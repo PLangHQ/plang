@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net7.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyVersion>0.1</AssemblyVersion>
+    <FileVersion>0.1</FileVersion>
+    <AssemblyName>plangw</AssemblyName>
+		<PreserveCompilationContext>true</PreserveCompilationContext>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2088.41" />
+    <PackageReference Include="RazorEngineCore" Version="2022.8.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PLang\PLang.csproj" />
+  </ItemGroup>
+
+</Project>

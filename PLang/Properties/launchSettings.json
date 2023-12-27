@@ -1,0 +1,113 @@
+{
+  "profiles": {
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    },
+    "App Build": {
+      "commandName": "Project",
+      "commandLineArgs": "build watch",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\ExtraModules\\test\\"
+    },
+    "App Webserver": {
+      "commandName": "Project",
+      "commandLineArgs": "webserver watch",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\ExtraModules\\test\\"
+    },
+    "Debugger webserver": {
+      "commandName": "Project",
+      "commandLineArgs": "webserver watch",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\ExtraModules\\test\\app\\_system\\debug"
+    },
+    "Debugger build": {
+      "commandName": "Project",
+      "commandLineArgs": "build watch",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\ExtraModules\\test\\app\\_system\\debug"
+    },
+    "Install build": {
+      "commandName": "Project",
+      "commandLineArgs": "build watch",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\plang\\apps\\Install"
+    },
+    "Install test": {
+      "commandName": "Project",
+      "commandLineArgs": "test watch",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\plang\\apps\\Install"
+    },
+    "Install test build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\plang\\apps\\Install\\"
+    },
+    "Install Test app": {
+      "commandName": "Project",
+      "commandLineArgs": "run appName=Test",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\plang\\apps\\Install"
+    },
+    "Dophop build": {
+      "commandName": "Project",
+      "commandLineArgs": "build watch",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\plang\\apps\\DohopWithoutDate"
+    },
+    "Dohop run": {
+      "commandName": "Project",
+      "commandLineArgs": "run origin=Reykjavik, destination=London",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\plang\\apps\\DohopWithoutDate"
+    },
+    "HelloWorld build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\plang\\apps\\HelloWorld"
+    },
+    "HelloWorld run": {
+      "commandName": "Project",
+      "commandLineArgs": "run",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\plang\\apps\\HelloWorld"
+    },
+    "ExDoc build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\plang\\apps\\ExternalDocExample"
+    },
+    "ffmpeg run": {
+      "commandName": "Project",
+      "commandLineArgs": "run",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\plang\\apps\\Ffmpeg"
+    },
+    "ffmpeg build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\plang\\apps\\Ffmpeg"
+    },
+    "nostr run": {
+      "commandName": "Project",
+      "commandLineArgs": "run",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\plang\\apps\\Messages"
+    },
+    "HttpR build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\plang\\apps\\HttpRequestWithSignature"
+    },
+    "HttpR run": {
+      "commandName": "Project",
+      "commandLineArgs": "run",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\plang\\apps\\HttpRequestWithSignature"
+    },
+    "PythonRun": {
+      "commandName": "Project",
+      "commandLineArgs": "run",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\plang\\apps\\PythonRunner"
+    },
+    "Windowapp build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\plang\\apps\\WindowApp"
+    },
+    "Windowapp run": {
+      "commandName": "Project",
+      "commandLineArgs": "run",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\plang\\apps\\WindowApp"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "profiles": {
+    "PlangWindowForms": {
+      "commandName": "Project",
+      "commandLineArgs": "run ui/Form",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\RestPlay"
+    },
+    "mannlif run": {
+      "commandName": "Project",
+      "commandLineArgs": "run",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PrivatePlangApps\\mannlif.is"
+    },
+    "Todo winap": {
+      "commandName": "Project",
+      "commandLineArgs": "run --debug",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\Todo"
+    }
+  }
+}

@@ -1,0 +1,198 @@
+{
+  "profiles": {
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    },
+    "HelloWorld build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\HelloWorld"
+    },
+    "Training run": {
+      "commandName": "Project",
+      "commandLineArgs": "run GenerateTrainingData",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\GPT35TrainingDataBuilder"
+    },
+    "Training build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\GPT35TrainingDataBuilder"
+    },
+    "HelloWorld run": {
+      "commandName": "Project",
+      "commandLineArgs": "run",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\HelloWorld"
+    },
+    "Install build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\Install"
+    },
+    "PythonRunner build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\PythonRunner"
+    },
+    "HttpSig build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\HttpRequestWithSignature"
+    },
+    "HttpSig run": {
+      "commandName": "Project",
+      "commandLineArgs": "run",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\HttpRequestWithSignature"
+    },
+    "PythonRun run": {
+      "commandName": "Project",
+      "commandLineArgs": "run",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\PythonRunner"
+    },
+    "Messages build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\Messages"
+    },
+    "Messages run": {
+      "commandName": "Project",
+      "commandLineArgs": "run",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\Messages"
+    },
+    "Install run": {
+      "commandName": "Project",
+      "commandLineArgs": "run",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\Install"
+    },
+    "Contact build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\Contact"
+    },
+    "DbTest build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\DbTest"
+    },
+    "DbTest run": {
+      "commandName": "Project",
+      "commandLineArgs": "run text=\"Hello man\"",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\DbTest"
+    },
+    "Selen build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\DohopWithoutDate"
+    },
+    "Selen run": {
+      "commandName": "Project",
+      "commandLineArgs": "run origin=reykjavik destination=london",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\DohopWithoutDate"
+    },
+    "Sel run setup": {
+      "commandName": "Project",
+      "commandLineArgs": "run Setup.goal",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\DohopWithoutDate"
+    },
+    "blockc listener": {
+      "commandName": "Project",
+      "commandLineArgs": "run MixedCalls",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\Examples\\Blockchain"
+    },
+    "block list buld": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\Examples\\Blockchain"
+    },
+    "Tests run": {
+      "commandName": "Project",
+      "commandLineArgs": "run",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\PLangServer"
+    },
+    "Test build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\PLangServer"
+    },
+    "PlangServer Run": {
+      "commandName": "Project",
+      "commandLineArgs": "exec",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PrivatePlangApps\\PLangServer"
+    },
+    "PlangClient Run": {
+      "commandName": "Project",
+      "commandLineArgs": "run",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PrivatePlangApps\\PLangClientTest"
+    },
+    "PlangServer build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PrivatePlangApps\\PLangServer"
+    },
+    "Docker run": {
+      "commandName": "Project",
+      "commandLineArgs": "exec path=\"C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\PLangServer\"",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\DockerMyProject"
+    },
+    "RestPlay build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\RestPlay"
+    },
+    "Docker build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\DockerMyProject"
+    },
+    "RestPlay run": {
+      "commandName": "Project",
+      "commandLineArgs": "run",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\RestPlay"
+    },
+    "VideoEditor build": {
+      "commandName": "Project",
+      "commandLineArgs": "build --debug",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PrivatePlangApps\\VideoEditor"
+    },
+    "VideoEditor run": {
+      "commandName": "Project",
+      "commandLineArgs": "run Editor",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PrivatePlangApps\\VideoEditor"
+    },
+    "PlangClient listen": {
+      "commandName": "Project",
+      "commandLineArgs": "run listentofile",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PrivatePlangApps\\PLangServer\\"
+    },
+    "Examples exec": {
+      "commandName": "Project",
+      "commandLineArgs": "run start",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\Tests"
+    },
+    "PlangClient build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PrivatePlangApps\\PLangClientTest"
+    },
+    "TEstLLM build": {
+      "commandName": "Project",
+      "commandLineArgs": "build",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PrivatePlangApps\\TestApp"
+    },
+    "mannlif run": {
+      "commandName": "Project",
+      "commandLineArgs": "run",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PrivatePlangApps\\mannlif.is"
+    },
+    "Todo run": {
+      "commandName": "Project",
+      "commandLineArgs": "run",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\todo"
+    },
+    "hopkaup build": {
+      "commandName": "Project",
+      "commandLineArgs": "exec --debug",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PrivatePlangApps\\hopkaup.is"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+﻿<ProjectConfiguration>
+  <Settings>
+    <HiddenComponentWarnings />
+    <IgnoredTests>
+      <NamedTestSelector>
+        <TestName>PLang.Modules.BlockchainModule.Tests.ProgramTests.TestTransfer</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.BuilderTest</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.BuilderTest (9611261512520098396)</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLangTests.Modules.BlockchainModule.ProgramTests.TestTransfer</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.GetBalance_Test</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLangTests.Modules.BlockchainModule.ProgramTests.ListenToContractEvent</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLangTests.Modules.BlockchainModule.ProgramTests.ListenToTranferContractEvent</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLangTests.Modules.BlockchainModule.ProgramTests.ListenToBlockEvent</TestName>
+      </NamedTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLangTests.Modules.LlmModule.ProgramTests</FixtureName>
+      </FixtureTestSelector>
+      <NamedTestSelector>
+        <TestName>PLangTests.Integration.ListAndLoopTest.TestListAndLoop</TestName>
+      </NamedTestSelector>
+    </IgnoredTests>
+  </Settings>
+</ProjectConfiguration>

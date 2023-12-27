@@ -1,0 +1,106 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
+    <PackageReference Include="Microsoft.QualityTools.Testing.Fakes" Version="16.11.230815" />
+    <PackageReference Include="MSTest.TestAdapter" Version="2.2.10" />
+    <PackageReference Include="MSTest.TestFramework" Version="2.2.10" />
+    <PackageReference Include="coverlet.collector" Version="3.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
+    <PackageReference Include="NSubstitute" Version="5.0.0" />
+    <PackageReference Include="TestableIO.System.IO.Abstractions.TestingHelpers" Version="19.2.69" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PLang\PLang.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Book1.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="main_params.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="main.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="PrFiles\Events\AfterGoalEvent.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="PrFiles\Events\AfterAppStartEvent.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="PrFiles\Events\AppEndEvent.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="PrFiles\Events\OnErrorAppRunningEvent.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="PrFiles\Events\OnErrorAppStartEvent.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="PrFiles\Events\BeforeAppStartEvent.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="PrFiles\Events\OnErrorGoalEvent.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="PrFiles\Events\OnErrorStepEvent.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="PrFiles\Events\BeforeGoalEvent.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="PrFiles\Events\BeforeStepEvent.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="PrFiles\Events\AfterStepEvent.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="PrFiles\Events\Events.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="PrFiles\Events\SampleApp\Events.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="PrFiles\GoalWith1Step.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="PrFiles\GoalWith2Steps.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="PrFiles\SomeApp.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="PrFiles\HelloWorld.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="PrFiles\Start.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="requirements.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Test1,000,000x10.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Test5x2.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="PrFiles\Apps\" />
+  </ItemGroup>
+
+</Project>
