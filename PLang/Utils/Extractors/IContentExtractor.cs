@@ -21,31 +21,37 @@ namespace PLang.Utils.Extractors
 		string GetRequiredResponse(Type scheme);
 	}
 
-	public class HtmlExtractor : IContentExtractor
+	public class TextExtractor : IContentExtractor
 	{
+		public object Extract(string content, Type responseType)
+		{
+			return content;
+		}
+
+		public T Extract<T>(string content)
+		{
+			return (T)Extract(content, typeof(T));
+		}
+
+		public string GetRequiredResponse(Type scheme)
+		{
+			return "";
+		}
+	}
+	public class GenericExtractor : IContentExtractor
+	{
+		string type;
+		public GenericExtractor(string type)
+		{
+			this.type = type;
+		}
 		public T Extract<T>(string content)
 		{
 			return (T)Extract(content, typeof(T));
 		}
 		public object Extract(string content, Type responseType)
 		{
-			var css = ExtractByType(content, "css").ToString().Trim(); 
-			if (!string.IsNullOrEmpty(css))
-			{
-				css = "<style>" + css + "</style>\n";
-			}
-			var html = ExtractByType(content, "html").ToString().Trim();			
-			var javascript = ExtractByType(content, "javascript").ToString().Trim();
-			if (!string.IsNullOrEmpty(javascript))
-			{
-				if (javascript.Contains("function callGoal"))
-				{
-					javascript = javascript.Replace("function callGoal", "function notcalled_callGoal");
-				}
-				javascript = "<script>" + javascript + "</script>\n";
-			}
-			var result = css + html + javascript;
-			return result;
+			return ExtractByType(content, type);
 		}
 		public object ExtractByType(string content, string contentType = "html")
 		{
@@ -60,6 +66,38 @@ namespace PLang.Utils.Extractors
 			}
 			return "";
 		}
+
+		public string GetRequiredResponse(Type scheme)
+		{
+			return "Only write the raw " + this.type + " no summary, no extra text to explain, be concise";
+		}
+	}
+
+	public class HtmlExtractor : GenericExtractor, IContentExtractor
+	{
+		public HtmlExtractor() : base("html") { }
+
+		public object Extract(string content, Type responseType)
+		{
+			var css = ExtractByType(content, "css").ToString().Trim();
+			if (!string.IsNullOrEmpty(css) && !css.Contains("No css needed"))
+			{
+				css = "<style>" + css + "</style>\n";
+			}
+			var html = ExtractByType(content, "html").ToString().Trim();
+			var javascript = ExtractByType(content, "javascript").ToString().Trim();
+			if (!string.IsNullOrEmpty(javascript) && !javascript.Contains("No javascript needed"))
+			{
+				if (javascript.Contains("function callGoal"))
+				{
+					javascript = javascript.Replace("function callGoal", "function notcalled_callGoal");
+				}
+				javascript = "<script>" + javascript + "</script>\n";
+			}
+			var result = css + html + javascript;
+			return result;
+		}
+
 
 		public string GetRequiredResponse(Type scheme)
 		{
@@ -118,11 +156,11 @@ namespace PLang.Utils.Extractors
 				unescaped = Regex.Replace(unescaped, pattern, @"\\$1");
 
 				unescaped = unescaped //.Substring(2, match.Value.Length - 3) // Remove leading @ and trailing "
-											//.Replace(@"\", @"\\")
+									  //.Replace(@"\", @"\\")
 											.Replace("\"\"", "\\\"") // Replace double quotes
 											.Replace("\r\n", "\\n")   // Replace newlines
 											.Replace("\n", "\\n");     // Replace newlines (alternative format)
-				return  unescaped; // Add enclosing quotes
+				return unescaped; // Add enclosing quotes
 			});
 			return newJson;
 		}
@@ -139,7 +177,7 @@ namespace PLang.Utils.Extractors
 				{
 					var newContent = FixMalformedJson(content);
 					var obj = JsonConvert.DeserializeObject(newContent, responseType);
-					
+
 					//var newJson = JsonConvert.SerializeObject(obj).Replace("[newline]", "\\n").Replace("[carreturn]", "\\r");
 					return obj;
 				}

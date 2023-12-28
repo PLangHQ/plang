@@ -1,0 +1,12 @@
+Start
+- set var Name="Get Started"
+- read "template/GetStarted.txt", into %content%
+- read file "template/guidance/teacher.txt", write to %system%
+- [var] load variables into %system%
+- [llm] system:%system%
+    user:%content%
+    model:'gpt-4-1106-preview'
+    write to %result%
+- create folder output
+- write %result% to output/GetStarted.md
+

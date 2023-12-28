@@ -18,11 +18,10 @@ namespace PLang.Modules.LlmModule
 			AppendToAssistantCommand(@"The following user request is for constructing a message to LLM engine
 
 Determine what part is system, assistant and user properties. If you cannot map it, the whole user request should be on user property
-Determine the scheme, it is the json scheme that the llm is expected to return, this is required and cannot be empty string. If scheme is not defined, the scheme is created from variables the user expects to write to
-If user expects the result to be written into variables, then those are in the scheme:
+llmResponseType can be text, json or html. If user does not define scheme then default to text, if scheme is defined use json
 
 ## examples ##
-system: do stuff, user: this is data from user, write to %data%, %output% and %dest% => scheme: {data:object, output:object, dest:object}
+system: do stuff, user: this is data from user, write to %data%, %output% and %dest% => scheme: null, llResponseType=text
 system: setup up system, asssistant: some assistant stuff, user: this is data from user, scheme: {data:string, year:number, name:string} => scheme:  {data:string, year:number, name:string}
 ## examples ##
 ");

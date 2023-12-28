@@ -281,7 +281,7 @@ namespace PLang.Runtime
 
 			var variables = (staticVariable) ? staticVariables : this.variables;
 			var varKey = variables.FirstOrDefault(p => p.Key.ToLower() == key.ToLower());
-			if (varKey.Key != null)
+			if (varKey.Key != null && varKey.Value.Initiated)
 			{
 				return variables[varKey.Key].Value;
 			}
@@ -364,7 +364,7 @@ namespace PLang.Runtime
 
 		public void PutForBuilder(string key, object value)
 		{
-			Put(key, value, false);
+			Put(key, value, false, false);
 		}
 
 		public void PutStatic(string key, object value)
@@ -586,6 +586,10 @@ namespace PLang.Runtime
 			}
 			else if (value is IList list)
 			{
+				if (value.GetType() == typeof(JArray))
+				{
+					list = (IList) ((JArray)value).ToObject(targetType);
+				}
 				return list;
 			}
 			else if (value is IEnumerable<KeyValuePair<string, int>> keyValuePairs)

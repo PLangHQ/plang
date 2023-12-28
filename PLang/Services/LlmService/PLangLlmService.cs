@@ -45,7 +45,8 @@ namespace PLang.Services.LlmService
 			{
 				try
 				{
-					return Extractor.Extract(cachedLlmQuestion.RawResponse, responseType);
+					var result = Extractor.Extract(cachedLlmQuestion.RawResponse, responseType);
+					if (result != null) return result;
 				}
 				catch { }
 			}

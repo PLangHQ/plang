@@ -1,4 +1,4 @@
-
+﻿
 
 <center>
 
@@ -72,26 +72,25 @@ It goes into detail about the language.
 
 PLang comes with a wide range of features including:
 
-- [Built-in Identity](Identity.md)
-- Intuitive syntax
+- Intuitive syntax (just natural language, with some rules)
 - Powerful standard library
-- Support for multiple programming paradigms
-- Efficient error handling
-- Efficient cache handling
-- Built-in Messaging system
-- Built-in Database
+- [Built-in Identity](Identity.md)
+- [Efficient error handling](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.FileModule.md#caching-retries-error-handling--run-and-forget)
+- [Efficient cache handling](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.CachingModule.md#caching)
+- [Built-in Messaging system](https://github.com/PLangHQ/plang/blob/main/Documentation/paper/README.md#messages)
+- [Built-in Database](https://github.com/PLangHQ/plang/blob/main/Documentation/paper/README.md#dbmodule)
 - [Dependency injection](Services.md)
-- [100% user privacy](paper/README.md)
-- Verifiable code
-- Local storage
-- Sync between devices
-- User controls the UX
-- Programing in your native tongue
-- Super secure - [Learn more about PLang Security](https://github.com/PLangHQ/documentation/tree/main/blob/main/Security.md)
+- [100% user privacy](https://github.com/PLangHQ/plang/blob/main/Documentation/paper/README.md#security--privacy)
+- [Verifiable code](https://github.com/PLangHQ/plang/blob/main/Documentation/paper/README.md#verifiable-code---possible)
+- [Local storage](https://github.com/PLangHQ/plang/blob/main/Documentation/paper/README.md#event-sourcing)
+- [Sync between devices](https://github.com/PLangHQ/plang/blob/main/Documentation/paper/README.md#event-sourcing)
+- [User controls the UX](https://github.com/PLangHQ/plang/blob/main/Documentation/paper/README.md#user-interface)
+- [Programing in your native tongue](https://github.com/PLangHQ/plang/blob/main/Documentation/paper/README.md#natural-language-neutral)
+- [Security at another level, eliminating most problems we have today](https://github.com/PLangHQ/documentation/tree/main/blob/main/Security.md)
 
 ## Contributing
 
-Join our growing community of contributors! Learn how you can contribute on [GitHub](https://github.com/PLangHQ).
+Join our community of contributors! Learn how you can contribute on [GitHub](https://github.com/PLangHQ).
 
 ## Versioning
 
@@ -102,16 +101,17 @@ At version 0.1.
 - Creator: [@ingig](https://twitter.com/ingig), [@ingig](https://github.com/ingig)
 - Contributors: [See the list of contributors](contributors.md)
 
-Special thanks to everyone who has contributed to the development of PLang.
+Special thanks to everyone who has developed an open source project that PLang uses. ❤️
 
 ## License
 
-PLang is available under the latest LGPL version. Details are in our [LICENSE.md](https://github.com/PLangHQ/LICENSE.md).
+PLang is available under LGPL version 2.1. Details are in our [LICENSE.md](https://github.com/PLangHQ/LICENSE.md).
 
 ## Contact Information
 
-For support or questions, reach out via our [official website](https://plang.is).
+Go to the [discussion board](https://github.com/orgs/PLangHQ/discussions), 
+find us on [Discord](https://discord.gg/A8kYUymsDD)
+or follow us on [Twitter](https://twitter.com/planghq)
+or email [plang@plang.is](mailto:plang@plang.is)
 
-## Changelog
 
-Stay up-to-date with PLang's development. See our [Changelog](https://github.com/PLangHQ/changelog).
