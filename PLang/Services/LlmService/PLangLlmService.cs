@@ -59,6 +59,8 @@ namespace PLang.Services.LlmService
 			parameters.Add("top_p", question.top_p);
 			parameters.Add("model", question.model);
 			parameters.Add("type", question.type);
+
+
 			parameters.Add("maxLength", question.maxLength);
 
 			var httpClient = new HttpClient();
@@ -102,7 +104,7 @@ namespace PLang.Services.LlmService
 			}
 
 			
-			throw new HttpRequestException(response.ReasonPhrase, null, response.StatusCode);
+			throw new HttpRequestException(responseBody, null, response.StatusCode);
 			
 
 		}

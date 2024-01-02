@@ -1,0 +1,34 @@
+File
+- read '1px.png', into %base64%
+- write out %base64%
+- read file.txt into %content%
+- write out %content%
+- read Employees.xlsx  into %excelData%
+- loop through %excelData%, call !PrintOutExcel
+- write  %excelData% to Employees.xlsx, has header, overwrite
+- read  Test5x2.csv into %csvData%
+- loop through %csvData%, call !PrintOutCSV
+- write to Test5x2.csv, data %csvData%
+- write to file2.txt, 'This is a content'
+- read file2.txt, into %newContent%
+- write out %newContent%
+- append ', some more content' to file2.txt
+- copy file2.txt to file3.txt
+- read file3.txt into %file3Content%
+- write out %file3Content%
+- delete file file2.txt
+- delete file file3.txt
+- get file info on Employees.xlsx   into %fileInfo%
+- write out 'fileInfo: %fileInfo%, CreationTime: %fileInfo.CreationTime%, LastWriteTime: %fileInfo.LastWriteTime%'
+- write to  demo.xlsx, %csvData%,  overwrite file
+- write to demo.csv, %csvData%,  overwrite file
+- write to  demo2.xlsx, data: %excelData%, %csvData%, overwrite file
+- delete demo.xlsx
+- delete demo2.xlsx
+- listen to 'files/*.json', call !ProcessJson
+
+PrintOutExcel
+- write out %item.Name% - %item.Email%
+
+PrintOutCSV
+- write out %item.ToJson()%

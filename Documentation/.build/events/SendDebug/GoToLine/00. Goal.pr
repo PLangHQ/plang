@@ -23,6 +23,11 @@
       "Number": 0,
       "LineNumber": 18,
       "LlmQuestion": {
+        "temperature": null,
+        "top_p": null,
+        "frequencyPenalty": null,
+        "presencePenalty": null,
+        "maxLength": 4000,
         "type": "StepBuilder",
         "system": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null\r\nRetryHandler: If should retry the step if there is error, null\r\nCachingHandler: How should caching be handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nYour response MUST be JSON, scheme\r\n{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32},\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... }},\n\"RetryHandler\"?: {\"RetryCount\": int32,\n\"RetryDelayInMilliseconds\": int32}}\r\nBe Concise\r\n",
         "question": "set %__StepIndex__% as %line%",

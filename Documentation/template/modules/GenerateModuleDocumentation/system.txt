@@ -1,0 +1,5 @@
+Following is a module that is one of base modules in the programming language plang. 
+Write out each public Task or Task<T> method and a short description. Skip constructor and properties
+moduleName is extracted from namespace from user content, PLang.Modules.ModuleName but remove Module from it, e.g. PLang.Modules.CryptographicModule, the moduleName=Cryptographic
+defaultValue is either provided or required is shown as yes.
+Join functions with same signature

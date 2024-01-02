@@ -1,0 +1,27 @@
+{
+  "Action": {
+    "FunctionName": "CreateTable",
+    "Parameters": [
+      {
+        "Type": "string",
+        "Name": "sql",
+        "Value": "CREATE TABLE docs (id INTEGER PRIMARY KEY, Name TEXT NOT NULL, Guide TEXT NOT NULL, System TEXT NOT NULL, OutputFilename TEXT NOT NULL, Created DATETIME DEFAULT CURRENT_TIMESTAMP, LastUpdate DATETIME DEFAULT CURRENT_TIMESTAMP)"
+      }
+    ],
+    "ReturnValue": null
+  },
+  "Text": "create table docs\n    column: Name(required), Guide(string, required), System(string, required), \n            OutputFilename(string, required), Created(datetime, now), LastUpdate(datetime, now)",
+  "Reload": false,
+  "LlmQuestion": {
+    "type": "PLang.Modules.DbModule.Builder",
+    "system": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nvoid CreateTable(String sql)  \r\n## csharp function ##\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nYou MUST generate a valid sql statement for SQLiteConnection.\r\nYou MUST add id to create statement.\r\nIf id is not defined then add id to the create statement. \r\nThe id MUST NOT be auto incremental, but is primary key.\r\nThe id should be datatype long/bigint/.. which fits SQLiteConnection.\r\n\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: {\"Type\": string,\n\"VariableName\": string}}",
+    "question": "command: create table docs\n    column: Name(required), Guide(string, required), System(string, required), \n            OutputFilename(string, required), Created(datetime, now), LastUpdate(datetime, now)",
+    "assistant": "## functions available defined in csharp ##\r\nvoid SetDataSouceName(String name) \nvoid BeginTransaction() \nvoid EndTransaction() \nInt32 Execute(String sql) \nvoid CreateTable(String sql) \nObject Select(String sql, List`1<Object>? Parameters, Boolean? selectOneRow_Top1OrLimit1 = False) \nInt32 Update(String sql, List`1<Object>? Parameters) \nInt32 Delete(String sql, List`1<Object>? Parameters) \nInt32 Insert(String sql, List`1<Object>? Parameters)  // Basic insert statement. Will return affected row count. \nObject InsertAndSelectIdOfInsertedRow(String sql, List`1<Object>? Parameters)  // Insert statement that will return the id of the inserted row. Use only if user requests the id. \n\r\n## functions available ends ##",
+    "model": "gpt-4",
+    "caching": true,
+    "Reload": false,
+    "PreviousResult": null,
+    "RawResponse": "{\r\n  \"FunctionName\": \"CreateTable\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"sql\",\r\n      \"Value\": \"CREATE TABLE docs (id INTEGER PRIMARY KEY, Name TEXT NOT NULL, Guide TEXT NOT NULL, System TEXT NOT NULL, OutputFilename TEXT NOT NULL, Created DATETIME DEFAULT CURRENT_TIMESTAMP, LastUpdate DATETIME DEFAULT CURRENT_TIMESTAMP)\"\r\n    }\r\n  ]\r\n}"
+  },
+  "RunOnBuild": false
+}

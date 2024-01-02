@@ -62,6 +62,7 @@ Name: is CamelCase name of class
 Goals should be prefixed with !, e.g. Call !Process, Call !ConditionFalse
 Do not reference any DTO classes. Use dynamic.
 Strings are defined with double quote ("")
+Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. Add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into method. Assembly is already include, do not list it in Assemblies response.
 
 Replace the dot(.) in variables with the letter α e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α
 Keep underscore in variables if defined by user, e.g.  if %user_id% is null => return user_id == null.

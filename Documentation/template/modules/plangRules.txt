@@ -1,0 +1,12 @@
+# plang rules #
+- Goal name start at the beginning of file, it works like a function
+- There can be multiple Goals in each file
+- A step is each line starting with dash(-) a goal can have multiple steps.
+- One step can be multiple lines but then the line does not start with dash
+- Variables start and end with %
+- \% is an escape character for variables so the language does not load the variable in text
+- single slash (/) is a start of a comment
+- if statment are in the following format: if %variable% then call !IsTrue, else !IsFalse
+- indented steps belong to and if statement
+- \%Now\% give access to DateTime in c#
+# plang rules #

@@ -1,0 +1,14 @@
+Following is an example of the plang language. 
+Only keep to examples that are related to the %module.moduleName%
+
+%plangRules%
+
+The natural language of the examples should stay the same as the language compiler can map them with module methods
+Following is method description of the %module.moduleName%Module class that the examples map to. 
+plang code example should map to a method
+
+# charp method description start #
+%module%
+# charp method description end #
+
+Return the documentation in .md format

@@ -31,6 +31,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Data.SQLite;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using Websocket.Client.Logging;
 using static PLang.Modules.DbModule.ModuleSettings;
@@ -541,34 +542,52 @@ namespace PLang.Utils
 			if (!fileSystem.Directory.Exists("services"))
 			{
 				logger.LogError($"services folder not found in {fileSystem.RootDirectory}");
+				return null;
 			}
-			injectorType = (injectorType.EndsWith(".dll")) ? injectorType : injectorType + ".dll";
+
+			//injectorType = (injectorType.EndsWith(".dll")) ? injectorType : injectorType + ".dll";
 
 			string dllFilePath = Path.Combine(settings.GoalsPath, "services", injectorType);
 			string[] dllFiles = new string[] { dllFilePath };
 			if (!fileSystem.File.Exists(dllFilePath))
 			{
-				var dirName = Path.GetDirectoryName(injectorType);
-				var moduleFolderPath = Path.Combine(settings.GoalsPath, "services", dirName);
+				//var dirName = Path.GetDirectoryName(injectorType);
+				var moduleFolderPath = Path.Combine(settings.GoalsPath, "services", dllFilePath);
 				if (!fileSystem.Directory.Exists(moduleFolderPath))
 				{
-					logger.LogError($"{injectorType} injection dll could not be found");
+					logger.LogError($"{injectorType} injection folder could not be found");
 					return null;
 				}
 				
 				dllFiles = fileSystem.Directory.GetFiles(moduleFolderPath, "*.dll", SearchOption.AllDirectories);				
 			}
 
-			var className = injectorType.Split('.').Last();
-
+			
+			Type? type = null;
 			foreach (var dllFile in dllFiles)
 			{
 				Assembly assembly = Assembly.LoadFile(dllFile);
-				var type = assembly.GetTypes().FirstOrDefault(p => p.GetInterfaces().Contains(typeToFind));
-				if (type != null)
-				{					
-					return type;
+				if (type == null)
+				{
+					type = assembly.GetTypes().FirstOrDefault(p => p.GetInterfaces().Contains(typeToFind));
 				}
+				
+			}
+
+			AppDomain.CurrentDomain.AssemblyResolve += (sender, eventArgs) =>
+			{
+				string assemblyName = new AssemblyName(eventArgs.Name).Name + ".dll";
+				string assemblyPath = Path.Combine(Path.GetDirectoryName(eventArgs.RequestingAssembly.Location), assemblyName);
+				if (File.Exists(assemblyPath))
+				{
+					return Assembly.LoadFile(assemblyPath);
+				}
+				return null;
+			};
+
+			if (type != null)
+			{
+				return type;
 			}
 
 			logger.LogError($"Cannot find {injectorType} in {dllFilePath}. Make sure that the class inherits from {typeToFind.Name} and the name of the dll is {injectorType}.dll");

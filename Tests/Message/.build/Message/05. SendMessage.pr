@@ -1,0 +1,32 @@
+{
+  "Action": {
+    "FunctionName": "SendPrivateMessage",
+    "Parameters": [
+      {
+        "Type": "string",
+        "Name": "content",
+        "Value": "Another message that I will recieve, %now%"
+      },
+      {
+        "Type": "string",
+        "Name": "npubReceiverPublicKey",
+        "Value": "%pubKey%"
+      }
+    ],
+    "ReturnValue": null
+  },
+  "Text": "send message to %pubKey%, 'Another message that I will recieve, %now%'",
+  "Reload": false,
+  "LlmQuestion": {
+    "type": "PLang.Modules.BaseBuilder",
+    "system": "Parse user command.\r\n\r\nSelect the correct function from list of available functions based on user command\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")%\r\nwhere the settingName would be the api key, config key, \r\ndefaultValue for settings is the usual value given, make it \"\" if no value can be default\r\nExplain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nType: the object type in c#\r\nName: name of the variable\r\nValue: %variable% or hardcode string that should be used\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nReturnValue: Only if the function returns a value, else null\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: {\"Type\": string,\n\"VariableName\": string}}",
+    "question": "command: send message to %pubKey%, 'Another message that I will recieve, %now%'",
+    "assistant": "## functions available defined in csharp ##\r\nString GetPublicKey() \nvoid SetCurrentAccount(String publicKeyOrName) \nvoid Listen(String goalName, String? variableName = content, Nullable`1<DateTimeOffset>? listenFromDateTime)  // goalName should be prefixed by ! and be whole word with possible dot(.). \nvoid SendPrivateMessageToMyself(String content) \nvoid SendPrivateMessage(String content, String npubReceiverPublicKey) \n\r\n## functions available ends ##\r\n## defined variables ##\r\npubKey(string), \r\n## defined variables ##\nFollowing Relay servers are available: [\"wss://relay.damus.io\",\"wss://nostr-pub.wellorder.net\",\"wss://offchain.pub\",\"wss://nos.lol\"].\r\nFollowing are Nostr accounts:[]\r\n",
+    "model": "gpt-4",
+    "caching": true,
+    "Reload": false,
+    "PreviousResult": null,
+    "RawResponse": "{\"FunctionName\": \"SendPrivateMessage\",\n\"Parameters\": [\n    {\"Type\": \"string\", \"Name\": \"content\", \"Value\": \"Another message that I will recieve, %now%\"},\n    {\"Type\": \"string\", \"Name\": \"npubReceiverPublicKey\", \"Value\": \"%pubKey%\"}\n]}"
+  },
+  "RunOnBuild": false
+}

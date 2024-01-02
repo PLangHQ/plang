@@ -1,0 +1,17 @@
+{
+  "Action": {
+    "Name": "CreateListFromZeroToTen",
+    "Code": "public static void Process(out List<int> list)\n{\n    list = new List<int>();\n    for (int i = 0; i <= 10; i++)\n    {\n        list.Add(i);\n    }\n}",
+    "Using": [
+      "System",
+      "System.Collections.Generic"
+    ],
+    "Parameters": {
+      "list": "List<int>"
+    }
+  },
+  "Text": "create List<int> from 0 to 10, write to %list%",
+  "Reload": false,
+  "LlmQuestion": null,
+  "RunOnBuild": false
+}

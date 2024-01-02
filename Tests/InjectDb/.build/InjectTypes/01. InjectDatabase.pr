@@ -1,0 +1,37 @@
+{
+  "Action": {
+    "FunctionName": "Inject",
+    "Parameters": [
+      {
+        "Type": "string",
+        "Name": "pathToDll",
+        "Value": "npgsql/lib/net7.0/Npgsql.dll"
+      },
+      {
+        "Type": "string",
+        "Name": "type",
+        "Value": "db"
+      },
+      {
+        "Type": "Boolean",
+        "Name": "global",
+        "Value": true
+      }
+    ],
+    "ReturnValue": null
+  },
+  "Text": "inject db, npgsql/lib/net7.0/Npgsql.dll, make it global",
+  "Reload": false,
+  "LlmQuestion": {
+    "type": "PLang.Modules.GenericFunctionBuilder",
+    "system": "Parse user command.\r\n\r\nSelect the correct function from list of available functions based on user command\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")%\r\nwhere the settingName would be the api key, config key, \r\ndefaultValue for settings is the usual value given, make it \"\" if no value can be default\r\nExplain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nType: the object type in c#\r\nName: name of the variable\r\nValue: %variable% or hardcode string that should be used\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nReturnValue: Only if the function returns a value, else null\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: {\"Type\": string,\n\"VariableName\": string}}",
+    "question": "command: inject db, npgsql/lib/net7.0/Npgsql.dll, make it global",
+    "assistant": "## functions available defined in csharp ##\r\nvoid Inject(String pathToDll, String type, Boolean? global = False)  // type can be: db, settings, caching, logger, llm, askuser, encryption, archiver. \n\r\n## functions available ends ##",
+    "model": "gpt-4",
+    "caching": true,
+    "Reload": false,
+    "PreviousResult": null,
+    "RawResponse": "{\"FunctionName\": \"Inject\",\n\"Parameters\": [{\"Type\": \"string\",\n\"Name\": \"pathToDll\",\n\"Value\": \"npgsql/lib/net7.0/Npgsql.dll\"},\n{\"Type\": \"string\",\n\"Name\": \"type\",\n\"Value\": \"db\"},\n{\"Type\": \"Boolean\",\n\"Name\": \"global\",\n\"Value\": true}]}"
+  },
+  "RunOnBuild": false
+}

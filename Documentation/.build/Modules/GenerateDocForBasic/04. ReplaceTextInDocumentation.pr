@@ -1,0 +1,30 @@
+{
+  "Action": {
+    "Name": "ReplaceCodeExamples",
+    "Code": "\npublic static class ReplaceCodeExamples\n{\n    public static void Process(string documentation, string plangExamplesDescription, out string documentationOut, PLang.SafeFileSystem.PLangFileSystem fileSystem)\n    {\n        if (documentation == null)\n        {\n            throw new Exception(\"The documentation is not provided.\");\n        }\n        if (plangExamplesDescription == null)\n        {\n            throw new Exception(\"The Plang examples description is not provided.\");\n        }\n        documentationOut = documentation.Replace(\"[PlangCodeExamples]\", plangExamplesDescription);\n    }\n}\n",
+    "Using": [
+      "System",
+      "PLang.SafeFileSystem"
+    ],
+    "Parameters": {
+      "documentation": "string",
+      "plangExamplesDescription": "string",
+      "documentationOut": "string",
+      "fileSystem": "PLang.SafeFileSystem.PLangFileSystem"
+    },
+    "OutParameterDefinition": {
+      "documentationOut": [
+        {
+          "Name": "documentationOut",
+          "FullTypeName": "System.String"
+        }
+      ]
+    },
+    "GoalToCallOnTrue": null,
+    "GoalToCallOnFalse": null
+  },
+  "Text": "[code] replace \"[PlangCodeExamples]\" in %documentation% with %plangExamplesDescription%, write to %documentationOut%(string)",
+  "Reload": false,
+  "LlmQuestion": null,
+  "RunOnBuild": false
+}

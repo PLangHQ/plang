@@ -17,7 +17,7 @@ namespace PLang.Utils
 
 		public string GetStringToHash(LlmQuestion question)
 		{
-			return question.type + question.system + question.assistant + question.question + question.model;
+			return question.type + question.system + question.assistant + question.question + question.model + question.maxLength + question.top_p + question.frequencyPenalty + question.presencePenalty + question.temperature;
 		}
 		public LlmQuestion? GetCachedQuestion(LlmQuestion question)
 		{

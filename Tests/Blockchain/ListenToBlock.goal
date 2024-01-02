@@ -1,0 +1,7 @@
+ListenToBlock
+/ default rpc server dont work. You can use websocket from Infra or Alchemy or other
+- listen to new block, call !BlockEvent
+
+BlockEvent
+- write out "timestamp:%timestamp% | lastBlockNotification:%lastBlockNotification%
+- write out block: %block.ToJson()%

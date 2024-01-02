@@ -1,12 +1,23 @@
 Start
-- set var Name="Get Started"
-- read "template/GetStarted.txt", into %content%
-- read file "template/guidance/teacher.txt", write to %system%
+- select * from docs, write to %docs%
+- foreach %docs% call GenerateDoc
+
+GenerateDoc
+- set var Name=%item.Name%
+- read file %item.Guide%, into %content%
+- read file %item.System%, write to %system%
+- read file %item.OutputFilename%, write to %assistant%
 - [var] load variables into %system%
 - [llm] system:%system%
+    assistant: '## previously generated doc ## 
+                %assistant%
+                ## previously generated doc ## 
     user:%content%
     model:'gpt-4-1106-preview'
+    max length = 4K
     write to %result%
 - create folder output
-- write %result% to output/GetStarted.md
+- write %result% to %item.OutputFilename%
+- update docs table, set LastUpdate=%Now%, where id=%item.id%
+
 

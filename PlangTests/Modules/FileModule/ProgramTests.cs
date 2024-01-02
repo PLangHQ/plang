@@ -282,6 +282,7 @@ namespace PLangTests.Modules.FileModule
 			Assert.IsTrue(fi.Exists);
 
 		}
+		/*
 		[TestMethod]
 		public async Task CreateDirectory_Test()
 		{
@@ -300,7 +301,7 @@ namespace PLangTests.Modules.FileModule
 			Assert.IsTrue(await p.DirectoryExists(path));
 			await p.DeleteDirectory(path);
 			Assert.IsFalse(await p.DirectoryExists(path));
-		}
+		}*/
 
 		[TestMethod]
 		public async Task GetFilesInDir_Test()

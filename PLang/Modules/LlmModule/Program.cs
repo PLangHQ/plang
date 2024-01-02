@@ -37,7 +37,7 @@ namespace PLang.Modules.LlmModule
 			double presencePenalty = 0.0,
 			int maxLength = 4000,
 			bool cacheResponse = true,
-			string llmResponseType = "text")
+			string? llmResponseType = null)
 		{
 			if (llmResponseType == "text")
 			{
@@ -56,6 +56,13 @@ namespace PLang.Modules.LlmModule
 			assistant = LoadVariables(assistant);
 			
 			var llmQuestion = new LlmQuestion("LlmModule", system, user, assistant, model, cacheResponse);
+			int tokenLength = user.Length + ((system == null) ? 0 : system.Length) + ((assistant == null) ? 0 : assistant.Length) / 4;
+			int ml = maxLength + tokenLength;
+			if (ml > maxLength)
+			{
+				ml = maxLength - (ml - maxLength);
+			}
+
 			llmQuestion.maxLength = maxLength;
 			llmQuestion.temperature = temperature;
 			llmQuestion.top_p = topP;

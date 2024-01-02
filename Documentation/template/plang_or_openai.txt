@@ -1,0 +1,43 @@
+You can use plang service to build your code or if you have OpenAI api key you can use GPT4.
+
+When you use plang service, you are supporting the project. 
+The plang service cost excatly 2x what using Open AI key would cost.
+To use plang service, you just start building. 
+
+On first build, if you dont have any voucher on the plang service, you will be provided
+with a payment link. Click that, choose the amount you want to buy for, something small to start with, like $5
+fill in the creditcard information, and submit. 
+
+The build again with plang, and you should be on your way.
+
+# OpenAI
+to use OpenAI key, you first need a api key(https://openai.com/). 
+Next you need to download the OpenAI module into your project(https://github.com/PLangHQ/modules/OpenAIService), 
+create folder modules
+
+in you Start.goal file type in at the top
+
+```plang
+@llm=OpenAIService
+
+Start
+- write out 'hello world'
+```
+if you are using Events in plang, then instead of putting in Start.goal, it needs to go into your Events.goal file
+```plang
+@llm=OpenAIService
+
+Events
+- before app start, call !DoStuff
+```
+
+
+The strict format of "@llm=OpenAIService" allows the builder to pick it up and use it instead of the build
+in plang service.
+
+# Which is better
+Plang service uses gpt4 from OpenAI, so there is no difference in results. 
+Hopefully in the future we can provide you with faster and much cheaper service
+By using our service your are supporting the project, development 
+and hopefully enabling us to create a cheaper llm 
+as the build process is relativly simple and doesn't need such a large LLM

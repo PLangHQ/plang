@@ -1,0 +1,45 @@
+{
+  "Action": {
+    "FunctionName": "AddToDictionary",
+    "Parameters": [
+      {
+        "Type": "String",
+        "Name": "key",
+        "Value": "key1"
+      },
+      {
+        "Type": "Object",
+        "Name": "value",
+        "Value": "Hello"
+      },
+      {
+        "Type": "Dictionary`2<String>",
+        "Name": "dictionaryInstance",
+        "Value": "%dict%"
+      },
+      {
+        "Type": "Boolean",
+        "Name": "updateIfExists",
+        "Value": false
+      }
+    ],
+    "ReturnValue": {
+      "Type": "Dictionary`2<String>",
+      "VariableName": "%dict%"
+    }
+  },
+  "Text": "add 'key1', 'Hello', write to %dict%",
+  "Reload": false,
+  "LlmQuestion": {
+    "type": "PLang.Modules.BaseBuilder",
+    "system": "Parse user command.\r\n\r\nSelect the correct function from list of available functions based on user command\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")%\r\nwhere the settingName would be the api key, config key, \r\ndefaultValue for settings is the usual value given, make it \"\" if no value can be default\r\nExplain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nType: the object type in c#\r\nName: name of the variable\r\nValue: %variable% or hardcode string that should be used\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nReturnValue: Only if the function returns a value, else null\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: {\"Type\": string,\n\"VariableName\": string}}",
+    "question": "command: add 'key1', 'Hello', write to %dict%",
+    "assistant": "## functions available defined in csharp ##\r\nBoolean DeleteFromList(Object item, List`1<Object> listInstance) \nBoolean DeleteKeyFromDictionary(String key, Dictionary`2<String> dictionary) \nList`1 AddToList(Object value, List`1<Object>? listInstance) \nDictionary`2 AddToDictionary(String key, Object value, Dictionary`2<String>? dictionaryInstance, Boolean? updateIfExists = False)  // Method always returns instance of dictionaryInstance, it creates a new instance if it is null. \n\r\n## functions available ends ##",
+    "model": "gpt-4",
+    "caching": true,
+    "Reload": false,
+    "PreviousResult": null,
+    "RawResponse": "{\"FunctionName\": \"AddToDictionary\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"key\",\n\"Value\": \"key1\"},\n{\"Type\": \"Object\",\n\"Name\": \"value\",\n\"Value\": \"Hello\"},\n{\"Type\": \"Dictionary`2<String>\",\n\"Name\": \"dictionaryInstance\",\n\"Value\": \"%dict%\"},\n{\"Type\": \"Boolean\",\n\"Name\": \"updateIfExists\",\n\"Value\": false}],\n\"ReturnValue\": {\"Type\": \"Dictionary`2<String>\",\n\"VariableName\": \"%dict%\"}}"
+  },
+  "RunOnBuild": false
+}

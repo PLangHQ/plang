@@ -1,0 +1,8 @@
+Schedule
+- write out %Now%
+- sleep for 1 sec
+- write out %Now%
+- every 1 minute, call !ItIsCalled
+
+ItIsCalled
+- write out 'Calling it every 1 min - %Now%

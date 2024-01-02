@@ -1,0 +1,16 @@
+ListAndDictionary
+- add [{"name":"Product1", "price":123}, {"name":"Product2", "price":222}] to list, write to %products%
+- add {"name":"Product3", "price":333} to %products%
+- foreach item in %products%, call !ShowProduct
+- add 'key1', 'hello' to dictionary, overwrite,  write to %ble%
+- add 'key2', 'plang',  write to %ble%, overwrite
+- add 'key3', 'world',  to %ble%, overwrite
+- go through %ble%, call !ShowHello
+- remove 'key3'  from %ble%
+- go through %ble%, call !ShowHello
+
+ShowProduct
+- write out %item.name% - %item.price%
+
+ShowHello
+- write out %item.Value%

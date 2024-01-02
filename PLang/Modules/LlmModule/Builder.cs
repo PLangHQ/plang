@@ -18,10 +18,10 @@ namespace PLang.Modules.LlmModule
 			AppendToAssistantCommand(@"The following user request is for constructing a message to LLM engine
 
 Determine what part is system, assistant and user properties. If you cannot map it, the whole user request should be on user property
-llmResponseType can be text, json or html. If user does not define scheme then default to text, if scheme is defined use json
+llmResponseType can be null, text, json, markdown or html. default is null. If scheme is defined use json, unless user defines otherwise
 
 ## examples ##
-system: do stuff, user: this is data from user, write to %data%, %output% and %dest% => scheme: null, llResponseType=text
+system: do stuff, user: this is data from user, write to %data%, %output% and %dest% => scheme: null, llResponseType=null
 system: setup up system, asssistant: some assistant stuff, user: this is data from user, scheme: {data:string, year:number, name:string} => scheme:  {data:string, year:number, name:string}
 ## examples ##
 ");
@@ -35,7 +35,7 @@ system: setup up system, asssistant: some assistant stuff, user: this is data fr
 			if (genericFunction != null)
 			{
 				var scheme = genericFunction.Parameters.FirstOrDefault(p => p.Name == "scheme");
-				if (scheme != null && !JsonHelper.LookAsJsonScheme(scheme.Value.ToString()))
+				if (scheme != null && scheme.Value != null && !JsonHelper.LookAsJsonScheme(scheme.Value.ToString()))
 				{
 					if (errorCount < 2)
 					{

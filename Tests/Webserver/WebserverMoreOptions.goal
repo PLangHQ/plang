@@ -1,0 +1,8 @@
+WebserverMoreOptions
+- set var %host% as '127.0.0.1'
+- set var %port% as 7070
+- start webserver
+    host %host%
+    port %port%, max upload size 10mb, ascii
+    public path: public
+- write out 'webserver start on http://%host%:%port%/hello.goal'

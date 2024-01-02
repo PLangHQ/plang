@@ -1,0 +1,16 @@
+{
+  "Action": {
+    "Name": "NotValidCheck",
+    "Code": "public static class NotValidCheck {\n\tpublic static bool Process(bool notValid) {\n\t\treturn !notValid;\n\t}\n}",
+    "Using": [
+      "System"
+    ],
+    "Parameters": {
+      "notValid": "bool"
+    }
+  },
+  "Text": "if %NotValid% is false then",
+  "Reload": false,
+  "LlmQuestion": null,
+  "RunOnBuild": false
+}

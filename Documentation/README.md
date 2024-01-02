@@ -1,6 +1,5 @@
 ﻿
 
-<center>
 
 # PLang Programming Language
 
@@ -9,9 +8,6 @@
 ***PLang is a modern programming language written in natural language.***
 
 Join our community on [Discord](https://discord.gg/A8kYUymsDD) | Follow us on [Twitter](https://twitter.com/planghq)
-
-</center>
-
 
 ## Hello plang world
 This is an example of a hello world app
@@ -56,10 +52,12 @@ Explore PLang's capabilities and start building today. For initial steps and gui
 Explore PLang's features and capabilities by browsing our comprehensive documentation:
 
 - **[Install](https://github.com/PLangHQ/documentation/tree/main/Install.md)**: Detailed installation guide for PLang.
+- **[Basic Rules]()**
 - **[GetStarted](https://github.com/PLangHQ/documentation/tree/main/GetStarted.md)**: Quickstart guide for new PLang users.
 - **[Variables](https://github.com/PLangHQ/documentation/tree/main/Variables.md)**: Learn about variables in PLang and how to use them.
 - **[Conditions](https://github.com/PLangHQ/documentation/tree/main/Conditions.md)**: Understanding `if` statements and conditional logic in PLang.
 - **[Loop](https://github.com/PLangHQ/documentation/tree/main/Loop.md)**: Explore how to iterate through lists and data collections.
+
 - **[Events](https://github.com/PLangHQ/documentation/tree/main/Events.md)**: Learn about event-driven programming in PLang.
 - **[Modules](https://github.com/PLangHQ/modules/README.md)**: Discover the different modules available in PLang and their capabilities.
 

@@ -41,15 +41,22 @@ namespace PLang
 			if (args.Length == 0) args = new string[1] { "build" };
 			
 			var debug = args.FirstOrDefault(p => p == "--debug") != null;
+			if (debug)
+			{
+				SetupDebug();
+			}
+
 			var test = args.FirstOrDefault(p => p == "--test") != null;
 			var build = args.FirstOrDefault(p => p == "build") != null;
 			var watch = args.FirstOrDefault(p => p == "watch") != null;
 			var run = args.FirstOrDefault(p => p == "run") != null;
 
-			if (debug)
+			var loggerLovel = args.FirstOrDefault(p => p.StartsWith("--logger"));
+			if (loggerLovel != null)
 			{
-				SetupDebug();
+				AppContext.SetData("--logger", loggerLovel.Replace("--logger=", ""));
 			}
+
 			if (args.FirstOrDefault(p => p == "exec") != null)
 			{
 				var list = args.ToList();

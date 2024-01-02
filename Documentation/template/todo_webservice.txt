@@ -1,0 +1,85 @@
+
+## Todo webservice
+Lets create the Todo web service. 
+
+You can also watch it in [this video](https://www.youtube.com/watch?v=abew4btk34). There might be some insights that are not in the written guide.
+There might be some insights that are not in the written guide.
+
+1. create folder Todo, at the location of your choosing, I like c:\plang\Todo
+2. Create Setup.goal
+```plang
+Setup
+- create table Todos 
+    columns:    task(string, not null), due_date(datetime, not null), 
+                completed(bool, false), created(datetime, now)
+```
+as you will notice, there is no Id column defined in the database structure. Plang will create that for you
+and manage the id for the table. This is what will enable Event source, a very powerfull feature for syncing between devices.
+3. We now need to build and run Setup.goal, this to create the table in the database.
+```bash
+plang exec Setup
+```
+4. Create Start.goal
+```
+Start
+- start webserver
+```
+5. Create folder api
+6. Create NewTask.goal
+```plang
+NewTask
+- make sure that %task% and %due_date% is not empty, throw error
+- insert into Todos %task%, %due_date%, write to %id%
+- write out %id%
+7. Create List.goal
+```plang
+List
+- select everything from Todos, write to %list%
+- write out %list%
+```
+8. Lets build and run the code, be sure you are located in the root of Todos folder. 
+Press F5 or use console/terminal
+```bash
+plang exec
+```
+You now have a running webserver with logic. Next step is to insert some task and list them out.
+9. 
+    Open up your favorite REST client.
+    the url is: http://localhost:8080/api/newtask
+    json body 
+    {
+        "task":"Do homework",
+        "due_date": "2023-27-12"
+    }
+    submit this using POST, you should get the id of the new task back.
+
+    Or create this in plang
+    Create folder `test` in root of Todo folder
+    Create file "NewTask.goal" in `test`
+    ```plang
+    NewTask 
+    - post http://localhost:8080/api/newtask
+        {
+            "task":"Do homework",
+            "due_date": "2023-27-12"
+        }
+    ```
+    then execute it 
+    ```bash
+    plang exec test/NewTask
+    ```
+
+Lets now get the tasks, 
+the url is: http://localhost:8080/api/list using GET method
+This should now list the task you created.
+
+Create file GetList.goal in `test`
+    ```plang
+    GetList 
+    - get http://localhost:8080/api/list, write to %todos%
+    - write out %todos%
+    ```
+    then execute it 
+    ```bash
+    plang exec test/GetList
+    ```

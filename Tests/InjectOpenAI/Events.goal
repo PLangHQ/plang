@@ -1,0 +1,4 @@
+@llm=PLangOpenAIModule
+
+Events
+- Before each goal, call !DoStuff

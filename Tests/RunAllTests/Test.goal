@@ -1,0 +1,10 @@
+Test
+- get all '00. Goal.pr' files in ../ and subfolders, exclude 'RunAllTests', write to %files%
+- go through %files%, call !RunTest
+
+RunTest
+- read file %item% into %goal%, throw error if not found
+- if %goal.Visbility% = 0 then
+    - write out '----- %item% ----'
+    - Call goal %item%
+    - write out '----- %item% ----\n\n'

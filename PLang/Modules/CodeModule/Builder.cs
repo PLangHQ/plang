@@ -1,22 +1,10 @@
-﻿using PLang.Utils;
-using Newtonsoft.Json;
-using PLang.Building.Model;
-
-using System.Net;
-using PLang.Building;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis;
-using System.Xml.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using Microsoft.Extensions.Logging;
+﻿using PLang.Building.Model;
+using PLang.Building.Parsers;
 using PLang.Exceptions;
 using PLang.Interfaces;
-using static PLang.Modules.Compiler;
-using PLang.Building.Parsers;
-using PLang.Utils.Extractors;
 using PLang.Runtime;
+using PLang.Utils.Extractors;
+using static PLang.Modules.Compiler;
 
 namespace PLang.Modules.CodeModule
 {
@@ -69,6 +57,7 @@ Assemblies: dll to reference to compile using Roslyn
 Variables that user expect to be written to should be provided with out, parameter in the function.
 Replace the dot(.) in variables with the letter α e.g. %user.id% to userαid, %product.items[0].title% to productαitemsαtitle
 Keep underscore in variables if defined by user, e.g.  if %user_id% is null => return user_id == null.
+Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. Add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into method. Assembly is already include, do not list it in Assemblies response.
 
 String are defined with double quote ("")
 Do not reference any dto classes. Use ExpandoObject.

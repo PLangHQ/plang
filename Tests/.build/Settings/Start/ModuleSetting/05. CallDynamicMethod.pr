@@ -1,0 +1,19 @@
+{
+  "Action": {
+    "Name": "CamelCase",
+    "Code": "\npublic static class CamelCase\n{\n    public static void Process(dynamic methodMapping, out dynamic result)\n    {\n        try\n        {\n            result = methodMapping();\n        }\n        catch\n        {\n            throw new System.Exception(\"There was an error while processing your request. Please try again.\");\n        }\n    }\n}\n",
+    "Using": [
+      "System"
+    ],
+    "Parameters": {
+      "methodMapping": "dynamic",
+      "result": "dynamic"
+    },
+    "GoalToCallOnTrue": null,
+    "GoalToCallOnFalse": null
+  },
+  "Text": "[settings] call dynamic method with %methodMapping%, write to %result%",
+  "Reload": false,
+  "LlmQuestion": null,
+  "RunOnBuild": false
+}

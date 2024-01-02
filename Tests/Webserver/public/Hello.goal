@@ -1,0 +1,3 @@
+/ Since this goal is not in api folder, we need to define the Method(GET|POST|DELETE|PATCH|OPTION|HEAD|PUT) in the title of the goal. 
+Hello - GET
+- write out 'Hello PLang world'

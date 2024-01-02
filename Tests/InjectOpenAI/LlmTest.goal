@@ -1,0 +1,5 @@
+/ This should not use the injected llm service
+LlmTest
+- [llm] system: Say hello again to  me
+		{hello:string}
+- write out 'Response: %hello%'

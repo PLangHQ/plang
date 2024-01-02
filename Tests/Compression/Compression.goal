@@ -1,0 +1,10 @@
+Compression
+- delete  dir ./extract
+- compress file.txt to file.zip
+- uncompress file.zip to ./extract/, overwrite
+- read extract/file.txt to %content%
+- if %content% contains 'this is a text file' then
+    - write out 'Yes, the file was decompressed and read, it contains correct data'
+/ cleanup
+- delete file.zip
+- delete dir  ./extract

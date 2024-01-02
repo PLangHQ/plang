@@ -56,14 +56,14 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		}
 
 		[Description("Set string local variable. If value is json, keep valid json format")]
-		public async Task SetStringVariable([HandlesVariableAttribute] string key, string value)
+		public async Task SetStringVariable([HandlesVariableAttribute] string key, string? value = null)
 		{
 			object val = variableHelper.LoadVariables(value);
 			memoryStack.Put(key, val, convertToJson: false);
 		}
 
 		[Description("Set local variable. If value is json, keep valid json format")]
-		public async Task SetVariable([HandlesVariableAttribute] string key, object value)
+		public async Task SetVariable([HandlesVariableAttribute] string key, object? value = null)
 		{
 			object val = variableHelper.LoadVariables(value);
 			memoryStack.Put(key, val);
@@ -83,18 +83,20 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		}
 
 		[Description("Set local variable.")]
-		public async Task AppendToVariable([HandlesVariableAttribute] string key, object value, char seperator = '\n')
+		public async Task AppendToVariable([HandlesVariableAttribute] string key, object? value = null, char seperator = '\n')
 		{
+			if (value == null) return;
+
 			object val = memoryStack.Get(key);
 			if (val == null && value is string)
 			{
-				val = "";
+				val = value.ToString();
 			} else if (val is string)
 			{
 				val = val + seperator.ToString() + value;
 			} else
 			{
-				//todo: wrong thing 
+				//todo: wrong thing, how do you append to object?
 				val = value;
 			}
 			

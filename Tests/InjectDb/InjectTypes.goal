@@ -1,0 +1,2 @@
+InjectTypes
+- inject db, npgsql/lib/net7.0/Npgsql.dll, make it global

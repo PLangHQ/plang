@@ -1,0 +1,18 @@
+Http
+- GET https://httpbin.org/get, write to %getResponse%
+- write out 'UserAgent: %getResponse.headers.User-Agent% , ip: %getResponse.origin%'
+- post https://httpbin.org/post
+    data='test=1'
+    signRequest
+    write to %postResponse%
+- write out %postResponse.tojson()%
+- post multipart https://httpbin.org/post
+    data: @file='1px.png', name='1px'
+    write to %postResponse2%
+- write out %postResponse2.tojson()%    
+- put https://httpbin.org/put, write to %putResponse%
+- write out %putResponse.tojson()%
+- delete https://httpbin.org/delete, write to %delResponse%
+- write out %delResponse.ToJson()%
+- patch https://httpbin.org/patch, write to %patchResponse%
+- write out %patchResponse.ToJson()%

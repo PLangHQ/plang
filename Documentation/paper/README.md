@@ -1440,7 +1440,7 @@ For example "install Stocks”. This would then retrieve the Stocks from the rep
 IDE
 ---
 
-A new IDE needs to be created to use plang to its maximum usage. An extension for VisualCode has been created.
+A new IDE needs to be created to use plang to its maximum usage. An extension for [VisualCode has been created](https://marketplace.visualstudio.com/items?itemName=PlangHQ.plang-extension).
 
 I believe an IDE should be created in plang as it could give more power and flexibility than current IDE written in typescript.
 

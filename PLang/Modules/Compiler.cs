@@ -131,8 +131,10 @@ namespace PLang.Modules
 			{
 				var stepText = step.Text.ToLower();
 				var parameterName = GetStepParameterName(parameter.Identifier.Text);
-
-				if (!stepText.Contains("%" + parameterName.ToLower()))
+				if (parameter.Type?.ToString().Trim() == "PLang.SafeFileSystem.PLangFileSystem" || parameter.Type?.ToString().Trim() == "PLangFileSystem")
+				{
+					inputParameters.Add(parameterName, parameter.Type.ToString());
+				} else if (!stepText.Contains("%" + parameterName.ToLower()))
 				{
 					Console.WriteLine(parameter.Type + " " + parameterName + " is not in step.Text. Should retry with LLM");
 					//retry with gpt with error that parameter is not in step text.
@@ -163,9 +165,13 @@ These are the rules with variables:
 			var compilation = CSharpCompilation.Create(dllFileName, options: compilationOptions)
 				.AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
 
-			foreach (var a in Assemblies)
-			{
-				string dllName = a;
+			compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(PLang.SafeFileSystem.PLangFileSystem).Assembly.Location));
+			compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(System.IO.Abstractions.IDirectory).Assembly.Location));
+			foreach (var assembly in Assemblies)
+			{				
+				if (assembly.ToLower() == "plang.safefilesystem") continue;
+			
+				string dllName = assembly;
 				if (!dllName.Contains(".dll")) dllName += ".dll";
 
 				var assemblyPath = Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), dllName);

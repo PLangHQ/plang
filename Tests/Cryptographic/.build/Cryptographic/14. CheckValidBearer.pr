@@ -1,0 +1,16 @@
+{
+  "Action": {
+    "Name": "IsValidCheck",
+    "Code": "public static class IsValidCheck\n{\npublic static bool Process(bool isValidBearer)\n{\nif(isValidBearer)\n{\nreturn true;\n}\nelse\n{\nreturn false;\n}\n}\n}",
+    "Using": [
+      "System"
+    ],
+    "Parameters": {
+      "isValidBearer": "bool"
+    }
+  },
+  "Text": "if %isValidBearer% then",
+  "Reload": false,
+  "LlmQuestion": null,
+  "RunOnBuild": false
+}

@@ -1,6 +1,7 @@
 ﻿using NBitcoin;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Utils;
 using System.ComponentModel;
@@ -175,7 +176,8 @@ namespace PLang.Modules.HttpModule
 			}
 			else
 			{
-				throw new HttpRequestException(responseBody, null, response.StatusCode);
+				throw new RuntimeException(responseBody, goal);
+				//throw new HttpRequestException(responseBody, null, response.StatusCode);
 			}
 		}
 

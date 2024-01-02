@@ -1,0 +1,9 @@
+Message
+- get public key for messages, write to %pubKey%
+- write out %pubKey%
+- listen for new message, call !NewMessage, write content to %content%
+- send my self message, 'Hi how are you, %Now%'
+- send message to %pubKey%, 'Another message that I will recieve, %now%'
+
+NewMessage
+- write out %content%

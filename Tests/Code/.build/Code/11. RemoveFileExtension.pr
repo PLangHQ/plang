@@ -1,0 +1,17 @@
+{
+  "Action": {
+    "Name": "RemoveFileExtension",
+    "Code": "\npublic static class RemoveFileExtension\n{\n    public static void Process(string fileNameWithExtension, out string fileName)\n    {\n        if(string.IsNullOrEmpty(fileNameWithExtension))\n        {\n            throw new Exception(\"The file name with extension cannot be empty.\");\n        }\n\n        int index = fileNameWithExtension.LastIndexOf('.');\n        if(index < 0)\n        {\n            throw new Exception(\"The file name does not contain an extension.\");\n        }\n\n        fileName = fileNameWithExtension.Substring(0, index);\n    }\n}",
+    "Using": [
+      "System"
+    ],
+    "Parameters": {
+      "fileNameWithExtension": "string",
+      "fileName": "string"
+    }
+  },
+  "Text": "[code] remove file extension from %fileNameWithExtension%, write to %fileName%",
+  "Reload": false,
+  "LlmQuestion": null,
+  "RunOnBuild": false
+}

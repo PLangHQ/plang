@@ -1,0 +1,17 @@
+LocalOrGlobalVariable
+- when var 'key' is created, call !NewVarAdded 
+- set var 'house' to true
+- set var 'key' to 1
+- when var 'house' changes, call !ChangedVar
+- set var 'house' to false
+- on remove on var 'house' call !VarRemoved
+- remove 'house' var
+
+NewVarAdded
+- write out 'key' was just created
+
+ChangedVar
+- write out 'house' changed
+
+VarRemoved
+- write out 'house' is just removed

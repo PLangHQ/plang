@@ -1,0 +1,8 @@
+Create guide how to install VS code plugin.
+
+first download Visual Code if you dont have it, download link at, https://code.visualstudio.com/
+Then install the Visual Code extension can be found at
+https://marketplace.visualstudio.com/items?itemName=PlangHQ.plang-extension
+
+it allows you to debug your code.
+screenshot of plugin https://raw.githubusercontent.com/PLangHQ/plang.vscodeextension/main/screenshot.jpg

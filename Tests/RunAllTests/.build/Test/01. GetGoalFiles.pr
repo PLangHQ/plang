@@ -1,0 +1,47 @@
+{
+  "Action": {
+    "FunctionName": "GetFilePathsInDirectory",
+    "Parameters": [
+      {
+        "Type": "String",
+        "Name": "directoryPath",
+        "Value": "../"
+      },
+      {
+        "Type": "String",
+        "Name": "searchPattern",
+        "Value": "00. Goal.pr"
+      },
+      {
+        "Type": "String[]",
+        "Name": "excludePatterns",
+        "Value": [
+          "RunAllTests"
+        ]
+      },
+      {
+        "Type": "Boolean",
+        "Name": "includeSubfolders",
+        "Value": true
+      }
+    ],
+    "ReturnValue": {
+      "Type": "String[]",
+      "VariableName": "files"
+    }
+  },
+  "Text": "get all '00. Goal.pr' files in ../ and subfolders, exclude 'RunAllTests', write to %files%",
+  "Reload": false,
+  "LlmQuestion": {
+    "type": "PLang.Modules.BaseBuilder",
+    "system": "Parse user command.\r\n\r\nSelect the correct function from list of available functions based on user command\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")%\r\nwhere the settingName would be the api key, config key, \r\ndefaultValue for settings is the usual value given, make it \"\" if no value can be default\r\nExplain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nType: the object type in c#\r\nName: name of the variable\r\nValue: %variable% or hardcode string that should be used\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nReturnValue: Only if the function returns a value, else null\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: {\"Type\": string,\n\"VariableName\": string}}",
+    "question": "command: get all '00. Goal.pr' files in ../ and subfolders, exclude 'RunAllTests', write to %files%",
+    "assistant": "## functions available defined in csharp ##\r\nString ReadBinaryFileAndConvertToBase64(String path, String? returnValueIfFileNotExisting, Boolean? throwErrorOnNotFound = False) \nString ReadTextFile(String path, String? returnValueIfFileNotExisting, Boolean? throwErrorOnNotFound = False) \nStream ReadFileAsStream(String path, Boolean? throwErrorOnNotFound = False) \nvoid WriteExcelFile(String path, String[] variablesToWriteToExcel, Int32? excelType = 0, Char? seperator = ,, Boolean? printHeader = True, Boolean? overwrite = False)  // excelType=0 is XSLX, excelType=1 is CSV. \nvoid WriteCsvFile(String path, String[] variablesToWriteToExcel, Char? seperator = ,, Boolean? printHeader = True, Boolean? overwrite = False) \nvoid ReadCsvFile(String path, Boolean? useHeaderRow = True, Dictionary`2<String>? sheetsToVariable) \nvoid ReadExcelFile(String path, Boolean? useHeaderRow = True, Dictionary`2<String>? sheetsToVariable)  // sheetsToVariable is name of sheet that should load into variable. Sheet1=%products% will load Sheet1 into %product% variable, Sheet2-A1:H53=%categories%, will load data from A1:H53 into %categories%. \nList`1 ReadMultipleTextFiles(String folderPath, String filePattern, Boolean? includeAllSubfolders = False) \nvoid WriteToFile(String path, String content, Boolean? overwrite = False) \nvoid AppendToFile(String path, String content, String? seperator) \nvoid CopyFile(String sourceFileName, String destFileName) \nvoid DeleteFile(String fileName, Boolean? throwErrorOnNotFound = False) \nIFileInfo GetFileInfo(String fileName) \nvoid CreateDirectory(String directoryPath) \nvoid DeleteDirectory(String directoryPath, Boolean? recursive = True, Boolean? throwErrorOnNotFound = False) \nString[] GetFilePathsInDirectory(String directoryPath, String? searchPattern = *, String[]? excludePatterns, Boolean? includeSubfolders = False) \nBoolean DirectoryExists(String directoryPath) \nBoolean FileExists(String directoryPath) \n\r\n## functions available ends ##",
+    "model": "gpt-4",
+    "caching": true,
+    "Reload": false,
+    "PreviousResult": null,
+    "RawResponse": "{\"FunctionName\": \"GetFilePathsInDirectory\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"directoryPath\", \"Value\": \"../\"},\n    {\"Type\": \"String\", \"Name\": \"searchPattern\", \"Value\": \"00. Goal.pr\"},\n    {\"Type\": \"String[]\", \"Name\": \"excludePatterns\", \"Value\": [\"RunAllTests\"]},\n    {\"Type\": \"Boolean\", \"Name\": \"includeSubfolders\", \"Value\": true}\n],\n\"ReturnValue\": {\"Type\": \"String[]\", \"VariableName\": \"files\"}}"
+  },
+  "RunOnBuild": false
+}

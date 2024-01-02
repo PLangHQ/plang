@@ -1,0 +1,15 @@
+Start
+- get content of all '.goal' files, write to %files%
+- write out %files%
+- foreach %files%, call !LoadText
+- write %content% to examples.txt
+
+LoadText
+- [code] get folder name that files is in from abosolute path %item.Path%, do not show full path, only name of folder at top level, write to %moduleName%
+- write out %item.Content%
+- [var] append to variable %content%, 
+    '=== %moduleName% starts === 
+    %item.Content% 
+    === %moduleName% ends ===
+    
+    '

@@ -1,19 +1,16 @@
 # Get Started
 ## Introduction
 This guide assumes you have installed plang(Install.md)
-We will start by making HelloWorld app, 
-then create a Todo app on a webserver and then change it to a app running on your desktop.
+We will be making HelloWorld app, 
 
 ## prereq
-You must have installed plang
-You should have VS Code as your editor with plang extension 
-
-
+You must have installed plang(Install.md)
+You should have VS Code as your editor with plang extension(Ide.md)
 
 ## Hello World
 Video link https://www.youtube.com/watch?v=iGW4btk34yQ
 
-If you are using plang for the first time, you will need to fill up your plang service account(simple) or use gpt4 api key(advanced).
+If you are using plang for the first time, you will need to fill up your plang service account(easy and support plang) or use gpt4 api key(complex, but cheaper). See more (PlangOrOpenAI.md)
 
 1. create folder HelloWorld in the location of your choosing, I like c:\plang\HelloWorld
 2. Create Start.goal file
@@ -29,56 +26,4 @@ plang exec
 ```
 6. It should build your code and then run it, printing out to the screen "Hello plang world"
 
-## Todo
-Lets create the Todo app. In this video I go through it step by step with a bit more info then is provided here
-https://www.youtube.com/watch?v=abew4btk34
-
-1. create folder Todo, at the location of your choosing, I like c:\plang\Todo
-2. Create Setup.goal
-```plang
-Setup
-- create table Todos 
-    columns:    task(string, not null), due_date(datetime, not null), 
-                completed(bool, false), created(datetime, now)
-```
-as you will notice, there is no Id column defined in the database structure. Plang will create that for you
-and manage the id for the table. This is what will enable Event source, a very powerfull feature for syncing between devices.
-3. We now need to build and run Setup.goal, this to create the table in the database.
-```bash
-plang exec Setup
-```
-4. Create Start.goal
-```
-Start
-- start webserver
-```
-5. Create folder api
-6. Create NewTask.goal
-```plang
-NewTask
-- make sure that %task% and %due_date% is not empty, throw error
-- insert into Todos %task%, %due_date%, write to %id%
-- write out %id%
-7. Create List.goal
-```plang
-List
-- select everything from Todos, write to %list%
-- write out %list%
-```
-8. Lets build and run the code, be sure you are located in the root of Todos folder. 
-Press F5 or use console/terminal
-```bash
-plang exec
-```
-You now have a running webserver with logic. Next step is to insert some task and list them out.
-9. Open up your favorite REST client or you could write it in plang. Lets start with rest client
-the url is: http://localhost:8080/api/newtask
-json body 
-{
-    "task":"Do homework",
-    "due_date": "2023-27-12"
-}
-submit this using POST, you should get the id of the new task back.
-Lets now get the task, 
-the url is: http://localhost:8080/api/list using GET method
-This should now list the task you created.
+Next to read, Todo webservice(todo_webservice.md)

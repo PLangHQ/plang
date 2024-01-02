@@ -1,5 +1,7 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using IdGen;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Newtonsoft.Json;
+using PLang.Interfaces;
 using PLang.Runtime;
 using System.ComponentModel;
 using System.Data;
@@ -8,11 +10,14 @@ using static PLang.Modules.Compiler;
 
 namespace PLang.Modules.CodeModule
 {
-	[Description("Generate c# code from user description. Only use if no other module is found")]
+	[Description("Generate c# code from user description. Only use if no other module is found.")]
 	public class Program : BaseProgram
 	{
-		public Program() : base()
+		private readonly IPLangFileSystem fileSystem;
+
+		public Program(IPLangFileSystem fileSystem) : base()
 		{
+			this.fileSystem = fileSystem;
 		}
 
 
@@ -35,7 +40,11 @@ namespace PLang.Modules.CodeModule
 			List<object> parametersObject = new List<object>();
 			for (var i = 0; i < parameters.Length; i++)
 			{
-				if (parameters[i].IsOut || parameters[i].ParameterType.IsByRef)
+				var parameterType = parameters[i].ParameterType;
+				if (parameterType.FullName == "PLang.SafeFileSystem.PLangFileSystem")
+				{
+					parametersObject.Add(fileSystem);
+				} else if (parameters[i].IsOut || parameters[i].ParameterType.IsByRef)
 				{
 					Type outType = parameters[i].ParameterType.GetElementType();
 					if (outType.IsValueType)

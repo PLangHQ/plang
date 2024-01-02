@@ -1,0 +1,16 @@
+{
+  "Action": {
+    "Name": "ContentProcessor",
+    "Code": "public static class ContentProcessor\n{\npublic static bool Process(string content)\n{\nreturn content.Contains(\"this is a text file\");\n}\n}",
+    "Using": [
+      "System"
+    ],
+    "Parameters": {
+      "content": "string"
+    }
+  },
+  "Text": "if %content% contains 'this is a text file' then",
+  "Reload": false,
+  "LlmQuestion": null,
+  "RunOnBuild": false
+}

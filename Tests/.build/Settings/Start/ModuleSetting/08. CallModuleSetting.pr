@@ -1,0 +1,27 @@
+{
+  "Action": {
+    "FunctionName": "RunGoal",
+    "Parameters": [
+      {
+        "Type": "string",
+        "Name": "goalName",
+        "Value": "ModuleSetting"
+      }
+    ],
+    "ReturnValue": null
+  },
+  "Text": "call !ModuleSetting",
+  "Reload": false,
+  "LlmQuestion": {
+    "type": "PLang.Modules.CallGoalModule.Builder",
+    "system": "\r\n Parse user command, to match the parameters needed for the RunGoal function\r\n\r\nVariables are defined with starting and ending %\r\n\r\nGoalName should be prefixed with !\r\nParameters are optional, they are key value of a variable, if user does not define key, then it is same as value.\r\n\r\n== Examples starts ==\r\n!ParseText then ParseText is goalName, no parameters\r\n!Gmail.Search %query%, then Gmail.Search is goalName,  %query% is key and value in parameters\r\nFolder.Search q=%fileName%, then key is q, and value is %fileName%\r\n== Examples ends ==\r\n\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: {\"Type\": string,\n\"VariableName\": string}}",
+    "question": "command: call !ModuleSetting",
+    "assistant": "## functions available defined in csharp ##\r\nvoid RunGoal(String goalName, Dictionary`2<String>? parameters, Boolean? waitForExecution = True, Int32? delayWhenNotWaitingInMilliseconds = 0) \n\r\n## functions available ends ##",
+    "model": "gpt-4",
+    "caching": true,
+    "Reload": false,
+    "PreviousResult": null,
+    "RawResponse": "{\n  \"FunctionName\": \"RunGoal\",\n  \"Parameters\": [\n    {\n      \"Type\": \"string\",\n      \"Name\": \"goalName\",\n      \"Value\": \"ModuleSetting\"\n    }\n  ]\n}"
+  },
+  "RunOnBuild": false
+}

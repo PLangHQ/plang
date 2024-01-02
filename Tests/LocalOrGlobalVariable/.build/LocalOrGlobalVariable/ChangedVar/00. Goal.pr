@@ -1,0 +1,48 @@
+{
+  "GoalName": "ChangedVar",
+  "Method": null,
+  "Comment": null,
+  "GoalSteps": [
+    {
+      "Text": "write out 'house' changed",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.OutputModule",
+      "Name": "OutputHouseChanged",
+      "Description": "Write out the string 'house changed' to the user interface.",
+      "PrFileName": "01. OutputHouseChanged.pr",
+      "RelativePrPath": ".build\\LocalOrGlobalVariable\\ChangedVar\\01. OutputHouseChanged.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Executed": null,
+      "Generated": "2023-10-06T16:01:10.5935503+00:00",
+      "WaitForExecution": true,
+      "ErrorHandler": null,
+      "RetryHandler": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 0,
+      "LlmQuestion": {
+        "type": "StepBuilder",
+        "system": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement. You MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null\r\nRetryHandler: If should retry the step if there is error, null\r\nCachingHandler: How should caching be handled, default is null\r\nExternalServiceHandler : !GoalName? / http://example.org/api/run.goal | file.txt | https://docs.api.is/doc.html .startCssSelector .endCssSelect\r\nRead the description of each module, then determine which module to use\r\n\r\nYour response MUST be JSON, scheme\r\n{\"StepName\"?: string,\n\"StepDescription\"?: string,\n\"Modules\"?: string[],\n\"WaitForExecution\": boolean,\n\"ExternalServiceHandler\": {\"GoalName\": string,\n\"Uri\": string,\n\"StartCssSelector\": string,\n\"EndCssSelector\": string},\n\"CachingHandler\": {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32},\n\"ErrorHandler\": {\"IgnoreErrors\": boolean,\n\"Except\"?: string[]},\n\"RetryHandler\": {\"RetryCount\": int32,\n\"RetryDelayInMilliseconds\": int32}}\r\nBe Concise\r\n",
+        "question": "write out 'house' changed",
+        "assistant": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.SeleniumModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.ReturnModule\", \"description\": \"Return true, return false, return. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages using Nostr protocol. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.HtmlModule\" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CultureInfoModule\", \"description\": \"Various settings for the program, such as culture, date & number formatting. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, e.g. !RenameFile. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money, sign message, verify signature. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n",
+        "model": "gpt-4",
+        "caching": true,
+        "Reload": false,
+        "PreviousResult": null,
+        "RawResponse": "{\"StepName\": \"OutputHouseChanged\",\n\"StepDescription\": \"Write out the string 'house changed' to the user interface.\",\n\"Modules\": [\"PLang.Modules.OutputModule\"],\n\"WaitForExecution\": true}"
+      },
+      "ExternalServiceHandler": null
+    }
+  ],
+  "Description": null,
+  "Visbility": 1,
+  "GoalFileName": "LocalOrGlobalVariable.goal",
+  "RelativeGoalPath": "\\LocalOrGlobalVariable.goal",
+  "RelativeGoalFolderPath": "\\",
+  "RelativePrPath": ".build\\LocalOrGlobalVariable\\ChangedVar\\00. Goal.pr",
+  "RelativePrFolderPath": ".build\\LocalOrGlobalVariable\\ChangedVar",
+  "ExternalApp": null
+}

@@ -1,0 +1,7 @@
+Terminal
+- when var %outputDelta% changes, call !WriteOutputDelta
+- ping google.com, output delta %outputDelta%, write to %output%
+- write out '\n\n-----------------\n%output%'
+
+WriteOutputDelta
+- write out %outputDelta%

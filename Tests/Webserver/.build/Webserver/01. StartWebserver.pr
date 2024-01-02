@@ -1,0 +1,47 @@
+{
+  "Action": {
+    "FunctionName": "StartWebserver",
+    "Parameters": [
+      {
+        "Type": "String",
+        "Name": "scheme",
+        "Value": "http"
+      },
+      {
+        "Type": "String",
+        "Name": "host",
+        "Value": "localhost"
+      },
+      {
+        "Type": "Int32",
+        "Name": "port",
+        "Value": 8080
+      },
+      {
+        "Type": "Int32",
+        "Name": "maxContentLengthInBytes",
+        "Value": 4096
+      },
+      {
+        "Type": "List`1<String>",
+        "Name": "publicPaths",
+        "Value": null
+      }
+    ],
+    "ReturnValue": null
+  },
+  "Text": "start webserver",
+  "Reload": false,
+  "LlmQuestion": {
+    "type": "PLang.Modules.BaseBuilder",
+    "system": "Parse user command.\r\n\r\nSelect the correct function from list of available functions based on user command\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")%\r\nwhere the settingName would be the api key, config key, \r\ndefaultValue for settings is the usual value given, make it \"\" if no value can be default\r\nExplain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nType: the object type in c#\r\nName: name of the variable\r\nValue: %variable% or hardcode string that should be used\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nReturnValue: Only if the function returns a value, else null\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: {\"Type\": string,\n\"VariableName\": string}}",
+    "question": "command: start webserver",
+    "assistant": "## functions available defined in csharp ##\r\nvoid StartWebserver(String? scheme = http, String? host = localhost, Int32? port = 8080, Int32? maxContentLengthInBytes = 4096, List`1<String>? publicPaths) \nvoid WriteToResponseHeader(String key, String value) \nString GetUserIp(String? headerKey)  // headerKey should be null unless specified by user. \nString GetRequestHeader(String key) \nString GetCookie(String name) \nvoid WriteCookie(String name, String value, Int32? expiresInSeconds = 604800) \nvoid DeleteCookie(String name, String value) \n\r\n## functions available ends ##",
+    "model": "gpt-4",
+    "caching": true,
+    "Reload": false,
+    "PreviousResult": null,
+    "RawResponse": "{\"FunctionName\": \"StartWebserver\",\n\"Parameters\": [{\"Type\": \"String\", \"Name\": \"scheme\", \"Value\": \"http\"},\n               {\"Type\": \"String\", \"Name\": \"host\", \"Value\": \"localhost\"},\n               {\"Type\": \"Int32\", \"Name\": \"port\", \"Value\": 8080},\n               {\"Type\": \"Int32\", \"Name\": \"maxContentLengthInBytes\", \"Value\": 4096},\n               {\"Type\": \"List`1<String>\", \"Name\": \"publicPaths\", \"Value\": null}]}"
+  },
+  "RunOnBuild": false
+}

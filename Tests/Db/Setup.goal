@@ -1,0 +1,2 @@
+Setup
+- create table tasks, columns decription(not null), due_date(datetime, not null), created(datetime, default now)

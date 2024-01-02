@@ -9,7 +9,7 @@ namespace PLang.Services.LoggerService
         public virtual void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
             LogLevel logLevelByUser = LogLevel.Trace;
-
+            
 			if (AppContext.TryGetSwitch("Runtime", out bool isEnabled) && isEnabled)
 			{
 				logLevelByUser = LogLevel.Information;
@@ -23,8 +23,23 @@ namespace PLang.Services.LoggerService
 				logLevelByUser = (LogLevel)AppContext.GetData("GoalLogLevelByUser");
 
 			}
-            
-            if (logLevel < logLevelByUser)
+
+			string? loggerLevel = AppContext.GetData("--logger") as string;
+			if (loggerLevel != null)
+			{
+				if (Enum.TryParse(loggerLevel, true, out LogLevel logLevelStartup))
+				{
+					if (logLevelByUser > logLevelStartup)
+					{
+						logLevelByUser = logLevelStartup;
+					}
+				} else { 
+					Console.WriteLine($"Could not set logger level to {loggerLevel}. You can set: Debug, Information, Warning, Error, Trace");
+				}
+
+			}
+
+			if (logLevel < logLevelByUser)
             {
                 return;
             }

@@ -111,7 +111,7 @@ namespace PLang.Utils
 					throw contextException;
                 }
 
-                context.Remove(ReservedKeywords.Exception);
+                 if (context.ContainsKey(ReservedKeywords.Exception)) context.Remove(ReservedKeywords.Exception);
 				string strError = "";
 				foreach (var error in errors)
 				{

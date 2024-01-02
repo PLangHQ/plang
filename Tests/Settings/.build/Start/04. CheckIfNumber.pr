@@ -1,0 +1,16 @@
+{
+  "Action": {
+    "Name": "CheckIfNotNumber",
+    "Code": "public static class CheckIfNotNumber\n{\npublic static bool Process(string nr)\n{\nlong parsedNumber;\nbool isNumeric = long.TryParse(nr, out parsedNumber);\nreturn !isNumeric;\n}\n}",
+    "Using": [
+      "System"
+    ],
+    "Parameters": {
+      "nr": "string"
+    }
+  },
+  "Text": "if %nr% is not a number then",
+  "Reload": false,
+  "LlmQuestion": null,
+  "RunOnBuild": false
+}

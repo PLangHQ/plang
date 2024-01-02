@@ -1,0 +1,42 @@
+{
+  "Action": {
+    "FunctionName": "AppendToVariable",
+    "Parameters": [
+      {
+        "Type": "String",
+        "Name": "key",
+        "Value": "%plangExamples%"
+      },
+      {
+        "Type": "Object",
+        "Name": "value",
+        "Value": "%testFileContent%"
+      },
+      {
+        "Type": "Char",
+        "Name": "seperator",
+        "Value": "\n"
+      }
+    ],
+    "ReturnValue": null
+  },
+  "Text": "[var] append %testFileContent% to %plangExamples%, new line for each append",
+  "Reload": false,
+  "LlmQuestion": {
+    "temperature": null,
+    "top_p": null,
+    "frequencyPenalty": null,
+    "presencePenalty": null,
+    "maxLength": 4000,
+    "type": "PLang.Modules.GenericFunctionBuilder",
+    "system": "Parse user command.\r\n\r\nSelect the correct function from list of available functions based on user command\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")%\r\nwhere the settingName would be the api key, config key, \r\ndefaultValue for settings is the usual value given, make it \"\" if no value can be default\r\nExplain is an explanation about the setting that novice user can understand.\r\n\r\nOnExceptionContainingTextCallGoal - if no text is defined, set as \"*\", goal to call is required from user\r\n\r\nJSON scheme information\r\nType: the object type in c#\r\nName: name of the variable\r\nValue: %variable% or hardcode string that should be used\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nReturnValue: Only if the function returns a value, else null\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: {\"Type\": string,\n\"VariableName\": string}}",
+    "question": "command: [var] append %testFileContent% to %plangExamples%, new line for each append",
+    "assistant": "## functions available defined in csharp ##\r\nvoid OnCreateVariableListener(String key, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  // goalName should be prefix with !, it can whole word only but can contain dot(.). \nvoid OnChangeVariableListener(String key, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  // goalName should be prefix with !, it can whole word only but can contain dot(.). \nvoid OnRemoveVariableListener(String key, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  // goalName should be prefix with !, it can whole word only but can contain dot(.). \nvoid OnCreateStaticVariableListener(String key, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  // goalName should be prefix with !, it can whole word only but can contain dot(.). \nvoid OnChangeStaticVariableListener(String key, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  // goalName should be prefix with !, it can whole word only but can contain dot(.). \nvoid OnRemoveStaticVariableListener(String key, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  // goalName should be prefix with !, it can whole word only but can contain dot(.). \nObject LoadVariables(String key) \nvoid SetStringVariable(String key, String? value)  // Set string local variable. If value is json, keep valid json format. \nvoid SetVariable(String key, Object? value)  // Set local variable. If value is json, keep valid json format. \nvoid SetDefaultValueOnVariables(Dictionary`2<String, Object> keyValues)  // Set default value on variables if not set. keys and values length MUST be equal. If value is json, keep valid json format. \nvoid AppendToVariable(String key, Object? value, Char? seperator = \n)  // Set local variable.. \nObject GetVariable(String key) \nvoid SetStaticVariable(String key, Object value) \nObject GetStaticVariable(String key) \nvoid RemoveVariable(String key) \nvoid RemoveStaticVariable(String key) \nString ConvertToBase64(String key) \n\r\n## functions available ends ##",
+    "model": "gpt-4",
+    "caching": true,
+    "Reload": false,
+    "PreviousResult": null,
+    "RawResponse": "{\r\n  \"FunctionName\": \"AppendToVariable\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"String\",\r\n      \"Name\": \"key\",\r\n      \"Value\": \"%plangExamples%\"\r\n    },\r\n    {\r\n      \"Type\": \"Object\",\r\n      \"Name\": \"value\",\r\n      \"Value\": \"%testFileContent%\"\r\n    },\r\n    {\r\n      \"Type\": \"Char\",\r\n      \"Name\": \"seperator\",\r\n      \"Value\": \"\\n\"\r\n    }\r\n  ]\r\n}"
+  },
+  "RunOnBuild": false
+}

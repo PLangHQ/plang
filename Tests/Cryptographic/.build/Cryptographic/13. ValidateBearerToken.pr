@@ -1,0 +1,40 @@
+{
+  "Action": {
+    "FunctionName": "ValidateBearerToken",
+    "Parameters": [
+      {
+        "Type": "String",
+        "Name": "token",
+        "Value": "%bearer%"
+      },
+      {
+        "Type": "String",
+        "Name": "issuer",
+        "Value": "PLangRuntime"
+      },
+      {
+        "Type": "String",
+        "Name": "audience",
+        "Value": "user"
+      }
+    ],
+    "ReturnValue": {
+      "Type": "Boolean",
+      "VariableName": "isValidBearer"
+    }
+  },
+  "Text": "validate bearer token %bearer%, write to %isValidBearer%",
+  "Reload": false,
+  "LlmQuestion": {
+    "type": "PLang.Modules.BaseBuilder",
+    "system": "Parse user command.\r\n\r\nSelect the correct function from list of available functions based on user command\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")%\r\nwhere the settingName would be the api key, config key, \r\ndefaultValue for settings is the usual value given, make it \"\" if no value can be default\r\nExplain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nType: the object type in c#\r\nName: name of the variable\r\nValue: %variable% or hardcode string that should be used\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nReturnValue: Only if the function returns a value, else null\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: {\"Type\": string,\n\"VariableName\": string}}",
+    "question": "command: validate bearer token %bearer%, write to %isValidBearer%",
+    "assistant": "## functions available defined in csharp ##\r\nString Encrypt(Object content) \nObject Decrypt(String content) \nString HashInput(String input, Boolean? useSalt = True, String? salt, String? hashAlgorithm = keccak256)  // Used for hashing, by default it uses salt. Only provide salt if user provides it in his statement. hashAlgorithm: keccak256 | sha256 | bcrypt(when salt). \nBoolean VerifyHashedValues(String password, String passwordHash, String? hashAlgorithm = keccak256, Boolean? useSalt = True)  // Used to verify hash, by default it uses salt. hashAlgorithm: keccak256 | sha256 | bcrypt(when salt). \nvoid SetCurrentBearerToken(String name) \nString GetBearerSecret() \nBoolean ValidateBearerToken(String token, String? issuer = PLangRuntime, String? audience = user) \nString GenerateBearerToken(String uniqueString, String? issuer = PLangRuntime, String? audience = user, Int32? expireTimeInSeconds = 604800) \n\r\n## functions available ends ##\r\n## defined variables ##\r\nbearer, isValidBearer\r\n## defined variables ##\nBearer token names are: Default",
+    "model": "gpt-4",
+    "caching": true,
+    "Reload": false,
+    "PreviousResult": null,
+    "RawResponse": "{\"FunctionName\": \"ValidateBearerToken\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"token\",\n\"Value\": \"%bearer%\"},\n{\"Type\": \"String\",\n\"Name\": \"issuer\",\n\"Value\": \"PLangRuntime\"},\n{\"Type\": \"String\",\n\"Name\": \"audience\",\n\"Value\": \"user\"}],\n\"ReturnValue\": {\"Type\": \"Boolean\",\n\"VariableName\": \"isValidBearer\"}}"
+  },
+  "RunOnBuild": false
+}

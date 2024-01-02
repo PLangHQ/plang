@@ -1,0 +1,4 @@
+Best practices
+- Caching is usually not used with Blockchain
+- Use testnet while developing
+- Make sure to test code extremly well before going live

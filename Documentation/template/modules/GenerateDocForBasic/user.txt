@@ -1,0 +1,18 @@
+# %module.moduleName%
+## What is %module.moduleName%(Module) 
+Write short summary what %module.moduleName%(Module) is (300 chars)
+# Best Practices for %module.moduleName%
+Give best practices for %module.moduleName% when writing plang code. 
+#Examples
+- examples will be injected into your response. Place [PlangCodeExamples] into your response where you believe it should be located.
+- Provide a link to full list of examples at https://github.com/PLangHQ/plang/tree/main/Tests/%module.moduleName% 
+# Step options
+These options are avaible for each step. 
+User can click link for more detail on how to use it
+- CacheHandler(/moduels/cacheHandler.md)
+- ErrorHandler(/moduels/ErrorHandler.md)
+- RetryHandler(/moduels/RetryHandler.md)
+- CancelationHandler(/moduels/CancelationHandler.md)
+- Run and forget(/moduels/RunAndForget.md)
+# Advanced
+For more advanced information, if you want to understand how the underlying mapping works with c#, check out ./%module.moduleName%Module_advanced.md

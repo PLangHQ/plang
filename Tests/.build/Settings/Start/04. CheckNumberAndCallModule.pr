@@ -1,0 +1,26 @@
+{
+  "Action": {
+    "Name": "CamelCase",
+    "Code": "\npublic static class CamelCase\n{\n    public static bool Process(string nr)\n    {\n        if (long.TryParse(nr, out _))\n        {\n            return true;\n        }\n        else\n        {\n            return false;\n        }\n    }\n}\n",
+    "Using": null,
+    "Parameters": {
+      "nr": "string"
+    },
+    "GoalToCallOnTrue": "ModuleSetting",
+    "GoalToCallOnFalse": "Start"
+  },
+  "Text": "if %nr% is a number then call !ModuleSetting , else call !Start",
+  "Reload": false,
+  "LlmQuestion": {
+    "type": "PLang.Modules.ConditionalModule.Builder",
+    "system": "Act as a senior c# developer, that converts the user statement into a c#(Ver. 9) code. \r\n\r\nA variable is defined by starting and ending %.\r\nGenerate static class. The code generated should have 1 method with the static method named Process and return bool. \r\nVariables defined in the user statement can be passed into the Process function by value, but only if defined in statement. \r\nStatement should return true\r\n\r\nThe code will not be modified after it's generated.\r\nALWAYS use long or long? instead of int or int?\r\nName: is CamelCase name of class\r\nGoals should be prefixed with !, e.g. Call !Process, Call !ConditionFalse\r\nAll strings in Implementation need be in single quote ('). The Code implementation cannot include double quote (\")\r\nDo not reference any DTO classes. Use dynamic.\r\n\r\nReplace the dot(.) in variables with the letter α e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α\r\n\r\nYou must return ```csharp for the code implementation and ```json scheme \r\n{Name:string, Using:string[]?= null,  Assemblies:string[]? = null,  GoalToCallOnTrue:string? = null, string? GoalToCallOnFalse:string? = null}\r\n\r\nBe Concise\n\nOnly write the raw c# code and json scheme, no summary, no extra text to explain, be concise",
+    "question": "command: if %nr% is a number then call !ModuleSetting , else call !Start",
+    "assistant": "## defined variables ##\r\nnr(string), \r\n## defined variables ##\nName cannot be: \n## examples ##\r\n'if %isValid% is true then', this condition would return true if %isValid% is true. \r\n'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false.\r\n\r\n'if %data% (string) is null, call !CreateData, else !AppendData' => return string.IsNullOrEmpty(userIdentity);\r\n'if %exists% (bool) is null, call !CreateUser' => return exists == null;\r\n'if %exists% (bool) is not null, call !CreateUser' => return exists != null;\r\n'if %data% is empty, call !CreateUser' => return (data == null || (data is string str && string.IsNullOrEmpty(str))); //if we dont know the type of %data%\r\n## examples ##\r\n",
+    "model": "gpt-4",
+    "caching": true,
+    "Reload": false,
+    "PreviousResult": null,
+    "RawResponse": "```csharp\npublic static class CamelCase\n{\n    public static bool Process(string nr)\n    {\n        if (long.TryParse(nr, out _))\n        {\n            return true;\n        }\n        else\n        {\n            return false;\n        }\n    }\n}\n```\n\n```json\n{\n    \"Name\": \"CamelCase\",\n    \"Using\": null,\n    \"Assemblies\": null,\n    \"GoalToCallOnTrue\": \"ModuleSetting\",\n    \"GoalToCallOnFalse\": \"Start\"\n}\n```"
+  },
+  "RunOnBuild": false
+}

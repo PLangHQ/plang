@@ -1,0 +1,16 @@
+{
+  "Action": {
+    "Name": "GoalVisibilityCheck",
+    "Code": "public static class GoalVisibilityCheck {\n\tpublic static bool Process(long goalαVisbility) {\n\t\treturn goalαVisbility == 0;\n\t}\n}",
+    "Using": [
+      "System"
+    ],
+    "Parameters": {
+      "goal.Visbility": "long"
+    }
+  },
+  "Text": "if %goal.Visbility% = 0 then",
+  "Reload": false,
+  "LlmQuestion": null,
+  "RunOnBuild": false
+}

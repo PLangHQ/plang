@@ -40,8 +40,8 @@ namespace PLang.Utils.Extractors
 	}
 	public class GenericExtractor : IContentExtractor
 	{
-		string type;
-		public GenericExtractor(string type)
+		string? type;
+		public GenericExtractor(string? type)
 		{
 			this.type = type;
 		}
@@ -53,18 +53,22 @@ namespace PLang.Utils.Extractors
 		{
 			return ExtractByType(content, type);
 		}
-		public object ExtractByType(string content, string contentType = "html")
+		public object ExtractByType(string content, string? contentType = null)
 		{
-			if (content.Contains($"```{contentType}"))
+			if (contentType == null && content.StartsWith("```"))
 			{
-				var regex = new Regex($"\\`\\`\\`{contentType}([^\\`\\`\\`]*)\\`\\`\\`");
-				var match = regex.Match(content);
-				if (match.Groups.Count > 1)
-				{
-					return match.Groups[1].Value ?? "";
-				}
+				contentType = content.Substring(0, content.IndexOf("\n")).Replace("```", "").Trim();
 			}
-			return "";
+			if (contentType == null) return content;
+
+			int idx = content.IndexOf($"```{contentType}");
+			if (idx != -1)
+			{
+				var newContent = content.Substring(idx + $"```{contentType}".Length);
+				newContent = newContent.Substring(0, newContent.LastIndexOf("```"));
+				return newContent;
+			}
+			return content;
 		}
 
 		public string GetRequiredResponse(Type scheme)
@@ -98,6 +102,20 @@ namespace PLang.Utils.Extractors
 			return result;
 		}
 
+		public object ExtractByType(string content, string contentType = "html")
+		{
+			if (content.Contains($"```{contentType}"))
+			{
+				var regex = new Regex($"\\`\\`\\`{contentType}([^\\`\\`\\`]*)\\`\\`\\`");
+				var match = regex.Match(content);
+				if (match.Groups.Count > 1)
+				{
+					return match.Groups[1].Value ?? "";
+				}
+			}
+			return content;
+		}
+
 
 		public string GetRequiredResponse(Type scheme)
 		{
@@ -129,15 +147,17 @@ namespace PLang.Utils.Extractors
 		{
 			return (T)Extract(content, typeof(T));
 		}
-
+		
 		public string GetRequiredResponse(Type scheme)
 		{
 			return "Only write the raw c# code and json scheme, no summary, no extra text to explain, be concise";
 		}
 	}
 
-	public class JsonExtractor : IContentExtractor
+	public class JsonExtractor : GenericExtractor, IContentExtractor
 	{
+		public JsonExtractor() : base("json") { }
+
 		public T Extract<T>(string content)
 		{
 			return (T)Extract(content, typeof(T));
@@ -171,10 +191,15 @@ namespace PLang.Utils.Extractors
 			{
 				try
 				{
+					if (content.Trim().StartsWith("```json"))
+					{
+						content = ExtractByType(content, "json").ToString();
+					}
 					return JsonConvert.DeserializeObject(content, responseType);
 				}
 				catch
 				{
+					
 					var newContent = FixMalformedJson(content);
 					var obj = JsonConvert.DeserializeObject(newContent, responseType);
 

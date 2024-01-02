@@ -195,8 +195,6 @@ namespace PLang.Building.Parsers
 						goals[i].GoalSteps[b].CancellationHandler = prevStep.CancellationHandler;
 						goals[i].GoalSteps[b].CacheHandler = prevStep.CacheHandler;
 						
-						goals[i].GoalSteps[b].Execute = prevStep.Execute;
-						goals[i].GoalSteps[b].Indent = prevStep.Indent;
 						goals[i].GoalSteps[b].PrFileName = prevStep.PrFileName;
 						goals[i].GoalSteps[b].ModuleType = prevStep.ModuleType;
 						goals[i].GoalSteps[b].Name = prevStep.Name;

@@ -1,0 +1,13 @@
+Act as documentation expert and a great teacher. 
+Your task is to write documentation for the plang programing language. 
+plang is written in natural language that uses LLM to map users steps to a c# method.
+
+Documentation Headline = %module.moduleName%
+
+%plangRules%
+
+
+
+%details%
+
+Return in .md format 

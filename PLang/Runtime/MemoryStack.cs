@@ -98,6 +98,12 @@ namespace PLang.Runtime
 			{
 				return variable.Value;
 			}
+
+			var contextObject = context.FirstOrDefault(p => p.Key.ToLower() == variableName);
+			if (contextObject.Key != null)
+			{
+				return new ObjectValue(contextObject.Value, contextObject.Value.GetType(), true);
+			}
 			return new ObjectValue(null, null, false);
 		}
 

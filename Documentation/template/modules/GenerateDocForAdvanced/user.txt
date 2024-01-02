@@ -1,0 +1,29 @@
+Generate the documentation you recommend is best for an programmer that knows how to program.
+User is already aware of what the syntax is of the language. 
+
+This is how modules are used in plang. On plang build a .goal file is read, each step in the goal file (line starts with -)
+is parsed and with a question(https://github.com/PLangHQ/plang/blob/main/PLang/Building/StepBuilder.cs)
+the builder sends to LLM a list of all available modules. The LLM then gives a suggestion of module to use. 
+Then builder sends all the method in that module to LLM along with the step and the LLM maps that step text to a method.
+
+Structure of documentation
+#Headline
+#Introduction 
+    - Brief overview of the %module.moduleName% module and its purpose.
+    - Explanation of how `plang` integrates with C# methods.
+# Plang code examples
+- go through each method in the c# module
+    Write short description. 
+    Write 1-3 plang code examples that map to that method. 
+    Write the default c# signature
+    Repeat for next method
+- if you dont give plang examples for all methods, write a Note about that, tell the user to look at Program.cs source code
+- full list of examples can be found at https://github.com/PLangHQ/plang/tree/main/Tests/%module.moduleName%
+# Source code
+%SourceCode%
+# Step options
+- CacheHandler(/moduels/cacheHandler.md)
+- ErrorHandler(/moduels/ErrorHandler.md)
+- RetryHandler(/moduels/RetryHandler.md)
+- CancelationHandler(/moduels/CancelationHandler.md)
+- Run and forget(/moduels/RunAndForget.md)

@@ -1,0 +1,17 @@
+{
+  "Action": {
+    "Name": "UppercaseName",
+    "Code": "public static class UppercaseName {\n\tpublic static void Process(string name, out string uppercaseName) {\n\t\tif (string.IsNullOrEmpty(name)) {\n\t\t\tthrow new Exception(\"Name cannot be null or empty.\");\n\t\t}\n\t\tuppercaseName = name.ToUpper();\n\t}\n}",
+    "Using": [
+      "System"
+    ],
+    "Parameters": {
+      "name": "string",
+      "uppercaseName": "string"
+    }
+  },
+  "Text": "[code] uppercase %name%, write to %uppercaseName%",
+  "Reload": false,
+  "LlmQuestion": null,
+  "RunOnBuild": false
+}

@@ -1,0 +1,19 @@
+{
+  "Action": {
+    "Name": "GetTopLevelFolderName",
+    "Code": "\nusing System.IO;\n\npublic static class GetTopLevelFolderName\n{\n    public static void Process(string itemαPath, out string moduleName)\n    {\n        try\n        {\n            var directoryInfo = new DirectoryInfo(Path.GetDirectoryName(itemαPath));\n            moduleName = directoryInfo.Name;\n        }\n        catch\n        {\n            throw new System.Exception(\"Unable to get the top level folder name from the provided path.\");\n        }\n    }\n}\n",
+    "Using": [
+      "System.IO"
+    ],
+    "Parameters": {
+      "item.Path": "string",
+      "moduleName": "string"
+    },
+    "GoalToCallOnTrue": null,
+    "GoalToCallOnFalse": null
+  },
+  "Text": "[code] get folder name that files is in from abosolute path %item.Path%, do not show full path, only name of folder at top level, write to %moduleName%",
+  "Reload": false,
+  "LlmQuestion": null,
+  "RunOnBuild": false
+}

@@ -116,7 +116,11 @@ namespace PLang.Modules
 				// when calling ScheduleModule.Sleep, system always must wait for the execution
 				if (goalStep.WaitForExecution || this.GetType() == typeof(PLang.Modules.ScheduleModule.Program) && function.FunctionName == "Sleep")
 				{
-					await task;
+					try
+					{
+						await task;
+					}
+					catch { }
 				}
 				if (task.Status == TaskStatus.Faulted)
 				{
@@ -144,6 +148,9 @@ namespace PLang.Modules
 
 					await SetCachedItem(result);
 				}
+			} catch (RunGoalException)
+			{
+				throw;			
 			} catch (Exception ex)
 			{
 				string str = $@"
@@ -173,13 +180,16 @@ Calling {this.GetType().FullName}.{function.FunctionName}
 			if (goalStep.ErrorHandler != null)
 			{
 				var except = goalStep.ErrorHandler.OnExceptionContainingTextCallGoal;
-				if (goalStep.ErrorHandler.IgnoreErrors && except.Count == 0) return;
-
-				foreach (var error in except)
+				if (except != null)
 				{
-					if (error.Key == "*"  || task.Exception.ToString().ToLower().Contains(error.Key.ToLower()))
+					if (goalStep.ErrorHandler.IgnoreErrors && except.Count == 0) return;
+
+					foreach (var error in except)
 					{
-						
+						if (error.Key == "*" || task.Exception.ToString().ToLower().Contains(error.Key.ToLower()))
+						{
+							throw new RunGoalException(error.Value, task.Exception);
+						}
 					}
 				}
 			}

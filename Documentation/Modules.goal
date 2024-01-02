@@ -1,0 +1,73 @@
+Modules
+- get all Program.cs files in ../Plang/Modules/%ModuleName%, include sub dirs, write to %files%
+- foreach %files%, call !GenerateModuleDocumentation file=%item%
+
+GenerateModuleDocumentation
+- read file 'template/modules/GenerateModuleDocumentation/system.txt', into %system%, load variables
+- read %file%, into %content%
+- [llm] system: %system%
+    user:%content%
+    model:'gpt-4-1106-preview'
+    max length: 4000
+    scheme: {moduleName:string, namespace:string, desc:string, [{functions:string[], parameters:[{type:string, name:string, (defaultValue:string|required:yes)}, ...], returns:type|void}]}
+    write to %module%
+- get folder permission on '../Tests'
+- [cond] if dir '../Tests/%module.moduleName%/' exists, then
+    - write out 'Doing %module.moduleName%'
+    - call !LoadVars   
+    - call !GeneratePlangExamples
+    - write out '- doing basic'
+    - call !GenerateDocForBasic
+    - write out '- doing adv'
+    - call !GenerateDocForAdvanced    
+
+LoadVars
+- read file '/template/modules/details/%module.moduleName%.txt', into %details%, empty if file not found
+- read file '/template/modules/plangRules.txt', into %plangRules%, empty if file not found 
+- set variable %SourceCode%, 'Progam.cs is the runtime code, can be found at https://github.com/PLangHQ/plang/tree/main/PLang/Modules/%module.moduleName%/Program.cs'
+- if ../PLang/Modules/%module.moduleName%Module/Builder.cs exists, then
+    - append to variable %SourceCode%, 'Builder.cs is for building of step, can be found at https://github.com/PLangHQ/plang/tree/main/PLang/Modules/%module.moduleName%/Builder.cs'
+- if ../PLang/Modules/%module.moduleName%Module/ModuleSettings.cs exists, then
+    - append to variable %SourceCode%, new line seperator, 'ModuleSettings.cs is settings for the module, can be found at https://github.com/PLangHQ/plang/tree/main/PLang/Modules/%module.moduleName%/ModuleSettings.cs'
+
+GeneratePlangExamples
+- get all *.goal files from '../Tests/%module.moduleName%/, write to %testFiles%
+- [var] set %plangExamples% to null
+- foreach %testFiles%, call !MergeFilesIntoOneVar path=%item%
+- read 'template/modules/GeneratePlangExamples/system.txt', into %system%, load variables
+- read 'template/modules/GeneratePlangExamples/user.txt', into %user%, load variables
+- [llm]: system:%system%
+        user: %user%
+        model:'gpt-4-1106-preview'
+        max length: 4k
+        write to %plangExamplesDescription%
+
+GenerateDocForBasic
+- read file 'template/modules/GenerateDocForBasic/user.txt', into %user%, load variables
+- read 'template/modules/GenerateDocForBasic/system.txt', into %system%, load variables
+- [llm]: system: %system%
+        user: %user%
+        model:'gpt-4-1106-preview'
+        max length: 4k
+        response: .md
+        write to %documentation%
+- [code] replace "[PlangCodeExamples]" in %documentation% with %plangExamplesDescription%, write to %documentationOut%(string)
+- write %documentationOut% to /output/modules/%module.namespace%.md, overwrite
+
+GenerateDocForAdvanced
+- read file 'template/modules/GenerateDocForAdvanced/system.txt', into %system%, load variables
+- read file 'template/modules/GenerateDocForAdvanced/user.txt', into %user%, load variables
+- [llm]: system:%system%
+        user: %user%
+        assistant: '# plang code examples #\n%plangExamplesDescription% \n# plang code examples #'
+                   '# csharp methods #
+                    %module%
+                    # csharp methods #'
+        model:'gpt-4-1106-preview'
+        max length: 4k
+        write to %advancedDoc%
+- write %advancedDoc% to /output/modules/%module.namespace%_advanced.md, overwrite
+
+MergeFilesIntoOneVar
+- read file %path%, into %testFileContent%
+- [var] append %testFileContent% to %plangExamples%, new line for each append

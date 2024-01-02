@@ -1,0 +1,17 @@
+{
+  "Action": {
+    "Name": "CreateStringOfListWithRandomData",
+    "Code": "public static void Process(out List<string> list) {\nRandom random = new Random();\nlist = new List<string>();\nfor (int i = 0; i < 10; i++) {\nlist.Add(random.Next().ToString());\n}\n}",
+    "Using": [
+      "System",
+      "System.Collections.Generic"
+    ],
+    "Parameters": {
+      "list": "List<string>"
+    }
+  },
+  "Text": "[code] create string of list with 10 rows of random data, write to %list%",
+  "Reload": false,
+  "LlmQuestion": null,
+  "RunOnBuild": false
+}

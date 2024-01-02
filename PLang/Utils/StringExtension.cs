@@ -38,6 +38,12 @@ namespace PLang.Utils
 			return str;
 		}
 
+		public static string MaxLength(this string txt, int maxLength, string trailing = "...")
+		{
+			if (txt.Length <= maxLength) return txt;
+			return txt.Substring(0, maxLength) + trailing;
+		}
+
 		public static string ComputeHash(this string input, string mode = "keccak256", string salt = null)
 		{
 			if (!string.IsNullOrWhiteSpace(salt))

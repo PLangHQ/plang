@@ -309,7 +309,7 @@ namespace PLang.Runtime
 				await eventRuntime.RunStepEvents(context, EventType.Before, goal, goal.GoalSteps[goalStepIndex]);
 			}
 
-			logger.LogDebug("- Step: " + goal.GoalSteps[goalStepIndex].Name);
+			logger.LogDebug($"- {goal.GoalSteps[goalStepIndex].Text.Replace("\n", "").Replace("\r", "").MaxLength(80)}");
 
 			await ProcessPrFile(goal, goal.GoalSteps[goalStepIndex], goalStepIndex);
 			if (goal.GoalSteps[goalStepIndex].Execute && goal.GoalSteps[goalStepIndex].Executed == null)
@@ -368,6 +368,7 @@ namespace PLang.Runtime
 
 					try
 					{
+						
 						var task = classInstance.Run();
 
 						await task;
@@ -378,6 +379,30 @@ namespace PLang.Runtime
 							settings.Set<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", dict);
 						}
 
+
+					}
+					catch (RunGoalException goalException)
+					{
+						var goalName = goalException.Message;
+						var goalToCall = prParser.GetGoalByAppAndGoalName(goal.AbsoluteAppStartupFolderPath, goalName, goal);
+						if (goalToCall != null)
+						{
+							var ex = goalException.InnerException;
+							if (ex.Message.StartsWith("One or more errors occurred.") && ex.InnerException != null)
+							{
+								ex = ex.InnerException;
+							}
+							context.AddOrReplace(ReservedKeywords.Exception, ex);
+							await RunGoal(goalToCall);
+							
+							//stop running any other steps
+							stepIndex = goal.GoalSteps.Count;
+						}
+						else
+						{
+							logger.LogError($"Could not find {goalName} to call");
+							throw;
+						}
 					}
 					catch (OperationCanceledException)
 					{

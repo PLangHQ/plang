@@ -87,7 +87,7 @@ namespace PLang.SafeFileSystem
 
 				if (fileAccesses.Count > 0)
 				{
-					var hasAccess = fileAccesses.FirstOrDefault(p => p.appName == appName && path.StartsWith(p.path) && p.expires > DateTime.UtcNow);
+					var hasAccess = fileAccesses.FirstOrDefault(p => p.appName.ToLower() == appName.ToLower() && path.ToLower().StartsWith(p.path.ToLower()) && p.expires > DateTime.UtcNow);
 					if (hasAccess != null) return path;
 				}
 

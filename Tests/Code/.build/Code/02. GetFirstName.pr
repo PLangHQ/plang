@@ -1,0 +1,17 @@
+{
+  "Action": {
+    "Name": "GetFirstName",
+    "Code": "public static void Process(string name, out string firstName) {\n\tif (string.IsNullOrEmpty(name)) {\n\t\tthrow new Exception(\"Name cannot be empty.\");\n\t}\n\tstring[] splitName = name.Split(' ');\n\tif (splitName.Length > 0) {\n\t\tfirstName = splitName[0];\n\t} else {\n\t\tthrow new Exception(\"Name does not contain a first name.\");\n\t}\n}",
+    "Using": [
+      "System"
+    ],
+    "Parameters": {
+      "name": "string",
+      "firstName": "string"
+    }
+  },
+  "Text": "[code] get first  name of %name%, write to %firstName%",
+  "Reload": false,
+  "LlmQuestion": null,
+  "RunOnBuild": false
+}

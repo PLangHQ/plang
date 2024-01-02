@@ -204,7 +204,7 @@ Modules: Name of module. Suggest 1-3 modules that could be used to solve the ste
 StepName: Short name for step
 StepDescription: Rewrite the step as you understand it, make it detailed
 WaitForExecution: Indicates if code should wait for execution to finish, default is true
-ErrorHandler: How to handle errors, default is null
+ErrorHandler: How to handle errors, default is null. if error should be handled but text is not defined, then use * for key
 RetryHandler: If should retry the step if there is error, null
 CachingHandler: How should caching be handled, default is null
 Read the description of each module, then determine which module to use

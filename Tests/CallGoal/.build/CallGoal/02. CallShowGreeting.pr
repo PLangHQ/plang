@@ -1,0 +1,34 @@
+{
+  "Action": {
+    "FunctionName": "RunGoal",
+    "Parameters": [
+      {
+        "Type": "string",
+        "Name": "goalName",
+        "Value": "Show"
+      },
+      {
+        "Type": "Dictionary`2",
+        "Name": "parameters",
+        "Value": {
+          "greetings": "%greetings%"
+        }
+      }
+    ],
+    "ReturnValue": null
+  },
+  "Text": "call !Show %greetings%",
+  "Reload": false,
+  "LlmQuestion": {
+    "type": "PLang.Modules.BaseBuilder",
+    "system": "\r\n Parse user command, to match the parameters needed for the RunGoal function\r\n\r\nVariables are defined with starting and ending %\r\n\r\nGoalName should be prefixed with !\r\nParameters are optional, they are key value of a variable, if user does not define key, then it is same as value.\r\n\r\n== Examples starts ==\r\n!ParseText then ParseText is goalName, no parameters\r\n!Gmail.Search %query%, then Gmail.Search is goalName,  %query% is key and value in parameters\r\nFolder.Search q=%fileName%, then key is q, and value is %fileName%\r\n== Examples ends ==\r\n\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: {\"Type\": string,\n\"VariableName\": string}}",
+    "question": "command: call !Show %greetings%",
+    "assistant": "## functions available defined in csharp ##\r\nvoid RunGoal(String goalName, Dictionary`2? parameters, Boolean? waitForExecution = True, Int32? delayWhenNotWaitingInMilliseconds = 0) \n\r\n## functions available ends ##\r\n## defined variables ##\r\n\t\t\t\t%greetings%\r\n## defined variables ##",
+    "model": "gpt-4",
+    "caching": true,
+    "Reload": false,
+    "PreviousResult": null,
+    "RawResponse": "{\n  \"FunctionName\": \"RunGoal\",\n  \"Parameters\": [\n    {\n      \"Type\": \"string\",\n      \"Name\": \"goalName\",\n      \"Value\": \"Show\"\n    },\n    {\n      \"Type\": \"Dictionary`2\",\n      \"Name\": \"parameters\",\n      \"Value\": {\n        \"greetings\": \"%greetings%\"\n      }\n    }\n  ]\n}"
+  },
+  "RunOnBuild": false
+}

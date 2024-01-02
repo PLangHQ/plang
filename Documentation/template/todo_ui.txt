@@ -1,0 +1,45 @@
+
+## Todo window app
+Lets change the previous todo web service into a window app. 
+
+In this video I go through it step by step with a bit more info then is provided here
+https://www.youtube.com/watch?v=abew4btk34
+
+-- Warning --
+At version 0.1, it only runs on Windows. It should be available for all platforms(desktop, mobile, tablets, tv, etc.) in the future.
+The window app is very early Alpha, it is more a proof of concept than a working thing.
+-- Warning --
+
+1. Change Start.goal
+```
+Start
+- start window app, call !Todos
+```
+2. Create folder ui
+3. Create Todos.goal
+```plang
+Todos
+- select * from todos, where not completed, newest first, write to %todos%
+- button, name="New task", call !NewTask
+- table for %todos%
+    header: Task, Due Date
+    body:  task, due_date
+
+4. Create NewTask.goal
+```plang
+NewTask
+- form, inputs for "task" and "due_date"(DateTime)
+- button "Save", call !SaveTask
+```
+5. Create SaveTask.goal
+```plang
+SaveTask
+- if %task% or %due_date% is empty, throw error
+- insert into Todos, %task%, %due_date%
+- call !Todos
+```
+
+6. The app is now ready, lets run it but using plangw.exe (notice it's not plang.exe) 
+    ```bash
+    plangw exec
+    ```

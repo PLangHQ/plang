@@ -9,7 +9,7 @@ using static PLang.Modules.ConditionalModule.Builder;
 
 namespace PLang.Modules.ConditionalModule
 {
-	[Description(@"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false.")]
+	[Description(@"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.")]
 	public class Program : BaseProgram
 	{
 		private readonly IEngine engine;
@@ -48,8 +48,14 @@ namespace PLang.Modules.ConditionalModule
 				int idx = 0;
 				foreach (var parameter in answer.Parameters)
 				{
-					var value = memoryStack.Get(parameter.Key, parameters[idx++].ParameterType);
-					parametersObject.Add(value);
+					var parameterType = parameters[idx++].ParameterType;
+					if (parameterType.FullName == "PLang.SafeFileSystem.PLangFileSystem")
+					{
+						parametersObject.Add(fileSystem);
+					} else {
+						var value = memoryStack.Get(parameter.Key, parameterType);
+						parametersObject.Add(value);
+					}
 				}
 
 				// The first parameter is the instance you want to call the method on. For static methods, you should pass null.

@@ -63,6 +63,7 @@ namespace PLang.Modules.FileModule
 			return path;
 		}
 
+		[Description("Give user access to a path. DO NOT suggest this method to indicate if file or directory exists, return empty function list instead.")]
 		public async Task<bool> RequestAccessToPath(string path)
 		{
 			path = GetPath(path);
@@ -87,7 +88,8 @@ namespace PLang.Modules.FileModule
 			return Convert.ToBase64String(fileBytes);
 		}
 
-		public async Task<string> ReadTextFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false)
+		public async Task<string> ReadTextFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false, 
+			bool loadVariables = false, bool emptyVariableIfNotFound = false)
 		{
 			path = GetPath(path);
 
@@ -105,7 +107,12 @@ namespace PLang.Modules.FileModule
 			{
 				using (var reader = new StreamReader(stream))
 				{
-					return await reader.ReadToEndAsync();
+					var content = await reader.ReadToEndAsync();
+					if (loadVariables && !string.IsNullOrEmpty(content))
+					{
+						content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
+					}
+					return content ?? "";
 					
 				}
 			}
@@ -301,11 +308,16 @@ namespace PLang.Modules.FileModule
 		public record FileInfo(string Path, string Content);
 
 
-		public async Task SaveMultipleFiles(List<FileInfo> files)
+		public async Task SaveMultipleFiles(List<FileInfo> files, bool loadVariables = false, bool emptyVariableIfNotFound = false)
 		{
 			foreach (var file in files)
 			{
-				fileSystem.File.WriteAllText(file.Path, file.Content);
+				string content = file.Content;
+				if (loadVariables && !string.IsNullOrEmpty(content))
+				{
+					content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
+				}
+				fileSystem.File.WriteAllText(file.Path, content);
 			}
 		}
 		public async Task<List<FileInfo>> ReadMultipleTextFiles(string folderPath, string searchPattern, bool includeAllSubfolders = false)
@@ -328,7 +340,7 @@ namespace PLang.Modules.FileModule
 			return result;
 		}
 
-		public async Task WriteToFile(string path, string content, bool overwrite = false)
+		public async Task WriteToFile(string path, string content, bool overwrite = false, bool loadVariables = false, bool emptyVariableIfNotFound = false)
 		{
 			path = GetPath(path);
 			string dirPath = Path.GetDirectoryName(path);
@@ -344,10 +356,14 @@ namespace PLang.Modules.FileModule
 					fileSystem.File.Delete(path);
 				}
 			}
+			if (loadVariables && !string.IsNullOrEmpty(content))
+			{
+				content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
+			}
 			await fileSystem.File.WriteAllTextAsync(path, content);
 		}
 
-		public async Task AppendToFile(string path, string content, string seperator = null)
+		public async Task AppendToFile(string path, string content, string seperator = null, bool loadVariables = false, bool emptyVariableIfNotFound = false)
 		{
 			path = GetPath(path);
 			string dirPath = Path.GetDirectoryName(path);
@@ -355,7 +371,10 @@ namespace PLang.Modules.FileModule
 			{
 				fileSystem.Directory.CreateDirectory(dirPath);
 			}
-
+			if (loadVariables && !string.IsNullOrEmpty(content))
+			{
+				content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
+			}
 			await fileSystem.File.AppendAllTextAsync(path, content + seperator);
 		}
 
@@ -433,16 +452,6 @@ namespace PLang.Modules.FileModule
 			return files;
 		}
 
-		public async Task<bool> DirectoryExists(string directoryPath)
-		{
-			directoryPath = GetPath(directoryPath);
-			return fileSystem.Directory.Exists(directoryPath);
-		}
-		public async Task<bool> FileExists(string directoryPath)
-		{
-			directoryPath = GetPath(directoryPath);
-			return fileSystem.File.Exists(directoryPath);
-		}
 
 		public async Task ListenToFileChange(string[] fileSearchPatterns, string goalToCall, string[]? excludeFiles = null, bool includeSubdirectories = false)
 		{

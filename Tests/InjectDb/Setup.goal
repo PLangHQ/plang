@@ -1,0 +1,2 @@
+Setup
+- Create table users, columns name(not null), email(not null)

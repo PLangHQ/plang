@@ -1,0 +1,24 @@
+you can retrieve settings by calling %Settings.Name_of_Key%, e.g. %Settings.API_KEY%
+plang will ask for the setting if it is empty
+
+```plang
+APIRequest
+- get http://some-api.com
+    Bearer: $Settings.SomeAPIKey%
+```
+
+it is possible to overwrite the settings service by injecting your own Settings service.
+To do that, you need to implement the ISettingsRepository and then injecting the dll 
+```plang
+Start
+- inject settings, 'mysettings', global
+```
+This tells the plang runtime to inject the service located in the folder 'services/mysettings/*.dll' and sets it to be global to the application
+
+when asking the plang Runtime throw AskUserException, you can inject your own askuser service, if you want to for example send a message with them message module
+you need to implement the IAskUserHandler interface and inject it
+```
+Start
+- inject askuser, 'myaskuser'
+```
+it looks for your service in the folder, 'services/myaskuser' folder

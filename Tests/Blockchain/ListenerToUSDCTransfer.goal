@@ -1,0 +1,12 @@
+ListenerToUSDCTransfer
+- set chain, matic
+- listen to usdc, Transfer event , call !Transfer
+    if exception is 500, call !WriteOutSetupMessage
+
+Transfer
+- write out "from: %from% | to:%to% | value:%value%
+- write out %__TxLog__.ToJson()%
+- stop listening %subscriptionId%
+
+WriteOutSetupMessage
+- write out 'You need to setup rpc server, call plang settings in terminal'

@@ -1,0 +1,15 @@
+Loop
+- add {"Name":"Product1", "Price":111} to list, write to %products%
+- add {"Name":"Product2", "Price":222} to list, write to %products%
+- go through %products% call !ShowProduct, item=%product%, list=%products%, key=1
+- add 'key1', 'Hello', write to %dict%
+- add 'key2', 'PLang', write to  %dict%
+- add 'key3', 'World', write to  %dict%
+- loop through %dict%, call !PrintDict
+
+ShowProduct
+- write out %product.Name% - %product.Price% - %products.Count% idx:%idx%, listCount:%listCount%, key:%key%
+
+PrintDict
+/ listCount give -1 on dictionary objects
+- write out %item.Key% - %item.Value%, listCount:%listCount%, %list.ToJson()%

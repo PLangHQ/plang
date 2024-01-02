@@ -1,0 +1,5 @@
+Python
+- set var %number1% to 20
+- set var %number2% to 10
+- call main.py, %number1%, %number2%, write to %result%
+- write out 'Calculated: %result%'

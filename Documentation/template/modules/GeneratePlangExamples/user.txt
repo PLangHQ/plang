@@ -1,0 +1,13 @@
+Use these example to build a list of example for documentation.
+If example is not provided for a method description, create an example using natural language.
+Large numbers should be represented in a human readable form, e.g. instead of bytes use mb. 
+Parameters should be in natural language, e.g. parameter called maxSize could be come 'max size 3mb', expiresInSeconds could be come 'expires in 2 weeks'
+Do not repeat a call to the same method more then 2 times, provide example with parameters. 
+If method returns a value, the step should end with "write to \%variableName\%", choose appropriate variable name. The \%variableName\% can then be used in next step for demonstration
+Example of write to:
+- read file.txt, write to \%content\%
+- write out \%content\%
+
+# plang examples #
+%plangExamples%
+# plang examples #

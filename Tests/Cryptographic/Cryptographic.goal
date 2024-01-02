@@ -1,0 +1,16 @@
+Cryptographic
+- set var %text% to 'Hello PLang world'
+- encrypt %text%, write to %encryptedText%
+- write out %encryptedText%
+- decrypt %encryptedText%, write to %decryptedText%
+- write out %decryptedText%
+- set var %password% as 'MySuperPassword123.'
+- hash  %password%, write to %hashedPassword%
+- validate  hashed password, 'MySuperPassword123.' to %hashedPassword%, write to %isValid%
+- if %isValid% then
+    - write out 'hash is valid'
+- get bearer secret, write to %bearerSecret%
+- create bearer, test@example.org, write to %bearer%, expires in 5 minutes
+- validate bearer token %bearer%, write to %isValidBearer%
+- if %isValidBearer% then
+    - write out 'bearer is valid'

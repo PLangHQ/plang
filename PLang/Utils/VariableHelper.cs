@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.SettingsService;
+using System.Dynamic;
 using System.IO;
 using System.Text.RegularExpressions;
 using static PLang.Utils.VariableHelper;
@@ -79,7 +80,15 @@ namespace PLang.Utils
 
 			foreach (var variable in variables)
 			{
-				content = content.Replace(variable.Key, (variable.Value ?? "").ToString());
+				string strValue = "";
+				if (variable.Value != null && variable.Value?.GetType() != typeof(string) && !variable.Value.GetType().IsPrimitive)
+				{
+					strValue = JsonConvert.SerializeObject(variable.Value);
+				} else
+				{
+					strValue = variable.Value?.ToString() ?? "";
+				}
+				content = content.Replace(variable.Key, strValue.ToString());
 			}
 			return content;
 
@@ -181,7 +190,7 @@ namespace PLang.Utils
 
 			if (!content.Contains("%")) return variables;
 
-			var pattern = @"\%[^\%]+\%";
+			var pattern = @"(?<!\\)%([^\s%]+|Settings\.Get\((""|')+.*?(""|')+, (""|')+.*?(""|')+, (""|')+.*?(""|')+\))%";
 
 			var regex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
 			var matches = regex.Matches(content);

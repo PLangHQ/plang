@@ -1,0 +1,486 @@
+
+=== Blockchain starts === 
+ListenerToUSDCTransfer
+- set chain, matic
+- listen to usdc, Transfer event , call !Transfer
+    if exception is 500, call !WriteOutSetupMessage
+
+Transfer
+- write out "from: %from% | to:%to% | value:%value%
+- write out %__TxLog__.ToJson()%
+- stop listening %subscriptionId%
+
+WriteOutSetupMessage
+- write out 'You need to setup rpc server, call plang settings in terminal' 
+=== Blockchain ends ===
+
+=== Blockchain starts === 
+ListenToBlock
+/ default rpc server dont work. You can use websocket from Infra or Alchemy or other
+- listen to new block, call !BlockEvent
+
+BlockEvent
+- write out "timestamp:%timestamp% | lastBlockNotification:%lastBlockNotification%
+- write out block: %block.ToJson()% 
+=== Blockchain ends ===
+
+=== Blockchain starts === 
+MixedCalls
+- [block] get current rpc server, write to %server%
+- write out %server.ToJson()%
+- get wallets, write to %wallets%
+- write out %wallets.ToJson()%
+- [block] get current address, write to %address%
+- write out %address%
+- [block] sign "Hello world", write to %signature%
+- [block] verify signature, "Hello world", %signature%, %address%, write to %result%
+- write out "Is message verified:%result%"
+- set to mumbai testnet
+- get wei balance of 0x50041223216d8bfd392544562d70fda452df5042, write to %maticBalance%
+- get balance on 0x0FA8781a83E46826621b3BC094Ea2A0212e71B23 for address 0x50041223216d8bfd392544562d70fda452df5042, write to %usdcBalance%
+- write out 'Balance of Matic:%maticBalance%, usdc balance:%usdcBalance%
+- [block] get decimal of 0x0FA8781a83E46826621b3BC094Ea2A0212e71B23, write to %decimal%
+- [block] get symbol of 0x0FA8781a83E46826621b3BC094Ea2A0212e71B23, write to %symbol%
+- write out '%symbol% has the %decimal% decimals" 
+=== Blockchain ends ===
+
+=== Caching starts === 
+Caching
+- cache %Now-1year% to 'lastYear'
+- get cache 'lastYear', write to %cachedItem%
+- write out %cachedItem%
+- cache 'abc' for 10 minutes, to 'abcKey'
+- get cache 'abcKey', write to %cachedAbcKey%
+- write out %cachedAbcKey% 
+=== Caching ends ===
+
+=== CallGoal starts === 
+CallGoal
+- set variable %greetings% to 'Hello'
+- call !Show %greetings%
+
+Show
+- write out '%greetings% PLang world' 
+=== CallGoal ends ===
+
+=== Code starts === 
+Code
+- set %name% as 'Toby Flenderson'
+- [code] get first  name of %name%, write to %firstName%
+- write out %firstName%
+- [code] get last name of %name%, write to %lastName%
+- write out %lastName%
+- [code] uppercase %name%, write to %uppercaseName%
+- write out %uppercaseName%
+- [code] create string of list with 10 rows of random data, write to %list%
+- write out %list.ToJson()%
+- set %fileNameWithExtension% as 'video.mp4'
+- [code] remove file extension from %fileNameWithExtension%, write to %fileName%
+- write out %fileName% 
+=== Code ends ===
+
+=== Compression starts === 
+Compression
+- delete  dir ./extract
+- compress file.txt to file.zip
+- uncompress file.zip to ./extract/, overwrite
+- read extract/file.txt to %content%
+- if %content% contains 'this is a text file' then
+    - write out 'Yes, the file was decompressed and read, it contains correct data'
+/ cleanup
+- delete file.zip
+- delete dir  ./extract
+ 
+=== Compression ends ===
+
+=== Conditions starts === 
+Conditions
+- set var 'Valid' as  true
+- if %Valid% (bool) then 
+    - write out 'It is valid'
+- set var 'NotValid' as false
+- if %NotValid% is false then
+    - write out 'Not valid variable is set to false' 
+=== Conditions ends ===
+
+=== Cryptographic starts === 
+Cryptographic
+- set var %text% to 'Hello PLang world'
+- encrypt %text%, write to %encryptedText%
+- write out %encryptedText%
+- decrypt %encryptedText%, write to %decryptedText%
+- write out %decryptedText%
+- set var %password% as 'MySuperPassword123.'
+- hash  %password%, write to %hashedPassword%
+- validate  hashed password, 'MySuperPassword123.' to %hashedPassword%, write to %isValid%
+- if %isValid% then
+    - write out 'hash is valid'
+- get bearer secret, write to %bearerSecret%
+- create bearer, test@example.org, write to %bearer%, expires in 5 minutes
+- validate bearer token %bearer%, write to %isValidBearer%
+- if %isValidBearer% then
+    - write out 'bearer is valid' 
+=== Cryptographic ends ===
+
+=== CultureInfo starts === 
+CultureInfo
+- set culture to is-is
+- write out %Now%
+- set culture to en-US
+- write out %Now% 
+=== CultureInfo ends ===
+
+=== Db starts === 
+Setup
+- create table tasks, columns decription(not null), due_date(datetime, not null), created(datetime, default now) 
+=== Db ends ===
+
+=== Db starts === 
+Tasks
+- set var 'description' as 'This is a task description'
+- set var due_date as %Now+5days%
+- begin transaction
+- Insert into tasks, %description%, %due_date%
+- Insert into tasks, description='This is a desc', due_date=%Now+10days%, write to %id%
+- select * from tasks, write to %tasks%
+- go through %tasks%, call !PrintOut
+- update tasks set description='Updated first task'  where id=%tasks[1].id%
+- update tasks set description='Hello PLang world'  where id=%id%
+- select * from tasks, write to %tasks%
+- go through %tasks%, call !PrintOut
+- delete from  table tasks
+- end transaction
+
+PrintOut
+- write %item.description% - %item.due_date% 
+=== Db ends ===
+
+=== File starts === 
+File
+- read '1px.png', into %base64%
+- write out %base64%
+- read file.txt into %content%
+- write out %content%
+- read Employees.xlsx  into %excelData%
+- loop through %excelData%, call !PrintOutExcel
+- write  %excelData% to Employees.xlsx, has header, overwrite
+- read  Test5x2.csv into %csvData%
+- loop through %csvData%, call !PrintOutCSV
+- write to Test5x2.csv, data %csvData%
+- write to file2.txt, 'This is a content'
+- read file2.txt, into %newContent%
+- write out %newContent%
+- append ', some more content' to file2.txt
+- copy file2.txt to file3.txt
+- read file3.txt into %file3Content%
+- write out %file3Content%
+- delete file file2.txt
+- delete file file3.txt
+- get file info on Employees.xlsx   into %fileInfo%
+- write out 'fileInfo: %fileInfo%, CreationTime: %fileInfo.CreationTime%, LastWriteTime: %fileInfo.LastWriteTime%'
+- write to  demo.xlsx, %csvData%,  overwrite file
+- write to demo.csv, %csvData%,  overwrite file
+- write to  demo2.xlsx, data: %excelData%, %csvData%, overwrite file
+- delete demo.xlsx
+- delete demo2.xlsx
+
+PrintOutExcel
+- write out %item.Name% - %item.Email%
+
+PrintOutCSV
+- write out %item.ToJson()% 
+=== File ends ===
+
+=== Http starts === 
+Http
+- GET https://httpbin.org/get, write to %getResponse%
+- write out 'UserAgent: %getResponse.headers.User-Agent% , ip: %getResponse.origin%'
+- post https://httpbin.org/post
+    data='test=1'
+    signRequest
+    write to %postResponse%
+- write out %postResponse.tojson()%
+- post multipart https://httpbin.org/post
+    data: @file='1px.png', name='1px'
+    write to %postResponse2%
+- write out %postResponse2.tojson()%    
+- put https://httpbin.org/put, write to %putResponse%
+- write out %putResponse.tojson()%
+- delete https://httpbin.org/delete, write to %delResponse%
+- write out %delResponse.ToJson()%
+- patch https://httpbin.org/patch, write to %patchResponse%
+- write out %patchResponse.ToJson()% 
+=== Http ends ===
+
+=== InjectDb starts === 
+Events
+- Before app starts, call InjectTypes 
+=== InjectDb ends ===
+
+=== InjectDb starts === 
+InjectTypes
+- inject db, npgsql/lib/net7.0/Npgsql.dll, make it global 
+=== InjectDb ends ===
+
+=== InjectDb starts === 
+Setup
+- Create table users, columns name(not null), email(not null) 
+=== InjectDb ends ===
+
+=== InjectDb starts === 
+Start
+- write out 'Start db injection'
+- SELECT version(); write to %version%
+- write out 'Version: %version%'
+ 
+=== InjectDb ends ===
+
+=== InjectOpenAI starts === 
+DoStuff
+- write out  'DoStuff called' 
+=== InjectOpenAI ends ===
+
+=== InjectOpenAI starts === 
+@llm=PLangOpenAIModule
+
+Events
+- Before each goal, call !DoStuff 
+=== InjectOpenAI ends ===
+
+=== InjectOpenAI starts === 
+/ This should not use the injected llm service
+LlmTest
+- [llm] system: Say hello again to  me
+		{hello:string}
+- write out 'Response: %hello%' 
+=== InjectOpenAI ends ===
+
+=== InjectOpenAI starts === 
+@llm=PLangOpenAIModule
+
+Start
+- [llm] system: Say hello to  me
+		{hello:string}
+- write out 'Response: %hello%' 
+=== InjectOpenAI ends ===
+
+=== ListAndDictionary starts === 
+ListAndDictionary
+- add [{"name":"Product1", "price":123}, {"name":"Product2", "price":222}] to list, write to %products%
+- add {"name":"Product3", "price":333} to %products%
+- foreach item in %products%, call !ShowProduct
+- add 'key1', 'hello' to dictionary, overwrite,  write to %ble%
+- add 'key2', 'plang',  write to %ble%, overwrite
+- add 'key3', 'world',  to %ble%, overwrite
+- go through %ble%, call !ShowHello
+- remove 'key3'  from %ble%
+- go through %ble%, call !ShowHello
+
+ShowProduct
+- write out %item.name% - %item.price%
+
+ShowHello
+- write out %item.Value% 
+=== ListAndDictionary ends ===
+
+=== LLM starts === 
+LLM
+- set %comment% as 'This is awesome'
+- [llm] system: give me sentiment from the user comment
+        user:  %comment%
+        scheme: {sentiment:negative|neutral|positive}
+        write to %result%
+- write out 'The comment is: %result.sentiment%'
+- set %text% as 'AI is taking over the world'
+- [llm] system: give me 2 categories from the user text
+        user: %text% 
+        write to %cat1% and %cat2%
+- write out 'The category is: %cat1% and %cat2%' 
+=== LLM ends ===
+
+=== LocalOrGlobalVariable starts === 
+LocalOrGlobalVariable
+- when var 'key' is created, call !NewVarAdded 
+- set var 'house' to true
+- set var 'key' to 1
+- when var 'house' changes, call !ChangedVar
+- set var 'house' to false
+- on remove on var 'house' call !VarRemoved
+- remove 'house' var
+
+NewVarAdded
+- write out 'key' was just created
+
+ChangedVar
+- write out 'house' changed
+
+VarRemoved
+- write out 'house' is just removed 
+=== LocalOrGlobalVariable ends ===
+
+=== Loop starts === 
+Loop
+- add {"Name":"Product1", "Price":111} to list, write to %products%
+- add {"Name":"Product2", "Price":222} to list, write to %products%
+- go through %products% call !ShowProduct, item=%product%, list=%products%, key=1
+- add 'key1', 'Hello', write to %dict%
+- add 'key2', 'PLang', write to  %dict%
+- add 'key3', 'World', write to  %dict%
+- loop through %dict%, call !PrintDict
+
+ShowProduct
+- write out %product.Name% - %product.Price% - %products.Count% idx:%idx%, listCount:%listCount%, key:%key%
+
+PrintDict
+/ listCount give -1 on dictionary objects
+- write out %item.Key% - %item.Value%, listCount:%listCount%, %list.ToJson()% 
+=== Loop ends ===
+
+=== Message starts === 
+Message
+- get public key for messages, write to %pubKey%
+- write out %pubKey%
+- listen for new message, call !NewMessage, write content to %content%
+- send my self message, 'Hi how are you, %Now%'
+- send message to %pubKey%, 'Another message that I will recieve, %now%'
+
+NewMessage
+- write out %content% 
+=== Message ends ===
+
+=== ModuleExample starts === 
+Start
+- use complex algo to add 2 and 3, write to %result%
+- write out %result% 
+=== ModuleExample ends ===
+
+=== Output starts === 
+Output
+- write out '{', use buffer
+- write out '}'
+- write out 'Hello PLang world' 
+=== Output ends ===
+
+=== Python starts === 
+Python
+- set var %number1% to 20
+- set var %number2% to 10
+- call main.py, %number1%, %number2%, write to %result%
+- write out 'Calculated: %result%' 
+=== Python ends ===
+
+=== RunAllTests starts === 
+Test
+- get all '00. Goal.pr' files in ../ and subfolders, exclude 'RunAllTests', write to %files%
+- go through %files%, call !RunTest
+
+RunTest
+- read file %item% into %goal%, throw error if not found
+- if %goal.Visbility% = 0 then
+    - write out '----- %item% ----'
+    - Call goal %item%
+    - write out '----- %item% ----\n\n' 
+=== RunAllTests ends ===
+
+=== Schedule starts === 
+Schedule
+- write out %Now%
+- sleep for 1 sec
+- write out %Now%
+- every 1 minute, call !ItIsCalled
+
+ItIsCalled
+- write out 'Calling it every 1 min - %Now% 
+=== Schedule ends ===
+
+=== Selenium starts === 
+Selenium
+- go to https://quotes.toscrape.com/, dont show browser
+- click href=/login
+/ Help LLM here by using [Selenium], otherwise it thinks it's a variable
+- [Selenium] set #username as 'test'
+- set input #password value as '123'
+- submit form
+- find href="/logout", write to %isLoggedIn%
+/ since isLoggedIn is a list, lets the the first(1) item in the list
+- if %isLoggedIn[1]% = 'Logout' then
+    - write out 'Yes, I am logged in' 
+- click first .tag-item link
+- [Selenium] extract all .quote, clear html, write into %quotes%
+- go through %quotes%, call !ShowQuote
+
+ShowQuote
+- write out 'Quote: %item%\n-------'
+ 
+=== Selenium ends ===
+
+=== Settings starts === 
+Start
+- get all available settings, write to %settings%
+- go through each %settings%, call !Modules
+- ask user, 'What settings would you like to access, type in nr.', into %nr%
+- if %nr% is a number then call !ModuleSetting , else call !Start
+
+Modules
+- write out '%idx%. %item.FullName%'
+
+ModuleSetting
+- [settings] get all method in settings %module%, write to %methods%
+- [llm] system: These are methods available, convert them to natural language
+        put them in numbered list
+        assistant: %methods%
+- ask user, input= %result%, write to %methodSelected%
+- [llm] system: format user input to match method that is provided, 
+            if no method fits, return {error:string},
+        assistant: %methods%
+        user: %methodSelected%
+        write to %methodMapping%
+- [settings] call dynamic method with %methodMapping%, write to %result%
+- if %result% is false
+    - write out 'Could not map function'
+- call !ModuleSetting 
+=== Settings ends ===
+
+=== Terminal starts === 
+Terminal
+- when var %outputDelta% changes, call !WriteOutputDelta
+- ping google.com, output delta %outputDelta%, write to %output%
+- write out '\n\n-----------------\n%output%'
+
+WriteOutputDelta
+- write out %outputDelta% 
+=== Terminal ends ===
+
+=== Webserver starts === 
+Webserver
+- start webserver
+- write out 'webserver start on http://localhost:8080' 
+=== Webserver ends ===
+
+=== Webserver starts === 
+WebserverMoreOptions
+- set var %host% as '127.0.0.1'
+- set var %port% as 7070
+- start webserver
+    host %host%
+    port %port%, max upload size 10mb, ascii
+    public path: public
+- write out 'webserver start on http://%host%:%port%/hello.goal' 
+=== Webserver ends ===
+
+=== api starts === 
+ShowDate - GET, do not cache or store
+- write %Now% 
+=== api ends ===
+
+=== api starts === 
+ShowList - GET, browser cache 2 days
+- create List<int> from 0 to 10, write to %list%
+- write out %list.toJson()% 
+=== api ends ===
+
+=== public starts === 
+/ Since this goal is not in api folder, we need to define the Method(GET|POST|DELETE|PATCH|OPTION|HEAD|PUT) in the title of the goal. 
+Hello - GET
+- write out 'Hello PLang world' 
+=== public ends ===

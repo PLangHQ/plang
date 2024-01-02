@@ -1,0 +1,24 @@
+Start
+- get all available settings, write to %settings%
+- go through each %settings%, call !Modules
+- ask user, 'What settings would you like to access, type in nr.', into %nr%
+- if %nr% is a number then call !ModuleSetting , else call !Start
+
+Modules
+- write out '%idx%. %item.FullName%'
+
+ModuleSetting
+- [settings] get all method in settings %module%, write to %methods%
+- [llm] system: These are methods available, convert them to natural language
+        put them in numbered list
+        assistant: %methods%
+- ask user, input= %result%, write to %methodSelected%
+- [llm] system: format user input to match method that is provided, 
+            if no method fits, return {error:string},
+        assistant: %methods%
+        user: %methodSelected%
+        write to %methodMapping%
+- [settings] call dynamic method with %methodMapping%, write to %result%
+- if %result% is false
+    - write out 'Could not map function'
+- call !ModuleSetting

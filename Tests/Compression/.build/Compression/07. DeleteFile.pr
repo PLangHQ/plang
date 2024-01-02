@@ -1,0 +1,27 @@
+{
+  "Action": {
+    "FunctionName": "DeleteFile",
+    "Parameters": [
+      {
+        "Type": "String",
+        "Name": "fileName",
+        "Value": "file.zip"
+      }
+    ],
+    "ReturnValue": null
+  },
+  "Text": "delete file.zip",
+  "Reload": false,
+  "LlmQuestion": {
+    "type": "PLang.Modules.BaseBuilder",
+    "system": "Parse user command.\r\n\r\nSelect the correct function from list of available functions based on user command\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")%\r\nwhere the settingName would be the api key, config key, \r\ndefaultValue for settings is the usual value given, make it \"\" if no value can be default\r\nExplain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nType: the object type in c#\r\nName: name of the variable\r\nValue: %variable% or hardcode string that should be used\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nReturnValue: Only if the function returns a value, else null\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: {\"Type\": string,\n\"VariableName\": string}}",
+    "question": "command: delete file.zip",
+    "assistant": "## functions available defined in csharp ##\r\nString ReadBinaryFileAndConvertToBase64(String path) \nString ReadTextFile(String path) \nStream ReadFileAsStream(String path) \nvoid CreateExcelFile(String path, String[] variablesToWriteToExcel, Int32? excelType = 0, Char? seperator = ,, Boolean? printHeader = True, Boolean? overwrite = False)  // excelType=0 is XSLX, excelType=1 is CSV. \nvoid ReadExcelFile(String path, Boolean? useHeaderRow = True, Dictionary`2? sheetsToVariable)  // sheetsToVariable is name of sheet that should load into variable. Sheet1=%products% will load Sheet1 into %product% variable, Sheet2-A1:H53=%categories%, will load data from A1:H53 into %categories%. \nList`1 ReadMultipleTextFiles(String folderPath, String filePattern, Boolean? includeAllSubfolders = False) \nvoid WriteToFile(String path, String content, Boolean? overwrite = False) \nvoid AppendToFile(String path, String content, String? seperator) \nvoid CopyFile(String sourceFileName, String destFileName) \nvoid DeleteFile(String fileName) \nIFileInfo GetFileInfo(String fileName) \nvoid CreateDirectory(String directoryPath) \nvoid DeleteDirectory(String directoryPath) \nBoolean DirectoryExists(String directoryPath) \nBoolean FileExists(String directoryPath) \n\r\n## functions available ends ##",
+    "model": "gpt-4",
+    "caching": true,
+    "Reload": false,
+    "PreviousResult": null,
+    "RawResponse": "{\"FunctionName\": \"DeleteFile\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"fileName\",\n\"Value\": \"file.zip\"}]}"
+  },
+  "RunOnBuild": false
+}
