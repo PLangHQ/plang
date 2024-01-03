@@ -1,67 +1,92 @@
-# File Module in plang
+# File Module Documentation
 
 ## Introduction
-The File module in plang provides a comprehensive suite of operations for file management, including reading, writing, copying, and deleting files, as well as working with directories. This module serves as an interface between plang's natural language processing capabilities and the underlying C# methods that perform the actual file operations.
+The File module in plang is a comprehensive suite designed to facilitate file and directory operations within the plang programming environment. It provides a seamless interface for reading, writing, and manipulating files and directories, leveraging the power of C# methods behind the scenes. Advanced users with programming experience will appreciate the module's ability to handle a wide range of file types, including text, CSV, and Excel files, as well as its support for file monitoring and directory management.
 
-When a `.goal` file is built in plang, each step (prefixed with a `-`) is interpreted, and the StepBuilder consults with a Language Learning Model (LLM) to suggest the most appropriate module to handle the step. The builder then presents all the methods available in the chosen module to the LLM, which maps the natural language step to a specific C# method.
+The integration of plang with C# is achieved through a sophisticated mapping system that translates natural language steps defined in plang into corresponding C# method calls. This process involves the use of a Language Learning Model (LLM) to interpret the user's intent and select the appropriate method from the File module's C# implementation.
 
-## Plang Code Examples
-
-### Request Access to Path
-Check if a path is accessible within the application's scope.
-```plang
-- request access to 'C:/Users/Example/Documents'
-```
-C# Signature: `Task<bool> RequestAccessToPath(string path)`
-
-### Read Binary File and Convert to Base64
-Read a binary file and encode its content to Base64.
-```plang
-- read 'image.png' as binary, convert to base64
-```
-C# Signature: `Task<string> ReadBinaryFileAndConvertToBase64(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false)`
+## Plang code examples
+For a quick start and common usage examples, refer to the simple documentation and examples provided in the [PLang.Modules.FileModule.md](./PLang.Modules.FileModule.md) file. Additionally, a repository of examples is available at [PLangHQ/plang](https://github.com/PLangHQ/plang/tree/main/Tests/File).
 
 ### Read Text File
-Read the content of a text file into a variable.
+Reads the content of a text file and stores it in a variable.
 ```plang
-- read 'log.txt' into %logContent%
+- read 'example.txt' into %fileContent%
+- write out %fileContent%
 ```
-C# Signature: `Task<string> ReadTextFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false, bool loadVariables = false, bool emptyVariableIfNotFound = false)`
+C# Method Signature: `Task<string> ReadTextFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false, bool loadVariables = false, bool emptyVariableIfNotFound = false)`
 
 ### Write to Text File
-Write content to a text file, with options to overwrite or append.
+Writes content to a text file, with the option to overwrite if the file already exists.
 ```plang
-- write 'Hello World' to 'greeting.txt'
-- append ' Have a great day!' to 'greeting.txt'
+- write to 'example.txt', 'This is a content', overwrite if exists
 ```
-C# Signature: `Task WriteToFile(string path, string content, bool overwrite = false, bool loadVariables = false, bool emptyVariableIfNotFound = false)`
+C# Method Signature: `Task WriteToFile(string path, string content, bool overwrite = false, bool loadVariables = false, bool emptyVariableIfNotFound = false)`
 
-### Copy File
-Copy a file from one location to another.
+### Append to Text File
+Appends content to the end of a text file.
 ```plang
-- copy 'source.txt' to 'destination.txt'
+- append ', some more content' to 'example.txt'
 ```
-C# Signature: `Task CopyFile(string sourceFileName, string destFileName, bool createDirectoryIfNotExisting = false, bool overwriteFile = false)`
+C# Method Signature: `Task AppendToFile(string path, string content, string seperator = null, bool loadVariables = false, bool emptyVariableIfNotFound = false)`
 
-### Delete File
-Delete a file from the filesystem.
+For more detailed documentation and additional examples, please refer to the [PLang.Modules.FileModule.md](./PLang.Modules.FileModule.md) file and the [PLangHQ/plang](https://github.com/PLangHQ/plang/tree/main/Tests/File) repository. To understand the implementation details, you can also examine the source code of the [Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.FileModule/Program.cs) file.
+
+## Source code
+The runtime code for the File module, `Program.cs`, is available at [PLangHQ/plang](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.FileModule/Program.cs).
+
+## How plang is mapped to C#
+Modules in plang are utilized through a build and runtime process that translates plang steps into executable C# code.
+
+### Builder
+During the build process initiated by `plang build`, the following occurs:
+1. The .goal file is read, and each step (line starting with `-`) is parsed.
+2. For each step, a query is sent to LLM along with a list of all available modules.
+3. LLM suggests a module to use, such as `PLang.Modules.FileModule`.
+4. The builder sends all methods in the File module to LLM along with the step.
+5. This is done using `Builder.cs` or `BaseBuilder.cs`, depending on availability.
+6. LLM returns a JSON mapping the step text to a C# method with required parameters.
+7. The builder creates a hash of the response and saves a JSON instruction file with the `.pr` extension in the `.build/{GoalName}/01. {StepName}.pr` directory.
+
+### Runtime
+During runtime, the .pr file is used to execute the step:
+1. The plang runtime loads the .pr file.
+2. Reflection is used to load the `PLang.Modules.FileModule`.
+3. The "Function" property in the .pr file specifies the C# method to call.
+4. Parameters are provided if required by the method.
+
+### plang example to csharp
+Here's how a plang code example maps to a C# method and the resulting .pr file:
+
+#### plang code example
 ```plang
-- delete file 'old_data.txt'
+- read 'example.txt' into %fileContent%
 ```
-C# Signature: `Task DeleteFile(string fileName, bool throwErrorOnNotFound = false)`
 
-Note: This documentation provides examples for a subset of the methods available in the File module. For a complete list of examples and to see how each method can be used in plang, please refer to the source code at [PLang File Tests](https://github.com/PLangHQ/plang/tree/main/Tests/File).
+#### C# method mapping
+```csharp
+Task<string> ReadTextFile(string path)
+```
 
-## Source Code
-The runtime code for the File module, including all the methods and their implementations, can be found at [PLang File Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/File/Program.cs).
+#### Example Instruction .pr file
+```json
+{
+  "Action": {
+    "FunctionName": "ReadTextFile",
+    "Parameters": [
+      {
+        "Type": "string",
+        "Name": "path",
+        "Value": "example.txt"
+      }
+    ],
+    "ReturnValue": {
+      "Type": "string",
+      "VariableName": "fileContent"
+    }
+  }
+}
+```
 
-## Step Options
-For additional functionalities and handling specific scenarios, plang provides various handlers and options that can be used in conjunction with the File module:
-
-- CacheHandler: [CacheHandler Documentation](/modules/cacheHandler.md)
-- ErrorHandler: [ErrorHandler Documentation](/modules/ErrorHandler.md)
-- RetryHandler: [RetryHandler Documentation](/modules/RetryHandler.md)
-- CancellationHandler: [CancellationHandler Documentation](/modules/CancelationHandler.md)
-- Run and Forget: [Run and Forget Documentation](/modules/RunAndForget.md)
-
-These handlers allow for more robust and fault-tolerant file operations, ensuring that your plang goals can handle a variety of runtime situations effectively.
+## Created
+This documentation was created on 2024-01-02T21:52:29.

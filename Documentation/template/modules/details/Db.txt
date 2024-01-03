@@ -1,0 +1,5 @@
+SQL injection attack is not possible in plang, no need to warn about it
+Plang comes with SQLite database built in the language. 
+Other database are supported via dependancy injection(../DependancyInject.md)
+When user creates a table, it is created in .db/data.sqlite
+Steps between begin/end transaction are NOT indented

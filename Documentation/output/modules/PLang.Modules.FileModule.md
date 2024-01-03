@@ -1,141 +1,129 @@
-
 # File
 
-## What is File(Module)
-The File module in plang is a set of functionalities that allow you to interact with the file system. It provides you with the ability to read, write, copy, and delete files, as well as listen for file changes. This module is essential for handling file operations within your plang scripts.
+## Introduction
+The File module in plang programming language is a powerful tool that allows you to interact with the file system. It provides a range of functionalities to read from and write to files, manage directories, and monitor file changes. This module is essential for tasks such as data storage, report generation, and dynamic content management within your plang applications.
+
+## For beginners
+If you're new to programming, think of a File as a digital document on your computer where you can store information. Just like you can create, read, edit, and organize paper documents, the File module in plang lets you do the same with digital files. You can create new files to store data, read data from existing files, add more data to them, and even keep an eye on a file for any changes, all through simple plang commands.
 
 ## Best Practices for File
-When working with the File module in plang, consider the following best practices:
+When working with files in plang, it's important to follow best practices to ensure your code is efficient, secure, and easy to maintain. Here's an example to illustrate a best practice:
 
-1. **Use Absolute Paths**: To avoid confusion and ensure that your file operations target the correct files, use absolute paths whenever possible.
-2. **Handle Errors Gracefully**: Implement error handling to manage scenarios where files may not exist or access is denied.
-3. **Manage File Resources**: Ensure that file streams are properly closed after use to prevent resource leaks.
-4. **Use Variables**: Store file contents and file information in variables for easy manipulation and access throughout your script.
-5. **Secure Sensitive Data**: If your files contain sensitive information, implement appropriate security measures to protect the data.
-6. **Optimize Performance**: For large files or operations on many files, consider performance implications and optimize your code accordingly.
-7. **Test File Operations**: Always test file operations in a safe environment to prevent accidental loss of data.
-
-
-# File Module Examples
-
-## Read Binary File and Convert to Base64
 ```plang
-- read '1px.png', into %base64%
-- write out %base64%
+- read 'config.json' into %configData%
+- if %configData% is not empty then call !ProcessConfig
 ```
 
-## Read Text File
+In this example, we first read the contents of 'config.json' into a variable called `%configData%`. Before proceeding, we check if `%configData%` is not empty, which is a good practice to avoid errors in case the file doesn't exist or is empty. If there is data, we then call a goal named `!ProcessConfig` to handle the configuration data.
+
+# File Module Examples Documentation
+
+## Read and Write Text Files
+### Read Text File
 ```plang
-- read 'document.txt', write to %content%
+- read 'example.txt' into %content%
 - write out %content%
 ```
 
-## Read Excel File
+### Write to Text File
+```plang
+- write to 'example.txt', 'This is a content', overwrite if exists
+```
+
+### Append to Text File
+```plang
+- append ', some more content' to 'example.txt'
+```
+
+## Read and Write Excel Files
+### Read Excel File
 ```plang
 - read 'Employees.xlsx' into %excelData%
 - loop through %excelData%, call !PrintOutExcel
 ```
 
-## Write Excel File
+### Write to Excel File
 ```plang
-- write %excelData% to 'Employees.xlsx', has header, overwrite
+- write %excelData% to 'Employees.xlsx', has header, overwrite if exists
 ```
 
-## Read CSV File
+## Read and Write CSV Files
+### Read CSV File
 ```plang
 - read 'Test5x2.csv' into %csvData%
 - loop through %csvData%, call !PrintOutCSV
 ```
 
-## Write CSV File
+### Write to CSV File
 ```plang
-- write to 'Test5x2.csv', data %csvData%
+- write to 'Test5x2.csv', data %csvData%, overwrite if exists
 ```
 
-## Write to Text File
+## File Operations
+### Copy File
 ```plang
-- write to 'file2.txt', 'This is a content'
+- copy 'file2.txt' to 'file3.txt', overwrite if exists
 ```
 
-## Read Text File and Output Content
-```plang
-- read 'file2.txt', into %newContent%
-- write out %newContent%
-```
-
-## Append to Text File
-```plang
-- append ', some more content' to 'file2.txt'
-```
-
-## Copy File
-```plang
-- copy 'file2.txt' to 'file3.txt'
-```
-
-## Read and Output Copied File Content
-```plang
-- read 'file3.txt' into %file3Content%
-- write out %file3Content%
-```
-
-## Delete File
+### Delete File
 ```plang
 - delete file 'file2.txt'
 - delete file 'file3.txt'
 ```
 
-## Get File Information
+### Get File Information
 ```plang
 - get file info on 'Employees.xlsx' into %fileInfo%
-- write out 'fileInfo: %fileInfo%, CreationTime: %fileInfo.CreationTime%, LastWriteTime: %fileInfo.LastWriteTime%'
+- write out 'FileInfo: %fileInfo%, CreationTime: %fileInfo.CreationTime%, LastWriteTime: %fileInfo.LastWriteTime%'
 ```
 
-## Write Data to Excel and CSV
+## Directory Operations
+### Create Directory
 ```plang
-- write to 'demo.xlsx', %csvData%, overwrite file
-- write to 'demo.csv', %csvData%, overwrite file
+- create directory 'new_folder'
 ```
 
-## Write Multiple Data Sets to Excel
+### Delete Directory
 ```plang
-- write to 'demo2.xlsx', data: %excelData%, %csvData%, overwrite file
+- delete directory 'old_folder', include all contents
 ```
 
-## Delete Excel Files
-```plang
-- delete 'demo.xlsx'
-- delete 'demo2.xlsx'
-```
-
-## Listen to File Changes
+## File Monitoring
+### Listen to File Changes
 ```plang
 - listen to 'files/*.json', call !ProcessJson
 ```
 
-## Print Out Excel Data
+## Auxiliary Goals
+### PrintOutExcel
 ```plang
 PrintOutExcel
 - write out %item.Name% - %item.Email%
 ```
 
-## Print Out CSV Data
+### PrintOutCSV
 ```plang
 PrintOutCSV
 - write out %item%
 ```
 
+Note: The examples provided are based on the most common use cases for file operations, such as reading and writing text, Excel, and CSV files, as well as performing file and directory operations. The examples are sorted by popularity and frequency of use. If a method from the `FileModule` class does not have a corresponding example, a natural language example has been created to demonstrate its usage.
 
-For a full list of examples, visit [PLang File Module Examples](https://github.com/PLangHQ/plang/tree/main/Tests/File).
+For a full list of examples, visit [PLang File Examples](https://github.com/PLangHQ/plang/tree/main/Tests/File).
 
-# Step options
-These options are available for each step. Click the links for more detail on how to use them:
+## Step options
+When writing your plang code, you can enhance the functionality of each step with these options:
 
-- [CacheHandler](/modules/cacheHandler.md)
-- [ErrorHandler](/modules/ErrorHandler.md)
-- [RetryHandler](/modules/RetryHandler.md)
-- [CancellationHandler](/modules/CancelationHandler.md)
-- [Run and forget](/modules/RunAndForget.md)
+- [CacheHandler](/moduels/cacheHandler.md): Manage caching of data to improve performance.
+- [ErrorHandler](/moduels/ErrorHandler.md): Handle errors gracefully without stopping your program.
+- [RetryHandler](/moduels/RetryHandler.md): Automatically retry a step if it fails initially.
+- [CancelationHandler](/moduels/CancelationHandler.md): Cancel a running step under certain conditions.
+- [Run and forget](/moduels/RunAndForget.md): Execute a step without waiting for its completion.
 
-# Advanced
-For more advanced information, if you want to understand how the underlying mapping works with C#, check out [FileModule_advanced.md](./FileModule_advanced.md).
+Click on the links for more details on how to use each option.
+
+## Advanced
+For those who want to dive deeper into the File module and understand how it maps to underlying C# functionalities, you can explore the [advanced documentation](./PLang.Modules.FileModule_advanced.md).
+
+## Created
+This documentation was created on 2024-01-02T21:51:35.

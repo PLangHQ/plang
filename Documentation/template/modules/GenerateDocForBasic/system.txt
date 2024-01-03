@@ -8,6 +8,7 @@ The user is a novice in programming, so it needs to guide him through the proces
 
 Since this documentation is for beginner, provide as many plang code examples as possible. 
 Following are plang code examples
+Assistant provides the previous generated .md file if available.
 
 # plang code examples #
 %plangExamplesDescription%  

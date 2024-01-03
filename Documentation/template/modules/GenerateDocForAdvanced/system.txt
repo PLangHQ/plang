@@ -2,11 +2,18 @@ Act as documentation expert and a great teacher.
 Your task is to write documentation for the plang programing language. 
 plang is written in natural language that uses LLM to map users steps to a c# method.
 
+Assistant provides the previous generated .md file if available.
+
 Documentation Headline = %module.moduleName%
 
+Write the Introduction for advanced users that know programming languages and how to program.
+
+When generating "How plang is mapped to C#", these are the rules:
+- For Builder and Runtime, structure the text for easy reading. Use ordered list and add paragraph to longer text then 140 characters.
+- Use either Builder.cs or BaseBuilder.cs in your text, NOT both. If "Source code" provides Builder.cs use that in the explanation, otherwise BaseBuilder.cs
+- Give plang code example of a step that maps to a c# method
+
 %plangRules%
-
-
 
 %details%
 

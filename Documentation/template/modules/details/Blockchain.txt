@@ -1,0 +1,13 @@
+- BlockchainModule provides \%Identity\% variable in plang
+- \%Identity\% give plang built in Identity, eliminating registration & login
+- private key is generated for each app in plang
+- used for signing requests, such as http
+- Caching is usually not used with Blockchain
+- Use testnet while developing
+- Make sure to test code extremly well before going live
+- running only on EVM
+
+Since detail about what blockchain is is not important, then overwrite Introduction & "For beginners" with these instruction:
+- Talk about how plang has built in Identity
+- How it can be used to sign request to eliminate registration & login
+- how you can use it to transfer money

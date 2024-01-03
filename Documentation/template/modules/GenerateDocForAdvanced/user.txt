@@ -1,29 +1,77 @@
 Generate the documentation you recommend is best for an programmer that knows how to program.
 User is already aware of what the syntax is of the language. 
 
-This is how modules are used in plang. On plang build a .goal file is read, each step in the goal file (line starts with -)
-is parsed and with a question(https://github.com/PLangHQ/plang/blob/main/PLang/Building/StepBuilder.cs)
-the builder sends to LLM a list of all available modules. The LLM then gives a suggestion of module to use. 
-Then builder sends all the method in that module to LLM along with the step and the LLM maps that step text to a method.
-
 Structure of documentation
-#Headline
-#Introduction 
-    - Brief overview of the %module.moduleName% module and its purpose.
-    - Explanation of how `plang` integrates with C# methods.
-# Plang code examples
-- go through each method in the c# module
+# Headline
+## Introduction 
+- Detailed overview of the %module.moduleName% module and its purpose.
+- Explanation of how `plang` integrates with C# methods.
+## Plang code examples
+- simple documentation and examples can be found at('./%module.namespace%.md')
+- the repository for examples can be found at https://github.com/PLangHQ/plang/tree/main/Tests/%module.moduleName%
+- Give 1-3 plang code examples, 
+    Choose plang example that would be a most common usage
     Write short description. 
     Write 1-3 plang code examples that map to that method. 
     Write the default c# signature
+    When c# method returns a value, the step should end in the statement ' write to \%variable\%', choose variable name that fits the example
     Repeat for next method
-- if you dont give plang examples for all methods, write a Note about that, tell the user to look at Program.cs source code
-- full list of examples can be found at https://github.com/PLangHQ/plang/tree/main/Tests/%module.moduleName%
-# Source code
+- Not all methods are demostrated, for more detail
+    - simple documentation and all examples can be found at('./%module.namespace%.md')
+    - the repository for examples can be found at https://github.com/PLangHQ/plang/tree/main/Tests/%module.moduleName%
+    - tell the user to look at Program.cs source code(https://github.com/PLangHQ/plang/tree/main/PLang/Modules/%module.namespace%/Program.cs)
+
+## Source code
 %SourceCode%
-# Step options
-- CacheHandler(/moduels/cacheHandler.md)
-- ErrorHandler(/moduels/ErrorHandler.md)
-- RetryHandler(/moduels/RetryHandler.md)
-- CancelationHandler(/moduels/CancelationHandler.md)
-- Run and forget(/moduels/RunAndForget.md)
+
+## How plang is mapped to C#
+This is how modules are used in plang. 
+
+### Builder 
+When user runs plang build, the .goal file is read
+- each step in the goal file (line starts with -) is parsed
+- for each step a question is sent to LLM (https://github.com/PLangHQ/plang/blob/main/PLang/Building/StepBuilder.cs)
+- with the question, the StepBuilder sends to LLM a list of all available modules. 
+The LLM returns a suggestion of module to use, in this case %module.namespace% 
+Then builder sends all the method in the %module.moduleName% to LLM along with the step
+- This is done either with Builder.cs(see source code) or BaseBuilder.cs(https://github.com/PLangHQ/plang/blob/main/PLang/Modules/BaseBuilder.cs) depending if Builder.cs is available
+The LLM returns with a json that maps that step text to a method in c# and with parameters needed.
+The Builder.cs or BaseBuilder.cs (depending on if Builder.cs is available)
+- create hash of the response to store with the instruction file
+- save an json instruction file with the .pr extension at location .build/{GoalName}/01. {StepName}.pr
+
+### Runtime
+The .pr file is then used by the plang runtime to execute the step.
+- plang runtime loads the .pr file
+- plang runtime uses reflection to load the %module.namespace% 
+- the .pr file will contain "Function" property,
+- The Function property will tell the runtime what c# method to call
+- Parameters might be provided as well if the method requires it
+
+### plang example to csharp
+- give a plang code example
+- map code plang code example to method in %module.moduleName%
+- You should show how the plang code example maps to .pr file
+- replace {NameOfFunctionInCSharpModule}, {parameterType}, {parameterName}, {parameterValue} with the example
+- default values dont need to be defined in json .pr file.
+- ReturnValue is only if c# method returns value
+
+### Example Instruction .pr file.
+{
+  "Action": {
+    "FunctionName": "{NameOfFunctionInCSharpModule}",
+    "Parameters": [
+      {
+        "Type": "{parameterType}",
+        "Name": "{parameterName}",
+        "Value": "{parameterValue}"
+      },...],
+    "ReturnValue": {
+      "Type": "{parameterType}",
+      "VariableName": "{parameterName}"
+    }
+  }
+}
+
+## Created
+This documentation is created %Now.ToString("s")%

@@ -24,11 +24,11 @@ GenerateModuleDocumentation
 LoadVars
 - read file '/template/modules/details/%module.moduleName%.txt', into %details%, empty if file not found
 - read file '/template/modules/plangRules.txt', into %plangRules%, empty if file not found 
-- set variable %SourceCode%, 'Progam.cs is the runtime code, can be found at https://github.com/PLangHQ/plang/tree/main/PLang/Modules/%module.moduleName%/Program.cs'
+- set variable %SourceCode%, 'Progam.cs is the runtime code, can be found at https://github.com/PLangHQ/plang/tree/main/PLang/Modules/%module.namespace%/Program.cs'
 - if ../PLang/Modules/%module.moduleName%Module/Builder.cs exists, then
-    - append to variable %SourceCode%, 'Builder.cs is for building of step, can be found at https://github.com/PLangHQ/plang/tree/main/PLang/Modules/%module.moduleName%/Builder.cs'
+    - append to variable %SourceCode%, 'Builder.cs is for building of step, can be found at https://github.com/PLangHQ/plang/tree/main/PLang/Modules/%module.namespace%/Builder.cs'
 - if ../PLang/Modules/%module.moduleName%Module/ModuleSettings.cs exists, then
-    - append to variable %SourceCode%, new line seperator, 'ModuleSettings.cs is settings for the module, can be found at https://github.com/PLangHQ/plang/tree/main/PLang/Modules/%module.moduleName%/ModuleSettings.cs'
+    - append to variable %SourceCode%, new line seperator, 'ModuleSettings.cs is settings for the module, can be found at https://github.com/PLangHQ/plang/tree/main/PLang/Modules/%module.namespace%/ModuleSettings.cs'
 
 GeneratePlangExamples
 - get all *.goal files from '../Tests/%module.moduleName%/, write to %testFiles%
@@ -49,7 +49,6 @@ GenerateDocForBasic
         user: %user%
         model:'gpt-4-1106-preview'
         max length: 4k
-        response: .md
         write to %documentation%
 - [code] replace "[PlangCodeExamples]" in %documentation% with %plangExamplesDescription%, write to %documentationOut%(string)
 - write %documentationOut% to /output/modules/%module.namespace%.md, overwrite
@@ -64,7 +63,7 @@ GenerateDocForAdvanced
                     %module%
                     # csharp methods #'
         model:'gpt-4-1106-preview'
-        max length: 4k
+        max length: 4k 
         write to %advancedDoc%
 - write %advancedDoc% to /output/modules/%module.namespace%_advanced.md, overwrite
 

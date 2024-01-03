@@ -1,4 +1,5 @@
 Use these example to build a list of example for documentation.
+Sort examples in the order of most populare usage. Use your knowledge of the world to determine what method would be mostly used.
 If example is not provided for a method description, create an example using natural language.
 Large numbers should be represented in a human readable form, e.g. instead of bytes use mb. 
 Parameters should be in natural language, e.g. parameter called maxSize could be come 'max size 3mb', expiresInSeconds could be come 'expires in 2 weeks'

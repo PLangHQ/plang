@@ -1,4 +1,4 @@
-MixedCalls
+Examples
 - [block] get current rpc server, write to %server%
 - write out %server.ToJson()%
 - get wallets, write to %wallets%

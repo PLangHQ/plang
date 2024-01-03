@@ -13,6 +13,10 @@ Tasks
 - go through %tasks%, call !PrintOut
 - delete from  table tasks
 - end transaction
+- select * from tasks
+    cache for 10 minutes
+    retry 2 times over 1 minutes
+    write to %tasks%
 
 PrintOut
 - write %item.description% - %item.due_date%

@@ -1,0 +1,5 @@
+# Guide for LLM when generating doc #
+files dont need to exists, the variable will simply be empty
+no need to close streams, plang with handle that
+use relative path (/this/is/a/path) instead of absolute(c:\this\is\path)
+# Guide for LLM when generating doc #

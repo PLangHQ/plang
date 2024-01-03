@@ -36,7 +36,7 @@
     "caching": true,
     "Reload": false,
     "PreviousResult": null,
-    "RawResponse": "{\r\n  \"FunctionName\": \"WriteToFile\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"String\",\r\n      \"Name\": \"path\",\r\n      \"Value\": \"/output/modules/%module.namespace%.md\"\r\n    },\r\n    {\r\n      \"Type\": \"String\",\r\n      \"Name\": \"content\",\r\n      \"Value\": \"%documentationOut%\"\r\n    },\r\n    {\r\n      \"Type\": \"Boolean\",\r\n      \"Name\": \"overwrite\",\r\n      \"Value\": true\r\n    }\r\n  ]\r\n}"
+    "RawResponse": null
   },
   "RunOnBuild": false
 }
