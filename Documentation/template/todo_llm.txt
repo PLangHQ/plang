@@ -18,13 +18,13 @@ Setup
 - add column 'category' to tbl 'Todos'                
 ```
 
-2. Change ui/SaveTask.goal
+2. Change NewTask.goal
 I want to categories my tasks, but having the user doing that, 
 makes for a more complex user experience, so lets deligate it to LLM
 
-Lets modify ui/SaveTask.goal, like this
+Lets modify NewTask.goal, like this
 ```plang
-SaveTask
+NewTask
 - if %task% or %due_date% is empty, throw error
 - insert into Todos, %task%, %due_date%, write to %id%
 - call !Categorize, dont wait
@@ -51,3 +51,48 @@ it simply does indexOf the module name from the content inside the []
 scheme in the llm, forces the LLM to return specific structure. that structure is automatically loaded as a variable, as you can see we can access %category% in next step
 scheme is not required, only when you want structured response. This is extremly powerfull.
 for more on llm, check out the LlmModule doc[./modules/PLang.Modules.LlmModule.md]
+
+
+3. ### Test the API Endpoints
+
+Lets modify our `TestNewTask.goal` file (just change the task text)
+
+- Modify `TestNewTask.goal` file in the `test` directory with the following code:
+
+    ```plang
+    TestNewTask
+    - post http://localhost:8080/api/newtask
+        {
+            "task":"Buy some Lego",
+            "due_date": "2023-27-12"
+        }
+        write to %result%
+    - write out %result%
+    ```
+
+Then, execute the `TestNewTask.goal` file:
+
+- Press F5 in VS Code, in the prompt window type in `TestNewTask` and press enter
+- or if you prefer terminal
+
+    ```bash
+    plang exec test/TestNewTask
+    ```
+
+Now if you open the http://localhost:8080/api/List, you should see that your new task has a category.
+
+Alternatively, you can test the API endpoints using your favorite REST client.
+
+To create a new task, send a POST request to `http://localhost:8080/api/newtask` with the following JSON body:
+
+```json
+{
+    "task":"Buy some Lego",
+    "due_date": "2023-27-12"
+}    
+```
+
+You can now go into two directions:
+- If you are running on a Windows machine (sorry, only Windows for now), let's change this [into a desktop app](./Todo_UI.md)
+- If you like to learn how to use `%Identity%` in your web service, [we can do that for our Todo service](./Todo_Identity.md)
+- Else, check out some more [Examples]() or other [Apps written by others]() to start learning. It is all open source and you can view all the code.

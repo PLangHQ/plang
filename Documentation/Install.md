@@ -16,13 +16,13 @@ To install Plang on your Windows machine, follow these steps:
 - Navigate to the Plang download page at [http://plang.is/download](http://plang.is/download).
 - Download the Plang zip file.
 - Unzip the file to a preferred location, such as `C:\plang\`.
-- Add `C:\plang\` to your system's PATH environment variable:
+- Add `C:\plang\` (or where you put it) to your system's PATH environment variable:
   - Right-click on 'This PC' or 'Computer' on your desktop or in File Explorer.
   - Select 'Properties'.
   - Click on 'Advanced system settings'.
   - In the System Properties window, click on the 'Environment Variables...' button.
   - In the Environment Variables window, under 'System variables', find and select the 'Path' variable, then click 'Edit...'.
-  - In the Edit Environment Variable window, click 'New' and add `C:\plang\`.
+  - In the Edit Environment Variable window, click 'New' and add `C:\plang\` (or where you put it).
   - Click 'OK' to close each window.
 
 ## Installing Plang on Linux
@@ -63,6 +63,4 @@ export PATH=$PATH:/usr/local/plang/
 
 ## Next Steps
 
-After successfully installing Plang on your system, the next step is to set up your development environment. Please proceed to the [Install Development Environment (IDE) guide](./IDE.md) for detailed instructions on how to configure your IDE for Plang development.
-
-Happy coding with Plang!
+You have now installing Plang on your system, the next step is to set up your development environment. Please proceed to the [Install Development Environment (IDE) guide](./IDE.md) for detailed instructions on how to configure your IDE for Plang development.

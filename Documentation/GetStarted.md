@@ -51,4 +51,4 @@ Watch this helpful video tutorial: [Hello World in Plang](https://www.youtube.co
 7. **Output**: Your code will compile and execute, displaying "Hello plang world" on the screen.
 
 
-Congratulations! You've now made your first plang app, next let's [create a Todo app](Todo_webservice.md)
+Congratulations! You've now made your first plang app, next let's [create a Todo app](Todo_webservice.md) where you will learn how to talk with a database and  connect to an LLM (AI) service

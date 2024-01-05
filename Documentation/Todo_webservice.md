@@ -30,7 +30,7 @@ Setup
                 completed(bool, false), created(datetime, now)
 ```
 
-Note: Plang will automatically create and manage an `id` column for the table. By allowing Plang to handle `id` you enable syncing between devices. It's a technique called Event sourcing. You don't need to know anything about at this stage.
+Note: Plang will automatically create and manage an `id` column for the table. By allowing Plang to handle `id` you enable syncing between devices. It's a technique called Event sourcing. You don't need to know anything about it at this stage.
 
 ### 3. Build and Run `Setup.goal`
 
@@ -74,7 +74,7 @@ List
 - select everything from Todos, write to %todos%
 - write out %todos%
 ```
-Note: if you are familiar with SQL, you could also write `select * from Todos`, it is just in a more natural language
+Note: if you are familiar with SQL, you could also write `select * from Todos`, previous statment is just in a more natural language
 
 ### 8. Build and Run the Code
 If you are using VS Code, then press F5 on your keyboard to build and run the code.
@@ -106,7 +106,7 @@ Lets create some data in your Todo list.
 
 Then, execute the `TestNewTask.goal` file:
 
-- Press F5 in VS Code, in the prompt window type in `TestNewTask` and press enter
+- Press F5 in VS Code, in the prompt window type in `TestNewTask` and press enter. When you type in `TestNewTask` into the prompt, you are telling plang that you want to run a specific goal
 - or if you prefer terminal
 
     ```bash
@@ -125,8 +125,9 @@ To create a new task, send a POST request to `http://localhost:8080/api/newtask`
     "due_date": "2023-27-12"
 }
 ```
+### 10. Retrieve all tasks
 
-To retrieve the list of tasks, send a GET request to [http://localhost:8080/api/list](http://localhost:8080/api/list). This should return a list of tasks you've created.
+To retrieve the list of tasks, send a GET request to [http://localhost:8080/api/list](http://localhost:8080/api/list) (you can click the link). This should return a list of tasks you've created.
 
 Alternatively, you can create a new `GetList.goal` file in the `test` directory with the following code:
 

@@ -29,4 +29,9 @@ Setup
 - insert into docs Name='Settings'
             Guide='template/settings.txt'
             System='template/guidance/teacher.txt'
-            OutputFilename='output/Settings.md'                                    
+            OutputFilename='output/Settings.md'           
+- insert into docs Name='TodoIdentity'
+            Guide='template/todo_identity.txt'
+            System='template/guidance/teacher.txt'
+            OutputFilename='output/Todo_Identity.md'                                    
+

@@ -43,3 +43,9 @@ SaveTask
     ```bash
     plangw exec
     ```
+
+
+If you like to learn how to use `%Identity%` in your web service, [we can do that for our Todo service](./Todo_Identity.md)
+
+Check out some more [Examples]() or other [Apps written by others]() to start learning. It is all open source and you can view all the code.
+

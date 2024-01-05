@@ -42,25 +42,14 @@ In the `ui` folder, create another file named `NewTask.goal` with the following 
 ```plang
 NewTask
 - form, inputs for "task"(required) and "due_date"(required, type is date)
-- button "Save", call !SaveTask
+- button "Save", call !NewTask
 ```
-
-### 5. Create SaveTask.goal
-
-Next, create a file named `SaveTask.goal` in the `ui` folder with the following content:
-
-```plang
-SaveTask
-- if %task% or %due_date% is empty, throw error
-- insert into Todos, %task%, %due_date%
-- call !Todos
-```
-
-### 6. Run the App
+Note: NewTask goal was created in previous tutorial
+### 5. Run the App
 
 The app is now ready to run. 
 
-- Press F5 in your VS Code and it will start
+- Press F5 in your VS Code and it will start a window app and show you your todo list.
 - or if you prefer terminal, use `plangw.exe` (not `plang.exe`) to run it. 
 
     For Windows:
@@ -78,4 +67,4 @@ The app is now ready to run.
 
 Enjoy your new Todo Window App!
 
-Next, let see how to [modify the database and use AI](Todo_LLM.md)
+Check out some more [Examples]() or other [Apps written by others]() to start learning. It is all open source and you can view all the code.

@@ -68,6 +68,8 @@ Lets modify our `TestNewTask.goal` file (just change the task text)
             "task":"Buy some Lego",
             "due_date": "2023-27-12"
         }
+        write to %result%
+    - write out %result%
     ```
 
 Then, execute the `TestNewTask.goal` file:

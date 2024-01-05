@@ -3,3 +3,11 @@ Plang comes with SQLite database built in the language.
 Other database are supported via dependancy injection(../DependancyInject.md)
 When user creates a table, it is created in .db/data.sqlite
 Steps between begin/end transaction are NOT indented
+
+example of sql in plang would be:
+    select everything from Todos where %Identity%
+    update Todos set %task%, %due_date%
+
+the builder, queries the todos table and gets all the columns in the table Todos, 
+it then sends those columns to the LLM, which then can map the variables to the correct columns
+This is why it is required to run plang exec Setup.goal if you add/modify a table, before you build other goals that include sql statements.
