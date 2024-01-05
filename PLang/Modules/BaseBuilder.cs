@@ -79,7 +79,7 @@ namespace PLang.Modules
 
 		public record Parameter(string Type, string Name, object Value);
 		public record ReturnValue(string Type, string VariableName);
-		public record GenericFunction(string FunctionName, List<Parameter> Parameters, ReturnValue? ReturnValue)
+		public record GenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValue = null)
 		{
 
 		}
@@ -181,7 +181,7 @@ Type: the object type in c#
 Name: name of the variable
 Value: %variable% or hardcode string that should be used
 FunctionName: Name of the function to use from list of functions, if no function matches set as ""N/A""
-ReturnValue: Only if the function returns a value, else null
+ReturnValue: Only if the function returns a value, else null. Usually indicated by ' write into %variable%' by user command
 ".Trim();
 		}
 

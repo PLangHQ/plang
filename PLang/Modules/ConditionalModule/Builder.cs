@@ -58,11 +58,12 @@ Statement should return true
 
 The code will not be modified after it's generated.
 ALWAYS use long or long? instead of int or int?
-Name: is CamelCase name of class
+Name: should be in the CamelCase format
 Goals should be prefixed with !, e.g. Call !Process, Call !ConditionFalse
-Do not reference any DTO classes. Use dynamic.
+Do not reference any DTO classes. Use dynamic? if complex object is needed, else use object?.
 Strings are defined with double quote ("")
-Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. Add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into method. Assembly is already include, do not list it in Assemblies response.
+Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into method, but ONLY if needed. Assembly is already include, do not list it in Assemblies response.
+if condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. Process(dynamic? variable)
 
 Replace the dot(.) in variables with the letter α e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α
 Keep underscore in variables if defined by user, e.g.  if %user_id% is null => return user_id == null.
@@ -74,10 +75,10 @@ You must return ```csharp for the code implementation and ```json scheme
 'if %isValid% is true then', this condition would return true if %isValid% is true. 
 'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false.
 
-'if %data% (string) is null, call !CreateData, else !AppendData' => return string.IsNullOrEmpty(userIdentity);
-'if %exists% (bool) is null, call !CreateUser' => return exists == null;
-'if %exists% (bool) is not null, call !CreateUser' => return exists != null;
-'if %data.user_id% is empty, call !CreateUser' => return (dataαuser_id == null || (dataαuser_id is string str && string.IsNullOrEmpty(str))); //if we dont know the type of %data.user_id%
+'if %data% (string) is null, call !CreateData, else !AppendData' => public static bool Process(string? dataαuser_id) { return string.IsNullOrEmpty(userIdentity); }
+'if %exists% (bool) is null, call !CreateUser' => public static bool Process(bool? dataαuser_id) { return exists == null;}
+'if %exists% (bool) is not null, call !CreateUser' => public static bool Process(bool? dataαuser_id) { return exists != null;}
+'if %data.user_id% is empty, call !CreateUser' => public static bool Process(dynamic? dataαuser_id) { return (dataαuser_id == null || (dataαuser_id is string str && string.IsNullOrEmpty(str))); } //if we dont know the type of %data.user_id%
 ## examples ##
 ");
 			if (error != null)

@@ -320,7 +320,7 @@ namespace PLang.Modules.FileModule
 				fileSystem.File.WriteAllText(file.Path, content);
 			}
 		}
-		public async Task<List<FileInfo>> ReadMultipleTextFiles(string folderPath, string searchPattern, bool includeAllSubfolders = false)
+		public async Task<List<FileInfo>> ReadMultipleTextFiles(string folderPath, string searchPattern = "*", bool includeAllSubfolders = false)
 		{
 			folderPath = GetPath(folderPath);
 

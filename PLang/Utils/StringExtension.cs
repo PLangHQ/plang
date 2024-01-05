@@ -44,7 +44,7 @@ namespace PLang.Utils
 			return txt.Substring(0, maxLength) + trailing;
 		}
 
-		public static string ComputeHash(this string input, string mode = "keccak256", string salt = null)
+		public static string ComputeHash(this string input, string mode = "keccak256", string? salt = null)
 		{
 			if (!string.IsNullOrWhiteSpace(salt))
 			{
@@ -90,10 +90,10 @@ namespace PLang.Utils
 			switch(hashSize)
 			{		
 				case 384:
-					hmac = new HMACSHA384(signatureBytes);
+					hmac = new HMACSHA384(secretKeyBytes);
 					break;
 				case 512:
-					hmac = new HMACSHA512(signatureBytes);
+					hmac = new HMACSHA512(secretKeyBytes);
 					break;
 				case 256:
 				default:

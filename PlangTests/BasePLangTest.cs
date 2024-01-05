@@ -1,7 +1,9 @@
 ﻿using LightInject;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using NSubstitute;
 using PLang.Building.Events;
+using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Interfaces;
 using PLang.Runtime;
@@ -10,6 +12,8 @@ using PLang.Services.SettingsService;
 using PLang.Utils;
 using PLangTests.Mocks;
 using System.Data;
+using System.Runtime.CompilerServices;
+using static PLang.Modules.BaseBuilder;
 
 namespace PLangTests
 {
@@ -22,6 +26,7 @@ namespace PLangTests
 		protected ILlmService aiService;
 		protected IPseudoRuntime pseudoRuntime;
 		protected IEngine engine;
+		protected ISettingsRepository settingsRepository;
 		protected ISettings settings;
 		protected IEventRuntime eventRuntime;
 		protected ITypeHelper typeHelper;
@@ -57,8 +62,8 @@ namespace PLangTests
 			fileSystem.AddFile(Path.Join(Environment.CurrentDirectory, ".build", "info.txt"), Guid.NewGuid().ToString());
 			container.RegisterInstance<IPLangFileSystem>(fileSystem);
 			container.RegisterInstance<IServiceContainer>(container);
-			
-			container.RegisterInstance<ISettingsRepository>(new SqliteSettingsRepository(fileSystem, context));
+			this.settingsRepository = new SqliteSettingsRepository(fileSystem, context);
+			container.RegisterInstance<ISettingsRepository>(settingsRepository);
 
 			containerFactory = Substitute.For<IServiceContainerFactory>();
 			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStream>()).Returns(p =>
@@ -89,7 +94,7 @@ namespace PLangTests
 			outputStream = Substitute.For<IOutputStream>();
 			container.RegisterInstance(outputStream);
 
-			
+
 
 			encryption = Substitute.For<IEncryption>();
 			container.RegisterInstance(encryption);
@@ -126,7 +131,7 @@ namespace PLangTests
 
 			memoryStack = new MemoryStack(pseudoRuntime, engine, context);
 			container.RegisterInstance(memoryStack);
-			
+
 			archiver = Substitute.For<IArchiver>();
 			container.RegisterInstance(archiver);
 
@@ -146,5 +151,89 @@ namespace PLangTests
 			container.RegisterInstance(prParser);
 			return container;
 		}
+
+		public record TestResponse(string stepText, string response, DateTimeOffset? created = null);
+
+		public void Store(string stepText, string? response, [CallerMemberName] string caller = "")
+		{
+			if (string.IsNullOrWhiteSpace(response)) return;
+		
+			if (string.IsNullOrWhiteSpace(stepText)) throw new Exception("stepText cannot be empty");
+			if (string.IsNullOrWhiteSpace(caller)) throw new Exception("caller cannot be empty");
+			
+			var dir = GetSourceResponseDir();
+			if (!Directory.Exists(dir))
+			{
+				Directory.CreateDirectory(dir);
+			}
+			
+			string filePath = Path.Combine(dir, caller + ".json");
+
+			List<TestResponse> responses = new List<TestResponse>();
+			if (File.Exists(filePath))
+			{
+				var jsonFile = File.ReadAllText(filePath);
+				responses = JsonConvert.DeserializeObject<List<TestResponse>>(jsonFile) ?? new List<TestResponse>();
+				var idx = responses.FindIndex(p => p.stepText == stepText);
+				if (idx != -1)
+				{
+					return;
+				}
+			}
+			responses.Add(new TestResponse(stepText, response, DateTimeOffset.Now));
+			File.WriteAllText(filePath, JsonConvert.SerializeObject(responses, Formatting.Indented));
+		}
+		public ILlmService? GetLlmService(string stepText, string caller = "", Type? type = null)
+		{
+			var testResponse = GetLlmTestResponse(stepText, caller);
+			if (testResponse == null) return null;
+
+			if (type == null) type = typeof(GenericFunction);
+
+			var llmService = Substitute.For<ILlmService>();
+			llmService.Query(Arg.Any<LlmQuestion>(), type).Returns(p => {
+				return JsonConvert.DeserializeObject(testResponse, type);
+			});
+			return llmService;
+
+		}
+		public string? GetLlmTestResponse(string stepText, [CallerMemberName] string caller = "")
+		{
+			if (string.IsNullOrWhiteSpace(caller)) throw new Exception("caller cannot be empty");
+
+			var dir = GetSourceResponseDir();
+			if (!Directory.Exists(dir))
+			{ 
+				return null;
+			}
+			string filePath = Path.Combine(dir, caller + ".json");
+			if (!File.Exists(filePath)) return null;
+
+			var jsonFile = File.ReadAllText(filePath);
+			var responses = JsonConvert.DeserializeObject<List<TestResponse>>(jsonFile) ?? new List<TestResponse>();
+			var testReponse = responses.FirstOrDefault(p => p.stepText == stepText);
+			if (testReponse == null) return null;
+			return testReponse.response;
+		}
+
+		public string GetSourceResponseDir()
+		{
+			string derivedClassPath = this.GetType().Assembly.Location;
+			string moduleFolder = this.GetType().Namespace.Replace("PLang.Modules.", "").Replace(".Tests", "");
+			if (derivedClassPath.ToLower().Contains("ncrunch"))
+			{
+				string testPath = Environment.GetEnvironmentVariable("PlangTestPath");
+				if (string.IsNullOrEmpty(testPath)) throw new Exception("You must set the PlangTestPath environment variable. I should point to PlangTests folder. The PlangTests folder contains Modules folder");
+				return Path.Combine(testPath, "Modules", moduleFolder, "responses");
+			}
+			else
+			{
+				string derivedClassDirectory = Path.GetDirectoryName(derivedClassPath);
+				
+				string responsesDir = Path.GetFullPath(Path.Combine(derivedClassDirectory, $"../../../Modules/{moduleFolder}/responses"));
+				return responsesDir;
+			}
+		}
+
 	}
 }

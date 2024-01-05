@@ -22,9 +22,8 @@ namespace PLang.Modules.MessageModule.Tests
 			base.Initialize();
 
 			settings.Get(typeof(PLangLlmService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var aiService = new PLangLlmService(cacheHelper, context);
+			var aiService = new PLangLlmService(cacheHelper, context, fileSystem, settingsRepository);
 			
-			var fileSystem = new PLangFileSystem(Environment.CurrentDirectory, "./");
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new Builder(settings, aiService);
@@ -64,7 +63,7 @@ namespace PLang.Modules.MessageModule.Tests
 
 			//Assert.AreEqual("1", instruction.LlmQuestion.RawResponse);
 			Assert.AreEqual("GetPublicKey", gf.FunctionName);
-			Assert.AreEqual("publicKey", gf.ReturnValue.VariableName);
+			Assert.AreEqual("publicKey", gf.ReturnValue[0].VariableName);
 
 
 		}

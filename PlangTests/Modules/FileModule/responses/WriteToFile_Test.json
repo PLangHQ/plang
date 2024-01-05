@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "write %content% to file.txt, overwrite it",
+    "response": "{\"FunctionName\": \"WriteToFile\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"path\",\n\"Value\": \"file.txt\"},\n{\"Type\": \"String\",\n\"Name\": \"content\",\n\"Value\": \"%content%\"},\n{\"Type\": \"Boolean\",\n\"Name\": \"overwrite\",\n\"Value\": true}]}",
+    "created": "2024-01-03T14:28:16.217016+00:00"
+  }
+]

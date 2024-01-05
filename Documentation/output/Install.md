@@ -1,51 +1,68 @@
 # Plang Programming Language Install Guide
 
-Welcome to the Plang programming language install guide. This guide will walk you through the steps needed to set up and start using Plang on your machine. Plang is compatible with Windows, Linux, and MacOS.
+Welcome to the Plang programming language install guide. This document will provide you with detailed instructions on how to install Plang on your system, regardless of whether you're using Windows, Linux, or MacOS. By following these steps, you'll be ready to start developing with Plang in no time.
 
 ## Table of Contents
 
-1. [Installing Visual Studio Code](#installing-visual-studio-code)
-2. [Installing Plang Extension for Visual Studio Code](#installing-plang-extension-for-visual-studio-code)
+1. [Installing Plang on Windows](#installing-plang-on-windows)
+2. [Installing Plang on Linux](#installing-plang-on-linux)
+3. [Installing Plang on MacOS](#installing-plang-on-macos)
+4. [Next Steps](#next-steps)
 
-## Installing Visual Studio Code
+## Installing Plang on Windows
 
-Before you can use the Plang extension, you need to have Visual Studio Code installed on your machine. If you already have it installed, you can skip this step.
+To install Plang on your Windows machine, follow these steps:
 
-### Windows
+- Navigate to the Plang download page at [http://plang.is/download](http://plang.is/download).
+- Download the Plang zip file.
+- Unzip the file to a preferred location, such as `C:\plang\`.
+- Add `C:\plang\` to your system's PATH environment variable:
+  - Right-click on 'This PC' or 'Computer' on your desktop or in File Explorer.
+  - Select 'Properties'.
+  - Click on 'Advanced system settings'.
+  - In the System Properties window, click on the 'Environment Variables...' button.
+  - In the Environment Variables window, under 'System variables', find and select the 'Path' variable, then click 'Edit...'.
+  - In the Edit Environment Variable window, click 'New' and add `C:\plang\`.
+  - Click 'OK' to close each window.
 
-- Download the installer from the [Visual Studio Code website](https://code.visualstudio.com/download).
-- Run the installer and follow the prompts to install Visual Studio Code.
+## Installing Plang on Linux
 
-### Linux
+For Linux users, the installation process is as follows:
 
-- Open the terminal.
-- Update the packages list:
+- Visit [http://plang.is/download](http://plang.is/download) to download the Plang zip file.
+- Extract the zip file to a directory of your choice, for example, `/opt/plang/`.
+- Add the Plang directory to your PATH environment variable by editing your shell's profile script:
+  - Open a terminal.
+  - Use a text editor to open your profile script (e.g., `~/.bashrc` for bash or `~/.zshrc` for zsh).
+  - Add the following line at the end of the file:
 
 ```
-sudo apt update
+export PATH=$PATH:/opt/plang/
 ```
 
-- Install the snap package:
+  - Save the file and close the text editor.
+  - Apply the changes by running `source ~/.bashrc` or `source ~/.zshrc`, depending on your shell.
+
+## Installing Plang on MacOS
+
+To install Plang on MacOS, please follow these instructions:
+
+- Go to [http://plang.is/download](http://plang.is/download) and download the Plang zip file.
+- Unzip the file to a location such as `/usr/local/plang/`.
+- Add the Plang directory to your PATH environment variable:
+  - Open the Terminal.
+  - Edit your shell profile file (e.g., `~/.bash_profile` for bash or `~/.zshrc` for zsh) using a text editor.
+  - Add the following export command to your profile script:
 
 ```
-sudo snap install --classic code
+export PATH=$PATH:/usr/local/plang/
 ```
 
-### MacOS
+  - Save the changes and close the text editor.
+  - To make the changes take effect, run `source ~/.bash_profile` or `source ~/.zshrc`.
 
-- Download the installer from the [Visual Studio Code website](https://code.visualstudio.com/download).
-- Open the downloaded .zip file.
-- Drag Visual Studio Code.app to the Applications folder, making it available in the Launchpad.
+## Next Steps
 
-## Installing Plang Extension for Visual Studio Code
+After successfully installing Plang on your system, the next step is to set up your development environment. Please proceed to the [Install Development Environment (IDE) guide](./IDE.md) for detailed instructions on how to configure your IDE for Plang development.
 
-Once you have Visual Studio Code installed, you can install the Plang extension.
-
-- Open Visual Studio Code.
-- Click on the Extensions view icon on the Sidebar (or press `Ctrl+Shift+X`).
-- Search for `Plang`.
-- Click on the install button next to `PlangHQ.plang-extension`.
-
-Alternatively, you can install the extension directly from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=PlangHQ.plang-extension).
-
-Now you're all set to start using Plang! Happy coding!
+Happy coding with Plang!

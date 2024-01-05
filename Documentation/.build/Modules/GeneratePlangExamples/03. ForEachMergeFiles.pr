@@ -3,12 +3,12 @@
     "FunctionName": "RunLoop",
     "Parameters": [
       {
-        "Type": "String",
+        "Type": "string",
         "Name": "variableToLoopThrough",
         "Value": "%testFiles%"
       },
       {
-        "Type": "String",
+        "Type": "string",
         "Name": "goalNameToCall",
         "Value": "MergeFilesIntoOneVar"
       },
@@ -31,14 +31,14 @@
     "presencePenalty": null,
     "maxLength": 4000,
     "type": "PLang.Modules.GenericFunctionBuilder",
-    "system": "Parse user command.\r\n\r\nSelect the correct function from list of available functions based on user command\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")%\r\nwhere the settingName would be the api key, config key, \r\ndefaultValue for settings is the usual value given, make it \"\" if no value can be default\r\nExplain is an explanation about the setting that novice user can understand.\r\n\r\nOnExceptionContainingTextCallGoal - if no text is defined, set as \"*\", goal to call is required from user\r\n\r\nJSON scheme information\r\nType: the object type in c#\r\nName: name of the variable\r\nValue: %variable% or hardcode string that should be used\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nReturnValue: Only if the function returns a value, else null\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: {\"Type\": string,\n\"VariableName\": string}}",
+    "system": "Parse user command.\r\n\r\nSelect the correct function from list of available functions based on user command\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")%\r\nwhere the settingName would be the api key, config key, \r\ndefaultValue for settings is the usual value given, make it \"\" if no value can be default\r\nExplain is an explanation about the setting that novice user can understand.\r\n\r\nOnExceptionContainingTextCallGoal - if no text is defined, set as \"*\", goal to call is required from user\r\n\r\nJSON scheme information\r\nType: the object type in c#\r\nName: name of the variable\r\nValue: %variable% or hardcode string that should be used\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nReturnValue: Only if the function returns a value, else null. Usually indicated by ' write into %variable%' by user command\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}]}",
     "question": "command: foreach %testFiles%, call !MergeFilesIntoOneVar path=%item%",
-    "assistant": "## functions available defined in csharp ##\r\nvoid RunLoop(String variableToLoopThrough, String goalNameToCall, Dictionary`2<String, Object>? parameters) \n\r\n## functions available ends ##\r\n## defined variables ##\r\ntestFiles(String[]), \r\n## defined variables ##",
+    "assistant": "## functions available defined in csharp ##\r\nvoid RunLoop(String variableToLoopThrough, String goalNameToCall, Dictionary`2<String, Object>? parameters) \n\r\n## functions available ends ##",
     "model": "gpt-4",
     "caching": true,
     "Reload": false,
     "PreviousResult": null,
-    "RawResponse": null
+    "RawResponse": "{\r\n  \"FunctionName\": \"RunLoop\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"variableToLoopThrough\",\r\n      \"Value\": \"%testFiles%\"\r\n    },\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"goalNameToCall\",\r\n      \"Value\": \"MergeFilesIntoOneVar\"\r\n    },\r\n    {\r\n      \"Type\": \"Dictionary`2<String, Object>\",\r\n      \"Name\": \"parameters\",\r\n      \"Value\": {\r\n        \"path\": \"%item%\"\r\n      }\r\n    }\r\n  ]\r\n}"
   },
   "RunOnBuild": false
 }

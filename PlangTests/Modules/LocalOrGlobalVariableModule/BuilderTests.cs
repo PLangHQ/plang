@@ -22,9 +22,8 @@ namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
 			base.Initialize();
 
 			settings.Get(typeof(PLangLlmService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var aiService = new PLangLlmService(cacheHelper, context);
+			var aiService = new PLangLlmService(cacheHelper, context, fileSystem, settingsRepository);
 			
-			var fileSystem = new PLangFileSystem(Environment.CurrentDirectory, "./");
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
@@ -131,7 +130,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
 			Assert.AreEqual("GetVariable", gf.FunctionName);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("name", gf.Parameters[0].Value);
-			Assert.AreEqual("name", gf.ReturnValue.VariableName);
+			Assert.AreEqual("name", gf.ReturnValue[0].VariableName);
 
 		}
 
@@ -159,7 +158,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
 			Assert.AreEqual("GetStaticVariable", gf.FunctionName);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("name", gf.Parameters[0].Value);
-			Assert.AreEqual("name", gf.ReturnValue.VariableName);
+			Assert.AreEqual("name", gf.ReturnValue[0].VariableName);
 
 		}
 

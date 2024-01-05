@@ -12,7 +12,7 @@ In PLang, an `if` statement checks a condition and runs different goals or steps
 
 ### Basic Format
 ```plang
-- if %condition% then call !GoalName
+- if %condition% then call !GoalName, else !ElseGoalName
 ```
 
 ### With Sub-steps
@@ -32,6 +32,9 @@ In PLang, an `if` statement checks a condition and runs different goals or steps
 ```
 
 **Example 2: With Sub-steps**
+
+Sub-steps are indented with 4 spaces. This is a rule
+
 ```plang
 - if %isAdmin% then
    - call !ShowAdmin
@@ -43,9 +46,11 @@ In PLang, an `if` statement checks a condition and runs different goals or steps
 
 In these examples, the program decides which goal to call based on whether `%isAdmin%` or `%isUser%` is true.
 
-## Multiple Conditions and Sub-steps
+## Else, Elseif
 
-You can check multiple conditions and perform several steps under each condition. PLang doesn't have `else` or `elseif`, so you need to write separate `if` statements for each condition.
+You can have `if` and `else` in one line condition (see Example 1)
+
+PLang doesn't have `else` or `elseif` with sub steps, so you need to write separate `if` statements for each condition.
 
 ## Best Practices
 

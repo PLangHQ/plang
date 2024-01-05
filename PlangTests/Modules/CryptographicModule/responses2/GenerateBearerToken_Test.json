@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "generate bearer, %email%, valid for 15 minutes, write to %token%",
+    "response": "{\"FunctionName\": \"GenerateBearerToken\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"uniqueString\", \"Value\": \"%email%\"},\n    {\"Type\": \"String\", \"Name\": \"issuer\", \"Value\": \"PLangRuntime\"},\n    {\"Type\": \"String\", \"Name\": \"audience\", \"Value\": \"user\"},\n    {\"Type\": \"Int32\", \"Name\": \"expireTimeInSeconds\", \"Value\": 900}\n],\n\"ReturnValue\": {\"Type\": \"String\", \"VariableName\": \"%token%\"}}",
+    "created": "2024-01-03T13:06:26.971687+00:00"
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "stepText": "sign a message 'Hello world', write to %signature%",
+    "response": "{\"FunctionName\": \"SignMessage\", \n\"Parameters\": [{\"Type\": \"string\", \n\"Name\": \"message\", \n\"Value\": \"Hello world\"}], \n\"ReturnValue\": [{\"Type\": \"string\", \n\"VariableName\": \"signature\"}]}",
+    "created": "2024-01-04T09:57:40.2922017+00:00"
+  },
+  {
+    "stepText": "sign using my wallet 'Hello world', write to %signature%",
+    "response": "{\"FunctionName\": \"SignMessage\", \n\"Parameters\": [{\"Type\": \"string\", \n\"Name\": \"message\", \n\"Value\": \"Hello world\"}], \n\"ReturnValue\": [{\"Type\": \"string\", \n\"VariableName\": \"signature\"}]}",
+    "created": "2024-01-04T09:57:47.2084637+00:00"
+  },
+  {
+    "stepText": "sign 'Hello world', write to %signature%",
+    "response": "{\"FunctionName\": \"SignMessage\", \n\"Parameters\": [{\"Type\": \"string\", \n\"Name\": \"message\", \n\"Value\": \"Hello world\"}], \n\"ReturnValue\": [{\"Type\": \"string\", \n\"VariableName\": \"signature\"}]}",
+    "created": "2024-01-04T09:57:54.4858675+00:00"
+  }
+]

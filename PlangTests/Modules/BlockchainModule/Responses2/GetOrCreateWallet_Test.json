@@ -1,0 +1,6 @@
+[
+  {
+    "stepText": "get current wallet, write to %wallet%",
+    "response": "{\"FunctionName\": \"GetOrCreateWallet\", \"Parameters\": [], \"ReturnValue\": {\"Type\": \"Wallet\", \"VariableName\": \"wallet\"}}"
+  }
+]

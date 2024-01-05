@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "create %dirName%",
+    "response": "{\"FunctionName\": \"CreateDirectory\",\n\"Parameters\": [{\"Type\": \"string\",\n\"Name\": \"directoryPath\",\n\"Value\": \"%dirName%\"}]}",
+    "created": "2024-01-03T14:32:07.9682226+00:00"
+  }
+]

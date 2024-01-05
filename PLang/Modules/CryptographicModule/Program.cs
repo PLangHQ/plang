@@ -38,15 +38,21 @@ namespace PLang.Modules.CryptographicModule
 		}
 
 		[Description("Hmac hash sizes are 256, 384, 512")]
-		public async Task<string> HashHmacShaInput(string input, string secretKey, int hashSize = 256)
+		public async Task<string> HashHmacShaInput(string input, string? secretKey = null, int hashSize = 256)
 		{
-			return input.ComputeHmacSha256(secretKey);
+			if (secretKey == null) secretKey = context.GetOrDefault<string>(ReservedKeywords.Salt, "");
+			if (string.IsNullOrEmpty(secretKey))
+			{
+				throw new Exception("secretKey is missing");
+			}
+
+			return input.ComputeHmacSha256(secretKey, hashSize);
 		}
 
-		[Description("Used for hashing, by default it uses salt. Only provide salt if user provides it in his statement. hashAlgorithm: keccak256 | sha256 | bcrypt(when salt)")]
-		public async Task<string> HashInput(string input, bool useSalt = false, string? salt = null, string hashAlgorithm = "keccak256")
+		[Description("Used for hashing. hashAlgorithm: keccak256 | sha256 | bcrypt")]
+		public async Task<string> HashInput(string input, bool useSalt = true, string? salt = null, string hashAlgorithm = "keccak256")
 		{
-			if (useSalt)
+			if (hashAlgorithm == "bcrypt")
 			{
 				if (salt == null)
 				{
@@ -55,19 +61,28 @@ namespace PLang.Modules.CryptographicModule
 				return BCrypt.Net.BCrypt.HashPassword(input, salt);
 			} else
 			{
-				return input.ComputeHash(hashAlgorithm);
+				if (useSalt && salt == null)
+				{
+					salt = context[ReservedKeywords.Salt]?.ToString();
+				}
+
+				return input.ComputeHash(hashAlgorithm, salt);
 			}
 		}
 
-		[Description("Used to verify hash, by default it uses salt. hashAlgorithm: keccak256 | sha256 | bcrypt(when salt)")]
-		public async Task<bool> VerifyHashedValues(string password, string passwordHash, string hashAlgorithm = "keccak256", bool useSalt = true)
+		[Description("Used to verify hash. hashAlgorithm: keccak256 | sha256 | bcrypt")]
+		public async Task<bool> VerifyHashedValues(string text, string hash, string hashAlgorithm = "keccak256", bool useSalt = true, string? salt = null)
 		{
-			if (useSalt)
+			if (hashAlgorithm == "bcrypt")
 			{
-				return BCrypt.Net.BCrypt.Verify(password, passwordHash);
+				return BCrypt.Net.BCrypt.Verify(text, hash);
 			} else
 			{
-				return (password.ComputeHash(hashAlgorithm) == passwordHash);
+				if (useSalt && salt == null)
+				{
+					salt = context[ReservedKeywords.Salt]?.ToString();
+				}
+				return (text.ComputeHash(hashAlgorithm, salt) == hash);
 			}
 		}
 

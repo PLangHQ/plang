@@ -1,0 +1,12 @@
+[
+  {
+    "stepText": "retrieve balance for 0x1234, decimal count is 8, write to %balance%",
+    "response": "{\"FunctionName\": \"GetBalanceToDecimalPoint\", \n\"Parameters\": [{\"Type\": \"string\", \"Name\": \"address\", \"Value\": \"0x1234\"}, {\"Type\": \"Int32\", \"Name\": \"decimalPlacesToUnit\", \"Value\": 8}], \n\"ReturnValue\": [{\"Type\": \"Decimal\", \"VariableName\": \"balance\"}]}",
+    "created": "2024-01-04T09:56:41.9825481+00:00"
+  },
+  {
+    "stepText": "retrieve decimal balance for 0x1234, write to %balance%",
+    "response": "{\"FunctionName\": \"GetBalanceToDecimalPoint\", \n\"Parameters\": [{\"Type\": \"string\", \n\"Name\": \"address\", \n\"Value\": \"0x1234\"}], \n\"ReturnValue\": [{\"Type\": \"decimal\", \n\"VariableName\": \"balance\"}]}",
+    "created": "2024-01-04T09:57:02.6649962+00:00"
+  }
+]

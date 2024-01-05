@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "get wallets, write to %wallets%",
+    "response": "{\"FunctionName\": \"GetWallets\", \"Parameters\": [], \"ReturnValue\": [{\"Type\": \"List`1\", \"VariableName\": \"wallets\"}]}",
+    "created": "2024-01-04T09:57:25.7317993+00:00"
+  }
+]

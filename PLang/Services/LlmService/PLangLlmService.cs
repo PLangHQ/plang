@@ -16,14 +16,17 @@ namespace PLang.Services.LlmService
 	{
 		private readonly CacheHelper cacheHelper;
 		private readonly PLangAppContext context;
-
+		private readonly IPLangFileSystem fileSystem;
+		private readonly ISettingsRepository settingsRepository;
 
 		public IContentExtractor Extractor { get; set; }
 
-		public PLangLlmService(CacheHelper cacheHelper, PLangAppContext context)
+		public PLangLlmService(CacheHelper cacheHelper, PLangAppContext context, IPLangFileSystem fileSystem, ISettingsRepository settingsRepository)
 		{
 			this.cacheHelper = cacheHelper;
 			this.context = context;
+			this.fileSystem = fileSystem;
+			this.settingsRepository = settingsRepository;
 			this.Extractor = new JsonExtractor();
 
 		}
@@ -181,10 +184,6 @@ namespace PLang.Services.LlmService
 			DateTime created = SystemTime.UtcNow();
 			string nonce = Guid.NewGuid().ToString();
 			string dataToSign = StringHelper.CreateSignatureData(method, url, created.ToFileTimeUtc(), nonce, data, contract);
-
-			
-			var fileSystem = new PLangFileSystem(Settings.GlobalPath, "/");
-			var settingsRepository = new SqliteSettingsRepository(fileSystem, context);
 
 			var settings = new Settings(settingsRepository, fileSystem);
 

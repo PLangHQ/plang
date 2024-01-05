@@ -3,6 +3,7 @@ using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Utils;
+using System;
 using System.Data;
 using System.Data.SQLite;
 using System.Reflection;
@@ -42,7 +43,11 @@ namespace PLang.Modules.DbModule
 			{
 				string dbPath = "." + Path.DirectorySeparatorChar + ".db" + Path.DirectorySeparatorChar + "data.sqlite";
 				string dbAbsolutePath = Path.Join(fileSystem.RootDirectory, dbPath);
-
+				AppContext.TryGetSwitch(ReservedKeywords.Test, out bool inMemory);
+				if (inMemory)
+				{
+					dbAbsolutePath = "data;Mode=Memory;Cache=Shared";
+				}
 				await SetDatabaseConnectionString("data", typeof(SQLiteConnection).FullName, "data.sqlite", $"Data Source={dbAbsolutePath};Version=3;", true, true);
 				return;
 			}
@@ -238,6 +243,7 @@ Be concise"
 
 		private string? Test(Type dbType, string connectionString)
 		{
+			if (connectionString.Contains(";Mode=Memory;")) return null;
 			if (dbType == typeof(SQLiteConnection))
 			{
 				var startIdx = connectionString.IndexOf('=') + 1;

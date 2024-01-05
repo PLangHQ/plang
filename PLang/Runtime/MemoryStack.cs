@@ -368,17 +368,17 @@ namespace PLang.Runtime
 		}
 
 
-		public void PutForBuilder(string key, object value)
+		public void PutForBuilder(string key, object? value)
 		{
 			Put(key, value, false, false);
 		}
 
-		public void PutStatic(string key, object value)
+		public void PutStatic(string key, object? value)
 		{
 			Put(key, value, true);
 		}
 
-		public void Put(string key, object value, bool staticVariable = false, bool initialize = true, bool convertToJson = true)
+		public void Put(string key, object? value, bool staticVariable = false, bool initialize = true, bool convertToJson = true)
 		{
 			if (key == null) return;
 			key = Clean(key);

@@ -48,6 +48,12 @@ namespace PLang.Utils
 			var address = validationHeaders["X-Signature-Address"];
 			var contract = validationHeaders["X-Signature-Contract"] ?? "C0";
 
+			DateTime signatureCreated = DateTime.FromFileTime(long.Parse(created));
+			if (signatureCreated < DateTime.UtcNow.AddMinutes(-5))
+			{
+				throw new Exception("The signature is to old.");
+			}
+
 			string message = StringHelper.CreateSignatureData(method, url, long.Parse(created), nonce, body, contract);
 			var p = new Modules.BlockchainModule.Program(settings, context, null, null, null, null, null);
 			if (p.VerifySignature(message, signature, address).Result)

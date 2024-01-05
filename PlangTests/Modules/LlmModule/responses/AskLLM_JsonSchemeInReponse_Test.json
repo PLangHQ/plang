@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "system: determine sentiment of user input. \nuser:This is awesome, scheme: {sentiment:negative|neutral|positive}",
+    "response": "{\"FunctionName\": \"AskLlm\",\n\"Parameters\": [\n    {\"Type\": \"string\", \"Name\": \"system\", \"Value\": \"determine sentiment of user input.\"},\n    {\"Type\": \"string\", \"Name\": \"user\", \"Value\": \"This is awesome\"},\n    {\"Type\": \"string\", \"Name\": \"scheme\", \"Value\": \"{sentiment:negative|neutral|positive}\"},\n    {\"Type\": \"string\", \"Name\": \"llmResponseType\", \"Value\": \"json\"}\n],\n\"ReturnValue\": null}",
+    "created": "2024-01-04T09:37:03.8449768+00:00"
+  }
+]

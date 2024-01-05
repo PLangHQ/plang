@@ -84,9 +84,12 @@ namespace PLang.Modules.LlmModule
 					}
 				}
 			}
-			if (function.ReturnValue != null && !string.IsNullOrEmpty(function.ReturnValue.VariableName))
+			if (function != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
 			{
-				memoryStack.Put(function.ReturnValue.VariableName, response);
+				foreach (var returnValue in function.ReturnValue)
+				{
+					memoryStack.Put(returnValue.VariableName, response);
+				}
 			}
 
 			llmService.Extractor = new JsonExtractor();

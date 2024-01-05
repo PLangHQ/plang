@@ -22,9 +22,8 @@ namespace PLang.Modules.OutputModule.Tests
 			base.Initialize();
 
 			settings.Get(typeof(PLangLlmService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var aiService = new PLangLlmService(cacheHelper, context);
+			var aiService = new PLangLlmService(cacheHelper, context, fileSystem, settingsRepository);
 			
-			var fileSystem = new PLangFileSystem(Environment.CurrentDirectory, "./");
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
@@ -68,7 +67,7 @@ namespace PLang.Modules.OutputModule.Tests
 			Assert.AreEqual("Ask", gf.FunctionName);
 			Assert.AreEqual("text", gf.Parameters[0].Name);
 			Assert.AreEqual("what should the settings be?", gf.Parameters[0].Value);
-			Assert.AreEqual("settings", gf.ReturnValue.VariableName);
+			Assert.AreEqual("settings", gf.ReturnValue[0].VariableName);
 
 		}
 

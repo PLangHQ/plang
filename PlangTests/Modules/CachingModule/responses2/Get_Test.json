@@ -1,0 +1,10 @@
+[
+  {
+    "stepText": "get 'BigData' from cache, write to %obj%",
+    "response": "{\"FunctionName\": \"Get\",\n\"Parameters\": [{\"Type\": \"string\",\n\"Name\": \"key\",\n\"Value\": \"BigData\"}],\n\"ReturnValue\": {\"Type\": \"Object\",\n\"VariableName\": \"obj\"}}"
+  },
+  {
+    "stepText": "get %cacheKey% from cache, write to %obj%",
+    "response": "{\"FunctionName\": \"Get\",\n\"Parameters\": [{\"Type\": \"string\",\n\"Name\": \"key\",\n\"Value\": \"%cacheKey%\"}],\n\"ReturnValue\": {\"Type\": \"Object\",\n\"VariableName\": \"%obj%\"}}"
+  }
+]

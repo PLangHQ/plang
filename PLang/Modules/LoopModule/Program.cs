@@ -33,7 +33,7 @@ namespace PLang.Modules.LoopModule
 			string listName = parameters.ContainsKey("list") ? parameters["list"].ToString().Replace("%", "") : "list";
 			string listCountName = parameters.ContainsKey("listCount") ? parameters["listCount"].ToString().Replace("%", "") : "listCount";
 			string itemName = parameters.ContainsKey("item") ? parameters["item"].ToString().Replace("%", "") : "item";
-			string idxName = parameters.ContainsKey("idx") ? parameters["idx"].ToString().Replace("%", "") : "idx";
+			string positionName = parameters.ContainsKey("position") ? parameters["position"].ToString().Replace("%", "") : "position";
 
 			var obj = memoryStack.Get(variableToLoopThrough);
 			if (obj is IList list)
@@ -50,7 +50,7 @@ namespace PLang.Modules.LoopModule
 					goalParameters.Add(listName.ToString()!, list);
 					goalParameters.Add(listCountName, list.Count);
 					goalParameters.Add(itemName.ToString()!, list[i]);
-					goalParameters.Add(idxName.ToString()!, i+1);
+					goalParameters.Add(positionName.ToString()!, i+1);
 
 					var missingEntries = parameters.Where(p => !goalParameters.ContainsKey(p.Key));
 					foreach (var entry in missingEntries)
@@ -68,7 +68,7 @@ namespace PLang.Modules.LoopModule
 					var goalParameters = new Dictionary<string, object>();
 					goalParameters.Add(listName.ToString()!, enumerables);
 					goalParameters.Add(itemName.ToString()!, item);
-					goalParameters.Add(idxName.ToString()!, idx++);
+					goalParameters.Add(positionName.ToString()!, idx++);
 					goalParameters.Add(listCountName, -1);
 					var missingEntries = parameters.Where(p => !goalParameters.ContainsKey(p.Key));
 					foreach (var entry in missingEntries)

@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "hash %password%, write to %password%",
+    "response": "{\n\"FunctionName\": \"HashInput\",\n\"Parameters\": [\n    {\"Type\": \"string\", \"Name\": \"input\", \"Value\": \"%password%\"},\n    {\"Type\": \"bool\", \"Name\": \"useSalt\", \"Value\": true},\n    {\"Type\": \"string\", \"Name\": \"hashAlgorithm\", \"Value\": \"keccak256\"}\n],\n\"ReturnValue\": {\"Type\": \"string\", \"VariableName\": \"%password%\"}\n}",
+    "created": "2024-01-03T13:03:13.0688688+00:00"
+  }
+]

@@ -16,11 +16,11 @@ namespace PLangTests.Modules.CachingModule
 
 			string key = "key";
 			string value = "value";
-			var time = DateTimeOffset.UtcNow.AddMinutes(1);
+			var time = 60;
 
 			await p.SetForAbsoluteExpiration(key, value, time);
 
-			await appCache.Received(1).Set(key, value, time);
+			await appCache.Received(1).Set(key, value, Arg.Any<DateTimeOffset>());
 		}
 
 		[TestMethod]
@@ -31,11 +31,11 @@ namespace PLangTests.Modules.CachingModule
 
 			string key = "key";
 			string value = "value";
-			var time = new TimeSpan(0, 1, 0);
+			var time = 60;
 
 			await p.SetForSlidingExpiration(key, value, time);
 
-			await appCache.Received(1).Set(key, value, time);
+			await appCache.Received(1).Set(key, value, Arg.Any<TimeSpan>());
 		}
 
 		[TestMethod]

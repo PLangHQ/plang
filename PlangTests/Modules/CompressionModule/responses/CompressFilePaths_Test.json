@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "compress %files% to %destination%",
+    "response": "{\"FunctionName\": \"CompressFiles\",\n\"Parameters\": [{\"Type\": \"String[]\",\n\"Name\": \"filePaths\",\n\"Value\": \"%files%\"},\n{\"Type\": \"String\",\n\"Name\": \"saveToPath\",\n\"Value\": \"%destination%\"}]}",
+    "created": "2024-01-05T10:03:05.7871498+00:00"
+  }
+]

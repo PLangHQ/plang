@@ -63,7 +63,7 @@ You can change the value of a variable at any point in your program.
 ```plang
 set variable %counter% to 0
 ...
-set variable %counter% to %counter% + 1
+set variable %counter% to 1
 ```
 
 ## Best Practices for Using Variables

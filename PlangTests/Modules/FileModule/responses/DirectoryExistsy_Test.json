@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "does dir %dirName% exists, write to %dirExists%",
+    "response": "{\"FunctionName\": \"N/A\",\n\"Parameters\": [],\n\"ReturnValue\": null}",
+    "created": "2024-01-03T14:32:39.2757162+00:00"
+  }
+]

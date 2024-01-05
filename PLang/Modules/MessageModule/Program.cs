@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using Nostr.Client.Client;
-using Nostr.Client.Communicator;
 using Nostr.Client.Keys;
 using Nostr.Client.Messages;
 using Nostr.Client.Messages.Direct;
@@ -11,12 +10,15 @@ using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Utils;
 using System.ComponentModel;
-using System.Net.WebSockets;
 using System.Reactive.Linq;
 
 
 namespace PLang.Modules.MessageModule
 {
+	//todo: should cleanup any usage of keys, set them to null after usage
+	// this is so they dont stay in memory until garbage collection
+	// this needs to happen down the call stack and figure out how settings is handled
+
 	[Description("Send and recieve private messages using Nostr protocol")]
 	public class Program : BaseProgram, IDisposable
 	{

@@ -1,0 +1,12 @@
+[
+  {
+    "stepText": "compress %filePath% to %destination%",
+    "response": "{\"FunctionName\": \"CompressFile\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"filePath\",\n\"Value\": \"%filePath%\"},\n{\"Type\": \"String\",\n\"Name\": \"saveToPath\",\n\"Value\": \"%destination%\"}]}",
+    "created": "2024-01-05T10:02:50.325905+00:00"
+  },
+  {
+    "stepText": "compress %filePath% to %destination% with high compression",
+    "response": "{\"FunctionName\": \"CompressFile\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"filePath\",\n\"Value\": \"%filePath%\"},\n{\"Type\": \"String\",\n\"Name\": \"saveToPath\",\n\"Value\": \"%destination%\"},\n{\"Type\": \"Int32\",\n\"Name\": \"compressionLevel\",\n\"Value\": 2}],\n\"ReturnValue\": null}",
+    "created": "2024-01-05T10:02:58.9526456+00:00"
+  }
+]

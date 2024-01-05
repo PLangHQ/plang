@@ -1,0 +1,53 @@
+
+## Todo window app with LLM
+Lets change the previous todo window to use LLM. 
+We will also learn how to modify the database.
+You will learn about run and forget.
+
+1. Change Setup.goal
+Add the following step your Setup.goal file
+```
+- add column 'category' to tbl 'Todos'
+```
+After adding it, your Setup.goal file should look like this
+```plang
+Setup
+- create table Todos 
+    columns:    task(string, not null), due_date(datetime, not null), 
+                completed(bool, false), created(datetime, now)
+- add column 'category' to tbl 'Todos'                
+```
+
+2. Change ui/SaveTask.goal
+I want to categories my tasks, but having the user doing that, 
+makes for a more complex user experience, so lets deligate it to LLM
+
+Lets modify ui/SaveTask.goal, like this
+```plang
+SaveTask
+- if %task% or %due_date% is empty, throw error
+- insert into Todos, %task%, %due_date%, write to %id%
+- call !Categorize, dont wait
+- call !Todos
+
+Categorize
+- [llm]: system: categories the user input by 3 categories, 'Work', "home", 'hobby'
+    user: %task%
+    scheme: {category:string}
+- update table tasks, set %category% where %id%
+```
+
+Explaination: 
+when we say, 'call !Categorize, dont wait', we instruct plang not to wait for the response
+of the !Categorize goal, this is because it is going to take a few seconds for the LLM to respond
+and we don't want the user to wait.
+
+using [llm] in the Categorize goal, indicates to the plang language that it should use
+the LLM module, this is simply to help the language to detect what module to use. 
+you can do this with any module, [http] would for the use of HttpModule,
+[co] will suggest the language to build the code using CodeModule, ConditionModule, CompressionModule.
+it simply does indexOf the module name from the content inside the []
+
+scheme in the llm, forces the LLM to return specific structure. that structure is automatically loaded as a variable, as you can see we can access %category% in next step
+scheme is not required, only when you want structured response. This is extremly powerfull.
+for more on llm, check out the LlmModule doc[./modules/PLang.Modules.LlmModule.md]

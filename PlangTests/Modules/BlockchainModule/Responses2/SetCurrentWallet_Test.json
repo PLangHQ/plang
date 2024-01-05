@@ -1,0 +1,6 @@
+[
+  {
+    "stepText": "set business wallet as current wallet",
+    "response": "{\"FunctionName\": \"SetCurrentWallet\", \"Parameters\": [{\"Type\": \"string\", \"Name\": \"walletName\", \"Value\": \"My business wallet\"}]}"
+  }
+]

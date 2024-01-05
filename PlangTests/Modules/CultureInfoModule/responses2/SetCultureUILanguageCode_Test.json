@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "set ui language to english uk",
+    "response": "{\"FunctionName\": \"SetCultureUILanguageCode\",\n\"Parameters\": [{\"Type\": \"string\",\n\"Name\": \"code\",\n\"Value\": \"en-GB\"}],\n\"ReturnValue\": null}",
+    "created": "2024-01-03T13:13:15.4756919+00:00"
+  }
+]

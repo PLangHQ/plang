@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "compress %dir% to %destination%, low compression, include all dir",
+    "response": "{\"FunctionName\": \"CompressDirectory\",\n\"Parameters\": [{\"Type\": \"string\",\n\"Name\": \"sourceDirectoryName\",\n\"Value\": \"%dir%\"},\n{\"Type\": \"string\",\n\"Name\": \"destinationArchiveFileName\",\n\"Value\": \"%destination%\"},\n{\"Type\": \"Int32\",\n\"Name\": \"compressionLevel\",\n\"Value\": 0},\n{\"Type\": \"Boolean\",\n\"Name\": \"includeBaseDirectory\",\n\"Value\": true}]}",
+    "created": "2024-01-05T10:02:44.4836162+00:00"
+  }
+]

@@ -37,7 +37,7 @@ namespace PLang.Modules.DbModule
 		}
 
 		public record FunctionInfo(string FunctionName, string[]? TableNames = null);
-		public record DbGenericFunction(string FunctionName, List<Parameter> Parameters, ReturnValue? ReturnValue = null, string? Warning = null) : GenericFunction(FunctionName, Parameters, ReturnValue);
+		public record DbGenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValue = null, string? Warning = null) : GenericFunction(FunctionName, Parameters, ReturnValue);
 		public override async Task<Instruction> Build(GoalStep goalStep)
 		{
 			var moduleSettings = new ModuleSettings(fileSystem, settings, context, aiService, db);

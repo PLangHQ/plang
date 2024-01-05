@@ -22,9 +22,8 @@ namespace PLang.Modules.PythonModule.Tests
 			base.Initialize();
 
 			settings.Get(typeof(PLangLlmService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var aiService = new PLangLlmService(cacheHelper, context);
+			var aiService = new PLangLlmService(cacheHelper, context, fileSystem, settingsRepository);
 			
-			var fileSystem = new PLangFileSystem(Environment.CurrentDirectory, "./");
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
@@ -91,7 +90,7 @@ namespace PLang.Modules.PythonModule.Tests
 
 			Assert.AreEqual("useNamedArguments", gf.Parameters[3].Name);
 			Assert.AreEqual(true, gf.Parameters[3].Value);
-			Assert.AreEqual("result", gf.ReturnValue.VariableName);
+			Assert.AreEqual("result", gf.ReturnValue[0].VariableName);
 
 		}
 

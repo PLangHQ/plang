@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "read file.txt to %content%",
+    "response": "{\"FunctionName\": \"ReadTextFile\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"path\",\n\"Value\": \"file.txt\"},\n{\"Type\": \"String\",\n\"Name\": \"returnValueIfFileNotExisting\",\n\"Value\": \"\"},\n{\"Type\": \"Boolean\",\n\"Name\": \"throwErrorOnNotFound\",\n\"Value\": false},\n{\"Type\": \"Boolean\",\n\"Name\": \"loadVariables\",\n\"Value\": false},\n{\"Type\": \"Boolean\",\n\"Name\": \"emptyVariableIfNotFound\",\n\"Value\": false}],\n\"ReturnValue\": {\"Type\": \"String\",\n\"VariableName\": \"content\"}}",
+    "created": "2024-01-03T13:44:53.1980541+00:00"
+  }
+]

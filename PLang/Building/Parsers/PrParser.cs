@@ -67,9 +67,9 @@ namespace PLang.Building.Parsers
 			var dict = settings.GetOrDefault<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", new());
 			for (int i = 0; i < goal.GoalSteps.Count; i++)
 			{
-				goal.GoalSteps[i].AbsolutePrFilePath = AdjustPathToOs(Path.Join(goal.AbsolutePrFolderPath, goal.GoalSteps[i].PrFileName));
-				goal.GoalSteps[i].RelativePrPath = AdjustPathToOs(Path.Join(goal.RelativePrFolderPath, goal.GoalSteps[i].PrFileName));
-				goal.GoalSteps[i].AppStartupPath = AdjustPathToOs(appAbsoluteStartupPath);
+				goal.GoalSteps[i].AbsolutePrFilePath = Path.Join(goal.AbsolutePrFolderPath, goal.GoalSteps[i].PrFileName).AdjustPathToOs();
+				goal.GoalSteps[i].RelativePrPath = Path.Join(goal.RelativePrFolderPath, goal.GoalSteps[i].PrFileName).AdjustPathToOs();
+				goal.GoalSteps[i].AppStartupPath = appAbsoluteStartupPath.AdjustPathToOs();
 				goal.GoalSteps[i].Number = i;
 				if (goal.GoalSteps.Count > i + 1)
 				{
@@ -86,31 +86,17 @@ namespace PLang.Building.Parsers
 
 		private static void AdjustPathsToOS(Goal goal)
 		{
-			goal.RelativeAppStartupFolderPath = AdjustPathToOs(goal.RelativeAppStartupFolderPath);
-			goal.RelativeGoalFolderPath = AdjustPathToOs(goal.RelativeGoalFolderPath);
-			goal.RelativeGoalPath = AdjustPathToOs(goal.RelativeGoalPath);
-			goal.RelativePrPath = AdjustPathToOs(goal.RelativePrPath);
-			goal.RelativePrFolderPath = AdjustPathToOs(goal.RelativePrFolderPath);
+			goal.RelativeAppStartupFolderPath = goal.RelativeAppStartupFolderPath.AdjustPathToOs();
+			goal.RelativeGoalFolderPath = goal.RelativeGoalFolderPath.AdjustPathToOs();
+			goal.RelativeGoalPath = goal.RelativeGoalPath.AdjustPathToOs();
+			goal.RelativePrPath = goal.RelativePrPath.AdjustPathToOs();
+			goal.RelativePrFolderPath = goal.RelativePrFolderPath.AdjustPathToOs();
 
-			goal.AbsoluteAppStartupFolderPath = AdjustPathToOs(goal.AbsoluteAppStartupFolderPath);
-			goal.AbsoluteGoalPath = AdjustPathToOs(goal.AbsoluteGoalPath);
-			goal.AbsoluteGoalFolderPath = AdjustPathToOs(goal.AbsoluteGoalFolderPath);
-			goal.AbsolutePrFilePath = AdjustPathToOs(goal.AbsolutePrFilePath);
-			goal.AbsolutePrFolderPath = AdjustPathToOs(goal.AbsolutePrFolderPath);
-		}
-
-		private static string AdjustPathToOs(string path)
-		{
-			if (string.IsNullOrEmpty(path)) return path;
-
-			if (Path.DirectorySeparatorChar == '\\')
-			{
-				return path.Replace('/', Path.DirectorySeparatorChar);
-			}
-			else
-			{
-				return path.Replace('\\', Path.DirectorySeparatorChar);
-			}
+			goal.AbsoluteAppStartupFolderPath = goal.AbsoluteAppStartupFolderPath.AdjustPathToOs();
+			goal.AbsoluteGoalPath = goal.AbsoluteGoalPath.AdjustPathToOs();
+			goal.AbsoluteGoalFolderPath = goal.AbsoluteGoalFolderPath.AdjustPathToOs();
+			goal.AbsolutePrFilePath = goal.AbsolutePrFilePath.AdjustPathToOs();
+			goal.AbsolutePrFolderPath = goal.AbsolutePrFolderPath.AdjustPathToOs();
 		}
 
 		public Instruction ParseInstructionFile(GoalStep step)

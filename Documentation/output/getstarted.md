@@ -8,14 +8,14 @@ Before you start, make sure you have installed Plang. If you haven't, please ref
 
 ## Prerequisites
 
-- Plang installed on your system. Refer to the [Installation Guide](Install.md) if you haven't installed it yet.
-- Visual Studio Code as your code editor with the Plang extension installed. For more details, refer to the [IDE Setup Guide](Ide.md).
+1. Plang installed on your system. Refer to the [Installation Guide](Install.md) if you haven't installed it yet.
+2. Visual Studio Code as your code editor with the Plang extension installed. For more details, refer to the [IDE Setup Guide](Ide.md).
 
 ## Creating a "Hello World" Application
 
 You can follow along with this [video tutorial](https://www.youtube.com/watch?v=iGW4btk34yQ) for a more detailed walkthrough.
 
-If you're using Plang for the first time, you'll need to set up your Plang service account. This is a straightforward process and supports Plang directly. Alternatively, you can use a GPT-4 API key, which is a bit more complex but cheaper. For more information, refer to [PlangOrOpenAI.md](PlangOrOpenAI.md).
+If you're using Plang for the first time, you'll need to set up your Plang service account. This is a straightforward process and supports Plang directly. Alternatively, you can use a GPT-4 API key, which is a bit more complex but cheaper. For more information, refer to [Plang Or OpenAI documentation](./PlangOrOpenAI.md).
 
 ### Step 1: Create a Project Directory
 

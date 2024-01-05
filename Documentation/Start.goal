@@ -1,6 +1,12 @@
 Start
-- select * from docs, write to %docs%
+- if %doc% is not empty then, LoadDoc, LoadDocs
 - foreach %docs% call GenerateDoc
+
+LoadDoc
+- select * from docs where Name=%doc%, write to %docs%
+
+LoadDocs
+- select * from docs, write to %docs%
 
 GenerateDoc
 - set var Name=%item.Name%

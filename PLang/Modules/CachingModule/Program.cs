@@ -16,13 +16,14 @@ namespace PLang.Modules.CachingModule
 			return await appCache.Get(key);
 		}
 
-		public async Task SetForSlidingExpiration(string key, object value, TimeSpan? slidingExpiration = null)
+		public async Task SetForSlidingExpiration(string key, object value, int timeInSeconds = 60 * 10)
 		{
-			if (slidingExpiration == null) slidingExpiration = TimeSpan.FromMinutes(10);
+			TimeSpan slidingExpiration = TimeSpan.FromSeconds(timeInSeconds);
 			await appCache.Set(key, value, (TimeSpan) slidingExpiration);
 		}
-		public async Task SetForAbsoluteExpiration(string key, object value, DateTimeOffset absoluteExpiration)
+		public async Task SetForAbsoluteExpiration(string key, object value, int timeInSeconds = 60 * 10)
 		{
+			DateTimeOffset absoluteExpiration = DateTimeOffset.UtcNow.AddSeconds(timeInSeconds);
 			await appCache.Set(key, value, absoluteExpiration);
 		}
 

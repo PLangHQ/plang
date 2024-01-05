@@ -22,9 +22,8 @@ namespace PLang.Modules.WebserverModule.Tests
 			base.Initialize();
 
 			settings.Get(typeof(PLangLlmService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var aiService = new PLangLlmService(cacheHelper, context);
+			var aiService = new PLangLlmService(cacheHelper, context, fileSystem, settingsRepository);
 			
-			var fileSystem = new PLangFileSystem(Environment.CurrentDirectory, "./");
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
@@ -102,7 +101,7 @@ namespace PLang.Modules.WebserverModule.Tests
 			Assert.AreEqual("headerKey", gf.Parameters[0].Name);
 			Assert.AreEqual(null, gf.Parameters[0].Value);
 
-			Assert.AreEqual("ip", gf.ReturnValue.VariableName);
+			Assert.AreEqual("ip", gf.ReturnValue[0].VariableName);
 
 		}
 
@@ -165,7 +164,7 @@ namespace PLang.Modules.WebserverModule.Tests
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("cache-control", gf.Parameters[0].Value);
 
-			Assert.AreEqual("cacheControl", gf.ReturnValue.VariableName);
+			Assert.AreEqual("cacheControl", gf.ReturnValue[0].VariableName);
 
 		}
 
@@ -195,7 +194,7 @@ namespace PLang.Modules.WebserverModule.Tests
 			Assert.AreEqual("name", gf.Parameters[0].Name);
 			Assert.AreEqual("TOS", gf.Parameters[0].Value);
 
-			Assert.AreEqual("%cookieValue%", gf.ReturnValue.VariableName);
+			Assert.AreEqual("%cookieValue%", gf.ReturnValue[0].VariableName);
 
 		}
 

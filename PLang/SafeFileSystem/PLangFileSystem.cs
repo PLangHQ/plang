@@ -1,5 +1,6 @@
 ﻿using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Utils;
 using System.IO.Abstractions;
 
 namespace PLang.SafeFileSystem
@@ -27,9 +28,9 @@ namespace PLang.SafeFileSystem
 		public PLangFileSystem(string appStartupPath, string relativeAppPath)
 		{
 			
-			this.RootDirectory = appStartupPath;
+			this.RootDirectory = appStartupPath.AdjustPathToOs();
 			
-			this.RelativeAppPath = relativeAppPath;
+			this.RelativeAppPath = relativeAppPath.AdjustPathToOs();
 			this.fileAccesses = new List<FileAccessControl>();
 
 			DriveInfo = new PLangDriveInfoFactory(this);

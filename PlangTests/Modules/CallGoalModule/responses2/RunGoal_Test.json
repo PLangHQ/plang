@@ -1,0 +1,6 @@
+[
+  {
+    "stepText": "call !Process.Image name=%full_name%, %address%",
+    "response": "{\n  \"FunctionName\": \"RunGoal\",\n  \"Parameters\": [\n    {\n      \"Type\": \"string\",\n      \"Name\": \"goalName\",\n      \"Value\": \"Process.Image\"\n    },\n    {\n      \"Type\": \"Dictionary<string, object>\",\n      \"Name\": \"parameters\",\n      \"Value\": {\n        \"name\": \"%full_name%\",\n        \"address\": \"%address%\"\n      }\n    }\n  ]\n}"
+  }
+]

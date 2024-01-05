@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "delete http://example.org, write to %json%",
+    "response": "{\"FunctionName\": \"Delete\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"url\",\n\"Value\": \"http://example.org\"}],\n\"ReturnValue\": {\"Type\": \"Object\",\n\"VariableName\": \"json\"}}",
+    "created": "2024-01-03T14:42:26.6439816+00:00"
+  }
+]

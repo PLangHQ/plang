@@ -1,0 +1,14 @@
+[
+  {
+    "stepText": "get wei balance 0x1234, write to %balance%",
+    "response": "{\"FunctionName\": \"GetBalanceInWei\", \n\"Parameters\": [{\"Type\": \"String\", \n\"Name\": \"address\", \n\"Value\": \"0x1234\"}], \n\"ReturnValue\": {\"Type\": \"BigInteger\", \n\"VariableName\": \"balance\"}}"
+  },
+  {
+    "stepText": "get balance on 0x1234, write to %balance%",
+    "response": "{\"FunctionName\": \"GetBalanceInWei\", \n\"Parameters\": [{\"Type\": \"String\", \n\"Name\": \"address\", \n\"Value\": \"0x1234\"}], \n\"ReturnValue\": {\"Type\": \"BigInteger\", \n\"VariableName\": \"balance\"}}"
+  },
+  {
+    "stepText": "get balance in wei 0x1234, output to %balance%",
+    "response": "{\"FunctionName\": \"GetBalanceInWei\", \n\"Parameters\": [{\"Type\": \"String\", \n\"Name\": \"address\", \n\"Value\": \"0x1234\"}], \n\"ReturnValue\": {\"Type\": \"BigInteger\", \n\"VariableName\": \"balance\"}}"
+  }
+]

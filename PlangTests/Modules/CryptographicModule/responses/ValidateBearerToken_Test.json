@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "validate bearer %token%, write to %isValidToken%",
+    "response": "{\"FunctionName\": \"ValidateBearerToken\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"token\",\n\"Value\": \"%token%\"}],\n\"ReturnValue\": [{\"Type\": \"Boolean\",\n\"VariableName\": \"isValidToken\"}]}",
+    "created": "2024-01-05T10:10:45.2871623+00:00"
+  }
+]

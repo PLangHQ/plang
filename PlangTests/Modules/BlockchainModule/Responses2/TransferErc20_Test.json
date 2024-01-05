@@ -1,0 +1,10 @@
+[
+  {
+    "stepText": "transfer erc20 %amount% from 0x2333 to 0x123, write to %txHash%",
+    "response": "{\"FunctionName\": \"TransferFromSmartContract\", \n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"contractAddressOrSymbol\", \"Value\": \"erc20\"},\n    {\"Type\": \"String\", \"Name\": \"from\", \"Value\": \"0x2333\"},\n    {\"Type\": \"String\", \"Name\": \"to\", \"Value\": \"0x123\"},\n    {\"Type\": \"BigInteger\", \"Name\": \"value\", \"Value\": \"%amount%\"},\n    {\"Type\": \"Boolean\", \"Name\": \"waitForReceipt\", \"Value\": false}\n],\n\"ReturnValue\": {\"Type\": \"String\", \"VariableName\": \"%txHash%\"}}"
+  },
+  {
+    "stepText": "transfer usdc %amount% from 0x2333 to 0x123, write to %txHash%",
+    "response": "{\"FunctionName\": \"TransferFromSmartContract\", \n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"contractAddressOrSymbol\", \"Value\": \"usdc\"},\n    {\"Type\": \"String\", \"Name\": \"from\", \"Value\": \"0x2333\"},\n    {\"Type\": \"String\", \"Name\": \"to\", \"Value\": \"0x123\"},\n    {\"Type\": \"BigInteger\", \"Name\": \"value\", \"Value\": \"%amount%\"},\n    {\"Type\": \"Boolean\", \"Name\": \"waitForReceipt\", \"Value\": false}\n],\n\"ReturnValue\": {\"Type\": \"String\", \"VariableName\": \"txHash\"}}"
+  }
+]

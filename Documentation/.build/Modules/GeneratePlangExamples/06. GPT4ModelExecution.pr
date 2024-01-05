@@ -23,10 +23,12 @@
         "Value": 4000
       }
     ],
-    "ReturnValue": {
-      "Type": "string",
-      "VariableName": "plangExamplesDescription"
-    }
+    "ReturnValue": [
+      {
+        "Type": "string",
+        "VariableName": "plangExamplesDescription"
+      }
+    ]
   },
   "Text": "[llm]: system:%system%\n        user: %user%\n        model:'gpt-4-1106-preview'\n        max length: 4k\n        write to %plangExamplesDescription%",
   "Reload": false,
@@ -37,14 +39,14 @@
     "presencePenalty": null,
     "maxLength": 4000,
     "type": "PLang.Modules.LlmModule.Builder",
-    "system": "Parse user command.\r\n\r\nSelect the correct function from list of available functions based on user command\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")%\r\nwhere the settingName would be the api key, config key, \r\ndefaultValue for settings is the usual value given, make it \"\" if no value can be default\r\nExplain is an explanation about the setting that novice user can understand.\r\n\r\nOnExceptionContainingTextCallGoal - if no text is defined, set as \"*\", goal to call is required from user\r\n\r\nJSON scheme information\r\nType: the object type in c#\r\nName: name of the variable\r\nValue: %variable% or hardcode string that should be used\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nReturnValue: Only if the function returns a value, else null\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: {\"Type\": string,\n\"VariableName\": string}}",
+    "system": "Parse user command.\r\n\r\nSelect the correct function from list of available functions based on user command\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")%\r\nwhere the settingName would be the api key, config key, \r\ndefaultValue for settings is the usual value given, make it \"\" if no value can be default\r\nExplain is an explanation about the setting that novice user can understand.\r\n\r\nOnExceptionContainingTextCallGoal - if no text is defined, set as \"*\", goal to call is required from user\r\n\r\nJSON scheme information\r\nType: the object type in c#\r\nName: name of the variable\r\nValue: %variable% or hardcode string that should be used\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nReturnValue: Only if the function returns a value, else null. Usually indicated by ' write into %variable%' by user command\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}]}",
     "question": "command: [llm]: system:%system%\n        user: %user%\n        model:'gpt-4-1106-preview'\n        max length: 4k\n        write to %plangExamplesDescription%",
     "assistant": "## functions available defined in csharp ##\r\nvoid AskLlm(String? scheme, String? system, String? assistant, String? user, String? model = gpt-4, Double? temperature = 0, Double? topP = 0, Double? frequencyPenalty = 0, Double? presencePenalty = 0, Int32? maxLength = 4000, Boolean? cacheResponse = True, String? llmResponseType)  // . \n\r\n## functions available ends ##\nThe following user request is for constructing a message to LLM engine\r\n\r\nDetermine what part is system, assistant and user properties. If you cannot map it, the whole user request should be on user property\r\nllmResponseType can be null, text, json, markdown or html. default is null. If scheme is defined use json, unless user defines otherwise\r\n\r\n## examples ##\r\nsystem: do stuff, user: this is data from user, write to %data%, %output% and %dest% => scheme: null, llResponseType=null\r\nsystem: setup up system, asssistant: some assistant stuff, user: this is data from user, scheme: {data:string, year:number, name:string} => scheme:  {data:string, year:number, name:string}\r\n## examples ##\r\n",
     "model": "gpt-4",
     "caching": true,
     "Reload": false,
     "PreviousResult": null,
-    "RawResponse": "{\r\n  \"FunctionName\": \"AskLlm\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"system\",\r\n      \"Value\": \"%system%\"\r\n    },\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"user\",\r\n      \"Value\": \"%user%\"\r\n    },\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"model\",\r\n      \"Value\": \"gpt-4-1106-preview\"\r\n    },\r\n    {\r\n      \"Type\": \"Int32\",\r\n      \"Name\": \"maxLength\",\r\n      \"Value\": 4000\r\n    }\r\n  ],\r\n  \"ReturnValue\": {\r\n    \"Type\": \"string\",\r\n    \"VariableName\": \"plangExamplesDescription\"\r\n  }\r\n}"
+    "RawResponse": "{\r\n  \"FunctionName\": \"AskLlm\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"system\",\r\n      \"Value\": \"%system%\"\r\n    },\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"user\",\r\n      \"Value\": \"%user%\"\r\n    },\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"model\",\r\n      \"Value\": \"gpt-4-1106-preview\"\r\n    },\r\n    {\r\n      \"Type\": \"Int32\",\r\n      \"Name\": \"maxLength\",\r\n      \"Value\": 4000\r\n    }\r\n  ],\r\n  \"ReturnValue\": [\r\n    {\r\n      \"Type\": \"string\",\r\n      \"VariableName\": \"plangExamplesDescription\"\r\n    }\r\n  ]\r\n}"
   },
   "RunOnBuild": false
 }

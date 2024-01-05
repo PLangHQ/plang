@@ -1,5 +1,6 @@
+Create install section for each OS (windows, linux, macos)
+Install plang from http://plang.is/download
+Download the zip file and unzip to a location such as c:\plang\ or equal on linux/macos (suggest a path)
+Add c:\plang\ to PATH, show for each OS (with path according to OS)
 
-
-
-Visual Code extension can be found at
-https://marketplace.visualstudio.com/items?itemName=PlangHQ.plang-extension
+Next step, (Install Development environment (IDE))[./IDE.md]

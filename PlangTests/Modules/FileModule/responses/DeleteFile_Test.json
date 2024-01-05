@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "delete %file1%",
+    "response": "{\"FunctionName\": \"DeleteFile\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"fileName\",\n\"Value\": \"%file1%\"}]}",
+    "created": "2024-01-03T14:31:07.3467825+00:00"
+  }
+]

@@ -1,0 +1,10 @@
+[
+  {
+    "stepText": "get decimal for 0x1234, write to %decimal%",
+    "response": "{\"FunctionName\": \"GetDecimal\", \n\"Parameters\": [{\"Type\": \"String\", \n\"Name\": \"contractAddress\", \n\"Value\": \"0x1234\"}], \n\"ReturnValue\": {\"Type\": \"UInt32\", \n\"VariableName\": \"decimal\"}}"
+  },
+  {
+    "stepText": "retrieve decimal point for smart contract 0x1234, write to %decimal%",
+    "response": "{\"FunctionName\": \"GetDecimal\", \n\"Parameters\": [{\"Type\": \"String\", \n\"Name\": \"contractAddress\", \n\"Value\": \"0x1234\"}], \n\"ReturnValue\": {\"Type\": \"UInt32\", \n\"VariableName\": \"decimal\"}}"
+  }
+]

@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "get 'productList' from list, write to %productList%",
+    "response": "{\"FunctionName\": \"N/A\",\n\"Parameters\": [],\n\"ReturnValue\": {\"Type\": \"List`1\",\n\"VariableName\": \"productList\"}}",
+    "created": "2024-01-03T14:46:07.2539306+00:00"
+  }
+]

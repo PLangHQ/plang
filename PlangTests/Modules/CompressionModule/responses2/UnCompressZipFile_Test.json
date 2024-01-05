@@ -1,0 +1,6 @@
+[
+  {
+    "stepText": "uncompress %file% to %destination%",
+    "response": "{\"FunctionName\": \"DecompressFile\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"sourceArchiveFileName\",\n\"Value\": \"%file%\"},\n{\"Type\": \"String\",\n\"Name\": \"destinationDirectoryName\",\n\"Value\": \"%destination%\"},\n{\"Type\": \"Boolean\",\n\"Name\": \"overwrite\",\n\"Value\": false}]}"
+  }
+]

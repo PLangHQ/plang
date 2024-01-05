@@ -149,9 +149,12 @@ namespace PLang.Building
 					try
 					{
 						var gf = JsonConvert.DeserializeObject<GenericFunction>(instruction.Action.ToString());
-						if (gf != null && gf.ReturnValue != null)
+						if (gf != null && gf.ReturnValue != null && gf.ReturnValue.Count > 0)
 						{
-							memoryStack.PutForBuilder(gf.ReturnValue.VariableName, gf.ReturnValue.Type);
+							foreach (var returnValue in gf.ReturnValue)
+							{
+								memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
+							}
 						}
 					}
 					catch { }

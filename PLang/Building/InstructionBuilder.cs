@@ -68,9 +68,12 @@ namespace PLang.Building
 			}
 			foreach (var function in functions)
 			{
-				if (function != null && function.ReturnValue != null)
+				if (function != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
 				{
-					memoryStack.Put(function.ReturnValue.VariableName, function.ReturnValue.Type);
+					foreach (var returnValue in function.ReturnValue)
+					{
+						memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
+					}
 				}
 			}
 			// since the no invalid function, we can save the instruction file
@@ -140,9 +143,12 @@ You have 3 options.
 						{
 							if (methodHelper.IsParameterMatch(instanceFunction, function.Parameters))
 							{				
-								if (instanceFunction.ReturnType != typeof(Task) && function.ReturnValue != null && !string.IsNullOrWhiteSpace(function.ReturnValue.VariableName))
+								if (instanceFunction.ReturnType != typeof(Task) && function.ReturnValue != null && function.ReturnValue.Count > 0)
 								{
-									memoryStack.Init(function.ReturnValue.VariableName, instanceFunction.ReturnType);
+									foreach (var returnValue in function.ReturnValue)
+									{
+										memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
+									}
 								}
 							} else
 							{

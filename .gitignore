@@ -6,3 +6,6 @@
 /**/obj/
 .vs
 *.sqlite
+*.ncrunchsolution
+*.ncrunchsolution.user
+*.cache

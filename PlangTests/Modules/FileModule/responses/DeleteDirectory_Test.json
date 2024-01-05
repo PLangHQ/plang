@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "delete %dirName%",
+    "response": "{\n\"FunctionName\": \"DeleteDirectory\",\n\"Parameters\": [\n    {\n        \"Type\": \"string\",\n        \"Name\": \"directoryPath\",\n        \"Value\": \"%dirName%\"\n    },\n    {\n        \"Type\": \"Boolean\",\n        \"Name\": \"recursive\",\n        \"Value\": true\n    },\n    {\n        \"Type\": \"Boolean\",\n        \"Name\": \"throwErrorOnNotFound\",\n        \"Value\": false\n    }\n]\n}",
+    "created": "2024-01-03T14:32:30.9811328+00:00"
+  }
+]

@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "read file.mp4 into %stream%",
+    "response": "{\"FunctionName\": \"ReadFileAsStream\", \n\"Parameters\": [{\"Type\": \"String\", \n\"Name\": \"path\", \n\"Value\": \"file.mp4\"}], \n\"ReturnValue\": {\"Type\": \"Stream\", \n\"VariableName\": \"stream\"}}",
+    "created": "2024-01-03T13:45:10.1510088+00:00"
+  }
+]

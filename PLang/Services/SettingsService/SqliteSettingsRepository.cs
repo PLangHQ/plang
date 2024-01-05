@@ -3,12 +3,9 @@ using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Interfaces;
 using PLang.Utils;
-using System;
 using System.Data;
 using System.Data.SQLite;
-using System.Reflection;
 using System.Security.Cryptography;
-using System.Xml.Linq;
 
 namespace PLang.Services.SettingsService
 {
@@ -89,6 +86,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 				{
 					globalPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "plang", ".db");
 				}
+
 				// ONLY time Directory and File is used directly.
 				// This is because PLangFileSystem depends on SqlSettingsRepository
 				if (!Directory.Exists(globalPath))
@@ -113,6 +111,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 				if (!fileSystem.IsRootApp)
 				{
 					dbName = fileSystem.RelativeAppPath.Replace(Path.DirectorySeparatorChar, '_');
+					if (dbName == "/") dbName = "AppDb";
 				}
 				if (File.Exists(dbName))
 				{

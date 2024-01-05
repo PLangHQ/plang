@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "system: get first name and last name from user request. \nuser:Andy Bernard, write to %firstName%, %lastName%",
+    "response": "{\"FunctionName\": \"AskLlm\",\n\"Parameters\": [\n    {\"Type\": \"string\", \"Name\": \"system\", \"Value\": \"get first name and last name from user request.\"},\n    {\"Type\": \"string\", \"Name\": \"user\", \"Value\": \"Andy Bernard\"}\n],\n\"ReturnValue\": [\n    {\"Type\": \"string\", \"VariableName\": \"firstName\"},\n    {\"Type\": \"string\", \"VariableName\": \"lastName\"}\n]}",
+    "created": "2024-01-04T09:39:28.0519674+00:00"
+  }
+]

@@ -1,0 +1,6 @@
+[
+  {
+    "stepText": "set current address as 0xeC146d8c6D51d547D09548A9D9B4451AeC3df285",
+    "response": "{\"FunctionName\": \"SetCurrentAddress\", \"Parameters\": [{\"Type\": \"String\", \"Name\": \"address\", \"Value\": \"0xeC146d8c6D51d547D09548A9D9B4451AeC3df285\"}]}"
+  }
+]

@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "post http://example.org, file=%@file%, write to %json%",
+    "response": "{\"FunctionName\": \"PostMultipartFormData\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"url\", \"Value\": \"http://example.org\"},\n    {\"Type\": \"FileStream\", \"Name\": \"data\", \"Value\": \"%@file%\"}\n],\n\"ReturnValue\": {\"Type\": \"Object\", \"VariableName\": \"json\"}}",
+    "created": "2024-01-03T14:43:54.9028167+00:00"
+  }
+]

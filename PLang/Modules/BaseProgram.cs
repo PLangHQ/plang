@@ -131,20 +131,12 @@ namespace PLang.Modules
 				if (goalStep.WaitForExecution)
 				{
 					object? result = await (dynamic)task;
-					if (function.ReturnValue == null) return;
+					if (function.ReturnValue == null || function.ReturnValue.Count == 0) return;
 
-					if (false && result is IDictionary<string, object> dict)
+					foreach (var returnValue in function.ReturnValue)
 					{
-						foreach (var item in dict)
-						{
-							logger.LogTrace("put on memoryStack - key:{0} | value:{1}", item.Key, item.Value);
-							memoryStack.Put(item.Key, item.Value);
-						}
-					}
-					else
-					{
-						memoryStack.Put(function.ReturnValue.VariableName, result);
-					}
+						memoryStack.Put(returnValue.VariableName, result);
+					}					
 
 					await SetCachedItem(result);
 				}
@@ -166,7 +158,7 @@ Calling {this.GetType().FullName}.{function.FunctionName}
 {JsonConvert.SerializeObject(parameterValues)}
 ";
 				}
-				str += $"\nReturn value {function.ReturnValue}";
+				str += $"\nReturn value {JsonConvert.SerializeObject(function.ReturnValue)}";
 				
 				throw new RuntimeException(str, goal, ex);
 			}
@@ -239,10 +231,13 @@ Calling {this.GetType().FullName}.{function.FunctionName}
 			else
 			{
 				var obj = await appCache.Get(goalStep.CacheHandler.CacheKey);
-				if (obj != null && function.ReturnValue != null)
+				if (obj != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
 				{
-					logger.LogDebug($"Cache was hit for {goalStep.CacheHandler.CacheKey}");
-					memoryStack.Put(function.ReturnValue.VariableName, obj);
+					foreach (var returnValue in function.ReturnValue)
+					{
+						logger.LogDebug($"Cache was hit for {goalStep.CacheHandler.CacheKey}");
+						memoryStack.Put(returnValue.VariableName, obj);
+					}
 					return true;
 				}
 			}

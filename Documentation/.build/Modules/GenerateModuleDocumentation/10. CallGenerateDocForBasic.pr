@@ -11,6 +11,16 @@
         "Type": "Dictionary`2<String, Object>",
         "Name": "parameters",
         "Value": null
+      },
+      {
+        "Type": "Boolean",
+        "Name": "waitForExecution",
+        "Value": true
+      },
+      {
+        "Type": "Int32",
+        "Name": "delayWhenNotWaitingInMilliseconds",
+        "Value": 0
       }
     ],
     "ReturnValue": null
@@ -24,14 +34,14 @@
     "presencePenalty": null,
     "maxLength": 4000,
     "type": "PLang.Modules.CallGoalModule.Builder",
-    "system": "\r\n Parse user command, to match the parameters needed for the RunGoal function\r\n\r\nVariables are defined with starting and ending %\r\n\r\nGoalName should be prefixed with !\r\nParameters are optional, they are key value of a variable, if user does not define key, then it is same as value.\r\n\r\n== Examples starts ==\r\n!ParseText then ParseText is goalName, no parameters\r\n!Gmail.Search %query%, then Gmail.Search is goalName,  %query% is key and value in parameters\r\nFolder.Search q=%fileName%, then key is q, and value is %fileName%\r\n== Examples ends ==\r\n\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: {\"Type\": string,\n\"VariableName\": string}}",
+    "system": "\r\n Parse user command, to match the parameters needed for the RunGoal function\r\n\r\nVariables are defined with starting and ending %\r\n\r\nGoalName should be prefixed with !\r\nParameters are optional, they are key value of a variable, if user does not define key, then it is same as value.\r\n\r\n== Examples starts ==\r\n!ParseText then ParseText is goalName, no parameters\r\n!Gmail.Search %query%, then Gmail.Search is goalName,  %query% is key and value in parameters\r\nFolder.Search q=%fileName%, then key is q, and value is %fileName%\r\n== Examples ends ==\r\n\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}]}",
     "question": "command: call !GenerateDocForBasic",
     "assistant": "## functions available defined in csharp ##\r\nvoid RunGoal(String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForExecution = True, Int32? delayWhenNotWaitingInMilliseconds = 0) \n\r\n## functions available ends ##",
     "model": "gpt-4",
     "caching": true,
     "Reload": false,
     "PreviousResult": null,
-    "RawResponse": null
+    "RawResponse": "{\r\n  \"FunctionName\": \"RunGoal\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"goalName\",\r\n      \"Value\": \"GenerateDocForBasic\"\r\n    },\r\n    {\r\n      \"Type\": \"Dictionary`2<String, Object>\",\r\n      \"Name\": \"parameters\",\r\n      \"Value\": null\r\n    },\r\n    {\r\n      \"Type\": \"Boolean\",\r\n      \"Name\": \"waitForExecution\",\r\n      \"Value\": true\r\n    },\r\n    {\r\n      \"Type\": \"Int32\",\r\n      \"Name\": \"delayWhenNotWaitingInMilliseconds\",\r\n      \"Value\": 0\r\n    }\r\n  ]\r\n}"
   },
   "RunOnBuild": false
 }

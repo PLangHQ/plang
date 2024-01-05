@@ -1,0 +1,12 @@
+[
+  {
+    "stepText": "decrypt %text%, write to %encryptedText%",
+    "response": "{\"FunctionName\": \"Decrypt\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"content\",\n\"Value\": \"%text%\"}],\n\"ReturnValue\": {\"Type\": \"String\",\n\"VariableName\": \"encryptedText\"}}",
+    "created": "2024-01-03T13:10:31.7858033+00:00"
+  },
+  {
+    "stepText": "decrypt %encryptedText%, write to %text%",
+    "response": "{\"FunctionName\": \"Decrypt\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"content\",\n\"Value\": \"%encryptedText%\"}],\n\"ReturnValue\": {\"Type\": \"String\",\n\"VariableName\": \"%text%\"}}",
+    "created": "2024-01-03T13:10:45.5759772+00:00"
+  }
+]

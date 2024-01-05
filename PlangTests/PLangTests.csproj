@@ -17,6 +17,7 @@
     <PackageReference Include="coverlet.collector" Version="3.2.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
     <PackageReference Include="NSubstitute" Version="5.0.0" />
+    <PackageReference Include="OpenAI" Version="1.10.0" />
     <PackageReference Include="TestableIO.System.IO.Abstractions.TestingHelpers" Version="19.2.69" />
   </ItemGroup>
 
@@ -100,7 +101,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Modules\BlockchainModule\Responses2\" />
+    <Folder Include="Modules\CryptographicModule\responses2\" />
     <Folder Include="PrFiles\Apps\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="OpenAiService">
+      <HintPath>lib\OpenAiService.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

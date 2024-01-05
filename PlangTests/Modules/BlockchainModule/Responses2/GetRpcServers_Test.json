@@ -1,0 +1,6 @@
+[
+  {
+    "stepText": "get rpc servers, write to %servers%",
+    "response": "{\"FunctionName\": \"GetRpcServers\", \"Parameters\": [], \"ReturnValue\": {\"Type\": \"List`1\", \"VariableName\": \"servers\"}}"
+  }
+]

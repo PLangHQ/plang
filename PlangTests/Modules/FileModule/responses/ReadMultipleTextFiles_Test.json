@@ -1,0 +1,17 @@
+[
+  {
+    "stepText": "read all files in %dir%, into %contents%",
+    "response": "{\"FunctionName\": \"ReadMultipleTextFiles\",\n\"Parameters\": [{\"Type\": \"String\", \"Name\": \"folderPath\", \"Value\": \"%dir%\"}, {\"Type\": \"String\", \"Name\": \"searchPattern\", \"Value\": \"*\"}, {\"Type\": \"Boolean\", \"Name\": \"includeAllSubfolders\", \"Value\": false}],\n\"ReturnValue\": {\"Type\": \"List`1\", \"VariableName\": \"contents\"}}",
+    "created": "2024-01-03T13:49:47.7346262+00:00"
+  },
+  {
+    "stepText": "read all files in %dir% ending with mp4, dont include sub dirs, into %contents%",
+    "response": "{\"FunctionName\": \"ReadMultipleTextFiles\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"folderPath\", \"Value\": \"%dir%\"},\n    {\"Type\": \"String\", \"Name\": \"searchPattern\", \"Value\": \"*.mp4\"},\n    {\"Type\": \"Boolean\", \"Name\": \"includeAllSubfolders\", \"Value\": false}\n],\n\"ReturnValue\": {\"Type\": \"List`1\", \"VariableName\": \"contents\"}}",
+    "created": "2024-01-03T13:49:57.5086205+00:00"
+  },
+  {
+    "stepText": "read all files in %dir% and subfolders, into %contents%",
+    "response": "{\"FunctionName\": \"ReadMultipleTextFiles\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"folderPath\", \"Value\": \"%dir%\"},\n    {\"Type\": \"Boolean\", \"Name\": \"includeAllSubfolders\", \"Value\": true}\n],\n\"ReturnValue\": {\"Type\": \"List`1\", \"VariableName\": \"%contents%\"}}",
+    "created": "2024-01-03T13:50:45.3993929+00:00"
+  }
+]

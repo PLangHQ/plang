@@ -5,8 +5,11 @@ using PLang.Building.Model;
 using PLang.Interfaces;
 using PLang.SafeFileSystem;
 using PLang.Services.LlmService;
+using PLang.Services.OpenAi;
 using PLang.Utils;
 using PLangTests;
+using PLangTests.Utils;
+using System.Runtime.CompilerServices;
 using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Modules.CachingModule.Tests
@@ -21,10 +24,9 @@ namespace PLang.Modules.CachingModule.Tests
 		{
 			base.Initialize();
 
-			settings.Get(typeof(PLangLlmService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var aiService = new PLangLlmService(cacheHelper, context);
-			
-			var fileSystem = new PLangFileSystem(Environment.CurrentDirectory, "./");
+			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
+			var aiService = new OpenAiService(settings, logger, cacheHelper, context);
+
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
@@ -32,15 +34,13 @@ namespace PLang.Modules.CachingModule.Tests
 
 		}
 
-		private void SetupResponse(string response, Type type)
+		private void SetupResponse(string stepText, [CallerMemberName] string caller = "", Type? type = null)
 		{
-			var aiService = Substitute.For<ILlmService>();
-			aiService.Query(Arg.Any<LlmQuestion>(), type).Returns(p => { 
-				return JsonConvert.DeserializeObject(response, type); 
-			});			
+			var llmService = GetLlmService(stepText, caller, type);
+			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CachingModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.CachingModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper);
 		}
 
 		[DataTestMethod]
@@ -48,44 +48,30 @@ namespace PLang.Modules.CachingModule.Tests
 		[DataRow("get %cacheKey% from cache, write to %obj%", "%cacheKey%")]
 		public async Task Get_Test(string text, string key)
 		{
-
-			string response = @"{""FunctionName"": ""Get"",
-""Parameters"": [{""Type"": ""String"",
-""Name"": ""key"",
-""Value"": """ + key + @"""}],
-""ReturnValue"": {""Type"": ""Object"",
-""VariableName"": ""%obj%""}}";
-
-			SetupResponse(response, typeof(GenericFunction));
+			SetupResponse(text);
 
 			var step = new Building.Model.GoalStep();
 			step.Text = text;			
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
-
-			//Assert.AreEqual("1", instruction.LlmQuestion.RawResponse);
+			
+			Store(text, instruction.LlmQuestion.RawResponse);
+			
 			Assert.AreEqual("Get", gf.FunctionName);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual(key, gf.Parameters[0].Value);
 			
-			Assert.AreEqual("%obj%", gf.ReturnValue.VariableName);
+			AssertVar.AreEqual("%obj%", gf.ReturnValue[0].VariableName);
 		}
 
 		[DataTestMethod]
 		[DataRow("set %obj% to cache, 'ObjCache', cache for 10 minutes from last usage")]
+		[DataRow("set %obj% to cache, 'ObjCache', cache for 1 minutes from last usage")]
 		public async Task SetWithSliding_Test(string text)
 		{
 
-			string response = @"{""FunctionName"": ""Set"",
-""Parameters"": [
-    {""Type"": ""String"", ""Name"": ""key"", ""Value"": ""ObjCache""},
-    {""Type"": ""Object"", ""Name"": ""value"", ""Value"": ""%obj%""},
-    {""Type"": ""TimeSpan"", ""Name"": ""slidingExpiration"", ""Value"": ""00:10:00""}
-],
-""ReturnValue"": null}";
-
-			SetupResponse(response, typeof(GenericFunction));
+			SetupResponse(text);
 
 			var step = new Building.Model.GoalStep();
 			step.Text = text;
@@ -93,13 +79,21 @@ namespace PLang.Modules.CachingModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			//Assert.AreEqual("1", instruction.LlmQuestion.RawResponse);
-			Assert.AreEqual("Set", gf.FunctionName);
+			Store(text, instruction.LlmQuestion.RawResponse);
+
+			Assert.AreEqual("SetForSlidingExpiration", gf.FunctionName);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("ObjCache", gf.Parameters[0].Value);
 			Assert.AreEqual("value", gf.Parameters[1].Name);
 			Assert.AreEqual("%obj%", gf.Parameters[1].Value);
-			Assert.AreEqual("slidingExpiration", gf.Parameters[2].Name);
+			Assert.AreEqual("timeInSeconds", gf.Parameters[2].Name);
+			if (text.Contains("cache for 10 minutes"))
+			{
+				Assert.AreEqual((long)60 * 10, gf.Parameters[2].Value);
+			} else
+			{
+				Assert.AreEqual((long)60, gf.Parameters[2].Value);
+			}
 		}
 
 		[DataTestMethod]
@@ -107,15 +101,7 @@ namespace PLang.Modules.CachingModule.Tests
 		public async Task SetWithAbsolute_Test(string text)
 		{
 
-			string response = @"{""FunctionName"": ""Set"",
-""Parameters"": [
-    {""Type"": ""String"", ""Name"": ""key"", ""Value"": ""ObjCache""},
-    {""Type"": ""Object"", ""Name"": ""value"", ""Value"": ""%obj%""},
-    {""Type"": ""TimeSpan"", ""Name"": ""absoluteExpiration"", ""Value"": ""00:10:00""}
-],
-""ReturnValue"": null}";
-
-			SetupResponse(response, typeof(GenericFunction));
+			SetupResponse(text);
 
 			var step = new Building.Model.GoalStep();
 			step.Text = text;
@@ -123,13 +109,15 @@ namespace PLang.Modules.CachingModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			//Assert.AreEqual("1", instruction.LlmQuestion.RawResponse);
-			Assert.AreEqual("Set", gf.FunctionName);
+			Store(text, instruction.LlmQuestion.RawResponse);
+			
+			Assert.AreEqual("SetForAbsoluteExpiration", gf.FunctionName);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("ObjCache", gf.Parameters[0].Value);
 			Assert.AreEqual("value", gf.Parameters[1].Name);
 			Assert.AreEqual("%obj%", gf.Parameters[1].Value);
-			Assert.AreEqual("absoluteExpiration", gf.Parameters[2].Name);
+			Assert.AreEqual("timeInSeconds", gf.Parameters[2].Name);
+			Assert.AreEqual((long)60*10, gf.Parameters[2].Value);
 		}
 
 	}

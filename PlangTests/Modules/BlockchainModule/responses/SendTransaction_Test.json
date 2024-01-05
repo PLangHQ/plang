@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "send transaction to 0x123555, [{\"name\":\"value\"}], params %amount%, %date%, %voted%, write to %txHash%",
+    "response": "{\"FunctionName\": \"SendTransaction\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"contractAddress\", \"Value\": \"0x123555\"},\n    {\"Type\": \"String\", \"Name\": \"abi\", \"Value\": \"[{\\\"name\\\":\\\"value\\\"}]\"},\n    {\"Type\": \"Object[]\", \"Name\": \"args\", \"Value\": [\"%amount%\", \"%date%\", \"%voted%\"]}\n],\n\"ReturnValue\": [\n    {\"Type\": \"String\", \"VariableName\": \"txHash\"}\n]}",
+    "created": "2024-01-04T09:57:33.3938975+00:00"
+  }
+]

@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "Patch http://example.org, write to %json%",
+    "response": "{\"FunctionName\": \"Patch\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"url\",\n\"Value\": \"http://example.org\"}],\n\"ReturnValue\": {\"Type\": \"Object\",\n\"VariableName\": \"json\"}}",
+    "created": "2024-01-03T14:42:10.0922554+00:00"
+  }
+]

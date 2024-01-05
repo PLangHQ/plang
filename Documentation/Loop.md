@@ -25,9 +25,23 @@ In PLang, loops are used to go through each item in a list, file, or data receiv
 
 ### Looping Through Files and HTTP Data
 ```plang
+Files
+- get files in 'c:\dir', write to %files%
 - foreach %files%, call !LoadText
-- traverse %products% !ShowProduct product=%item%
+
+LoadText
+- read file %item.path% into %content%
 ```
+```plang
+CatFacts
+- GET https://cat-fact.herokuapp.com/facts, write to %facts%
+- go through %facts% !ShowFact fact=%item%
+
+ShowFact
+- write out '%fact.text% was created at %fact.createdAt%'
+```
+
+Notice how the syntax is natural and not strict to `foreach` or `for(int i=...)`. In the examples the intent is described of going through a list, such as `go through %facts%`
 
 ## Default Values in Loop Calls
 
@@ -35,13 +49,23 @@ When you use a loop in PLang, some default values are automatically available:
 
 - `%list%`: The list you're looping through.
 - `%item%`: The current item in the loop.
-- `%idx%`: The index (position) of the current item.
+- `%position%`: The position of the current item. %position% starts at 1
 - `%listCount%`: The total number of items in the list.
 
 ### Example with Default Values
 ```plang
+ShowFact
+- Write out "This is fact nr. %position% of %listCount%, this is the %item%, from %list%"
+```
+
+You can overwrite the default names of those values. This can be helpful to make your code clear or of the goal you are calling requires specific name.
+```plang
+Products
+- select everything from products table, newest first, write to %products%
+- go through %products% call !ProcessProduct list=%productList%, item=%product%, position=%productPosition%, listCount=%numberOfProducts%
+
 ShowProduct
-- Write out "This is product nr. %idx% of %listCount%, this is the %item%, from %list%"
+- Write out "This is product nr. %productPosition% of %numberOfProducts%, this is the %product%, from %productList%"
 ```
 
 ## Best Practices

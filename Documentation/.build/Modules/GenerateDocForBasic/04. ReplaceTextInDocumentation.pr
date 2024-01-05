@@ -1,7 +1,7 @@
 {
   "Action": {
-    "Name": "ReplaceCodeExamples",
-    "Code": "\nusing System;\nusing System.Dynamic;\n\npublic static class ReplaceCodeExamples\n{\n    public static void Process(string documentation, string plangExamplesDescription, out string documentationOut, PLang.SafeFileSystem.PLangFileSystem fileSystem)\n    {\n        if (documentation == null)\n            throw new Exception(\"The documentation is not provided.\");\n        if (plangExamplesDescription == null)\n            throw new Exception(\"The Plang examples description is not provided.\");\n\n        documentationOut = documentation.Replace(\"[PlangCodeExamples]\", plangExamplesDescription);\n    }\n}\n",
+    "Name": "CamelCase",
+    "Code": "\nusing System;\nusing System.Dynamic;\n\npublic static class CamelCase\n{\n    public static void Process(string documentation, string plangExamplesDescription, out string documentationOut, PLang.SafeFileSystem.PLangFileSystem fileSystem)\n    {\n        if (documentation == null)\n        {\n            throw new Exception(\"The documentation is not provided.\");\n        }\n\n        if (plangExamplesDescription == null)\n        {\n            throw new Exception(\"The Plang examples description is not provided.\");\n        }\n\n        documentationOut = documentation.Replace(\"[PlangCodeExamples]\", plangExamplesDescription);\n    }\n}\n",
     "Using": [
       "System",
       "System.Dynamic"

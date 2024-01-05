@@ -1,0 +1,14 @@
+[
+  {
+    "stepText": "compress %dir% to %destination%, hig",
+    "response": "{\"FunctionName\": \"CompressDirectory\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"sourceDirectoryName\", \"Value\": \"%dir%\"},\n    {\"Type\": \"String\", \"Name\": \"destinationArchiveFileName\", \"Value\": \"%destination%\"},\n    {\"Type\": \"Int32\", \"Name\": \"compressionLevel\", \"Value\": 9},\n    {\"Type\": \"Boolean\", \"Name\": \"includeBaseDirectory\", \"Value\": true}\n]}"
+  },
+  {
+    "stepText": "compress %dir% to %destination%, low compression, include ",
+    "response": "{\"FunctionName\": \"CompressDirectory\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"sourceDirectoryName\", \"Value\": \"%dir%\"},\n    {\"Type\": \"String\", \"Name\": \"destinationArchiveFileName\", \"Value\": \"%destination%\"},\n    {\"Type\": \"Int32\", \"Name\": \"compressionLevel\", \"Value\": 0},\n    {\"Type\": \"Boolean\", \"Name\": \"includeBaseDirectory\", \"Value\": true}\n]}"
+  },
+  {
+    "stepText": "compress %dir% to %destination%, low compression, include all dir",
+    "response": "{\"FunctionName\": \"CompressDirectory\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"sourceDirectoryName\", \"Value\": \"%dir%\"},\n    {\"Type\": \"String\", \"Name\": \"destinationArchiveFileName\", \"Value\": \"%destination%\"},\n    {\"Type\": \"Int32\", \"Name\": \"compressionLevel\", \"Value\": 0},\n    {\"Type\": \"Boolean\", \"Name\": \"includeBaseDirectory\", \"Value\": true}\n]}"
+  }
+]

@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "copy %file1% to %file2%",
+    "response": "{\"FunctionName\": \"CopyFile\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"sourceFileName\",\n\"Value\": \"%file1%\"},\n{\"Type\": \"String\",\n\"Name\": \"destFileName\",\n\"Value\": \"%file2%\"},\n{\"Type\": \"Boolean\",\n\"Name\": \"createDirectoryIfNotExisting\",\n\"Value\": true},\n{\"Type\": \"Boolean\",\n\"Name\": \"overwriteFile\",\n\"Value\": false}]}",
+    "created": "2024-01-03T14:30:40.4278451+00:00"
+  }
+]

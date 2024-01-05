@@ -1,8 +1,5 @@
-﻿using IdGen;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
-using Nethereum.Contracts;
-using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
 using Nethereum.JsonRpc.WebSocketClient;
 using Nethereum.JsonRpc.WebSocketStreamingClient;
@@ -18,18 +15,19 @@ using PLang.Attributes;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
-using PLang.Services.LoggerService;
 using PLang.Utils;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Numerics;
 using System.Text;
-using System.Threading.Tasks;
-using Websocket.Client.Logging;
 using static PLang.Modules.BlockchainModule.ModuleSettings;
 
 namespace PLang.Modules.BlockchainModule
-{
+{   
+	
+	//todo: should cleanup any usage of keys, set them to null after usage
+	// this is so they dont stay in memory until garbage collection
+	// this needs to happen down the call stack and figure out how settings is handled
+
 	[Description("Use blockchain, create wallet, account info, transfer money, sign message, verify signature")]
 	public class Program : BaseProgram, IDisposable
 	{

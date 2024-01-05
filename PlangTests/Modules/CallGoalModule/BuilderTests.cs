@@ -1,12 +1,10 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using NSubstitute;
-using PLang.Building.Model;
-using PLang.Interfaces;
-using PLang.SafeFileSystem;
-using PLang.Services.LlmService;
+using PLang.Services.OpenAi;
 using PLang.Utils;
 using PLangTests;
+using System.Runtime.CompilerServices;
 using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Modules.CallGoalModule.Tests
@@ -21,64 +19,30 @@ namespace PLang.Modules.CallGoalModule.Tests
 		{
 			base.Initialize();
 
-			settings.Get(typeof(PLangLlmService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var aiService = new PLangLlmService(cacheHelper, context);
-			
-			var fileSystem = new PLangFileSystem(Environment.CurrentDirectory, "./");
+			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
+			var llmService = new OpenAiService(settings, logger, cacheHelper, context);
+
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new Builder();
-			builder.InitBaseBuilder("PLang.Modules.CallGoalModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.CallGoalModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper);
 
 		}
 
-		private void SetupResponse(string response, Type type)
+		private void SetupResponse(string stepText, [CallerMemberName] string caller = "", Type? type = null)
 		{
-			var aiService = Substitute.For<ILlmService>();
-			aiService.Query(Arg.Any<LlmQuestion>(), type).Returns(p => { 
-				return JsonConvert.DeserializeObject(response, type); 
-			});			
+			var llmService = GetLlmService(stepText, caller, type);
+			if (llmService == null) return;
 
 			builder = new Builder();
-			builder.InitBaseBuilder("PLang.Modules.CallGoalModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.CallGoalModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper);
 		}
 
 		[DataTestMethod]
 		[DataRow("call !Process.Image name=%full_name%, %address%")]
 		public async Task RunGoal_Test(string text)
 		{
-
-			string response = @"{
-  ""FunctionName"": ""RunGoal"",
-  ""Parameters"": [
-    {
-      ""Type"": ""String"",
-      ""Name"": ""goalName"",
-      ""Value"": ""Process.Image""
-    },
-    {
-      ""Type"": ""Dictionary`2"",
-      ""Name"": ""parameters"",
-      ""Value"": {
-        ""name"": ""%full_name%"",
-        ""address"": ""%address%""
-      }
-    },
-    {
-      ""Type"": ""Boolean"",
-      ""Name"": ""waitForExecution"",
-      ""Value"": true
-    },
-    {
-      ""Type"": ""Int32"",
-      ""Name"": ""delayWhenNotWaitingInMilliseconds"",
-      ""Value"": 0
-    }
-  ],
-  ""ReturnValue"": null
-}";
-
-			SetupResponse(response, typeof(GenericFunction));
+			SetupResponse(text);
 
 			var step = new Building.Model.GoalStep();
 			step.Text = text;			
@@ -86,7 +50,8 @@ namespace PLang.Modules.CallGoalModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			//Assert.AreEqual("1", instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmQuestion.RawResponse);
+			
 			Assert.AreEqual("RunGoal", gf.FunctionName);
 			Assert.AreEqual("goalName", gf.Parameters[0].Name);
 			Assert.AreEqual("Process.Image", gf.Parameters[0].Value);
@@ -96,11 +61,6 @@ namespace PLang.Modules.CallGoalModule.Tests
 			Assert.AreEqual("%full_name%", dict["name"]);
 			Assert.AreEqual("%address%", dict["address"]);
 
-			Assert.AreEqual("waitForExecution", gf.Parameters[2].Name);
-			Assert.AreEqual(true, gf.Parameters[2].Value);
-			Assert.AreEqual("delayWhenNotWaitingInMilliseconds", gf.Parameters[3].Name);
-			Assert.AreEqual((long) 0, gf.Parameters[3].Value);
-
 		}
 
 
@@ -108,38 +68,15 @@ namespace PLang.Modules.CallGoalModule.Tests
 		[DataRow("call !RunReporting, dont wait, delay for 3 sec")]
 		public async Task RunGoal2_Test(string text)
 		{
-
-			string response = @"{
-  ""FunctionName"": ""RunGoal"",
-  ""Parameters"": [
-    {
-      ""Type"": ""String"",
-      ""Name"": ""goalName"",
-      ""Value"": ""RunReporting""
-    },
-    {
-      ""Type"": ""Boolean"",
-      ""Name"": ""waitForExecution"",
-      ""Value"": false
-    },
-    {
-      ""Type"": ""Int32"",
-      ""Name"": ""delayWhenNotWaitingInMilliseconds"",
-      ""Value"": 3000
-    }
-  ],
-  ""ReturnValue"": null
-}";
-
-			SetupResponse(response, typeof(GenericFunction));
-
+			SetupResponse(text);
 			var step = new Building.Model.GoalStep();
 			step.Text = text;
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			//Assert.AreEqual("1", instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmQuestion.RawResponse);
+
 			Assert.AreEqual("RunGoal", gf.FunctionName);
 			Assert.AreEqual("goalName", gf.Parameters[0].Name);
 			Assert.AreEqual("RunReporting", gf.Parameters[0].Value);

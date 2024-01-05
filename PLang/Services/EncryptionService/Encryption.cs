@@ -6,6 +6,9 @@ using System.Text;
 
 namespace PLang.Services.EncryptionService
 {
+	//todo: should cleanup any usage of keys, set them to null after usage
+	// this is so they dont stay in memory until garbage collection
+	// this needs to happen down the call stack and figure out how settings is handled
 	public class Encryption : IEncryption
 	{
 		private readonly ISettings settings;
@@ -40,6 +43,8 @@ namespace PLang.Services.EncryptionService
 
 		private EncryptionKey GetKey()
 		{
+			
+
 			var keys = settings.GetValues<EncryptionKey>(this.GetType());
 			if (keys.Count == 0)
 			{
@@ -60,7 +65,7 @@ namespace PLang.Services.EncryptionService
 			using (var aes = Aes.Create())
 			{
 				aes.Key = Convert.FromBase64String(key.PrivateKey);
-				aes.GenerateIV(); // Generate a new Initialization Vector (IV) each time for better security
+				aes.GenerateIV(); 
 
 				byte[] encryptedData;
 				using (var encryptor = aes.CreateEncryptor())
@@ -72,6 +77,7 @@ namespace PLang.Services.EncryptionService
 				byte[] result = new byte[aes.IV.Length + encryptedData.Length];
 				Buffer.BlockCopy(aes.IV, 0, result, 0, aes.IV.Length);
 				Buffer.BlockCopy(encryptedData, 0, result, aes.IV.Length, encryptedData.Length);
+				key = null;
 
 				return Convert.ToBase64String(result);
 			}

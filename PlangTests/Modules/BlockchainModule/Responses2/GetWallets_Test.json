@@ -1,0 +1,6 @@
+[
+  {
+    "stepText": "get wallets, write to %wallets%",
+    "response": "{\"FunctionName\": \"GetWallets\", \"Parameters\": [], \"ReturnValue\": {\"Type\": \"List`1\", \"VariableName\": \"wallets\"}}"
+  }
+]
