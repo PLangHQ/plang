@@ -6,8 +6,8 @@ Before you begin, make sure you're familiar with the concept of `%Identity%` by 
 
 ## Prerequisites
 
-- Understanding of `%Identity%` ([Identity.md](./Identity.md))
-- Completion of previous tutorials ([Todo_webservice.md](./Todo_webservice.md))
+- Understanding of `%Identity%` ([Identity](./Identity.md))
+- Completion of [previous tutorials](./Todo_webservice.md)
 
 ## Step-by-Step Integration
 

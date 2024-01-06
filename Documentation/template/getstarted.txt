@@ -12,7 +12,7 @@ Video link https://www.youtube.com/watch?v=iGW4btk34yQ
 
 If you are using plang for the first time, you will need to fill up your plang service account(easy and support plang) or use gpt4 api key(complex, but cheaper). See more (PlangOrOpenAI.md)
 
-1. create folder HelloWorld in the location of your choosing, I like c:\plang\HelloWorld
+1. create folder HelloWorld in the location of your choosing, I like c:\apps\HelloWorld
 2. Create Start.goal file
 3. Write the following
 ```plang

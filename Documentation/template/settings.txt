@@ -1,13 +1,23 @@
-you can retrieve settings by calling %Settings.Name_of_Key%, e.g. %Settings.API_KEY%
+you can retrieve settings by calling \%Settings.Name_of_Key\%, e.g. \%Settings.API_KEY\%
 plang will ask for the setting if it is empty
 
 ```plang
 APIRequest
 - get http://some-api.com
-    Bearer: $Settings.SomeAPIKey%
+    Bearer: \%Settings.SomeAPIKey\%
 ```
 
+How to add new Settings key
+When you write your plang and you reference \%Settings.MyKey\%, plang will search the settings database, located at .db/system.sqlite, 
+if it finds a setting stored in the database with the name MyKey, it will return that value
+if no key is found, plang will ask the user for the value of the key. This is done with AskUserHandler that can be overwritten using injection(see below).
+to change or remove key, you will need to open the .db/system.sqlite database with a database tool
+
+
+Everything below is for advanced users, it is for customizing the language but few will need to
+
 it is possible to overwrite the settings service by injecting your own Settings service.
+This is important when the developer want to user his own custom storage medium for settings, such as .env, Google Cloud's Secret Manager,  Azure Key Vault, AWS Secrets Manager, or other secure storage medium.
 To do that, you need to implement the ISettingsRepository and then injecting the dll 
 ```plang
 Start

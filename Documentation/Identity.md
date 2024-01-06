@@ -1,8 +1,8 @@
-# Understanding Built-in Identity in plang
+# Understanding Identity in plang
 
-## What is Built-in Identity?
+## What is Identity?
 
-Built-in Identity in plang offers a secure and private way of handling user identification, replacing traditional methods like email and password with a unique digital key.
+Identity in plang offers a secure and private way of handling user identification, replacing traditional methods like email and password with a unique digital key.
 
 ## Identity Explained
 In the world of web development, when a web service asks you to log in using your email and password, the main reason is to identify you in order to show you your data and not someone else's.
@@ -25,7 +25,7 @@ Web services don't need to store your email or password. They don't need your na
 
 ## The Developer's Advantage
 
-For developers, plang's Built-in Identity system simplifies user authentication.
+For developers, plang's built-in `%Identity%` simplifies user authentication.
 
 There's no need to manage keys or complex processes; plang handles everything, allowing developers to focus on building their application's core functionalities.
 
@@ -106,7 +106,7 @@ Preferences
 
 ### C# - Advanced Programming
 
-For developers interested in the technical workings of plang's Built-in Identity, especially in C#, the following C# code snippets provide insight into how user requests are signed and verified. 
+For developers interested in the technical workings of plang's Identity, especially in C#, the following C# code snippets provide insight into how user requests are signed and verified. 
  
 #### Signing Requests & Verifying Signatures
 

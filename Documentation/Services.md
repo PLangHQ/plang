@@ -21,7 +21,7 @@ Services must be located under the `services` folder in PLang.
 
 ##### db Service
 ```plang
-- inject db, /services/npgsql/lib/net7.0/Npgsql.dll, global
+- inject db, /npgsql/lib/net7.0/Npgsql.dll, global
 ```
 
 ##### settings Service

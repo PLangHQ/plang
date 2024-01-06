@@ -1,4 +1,4 @@
-Following is a template for Todo Identity guide that will be in a github repository
+Following is a template for %Name% that will be in a github repository
 for developers using a programming language called plang.
 
 Leave any ```plang code as is.
@@ -14,7 +14,10 @@ This means you need to structure the document in a good teachable way.
 Make sure to have extra linespace between items for .md to be formatted correctly.
 
 plang runs on Windows, Linux and Macos, so if you need to give examples that is dependant on OS, make sure to give example of each OS
+You dont need to write in the documentation that it's runs on these system, unless the subject of documentation depends on the OS.
 
 User will provide a rough draft of the documentation, but will include important information that is needed for the user of the doc. 
 
 Rewrite the user content into a well defined and readable documentation in .md format. 
+
+You might be provided with how the documentation looks currently, dont change the structure but you are free to modify the content if it needs to be clearer

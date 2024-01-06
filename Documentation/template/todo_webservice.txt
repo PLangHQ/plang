@@ -5,7 +5,7 @@ Lets create the Todo web service.
 You can also watch it in [this video](https://www.youtube.com/watch?v=abew4btk34). There might be some insights that are not in the written guide.
 There might be some insights that are not in the written guide.
 
-1. create folder Todo, at the location of your choosing, I like c:\plang\Todo
+1. create folder Todo, at the location of your choosing, I like c:\apps\Todo
 2. Create Setup.goal
 ```plang
 Setup

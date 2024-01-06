@@ -1,0 +1,25 @@
+## info for LLM, dont put in doc ##
+
+Environment.SpecialFolder.ApplicationData and Environment.SpecialFolder.Personal are the c# properties called to get the path
+
+## info for LLM, dont put in doc ##
+
+
+all private keys are stored in .db/system.sqlite
+they are not encrypted
+the root private key is stored in global system.sqlite is stored at (give example of path)
+    C:\Users\[Username]\AppData\Roaming\plang\.db\system.sqlite on Windows
+    /home/[Username]/plang/.db/system.sqlite on Linux
+    /Users/[Username]/plang/.db/system.sqlite on macos
+
+There are 3 private keys
+- Encryption keys to encrypt & decrypt data
+- Blockchain keys, used to sign requests that enables (%Identity%)[./Identity.md] and other blockchain related actions
+- Nostr keys, used to send and recieve messages.
+
+Exporting private keys
+when you try to export private by calling ExportPrivate method, plang will ask the user 3 questions
+the answer are sent to LLM which determines the liklyhood of the user being tricked, if it is high, plang blocks the export for 24 hours.
+this is meant as a proof of concept, to help prevent social engineering on unsuspected users.
+
+Make sure to backup critical private keys. This is important in early version of plang as the language does not provide any type of backup

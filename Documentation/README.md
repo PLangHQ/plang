@@ -47,16 +47,17 @@ Explore plang's capabilities and start building today. For initial steps and gui
 Explore plang's features and capabilities:
 
 - **Basics for everybody**
-    - **[Development Environment (IDE)]()**: This is where you write your code. Makes sure to setup your development environment.
-    - **[Rules]()**: The basic rules to follow when writing plang code.
+    - **[Development Environment (IDE)](./IDE.md)**: This is where you write your code. Makes sure to setup your development environment.
+    - **[Rules](./Rules.md)**: The basic rules to follow when writing plang code.
 - **Basics for beginners**
-    - **[Variables](./Variables.md)**: Learn about variables in plang and how to use them.
+    - **[Variables](./Variables.md)**: Learn about `%variables%` in plang and how to use them.
     - **[Conditions](./Conditions.md)**: Understanding `if` statements and conditional logic in plang.
-    - **[Loops](./Loop.md)**: Explore how to go through lists
+    - **[Loops](./Loop.md)**: Explore how to go through a list of data
+    - **[Date & Time](./Time.md)**: How you work with `%Now%`, the date and time of the system
 - **For everybody**
     - **[Debugging]()**: Learn how to debug when programming in the plang language
     - **[Examples](https://github.com/PLangHQ/plang/tree/main/Tests)**: See list of plang code examples, it can help you get started    
-    - **[Apps]()**: How to find, install & use apps written in plang others have written.
+    - **[Apps](https://github.com/PLangHQ/apps/)**: See list of available apps, written in plang. Great for learning.
 - **Advanced**
     - **[Identity](./Identity.md)**: What is Identity and why is it so important
     - **[Private keys](./PrivateKeys.md)**: What private keys are in the system and where are they stored.
