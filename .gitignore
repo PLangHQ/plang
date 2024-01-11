@@ -9,3 +9,5 @@
 *.ncrunchsolution
 *.ncrunchsolution.user
 *.cache
+/Documentation/.db/system.sqlite
+/Documentation/output
