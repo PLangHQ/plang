@@ -1,5 +1,7 @@
 ﻿using Newtonsoft.Json;
 using PLang.Building.Events;
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 namespace PLang.Building.Model
 {
@@ -18,31 +20,52 @@ namespace PLang.Building.Model
 		public string? Description { get; set; }
 		public string PrFileName { get; set; }
 		public string RelativePrPath { get; set; }
-		[JsonIgnore]
+		[Newtonsoft.Json.JsonIgnore]
+[IgnoreDataMemberAttribute]
+
+		[System.Text.Json.Serialization.JsonIgnore]
 		public string AbsolutePrFilePath { get; set; }
-		[JsonIgnore]
+		[Newtonsoft.Json.JsonIgnore]
+[IgnoreDataMemberAttribute]
+
+		[System.Text.Json.Serialization.JsonIgnore]
 		public string AppStartupPath { get; set; }
 
 		public int Indent { get; set; }
 		public bool Execute { get; set; }
 		public bool RunOnce { get; set; }
-		[JsonIgnore]
+		[Newtonsoft.Json.JsonIgnore]
+[IgnoreDataMemberAttribute]
+
+		[System.Text.Json.Serialization.JsonIgnore]
 		public DateTime? Executed { get; set; }
 		public DateTime Generated { get; set; }
-		
+
 		[DefaultValue("true")]
 		public bool WaitForExecution { get; set; } = true;
 		public ErrorHandler? ErrorHandler { get; set; }
 		public RetryHandler? RetryHandler { get; set; }
 		public CachingHandler? CacheHandler { get; set; }
-		public CancellationHandler? CancellationHandler { get ; set; }
-		[JsonIgnore]
+		public CancellationHandler? CancellationHandler { get; set; }
+		[Newtonsoft.Json.JsonIgnore]
+[IgnoreDataMemberAttribute]
+
+		[System.Text.Json.Serialization.JsonIgnore]
 		public string? PreviousText { get; set; }
-		[JsonIgnore]
+		[Newtonsoft.Json.JsonIgnore]
+[IgnoreDataMemberAttribute]
+
+		[System.Text.Json.Serialization.JsonIgnore]
 		public bool Reload { get; set; }
-		[JsonIgnore]
+		[Newtonsoft.Json.JsonIgnore]
+[IgnoreDataMemberAttribute]
+
+		[System.Text.Json.Serialization.JsonIgnore]
 		public GoalStep NextStep { get; set; }
-		[JsonIgnore]
+		[Newtonsoft.Json.JsonIgnore]
+[IgnoreDataMemberAttribute]
+
+		[System.Text.Json.Serialization.JsonIgnore]
 		public Goal Goal { get; set; }
 		//public LlmQuestion LlmQuestion { get; set; }
 		public Dictionary<string, object> Custom { get; set; } = new Dictionary<string, object>();

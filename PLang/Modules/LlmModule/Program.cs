@@ -25,7 +25,7 @@ namespace PLang.Modules.LlmModule
 		}
 
 		public record AskLlmResponse(string Result);
-
+		/*
 		[Description("")]
 		public async Task AskLlm(
 			string scheme = "",
@@ -69,6 +69,67 @@ namespace PLang.Modules.LlmModule
 			llmQuestion.frequencyPenalty = frequencyPenalty;
 			llmQuestion.presencePenalty = presencePenalty;
 			
+			var response = await llmService.Query(llmQuestion, typeof(ExpandoObject));
+
+			if (scheme.StartsWith("{") && scheme.EndsWith("}"))
+			{
+				var variables = scheme.Replace("{", "").Replace("}", "").Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+				var objResult = (IDictionary<string, object>)response;
+				foreach (var variable in variables)
+				{
+					string varName = (variable.Contains(":")) ? variable.Substring(0, variable.IndexOf(":")) : variable;
+					if (objResult.TryGetValue(varName, out object? val))
+					{
+						memoryStack.Put(varName, val);
+					}
+				}
+			}
+			if (function != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
+			{
+				foreach (var returnValue in function.ReturnValue)
+				{
+					memoryStack.Put(returnValue.VariableName, response);
+				}
+			}
+
+			llmService.Extractor = new JsonExtractor();
+		}
+		*/
+
+		[Description("")]
+		public async Task AskLlm(
+			string scheme = "",
+			string promptMessages = "",
+			string model = "gpt-4",
+			double temperature = 0,
+			double topP = 0,
+			double frequencyPenalty = 0.0,
+			double presencePenalty = 0.0,
+			int maxLength = 4000,
+			bool cacheResponse = true,
+			string? llmResponseType = null)
+		{
+			if (llmResponseType == "text")
+			{
+				llmService.Extractor = new TextExtractor();
+			}
+			else if (llmResponseType == "json")
+			{
+				//system += $"\n\nYou MUST respond in JSON, scheme: {scheme}";
+			}
+			else
+			{
+				llmService.Extractor = new GenericExtractor(llmResponseType);
+			}
+
+
+			var llmQuestion = new LlmRequest("LlmModule", promptMessages, model, cacheResponse);
+			llmQuestion.maxLength = maxLength;
+			llmQuestion.temperature = temperature;
+			llmQuestion.top_p = topP;
+			llmQuestion.frequencyPenalty = frequencyPenalty;
+			llmQuestion.presencePenalty = presencePenalty;
+
 			var response = await llmService.Query(llmQuestion, typeof(ExpandoObject));
 
 			if (scheme.StartsWith("{") && scheme.EndsWith("}"))

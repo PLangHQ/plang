@@ -19,7 +19,7 @@ File
 - delete file file2.txt
 - delete file file3.txt
 - get file info on Employees.xlsx   into %fileInfo%
-- write out 'fileInfo: %fileInfo%, CreationTime: %fileInfo.CreationTime%, LastWriteTime: %fileInfo.LastWriteTime%'
+- write out 'fileInfo: CreationTime: %fileInfo.CreationTime%, LastWriteTime: %fileInfo.LastWriteTime%'
 - write to  demo.xlsx, %csvData%,  overwrite file
 - write to demo.csv, %csvData%,  overwrite file
 - write to  demo2.xlsx, data: %excelData%, %csvData%, overwrite file
@@ -31,4 +31,4 @@ PrintOutExcel
 - write out %item.Name% - %item.Email%
 
 PrintOutCSV
-- write out %item.ToJson()%
+- write out %item%

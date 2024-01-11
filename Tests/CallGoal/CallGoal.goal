@@ -1,8 +1,9 @@
 CallGoal
 - set variable %greetings% to 'Hello'
-- call !Show %greetings%, %Now% / greetings & Now are parameters
-- call !HelloWorld / calls apps/HelloWorld Start.goal
-- call !Ffmpeg.ConvertToMp4 inputFile='myvideo.mov', outputPath='myvideo.mp4'
+- call !Show %greetings%, time=%Now% / greetings & Now are parameters
+/ Here we call apps/HelloWorld/Start.goal, if it is not install it will install it.
+- call !HelloWorld.Start
+/ - call !Ffmpeg.ConvertToMp4 inputFile='myvideo.mov', outputPath='myvideo.mp4'
 
 Show
-- write out '%greetings% PLang world'
+- write out '%greetings% PLang world at %time%'

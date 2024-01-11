@@ -46,3 +46,7 @@ Setup
             Guide='template/private_keys.txt'
             System='template/guidance/teacher.txt'
             OutputFilename='output/PrivateKeys.md'    
+- insert into docs Name='Debug'
+            Guide='template/debug.txt'
+            System='template/guidance/teacher.txt'
+            OutputFilename='output/Debug.md'                

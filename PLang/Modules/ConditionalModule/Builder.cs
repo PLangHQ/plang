@@ -79,6 +79,7 @@ You must return ```csharp for the code implementation and ```json scheme
 'if %exists% (bool) is null, call !CreateUser' => public static bool Process(bool? dataαuser_id) { return exists == null;}
 'if %exists% (bool) is not null, call !CreateUser' => public static bool Process(bool? dataαuser_id) { return exists != null;}
 'if %data.user_id% is empty, call !CreateUser' => public static bool Process(dynamic? dataαuser_id) { return (dataαuser_id == null || (dataαuser_id is string str && string.IsNullOrEmpty(str))); } //if we dont know the type of %data.user_id%
+'if !%isValid% then => public static bool Process(bool? isValid) { return !isValid; }
 ## examples ##
 ");
 			if (error != null)

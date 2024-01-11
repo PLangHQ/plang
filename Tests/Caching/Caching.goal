@@ -5,5 +5,7 @@ Caching
 - cache 'abc' for 10 minutes, to 'abcKey'
 - get cache 'abcKey', write to %cachedAbcKey%
 - write out %cachedAbcKey%
-- get https://goweather.herokuapp.com/weather/, write to %weatherData%
-    cache for 10 minutes
+- get https://goweather.herokuapp.com/weather/London, write to %weatherData%
+    cache for 10 minutes, key 'weatherData'
+- get cache 'weatherData', write to %cachedWeatherData%
+- write out  %cachedWeatherData%

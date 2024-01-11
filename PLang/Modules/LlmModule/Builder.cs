@@ -15,14 +15,71 @@ namespace PLang.Modules.LlmModule
 
 		public async Task<Instruction> Build(GoalStep step, string error = null, int errorCount = 0)
 		{
-			AppendToAssistantCommand(@"The following user request is for constructing a message to LLM engine
+			AppendToSystemCommand(@"The following user request is for constructing a message to LLM engine
 
-Determine what part is system, assistant and user properties. If you cannot map it, the whole user request should be on user property
 llmResponseType can be null, text, json, markdown or html. default is null. If scheme is defined use json, unless user defines otherwise
+when llmResponseType is json, the statement ""You MUST respond in JSON, scheme:'{....}'"" must be appened to system role as a string
+
+promptMessages contains the system, assistant and user messages. assistant or user message is required.
+Determine what part is system, assistant and user properties. If you cannot map it, the whole user request should be on user role
+if user does not define model, set model to ""gpt-4-vision-preview"" if content type is image_url
+
 
 ## examples ##
 system: do stuff, user: this is data from user, write to %data%, %output% and %dest% => scheme: null, llResponseType=null
 system: setup up system, asssistant: some assistant stuff, user: this is data from user, scheme: {data:string, year:number, name:string} => scheme:  {data:string, year:number, name:string}
+
+promptMessages: 
+[
+	{
+        ""role"": ""system"",
+        ""content"": [
+            {
+                ""type"": ""text"",
+                ""text"": ""setup up system\nYou MUST respond in JSON, scheme:{data:string, year:number, name:string}""
+            }
+        ]
+    },
+    {
+        ""role"": ""assistant"",
+        ""content"": [
+            {
+                ""type"": ""text"",
+                ""text"": ""some assistant stuff""
+            }
+        ]
+    },
+    {
+        ""role"": ""user"",
+        ""content"": [
+            {
+                ""type"": ""text"",
+                ""text"": ""this is data from user""
+            }
+        ]
+    }
+]
+
+content can also have the type of image_url, the content of image_url json property can be a URL or a base64 of image
+""content"": [
+    {
+        ""type"": ""image_url"",
+        ""image_url"": {
+            ""url"": f""%base64OfImage%""
+        }
+    }
+]
+
+or url 
+
+""content"": [
+   {
+        ""type"": ""image_url"",
+        ""image_url"": {
+            ""url"": ""http://example.org/image.jpg""
+        }
+    }
+]
 ## examples ##
 ");
 			if (error != null)

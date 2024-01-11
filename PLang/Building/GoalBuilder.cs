@@ -117,7 +117,7 @@ namespace PLang.Building
 
 			var assembly = Assembly.GetAssembly(this.GetType());
 			goal.BuilderVersion = assembly.GetName().Version.ToString();
-			goal.Signature = goal.ToString().ComputeHash();
+			goal.Hash = JsonConvert.SerializeObject(goal).ComputeHash();
 
 			fileSystem.File.WriteAllText(goal.AbsolutePrFilePath, JsonConvert.SerializeObject(goal, Formatting.Indented));
 		}

@@ -1,25 +1,14 @@
 ﻿using Dapper;
 using IdGen;
-using LightInject;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Services.EventSourceService;
-using PLang.Services.SettingsService;
 using PLang.Utils;
-using System;
 using System.ComponentModel;
 using System.Data;
-using System.Data.Common;
-using System.Data.SqlClient;
-using System.Data.SQLite;
 using System.Globalization;
-using System.Reflection;
 using static Dapper.SqlMapper;
-using static PLang.Modules.DbModule.ModuleSettings;
-using static PLang.Utils.RSAKey;
 
 namespace PLang.Modules.DbModule
 {
@@ -53,6 +42,7 @@ namespace PLang.Modules.DbModule
 			var dataSource = await moduleSettings.GetDataSource(name);
 			if (dataSource == null)
 			{
+				
 				throw new ArgumentException($"Datasource with the name '{name}' could not be found");
 			}
 			context[ReservedKeywords.CurrentDataSourceName] = dataSource;
@@ -251,12 +241,15 @@ namespace PLang.Modules.DbModule
 			var rowsAsList = ((IList<object>)rows);
 			var columns = ((IDictionary<string, object>)rowsAsList[0]);
 
-			foreach (var key in columns.Keys)
+			if (this.function == null || this.function.ReturnValue == null) return null;
+
+			if (columns.Count == 1)
 			{
-				memoryStack.Put(key, columns[key]);
+				return columns.FirstOrDefault().Value;
 			}
 
 			return (selectOneRow_Top1OrLimit1) ? rows[0] : rows;
+
 		}
 
 		public async Task<int> Update(string sql, List<object>? Parameters = null)

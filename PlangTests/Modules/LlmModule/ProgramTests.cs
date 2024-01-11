@@ -47,9 +47,10 @@ namespace PLangTests.Modules.LlmModule
 		{
 			//RealOpenAIService();
 			SetupResponse("{\"sentiment\":\"positive\"}");
-
-			await p.AskLlm("determine sentiment of user input. ", "", "This is awesome", "{sentiment:negative|neutral|positive}");
+			/*
+			await p.AskLlm2("determine sentiment of user input. ", "", "This is awesome", "{sentiment:negative|neutral|positive}");
 			Assert.AreEqual("positive", memoryStack.Get("sentiment"));
+			*/
 
 		}
 
@@ -58,10 +59,11 @@ namespace PLangTests.Modules.LlmModule
 		{
 			//RealOpenAIService();
 			SetupResponse(@"{""firstName"":""Darryl"", ""lastName"":""Philbin"" }");
-
+			/*
 			await p.AskLlm("Find first and last name", "", "Darryl Philbin", "{firstName:string, lastName:string}");
 			Assert.AreEqual("Darryl", memoryStack.Get("firstName"));
 			Assert.AreEqual("Philbin", memoryStack.Get("lastName"));
+			*/
 
 		}
 

@@ -3,12 +3,9 @@ using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
-using PLang.SafeFileSystem;
-using PLang.Services.SettingsService;
 using PLang.Utils;
 using PLang.Utils.Extractors;
 using System.Text;
-using static PLang.Runtime.Startup.ModuleLoader;
 
 namespace PLang.Services.LlmService
 {
@@ -31,18 +28,19 @@ namespace PLang.Services.LlmService
 
 		}
 
-		public virtual async Task<T?> Query<T>(LlmQuestion question)
+
+		public virtual async Task<T?> Query<T>(LlmRequest question)
 		{
 			return (T)await Query(question, typeof(T));
 		}
 
-		public virtual async Task<object?> Query(LlmQuestion question, Type responseType)
+		public virtual async Task<object?> Query(LlmRequest question, Type responseType)
 		{
 			return await Query(question, responseType, 0);
 		}
-		public virtual async Task<object?> Query(LlmQuestion question, Type responseType, int errorCount = 0)
+		public virtual async Task<object?> Query(LlmRequest question, Type responseType, int errorCount = 0)
 		{
-
+			
 			var cachedLlmQuestion = cacheHelper.GetCachedQuestion(question);
 			if (!question.Reload && question.caching && cachedLlmQuestion != null)
 			{
@@ -55,15 +53,11 @@ namespace PLang.Services.LlmService
 			}
 
 			Dictionary<string, object?> parameters = new();
-			parameters.Add("user", question.question);
-			parameters.Add("system", question.system);
-			parameters.Add("assistant", question.assistant);
+			parameters.Add("messages", question.promptMessage);
 			parameters.Add("temperature", question.temperature);
 			parameters.Add("top_p", question.top_p);
 			parameters.Add("model", question.model);
 			parameters.Add("type", question.type);
-
-
 			parameters.Add("maxLength", question.maxLength);
 
 			var httpClient = new HttpClient();
@@ -91,7 +85,7 @@ namespace PLang.Services.LlmService
 					cacheHelper.SetCachedQuestion(question);
 				}
 				return obj;
-			} 
+			}
 
 			if (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired)
 			{
@@ -106,11 +100,12 @@ namespace PLang.Services.LlmService
 				}
 			}
 
-			
+
 			throw new HttpRequestException(responseBody, null, response.StatusCode);
-			
+
 
 		}
+
 		private string nameOfPayer = "";
 		private Task GetCountry(object value)
 		{
@@ -197,6 +192,88 @@ namespace PLang.Services.LlmService
 			dict.Add("X-Signature-Nonce", nonce);
 			dict.Add("X-Signature-Address", address);
 			return dict;
+		}
+
+
+
+
+
+
+
+		/* All this is depricated */
+		public virtual async Task<T?> Query<T>(LlmQuestion question)
+		{
+			return (T)await Query(question, typeof(T));
+		}
+
+		public virtual async Task<object?> Query(LlmQuestion question, Type responseType)
+		{
+			return await Query(question, responseType, 0);
+		}
+
+
+		private class Message
+		{
+			public Message()
+			{
+				content = new();
+			}
+			public string role { get; set; }
+			public List<Content> content { get; set; }
+		}
+		private class Content
+		{
+			public string type = "text";
+			public string text { get; set; }
+		}
+		public virtual async Task<object?> Query(LlmQuestion question, Type responseType, int errorCount = 0)
+		{
+			// todo: should remove this function, should just use LlmRequest.
+			// old setup, and should be removed.
+			var promptMessage = new List<Message>();
+			if (!string.IsNullOrEmpty(question.system))
+			{
+				var contents = new List<Content>();
+				contents.Add(new Content
+				{
+					text = question.system
+				});
+				promptMessage.Add(new Message()
+				{
+					role = "system",
+					content = contents
+				});
+			}
+			if (!string.IsNullOrEmpty(question.assistant))
+			{
+				var contents = new List<Content>();
+				contents.Add(new Content
+				{
+					text = question.assistant
+				});
+				promptMessage.Add(new Message()
+				{
+					role = "assistant",
+					content = contents
+				});
+			}
+			if (!string.IsNullOrEmpty(question.question))
+			{
+				var contents = new List<Content>();
+				contents.Add(new Content
+				{
+					text = question.question
+				});
+				promptMessage.Add(new Message()
+				{
+					role = "user",
+					content = contents
+				});
+			}
+
+			LlmRequest llmRequest = new LlmRequest(question.type, JsonConvert.SerializeObject(promptMessage), question.model, question.caching);
+			return await Query(llmRequest, responseType);
+
 		}
 	}
 }

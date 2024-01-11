@@ -42,5 +42,7 @@ namespace PLang.Interfaces
         void Remove(Setting setting);
 		LlmQuestion? GetLlmCache(string hash);
 		void SetLlmCache(string hash, LlmQuestion llmQuestion);
+		LlmRequest? GetLlmRequestCache(string hash);
+		void SetLlmRequestCache(string hash, LlmRequest question);
 	}
 }

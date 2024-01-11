@@ -1,11 +1,17 @@
-﻿using LightInject;
+﻿using Jil;
+using LightInject;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.SettingsService;
 using System.Dynamic;
 using System.IO;
+using System.IO.Abstractions;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using static PLang.Utils.VariableHelper;
 
@@ -51,7 +57,7 @@ namespace PLang.Utils
 				}
 				else
 				{
-					return memoryStack.Get(content);					
+					return memoryStack.Get(content);
 				}
 			}
 
@@ -66,12 +72,14 @@ namespace PLang.Utils
 					{
 						if (jsonProperty.Contains("."))
 						{
-							var value = (variable.Value == null) ? null : JToken.FromObject(variable.Value);
+							var value = (variable.Value == null) ? null : JsonSerialize(variable.Value);
 							SetNestedPropertyValue(jobject, jsonProperty, value);
 						}
 						else
 						{
-							jobject[jsonProperty] = (variable.Value == null) ? "" : JToken.FromObject(variable.Value);
+
+							jobject[jsonProperty] = (variable.Value == null) ? "" : JsonSerialize(variable.Value);
+
 						}
 					}
 				}
@@ -83,8 +91,9 @@ namespace PLang.Utils
 				string strValue = "";
 				if (variable.Value != null && variable.Value?.GetType() != typeof(string) && !variable.Value.GetType().IsPrimitive)
 				{
-					strValue = JsonConvert.SerializeObject(variable.Value);
-				} else
+					strValue = JsonSerialize(variable.Value).ToString();
+				}
+				else
 				{
 					strValue = variable.Value?.ToString() ?? "";
 				}
@@ -94,8 +103,67 @@ namespace PLang.Utils
 
 		}
 
+		public JToken JsonSerialize(object? obj)
+		{
+			if (obj == null) return "";
 
-		// ... other code ...
+			if (obj is string str)
+			{
+				if (JsonHelper.IsJson(obj, out object? parsedObj) && parsedObj != null) {
+					var token = parsedObj as JToken;
+					if (token != null) return token;
+				}
+				return str;
+			}
+			
+			if (obj is JArray jarray) return jarray;
+			if (obj is JObject jobject) return jobject;
+			if (obj is JToken jtoken) return jtoken;
+
+			try
+			{
+
+				var options = new JsonSerializerOptions
+				{
+					Converters = { new ObjectValueConverter() },
+					
+				};
+				// TODO: Not sure how to solve this ugly code. 
+
+				// doing this bad code, because Newtonsoft give stackoverflow on objects
+				// e.g. when getting file info, then when it tries to serialize it crashes app.
+				// .net json serializer can survive it, so that is why this is like this :(
+				var json = System.Text.Json.JsonSerializer.Serialize(obj, options);
+				return JToken.Parse(json);
+			} catch (InfiniteRecursionException iew)
+			{
+				return "Infinite";
+			
+			} catch (Exception e)
+			{
+				return "Exception";
+			}
+		}
+
+		public class ObjectValueConverter : System.Text.Json.Serialization.JsonConverter<ObjectValue>
+		{
+			public override ObjectValue Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+			{
+				// Implement deserialization if necessary
+				throw new NotImplementedException();
+			}
+
+			public override void Write(Utf8JsonWriter writer, ObjectValue value, JsonSerializerOptions options)
+			{
+				writer.WriteStartObject();
+				writer.WriteString("Type", value.Type?.Name);
+				// Serialize other properties
+				writer.WriteBoolean("Initiated", value.Initiated);
+				writer.WritePropertyName("Value");
+				System.Text.Json.JsonSerializer.Serialize(writer, value.Value, options);
+				writer.WriteEndObject();
+			}
+		}
 
 		public static void SetNestedPropertyValue(JObject jobject, string path, JToken value)
 		{

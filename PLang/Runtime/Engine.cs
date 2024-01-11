@@ -39,7 +39,7 @@ namespace PLang.Runtime
 		private IEventRuntime eventRuntime;
 		private ITypeHelper typeHelper;
 		private IErrorHelper errorHelper;
-
+		private IOutputStream outputStream;
 
 		private PrParser prParser;
 		private MemoryStack memoryStack;
@@ -62,6 +62,7 @@ namespace PLang.Runtime
 			this.typeHelper = container.GetInstance<ITypeHelper>();
 			this.errorHelper = container.GetInstance<IErrorHelper>();
 
+			this.outputStream = container.GetInstance<IOutputStream>();
 			this.prParser = container.GetInstance<PrParser>();
 			this.memoryStack = container.GetInstance<MemoryStack>();
 
@@ -222,6 +223,7 @@ namespace PLang.Runtime
 
 		public async Task RunGoal(Goal goal)
 		{
+			context.AddOrReplace(ReservedKeywords.Goal, goal);
 			if (goal.Comment != null && goal.Comment.ToLower().Contains("[trace]"))
 			{
 				AppContext.SetData("GoalLogLevelByUser", Microsoft.Extensions.Logging.LogLevel.Trace);
@@ -246,7 +248,7 @@ namespace PLang.Runtime
 					{
 						await RunStep(goal, goalStepIndex);
 					}
-					catch (Exception ex)
+					catch (Exception ex) when (!(ex is RuntimeUserStepException || ex is RuntimeGoalEndException))
 					{
 						await errorHelper.ShowFriendlyErrorMessage(ex,
 							callBackForAskUser: async () =>
@@ -274,6 +276,15 @@ namespace PLang.Runtime
 						step.Dispose();
 					}
 				}
+			}
+			catch (RuntimeUserStepException rse)
+			{
+				await outputStream.Write(rse.Message, rse.Type, rse.StatusCode);
+			}
+			catch (RuntimeGoalEndException ex)
+			{
+				//this equals to doing return in a function
+				logger.LogDebug(ex.Message, ex);
 			}
 			catch (Exception? ex)
 			{
@@ -431,27 +442,8 @@ namespace PLang.Runtime
 
 
 			}
-			/*
-			catch (FileAccessException ex)
-			{
-				var fileAccessHandler = new FileAccessHandler(settings, container.GetInstance<ILlmService>(), logger, fileSystem);
-				var askUserFileException = new AskUserFileAccess(ex.AppName, ex.Path, ex.Message, fileAccessHandler.ValidatePathResponse);
-
-				var askUserHandler = container.GetInstance<IAskUserHandler>(context[ReservedKeywords.Inject_AskUserHandler].ToString());
-				if (await askUserHandler.Handle(askUserFileException))
-				{
-					await ProcessPrFile(goal, goalStep, stepIndex);
-				}
-			}
-			catch (AskUserException ex)
-			{
-				var askUserHandler = container.GetInstance<IAskUserHandler>(context[ReservedKeywords.Inject_AskUserHandler].ToString());
-				if (await askUserHandler.Handle(ex))
-				{
-					await ProcessPrFile(goal, goalStep, stepIndex);
-				}
-			}
-			*/
+			catch (RuntimeUserStepException) { throw; }
+			catch (RuntimeGoalEndException) { throw; }
 			catch (Exception ex)
 			{
 				await errorHelper.ShowFriendlyErrorMessage(ex, goalStep,

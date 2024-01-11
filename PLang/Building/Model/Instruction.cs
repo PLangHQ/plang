@@ -18,20 +18,27 @@ namespace PLang.Building.Model
 		public bool RunOnBuild { get; set; }
 		public GenericFunction[] GetFunctions()
 		{
-			if (Action == null) return new GenericFunction[0];
-
-			if (Action.GetType() == typeof(JArray))
+			try
 			{
-				return JsonConvert.DeserializeObject<GenericFunction[]>(Action.ToString());
-			}
-			else if (Action.GetType() == typeof(JObject))
-			{
-				var gf = JsonConvert.DeserializeObject<GenericFunction>(Action.ToString());
-				return new GenericFunction[] { gf };
-			}
+				if (Action == null) return new GenericFunction[0];
 
-			if (Action.ToString().EndsWith("[]")) return Action as GenericFunction[];
-			return new GenericFunction[] { Action as GenericFunction };
+				if (Action.GetType() == typeof(JArray))
+				{
+					return JsonConvert.DeserializeObject<GenericFunction[]>(Action.ToString());
+				}
+				else if (Action.GetType() == typeof(JObject))
+				{
+					var gf = JsonConvert.DeserializeObject<GenericFunction>(Action.ToString());
+					return new GenericFunction[] { gf };
+				}
+
+				if (Action.ToString().EndsWith("[]")) return Action as GenericFunction[];
+				return new GenericFunction[] { Action as GenericFunction };
+			} catch (Exception ex)
+			{
+				Console.WriteLine(ex.ToString());
+				throw;
+			}
 		}
 	};
 }

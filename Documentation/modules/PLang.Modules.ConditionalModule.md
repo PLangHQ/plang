@@ -17,8 +17,6 @@ Let's say you want to write a PLang program that gives advice on what to wear ba
 - set var 'Weather' as 'sunny'
 - if %Weather% equals 'rainy' then
     - write out 'Wear a raincoat'
-  else
-    - write out 'Enjoy the sunshine'
 ```
 
 In this example, the program checks if the weather is rainy. If it is, it advises wearing a raincoat. Otherwise, it suggests enjoying the sunshine.

@@ -197,6 +197,31 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 						new { hash, llmQuestion = JsonConvert.SerializeObject(llmQuestion)});
 			}
 		}
+
+		public LlmRequest? GetLlmRequestCache(string hash)
+		{
+			using (IDbConnection connection = new SQLiteConnection(global_datasource))
+			{
+				var cache = connection.QueryFirstOrDefault<dynamic>("SELECT * FROM LlmCache WHERE Hash=@hash", new { hash });
+				if (cache == null) return null;
+
+				connection.Execute("UPDATE LlmCache SET LastUsed=CURRENT_TIMESTAMP WHERE Id=@id", new { id = cache.Id });
+				return JsonConvert.DeserializeObject<LlmRequest>(cache.LlmQuestion);
+			}
+		}
+		public void SetLlmRequestCache(string hash, LlmRequest llmQuestion)
+		{
+			using (IDbConnection connection = new SQLiteConnection(global_datasource))
+			{
+				var cache = connection.QueryFirstOrDefault<dynamic>("SELECT * FROM LlmCache WHERE Hash=@hash", new { hash });
+				if (cache != null) return;
+
+				connection.Execute("INSERT INTO LlmCache (Hash, LlmQuestion) VALUES (@hash, @llmQuestion)",
+						new { hash, llmQuestion = JsonConvert.SerializeObject(llmQuestion) });
+			}
+		}
+
+
 		public IEnumerable<Setting> GetSettings()
 		{
 			IEnumerable<Setting> settings;

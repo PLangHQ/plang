@@ -92,7 +92,7 @@ namespace PLang.Building
 				step.ErrorHandler = stepAnswer.ErrorHandler;
 				step.WaitForExecution = stepAnswer.WaitForExecution;
 				step.RetryHandler = stepAnswer.RetryHandler;
-				step.CacheHandler = stepAnswer.CachingHandler;
+				step.CacheHandler = (module == "PLang.Modules.CachingModule") ? null : stepAnswer.CachingHandler;
 				step.Name = stepAnswer.StepName;
 				step.Description = stepAnswer.StepDescription;
 				step.PrFileName = strStepNr + ". " + step.Name + ".pr";

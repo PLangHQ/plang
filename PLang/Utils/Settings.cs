@@ -114,6 +114,16 @@ namespace PLang.Utils
 			settingsRepository.SetLlmCache(hash, question);
 		}
 
+		public LlmRequest? GetLlmRequest(string hash)
+		{
+			return settingsRepository.GetLlmRequestCache(hash);
+		}
+
+		public void SetLlmQuestion(string hash, LlmRequest question)
+		{
+			settingsRepository.SetLlmRequestCache(hash, question);
+		}
+
 		public void Set<T>(Type callingType, string key, T value)
 		{
 			var typeName = typeof(T).FullName;

@@ -126,24 +126,47 @@ namespace PLang.Modules
 				{
 					HandleException(task);
 				}
-				if (method.ReturnType == typeof(Task)) return;
+				if (method.ReturnType == typeof(Task))
+				{
+					return;
+				}
 
 				if (goalStep.WaitForExecution)
 				{
 					object? result = await (dynamic)task;
+
+
 					if (function.ReturnValue == null || function.ReturnValue.Count == 0) return;
 
-					foreach (var returnValue in function.ReturnValue)
+					if (function.ReturnValue.Count == 1)
 					{
-						memoryStack.Put(returnValue.VariableName, result);
-					}					
+						memoryStack.Put(function.ReturnValue[0].VariableName, result);
+					}
+					else if (result == null)
+					{
+						foreach (var returnValue in function.ReturnValue)
+						{
+							memoryStack.Put(returnValue.VariableName, null);
+						}
+					}
+					else
+					{
+						var dict = (IDictionary<string, object>)result;
+						foreach (var returnValue in function.ReturnValue)
+						{
+							var key = dict.Keys.FirstOrDefault(p => p.ToLower() == returnValue.VariableName.Replace("%", "").ToLower());
+							if (key == null) continue;
 
+							memoryStack.Put(returnValue.VariableName, dict[key]);
+						}
+					}
 					await SetCachedItem(result);
 				}
-			} catch (RunGoalException)
-			{
-				throw;			
-			} catch (Exception ex)
+			}
+			catch (RuntimeUserStepException) { throw; }
+			catch (RuntimeGoalEndException) { throw; }
+			catch (RunGoalException) { throw; }
+			catch (Exception ex)
 			{
 				string str = $@"
 Step: {goalStep.Text}
@@ -159,7 +182,7 @@ Calling {this.GetType().FullName}.{function.FunctionName}
 ";
 				}
 				str += $"\nReturn value {JsonConvert.SerializeObject(function.ReturnValue)}";
-				
+
 				throw new RuntimeException(str, goal, ex);
 			}
 		}

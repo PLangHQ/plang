@@ -1,3 +1,5 @@
+Developers have 2 way of building code, using Plang service or OpenAI. This is a guide on how to use each
+
 You can use plang service to build your code or if you have OpenAI api key you can use GPT4.
 
 When you use plang service, you are supporting the project. 

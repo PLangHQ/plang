@@ -21,5 +21,7 @@ namespace PLang.Interfaces
 		void SetList<T>(Type callingType, T value, string? key = null);
 		LlmQuestion? GetLlmQuestion(string hash);
 		void SetLlmQuestion(string hash, LlmQuestion question);
+		void SetLlmQuestion(string hash, LlmRequest question);
+		LlmRequest? GetLlmRequest(string hash);
 	}
 }

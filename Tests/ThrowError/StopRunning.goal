@@ -1,0 +1,6 @@
+StopRunning
+- set default value of %test% to false
+- if !%test% then
+    - write out 'will end goal now'
+    - end goal
+- write out 'This should not print out'

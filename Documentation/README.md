@@ -55,17 +55,16 @@ Explore plang's features and capabilities:
     - **[Loops](./Loop.md)**: Explore how to go through a list of data
     - **[Date & Time](./Time.md)**: How you work with `%Now%`, the date and time of the system
 - **For everybody**
-    - **[Debugging]()**: Learn how to debug when programming in the plang language
+    - **[Debugging](./Debug.md)**: Learn how to debug when programming in the plang language
     - **[Examples](https://github.com/PLangHQ/plang/tree/main/Tests)**: See list of plang code examples, it can help you get started    
     - **[Apps](https://github.com/PLangHQ/apps/)**: See list of available apps, written in plang. Great for learning.
 - **Advanced**
     - **[Identity](./Identity.md)**: What is Identity and why is it so important
     - **[Private keys](./PrivateKeys.md)**: What private keys are in the system and where are they stored.
     - **[Settings](./Settings.md)**: How to store and use settings in your app such as API keys and other sensitive data.
-    - **[Events](https://github.com/PLangHQ/documentation/tree/main/Events.md)**: Learn about event-driven programming in plang.
-    - **[Modules](https://github.com/PLangHQ/modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
+    - **[Events](./Events.md)**: Learn about event-driven programming in plang.
+    - **[Modules](./modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
     - **[Services]()**: Learn how flexible the plang language is, e.g. using the db engine of your choice, your own caching service and more.
-    - **[Debugging C# code]()**: Learn how to debug the c# that plang language generates or the plang language it self.
     - **[Reserved keywords]()**: See list of reserved keywords in the language
 - **Developing the plang language**
     - **[How to start]()**: Information on how to help with development of plang programming language.

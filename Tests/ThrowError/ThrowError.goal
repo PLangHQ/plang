@@ -1,0 +1,4 @@
+ThrowError
+- set default value of %test% to false
+- if !%test% then
+    - throw 'Test variable is false'

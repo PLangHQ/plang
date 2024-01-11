@@ -79,9 +79,9 @@ namespace PLang.Runtime
 		public record VariableExecutionPlan(string VariableName, ObjectValue ObjectValue, List<string> Calls, int Index = 0, string? JsonPath = null);
 
 
-		public ObjectValue GetObjectValue(string variableName, bool staticVariable)
+		public ObjectValue GetObjectValue(string variableName, bool staticVariable, bool initiate = false)
 		{
-			if (variableName == null) return new ObjectValue(null, null, false);
+			if (variableName == null) return new ObjectValue(null, null, initiate);
 
 			variableName = Clean(variableName).ToLower();
 			KeyValuePair<string, ObjectValue> variable;
@@ -104,7 +104,7 @@ namespace PLang.Runtime
 			{
 				return new ObjectValue(contextObject.Value, contextObject.Value.GetType(), true);
 			}
-			return new ObjectValue(null, null, false);
+			return new ObjectValue(null, typeof(Nullable), initiate);
 		}
 
 		public VariableExecutionPlan GetVariableExecutionPlan(string key, bool staticVariable)
@@ -556,10 +556,11 @@ namespace PLang.Runtime
 
 		public object? Get(string key, Type type, bool staticVariable = false)
 		{
-			return ConvertToType(Get(key, staticVariable), type);
+			var obj = Get(key, staticVariable);
+			return ConvertToType(obj, key, type);
 		}
 
-		public static object ConvertToType(object value, Type targetType)
+		public static object ConvertToType(object value, string key, Type targetType)
 		{
 			if (value == null) return null; 
 			if (targetType.Name == "Object")
@@ -583,7 +584,13 @@ namespace PLang.Runtime
 				Type underlyingType = Nullable.GetUnderlyingType(targetType);
 
 				// Convert the value to the underlying type and then convert it to the nullable type
-				return Activator.CreateInstance(targetType, Convert.ChangeType(value, underlyingType));
+				try
+				{
+					return Activator.CreateInstance(targetType, Convert.ChangeType(value, underlyingType));
+				} catch (Exception ex)
+				{
+					throw new RuntimeException($"Could not convert %{key}% to {underlyingType.Name} because it is a type of {value.GetType().Name}");
+				}
 			}
 			if (value is IDictionary dictionary)
 			{
@@ -606,10 +613,15 @@ namespace PLang.Runtime
 			{
 				//return objects;
 			}
-			
-			
-				// If targetType is not nullable, proceed with the regular conversion
-			return Convert.ChangeType(value, targetType);
+
+			try
+			{
+				return Convert.ChangeType(value, targetType);
+			}
+			catch (Exception ex)
+			{
+				throw new RuntimeException($"Could not convert %{key}% to {targetType.Name} because it is a type of {value.GetType().Name}");
+			}
 			
 		}
 
@@ -985,14 +997,14 @@ namespace PLang.Runtime
 				variables.AddOrReplace(key, objectValue);
 			}
 		}
-		public void AddOnChangeEvent(string key, string goalName, bool staticVariable = false, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 0)
+		public void AddOnChangeEvent(string key, string goalName, bool staticVariable = false, bool notifyWhenCreated = true, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 0)
 		{
 			var variables = (staticVariable) ? staticVariables : this.variables;
-			var objectValue = GetObjectValue(key, staticVariable);
+			var objectValue = GetObjectValue(key, staticVariable, notifyWhenCreated);
 			if (!objectValue.Initiated)
 			{
 				Put(key, null);
-				objectValue = GetObjectValue(key, staticVariable);
+				objectValue = GetObjectValue(key, staticVariable, notifyWhenCreated);
 			};
 			var eve = objectValue.Events.FirstOrDefault(p => p.EventType == VariableEventType.OnChange && p.goalName == goalName);
 			if (eve == null)

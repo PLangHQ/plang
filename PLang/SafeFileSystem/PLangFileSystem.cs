@@ -1,4 +1,5 @@
-﻿using PLang.Exceptions;
+﻿using Newtonsoft.Json;
+using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Utils;
 using System.IO.Abstractions;
@@ -8,7 +9,8 @@ namespace PLang.SafeFileSystem
 
 	public record FileAccessControl(string appName, string path, DateTime? expires);
 
-	[Serializable]
+
+	//[Serializable]
 	public sealed class PLangFileSystem : FileSystem, IPLangFileSystem
 	{
 		List<FileAccessControl>? fileAccesses = null;
@@ -114,29 +116,38 @@ Your answer:
 			return path;
 		}
 
-		
 
+
+		[Newtonsoft.Json.JsonIgnore]
+[System.Text.Json.Serialization.JsonIgnore]
 		/// <inheritdoc />
 		public override IDirectory Directory { get; }
-
+		[Newtonsoft.Json.JsonIgnore]
+[System.Text.Json.Serialization.JsonIgnore]
 		/// <inheritdoc />
 		public override IFile File { get; }
-
+		[Newtonsoft.Json.JsonIgnore]
+[System.Text.Json.Serialization.JsonIgnore]
 		/// <inheritdoc />
 		public override IFileInfoFactory FileInfo { get; }
-
+		[Newtonsoft.Json.JsonIgnore]
+[System.Text.Json.Serialization.JsonIgnore]
 		/// <inheritdoc />
 		public override IFileStreamFactory FileStream { get; }
-
+		[Newtonsoft.Json.JsonIgnore]
+[System.Text.Json.Serialization.JsonIgnore]
 		/// <inheritdoc />
 		public override IPath Path { get; }
-
+		[Newtonsoft.Json.JsonIgnore]
+[System.Text.Json.Serialization.JsonIgnore]
 		/// <inheritdoc />
 		public override IDirectoryInfoFactory DirectoryInfo { get; }
-
+		[Newtonsoft.Json.JsonIgnore]
+[System.Text.Json.Serialization.JsonIgnore]
 		/// <inheritdoc />
 		public override IDriveInfoFactory DriveInfo { get; }
-
+		[Newtonsoft.Json.JsonIgnore]
+[System.Text.Json.Serialization.JsonIgnore]
 		/// <inheritdoc />
 		public override IFileSystemWatcherFactory FileSystemWatcher { get; }
 

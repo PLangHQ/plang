@@ -27,5 +27,15 @@ namespace PLangTests.Helpers
 		{
 			return Task.FromResult<object?>(default);
 		}
+
+		public Task<T?> Query<T>(LlmRequest question)
+		{
+			return Task.FromResult<T?>(default);
+		}
+
+		public Task<object?> Query(LlmRequest question, Type responseType)
+		{
+			return Task.FromResult<object?>(default);
+		}
 	}
 }

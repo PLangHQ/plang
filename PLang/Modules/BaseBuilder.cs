@@ -169,10 +169,10 @@ Select the correct function from list of available functions based on user comma
 
 variable is defined with starting and ending %, e.g. %filePath%
 
-If there is some api key, settings, config replace it with %Settings.Get(""settingName"", ""defaultValue"", ""Explain"")%
-where the settingName would be the api key, config key, 
-defaultValue for settings is the usual value given, make it """" if no value can be default
-Explain is an explanation about the setting that novice user can understand.
+If there is some api key, settings, config replace it with %Settings.Get(""settingName"", ""defaultValue"", ""Explain"")% 
+- settingName would be the api key, config key, 
+- defaultValue for settings is the usual value given, make it """" if no value can be default
+- Explain is an explanation about the setting that novice user can understand.
 
 OnExceptionContainingTextCallGoal - if no text is defined, set as ""*"", goal to call is required from user
 
@@ -181,7 +181,7 @@ Type: the object type in c#
 Name: name of the variable
 Value: %variable% or hardcode string that should be used
 FunctionName: Name of the function to use from list of functions, if no function matches set as ""N/A""
-ReturnValue: Only if the function returns a value, else null. Usually indicated by ' write into %variable%' by user command
+ReturnValue: Only if the function returns a value AND if user defines %variable% to write into. If no %variable% is defined then set as null.
 ".Trim();
 		}
 

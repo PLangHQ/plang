@@ -1,7 +1,5 @@
 # Get Started with Plang
 
-Welcome to the world of Plang, a dynamic and versatile programming language! 
-
 This guide is specifically designed to cater to new Plang users. Whether you're on Windows, Linux, or macOS, this guide will help you navigate through the initial stages of Plang programming with ease. 
 
 We'll go through the following
@@ -13,7 +11,7 @@ We'll go through the following
 ## 1. Install plang
 You need to install plang on your system. Refer to the [Installation Guide](Install.md) if you haven't installed it yet. Then come back.
 
-## 2. Installing development environment (IDE)
+## 2. Integrated development environment (IDE)
 Visual Studio Code as your code editor with the Plang extension installed. For more details, refer to the [IDE Setup Guide](Ide.md).
 
 ## 3. First plang app, "Hello plang world"
@@ -21,7 +19,7 @@ Visual Studio Code as your code editor with the Plang extension installed. For m
 Watch this helpful video tutorial: [Hello World in Plang](https://www.youtube.com/watch?v=iGW4btk34yQ)
 
 1. **Create a Folder**: Make a new folder named `HelloWorld`. For example:
-   - Windows: `C:\plang\HelloWorld`
+   - Windows: `C:\apps\HelloWorld`
    - Linux/MacOS: `/home/user/plang/HelloWorld`
 
 2. **Create Start.goal File**: In the `HelloWorld` folder, create a file named `Start.goal`.
@@ -40,7 +38,7 @@ Watch this helpful video tutorial: [Hello World in Plang](https://www.youtube.co
      ```bash
      plang exec
      ```
-6. **Purchase voucher in plang service** (for non OpenAI api key):
+6. **Purchase voucher in plang service** ([for non OpenAI api key](./PlangOrOpenAI.md)):
     - On your first run, you will be asked to fill up your account. 
     - Click the link that is provided
     - Purchase for the amount of your choosing. If you are trying for the first time, we recommend something small, like $5.

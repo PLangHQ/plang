@@ -97,12 +97,7 @@ namespace PLang
 
 			Console.WriteLine("-- Debug mode");
 			AppContext.SetSwitch(ReservedKeywords.Debug, true);
-			if (!Debugger.IsAttached)
-			{
-				Debugger.Launch();
-			}
-
-
+			
 			if (fileSystem.File.Exists(sendDebugPath)) return;
 
 			if (!fileSystem.Directory.Exists(eventsPath))
@@ -111,7 +106,7 @@ namespace PLang
 				using (MemoryStream ms = new MemoryStream(InternalApps.Debugger))
 				using (ZipArchive archive = new ZipArchive(ms))
 				{
-					archive.ExtractToDirectory(settings.GoalsPath);
+					archive.ExtractToDirectory(settings.GoalsPath, true);
 				}
 				return;
 			}

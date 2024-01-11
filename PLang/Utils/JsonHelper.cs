@@ -18,11 +18,12 @@ namespace PLang.Utils
 			if (IsJson(content))
 			{
 				return JsonConvert.DeserializeObject<T>(content);
-			} else
+			}
+			else
 			{
 				return (T)Convert.ChangeType(content, typeof(T));
 			}
-		
+
 		}
 
 		public static bool LookAsJsonScheme(string content)
@@ -45,19 +46,30 @@ namespace PLang.Utils
 			var result = (content.StartsWith("{") && content.EndsWith("}")) || (content.StartsWith("[") && content.EndsWith("]"));
 			if (!result) return false;
 
+
 			try
 			{
 				parsedObject = JsonDocument.Parse(content);
 				return true;
-			} catch
+			}
+			catch
 			{
-				return false;
+				try
+				{
+					string json = content.Replace("\n", " ").Replace("\r", " ");
+					parsedObject = JsonDocument.Parse(json);
+					return true;
+				}
+				catch
+				{
+					return false;
+				}
 			}
 		}
 
 		public static T? ParseFilePath<T>(IPLangFileSystem fileSystem, string? filePath)
 		{
-			
+
 			if (filePath == null || !fileSystem.File.Exists(filePath)) return default;
 
 			string content = fileSystem.File.ReadAllText(filePath);
@@ -74,7 +86,8 @@ namespace PLang.Utils
 			try
 			{
 				return JsonConvert.DeserializeObject<T>(content);
-			} catch (Exception ex) 
+			}
+			catch (Exception ex)
 			{
 				return default;
 			}

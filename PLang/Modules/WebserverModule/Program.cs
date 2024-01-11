@@ -96,8 +96,16 @@ namespace PLang.Modules.WebserverModule
 								await WriteNotfound(resp, $"Goal could not be loaded");
 								continue;
 							}
+							if (httpContext.Request.QueryString.GetValues("__signature__") != null)
+							{
+								httpContext.Response.AddHeader("X-Goal-Hash", goal.Hash);
+								httpContext.Response.AddHeader("X-Goal-Signature", goal.Signature);
+								httpContext.Response.StatusCode = 200;
+								httpContext.Response.Close();
+								continue;
+							}
 
-							int maxContentLength = (goal.GoalApiInfo != null && goal.GoalApiInfo.MaxContentLengthInBytes != null) ? goal.GoalApiInfo.MaxContentLengthInBytes : maxContentLengthInBytes;
+							int maxContentLength = (goal.GoalApiInfo != null && goal.GoalApiInfo.MaxContentLengthInBytes != 0) ? goal.GoalApiInfo.MaxContentLengthInBytes : maxContentLengthInBytes;
 							if (httpContext.Request.ContentLength64 > maxContentLength)
 							{
 								httpContext.Response.StatusCode = 413;
@@ -115,6 +123,8 @@ namespace PLang.Modules.WebserverModule
 							httpContext.Response.ContentEncoding = Encoding.GetEncoding(defaultResponseContentEncoding);
 							httpContext.Response.ContentType = "application/json";
 							httpContext.Response.SendChunked = true;
+							httpContext.Response.AddHeader("X-Goal-Hash", goal.Hash);
+							httpContext.Response.AddHeader("X-Goal-Signature", goal.Signature);
 							if (goal.GoalApiInfo != null)
 							{
 								if (goal.GoalApiInfo.ContentEncoding != null)

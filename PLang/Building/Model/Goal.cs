@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using PLang.Modules;
 using System.IO.Abstractions;
+using System.Runtime.Serialization;
 using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Building.Model
@@ -52,32 +53,59 @@ namespace PLang.Building.Model
 		public List<GoalStep> GoalSteps { get; set; }
 		public string? Description { get; internal set; }
 		public Visibility Visibility { get; set; }
-		[JsonIgnore]
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+
+		[System.Text.Json.Serialization.JsonIgnore]
 		public string AppName { get; set; }
 		public string GoalFileName { get; set; }
-		[JsonIgnore]
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+
+		[System.Text.Json.Serialization.JsonIgnore]
 		public string PrFileName { get; set; }
 		public string RelativeGoalPath { get; set; }
 		public string RelativeGoalFolderPath { get; set; }
 		public string RelativePrPath { get; set; }
 		public string RelativePrFolderPath { get; set; }
-		[JsonIgnore]
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+		[System.Text.Json.Serialization.JsonIgnore]
 		public string AbsoluteGoalPath { get; set; }
-		[JsonIgnore]
-		public string AbsoluteGoalFolderPath { get; set; }	
-		[JsonIgnore]
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+
+		[System.Text.Json.Serialization.JsonIgnore]
+		public string AbsoluteGoalFolderPath { get; set; }
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+
+		[System.Text.Json.Serialization.JsonIgnore]
 		public string AbsolutePrFilePath { get; set; }
-		[JsonIgnore]
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+
+		[System.Text.Json.Serialization.JsonIgnore]
 		public string AbsolutePrFolderPath { get; set; }
-		[JsonIgnore]
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+
+		[System.Text.Json.Serialization.JsonIgnore]
 		public string AbsoluteAppStartupFolderPath { get; set; }
-		[JsonIgnore] 
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+
+		[System.Text.Json.Serialization.JsonIgnore]
 		public string RelativeAppStartupFolderPath { get; set; }
 		public string BuilderVersion { get; set; }
-		public GoalApiInfo? GoalApiInfo {  get; set; }
+		public GoalApiInfo? GoalApiInfo { get; set; }
 
 		public List<Injections> Injections { get; set; }
+
+		//Signature should be used when goal is deployed
+		//this allows for validating the publisher and that code has not changed.
 		public string Signature { get; set; }
+		public string Hash { get; set; }
 		public string GetGoalAsString()
 		{
 			string goal = this.GoalName;
@@ -88,10 +116,10 @@ namespace PLang.Building.Model
 			return goal;
 		}
 
-		
+
 
 	}
 
 
-	
+
 }

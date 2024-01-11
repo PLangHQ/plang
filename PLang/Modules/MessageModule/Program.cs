@@ -149,6 +149,10 @@ namespace PLang.Modules.MessageModule
 				CreatedAt = DateTime.UtcNow,
 				Content = content
 			};
+			
+			// Should sign the message with blockchain key
+			// This way we can validate the message is coming from specific user
+			//ev.Tags.Append(new NostrEventTag("Signature", ""));
 
 			var encrypted = ev.EncryptDirect(sender, receiver);
 			var signed = encrypted.Sign(sender);

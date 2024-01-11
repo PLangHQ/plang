@@ -19,33 +19,32 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			memoryStack.AddOnCreateEvent(key, goalName, false, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
 		}
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
-		public async Task OnChangeVariableListener([HandlesVariable] string key, string goalName, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
+		public async Task OnChangeVariableListener([HandlesVariable] string key, string goalName, bool notifyWhenCreated = true, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
 		{
-
-			memoryStack.AddOnChangeEvent(key, goalName, false, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+			memoryStack.AddOnChangeEvent(key, goalName, false, notifyWhenCreated, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
 		}
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
 		public async Task OnRemoveVariableListener([HandlesVariable] string key, string goalName, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
 		{
-
 			memoryStack.AddOnRemoveEvent(key, goalName, false, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
 		}
-
+		/*
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
 		public async Task OnCreateStaticVariableListener([HandlesVariable] string key, string goalName, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
 		{
 			memoryStack.AddOnCreateEvent(key, goalName, true, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
 		}
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
-		public async Task OnChangeStaticVariableListener([HandlesVariable] string key, string goalName, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
+		public async Task OnChangeStaticVariableListener([HandlesVariable] string key, string goalName, bool notifyWhenCreated = true, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
 		{
-			memoryStack.AddOnChangeEvent(key, goalName, true, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+			memoryStack.AddOnChangeEvent(key, goalName, true, notifyWhenCreated, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
 		}
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
 		public async Task OnRemoveStaticVariableListener([HandlesVariable] string key, string goalName, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
 		{
 			memoryStack.AddOnRemoveEvent(key, goalName, true, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
 		}
+		*/
 
 		public async Task<object?> LoadVariables([HandlesVariable] string key)
 		{
@@ -69,7 +68,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			memoryStack.Put(key, val);
 		}
 
-		[Description("Set default value on variables if not set. keys and values length MUST be equal. If value is json, keep valid json format")]
+		[Description("Set default value on variables if not set. keys and values length MUST be equal. If value is json, keep valid json format. Keep object type as defined, int should be int, double should double, string as string.")]
 		public async Task SetDefaultValueOnVariables([HandlesVariableAttribute] Dictionary<string, object> keyValues)
 		{
 			foreach (var key in keyValues) 
@@ -106,7 +105,17 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		{
 			return memoryStack.Get(key);
 		}
+		
 
+		public async Task RemoveVariable([HandlesVariableAttribute] string key)
+		{
+			memoryStack.Remove(key);
+		}
+
+
+		/*
+		 * dont think we need static variable, so removed for now.
+		 * 
 		public async Task SetStaticVariable([HandlesVariableAttribute] string key, object value)
 		{
 			if (value.ToString().StartsWith("%") && value.ToString().EndsWith("%"))
@@ -120,15 +129,11 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		{
 			return memoryStack.GetStatic(key);
 		}
-
-		public async Task RemoveVariable([HandlesVariableAttribute] string key)
-		{
-			memoryStack.Remove(key);
-		}
 		public async Task RemoveStaticVariable([HandlesVariableAttribute] string key)
 		{
 			memoryStack.RemoveStatic(key);
 		}
+		 */
 
 		public async Task<string> ConvertToBase64([HandlesVariableAttribute] string key)
 		{

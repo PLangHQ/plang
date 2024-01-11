@@ -1,0 +1,24 @@
+{
+  "Action": {
+    "FunctionName": "EndGoalExecution",
+    "Parameters": [],
+    "ReturnValue": null
+  },
+  "Text": "end goal",
+  "Reload": false,
+  "LlmQuestion": {
+    "temperature": null,
+    "top_p": null,
+    "frequencyPenalty": null,
+    "presencePenalty": null,
+    "maxLength": 4000,
+    "type": "PLang.Modules.GenericFunctionBuilder",
+    "system": "Parse user command.\r\n\r\nSelect the correct function from list of available functions based on user command\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nOnExceptionContainingTextCallGoal - if no text is defined, set as \"*\", goal to call is required from user\r\n\r\nJSON scheme information\r\nType: the object type in c#\r\nName: name of the variable\r\nValue: %variable% or hardcode string that should be used\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nReturnValue: Only if the function returns a value AND if user defines %variable% to write into. If no %variable% is defined then set as null.\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}]}",
+    "question": "command: end goal",
+    "assistant": "## functions available defined in csharp ##\r\nvoid Throw(String message, String? type = error, Int32? statusCode = 400)  // When developer intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc. type can be error|critical. statusCode(like http status code) should be defined by user.. \nvoid EndGoalExecution(String? message)  // When developer intends the execution of the goal to stop without giving a error to user. This is equal to doing return in a function. \n\r\n## functions available ends ##",
+    "model": "gpt-4",
+    "caching": true,
+    "RawResponse": null
+  },
+  "RunOnBuild": false
+}

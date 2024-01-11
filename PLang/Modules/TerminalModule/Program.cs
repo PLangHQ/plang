@@ -37,7 +37,7 @@ namespace PLang.Modules.TerminalModule
 		public async Task<Dictionary<string, object>> RunTerminal(string appExecutableName, List<string>? parameters = null,
 			string pathToWorkingDirInTerminal = null,
 			[HandlesVariable] string? dataOutputVariable = null, [HandlesVariable] string? errorDebugInfoOutputVariable = null,
-			[HandlesVariable] string? dataStreamDelta = null, [HandlesVariable] string? errorStreamDelta = null
+			[HandlesVariable] string? dataStreamDelta = null, [HandlesVariable] string? debugErrorStreamDelta = null
 			)
 		{
 			if (pathToWorkingDirInTerminal == null)
@@ -125,9 +125,9 @@ namespace PLang.Modules.TerminalModule
 				{
 					if (string.IsNullOrWhiteSpace(e.Data)) return;
 					//logger.LogInformation(e.Data);
-					if (errorStreamDelta != null)
+					if (debugErrorStreamDelta != null)
 					{
-						memoryStack.Put(errorStreamDelta, e.Data);
+						memoryStack.Put(debugErrorStreamDelta, e.Data);
 					} else
 					{
 						if (string.IsNullOrWhiteSpace(errorOutput))

@@ -41,7 +41,7 @@ MyApp
 - Retrieve the list of todos from %todos% table
     cache for 3 minutes
 - Iterate through %todos%, calling !ProcessTodo for each item
--/ This is a comment explaining the next steps
+/ This is a comment explaining the next steps
 - Fetch data from https://example.org
     Bearer %Settings.ApiKey%
     {

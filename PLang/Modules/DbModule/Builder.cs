@@ -125,17 +125,19 @@ Choose the best method to use, if the method is not provided that fits the SQL, 
 			SetSystem(@$"Map user command to this c# function: 
 
 ## csharp function ##
-dynamic Select(String sql, List<object>()? Parameters = null, bool selectOneRow_Top1OrLimit1 = false) )
+dynamic Select(String sql, List<object>()? Parameters = null, bool selectOneRow_Top1OrLimit1 = false)
 ## csharp function ##
 
+## Rules ##
 variable is defined with starting and ending %, e.g. %filePath%.
 Parameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
 TypeFullName is Full name of the type in c#, System.String, System.Double, etc.
-Return value of Select function is dynamic
+ReturnValue: Columns being returned with type if defined by user. * will return dynamic. integer/int should always be System.Int64. 
 {appendToSystem}
 
 You MUST generate a valid sql statement for {databaseType}.
 You MUST provide Parameters if SQL has @parameter.
+## Rules ##
 ");
 
 			SetAssistant(@"# examples #

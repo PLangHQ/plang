@@ -1,0 +1,11 @@
+
+Usefull info for developers:
+
+Plang LLM service proxies the OpenAI service. We charge 2x the price, you can see prices at https://openai.com/pricing, example gpt4 input price is 0.03, but using plang as proxy is 0.06.
+supported models: gpt-4-1106-preview, gpt-4-1106-vision-preview, gpt-4, gpt-4-32k, gpt-3.5-turbo-1106, gpt-3.5-turbo-instruct
+See how to use OpenAI service instead for plang service(/PlangOrOpenAI.md)
+
+Llm request are cached, the cached response is store in .db/system.sqlite
+build steps are cached, only way to get llm to ask request new data is to modify the step or to delete cached result in db
+
+.db/system.sqlite can become big because of caching, system does not clean up automatically.
