@@ -185,6 +185,7 @@
       <NamedTestSelector>
         <TestName>PLang.Modules.ListDictionaryModule.Tests.BuilderTests.GetDictionary_Test (7781740190198366092)</TestName>
       </NamedTestSelector>
+      <AllTestsSelector />
     </IgnoredTests>
   </Settings>
 </ProjectConfiguration>

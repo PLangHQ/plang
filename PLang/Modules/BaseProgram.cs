@@ -216,7 +216,7 @@ Calling {this.GetType().FullName}.{function.FunctionName}
 
 			if (throwException)
 			{
-				// just realizeing after doing this that this should be done in plang
+				// just realising after doing this that this should be done in plang
 				// an event that binds to on error on step, 
 				string error = (task.Exception.InnerException != null) ? task.Exception.InnerException.ToString() : task.Exception.ToString();
 

@@ -73,6 +73,7 @@ namespace PlangWindowForms
 			var context = container.GetInstance<PLangAppContext>();
 			context.AddOrReplace("__WindowApp__", this);
 			engine = await pLang.Run();
+			
 			pseudoRuntime = container.GetInstance<IPseudoRuntime>();
 
 			await RenderContent();
@@ -106,7 +107,7 @@ namespace PlangWindowForms
 				}
 
 			}
-			stream.Position = 0;
+
 			string? html = null;
 			using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
 			{

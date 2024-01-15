@@ -40,9 +40,10 @@ namespace PLang.Services.OutputStream
 			sb.Append(@"</body>
 </html>");
 			byte[] bytes = Encoding.UTF8.GetBytes(sb.ToString());
+			Stream = new MemoryStream(bytes);
 
-			Stream.Write(bytes, 0, bytes.Length);
 			sb.Clear();
+
 		}
 
 		public string Read()
@@ -130,10 +131,6 @@ console.log(args);
 					}
 
 				}
-				//byte[] bytes = Encoding.UTF8.GetBytes(html);
-					
-				//await Stream.WriteAsync(bytes, 0, bytes.Length);
-				
 			}
 			catch (Exception ex)
 			{

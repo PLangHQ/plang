@@ -98,7 +98,7 @@ Lets create some data in your Todo list.
     - post http://localhost:8080/api/newtask
         {
             "task":"Do homework",
-            "due_date": "2023-27-12"
+            "due_date": "2023-12-27"
         }
         write to %result%
     - write out %result%
@@ -122,17 +122,17 @@ To create a new task, send a POST request to `http://localhost:8080/api/newtask`
 ```json
 {
     "task":"Do homework",
-    "due_date": "2023-27-12"
+    "due_date": "2023-12-27"
 }
 ```
 ### 10. Retrieve all tasks
 
 To retrieve the list of tasks, send a GET request to [http://localhost:8080/api/list](http://localhost:8080/api/list) (you can click the link). This should return a list of tasks you've created.
 
-Alternatively, you can create a new `GetList.goal` file in the `test` directory with the following code:
+Alternatively, you can create a new `TestList.goal` file in the `test` directory with the following code:
 
 ```plang
-GetList 
+TestList 
 - get http://localhost:8080/api/list, write to %todos%
 - write out %todos%
 ```

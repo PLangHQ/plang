@@ -21,13 +21,16 @@ namespace PLang.Modules.WindowAppModule
 		public async Task<string> RunWindowApp(string goalName, Dictionary<string, object>? parameters = null, 
 			int width = 800, int height = 450, string? iconPath = null, string windowTitle = "plang")
 		{
-			var iform = context["__WindowApp__"] as IForm;
-            if (iform != null) 
-            {
-				iform.SetSize(width, height);
-				if (iconPath != null) iform.SetIcon(iconPath);
-				iform.SetTitle(windowTitle);
-            }
+			if (context.ContainsKey("__WindowApp__"))
+			{
+				var iform = context["__WindowApp__"] as IForm;
+				if (iform != null)
+				{
+					iform.SetSize(width, height);
+					if (iconPath != null) iform.SetIcon(iconPath);
+					iform.SetTitle(windowTitle);
+				}
+			}
             await pseudoRuntime.RunGoal(engine, context, "", goalName, parameters, Goal);
 
 			return "";

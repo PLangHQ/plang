@@ -44,7 +44,7 @@ Categorize
 - [llm]: system: categories the user input by 3 categories, 'Work', "home", 'hobby'
     user: %task%
     scheme: {category:string}
-- update table tasks, set %category% where %id%
+- update table Todos, set %category% where %id%
 ```
 
 #### Explanation

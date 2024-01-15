@@ -29,22 +29,23 @@ In the `ui` folder, create a new file named `Todos.goal` with the following cont
 ```plang
 Todos
 - select * from todos, where not completed, newest first, write to %todos%
-- button, name="New task", call !NewTask
+- button, name="Add task", call !AddTask
 - table for %todos%
     header: Task, Due Date
     body:  task, due_date(as date)
 ```
 
-### 4. Create NewTask.goal
+### 4. Create AddTask.goal
 
-In the `ui` folder, create another file named `NewTask.goal` with the following content:
+In the `ui` folder, create another file named `AddTask.goal` with the following content:
 
 ```plang
-NewTask
+AddTask
 - form, inputs for "task"(required) and "due_date"(required, type is date)
 - button "Save", call !NewTask
+- call !Todos
 ```
-Note: NewTask goal was created in previous tutorial
+Note: `NewTask.goal` was created in previous tutorial
 ### 5. Run the App
 
 The app is now ready to run. 
@@ -58,12 +59,8 @@ The app is now ready to run.
     plangw exec
     ```
 
-    For Linux and MacOS, you might need to make `plangw` executable first:
+    For Linux and MacOS, sorry, we don't support you at the moment
 
-    ```bash
-    chmod +x plangw
-    ./plangw exec
-    ```
 
 Enjoy your new Todo Window App!
 

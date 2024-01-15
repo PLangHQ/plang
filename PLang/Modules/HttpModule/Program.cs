@@ -165,7 +165,7 @@ namespace PLang.Modules.HttpModule
 				{
 					try
 					{
-						return JObject.Parse(responseBody);
+						return JsonConvert.DeserializeObject(responseBody);
 					} catch (Exception ex)
 					{
 						throw;

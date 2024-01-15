@@ -1,0 +1,4 @@
+AddTask
+- form, inputs for "task"(required) and "due_date"(required, type is date)
+- button "Save", call !NewTask
+- call !Todos

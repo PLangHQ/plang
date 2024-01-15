@@ -1,0 +1,3 @@
+TestList 
+- get http://localhost:8080/api/list, write to %todos%
+- write out %todos%

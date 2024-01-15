@@ -113,7 +113,7 @@ namespace PLang.Modules.LlmModule
 			{
 				llmService.Extractor = new TextExtractor();
 			}
-			else if (llmResponseType == "json")
+			else if (llmResponseType == "json" || !string.IsNullOrEmpty(scheme))
 			{
 				//system += $"\n\nYou MUST respond in JSON, scheme: {scheme}";
 			}
@@ -130,22 +130,17 @@ namespace PLang.Modules.LlmModule
 			llmQuestion.frequencyPenalty = frequencyPenalty;
 			llmQuestion.presencePenalty = presencePenalty;
 
-			var response = await llmService.Query(llmQuestion, typeof(ExpandoObject));
+			var response = await llmService.Query<object>(llmQuestion);
 
-			if (scheme.StartsWith("{") && scheme.EndsWith("}"))
+			if (response is JObject)
 			{
-				var variables = scheme.Replace("{", "").Replace("}", "").Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-				var objResult = (IDictionary<string, object>)response;
-				foreach (var variable in variables)
+				var objResult = (JObject)response;
+				foreach (var property in objResult.Properties())
 				{
-					string varName = (variable.Contains(":")) ? variable.Substring(0, variable.IndexOf(":")) : variable;
-					if (objResult.TryGetValue(varName, out object? val))
-					{
-						memoryStack.Put(varName, val);
-					}
+					memoryStack.Put(property.Name, property.Value);
 				}
 			}
-			if (function != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
+			else if (function != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
 			{
 				foreach (var returnValue in function.ReturnValue)
 				{
@@ -153,7 +148,7 @@ namespace PLang.Modules.LlmModule
 				}
 			}
 
-			llmService.Extractor = new JsonExtractor();
+			
 		}
 
 		private string? LoadVariables(string? content)

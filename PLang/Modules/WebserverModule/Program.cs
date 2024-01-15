@@ -19,6 +19,7 @@ using System.ComponentModel;
 using System.Net;
 using System.Net.Http;
 using System.Net.WebSockets;
+using System.Reflection;
 using System.Text;
 using static PLang.Modules.WebserverModule.Program;
 
@@ -114,6 +115,9 @@ namespace PLang.Modules.WebserverModule
 			listener.Prefixes.Add(scheme + "://" + host + ":" + port + "/");
 			listener.Start();
 
+			var assembly = Assembly.GetAssembly(this.GetType());
+			string version = assembly.GetName().Version.ToString();
+
 			var webserverInfo = new WebserverInfo(listener, webserverName, scheme, host, port, maxContentLengthInBytes, defaultResponseContentEncoding, signedRequestRequired, publicPaths);
 			listeners.Add(webserverInfo);
 
@@ -135,6 +139,8 @@ namespace PLang.Modules.WebserverModule
 						var request = httpContext.Request;
 						var resp = httpContext.Response;
 
+						httpContext.Response.Headers.Add("Server", "plang v" + version);
+						
 						if (signedRequestRequired && string.IsNullOrEmpty(request.Headers.Get("X-Signature")))
 						{
 							await WriteError(httpContext.Response, $"You must sign your request to user this web service. Using plang, you simply say. '- GET http://... sign request");
@@ -235,12 +241,12 @@ namespace PLang.Modules.WebserverModule
 							await ParseRequest(httpContext, goal.GoalApiInfo.Method, requestMemoryStack);
 							await engine.RunGoal(goal);
 
-
+							/*
 							using (var reader = new StreamReader(resp.OutputStream, resp.ContentEncoding ?? Encoding.UTF8))
 							{
 								var content = reader.ReadToEndAsync();
 								// content should be signed by server. 
-							}
+							}*/
 							resp.StatusCode = (int)HttpStatusCode.OK;
 							resp.StatusDescription = "Status OK";
 						}

@@ -528,14 +528,16 @@ namespace PLang.Runtime
 				{
 					if (string.IsNullOrEmpty(goalName)) continue;
 
-					var folderPath = goalFiles.FirstOrDefault(p => p.ToLower().EndsWith(Path.Join(goalName.Replace(".goal", ""), ISettings.GoalFileName).ToLower()));
+					string name = goalName.AdjustPathToOs().Replace(".goal", "").ToLower();
+
+					var folderPath = goalFiles.FirstOrDefault(p => p.ToLower().EndsWith(Path.Join(name, ISettings.GoalFileName).ToLower()));
 					if (folderPath != null)
 					{
 						goalsToRun.Add(folderPath);
 					}
 					else
 					{
-						logger.LogError($"{goalName} could not be found. It will not run. Folder path: {folderPath}");
+						logger.LogError($"{goalName} could not be found. It will not run. Startup path: {fileSystem.RootDirectory}");
 						return new();
 					}
 				}
