@@ -4,13 +4,14 @@ using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Services.OutputStream;
 using PLang.Utils;
 
 namespace PLang.Runtime
 {
-	public interface IPseudoRuntime
+    public interface IPseudoRuntime
 	{
-		Task RunGoal(IEngine engine, PLangAppContext context, string appPath, string goalName, Dictionary<string, object> parameters, Goal? callingGoal = null);
+		Task RunGoal(IEngine engine, PLangAppContext context, string appPath, string goalName, Dictionary<string, object?>? parameters, Goal? callingGoal = null);
 	}
 
 	public class PseudoRuntime : IPseudoRuntime
@@ -18,17 +19,15 @@ namespace PLang.Runtime
 		private readonly PrParser prParser;
 		private readonly IServiceContainerFactory serviceContainerFactory;
 		private readonly IPLangFileSystem fileSystem;
-		private readonly IOutputStream outputStream;
 
-		public PseudoRuntime(PrParser prParser, IServiceContainerFactory serviceContainerFactory, IPLangFileSystem fileSystem, IOutputStream outputStream)
+		public PseudoRuntime(PrParser prParser, IServiceContainerFactory serviceContainerFactory, IPLangFileSystem fileSystem)
 		{
 			this.prParser = prParser;
 			this.serviceContainerFactory = serviceContainerFactory;
 			this.fileSystem = fileSystem;
-			this.outputStream = outputStream;
 		}
 
-		public async Task RunGoal(IEngine engine, PLangAppContext context, string appPath, string goalName, Dictionary<string, object> parameters, Goal? callingGoal = null)
+		public async Task RunGoal(IEngine engine, PLangAppContext context, string appPath, string goalName, Dictionary<string, object?>? parameters, Goal? callingGoal = null)
 		{
 			Goal? goal = prParser.GetGoalByAppAndGoalName(appPath, goalName, callingGoal);
 
@@ -43,7 +42,7 @@ namespace PLang.Runtime
 			ServiceContainer? container = null;
 			if (!goal.AbsoluteGoalPath.StartsWith(fileSystem.RootDirectory))
 			{
-				container = serviceContainerFactory.CreateContainer(context, goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath, outputStream);
+				container = serviceContainerFactory.CreateContainer(context, goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath, engine.OutputStream);
 
 				engine = container.GetInstance<IEngine>();
 				engine.Init(container);

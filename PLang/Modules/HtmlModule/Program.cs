@@ -1,35 +1,56 @@
-﻿using System.ComponentModel;
+﻿using PLang.Services.OutputStream;
+using System.ComponentModel;
 
 namespace PLang.Modules.HtmlModule
 {
-	[Description("Takes any user command and tries to convert it to html")]
-	public class Program : BaseProgram
+	public interface IFlush
 	{
-		public Program() : base()
+		void Flush();
+	}
+    [Description("Takes any user command and tries to convert it to html")]
+	public class Program : BaseProgram, IFlush
+	{
+		private readonly IOutputStream outputStream;
+
+		public Program(IOutputStream outputStream) : base()
 		{
+			this.outputStream = outputStream;
+			
 		}
 
-		public async Task<string> RenderHtml(string html)
+		public async Task RenderHtml(string html)
 		{
 			html = variableHelper.LoadVariables(html).ToString();
 
-			if (!string.IsNullOrEmpty(html))
+			if (string.IsNullOrEmpty(html)) return;
+
+			var os = (UIOutputStream) outputStream;
+			os.MemoryStack = memoryStack;
+			os.Goal = goal;
+			os.GoalStep = goalStep;
+
+			var nextStep = goalStep.NextStep;
+			while (nextStep != null && nextStep.Indent > 0)
 			{
-				context.TryGetValue("__HTML__", out object? responseHtml);
-				if (responseHtml != null && responseHtml.ToString().Contains($"{{step{goalStep.Number}}}"))
-				{
-					responseHtml = responseHtml.ToString().Replace($"{{step{goalStep.Number}}}", html);
-				} else
-				{
-					responseHtml = responseHtml + "\n" + html.ToString();
-
-				}
-
-				context.AddOrReplace("__HTML__", responseHtml);
+				nextStep.Execute = true;
+				nextStep = nextStep.NextStep;
 			}
-			return html;
+			await os.Write(html, "text", 200, (goalStep.Indent > 0) ? goalStep.Number : -1);
 		}
 
+		public async Task AskUserHtml(string html)
+		{
+			html = variableHelper.LoadVariables(html).ToString();
+
+			if (string.IsNullOrEmpty(html)) return;
+			((UIOutputStream)outputStream).MemoryStack = memoryStack;
+			await outputStream.Ask(html);
+		}
+
+		public void Flush()
+		{
+			((UIOutputStream)outputStream).Flush();
+		}
 	}
 
 }

@@ -26,19 +26,24 @@ using PLang.Services.CachingService;
 using PLang.Services.EncryptionService;
 using PLang.Services.EventSourceService;
 using PLang.Services.LlmService;
+using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
+using RazorEngineCore;
 using System.ComponentModel;
 using System.Data;
 using System.Data.SQLite;
+using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using Websocket.Client.Logging;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 using static PLang.Modules.DbModule.ModuleSettings;
 
 namespace PLang.Utils
 {
-	public static class Instance
+    public static class Instance
 	{
 		private static readonly string PrefixForTempInjection = "__Temp__";
 		public record InjectedType(Type ServiceType, Type ImplementationType);
@@ -51,6 +56,7 @@ namespace PLang.Utils
 			{
 				throw new ArgumentNullException("askUserHandlerFullName cannot be empty when creating a new container");
 			}
+			container.RegisterInstance<IOutputStream>(outputStream);
 
 			RegisterForPLang(container, path, appPath);
 
@@ -58,12 +64,12 @@ namespace PLang.Utils
 			askUserHandlerFullName = AppContext.GetData(ReservedKeywords.Inject_AskUserHandler) as string ?? askUserHandlerFullName;
 			context.AddOrReplace(ReservedKeywords.Inject_AskUserHandler, askUserHandlerFullName);
 
-			container.RegisterInstance<IOutputStream>(outputStream);
+			
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			RegisterModules(container, fileSystem);
 		}
-		public static void RegisterForPLangWebserver(this ServiceContainer container, string path, string appPath)
+		public static void RegisterForPLangWebserver(this ServiceContainer container, string path, string appPath, HttpListenerContext httpContext)
 		{
 			RegisterForPLang(container, path, appPath);
 
@@ -74,17 +80,40 @@ namespace PLang.Utils
 
 			container.RegisterSingleton<IOutputStream>(factory =>
 			{
-				var outputStream = new JsonOutputStream();
-				outputStream.Context = context;
+				var outputStream = new JsonOutputStream(httpContext);
+
+				var askUserHandler = new AskUserHandler(outputStream);
+				container.Register<IAskUserHandler>(askFactory =>
+				{
+					return new AskUserHandler(outputStream);
+				});
+
+
 				return outputStream;
 			});
-
-
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			RegisterModules(container, fileSystem);
 		}
+		public static void RegisterForPLangWindowApp(this ServiceContainer container, string path, string appPath, IAskUserDialog askUserDialog)
+		{
+			container.RegisterSingleton<IOutputStream, UIOutputStream>();
 
+			RegisterForPLang(container, path, appPath);
+
+			var context = container.GetInstance<PLangAppContext>();
+			context.AddOrReplace(ReservedKeywords.Inject_AskUserHandler, typeof(AskUserWindowHandler).FullName);
+
+			container.Register<IAskUserHandler>(factory =>
+			{
+				var askUserHandler = new AskUserWindowHandler(askUserDialog);
+				return askUserHandler;
+			}, typeof(AskUserWindowHandler).FullName);
+
+			container.RegisterSingleton<IRazorEngine, RazorEngine>();
+			var fileSystem = container.GetInstance<IPLangFileSystem>();
+			RegisterModules(container, fileSystem);
+		}
 
 
 		public static void RegisterForPLangConsole(this ServiceContainer container, string path, string appPath)
@@ -234,13 +263,10 @@ namespace PLang.Utils
 						{
 							var askUserHandler = context[ReservedKeywords.Inject_AskUserHandler].ToString();
 							var askUser = factory.GetInstance<IAskUserHandler>(askUserHandler);
-							Console.WriteLine("Asking user for info:" + ex.ToString());
+							
 							var task = askUser.Handle(ex as AskUserException);
 							task.Wait();
-							if (task.Result)
-							{
-								Console.WriteLine("Answered");
-							}
+							
 						}
 						else
 						{
@@ -300,11 +326,12 @@ namespace PLang.Utils
 				var fileSystem = container.GetInstance<IPLangFileSystem>();
 				var settings = container.GetInstance<ISettings>();
 				var llService = container.GetInstance<ILlmService>();
+				var logger = container.GetInstance<ILogger>();
 
 				string type = context[ReservedKeywords.Inject_IDbConnection].ToString();
 				var dbConnection = factory.GetInstance<IDbConnection>(type);
 
-				var moduleSettings = new PLang.Modules.DbModule.ModuleSettings(fileSystem, settings, context, llService, dbConnection);
+				var moduleSettings = new PLang.Modules.DbModule.ModuleSettings(fileSystem, settings, context, llService, dbConnection, logger);
 				DataSource dataSource = moduleSettings.GetCurrentDatasource().Result;
 
 				dbConnection.ConnectionString = dataSource.ConnectionString;
@@ -323,8 +350,9 @@ namespace PLang.Utils
 				var settings = container.GetInstance<ISettings>();
 				string dbType = context[ReservedKeywords.Inject_IDbConnection].ToString();
 				var dbConnection = factory.GetInstance<IDbConnection>(dbType);
+				var logger = container.GetInstance<ILogger>();
 
-				var moduleSettings = new PLang.Modules.DbModule.ModuleSettings(fileSystem, settings, context, null, dbConnection);
+				var moduleSettings = new PLang.Modules.DbModule.ModuleSettings(fileSystem, settings, context, null, dbConnection, logger);
 				DataSource dataSource = moduleSettings.GetCurrentDatasource().Result;
 
 				if (!dataSource.KeepHistory)

@@ -1,6 +1,7 @@
 ﻿using LightInject;
 using PLang.Interfaces;
 using PLang.Runtime;
+using PLang.Services.OutputStream;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace PLang.Utils
 {
-	public interface IServiceContainerFactory
+    public interface IServiceContainerFactory
 	{
 		ServiceContainer CreateContainer(PLangAppContext context, string path, string goalPath, IOutputStream outputStream);
 	}

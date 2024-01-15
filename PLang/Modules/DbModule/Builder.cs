@@ -40,7 +40,21 @@ namespace PLang.Modules.DbModule
 		public record DbGenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValue = null, string? Warning = null) : GenericFunction(FunctionName, Parameters, ReturnValue);
 		public override async Task<Instruction> Build(GoalStep goalStep)
 		{
-			var moduleSettings = new ModuleSettings(fileSystem, settings, context, aiService, db);
+			var moduleSettings = new ModuleSettings(fileSystem, settings, context, aiService, db, logger);
+			var buildInstruction = await base.Build(goalStep);
+			var gf = buildInstruction.Action as GenericFunction;
+			if (gf != null && gf.FunctionName == "CreateDataSource")
+			{
+				if (string.IsNullOrEmpty(gf.Parameters[0].Value.ToString()))
+				{
+					throw new BuilderStepException("Name of the datasource is missing. Please define it. Example: \"Create data source 'myDatabase'\"");
+				}
+
+				await moduleSettings.CreateDataSource(gf.Parameters[0].Value.ToString());
+				return buildInstruction;
+			}
+
+			
 			var dataSource = await moduleSettings.GetCurrentDatasource();
 
 			
@@ -58,7 +72,7 @@ TableNames: table names in sql statement");
 {typeHelper.GetMethodsAsString(typeof(Program))}
 ## functions available ends ##
 ");
-			var program = new Program(db, fileSystem, settings, aiService, new DisableEventSourceRepository(), context);
+			var program = new Program(db, fileSystem, settings, aiService, new DisableEventSourceRepository(), context, logger);
 			if (!string.IsNullOrEmpty(dataSource.SelectTablesAndViews))
 			{
 
@@ -107,8 +121,8 @@ TableNames: table names in sql statement");
 You MUST provide Parameters if SQL has @parameter.
 Choose the best method to use, if the method is not provided that fits the SQL, you can use Execute to run SQL statement.
 ");
-			
 
+			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
 
 			return await base.Build(goalStep);
 		

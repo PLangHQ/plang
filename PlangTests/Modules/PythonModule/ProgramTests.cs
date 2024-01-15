@@ -5,12 +5,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using PLang.Modules.PythonModule;
-using PLang.Utils;
 using Newtonsoft.Json;
+using PLang.Services.OutputStream;
 
 namespace PLangTests.Modules.PythonModule
 {
-	[TestClass]
+    [TestClass]
 	public class ProgramTests : BasePLangTest
 	{
 		[TestInitialize]

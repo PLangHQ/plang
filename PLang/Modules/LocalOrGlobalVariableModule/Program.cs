@@ -69,7 +69,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		}
 
 		[Description("Set default value on variables if not set. keys and values length MUST be equal. If value is json, keep valid json format. Keep object type as defined, int should be int, double should double, string as string.")]
-		public async Task SetDefaultValueOnVariables([HandlesVariableAttribute] Dictionary<string, object> keyValues)
+		public async Task SetDefaultValueOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues)
 		{
 			foreach (var key in keyValues) 
 			{

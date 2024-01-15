@@ -4,6 +4,7 @@ using NSubstitute;
 using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Services.OutputStream;
 using PLang.Utils;
 using PLangTests;
 using PLangTests.Helpers;
@@ -12,7 +13,7 @@ using System.IO.Abstractions.TestingHelpers;
 
 namespace PLang.Runtime.Tests
 {
-	[TestClass()]
+    [TestClass()]
 	public class PseudoRuntimeTests : BasePLangTest
 	{
 		[TestInitialize()]
@@ -44,7 +45,7 @@ namespace PLang.Runtime.Tests
 		{
 			var context = new PLangAppContext();
 			context.Add("Test", 1);
-			var pseudoRuntime = new PseudoRuntime(prParser, containerFactory, fileSystem, outputStream);
+			var pseudoRuntime = new PseudoRuntime(prParser, containerFactory, fileSystem);
 			await pseudoRuntime.RunGoal(engine, context, @"\", "GoalWith1Step.goal", new Dictionary<string, object>());
 
 			await engine.Received(1).RunGoal(Arg.Any<Goal>());
@@ -65,7 +66,7 @@ namespace PLang.Runtime.Tests
 			});
 
 
-			var pseudoRuntime = new PseudoRuntime(prParser, serviceFactory, fileSystem, outputStream);
+			var pseudoRuntime = new PseudoRuntime(prParser, serviceFactory, fileSystem);
 
 			context.Add("Test", 1);
 
@@ -89,7 +90,7 @@ namespace PLang.Runtime.Tests
 		public async Task RunGoalTest_GoalNotFound()
 		{
 		
-			var pseudoRuntime = new PseudoRuntime(prParser, containerFactory, fileSystem, outputStream);
+			var pseudoRuntime = new PseudoRuntime(prParser, containerFactory, fileSystem);
 
 			await pseudoRuntime.RunGoal(engine, new(), @"\", "UnknownGoal.goal", new Dictionary<string, object>());
 		}
@@ -98,7 +99,7 @@ namespace PLang.Runtime.Tests
 		[ExpectedException(typeof(GoalNotFoundException))]
 		public async Task RunGoalTest_GoalNotFound_GoalWith2Steps_IsNotPrefixedWithApp()
 		{
-			var pseudoRuntime = new PseudoRuntime(prParser, containerFactory, fileSystem, outputStream);
+			var pseudoRuntime = new PseudoRuntime(prParser, containerFactory, fileSystem);
 
 			await pseudoRuntime.RunGoal(engine, new(), @"\", "GoalWith2Steps.goal", new Dictionary<string, object>());
 		}
@@ -111,7 +112,7 @@ namespace PLang.Runtime.Tests
 			
 
 			
-			var pseudoRuntime = new PseudoRuntime(prParser, containerFactory, fileSystem, outputStream);
+			var pseudoRuntime = new PseudoRuntime(prParser, containerFactory, fileSystem);
 			var memoryStackMock = Substitute.For<MemoryStack>(pseudoRuntime, engine, context);
 
 			engine.GetMemoryStack().Returns(memoryStackMock);

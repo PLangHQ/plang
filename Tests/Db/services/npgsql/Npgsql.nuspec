@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>Npgsql</id>
+    <version>7.0.6</version>
+    <authors>Shay Rojansky,Nikita Kazmin,Brar Piening,Yoh Deadfall,Austin Drenski,Emil Lenngren,Francisco Figueiredo Jr.,Kenji Uno</authors>
+    <license type="expression">PostgreSQL</license>
+    <licenseUrl>https://licenses.nuget.org/PostgreSQL</licenseUrl>
+    <icon>postgresql.png</icon>
+    <readme>README.md</readme>
+    <projectUrl>https://github.com/npgsql/npgsql</projectUrl>
+    <description>Npgsql is the open source .NET data provider for PostgreSQL.</description>
+    <copyright>Copyright 2023 © The Npgsql Development Team</copyright>
+    <tags>npgsql postgresql postgres ado ado.net database sql</tags>
+    <repository type="git" url="https://github.com/npgsql/npgsql" commit="eff6b18aa14cdd329b14c5168781f61bbafec3a0" />
+    <dependencies>
+      <group targetFramework=".NETCoreApp3.1">
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="6.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Diagnostics.DiagnosticSource" version="6.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Runtime.CompilerServices.Unsafe" version="6.0.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework="net5.0">
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="6.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Runtime.CompilerServices.Unsafe" version="6.0.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework="net6.0">
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="6.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Runtime.CompilerServices.Unsafe" version="6.0.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework="net7.0">
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="6.0.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="Microsoft.Bcl.HashCode" version="1.1.1" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="6.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Collections.Immutable" version="7.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Diagnostics.DiagnosticSource" version="6.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Runtime.CompilerServices.Unsafe" version="6.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Text.Json" version="7.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Threading.Channels" version="7.0.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework=".NETStandard2.1">
+        <dependency id="Microsoft.Extensions.Logging.Abstractions" version="6.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Collections.Immutable" version="7.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Diagnostics.DiagnosticSource" version="6.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Runtime.CompilerServices.Unsafe" version="6.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Text.Json" version="7.0.0" exclude="Build,Analyzers" />
+        <dependency id="System.Threading.Channels" version="7.0.0" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>

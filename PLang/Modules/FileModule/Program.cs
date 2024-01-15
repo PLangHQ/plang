@@ -9,6 +9,7 @@ using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Utils;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO.Abstractions;
@@ -17,7 +18,7 @@ using System.Text.RegularExpressions;
 
 namespace PLang.Modules.FileModule
 {
-	[Description("Handle file system access")]
+	[Description("Handle file system access. Listen to files and dirs")]
 	public class Program : BaseProgram, IDisposable
 	{
 		private readonly IPLangFileSystem fileSystem;
@@ -452,8 +453,11 @@ namespace PLang.Modules.FileModule
 			return files;
 		}
 
+		private ConcurrentDictionary<string, Timer> timers = new ConcurrentDictionary<string, Timer>();
 
-		public async Task ListenToFileChange(string[] fileSearchPatterns, string goalToCall, string[]? excludeFiles = null, bool includeSubdirectories = false)
+		[Description("debounceTime is the time in ms that is waited until action is executed to prevent multiple execution for same file.")]
+		public async Task ListenToFileChange(string[] fileSearchPatterns, string goalToCall, string[]? excludeFiles = null,
+			bool includeSubdirectories = false, long debounceTime = 150)
 		{
 			PLangFileSystemWatcherFactory watcherFactory = new PLangFileSystemWatcherFactory(fileSystem);
 			foreach (var fileSearchPattern in fileSearchPatterns)
@@ -467,54 +471,76 @@ namespace PLang.Modules.FileModule
 				watcher.Path = settings.GoalsPath;
 				watcher.IncludeSubdirectories = includeSubdirectories;
 				watcher.Filter = fileSearchPattern;
-				watcher.EnableRaisingEvents = true;
 
-				/*watcher.NotifyFilter = NotifyFilters.LastWrite
-									 | NotifyFilters.FileName | NotifyFilters.CreationTime;
-					*/
-				watcher.Changed += async (object sender, FileSystemEventArgs e) =>
+				watcher.Changed += (object sender, FileSystemEventArgs e) =>
 				{
-					await WatcherCallGoal(sender, e, goalToCall, excludeFiles);
+					AddEventToTimer(sender, e, debounceTime, goalToCall, excludeFiles);
 
 				};
-				watcher.Created += async (object sender, FileSystemEventArgs e) =>
+				watcher.Created += (object sender, FileSystemEventArgs e) =>
 				{
-					await WatcherCallGoal(sender, e, goalToCall, excludeFiles);
+					AddEventToTimer(sender, e, debounceTime, goalToCall, excludeFiles);
 
 				};
 				watcher.Deleted += async (object sender, FileSystemEventArgs e) =>
 				{
-					await WatcherCallGoal(sender, e, goalToCall, excludeFiles);
+					AddEventToTimer(sender, e, debounceTime, goalToCall, excludeFiles);
 
 				};
 				watcher.Renamed += async (object sender, RenamedEventArgs e) =>
 				{
-					if (excludeFiles != null && excludeFiles.Contains(e.Name)) return;
+					Timer? timer;
+					if (timers.TryGetValue(e.FullPath, out timer))
+					{
+						timer.Change(debounceTime, Timeout.Infinite);
+					}
+					else
+					{
+						timer = new Timer((state) => {
+							if (excludeFiles != null && excludeFiles.Contains(e.Name)) return;
 
-					Dictionary<string, object> parameters = new Dictionary<string, object>();
-					parameters.Add("OldFullPath", e.OldFullPath);
-					parameters.Add("OldName", e.OldName);
-					parameters.Add("FullPath", e.FullPath);
-					parameters.Add("Name", e.Name);
-					parameters.Add("ChangeType", e.ChangeType);
-					parameters.Add("Sender", sender);
+							Dictionary<string, object> parameters = new Dictionary<string, object>();
+							parameters.Add("OldFullPath", e.OldFullPath);
+							parameters.Add("OldName", e.OldName);
+							parameters.Add("FullPath", e.FullPath);
+							parameters.Add("Name", e.Name);
+							parameters.Add("ChangeType", e.ChangeType);
+							parameters.Add("Sender", sender);
 
-					await pseudoRuntime.RunGoal(engine, context, "", goalToCall, parameters);
+							var task = pseudoRuntime.RunGoal(engine, context, "", goalToCall, parameters);
+							task.Wait();
+						}, e.FullPath, debounceTime, Timeout.Infinite);
+						timers.TryAdd(e.FullPath, timer);
+					}
+					
 				};
 
 				watcher.EnableRaisingEvents = true;
+
 				int counter = 0;
 				while (context.ContainsKey($"FileWatcher_{fileSearchPattern}_{goalToCall}_{counter}")) { counter++; };
 
 				context.Add($"FileWatcher_{fileSearchPattern}_{goalToCall}_{counter}", watcher);
 				KeepAlive(this, $"FileWatcher [{fileSearchPattern}]");
 			}
+		}
 
-
+		private void AddEventToTimer(object sender, FileSystemEventArgs e, long debounceTime, string goalToCall, string[]? excludeFiles)
+		{
+			Timer? timer;
+			if (timers.TryGetValue(e.FullPath, out timer))
+			{
+				timer.Change(debounceTime, Timeout.Infinite);
+			}
+			else
+			{
+				timer = new Timer((state) => { WatcherCallGoal(sender, e, goalToCall, excludeFiles); }, e.FullPath, debounceTime, Timeout.Infinite);
+				timers.TryAdd(e.FullPath, timer);
+			}
 		}
 
 		private static readonly object _lock = new object();
-		private async Task WatcherCallGoal(object sender, FileSystemEventArgs e, string goalToCall, string[]? excludeFiles)
+		private void WatcherCallGoal(object sender, FileSystemEventArgs e, string goalToCall, string[]? excludeFiles)
 		{
 			if (excludeFiles != null && excludeFiles.Contains(e.Name)) return;
 

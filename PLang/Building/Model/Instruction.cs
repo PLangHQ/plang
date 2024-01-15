@@ -36,7 +36,6 @@ namespace PLang.Building.Model
 				return new GenericFunction[] { Action as GenericFunction };
 			} catch (Exception ex)
 			{
-				Console.WriteLine(ex.ToString());
 				throw;
 			}
 		}

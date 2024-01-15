@@ -1,9 +1,9 @@
-﻿using PLang.Utils;
+﻿using PLang.Services.OutputStream;
 using System.ComponentModel;
 
 namespace PLang.Modules.OutputModule
 {
-	[Description("Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response")]
+    [Description("Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response")]
 	public class Program : BaseProgram
 	{
 		private readonly IOutputStream outputStream;

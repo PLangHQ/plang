@@ -31,16 +31,14 @@ namespace PLang.Modules.HtmlModule
 			string contentToBeAdded = "";
 			if (childrenStr != "")
 			{
-				contentToBeAdded = $"put the variable {{content}} where content should be";
+				contentToBeAdded = $"Put the variable {{step#}} where sub steps should be. e.g. if you generated html to insert to step it would look something like this. <div><div>{{step1}}</div><div>{{step2}}</div></div>";
 			}
 
 
-			SetSystem(@$"Create the html, javascript and css needed from the user command using Bootstrap 5.1. 
+			SetSystem(@$"Create the html, javascript and css needed from the user command using Bootstrap 5.0.2 & Fontawesome 5.15.3. 
 
-Goal has series of steps, it is only to provide context. Steps start with dash(-), steps can have sub steps, they are indented
-
+Goal has series of steps. Steps start with dash(-), steps can have sub steps, substeps are indented and are referenced in previous step by {{step#}} where # is a number, e.g. {{step1}}.
 Variables are defined with starting and ending %. They are case sensitive so keep them as defined
-
 Goals are prefixed with !, they are for calling a method, e.g. Call !NewUser or reference a goal, such as Edit.goal. To call it use javascript function callGoal(name:string, parameters:object)
 DO NOT generate the function callGoal, it will be provided
 All object.Id or object.id are long and needs to be wrapped with single quote(')
@@ -56,10 +54,11 @@ Use @Razor templating engine for variables and to go through lists, displaying o
 
 Css should be using up to date css standards. colors should be in rgb.
 
-If a feedback is needed to the user, provide the solution also for that, if it needs javascript, provide javascript, if it needs custom css, provide css
+If a feedback is needed from the user using the html, provide the solution also for that, if it needs javascript, provide javascript, if it needs custom css, provide css
 
-You must return ```html, ```css, ```javascript, 
-No extra text to explain, be concise
+Goalfile is only provide for context. 
+
+Your job is to build ```html, ```javascript, ```css from the user command and nothing else.
 ");
 
 			var variables = GetVariablesInStep(step);
@@ -67,9 +66,9 @@ No extra text to explain, be concise
 ### variables available ###
 {variables}
 ### variables available ###
-### For context ###
+### Goalfile ###
 {str}
-### For context ###
+### Goalfile ###
 ### Razor ###
 Variables in plural are lists, singular is object. 
 To access variable, prefix it with Model.

@@ -1,11 +1,11 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PLang.Utils;
 using PLang.Modules.OutputModule;
 using NSubstitute;
+using PLang.Services.OutputStream;
 
 namespace PLangTests.Modules.OutputModule
 {
-	[TestClass]
+    [TestClass]
 	public class ProgramTests : BasePLangTest
 	{
 		[TestInitialize]

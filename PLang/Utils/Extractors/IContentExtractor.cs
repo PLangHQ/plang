@@ -83,26 +83,41 @@ namespace PLang.Utils.Extractors
 
 		public object Extract(string content, Type responseType)
 		{
-			var css = ExtractByType(content, "css").ToString().Trim();
-			if (!string.IsNullOrEmpty(css) && !css.Contains("No css needed"))
+			var css = ExtractByType(content, "css", true).ToString().Trim();
+			if (!string.IsNullOrEmpty(css))
 			{
-				css = "<style>" + css + "</style>\n";
+				if (css.ToLower().Contains("no css needed"))
+				{
+					css = "";
+				}
+				else
+				{
+					css = "<style>" + css + "</style>\n";
+				}
 			}
-			var html = ExtractByType(content, "html").ToString().Trim();
-			var javascript = ExtractByType(content, "javascript").ToString().Trim();
-			if (!string.IsNullOrEmpty(javascript) && !javascript.Contains("No javascript needed"))
+			var html = ExtractByType(content, "html", true).ToString().Trim();
+			
+			var javascript = ExtractByType(content, "javascript", true).ToString().Trim();
+			if (!string.IsNullOrEmpty(javascript))
 			{
-				if (javascript.Contains("function callGoal"))
+				if (javascript.ToLower().Contains("no javascript needed"))
+				{
+					javascript = "";
+				}
+				else if (javascript.Contains("function callGoal"))
 				{
 					javascript = javascript.Replace("function callGoal", "function notcalled_callGoal");
 				}
-				javascript = "<script>" + javascript + "</script>\n";
+				else
+				{
+					javascript = "<script>" + javascript + "</script>\n";
+				}
 			}
 			var result = css + html + javascript;
 			return result;
 		}
 
-		public object ExtractByType(string content, string contentType = "html")
+		public object ExtractByType(string content, string contentType = "html", bool returnEmpty = false)
 		{
 			if (content.Contains($"```{contentType}"))
 			{
@@ -113,13 +128,13 @@ namespace PLang.Utils.Extractors
 					return match.Groups[1].Value ?? "";
 				}
 			}
-			return content;
+			return (returnEmpty) ? "" : content;
 		}
 
 
 		public string GetRequiredResponse(Type scheme)
 		{
-			return "Only write the raw html and javascript no summary, no extra text to explain, be concise";
+			return "Only write the raw ```html, ```css and ```javascript. No summary, no extra text to explain, be concise";
 		}
 	}
 
@@ -187,6 +202,7 @@ namespace PLang.Utils.Extractors
 
 		public object Extract(string content, Type responseType)
 		{
+			if (responseType == typeof(string)) return content;
 			try
 			{
 				try

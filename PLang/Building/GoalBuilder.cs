@@ -66,11 +66,13 @@ namespace PLang.Building
 				for (int i = 0; i < goal.GoalSteps.Count; i++)
 				{
 					await stepBuilder.BuildStep(goal, i);
+
+					//LoadInjections(goal, container);
 					WriteToGoalPrFile(goal);
 				}
 				RemoveUnusedPrFiles(goal);
 
-				LoadInjections(goal, container);			
+				LoadInjections(goal, container);
 
 				await eventRuntime.RunBuildGoalEvents(EventType.After, goal);
 

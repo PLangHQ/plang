@@ -1,6 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using LightInject;
+using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
+using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Utils;
@@ -16,7 +18,7 @@ namespace PLang.Building.Events
 		List<string> GetRuntimeEventsFiles(string goalsPath, string eventFolder);
 		bool GoalHasBinding(Goal goal, EventBinding eventBinding);
 		bool IsStepMatch(GoalStep step, EventBinding eventBinding);
-		Task Load(bool builder = false);
+		Task Load(IServiceContainer container, bool builder = false);
 		Task RunBuildGoalEvents(EventType eventType, Goal goal);
 		Task RunBuildStepEvents(EventType eventType, Goal goal, GoalStep step, int stepIdx);
 		Task RunGoalEvents(PLangAppContext context, EventType eventType, Goal goal);
@@ -49,7 +51,7 @@ namespace PLang.Building.Events
 		{
 			if (events == null)
 			{
-				await Load(true);
+				throw new BuilderException("Events are null. GetBuilderEvents() cannot be called before Load");
 			}
 			return events!;
 		}
@@ -58,11 +60,11 @@ namespace PLang.Building.Events
 		{
 			if (events == null)
 			{
-				await Load(false);
+				throw new RuntimeException("Events are null. GetRuntimeEvents() cannot be called before Load");
 			}
 			return events!;
 		}
-		public async Task Load(bool builder = false)
+		public async Task Load(IServiceContainer container, bool builder = false)
 		{
 			events = new List<EventBinding>();
 
@@ -88,6 +90,14 @@ namespace PLang.Building.Events
 						continue;
 					}
 					events.Add(eve);
+				}
+
+				if (goal.Injections != null)
+				{
+					foreach (var injection in goal.Injections)
+					{
+						container.RegisterForPLangUserInjections(injection.Type, injection.Path, injection.IsGlobal);
+					}
 				}
 			}
 		}

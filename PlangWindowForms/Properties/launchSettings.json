@@ -14,6 +14,11 @@
       "commandName": "Project",
       "commandLineArgs": "run --debug",
       "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\Todo"
+    },
+    "Weather": {
+      "commandName": "Project",
+      "commandLineArgs": "run --debug",
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\Weather"
     }
   }
 }

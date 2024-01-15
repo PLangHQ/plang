@@ -15,23 +15,24 @@ namespace PLang
 	public class Executor
 	{
 		private readonly ISettings settings;
-		private readonly ServiceContainer container;
+		private readonly IServiceContainer container;
 		private readonly PrParser prParser;
 		private readonly IErrorHelper errorHelper;
 		private readonly IPLangFileSystem fileSystem;
+		private IEngine engine;
+
+		private IBuilder builder;
 
 		private static FileSystemWatcher? watcher = null;
 
-		public Executor()
+		public Executor(IServiceContainer container)
 		{
-
-			container = new ServiceContainer();
-			container.RegisterForPLangConsole(Environment.CurrentDirectory, Environment.CurrentDirectory);
-			
+			this.container = container;
 			this.settings = container.GetInstance<ISettings>();
 			this.prParser = container.GetInstance<PrParser>();
 			this.errorHelper = container.GetInstance<IErrorHelper>();
 			this.fileSystem = container.GetInstance<IPLangFileSystem>();
+			
 		}
 
 
@@ -73,7 +74,7 @@ namespace PLang
 				await Build();
 				if (watch && !run)
 				{
-					WatchFolder(container, settings.GoalsPath, "*.goal");
+					WatchFolder(settings.GoalsPath, "*.goal");
 					Console.Read();
 				}
 
@@ -83,7 +84,7 @@ namespace PLang
 			{
 				if (watch)
 				{
-					WatchFolder(container, settings.GoalsPath, "*.goal");
+					WatchFolder(settings.GoalsPath, "*.goal");
 				}
 				await Run(debug, test, args);
 			}
@@ -115,13 +116,13 @@ namespace PLang
 
 		}
 
-		private static void WatchFolder(ServiceContainer container, string path, string filter)
+		private void WatchFolder(string path, string filter)
 		{
 			if (watcher == null)
 			{
 				watcher = new FileSystemWatcher();
 			}
-			var fileSystem = container.GetInstance<IPLangFileSystem>();
+			
 			if (!fileSystem.Directory.Exists(path))
 			{
 				fileSystem.Directory.CreateDirectory(path);
@@ -137,15 +138,25 @@ namespace PLang
 			// Add event handlers.
 			watcher.Changed += async (object sender, FileSystemEventArgs e) =>
 			{
-				var pLanguage = new Executor();
+				var container = new ServiceContainer();
+				container.RegisterForPLangConsole(Environment.CurrentDirectory, Environment.CurrentDirectory);
+
+				var pLanguage = new Executor(container);
 				await pLanguage.Build();
+
+				prParser.ForceLoadAllGoals();
 			};
 
 
 			watcher.Renamed += async (object sender, RenamedEventArgs e) =>
 			{
-				var pLanguage = new Executor();
+				var container = new ServiceContainer();
+				container.RegisterForPLangConsole(Environment.CurrentDirectory, Environment.CurrentDirectory);
+
+				var pLanguage = new Executor(container);
 				await pLanguage.Build();
+
+				prParser.ForceLoadAllGoals();
 			}; ;
 
 			// Begin watching.
@@ -158,7 +169,8 @@ namespace PLang
 
 			try
 			{
-				var builder = container.GetInstance<IBuilder>();
+
+				this.builder = container.GetInstance<IBuilder>();
 				await builder.Start(container);
 				prParser.LoadAllGoals();
 			}
@@ -171,10 +183,12 @@ namespace PLang
 
 		public async Task<IEngine> Run(bool debug = false, bool test = false, string[] args = null)
 		{
-			IEngine engine = container.GetInstance<IEngine>();
-			engine.Init(container);
+			
 		
 			if (test) AppContext.SetSwitch(ReservedKeywords.Test, true);
+
+			this.engine = container.GetInstance<IEngine>();
+			this.engine.Init(container);
 
 			var goalsToRun = new List<string>();
 			for (int i = 0; args != null && i < args.Length; i++)

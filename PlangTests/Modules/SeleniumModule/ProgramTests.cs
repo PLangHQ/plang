@@ -1,7 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PLang.Modules.SeleniumModule;
+using PLang.Modules.WebCrawlerModule;
 
-namespace PLangTests.Modules.SeleniumModule
+namespace PLangTests.Modules.WebCrawlerModule
 {
 	[TestClass]
 	public class ProgramTests : BasePLangTest

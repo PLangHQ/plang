@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using IdGen;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Interfaces;
@@ -27,14 +28,19 @@ namespace PLang.Modules.DbModule
 		private readonly IEventSourceRepository eventSourceRepository;
 		private readonly PLangAppContext context;
 
-		public Program(IDbConnection dbConnection, IPLangFileSystem fileSystem, ISettings settings, ILlmService aiService, IEventSourceRepository eventSourceRepository, PLangAppContext context) : base()
+		public Program(IDbConnection dbConnection, IPLangFileSystem fileSystem, ISettings settings, ILlmService aiService, IEventSourceRepository eventSourceRepository, PLangAppContext context, ILogger logger) : base()
 		{
 			this.dbConnection = dbConnection;
 			this.settings = settings;
 			this.eventSourceRepository = eventSourceRepository;
 			this.context = context;
 
-			this.moduleSettings = new ModuleSettings(fileSystem, settings, context, aiService, dbConnection);
+			this.moduleSettings = new ModuleSettings(fileSystem, settings, context, aiService, dbConnection, logger);
+		}
+
+		public async Task CreateDataSource(string name)
+		{
+			await moduleSettings.CreateDataSource(name);
 		}
 
 		public async Task SetDataSouceName(string name)
@@ -42,7 +48,6 @@ namespace PLang.Modules.DbModule
 			var dataSource = await moduleSettings.GetDataSource(name);
 			if (dataSource == null)
 			{
-				
 				throw new ArgumentException($"Datasource with the name '{name}' could not be found");
 			}
 			context[ReservedKeywords.CurrentDataSourceName] = dataSource;
@@ -328,6 +333,29 @@ namespace PLang.Modules.DbModule
 				return null;
 			}
 
+		}
+
+		public async override Task<string> GetAdditionalSystemErrorInfo()
+		{
+			return "You will be provided with tables that already exists in the database";
+		}
+
+		public async override Task<string> GetAdditionalAssistantErrorInfo()
+		{
+			var dataSource = await moduleSettings.GetCurrentDatasource();
+
+			List<object> parameters = new List<object>();
+			parameters.Add(new ParameterInfo("Database", dataSource.DbName, "System.String"));
+
+			(var connection, var par) = Prepare(parameters);
+
+			var result = await connection.QueryAsync(dataSource.SelectTablesAndViews, par);
+
+
+			return @$"## tables in database ##
+{JsonConvert.SerializeObject(result)}
+## tables in database ##
+";
 		}
 
 

@@ -63,6 +63,9 @@ namespace PLang.Building
 			var invalidFunctions = ValidateFunctions(step, functions, module);
 			if (invalidFunctions.Count > 0)
 			{
+				foreach (var invalidFunction in invalidFunctions) {
+					logger.LogWarning(invalidFunction.explain);
+				}
 				await Retry(stepBuilder, invalidFunctions, module, goal, stepIndex, excludeModules, errorCount);
 				return;
 			}
@@ -141,7 +144,8 @@ You have 3 options.
 												
 						foreach (var instanceFunction in instanceFunctions)
 						{
-							if (methodHelper.IsParameterMatch(instanceFunction, function.Parameters))
+							var parameterError = methodHelper.IsParameterMatch(instanceFunction, function.Parameters);
+							if (parameterError == null)
 							{				
 								if (instanceFunction.ReturnType != typeof(Task) && function.ReturnValue != null && function.ReturnValue.Count > 0)
 								{
@@ -152,7 +156,7 @@ You have 3 options.
 								}
 							} else
 							{
-								invalidFunctions.Add(new InvalidFunction(function.FunctionName, $"Parameters dont match with {function.FunctionName}", false));
+								invalidFunctions.Add(new InvalidFunction(function.FunctionName, $"Parameters dont match with {function.FunctionName} - {parameterError}", false));
 							}
 
 						}

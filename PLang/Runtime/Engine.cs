@@ -10,7 +10,9 @@ using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Modules;
+using PLang.Modules.HtmlModule;
 using PLang.SafeFileSystem;
+using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
 using PLang.Utils;
 using System.Diagnostics;
@@ -18,8 +20,9 @@ using System.Net;
 
 namespace PLang.Runtime
 {
-	public interface IEngine
+    public interface IEngine
 	{
+		IOutputStream OutputStream { get; }
 		void AddContext(string key, object value);
 		PLangAppContext GetContext();
 		MemoryStack GetMemoryStack();
@@ -39,7 +42,7 @@ namespace PLang.Runtime
 		private IEventRuntime eventRuntime;
 		private ITypeHelper typeHelper;
 		private IErrorHelper errorHelper;
-		private IOutputStream outputStream;
+		public IOutputStream OutputStream { get; private set; }
 
 		private PrParser prParser;
 		private MemoryStack memoryStack;
@@ -62,7 +65,7 @@ namespace PLang.Runtime
 			this.typeHelper = container.GetInstance<ITypeHelper>();
 			this.errorHelper = container.GetInstance<IErrorHelper>();
 
-			this.outputStream = container.GetInstance<IOutputStream>();
+			this.OutputStream = container.GetInstance<IOutputStream>();
 			this.prParser = container.GetInstance<PrParser>();
 			this.memoryStack = container.GetInstance<MemoryStack>();
 
@@ -90,11 +93,11 @@ namespace PLang.Runtime
 			{
 				logger.LogInformation("App Start:" + DateTime.Now.ToLongTimeString());
 
-				await eventRuntime.Load();
+				await eventRuntime.Load(container, false);
 				await eventRuntime.RunStartEndEvents(context, EventType.Before, EventScope.StartOfApp);
 
 				await RunSetup();
-				if (goalsToRun.Count == 1 && goalsToRun[0].ToLower() == "setup.goal") return;
+				if (goalsToRun.Count == 1 && Path.GetFileNameWithoutExtension(goalsToRun[0].ToLower()) == "setup") return;
 
 				StartScheduler();
 
@@ -178,10 +181,17 @@ namespace PLang.Runtime
 
 		private async Task RunStart(List<string> goalNames)
 		{
-			var goalsToRun = GetStartGoals(settings.BuildPath, goalNames);
+			var goalsToRun = GetStartGoals(goalNames);
 			if (goalsToRun.Count == 0)
 			{
-				logger.LogWarning($"No goal files found to run. Are you in correct directory? I am running from {settings.BuildPath}");
+				if (goalNames.Count == 0)
+				{
+					logger.LogWarning($"Could not find Start.goal to run. Are you in correct directory? I am running from {settings.GoalsPath}. If you want to run specific goal file, for example Test.goal, you must run it like this: 'plang run Test'");
+				} else
+				{
+					logger.LogWarning($"Goal file(s) not found to run. Are you in correct directory? I am running from {settings.GoalsPath}");
+				}
+				
 				return;
 			}
 			logger.LogDebug("Start");
@@ -270,16 +280,17 @@ namespace PLang.Runtime
 				// Cleanup any context settings that each step is reponsible for so it doesnt transfer to other.
 				if (context.ContainsKey("DisposableSteps"))
 				{
-					var disposableSteps = context["DisposableSteps"] as List<IDisposable>;
+					var disposableSteps = context["DisposableSteps"] as List<IFlush>;
 					foreach (var step in disposableSteps)
 					{
-						step.Dispose();
+						step.Flush();
 					}
+					context.Remove("DisposableSteps");
 				}
 			}
 			catch (RuntimeUserStepException rse)
 			{
-				await outputStream.Write(rse.Message, rse.Type, rse.StatusCode);
+				await OutputStream.Write(rse.Message, rse.Type, rse.StatusCode);
 			}
 			catch (RuntimeGoalEndException ex)
 			{
@@ -386,6 +397,8 @@ namespace PLang.Runtime
 						if (goalStep.RunOnce)
 						{
 							var dict = settings.GetOrDefault<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", new());
+							if (dict == null) dict = new();
+
 							dict.TryAdd(goalStep.RelativePrPath, DateTime.UtcNow);
 							settings.Set<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", dict);
 						}
@@ -505,7 +518,7 @@ namespace PLang.Runtime
 		}
 
 
-		private List<string> GetStartGoals(string buildPath, List<string> goalNames)
+		private List<string> GetStartGoals(List<string> goalNames)
 		{
 			List<string> goalsToRun = new();
 			if (goalNames.Count > 0)
@@ -528,6 +541,10 @@ namespace PLang.Runtime
 				}
 
 				return goalsToRun;
+			}
+			
+			if (!fileSystem.Directory.Exists(Path.Join(settings.BuildPath, "Start"))) {
+				return new();
 			}
 
 			var startFile = fileSystem.Directory.GetFiles(Path.Join(settings.BuildPath, "Start"), ISettings.GoalFileName, SearchOption.AllDirectories).FirstOrDefault();

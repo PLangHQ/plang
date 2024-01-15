@@ -1,20 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
-using NBitcoin.Secp256k1;
 using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.SafeFileSystem;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PLang.Utils
 {
-    public interface IErrorHelper
+	public interface IErrorHelper
     {
         Task ShowFriendlyErrorMessage(Exception ex, GoalStep? step = null, 
 				Func<Task>? callBackForAskUser = null, Func<Exception, Task<bool>>? eventToRun = null, Func<Task, Task<bool>>? retryCallback = null);
@@ -111,7 +104,7 @@ namespace PLang.Utils
 					throw contextException;
                 }
 
-                 if (context.ContainsKey(ReservedKeywords.Exception)) context.Remove(ReservedKeywords.Exception);
+              //   if (context.ContainsKey(ReservedKeywords.Exception)) context.Remove(ReservedKeywords.Exception);
 				string strError = "";
 				foreach (var error in errors)
 				{

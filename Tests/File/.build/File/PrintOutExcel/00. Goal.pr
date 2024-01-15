@@ -48,5 +48,6 @@
   "BuilderVersion": "0.1.0.0",
   "GoalApiInfo": null,
   "Injections": [],
-  "Signature": "6575b024d7856db5df5142e596f6494bb5a8aca20a47e4c45692ce564a1f4527"
+  "Signature": null,
+  "Hash": "b9955026eeb1bf7f393179696ec82ea28bca5327ba3b6914683d55ceb773a3bf"
 }

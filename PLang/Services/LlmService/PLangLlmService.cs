@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
+using PLang.Services.OutputStream;
 using PLang.Utils;
 using PLang.Utils.Extractors;
 using System.Text;
@@ -15,15 +16,17 @@ namespace PLang.Services.LlmService
 		private readonly PLangAppContext context;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ISettingsRepository settingsRepository;
+		private readonly IOutputStream outputStream;
 
 		public IContentExtractor Extractor { get; set; }
 
-		public PLangLlmService(CacheHelper cacheHelper, PLangAppContext context, IPLangFileSystem fileSystem, ISettingsRepository settingsRepository)
+		public PLangLlmService(CacheHelper cacheHelper, PLangAppContext context, IPLangFileSystem fileSystem, ISettingsRepository settingsRepository, IOutputStream outputStream)
 		{
 			this.cacheHelper = cacheHelper;
 			this.context = context;
 			this.fileSystem = fileSystem;
 			this.settingsRepository = settingsRepository;
+			this.outputStream = outputStream;
 			this.Extractor = new JsonExtractor();
 
 		}
@@ -59,7 +62,6 @@ namespace PLang.Services.LlmService
 			parameters.Add("model", question.model);
 			parameters.Add("type", question.type);
 			parameters.Add("maxLength", question.maxLength);
-
 			var httpClient = new HttpClient();
 			var httpMethod = new HttpMethod("POST");
 			var request = new HttpRequestMessage(httpMethod, "http://localhost:10000/api/llm");
@@ -92,7 +94,7 @@ namespace PLang.Services.LlmService
 				var obj = JObject.Parse(responseBody);
 				if (obj["url"].ToString() != "")
 				{
-					Console.WriteLine("You can buy more voucher at this url: " + obj["url"] + ". Restart after payment");
+					await outputStream.Write("You can buy more voucher at this url: " + obj["url"] + ". Restart after payment", "error", 402);
 				}
 				else
 				{
@@ -147,7 +149,7 @@ namespace PLang.Services.LlmService
 				var obj = JObject.Parse(responseBody);
 				if (obj["url"] != null)
 				{
-					Console.WriteLine("You can buy more voucher at this url: " + obj["url"] + ". Restart after payment");
+					await outputStream.Write("You can buy more voucher at this url: " + obj["url"] + ". Restart after payment", "error", 402);
 				} else
 				{
 					throw new AskUserConsole("Could not create url. Lets try again. What is your name?", GetCountry);

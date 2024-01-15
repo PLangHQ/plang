@@ -33,7 +33,7 @@ namespace PLang.Utils
 			if ((AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebug) && isDebug) || !MethodCache.Cache.TryGetValue(cacheKey, out method))
 			{
 				var methods = callingInstance.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
-				method = methods.FirstOrDefault(p => p.Name == function.FunctionName && IsParameterMatch(p, function.Parameters));
+				method = methods.FirstOrDefault(p => p.Name == function.FunctionName && IsParameterMatch(p, function.Parameters) == null);
 				if (method == null)
 				{
 					await HandleMethodNotFound(callingInstance, function);
@@ -74,26 +74,27 @@ you must answer in JSON, scheme:
 		}
 		public record MethodNotFoundResponse(string Text);
 
-		public bool IsParameterMatch(MethodInfo p, List<Parameter> parameters)
+		public string? IsParameterMatch(MethodInfo p, List<Parameter> parameters)
 		{
 			foreach (var methodParameter in p.GetParameters())
 			{
 				var methodType = methodParameter.ParameterType.Name.ToLower();
-				if (methodType == "nullable`1" && methodParameter.ParameterType.GenericTypeArguments.Length > 0)
+				if (methodType.Contains("`")) methodType = methodType.Substring(0, methodType.IndexOf("`"));
+				if (methodType == "nullable" && methodParameter.ParameterType.GenericTypeArguments.Length > 0)
 				{
 					methodType = methodParameter.ParameterType.GenericTypeArguments[0].Name.ToLower();
 				}
 
 				if (parameters.FirstOrDefault(p => p.Type.ToLower().StartsWith(methodType)) == null && parameters.FirstOrDefault(p => p.Type.ToLower() == methodParameter.ParameterType.FullName.ToLower()) == null)
 				{
-					if (methodParameter.ParameterType.Name.ToLower() != "nullable`1" && !methodParameter.IsOptional && !methodParameter.HasDefaultValue)
+					if (!methodParameter.ParameterType.Name.ToLower().StartsWith("nullable") && !methodParameter.IsOptional && !methodParameter.HasDefaultValue)
 					{
-						return false;
+						return $"{methodParameter.Name} ({methodParameter.ParameterType.Name})";
 					}
 
 				}
 			}
-			return true;
+			return null;
 		}
 
 		public Dictionary<string, object?> GetParameterValues(MethodInfo method, GenericFunction function)

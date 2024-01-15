@@ -111,13 +111,12 @@ namespace PLang.Building.Parsers
 		}
 		public List<Goal> ForceLoadAllGoals()
 		{
-			allGoals.Clear();
-			return LoadAllGoals();
+			return LoadAllGoals(true);
 		}
-
-		public List<Goal> LoadAllGoals()
+		public static readonly object _lock = new object();
+		public List<Goal> LoadAllGoals(bool force = false)
 		{
-			if (allGoals.Count > 0) return allGoals;
+			if (allGoals.Count > 0 && !force) return allGoals;
 
 			if (!fileSystem.Directory.Exists(fileSystem.RootDirectory))
 			{
@@ -125,7 +124,7 @@ namespace PLang.Building.Parsers
 			}
 
 			string[] files = fileSystem.Directory.GetFiles(fileSystem.RootDirectory, ISettings.GoalFileName, SearchOption.AllDirectories);
-			allGoals.Clear();
+			var goals = new List<Goal>();
 			foreach (var file in files)
 			{
 				var goal = ParsePrFile(file);
@@ -135,11 +134,20 @@ namespace PLang.Building.Parsers
 					{
 						goal.GoalSteps[i].Goal = goal;
 					}
-					allGoals.Add(goal);
+					goals.Add(goal);
 				}
 			}
-			publicGoals.Clear();
-			publicGoals.AddRange(allGoals.Where(p => p.Visibility == Visibility.Public).ToList());
+			var pubGoals = goals.Where(p => p.Visibility == Visibility.Public).ToList();
+
+			// this reloads the whole app
+			lock (_lock)
+			{
+				allGoals.Clear();
+				allGoals.AddRange(goals);
+				publicGoals.Clear();
+				publicGoals.AddRange(pubGoals);
+			}
+
 			return allGoals;
 		}
 

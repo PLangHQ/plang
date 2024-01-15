@@ -1,4 +1,5 @@
-﻿using PLang.Building.Model;
+﻿using Microsoft.Extensions.Logging;
+using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
@@ -7,6 +8,7 @@ using System;
 using System.Data;
 using System.Data.SQLite;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace PLang.Modules.DbModule
@@ -18,37 +20,44 @@ namespace PLang.Modules.DbModule
 		private readonly PLangAppContext context;
 		private readonly ILlmService aiService;
 		private readonly IDbConnection db;
+		private readonly ILogger logger;
 
 		public record SqlStatement(string SelectTablesAndViewsInMyDatabaseSqlStatement, string SelectColumnsFromTablesSqlStatement);
 
-		public ModuleSettings(IPLangFileSystem fileSystem, ISettings settings, PLangAppContext context, ILlmService aiService, IDbConnection db)
+		public ModuleSettings(IPLangFileSystem fileSystem, ISettings settings, PLangAppContext context, ILlmService aiService, IDbConnection db, ILogger logger)
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
 			this.context = context;
 			this.aiService = aiService;
 			this.db = db;
+			this.logger = logger;
 		}
 
 
 		public record DataSource(string Name, string TypeFullName, string ConnectionString, string DbName, string SelectTablesAndViews, string SelectColumns, bool KeepHistory = true, bool IsDefault = false);
 
 
-		public async Task CreateDataSource()
+		public async Task CreateDataSource(string dataSourceName = "data")
 		{
+			var dataSources = await GetDataSourcesByType();
+			var dataSource = dataSources.FirstOrDefault(p => p.Name.ToLower() == dataSourceName.ToLower());
+			if (dataSource != null) {
+				logger.LogWarning($"Data source with the name '{dataSourceName}' already exists.");
+				return;
+			}
 
 			var listOfDbSupported = GetSupportedDbTypes();
-			var dataSources = await GetDataSourcesByType();
+			
 			if (listOfDbSupported.Count == 1 && dataSources.Count == 0)
 			{
-				string dbPath = "." + Path.DirectorySeparatorChar + ".db" + Path.DirectorySeparatorChar + "data.sqlite";
-				string dbAbsolutePath = Path.Join(fileSystem.RootDirectory, dbPath);
+				string dbPath = Path.Join(".db", "data.sqlite");
 				AppContext.TryGetSwitch(ReservedKeywords.Test, out bool inMemory);
 				if (inMemory)
 				{
-					dbAbsolutePath = "data;Mode=Memory;Cache=Shared";
+					dbPath = "data;Mode=Memory;Cache=Shared";
 				}
-				await SetDatabaseConnectionString("data", typeof(SQLiteConnection).FullName, "data.sqlite", $"Data Source={dbAbsolutePath};Version=3;", true, true);
+				await SetDatabaseConnectionString("data", typeof(SQLiteConnection).FullName, "data.sqlite", $"Data Source={dbPath};Version=3;", true, true);
 				return;
 			}
 
@@ -58,16 +67,23 @@ namespace PLang.Modules.DbModule
 			}
 
 			var supportedDbTypes = GetSupportedDbTypesAsString();
-			throw new AskUserDatabaseType(aiService, supportedDbTypes, @$"------ Datasource setup --------------
+			throw new AskUserDatabaseType(aiService, supportedDbTypes, @$"------ Data source setup --------------
 Following databases are supported:
 {supportedDbTypes}. 
 
+Learn how to add more databases at https://github.com/PLangHQ/plang/blob/main/Documentation/Services.md
+
 Type in what database you would like to use?
-You can also set the connection as the default, or not to keep history
+
+You can set the connection as the default, or not to keep history
+
+Options:
+	- set as default datasource
+	- keep history, this enables event sourcing for your data
 
 Examples you can type in:
-sqllite
-postresql, set as default, dont keep history
+	sqllite
+	postresql, set as default, dont keep history
 
 ", AddDataSource);
 		}
@@ -110,7 +126,7 @@ Connection string:",
 			string? error = Test(dbType, databaseConnectionString);
 			if (error != null)
 			{
-				throw new AskUserDbConnectionString(dataSourceName, typeFullName, regexToExtractDatabaseNameFromConnectionString, keepHistory, isDefault, $"Could not connect to {databaseConnectionString}. The error message was {error}.", SetDatabaseConnectionString);
+				throw new AskUserDbConnectionString(dataSourceName, typeFullName, regexToExtractDatabaseNameFromConnectionString, keepHistory, isDefault, $"Could not connect to {databaseConnectionString}. The error message was {error}.\n\nFix the connection string and type in again:\n", SetDatabaseConnectionString);
 			}
 
 			var regex = new Regex(regexToExtractDatabaseNameFromConnectionString);
@@ -149,8 +165,8 @@ Be concise"
 			{
 				throw new AskUserDbConnectionString(dataSourceName, typeFullName, regexToExtractDatabaseNameFromConnectionString, keepHistory, isDefault, $"{dataSourceName} alrady exists. Please choose a different name.", SetDatabaseConnectionString);
 			}
-
-			dataSource = new DataSource(dataSourceName, typeFullName, databaseConnectionString, dbName,
+			
+			dataSource = new DataSource(dataSourceName, typeFullName, databaseConnectionString.Replace(fileSystem.RootDirectory, ""), dbName,
 									statement.SelectTablesAndViewsInMyDatabaseSqlStatement, statement.SelectColumnsFromTablesSqlStatement,
 									keepHistory, isDefault);
 

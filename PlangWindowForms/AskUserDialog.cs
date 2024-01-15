@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PLang.Utils;
 
 namespace PLangWindowForms
 {
-	public static class AskUserDialog
+
+	public class AskUserDialog : IAskUserDialog
 	{
-		public static string ShowDialog(string text, string caption, bool isMultiline = false, int formWidth = 300, int formHeight = 200)
+		public string ShowDialog(string text, string caption, bool isMultiline = false, int formWidth = 300, int formHeight = 200)
 		{
 			var prompt = new Form
 			{

@@ -1,4 +1,5 @@
 ﻿using LightInject;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NBitcoin;
 using Newtonsoft.Json;
 using PLang.Building.Model;
@@ -171,7 +172,14 @@ namespace PLang.Building.Parsers
 				var prevBuildGoal = JsonHelper.ParseFilePath<Goal>(fileSystem, prFileAbsolutePath);
 				if (prevBuildGoal == null) continue;
 
-				goal.Injections = prevBuildGoal.Injections;
+				foreach (var injection in prevBuildGoal.Injections)
+				{
+					if (goal.Injections.FirstOrDefault(p => p.Type == injection.Type && p.Path == injection.Path) == null)
+					{
+						goal.Injections.Add(injection);
+					}
+				}
+				
 				for (int b = 0; prevBuildGoal != null && b < goals[i].GoalSteps.Count; b++)
 				{
 					var prevStep = prevBuildGoal.GoalSteps.FirstOrDefault(p => p.Text == goals[i].GoalSteps[b].Text);

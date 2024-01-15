@@ -4,14 +4,14 @@ using Microsoft.Extensions.Logging;
 using PLang.Attributes;
 using PLang.Interfaces;
 using PLang.Runtime;
-using PLang.Utils;
+using PLang.Services.OutputStream;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace PLang.Modules.TerminalModule
 {
-	[Description("Terminal/Console access to run external applications")]
+    [Description("Terminal/Console access to run external applications")]
 	public class Program : BaseProgram
 	{
 		private readonly ILogger logger;

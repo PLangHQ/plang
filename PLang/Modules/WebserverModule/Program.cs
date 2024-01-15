@@ -2,18 +2,25 @@
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
+using Nethereum.ABI;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Building.Events;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
+using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
+using PLang.Services.OutputStream;
 using PLang.Utils;
+using Python.Runtime;
+using System;
 using System.ComponentModel;
 using System.Net;
 using System.Net.Http;
+using System.Net.WebSockets;
 using System.Text;
+using static PLang.Modules.WebserverModule.Program;
 
 namespace PLang.Modules.WebserverModule
 {
@@ -27,10 +34,14 @@ namespace PLang.Modules.WebserverModule
 		private readonly IOutputStream outputStream;
 		private readonly PrParser prParser;
 		private readonly HttpHelper httpHelper;
+		private readonly IPseudoRuntime pseudoRuntime;
+		private readonly IEngine engine;
+		private readonly Signature signature;
+		private readonly static List<WebserverInfo> listeners = new();
 
 		public Program(ILogger logger, IEventRuntime eventRuntime, IPLangFileSystem fileSystem
 			, ISettings settings, IOutputStream outputStream
-			, PrParser prParser, HttpHelper httpHelper) : base()
+			, PrParser prParser, HttpHelper httpHelper, IPseudoRuntime pseudoRuntime, IEngine engine, Signature signature) : base()
 		{
 			this.logger = logger;
 			this.eventRuntime = eventRuntime;
@@ -39,19 +50,72 @@ namespace PLang.Modules.WebserverModule
 			this.outputStream = outputStream;
 			this.prParser = prParser;
 			this.httpHelper = httpHelper;
+			this.pseudoRuntime = pseudoRuntime;
+			this.engine = engine;
+			this.signature = signature;
 		}
 
-		public async Task StartWebserver(string scheme = "http", string host = "localhost",
-			int port = 8080, int maxContentLengthInBytes = 4096 * 1024,
+		public async Task<WebserverInfo?> ShutdownWebserver(string webserverName)
+		{
+			var webserverInfo = listeners.FirstOrDefault(p => p.WebserverName == webserverName);
+			if (webserverInfo == null)
+			{
+				await outputStream.Write($"Webserver named '{webserverName}' does not exist");
+				return null;
+			}
+
+			try
+			{
+				webserverInfo.Listener.Close();
+			}
+			catch
+			{
+				webserverInfo.Listener.Abort();
+			}
+			listeners.Remove(webserverInfo);
+			return webserverInfo;
+		}
+
+		public async Task<bool> RestartWebserver(string webserverName = "default")
+		{
+			var webserverInfo = await ShutdownWebserver(webserverName);
+			if (webserverInfo == null) return false;
+
+			await StartWebserver(webserverInfo.WebserverName, webserverInfo.Scheme, webserverInfo.Host, webserverInfo.Port,
+				webserverInfo.MaxContentLengthInBytes, webserverInfo.DefaultResponseContentEncoding, webserverInfo.SignedRequestRequired, webserverInfo.PublicPaths);
+
+			return true;
+		}
+
+		public record WebserverInfo(HttpListener Listener, string WebserverName, string Scheme, string Host, int Port,
+			long MaxContentLengthInBytes, string DefaultResponseContentEncoding, bool SignedRequestRequired, List<string>? PublicPaths);
+
+
+
+		public async Task<WebserverInfo> StartWebserver(string webserverName = "default", string scheme = "http", string host = "localhost",
+			int port = 8080, long maxContentLengthInBytes = 4096 * 1024,
 			string defaultResponseContentEncoding = "utf-8",
 			bool signedRequestRequired = false,
 			List<string>? publicPaths = null)
 		{
+			if (listeners.FirstOrDefault(p => p.WebserverName == webserverName) != null)
+			{
+				throw new RuntimeException($"Webserver '{webserverName}' already exists. Give it a different name");
+			}
+
+			if (listeners.FirstOrDefault(p => p.Port == port) != null)
+			{
+				throw new RuntimeException($"Port {port} is already in use. Select different port to run on, e.g.\n-Start webserver, port 4687");
+			}
+
 			publicPaths = publicPaths ?? new List<string> { "api", "api.goal" };
 			var listener = new HttpListener();
-			listener.Prefixes.Add(scheme + "://" + host + ":" + port + "/");
 
+			listener.Prefixes.Add(scheme + "://" + host + ":" + port + "/");
 			listener.Start();
+
+			var webserverInfo = new WebserverInfo(listener, webserverName, scheme, host, port, maxContentLengthInBytes, defaultResponseContentEncoding, signedRequestRequired, publicPaths);
+			listeners.Add(webserverInfo);
 
 			logger.LogDebug($"Listening on {host}:{port}...");
 			Console.WriteLine($"Listening on {host}:{port}...");
@@ -67,6 +131,7 @@ namespace PLang.Modules.WebserverModule
 					while (true)
 					{
 						var httpContext = listener.GetContext();
+
 						var request = httpContext.Request;
 						var resp = httpContext.Response;
 
@@ -75,6 +140,8 @@ namespace PLang.Modules.WebserverModule
 							await WriteError(httpContext.Response, $"You must sign your request to user this web service. Using plang, you simply say. '- GET http://... sign request");
 							continue;
 						}
+
+
 
 						Goal? goal = null;
 						string? goalPath = null;
@@ -105,7 +172,7 @@ namespace PLang.Modules.WebserverModule
 								continue;
 							}
 
-							int maxContentLength = (goal.GoalApiInfo != null && goal.GoalApiInfo.MaxContentLengthInBytes != 0) ? goal.GoalApiInfo.MaxContentLengthInBytes : maxContentLengthInBytes;
+							long maxContentLength = (goal.GoalApiInfo != null && goal.GoalApiInfo.MaxContentLengthInBytes != 0) ? goal.GoalApiInfo.MaxContentLengthInBytes : maxContentLengthInBytes;
 							if (httpContext.Request.ContentLength64 > maxContentLength)
 							{
 								httpContext.Response.StatusCode = 413;
@@ -113,7 +180,11 @@ namespace PLang.Modules.WebserverModule
 								continue;
 							}
 
-
+							if (httpContext.Request.IsWebSocketRequest)
+							{
+								ProcessWebsocketRequest(httpContext);
+								continue;
+							}
 
 							if (goal.GoalApiInfo == null || String.IsNullOrEmpty(goal.GoalApiInfo.Method))
 							{
@@ -151,10 +222,9 @@ namespace PLang.Modules.WebserverModule
 							}
 
 							var container = new ServiceContainer();
-							container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath);
+							container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath, httpContext);
 
 							var context = container.GetInstance<PLangAppContext>();
-							context.Add(ReservedKeywords.HttpContext, httpContext);
 							context.Add(ReservedKeywords.IsHttpRequest, true);
 
 							var engine = container.GetInstance<IEngine>();
@@ -164,23 +234,12 @@ namespace PLang.Modules.WebserverModule
 							var requestMemoryStack = container.GetInstance<MemoryStack>();
 							await ParseRequest(httpContext, goal.GoalApiInfo.Method, requestMemoryStack);
 							await engine.RunGoal(goal);
-							if (context.TryGetValue("OutputStream", out object? list))
+
+
+							using (var reader = new StreamReader(resp.OutputStream, resp.ContentEncoding ?? Encoding.UTF8))
 							{
-
-								using (var writer = new StreamWriter(resp.OutputStream, resp.ContentEncoding ?? Encoding.UTF8))
-								{
-									if (list != null)
-									{
-										string content = list.ToString();
-										if (JsonHelper.IsJson(content))
-										{
-											content = JsonConvert.SerializeObject(list);
-										}
-
-										await writer.WriteAsync(content);
-									}
-									await writer.FlushAsync();
-								}
+								var content = reader.ReadToEndAsync();
+								// content should be signed by server. 
 							}
 							resp.StatusCode = (int)HttpStatusCode.OK;
 							resp.StatusDescription = "Status OK";
@@ -211,7 +270,10 @@ namespace PLang.Modules.WebserverModule
 			});
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
+			return webserverInfo;
 		}
+
+
 
 		private void ProcessGeneralRequest(HttpListenerContext httpContext)
 		{
@@ -219,7 +281,7 @@ namespace PLang.Modules.WebserverModule
 			if (requestedFile == null) return;
 
 			var container = new ServiceContainer();
-			container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath);
+			container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath, httpContext);
 
 			requestedFile = requestedFile.Replace("/", Path.DirectorySeparatorChar.ToString()).Replace(@"\", Path.DirectorySeparatorChar.ToString());
 
@@ -274,6 +336,16 @@ namespace PLang.Modules.WebserverModule
 			}
 			await outputStream.Write(JsonConvert.SerializeObject(error), "text");
 
+		}
+
+		public async Task Redirect(string url)
+		{
+			if (HttpListenerContext == null)
+			{
+				throw new HttpListenerException(500, "Context is null. Start a webserver before calling me.");
+			}
+
+			HttpListenerContext.Response.Redirect(url);
 		}
 
 		public async Task WriteToResponseHeader(string key, string value)
@@ -449,7 +521,7 @@ namespace PLang.Modules.WebserverModule
 						memoryStack.Put(item.Key, item.Value);
 					}
 				}
-				catch {}
+				catch { }
 
 
 			}
@@ -471,6 +543,170 @@ namespace PLang.Modules.WebserverModule
 				}
 			}
 
+		}
+
+
+		private async Task ProcessWebsocketRequest(HttpListenerContext httpContext)
+		{
+			HttpListenerWebSocketContext webSocketContext = await httpContext.AcceptWebSocketAsync(subProtocol: null);
+			WebSocket webSocket = webSocketContext.WebSocket;
+
+			try
+			{
+
+				var outputStream = new WebsocketOutputStream(webSocket, signature);
+				var container = new ServiceContainer();
+
+				container.RegisterForPLang(goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath, "PLang.Exceptions.AskUser.AskUserConsoleHandler", outputStream);
+
+				var context = container.GetInstance<PLangAppContext>();
+				context.Add(ReservedKeywords.IsHttpRequest, true);
+
+				var engine = container.GetInstance<IEngine>();
+				engine.Init(container);
+				engine.HttpContext = httpContext;
+
+				byte[] buffer = new byte[1024];
+
+				while (webSocket.State == WebSocketState.Open)
+				{
+					var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+
+					if (result.MessageType == WebSocketMessageType.Close)
+					{
+						await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+					}
+					else if (result.MessageType == WebSocketMessageType.Text)
+					{
+						string receivedMessage = System.Text.Encoding.UTF8.GetString(buffer, 0, result.Count);
+					}
+				}
+				await engine.RunGoal(goal);
+
+				await webSocket.ReceiveAsync(new ArraySegment<byte>(new byte[1024]), CancellationToken.None);
+			}
+			catch (Exception e)
+			{
+				logger.LogError(e.Message, e);
+				Console.WriteLine("Exception: " + e.Message);
+			}
+			finally
+			{
+				if (webSocket != null)
+					webSocket.Dispose();
+			}
+		}
+
+
+		private List<WebSocketInfo> websocketInfos = new List<WebSocketInfo>();
+		public record WebSocketInfo(ClientWebSocket ClientWebSocket, string Url, string GoalToCAll, string WebSocketName, string ContentRecievedVariableName);
+		public record WebSocketData(string GoalToCall, string Url, string Method, string Contract, Dictionary<string, object?>? Parameters)
+		{
+			public Dictionary<string, string>? SignatureData = null;
+		};
+
+
+		public async Task SendToWebSocket(string goalToCall, Dictionary<string, object?>? parameters = null, string webSocketName = "default")
+		{
+			var webSocketInfo = websocketInfos.FirstOrDefault(p => p.WebSocketName == webSocketName);
+			if (webSocketInfo == null)
+			{
+				throw new RuntimeException($"Websocket with name '{webSocketName}' does not exists");
+			}
+
+			string url = webSocketInfo.Url;
+			string method = "Websocket";
+			string contract = "C0";
+
+			var obj = new WebSocketData(goalToCall, url, method, contract, parameters);
+
+			var signatureData = signature.Sign(JsonConvert.SerializeObject(obj), method, url, contract);
+			obj.SignatureData = signatureData;
+
+			byte[] message = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj));
+
+			await webSocketInfo.ClientWebSocket.SendAsync(new ArraySegment<byte>(message), WebSocketMessageType.Text, true, CancellationToken.None);
+
+		}
+		public async Task<WebSocketInfo> StartWebSocketConnection(string url, string goalToCall, string webSocketName = "default", string contentRecievedVariableName = "%content%")
+		{
+			if (string.IsNullOrEmpty(url))
+			{
+				throw new RuntimeException($"url cannot be empty");
+			}
+
+			if (string.IsNullOrEmpty(goalToCall))
+			{
+				throw new RuntimeException($"goalToCall cannot be empty");
+			}
+
+			if (!url.StartsWith("ws://") && !url.StartsWith("wss://"))
+			{
+				throw new RuntimeException($"url must start with ws:// or wss://. You url is '{url}'");
+			}
+
+			if (websocketInfos.FirstOrDefault(p => p.WebSocketName == webSocketName) != null)
+			{
+				throw new RuntimeException($"Websocket with name '{webSocketName}' already exists");
+			}
+
+			ClientWebSocket client = new ClientWebSocket();
+			await client.ConnectAsync(new Uri(url), CancellationToken.None);
+			var webSocketInfo = new WebSocketInfo(client, url, goalToCall, webSocketName, contentRecievedVariableName);
+
+			websocketInfos.Add(webSocketInfo);
+
+			Console.WriteLine("Connected to the server");
+
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+			Task.Run(async () =>
+			{
+				byte[] buffer = new byte[1024];
+				MemoryStream messageStream = new MemoryStream();
+				while (true)
+				{
+
+					WebSocketReceiveResult result;
+					do
+					{
+						result = await client.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+						messageStream.Write(buffer, 0, result.Count);
+					}
+					while (!result.EndOfMessage);
+
+					messageStream.Seek(0, SeekOrigin.Begin);
+
+					if (result.MessageType == WebSocketMessageType.Close)
+					{
+						await client.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+						break;
+					}
+					else if (result.MessageType == WebSocketMessageType.Text)
+					{
+						StreamReader reader = new StreamReader(messageStream, Encoding.UTF8);
+						string receivedMessage = await reader.ReadToEndAsync();
+						reader.Dispose();
+
+						var websocketData = JsonConvert.DeserializeObject<WebSocketData>(receivedMessage);
+						if (websocketData == null || string.IsNullOrEmpty(websocketData.GoalToCall))
+						{
+							continue;
+						}
+
+						var signatureData = websocketData.SignatureData;
+
+						websocketData.SignatureData = null;
+						string identity = signature.VerifySignature(JsonConvert.SerializeObject(websocketData), websocketData.Method, websocketData.Url, signatureData);
+						
+						context.AddOrReplace("Identity", identity);
+
+						await pseudoRuntime.RunGoal(engine, context, fileSystem.RootDirectory, websocketData.GoalToCall, websocketData.Parameters);
+					}
+					messageStream.SetLength(0);
+				}
+			});
+
+			return webSocketInfo;
 		}
 
 

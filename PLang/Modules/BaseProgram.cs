@@ -4,7 +4,9 @@ using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Modules.HtmlModule;
 using PLang.Runtime;
+using PLang.Services.OutputStream;
 using PLang.Utils;
 using System.Diagnostics;
 using System.Net;
@@ -20,20 +22,21 @@ namespace PLang.Modules
 		private HttpListenerContext? _listenerContext = null;
 
 		protected MemoryStack memoryStack;
-		protected Goal? goal = null;
-		protected GoalStep? goalStep;
-		protected Instruction? instruction;
+		protected Goal goal;
+		protected GoalStep goalStep;
+		protected Instruction instruction;
 		protected PLangAppContext context;
 		protected VariableHelper variableHelper;
 		protected ITypeHelper typeHelper;
-		protected GenericFunction? function;
+		protected GenericFunction function;
 		private ILlmService llmService;
 		private ILogger logger;
 		private IServiceContainer container;
 		private IAppCache appCache;
+		private IOutputStream outputStream;
 
 		public HttpListenerContext? HttpListenerContext { get { return _listenerContext; } }
-		public Goal? Goal { get { return goal; } }
+		public Goal Goal { get { return goal; } }
 
 		public BaseProgram()
 		{
@@ -50,6 +53,7 @@ namespace PLang.Modules
 			this.memoryStack = memoryStack;
 			this.context = context;
 			this.appCache = appCache;
+			this.outputStream = container.GetInstance<IOutputStream>();
 
 			_listenerContext = httpListenerContext;
 
@@ -72,15 +76,16 @@ namespace PLang.Modules
 				await RunFunction(function);
 
 			}
-			if (this is IDisposable)
+			if (this is IFlush)
 			{
-				var disposableSteps = new List<IDisposable>();
+				var disposableSteps = new List<IFlush>();
 				if (context.ContainsKey("DisposableSteps"))
 				{
-					disposableSteps = context["DisposableSteps"] as List<IDisposable>;
+					disposableSteps = context["DisposableSteps"] as List<IFlush>;
 				}
-				disposableSteps.Add((IDisposable)this);
-				//context.AddOrReplace("DisposableSteps", disposableSteps);
+				disposableSteps.Add((IFlush)this);
+				context.AddOrReplace("DisposableSteps", disposableSteps);
+				
 			}
 
 		}
@@ -124,7 +129,7 @@ namespace PLang.Modules
 				}
 				if (task.Status == TaskStatus.Faulted)
 				{
-					HandleException(task);
+					await HandleException(task, function, goalStep);
 				}
 				if (method.ReturnType == typeof(Task))
 				{
@@ -187,7 +192,7 @@ Calling {this.GetType().FullName}.{function.FunctionName}
 			}
 		}
 
-		private void HandleException(Task task)
+		private async Task HandleException(Task task, GenericFunction function, GoalStep step)
 		{
 			if (task.Exception == null) return;
 
@@ -211,14 +216,21 @@ Calling {this.GetType().FullName}.{function.FunctionName}
 
 			if (throwException)
 			{
-				if (task.Exception != null && task.Exception.InnerException != null)
-				{
-					throw task.Exception.InnerException;
-				}
+				// just realizeing after doing this that this should be done in plang
+				// an event that binds to on error on step, 
+				string error = (task.Exception.InnerException != null) ? task.Exception.InnerException.ToString() : task.Exception.ToString();
 
-				throw task.Exception;
+				
+				await outputStream.Write(error, "error", 400);
+				await outputStream.Write("\n\n.... Asking LLM to explain, wait few seconds ....\n", "error", 400);
+				var result = await AssistWithError(error, step, function);
+				await outputStream.Write("\n\n#### Explanation ####\n" + result, "error", 400);
+
+				throw new RuntimeException(error, goal, task.Exception);
+
 			}
 		}
+
 
 		private async Task SetCachedItem(object result)
 		{
@@ -302,6 +314,50 @@ Calling {this.GetType().FullName}.{function.FunctionName}
 		protected void RegisterForPLangUserInjections(string type, string pathToDll, bool globalForWholeApp = false)
 		{
 			this.container.RegisterForPLangUserInjections(type, pathToDll, globalForWholeApp);
+		}
+		public virtual async Task<string> GetAdditionalAssistantErrorInfo() {
+			return ""; 
+		}
+		public virtual async Task<string> GetAdditionalSystemErrorInfo() {
+			return ""; 
+		}
+		protected async Task<string?> AssistWithError(string error, GoalStep step, GenericFunction function)
+		{
+			string additionSystemErrorInfo = await GetAdditionalSystemErrorInfo();
+			string system = @$"You are c# expert developer debugging an error that c# throws.
+The user is programming in a programming language called Plang, a pseudo language, that is built on top of c#.
+
+The user is not familiar with c# and does not understand it, he only understands Plang.
+
+You job is to identify why an error occurred that user provides.
+You will be provided with function information and the parameters used. 
+You will get description of what the function should do.
+{additionSystemErrorInfo}
+
+Be straight to the point, point out the most obvious reason and how to fix in plang source code. 
+Be Concise";
+			string additionalInfo = await GetAdditionalAssistantErrorInfo();
+			string assistant = @$"
+## plang source code ##
+{step.Text}
+## plang source code ##
+## function info ##
+{typeHelper.GetMethodsAsString(this.GetType(), function.FunctionName)}
+## function info ##
+" + additionalInfo;
+
+			try
+			{
+				var llmQuestion = new LlmQuestion("AssistWithError", system, error, assistant);
+				var result = await llmService.Query(llmQuestion, typeof(string));
+
+				return result?.ToString();
+			} catch
+			{
+				return "Could not connect to LLM service";
+			}
+			
+			
 		}
 	}
 }

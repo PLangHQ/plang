@@ -50,7 +50,7 @@ namespace PLang.Building
 				logger.LogDebug("Build Start:" + DateTime.Now.ToLongTimeString());
 
 				var eventGoalFiles = await eventBuilder.BuildEventsPr();
-				await eventRuntime.Load(true);
+				await eventRuntime.Load(container, true);
 
 				foreach (string file in goalFiles)
 				{

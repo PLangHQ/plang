@@ -1,7 +1,11 @@
 Tasks
 - set var 'description' as 'This is a task description'
 - set var due_date as %Now+5days%
+- create table items, columns: name(string, not null)
+- add rows into items, name='John'
 - select * from items, write to %items%
+- write out %items%
+- drop table items
 - begin transaction
 - Insert into tasks, %description%, %due_date%
 - Insert into tasks, description='This is a desc', due_date=%Now+10days%, write to %id%

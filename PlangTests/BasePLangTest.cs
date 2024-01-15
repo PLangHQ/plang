@@ -8,6 +8,7 @@ using PLang.Building.Parsers;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.CachingService;
+using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
 using PLang.Utils;
 using PLangTests.Mocks;
@@ -17,7 +18,7 @@ using static PLang.Modules.BaseBuilder;
 
 namespace PLangTests
 {
-	public class BasePLangTest
+    public class BasePLangTest
 	{
 		protected ServiceContainer container;
 
