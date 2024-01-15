@@ -283,7 +283,7 @@ namespace PLang.Runtime
 					var disposableSteps = context["DisposableSteps"] as List<IFlush>;
 					foreach (var step in disposableSteps)
 					{
-						step.Flush();
+						//step.Flush();
 					}
 					context.Remove("DisposableSteps");
 				}

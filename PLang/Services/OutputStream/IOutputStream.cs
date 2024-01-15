@@ -11,7 +11,6 @@ namespace PLang.Services.OutputStream
         public string Read();
         public Task<string> Ask(string text, string type = "text", int statusCode = 200);
 
-        //public void Dispose();
     }
 
     

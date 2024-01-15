@@ -91,10 +91,11 @@ namespace PlangWindowForms
 			{
 				errorStream.Position = 0;
 
-				using (StreamReader reader = new StreamReader(errorStream, Encoding.UTF8))
+				using (StreamReader reader = new StreamReader(errorStream, Encoding.UTF8, leaveOpen:true))
 				{
 					errorConsole = reader.ReadToEnd();
 				}
+
 
 				if (!string.IsNullOrEmpty(errorConsole))
 				{
@@ -107,8 +108,9 @@ namespace PlangWindowForms
 				}
 
 			}
-
-			string? html = null;
+			
+			string? html = ((UIOutputStream)outputStream).Flush();
+			/*
 			using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
 			{
 				html = reader.ReadToEnd();
@@ -116,7 +118,9 @@ namespace PlangWindowForms
 				{
 					html = "Stream is empty :(";
 				}
-			}
+			}*/
+
+			//stream.SetLength(0);
 			webView.CoreWebView2.NavigationCompleted += async (object? sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e) =>
 			{
 				if (string.IsNullOrEmpty(errorConsole)) return;

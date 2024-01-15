@@ -31,8 +31,8 @@ Todos
 - select * from todos, where not completed, newest first, write to %todos%
 - button, name="Add task", call !AddTask
 - table for %todos%
-    header: Task, Due Date
-    body:  task, due_date(as date)
+    header: Task, Category, Due Date
+    body:  task, category, due_date(as date)
 ```
 
 ### 4. Create AddTask.goal
@@ -42,7 +42,7 @@ In the `ui` folder, create another file named `AddTask.goal` with the following 
 ```plang
 AddTask
 - form, inputs for "task"(required) and "due_date"(required, type is date)
-- button "Save", call !NewTask
+- [html] button "Save", call !NewTask
 - call !Todos
 ```
 Note: `NewTask.goal` was created in previous tutorial

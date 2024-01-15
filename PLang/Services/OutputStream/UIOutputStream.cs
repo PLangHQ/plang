@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Razor.Language;
+using Org.BouncyCastle.Utilities.IO;
+using Org.BouncyCastle.Utilities.Zlib;
 using PLang.Building.Model;
 using PLang.Runtime;
 using RazorEngineCore;
@@ -33,17 +35,16 @@ namespace PLang.Services.OutputStream
 			//throw new NotImplementedException();
 		}
 
-		public void Flush()
+		public string Flush()
 		{
-			if (sb.Length == 0) return;
+			if (sb.Length == 0) return "";
 
 			sb.Append(@"</body>
 </html>");
-			byte[] bytes = Encoding.UTF8.GetBytes(sb.ToString());
-			Stream = new MemoryStream(bytes);
-
+			string ble = sb.ToString();
 			sb.Clear();
-
+			return ble;
+			
 		}
 
 		public string Read()
@@ -131,6 +132,10 @@ console.log(args);
 					}
 
 				}
+				//byte[] bytes = Encoding.UTF8.GetBytes(html);
+					
+				//await Stream.WriteAsync(bytes, 0, bytes.Length);
+				
 			}
 			catch (Exception ex)
 			{

@@ -2,7 +2,7 @@ NewTask
 - make sure that %task% and %due_date% is not empty, throw error
 - insert into Todos %task%, %due_date%, write to %id%
 - call !Categorize, dont wait
-- write out %id%
+- call !Todos
 
 Categorize
 - [llm]: system: categories the user input by 3 categories, 'Work', "home", 'hobby'
