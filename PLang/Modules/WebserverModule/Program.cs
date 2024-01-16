@@ -255,10 +255,16 @@ namespace PLang.Modules.WebserverModule
 							logger.LogError("WebServerError - requestedFile:{0} - goalPath:{1} - goal:{2} - Exception:{3}", requestedFile, goalPath, goal, ex);
 							resp.StatusCode = (int)HttpStatusCode.InternalServerError;
 							resp.StatusDescription = "Error";
-							using (var writer = new StreamWriter(resp.OutputStream, resp.ContentEncoding ?? Encoding.UTF8))
+							try
 							{
-								await writer.WriteAsync(JsonConvert.SerializeObject(ex));
-								await writer.FlushAsync();
+								using (var writer = new StreamWriter(resp.OutputStream, resp.ContentEncoding ?? Encoding.UTF8))
+								{
+									await writer.WriteAsync(JsonConvert.SerializeObject(ex));
+									await writer.FlushAsync();
+								}
+							} catch (Exception ex2)
+							{
+								Console.WriteLine(ex2);
 							}
 
 						}

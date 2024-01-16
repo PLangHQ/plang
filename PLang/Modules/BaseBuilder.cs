@@ -219,7 +219,10 @@ ReturnValue: Only if the function returns a value AND if user defines %variable%
 				var objectValue = memoryStack.GetObjectValue(variable.OriginalKey, false);
 				if (objectValue.Initiated)
 				{
-					vars += variable.OriginalKey + "(" + objectValue.Value + "), ";
+					vars += variable.OriginalKey + " (" + objectValue.Value + "), ";
+				} else
+				{
+					vars += variable.OriginalKey + " (type:" + objectValue.Value + "), ";
 				}
 			}
 			return vars;

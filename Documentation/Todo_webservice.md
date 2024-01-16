@@ -19,7 +19,7 @@ Create a new directory named `Todo` at your preferred location. For instance, yo
 
 For Linux and MacOS, you can create it at `~/plang/Todo`.
 
-### 2. Create `Setup.goal`
+### 2. Create `Setup.goal` 
 
 In the `Todo` directory, create a new file named `Setup.goal` and add the following code:
 
@@ -33,6 +33,8 @@ Setup
 Note: Plang will automatically create and manage an `id` column for the table. By allowing Plang to handle `id` you enable syncing between devices. It's a technique called Event sourcing. You don't need to know anything about it at this stage.
 
 ### 3. Build and Run `Setup.goal`
+
+> Cost estimate: $0.189
 
 Execute the `Setup.goal` file to create the `Todos` table in the database.
 
@@ -76,7 +78,10 @@ List
 ```
 Note: if you are familiar with SQL, you could also write `select * from Todos`, previous statment is just in a more natural language
 
-### 8. Build and Run the Code
+### 8. Build and Run the Code 
+
+> Cost estimate: $0.941
+
 If you are using VS Code, then press F5 on your keyboard to build and run the code.
 
 If you prefer terminal, navigate to the root of the `Todo` directory and execute the following command:
@@ -88,6 +93,8 @@ plang exec
 This will start a web server with the logic you've defined.
 
 ### 9. Test the API Endpoints
+
+> Cost estimate: $0.28
 
 Lets create some data in your Todo list.
 
@@ -130,6 +137,8 @@ To create a new task, send a POST request to `http://localhost:8080/api/newtask`
 To retrieve the list of tasks, send a GET request to [http://localhost:8080/api/list](http://localhost:8080/api/list) (you can click the link). This should return a list of tasks you've created.
 
 Alternatively, you can create a new `TestList.goal` file in the `test` directory with the following code:
+
+> Cost estimate: $0.156
 
 ```plang
 TestList 

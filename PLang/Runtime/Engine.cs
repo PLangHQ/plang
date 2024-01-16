@@ -529,6 +529,7 @@ namespace PLang.Runtime
 					if (string.IsNullOrEmpty(goalName)) continue;
 
 					string name = goalName.AdjustPathToOs().Replace(".goal", "").ToLower();
+					if (name.StartsWith(".")) name = name.Substring(1);
 
 					var folderPath = goalFiles.FirstOrDefault(p => p.ToLower().EndsWith(Path.Join(name, ISettings.GoalFileName).ToLower()));
 					if (folderPath != null)

@@ -12,6 +12,8 @@ Let's add a new column to your `Todos` table, you need to modify the `Setup.goal
 
 Add the following line into `Setup.goal`
 
+> Cost estimate $0.182
+
 ```plang
 - add column 'category' to tbl 'Todos'
 ```
@@ -29,6 +31,8 @@ Setup
 By adding the `- add column 'category' to tbl 'Todos'` step, you instruct plang to update the database schema to include a new column named 'category'.
 
 ## 2. Modify `NewTask.goal`
+
+> Cost estimated: $0.55
 
 To categorize tasks automatically using LLM, you'll need to adjust the `NewTask.goal` file. 
 
@@ -56,6 +60,8 @@ Categorize
 - For more information on how to use the LLM module in plang, please refer to the LLM Module documentation: [PLang.Modules.LlmModule.md](./modules/PLang.Modules.LlmModule.md).
 
 ### Test the API Endpoints
+
+> Cost estimated: $0.153
 
 Lets modify our `TestNewTask.goal` file (just change the task text)
 

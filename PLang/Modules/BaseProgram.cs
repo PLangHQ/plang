@@ -349,8 +349,8 @@ Be Concise";
 			try
 			{
 				var llmQuestion = new LlmQuestion("AssistWithError", system, error, assistant);
-				var result = await llmService.Query(llmQuestion, typeof(string));
-
+				//var result = await llmService.Query(llmQuestion, typeof(string));
+				string result = "";
 				return result?.ToString();
 			} catch
 			{

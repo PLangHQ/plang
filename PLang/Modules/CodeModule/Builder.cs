@@ -74,7 +74,7 @@ Be Concise");
 			{
 				AppendToAssistantCommand(error);
 			}
-			AppendToAssistantCommand(GetVariablesInStep(step));
+			//AppendToAssistantCommand(GetVariablesInStep(step));
 
 			base.SetContentExtractor(new CSharpExtractor());
 			var instruction = await Build<CodeImplementationResponse>(step);

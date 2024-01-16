@@ -10,6 +10,8 @@ For a more detailed walkthrough, you can watch this step-by-step video tutorial:
 
 ### 1. Modify Start.goal
 
+> Cost estimated: $0.124
+
 Change the `Start.goal` file as follows:
 
 ```plang
@@ -24,6 +26,8 @@ Create a new folder named `ui`.
 
 ### 3. Create Todos.goal
 
+> Cost estimated: $0.359
+
 In the `ui` folder, create a new file named `Todos.goal` with the following content:
 
 ```plang
@@ -37,12 +41,14 @@ Todos
 
 ### 4. Create AddTask.goal
 
+> Cost estimated: $0.228
+
 In the `ui` folder, create another file named `AddTask.goal` with the following content:
 
 ```plang
 AddTask
 - form, inputs for "task"(required) and "due_date"(required, type is date)
-- [html] button "Save", call !NewTask
+- [html] button "Save", call !NewTask  %task%, %due_date%
 - call !Todos
 ```
 Note: `NewTask.goal` was created in previous tutorial

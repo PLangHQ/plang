@@ -1,0 +1,30 @@
+{
+  "Action": {
+    "FunctionName": "RenderHtml",
+    "Parameters": [
+      {
+        "Type": "string",
+        "Name": "html",
+        "Value": "<form>\n  <div class=\"mb-3\">\n    <label for=\"task\" class=\"form-label\">Task</label>\n    <input type=\"text\" class=\"form-control\" id=\"task\" required>\n  </div>\n  <div class=\"mb-3\">\n    <label for=\"due_date\" class=\"form-label\">Due Date</label>\n    <input type=\"date\" class=\"form-control\" id=\"due_date\" required>\n  </div>\n</form>"
+      }
+    ],
+    "ReturnValue": null
+  },
+  "Text": "form, inputs for \"task\"(required) and \"due_date\"(required, type is date)",
+  "Reload": false,
+  "LlmQuestion": {
+    "temperature": null,
+    "top_p": null,
+    "frequencyPenalty": null,
+    "presencePenalty": null,
+    "maxLength": 4000,
+    "type": "PLang.Modules.HtmlModule.Builder",
+    "system": "Create the html, javascript and css needed from the user command using Bootstrap 5.0.2 & Fontawesome 5.15.3. \r\n\r\nGoal has series of steps. Steps start with dash(-), steps can have sub steps, substeps are indented and are referenced in previous step by {step#} where # is a number, e.g. {step1}.\r\nVariables are defined with starting and ending %. They are case sensitive so keep them as defined\r\nGoals are prefixed with !, they are for calling a method, e.g. Call !NewUser or reference a goal, such as Edit.goal. To call it use javascript function callGoal(name:string, parameters:object)\r\nDO NOT generate the function callGoal, it will be provided\r\nAll object.Id or object.id are long and needs to be wrapped with single quote(')\r\nAll properties on variables are case sensitive, keep formatting defined by user.\r\n\r\n  \r\n\r\nHTML comments and <!-- --> are NOT allowed\r\n\r\nJavascript should be vanilla Javascript. popper.min.js and bootstrap.min.js are available. \r\n\r\nUse @Razor templating engine for variables and to go through lists, displaying object or property, see example later\r\n\r\nCss should be using up to date css standards. colors should be in rgb.\r\n\r\nIf a feedback is needed from the user using the html, provide the solution also for that, if it needs javascript, provide javascript, if it needs custom css, provide css\r\n\r\nGoalfile is only provide for context. \r\n\r\nYour job is to build ```html, ```javascript, ```css from the user command and nothing else.\r\n\n\nOnly write the raw ```html, ```css and ```javascript. No summary, no extra text to explain, be concise",
+    "question": "command: form, inputs for \"task\"(required) and \"due_date\"(required, type is date)",
+    "assistant": "\r\n### variables available ###\r\n\r\n### variables available ###\r\n### Goalfile ###\r\n(Goal) AddTask\n- (%step0%) form, inputs for \"task\"(required) and \"due_date\"(required, type is date)\n- (%step2%) [html] button \"Save\", call !NewTask\n- (%step3%) call !Todos\n\r\n### Goalfile ###\r\n### Razor ###\r\nVariables in plural are lists, singular is object. \r\nTo access variable, prefix it with Model.\r\nuse the variable name as the name for the list and when looping through the list. \r\nExample for a tr in a table.\r\n\r\n@foreach (var task in Model.tasks)\r\n{\r\n    <tr>\r\n        <td>@task.Description</td>\r\n        <td>Due date: @task.DueDate</td>\r\n\t\t<td><a href=\"javascript:callGoal('edit.goal', {id:'@task.Id'})\">Edit</a></td>\r\n\t\t<td><button onclick=\"callGoal('delete.goal', {id:'@task.Id'})\">Delete</button></td>\r\n    </tr>\r\n}\r\n\r\n<h3>@Model.book.Title</h3>\r\n\r\n@{\r\n    bool isUserLoggedIn = Model.isLoggedIn;\r\n}\r\n\r\n@if (isUserLoggedIn)\r\n{\r\n    <p>Welcome back, @user.Username!</p>\r\n}\r\nelse\r\n{\r\n    <p>Please log in.</p>\r\n}\r\n### Razor ###",
+    "model": "gpt-4",
+    "caching": true,
+    "RawResponse": null
+  },
+  "RunOnBuild": false
+}

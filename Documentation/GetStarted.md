@@ -16,7 +16,12 @@ Visual Studio Code as your code editor with the Plang extension installed. For m
 
 ## 3. First plang app, "Hello plang world"
 
+> You will see ***Cost estimate: $0.XXX*** in the text. This is the estimate cost of building the code. It is an estimate since each request to LLM can be different and have different costs. You will be asked to fill up you account with plang.is or if you use OpenAI api key, you can divide the cost by 2.
+
+
 Watch this helpful video tutorial: [Hello World in Plang](https://www.youtube.com/watch?v=iGW4btk34yQ)
+
+
 
 1. **Create a Folder**: Make a new folder named `HelloWorld`. For example:
    - Windows: `C:\apps\HelloWorld`
@@ -24,7 +29,11 @@ Watch this helpful video tutorial: [Hello World in Plang](https://www.youtube.co
 
 2. **Create Start.goal File**: In the `HelloWorld` folder, create a file named `Start.goal`.
 
-3. **Write Your Code**:
+3. **Write Your Code** 
+
+> Cost estimate: $0.118
+
+
     ```plang
     Start
     - write out 'Hello plang world'
