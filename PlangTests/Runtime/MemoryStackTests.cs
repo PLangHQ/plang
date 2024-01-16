@@ -370,7 +370,7 @@ namespace PLang.Runtime.Tests
 			// now change the variable
 			stack.PutStatic("item", 2);
 
-			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test", Arg.Any<Dictionary<string, object>>());
+			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test", Arg.Any<Dictionary<string, object?>>());
 		}
 
 		[TestMethod]
@@ -382,15 +382,15 @@ namespace PLang.Runtime.Tests
 			stack.Put("weight", 80.5);
 			stack.Put("data", new { foo = 1, bar = 2 });
 
-			var nameObj = stack.Get("name");
+			var nameObj = stack.Get("name") ?? "";
 			Assert.AreEqual("John", nameObj);
 			Assert.AreEqual(typeof(string), nameObj.GetType());
 
-			var ageObj = stack.Get("age");
+			var ageObj = stack.Get("age") ?? "";
 			Assert.AreEqual(29, ageObj);
 			Assert.AreEqual(typeof(int), ageObj.GetType());
 
-			var weightObj = stack.Get("weight");
+			var weightObj = stack.Get("weight") ?? "";
 			Assert.AreEqual(80.5, weightObj);
 			Assert.AreEqual(typeof(double), weightObj.GetType());
 

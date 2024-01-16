@@ -45,7 +45,7 @@ namespace PLang.Utils.Tests
 			httpHelper.SignRequest(request);
 
 			Assert.AreEqual(HttpMethod.Get, method);
-			Assert.AreEqual(request.RequestUri, url);
+			Assert.AreEqual(request.RequestUri.ToString(), url);
 
 			request.Headers.TryGetValues("X-Signature-Contract", out var contracts);
 			Assert.AreEqual("C0", contracts.FirstOrDefault());

@@ -387,7 +387,7 @@ namespace PLang.Runtime
 				{
 					long executionTimeout = (goalStep.CancellationHandler == null) ? 30 * 1000 : goalStep.CancellationHandler.CancelExecutionAfterXMilliseconds;
 					cts.CancelAfter(TimeSpan.FromMilliseconds(executionTimeout));
-
+					
 					try
 					{
 						
