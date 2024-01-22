@@ -20,7 +20,7 @@ namespace PLangTests.Modules.FileModule
 		public void Init()
 		{
 			base.Initialize();
-			p = new Program(fileSystem, settings, logger, context, memoryStack, pseudoRuntime, engine);
+			p = new Program(fileSystem, settings, logger, pseudoRuntime, engine);
 		}
 
 		[TestMethod]

@@ -20,8 +20,11 @@ namespace PLang.Utils
 		public ServiceContainer CreateContainer(PLangAppContext context, string path, string goalPath, IOutputStream outputStream)
 		{
 			var container = new ServiceContainer();
-			string askUserHandler = context.GetOrDefault<string>(ReservedKeywords.Inject_AskUserHandler, "");
-
+			string? askUserHandler = context.GetOrDefault<string>(ReservedKeywords.Inject_AskUserHandler, "");
+			if (askUserHandler == null)
+			{
+				throw new NullReferenceException($"Could not find askUserHandler. It must be defined");
+			}
 			container.RegisterForPLang(path, goalPath, askUserHandler, outputStream);
 
 			return container;

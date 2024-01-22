@@ -36,12 +36,12 @@ namespace PLang.Interfaces
 			{
 				key = key.Replace("%", "");
 				return this.FirstOrDefault(p => p.Key.ToLower() == key.ToLower()).Key != null;
-			} catch (Exception ex)
+			} catch (Exception)
 			{
 				throw;
 			}
 		}
-		public new bool ContainsKey(string key, out object? obj)
+		public bool ContainsKey(string key, out object? obj)
 		{
 			key = key.Replace("%", "");
 			var keyValue = this.FirstOrDefault(p => p.Key.ToLower() == key.ToLower());
@@ -54,9 +54,9 @@ namespace PLang.Interfaces
 			return true;
 		}
 
-		public Dictionary<string, object> GetReserverdKeywords()
+		public Dictionary<string, object?> GetReserverdKeywords()
 		{
-			var dict = new Dictionary<string, object>();
+			var dict = new Dictionary<string, object?>();
 			var keywords = ReservedKeywords.Keywords;
 			foreach (var keyword in keywords)
 			{

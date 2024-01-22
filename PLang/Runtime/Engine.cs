@@ -37,6 +37,7 @@ namespace PLang.Runtime
 		private IServiceContainer container;
 
 		private IPLangFileSystem fileSystem;
+		private IPLangIdentityService identityService;
 		private ILogger logger;
 		private ISettings settings;
 		private IEventRuntime eventRuntime;
@@ -59,6 +60,7 @@ namespace PLang.Runtime
 
 			this.context = container.GetInstance<PLangAppContext>();
 			this.fileSystem = container.GetInstance<IPLangFileSystem>();
+			this.identityService = container.GetInstance<IPLangIdentityService>();
 			this.logger = container.GetInstance<ILogger>();
 			this.settings = container.GetInstance<ISettings>();
 			this.eventRuntime = container.GetInstance<IEventRuntime>();
@@ -69,6 +71,7 @@ namespace PLang.Runtime
 			this.prParser = container.GetInstance<PrParser>();
 			this.memoryStack = container.GetInstance<MemoryStack>();
 
+			context.AddOrReplace(ReservedKeywords.MyIdentity, identityService.GetCurrentIdentity());
 
 			prParser.LoadAllGoals();
 		}
@@ -153,7 +156,7 @@ namespace PLang.Runtime
 		private void StartScheduler()
 		{
 			var containerForScheduler = new ServiceContainer();
-			containerForScheduler.RegisterForPLangConsole(settings.GoalsPath, "\\");
+			containerForScheduler.RegisterForPLangConsole(fileSystem.GoalsPath, "\\");
 
 			var schedulerEngine = containerForScheduler.GetInstance<IEngine>();
 			schedulerEngine.Init(containerForScheduler);
@@ -166,7 +169,7 @@ namespace PLang.Runtime
 		private async Task RunSetup()
 		{
 
-			string setupFolder = Path.Combine(settings.BuildPath, "Setup");
+			string setupFolder = Path.Combine(fileSystem.BuildPath, "Setup");
 			if (!fileSystem.Directory.Exists(setupFolder)) return;
 
 			var files = fileSystem.Directory.GetFiles(setupFolder, ISettings.GoalFileName).ToList();
@@ -186,10 +189,10 @@ namespace PLang.Runtime
 			{
 				if (goalNames.Count == 0)
 				{
-					logger.LogWarning($"Could not find Start.goal to run. Are you in correct directory? I am running from {settings.GoalsPath}. If you want to run specific goal file, for example Test.goal, you must run it like this: 'plang run Test'");
+					logger.LogWarning($"Could not find Start.goal to run. Are you in correct directory? I am running from {fileSystem.GoalsPath}. If you want to run specific goal file, for example Test.goal, you must run it like this: 'plang run Test'");
 				} else
 				{
-					logger.LogWarning($"Goal file(s) not found to run. Are you in correct directory? I am running from {settings.GoalsPath}");
+					logger.LogWarning($"Goal file(s) not found to run. Are you in correct directory? I am running from {fileSystem.GoalsPath}");
 				}
 				
 				return;
@@ -277,16 +280,6 @@ namespace PLang.Runtime
 
 				await eventRuntime.RunGoalEvents(context, EventType.After, goal);
 
-				// Cleanup any context settings that each step is reponsible for so it doesnt transfer to other.
-				if (context.ContainsKey("DisposableSteps"))
-				{
-					var disposableSteps = context["DisposableSteps"] as List<IFlush>;
-					foreach (var step in disposableSteps)
-					{
-						//step.Flush();
-					}
-					context.Remove("DisposableSteps");
-				}
 			}
 			catch (RuntimeUserStepException rse)
 			{
@@ -523,7 +516,7 @@ namespace PLang.Runtime
 			List<string> goalsToRun = new();
 			if (goalNames.Count > 0)
 			{
-				var goalFiles = fileSystem.Directory.GetFiles(settings.BuildPath, ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
+				var goalFiles = fileSystem.Directory.GetFiles(fileSystem.BuildPath, ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
 				foreach (var goalName in goalNames)
 				{
 					if (string.IsNullOrEmpty(goalName)) continue;
@@ -546,18 +539,18 @@ namespace PLang.Runtime
 				return goalsToRun;
 			}
 			
-			if (!fileSystem.Directory.Exists(Path.Join(settings.BuildPath, "Start"))) {
+			if (!fileSystem.Directory.Exists(Path.Join(fileSystem.BuildPath, "Start"))) {
 				return new();
 			}
 
-			var startFile = fileSystem.Directory.GetFiles(Path.Join(settings.BuildPath, "Start"), ISettings.GoalFileName, SearchOption.AllDirectories).FirstOrDefault();
+			var startFile = fileSystem.Directory.GetFiles(Path.Join(fileSystem.BuildPath, "Start"), ISettings.GoalFileName, SearchOption.AllDirectories).FirstOrDefault();
 			if (startFile != null)
 			{
 				goalsToRun.Add(startFile);
 				return goalsToRun;
 			}
 
-			var files = fileSystem.Directory.GetFiles(settings.GoalsPath, "*.goal");
+			var files = fileSystem.Directory.GetFiles(fileSystem.GoalsPath, "*.goal");
 			if (files.Length > 1)
 			{
 				logger.LogError("Could not decide on what goal to run. More then 1 goal file is in directory. You send the goal name as parameter when you run plang");
@@ -569,7 +562,7 @@ namespace PLang.Runtime
 			}
 			else
 			{
-				logger.LogError($"No goal file could be found in directory. Are you in the correct directory? I am running from {settings.GoalsPath}");
+				logger.LogError($"No goal file could be found in directory. Are you in the correct directory? I am running from {fileSystem.GoalsPath}");
 				return new();
 			}
 

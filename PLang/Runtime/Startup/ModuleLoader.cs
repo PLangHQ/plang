@@ -40,24 +40,6 @@ $@""
 		public record Answer(string Module, string Type);
 
 
-		public async Task Process()
-		{
-			/*PLang.Modules.FileModule.Program p = new();
-			var content = await p.ReadTextFile("../../../modules.goal");
-			if (content == null) { return; }
-			throw new Exception("Did this run?");*/
-			/*
-			content = VariableHelper.LoadVariables(content);
-			var question = GetQuestion(content);
-			var answers = await openAIService.Query<List<Answer>>(question);
-			if (answers == null || answers.Count == 0) return;
-
-			foreach (var answer in answers) {
-				Modules.Add(answer.Module, answer.Type);
-			}*/
-
-		}
-
 
 	}
 }

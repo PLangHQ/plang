@@ -16,20 +16,16 @@ namespace PLang.Modules.CallGoalModule
 	{
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
-		private readonly VariableHelper variableHelper;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly PrParser prParser;
 
-		public Program(IPseudoRuntime pseudoRuntime, IEngine engine, VariableHelper variableHelper, IPLangFileSystem fileSystem, PrParser prParser) : base()
+		public Program(IPseudoRuntime pseudoRuntime, IEngine engine, IPLangFileSystem fileSystem, PrParser prParser) : base()
 		{
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
-			this.variableHelper = variableHelper;
 			this.fileSystem = fileSystem;
 			this.prParser = prParser;
 		}
-
-		public new Goal Goal { get; set; }
 
 		public async Task RunGoal(string goalName, Dictionary<string, object>? parameters = null, bool waitForExecution = true, int delayWhenNotWaitingInMilliseconds = 0)
 		{
@@ -37,7 +33,7 @@ namespace PLang.Modules.CallGoalModule
 			{
 				throw new Exception($"Could not find goal to call from step: {goalStep.Text}");
 			}
-			if (Goal == null) Goal = base.Goal;
+
 			if (goalName.Contains("."))
 			{
 				ValidateAppInstall(goalName);

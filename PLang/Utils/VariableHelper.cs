@@ -1,19 +1,10 @@
 ﻿using Jil;
-using LightInject;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 using PLang.Interfaces;
 using PLang.Runtime;
-using PLang.Services.SettingsService;
-using System.Dynamic;
-using System.IO;
-using System.IO.Abstractions;
-using System.Reflection;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
-using static PLang.Utils.VariableHelper;
 
 namespace PLang.Utils
 {
@@ -29,9 +20,9 @@ namespace PLang.Utils
 			this.memoryStack = memoryStack;
 		}
 
-		public Dictionary<string, object> LoadVariables(Dictionary<string, object>? items, bool emptyIfNotFound = true)
+		public Dictionary<string, object?> LoadVariables(Dictionary<string, object?>? items, bool emptyIfNotFound = true)
 		{
-			if (items == null) return new Dictionary<string, object>();
+			if (items == null) return new Dictionary<string, object?>();
 
 			foreach (var item in items)
 			{
@@ -42,11 +33,13 @@ namespace PLang.Utils
 
 
 
-		public object? LoadVariables(object obj, bool emptyIfNotFound = true)
+		public object? LoadVariables(object? obj, bool emptyIfNotFound = true)
 		{
 			if (obj == null) return null;
 
-			string content = obj.ToString();
+			string? content = obj.ToString();
+			if (content == null) return null;
+
 			if (Regex.IsMatch(content, @"^%[a-zA-Z0-9\[\]_\.\+]*%$"))
 			{
 				if (content.StartsWith("%Settings."))
@@ -68,20 +61,21 @@ namespace PLang.Utils
 				foreach (var variable in variables)
 				{
 					var jsonProperty = FindPropertyNameByValue(jobject, variable.OriginalKey);
-					if (jsonProperty != null)
+					if (jsonProperty == null) continue;
+
+					if (jsonProperty.Contains("."))
 					{
-						if (jsonProperty.Contains("."))
+						var value = (variable.Value == null) ? null : JsonSerialize(variable.Value);
+						if (value != null)
 						{
-							var value = (variable.Value == null) ? null : JsonSerialize(variable.Value);
 							SetNestedPropertyValue(jobject, jsonProperty, value);
 						}
-						else
-						{
-
-							jobject[jsonProperty] = (variable.Value == null) ? "" : JsonSerialize(variable.Value);
-
-						}
 					}
+					else
+					{
+						jobject[jsonProperty] = (variable.Value == null) ? "" : JsonSerialize(variable.Value);
+					}
+
 				}
 				return jobject.ToString();
 			}
@@ -89,7 +83,7 @@ namespace PLang.Utils
 			foreach (var variable in variables)
 			{
 				string strValue = "";
-				if (variable.Value != null && variable.Value?.GetType() != typeof(string) && !variable.Value.GetType().IsPrimitive)
+				if (variable.Value != null && variable.Value?.GetType() != typeof(string) && !variable.Value!.GetType().IsPrimitive)
 				{
 					strValue = JsonSerialize(variable.Value).ToString();
 				}
@@ -109,13 +103,14 @@ namespace PLang.Utils
 
 			if (obj is string str)
 			{
-				if (JsonHelper.IsJson(obj, out object? parsedObj) && parsedObj != null) {
+				if (JsonHelper.IsJson(obj, out object? parsedObj) && parsedObj != null)
+				{
 					var token = parsedObj as JToken;
 					if (token != null) return token;
 				}
 				return str;
 			}
-			
+
 			if (obj is JArray jarray) return jarray;
 			if (obj is JObject jobject) return jobject;
 			if (obj is JToken jtoken) return jtoken;
@@ -126,7 +121,7 @@ namespace PLang.Utils
 				var options = new JsonSerializerOptions
 				{
 					Converters = { new ObjectValueConverter() },
-					
+
 				};
 				// TODO: Not sure how to solve this ugly code. 
 
@@ -135,11 +130,13 @@ namespace PLang.Utils
 				// .net json serializer can survive it, so that is why this is like this :(
 				var json = System.Text.Json.JsonSerializer.Serialize(obj, options);
 				return JToken.Parse(json);
-			} catch (InfiniteRecursionException iew)
+			}
+			catch (InfiniteRecursionException)
 			{
 				return "Infinite";
-			
-			} catch (Exception e)
+
+			}
+			catch (Exception)
 			{
 				return "Exception";
 			}
@@ -159,8 +156,27 @@ namespace PLang.Utils
 				writer.WriteString("Type", value.Type?.Name);
 				// Serialize other properties
 				writer.WriteBoolean("Initiated", value.Initiated);
-				writer.WritePropertyName("Value");
-				System.Text.Json.JsonSerializer.Serialize(writer, value.Value, options);
+				
+
+				if (value.Value is JArray jarray || value.Value is JObject jobject || value.Value is JToken jtoken)
+				{
+					
+					writer.WritePropertyName("Value");
+					if (value.Value is JValue)
+					{
+						writer.WriteStringValue(value.Value.ToString());
+					} else
+					{
+						writer.WriteRawValue(value.Value.ToString());
+					}
+					
+
+				}
+				else
+				{
+					writer.WritePropertyName("Value");
+					System.Text.Json.JsonSerializer.Serialize(writer, value.Value, options);
+				}
 				writer.WriteEndObject();
 			}
 		}
@@ -168,23 +184,29 @@ namespace PLang.Utils
 		public static void SetNestedPropertyValue(JObject jobject, string path, JToken value)
 		{
 			string[] parts = path.Split('.');
-			JToken current = jobject;
+			JToken? current = jobject;
 
 			for (int i = 0; i < parts.Length - 1; i++)
 			{
+				if (current == null) continue;
+
 				string part = parts[i];
 				if (part.EndsWith("]"))
 				{
 					var arrayMatch = Regex.Match(part, @"(.+)\[(\d+)\]");
 					string arrayName = arrayMatch.Groups[1].Value;
 					int arrayIndex = int.Parse(arrayMatch.Groups[2].Value);
-					current = current[arrayName][arrayIndex];
+					if (current[arrayName] != null)
+					{
+						current = current[arrayName]?[arrayIndex];
+					}
 				}
 				else
 				{
 					current = current[part];
 				}
 			}
+			if (current == null) return;
 
 			string lastPart = parts.Last();
 			if (lastPart.EndsWith("]"))
@@ -192,7 +214,14 @@ namespace PLang.Utils
 				var arrayMatch = Regex.Match(lastPart, @"(.+)\[(\d+)\]");
 				string arrayName = arrayMatch.Groups[1].Value;
 				int arrayIndex = int.Parse(arrayMatch.Groups[2].Value);
-				((JArray)current[arrayName])[arrayIndex] = value;
+				if (current[arrayName] != null)
+				{
+					var obj = (JArray?)current[arrayName];
+					if (obj != null)
+					{
+						obj[arrayIndex] = value;
+					}
+				}
 			}
 			else
 			{
@@ -200,7 +229,7 @@ namespace PLang.Utils
 			}
 		}
 
-		public static string FindPropertyNameByValue(JToken token, string value, string parentPath = "")
+		public static string? FindPropertyNameByValue(JToken token, string value, string parentPath = "")
 		{
 			switch (token.Type)
 			{
@@ -229,7 +258,7 @@ namespace PLang.Utils
 					}
 					break;
 				case JTokenType.String:
-					if ((string)token == value)
+					if ((string?)token == value)
 					{
 						return parentPath;
 					}
@@ -252,13 +281,16 @@ namespace PLang.Utils
 
 
 		public record Variable(string OriginalKey, string Key, object? Value);
+
+
+		//%method%%urlPath%%salt%%timestamp%%Settings.RapydApiKey%%Settings.RapydSecretApiKey%%body.ToString().Replace("{}", "").ClearWhitespace()%
 		internal List<Variable> GetVariables(string content, bool emptyIfNotFound = true)
 		{
 			List<Variable> variables = new List<Variable>();
 
 			if (!content.Contains("%")) return variables;
 
-			var pattern = @"(?<!\\)%([^\s%]+|Settings\.Get\((""|')+.*?(""|')+, (""|')+.*?(""|')+, (""|')+.*?(""|')+\))%";
+			var pattern = @"(?<!\\)%([^\n\r%]+|Settings\.Get\((""|')+.*?(""|')+, (""|')+.*?(""|')+, (""|')+.*?(""|')+\))%";
 
 			var regex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
 			var matches = regex.Matches(content);
@@ -272,7 +304,7 @@ namespace PLang.Utils
 				}
 				if (variable.StartsWith("%Settings."))
 				{
-					LoadSettings(variables, content);
+					LoadSetting(variables, variable, content);
 
 					continue;
 				}
@@ -304,6 +336,29 @@ namespace PLang.Utils
 
 			return variables;
 		}
+		private void LoadSetting(List<Variable> variables, string variable, string content)
+		{
+
+			var settingsPattern = @"Settings\.Get\(\\?('|"")(?<key>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<default>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<explain>[^\('|"")]*)\\?('|"")\)";
+			var settingsRegex = new Regex(settingsPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+			var settingsMatch = settingsRegex.Match(variable);
+			if (settingsMatch.Success)
+			{
+				var setting = settings.Get<string>(typeof(Settings), settingsMatch.Groups["key"].Value, settingsMatch.Groups["default"].Value, settingsMatch.Groups["explain"].Value);
+
+				variables.Add(new Variable("%" + settingsMatch.Value + "%", "%" + settingsMatch.Value + "%", setting));
+			}
+
+			settingsPattern = "%Settings.(?<key>[a-z0-9]*)%";
+			settingsRegex = new Regex(settingsPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+			var settingsMatches = settingsRegex.Matches(variable);
+			foreach (Match match in settingsMatches)
+			{
+				var setting = settings.Get<string>(typeof(Settings), match.Groups["key"].Value, "", match.Groups["key"].Value);
+
+				variables.Add(new Variable(match.Value, match.Value, setting));
+			}
+		}
 
 		private void LoadSettings(List<Variable> variables, string content)
 		{
@@ -330,7 +385,7 @@ namespace PLang.Utils
 
 		internal bool IsVariable(object variable)
 		{
-			return Regex.IsMatch(variable.ToString(), @"^%[a-zA-Z0-9\[\]_\.\+]*%$");
+			return Regex.IsMatch(variable.ToString()!, @"^%[a-zA-Z0-9\[\]_\.\+]*%$");
 		}
 	}
 }

@@ -1,8 +1,6 @@
 ﻿using LightInject;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
-using Nethereum.ABI;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Building.Events;
@@ -12,16 +10,14 @@ using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
+using PLang.Services.SigningService;
 using PLang.Utils;
-using Python.Runtime;
-using System;
 using System.ComponentModel;
 using System.Net;
-using System.Net.Http;
 using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
-using static PLang.Modules.WebserverModule.Program;
+using System.Web;
 
 namespace PLang.Modules.WebserverModule
 {
@@ -34,15 +30,15 @@ namespace PLang.Modules.WebserverModule
 		private readonly ISettings settings;
 		private readonly IOutputStream outputStream;
 		private readonly PrParser prParser;
-		private readonly HttpHelper httpHelper;
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
-		private readonly Signature signature;
+		private readonly IPLangSigningService signingService;
 		private readonly static List<WebserverInfo> listeners = new();
 
 		public Program(ILogger logger, IEventRuntime eventRuntime, IPLangFileSystem fileSystem
 			, ISettings settings, IOutputStream outputStream
-			, PrParser prParser, HttpHelper httpHelper, IPseudoRuntime pseudoRuntime, IEngine engine, Signature signature) : base()
+			, PrParser prParser, 
+			IPseudoRuntime pseudoRuntime, IEngine engine, IPLangSigningService signingService) : base()
 		{
 			this.logger = logger;
 			this.eventRuntime = eventRuntime;
@@ -50,10 +46,9 @@ namespace PLang.Modules.WebserverModule
 			this.settings = settings;
 			this.outputStream = outputStream;
 			this.prParser = prParser;
-			this.httpHelper = httpHelper;
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
-			this.signature = signature;
+			this.signingService = signingService;
 		}
 
 		public async Task<WebserverInfo?> ShutdownWebserver(string webserverName)
@@ -116,7 +111,7 @@ namespace PLang.Modules.WebserverModule
 			listener.Start();
 
 			var assembly = Assembly.GetAssembly(this.GetType());
-			string version = assembly.GetName().Version.ToString();
+			string version = assembly!.GetName().Version!.ToString();
 
 			var webserverInfo = new WebserverInfo(listener, webserverName, scheme, host, port, maxContentLengthInBytes, defaultResponseContentEncoding, signedRequestRequired, publicPaths);
 			listeners.Add(webserverInfo);
@@ -192,7 +187,7 @@ namespace PLang.Modules.WebserverModule
 								continue;
 							}
 
-							if (goal.GoalApiInfo == null || String.IsNullOrEmpty(goal.GoalApiInfo.Method))
+							if (goal.GoalApiInfo == null || string.IsNullOrEmpty(goal.GoalApiInfo.Method))
 							{
 								await WriteError(resp, $"METHOD is not defined on goal");
 								continue;
@@ -219,7 +214,7 @@ namespace PLang.Modules.WebserverModule
 								}
 								else if (goal.GoalApiInfo.CacheControlPrivateOrPublic != null || goal.GoalApiInfo.CacheControlMaxAge != null)
 								{
-									string publicOrPrivate = goal.GoalApiInfo.CacheControlPrivateOrPublic;
+									string? publicOrPrivate = goal.GoalApiInfo.CacheControlPrivateOrPublic;
 									if (publicOrPrivate == null) { publicOrPrivate = "public"; }
 
 
@@ -238,7 +233,8 @@ namespace PLang.Modules.WebserverModule
 							engine.HttpContext = httpContext;
 
 							var requestMemoryStack = container.GetInstance<MemoryStack>();
-							await ParseRequest(httpContext, goal.GoalApiInfo.Method, requestMemoryStack);
+							var identityService = container.GetInstance<IPLangIdentityService>();
+							await ParseRequest(httpContext, identityService, goal.GoalApiInfo!.Method, requestMemoryStack);
 							await engine.RunGoal(goal);
 
 							/*
@@ -277,7 +273,7 @@ namespace PLang.Modules.WebserverModule
 				}
 				catch (Exception ex)
 				{
-					logger.LogError("Webserver crashed");
+					logger.LogError("Webserver crashed", ex);
 				}
 			});
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
@@ -296,9 +292,9 @@ namespace PLang.Modules.WebserverModule
 			container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath, httpContext);
 
 			requestedFile = requestedFile.Replace("/", Path.DirectorySeparatorChar.ToString()).Replace(@"\", Path.DirectorySeparatorChar.ToString());
-
-			var filePath = Path.Join(settings.GoalsPath!, requestedFile);
+			
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
+			var filePath = Path.Join(fileSystem.GoalsPath!, requestedFile);			
 
 			if (fileSystem.File.Exists(filePath))
 			{
@@ -370,11 +366,14 @@ namespace PLang.Modules.WebserverModule
 		}
 
 		[Description("headerKey should be null unless specified by user")]
-		public async Task<string> GetUserIp(string headerKey = null)
+		public async Task<string?> GetUserIp(string? headerKey = null)
 		{
 			if (headerKey != null)
 			{
-				return HttpListenerContext.Request.Headers[headerKey];
+				if (HttpListenerContext.Request.Headers != null && HttpListenerContext.Request.Headers.AllKeys.Contains(headerKey))
+				{
+					return HttpListenerContext.Request.Headers[headerKey];
+				}
 			}
 			return HttpListenerContext.Request.UserHostAddress;
 		}
@@ -386,14 +385,14 @@ namespace PLang.Modules.WebserverModule
 				throw new HttpListenerException(500, "Context is null. Start a webserver before calling me.");
 			}
 
-			string ble = HttpListenerContext.Request.Headers[key];
-			if (ble != null) return ble;
+			string? headerValue = HttpListenerContext.Request.Headers[key];
+			if (headerValue != null) return headerValue;
 
-			ble = HttpListenerContext.Request.Headers[key.ToUpper()];
-			if (ble != null) return ble;
+			headerValue = HttpListenerContext.Request.Headers[key.ToUpper()];
+			if (headerValue != null) return headerValue;
 
-			ble = HttpListenerContext.Request.Headers[key.ToLower()];
-			if (ble != null) return ble;
+			headerValue = HttpListenerContext.Request.Headers[key.ToLower()];
+			if (headerValue != null) return headerValue;
 
 			return "";
 		}
@@ -439,14 +438,14 @@ namespace PLang.Modules.WebserverModule
 			}
 			goalName = Path.GetFileNameWithoutExtension(goalName);
 
-			var directories = fileSystem.Directory.GetDirectories(settings.BuildPath!, goalName, SearchOption.AllDirectories);
+			var directories = fileSystem.Directory.GetDirectories(fileSystem.BuildPath, goalName, SearchOption.AllDirectories);
 
 			foreach (var directory in directories)
 			{
 				foreach (var publicPath in publicPaths)
 				{
 
-					if (directory.StartsWith(Path.Combine(settings.BuildPath!, publicPath)))
+					if (directory.StartsWith(Path.Combine(fileSystem.BuildPath, publicPath)))
 					{
 						return directory;
 					}
@@ -458,7 +457,7 @@ namespace PLang.Modules.WebserverModule
 
 
 
-		private async Task ParseRequest(HttpListenerContext? context, string? method, MemoryStack memoryStack)
+		private async Task ParseRequest(HttpListenerContext? context, IPLangIdentityService identityService, string? method, MemoryStack memoryStack)
 		{
 			if (context == null) return;
 
@@ -479,23 +478,52 @@ namespace PLang.Modules.WebserverModule
 			{
 				body = await reader.ReadToEndAsync();
 			}
-			httpHelper.VerifySignature(request, body, memoryStack);
+			await VerifySignature(request, identityService, body, memoryStack);
 
-
-			if (request.HttpMethod == method)
+			var nvc = request.QueryString;
+			if (contentType.StartsWith("application/json") && !string.IsNullOrEmpty(body))
 			{
-				var nvc = request.QueryString;
-				foreach (var key in nvc.AllKeys)
-				{
-					if (key == null) continue;
-					if (ReservedKeywords.IsReserved(key))
+				var obj = JsonConvert.DeserializeObject(body) as JObject;
+				
+				if (nvc.AllKeys.Length > 0) {
+					if (obj == null) obj = new JObject();
+					foreach (var key in nvc.AllKeys)
 					{
-						throw new HttpRequestException($"{key} is reserved. You cannot submit it to the server");
+						if (key == null) continue;
+						obj.Add(key, nvc[key]);						
 					}
-					var value = nvc.Get(key) ?? "";
-					memoryStack.Put(key, value);
 				}
+				
+				memoryStack.Put("request", obj);
+
+
+				return;
 			}
+
+			if (contentType.StartsWith("application/x-www-form-urlencoded") && !string.IsNullOrEmpty(body))
+			{
+				var formData = HttpUtility.ParseQueryString(body);
+				if (nvc.AllKeys.Length > 0)
+				{
+					if (formData == null)
+					{
+						formData = nvc;
+					}
+					else
+					{
+						foreach (var key in nvc.AllKeys)
+						{
+							if (key == null) continue;
+							formData.Add(key, nvc[key]);
+						}
+					}
+				}
+				memoryStack.Put("request", formData);
+				return;
+			}
+
+			
+			memoryStack.Put("request", nvc);
 
 			/*
 			 * @ingig - Not really sure what is happening here, so decide to remove it for now. 
@@ -515,48 +543,35 @@ namespace PLang.Modules.WebserverModule
 			}
 			*/
 
-			if (request.HttpMethod == method && contentType.StartsWith("application/json") && !string.IsNullOrEmpty(body))
-			{
-
-				var obj = JsonConvert.DeserializeObject(body) as JObject;
-				memoryStack.Put("body", obj);
-				try
-				{
-					var dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
-					foreach (var item in dict)
-					{
-						if (ReservedKeywords.IsReserved(item.Key))
-						{
-							throw new HttpRequestException($"{item.Key} is reserved. You cannot submit it to the server");
-						}
-
-						memoryStack.Put(item.Key, item.Value);
-					}
-				}
-				catch { }
-
-
-			}
-
-
-			if (request.HttpMethod == method && contentType.StartsWith("application/x-www-form-urlencoded"))
-			{
-				var parsedFormData = System.Web.HttpUtility.ParseQueryString(body);
-				foreach (var key in parsedFormData.AllKeys)
-				{
-					if (key == null) continue;
-					if (ReservedKeywords.IsReserved(key))
-					{
-						throw new HttpRequestException($"{key} is reserved. You cannot submit it to the server");
-					}
-
-					var value = parsedFormData[key] ?? "";
-					memoryStack.Put(key, value);
-				}
-			}
-
 		}
 
+		public async Task<bool> VerifySignature(HttpListenerRequest request, IPLangIdentityService identityService, string body, MemoryStack memoryStack)
+		{
+			if (request.Headers.Get("X-Signature") == null ||
+				request.Headers.Get("X-Signature-Created") == null ||
+				request.Headers.Get("X-Signature-Nonce") == null ||
+				request.Headers.Get("X-Signature-Address") == null ||
+				request.Headers.Get("X-Signature-Contract") == null
+				) return false;
+
+			var validationHeaders = new Dictionary<string, object>();
+			validationHeaders.Add("X-Signature", request.Headers.Get("X-Signature")!);
+			validationHeaders.Add("X-Signature-Created", request.Headers.Get("X-Signature-Created")!);
+			validationHeaders.Add("X-Signature-Nonce", request.Headers.Get("X-Signature-Nonce")!);
+			validationHeaders.Add("X-Signature-Address", request.Headers.Get("X-Signature-Address")!);
+			validationHeaders.Add("X-Signature-Contract", request.Headers.Get("X-Signature-Contract") ?? "C0");
+
+			var url = request.Url?.PathAndQuery ?? "";
+
+			var address = await signingService.VerifySignature(body, request.HttpMethod, url, validationHeaders);
+
+			if (address == null) return false;
+
+			memoryStack.Put(ReservedKeywords.Identity, address.ComputeHash(salt: context[ReservedKeywords.Salt]!.ToString()));
+			memoryStack.Put(ReservedKeywords.IdentityNotHashed, address);
+			return true;
+
+		}
 
 		private async Task ProcessWebsocketRequest(HttpListenerContext httpContext)
 		{
@@ -566,7 +581,7 @@ namespace PLang.Modules.WebserverModule
 			try
 			{
 
-				var outputStream = new WebsocketOutputStream(webSocket, signature);
+				var outputStream = new WebsocketOutputStream(webSocket, signingService);
 				var container = new ServiceContainer();
 
 				container.RegisterForPLang(goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath, "PLang.Exceptions.AskUser.AskUserConsoleHandler", outputStream);
@@ -614,7 +629,7 @@ namespace PLang.Modules.WebserverModule
 		public record WebSocketInfo(ClientWebSocket ClientWebSocket, string Url, string GoalToCAll, string WebSocketName, string ContentRecievedVariableName);
 		public record WebSocketData(string GoalToCall, string Url, string Method, string Contract, Dictionary<string, object?>? Parameters)
 		{
-			public Dictionary<string, string>? SignatureData = null;
+			public Dictionary<string, object>? SignatureData = null;
 		};
 
 
@@ -632,7 +647,7 @@ namespace PLang.Modules.WebserverModule
 
 			var obj = new WebSocketData(goalToCall, url, method, contract, parameters);
 
-			var signatureData = signature.Sign(JsonConvert.SerializeObject(obj), method, url, contract);
+			var signatureData = signingService.Sign(JsonConvert.SerializeObject(obj), method, url, contract);
 			obj.SignatureData = signatureData;
 
 			byte[] message = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj));
@@ -706,10 +721,9 @@ namespace PLang.Modules.WebserverModule
 						}
 
 						var signatureData = websocketData.SignatureData;
+						var identity = await signingService.VerifySignature(JsonConvert.SerializeObject(websocketData), websocketData.Method, websocketData.Url, signatureData);
 
 						websocketData.SignatureData = null;
-						string identity = signature.VerifySignature(JsonConvert.SerializeObject(websocketData), websocketData.Method, websocketData.Url, signatureData);
-						
 						context.AddOrReplace("Identity", identity);
 
 						await pseudoRuntime.RunGoal(engine, context, fileSystem.RootDirectory, websocketData.GoalToCall, websocketData.Parameters);

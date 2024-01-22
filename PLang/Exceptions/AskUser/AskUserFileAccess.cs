@@ -21,8 +21,8 @@ namespace PLang.Exceptions.AskUser
 
 		public override async Task InvokeCallback(object answer)
 		{
-			await Callback?.Invoke(new object[] { app, path, answer });
-	
+			await Callback.Invoke([app, path, answer]);
+
 		}
 	}
 

@@ -10,7 +10,7 @@ namespace PLang.Utils
 	public interface IErrorHelper
     {
         Task ShowFriendlyErrorMessage(Exception ex, GoalStep? step = null, 
-				Func<Task>? callBackForAskUser = null, Func<Exception, Task<bool>>? eventToRun = null, Func<Task, Task<bool>>? retryCallback = null);
+				Func<Task>? callBackForAskUser = null, Func<Exception?, Task<bool>>? eventToRun = null, Func<Task?, Task<bool>>? retryCallback = null);
     }
 
     public class ErrorHelper : IErrorHelper
@@ -31,8 +31,8 @@ namespace PLang.Utils
 		}
 
 		public async Task ShowFriendlyErrorMessage(Exception? ex, GoalStep? step = null,
-				Func<Task>? callBackForAskUser = null, Func<Exception, Task<bool>>? eventToRun = null,
-				Func<Task, Task<bool>>? retryCallback = null)
+				Func<Task>? callBackForAskUser = null, Func<Exception?, Task<bool>>? eventToRun = null,
+				Func<Task?, Task<bool>>? retryCallback = null)
         {
             AskUserException? aue = null;
 
@@ -55,7 +55,7 @@ namespace PLang.Utils
             }
 
 			// check
-			if (fae != null)
+			if (fae != null && step != null)
 			{
 				await FileAccessRequest(fae, step.Goal, callBackForAskUser);
 				return;
@@ -120,8 +120,11 @@ namespace PLang.Utils
 					errorInfo += $"\nStep '{step.Text}'";
 				}
 				logger.LogError(strError);
-				logger.LogWarning("--------- StackTrace ---------\n" + ex.StackTrace);
-                throw new Exception("FriendlyError", ex);
+				if (ex != null)
+				{
+					logger.LogWarning("--------- StackTrace ---------\n" + ex.StackTrace);
+					throw new Exception("FriendlyError", ex);
+				}
 			}
 
             /*

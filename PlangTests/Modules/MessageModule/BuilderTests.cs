@@ -22,7 +22,7 @@ namespace PLang.Modules.MessageModule.Tests
 			base.Initialize();
 
 			settings.Get(typeof(PLangLlmService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var aiService = new PLangLlmService(cacheHelper, context, fileSystem, settingsRepository, outputStream);
+			var aiService = new PLangLlmService(cacheHelper, outputStream, signingService);
 			
 			typeHelper = new TypeHelper(fileSystem, settings);
 

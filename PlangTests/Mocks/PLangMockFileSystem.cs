@@ -16,6 +16,11 @@ namespace PLangTests.Mocks
 
 		public string RelativeAppPath => Path.DirectorySeparatorChar.ToString();
 
+		public string SharedPath => Path.DirectorySeparatorChar.ToString();
+		public string GoalsPath => RootDirectory;
+		public string BuildPath => Path.Join(RootDirectory, ".build");
+		public string DbPath => Path.Join(RootDirectory, ".db");
+
 		public string? ValidatePath(string? path)
 		{
 			return path;

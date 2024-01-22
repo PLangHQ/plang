@@ -10,6 +10,7 @@ using PLang.Runtime;
 using PLang.Services.CachingService;
 using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
+using PLang.Services.SigningService;
 using PLang.Utils;
 using PLangTests.Mocks;
 using System.Data;
@@ -34,7 +35,6 @@ namespace PLangTests
 		protected IErrorHelper errorHelper;
 		protected PrParser prParser;
 		protected PLangAppContext context;
-		protected HttpHelper httpHelper;
 		protected HttpClient httpClient;
 		protected CacheHelper cacheHelper;
 		protected IServiceContainerFactory containerFactory;
@@ -45,8 +45,9 @@ namespace PLangTests
 		protected IEventSourceRepository eventSourceRepository;
 		protected IEncryption encryption;
 		protected IOutputStream outputStream;
-		protected Signature signature;
-
+		protected IAppCache appCache;
+		protected IPLangIdentityService identityService;
+		protected IPLangSigningService signingService;
 		protected void Initialize()
 		{
 
@@ -61,6 +62,8 @@ namespace PLangTests
 			context = new PLangAppContext();
 			fileSystem = new PLangMockFileSystem();
 			fileSystem.AddFile(Path.Join(Environment.CurrentDirectory, ".build", "info.txt"), Guid.NewGuid().ToString());
+
+
 			container.RegisterInstance<IPLangFileSystem>(fileSystem);
 			container.RegisterInstance<IServiceContainer>(container);
 			this.settingsRepository = new SqliteSettingsRepository(fileSystem, context);
@@ -83,11 +86,17 @@ namespace PLangTests
 
 			context.AddOrReplace(ReservedKeywords.Inject_Caching, typeof(InMemoryCaching).FullName);
 
-			container.RegisterInstance<IAppCache>(new InMemoryCaching(context), "PLang.Services.CachingService.InMemoryCaching");
+			appCache = new InMemoryCaching(context);
+			container.RegisterInstance<IAppCache>(appCache, "PLang.Services.CachingService.InMemoryCaching");
 
 			logger = Substitute.For<MockLogger>();
 			//logger = new PLang.Utils.Logger<BasePLangTest>();
 			container.RegisterInstance<ILogger>(logger);
+
+			identityService = Substitute.For<IPLangIdentityService>();
+			container.RegisterInstance(identityService);
+			signingService = Substitute.For<IPLangSigningService>();
+			container.RegisterInstance(signingService);
 
 			aiService = Substitute.For<ILlmService>();
 			container.RegisterInstance(aiService);
@@ -104,8 +113,6 @@ namespace PLangTests
 			container.RegisterInstance(engine);
 
 			settings = Substitute.For<ISettings>();
-			settings.GoalsPath.Returns(Environment.CurrentDirectory);
-			settings.BuildPath.Returns(Path.Join(Environment.CurrentDirectory, ".build"));
 
 			container.RegisterInstance<ISettings>(settings);
 			pseudoRuntime = Substitute.For<IPseudoRuntime>();
@@ -145,10 +152,6 @@ namespace PLangTests
 			variableHelper = new VariableHelper(context, memoryStack, settings);
 			container.RegisterInstance(variableHelper);
 
-			signature = new Signature(settings, context);
-			container.RegisterInstance(signature);
-
-			httpHelper = new HttpHelper(settings, context, aiService, signature);
 			container.RegisterInstance(prParser);
 			return container;
 		}

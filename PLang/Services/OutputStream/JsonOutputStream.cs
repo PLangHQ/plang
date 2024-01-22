@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using PLang.Utils;
 using System.Net;
+using System.Text;
 
 namespace PLang.Services.OutputStream
 {
@@ -24,7 +25,7 @@ namespace PLang.Services.OutputStream
 			httpContext.Response.SendChunked = true;
 			httpContext.Response.StatusCode = 400;
 
-			using (var writer = new StreamWriter(httpContext.Response.OutputStream, httpContext.Response.ContentEncoding))
+			using (var writer = new StreamWriter(httpContext.Response.OutputStream, httpContext.Response.ContentEncoding ?? Encoding.UTF8))
 			{
 				if (text != null)
 				{
@@ -38,7 +39,7 @@ namespace PLang.Services.OutputStream
 				}
 				await writer.FlushAsync();
 			}
-			return null;
+			return "";
 		}
 
 		public void Dispose()
@@ -54,7 +55,7 @@ namespace PLang.Services.OutputStream
 		{
 
 			httpContext.Response.StatusCode = httpStatusCode;
-			using (var writer = new StreamWriter(httpContext.Response.OutputStream, httpContext.Response.ContentEncoding))
+			using (var writer = new StreamWriter(httpContext.Response.OutputStream, httpContext.Response.ContentEncoding ?? Encoding.UTF8))
 			{
 				if (obj != null)
 				{
@@ -72,7 +73,7 @@ namespace PLang.Services.OutputStream
 							return;
 						}
 
-						string content = obj.ToString();
+						string content = obj.ToString()!;
 						if (!JsonHelper.IsJson(content))
 						{
 							content = JsonConvert.SerializeObject(obj);

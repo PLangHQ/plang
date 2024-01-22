@@ -30,6 +30,12 @@ namespace PLang.Utils
 			return Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(txt);
 		}
 
+		public static string Between(this string content, string startChar, string endChar)
+		{
+			int idx = content.IndexOf(startChar) + 1;
+			int endIdx = content.IndexOf(endChar);
+			return content.Substring(idx, endIdx - idx);
+		}
 
 		public static string JsonSafe(this string txt)
 		{

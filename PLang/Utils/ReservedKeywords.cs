@@ -50,7 +50,7 @@ namespace PLang.Utils
 				{
 					if (field.FieldType == typeof(string))
 					{
-						keywords.Add((string)field.GetValue(null));
+						keywords.Add(field.GetValue(null)!.ToString()!);
 					}
 				}
 

@@ -16,7 +16,7 @@ namespace PLang.Services.OutputStream
 		{
 		
 			Console.WriteLine(text);
-			return Console.ReadLine();
+			return Console.ReadLine() ?? "";
 		}
 
 		public void Dispose()
@@ -25,10 +25,10 @@ namespace PLang.Services.OutputStream
 
 		public string Read()
 		{
-			return Console.ReadLine();
+			return Console.ReadLine() ?? "";
 		}
 
-		public async Task Write(object obj, string type = "text", int statusCode = 200)
+		public async Task Write(object? obj, string type = "text", int statusCode = 200)
 		{
 			if (obj == null) return;
 			if (obj.GetType().IsPrimitive || obj is string)
@@ -42,7 +42,7 @@ namespace PLang.Services.OutputStream
 
 		}
 
-		public async Task WriteToBuffer(object obj, string type, int statusCode = 200)
+		public async Task WriteToBuffer(object? obj, string type, int statusCode = 200)
 		{
 			await Write(obj, type);
 		}

@@ -13,7 +13,7 @@ namespace PLang.Modules.LlmModule
 			return await Build(step, null, 0);
 		}
 
-		public async Task<Instruction> Build(GoalStep step, string error = null, int errorCount = 0)
+		public async Task<Instruction> Build(GoalStep step, string? error = null, int errorCount = 0)
 		{
 			AppendToSystemCommand(@"The following user request is for constructing a message to LLM engine
 

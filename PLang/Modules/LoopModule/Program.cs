@@ -2,9 +2,7 @@
 
 using Microsoft.Extensions.Logging;
 using PLang.Attributes;
-using PLang.Building.Parsers;
 using PLang.Runtime;
-using PLang.Utils;
 using System.Collections;
 using System.ComponentModel;
 
@@ -16,14 +14,12 @@ namespace PLang.Modules.LoopModule
 		private readonly ILogger logger;
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
-		private readonly MemoryStack memoryStack;
 
-		public Program(ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine, MemoryStack memoryStack) : base()
+		public Program(ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine) : base()
 		{
 			this.logger = logger;
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
-			this.memoryStack = memoryStack;
 		}
 
 		public async Task RunLoop([HandlesVariableAttribute] string variableToLoopThrough, string goalNameToCall, [HandlesVariableAttribute] Dictionary<string, object>? parameters = null)

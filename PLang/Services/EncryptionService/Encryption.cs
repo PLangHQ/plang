@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Nethereum.KeyStore.Crypto;
+using Newtonsoft.Json;
 using PLang.Interfaces;
 using PLang.Utils;
 using System.Security.Cryptography;
@@ -22,7 +23,7 @@ namespace PLang.Services.EncryptionService
 		public void GenerateKey()
 		{
 			var keys = settings.GetValues<EncryptionKey>(this.GetType());
-			if (keys != null && keys.Count > 0) return;
+			if (keys.Count > 0) return;
 
 			using (var aes = Aes.Create())
 			{
@@ -106,7 +107,11 @@ namespace PLang.Services.EncryptionService
 				}
 
 				var decryptedJson = Encoding.UTF8.GetString(decryptedData);
-				return JsonConvert.DeserializeObject<T>(decryptedJson);
+				var result = JsonConvert.DeserializeObject<T>(decryptedJson);
+				if (result != null) return result;
+
+				throw new Exception("Could not decrypt data");
+
 			}
 
 

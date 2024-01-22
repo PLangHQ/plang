@@ -50,62 +50,64 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		{
 			var content = memoryStack.Get(key);
 			if (content == null) return null;
-			
+
 			return variableHelper.LoadVariables(content);
 		}
 
-		[Description("Set string local variable. If value is json, keep valid json format")]
-		public async Task SetStringVariable([HandlesVariableAttribute] string key, string? value = null)
+		[Description(@"Set variable")]
+		public async Task SetVariable([HandlesVariable] string key, object? value = null)
 		{
-			object val = variableHelper.LoadVariables(value);
-			memoryStack.Put(key, val, convertToJson: false);
+			memoryStack.Put(key, variableHelper.LoadVariables(value));
+		}
+		[Description(@"Set multiple variables.")]
+		public async Task SetVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues)
+		{
+			foreach (var key in keyValues)
+			{
+				memoryStack.Put(key.Key, key.Value);
+			}
 		}
 
-		[Description("Set local variable. If value is json, keep valid json format")]
-		public async Task SetVariable([HandlesVariableAttribute] string key, object? value = null)
-		{
-			object val = variableHelper.LoadVariables(value);
-			memoryStack.Put(key, val);
-		}
-
-		[Description("Set default value on variables if not set. keys and values length MUST be equal. If value is json, keep valid json format. Keep object type as defined, int should be int, double should double, string as string.")]
+		[Description(@"Set default value on variables if not set.")]
 		public async Task SetDefaultValueOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues)
 		{
-			foreach (var key in keyValues) 
+			foreach (var key in keyValues)
 			{
-				var objectValue = memoryStack.GetObjectValue(key.Key, false);
+				var objectValue = memoryStack.GetObjectValue2(key.Key, false);
 				if (!objectValue.Initiated)
 				{
 					memoryStack.Put(key.Key, key.Value);
-				}				
-			}			
+				}
+			}
+
 		}
 
-		[Description("Set local variable.")]
-		public async Task AppendToVariable([HandlesVariableAttribute] string key, object? value = null, char seperator = '\n')
+		[Description("Append to variable.")]
+		public async Task<object?> AppendToVariable([HandlesVariableAttribute] string key, object? value = null, char seperator = '\n')
 		{
-			if (value == null) return;
+			if (value == null) return value;
 
-			object val = memoryStack.Get(key);
+			object? val = memoryStack.Get(key);
 			if (val == null && value is string)
 			{
 				val = value.ToString();
-			} else if (val is string)
+			}
+			else if (val is string)
 			{
 				val = val + seperator.ToString() + value;
-			} else
+			}
+			else
 			{
 				//todo: wrong thing, how do you append to object?
 				val = value;
 			}
-			
-			memoryStack.Put(key, val);
+			return val;
 		}
 		public async Task<object> GetVariable([HandlesVariableAttribute] string key)
 		{
 			return memoryStack.Get(key);
 		}
-		
+
 
 		public async Task RemoveVariable([HandlesVariableAttribute] string key)
 		{
@@ -142,6 +144,6 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 	}
 
 
-	
+
 }
 

@@ -13,4 +13,8 @@ namespace PLang.Utils
 		public static Func<DateTimeOffset> OffsetNow = () => DateTimeOffset.Now;
 		public static Func<DateTimeOffset> OffsetUtcNow = () => DateTimeOffset.UtcNow;
 	}
+	public static class SystemNonce
+	{
+		public static Func<string> New = () => Guid.NewGuid().ToString();
+	}
 }

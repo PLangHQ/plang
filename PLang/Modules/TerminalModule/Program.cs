@@ -17,15 +17,15 @@ namespace PLang.Modules.TerminalModule
 		private readonly ILogger logger;
 		private readonly ISettings settings;
 		private readonly IOutputStream outputStream;
-		private readonly MemoryStack memoryStack;
+		private readonly IPLangFileSystem fileSystem;
 		public static readonly string DefaultOutputVariable = "__Terminal_Output__";
 		public static readonly string DefaultErrorOutputVariable = "__Terminal_Error_Output__";
-		public Program(ILogger logger, ISettings settings, IOutputStream outputStream, MemoryStack memoryStack) : base()
+		public Program(ILogger logger, ISettings settings, IOutputStream outputStream, IPLangFileSystem fileSystem) : base()
 		{
 			this.logger = logger;
 			this.settings = settings;
 			this.outputStream = outputStream;
-			this.memoryStack = memoryStack;
+			this.fileSystem = fileSystem;
 		}
 
 		public async Task Read(string? variableName)
@@ -35,14 +35,14 @@ namespace PLang.Modules.TerminalModule
 		}
 
 		public async Task<Dictionary<string, object>> RunTerminal(string appExecutableName, List<string>? parameters = null,
-			string pathToWorkingDirInTerminal = null,
+			string? pathToWorkingDirInTerminal = null,
 			[HandlesVariable] string? dataOutputVariable = null, [HandlesVariable] string? errorDebugInfoOutputVariable = null,
 			[HandlesVariable] string? dataStreamDelta = null, [HandlesVariable] string? debugErrorStreamDelta = null
 			)
 		{
 			if (pathToWorkingDirInTerminal == null)
 			{
-				pathToWorkingDirInTerminal = settings.GoalsPath;
+				pathToWorkingDirInTerminal = fileSystem.GoalsPath;
 			}
 			ProcessStartInfo startInfo = new ProcessStartInfo
 			{

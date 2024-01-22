@@ -37,7 +37,7 @@ namespace PLang.Building
 		public async Task CreateSettingsPr()
 		{
 			//Check for BuilderHelperAttribute
-			var settingsFile = Path.Combine(settings.GoalsPath, "startup", "settings.goal");
+			var settingsFile = Path.Combine(fileSystem.GoalsPath, "startup", "settings.goal");
 
 			var question = @"Settings
 - use Sqlite for db
@@ -71,11 +71,11 @@ db_type, encoding, environment, auth_type, auth_method, variable_pre_postfix, re
 		
 			var result = await aiService.Query<SettingConfiguration[]>(llmQuestion);
 
-			if (!fileSystem.Directory.Exists(settings.BuildPath)) {
-				fileSystem.Directory.CreateDirectory(settings.BuildPath);
+			if (!fileSystem.Directory.Exists(fileSystem.BuildPath)) {
+				fileSystem.Directory.CreateDirectory(fileSystem.BuildPath);
 			}
 
-			fileSystem.File.WriteAllText(Path.Combine(settings.BuildPath, "Settings.pr"), JsonConvert.SerializeObject(result, Formatting.Indented));
+			fileSystem.File.WriteAllText(Path.Combine(fileSystem.BuildPath, "Settings.pr"), JsonConvert.SerializeObject(result, Formatting.Indented));
 
 			SettingsLoader.Load();
 		}

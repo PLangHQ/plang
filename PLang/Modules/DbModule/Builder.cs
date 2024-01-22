@@ -381,7 +381,7 @@ You MUST provide Parameters if SQL has @parameter.
 				}
 
 				var columnInfo = await program.Select(selectColumns);
-				if (columnInfo != null && columnInfo.Count > 0)
+				if (columnInfo != null && ((dynamic) columnInfo).Count > 0)
 				{
 					AppendToAssistantCommand($"### {tableName} table info starts ###\n{JsonConvert.SerializeObject(columnInfo)}\n### table info ends ###");
 				} else

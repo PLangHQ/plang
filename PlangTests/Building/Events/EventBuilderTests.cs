@@ -31,15 +31,15 @@ namespace PLang.Building.Events.Tests
 			string content = @"Events";
 
 			
-			fileSystem.AddFile(Path.Join(settings.GoalsPath, "Events", "Events.goal"), new MockFileData(content));
-			fileSystem.AddFile(Path.Join(settings.GoalsPath, "Events", "BuilderEvents.goal"), new MockFileData(content));
-			fileSystem.AddFile(Path.Join(settings.GoalsPath, "apps", "HelloWorld", "Events", "Events.goal"), new MockFileData(content));
+			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "Events", "Events.goal"), new MockFileData(content));
+			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "Events", "BuilderEvents.goal"), new MockFileData(content));
+			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", "Events", "Events.goal"), new MockFileData(content));
 
 			var eventBuilder = container.GetInstance<EventBuilder>();
 			var files = eventBuilder.GetEventGoalFiles();
 			Assert.IsNotNull(files);
 			Assert.AreEqual(2, files.Count);
-			Assert.AreEqual(files[0], Path.Join(settings.GoalsPath, "Events", "Events.goal"));
+			Assert.AreEqual(files[0], Path.Join(fileSystem.GoalsPath, "Events", "Events.goal"));
 
 			//var result = eventBuilder.BuildEventsPr().Wait();
 		
@@ -56,9 +56,9 @@ namespace PLang.Building.Events.Tests
 
 			string content = @"Events";
 
-			fileSystem.AddFile(Path.Join(settings.GoalsPath, "apps", "SomeApp", "Events", "Events.goal"), new MockFileData(content));
-			fileSystem.AddFile(Path.Join(settings.GoalsPath, "Events", "Events.goal"), new MockFileData(content));
-			fileSystem.AddFile(Path.Join(settings.GoalsPath, "apps", "HelloWorld", "Events", "Events.goal"), new MockFileData(content));
+			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "SomeApp", "Events", "Events.goal"), new MockFileData(content));
+			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "Events", "Events.goal"), new MockFileData(content));
+			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", "Events", "Events.goal"), new MockFileData(content));
 
 			eventBuilder.BuildEventsPr().Wait();
 
@@ -77,7 +77,7 @@ namespace PLang.Building.Events.Tests
 
 			string content = @"";
 
-			fileSystem.AddFile(Path.Join(settings.GoalsPath, "Events", "Events.goal"), new MockFileData(content));
+			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "Events", "Events.goal"), new MockFileData(content));
 
 			eventBuilder.BuildEventsPr().Wait();
 
@@ -96,7 +96,7 @@ namespace PLang.Building.Events.Tests
 - before each goal, call DoStuff
 - after each step call DontDoStuff";
 
-			fileSystem.AddFile(Path.Join(settings.GoalsPath, "Events", "Events.goal"), new MockFileData(content));
+			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "Events", "Events.goal"), new MockFileData(content));
 
 			var prParser = Substitute.For<PrParser>(fileSystem);
 			prParser.ParsePrFile(Arg.Any<string>()).Returns(new Goal());
@@ -118,7 +118,7 @@ namespace PLang.Building.Events.Tests
 - after Run.goal, call !AfterRun
 - after step nr 1 in Startup.goal, run ProcessImage";
 
-			fileSystem.AddFile(Path.Join(settings.GoalsPath, "Events", "Events.goal"), new MockFileData(content));
+			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "Events", "Events.goal"), new MockFileData(content));
 
 			var aiService = container.GetInstance<ILlmService>();
 			aiService.Query<EventBinding>(Arg.Is<LlmQuestion>(p => p.question.Contains("before each goal")))
@@ -136,7 +136,7 @@ namespace PLang.Building.Events.Tests
 			//fileSystem.File.Received(1).WriteAllText(Arg.Any<string>(), Arg.Any<string>());
 			//Assert.ThrowsAsync<BuilderStepException>(() => eventBuilder.BuildEventsPr());
 
-			var buildPathFolder = Path.Join(settings.BuildPath, "Events");
+			var buildPathFolder = Path.Join(fileSystem.BuildPath, "Events");
 			var eventFile = fileSystem.File.ReadAllText(Path.Combine(buildPathFolder, "Events", ISettings.GoalFileName));
 
 			var goal = JsonConvert.DeserializeObject<Goal>(eventFile);

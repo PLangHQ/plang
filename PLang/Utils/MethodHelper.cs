@@ -13,12 +13,12 @@ namespace PLang.Utils
 {
 	public class MethodHelper
 	{
-		private GoalStep? goalStep;
+		private GoalStep goalStep;
 		private readonly VariableHelper variableHelper;
 		private readonly ITypeHelper typeHelper;
 		private readonly ILlmService llmService;
 
-		public MethodHelper(GoalStep? goalStep, VariableHelper variableHelper, ITypeHelper typeHelper, ILlmService llmService)
+		public MethodHelper(GoalStep goalStep, VariableHelper variableHelper, ITypeHelper typeHelper, ILlmService llmService)
 		{
 			this.goalStep = goalStep;
 			this.variableHelper = variableHelper;
@@ -26,7 +26,7 @@ namespace PLang.Utils
 			this.llmService = llmService;
 		}
 
-		public async Task<(MethodInfo method, Dictionary<string, object> parameterValues)> GetMethodAndParameters(object callingInstance, GenericFunction function)
+		public async Task<(MethodInfo method, Dictionary<string, object?> parameterValues)> GetMethodAndParameters(object callingInstance, GenericFunction function)
 		{
 			string cacheKey = callingInstance.GetType().FullName + "_" + function.FunctionName;
 			MethodInfo? method = null;
@@ -38,7 +38,8 @@ namespace PLang.Utils
 				{
 					await HandleMethodNotFound(callingInstance, function);
 				}
-				if (!isDebug)
+
+				if (!isDebug && method != null)
 				{
 					MethodCache.Cache.AddOrReplace(cacheKey, method);
 				}
@@ -84,8 +85,13 @@ you must answer in JSON, scheme:
 				{
 					methodType = methodParameter.ParameterType.GenericTypeArguments[0].Name.ToLower();
 				}
+				string? parameterTypeName = methodParameter.ParameterType.FullName;
+				if (parameterTypeName == null)
+				{
+					throw new ArgumentNullException($"Parameter does not have type: {methodParameter.ParameterType}");
+				}
 
-				if (parameters.FirstOrDefault(p => p.Type.ToLower().StartsWith(methodType)) == null && parameters.FirstOrDefault(p => p.Type.ToLower() == methodParameter.ParameterType.FullName.ToLower()) == null)
+				if (parameters.FirstOrDefault(p => p.Type.ToLower().StartsWith(methodType)) == null && parameters.FirstOrDefault(p => p.Type.ToLower() == parameterTypeName!.ToLower()) == null)
 				{
 					if (!methodParameter.ParameterType.Name.ToLower().StartsWith("nullable") && !methodParameter.IsOptional && !methodParameter.HasDefaultValue)
 					{
@@ -145,7 +151,7 @@ you must answer in JSON, scheme:
 
 
 				}
-				catch (PropertyNotFoundException pe) { throw; }
+				catch (PropertyNotFoundException) { throw; }
 				catch (Exception ex)
 				{
 					if (ex is AskUserException) throw;
@@ -159,21 +165,25 @@ you must answer in JSON, scheme:
 
 		private void SetObjectParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
 		{
-			object value = variableValue;
+			object? value = variableValue;
 			if (handlesAttribute == null)
 			{
 				value = variableHelper.LoadVariables(variableValue);
 			}
 
-			if (parameter.ParameterType != typeof(string) && parameter.ParameterType == typeof(object) && value != null && JsonHelper.IsJson(value.ToString()))
+			if (value != null)
 			{
-				value = JsonConvert.DeserializeObject(value.ToString(), parameter.ParameterType);
+
+				if (parameter.ParameterType != typeof(string) && parameter.ParameterType == typeof(object) && value != null && JsonHelper.IsJson(value.ToString()))
+				{
+					value = JsonConvert.DeserializeObject(value.ToString()!, parameter.ParameterType);
+				}
+				else
+				{
+					value = ConvertToType(value, parameter);
+				}
 			}
-			else
-			{
-				value = ConvertToType(value, parameter);
-			}
-			parameterValues.Add(parameter.Name, value);
+			parameterValues.Add(parameter.Name!, value);
 		}
 
 		private void SetArrayParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
@@ -201,7 +211,9 @@ you must answer in JSON, scheme:
 
 		private void SetListParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
 		{
-			System.Collections.IList list;
+			if (parameter.Name == null) return;
+
+			System.Collections.IList? list;
 			if (variableHelper.IsVariable(variableValue))
 			{
 				list = variableHelper.LoadVariables(variableValue) as System.Collections.IList;
@@ -223,7 +235,7 @@ you must answer in JSON, scheme:
 
 			for (int i = 0; list != null && i < list.Count; i++)
 			{
-				object obj = variableHelper.LoadVariables(list[i]);
+				object? obj = variableHelper.LoadVariables(list[i]);
 				if (obj != null && parameter.ParameterType.GenericTypeArguments[0] == typeof(string))
 				{
 					
@@ -297,8 +309,10 @@ you must answer in JSON, scheme:
 			}
 		}
 
-		private object? ConvertToType(object value, ParameterInfo parameterInfo)
+		private object? ConvertToType(object? value, ParameterInfo parameterInfo)
 		{
+			if (value == null) return null;
+
 			var targetType = parameterInfo.ParameterType;
 
 			if (targetType == null)
@@ -307,7 +321,6 @@ you must answer in JSON, scheme:
 			if (value == null)
 				return null;
 
-			// Directly return the value if it's already of the target type
 			if (targetType.IsInstanceOfType(value))
 				return value;
 

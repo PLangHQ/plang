@@ -1,9 +1,10 @@
-﻿using Nethereum.Model;
+﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Interfaces;
-using System.Collections.Generic;
+using PLang.Services.SigningService;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 
 namespace PLang.Utils
@@ -11,50 +12,39 @@ namespace PLang.Utils
 
 	public class Settings : ISettings
 	{
-		private List<Setting> settings;
 		private readonly ISettingsRepository settingsRepository;
 		private readonly IPLangFileSystem fileSystem;
+		private readonly IPLangSigningService signingService;
+		private readonly ILogger logger;
+		private readonly PLangAppContext context;
 
-		public string BuildPath { get; private set; }
-		public string GoalsPath { get; private set; }
-
-
-		public Settings(ISettingsRepository settingsRepository, IPLangFileSystem fileSystem)
+		public Settings(ISettingsRepository settingsRepository, IPLangFileSystem fileSystem, IPLangSigningService signingService, ILogger logger, PLangAppContext context)
 		{
 			this.settingsRepository = settingsRepository;
 			this.fileSystem = fileSystem;
+			this.signingService = signingService;
+			this.logger = logger;
+			this.context = context;
 
-			settings = settingsRepository.GetSettings().ToList();
-
-			GoalsPath = fileSystem.RootDirectory;
-			BuildPath = Path.Join(GoalsPath, ".build");
-
-			if (!fileSystem.Directory.Exists(BuildPath))
-			{
-				var dir = fileSystem.Directory.CreateDirectory(BuildPath);
-				dir.Attributes = FileAttributes.Directory | FileAttributes.Hidden;
-			}
+			LoadSalt();
 		}
 
-		public static string GlobalPath
+		public LlmRequest? GetLlmRequest(string hash)
 		{
-			get
-			{
-				string globalPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "plang");
-				if (globalPath == "plang")
-				{
-					globalPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "plang");
-				}
-				return globalPath;
-			}
+			return settingsRepository.GetLlmRequestCache(hash);
 		}
 
+		public void SetLlmQuestion(string hash, LlmRequest question)
+		{
+			settingsRepository.SetLlmRequestCache(hash, question);
+		}
 		public string AppId
 		{
 			get
 			{
 
-				string infoFile = Path.Combine(BuildPath!, "info.txt");
+				var buildPath = Path.Join(fileSystem.RootDirectory, ".build");
+				string infoFile = Path.Combine(buildPath!, "info.txt");
 				string appId;
 				if (fileSystem.File.Exists(infoFile))
 				{
@@ -88,11 +78,14 @@ namespace PLang.Utils
 			{
 				throw new BuilderException("Class must have a name and namespace");
 			}
-			Setting? setting;
+
 			string settingValue = JsonConvert.SerializeObject(value);
-			setting = new Setting(AppId, callingType.FullName, type, key, settingValue);
+			var signatureData = signingService.Sign(settingValue, "Setting", callingType.FullName);
+
+			var setting = new Setting(AppId, callingType.FullName, type, key, settingValue, signatureData);
 			settingsRepository.Set(setting);
 
+			var settings = settingsRepository.GetSettings().ToList();
 			int idx = settings.FindIndex(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key == key);
 			if (idx == -1)
 			{
@@ -104,25 +97,7 @@ namespace PLang.Utils
 			}
 		}
 
-		public LlmQuestion? GetLlmQuestion(string hash)
-		{
-			return settingsRepository.GetLlmCache(hash);
-		}
 
-		public void SetLlmQuestion(string hash,  LlmQuestion question)
-		{
-			settingsRepository.SetLlmCache(hash, question);
-		}
-
-		public LlmRequest? GetLlmRequest(string hash)
-		{
-			return settingsRepository.GetLlmRequestCache(hash);
-		}
-
-		public void SetLlmQuestion(string hash, LlmRequest question)
-		{
-			settingsRepository.SetLlmRequestCache(hash, question);
-		}
 
 		public void Set<T>(Type callingType, string key, T value)
 		{
@@ -144,6 +119,7 @@ namespace PLang.Utils
 				var listItemType = listType.GetGenericArguments()[0];
 				typeName = listItemType.FullName;
 			}
+
 			if (key == null) key = typeName;
 
 			SetInternal<T>(callingType, typeName, key, value);
@@ -153,16 +129,27 @@ namespace PLang.Utils
 		{
 			var type = typeof(T).FullName;
 			if (key == null) key = type;
-			return settings.FirstOrDefault(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key == key);
+
+			var settings = settingsRepository.GetSettings();
+			var setting = settings.FirstOrDefault(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key == key);
+			if (setting == null) return null;
+
+			var verifiedData = signingService.VerifySignature(setting.Value, "Setting", callingType.FullName, setting.SignatureData).Result;
+			if (verifiedData == null) {
+				logger.LogWarning($"Signature for setting {setting.Key} | {setting.ClassOwnerFullName} is not valid.");
+			}
+			return setting;
 		}
 
 		public List<T> GetValues<T>(Type callingType)
 		{
 			var type = typeof(T).FullName;
+
+			var settings = settingsRepository.GetSettings();
 			var setts = settings.Where(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type).ToList();
 			if (setts.Count == 0) return new();
 
-			List<T> list = JsonConvert.DeserializeObject<List<T>>(setts[0].Value);
+			List<T> list = JsonConvert.DeserializeObject<List<T>>(setts[0].Value) ?? new();
 			return list;
 		}
 
@@ -174,32 +161,44 @@ namespace PLang.Utils
 			if (setting == null) return;
 
 			settingsRepository.Remove(setting);
-			settings.Remove(setting);
 		}
 
 
-		public T? Get<T>(Type callingType, string key, T defaultValue, string explain)
+		public T Get<T>(Type callingType, string key, T defaultValue, string explain)
 		{
+			if (defaultValue == null)
+			{
+				throw new RuntimeException("defaultValue cannot be null");
+			}
 			var type = defaultValue.GetType().FullName;
 
+			var settings = settingsRepository.GetSettings();
 			var setting = settings.FirstOrDefault(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key == key);
 			if (setting == null)
 			{
 				throw new MissingSettingsException(callingType, type, key, defaultValue, explain, SetInternal);
 			}
 
-			return JsonConvert.DeserializeObject<T>(setting.Value);
+			var obj = JsonConvert.DeserializeObject<T>(setting.Value);
+			if (obj == null)
+			{
+				throw new MissingSettingsException(callingType, type, key, defaultValue, explain, SetInternal);
+			}
+			return obj;
 		}
-		public T? GetOrDefault<T>(Type callingType, string? key, T defaultValue)
+		public T GetOrDefault<T>(Type callingType, string? key, T defaultValue)
 		{
 			var type = typeof(T).FullName;
 			if (key == null) key = type;
 
+			var settings = settingsRepository.GetSettings();
 			var setting = settings.FirstOrDefault(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key == key);
 
 			if (setting == null) return defaultValue;
 
-			return JsonConvert.DeserializeObject<T>(setting.Value);
+			var obj = JsonConvert.DeserializeObject<T>(setting.Value);
+			if (obj == null) return defaultValue;
+			return obj;
 		}
 
 
@@ -208,13 +207,39 @@ namespace PLang.Utils
 			var type = typeof(T).FullName;
 			if (key == null) key = type;
 
-
+			var settings = settingsRepository.GetSettings();
 			return settings.FirstOrDefault(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key == key) != null;
 		}
 
-		public List<Setting> GetAllSettings()
+		public IEnumerable<Setting> GetAllSettings()
 		{
-			return settings;
+			return settingsRepository.GetSettings();
+		}
+
+		private void LoadSalt()
+		{
+			var setting = GetAllSettings().FirstOrDefault(p => p.ClassOwnerFullName == GetType().FullName && p.ValueType == typeof(string).ToString() && p.Key == "Salt");
+			if (setting != null)
+			{
+				context.AddOrReplace(ReservedKeywords.Salt, setting.Value);
+				return;
+			}
+
+			var salt = GenerateSalt(32);
+
+			var signatureData = signingService.SignWithTimeout(salt, "Salt", GetType().FullName, SystemTime.OffsetUtcNow().AddYears(500));
+
+			setting = new Setting("1", GetType().FullName, salt.GetType().ToString(), "Salt", salt, signatureData);
+			settingsRepository.Set(setting);
+
+			context.AddOrReplace(ReservedKeywords.Salt, salt);
+		}
+
+		private string GenerateSalt(int length)
+		{
+			byte[] salt = new byte[length];
+			RandomNumberGenerator.Fill(salt);
+			return Convert.ToBase64String(salt);
 		}
 
 	}

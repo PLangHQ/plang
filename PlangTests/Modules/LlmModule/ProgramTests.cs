@@ -24,10 +24,10 @@ namespace PLangTests.Modules.LlmModule
 		private void RealOpenAIService()
 		{
 			settings.Get(typeof(PLangLlmService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var aiService = new PLangLlmService(cacheHelper, context, fileSystem, settingsRepository, outputStream);
+			var aiService = new PLangLlmService(cacheHelper, outputStream, signingService);
 
 			typeHelper = new TypeHelper(fileSystem, settings);
-			p = new Program(aiService, memoryStack, variableHelper);
+			p = new Program(aiService);
 
 		}
 
@@ -39,7 +39,7 @@ namespace PLangTests.Modules.LlmModule
 				return response;
 			});
 
-			p = new Program(aiService, memoryStack, variableHelper);
+			p = new Program(aiService);
 		}
 
 		[TestMethod]

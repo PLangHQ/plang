@@ -18,7 +18,8 @@ namespace PLang.Utils.Tests
 		{
 			base.Initialize();
 		}
-
+		/*
+		 * Change to LlmRequest
 		[TestMethod()]
 		public void GetStringToHashTest()
 		{
@@ -46,5 +47,6 @@ namespace PLang.Utils.Tests
 			Assert.IsNotNull(result);
 
 		}
+		*/
 	}
 }

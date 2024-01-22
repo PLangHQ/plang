@@ -74,7 +74,7 @@ namespace PLang
 				await Build();
 				if (watch && !run)
 				{
-					WatchFolder(settings.GoalsPath, "*.goal");
+					WatchFolder(fileSystem.GoalsPath, "*.goal");
 					Console.Read();
 				}
 
@@ -84,7 +84,7 @@ namespace PLang
 			{
 				if (watch)
 				{
-					WatchFolder(settings.GoalsPath, "*.goal");
+					WatchFolder(fileSystem.GoalsPath, "*.goal");
 				}
 				await Run(debug, test, args);
 			}
@@ -93,7 +93,7 @@ namespace PLang
 
 		public void SetupDebug()
 		{
-			var eventsPath = Path.Join(settings.GoalsPath, "Events");
+			var eventsPath = Path.Join(fileSystem.GoalsPath, "Events");
 			var sendDebugPath = Path.Join(eventsPath, "SendDebug.goal");
 
 			Console.WriteLine("-- Debug mode");
@@ -107,7 +107,7 @@ namespace PLang
 				using (MemoryStream ms = new MemoryStream(InternalApps.Debugger))
 				using (ZipArchive archive = new ZipArchive(ms))
 				{
-					archive.ExtractToDirectory(settings.GoalsPath, true);
+					archive.ExtractToDirectory(fileSystem.GoalsPath, true);
 				}
 				return;
 			}
@@ -181,7 +181,7 @@ namespace PLang
 		}
 
 
-		public async Task<IEngine> Run(bool debug = false, bool test = false, string[] args = null)
+		public async Task<IEngine> Run(bool debug = false, bool test = false, string[]? args = null)
 		{
 			
 		

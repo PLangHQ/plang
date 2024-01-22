@@ -136,7 +136,7 @@ enum EventScope {{ StartOfApp = 0, EndOfApp = 1,RunningApp = 2,	Goal = 20, Step 
 
 		public List<string> GetEventGoalFiles()
 		{
-			var eventsPath = Path.Join(settings.GoalsPath, "events");
+			var eventsPath = Path.Join(fileSystem.GoalsPath, "events");
 			if (!fileSystem.Directory.Exists(eventsPath)) return new();
 
 			return fileSystem.Directory.GetFiles(eventsPath, "*.goal", SearchOption.AllDirectories)

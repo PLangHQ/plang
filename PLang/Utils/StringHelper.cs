@@ -10,12 +10,12 @@ namespace PLang.Utils
 		public static string ConvertToString(object? body)
 		{
 			if (body == null) return "";
-			if (body.GetType() == typeof(JObject)) return body.ToString();
-			if (body.GetType() == typeof(string)) return body.ToString();
+			if (body.GetType() == typeof(JObject)) return body.ToString()!;
+			if (body.GetType() == typeof(string)) return body.ToString()!;
 			try
 			{
-				var ble = JsonConvert.DeserializeObject(body.ToString());
-				return body.ToString();
+				JsonConvert.DeserializeObject(body.ToString()!);
+				return body.ToString()!;
 			}
 			catch
 			{
@@ -25,7 +25,7 @@ namespace PLang.Utils
 				}
 				catch
 				{
-					return body.ToString();
+					return body.ToString() ?? "";
 				}
 			}
 		}

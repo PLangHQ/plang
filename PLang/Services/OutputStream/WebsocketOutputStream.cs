@@ -1,4 +1,6 @@
-﻿using PLang.Utils;
+﻿using PLang.Interfaces;
+using PLang.Services.SigningService;
+using PLang.Utils;
 using System.Net.WebSockets;
 
 namespace PLang.Services.OutputStream
@@ -6,12 +8,12 @@ namespace PLang.Services.OutputStream
 	public class WebsocketOutputStream : IOutputStream
 	{
 		private readonly WebSocket webSocket;
-		private readonly Signature signature;
+		private readonly IPLangSigningService signingService;
 
-		public WebsocketOutputStream(WebSocket webSocket, Signature signature)
+		public WebsocketOutputStream(WebSocket webSocket, IPLangSigningService signingService)
 		{			
 			this.webSocket = webSocket;
-			this.signature = signature;
+			this.signingService = signingService;
 			Stream = new MemoryStream();
 			ErrorStream = new MemoryStream();
 		}
@@ -31,7 +33,9 @@ namespace PLang.Services.OutputStream
 
 		public async Task Write(object? obj, string type = "text", int statusCode = 200)
 		{
-			byte[] buffer = System.Text.Encoding.UTF8.GetBytes(obj.ToString());
+			if (obj == null) { return; }
+
+			byte[] buffer = System.Text.Encoding.UTF8.GetBytes(obj.ToString()!);
 			await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
 
 		}

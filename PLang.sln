@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PLangConsole", "PlangConsol
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PLangWindowForms", "PlangWindowForms\PLangWindowForms.csproj", "{A9D706C1-3AF7-4A96-8AB7-F8952549E21E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenAiService", "..\ingig\OpenAiService\OpenAiService.csproj", "{66A9F821-6E24-4D10-A2DE-4CBA8AEA9786}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenAiService", "..\services\OpenAiService\OpenAiService.csproj", "{3D6389A1-CEED-40D6-BBC8-63E95C587DC5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,10 +35,10 @@ Global
 		{A9D706C1-3AF7-4A96-8AB7-F8952549E21E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A9D706C1-3AF7-4A96-8AB7-F8952549E21E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A9D706C1-3AF7-4A96-8AB7-F8952549E21E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{66A9F821-6E24-4D10-A2DE-4CBA8AEA9786}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{66A9F821-6E24-4D10-A2DE-4CBA8AEA9786}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{66A9F821-6E24-4D10-A2DE-4CBA8AEA9786}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{66A9F821-6E24-4D10-A2DE-4CBA8AEA9786}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D6389A1-CEED-40D6-BBC8-63E95C587DC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D6389A1-CEED-40D6-BBC8-63E95C587DC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D6389A1-CEED-40D6-BBC8-63E95C587DC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D6389A1-CEED-40D6-BBC8-63E95C587DC5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

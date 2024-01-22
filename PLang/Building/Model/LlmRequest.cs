@@ -1,14 +1,16 @@
-﻿using System.Runtime.Serialization;
+﻿
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
+using static PLang.Services.LlmService.PLangLlmService;
 
 namespace PLang.Building.Model
 {
-	public record LlmRequest(string type, string? promptMessage, string model = "gpt-4", bool caching = true)
+	public record LlmRequest(string type, List<Message> promptMessage, string model = "gpt-4", bool caching = true)
 	{
-		public double? temperature;
-		public double? top_p;
-		public double? frequencyPenalty;
-		public double? presencePenalty;
+		public double temperature = 0;
+		public double top_p = 0;
+		public double frequencyPenalty = 0;
+		public double presencePenalty = 0;
 		public int maxLength = 4000;
 
 		[Newtonsoft.Json.JsonIgnore]

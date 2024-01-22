@@ -7,6 +7,7 @@ using PLang.Utils;
 using PLang.Utils.Extractors;
 using System.ComponentModel;
 using System.Dynamic;
+using static PLang.Services.LlmService.PLangLlmService;
 
 namespace PLang.Modules.LlmModule
 {
@@ -14,14 +15,10 @@ namespace PLang.Modules.LlmModule
 	public class Program : BaseProgram
 	{
 		private readonly ILlmService llmService;
-		private readonly MemoryStack memoryStack;
-		private readonly VariableHelper variableHelper;
 
-		public Program(ILlmService llmService, MemoryStack memoryStack, VariableHelper variableHelper) : base()
+		public Program(ILlmService llmService) : base()
 		{
 			this.llmService = llmService;
-			this.memoryStack = memoryStack;
-			this.variableHelper = variableHelper;
 		}
 
 		public record AskLlmResponse(string Result);
@@ -98,8 +95,8 @@ namespace PLang.Modules.LlmModule
 
 		[Description("")]
 		public async Task AskLlm(
-			string scheme = "",
-			string promptMessages = "",
+			List<Message> promptMessages,
+			string scheme = "", 
 			string model = "gpt-4",
 			double temperature = 0,
 			double topP = 0,

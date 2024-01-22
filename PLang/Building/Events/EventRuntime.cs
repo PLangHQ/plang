@@ -69,7 +69,7 @@ namespace PLang.Building.Events
 			events = new List<EventBinding>();
 
 			string buildEventsFolder = (builder) ? "BuilderEvents" : "Events";
-			var eventsFiles = GetRuntimeEventsFiles(settings.GoalsPath, buildEventsFolder);
+			var eventsFiles = GetRuntimeEventsFiles(fileSystem.GoalsPath, buildEventsFolder);
 
 			foreach (var eventFile in eventsFiles)
 			{

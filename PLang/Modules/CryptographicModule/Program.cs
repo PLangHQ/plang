@@ -1,4 +1,5 @@
 ﻿using Microsoft.IdentityModel.Tokens;
+using Nethereum.ABI;
 using PLang.Interfaces;
 using PLang.Utils;
 using System.ComponentModel;
@@ -12,13 +13,11 @@ namespace PLang.Modules.CryptographicModule
 	public class Program : BaseProgram, IDisposable
 	{
 		private readonly string CurrentBearerToken = "PLang.Modules.CryptographicModule.CurrentBearerToken";
-		private readonly PLangAppContext context;
 		private readonly IEncryption encryption;
 		private readonly ModuleSettings moduleSettings;
 
-		public Program(ISettings settings, PLangAppContext context, IEncryption encryption) : base()
+		public Program(ISettings settings, IEncryption encryption) : base()
 		{
-			this.context = context;
 			this.encryption = encryption;
 			this.moduleSettings = new ModuleSettings(settings);
 		}
@@ -32,6 +31,22 @@ namespace PLang.Modules.CryptographicModule
 		{
 			return encryption.Decrypt<object>(content);
 		}
+
+		public async Task<string?> ConvertToBase64(string content)
+		{
+			if (string.IsNullOrEmpty(content)) return null;
+
+			byte[] bytes = Encoding.UTF8.GetBytes(content); 
+			return Convert.ToBase64String(bytes);
+		}
+
+		public async Task<byte[]?> ConvertFromBase64(string base64)
+		{
+			if (string.IsNullOrEmpty(base64)) return null;
+
+			return Convert.FromBase64String(base64);
+		}
+
 		public async Task<string> CreateSalt(int workFactor = 12)
 		{
 			return BCrypt.Net.BCrypt.GenerateSalt(workFactor);

@@ -35,10 +35,18 @@ namespace PLang.Modules
 		private IAppCache appCache;
 		private IOutputStream outputStream;
 
-		public HttpListenerContext? HttpListenerContext { get { return _listenerContext; } }
+		public HttpListenerContext HttpListenerContext { 
+			get {
+				if (_listenerContext == null) throw new NullReferenceException("_listenerContext is null. It should not be null");
+
+				return _listenerContext; 
+			}
+		}
 		public Goal Goal { get { return goal; } }
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		public BaseProgram()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		{
 		}
 
@@ -76,17 +84,7 @@ namespace PLang.Modules
 				await RunFunction(function);
 
 			}
-			if (this is IFlush)
-			{
-				var disposableSteps = new List<IFlush>();
-				if (context.ContainsKey("DisposableSteps"))
-				{
-					disposableSteps = context["DisposableSteps"] as List<IFlush>;
-				}
-				disposableSteps.Add((IFlush)this);
-				context.AddOrReplace("DisposableSteps", disposableSteps);
-				
-			}
+
 
 		}
 
@@ -232,19 +230,21 @@ Calling {this.GetType().FullName}.{function.FunctionName}
 		}
 
 
-		private async Task SetCachedItem(object result)
+		private async Task SetCachedItem(object? result)
 		{
+			if (result == null) return;
 			if (goalStep?.CacheHandler?.CacheKey == null || goalStep.CacheHandler?.TimeInMilliseconds == null) return;
 
-			long time = (long)goalStep.CacheHandler?.TimeInMilliseconds;
+			long time = goalStep.CacheHandler?.TimeInMilliseconds ?? 0;
+			if (time == 0) return;
 
 			if (goalStep.CacheHandler?.CachingType == 0)
 			{
-				await appCache.Set(goalStep.CacheHandler?.CacheKey, result, TimeSpan.FromMilliseconds((double)time));
+				await appCache.Set(goalStep.CacheHandler?.CacheKey!, result, TimeSpan.FromMilliseconds((double)time));
 			}
 			else
 			{
-				await appCache.Set(goalStep.CacheHandler?.CacheKey, result, DateTime.Now.AddMilliseconds((double)time));
+				await appCache.Set(goalStep.CacheHandler?.CacheKey!, result, DateTime.Now.AddMilliseconds((double)time));
 			}
 		}
 

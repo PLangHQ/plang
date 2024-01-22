@@ -8,11 +8,9 @@ namespace PLang.Modules.ListDictionaryModule
 	[Description("Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global")]
 	public class Program : BaseProgram
 	{
-		private readonly MemoryStack memoryStack;
 
-		public Program(MemoryStack memoryStack) : base()
+		public Program() : base()
 		{
-			this.memoryStack = memoryStack;
 		}
 
 		public async Task<bool> DeleteFromList(object item, List<object> listInstance)

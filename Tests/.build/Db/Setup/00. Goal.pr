@@ -34,8 +34,6 @@
         "assistant": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.SeleniumModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages using Nostr protocol. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.HtmlModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CultureInfoModule\", \"description\": \"Various settings for the program, such as culture, date & number formatting. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, e.g. !RenameFile. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money, sign message, verify signature. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n",
         "model": "gpt-4",
         "caching": true,
-        "Reload": false,
-        "PreviousResult": null,
         "RawResponse": "{\"StepName\": \"CreateTasksTable\",\n\"StepDescription\": \"Create a new table named 'tasks' in the database. The table should have three columns: 'description' which cannot be null, 'due_date' which is a datetime and cannot be null, and 'created' which is a datetime and has a default value of the current time.\",\n\"Modules\": [\"PLang.Modules.DbModule\"],\n\"WaitForExecution\": true}"
       }
     },
@@ -62,7 +60,7 @@
       "LlmQuestion": null
     },
     {
-      "Text": "create table items, columns: name(string, not null)",
+      "Text": "add unqiue index to table task, on description and due_date",
       "Comment": null,
       "ModuleType": null,
       "Name": null,
@@ -82,50 +80,6 @@
       "Number": 3,
       "LineNumber": 3,
       "LlmQuestion": null
-    },
-    {
-      "Text": "drop table items",
-      "Comment": null,
-      "ModuleType": null,
-      "Name": null,
-      "Description": null,
-      "PrFileName": null,
-      "RelativePrPath": null,
-      "Indent": 0,
-      "Execute": true,
-      "RunOnce": false,
-      "Generated": "0001-01-01T00:00:00",
-      "WaitForExecution": true,
-      "ErrorHandler": null,
-      "RetryHandler": null,
-      "CacheHandler": null,
-      "CancellationHandler": null,
-      "Custom": {},
-      "Number": 4,
-      "LineNumber": 4,
-      "LlmQuestion": null
-    },
-    {
-      "Text": "add unqiue index to table task, on description and due_date",
-      "Comment": null,
-      "ModuleType": null,
-      "Name": null,
-      "Description": null,
-      "PrFileName": null,
-      "RelativePrPath": null,
-      "Indent": 0,
-      "Execute": true,
-      "RunOnce": false,
-      "Generated": "0001-01-01T00:00:00",
-      "WaitForExecution": true,
-      "ErrorHandler": null,
-      "RetryHandler": null,
-      "CacheHandler": null,
-      "CancellationHandler": null,
-      "Custom": {},
-      "Number": 5,
-      "LineNumber": 5,
-      "LlmQuestion": null
     }
   ],
   "Description": null,
@@ -138,5 +92,6 @@
   "BuilderVersion": "0.1.0.0",
   "GoalApiInfo": null,
   "Injections": [],
-  "Signature": "6575b024d7856db5df5142e596f6494bb5a8aca20a47e4c45692ce564a1f4527"
+  "Signature": null,
+  "Hash": "8f736f6f01229d117858efe693011908114f292ecef5325d9dad9ee916543b47"
 }

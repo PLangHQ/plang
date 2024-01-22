@@ -4,6 +4,7 @@ using PLang.Building.Model;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Services.OutputStream;
+using PLang.Services.SigningService;
 using PLang.Utils;
 using PLang.Utils.Extractors;
 using System.Text;
@@ -13,28 +14,23 @@ namespace PLang.Services.LlmService
 	public class PLangLlmService : ILlmService
 	{
 		private readonly CacheHelper cacheHelper;
-		private readonly PLangAppContext context;
-		private readonly IPLangFileSystem fileSystem;
-		private readonly ISettingsRepository settingsRepository;
 		private readonly IOutputStream outputStream;
+		private readonly IPLangSigningService signingService;
 
 		public IContentExtractor Extractor { get; set; }
 
-		public PLangLlmService(CacheHelper cacheHelper, PLangAppContext context, IPLangFileSystem fileSystem, ISettingsRepository settingsRepository, IOutputStream outputStream)
+		public PLangLlmService(CacheHelper cacheHelper, IOutputStream outputStream, IPLangSigningService signingService)
 		{
 			this.cacheHelper = cacheHelper;
-			this.context = context;
-			this.fileSystem = fileSystem;
-			this.settingsRepository = settingsRepository;
 			this.outputStream = outputStream;
+			this.signingService = signingService;
 			this.Extractor = new JsonExtractor();
-
 		}
 
 
 		public virtual async Task<T?> Query<T>(LlmRequest question)
 		{
-			return (T)await Query(question, typeof(T));
+			return (T?)await Query(question, typeof(T));
 		}
 
 		public virtual async Task<object?> Query(LlmRequest question, Type responseType)
@@ -60,6 +56,8 @@ namespace PLang.Services.LlmService
 			parameters.Add("temperature", question.temperature);
 			parameters.Add("top_p", question.top_p);
 			parameters.Add("model", question.model);
+			parameters.Add("frequency_penalty", question.frequencyPenalty);
+			parameters.Add("presence_penalty", question.presencePenalty);
 			parameters.Add("type", question.type);
 			parameters.Add("maxLength", question.maxLength);
 			var httpClient = new HttpClient();
@@ -71,7 +69,7 @@ namespace PLang.Services.LlmService
 
 			request.Content = new StringContent(body, Encoding.GetEncoding("utf-8"), "application/json");
 			httpClient.Timeout = new TimeSpan(0, 5, 0);
-			SignRequest(request);
+			await SignRequest(request);
 
 			var response = await httpClient.SendAsync(request);
 
@@ -92,9 +90,9 @@ namespace PLang.Services.LlmService
 			if (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired)
 			{
 				var obj = JObject.Parse(responseBody);
-				if (obj["url"].ToString() != "")
+				if (obj != null && obj["url"].ToString() != "")
 				{
-					await outputStream.Write("You can buy more voucher at this url: " + obj["url"] + ". Restart after payment", "error", 402);
+					await outputStream.Write("You need to fill up your account at plang.is. You can buy at this url: " + obj["url"] + ". Try again after payment", "error", 402);
 				}
 				else
 				{
@@ -141,7 +139,7 @@ namespace PLang.Services.LlmService
 
 				request.Content = new StringContent(body, Encoding.GetEncoding("utf-8"), "application/json");
 				httpClient.Timeout = new TimeSpan(0, 0, 30);
-				SignRequest(request);
+				await SignRequest(request);
 
 				var response = await httpClient.SendAsync(request);
 
@@ -158,45 +156,23 @@ namespace PLang.Services.LlmService
 		}
 
 
-		public void SignRequest(HttpRequestMessage request)
+		public async Task SignRequest(HttpRequestMessage request)
 		{
 			string method = request.Method.Method;
-			string url = request.RequestUri.PathAndQuery;
+			string url = request.RequestUri?.PathAndQuery ?? "/";
 			string contract = "C0";
-			using (var reader = new StreamReader(request.Content.ReadAsStream()))
+			using (var reader = new StreamReader(request.Content.ReadAsStream(), leaveOpen: true))
 			{
-				string body = reader.ReadToEnd();
+				string body = await reader.ReadToEndAsync();
 
-				var dict = Sign(body, method, url, contract);
-				foreach (var item in dict)
+				var signature = signingService.Sign(body, method, url, contract);
+
+				foreach (var item in signature)
 				{
-					request.Headers.TryAddWithoutValidation(item.Key, item.Value);
+					request.Headers.TryAddWithoutValidation(item.Key, item.Value.ToString());
 				}
 			}
 		}
-
-		private Dictionary<string, string> Sign(string data, string method, string url, string contract)
-		{
-			var dict = new Dictionary<string, string>();
-			DateTime created = SystemTime.UtcNow();
-			string nonce = Guid.NewGuid().ToString();
-			string dataToSign = StringHelper.CreateSignatureData(method, url, created.ToFileTimeUtc(), nonce, data, contract);
-
-			var settings = new Settings(settingsRepository, fileSystem);
-
-			var p = new Modules.BlockchainModule.Program(settings, context, null, null, null, null, null);
-			string signedMessage = p.SignMessage(dataToSign).Result;
-			string address = p.GetCurrentAddress().Result;
-
-			dict.Add("X-Signature", signedMessage);
-			dict.Add("X-Signature-Contract", contract);
-			dict.Add("X-Signature-Created", created.ToFileTimeUtc().ToString());
-			dict.Add("X-Signature-Nonce", nonce);
-			dict.Add("X-Signature-Address", address);
-			return dict;
-		}
-
-
 
 
 
@@ -205,7 +181,7 @@ namespace PLang.Services.LlmService
 		/* All this is depricated */
 		public virtual async Task<T?> Query<T>(LlmQuestion question)
 		{
-			return (T)await Query(question, typeof(T));
+			return (T?)await Query(question, typeof(T));
 		}
 
 		public virtual async Task<object?> Query(LlmQuestion question, Type responseType)
@@ -214,7 +190,7 @@ namespace PLang.Services.LlmService
 		}
 
 
-		private class Message
+		public class Message
 		{
 			public Message()
 			{
@@ -223,7 +199,7 @@ namespace PLang.Services.LlmService
 			public string role { get; set; }
 			public List<Content> content { get; set; }
 		}
-		private class Content
+		public class Content
 		{
 			public string type = "text";
 			public string text { get; set; }
@@ -273,7 +249,7 @@ namespace PLang.Services.LlmService
 				});
 			}
 
-			LlmRequest llmRequest = new LlmRequest(question.type, JsonConvert.SerializeObject(promptMessage), question.model, question.caching);
+			LlmRequest llmRequest = new LlmRequest(question.type, promptMessage, question.model, question.caching);
 			return await Query(llmRequest, responseType);
 
 		}

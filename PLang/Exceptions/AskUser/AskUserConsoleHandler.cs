@@ -13,7 +13,7 @@ namespace PLang.Exceptions.AskUser
 
 			if (ex.InvokeCallback != null)
 			{
-				await ex.InvokeCallback(result);
+				await ex.InvokeCallback(result ?? "");
 			}
 			return true;
 

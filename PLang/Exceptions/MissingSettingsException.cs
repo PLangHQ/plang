@@ -25,7 +25,10 @@ namespace PLang.Exceptions
 		public override async Task InvokeCallback(object value)
 		{
 			var task = Callback?.Invoke(new object[] { callingType, type, key, value });
-			await task;
+			if (task != null)
+			{
+				await task;
+			}
 		}
 
 

@@ -1,23 +1,18 @@
 ﻿
 
 using LightInject;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Logging;
-using Nethereum.JsonRpc.Client;
 using Nethereum.JsonRpc.WebSocketClient;
 using Nethereum.RPC.Accounts;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using Nostr.Client.Client;
-using Nostr.Client.Communicator;
 using PLang.Building;
 using PLang.Building.Events;
 using PLang.Building.Parsers;
-using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Modules;
-using PLang.Modules.DbModule;
 using PLang.Modules.MessageModule;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
@@ -25,29 +20,26 @@ using PLang.Services.ArchiveService;
 using PLang.Services.CachingService;
 using PLang.Services.EncryptionService;
 using PLang.Services.EventSourceService;
+using PLang.Services.IdentityService;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
 using RazorEngineCore;
-using System.ComponentModel;
 using System.Data;
 using System.Data.SQLite;
 using System.Net;
-using System.Net.Http;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using Websocket.Client.Logging;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 using static PLang.Modules.DbModule.ModuleSettings;
 
 namespace PLang.Utils
 {
-    public static class Instance
+	public static class Instance
 	{
 		private static readonly string PrefixForTempInjection = "__Temp__";
 		public record InjectedType(Type ServiceType, Type ImplementationType);
-		private static readonly Dictionary<string, InjectedType> injectedTypes = new();
+		private static readonly Dictionary<string, InjectedType> injectedTypes = [];
 
 
 		public static void RegisterForPLang(this ServiceContainer container, string path, string appPath, string askUserHandlerFullName, IOutputStream outputStream)
@@ -63,8 +55,6 @@ namespace PLang.Utils
 			var context = container.GetInstance<PLangAppContext>();
 			askUserHandlerFullName = AppContext.GetData(ReservedKeywords.Inject_AskUserHandler) as string ?? askUserHandlerFullName;
 			context.AddOrReplace(ReservedKeywords.Inject_AskUserHandler, askUserHandlerFullName);
-
-			
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			RegisterModules(container, fileSystem);
@@ -87,8 +77,6 @@ namespace PLang.Utils
 				{
 					return new AskUserHandler(outputStream);
 				});
-
-
 				return outputStream;
 			});
 
@@ -153,11 +141,11 @@ namespace PLang.Utils
 			container.RegisterSingleton<MemoryStack>();
 			container.RegisterSingleton<PLangAppContext>();
 			container.RegisterSingleton<FileAccessHandler>();
-			container.RegisterSingleton<Signature>();
-
+			
 			container.RegisterSingleton<IEventBuilder, EventBuilder>();
 			container.RegisterSingleton<IEventRuntime, EventRuntime>();
-
+			container.RegisterSingleton<IPLangIdentityService, PLangIdentityService>();
+			container.Register<IPublicPrivateKeyCreator, PublicPrivateKeyCreator>();
 
 
 			container.Register<IGoalParser>(factory =>
@@ -169,7 +157,6 @@ namespace PLang.Utils
 			container.Register<IInstructionBuilder, InstructionBuilder>();
 			container.Register<IErrorHelper, ErrorHelper>();
 			container.Register<SettingsBuilder, SettingsBuilder>();
-			container.Register<HttpHelper, HttpHelper>();
 			container.Register<CacheHelper, CacheHelper>();
 			container.Register<VariableHelper, VariableHelper>();
 
@@ -575,12 +562,12 @@ namespace PLang.Utils
 
 			//injectorType = (injectorType.EndsWith(".dll")) ? injectorType : injectorType + ".dll";
 
-			string dllFilePath = Path.Combine(settings.GoalsPath, "services", injectorType);
+			string dllFilePath = Path.Combine(fileSystem.GoalsPath, "services", injectorType);
 			string[] dllFiles = new string[] { dllFilePath };
 			if (!fileSystem.File.Exists(dllFilePath))
 			{
 				//var dirName = Path.GetDirectoryName(injectorType);
-				var moduleFolderPath = Path.Combine(settings.GoalsPath, "services", dllFilePath);
+				var moduleFolderPath = Path.Combine(fileSystem.GoalsPath, "services", dllFilePath);
 				if (!fileSystem.Directory.Exists(moduleFolderPath))
 				{
 					logger.LogError($"{injectorType} injection folder could not be found");

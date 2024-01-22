@@ -24,17 +24,13 @@ namespace PLang.Modules.DbModule
 
 		private ModuleSettings moduleSettings;
 		private readonly IDbConnection dbConnection;
-		private readonly ISettings settings;
 		private readonly IEventSourceRepository eventSourceRepository;
-		private readonly PLangAppContext context;
 
 		public Program(IDbConnection dbConnection, IPLangFileSystem fileSystem, ISettings settings, ILlmService aiService, IEventSourceRepository eventSourceRepository, PLangAppContext context, ILogger logger) : base()
 		{
 			this.dbConnection = dbConnection;
-			this.settings = settings;
 			this.eventSourceRepository = eventSourceRepository;
 			this.context = context;
-
 			this.moduleSettings = new ModuleSettings(fileSystem, settings, context, aiService, dbConnection, logger);
 		}
 
@@ -234,7 +230,7 @@ namespace PLang.Modules.DbModule
 			}
 		}
 
-		public async Task<dynamic?> Select(string sql, List<object>? Parameters = null, bool selectOneRow_Top1OrLimit1 = false)
+		public async Task<object?> Select(string sql, List<object>? Parameters = null, bool selectOneRow_Top1OrLimit1 = false)
 		{
 			var prep = Prepare(Parameters);
 			var rows = (await prep.connection.QueryAsync<dynamic>(sql, prep.param)).ToList();

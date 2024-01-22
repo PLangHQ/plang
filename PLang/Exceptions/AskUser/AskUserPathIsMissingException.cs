@@ -7,7 +7,7 @@
 		}
 		public override async Task InvokeCallback(object value)
 		{
-			await Callback?.Invoke(new object[] { value });
+			await Callback.Invoke([value]);
 		}
 	}
 }

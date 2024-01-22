@@ -30,11 +30,11 @@ namespace PLang.Runtime.Tests
 
 			// Goal file that is in root app
 			string GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
-			fileSystem.AddFile(Path.Join(settings.BuildPath, "GoalWith1Step", ISettings.GoalFileName), new MockFileData(GoalWith1Step));
+			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName), new MockFileData(GoalWith1Step));
 
 			// Goal file that is inside the apps folder
 			string GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
-			fileSystem.AddFile(Path.Join(settings.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName), new MockFileData(GoalWith2Steps));
+			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName), new MockFileData(GoalWith2Steps));
 
 			prParser.ForceLoadAllGoals();
 

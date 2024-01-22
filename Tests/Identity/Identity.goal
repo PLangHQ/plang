@@ -1,0 +1,18 @@
+Identity
+- write out 'My identity: %MyIdentity%'
+- get my identity, write %myCurrentIdentity%
+- write out 'My Current Identity: %myCurrentIdentity%'
+- create new identity 'testIdentity', write to %testIdentity%
+- write out 'Test identity: %testIdentity%'
+- get identity, 'testIdentity', write to %newVarFortestIdentity%
+- write out 'Should be same as before: %newVarFortestIdentity%'
+- archive 'testIdentity', write to %archivedIdentity%
+- write out 'Archived: %archivedIdentity%'
+- set default values: 
+    body = 'Hello world'
+    method = "post"
+    url = "http://plang.is"
+- sign using identity, %body%, %method%, %url%, write to %signature%
+- write out 'Signature: %signature%'
+- validate signature, %body%, %method%, %url%, %signature.KeyValues%, write to %address%
+- write out 'This is the address: %address%

@@ -99,15 +99,22 @@ namespace PLang.Building.Parsers
 			goal.AbsolutePrFolderPath = goal.AbsolutePrFolderPath.AdjustPathToOs();
 		}
 
-		public Instruction ParseInstructionFile(GoalStep step)
+		public Instruction? ParseInstructionFile(GoalStep step)
 		{
+			if (!fileSystem.File.Exists(step.AbsolutePrFilePath))
+			{
+				return null;
+			}
+
 			if (instructions.TryGetValue(step.AbsolutePrFilePath, out var instruction))
 			{
 				return instruction;
 			}
 
 			instruction = JsonHelper.ParseFilePath<Instruction>(fileSystem, step.AbsolutePrFilePath);
-			return instruction;
+			if (instruction != null) return instruction;
+
+			throw new Exception("Could not parse Instruction file.");
 		}
 		public List<Goal> ForceLoadAllGoals()
 		{
@@ -190,7 +197,7 @@ namespace PLang.Building.Parsers
 				goal = allGoals.FirstOrDefault(p => p.RelativeAppStartupFolderPath == appStartupPath && (p.GoalName == goalName || p.RelativeGoalPath.ToLower() == goalPath));
 				if (goal != null) return goal;
 			}
-			else if (appStartupPath == Settings.GlobalPath)
+			else if (appStartupPath == fileSystem.SharedPath)
 			{
 				var goalPath = Path.Combine(appStartupPath, goalName);
 				goal = ParsePrFile(goalPath);
@@ -228,9 +235,9 @@ namespace PLang.Building.Parsers
 				goalName = paths[paths.Count - 1];
 				path = Path.Join(paths.ToArray());
 			}
-			else if (appStartupPath == Settings.GlobalPath)
+			else if (appStartupPath == fileSystem.SharedPath)
 			{
-				path = Settings.GlobalPath;
+				path = fileSystem.SharedPath;
 			}
 			else
 			{

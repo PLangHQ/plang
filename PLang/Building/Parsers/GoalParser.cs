@@ -152,12 +152,12 @@ namespace PLang.Building.Parsers
 
 				goal.AbsoluteGoalPath = goalFileAbsolutePath;
 				goal.AbsoluteGoalFolderPath = Path.GetDirectoryName(goalFileAbsolutePath);
-				goal.RelativeGoalPath = goalFileAbsolutePath.Replace(settings.GoalsPath, "");
+				goal.RelativeGoalPath = goalFileAbsolutePath.Replace(fileSystem.GoalsPath, "");
 				goal.RelativeGoalFolderPath = Path.GetDirectoryName(goal.RelativeGoalPath);
 
 				goal.AbsolutePrFilePath = prFileAbsolutePath;
 				goal.AbsolutePrFolderPath = Path.GetDirectoryName(prFileAbsolutePath);
-				goal.RelativePrPath = Path.Join(".build", prFileAbsolutePath.Replace(settings.BuildPath, ""));
+				goal.RelativePrPath = Path.Join(".build", prFileAbsolutePath.Replace(fileSystem.BuildPath, ""));
 				goal.RelativePrFolderPath = Path.GetDirectoryName(goal.RelativePrPath);
 				if (injections.Count > 0)
 				{
@@ -253,9 +253,9 @@ namespace PLang.Building.Parsers
 
 		public string GetBuildPathOfGoalFile(string goalFilePath)
 		{
-			var path = goalFilePath.Replace(".goal", "").Replace(settings.GoalsPath, "");
+			var path = goalFilePath.Replace(".goal", "").Replace(fileSystem.GoalsPath, "");
 			if (path.StartsWith(Path.DirectorySeparatorChar)) path = path.Substring(1);
-			return Path.Combine(settings.BuildPath, path);
+			return Path.Combine(fileSystem.BuildPath, path);
 		}
 
 	}

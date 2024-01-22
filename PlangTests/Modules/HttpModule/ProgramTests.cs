@@ -94,7 +94,7 @@ namespace PLangTests.Modules.HttpModule
 			});
 			var httpClient = new HttpClient(new TestHttpMessageHandler(url, data, signRequest, headers, encoding, contentType));
 			
-			var p = new PLang.Modules.HttpModule.Program(httpHelper, fileSystem, variableHelper);
+			var p = new PLang.Modules.HttpModule.Program(fileSystem, signingService);
 			var result = await p.Post(url, data, signRequest, headers, encoding, contentType);
 
 

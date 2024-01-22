@@ -218,7 +218,7 @@ namespace PLang.SafeFileSystem
 		}
 
 		/// <inheritdoc />
-		public override IDirectoryInfo GetParent(string path)
+		public override IDirectoryInfo? GetParent(string path)
 		{
 			path = fileSystem.ValidatePath(path);
 			var parent = Directory.GetParent(path);

@@ -36,7 +36,9 @@ namespace PLang.Repository.Tests
 
 			settingsRepository.Remove(setting);
 
-			setting = new Setting(appId, module, typeof(string).Name, key, JsonConvert.SerializeObject(value));
+			var dict = new Dictionary<string, object>();
+			dict.Add("Test", "hello");
+			setting = new Setting(appId, module, typeof(string).Name, key, JsonConvert.SerializeObject(value), dict);
 
 			settingsRepository.Set(setting);
 
@@ -47,6 +49,7 @@ namespace PLang.Repository.Tests
 			Assert.AreEqual(setting.AppId, returnedSetting.AppId);
 			Assert.AreEqual(setting.Created, returnedSetting.Created);
 			Assert.AreEqual(setting.ClassOwnerFullName, returnedSetting.ClassOwnerFullName);
+			Assert.AreEqual("hello", returnedSetting.SignatureData["Test"]);
 
 		}
 
@@ -73,7 +76,7 @@ namespace PLang.Repository.Tests
 			List<DunderMifflin> list = new List<DunderMifflin>();
 			list.Add(value);
 
-			var setting2 = new Setting(appId, classType, typeof(string).Name, key, JsonConvert.SerializeObject(list));
+			var setting2 = new Setting(appId, classType, typeof(string).Name, key, JsonConvert.SerializeObject(list), "");
 			settingsRepository.Set(setting2);
 
 			var returnedSetting = settingsRepository.GetSettings().FirstOrDefault(p => p.ClassOwnerFullName == classType);
@@ -88,7 +91,7 @@ namespace PLang.Repository.Tests
 
 			var value2 = new DunderMifflin("Pamela");
 			list.Add(value2);
-			setting2 = new Setting(appId, classType, typeof(string).Name, key, JsonConvert.SerializeObject(list), returnedSetting.Created);
+			setting2 = new Setting(appId, classType, typeof(string).Name, key, JsonConvert.SerializeObject(list), returnedSetting.SignatureData, returnedSetting.Created);
 
 			settingsRepository.Set(setting2);
 

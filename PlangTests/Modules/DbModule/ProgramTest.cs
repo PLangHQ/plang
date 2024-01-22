@@ -68,7 +68,7 @@ namespace PLangTests.Modules.DbModule
 			dict.Add(new ParameterInfo("phone", "717 555 0177", "System.String"));
 			var id = await p.InsertAndSelectIdOfInsertedRow("INSERT INTO users (name, address, phone) VALUES (@name, @address, @phone);SELECT last_insert_rowid();", dict);
 
-			var result = await p.Select("SELECT * FROM users");
+			var result = (dynamic) await p.Select("SELECT * FROM users");
 			Assert.AreEqual(1, result.Count);
 
 			dict = new List<object>();
@@ -78,7 +78,7 @@ namespace PLangTests.Modules.DbModule
 
 			dict = new List<object>();
 			dict.Add(new ParameterInfo("id", id, "System.Int64"));
-			var user = await p.Select("SELECT * FROM users WHERE id=@id", dict);
+			var user = (dynamic)await p.Select("SELECT * FROM users WHERE id=@id", dict);
 			Assert.AreEqual("Micheal Scott", user[0].name);
 
 			dict = new List<object>();
@@ -128,7 +128,7 @@ namespace PLangTests.Modules.DbModule
 
 
 
-			var result = await p.Select("SELECT * FROM users");
+			var result = (dynamic)await p.Select("SELECT * FROM users");
 			Assert.AreEqual(1, result.Count);
 
 			dict = new List<object>();
@@ -138,7 +138,7 @@ namespace PLangTests.Modules.DbModule
 
 			dict = new List<object>();
 			dict.Add(new ParameterInfo("id", id, "System.Int64"));
-			var user = await p.Select("SELECT * FROM users WHERE id=@id", dict);
+			var user = (dynamic)await p.Select("SELECT * FROM users WHERE id=@id", dict);
 			Assert.AreEqual("Micheal Scott", user[0].name);
 
 			dict = new List<object>();
@@ -158,7 +158,7 @@ namespace PLangTests.Modules.DbModule
 			result = await p.Select("SELECT * FROM users");
 			Assert.AreEqual(1, result.Count);
 
-			var events = await p.Select("SELECT * from __Events__");
+			var events = (dynamic)await p.Select("SELECT * from __Events__");
 			Assert.AreEqual(5, events.Count);
 
 			await p.EndTransaction();

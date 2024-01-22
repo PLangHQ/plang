@@ -1,0 +1,29 @@
+{
+  "Action": {
+    "FunctionName": "GetMyIdentity",
+    "Parameters": [],
+    "ReturnValue": [
+      {
+        "Type": "Identity",
+        "VariableName": "myCurrentIdentity"
+      }
+    ]
+  },
+  "Text": "get my identity, write %myCurrentIdentity%",
+  "Reload": false,
+  "LlmQuestion": {
+    "temperature": null,
+    "top_p": null,
+    "frequencyPenalty": null,
+    "presencePenalty": null,
+    "maxLength": 4000,
+    "type": "PLang.Modules.GenericFunctionBuilder",
+    "system": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. Variables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue: Only if the function returns a value AND if user defines %variable% to write into. If no %variable% is defined then set as null.\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}]}",
+    "question": "get my identity, write %myCurrentIdentity%",
+    "assistant": "## functions available starts ##\r\nIdentity GetMyIdentity()  // Get the current identity, also called %MyIdentity%. \nIdentity CreateIdentity(String name, Boolean? setAsDefault = False)  // Create a new identity in the system. \nIdentity SetCurrentIdentity(String nameOrIdentity)  // Set the current identity(MyIdentity). Name or identity, identity could be a public address, 0x123..... \nIdentity ArchiveIdentity(String nameOrIdentity)  // Archives a identity. Name or identity, identity could be a public address, 0x123..... \nIEnumerable`1 GetIdentities()  // Gets all identites in the system. \nSignatureInfo Sign(String content, String method, String url, String? contract = \"C0\")  // Sign a content with specific method, url and contract. Return SignatureInfo object that contains .Signature and .KeyValues that are the values to create the signature. \nString VerifySignature(String content, String method, String url, Dictionary`2<String, Object> validationKeyValues)  // validationKeyValues should have these keys: X-Signature, X-Signature-Created(type is long, unix time), X-Signature-Nonce, X-Signature-Address, X-Signature-Contract=\"CO\".\r\n## functions available ends ##\r\n## defined variables ##\r\nmyCurrentIdentity (type:object), \r\n## defined variables ##",
+    "model": "gpt-4",
+    "caching": true,
+    "RawResponse": null
+  },
+  "RunOnBuild": false
+}

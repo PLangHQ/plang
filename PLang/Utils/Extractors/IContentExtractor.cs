@@ -81,9 +81,9 @@ namespace PLang.Utils.Extractors
 	{
 		public HtmlExtractor() : base("html") { }
 
-		public object Extract(string content, Type responseType)
+		public new object Extract(string content, Type responseType)
 		{
-			var css = ExtractByType(content, "css", true).ToString().Trim();
+			var css = ExtractByType(content, "css", true).ToString()?.Trim();
 			if (!string.IsNullOrEmpty(css))
 			{
 				if (css.ToLower().Contains("no css needed"))
@@ -95,9 +95,9 @@ namespace PLang.Utils.Extractors
 					css = "<style>" + css + "</style>\n";
 				}
 			}
-			var html = ExtractByType(content, "html", true).ToString().Trim();
+			var html = ExtractByType(content, "html", true).ToString()?.Trim();
 			
-			var javascript = ExtractByType(content, "javascript", true).ToString().Trim();
+			var javascript = ExtractByType(content, "javascript", true).ToString()?.Trim();
 			if (!string.IsNullOrEmpty(javascript))
 			{
 				if (javascript.ToLower().Contains("no javascript needed"))
@@ -132,7 +132,7 @@ namespace PLang.Utils.Extractors
 		}
 
 
-		public string GetRequiredResponse(Type scheme)
+		public new string GetRequiredResponse(Type scheme)
 		{
 			return "Only write the raw ```html, ```css and ```javascript. No summary, no extra text to explain, be concise";
 		}
@@ -147,7 +147,7 @@ namespace PLang.Utils.Extractors
 			var json = htmlExtractor.ExtractByType(content, "json");
 
 			var jsonExtractor = new JsonExtractor();
-			var jsonObject = jsonExtractor.Extract(json.ToString(), typeof(CodeImplementationResponse)) as CodeImplementationResponse;
+			var jsonObject = jsonExtractor.Extract(json.ToString()!, typeof(CodeImplementationResponse)) as CodeImplementationResponse;
 
 			if (implementation != null && implementation.Contains("System.IO."))
 			{
@@ -173,7 +173,7 @@ namespace PLang.Utils.Extractors
 	{
 		public JsonExtractor() : base("json") { }
 
-		public T Extract<T>(string content)
+		public new T Extract<T>(string content)
 		{
 			return (T)Extract(content, typeof(T));
 		}
@@ -200,7 +200,7 @@ namespace PLang.Utils.Extractors
 			return newJson;
 		}
 
-		public object Extract(string content, Type responseType)
+		public new object Extract(string content, Type responseType)
 		{
 			if (responseType == typeof(string)) return content;
 			try
@@ -209,9 +209,9 @@ namespace PLang.Utils.Extractors
 				{
 					if (content.Trim().StartsWith("```json"))
 					{
-						content = ExtractByType(content, "json").ToString();
+						content = ExtractByType(content, "json").ToString()!;
 					}
-					return JsonConvert.DeserializeObject(content, responseType);
+					return JsonConvert.DeserializeObject(content, responseType) ?? "";
 				}
 				catch
 				{
@@ -220,7 +220,7 @@ namespace PLang.Utils.Extractors
 					var obj = JsonConvert.DeserializeObject(newContent, responseType);
 
 					//var newJson = JsonConvert.SerializeObject(obj).Replace("[newline]", "\\n").Replace("[carreturn]", "\\r");
-					return obj;
+					return obj ?? "";
 				}
 			}
 			catch
@@ -245,7 +245,7 @@ namespace PLang.Utils.Extractors
 
 						}
 						sb.Append("]");
-						return JsonConvert.DeserializeObject(sb.ToString(), responseType);
+						return JsonConvert.DeserializeObject(sb.ToString(), responseType) ?? "";
 					}
 
 					foreach (Match match in matches)
@@ -254,19 +254,17 @@ namespace PLang.Utils.Extractors
 						{
 							try
 							{
-								return JsonConvert.DeserializeObject(match.Value.ToString(), responseType);
+								return JsonConvert.DeserializeObject(match.Value.ToString(), responseType) ?? "";
 							}
 							catch
 							{
-								Console.WriteLine("Type:" + responseType);
-								Console.WriteLine(match.Value.ToString());
 								throw;
 							}
 
 						}
 					}
 
-					return default;
+					return "";
 				}
 				catch
 				{
@@ -275,7 +273,7 @@ namespace PLang.Utils.Extractors
 			}
 		}
 
-		public string GetRequiredResponse(Type scheme)
+		public new string GetRequiredResponse(Type scheme)
 		{
 			string strScheme = TypeHelper.GetJsonSchema(scheme);
 			return $"You MUST respond in JSON, scheme:\r\n {strScheme}";

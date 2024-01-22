@@ -9,10 +9,9 @@ namespace PLang.SafeFileSystem
 
 	public sealed class PLangFile : FileWrapper, IFile
 	{
-		private string rootPath;
 		private readonly IPLangFileSystem fileSystem;
 
-		public IFileSystem FileSystem => fileSystem;
+		public new IFileSystem FileSystem => fileSystem;
 
 		public PLangFile(IPLangFileSystem fileSystem) : base(fileSystem)
 		{

@@ -46,7 +46,8 @@ namespace PLang.Building
 			{
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				AppContext.SetSwitch("builder", true);
-				var goalFiles = GoalFiles.GetGoalFilesToBuild(fileSystem, settings.GoalsPath);
+				InitFolders();
+				var goalFiles = GoalFiles.GetGoalFilesToBuild(fileSystem, fileSystem.GoalsPath);
 				logger.LogDebug("Build Start:" + DateTime.Now.ToLongTimeString());
 
 				var eventGoalFiles = await eventBuilder.BuildEventsPr();
@@ -69,6 +70,23 @@ namespace PLang.Building
 					await errorHelper.ShowFriendlyErrorMessage(ex, callBackForAskUser: async () => { await Start(container); });
 				}
 				
+			}
+		}
+
+		private void InitFolders()
+		{
+			var buildPath = Path.Join(fileSystem.RootDirectory, ".build");
+			if (!fileSystem.Directory.Exists(buildPath))
+			{
+				var dir = fileSystem.Directory.CreateDirectory(buildPath);
+				dir.Attributes = FileAttributes.Directory | FileAttributes.Hidden;
+			}
+
+			var dbPath = Path.Join(fileSystem.RootDirectory, ".db");
+			if (!fileSystem.Directory.Exists(dbPath))
+			{
+				var dir = fileSystem.Directory.CreateDirectory(dbPath);
+				dir.Attributes = FileAttributes.Directory | FileAttributes.Hidden;
 			}
 		}
 

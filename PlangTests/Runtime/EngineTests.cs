@@ -39,7 +39,7 @@ namespace PLang.Runtime.Tests
 
 			var fileSystem = new PLangMockFileSystem();
 			var content = PrReaderHelper.GetPrFileRaw("Start.pr");
-			fileSystem.AddFile(settings.GoalsPath, new MockFileData(content));
+			fileSystem.AddFile(fileSystem.GoalsPath, new MockFileData(content));
 
 			var serviceContainer = CreateServiceContainer();
 

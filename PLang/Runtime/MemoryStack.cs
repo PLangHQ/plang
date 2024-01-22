@@ -26,22 +26,25 @@ namespace PLang.Runtime
 		public MemoryStackPathNotFoundException(string message) : base(message) { }
 	}
 
-	public record VariableEvent(VariableEventType EventType, string goalName, Dictionary<string, object>? Parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50);
+	public record VariableEvent(VariableEventType EventType, string goalName, Dictionary<string, object?>? Parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50);
 
 	public class ObjectValue
 	{
-		public ObjectValue(object? value, Type? type, bool Initiated = true)
+		public ObjectValue(string name, object? value, Type? type, ObjectValue? parent, bool Initiated = true)
 		{
+			Name = name;
 			Value = value;
 			Type = type;
 			this.Initiated = Initiated;
+			Parent = parent;
 		}
 
 		public List<VariableEvent> Events = new List<VariableEvent>();
-
+		public string Name { get; set; }
 		public object? Value { get; set; }
 		public Type? Type { get; set; }
 		public bool Initiated { get; set; }
+		public ObjectValue? Parent { get; set; }
 	}
 	public class MemoryStack
 	{
@@ -67,21 +70,12 @@ namespace PLang.Runtime
 			return staticVariables;
 		}
 
-		public void Init(string key, Type type)
-		{
-			variables.AddOrReplace(key, new ObjectValue(null, type, false));
-		}
-		public void InitFakeValue(string key, Type type, string value)
-		{
-			variables.AddOrReplace(key, new ObjectValue(value, type, false));
-		}
-
 		public record VariableExecutionPlan(string VariableName, ObjectValue ObjectValue, List<string> Calls, int Index = 0, string? JsonPath = null);
 
 
 		public ObjectValue GetObjectValue(string variableName, bool staticVariable, bool initiate = false)
 		{
-			if (variableName == null) return new ObjectValue(null, null, initiate);
+			if (variableName == null) return new ObjectValue("", null, null, null, initiate);
 
 			variableName = Clean(variableName).ToLower();
 			KeyValuePair<string, ObjectValue> variable;
@@ -102,26 +96,28 @@ namespace PLang.Runtime
 			var contextObject = context.FirstOrDefault(p => p.Key.ToLower() == variableName);
 			if (contextObject.Key != null)
 			{
-				return new ObjectValue(contextObject.Value, contextObject.Value.GetType(), true);
+				var type = (contextObject.Value != null) ? contextObject.Value.GetType() : typeof(Nullable);
+				return new ObjectValue(variableName, contextObject.Value, type, null, true);
 			}
-			return new ObjectValue(null, typeof(Nullable), initiate);
+			return new ObjectValue(variableName, null, typeof(Nullable), null, initiate);
 		}
 
 		public VariableExecutionPlan GetVariableExecutionPlan(string key, bool staticVariable)
 		{
-			if (key == null) return null;
+			if (key == null) throw new ArgumentNullException(nameof(key));
+
 			key = Clean(key);
 
 			if (variables.ContainsKey(key))
 			{
 				return new VariableExecutionPlan(key, variables[key], new List<string>());
 			}
-			if (!key.Contains(".") && !key.Contains("[")) return new VariableExecutionPlan(key, new ObjectValue(null, null, false), new List<string>());
+			if (!key.Contains(".") && !key.Contains("[")) return new VariableExecutionPlan(key, new ObjectValue(key, null, null, null,false), new List<string>());
 
 			string[] keySplit = key.Split('.');
 			int index = 0;
 			string dictKey = "";
-			string jsonPath = null;
+			string? jsonPath = null;
 			string variableName = keySplit[0];
 			if (keySplit.Length > 1 && Regex.IsMatch(keySplit[1], "^[0-9]+$"))
 			{
@@ -219,7 +215,8 @@ namespace PLang.Runtime
 				if (list.Count >= index)
 				{
 					var item = list[index - 1];
-					objectValue = new ObjectValue(item, item.GetType());
+
+					objectValue = new ObjectValue(variableName, item, item.GetType(), objectValue);
 				}
 				else
 				{
@@ -233,7 +230,7 @@ namespace PLang.Runtime
 					var dict = objectValue.Value as IDictionary;
 					if (dict.Contains(dictKey))
 					{
-						objectValue = new ObjectValue(dict[dictKey], dict[dictKey].GetType());
+						objectValue = new ObjectValue(variableName, dict[dictKey], dict[dictKey].GetType(), objectValue);
 					}
 					else
 					{
@@ -247,7 +244,7 @@ namespace PLang.Runtime
 					{
 						if (counter++ == index)
 						{
-							objectValue = new ObjectValue(item, item.GetType());
+							objectValue = new ObjectValue(variableName,item, item.GetType(), objectValue);
 							break;
 						}
 					}
@@ -258,7 +255,12 @@ namespace PLang.Runtime
 
 		public object? Get(string key, bool staticVariable = false)
 		{
-			if (key == null) return null;
+			return GetObjectValue2(key, staticVariable).Value;
+		}
+
+		public ObjectValue GetObjectValue2(string key, bool staticVariable = false)
+		{
+			if (key == null) return new ObjectValue("", null, typeof(Nullable), null, false);
 			key = Clean(key);
 			var keyLower = key.ToLower();
 			if (keyLower == "now" || keyLower.StartsWith("now+") || keyLower.StartsWith("now-") || keyLower.StartsWith("now."))
@@ -270,32 +272,35 @@ namespace PLang.Runtime
 			{
 				if (keyLower == ReservedKeywords.MemoryStack.ToLower())
 				{
-					return this.GetMemoryStack();
+					return new ObjectValue(key, this.GetMemoryStack(), typeof(Dictionary<string, ObjectValue>), null);
 				}
 
 
 				var objV = this.variables.FirstOrDefault(p => p.Key.ToLower() == keyLower);
 				if (objV.Key != null && objV.Value != null)
 				{
-					return objV.Value.Value;
+					return objV.Value;
 				}
 
 				var value = context.FirstOrDefault(p => p.Key.ToLower() == keyLower);
+				if (value.Value != null)
+				{
+					return new ObjectValue(key, value.Value, value.Value.GetType(), null);
+				}
 				
-				return value.Value;
 			}
 
 			var variables = (staticVariable) ? staticVariables : this.variables;
 			var varKey = variables.FirstOrDefault(p => p.Key.ToLower() == key.ToLower());
 			if (varKey.Key != null && varKey.Value.Initiated)
 			{
-				return variables[varKey.Key].Value;
+				return variables[varKey.Key];
 			}
 
 			var plan = GetVariableExecutionPlan(key, staticVariable);
 			if (!plan.ObjectValue.Initiated)
 			{
-				return null;
+				return new ObjectValue(key, null, typeof(Nullable), null, false);
 			}
 
 			var objectValue = plan.ObjectValue;
@@ -316,21 +321,21 @@ namespace PLang.Runtime
 				}
 			}
 
-
-			return objectValue.Value;
+			return objectValue;
 		}
 
 		private ObjectValue ApplyJsonPath(ObjectValue objectValue, VariableExecutionPlan plan)
 		{
+			if (objectValue.Value == null) return objectValue;
 
 			var objType = objectValue.Value.GetType();
 			IEnumerable<JToken>? tokens = null;
-			if (objType == typeof(JObject))
+			if (objType == typeof(JObject) && plan.JsonPath != null)
 			{
 				tokens = ((JObject)objectValue.Value).SelectTokens(plan.JsonPath);
 
 			}
-			else if (objType == typeof(JArray))
+			else if (objType == typeof(JArray) && plan.JsonPath != null)
 			{
 				try
 				{
@@ -347,23 +352,31 @@ namespace PLang.Runtime
 
 			if (tokens == null)
 			{
-				return new ObjectValue(null, null, false);
+				return new ObjectValue(objectValue.Name, null, null, null, false);
 			}
 
-			object val;
-			if (tokens.Count() > 1)
+			object? val = null;
+			if (tokens != null && tokens.Count() > 1)
 			{
 				val = tokens.ToList();
 			}
-			else
+			else if (tokens != null)
 			{
 				val = tokens.FirstOrDefault();
 			}
+
 			if (val == null)
 			{
-				return new ObjectValue(null, null, false);
+				return new ObjectValue(objectValue.Name, null, null, null, false);
 			}
-			return new ObjectValue(val, val.GetType());
+
+			string objName = objectValue.Name;
+			if (plan.JsonPath != null && plan.JsonPath != "$.." && plan.JsonPath.StartsWith("$."))
+			{
+				objName += plan.JsonPath.Substring(1);
+			}
+
+			return new ObjectValue(objName, val, val.GetType(), objectValue);
 
 		}
 
@@ -390,11 +403,11 @@ namespace PLang.Runtime
 			var variables = (staticVariable) ? staticVariables : this.variables;
 			if (value == null)
 			{
-				AddOrReplace(variables, key, new ObjectValue(null, null, false));
+				AddOrReplace(variables, key, new ObjectValue(key, null, null, null, false));
 				return;
 			}
 
-			string strValue = value.ToString().Trim();
+			string strValue = value.ToString()!.Trim();
 			if (convertToJson && !value.GetType().Name.StartsWith("<>f__Anonymous") && JsonHelper.IsJson(strValue))
 			{
 				if (strValue.StartsWith("["))
@@ -427,7 +440,7 @@ namespace PLang.Runtime
 			if (!key.Contains("."))
 			{
 				var type = (value == null) ? null : value.GetType();
-				AddOrReplace(variables, key, new ObjectValue(value, type, initialize));
+				AddOrReplace(variables, key, new ObjectValue(key, value, type, null, initialize));
 				return;
 			}
 
@@ -438,13 +451,13 @@ namespace PLang.Runtime
 				ObjectValue objectValue = keyPlan.ObjectValue;
 				foreach (var call in keyPlan.Calls)
 				{
-					object obj = keyPlan.ObjectValue.Value;
+					object? obj = keyPlan.ObjectValue.Value;
 					if (obj == null) obj = new { };
 
 					if (obj.GetType().Name.StartsWith("<>f__Anonymous"))
 					{
 						var anomType = obj.GetType();
-						var properties = new Dictionary<string, object>();
+						var properties = new Dictionary<string, object?>();
 						foreach (var prop in anomType.GetProperties())
 						{
 							if (prop.Name.ToLower() == call.ToLower())
@@ -458,7 +471,9 @@ namespace PLang.Runtime
 						}
 
 						var anomObject = Activator.CreateInstance(anomType, properties.Values.ToArray());
-						objectValue = new ObjectValue(anomObject, anomObject.GetType(), initialize);
+						if (anomObject == null) throw new NullReferenceException($"{nameof(anomObject)} is null, it should not be null");
+
+						objectValue = new ObjectValue(objectValue.Name, anomObject, anomObject.GetType(), objectValue, initialize);
 					}
 					else if (call.Contains("("))
 					{
@@ -472,12 +487,12 @@ namespace PLang.Runtime
 						{
 							throw new VariableDoesNotExistsException($"{call} does not exist on variable {keyPlan.VariableName}, there for I cannot set {key}");
 						}
-						if (value.GetType() != propInfo.PropertyType)
+						if (value != null && value.GetType() != propInfo.PropertyType)
 						{
 							value = Convert.ChangeType(value, propInfo.PropertyType);
 						}
 						propInfo.SetValue(obj, value);
-						objectValue = new ObjectValue(obj, obj.GetType(), initialize);
+						objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
 					}
 
 				}
@@ -520,8 +535,11 @@ namespace PLang.Runtime
 					var context = engine.GetContext();
 					if (context != null && context.ContainsKey(ReservedKeywords.Goal))
 					{
-						var goal = (Goal)context[ReservedKeywords.Goal];
-						await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, eve.goalName, eve.Parameters);
+						var goal = context[ReservedKeywords.Goal] as Goal;
+						if (goal != null)
+						{
+							await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, eve.goalName, eve.Parameters);
+						}
 					}
 				});
 				task.Wait();
@@ -542,7 +560,6 @@ namespace PLang.Runtime
 
 		public string Clean(string str)
 		{
-			if (str == null) return null;
 			str = str.Trim();
 			if (str.StartsWith("%")) str = str.Substring(1);
 			if (str.EndsWith("%")) str = str.Remove(str.Length - 1);
@@ -560,7 +577,7 @@ namespace PLang.Runtime
 			return ConvertToType(obj, key, type);
 		}
 
-		public static object ConvertToType(object value, string key, Type targetType)
+		public static object? ConvertToType(object? value, string key, Type targetType)
 		{
 			if (value == null) return null; 
 			if (targetType.Name == "Object")
@@ -625,7 +642,7 @@ namespace PLang.Runtime
 			
 		}
 
-		private object GetNow(string key)
+		private ObjectValue GetNow(string key)
 		{
 
 			if (key.Contains("="))
@@ -634,7 +651,7 @@ namespace PLang.Runtime
 				key = strings[0];
 				if (DateTime.TryParse(strings[1].Trim(), out DateTime result))
 				{
-					return result;
+					return new ObjectValue(key, result, typeof(DateTime), null);
 				}
 
 			}
@@ -642,17 +659,17 @@ namespace PLang.Runtime
 			{
 				string[] strings = key.Split("+");
 				string addString = strings[1];
-				return CalculateDate("+", addString);
+				return new ObjectValue(key, CalculateDate("+", addString), typeof(DateTime), null);
 			}
 			if (key.Contains("-") && !key.Contains("."))
 			{
 				string[] strings = key.Split("-");
 				string addString = strings[1];
-				return CalculateDate("-", addString);
+				return new ObjectValue(key, CalculateDate("-", addString), typeof(DateTime), null);
 			}
 			if (key.Contains("."))
 			{
-				var objectValue = new ObjectValue(DateTime.UtcNow, typeof(DateTime));
+				var objectValue = new ObjectValue(key, SystemTime.UtcNow, typeof(DateTime), null);
 				if (key.Contains("("))
 				{
 					objectValue = ExecuteMethod(objectValue, key.Substring(key.IndexOf(".") + 1), "Now");
@@ -662,11 +679,11 @@ namespace PLang.Runtime
 					objectValue = ExecuteProperty(objectValue, key.Substring(key.IndexOf(".") + 1), "Now");
 				}
 
-				return objectValue.Value;
+				if (objectValue.Value != null) return objectValue;
 
 			}
 
-			return DateTime.UtcNow;
+			return new ObjectValue(key, SystemTime.UtcNow, typeof(DateTime), null);
 		}
 
 
@@ -711,9 +728,9 @@ namespace PLang.Runtime
 
 			if (value == null)
 			{
-				return new ObjectValue(null, null, false);
+				return new ObjectValue(objValue.Name, null, null, null, false);
 			}
-			var objectValue = new ObjectValue(value, value.GetType());
+			var objectValue = new ObjectValue(objValue.Name, value, value.GetType(), objValue);
 			return objectValue;
 
 		}
@@ -743,7 +760,7 @@ namespace PLang.Runtime
 					}
 				}
 
-				var objectValue = new ObjectValue(json, json.GetType());
+				var objectValue = new ObjectValue(objValue.Name, json, json.GetType(), objValue);
 				return objectValue;
 			}
 
@@ -752,22 +769,22 @@ namespace PLang.Runtime
 			{
 				if (enumerable is IDictionary dictionary)
 				{
-					return new ObjectValue(dictionary, dictionary.GetType());
+					return new ObjectValue(objValue.Name, dictionary, dictionary.GetType(), objValue);
 
 				}
 				else if (enumerable is IList list)
 				{
-					return new ObjectValue(list, list.GetType());
+					return new ObjectValue(objValue.Name, list, list.GetType(), objValue);
 				}
 				else if (enumerable is IEnumerable<KeyValuePair<string, int>> keyValuePairs)
 				{
 					var dict = keyValuePairs.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-					return new ObjectValue(dict, dict.GetType());
+					return new ObjectValue(objValue.Name, dict, dict.GetType(), objValue);
 				}
 				else if (enumerable is IEnumerable<object> objects)
 				{
 					var list3 = objects.ToList();
-					return new ObjectValue(list3, list3.GetType());
+					return new ObjectValue(objValue.Name, list3, list3.GetType(), objValue);
 				}
 
 				List<object> list2 = new List<object>();
@@ -775,7 +792,7 @@ namespace PLang.Runtime
 				{
 					list2.Add(item);
 				}
-				return new ObjectValue(list2, list2.GetType()); ;
+				return new ObjectValue(objValue.Name, list2, list2.GetType(), objValue); ;
 			}
 
 			var methodName = methodDescription.Substring(0, methodDescription.IndexOf("("));
@@ -786,8 +803,7 @@ namespace PLang.Runtime
 			splitParams.ForEach(p => paramValues.Add(p));
 
 			var type = obj.GetType();
-			var methods = GetMethodOnType(type, methodName, paramValues, obj).ToList();
-
+			var methods = GetMethodsOnType(type, methodName, paramValues, obj).ToList();
 
 			if (methods.Count == 0 && !isBuilder)
 			{
@@ -831,7 +847,12 @@ namespace PLang.Runtime
 					}
 
 					obj = method.Invoke(obj, convertedParams);
-					var objectValue = new ObjectValue(obj, obj.GetType());
+					if (obj == null)
+					{
+						return new ObjectValue(objValue.Name, null, typeof(Nullable), null, false);
+					}
+
+					var objectValue = new ObjectValue(objValue.Name, obj, obj.GetType(), null);
 					return objectValue;
 				}
 				catch
@@ -845,7 +866,7 @@ namespace PLang.Runtime
 			return objValue;
 		}
 
-		private IEnumerable<MethodInfo>? GetMethodOnType(Type type, string methodName, List<object> paramValues, object obj)
+		private IEnumerable<MethodInfo> GetMethodsOnType(Type type, string methodName, List<object> paramValues, object obj)
 		{
 
 
@@ -858,7 +879,7 @@ namespace PLang.Runtime
 					paramValues.Insert(0, obj);
 				}
 			}
-			return methods;
+			return methods ?? new List<MethodInfo>();
 
 		}
 

@@ -1,0 +1,86 @@
+{
+  "GoalName": "Events",
+  "Comment": null,
+  "GoalSteps": [
+    {
+      "Text": "before each step, include private goals,call !SendDebug, only in debug mode",
+      "Comment": null,
+      "ModuleType": null,
+      "Name": null,
+      "Description": null,
+      "PrFileName": null,
+      "RelativePrPath": null,
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-01-08T13:00:44.4294914+00:00",
+      "WaitForExecution": true,
+      "ErrorHandler": null,
+      "RetryHandler": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {
+        "Event": {
+          "EventType": 0,
+          "EventScope": 30,
+          "GoalToBindTo": "*",
+          "GoalToCall": "!SendDebug",
+          "IncludePrivate": true,
+          "StepNumber": null,
+          "StepText": null,
+          "WaitForExecution": true,
+          "RunOnlyInDebugMode": true
+        }
+      },
+      "Number": 1,
+      "LineNumber": 1,
+      "LlmQuestion": null
+    },
+    {
+      "Text": "before goal ends, include private goals, call !SendDebug, only in debug mode",
+      "Comment": null,
+      "ModuleType": null,
+      "Name": null,
+      "Description": null,
+      "PrFileName": null,
+      "RelativePrPath": null,
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-01-08T13:00:44.4370389+00:00",
+      "WaitForExecution": true,
+      "ErrorHandler": null,
+      "RetryHandler": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {
+        "Event": {
+          "EventType": 1,
+          "EventScope": 20,
+          "GoalToBindTo": null,
+          "GoalToCall": "!SendDebug",
+          "IncludePrivate": true,
+          "StepNumber": null,
+          "StepText": null,
+          "WaitForExecution": true,
+          "RunOnlyInDebugMode": true
+        }
+      },
+      "Number": 2,
+      "LineNumber": 2,
+      "LlmQuestion": null
+    }
+  ],
+  "Description": null,
+  "Visibility": 1,
+  "GoalFileName": "Events.goal",
+  "RelativeGoalPath": "\\events\\Events.goal",
+  "RelativeGoalFolderPath": "\\events",
+  "RelativePrPath": ".build\\events\\Events\\00. Goal.pr",
+  "RelativePrFolderPath": ".build\\events\\Events",
+  "BuilderVersion": null,
+  "GoalApiInfo": null,
+  "Injections": [],
+  "Signature": null,
+  "Hash": null
+}

@@ -1,21 +1,18 @@
-﻿using LightInject;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Building.Events;
 using PLang.Building.Model;
 using PLang.Exceptions;
-using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Utils;
 using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
 using static PLang.Modules.Compiler;
-using static PLang.Runtime.Startup.ModuleLoader;
 
 namespace PLang.Building
 {
-    public interface IStepBuilder
+	public interface IStepBuilder
 	{
 		Task BuildStep(Goal goal, int stepNr, List<string>? excludeModules = null, int errorCount = 0);
 	}
@@ -142,34 +139,36 @@ namespace PLang.Building
 			step.Reload = (step.Reload || instruction.Reload && step.Text != instruction?.Text);
 			if (step.Reload) return step.Reload;
 
+			string? action = instruction?.Action?.ToString();
+			if (action == null) return false;
+
 			// lets load the return value into memoryStack
-			if (instruction.Action != null) {
-				if (instruction.Action.ToString().Contains("ReturnValue"))
+			if (action.Contains("ReturnValue"))
+			{
+				try
 				{
-					try
+					var gf = JsonConvert.DeserializeObject<GenericFunction>(action);
+					if (gf != null && gf.ReturnValue != null && gf.ReturnValue.Count > 0)
 					{
-						var gf = JsonConvert.DeserializeObject<GenericFunction>(instruction.Action.ToString());
-						if (gf != null && gf.ReturnValue != null && gf.ReturnValue.Count > 0)
+						foreach (var returnValue in gf.ReturnValue)
 						{
-							foreach (var returnValue in gf.ReturnValue)
-							{
-								memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
-							}
-						}
-					}
-					catch { }
-				} else if (instruction.Action.ToString().Contains("OutParameterDefinition"))
-				{
-					var implementation = JsonConvert.DeserializeObject<Implementation>(instruction.Action.ToString());
-					if (implementation != null && implementation.OutParameterDefinition != null)
-					{
-						foreach (var vars in implementation.OutParameterDefinition)
-						{
-							memoryStack.PutForBuilder(vars.Key, JsonConvert.SerializeObject(vars.Value));
+							memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
 						}
 					}
 				}
-			} 
+				catch { }
+			}
+			else if (action.Contains("OutParameterDefinition"))
+			{
+				var implementation = JsonConvert.DeserializeObject<Implementation>(action);
+				if (implementation != null && implementation.OutParameterDefinition != null)
+				{
+					foreach (var vars in implementation.OutParameterDefinition)
+					{
+						memoryStack.PutForBuilder(vars.Key, JsonConvert.SerializeObject(vars.Value));
+					}
+				}
+			}
 
 			logger.Value.LogDebug($"- Step {step.Name} is already built");
 			return true;
@@ -207,7 +206,7 @@ Modules: Name of module. Suggest 1-3 modules that could be used to solve the ste
 StepName: Short name for step
 StepDescription: Rewrite the step as you understand it, make it detailed
 WaitForExecution: Indicates if code should wait for execution to finish, default is true
-ErrorHandler: How to handle errors, default is null. if error should be handled but text is not defined, then use * for key
+ErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key
 RetryHandler: How to retry the step if there is error, default is null
 CachingHandler: How caching is handled, default is null
 Read the description of each module, then determine which module to use
@@ -275,7 +274,7 @@ Sliding = 0, Absolute = 1
 				{
 					foreach (var tmp in modules)
 					{
-						if (tmp.FullName.ToLower().Contains(matchValue.ToLower()))
+						if (tmp.FullName != null && tmp.FullName.ToLower().Contains(matchValue.ToLower()))
 						{
 							userRequestedModules.Add(tmp.FullName.Replace(".Program", ""));
 						}

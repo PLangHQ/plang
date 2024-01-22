@@ -1,4 +1,5 @@
-﻿using PLang.Interfaces;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using PLang.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -41,7 +42,7 @@ namespace PLang.SafeFileSystem
 		}
 
 		/// <inheritdoc />
-		public IDirectoryInfo Wrap(DirectoryInfo directoryInfo)
+		public IDirectoryInfo? Wrap(DirectoryInfo? directoryInfo)
 		{
 			if (directoryInfo == null)
 			{

@@ -11,7 +11,7 @@ namespace PLangTests.Modules.ListDictionaryModule
 		public void Init()
 		{
 			base.Initialize();
-			p = new Program(memoryStack);
+			p = new Program();
 		}
 		/*
 

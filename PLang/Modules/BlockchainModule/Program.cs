@@ -28,15 +28,13 @@ namespace PLang.Modules.BlockchainModule
 	// this is so they dont stay in memory until garbage collection
 	// this needs to happen down the call stack and figure out how settings is handled
 
-	[Description("Use blockchain, create wallet, account info, transfer money, sign message, verify signature")]
+	[Description("Use blockchain, create wallet, account info, transfer money")]
 	public class Program : BaseProgram, IDisposable
 	{
 		private readonly IWeb3 web3;
 		private readonly ISettings settings;
-		private readonly PLangAppContext context;
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
-		private readonly MemoryStack memoryStack;
 		private readonly ILogger logger;
 		private readonly ModuleSettings moduleSettings;
 
@@ -46,14 +44,12 @@ namespace PLang.Modules.BlockchainModule
 		public static readonly string CurrentAddressContextKey = "PLang.Modules.BlockchainModule.ModuleSettings.CurrentAddress";
 		public static readonly string CurrentRpcServerContextKey = "PLang.Modules.BlockchainModule.ModuleSettings.CurrentRpcServer";
 
-		public Program(ISettings settings, PLangAppContext context, ILlmService aiService, 
-			IPseudoRuntime pseudoRuntime, IEngine engine, MemoryStack memoryStack, ILogger logger) : base()
+		public Program(ISettings settings, ILlmService aiService, 
+			IPseudoRuntime pseudoRuntime, IEngine engine, ILogger logger) : base()
 		{
 			this.settings = settings;
-			this.context = context;
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
-			this.memoryStack = memoryStack;
 			this.logger = logger;
 			this.moduleSettings = new ModuleSettings(settings, aiService);
 
@@ -588,35 +584,6 @@ namespace PLang.Modules.BlockchainModule
 			//return addresses[idx];
 
 		}
-
-		public async Task<string> SignMessage(string message)
-		{
-			// TODO: signing a message should trigger a AskUserException. 
-			// this would then ask the user if he want to sign the message
-			// the user can accept it and even allow expire date far into future.
-			var wallet = await GetOrCreateWallet();
-			var idx = (context.ContainsKey(CurrentAddressContextKey)) ? (int)context[CurrentAddressContextKey] : 0;
-			var signer = new EthereumMessageSigner();
-			var signature = signer.HashAndSign(Encoding.UTF8.GetBytes(message), wallet.GetEthereumKey(idx));
-			return signature;
-		}
-
-		public async Task<bool> VerifySignature(string message, string signature, string expectedAddress)
-		{
-			var signer = new EthereumMessageSigner();
-			var byteMessage = Encoding.UTF8.GetBytes(message);
-			// Extract the address from the signature
-			string recoveredAddress = signer.HashAndEcRecover(message, signature);
-
-			// Normalize addresses (to ensure they're in the same format)
-			var normalizer = new AddressUtil();
-			string recoveredAddress2 = normalizer.ConvertToChecksumAddress(recoveredAddress);
-			string expectedAddress2 = normalizer.ConvertToChecksumAddress(expectedAddress);
-
-			// Compare the recovered and expected addresses
-			return recoveredAddress2 == expectedAddress2;
-		}
-
 
 		public async Task<BigInteger> GetBalanceInWei(string address)
 		{

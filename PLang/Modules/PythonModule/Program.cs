@@ -7,6 +7,7 @@ using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
+using PLang.Services.SigningService;
 using PLang.Utils;
 using Python.Runtime;
 using System.ComponentModel;
@@ -21,29 +22,27 @@ namespace PLang.Modules.PythonModule
 		private readonly ILogger logger;
 		private readonly ISettings settings;
 		private readonly IOutputStream outputStream;
-		private readonly MemoryStack memoryStack;
-		private readonly Signature signature;
+		private readonly IPLangSigningService signingService;
 
-		public Program(IPLangFileSystem fileSystem, ILogger logger, ISettings settings, IOutputStream outputStream, MemoryStack memoryStack, Signature signature) : base()
+		public Program(IPLangFileSystem fileSystem, ILogger logger, ISettings settings, IOutputStream outputStream, IPLangSigningService signingService) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.logger = logger;
 			this.settings = settings;
 			this.outputStream = outputStream;
-			this.memoryStack = memoryStack;
-			this.signature = signature;
+			this.signingService = signingService;
 		}
 
 		[Description("Run a python script. parameterNames should be equal length as parameterValues. Parameter example name=%name%. variablesToExtractFromPythonScript are keys in the format [a-zA-Z0-9_\\.]+ that the user want to write to")]
 		public async Task<Dictionary<string, object>> RunPythonScript(string fileName = "main.py",
-			string[] parameterValues = null, string[] parameterNames = null,
-			[HandlesVariable] string[] variablesToExtractFromPythonScript = null,
-			bool useNamedArguments = false, bool useTerminal = false, string pythonPath = null,
-			string stdOutVariableName = null, string stdErrorVariableName = null)
+			string[]? parameterValues = null, string[]? parameterNames = null,
+			[HandlesVariable] string[]? variablesToExtractFromPythonScript = null,
+			bool useNamedArguments = false, bool useTerminal = false, string? pythonPath = null,
+			string? stdOutVariableName = null, string? stdErrorVariableName = null)
 		{
 
 			var result = new Dictionary<string, object>();
-			var program = new TerminalModule.Program(logger, settings, outputStream, memoryStack);
+			var program = new TerminalModule.Program(logger, settings, outputStream, fileSystem);
 
 			if (fileSystem.File.Exists("requirements.txt"))
 			{
@@ -112,13 +111,13 @@ namespace PLang.Modules.PythonModule
 					{
 						dynamic pyModule = Py.Import("__main__");
 
-						pyModule.plangSign = new Func<string, string, string, string, PyObject>((input, method, url, contract) =>
+						pyModule.plangSign = new Func<string, string, string, string, Task<PyObject>>(async (input, method, url, contract) =>
 						{
-							var result = signature.Sign(input, method, url, contract);
+							var signatureData = signingService.Sign(input, method, url, contract);
 							PyDict pyResult = new PyDict();
-							foreach (var kv in result)
+							foreach (var kv in signatureData)
 							{
-								pyResult[new PyString(kv.Key)] = new PyString(kv.Value);
+								pyResult[new PyString(kv.Key)] = new PyString(kv.Value.ToString());
 							}
 							return pyResult;
 						});
@@ -131,7 +130,7 @@ namespace PLang.Modules.PythonModule
 						args.Add(new PyString(fileName));
 						for (int i = 0; parameterValues != null && i < parameterValues.Length; i++)
 						{
-							if (parameterNames != null || useNamedArguments)
+							if (parameterNames != null && useNamedArguments)
 							{
 								string paramName = (parameterNames[i].StartsWith("--")) ? parameterNames[i] : "--" + parameterNames[i];
 								args.Add(new PyString(paramName));
@@ -142,13 +141,16 @@ namespace PLang.Modules.PythonModule
 						sys.argv = new PyList(args.ToArray());
 
 						string code = fileSystem.File.ReadAllText(fileName);
-						variablesToExtractFromPythonScript = variablesToExtractFromPythonScript.Select(p => p.Replace("%", "")).ToArray();
-						string pythonList = "['" + string.Join("', '", variablesToExtractFromPythonScript) + "']";
+						if (variablesToExtractFromPythonScript != null)
+						{
+							variablesToExtractFromPythonScript = variablesToExtractFromPythonScript.Select(p => p.Replace("%", "")).ToArray();
+							string pythonList = "['" + string.Join("', '", variablesToExtractFromPythonScript) + "']";
 
-						string appendedCode = $"\n\nimport __main__\n";
-						appendedCode += $"__main__.plang_export_variables_dict = {{k: v for k, v in globals().items() if k in {pythonList}}}";
+							string appendedCode = $"\n\nimport __main__\n";
+							appendedCode += $"__main__.plang_export_variables_dict = {{k: v for k, v in globals().items() if k in {pythonList}}}";
 
-						code += appendedCode;
+							code += appendedCode;
+						}
 						PythonEngine.Exec(code);
 
 						capturedStdout = sys.stdout.getvalue().ToString();
@@ -163,7 +165,7 @@ namespace PLang.Modules.PythonModule
 							{
 								var key = item[0].ToString();
 
-								if (variablesToExtractFromPythonScript.FirstOrDefault(p => p == key) != null)
+								if (key != null && variablesToExtractFromPythonScript.FirstOrDefault(p => p == key) != null)
 								{
 									var value = ConvertValue(item[1]);
 									result.AddOrReplace(key, value);
@@ -248,12 +250,12 @@ namespace PLang.Modules.PythonModule
 					{
 						logger.LogWarning("Unsupported OS platform.");
 					}
-					;
 
+					if (pythonPath == null) throw new NullReferenceException("pythonPath is empty, please define it");
 				}
 				var parameterList = new List<string>();
 				parameterList.Add(fileName);
-				for (int i = 0; i < parameterNames.Length; i++)
+				for (int i = 0; parameterValues != null && parameterNames != null && i < parameterNames.Length; i++)
 				{
 					parameterList.Add($"--{parameterNames[i]}={parameterValues[i]} ");
 				}
@@ -269,13 +271,16 @@ namespace PLang.Modules.PythonModule
 					{
 						foreach (var output in jobj)
 						{
-							if ("dataOutputVariable".ToLower().Contains(output.FirstOrDefault().ToString().Replace("%", "").ToLower()))
+							var item = output.FirstOrDefault()?.ToString();
+							if (item == null) continue;
+
+							if ("dataOutputVariable".ToLower().Contains(item.Replace("%", "").ToLower()))
 							{
-								dataOutputVariable = output.FirstOrDefault().ToString();
+								dataOutputVariable = item;
 							}
-							if ("errorDebugInfoOutputVariable".ToLower().Contains(output.FirstOrDefault().ToString().Replace("%", "").ToLower()))
+							if ("errorDebugInfoOutputVariable".ToLower().Contains(item.Replace("%", "").ToLower()))
 							{
-								errorDebugInfoOutputVariable = output.FirstOrDefault().ToString();
+								errorDebugInfoOutputVariable = item;
 							}
 						}
 					}

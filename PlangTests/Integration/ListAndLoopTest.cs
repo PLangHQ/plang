@@ -14,12 +14,12 @@ namespace PLangTests.Integration
 		public void Init() {
 			base.Initialize();
 
-			fileProgram = new(fileSystem, settings, logger, context, memoryStack, pseudoRuntime, engine);
+			fileProgram = new(fileSystem, settings, logger, pseudoRuntime, engine);
 			fileProgram.Init(container, null, null, null, null, null, null, null, null, null, null, null);
 			var goal = new Goal();
 			goal.RelativeAppStartupFolderPath = "/";
 
-			loopProgram = new(logger, pseudoRuntime, engine, memoryStack);
+			loopProgram = new(logger, pseudoRuntime, engine);
 			loopProgram.Init(container, goal, null, null, null, null, null, null, null, null, null, null);
 		}
 

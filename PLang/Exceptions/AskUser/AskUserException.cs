@@ -10,18 +10,22 @@ using static PLang.Runtime.Startup.ModuleLoader;
 
 namespace PLang.Exceptions.AskUser
 {
-    public abstract class AskUserException : Exception
+	public abstract class AskUserException : Exception
 	{
-		protected Func<object[], Task>? Callback { get; set; }
+		protected Func<object[], Task> Callback { get; set; }
 		public abstract Task InvokeCallback(object value);
-		public AskUserException(string question, Func<object[], Task>? callback = null) : base(question)
+		public AskUserException(string question) : base(question)
+		{
+			this.Callback = (obj) => { return Task.CompletedTask; };
+		}
+		public AskUserException(string question, Func<object[], Task> callback) : base(question)
 		{
 			this.Callback = callback;
 		}
 
 		protected static Func<object[], Task> CreateAdapter(Delegate? callback)
 		{
-			if (callback == null) { return null; }
+			if (callback == null) { return (obj) => { return Task.CompletedTask; }; }
 			return async args =>
 			{
 				var result = callback.DynamicInvoke(args) as Task;
@@ -55,7 +59,7 @@ namespace PLang.Exceptions.AskUser
 		}
 		public override async Task InvokeCallback(object value)
 		{
-			await Callback.Invoke(new object[] { value });
+			await Callback.Invoke([value]);			
 		}
 	}
 
@@ -80,7 +84,9 @@ namespace PLang.Exceptions.AskUser
 
 		public override async Task InvokeCallback(object answer)
 		{
-			await Callback.Invoke(new object[] { dataSourceName, typeFullName, regexToExtractDatabaseNameFromConnectionString, answer, keepHistory, isDefault });
+			if (Callback == null) return;
+
+			await Callback.Invoke([dataSourceName, typeFullName, regexToExtractDatabaseNameFromConnectionString, answer, keepHistory, isDefault]);
 
 		}
 	}
@@ -96,8 +102,8 @@ namespace PLang.Exceptions.AskUser
 			this.supportedDbTypes = supportedDbTypes;
 		}
 
-		private record MethodResponse(string typeFullName, string dataSourceName, string nugetCommand, 
-				string regexToExtractDatabaseNameFromConnectionString, string dataSourceConnectionStringExample, 
+		private record MethodResponse(string typeFullName, string dataSourceName, string nugetCommand,
+				string regexToExtractDatabaseNameFromConnectionString, string dataSourceConnectionStringExample,
 				bool keepHistoryEventSourcing, bool isDefault = false);
 
 		public override async Task InvokeCallback(object answer)
@@ -123,11 +129,20 @@ You must return JSON scheme:
 			var llmQuestion = new LlmQuestion("AskUserDatabaseType", system, answer.ToString(), assistant);
 			var result = await aiService.Query<MethodResponse>(llmQuestion);
 
-			await Callback.Invoke(new object[] {
-				 result.typeFullName, result.dataSourceName, result.nugetCommand, result.dataSourceConnectionStringExample,
-				result.regexToExtractDatabaseNameFromConnectionString, result.keepHistoryEventSourcing, result.isDefault});	
+			if (result == null) throw new Exception("Could not use LLM to format your answer");
+			if (Callback == null) return;
+
+			await Callback.Invoke([
+				 result.typeFullName,
+				result.dataSourceName,
+				result.nugetCommand,
+				result.dataSourceConnectionStringExample,
+				result.regexToExtractDatabaseNameFromConnectionString,
+				result.keepHistoryEventSourcing,
+				result.isDefault]);
+			
 		}
-	}	
+	}
 	public class AskUserSqliteName : AskUserException
 	{
 		private readonly string rootPath;
@@ -139,15 +154,17 @@ You must return JSON scheme:
 
 		public override async Task InvokeCallback(object answer)
 		{
-			var dbName = answer.ToString().Replace(" ", "_").Replace(".sqlite", "");
+			if (Callback == null) return;
+
+			var dbName = answer.ToString()!.Replace(" ", "_").Replace(".sqlite", "");
 			string dbPath = "." + Path.DirectorySeparatorChar + ".db" + Path.DirectorySeparatorChar + dbName + ".sqlite";
 			string dbAbsolutePath = Path.Join(rootPath, dbPath);
 
-			await Callback.Invoke(new object[] {
-				dbName.ToString(), typeof(SQLiteConnection).FullName, dbName.ToString() + ".sqlite", $"Data Source={dbAbsolutePath};Version=3;", true, false});	
+			await Callback.Invoke([
+				dbName.ToString(), typeof(SQLiteConnection).FullName!, dbName.ToString() + ".sqlite", $"Data Source={dbAbsolutePath};Version=3;", true, false]);
 
 		}
-	}		
+	}
 	public class AskUserDataSourceNameExists : AskUserException
 	{
 		private readonly ILlmService aiService;
@@ -176,6 +193,8 @@ You must return JSON scheme:
 		private record MethodResponse(string typeFullName, string dataSourceName, string dataSourceConnectionStringExample, string nugetCommand, string regexToExtractDatabaseNameFromConnectionString, bool keepHistoryEventSourcing, bool isDefault = false);
 		public override async Task InvokeCallback(object answer)
 		{
+			if (Callback == null) return;
+
 			string assistant = @$"These are previously defined properties by the user, use them if not otherwise defined by user.
 ## previously defined ##
 typeFullName: {typeFullName}
@@ -188,12 +207,13 @@ keepHistoryEventSourcing: {keepHistoryEventSourcing}
 ## previously defined ##
 ";
 
-			var llmQuestion = new LlmQuestion("AskUserDatabaseType", $"Map user request", answer.ToString(), "");
+			var llmQuestion = new LlmQuestion("AskUserDatabaseType", $"Map user request", answer.ToString()!, "");
 			var result = await aiService.Query<MethodResponse>(llmQuestion);
+			if (result == null) return;
 
 			await Callback.Invoke(new object[] {
 				 result.typeFullName, result.dataSourceName, result.nugetCommand, result.dataSourceConnectionStringExample,
-				result.regexToExtractDatabaseNameFromConnectionString, result.keepHistoryEventSourcing, result.isDefault});	
+				result.regexToExtractDatabaseNameFromConnectionString, result.keepHistoryEventSourcing, result.isDefault});
 
 		}
 	}

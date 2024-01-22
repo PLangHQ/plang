@@ -45,7 +45,7 @@ namespace PLang.Utils
 
 		public TypeHelper(IPLangFileSystem fileSystem, ISettings settings)
 		{
-			LoadModules(fileSystem, settings.GoalsPath);
+			LoadModules(fileSystem, fileSystem.GoalsPath);
 			this.fileSystem = fileSystem;
 			this.settings = settings;
 		}
@@ -75,7 +75,7 @@ namespace PLang.Utils
 				}
 			}
 
-			string modulesDirectory = Path.Combine(settings.GoalsPath, "modules");
+			string modulesDirectory = Path.Combine(fileSystem.GoalsPath, "modules");
 			if (!fileSystem.Directory.Exists(modulesDirectory)) return types;
 
 			foreach (var dll in fileSystem.Directory.GetFiles(modulesDirectory, "*.dll"))
@@ -150,7 +150,14 @@ namespace PLang.Utils
 					strMethod += " " + param.Name;
 					if (!string.IsNullOrEmpty(param.DefaultValue?.ToString()))
 					{
-						strMethod += " = " + param.DefaultValue;
+						if (param.DefaultValue.GetType() == typeof(string))
+						{
+							strMethod += " = \"" + param.DefaultValue + "\"";
+						}
+						else
+						{
+							strMethod += " = " + param.DefaultValue;
+						}
 					}
 
 				}
@@ -251,7 +258,7 @@ namespace PLang.Utils
 					}
 					else
 					{
-						value = parameter.DefaultValue.ToString();
+						value = parameter.DefaultValue.ToString()!;
 					}
 				} else
 				{

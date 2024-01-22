@@ -185,7 +185,45 @@
       <NamedTestSelector>
         <TestName>PLang.Modules.ListDictionaryModule.Tests.BuilderTests.GetDictionary_Test (7781740190198366092)</TestName>
       </NamedTestSelector>
-      <AllTestsSelector />
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.BlockchainModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.CachingModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.CallGoalModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.CompressionModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.CryptographicModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.CultureInfoModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.DbModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.FileModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.HttpModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.ListDictionaryModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.LlmModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.WebCrawlerModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLangTests.Modules.WebCrawlerModule.ProgramTests</FixtureName>
+      </FixtureTestSelector>
     </IgnoredTests>
   </Settings>
 </ProjectConfiguration>

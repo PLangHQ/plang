@@ -10,7 +10,7 @@ namespace PlangWindowForms
 		[STAThread]
 		static void Main(string[] args)
 		{
-			var debug = args.FirstOrDefault(p => p == "--debug") != null;
+			var debug = args.FirstOrDefault(p => p == "--csdebug") != null;
 			if (debug && !Debugger.IsAttached)
 			{
 				Debugger.Launch();

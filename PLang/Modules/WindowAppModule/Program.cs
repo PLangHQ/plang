@@ -18,7 +18,7 @@ namespace PLang.Modules.WindowAppModule
 		}
 
 		[Description("goalName is required. It is one word. Example: call !NameOfGoal, run !Google.Search. Do not use the names in your response unless defined by user")]
-		public async Task<string> RunWindowApp(string goalName, Dictionary<string, object>? parameters = null, 
+		public async Task<string> RunWindowApp(string goalName, Dictionary<string, object?>? parameters = null, 
 			int width = 800, int height = 450, string? iconPath = null, string windowTitle = "plang")
 		{
 			if (context.ContainsKey("__WindowApp__"))

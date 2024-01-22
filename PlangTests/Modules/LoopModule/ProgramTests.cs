@@ -25,7 +25,7 @@ namespace PLangTests.Modules.LoopModule
 			var goal = new Goal();
 			goal.RelativeAppStartupFolderPath = "/";
 
-			p = new Program(logger, pseudoRuntime, engine, memoryStack);
+			p = new Program(logger, pseudoRuntime, engine);
 			p.Init(container, goal, null, null, memoryStack, logger, context, typeHelper, aiService, settings, null, null);
 		}
 

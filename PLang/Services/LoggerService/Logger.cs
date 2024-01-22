@@ -8,7 +8,7 @@ namespace PLang.Services.LoggerService
 
         public virtual void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
-            LogLevel logLevelByUser = LogLevel.Trace;
+            LogLevel? logLevelByUser = LogLevel.Trace;
             
 			if (AppContext.TryGetSwitch("Runtime", out bool isEnabled) && isEnabled)
 			{
@@ -16,11 +16,11 @@ namespace PLang.Services.LoggerService
 			}
 			if (AppContext.GetData("StepLogLevelByUser") != null)
 			{
-				logLevelByUser = (LogLevel)AppContext.GetData("StepLogLevelByUser");
+				logLevelByUser = (LogLevel?)AppContext.GetData("StepLogLevelByUser");
 			}
 			if (AppContext.GetData("GoalLogLevelByUser") != null)
 			{
-				logLevelByUser = (LogLevel)AppContext.GetData("GoalLogLevelByUser");
+				logLevelByUser = (LogLevel?)AppContext.GetData("GoalLogLevelByUser");
 
 			}
 

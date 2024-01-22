@@ -12,8 +12,10 @@ namespace PLang.Exceptions
 			this.Type = type;
 			this.StatusCode = statusCode;
 		}
-		public RuntimeUserStepException(GoalStep step, Exception ex) : base($"Step '{step.Text}' had exception", ex) {
+		public RuntimeUserStepException(GoalStep step, Exception ex, string type = "error", int statusCode = 500) : base($"Step '{step.Text}' had exception", ex) {
 			this.Step = step;
+			this.Type = type;
+			this.StatusCode = statusCode;
 		}
 	}
 }

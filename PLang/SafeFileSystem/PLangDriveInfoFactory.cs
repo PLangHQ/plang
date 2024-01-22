@@ -43,7 +43,7 @@ namespace PLang.SafeFileSystem
 		}
 
 		/// <inheritdoc />
-		public IDriveInfo Wrap(DriveInfo driveInfo)
+		public IDriveInfo? Wrap(DriveInfo? driveInfo)
 		{
 			if (driveInfo == null)
 			{

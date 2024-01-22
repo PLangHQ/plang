@@ -89,6 +89,8 @@ namespace PLang.Building
 			foreach (var injection in injectionSteps)
 			{
 				var instruction = prParser.ParseInstructionFile(injection);
+				if (instruction == null) continue;
+
 				var gfs = instruction.GetFunctions();
 				if (gfs != null && gfs.Length > 0)
 				{
@@ -97,6 +99,7 @@ namespace PLang.Building
 
 					goal.Injections.Add(dependancyInjection);
 				}
+
 			}			
 
 			foreach (var injection in goal.Injections)

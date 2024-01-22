@@ -1,7 +1,4 @@
-﻿using LightInject;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using PLang.Building.Model;
+﻿using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
@@ -16,12 +13,10 @@ namespace PLang.Modules
 	public abstract class BaseBuilder : IBaseBuilder
 	{
 
-		private Type type;
 		private string? system;
 		private string? assistant;
 		private string? appendedSystemCommand;
 		private string? appendedAssistantCommand;
-		private string moduleNamespace = "PLang.Modules.BaseBuilder";
 		private string module;
 		private IPLangFileSystem fileSystem;
 		private ILlmService aiService;
@@ -30,7 +25,9 @@ namespace PLang.Modules
 		private PLangAppContext context;
 		private VariableHelper variableHelper;
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		protected BaseBuilder()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		{ }
 
 		public void InitBaseBuilder(string module, IPLangFileSystem fileSystem, ILlmService llmService, ITypeHelper typeHelper, MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper)
@@ -84,8 +81,6 @@ namespace PLang.Modules
 
 		}
 
-		public async Task ChangeCommands(GoalStep step) { }
-
 		public void AppendToSystemCommand(string appendedSystemCommand)
 		{
 			this.appendedSystemCommand += appendedSystemCommand;
@@ -127,7 +122,7 @@ namespace PLang.Modules
 			
 			var question = new LlmQuestion(GetType().FullName,
 				system + "\n\n" + requiredResponse,
-				"command: " + step.Text,
+				step.Text,
 				assistant);
 
 			//cleanup for next time
@@ -140,47 +135,28 @@ namespace PLang.Modules
 
 		}
 
-		private string GetExternalServiceInfo(ExternalServiceHandler? externalServiceHandler)
-		{
-			if (externalServiceHandler == null) return null;
-			if (externalServiceHandler.Uri.StartsWith("http"))
-			{
-				return null;
-			}
-
-			string fileName = externalServiceHandler.Uri;
-			if (!fileSystem.File.Exists(fileName)) return null;
-
-			var content = fileSystem.File.ReadAllText(fileName);
-			return @$"### Context information ##
-Following content is provide as help and to give context.
-{content}
-### Context information ##
-";
-		}
-
 		private string? getDefaultSystemText()
 		{
 
 			return $@"
-			Parse user command.
+Your job is: 
+1. Parse user intent
+2. Map the intent to one of C# function provided to you
+3. Return a valid JSON
 
-Select the correct function from list of available functions based on user command
-
-variable is defined with starting and ending %, e.g. %filePath%
+Variable is defined with starting and ending %, e.g. %filePath%. Variables MUST be wrapped in quotes("") in json response, e.g. {{ ""name"":""%name%"" }}
 
 If there is some api key, settings, config replace it with %Settings.Get(""settingName"", ""defaultValue"", ""Explain"")% 
 - settingName would be the api key, config key, 
 - defaultValue for settings is the usual value given, make it """" if no value can be default
 - Explain is an explanation about the setting that novice user can understand.
 
-OnExceptionContainingTextCallGoal - if no text is defined, set as ""*"", goal to call is required from user
-
 JSON scheme information
-Type: the object type in c#
-Name: name of the variable
-Value: %variable% or hardcode string that should be used
 FunctionName: Name of the function to use from list of functions, if no function matches set as ""N/A""
+Parameters: List of parameters that are needed according to the user intent.
+- Type: the object type in c#
+- Name: name of the variable
+- Value: ""%variable%"" or hardcode string that should be used
 ReturnValue: Only if the function returns a value AND if user defines %variable% to write into. If no %variable% is defined then set as null.
 ".Trim();
 		}
@@ -195,8 +171,8 @@ ReturnValue: Only if the function returns a value AND if user defines %variable%
 			if (!string.IsNullOrEmpty(methods))
 			{
 				assistant = $@"
-## functions available defined in csharp ##
-{methods}
+## functions available starts ##
+{methods.Trim()}
 ## functions available ends ##";
 			}
 
@@ -222,7 +198,8 @@ ReturnValue: Only if the function returns a value AND if user defines %variable%
 					vars += variable.OriginalKey + " (" + objectValue.Value + "), ";
 				} else
 				{
-					vars += variable.OriginalKey + " (type:" + objectValue.Value + "), ";
+					vars += variable.OriginalKey + " (type:" + (objectValue.Value ?? "object") + "), ";
+					
 				}
 			}
 			return vars;

@@ -4,7 +4,7 @@ using PLang;
 using System.Diagnostics;
 using PLang.Utils;
 
-var debug = args.FirstOrDefault(p => p == "--debug") != null;
+var debug = args.FirstOrDefault(p => p == "--csdebug") != null;
 if (debug && !Debugger.IsAttached)
 {
 	Debugger.Launch();

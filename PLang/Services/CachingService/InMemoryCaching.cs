@@ -7,7 +7,7 @@ namespace PLang.Services.CachingService
     {
         public InMemoryCaching(PLangAppContext context) : base(context) { }
 
-        public override async Task<object> Get(string key)
+        public override async Task<object?> Get(string key)
         {
 			return MemoryCache.Default.Get(key);
         }

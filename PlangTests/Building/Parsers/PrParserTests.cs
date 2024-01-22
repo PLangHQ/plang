@@ -34,11 +34,11 @@ namespace PLang.Building.Parsers.Tests
 			string someApp = PrReaderHelper.GetPrFileRaw("SomeApp.pr");
 
 			// this is build file belonging to the app user is creating
-			fileSystem.AddFile(Path.Join(settings.BuildPath, ISettings.GoalFileName), new MockFileData(start));
+			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, ISettings.GoalFileName), new MockFileData(start));
 
 			// apps that he has installed
-			fileSystem.AddFile(Path.Join(settings.GoalsPath, "apps", "SomeApp", ".build", ISettings.GoalFileName), new MockFileData(someApp));
-			fileSystem.AddFile(Path.Join(settings.GoalsPath, "apps", "HelloWorld", ".build", ISettings.GoalFileName), new MockFileData(helloWorld));
+			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "SomeApp", ".build", ISettings.GoalFileName), new MockFileData(someApp));
+			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", ISettings.GoalFileName), new MockFileData(helloWorld));
 
 			prParser.ForceLoadAllGoals();
 			var goals = prParser.GetAllGoals();
@@ -47,7 +47,7 @@ namespace PLang.Building.Parsers.Tests
 			Assert.AreEqual(@"\", goals[0].RelativeAppStartupFolderPath);
 			Assert.AreEqual(@"\", goals[0].RelativeGoalFolderPath);
 			Assert.AreEqual(@"\Start.goal", goals[0].RelativeGoalPath);
-			Assert.AreEqual(Path.Join(settings.GoalsPath, ".build", "Start", ISettings.GoalFileName), goals[0].AbsolutePrFilePath);
+			Assert.AreEqual(Path.Join(fileSystem.GoalsPath, ".build", "Start", ISettings.GoalFileName), goals[0].AbsolutePrFilePath);
 
 
 
@@ -55,7 +55,7 @@ namespace PLang.Building.Parsers.Tests
 			Assert.AreEqual(@"\apps\SomeApp", goals[1].RelativeAppStartupFolderPath);
 			Assert.AreEqual(@"\apps\SomeApp", goals[1].RelativeGoalFolderPath);
 			Assert.AreEqual(@"\apps\SomeApp\SomeApp.goal", goals[1].RelativeGoalPath);
-			Assert.AreEqual(Path.Join(settings.GoalsPath, "apps", "SomeApp", ".build", "SomeApp", ISettings.GoalFileName), goals[1].AbsolutePrFilePath);
+			Assert.AreEqual(Path.Join(fileSystem.GoalsPath, "apps", "SomeApp", ".build", "SomeApp", ISettings.GoalFileName), goals[1].AbsolutePrFilePath);
 
 		}
 
@@ -72,11 +72,11 @@ namespace PLang.Building.Parsers.Tests
 			string someApp = PrReaderHelper.GetPrFileRaw("SomeApp.pr");
 
 			// this is build file belonging to the app user is creating
-			fileSystem.AddFile(Path.Join(settings.BuildPath, ISettings.GoalFileName), new MockFileData(start));
+			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, ISettings.GoalFileName), new MockFileData(start));
 
 			// apps that he has installed
-			fileSystem.AddFile(Path.Join(settings.GoalsPath, "apps", "SomeApp", ".build", ISettings.GoalFileName), new MockFileData(someApp));
-			fileSystem.AddFile(Path.Join(settings.GoalsPath, "apps", "HelloWorld", ".build", ISettings.GoalFileName), new MockFileData(helloWorld));
+			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "SomeApp", ".build", ISettings.GoalFileName), new MockFileData(someApp));
+			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", ISettings.GoalFileName), new MockFileData(helloWorld));
 
 			prParser.ForceLoadAllGoals();
 
@@ -162,8 +162,8 @@ namespace PLang.Building.Parsers.Tests
 			string publicGoalData = "{ \"Visibility\": 0 }";  // 0 for public visibility.
 			string privateGoalData = "{ \"Visibility\": 1 }";  // 1 for private visibility.
 
-			string publicGoalPath = $"{settings.GoalsPath}{Path.DirectorySeparatorChar}.build{Path.DirectorySeparatorChar}AnalyzeFile{Path.DirectorySeparatorChar}00. Goal.pr";
-			string privateGoalPath = $"{settings.GoalsPath}{Path.DirectorySeparatorChar}.build{Path.DirectorySeparatorChar}AnalyzeFile{Path.DirectorySeparatorChar}ProcessFile{Path.DirectorySeparatorChar}00. Goal.pr";
+			string publicGoalPath = $"{fileSystem.GoalsPath}{Path.DirectorySeparatorChar}.build{Path.DirectorySeparatorChar}AnalyzeFile{Path.DirectorySeparatorChar}00. Goal.pr";
+			string privateGoalPath = $"{fileSystem.GoalsPath}{Path.DirectorySeparatorChar}.build{Path.DirectorySeparatorChar}AnalyzeFile{Path.DirectorySeparatorChar}ProcessFile{Path.DirectorySeparatorChar}00. Goal.pr";
 
 			fileSystem.AddFile(publicGoalPath, new MockFileData(publicGoalData));
 			fileSystem.AddFile(privateGoalPath, new MockFileData(privateGoalData));
@@ -190,13 +190,13 @@ namespace PLang.Building.Parsers.Tests
 			var fileSystem = (PLangMockFileSystem)container.GetInstance<IPLangFileSystem>();
 			var settings = container.GetInstance<ISettings>();
 
-			string path1 = Path.Join(settings.BuildPath, "start", ISettings.GoalFileName);
-			string path2 = Path.Join(settings.BuildPath, "main", ISettings.GoalFileName);
+			string path1 = Path.Join(fileSystem.BuildPath, "start", ISettings.GoalFileName);
+			string path2 = Path.Join(fileSystem.BuildPath, "main", ISettings.GoalFileName);
 			// Create some mock goals.
 			Goal mockGoal1 = new Goal { AbsolutePrFilePath = path1, RelativePrPath = "\\.build\\start\\" + ISettings.GoalFileName };
 			Goal mockGoal2 = new Goal { AbsolutePrFilePath = path2, RelativePrPath = "\\.build\\main\\" + ISettings.GoalFileName };
-			fileSystem.AddFile(Path.Join(settings.BuildPath, "start", ISettings.GoalFileName), new MockFileData(JsonConvert.SerializeObject(mockGoal1)));
-			fileSystem.AddFile(Path.Join(settings.BuildPath, "main", ISettings.GoalFileName), new MockFileData(JsonConvert.SerializeObject(mockGoal2)));
+			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "start", ISettings.GoalFileName), new MockFileData(JsonConvert.SerializeObject(mockGoal1)));
+			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "main", ISettings.GoalFileName), new MockFileData(JsonConvert.SerializeObject(mockGoal2)));
 
 			var prParser = container.GetInstance<PrParser>();
 			prParser.ForceLoadAllGoals();
@@ -219,10 +219,10 @@ namespace PLang.Building.Parsers.Tests
 			string relativeApp2 = Path.Join("apps", "App2", ".build", "Process2", ISettings.GoalFileName);
 			string relativeApp3 = Path.Join("apps", "App2", ".build", "Process2", "ProcessFile", ISettings.GoalFileName);
 			string relativeGoal = Path.Join(".build", "Hello", ISettings.GoalFileName);
-			string path1 = Path.Join(settings.GoalsPath, relativeApp1);
-			string path2 = Path.Join(settings.GoalsPath, relativeApp2);
-			string path3 = Path.Join(settings.GoalsPath, relativeApp3);
-			string path4 = Path.Join(settings.GoalsPath, relativeGoal);
+			string path1 = Path.Join(fileSystem.GoalsPath, relativeApp1);
+			string path2 = Path.Join(fileSystem.GoalsPath, relativeApp2);
+			string path3 = Path.Join(fileSystem.GoalsPath, relativeApp3);
+			string path4 = Path.Join(fileSystem.GoalsPath, relativeGoal);
 			
 			Goal mockGoal1 = new Goal { AppName = "Process1", AbsolutePrFilePath = path1, RelativeAppStartupFolderPath = relativeApp1 };
 			Goal mockGoal2 = new Goal { AppName = "Process2", AbsolutePrFilePath = path2, RelativePrPath = relativeApp2 };

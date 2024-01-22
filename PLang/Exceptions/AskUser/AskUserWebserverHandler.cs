@@ -12,7 +12,13 @@ namespace PLang.Exceptions.AskUser
 
 		public AskUserWebserverHandler(PLangAppContext context)
 		{
-			this.context = context[ReservedKeywords.HttpContext] as HttpListenerContext;
+			if (context.TryGetValue(ReservedKeywords.HttpContext, out object? obj) && obj != null)
+			{
+				this.context = (HttpListenerContext)obj;
+			}
+
+			if (this.context == null) throw new NullReferenceException($"{nameof(context)} cannot be null");
+
 		}
 
 
@@ -39,7 +45,7 @@ namespace PLang.Exceptions.AskUser
 			{
 				return JsonConvert.SerializeObject(objectToSerialize);
 			}
-			return objectToSerialize.ToString();
+			return objectToSerialize.ToString() ?? "";
 
 		}
 	}

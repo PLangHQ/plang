@@ -42,7 +42,7 @@ namespace PLang.SafeFileSystem
 		}
 
 		/// <inheritdoc />
-		public IFileInfo Wrap(FileInfo fileInfo)
+		public IFileInfo? Wrap(FileInfo? fileInfo)
 		{
 			if (fileInfo == null)
 			{

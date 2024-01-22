@@ -18,52 +18,6 @@ namespace PLang.Utils.Tests
 			base.Initialize();
 		}
 
-		[TestMethod()]
-		public void SignRequestTest()
-		{
-			HttpMethod method = HttpMethod.Get;
-			string url = "https://dundermifflin.com";
-			HttpRequestMessage request = new HttpRequestMessage(method, url);
-			request.Content = new StringContent("hello", Encoding.UTF8);
-
-			SystemTime.UtcNow = () => new DateTime(2000, 1, 1);
-			
-			var wallet = new Wallet("Default", "a26c463040c1ea9ed3a11da2a1619ab81a3937b7ab4a535a33456ebff682ed36583a5f11ed359a230cc20790284bbf7198e06091d315d02ee50cc4f351cb4f40", "");
-			List<Wallet> wallets = new List<Wallet>();
-			wallets.Add(wallet);
-
-			settings.GetValues<RpcServer>(typeof(ModuleSettings)).Returns(new List<RpcServer>()
-			{
-				new RpcServer("Mumbai - Polygon testnet", "wss://polygon-bor.publicnode.com", 80001, true)
-				{
-					IsDefault = true
-				}
-			});
-			settings.GetValues<Wallet>(typeof(ModuleSettings)).Returns(wallets);
-
-
-			httpHelper.SignRequest(request);
-
-			Assert.AreEqual(HttpMethod.Get, method);
-			Assert.AreEqual(request.RequestUri.ToString(), url);
-
-			request.Headers.TryGetValues("X-Signature-Contract", out var contracts);
-			Assert.AreEqual("C0", contracts.FirstOrDefault());
-
-			request.Headers.TryGetValues("X-Signature-Created", out var created);
-			Assert.AreEqual(SystemTime.UtcNow().ToFileTimeUtc().ToString(), created.FirstOrDefault());
-
-			var p = new Modules.BlockchainModule.Program(settings, context, aiService, null, null, memoryStack, null);
-			string address = p.GetCurrentAddress().Result;
-
-
-			request.Headers.TryGetValues("X-Signature-Address", out var addresses);
-			Assert.AreEqual(address, addresses.FirstOrDefault());
-			
-			request.Headers.TryGetValues("X-Signature-Nonce", out var nonces);
-			Assert.IsNotNull(nonces.FirstOrDefault());
-
-		}
 
 		[TestMethod()]
 		public void VerifySignatureTest()

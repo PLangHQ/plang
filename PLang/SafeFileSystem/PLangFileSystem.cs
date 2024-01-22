@@ -18,6 +18,10 @@ namespace PLang.SafeFileSystem
 		public string RelativeAppPath { get; private set; }
 
 		public string RootDirectory { get; private set; }
+		public string SharedPath { get; private set; }
+		public string GoalsPath { get; private set; }
+		public string BuildPath { get; private set; }
+		public string DbPath { get; private set; }
 
 		// This SafeFileSystem namespace would need some good testing
 		// for now it is simply proof of concept about access control
@@ -30,8 +34,7 @@ namespace PLang.SafeFileSystem
 		public PLangFileSystem(string appStartupPath, string relativeAppPath)
 		{
 			
-			this.RootDirectory = appStartupPath.AdjustPathToOs();
-			
+			this.RootDirectory = appStartupPath.AdjustPathToOs();			
 			this.RelativeAppPath = relativeAppPath.AdjustPathToOs();
 			this.fileAccesses = new List<FileAccessControl>();
 
@@ -45,7 +48,14 @@ namespace PLang.SafeFileSystem
 			FileSystemWatcher = new PLangFileSystemWatcherFactory(this);
 
 			this.IsRootApp = (relativeAppPath == Path.DirectorySeparatorChar.ToString());
-			
+			this.SharedPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "plang");
+			if (SharedPath == "plang")
+			{
+				SharedPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "plang");
+			}
+			this.GoalsPath = this.RootDirectory;
+			this.BuildPath = Path.Join(this.GoalsPath, ".build");
+			this.DbPath = Path.Join(this.GoalsPath, ".db");
 		}
 
 		// This is a security issue, here anybody can set what ever file access.
@@ -67,7 +77,7 @@ namespace PLang.SafeFileSystem
 
 		
 
-		public string? ValidatePath(string? path)
+		public string ValidatePath(string? path)
 		{
 			if (path == null)
 			{

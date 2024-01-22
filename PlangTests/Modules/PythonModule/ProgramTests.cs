@@ -32,7 +32,7 @@ namespace PLangTests.Modules.PythonModule
 			fileSystem.AddFile("main.py", new System.IO.Abstractions.TestingHelpers.MockFileData(content));
 			fileSystem.AddFile("requirements.txt", new System.IO.Abstractions.TestingHelpers.MockFileData(requirements));
 			var outputStream = NSubstitute.Substitute.For<IOutputStream>();
-			var p = new Program(fileSystem, logger, settings, outputStream, memoryStack, signature);
+			var p = new Program(fileSystem, logger, settings, outputStream, signingService);
 
 			string[] vars = new string[] { "result" };
 			var result = await p.RunPythonScript("main.py", variablesToExtractFromPythonScript: vars,
@@ -54,7 +54,7 @@ namespace PLangTests.Modules.PythonModule
 			fileSystem.AddFile("main_params.py", new System.IO.Abstractions.TestingHelpers.MockFileData(content));
 
 			var outputStream = NSubstitute.Substitute.For<IOutputStream>();
-			var p = new Program(fileSystem, logger, settings, outputStream, memoryStack, signature);
+			var p = new Program(fileSystem, logger, settings, outputStream, signingService);
 
 			string[] vars = new string[] { "result" };
 			var result = await p.RunPythonScript("main_params.py", variablesToExtractFromPythonScript: vars,

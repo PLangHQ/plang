@@ -24,20 +24,15 @@ namespace PLang.Modules.FileModule
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ISettings settings;
 		private readonly ILogger logger;
-		private readonly PLangAppContext context;
-		private readonly MemoryStack memoryStack;
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
 
 		public Program(IPLangFileSystem fileSystem, ISettings settings,
-			ILogger logger, PLangAppContext context, MemoryStack memoryStack,
-			IPseudoRuntime pseudoRuntime, IEngine engine) : base()
+			ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
 			this.logger = logger;
-			this.context = context;
-			this.memoryStack = memoryStack;
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
 		}
@@ -58,7 +53,7 @@ namespace PLang.Modules.FileModule
 				}
 				else
 				{
-					path = Path.Combine(settings.GoalsPath, path);
+					path = Path.Combine(fileSystem.GoalsPath, path);
 				}
 			}
 			return path;
@@ -364,7 +359,7 @@ namespace PLang.Modules.FileModule
 			await fileSystem.File.WriteAllTextAsync(path, content);
 		}
 
-		public async Task AppendToFile(string path, string content, string seperator = null, bool loadVariables = false, bool emptyVariableIfNotFound = false)
+		public async Task AppendToFile(string path, string content, string? seperator = null, bool loadVariables = false, bool emptyVariableIfNotFound = false)
 		{
 			path = GetPath(path);
 			string dirPath = Path.GetDirectoryName(path);
@@ -462,13 +457,13 @@ namespace PLang.Modules.FileModule
 			PLangFileSystemWatcherFactory watcherFactory = new PLangFileSystemWatcherFactory(fileSystem);
 			foreach (var fileSearchPattern in fileSearchPatterns)
 			{
-				if (Path.IsPathFullyQualified(fileSearchPattern) && !fileSearchPattern.StartsWith(settings.GoalsPath))
+				if (Path.IsPathFullyQualified(fileSearchPattern) && !fileSearchPattern.StartsWith(fileSystem.GoalsPath))
 				{
 					throw new RuntimeStepException("fileSearchPattern is out of app folder. You can only listen for files inside same app folder", goalStep);
 				}
 
 				var watcher = watcherFactory.New();
-				watcher.Path = settings.GoalsPath;
+				watcher.Path = fileSystem.GoalsPath;
 				watcher.IncludeSubdirectories = includeSubdirectories;
 				watcher.Filter = fileSearchPattern;
 

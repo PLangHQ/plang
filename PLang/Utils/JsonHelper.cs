@@ -17,12 +17,12 @@ namespace PLang.Utils
 		{
 			if (IsJson(content))
 			{
-				return JsonConvert.DeserializeObject<T>(content);
+				var obj = JsonConvert.DeserializeObject<T>(content);
+				if (obj != null) return obj;
 			}
-			else
-			{
-				return (T)Convert.ChangeType(content, typeof(T));
-			}
+
+			return (T)Convert.ChangeType(content, typeof(T));
+
 
 		}
 
@@ -33,14 +33,14 @@ namespace PLang.Utils
 		}
 		public static bool IsJson(object? obj)
 		{
-			return IsJson(obj, out object _);
+			return IsJson(obj, out object? _);
 		}
 		public static bool IsJson(object? obj, out object? parsedObject)
 		{
 			parsedObject = null;
 
 			if (obj == null) return false;
-			string content = obj.ToString();
+			string content = obj.ToString()!;
 
 			content = content.Trim();
 			var result = (content.StartsWith("{") && content.EndsWith("}")) || (content.StartsWith("[") && content.EndsWith("]"));
