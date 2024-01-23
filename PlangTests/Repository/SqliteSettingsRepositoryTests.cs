@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Services.SettingsService;
 using PLang.Utils;
 using PLangTests;
@@ -76,7 +77,7 @@ namespace PLang.Repository.Tests
 			List<DunderMifflin> list = new List<DunderMifflin>();
 			list.Add(value);
 
-			var setting2 = new Setting(appId, classType, typeof(string).Name, key, JsonConvert.SerializeObject(list), "");
+			var setting2 = new Setting(appId, classType, typeof(string).Name, key, JsonConvert.SerializeObject(list));
 			settingsRepository.Set(setting2);
 
 			var returnedSetting = settingsRepository.GetSettings().FirstOrDefault(p => p.ClassOwnerFullName == classType);

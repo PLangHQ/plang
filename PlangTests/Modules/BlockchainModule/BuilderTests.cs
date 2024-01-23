@@ -54,7 +54,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new Builder(settings, context, aiService);
-			builder.InitBaseBuilder("PLang.Modules.BlockchainModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.BlockchainModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper, logger);
 
 			
 		}
@@ -67,7 +67,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var moduleSettings = new ModuleSettings(settings, llmService);
 
 			builder = new Builder(settings, context, llmService);
-			builder.InitBaseBuilder("PLang.Modules.BlockchainModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.BlockchainModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
 		[DataTestMethod]

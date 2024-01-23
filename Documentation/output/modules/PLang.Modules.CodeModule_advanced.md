@@ -38,11 +38,11 @@ Code
 string ReadFromFile(string filePath)
 ```
 
-For more detailed documentation and all examples, please refer to [PLang.Modules.CodeModule.md](./PLang.Modules.CodeModule.md) and the [PLang Code Examples Repository](https://github.com/PLangHQ/plang/tree/main/Tests/Code). Additionally, inspect the Program.cs source code for a deeper understanding of the runtime behavior at [Program.cs Source Code](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CodeModule/Program.cs).
+For more detailed documentation and all examples, please refer to [PLang.Modules.CodeModule.md](./PLang.Modules.CodeModule.md) and the [PLang Code Examples Repository](https://github.com/PLangHQ/plang/tree/main/Tests/Code). Additionally, inspect the Program.cs source code for a deeper understanding of the runtime behavior at [Program.cs Source Code](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CodeModule/Program.cs).
 
 ## Source code
-The runtime code for the Code module, Program.cs, can be found at [Program.cs Source](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CodeModule/Program.cs).
-The Builder.cs, responsible for the construction of steps, is available at [Builder.cs Source](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CodeModule/Builder.cs).
+The runtime code for the Code module, Program.cs, can be found at [Program.cs Source](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CodeModule/Program.cs).
+The Builder.cs, responsible for the construction of steps, is available at [Builder.cs Source](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CodeModule/Builder.cs).
 
 ## How plang is mapped to C#
 The mapping of plang to C# methods is a two-step process involving the Builder and Runtime.

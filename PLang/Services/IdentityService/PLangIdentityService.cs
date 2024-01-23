@@ -1,10 +1,12 @@
-﻿using NBitcoin;
+﻿using Microsoft.Extensions.Logging;
+using NBitcoin;
 using Nethereum.Signer;
 using Nethereum.Util;
 using Newtonsoft.Json;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Model;
+using PLang.Models;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using System.Text;
@@ -16,28 +18,44 @@ namespace PLang.Services.IdentityService
 	{
 		public IdentityException(string message) : base(message) { }
 	}
-	public class SignatureExpiredException : Exception
-	{
-		public SignatureExpiredException(string message) : base(message) { }
-	}
-	public class SignatureException : Exception
-	{
-		public SignatureException(string message) : base(message) { }
-	}
+	
 
-	public class PLangIdentityService(ISettingsRepository settingsRepository, IAppCache appCache, IPublicPrivateKeyCreator publicPrivateKeyCreator, PLangAppContext context) : IPLangIdentityService
+	public class PLangIdentityService(ISettingsRepository settingsRepository, IAppCache appCache, IPublicPrivateKeyCreator publicPrivateKeyCreator, ILogger logger, PLangAppContext context) : IPLangIdentityService
 	{
 		public static readonly string SettingKey = "Identities";
+		private string? sharedIdentity = null;
+		public void UseSharedIdentity(string? sharedIdentity = null)
+		{
+            if (sharedIdentity == null) 
+            {
+				this.sharedIdentity = null;
+				settingsRepository.UseSharedDataSource(false);
+            } else
+			{
+				this.sharedIdentity = sharedIdentity;
+				settingsRepository.UseSharedDataSource(true);
+			}
+            
+		}
+
+		private Setting? GetSetting()
+		{
+			var setting = settingsRepository.GetSettings().FirstOrDefault(p => p.ClassOwnerFullName == this.GetType().FullName && p.Key == SettingKey);
+			if (setting != null && PLangSigningService.VerifySignature(appCache, context, setting.Value, "Identity", GetType().FullName, setting.SignatureData).Result == null)
+			{
+				logger.LogWarning($"Signature for {setting.Key} is not valid. It has been modified outside of plang language.");
+			}
+			return setting;
+		}
 
 		public Identity CreateIdentity(string name = "MyIdentity", bool setAsDefault = false)
 		{
-			var setting = settingsRepository.GetSettings().FirstOrDefault(p => p.ClassOwnerFullName == this.GetType().FullName && p.Key == SettingKey);
+			var setting = GetSetting();
 			if (setting == null) return CreatePrivatePublicKeyIdentity(new(), name, true);
 
-			var identites = JsonConvert.DeserializeObject<List<Identity>>(setting.Value);
-			if (identites == null) throw new RuntimeException("Could load Identites. Backup your system.sqlite database to save your Identies, you might have to delete system.sqlite");
 
-			var identity = identites.FirstOrDefault(p => p.Name == name);
+			var identites = GetIdentitiesWithPrivateKey().ToList();
+			var identity = identites.FirstOrDefault(p => p.Name == name && !p.IsArchived && p.SharedIdentity == sharedIdentity);
 			if (identity != null)
 			{
 				throw new IdentityException($"Identity named '{name}' already exists");
@@ -63,7 +81,7 @@ namespace PLang.Services.IdentityService
 		{
 			using (var keyCreator = publicPrivateKeyCreator.Create())
 			{
-				var identity = new Identity(name, keyCreator.GetPublicKey(), keyCreator.GetPrivateKey(), setAsDefault);
+				var identity = new Identity(name, keyCreator.GetPublicKey(), keyCreator.GetPrivateKey(), setAsDefault, sharedIdentity);
 				identites.Add(identity);
 
 				StoreIdentities(identites);
@@ -75,19 +93,10 @@ namespace PLang.Services.IdentityService
 		private void StoreIdentities(IEnumerable<Identity> identities)
 		{
 			var jsonIdentities = JsonConvert.SerializeObject(identities);
-			Dictionary<string, object> signatureData;
 
-			var signingService = new SigningService.PLangSigningService(appCache, this);
-			if (identities.Count() == 1)
-			{
-				var seed = Encoding.UTF8.GetBytes(identities.FirstOrDefault().Value.ToString()!);
-				signatureData = signingService.SignWithTimeout(seed, jsonIdentities, SettingKey, GetType().FullName, DateTimeOffset.UtcNow.AddYears(500), "CreateIdentity");
-			}
-			else
-			{
-				var seed = Encoding.UTF8.GetBytes(identities.FirstOrDefault(p => p.IsDefault).Value.ToString()!);
-				signatureData = signingService.SignWithTimeout(seed, jsonIdentities, SettingKey, GetType().FullName, DateTimeOffset.UtcNow.AddYears(500), "CreateIdentity");
-			}
+			var signingService = new PLangSigningService(appCache, this, context);
+			var seed = Encoding.UTF8.GetBytes(identities.FirstOrDefault().Value!.ToString()!);
+			var signatureData = signingService.SignWithTimeout(seed, jsonIdentities, SettingKey, GetType().FullName, DateTimeOffset.UtcNow.AddYears(500), "C0");
 
 			Setting setting = new Setting("1", GetType().FullName, identities.GetType().FullName, SettingKey, jsonIdentities, signatureData);
 
@@ -115,12 +124,13 @@ namespace PLang.Services.IdentityService
 		public Identity GetCurrentIdentityWithPrivateKey()
 		{
 			Identity identity = GetCurrentIdentity();
-			identity = GetIdentitiesWithPrivateKey().Where(p => !p.IsArchived && p.Identifier == identity.Identifier).FirstOrDefault()!;
+			identity = GetIdentitiesWithPrivateKey().Where(p => !p.IsArchived && p.Identifier == identity.Identifier && p.SharedIdentity == sharedIdentity).FirstOrDefault()!;
 			return identity;
 		}
 		public Identity GetCurrentIdentity()
-		{			
-			if (context.TryGetValue(ReservedKeywords.MyIdentity, out object? value) && value != null)
+		{		
+			
+			if (sharedIdentity == null && context.TryGetValue(ReservedKeywords.MyIdentity, out object? value) && value != null)
 			{
 				return (Identity)value;
 			}
@@ -138,19 +148,20 @@ namespace PLang.Services.IdentityService
 			identity = CreateIdentity("MyIdentity", true);
 			
 			var currentIdentity = GetIdentityInstance(identity);
-
-			context.AddOrReplace(ReservedKeywords.MyIdentity, currentIdentity);
+			if (sharedIdentity == null)
+			{
+				context.AddOrReplace(ReservedKeywords.MyIdentity, currentIdentity);
+			}
 			
 			return currentIdentity;
 		}
 
 		private Identity GetIdentityInstance(Identity identity)
 		{
-			return new Identity(identity.Name, identity.Identifier, null)
+			return new Identity(identity.Name, identity.Identifier, null, identity.IsDefault, identity.SharedIdentity)
 			{
 				Created = identity.Created,
 				IsArchived = identity.IsArchived,
-				IsDefault = identity.IsDefault,
 			};
 		}
 
@@ -179,11 +190,11 @@ namespace PLang.Services.IdentityService
 
 		private IEnumerable<Identity> GetIdentitiesWithPrivateKey()
 		{
-			var setting = settingsRepository.GetSettings().FirstOrDefault(p => p.ClassOwnerFullName == this.GetType().FullName && p.Key == SettingKey);
+			var setting = GetSetting();
 			if (setting == null) return new List<Identity>();
 
 			var identities = JsonConvert.DeserializeObject<List<Identity>>(setting.Value);
-			if (identities == null) return new List<Identity>();
+			if (identities == null) throw new RuntimeException("Could not load Identites. Backup your system.sqlite database to save your Identities, you might have to delete system.sqlite");
 
 			return identities;
 		}
@@ -194,7 +205,7 @@ namespace PLang.Services.IdentityService
 		}
 		public IEnumerable<Identity> GetIdentities()
 		{
-			return GetAllIdentities().Where(p => !p.IsArchived);
+			return GetAllIdentities().Where(p => !p.IsArchived && p.SharedIdentity == sharedIdentity);
 		}
 
 

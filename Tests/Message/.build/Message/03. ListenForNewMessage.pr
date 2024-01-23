@@ -3,35 +3,38 @@
     "FunctionName": "Listen",
     "Parameters": [
       {
-        "Type": "string",
+        "Type": "String",
         "Name": "goalName",
         "Value": "!NewMessage"
       },
       {
-        "Type": "string",
-        "Name": "variableName",
+        "Type": "String",
+        "Name": "contentVariableName",
         "Value": "%content%"
       },
       {
-        "Type": "Nullable`1<DateTimeOffset>",
-        "Name": "listenFromDateTime",
-        "Value": null
+        "Type": "String",
+        "Name": "senderVariableName",
+        "Value": "%sender%"
       }
     ],
     "ReturnValue": null
   },
-  "Text": "listen for new message, call !NewMessage, write content to %content%",
+  "Text": "listen for new message, call !NewMessage, write content to %content%, %sender% for sender address",
   "Reload": false,
   "LlmQuestion": {
-    "type": "PLang.Modules.BaseBuilder",
-    "system": "Parse user command.\r\n\r\nSelect the correct function from list of available functions based on user command\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")%\r\nwhere the settingName would be the api key, config key, \r\ndefaultValue for settings is the usual value given, make it \"\" if no value can be default\r\nExplain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nType: the object type in c#\r\nName: name of the variable\r\nValue: %variable% or hardcode string that should be used\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nReturnValue: Only if the function returns a value, else null\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: {\"Type\": string,\n\"VariableName\": string}}",
-    "question": "command: listen for new message, call !NewMessage, write content to %content%",
-    "assistant": "## functions available defined in csharp ##\r\nString GetPublicKey() \nvoid SetCurrentAccount(String publicKeyOrName) \nvoid Listen(String goalName, String variableName, Nullable`1<DateTimeOffset>? listenFromDateTime)  // goalName should be prefixed by ! and be whole word with possible dot(.). \nvoid SendPrivateMessageToMyself(String content) \nvoid SendPrivateMessage(String content, String npubReceiverPublicKey) \n\r\n## functions available ends ##\nFollowing Relay servers are available: [\"wss://relay.damus.io\",\"wss://nostr-pub.wellorder.net\",\"wss://offchain.pub\",\"wss://nos.lol\"].\r\nFollowing are Nostr accounts:[]\r\n",
+    "temperature": null,
+    "top_p": null,
+    "frequencyPenalty": null,
+    "presencePenalty": null,
+    "maxLength": 4000,
+    "type": "PLang.Modules.MessageModule.Builder",
+    "system": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. Variables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue: Only if the function returns a value AND if user defines %variable% to write into. If no %variable% is defined then set as null.\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}]}",
+    "question": "listen for new message, call !NewMessage, write content to %content%, %sender% for sender address",
+    "assistant": "## functions available starts ##\r\nString GetPublicKey() \nList`1 GetRelays() \nvoid SetCurrentAccount(String publicKeyOrName) \nvoid Listen(String goalName, String? contentVariableName = \"content\", String? senderVariableName = \"sender\", String? eventVariableName = \"__NosrtEventKey__\", Nullable`1<DateTimeOffset>? listenFromDateTime)  // goalName should be prefixed by ! and be whole word with possible dot(.). \nvoid SendPrivateMessageToMyself(String content) \nvoid SendPrivateMessage(String content, String npubReceiverPublicKey)\r\n## functions available ends ##\r\n## defined variables ##\r\ncontent (type:object), sender (type:object), \r\n## defined variables ##\nFollowing Relay servers are available: [\"wss://relay.damus.io\",\"wss://nostr-pub.wellorder.net\",\"wss://offchain.pub\",\"wss://nos.lol\"].\r\nFollowing are Nostr accounts:[{\"IsDefault\":false,\"IsArchived\":false,\"Name\":\"Default\",\"PrivateKeyBech32\":\"\",\"HexPublicKey\":\"35a1fee7df654ff780fde79232e4c874a908c5d973743efb9f080de4206562ac\",\"Bech32PublicKey\":\"npub1xkslae7lv48l0q8au7fr9exgwj5s33wewd6ra7ulpqx7ggr9v2kqtmskaf\"}]\r\n",
     "model": "gpt-4",
     "caching": true,
-    "Reload": false,
-    "PreviousResult": null,
-    "RawResponse": "{\"FunctionName\": \"Listen\",\n\"Parameters\": [\n    {\"Type\": \"string\", \"Name\": \"goalName\", \"Value\": \"!NewMessage\"},\n    {\"Type\": \"string\", \"Name\": \"variableName\", \"Value\": \"%content%\"},\n    {\"Type\": \"Nullable`1<DateTimeOffset>\", \"Name\": \"listenFromDateTime\", \"Value\": null}\n]}"
+    "RawResponse": null
   },
   "RunOnBuild": false
 }

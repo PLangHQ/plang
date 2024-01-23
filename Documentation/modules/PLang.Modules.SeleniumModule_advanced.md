@@ -51,11 +51,11 @@ Task<List<string>> ExtractContent(bool clearHtml = true, string cssSelector = nu
 For more detailed documentation and examples:
 - Refer to [PLang.Modules.SeleniumModule.md](./PLang.Modules.SeleniumModule.md).
 - Explore the repository at [PLangHQ Selenium Tests](https://github.com/PLangHQ/plang/tree/main/Tests/Selenium).
-- Review the Program.cs source code at [PLang.Modules.SeleniumModule Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.SeleniumModule/Program.cs).
+- Review the Program.cs source code at [PLang.Modules.SeleniumModule Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/SeleniumModule/Program.cs).
 
 ## Source code
-The Program.cs runtime code can be found at [PLang.Modules.SeleniumModule Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.SeleniumModule/Program.cs).
-The Builder.cs for building steps can be found at [PLang.Modules.SeleniumModule Builder.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.SeleniumModule/Builder.cs).
+The Program.cs runtime code can be found at [PLang.Modules.SeleniumModule Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/SeleniumModule/Program.cs).
+The Builder.cs for building steps can be found at [PLang.Modules.SeleniumModule Builder.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/SeleniumModule/Builder.cs).
 
 ## How plang is mapped to C#
 

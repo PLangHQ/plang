@@ -23,11 +23,11 @@ Python
 Task<Dictionary<string, object>> RunPythonScript(string fileName, string[] parameterValues = null, string[] parameterNames = null, string[] variablesToExtractFromPythonScript = null, bool useNamedArguments = false, bool useTerminal = false, string pythonPath = null, string stdOutVariableName = null, string stdErrorVariableName = null)
 ```
 
-For more detailed documentation and all examples, please refer to [PLang.Modules.PythonModule.md](./PLang.Modules.PythonModule.md) and the [plang Python Tests repository](https://github.com/PLangHQ/plang/tree/main/Tests/Python). Additionally, users can look at the Program.cs source code for a deeper understanding of the module's implementation: [PLang.Modules.PythonModule/Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.PythonModule/Program.cs).
+For more detailed documentation and all examples, please refer to [PLang.Modules.PythonModule.md](./PLang.Modules.PythonModule.md) and the [plang Python Tests repository](https://github.com/PLangHQ/plang/tree/main/Tests/Python). Additionally, users can look at the Program.cs source code for a deeper understanding of the module's implementation: [PLang.Modules.PythonModule/Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PythonModule/Program.cs).
 
 ## Source code
 
-Program.cs is the runtime code for the Python module and can be found at [PLang.Modules.PythonModule/Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.PythonModule/Program.cs).
+Program.cs is the runtime code for the Python module and can be found at [PLang.Modules.PythonModule/Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PythonModule/Program.cs).
 
 ## How plang is mapped to C#
 

@@ -5,14 +5,14 @@ Http
     data='test=1'
     signRequest
     write to %postResponse%
-- write out %postResponse.tojson()%
-- post multipart https://httpbin.org/post
+- write out %postResponse%
+- post  multipart https://httpbin.org/post
     data: @file='1px.png', name='1px'
     write to %postResponse2%
-- write out %postResponse2.tojson()%    
+- write out %postResponse2%    
 - put https://httpbin.org/put, write to %putResponse%
-- write out %putResponse.tojson()%
+- write out %putResponse%
 - delete https://httpbin.org/delete, write to %delResponse%
-- write out %delResponse.ToJson()%
+- write out %delResponse%
 - patch https://httpbin.org/patch, write to %patchResponse%
-- write out %patchResponse.ToJson()%
+- write out %patchResponse%

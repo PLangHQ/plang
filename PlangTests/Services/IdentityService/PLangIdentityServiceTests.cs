@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using NSubstitute;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Utils;
 using PLangTests;
 
@@ -24,7 +25,7 @@ namespace PLang.Services.IdentityService.Tests
 					new Identity("default", "aaa", "a26c463040c1ea9ed3a11da2a1619ab81a3937b7ab4a535a33456ebff682ed36583a5f11ed359a230cc20790284bbf7198e06091d315d02ee50cc4f351cb4f40") { IsDefault = true },
 					new Identity("default2", "aaaff", "a26c463040c1ea9ed3a11da2a1619ab81a3937b7ab4a535a33456ebff682ed36583a5f11ed359a230cc20790284bbf7198e06091d315d02ee50cc4f351cb4f40") { IsDefault = false }
 				};
-			settings.Add(new Setting("1", "PLang.Services.IdentityService.PLangIdentityService", typeof(string).ToString(), PLangIdentityService.SettingKey, JsonConvert.SerializeObject(identites), ""));
+			settings.Add(new Setting("1", "PLang.Services.IdentityService.PLangIdentityService", typeof(string).ToString(), PLangIdentityService.SettingKey, JsonConvert.SerializeObject(identites)));
 
 			settingsRepository = Substitute.For<ISettingsRepository>();
 			settingsRepository.GetSettings().Returns(settings);
@@ -32,7 +33,7 @@ namespace PLang.Services.IdentityService.Tests
 			publicPrivateKeyCreator.Create().Returns(new PublicPrivateKey("1234", "abcd"));
 
 
-			pis = new PLangIdentityService(settingsRepository, appCache, publicPrivateKeyCreator, context);
+			pis = new PLangIdentityService(settingsRepository, appCache, publicPrivateKeyCreator, logger, context);
 		}
 
 
@@ -182,7 +183,7 @@ namespace PLang.Services.IdentityService.Tests
 			settingsRepository = Substitute.For<ISettingsRepository>();
 			settingsRepository.GetSettings().Returns(settings);
 
-			PLangIdentityService pis = new PLangIdentityService(settingsRepository, appCache, publicPrivateKeyCreator, context);
+			PLangIdentityService pis = new PLangIdentityService(settingsRepository, appCache, publicPrivateKeyCreator, logger, context);
 			var identity = pis.GetCurrentIdentity();
 			Assert.IsNotNull(identity);
 			Assert.AreEqual("1234", identity.Identifier);
@@ -213,7 +214,7 @@ namespace PLang.Services.IdentityService.Tests
 					new Identity("default2", "aaaff", "a26c463040c1ea9ed3a11da2a1619ab81a3937b7ab4a535a33456ebff682ed36583a5f11ed359a230cc20790284bbf7198e06091d315d02ee50cc4f351cb4f40") { IsDefault = false }
 				});
 
-			PLangIdentityService pis = new PLangIdentityService(settingsRepository, appCache, publicPrivateKeyCreator, context);
+			PLangIdentityService pis = new PLangIdentityService(settingsRepository, appCache, publicPrivateKeyCreator, logger, context);
 			var identity = pis.ArchiveIdentity("default");
 
 		}

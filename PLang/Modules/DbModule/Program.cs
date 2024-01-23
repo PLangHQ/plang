@@ -44,7 +44,7 @@ namespace PLang.Modules.DbModule
 			var dataSource = await moduleSettings.GetDataSource(name);
 			if (dataSource == null)
 			{
-				throw new ArgumentException($"Datasource with the name '{name}' could not be found");
+				throw new ArgumentException($"Datasource with the name '{name}' could not be found. You need to create a datasource first, e.g. \n\n- Create data source {name}");
 			}
 			context[ReservedKeywords.CurrentDataSourceName] = dataSource;
 		}

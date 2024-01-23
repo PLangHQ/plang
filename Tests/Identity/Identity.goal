@@ -14,5 +14,5 @@ Identity
     url = "http://plang.is"
 - sign using identity, %body%, %method%, %url%, write to %signature%
 - write out 'Signature: %signature%'
-- validate signature, %body%, %method%, %url%, %signature.KeyValues%, write to %address%
+- validate signature, %body%, %method%, %url%, %signature%, write to %address%
 - write out 'This is the address: %address%

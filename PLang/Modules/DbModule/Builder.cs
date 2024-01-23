@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Runtime;
 using PLang.Services.EventSourceService;
 using PLang.Utils;
 using System.ComponentModel;
@@ -24,8 +25,9 @@ namespace PLang.Modules.DbModule
 		private readonly ILlmService aiService;
 		private readonly ITypeHelper typeHelper;
 		private readonly ILogger logger;
+		private readonly MemoryStack memoryStack;
 
-		public Builder(IPLangFileSystem fileSystem, IDbConnection db, ISettings settings, PLangAppContext context, ILlmService aiService, ITypeHelper typeHelper, ILogger logger) : base()
+		public Builder(IPLangFileSystem fileSystem, IDbConnection db, ISettings settings, PLangAppContext context, ILlmService aiService, ITypeHelper typeHelper, ILogger logger, MemoryStack memoryStack) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.db = db;
@@ -34,6 +36,7 @@ namespace PLang.Modules.DbModule
 			this.aiService = aiService;
 			this.typeHelper = typeHelper;
 			this.logger = logger;
+			this.memoryStack = memoryStack;
 		}
 
 		public record FunctionInfo(string FunctionName, string[]? TableNames = null);
@@ -220,7 +223,7 @@ You MUST provide Parameters if SQL has @parameter.
 ""delete from tableX"" => sql: ""DELETE FROM tableX"", warning: Missing WHERE statement can affect rows that should not
 ""delete tableB where id=%id%"" => sql: ""DELETE FROM tableB WHERE id=@id"", warning: null
 # examples #");
-
+			
 			return await BuildCustomStatementsWithWarning(goalStep, dataSource, program, functionInfo);
 		}
 		private async Task<Instruction> CreateUpdate(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
@@ -231,13 +234,17 @@ You MUST provide Parameters if SQL has @parameter.
 			{
 				appendToSystem = "Parameter @id MUST be type System.Int64";
 			}
-			SetSystem(@$"Map user command to this c# function: 
+			SetSystem(@$"Your job is: 
+1. Parse user intent
+2. Map the intent to one of C# function provided to you
+3. Return a valid JSON: 
 
 ## csharp function ##
 Int32 Update(String sql, List<object>()? Parameters = null)
 ## csharp function ##
 
 variable is defined with starting and ending %, e.g. %filePath%. Do not remove %
+Sql is the SQL statement that should be executed. Sql MAY NOT contain a variable, it MUST be injected using Parameter to prevent SQL injection
 Parameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
 TypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.
 All integers are type of System.Int64.
@@ -252,16 +259,19 @@ You MUST provide Parameters if SQL has @parameter.
 ""update tableB, %name%, %phone% where id=%id%"" => sql: ""UPDATE tableB SET name=@name, phone=@phone WHERE id=@id"", parameters:[{name:%name%, phone:%phone%, id=%id%}] 
 # examples #");
 
-			return await BuildCustomStatementsWithWarning(goalStep, dataSource, program, functionInfo);
+			
+			var instruction = await BuildCustomStatementsWithWarning(goalStep, dataSource, program, functionInfo);
+			
+			return instruction;
 
 
 		}
 
-		private async Task<Instruction> BuildCustomStatementsWithWarning(GoalStep goalStep, DataSource dataSource, Program program, FunctionInfo functionInfo)
+		private async Task<Instruction> BuildCustomStatementsWithWarning(GoalStep goalStep, DataSource dataSource, Program program, FunctionInfo functionInfo, string? errorMessage = null, int errorCount = 0)
 		{
 			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
-
 			var instruction = await base.Build<DbGenericFunction>(goalStep);
+
 			var gf = instruction.Action as DbGenericFunction;
 			if (!string.IsNullOrWhiteSpace(gf.Warning))
 			{

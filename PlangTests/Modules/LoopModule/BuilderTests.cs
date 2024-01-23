@@ -27,7 +27,7 @@ namespace PLang.Modules.LoopModule.Tests
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.LoopModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.LoopModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -39,7 +39,7 @@ namespace PLang.Modules.LoopModule.Tests
 			});			
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.LoopModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.LoopModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
 

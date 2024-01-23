@@ -478,7 +478,7 @@ namespace PLang.Modules.WebserverModule
 			{
 				body = await reader.ReadToEndAsync();
 			}
-			await VerifySignature(request, identityService, body, memoryStack);
+			await VerifySignature(request, body);
 
 			var nvc = request.QueryString;
 			if (contentType.StartsWith("application/json") && !string.IsNullOrEmpty(body))
@@ -545,14 +545,14 @@ namespace PLang.Modules.WebserverModule
 
 		}
 
-		public async Task<bool> VerifySignature(HttpListenerRequest request, IPLangIdentityService identityService, string body, MemoryStack memoryStack)
+		public async Task VerifySignature(HttpListenerRequest request, string body)
 		{
 			if (request.Headers.Get("X-Signature") == null ||
 				request.Headers.Get("X-Signature-Created") == null ||
 				request.Headers.Get("X-Signature-Nonce") == null ||
 				request.Headers.Get("X-Signature-Address") == null ||
 				request.Headers.Get("X-Signature-Contract") == null
-				) return false;
+				) return;
 
 			var validationHeaders = new Dictionary<string, object>();
 			validationHeaders.Add("X-Signature", request.Headers.Get("X-Signature")!);
@@ -563,14 +563,12 @@ namespace PLang.Modules.WebserverModule
 
 			var url = request.Url?.PathAndQuery ?? "";
 
-			var address = await signingService.VerifySignature(body, request.HttpMethod, url, validationHeaders);
-
-			if (address == null) return false;
-
-			memoryStack.Put(ReservedKeywords.Identity, address.ComputeHash(salt: context[ReservedKeywords.Salt]!.ToString()));
-			memoryStack.Put(ReservedKeywords.IdentityNotHashed, address);
-			return true;
-
+			var identies = await signingService.VerifySignature(body, request.HttpMethod, url, validationHeaders);
+			if (identies == null) return;
+			foreach (var identity in identies)
+			{
+				memoryStack.Put(identity.Key, identity.Value);
+			}
 		}
 
 		private async Task ProcessWebsocketRequest(HttpListenerContext httpContext)
@@ -627,8 +625,9 @@ namespace PLang.Modules.WebserverModule
 
 		private List<WebSocketInfo> websocketInfos = new List<WebSocketInfo>();
 		public record WebSocketInfo(ClientWebSocket ClientWebSocket, string Url, string GoalToCAll, string WebSocketName, string ContentRecievedVariableName);
-		public record WebSocketData(string GoalToCall, string Url, string Method, string Contract, Dictionary<string, object?>? Parameters)
+		public record WebSocketData(string GoalToCall, string Url, string Method, string Contract)
 		{
+			public Dictionary<string, object?> Parameters = new();
 			public Dictionary<string, object>? SignatureData = null;
 		};
 
@@ -645,7 +644,8 @@ namespace PLang.Modules.WebserverModule
 			string method = "Websocket";
 			string contract = "C0";
 
-			var obj = new WebSocketData(goalToCall, url, method, contract, parameters);
+			var obj = new WebSocketData(goalToCall, url, method, contract);
+			obj.Parameters = parameters;
 
 			var signatureData = signingService.Sign(JsonConvert.SerializeObject(obj), method, url, contract);
 			obj.SignatureData = signatureData;
@@ -723,8 +723,8 @@ namespace PLang.Modules.WebserverModule
 						var signatureData = websocketData.SignatureData;
 						var identity = await signingService.VerifySignature(JsonConvert.SerializeObject(websocketData), websocketData.Method, websocketData.Url, signatureData);
 
-						websocketData.SignatureData = null;
-						context.AddOrReplace("Identity", identity);
+						websocketData.SignatureData = null;						
+						websocketData.Parameters.AddOrReplace(identity);
 
 						await pseudoRuntime.RunGoal(engine, context, fileSystem.RootDirectory, websocketData.GoalToCall, websocketData.Parameters);
 					}

@@ -54,12 +54,12 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			return variableHelper.LoadVariables(content);
 		}
 
-		[Description(@"Set variable")]
+		[Description(@"Set variable. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
 		public async Task SetVariable([HandlesVariable] string key, object? value = null)
 		{
 			memoryStack.Put(key, variableHelper.LoadVariables(value));
 		}
-		[Description(@"Set multiple variables.")]
+		[Description(@"Set multiple variables. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
 		public async Task SetVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues)
 		{
 			foreach (var key in keyValues)
@@ -68,7 +68,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			}
 		}
 
-		[Description(@"Set default value on variables if not set.")]
+		[Description(@"Set default value on variables if not set. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
 		public async Task SetDefaultValueOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues)
 		{
 			foreach (var key in keyValues)

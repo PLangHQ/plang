@@ -11,7 +11,7 @@ using System.Net;
 
 namespace PLang.Modules.CallGoalModule
 {
-	[Description("Call another Goal, when ! is prefixed, e.g. !RenameFile")]
+	[Description("Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search.")]
 	public class Program : BaseProgram
 	{
 		private readonly IPseudoRuntime pseudoRuntime;
@@ -27,6 +27,7 @@ namespace PLang.Modules.CallGoalModule
 			this.prParser = prParser;
 		}
 
+		[Description("If backward slash(\\) is used by user, change to forward slash(/)")]
 		public async Task RunGoal(string goalName, Dictionary<string, object>? parameters = null, bool waitForExecution = true, int delayWhenNotWaitingInMilliseconds = 0)
 		{
 			if (goalName == null)
@@ -34,7 +35,7 @@ namespace PLang.Modules.CallGoalModule
 				throw new Exception($"Could not find goal to call from step: {goalStep.Text}");
 			}
 
-			if (goalName.Contains("."))
+			if (goalName.Contains("/"))
 			{
 				ValidateAppInstall(goalName);
 
@@ -61,7 +62,7 @@ namespace PLang.Modules.CallGoalModule
 
 		private void ValidateAppInstall(string goalName)
 		{
-			string appName = goalName.Substring(0, goalName.IndexOf("."));
+			string appName = goalName.Substring(0, goalName.IndexOf("/"));
 			if (!fileSystem.Directory.Exists(Path.Join("apps", appName)))
 			{
 				string zipPath = Path.Join(fileSystem.RootDirectory, "apps", appName, appName + ".zip");

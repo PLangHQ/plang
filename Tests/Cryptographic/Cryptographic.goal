@@ -5,7 +5,7 @@ Cryptographic
 - decrypt %encryptedText%, write to %decryptedText%
 - write out %decryptedText%
 - set var %password% as 'MySuperPassword123.'
-- hash  %password%, write to %hashedPassword%
+- hash %password% using bcrypt, write to %hashedPassword%
 - validate  hashed password, 'MySuperPassword123.' to %hashedPassword%, write to %isValid%
 - if %isValid% then
     - write out 'hash is valid'

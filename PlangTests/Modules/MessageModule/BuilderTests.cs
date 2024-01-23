@@ -27,7 +27,7 @@ namespace PLang.Modules.MessageModule.Tests
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new Builder(settings, aiService);
-			builder.InitBaseBuilder("PLang.Modules.MessageModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.MessageModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -39,7 +39,7 @@ namespace PLang.Modules.MessageModule.Tests
 			});			
 
 			builder = new Builder(settings, aiService);
-			builder.InitBaseBuilder("PLang.Modules.MessageModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.MessageModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
 

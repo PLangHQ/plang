@@ -24,10 +24,10 @@ public async Task<bool> CheckConditionAsync(bool condition);
 For more detailed examples and documentation:
 - [PLang.Modules.ConditionalModule.md](./PLang.Modules.ConditionalModule.md)
 - [PLang Conditional Tests](https://github.com/PLangHQ/plang/tree/main/Tests/Conditional)
-- [Program.cs source code](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.ConditionalModule/Program.cs)
+- [Program.cs source code](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/ConditionalModule/Program.cs)
 
 ## Source code
-The runtime code for the Conditional module can be found at [Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.ConditionalModule/Program.cs). The Builder.cs, responsible for the building of steps, is available at [Builder.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.ConditionalModule/Builder.cs).
+The runtime code for the Conditional module can be found at [Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/ConditionalModule/Program.cs). The Builder.cs, responsible for the building of steps, is available at [Builder.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/ConditionalModule/Builder.cs).
 
 ## How plang is mapped to C#
 Modules in plang are used to encapsulate functionality and map user-defined steps to C# methods.

@@ -1,9 +1,14 @@
-﻿using PLang.Building.Model;
+﻿using Microsoft.Extensions.Logging;
+using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Utils;
 using PLang.Utils.Extractors;
+using System.Runtime.InteropServices;
+using Websocket.Client.Logging;
+using static PLang.Modules.DbModule.Builder;
+using static PLang.Modules.DbModule.ModuleSettings;
 using Instruction = PLang.Building.Model.Instruction;
 
 namespace PLang.Modules
@@ -21,6 +26,7 @@ namespace PLang.Modules
 		private IPLangFileSystem fileSystem;
 		private ILlmService aiService;
 		private ITypeHelper typeHelper;
+		private ILogger logger;
 		private MemoryStack memoryStack;
 		private PLangAppContext context;
 		private VariableHelper variableHelper;
@@ -30,7 +36,8 @@ namespace PLang.Modules
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		{ }
 
-		public void InitBaseBuilder(string module, IPLangFileSystem fileSystem, ILlmService llmService, ITypeHelper typeHelper, MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper)
+		public void InitBaseBuilder(string module, IPLangFileSystem fileSystem, ILlmService llmService, ITypeHelper typeHelper, 
+			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ILogger logger)
 		{
 			this.module = module;
 			this.fileSystem = fileSystem;
@@ -39,6 +46,7 @@ namespace PLang.Modules
 			this.memoryStack = memoryStack;
 			this.context = context;
 			this.variableHelper = variableHelper;
+			this.logger = logger;
 		}
 
 
@@ -55,8 +63,13 @@ namespace PLang.Modules
 			return await Build(step, typeof(GenericFunction));
 		}
 
-		public virtual async Task<Instruction> Build(GoalStep step, Type? responseType = null)
+		public virtual async Task<Instruction> Build(GoalStep step, Type? responseType = null, string? errorMessage = null, int errorCount = 0)
 		{
+			if (errorCount > 3)
+			{
+				logger.LogError(errorMessage);
+				throw new BuilderException("Could not get a valid function from LLM. You need to adjust your wording.");
+			}
 			if (responseType == null) responseType = typeof(GenericFunction);
 
 			var question = GetQuestion(step, responseType);
@@ -68,9 +81,38 @@ namespace PLang.Modules
 				throw new BuilderException($"Could not build for {responseType.Name}");
 			}
 
-
 			var instruction = new Instruction(result);
 			instruction.LlmQuestion = question;
+
+			var methodHelper = new MethodHelper(step, variableHelper, typeHelper, aiService);
+			var invalidFunctions = methodHelper.ValidateFunctions(instruction.GetFunctions(), step.ModuleType, memoryStack);
+
+			if (invalidFunctions.Count > 0)
+			{
+				errorMessage = @$"## Error from previous LLM request ## 
+Previous response from LLM caused error. This was your response.
+{instruction.Action.ToString()}
+
+This is the error(s)
+";
+				foreach (var invalidFunction in invalidFunctions)
+				{
+					errorMessage += " - " + invalidFunction.explain;
+				}
+				errorMessage += $@"Make sure to fix the error and return valid JSON response
+## Error from previous LLM request ##
+
+				";
+				return await Build(step, responseType, errorMessage, ++errorCount);
+			}
+
+			//cleanup for next time
+			appendedSystemCommand = "";
+			appendedAssistantCommand = "";
+			assistant = "";
+			system = "";
+
+
 			return instruction;
 		}
 
@@ -125,11 +167,7 @@ namespace PLang.Modules
 				step.Text,
 				assistant);
 
-			//cleanup for next time
-			appendedSystemCommand = "";
-			appendedAssistantCommand = "";
-			assistant = "";
-			system = "";
+			
 
 			return question;
 

@@ -5,6 +5,7 @@ using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
+using PLang.Runtime;
 using System.Reflection;
 using System.Runtime.Caching;
 using static PLang.Modules.BaseBuilder;
@@ -75,12 +76,80 @@ you must answer in JSON, scheme:
 		}
 		public record MethodNotFoundResponse(string Text);
 
+
+
+		public record InvalidFunction(string functionName, string explain, bool excludeModule);
+
+		public List<InvalidFunction> ValidateFunctions(GenericFunction[] functions, string module, MemoryStack memoryStack)
+		{
+			List<InvalidFunction> invalidFunctions = new List<InvalidFunction>();
+			if (functions == null || functions[0] == null) return invalidFunctions;
+
+			foreach (var function in functions)
+			{
+
+				if (function.FunctionName.ToUpper() == "N/A")
+				{
+					invalidFunctions.Add(new InvalidFunction(function.FunctionName, "", true));
+				}
+				else
+				{
+					var runtimeType = typeHelper.GetRuntimeType(module);
+					if (runtimeType == null)
+					{
+						throw new BuilderException($"Could not load {module}.Program");
+					}
+
+					var instanceFunctions = runtimeType.GetMethods().Where(p => p.Name == function.FunctionName);
+					if (instanceFunctions.Count() == 0)
+					{
+						invalidFunctions.Add(new InvalidFunction(function.FunctionName, $"Could not find {function.FunctionName} in module", true));
+					}
+					else
+					{
+
+						foreach (var instanceFunction in instanceFunctions)
+						{
+							var parameterError = IsParameterMatch(instanceFunction, function.Parameters);
+							if (parameterError == null)
+							{
+								if (instanceFunction.ReturnType != typeof(Task) && function.ReturnValue != null && function.ReturnValue.Count > 0)
+								{
+									foreach (var returnValue in function.ReturnValue)
+									{
+										memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
+									}
+								}
+							}
+							else
+							{
+								invalidFunctions.Add(new InvalidFunction(function.FunctionName, $"Parameters dont match with {function.FunctionName} - {parameterError}", false));
+							}
+
+						}
+
+					}
+				}
+			}
+			return invalidFunctions;
+		}
+
+
+
 		public string? IsParameterMatch(MethodInfo p, List<Parameter> parameters)
 		{
+			string? error = null;
 			foreach (var methodParameter in p.GetParameters())
 			{
 				var methodType = methodParameter.ParameterType.Name.ToLower();
 				if (methodType.Contains("`")) methodType = methodType.Substring(0, methodType.IndexOf("`"));
+
+				var parameter = parameters.FirstOrDefault(x => x.Name == methodParameter.Name);
+				if (parameter == null && methodType != "nullable" && !methodParameter.HasDefaultValue && !methodParameter.IsOptional)
+				{
+					error += $"{methodParameter.Name} ({methodType}) is missing from parameters. {methodParameter.Name} is a required parameter\n";
+				}
+
 				if (methodType == "nullable" && methodParameter.ParameterType.GenericTypeArguments.Length > 0)
 				{
 					methodType = methodParameter.ParameterType.GenericTypeArguments[0].Name.ToLower();
@@ -95,12 +164,12 @@ you must answer in JSON, scheme:
 				{
 					if (!methodParameter.ParameterType.Name.ToLower().StartsWith("nullable") && !methodParameter.IsOptional && !methodParameter.HasDefaultValue)
 					{
-						return $"{methodParameter.Name} ({methodParameter.ParameterType.Name})";
+						error += $"{methodParameter.Name} ({methodParameter.ParameterType.Name}) is missing\n";
 					}
 
 				}
 			}
-			return null;
+			return error;
 		}
 
 		public Dictionary<string, object?> GetParameterValues(MethodInfo method, GenericFunction function)

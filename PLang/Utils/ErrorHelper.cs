@@ -118,12 +118,13 @@ namespace PLang.Utils
 				{					
 					errorInfo += $"\nGoalName '{step.Goal.GoalName}' at {step.Goal.AbsoluteGoalPath}";
 					errorInfo += $"\nStep '{step.Text}'";
+					logger.LogError(errorInfo);
 				}
 				logger.LogError(strError);
 				if (ex != null)
 				{
 					logger.LogWarning("--------- StackTrace ---------\n" + ex.StackTrace);
-					throw new Exception("FriendlyError", ex);
+					throw new RuntimeGoalEndException("FriendlyError", step);
 				}
 			}
 

@@ -27,10 +27,10 @@ Sets a value to a static variable that is shared across all instances of the mod
 ```
 C# Method Signature: `void SetStaticVariable(string key, object value)`
 
-For more detailed documentation and all examples, visit [PLang.Modules.LocalOrGlobalVariableModule.md](./PLang.Modules.LocalOrGlobalVariableModule.md) and the [PLangHQ/plang LocalOrGlobalVariable repository](https://github.com/PLangHQ/plang/tree/main/Tests/LocalOrGlobalVariable). Additionally, inspect the Program.cs source code at [PLangHQ/plang Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.LocalOrGlobalVariableModule/Program.cs).
+For more detailed documentation and all examples, visit [PLang.Modules.LocalOrGlobalVariableModule.md](./PLang.Modules.LocalOrGlobalVariableModule.md) and the [PLangHQ/plang LocalOrGlobalVariable repository](https://github.com/PLangHQ/plang/tree/main/Tests/LocalOrGlobalVariable). Additionally, inspect the Program.cs source code at [PLangHQ/plang Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/LocalOrGlobalVariableModule/Program.cs).
 
 ## Source code
-Program.cs is the runtime code for the `LocalOrGlobalVariable` module and can be found at [PLangHQ/plang Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.LocalOrGlobalVariableModule/Program.cs).
+Program.cs is the runtime code for the `LocalOrGlobalVariable` module and can be found at [PLangHQ/plang Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/LocalOrGlobalVariableModule/Program.cs).
 
 ## How plang is mapped to C#
 Modules in plang are utilized through a build and runtime process that translates natural language steps into executable C# code.

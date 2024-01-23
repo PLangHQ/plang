@@ -25,11 +25,11 @@ C# method signature:
 Task<string> AskLlm(string system, string user, string model = "gpt-4", double temperature = 0, double topP = 0, double frequencyPenalty = 0.0, double presencePenalty = 0.0, int maxLength = 4000, bool cacheResponse = true, string llmResponseType = null);
 ```
 
-For more detailed documentation and all examples, please visit [PLang.Modules.LlmModule.md](./PLang.Modules.LlmModule.md) and the [plang Llm tests repository](https://github.com/PLangHQ/plang/tree/main/Tests/Llm). Additionally, the source code for the Llm module can be found in [Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.LlmModule/Program.cs).
+For more detailed documentation and all examples, please visit [PLang.Modules.LlmModule.md](./PLang.Modules.LlmModule.md) and the [plang Llm tests repository](https://github.com/PLangHQ/plang/tree/main/Tests/Llm). Additionally, the source code for the Llm module can be found in [Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/LlmModule/Program.cs).
 
 ## Source code
-The runtime code for the Llm module, `Program.cs`, is available at [plang Llm Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.LlmModule/Program.cs).
-The builder code for the Llm module, `Builder.cs`, can be found at [plang Llm Builder.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.LlmModule/Builder.cs).
+The runtime code for the Llm module, `Program.cs`, is available at [plang Llm Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/LlmModule/Program.cs).
+The builder code for the Llm module, `Builder.cs`, can be found at [plang Llm Builder.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/LlmModule/Builder.cs).
 
 ## How plang is mapped to C#
 The integration of plang with C# methods occurs through a two-phase process: the Builder phase and the Runtime phase.

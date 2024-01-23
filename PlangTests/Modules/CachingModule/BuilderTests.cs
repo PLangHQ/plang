@@ -30,7 +30,7 @@ namespace PLang.Modules.CachingModule.Tests
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CachingModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.CachingModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -40,7 +40,7 @@ namespace PLang.Modules.CachingModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CachingModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.CachingModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
 		[DataTestMethod]

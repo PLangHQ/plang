@@ -29,7 +29,7 @@ namespace PLang.Modules.LlmModule.Tests
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new Builder();
-			builder.InitBaseBuilder("PLang.Modules.LlmModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.LlmModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -40,7 +40,7 @@ namespace PLang.Modules.LlmModule.Tests
 			if (llmService == null) return;
 
 			builder = new Builder();
-			builder.InitBaseBuilder("PLang.Modules.LlmModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.LlmModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
 

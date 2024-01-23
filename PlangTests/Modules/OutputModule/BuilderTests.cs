@@ -27,7 +27,7 @@ namespace PLang.Modules.OutputModule.Tests
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.OutputModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.OutputModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -39,7 +39,7 @@ namespace PLang.Modules.OutputModule.Tests
 			});			
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.OutputModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.OutputModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
 

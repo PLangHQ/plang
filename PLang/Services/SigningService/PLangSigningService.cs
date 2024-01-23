@@ -1,4 +1,5 @@
-﻿using Nethereum.Signer;
+﻿using NBitcoin.Secp256k1;
+using Nethereum.Signer;
 using Nethereum.Util;
 using Newtonsoft.Json;
 using PLang.Interfaces;
@@ -8,43 +9,67 @@ using System.Text;
 
 namespace PLang.Services.SigningService
 {
+	public class SignatureExpiredException : Exception
+	{
+		public SignatureExpiredException(string message) : base(message) { }
+	}
+	public class SignatureException : Exception
+	{
+		public SignatureException(string message) : base(message) { }
+	}
+
 	public interface IPLangSigningService
 	{
-		Dictionary<string, object> Sign(string content, string method, string url, string contract = "C0");
-		Dictionary<string, object> SignWithTimeout(string content, string method, string url, DateTimeOffset expires, string contract = "C0");
+		Dictionary<string, object> Sign(string content, string method, string url, string contract = "C0", string? sharedIdentity = null);
+		Dictionary<string, object> Sign(byte[] seed, string content, string method, string url, string contract = "C0");
 		Dictionary<string, object> SignWithTimeout(byte[] seed, string content, string method, string url, DateTimeOffset expires, string contract = "C0");
-		Task<string?> VerifySignature(string body, string method, string url, Dictionary<string, object> validationKeyValues);
+		Dictionary<string, object> SignWithTimeout(string content, string method, string url, DateTimeOffset expires, string contract = "C0", string? sharedIdentity = null);
+		Task<Dictionary<string, object?>> VerifySignature(string body, string method, string url, Dictionary<string, object> validationKeyValues);
 	}
 
 	public class PLangSigningService : IPLangSigningService
 	{
 		private readonly IAppCache appCache;
 		private readonly IPLangIdentityService identityService;
+		private readonly PLangAppContext context;
 
-		public PLangSigningService(IAppCache appCache, IPLangIdentityService identityService)
+		public PLangSigningService(IAppCache appCache, IPLangIdentityService identityService, PLangAppContext context)
 		{
 			this.appCache = appCache;
 			this.identityService = identityService;
+			this.context = context;
 		}
 
-		public Dictionary<string, object> SignWithTimeout(string content, string method, string url, DateTimeOffset expires, string contract = "C0")
+		public Dictionary<string, object> SignWithTimeout(string content, string method, string url, DateTimeOffset expires, string contract = "C0", string? sharedIdentity = null)
 		{
-			return SignInternal(content, method, url, contract, expires);
+			return SignInternal(content, method, url, contract, expires, sharedIdentity);
 		}
 		public Dictionary<string, object> SignWithTimeout(byte[] seed, string content, string method, string url, DateTimeOffset expires, string contract = "C0")
 		{
 			return SignInternal(seed, content, method, url, contract, expires);
 		}
-		public Dictionary<string, object> Sign(string content, string method, string url, string contract = "C0")
+		public Dictionary<string, object> Sign(string content, string method, string url, string contract = "C0", string? sharedIdentity = null)
 		{
-			return SignInternal(content, method, url, contract);
+			return SignInternal(content, method, url, contract, null, sharedIdentity);
+		}
+		public Dictionary<string, object> Sign(byte[] seed, string content, string method, string url, string contract = "C0")
+		{
+			return SignInternal(seed, content, method, url, contract, null);
 		}
 
-		private Dictionary<string, object> SignInternal(string content, string method, string url, string contract = "C0", DateTimeOffset? expires = null)
+		private Dictionary<string, object> SignInternal(string content, string method, string url, string contract = "C0", DateTimeOffset? expires = null, string? sharedIdentity = null)
 		{
-			var identity = identityService.GetCurrentIdentityWithPrivateKey();
-			var seed = Encoding.UTF8.GetBytes(identity.Value!.ToString()!);
-			return SignInternal(seed, content, method, url, contract, expires);
+			try
+			{
+				identityService.UseSharedIdentity(sharedIdentity);
+				var identity = identityService.GetCurrentIdentityWithPrivateKey();
+				var seed = Encoding.UTF8.GetBytes(identity.Value!.ToString()!);
+				return SignInternal(seed, content, method, url, contract, expires);
+			}
+			finally
+			{
+				identityService.UseSharedIdentity(null);
+			}
 		}
 		private Dictionary<string, object> SignInternal(byte[] seed, string content, string method, string url, string contract = "C0", DateTimeOffset? expires = null)
 		{
@@ -90,16 +115,25 @@ namespace PLang.Services.SigningService
 
 		}
 
-		public async Task<string?> VerifySignature(string body, string method, string url, Dictionary<string, object> validationKeyValues)
+		
+		public async Task<Dictionary<string, object?>> VerifySignature(string body, string method, string url, Dictionary<string, object> validationKeyValues)
 		{
-			return await VerifySignature(appCache, body, method, url, validationKeyValues);
+			return await VerifySignature(appCache, context, body, method, url, validationKeyValues);
 		}
 
 		/*
 		 * Return Identity(string) if signature is valid, else null  
 		 */
-		public static async Task<string?> VerifySignature(IAppCache appCache, string body, string method, string url, Dictionary<string, object> validationKeyValues)
+		public static async Task<Dictionary<string, object?>> VerifySignature(IAppCache appCache, PLangAppContext context, string body, string method, string url, Dictionary<string, object> validationKeyValues)
 		{
+			var identities = new Dictionary<string, object?>();
+
+			if (!validationKeyValues.ContainsKey("X-Signature"))
+			{
+				identities.AddOrReplace(ReservedKeywords.Identity, null);
+				identities.AddOrReplace(ReservedKeywords.IdentityNotHashed, null);
+				return identities;
+			}
 			var signature = validationKeyValues["X-Signature"];
 
 			if (!long.TryParse(validationKeyValues["X-Signature-Created"].ToString(), out long createdUnixTime))
@@ -146,7 +180,21 @@ namespace PLang.Services.SigningService
 			string recoveredAddress2 = normalizer.ConvertToChecksumAddress(recoveredAddress);
 			string expectedAddress2 = normalizer.ConvertToChecksumAddress(expectedAddress.ToString());
 
-			return recoveredAddress2 == expectedAddress2 ? recoveredAddress2 : null;
+			string address = (recoveredAddress2 == expectedAddress2) ? recoveredAddress2 : null;
+
+			
+			if (address == null)
+			{
+				identities.AddOrReplace(ReservedKeywords.Identity, null);
+				identities.AddOrReplace(ReservedKeywords.IdentityNotHashed, null);
+				return identities;
+			}
+
+			
+			identities.AddOrReplace(ReservedKeywords.Identity, address.ComputeHash(mode: "keccak256", salt: context[ReservedKeywords.Salt]!.ToString()));
+			identities.AddOrReplace(ReservedKeywords.IdentityNotHashed, address);
+
+			return identities;
 		}
 	}
 }

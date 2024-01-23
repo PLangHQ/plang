@@ -27,7 +27,7 @@ namespace PLang.Modules.WebserverModule.Tests
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.WebserverModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.WebserverModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -39,7 +39,7 @@ namespace PLang.Modules.WebserverModule.Tests
 			});			
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.WebserverModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.WebserverModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
 

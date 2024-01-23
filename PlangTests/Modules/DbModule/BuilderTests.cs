@@ -37,8 +37,8 @@ namespace PLang.Modules.DbModule.Tests
 
 			var db = new SQLiteConnection("DataSource=In memory;Version=3");
 
-			builder = new Builder(fileSystem, db, settings, context, llmService, typeHelper, logger);
-			builder.InitBaseBuilder("PLang.Modules.DbModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper);
+			builder = new Builder(fileSystem, db, settings, context, llmService, typeHelper, logger, memoryStack);
+			builder.InitBaseBuilder("PLang.Modules.DbModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -59,8 +59,8 @@ namespace PLang.Modules.DbModule.Tests
 			dataSources.Add(new DataSource("Main", "System.Data.SQLite.SQLiteConnection", "", "", "", ""));
 			settings.GetValues<DataSource>(typeof(ModuleSettings)).Returns(dataSources);
 
-			builder = new Builder(fileSystem, db, settings, context, llmService, typeHelper, logger);
-			builder.InitBaseBuilder("PLang.Modules.DbModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper);
+			builder = new Builder(fileSystem, db, settings, context, llmService, typeHelper, logger, memoryStack);
+			builder.InitBaseBuilder("PLang.Modules.DbModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
 		[DataTestMethod]

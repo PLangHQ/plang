@@ -31,11 +31,11 @@ C# method signature:
 Task RunGoal(string goalName, Dictionary<string, object>? parameters = null, bool waitForExecution = true, int delayWhenNotWaitingInMilliseconds = 0)
 ```
 
-For more detailed documentation and examples, please refer to [PLang.Modules.CallGoalModule.md](./PLang.Modules.CallGoalModule.md) and the [CallGoal Test Repository](https://github.com/PLangHQ/plang/tree/main/Tests/CallGoal). Additionally, the source code for the `CallGoal` module can be found in [Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CallGoalModule/Program.cs).
+For more detailed documentation and examples, please refer to [PLang.Modules.CallGoalModule.md](./PLang.Modules.CallGoalModule.md) and the [CallGoal Test Repository](https://github.com/PLangHQ/plang/tree/main/Tests/CallGoal). Additionally, the source code for the `CallGoal` module can be found in [Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CallGoalModule/Program.cs).
 
 ## Source code
-The runtime code for the `CallGoal` module is available at [PLangHQ/plang CallGoal Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CallGoalModule/Program.cs).
-The builder code for the `CallGoal` module is available at [PLangHQ/plang CallGoal Builder.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CallGoalModule/Builder.cs).
+The runtime code for the `CallGoal` module is available at [PLangHQ/plang CallGoal Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CallGoalModule/Program.cs).
+The builder code for the `CallGoal` module is available at [PLangHQ/plang CallGoal Builder.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CallGoalModule/Builder.cs).
 
 ## How plang is mapped to C#
 The mapping of plang to C# methods is a two-step process involving the Builder and Runtime.

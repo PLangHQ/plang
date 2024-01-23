@@ -32,13 +32,13 @@ This step corresponds to the `InsertAndSelectIdOfInsertedRow` method in the `Db`
 Task<object> InsertAndSelectIdOfInsertedRow(string sql, List<object> Parameters = null)
 ```
 
-For more detailed documentation and additional examples, please refer to [PLang.Modules.DbModule.md](./PLang.Modules.DbModule.md) and the [PLangHQ/plang - Db Tests](https://github.com/PLangHQ/plang/tree/main/Tests/Db) repository. To understand the implementation details, examine the Program.cs source code at [PLang.Modules.DbModule - Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.DbModule/Program.cs).
+For more detailed documentation and additional examples, please refer to [PLang.Modules.DbModule.md](./PLang.Modules.DbModule.md) and the [PLangHQ/plang - Db Tests](https://github.com/PLangHQ/plang/tree/main/Tests/Db) repository. To understand the implementation details, examine the Program.cs source code at [PLang.Modules.DbModule - Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/DbModule/Program.cs).
 
 ## Source code
 The source code for the `Db` module is organized into several files:
-- [Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.DbModule/Program.cs) contains the runtime code for the module.
-- [Builder.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.DbModule/Builder.cs) is responsible for building the steps during the plang build process.
-- [ModuleSettings.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.DbModule/ModuleSettings.cs) includes settings specific to the `Db` module.
+- [Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/DbModule/Program.cs) contains the runtime code for the module.
+- [Builder.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/DbModule/Builder.cs) is responsible for building the steps during the plang build process.
+- [ModuleSettings.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/DbModule/ModuleSettings.cs) includes settings specific to the `Db` module.
 
 ## How plang is mapped to C#
 Modules in plang are utilized through a two-step process involving the Builder and Runtime.

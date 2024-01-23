@@ -24,6 +24,7 @@ using PLang.Services.IdentityService;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
+using PLang.Services.SigningService;
 using RazorEngineCore;
 using System.Data;
 using System.Data.SQLite;
@@ -145,6 +146,7 @@ namespace PLang.Utils
 			container.RegisterSingleton<IEventBuilder, EventBuilder>();
 			container.RegisterSingleton<IEventRuntime, EventRuntime>();
 			container.RegisterSingleton<IPLangIdentityService, PLangIdentityService>();
+			container.RegisterSingleton<IPLangSigningService, PLangSigningService>();
 			container.Register<IPublicPrivateKeyCreator, PublicPrivateKeyCreator>();
 
 
@@ -164,7 +166,9 @@ namespace PLang.Utils
 			{
 				var moduleSettings = new PLang.Modules.MessageModule.ModuleSettings(container.GetInstance<ISettings>(), container.GetInstance<ILlmService>());
 				var nostrClientManager = new NostrClientManager();
-				return nostrClientManager.GetClient(moduleSettings.GetRelays());
+				
+				var multi = nostrClientManager.GetClient(moduleSettings.GetRelays());
+				return multi;
 			}, path);
 
 			container.RegisterSingleton<IWeb3>(factory =>

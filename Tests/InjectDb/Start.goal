@@ -1,4 +1,5 @@
 Start
+- set datasource 'my_postgresql'
 - write out 'Start db injection'
 - SELECT version(); write to %version%
 - write out 'Version: %version%'

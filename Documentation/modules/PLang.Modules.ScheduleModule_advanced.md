@@ -39,11 +39,11 @@ ScheduleRecurringTask
 Task Schedule(string cronCommand, string goalName, DateTime? nextRun = null)
 ```
 
-For more detailed documentation and all examples, please visit the [Schedule Module Documentation](./PLang.Modules.ScheduleModule.md) and the [example repository on GitHub](https://github.com/PLangHQ/plang/tree/main/Tests/Schedule). Additionally, inspect the Program.cs source code for a deeper understanding of the module's implementation [here](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.ScheduleModule/Program.cs).
+For more detailed documentation and all examples, please visit the [Schedule Module Documentation](./PLang.Modules.ScheduleModule.md) and the [example repository on GitHub](https://github.com/PLangHQ/plang/tree/main/Tests/Schedule). Additionally, inspect the Program.cs source code for a deeper understanding of the module's implementation [here](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/ScheduleModule/Program.cs).
 
 ## Source code
 
-The runtime code for the Schedule module, `Program.cs`, can be found at the [PLang GitHub repository](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.ScheduleModule/Program.cs). The settings for the module, `ModuleSettings.cs`, are available at the same repository [here](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.ScheduleModule/ModuleSettings.cs).
+The runtime code for the Schedule module, `Program.cs`, can be found at the [PLang GitHub repository](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/ScheduleModule/Program.cs). The settings for the module, `ModuleSettings.cs`, are available at the same repository [here](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/ScheduleModule/ModuleSettings.cs).
 
 ## How plang is mapped to C#
 

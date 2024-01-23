@@ -37,12 +37,12 @@ Transferring cryptocurrency is a fundamental operation on the blockchain.
 Task<string> Transfer(string to, decimal etherAmount);
 ```
 
-For more detailed examples and documentation, please refer to [PLang.Modules.BlockchainModule.md](./PLang.Modules.BlockchainModule.md) and explore the [plang blockchain tests](https://github.com/PLangHQ/plang/tree/main/Tests/Blockchain). Additionally, the source code for the Blockchain module can be found in [Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.BlockchainModule/Program.cs).
+For more detailed examples and documentation, please refer to [PLang.Modules.BlockchainModule.md](./PLang.Modules.BlockchainModule.md) and explore the [plang blockchain tests](https://github.com/PLangHQ/plang/tree/main/Tests/Blockchain). Additionally, the source code for the Blockchain module can be found in [Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/BlockchainModule/Program.cs).
 
 ## Source code
-- [Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.BlockchainModule/Program.cs) - Runtime code for the Blockchain module.
-- [Builder.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.BlockchainModule/Builder.cs) - Code for building steps in the Blockchain module.
-- [ModuleSettings.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.BlockchainModule/ModuleSettings.cs) - Settings for the Blockchain module.
+- [Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/BlockchainModule/Program.cs) - Runtime code for the Blockchain module.
+- [Builder.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/BlockchainModule/Builder.cs) - Code for building steps in the Blockchain module.
+- [ModuleSettings.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/BlockchainModule/ModuleSettings.cs) - Settings for the Blockchain module.
 
 ## How plang is mapped to C#
 

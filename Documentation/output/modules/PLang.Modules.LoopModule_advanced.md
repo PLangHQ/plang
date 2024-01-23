@@ -22,10 +22,10 @@ A common usage of loops in plang is to iterate over a list of items and perform 
 Task RunLoop(string variableToLoopThrough, string goalNameToCall, Dictionary<string, object>? parameters = null)
 ```
 
-For more detailed documentation and all examples, see [PLang.Modules.LoopModule.md](./PLang.Modules.LoopModule.md) and the [Loop examples repository](https://github.com/PLangHQ/plang/tree/main/Tests/Loop). Additionally, inspect the Program.cs source code for a deeper understanding of the loop module's implementation: [PLang.Modules.LoopModule - Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.LoopModule/Program.cs).
+For more detailed documentation and all examples, see [PLang.Modules.LoopModule.md](./PLang.Modules.LoopModule.md) and the [Loop examples repository](https://github.com/PLangHQ/plang/tree/main/Tests/Loop). Additionally, inspect the Program.cs source code for a deeper understanding of the loop module's implementation: [PLang.Modules.LoopModule - Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/LoopModule/Program.cs).
 
 ## Source code
-The runtime code for the Loop module, Program.cs, is available at [PLangHQ/plang - LoopModule Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.LoopModule/Program.cs).
+The runtime code for the Loop module, Program.cs, is available at [PLangHQ/plang - LoopModule Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/LoopModule/Program.cs).
 
 ## How plang is mapped to C#
 Modules in plang are utilized to map natural language steps to C# methods.

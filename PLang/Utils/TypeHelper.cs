@@ -418,12 +418,14 @@ namespace PLang.Utils
 		}
 		public Type? GetBuilderType(string module)
 		{
-			return builderModules.FirstOrDefault(p => p.FullName == module + ".Builder");
+			if (!module.EndsWith(".Builder")) module += ".Builder";
+			return builderModules.FirstOrDefault(p => p.FullName == module);
 		}
 
 		public Type? GetRuntimeType(string module)
 		{
-			return runtimeModules.FirstOrDefault(p => p.FullName == module + ".Program");
+			if (!module.EndsWith(".Program")) module += ".Program";
+			return runtimeModules.FirstOrDefault(p => p.FullName == module);
 		}
 
 		public List<Type> GetBuilderModules()

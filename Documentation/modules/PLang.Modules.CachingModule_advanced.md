@@ -42,10 +42,10 @@ Maps to C# method signature:
 void RemoveCache(string key)
 ```
 
-For more detailed documentation and all examples, refer to [PLang.Modules.CachingModule.md](./PLang.Modules.CachingModule.md) and the [plang Caching Tests](https://github.com/PLangHQ/plang/tree/main/Tests/Caching). Additionally, inspect the Program.cs source code at [PLang.Modules.CachingModule Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CachingModule/Program.cs).
+For more detailed documentation and all examples, refer to [PLang.Modules.CachingModule.md](./PLang.Modules.CachingModule.md) and the [plang Caching Tests](https://github.com/PLangHQ/plang/tree/main/Tests/Caching). Additionally, inspect the Program.cs source code at [PLang.Modules.CachingModule Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CachingModule/Program.cs).
 
 ## Source code
-Program.cs is the runtime code for the Caching module and can be found at [PLang.Modules.CachingModule Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CachingModule/Program.cs).
+Program.cs is the runtime code for the Caching module and can be found at [PLang.Modules.CachingModule Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CachingModule/Program.cs).
 
 ## How plang is mapped to C#
 Modules in plang are utilized through a build and runtime process.

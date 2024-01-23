@@ -669,7 +669,7 @@ namespace PLang.Runtime
 			}
 			if (key.Contains("."))
 			{
-				var objectValue = new ObjectValue(key, SystemTime.UtcNow, typeof(DateTime), null);
+				var objectValue = new ObjectValue(key, SystemTime.UtcNow(), typeof(DateTime), null);
 				if (key.Contains("("))
 				{
 					objectValue = ExecuteMethod(objectValue, key.Substring(key.IndexOf(".") + 1), "Now");
@@ -683,7 +683,7 @@ namespace PLang.Runtime
 
 			}
 
-			return new ObjectValue(key, SystemTime.UtcNow, typeof(DateTime), null);
+			return new ObjectValue(key, SystemTime.UtcNow(), typeof(DateTime), null);
 		}
 
 

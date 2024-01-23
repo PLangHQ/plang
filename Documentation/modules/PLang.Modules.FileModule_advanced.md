@@ -30,10 +30,10 @@ Appends content to the end of a text file.
 ```
 C# Method Signature: `Task AppendToFile(string path, string content, string seperator = null, bool loadVariables = false, bool emptyVariableIfNotFound = false)`
 
-For more detailed documentation and additional examples, please refer to the [PLang.Modules.FileModule.md](./PLang.Modules.FileModule.md) file and the [PLangHQ/plang](https://github.com/PLangHQ/plang/tree/main/Tests/File) repository. To understand the implementation details, you can also examine the source code of the [Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.FileModule/Program.cs) file.
+For more detailed documentation and additional examples, please refer to the [PLang.Modules.FileModule.md](./PLang.Modules.FileModule.md) file and the [PLangHQ/plang](https://github.com/PLangHQ/plang/tree/main/Tests/File) repository. To understand the implementation details, you can also examine the source code of the [Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/FileModule/Program.cs) file.
 
 ## Source code
-The runtime code for the File module, `Program.cs`, is available at [PLangHQ/plang](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.FileModule/Program.cs).
+The runtime code for the File module, `Program.cs`, is available at [PLangHQ/plang](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/FileModule/Program.cs).
 
 ## How plang is mapped to C#
 Modules in plang are utilized through a build and runtime process that translates plang steps into executable C# code.

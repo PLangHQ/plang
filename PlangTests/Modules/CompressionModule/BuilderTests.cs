@@ -29,7 +29,7 @@ namespace PLang.Modules.CompressionModule.Tests
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CompressionModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.CompressionModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -39,7 +39,7 @@ namespace PLang.Modules.CompressionModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CompressionModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.CompressionModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
 		[DataTestMethod]

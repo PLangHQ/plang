@@ -17,8 +17,8 @@ Parameters are optional, they are key value of a variable, if user does not defi
 
 == Examples starts ==
 !ParseText then ParseText is goalName, no parameters
-!Gmail.Search %query%, then Gmail.Search is goalName,  %query% is key and value in parameters
-Folder.Search q=%fileName%, then key is q, and value is %fileName%
+!Gmail/Search %query%, then Gmail/Search is goalName,  %query% is key and value in parameters
+Folder/Search q=%fileName%, then key is q, and value is %fileName%
 == Examples ends ==
 ");
 			return await base.Build(step);

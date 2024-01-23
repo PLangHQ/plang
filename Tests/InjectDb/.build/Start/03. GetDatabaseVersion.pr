@@ -1,0 +1,35 @@
+{
+  "Action": {
+    "FunctionName": "Select",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "sql",
+        "Value": "SELECT version();"
+      }
+    ],
+    "ReturnValue": [
+      {
+        "Type": "System.String",
+        "VariableName": "version"
+      }
+    ]
+  },
+  "Text": "SELECT version(); write to %version%",
+  "Reload": false,
+  "LlmQuestion": {
+    "temperature": null,
+    "top_p": null,
+    "frequencyPenalty": null,
+    "presencePenalty": null,
+    "maxLength": 4000,
+    "type": "PLang.Modules.DbModule.Builder",
+    "system": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\ndynamic Select(String sql, List<object>()? Parameters = null, bool selectOneRow_Top1OrLimit1 = false)\r\n## csharp function ##\r\n\r\n## Rules ##\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, etc.\r\nReturnValue: Columns being returned with type if defined by user. * will return dynamic. integer/int should always be System.Int64. \r\nParameter @id MUST be type System.Int64\r\n\r\nYou MUST generate a valid sql statement for SQLiteConnection.\r\nYou MUST provide Parameters if SQL has @parameter.\r\n## Rules ##\r\n\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}]}",
+    "question": "SELECT version(); write to %version%",
+    "assistant": "# examples #\r\n\"select everything from tableX\" => sql: \"SELECT * FROM tableX\"\r\n\"select from tableB where id=%id%\" => sql: \"SELECT * FROM tableB WHERE id=@id\"\r\n# examples #",
+    "model": "gpt-4",
+    "caching": true,
+    "RawResponse": null
+  },
+  "RunOnBuild": false
+}

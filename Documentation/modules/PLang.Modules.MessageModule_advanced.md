@@ -36,15 +36,15 @@ Message
 Task SendPrivateMessage(string content, string npubReceiverPublicKey);
 ```
 
-For additional methods and detailed examples, please refer to the [Message Module Documentation](./PLang.Modules.MessageModule.md) and the [plang Message Tests](https://github.com/PLangHQ/plang/tree/main/Tests/Message). To understand the implementation details, examine the Program.cs source code at [PLang.Modules.MessageModule/Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.MessageModule/Program.cs).
+For additional methods and detailed examples, please refer to the [Message Module Documentation](./PLang.Modules.MessageModule.md) and the [plang Message Tests](https://github.com/PLangHQ/plang/tree/main/Tests/Message). To understand the implementation details, examine the Program.cs source code at [PLang.Modules.MessageModule/Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/MessageModule/Program.cs).
 
 ## Source code
 
 The source code for the Message Module is divided into several parts:
 
-- **Program.cs**: The runtime code for the Message Module, available at [Program.cs source](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.MessageModule/Program.cs).
-- **Builder.cs**: The builder code for constructing steps, available at [Builder.cs source](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.MessageModule/Builder.cs). If Builder.cs is not available, BaseBuilder.cs is used instead.
-- **ModuleSettings.cs**: The settings for the Message Module, available at [ModuleSettings.cs source](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.MessageModule/ModuleSettings.cs).
+- **Program.cs**: The runtime code for the Message Module, available at [Program.cs source](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/MessageModule/Program.cs).
+- **Builder.cs**: The builder code for constructing steps, available at [Builder.cs source](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/MessageModule/Builder.cs). If Builder.cs is not available, BaseBuilder.cs is used instead.
+- **ModuleSettings.cs**: The settings for the Message Module, available at [ModuleSettings.cs source](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/MessageModule/ModuleSettings.cs).
 
 ## How plang is mapped to C#
 

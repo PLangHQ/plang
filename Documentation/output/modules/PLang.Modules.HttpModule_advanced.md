@@ -26,11 +26,11 @@ C# method signature:
 public object Get(string url, object data = null, bool doNotSignRequest = false, Dictionary<string, object> headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 100)
 ```
 
-For more detailed documentation and examples, visit [PLang.Modules.HttpModule.md](./PLang.Modules.HttpModule.md) and the [PLangHQ/plang Http Tests](https://github.com/PLangHQ/plang/tree/main/Tests/Http). Additionally, inspect the Program.cs source code at [PLang.Modules.HttpModule Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.HttpModule/Program.cs).
+For more detailed documentation and examples, visit [PLang.Modules.HttpModule.md](./PLang.Modules.HttpModule.md) and the [PLangHQ/plang Http Tests](https://github.com/PLangHQ/plang/tree/main/Tests/Http). Additionally, inspect the Program.cs source code at [PLang.Modules.HttpModule Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/HttpModule/Program.cs).
 
 ## Source code
 
-The runtime code for the Http module, Program.cs, can be found at [PLang.Modules.HttpModule Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.HttpModule/Program.cs). The Builder.cs, responsible for the construction of steps, is available at [PLang.Modules.HttpModule Builder.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.HttpModule/Builder.cs).
+The runtime code for the Http module, Program.cs, can be found at [PLang.Modules.HttpModule Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/HttpModule/Program.cs). The Builder.cs, responsible for the construction of steps, is available at [PLang.Modules.HttpModule Builder.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/HttpModule/Builder.cs).
 
 ## How plang is mapped to C#
 

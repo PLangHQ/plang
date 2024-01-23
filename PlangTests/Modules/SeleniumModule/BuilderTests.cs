@@ -27,7 +27,7 @@ namespace PLang.Modules.WebCrawlerModule.Tests
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new Builder();
-			builder.InitBaseBuilder("PLang.Modules.SeleniumModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.SeleniumModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper, logger	);
 
 		}
 
@@ -39,7 +39,7 @@ namespace PLang.Modules.WebCrawlerModule.Tests
 			});			
 
 			builder = new Builder();
-			builder.InitBaseBuilder("PLang.Modules.SeleniumModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.SeleniumModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
 

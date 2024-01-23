@@ -229,6 +229,7 @@ Be concise"
 		private List<Type> GetSupportedDbTypes()
 		{
 			var typeHelper = new TypeHelper(fileSystem, settings);
+			typeHelper.GetTypesByType(typeof(IDbConnection)).ToList();
 			var types = new List<Type>();
 			types.Add(db.GetType());
 			if (types.FirstOrDefault(p => p == typeof(SQLiteConnection)) == null)
@@ -250,9 +251,8 @@ Be concise"
 
 		private IDbConnection GetDbConnection(Type dbType, string connectionString)
 		{
-			ConstructorInfo constructor = dbType.GetConstructor(new Type[] { typeof(string) });
+			ConstructorInfo? constructor = dbType.GetConstructor(new Type[] { typeof(string) });
 
-			// Invoke the constructor with the parameters
 			object instance = constructor.Invoke(new object[] { connectionString });
 			return instance as IDbConnection;
 		}

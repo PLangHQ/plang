@@ -39,12 +39,12 @@ C# Method Signature: `Task<string> HashInput(string input, bool useSalt = false,
 For more detailed documentation and examples:
 - Refer to [PLang.Modules.CryptographicModule.md](./PLang.Modules.CryptographicModule.md).
 - Explore the [Cryptographic Test Examples](https://github.com/PLangHQ/plang/tree/main/Tests/Cryptographic).
-- Review the Program.cs source code at [PLang Cryptographic Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CryptographicModule/Program.cs).
+- Review the Program.cs source code at [PLang Cryptographic Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CryptographicModule/Program.cs).
 
 ## Source code
-- Program.cs (runtime code): [PLang Cryptographic Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CryptographicModule/Program.cs)
-- Builder.cs (step building): [PLang Cryptographic Builder.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CryptographicModule/Builder.cs)
-- ModuleSettings.cs (module settings): [PLang Cryptographic ModuleSettings.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CryptographicModule/ModuleSettings.cs)
+- Program.cs (runtime code): [PLang Cryptographic Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CryptographicModule/Program.cs)
+- Builder.cs (step building): [PLang Cryptographic Builder.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CryptographicModule/Builder.cs)
+- ModuleSettings.cs (module settings): [PLang Cryptographic ModuleSettings.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CryptographicModule/ModuleSettings.cs)
 
 ## How plang is mapped to C#
 

@@ -27,10 +27,10 @@ C# Method Signature:
 Task DecompressFile(string sourceArchiveFileName, string destinationDirectoryName, bool overwrite = false)
 ```
 
-For more detailed documentation and all examples, see [PLang.Modules.CompressionModule.md](./PLang.Modules.CompressionModule.md) and explore the [PLang Compression Examples Repository](https://github.com/PLangHQ/plang/tree/main/Tests/Compression). For a deeper understanding, review the `Program.cs` source code at [PLang Compression Module Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CompressionModule/Program.cs).
+For more detailed documentation and all examples, see [PLang.Modules.CompressionModule.md](./PLang.Modules.CompressionModule.md) and explore the [PLang Compression Examples Repository](https://github.com/PLangHQ/plang/tree/main/Tests/Compression). For a deeper understanding, review the `Program.cs` source code at [PLang Compression Module Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CompressionModule/Program.cs).
 
 ## Source Code
-The runtime code for the Compression module, `Program.cs`, can be found at [PLang Compression Module Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CompressionModule/Program.cs).
+The runtime code for the Compression module, `Program.cs`, can be found at [PLang Compression Module Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CompressionModule/Program.cs).
 
 ## How Plang is Mapped to C#
 Modules in plang are utilized through a build and runtime process.

@@ -2,7 +2,7 @@ CallGoal
 - set variable %greetings% to 'Hello'
 - call !Show %greetings%, time=%Now% / greetings & Now are parameters
 / Here we call apps/HelloWorld/Start.goal, if it is not install it will install it.
-- call !HelloWorld.Start
+- call !HelloWorld/Start
 / - call !Ffmpeg.ConvertToMp4 inputFile='myvideo.mov', outputPath='myvideo.mp4'
 
 Show

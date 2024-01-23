@@ -31,9 +31,16 @@ namespace PLang.Services.OutputStream
 		public async Task Write(object? obj, string type = "text", int statusCode = 200)
 		{
 			if (obj == null) return;
-			if (obj.GetType().IsPrimitive || obj is string)
+
+			string content = obj.ToString();
+			var fullName = obj.GetType().FullName ?? "";
+			if (fullName.IndexOf("[") != -1)
 			{
-				Console.WriteLine(obj);
+				fullName = fullName.Substring(0, fullName.IndexOf("["));
+			}
+			if (!content.StartsWith(fullName))
+			{
+				Console.WriteLine(content);
 			}
 			else
 			{
@@ -46,5 +53,7 @@ namespace PLang.Services.OutputStream
 		{
 			await Write(obj, type);
 		}
+
+		
 	}
 }

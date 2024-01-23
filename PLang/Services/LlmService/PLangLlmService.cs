@@ -16,6 +16,7 @@ namespace PLang.Services.LlmService
 		private readonly CacheHelper cacheHelper;
 		private readonly IOutputStream outputStream;
 		private readonly IPLangSigningService signingService;
+		private readonly string url = "http://localhost:10000";
 
 		public IContentExtractor Extractor { get; set; }
 
@@ -62,7 +63,7 @@ namespace PLang.Services.LlmService
 			parameters.Add("maxLength", question.maxLength);
 			var httpClient = new HttpClient();
 			var httpMethod = new HttpMethod("POST");
-			var request = new HttpRequestMessage(httpMethod, "http://localhost:10000/api/llm");
+			var request = new HttpRequestMessage(httpMethod, url + "/api/llm");
 			request.Headers.UserAgent.ParseAdd("plang llm v0.1");
 
 			string body = StringHelper.ConvertToString(parameters);
@@ -130,7 +131,7 @@ namespace PLang.Services.LlmService
 
 				var httpClient = new HttpClient();
 				var httpMethod = new HttpMethod("POST");
-				var request = new HttpRequestMessage(httpMethod, "http://localhost:10000/api/GetOrCreatePaymentLink");
+				var request = new HttpRequestMessage(httpMethod, url + "/api/GetOrCreatePaymentLink");
 				request.Headers.UserAgent.ParseAdd("plang llm v0.1");
 				Dictionary<string, object?> parameters = new();
 				parameters.Add("name", nameOfPayer);
@@ -161,11 +162,11 @@ namespace PLang.Services.LlmService
 			string method = request.Method.Method;
 			string url = request.RequestUri?.PathAndQuery ?? "/";
 			string contract = "C0";
-			using (var reader = new StreamReader(request.Content.ReadAsStream(), leaveOpen: true))
+			using (var reader = new StreamReader(request.Content!.ReadAsStream(), leaveOpen: true))
 			{
 				string body = await reader.ReadToEndAsync();
-
-				var signature = signingService.Sign(body, method, url, contract);
+				
+				var signature = signingService.Sign(body, method, url, contract, GetType().FullName);
 
 				foreach (var item in signature)
 				{

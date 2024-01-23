@@ -24,10 +24,10 @@ CultureInfo
 Task SetCultureLanguageCode(string code)
 ```
 
-For more detailed documentation and all examples, please refer to [PLang.Modules.CultureInfoModule.md](./PLang.Modules.CultureInfoModule.md) and explore the examples repository at [PLang CultureInfo Tests](https://github.com/PLangHQ/plang/tree/main/Tests/CultureInfo). Additionally, you can look at the `Program.cs` source code for the CultureInfo module [here](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CultureInfoModule/Program.cs).
+For more detailed documentation and all examples, please refer to [PLang.Modules.CultureInfoModule.md](./PLang.Modules.CultureInfoModule.md) and explore the examples repository at [PLang CultureInfo Tests](https://github.com/PLangHQ/plang/tree/main/Tests/CultureInfo). Additionally, you can look at the `Program.cs` source code for the CultureInfo module [here](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CultureInfoModule/Program.cs).
 
 ## Source code
-The runtime code for the `CultureInfo` module, `Program.cs`, can be found at the [PLang CultureInfo Program](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CultureInfoModule/Program.cs).
+The runtime code for the `CultureInfo` module, `Program.cs`, can be found at the [PLang CultureInfo Program](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CultureInfoModule/Program.cs).
 
 ## How plang is mapped to C#
 Modules in plang are utilized through a build and runtime process that translates natural language steps into executable C# code.

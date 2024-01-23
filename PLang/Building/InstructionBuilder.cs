@@ -8,6 +8,7 @@ using PLang.Modules;
 using PLang.Runtime;
 using PLang.Utils;
 using static PLang.Modules.BaseBuilder;
+using static PLang.Utils.MethodHelper;
 
 
 namespace PLang.Building
@@ -47,7 +48,7 @@ namespace PLang.Building
 		public async Task BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep step, string module, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
 		{
 			var classInstance = builderFactory.Create(module);
-			classInstance.InitBaseBuilder(module, fileSystem, llmService.Value, typeHelper, memoryStack, context, variableHelper);
+			classInstance.InitBaseBuilder(module, fileSystem, llmService.Value, typeHelper, memoryStack, context, variableHelper, logger);
 
 			logger.LogDebug($"- Build using {module}");
 
@@ -111,60 +112,14 @@ You have 3 options.
 			return;
 		}
 
-		public record InvalidFunction(string functionName, string explain, bool excludeModule);
-
-		private List<InvalidFunction> ValidateFunctions(GoalStep step, GenericFunction[] functions, string module)
+	
+		public List<InvalidFunction> ValidateFunctions(GoalStep step, GenericFunction[] functions, string module)
 		{
 			List<InvalidFunction> invalidFunctions = new List<InvalidFunction>();
 			if (functions == null || functions[0] == null) return invalidFunctions;
 
 			var methodHelper = new MethodHelper(step, variableHelper, typeHelper, llmService.Value);
-			foreach (var function in functions)
-			{
-
-				if (function.FunctionName.ToUpper() == "N/A")
-				{
-					invalidFunctions.Add(new InvalidFunction(function.FunctionName, "", true));
-				}
-				else
-				{
-					var runtimeType = typeHelper.GetRuntimeType(module);
-					if (runtimeType == null)
-					{
-						throw new BuilderException($"Could not load {module}.Program");
-					}
-
-					var instanceFunctions = runtimeType.GetMethods().Where(p => p.Name == function.FunctionName);
-					if (instanceFunctions.Count() == 0)
-					{
-						invalidFunctions.Add(new InvalidFunction(function.FunctionName, $"Could not find {function.FunctionName} in module", true));
-					}
-					else
-					{
-												
-						foreach (var instanceFunction in instanceFunctions)
-						{
-							var parameterError = methodHelper.IsParameterMatch(instanceFunction, function.Parameters);
-							if (parameterError == null)
-							{				
-								if (instanceFunction.ReturnType != typeof(Task) && function.ReturnValue != null && function.ReturnValue.Count > 0)
-								{
-									foreach (var returnValue in function.ReturnValue)
-									{
-										memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
-									}
-								}
-							} else
-							{
-								invalidFunctions.Add(new InvalidFunction(function.FunctionName, $"Parameters dont match with {function.FunctionName} - {parameterError}", false));
-							}
-
-						}
-
-					}
-				}
-			}
-			return invalidFunctions;
+			return methodHelper.ValidateFunctions(functions, module, memoryStack);
 		}
 
 

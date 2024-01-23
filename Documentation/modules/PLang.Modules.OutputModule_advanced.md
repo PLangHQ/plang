@@ -35,10 +35,10 @@ Output
 Task<string> Ask(string text, string type = "text", int statusCode = 200)
 ```
 
-For more detailed documentation and all examples, please refer to [PLang.Modules.OutputModule.md](./PLang.Modules.OutputModule.md) and the [PLangHQ/plang Output Tests](https://github.com/PLangHQ/plang/tree/main/Tests/Output). Additionally, you can look at the [Program.cs source code](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.OutputModule/Program.cs) for a deeper understanding of the Output module's implementation.
+For more detailed documentation and all examples, please refer to [PLang.Modules.OutputModule.md](./PLang.Modules.OutputModule.md) and the [PLangHQ/plang Output Tests](https://github.com/PLangHQ/plang/tree/main/Tests/Output). Additionally, you can look at the [Program.cs source code](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/OutputModule/Program.cs) for a deeper understanding of the Output module's implementation.
 
 ## Source code
-The runtime code for the Output module, `Program.cs`, can be found at [PLangHQ/plang Output Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.OutputModule/Program.cs).
+The runtime code for the Output module, `Program.cs`, can be found at [PLangHQ/plang Output Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/OutputModule/Program.cs).
 
 ## How plang is mapped to C#
 Modules in plang are utilized through a build and runtime process that translates natural language steps into executable C# code.

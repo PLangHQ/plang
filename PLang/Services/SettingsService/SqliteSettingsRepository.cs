@@ -2,11 +2,11 @@
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Utils;
 using System.Data;
 using System.Data.SQLite;
-using System.Security.Cryptography;
-using System.Xml.Linq;
+using System.Reflection;
 
 namespace PLang.Services.SettingsService
 {
@@ -109,12 +109,13 @@ namespace PLang.Services.SettingsService
 		{
 
 			var dbPath = datasource.Between("=", ";");
-			if (!fileSystem.File.Exists(dbPath))
+			//only time System.IO is used in the system.
+			if (!File.Exists(dbPath))
 			{
 				string? dirName = Path.GetDirectoryName(dbPath);
-				if (!string.IsNullOrEmpty(dirName) && !fileSystem.Directory.Exists(dirName))
+				if (!string.IsNullOrEmpty(dirName) && !Directory.Exists(dirName))
 				{
-					var dir = fileSystem.Directory.CreateDirectory(dirName!);
+					var dir = Directory.CreateDirectory(dirName!);
 					dir.Attributes = FileAttributes.Directory | FileAttributes.Hidden;
 				} else if (string.IsNullOrEmpty(dirName))
 				{
@@ -123,8 +124,7 @@ namespace PLang.Services.SettingsService
 						File.Delete(dbPath);
 					}
 				}
-				fileSystem.File.Create(dbPath).Close();
-
+				File.Create(dbPath).Close();
 			}
 
 			using (IDbConnection connection = new SQLiteConnection(datasource))
@@ -136,8 +136,8 @@ CREATE TABLE IF NOT EXISTS Settings (
     [ValueType] TEXT NOT NULL,
     [Key] TEXT NOT NULL,
     Value TEXT NOT NULL,
-	SignatureData TEXT NOT NULL,
-    [Created] DATETIME DEFAULT CURRENT_TIMESTAMP	
+    [Created] DATETIME DEFAULT CURRENT_TIMESTAMP,
+	SignatureData TEXT NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassOwnerFullName], [ValueType], [Key]);
 ";
@@ -149,14 +149,76 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 
 		public void Init()
 		{
-			
-			CreateSettingsTable(LocalDataSourcePath);
-			CreateSettingsTable(SharedDataSourcePath);
+
+			CheckSettingsTable(LocalDataSourcePath);
+			CheckSettingsTable(SharedDataSourcePath);
 
 			CreateLlmCacheTable(SharedDataSourcePath);
 
 		}
-	
+
+		private void CheckSettingsTable(string dataSource)
+		{
+			using (IDbConnection connection = new SQLiteConnection(dataSource))
+			{
+				var settingsExists = connection.Query<dynamic>("PRAGMA table_info(Settings)");
+				if (settingsExists.Count() == 0)
+				{
+					CreateSettingsTable(dataSource);
+				}
+				else
+				{
+					var settingProperties = typeof(Setting).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+					if (settingProperties.Length != settingsExists.Count()) {
+						ModifySettingsTable(connection, settingsExists, settingProperties);
+					}
+				}
+			}
+		}
+
+		private void ModifySettingsTable(IDbConnection connection, IEnumerable<dynamic> settingsExists, PropertyInfo[] settingProperties)
+		{
+			foreach (var property in settingProperties)
+			{
+				// Check if the column exists in the table
+				var columnExists = settingsExists.Any(row => string.Equals(row.name, property.Name, StringComparison.OrdinalIgnoreCase));
+
+				if (!columnExists)
+				{
+					// If the column doesn't exist, create it
+					var columnName = property.Name;
+					var columnType = ConvertToSQLiteType(property.PropertyType);
+
+					var alterTableCommand = $"ALTER TABLE Settings ADD COLUMN {columnName} {columnType};";
+					connection.Execute(alterTableCommand);
+				}
+			}
+		}
+
+		private static string ConvertToSQLiteType(Type type)
+		{
+			// You can expand this method to handle more types as needed
+			if (type == typeof(int) || type == typeof(long))
+			{
+				return "INTEGER";
+			}
+			else if (type == typeof(string) || type.Name == typeof(Dictionary<,>).Name || type.Name == typeof(List<>).Name)
+			{
+				return "TEXT";
+			}
+			else if (type == typeof(double) || type == typeof(float))
+			{
+				return "DOUBLE";
+			}
+			else if (type == typeof(DateTime))
+			{
+				return "DATETIME";
+			}
+			else
+			{
+				throw new NotSupportedException($"Type {type.Name} not supported.");
+			}
+		}
 
 		public LlmRequest? GetLlmRequestCache(string hash)
 		{
@@ -186,13 +248,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 		{
 			using (IDbConnection connection = new SQLiteConnection(DataSource))
 			{
-				var settingsExists = connection.QueryFirstOrDefault<dynamic>("PRAGMA table_info(Settings)");
-				if (settingsExists == null)
-				{
-					CreateSettingsTable(DataSource);
-				}
-
 				return connection.Query<Setting>("SELECT * FROM Settings");
+			
 			}
 
 		}
@@ -216,7 +273,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 			{
 				connection.Execute(@"
 					INSERT OR IGNORE INTO Settings (AppId, ClassOwnerFullName, ValueType, [Key], [Value], SignatureData, Created) VALUES (@AppId, @ClassOwnerFullName, @ValueType, @Key, @Value, @SignatureData, @Created)
-					ON CONFLICT(AppId, [ClassOwnerFullName], [ValueType], [Key]) DO UPDATE SET Value = excluded.Value;
+					ON CONFLICT(AppId, [ClassOwnerFullName], [ValueType], [Key]) DO UPDATE SET Value = excluded.Value, SignatureData=@SignatureData;
 					", new { setting.AppId, setting.ClassOwnerFullName, setting.ValueType, setting.Key, setting.Value, SignatureData = JsonConvert.SerializeObject(setting.SignatureData), setting.Created });
 
 			}

@@ -25,11 +25,11 @@ Webserver
 Task StartWebserver(string scheme = "http", string host = "localhost", int port = 8080, int maxContentLengthInBytes = 4194304, string defaultResponseContentEncoding = "utf-8", bool signedRequestRequired = false, List<string> publicPaths = null)
 ```
 
-For more detailed documentation and all examples, please refer to [PLang.Modules.WebserverModule.md](./PLang.Modules.WebserverModule.md) and the [plang Webserver Tests](https://github.com/PLangHQ/plang/tree/main/Tests/Webserver). For a deeper understanding of the implementation, examine the Program.cs source code at [PLang.Modules.WebserverModule/Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.WebserverModule/Program.cs).
+For more detailed documentation and all examples, please refer to [PLang.Modules.WebserverModule.md](./PLang.Modules.WebserverModule.md) and the [plang Webserver Tests](https://github.com/PLangHQ/plang/tree/main/Tests/Webserver). For a deeper understanding of the implementation, examine the Program.cs source code at [PLang.Modules.WebserverModule/Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/WebserverModule/Program.cs).
 
 ## Source code
 
-The runtime code for the Webserver module, Program.cs, can be found at [PLang.Modules.WebserverModule/Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.WebserverModule/Program.cs).
+The runtime code for the Webserver module, Program.cs, can be found at [PLang.Modules.WebserverModule/Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/WebserverModule/Program.cs).
 
 ## How plang is mapped to C#
 

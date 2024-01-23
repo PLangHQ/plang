@@ -30,7 +30,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CryptographicModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.CryptographicModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -40,7 +40,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CryptographicModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper);
+			builder.InitBaseBuilder("PLang.Modules.CryptographicModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 		[DataTestMethod]
 		[DataRow("encrypt %text%, write to %encryptedText%")]

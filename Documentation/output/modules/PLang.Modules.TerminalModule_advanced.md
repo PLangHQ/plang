@@ -38,11 +38,11 @@ C# Method Signature:
 void Read(string variableName = null)
 ```
 
-For more detailed documentation and additional examples, please refer to [PLang.Modules.TerminalModule.md](./PLang.Modules.TerminalModule.md) and the [PLangHQ/plang - Terminal Tests](https://github.com/PLangHQ/plang/tree/main/Tests/Terminal). To understand the full implementation, inspect the Program.cs source code at [PLang.Modules.TerminalModule - Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.TerminalModule/Program.cs).
+For more detailed documentation and additional examples, please refer to [PLang.Modules.TerminalModule.md](./PLang.Modules.TerminalModule.md) and the [PLangHQ/plang - Terminal Tests](https://github.com/PLangHQ/plang/tree/main/Tests/Terminal). To understand the full implementation, inspect the Program.cs source code at [PLang.Modules.TerminalModule - Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/TerminalModule/Program.cs).
 
 ## Source code
 
-The runtime code for the Terminal module is available at [PLang.Modules.TerminalModule - Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.TerminalModule/Program.cs). The Builder.cs, which is responsible for the construction of steps, can be found at [PLang.Modules.TerminalModule - Builder.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.TerminalModule/Builder.cs).
+The runtime code for the Terminal module is available at [PLang.Modules.TerminalModule - Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/TerminalModule/Program.cs). The Builder.cs, which is responsible for the construction of steps, can be found at [PLang.Modules.TerminalModule - Builder.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/TerminalModule/Builder.cs).
 
 ## How plang is mapped to C#
 

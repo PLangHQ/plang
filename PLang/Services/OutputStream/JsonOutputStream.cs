@@ -82,7 +82,14 @@ namespace PLang.Services.OutputStream
 						await writer.WriteAsync(content);
 					}
 				}
-				await writer.FlushAsync();
+				try
+				{
+					await writer.FlushAsync();
+				} catch (System.Net.HttpListenerException ex)
+				{
+					if (ex.Message.Contains("An operation was attempted on a nonexistent network connection")) return;
+					throw;
+				}
 			}
 		}
 
