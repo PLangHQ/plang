@@ -1,0 +1,30 @@
+Plang runtime lifecycle
+
+When you start a plang app this is the order of execution
+- Load events by running Events.goal
+- Run before start app events
+- Run Setup.goal file
+- Start scheduler
+- Run goal file (default: Start.goal)
+- Run after start of app events
+
+Following applies to all goal files executed. Events are not executed if goal file is being executed by an event.
+
+- Depency injection defined in the goal is registered
+- Before goal event goals are executed
+- Go through each step in goal
+    - Before step execute events
+    - Execute the step
+    - After step execute events
+- After goal event executed
+
+The cycle is affected by errors
+- if a goal throws an error, the After goal event is not exeucted, but on error event is executed(if defined)
+- if a step throws an error, the After step event is not exeucted but an on error event is executed(if defined). 
+
+When running plang with out goal file defined, such as
+```bash
+plang run
+```
+
+The plang runtime will search for a Start.goal file in the directory you are located in. If it does not find it it will print out error message 'Could not find Start.goal to run......'. It will still run the Setup.goal and Events that occure before the goal file is executed.

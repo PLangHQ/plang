@@ -60,7 +60,9 @@ This will allow you to create implementation to read .env files, Azure Vault, AW
 ```
 ##### caching Service
 
-Plang uses in memory caching. For services that need distributed caching, you can implement [IAppCache](https://github.com/PLangHQ/plang/blob/main/PLang/Interfaces/IAppCache.cs)
+Plang uses in memory caching. For services that need distributed caching, you can implement the abstract class [AppCache](https://github.com/PLangHQ/plang/blob/main/PLang/Interfaces/IAppCache.cs)
+
+Check out the InMemory cache implementation that plang uses, [InMemoryCaching.cs](https://github.com/PLangHQ/plang/blob/main/PLang/Services/CachingService/InMemoryCaching.cs)
 
 ```plang
 - inject caching, /mycaching/mycaching.dll

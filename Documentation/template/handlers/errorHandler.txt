@@ -1,0 +1,59 @@
+ErrorHandler 
+
+Allows you to handle errors in plang.
+
+You can handle errors
+```plang
+Start
+- get http://example.org
+    on error call ManageError
+
+ManageError
+- write out error %____Exception__%
+```
+
+You can also handle error differently depending on the error message
+```plang
+Start
+- get http://example.org
+    on error 'timeout' call ManageTimeoutError
+    on error 'host not found' call InternetDownError
+
+ManageTimeoutError
+- write out error 'There was a timeout'
+
+InternetDownError
+- write out error 'Internet is down'
+```
+
+You can ignore all errors
+```plang
+Start
+- get http://example.org
+    ignore all errors
+```
+
+The error handler works well with the RetryHandler(./RetryHandler.md), allowing you to retry the request before throwing an error
+```plang
+Start
+- get http://example.org
+    retry 2 times over 1 min
+    on error ManageError
+
+ManageError
+- write out error %____Exception__%
+```
+
+You can also use events to handle errors 
+
+```plang
+Events
+- on error for step, call HandleErrorOnStep
+- on error for goal, call HandleErrorOnGoal
+
+HandleErrorOnStep
+- write out error, 'Error on step: %____Exception__%'
+
+HandleErrorOnGoal
+- write out error, 'Error on goal: %____Exception__%'
+```

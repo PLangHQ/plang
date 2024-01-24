@@ -86,7 +86,7 @@ namespace PLangTests
 
 			context.AddOrReplace(ReservedKeywords.Inject_Caching, typeof(InMemoryCaching).FullName);
 
-			appCache = new InMemoryCaching(context);
+			appCache = new InMemoryCaching();
 			container.RegisterInstance<IAppCache>(appCache, "PLang.Services.CachingService.InMemoryCaching");
 
 			logger = Substitute.For<MockLogger>();

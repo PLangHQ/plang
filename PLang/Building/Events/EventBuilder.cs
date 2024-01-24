@@ -43,6 +43,7 @@ namespace PLang.Building.Events
 		public virtual async Task<List<string>> BuildEventsPr()
 		{
 			var goalFiles = GetEventGoalFiles();
+			logger.LogDebug($"Building {goalFiles.Count} event file(s)");
 			var validGoalFiles = new List<string>();
 			foreach (var filePath in goalFiles)
 			{
@@ -137,6 +138,15 @@ enum EventScope {{ StartOfApp = 0, EndOfApp = 1,RunningApp = 2,	Goal = 20, Step 
 		public List<string> GetEventGoalFiles()
 		{
 			var eventsPath = Path.Join(fileSystem.GoalsPath, "events");
+			if (fileSystem.File.Exists(eventsPath + ".goal"))
+			{
+				throw new BuilderException("Events.goal file must be located in the events folder.");
+			}
+			if (fileSystem.File.Exists(eventsPath + "build.goal"))
+			{
+				throw new BuilderException("EventsBuild.goal file must be located in the events folder.");
+			}
+
 			if (!fileSystem.Directory.Exists(eventsPath)) return new();
 
 			return fileSystem.Directory.GetFiles(eventsPath, "*.goal", SearchOption.AllDirectories)

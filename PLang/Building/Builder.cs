@@ -47,6 +47,7 @@ namespace PLang.Building
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				AppContext.SetSwitch("builder", true);
 				InitFolders();
+
 				var goalFiles = GoalFiles.GetGoalFilesToBuild(fileSystem, fileSystem.GoalsPath);
 				logger.LogDebug("Build Start:" + DateTime.Now.ToLongTimeString());
 

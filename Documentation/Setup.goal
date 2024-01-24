@@ -54,4 +54,7 @@ Setup
             Guide='template/plang_development.txt'
             System='template/guidance/teacher.txt'
             OutputFilename='output/PlangDevelopment.md'                
-
+- insert into docs Name='RuntimeLifcycle'
+            Guide='template/runtime_lifecycle.txt'
+            System='template/guidance/teacher.txt'
+            OutputFilename='output/RuntimeLifcycle.md'   

@@ -1,0 +1,35 @@
+CachingHandler
+
+Handles caching in plang for a step.
+
+Absolute time
+```plang
+Start
+- http://example.org
+    write to %response%
+    cache 'example.org', for 10 minutes
+```
+cache key is 'example.org'
+
+Sliding time
+```plang
+Start
+- http://example.org
+    write to %response%
+    cache for 5 minutes from last usage
+```
+Here we skip cache key and let plang decide it. This can cause colition with other caches, so be carefull
+
+CachingHandler uses the IAppCache instance in the instance. By default this is in-memory. By [injecting your own caching handler](/Services.md) you can have you own distributed caching.
+
+```plang
+Start
+- inject caching, /redis/redis.dll, use globally
+
+LoadUrl
+- http://example.org
+    write to %response%
+    cache 4 minutes
+```
+
+The caching will be handled by Redis since it was injected at the start of the application.
