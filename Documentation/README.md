@@ -68,6 +68,14 @@ Explore plang's features and capabilities:
     - **[Reserved keywords](https://github.com/PLangHQ/plang/blob/main/PLang/Utils/ReservedKeywords.cs)**: See list of reserved keywords in the language
 - **Developing the plang language**
     - **[How to start](./PLangDevelopment.md)**: Information on how to help with development of plang programming language.
+- **Examples of actual apps**
+    - List of apps at https://github.com/PLangHQ/apps
+    - We build this doc with plang
+        - https://github.com/PLangHQ/plang/blob/main/Documentation/Setup.goal
+        - https://github.com/PLangHQ/plang/blob/main/Documentation/Start.goal
+        - https://github.com/PLangHQ/plang/blob/main/Documentation/Modules.goal
+    - We build plang.is website using plang
+        - https://github.com/PLangHQ/plang.is/blob/main/Start.goal
 
 ## Features
 

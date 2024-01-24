@@ -70,4 +70,4 @@ The app is now ready to run.
 
 Enjoy your new Todo Window App!
 
-Check out some more [Examples]() or other [Apps written by others]() to start learning. It is all open source and you can view all the code.
+Check out some more [Examples](https://github.com/PLangHQ/plang/tree/main/Tests) or other [Apps written by others](https://github.com/PLangHQ/apps) to start learning. It is all open source and you can view all the code.

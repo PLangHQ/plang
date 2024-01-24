@@ -104,4 +104,4 @@ To create a new task, send a POST request to `http://localhost:8080/api/newtask`
 
 - Learn how to use [%Identity% in plang](./Todo_Identity.md)
 - If you are running on a Windows machine (sorry, only Windows for now), let's change the web service [into a desktop app](./Todo_UI.md)
-- Or, check out some more [Examples]() or other [Apps written by others]() to start learning. It is all open source and you can view all the code.
+- Or, check out some more [Examples](https://github.com/PLangHQ/plang/tree/main/Tests) or other [Apps written by others](https://github.com/PLangHQ/apps) to start learning. It is all open source and you can view all the code.
