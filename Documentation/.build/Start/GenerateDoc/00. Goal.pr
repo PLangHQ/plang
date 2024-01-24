@@ -178,17 +178,17 @@
       }
     },
     {
-      "Text": "[llm] system:%system%\n    assistant: '## previously generated doc ## \n                %assistant%\n                ## previously generated doc ## \n    user:%content%\n    model:'gpt-4-1106-preview'\n    max length = 4K\n    write to %result%",
+      "Text": "[llm] system:%system%\n    assistant: '## previously generated doc ## \n                %assistant%\n                ## previously generated doc ## '\n    user:%content%\n    model:'gpt-4-1106-preview'\n    max length = 4K\n    write to %result%",
       "Comment": null,
       "ModuleType": "PLang.Modules.LlmModule",
       "Name": "GenerateDocument",
-      "Description": "Generate a document using the GPT-4-1106-preview model with a maximum length of 4K. The generated document will be written to the variable %result%",
+      "Description": "Use the LlmModule to generate a document with the provided system, assistant, user content, and model. The maximum length of the document is 4K. The result is written to the specified result variable.",
       "PrFileName": "06. GenerateDocument.pr",
       "RelativePrPath": ".build\\Start\\GenerateDoc\\06. GenerateDocument.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-01-05T11:34:31.3218335+00:00",
+      "Generated": "2024-01-24T09:24:36.8670837+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -204,8 +204,8 @@
         "presencePenalty": null,
         "maxLength": 4000,
         "type": "StepBuilder",
-        "system": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text is not defined, then use * for key\r\nRetryHandler: If should retry the step if there is error, null\r\nCachingHandler: How should caching be handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nYour response MUST be JSON, scheme\r\n{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32},\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... }},\n\"RetryHandler\"?: {\"RetryCount\": int32,\n\"RetryDelayInMilliseconds\": int32}}\r\nBe Concise\r\n",
-        "question": "[llm] system:%system%\n    assistant: '## previously generated doc ## \n                %assistant%\n                ## previously generated doc ## \n    user:%content%\n    model:'gpt-4-1106-preview'\n    max length = 4K\n    write to %result%",
+        "system": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nYour response MUST be JSON, scheme\r\n{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32},\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... }},\n\"RetryHandler\"?: {\"RetryCount\": int32,\n\"RetryDelayInMilliseconds\": int32}}\r\nBe Concise\r\n",
+        "question": "[llm] system:%system%\n    assistant: '## previously generated doc ## \n                %assistant%\n                ## previously generated doc ## '\n    user:%content%\n    model:'gpt-4-1106-preview'\n    max length = 4K\n    write to %result%",
         "assistant": "This is a list of modules you can choose from\r\n## modules available starts ##\r\nPLang.Modules.LlmModule\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n",
         "model": "gpt-4",
         "caching": true,
@@ -329,5 +329,5 @@
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "f167a928c7b7b0c2bdece094d80ecd4b982e4a971c1b6e10d03ad185d16fee69"
+  "Hash": "a07d3bf58c68635335090bea32ac3103af9d0c0a034bde8a8ef6d2c5709e18dd"
 }

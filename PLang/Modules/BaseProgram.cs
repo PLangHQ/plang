@@ -93,7 +93,7 @@ namespace PLang.Modules
 			this.function = function; // this is to give sub classes access to current function running.
 
 			var methodHelper = new MethodHelper(goalStep, variableHelper, typeHelper, llmService);
-			(MethodInfo? method, Dictionary<string, object> parameterValues) = await methodHelper.GetMethodAndParameters(this, function);
+			(MethodInfo? method, Dictionary<string, object?> parameterValues) = await methodHelper.GetMethodAndParameters(this, function);
 			logger.LogTrace("Method:{0}", method);
 			logger.LogTrace("Parameters:{0}", parameterValues);
 

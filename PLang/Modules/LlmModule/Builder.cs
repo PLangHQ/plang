@@ -1,6 +1,7 @@
 ﻿using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Utils;
+using static PLang.Services.LlmService.PLangLlmService;
 
 namespace PLang.Modules.LlmModule
 {
@@ -15,9 +16,10 @@ namespace PLang.Modules.LlmModule
 
 		public async Task<Instruction> Build(GoalStep step, string? error = null, int errorCount = 0)
 		{
+            string schemea = TypeHelper.GetJsonSchema(typeof(List<Message>));
 			AppendToSystemCommand(@"The following user request is for constructing a message to LLM engine
 
-llmResponseType can be null, text, json, markdown or html. default is null. If scheme is defined use json, unless user defines otherwise
+llmResponseType can be null, text, json, markdown or html. default is null. If scheme is defined then use json, unless user defines otherwise
 when llmResponseType is json, the statement ""You MUST respond in JSON, scheme:'{....}'"" must be appened to system role as a string
 
 promptMessages contains the system, assistant and user messages. assistant or user message is required.
@@ -26,6 +28,40 @@ if user does not define model, set model to ""gpt-4-vision-preview"" if content 
 
 
 ## examples ##
+system: %system%, assistant: %assistant%, user: %user%
+
+promptMessages: 
+[
+	{
+        ""role"": ""system"",
+        ""content"": [
+            {
+                ""type"": ""text"",
+                ""text"": ""%system%""
+            }
+        ]
+    },
+    {
+        ""role"": ""assistant"",
+        ""content"": [
+            {
+                ""type"": ""text"",
+                ""text"": ""%assistant%""
+            }
+        ]
+    },
+    {
+        ""role"": ""user"",
+        ""content"": [
+            {
+                ""type"": ""text"",
+                ""text"": ""%user%""
+            }
+        ]
+    }
+]
+
+
 system: do stuff, user: this is data from user, write to %data%, %output% and %dest% => scheme: null, llResponseType=null
 system: setup up system, asssistant: some assistant stuff, user: this is data from user, scheme: {data:string, year:number, name:string} => scheme:  {data:string, year:number, name:string}
 
@@ -65,7 +101,7 @@ content can also have the type of image_url, the content of image_url json prope
     {
         ""type"": ""image_url"",
         ""image_url"": {
-            ""url"": f""%base64OfImage%""
+            ""url"": ""%base64OfImage%""
         }
     }
 ]
@@ -80,6 +116,9 @@ or url
         }
     }
 ]
+
+
+
 ## examples ##
 ");
 			if (error != null)

@@ -3,22 +3,45 @@
     "FunctionName": "AskLlm",
     "Parameters": [
       {
-        "Type": "string",
-        "Name": "system",
-        "Value": "%system%"
+        "Type": "List`1<Message>",
+        "Name": "promptMessages",
+        "Value": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "%system%"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "## previously generated doc ## \n%assistant%\n## previously generated doc ## "
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "%content%"
+              }
+            ]
+          }
+        ]
       },
       {
-        "Type": "string",
-        "Name": "assistant",
-        "Value": "## previously generated doc ## \n%assistant%\n## previously generated doc ##"
+        "Type": "String",
+        "Name": "scheme",
+        "Value": null
       },
       {
-        "Type": "string",
-        "Name": "user",
-        "Value": "%content%"
-      },
-      {
-        "Type": "string",
+        "Type": "String",
         "Name": "model",
         "Value": "gpt-4-1106-preview"
       },
@@ -30,12 +53,12 @@
     ],
     "ReturnValue": [
       {
-        "Type": "string",
-        "VariableName": "result"
+        "Type": "object",
+        "VariableName": "%result%"
       }
     ]
   },
-  "Text": "[llm] system:%system%\n    assistant: '## previously generated doc ## \n                %assistant%\n                ## previously generated doc ## \n    user:%content%\n    model:'gpt-4-1106-preview'\n    max length = 4K\n    write to %result%",
+  "Text": "[llm] system:%system%\n    assistant: '## previously generated doc ## \n                %assistant%\n                ## previously generated doc ## '\n    user:%content%\n    model:'gpt-4-1106-preview'\n    max length = 4K\n    write to %result%",
   "Reload": false,
   "LlmQuestion": {
     "temperature": null,
@@ -44,14 +67,12 @@
     "presencePenalty": null,
     "maxLength": 4000,
     "type": "PLang.Modules.LlmModule.Builder",
-    "system": "Parse user command.\r\n\r\nSelect the correct function from list of available functions based on user command\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")%\r\nwhere the settingName would be the api key, config key, \r\ndefaultValue for settings is the usual value given, make it \"\" if no value can be default\r\nExplain is an explanation about the setting that novice user can understand.\r\n\r\nOnExceptionContainingTextCallGoal - if no text is defined, set as \"*\", goal to call is required from user\r\n\r\nJSON scheme information\r\nType: the object type in c#\r\nName: name of the variable\r\nValue: %variable% or hardcode string that should be used\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nReturnValue: Only if the function returns a value, else null. Usually indicated by ' write into %variable%' by user command\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}]}",
-    "question": "command: [llm] system:%system%\n    assistant: '## previously generated doc ## \n                %assistant%\n                ## previously generated doc ## \n    user:%content%\n    model:'gpt-4-1106-preview'\n    max length = 4K\n    write to %result%",
-    "assistant": "## functions available defined in csharp ##\r\nvoid AskLlm(String? scheme, String? system, String? assistant, String? user, String? model = gpt-4, Double? temperature = 0, Double? topP = 0, Double? frequencyPenalty = 0, Double? presencePenalty = 0, Int32? maxLength = 4000, Boolean? cacheResponse = True, String? llmResponseType)  // . \n\r\n## functions available ends ##\nThe following user request is for constructing a message to LLM engine\r\n\r\nDetermine what part is system, assistant and user properties. If you cannot map it, the whole user request should be on user property\r\nllmResponseType can be null, text, json, markdown or html. default is null. If scheme is defined use json, unless user defines otherwise\r\n\r\n## examples ##\r\nsystem: do stuff, user: this is data from user, write to %data%, %output% and %dest% => scheme: null, llResponseType=null\r\nsystem: setup up system, asssistant: some assistant stuff, user: this is data from user, scheme: {data:string, year:number, name:string} => scheme:  {data:string, year:number, name:string}\r\n## examples ##\r\n",
+    "system": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. Variables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue: Only if the function returns a value AND if user defines %variable% to write into. If no %variable% is defined then set as null.\nThe following user request is for constructing a message to LLM engine\r\n\r\nllmResponseType can be null, text, json, markdown or html. default is null. If scheme is defined then use json, unless user defines otherwise\r\nwhen llmResponseType is json, the statement \"You MUST respond in JSON, scheme:'{....}'\" must be appened to system role as a string\r\n\r\npromptMessages contains the system, assistant and user messages. assistant or user message is required.\r\nDetermine what part is system, assistant and user properties. If you cannot map it, the whole user request should be on user role\r\nif user does not define model, set model to \"gpt-4-vision-preview\" if content type is image_url\r\n\r\n\r\n## examples ##\r\nsystem: %system%, assistant: %assistant%, user: %user%\r\n\r\npromptMessages: \r\n[\r\n\t{\r\n        \"role\": \"system\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%system%\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"assistant\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%assistant%\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"user\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%user%\"\r\n            }\r\n        ]\r\n    }\r\n]\r\n\r\n\r\nsystem: do stuff, user: this is data from user, write to %data%, %output% and %dest% => scheme: null, llResponseType=null\r\nsystem: setup up system, asssistant: some assistant stuff, user: this is data from user, scheme: {data:string, year:number, name:string} => scheme:  {data:string, year:number, name:string}\r\n\r\npromptMessages: \r\n[\r\n\t{\r\n        \"role\": \"system\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"setup up system\\nYou MUST respond in JSON, scheme:{data:string, year:number, name:string}\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"assistant\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"some assistant stuff\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"user\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"this is data from user\"\r\n            }\r\n        ]\r\n    }\r\n]\r\n\r\ncontent can also have the type of image_url, the content of image_url json property can be a URL or a base64 of image\r\n\"content\": [\r\n    {\r\n        \"type\": \"image_url\",\r\n        \"image_url\": {\r\n            \"url\": \"%base64OfImage%\"\r\n        }\r\n    }\r\n]\r\n\r\nor url \r\n\r\n\"content\": [\r\n   {\r\n        \"type\": \"image_url\",\r\n        \"image_url\": {\r\n            \"url\": \"http://example.org/image.jpg\"\r\n        }\r\n    }\r\n]\r\n\r\n\r\n\r\n## examples ##\r\n\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}]}",
+    "question": "[llm] system:%system%\n    assistant: '## previously generated doc ## \n                %assistant%\n                ## previously generated doc ## '\n    user:%content%\n    model:'gpt-4-1106-preview'\n    max length = 4K\n    write to %result%",
+    "assistant": "## functions available starts ##\r\nvoid AskLlm(List`1<Message> promptMessages, String? scheme, String? model = \"gpt-4\", Double? temperature = 0, Double? topP = 0, Double? frequencyPenalty = 0, Double? presencePenalty = 0, Int32? maxLength = 4000, Boolean? cacheResponse = True, String? llmResponseType)  // .\r\n## functions available ends ##\r\n## defined variables ##\r\nsystem (type:Object), assistant (type:String), content (type:String), result (type:object), \r\n## defined variables ##",
     "model": "gpt-4",
     "caching": true,
-    "Reload": false,
-    "PreviousResult": null,
-    "RawResponse": "{\r\n  \"FunctionName\": \"AskLlm\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"system\",\r\n      \"Value\": \"%system%\"\r\n    },\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"assistant\",\r\n      \"Value\": \"## previously generated doc ## \\n%assistant%\\n## previously generated doc ##\"\r\n    },\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"user\",\r\n      \"Value\": \"%content%\"\r\n    },\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"model\",\r\n      \"Value\": \"gpt-4-1106-preview\"\r\n    },\r\n    {\r\n      \"Type\": \"Int32\",\r\n      \"Name\": \"maxLength\",\r\n      \"Value\": 4000\r\n    }\r\n  ],\r\n  \"ReturnValue\": [\r\n    {\r\n      \"Type\": \"string\",\r\n      \"VariableName\": \"result\"\r\n    }\r\n  ]\r\n}"
+    "RawResponse": null
   },
   "RunOnBuild": false
 }

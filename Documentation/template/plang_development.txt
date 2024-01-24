@@ -1,0 +1,12 @@
+Development of the PLang programming language
+
+- You can help in many ways
+- Help with documentation, send us pull request on change to help us improve it, https://github.com/PLangHQ/plang/tree/main/Documentation
+- Help with developing the C# code. 
+- Help developing modules and services to make the language even more powerfull
+- Join us on Discord(https://discord.gg/A8kYUymsDD)
+- Join our discussion board(https://github.com/orgs/PLangHQ/discussions)
+
+## For Development of plang, modules & services
+You will need Visual Studio Community(https://visualstudio.microsoft.com/vs/community/)
+and knowledge of programming languages

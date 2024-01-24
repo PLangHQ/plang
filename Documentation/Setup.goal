@@ -49,4 +49,9 @@ Setup
 - insert into docs Name='Debug'
             Guide='template/debug.txt'
             System='template/guidance/teacher.txt'
-            OutputFilename='output/Debug.md'                
+            OutputFilename='output/Debug.md'     
+- insert into docs Name='PlangDevelopment'
+            Guide='template/plang_development.txt'
+            System='template/guidance/teacher.txt'
+            OutputFilename='output/PlangDevelopment.md'                
+

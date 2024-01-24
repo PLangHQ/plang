@@ -17,7 +17,7 @@ GenerateDoc
 - [llm] system:%system%
     assistant: '## previously generated doc ## 
                 %assistant%
-                ## previously generated doc ## 
+                ## previously generated doc ## '
     user:%content%
     model:'gpt-4-1106-preview'
     max length = 4K

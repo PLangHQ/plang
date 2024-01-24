@@ -57,7 +57,7 @@ CreateUser
 - Write bearer token to response
 ```
 
-That is it. Now compile and run 🤯
+That is it. 🤯
 
 Here I describe step by step what should happen, if I need my custom action/property, it is easy for me to add, like the Brevo registration.
 

@@ -57,35 +57,37 @@ namespace PLang.Services.OutputStream
 			httpContext.Response.StatusCode = httpStatusCode;
 			using (var writer = new StreamWriter(httpContext.Response.OutputStream, httpContext.Response.ContentEncoding ?? Encoding.UTF8))
 			{
-				if (obj != null)
-				{
-					if (obj is JValue || obj is JObject || obj is JArray)
-					{
-						await writer.WriteAsync(obj.ToString());
-					}
-					else
-					{
-						if (type != "text")
-						{
-							JObject jsonObj = new JObject();
-							jsonObj[type] = JToken.FromObject(obj);
-							writer.Write(jsonObj.ToString());
-							return;
-						}
-
-						string content = obj.ToString()!;
-						if (!JsonHelper.IsJson(content))
-						{
-							content = JsonConvert.SerializeObject(obj);
-						}
-
-						await writer.WriteAsync(content);
-					}
-				}
 				try
 				{
+					if (obj != null)
+					{
+						if (obj is JValue || obj is JObject || obj is JArray)
+						{
+							await writer.WriteAsync(obj.ToString());
+						}
+						else
+						{
+							if (type != "text")
+							{
+								JObject jsonObj = new JObject();
+								jsonObj[type] = JToken.FromObject(obj);
+								writer.Write(jsonObj.ToString());
+								return;
+							}
+
+							string content = obj.ToString()!;
+							if (!JsonHelper.IsJson(content))
+							{
+								content = JsonConvert.SerializeObject(obj);
+							}
+
+							await writer.WriteAsync(content);
+						}
+					}
+
 					await writer.FlushAsync();
-				} catch (System.Net.HttpListenerException ex)
+				}
+				catch (System.Net.HttpListenerException ex)
 				{
 					if (ex.Message.Contains("An operation was attempted on a nonexistent network connection")) return;
 					throw;

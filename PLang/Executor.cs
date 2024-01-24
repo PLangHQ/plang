@@ -198,14 +198,14 @@ namespace PLang
 				{
 					var stack = engine.GetMemoryStack();
 					var value = args[i].Split('=')[1];
-					if (value.StartsWith("\"")) value = value.Substring(1);
-					if (value.EndsWith("\"")) value = value.Substring(0, value.Length - 1);
+					if (value.StartsWith("\"")) value = value.Substring(1).Trim();
+					if (value.EndsWith("\"")) value = value.Substring(0, value.Length - 1).Trim();
 
-					stack.Put(args[i].Split('=')[0], value);
+					stack.Put(args[i].Split('=')[0].Trim(), value.Trim());
 				}
 				else if (args[i].ToLower() != "run" && !string.IsNullOrEmpty(args[i]))
 				{
-					goalsToRun.Add(args[i]);
+					goalsToRun.Add(args[i].Trim());
 				}
 			}
 

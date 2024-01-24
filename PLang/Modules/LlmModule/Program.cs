@@ -95,7 +95,7 @@ namespace PLang.Modules.LlmModule
 
 		[Description("")]
 		public async Task AskLlm(
-			List<Message> promptMessages,
+			[HandlesVariable] List<Message> promptMessages,
 			string scheme = "", 
 			string model = "gpt-4",
 			double temperature = 0,
@@ -118,7 +118,14 @@ namespace PLang.Modules.LlmModule
 			{
 				llmService.Extractor = new GenericExtractor(llmResponseType);
 			}
+			foreach (var message in promptMessages)
+			{
+				foreach (var c in message.content)
+				{
+					c.text = variableHelper.LoadVariables(c.text).ToString();
+				}
 
+			}
 
 			var llmQuestion = new LlmRequest("LlmModule", promptMessages, model, cacheResponse);
 			llmQuestion.maxLength = maxLength;

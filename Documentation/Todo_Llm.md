@@ -100,6 +100,8 @@ To create a new task, send a POST request to `http://localhost:8080/api/newtask`
 }    
 ```
 
-If you are running on a Windows machine (sorry, only Windows for now), let's change this [into a desktop app](./Todo_UI.md)
+# Next tutorials
 
-Else, check out some more [Examples]() or other [Apps written by others]() to start learning. It is all open source and you can view all the code.
+- Learn how to use [%Identity% in plang](./Todo_Identity.md)
+- If you are running on a Windows machine (sorry, only Windows for now), let's change the web service [into a desktop app](./Todo_UI.md)
+- Or, check out some more [Examples]() or other [Apps written by others]() to start learning. It is all open source and you can view all the code.
