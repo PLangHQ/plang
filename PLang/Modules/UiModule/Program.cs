@@ -1,7 +1,7 @@
 ﻿using PLang.Services.OutputStream;
 using System.ComponentModel;
 
-namespace PLang.Modules.HtmlModule
+namespace PLang.Modules.UiModule
 {
 	public interface IFlush
 	{
@@ -49,7 +49,10 @@ namespace PLang.Modules.HtmlModule
 
 		public void Flush()
 		{
-			((UIOutputStream)outputStream).Flush();
+			if (outputStream is UIOutputStream)
+			{
+				((UIOutputStream)outputStream).Flush();
+			}
 		}
 	}
 

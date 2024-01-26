@@ -1,0 +1,35 @@
+Builder lifecycle
+
+When you build plang code, it starts by building .goal files in the Events folder.
+It then builds Setup.goal
+Then Start.goal
+Then the rest of goal files
+
+Build Events
+
+If you create EventsBuild.goal file in your events folder, you can enable events on the build process.
+
+You can bind a build event that should execute a goal. The options are before and after goal build, and before and after step build.
+This can be usefull to build development tools for plang.
+An example would be to create a Goal that builds an unit test for a step after the step has been built.
+```plang 
+EventsBuild
+- after step is built, call !CreateTest
+
+CreateTest
+- [llm] system: create unit test for the user intent...
+    user: %__Step.Text__%
+    scheme: {data:object}
+    write to %testData%
+- write %testData% to /tests/%__Step.Name__%
+```
+
+Another example would be to analyze if all variables in step are valid or to guide the developer to improve his code.
+```plang 
+EventsBuild
+- before step is built, call !CheckVariables
+
+CheckVariables
+- write out 'Checking variables'
+```
+

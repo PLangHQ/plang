@@ -14,7 +14,7 @@ namespace PLang.Interfaces
 	public interface IEventSourceRepository
 	{
 		DataSource DataSource { get; set; } 
-		Task<int> Add(IDbConnection dbConnection, string sql, DynamicParameters parameters);
+		Task<int> Add(IDbConnection dbConnection, string sql, DynamicParameters parameters, IDbTransaction? transaction = null);
 		Task<List<SqliteEventSourceRepository.EventData>> GetUnprocessedData();
 	}
 }

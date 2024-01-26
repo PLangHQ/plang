@@ -64,7 +64,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		{
 			foreach (var key in keyValues)
 			{
-				memoryStack.Put(key.Key, key.Value);
+				memoryStack.Put(key.Key, variableHelper.LoadVariables(key.Value));
 			}
 		}
 
@@ -76,7 +76,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 				var objectValue = memoryStack.GetObjectValue2(key.Key, false);
 				if (!objectValue.Initiated)
 				{
-					memoryStack.Put(key.Key, key.Value);
+					memoryStack.Put(key.Key, variableHelper.LoadVariables(key.Value));
 				}
 			}
 

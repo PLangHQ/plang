@@ -10,6 +10,7 @@ using System.Data.SQLite;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using static PLang.Modules.DbModule.ModuleSettings;
 
 namespace PLang.Modules.DbModule
 {
@@ -67,7 +68,7 @@ namespace PLang.Modules.DbModule
 			}
 
 			var supportedDbTypes = GetSupportedDbTypesAsString();
-			throw new AskUserDatabaseType(aiService, supportedDbTypes, @$"------ Data source setup --------------
+			throw new AskUserDatabaseType(aiService, supportedDbTypes, dataSourceName, @$"------ Data source setup --------------
 Following databases are supported:
 {supportedDbTypes}. 
 
@@ -102,7 +103,7 @@ Examples you can type in:
 			if (!IsModuleInstalled(typeFullName))
 			{
 				var listOfDbSupported = GetSupportedDbTypesAsString();
-				throw new AskUserDatabaseType(aiService, listOfDbSupported, $"{typeFullName} is not supported. Following databases are supported: {listOfDbSupported}. If you need {typeFullName}, you must install it into modules folder in your app using {nugetCommand}.", AddDataSource);
+				throw new AskUserDatabaseType(aiService, listOfDbSupported, dataSourceName, $"{typeFullName} is not supported. Following databases are supported: {listOfDbSupported}. If you need {typeFullName}, you must install it into modules folder in your app using {nugetCommand}.", AddDataSource);
 			}
 
 
@@ -294,6 +295,31 @@ Be concise"
 				connection.Close();
 			}
 			return null;
+		}
+
+
+		public async Task<string> FormatSelectColumnsStatement(string tableName)
+		{
+			var dataSource = await GetCurrentDatasource();
+			string selectColumns = dataSource.SelectColumns.ToLower();
+
+			if (selectColumns.Contains("'@tablename'"))
+			{
+				selectColumns = selectColumns.Replace("@tablename", tableName);
+			}
+			else if (selectColumns.Contains("@tablename"))
+			{
+				selectColumns = selectColumns.Replace("@tablename", "'" + tableName + "'");
+			}
+			if (selectColumns.Contains("'@database'"))
+			{
+				selectColumns = selectColumns.Replace("@database", dataSource.DbName);
+			}
+			else if (selectColumns.Contains("@database"))
+			{
+				selectColumns = selectColumns.Replace("@database", "'" + dataSource.DbName + "'");
+			}
+			return selectColumns;
 		}
 
 

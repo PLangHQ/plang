@@ -63,7 +63,8 @@ Explore plang's features and capabilities:
     - **[Private keys](./PrivateKeys.md)**: What private keys are in the system and where are they stored.
     - **[Settings](./Settings.md)**: How to store and use settings in your app such as API keys and other sensitive data.
     - **[Runtime Lifecycle](./RuntimeLifcycle.md)**: Sequence of operations when running plang
-    - **[Events](./Events.md)**: Learn about event-driven programming in plang.
+    - **[Runtime Events](./Events.md)**: Learn about event-driven programming in plang.
+    - **[Builder Lifecycle & Events](./BuilderLifcycle.md)**: Sequence of operations when building plang and build events
     - **[Modules](./modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
     - **[Services](./Services.md)**: Learn how flexible the plang language is, e.g. using the db engine of your choice, your own caching service and more.
     - **[Reserved keywords](https://github.com/PLangHQ/plang/blob/main/PLang/Utils/ReservedKeywords.cs)**: See list of reserved keywords in the language

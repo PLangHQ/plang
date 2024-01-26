@@ -2,6 +2,7 @@
 using Org.BouncyCastle.Utilities.IO;
 using Org.BouncyCastle.Utilities.Zlib;
 using PLang.Building.Model;
+using PLang.Modules.UiModule;
 using PLang.Runtime;
 using RazorEngineCore;
 using System.Dynamic;
@@ -20,6 +21,7 @@ namespace PLang.Services.OutputStream
 		public Stream Stream { get; private set; }
 		public Stream ErrorStream { get; private set; }
 		StringBuilder sb;
+		public Action<string>? onFlush { get; set; }
 		public UIOutputStream(IRazorEngine razorEngine)
 		{
 			this.razorEngine = razorEngine;
@@ -43,6 +45,8 @@ namespace PLang.Services.OutputStream
 </html>");
 			string ble = sb.ToString();
 			sb.Clear();
+
+			if (onFlush != null) onFlush(ble);
 			return ble;
 			
 		}

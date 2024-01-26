@@ -62,6 +62,13 @@ namespace PLang.Modules.CallGoalModule
 
 		private void ValidateAppInstall(string goalName)
 		{
+			var localGoalName = goalName.AdjustPathToOs();
+			if (localGoalName.EndsWith(".goal")) localGoalName = localGoalName.Replace(".goal", "");
+			localGoalName = Path.Join(".build", localGoalName);
+
+			var goal = prParser.GetAllGoals().FirstOrDefault(p => p.RelativePrFolderPath.ToLower() == localGoalName.ToLower());
+			if (goal != null) return;
+
 			string appName = goalName.Substring(0, goalName.IndexOf("/"));
 			if (!fileSystem.Directory.Exists(Path.Join("apps", appName)))
 			{

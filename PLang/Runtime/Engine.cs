@@ -1,8 +1,6 @@
 ﻿using LightInject;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using PLang.Building;
 using PLang.Building.Events;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
@@ -10,17 +8,16 @@ using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Modules;
-using PLang.Modules.HtmlModule;
+using PLang.Modules.UiModule;
 using PLang.SafeFileSystem;
 using PLang.Services.OutputStream;
-using PLang.Services.SettingsService;
 using PLang.Utils;
 using System.Diagnostics;
 using System.Net;
 
 namespace PLang.Runtime
 {
-    public interface IEngine
+	public interface IEngine
 	{
 		IOutputStream OutputStream { get; }
 		void AddContext(string key, object value);
@@ -232,12 +229,23 @@ namespace PLang.Runtime
 
 			stopwatch.Stop();
 			logger.LogDebug("Total time:" + stopwatch.ElapsedMilliseconds);
+
+		}
+		private bool IsLogLevel(string goalComment)
+		{
+
+			string[] logLevels = ["trace", "debug", "information", "warning", "error"];
+			foreach (var logLevel in logLevels)
+			{
+				if (goalComment.ToLower().Contains($"[{logLevel}]")) return true;
+			}
+			return false;
 		}
 
 		public async Task RunGoal(Goal goal)
 		{
 			context.AddOrReplace(ReservedKeywords.Goal, goal);
-			if (goal.Comment != null && goal.Comment.ToLower().Contains("[trace]"))
+			if (goal.Comment != null && IsLogLevel(goal.Comment))
 			{
 				AppContext.SetData("GoalLogLevelByUser", Microsoft.Extensions.Logging.LogLevel.Trace);
 			}
@@ -308,7 +316,7 @@ namespace PLang.Runtime
 			}
 			finally
 			{
-				if (goal.Comment != null && goal.Comment.ToLower().Contains("[trace]"))
+				if (goal.Comment != null && IsLogLevel(goal.Comment))
 				{
 					AppContext.SetData("GoalLogLevelByUser", null);
 				}
@@ -438,6 +446,17 @@ namespace PLang.Runtime
 					}
 					finally
 					{
+						if (classInstance is IFlush)
+						{
+							try
+							{
+								((IFlush)classInstance).Flush();
+							}
+							catch (Exception ex)
+							{
+								logger.LogError("Flush error on output stream:{0}", ex);
+							}
+						}
 						// reeset the Execute to false on all steps inside if statement
 						if (goalStep.Indent > 0)
 						{

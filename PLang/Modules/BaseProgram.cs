@@ -4,7 +4,6 @@ using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Interfaces;
-using PLang.Modules.HtmlModule;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Utils;
@@ -94,8 +93,8 @@ namespace PLang.Modules
 
 			var methodHelper = new MethodHelper(goalStep, variableHelper, typeHelper, llmService);
 			(MethodInfo? method, Dictionary<string, object?> parameterValues) = await methodHelper.GetMethodAndParameters(this, function);
-			logger.LogTrace("Method:{0}", method);
-			logger.LogTrace("Parameters:{0}", parameterValues);
+			logger.LogDebug("Method:{0}", method);
+			logger.LogDebug("Parameters:{0}", parameterValues);
 
 			//TODO: Should move this caching check up the call stack. code is doing to much work before returning cache
 			if (await LoadCached(method, function)) return;

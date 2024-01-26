@@ -40,7 +40,7 @@ namespace PLang.Utils
 			string? content = obj.ToString();
 			if (content == null) return null;
 
-			if (Regex.IsMatch(content, @"^%[a-zA-Z0-9\[\]_\.\+]*%$"))
+			if (content.StartsWith("%") && content.EndsWith("%"))
 			{
 				if (content.StartsWith("%Settings."))
 				{
@@ -162,7 +162,7 @@ namespace PLang.Utils
 				{
 					
 					writer.WritePropertyName("Value");
-					if (value.Value is JValue)
+					if (value.Value is JValue || value.Value is JProperty)
 					{
 						writer.WriteStringValue(value.Value.ToString());
 					} else

@@ -65,10 +65,17 @@ namespace PLang.Building
 
 				for (int i = 0; i < goal.GoalSteps.Count; i++)
 				{
-					await stepBuilder.BuildStep(goal, i);
+					try
+					{
+						await stepBuilder.BuildStep(goal, i);
+						
+						WriteToGoalPrFile(goal);
+					} catch (RunStepAgainException)
+					{
+						i--;
+					}
 
-					//LoadInjections(goal, container);
-					WriteToGoalPrFile(goal);
+
 				}
 				RemoveUnusedPrFiles(goal);
 

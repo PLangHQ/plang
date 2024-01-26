@@ -159,6 +159,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 
 		private void CheckSettingsTable(string dataSource)
 		{
+			CreateSettingsTable(dataSource);
 			using (IDbConnection connection = new SQLiteConnection(dataSource))
 			{
 				var settingsExists = connection.Query<dynamic>("PRAGMA table_info(Settings)");

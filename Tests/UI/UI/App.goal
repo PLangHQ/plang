@@ -1,0 +1,14 @@
+App
+- divide content in 2 parts, left is fixed 200px, right is flexible
+    - call !Countries
+    - call !ShowInfo
+
+Countries
+- get https://restcountries.com/v3.1/all, write to %countries%
+    cache for 10 min
+- bullet list, %countries%
+    list item %countries.name.common%
+    link call to !LoadCountry name=%countries.name.common%
+
+ShowInfo
+- center content, show info icon, 'Click country to see information about it'

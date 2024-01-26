@@ -26,8 +26,11 @@ namespace PLang.Modules.DbModule
 		private readonly ITypeHelper typeHelper;
 		private readonly ILogger logger;
 		private readonly MemoryStack memoryStack;
+		private readonly VariableHelper variableHelper;
+		private ModuleSettings moduleSettings;
 
-		public Builder(IPLangFileSystem fileSystem, IDbConnection db, ISettings settings, PLangAppContext context, ILlmService aiService, ITypeHelper typeHelper, ILogger logger, MemoryStack memoryStack) : base()
+		public Builder(IPLangFileSystem fileSystem, IDbConnection db, ISettings settings, PLangAppContext context, 
+			ILlmService aiService, ITypeHelper typeHelper, ILogger logger, MemoryStack memoryStack, VariableHelper variableHelper) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.db = db;
@@ -37,13 +40,14 @@ namespace PLang.Modules.DbModule
 			this.typeHelper = typeHelper;
 			this.logger = logger;
 			this.memoryStack = memoryStack;
+			this.variableHelper = variableHelper;
 		}
 
 		public record FunctionInfo(string FunctionName, string[]? TableNames = null);
 		public record DbGenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValue = null, string? Warning = null) : GenericFunction(FunctionName, Parameters, ReturnValue);
 		public override async Task<Instruction> Build(GoalStep goalStep)
 		{
-			var moduleSettings = new ModuleSettings(fileSystem, settings, context, aiService, db, logger);
+			moduleSettings = new ModuleSettings(fileSystem, settings, context, aiService, db, logger);
 			var buildInstruction = await base.Build(goalStep);
 			var gf = buildInstruction.Action as GenericFunction;
 			if (gf != null && gf.FunctionName == "CreateDataSource")
@@ -52,8 +56,8 @@ namespace PLang.Modules.DbModule
 				{
 					throw new BuilderStepException("Name of the datasource is missing. Please define it. Example: \"Create data source 'myDatabase'\"");
 				}
-
-				await moduleSettings.CreateDataSource(gf.Parameters[0].Value.ToString());
+				var dbSourceName = variableHelper.LoadVariables(gf.Parameters[0].Value.ToString());
+				await moduleSettings.CreateDataSource(dbSourceName.ToString());
 				return buildInstruction;
 			}
 
@@ -68,7 +72,7 @@ Select the correct function from list of available functions based on user comma
 
 variable is defined with starting and ending %, e.g. %filePath%
 
-TableNames: table names in sql statement");
+TableNames: table names in sql statement, leave variables as is");
 
 
 			SetAssistant($@"## functions available defined in csharp ##
@@ -146,12 +150,13 @@ dynamic Select(String sql, List<object>()? Parameters = null, bool selectOneRow_
 ## csharp function ##
 
 ## Rules ##
-variable is defined with starting and ending %, e.g. %filePath%.
+Variable is defined with starting and ending %, e.g. %filePath%.
 Parameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
 TypeFullName is Full name of the type in c#, System.String, System.Double, etc.
 ReturnValue: Columns being returned with type if defined by user. * will return dynamic. integer/int should always be System.Int64. 
 {appendToSystem}
 
+If table name is a variable, keep the variable in the sql statement
 You MUST generate a valid sql statement for {databaseType}.
 You MUST provide Parameters if SQL has @parameter.
 ## Rules ##
@@ -160,6 +165,7 @@ You MUST provide Parameters if SQL has @parameter.
 			SetAssistant(@"# examples #
 ""select everything from tableX"" => sql: ""SELECT * FROM tableX""
 ""select from tableB where id=%id%"" => sql: ""SELECT * FROM tableB WHERE id=@id""
+""select * from %table% WHERE %name% => sql: ""SELECT * FROM %table% WHERE name=@name""
 # examples #");
 
 
@@ -188,6 +194,7 @@ The id should be datatype long/bigint/.. which fits {databaseType}.";
 void CreateTable(String sql)  
 ## csharp function ##
 
+If table name is a variable, keep the variable in the sql statement
 variable is defined with starting and ending %, e.g. %filePath%.
 You MUST generate a valid sql statement for {databaseType}.
 {keepHistoryCommand}
@@ -210,11 +217,12 @@ You MUST generate a valid sql statement for {databaseType}.
 Int32 Delete(String sql, List<object>()? Parameters = null)
 ## csharp function ##
 
-variable is defined with starting and ending %, e.g. %filePath%.
+Variable is defined with starting and ending %, e.g. %filePath%.
 Parameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
 TypeFullName is Full name of the type in c#, System.String, System.Double, etc.
 {appendToSystem}
 
+If table name is a variable, keep the variable in the sql statement
 You MUST generate a valid sql statement for {databaseType}.
 You MUST provide Parameters if SQL has @parameter.
 ");
@@ -222,6 +230,7 @@ You MUST provide Parameters if SQL has @parameter.
 			SetAssistant(@"# examples #
 ""delete from tableX"" => sql: ""DELETE FROM tableX"", warning: Missing WHERE statement can affect rows that should not
 ""delete tableB where id=%id%"" => sql: ""DELETE FROM tableB WHERE id=@id"", warning: null
+""delete * from %table% WHERE %name% => sql: ""DELETE FROM %table% WHERE name=@name""
 # examples #");
 			
 			return await BuildCustomStatementsWithWarning(goalStep, dataSource, program, functionInfo);
@@ -244,12 +253,12 @@ Int32 Update(String sql, List<object>()? Parameters = null)
 ## csharp function ##
 
 variable is defined with starting and ending %, e.g. %filePath%. Do not remove %
-Sql is the SQL statement that should be executed. Sql MAY NOT contain a variable, it MUST be injected using Parameter to prevent SQL injection
+Sql is the SQL statement that should be executed. Sql MAY NOT contain a variable(except table name), it MUST be injected using Parameter to prevent SQL injection
 Parameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
 TypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.
 All integers are type of System.Int64.
 {appendToSystem}
-
+If table name is a variable, keep the variable in the sql statement
 You MUST generate a valid sql statement for {databaseType}.
 You MUST provide Parameters if SQL has @parameter.
 ");
@@ -257,6 +266,7 @@ You MUST provide Parameters if SQL has @parameter.
 			SetAssistant(@"# examples #
 ""update table myTable, street=%full_street%, %zip%"" => sql: ""UPDATE myTable SET street = @full_street, zip = @zip"", parameters:[{full_street:%full_street%, zip:%zip%}], Warning: Missing WHERE statement can affect rows that should not
 ""update tableB, %name%, %phone% where id=%id%"" => sql: ""UPDATE tableB SET name=@name, phone=@phone WHERE id=@id"", parameters:[{name:%name%, phone:%phone%, id=%id%}] 
+""update %table% WHERE %name%, set zip=@zip => sql: ""UPDATE %table% SET zip=@zip WHERE name=@name"", parameters:[{name:%name%, zip:%zip%, id=%id%}] 
 # examples #");
 
 			
@@ -300,6 +310,7 @@ Parameters is List of ParameterInfo(string ParameterName, string VariableNameOrV
 TypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.
 {appendToSystem}
 {eventSourcing}
+If table name is a variable, keep the variable in the sql statement
 You MUST generate a valid sql statement for {databaseType}.
 You MUST provide Parameters if SQL has @parameter.
 ");
@@ -308,13 +319,15 @@ You MUST provide Parameters if SQL has @parameter.
 				SetAssistant(@"# examples #
 ""insert into users, name=%name%"" => sql: ""insert into users (id, name) values (@id, @name)""
 ""insert into tableX, %phone%, write to %rows%"" => sql: ""insert into tableX (id, phone) values (@id, @phone)""
+""insert into %table%, %phone%, write to %rows%"" => sql: ""insert into %table% (id, phone) values (@id, @phone)""
 # examples #");
 			}
 			else
 			{
 				SetAssistant(@"# examples #
-""insert into users, name=%name%"" => sql: ""insert into users (name) values (@name)"", re
+""insert into users, name=%name%"" => sql: ""insert into users (name) values (@name)""
 ""insert into tableX, %phone%, write to %rows%"" => sql: ""insert into tableX (phone) values (@phone)""
+""insert into %table%, %phone%, write to %rows%"" => sql: ""insert into %table% (phone) values (@phone)""
 # examples #");
 			}
 			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
@@ -343,6 +356,7 @@ Parameters is List of ParameterInfo(string ParameterName, string VariableNameOrV
 TypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.
 {appendToSystem}
 {eventSourcing}
+If table name is a variable, keep the variable in the sql statement
 You MUST generate a valid sql statement for {databaseType}.
 You MUST provide Parameters if SQL has @parameter.
 ");
@@ -370,26 +384,19 @@ You MUST provide Parameters if SQL has @parameter.
 		{
 			if (tableNames == null) return;
 
-			foreach (var tableName in tableNames)
+			foreach (var item in tableNames)
 			{
-				string selectColumns = dataSource.SelectColumns.ToLower();
-
-				if (selectColumns.Contains("'@tablename'"))
+				string tableName = item;
+				if (variableHelper.IsVariable(tableName))
 				{
-					selectColumns = selectColumns.Replace("@tablename", tableName);
-				} else if (selectColumns.Contains("@tablename"))
-				{
-					selectColumns = selectColumns.Replace("@tablename", "'" + tableName + "'");
-				}
-				if (selectColumns.Contains("'@database'"))
-				{
-					selectColumns = selectColumns.Replace("@database", dataSource.DbName);
-				}
-				 else if (selectColumns.Contains("@database"))
-				{
-					selectColumns = selectColumns.Replace("@database", "'" + dataSource.DbName + "'");
+					var obj = memoryStack.Get(tableName);
+					if (obj != null)
+					{
+						tableName = obj.ToString();
+					}
 				}
 
+				string selectColumns = await moduleSettings.FormatSelectColumnsStatement(tableName);
 				var columnInfo = await program.Select(selectColumns);
 				if (columnInfo != null && ((dynamic) columnInfo).Count > 0)
 				{

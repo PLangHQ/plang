@@ -1,9 +1,12 @@
 ﻿using Dapper;
 using IdGen;
 using Microsoft.Extensions.Logging;
+using NBitcoin;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Runtime;
 using PLang.Services.EventSourceService;
 using PLang.Utils;
 using System.ComponentModel;
@@ -104,13 +107,14 @@ namespace PLang.Modules.DbModule
 					{
 						var generator = new IdGenerator(1);
 						param.Add("@" + p.ParameterName.Replace("@", ""), generator.ElementAt(0), DbType.Int64);
-					} else if (p.VariableNameOrValue == null)
+					}
+					else if (p.VariableNameOrValue == null)
 					{
 						param.Add("@" + p.ParameterName.Replace("@", ""), null);
 					}
 					else
 					{
-						object value = ConvertObjectToType(p.VariableNameOrValue, p.TypeFullName); 
+						object value = ConvertObjectToType(p.VariableNameOrValue, p.TypeFullName);
 						param.Add("@" + p.ParameterName.Replace("@", ""), value);
 					}
 				}
@@ -191,13 +195,14 @@ namespace PLang.Modules.DbModule
 			{
 				int rowsAffected = 0;
 				var prepare = Prepare(null);
+				var transaction = context[DbTransactionContextKey] as IDbTransaction;
 				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 				{
 					rowsAffected = await eventSourceRepository.Add(prepare.connection, sql, null);
 				}
 				else
 				{
-					rowsAffected = await prepare.connection.ExecuteAsync(sql, prepare.param);
+					rowsAffected = await prepare.connection.ExecuteAsync(sql, prepare.param, transaction);
 				}
 
 				Done(prepare.connection);
@@ -293,8 +298,6 @@ namespace PLang.Modules.DbModule
 			var prepare = Prepare(Parameters, true);
 			if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 			{
-
-
 				rowsAffected = await eventSourceRepository.Add(prepare.connection, sql, prepare.param);
 			}
 			else
@@ -329,6 +332,80 @@ namespace PLang.Modules.DbModule
 				return null;
 			}
 
+		}
+		
+		[Description("Insert a list(bulk) into database, return number of rows inserted")]
+		public async Task<int> InsertBulk(string tableName, List<object> items)
+		{
+			var dataSource = await moduleSettings.GetCurrentDatasource();
+			var sqlSelectColumns = await moduleSettings.FormatSelectColumnsStatement(tableName);
+			var columnsInTable = await Select(sqlSelectColumns) as List<dynamic>;
+			if (columnsInTable == null)
+			{
+				throw new RuntimeException($"Table {tableName} could not be found");
+			}
+
+			string? sql = GetBulkSql(tableName, columnsInTable, items);
+			if (sql == null) return 0;
+
+			var param = new List<object>();
+			
+			int affectedRows = 0;
+			var generator = new IdGenerator(items.Count);
+			await BeginTransaction();
+
+			for (int i=0;i<items.Count;i++)
+			{
+				var row = (JObject)items[i];
+
+				foreach (var column in columnsInTable)
+				{
+					if (column.name == "id")
+					{
+						param.Add(new ParameterInfo("id", generator.ElementAt(i), typeof(Int64).FullName));
+					} else if (row.ContainsKey(column.name))
+					{
+						var obj = row[column.name];
+						if (obj is ObjectValue ov)
+						{
+							param.Add(new ParameterInfo(column.name, ov.Value, ov.Type.FullName));
+						} else
+						{
+							param.Add(new ParameterInfo(column.name, obj, obj.GetType().FullName));
+						}
+					}
+
+				}
+				affectedRows += await Insert(sql, param);
+			}
+
+			await EndTransaction();
+
+			return affectedRows;
+
+		}
+
+		private string? GetBulkSql(string tableName, List<dynamic> columnsInTable, List<object> items)
+		{
+			if (items.Count == 0) return null;
+
+
+			var row = (JObject)items[0];
+			string? columns = null;
+			string? values = null;
+			foreach (var column in columnsInTable)
+			{
+				if (row.ContainsKey(column.name))
+				{
+					if (columns != null) columns += ", ";
+					columns += column.name;
+
+					if (values != null) values += ", ";
+					values += $"@{column.name}";
+				}
+			}
+
+			return $"INSERT INTO {tableName} ({columns}) VALUES ({values})";
 		}
 
 		public async override Task<string> GetAdditionalSystemErrorInfo()

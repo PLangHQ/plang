@@ -223,7 +223,15 @@ namespace PLang.Building.Parsers
 		private (string, string) GetGoalAndPath(string appStartupPath, string goalName)
 		{
 			
-			goalName = goalName.Replace("!", "").Replace(".goal", "");
+			goalName = goalName.Replace("!", "").Replace(".goal", "").AdjustPathToOs();
+
+			var localGoalName = goalName;
+			localGoalName = Path.Join(".build", localGoalName);
+
+			var goal = GetAllGoals().FirstOrDefault(p => p.RelativePrFolderPath.ToLower() == localGoalName.ToLower());
+			if (goal != null) return (goal.GoalName, goal.RelativeAppStartupFolderPath);
+
+
 			string path = appStartupPath;
 			// if goalName has . then it's referencing an app
 			if (goalName.Contains("/"))

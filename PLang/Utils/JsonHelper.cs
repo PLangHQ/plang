@@ -49,7 +49,7 @@ namespace PLang.Utils
 
 			try
 			{
-				parsedObject = JsonDocument.Parse(content);
+				parsedObject = JsonConvert.DeserializeObject(content);
 				return true;
 			}
 			catch
@@ -57,7 +57,7 @@ namespace PLang.Utils
 				try
 				{
 					string json = content.Replace("\n", " ").Replace("\r", " ");
-					parsedObject = JsonDocument.Parse(json);
+					parsedObject = JsonConvert.DeserializeObject(json);
 					return true;
 				}
 				catch

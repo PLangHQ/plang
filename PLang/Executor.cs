@@ -39,7 +39,7 @@ namespace PLang
 
 		public async Task Execute(string[] args)
 		{
-			if (args.Length == 0) args = new string[1] { "build" };
+			if (args.Length == 0) args = new string[1] { "run" };
 			
 			var debug = args.FirstOrDefault(p => p == "--debug") != null;
 			if (debug)

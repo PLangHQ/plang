@@ -95,14 +95,16 @@ namespace PLang.Exceptions.AskUser
 	{
 		private readonly ILlmService aiService;
 		private readonly string supportedDbTypes;
+		private readonly string dataSourceName;
 
-		public AskUserDatabaseType(ILlmService aiService, string supportedDbTypes, string question, Func<string, string, string, string, string, bool, bool, Task> callback) : base(question, CreateAdapter(callback))
+		public AskUserDatabaseType(ILlmService aiService, string supportedDbTypes, string dataSourceName, string question, Func<string, string, string, string, string, bool, bool, Task> callback) : base(question, CreateAdapter(callback))
 		{
 			this.aiService = aiService;
 			this.supportedDbTypes = supportedDbTypes;
+			this.dataSourceName = dataSourceName;
 		}
 
-		private record MethodResponse(string typeFullName, string dataSourceName, string nugetCommand,
+		private record MethodResponse(string typeFullName, string nugetCommand,
 				string regexToExtractDatabaseNameFromConnectionString, string dataSourceConnectionStringExample,
 				bool keepHistoryEventSourcing, bool isDefault = false);
 
@@ -134,7 +136,7 @@ You must return JSON scheme:
 
 			await Callback.Invoke([
 				 result.typeFullName,
-				result.dataSourceName,
+				this.dataSourceName,
 				result.nugetCommand,
 				result.dataSourceConnectionStringExample,
 				result.regexToExtractDatabaseNameFromConnectionString,

@@ -72,13 +72,7 @@ namespace PLang.Building
 			}
 			foreach (var function in functions)
 			{
-				if (function != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
-				{
-					foreach (var returnValue in function.ReturnValue)
-					{
-						memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
-					}
-				}
+				StepBuilder.LoadVariablesIntoMemoryStack(function, memoryStack);
 			}
 			// since the no invalid function, we can save the instruction file
 			WriteInstructionFile(step, instruction);

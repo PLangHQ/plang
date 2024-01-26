@@ -48,6 +48,7 @@ Events
 - **Before and After Events**: Trigger actions before or after a specific goal or step.
 - **Error Events**: Trigger actions when an error occurs in a step or goal.
 - **Conditional Events**: Execute actions under specific conditions, like in debug mode.
+- **Build Events**: Read more about [build events](./BuilderLifcycle.md)
 
 ## Using Events with Goals
 

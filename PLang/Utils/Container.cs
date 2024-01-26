@@ -84,9 +84,14 @@ namespace PLang.Utils
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			RegisterModules(container, fileSystem);
 		}
-		public static void RegisterForPLangWindowApp(this ServiceContainer container, string path, string appPath, IAskUserDialog askUserDialog)
+		public static void RegisterForPLangWindowApp(this ServiceContainer container, string path, string appPath, IAskUserDialog askUserDialog, Action<string> onFlush)
 		{
-			container.RegisterSingleton<IOutputStream, UIOutputStream>();
+			container.RegisterSingleton<IOutputStream>(factory =>
+			{
+				var outputStream = new UIOutputStream(container.GetInstance<IRazorEngine>());
+				outputStream.onFlush = onFlush;
+				return outputStream;
+			});
 
 			RegisterForPLang(container, path, appPath);
 

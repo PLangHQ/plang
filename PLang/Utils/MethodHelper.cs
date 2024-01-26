@@ -282,20 +282,21 @@ you must answer in JSON, scheme:
 		{
 			if (parameter.Name == null) return;
 
-			System.Collections.IList? list;
+			System.Collections.IList? list = null;
 			if (variableHelper.IsVariable(variableValue))
 			{
-				list = variableHelper.LoadVariables(variableValue) as System.Collections.IList;
+				variableValue = variableHelper.LoadVariables(variableValue);
+			}
+
+			if (variableValue is JArray)
+			{
+				list = ((JArray)variableValue).ToObject(parameter.ParameterType) as System.Collections.IList;
 			}
 			else if (variableValue is JObject)
 			{
 				list = JArray.FromObject(variableValue) as System.Collections.IList;
 			}
-			else
-			{
-				list = ((JArray)variableValue).ToObject(parameter.ParameterType) as System.Collections.IList;
-			}
-
+			
 			if (handlesAttribute != null)
 			{
 				parameterValues.Add(parameter.Name, list);
@@ -318,9 +319,22 @@ you must answer in JSON, scheme:
 			parameterValues.Add(parameter.Name, list);
 		}
 
+		private Dictionary<string, object?> MapJArray(JArray jArray)
+		{
+			return jArray.ToObject<List<JObject>>()
+						.ToDictionary(
+						jobj => jobj.Properties().First().Value.ToString(),
+						jobj => (object?)jobj.Properties().Skip(1).FirstOrDefault()?.Value.ToString()
+						);
+		}
+		private Dictionary<string, object?> MapJObject(JObject jObject)
+		{
+			return jObject.ToObject<Dictionary<string, object?>>();
+		}
+
 		private void SetDictionaryParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
 		{
-			Dictionary<string, object?>? dict;
+			Dictionary<string, object?>? dict = null;
 			if (variableHelper.IsVariable(variableValue))
 			{
 				dict = variableHelper.LoadVariables(variableValue) as Dictionary<string, object?>;
@@ -329,15 +343,20 @@ you must answer in JSON, scheme:
 			{
 				if (variableValue is JArray array)
 				{
-					dict = array.ToObject<List<JObject>>()
-						.ToDictionary(
-						jobj => jobj.Properties().First().Value.ToString(),
-						jobj => (object?)jobj.Properties().Skip(1).FirstOrDefault()?.Value.ToString()
-						);
+					dict = MapJArray(array);
 				}
-				else
+				else if (variableValue is JObject jobject) 
 				{
-					dict = ((JObject)variableValue).ToObject<Dictionary<string, object?>>();
+					dict = MapJObject(jobject);
+				} else if (JsonHelper.IsJson(variableValue, out object? obj))
+				{
+					if (obj is JArray array2)
+					{
+						dict = MapJArray(array2);
+					} else if (obj is JObject jobj)
+					{
+						dict = MapJObject(jobj);
+					}
 				}
 			}
 			if (dict == null) dict = new();

@@ -22,12 +22,13 @@ namespace PlangWindowForms
 		ServiceContainer container;
 		IEngine engine;
 		Executor pLang;
+		private string[] args;
 		public Form1(string[] args)
 		{
 			debug = args.FirstOrDefault(p => p == "--debug") != null;
-
+			this.args = args;
 			container = new ServiceContainer();
-			container.RegisterForPLangWindowApp(Environment.CurrentDirectory, "\\", new AskUserDialog());
+			container.RegisterForPLangWindowApp(Environment.CurrentDirectory, "\\", new AskUserDialog(), RenderContent);
 
 			pLang = new Executor(container);
 
@@ -59,8 +60,6 @@ namespace PlangWindowForms
 		IPseudoRuntime pseudoRuntime;
 		private async Task SetInitialHtmlContent()
 		{
-
-
 			await webView.EnsureCoreWebView2Async();
 			this.webView.CoreWebView2.WebMessageReceived += async (object sender, Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs e) =>
 			{
@@ -72,14 +71,16 @@ namespace PlangWindowForms
 			}
 			var context = container.GetInstance<PLangAppContext>();
 			context.AddOrReplace("__WindowApp__", this);
-			engine = await pLang.Run();
 			
-			pseudoRuntime = container.GetInstance<IPseudoRuntime>();
+			engine = container.GetInstance<IEngine>();
 
-			await RenderContent();
+			await pLang.Execute(args);
+			
+			
+
 		}
 
-		private async Task RenderContent()
+		private void RenderContent(string html)
 		{
 			var outputStream = container.GetInstance<IOutputStream>();
 			var stream = outputStream.Stream;
@@ -109,18 +110,6 @@ namespace PlangWindowForms
 
 			}
 			
-			string? html = ((UIOutputStream)outputStream).Flush();
-			/*
-			using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
-			{
-				html = reader.ReadToEnd();
-				if (string.IsNullOrEmpty(html))
-				{
-					html = "Stream is empty :(";
-				}
-			}*/
-
-			//stream.SetLength(0);
 			webView.CoreWebView2.NavigationCompleted += async (object? sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e) =>
 			{
 				if (string.IsNullOrEmpty(errorConsole)) return;
@@ -194,8 +183,6 @@ These variables are available:
 			try
 			{
 				await pseudoRuntime.RunGoal(engine, engine.GetContext(), "", dynamic.GoalName.ToString(), parameters);
-
-				await RenderContent();
 
 			}
 			catch (Exception ex)

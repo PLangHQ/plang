@@ -52,7 +52,7 @@ namespace PLangWindowForms
 			prompt.Controls.Add(textBox);
 			prompt.Controls.Add(confirmationButton);
 			prompt.Controls.Add(textLabel);
-
+			prompt.Focus();
 			return prompt.ShowDialog() == DialogResult.OK ? textBox.Text : string.Empty;
 		}
 	}

@@ -145,18 +145,8 @@ namespace PLang.Building
 			// lets load the return value into memoryStack
 			if (action.Contains("ReturnValue"))
 			{
-				try
-				{
-					var gf = JsonConvert.DeserializeObject<GenericFunction>(action);
-					if (gf != null && gf.ReturnValue != null && gf.ReturnValue.Count > 0)
-					{
-						foreach (var returnValue in gf.ReturnValue)
-						{
-							memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
-						}
-					}
-				}
-				catch { }
+				var gf = JsonConvert.DeserializeObject<GenericFunction>(action);
+				LoadVariablesIntoMemoryStack(gf, memoryStack);
 			}
 			else if (action.Contains("OutParameterDefinition"))
 			{
@@ -174,6 +164,43 @@ namespace PLang.Building
 			return true;
 		}
 
+		public static void LoadVariablesIntoMemoryStack(GenericFunction? gf, MemoryStack memoryStack)
+		{
+			if (gf == null) return;
+
+			if (gf.ReturnValue != null && gf.ReturnValue.Count > 0)
+			{
+				foreach (var returnValue in gf.ReturnValue)
+				{
+					memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
+				}
+			}
+
+			LoadParameters(gf, memoryStack);
+		}
+
+		private static void LoadParameters(GenericFunction? gf, MemoryStack memoryStack)
+		{
+			// todo: hack for now, should be able to load dynamically variables that are being set at build time
+			// might have to structure the build
+			if (gf == null || gf.Parameters == null || gf.Parameters.Count == 0) return;
+
+			if (gf.FunctionName == "RunGoal")
+			{
+				var json = gf.Parameters.FirstOrDefault(p => p.Name == "parameters")?.Value;
+				if (json == null) return;
+				var parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(json.ToString());
+				if (parameters == null) return;
+
+				foreach (var parameter in parameters)
+				{
+					memoryStack.PutForBuilder(parameter.Key, parameter.Value);
+				}
+			}
+
+
+
+		}
 
 		private LlmQuestion GetBuildStepQuestion(Goal goal, GoalStep step, List<string>? excludeModules = null)
 		{

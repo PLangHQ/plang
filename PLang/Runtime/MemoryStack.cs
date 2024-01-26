@@ -300,7 +300,8 @@ namespace PLang.Runtime
 			var plan = GetVariableExecutionPlan(key, staticVariable);
 			if (!plan.ObjectValue.Initiated)
 			{
-				return new ObjectValue(key, null, typeof(Nullable), null, false);
+				return plan.ObjectValue;
+				//return new ObjectValue(key, null, typeof(Nullable), null, false);
 			}
 
 			var objectValue = plan.ObjectValue;

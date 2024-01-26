@@ -3,7 +3,7 @@
 using PLang.Utils;
 using PLang.Utils.Extractors;
 
-namespace PLang.Modules.HtmlModule
+namespace PLang.Modules.UiModule
 
 {
 	public class Builder : BaseBuilder

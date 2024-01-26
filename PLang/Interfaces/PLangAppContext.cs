@@ -4,13 +4,26 @@ namespace PLang.Interfaces
 {
 	public class PLangAppContext : Dictionary<string, object?>
 	{
+
+		public object? this[string key]
+		{
+			get
+			{
+				if (TryGetValue(key, out var value)) return value;
+				return null;
+			}
+			set
+			{
+				AddOrReplace(key, value);
+			}
+		}
 		public void AddOrReplace(string key, object? value)
 		{
 			if (key == null || value == null) return;
 
 			if (ContainsKey(key))
 			{
-				this[key] = value;
+				base[key] = value;
 			} else
 			{
 				Add(key, value);
@@ -23,7 +36,7 @@ namespace PLang.Interfaces
 
 			if (ContainsKey(key))
 			{
-				return (T?) this[key];
+				return (T?) base[key];
 			} else
 			{
 				return defaultValue;
@@ -62,7 +75,7 @@ namespace PLang.Interfaces
 			{
 				if (this.ContainsKey(keyword))
 				{
-					dict.Add(keyword, this[keyword]);
+					dict.Add(keyword, base[keyword]);
 				}
 			}
 			return dict;
