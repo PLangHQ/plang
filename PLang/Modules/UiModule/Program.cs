@@ -1,4 +1,5 @@
-﻿using PLang.Services.OutputStream;
+﻿using PLang.Exceptions;
+using PLang.Services.OutputStream;
 using System.ComponentModel;
 
 namespace PLang.Modules.UiModule
@@ -23,7 +24,9 @@ namespace PLang.Modules.UiModule
 			html = variableHelper.LoadVariables(html).ToString();
 
 			if (string.IsNullOrEmpty(html)) return;
-
+			if (outputStream is ConsoleOutputStream) {
+				throw new RuntimeException("Incorrect output stream. You probably ran the command: plang run, but you should run: plangw run");
+			}
 			var os = (UIOutputStream) outputStream;
 			os.MemoryStack = memoryStack;
 			os.Goal = goal;

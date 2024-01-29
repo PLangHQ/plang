@@ -1,0 +1,43 @@
+Following AI models are built in support in plang. 
+
+## OpenAI
+input and output price is per 1000.
+
+Model, input price, output price
+gpt-4', 0.06, 0.12
+gpt-4-32k', 0.12, 0.24
+gpt-3.5-turbo-1106', 0.0020, 0.0040
+gpt-3.5-turbo-instruct', 0.0030 , 0.0040
+gpt-4-1106-preview', 0.02, 0.06
+gpt-4-1106-vision-preview', 0.02, 0.06
+gpt-4-vision-preview', 0.02, 0.06
+
+how to use the model, create your goal file
+
+This is example how to user LLM, default model is gpt-4.
+
+```plang
+Start
+- [llm] system: what is the sentiment of user input
+        user: This rocks
+        scheme: {sentiment:positive|negative|neutral}
+        write to %sentiment%
+- write out %sentiment%
+```
+
+These parameters are supported
+- scheme: string that describes json, only if you want json resonse, this is good for structured responses from llm
+- model: default gpt-4
+- temperature = 0,
+- topP = 0,
+- frequencyPenalty = 0.0,
+- presencePenalty = 0.0,
+- max Length = 4000,
+- cacheResponse = true,
+- llmResponseType: default is null, but you can define .md, css, javascript, html
+
+Create examples from these parameters.
+
+## how is LLM structured
+explain system, assistant, user works to explain the syntax setup that is in plang code.
+

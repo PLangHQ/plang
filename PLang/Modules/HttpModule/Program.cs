@@ -10,6 +10,7 @@ using System.ComponentModel;
 using System.IO.Abstractions;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
+using System.Xml;
 
 namespace PLang.Modules.HttpModule
 {
@@ -118,6 +119,17 @@ namespace PLang.Modules.HttpModule
 					{
 						return JsonConvert.DeserializeObject(responseBody);
 					}
+					else if (IsXml(response.Content.Headers.ContentType.MediaType))
+					{
+						// todo: here we convert any xml to json so user can use JSONPath to get the content. 
+						// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
+						XmlDocument xmlDoc = new XmlDocument();
+						xmlDoc.LoadXml(responseBody);
+
+						string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
+						return JsonConvert.DeserializeObject(jsonString);
+
+					}
 					return responseBody;
 				}
 				finally
@@ -129,7 +141,12 @@ namespace PLang.Modules.HttpModule
 			}
 		}
 
-		public async Task<object> Request(string url, string method, object? data = null, bool doNotSignRequest = false, 
+		private bool IsXml(string? mediaType)
+		{
+			return (mediaType.Contains("application/xml") || mediaType.Contains("text/xml") || mediaType.Contains("application/rss+xml"));
+		}
+
+		public async Task<object> Request(string url, string method, object? data = null, bool doNotSignRequest = false,
 			Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			var requestUrl = variableHelper.LoadVariables(url);
@@ -141,7 +158,7 @@ namespace PLang.Modules.HttpModule
 			var httpClient = new HttpClient();
 			var httpMethod = new HttpMethod(method);
 			var request = new HttpRequestMessage(httpMethod, requestUrl.ToString());
-			
+
 			if (headers != null)
 			{
 				foreach (var header in headers)
@@ -156,7 +173,7 @@ namespace PLang.Modules.HttpModule
 			request.Headers.UserAgent.ParseAdd("plang v0.1");
 
 			string body = StringHelper.ConvertToString(data);
-	
+
 			request.Content = new StringContent(body, System.Text.Encoding.GetEncoding(encoding), contentType);
 			if (!doNotSignRequest)
 			{
@@ -174,11 +191,23 @@ namespace PLang.Modules.HttpModule
 					try
 					{
 						return JsonConvert.DeserializeObject(responseBody);
-					} catch (Exception ex)
+					}
+					catch (Exception ex)
 					{
 						throw;
 					}
-				} 
+				}
+				else if (IsXml(response.Content.Headers.ContentType.MediaType))
+				{
+					// todo: here we convert any xml to json so user can use JSONPath to get the content. 
+					// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
+					XmlDocument xmlDoc = new XmlDocument();
+					xmlDoc.LoadXml(Regex.Replace(responseBody, "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
+
+					string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
+					return JsonConvert.DeserializeObject(jsonString);
+
+				}
 
 				return responseBody;
 			}
@@ -191,25 +220,25 @@ namespace PLang.Modules.HttpModule
 
 		private async Task SignRequest(HttpRequestMessage request)
 		{
-		
-				if (request.Content == null) return;
-				if (request.RequestUri == null) return;
 
-				string method = request.Method.Method;
-				string url = request.RequestUri.PathAndQuery;
-				string contract = "C0";
+			if (request.Content == null) return;
+			if (request.RequestUri == null) return;
 
-				using (var reader = new StreamReader(request.Content.ReadAsStream()))
+			string method = request.Method.Method;
+			string url = request.RequestUri.PathAndQuery;
+			string contract = "C0";
+
+			using (var reader = new StreamReader(request.Content.ReadAsStream()))
+			{
+				string body = await reader.ReadToEndAsync();
+
+				var dict = signingService.Sign(body, method, url, contract);
+				foreach (var item in dict)
 				{
-					string body = await reader.ReadToEndAsync();
-
-					var dict = signingService.Sign(body, method, url, contract);
-					foreach (var item in dict)
-					{
-						request.Headers.TryAddWithoutValidation(item.Key, item.Value.ToString());
-					}
+					request.Headers.TryAddWithoutValidation(item.Key, item.Value.ToString());
 				}
-			
+			}
+
 		}
 	}
 }

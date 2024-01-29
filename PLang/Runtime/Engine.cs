@@ -320,6 +320,10 @@ namespace PLang.Runtime
 				{
 					AppContext.SetData("GoalLogLevelByUser", null);
 				}
+				if (OutputStream is UIOutputStream && goal.ParentGoal == null)
+				{
+					((UIOutputStream)OutputStream).Flush();
+				}
 			}
 
 		}
@@ -446,18 +450,7 @@ namespace PLang.Runtime
 					}
 					finally
 					{
-						if (classInstance is IFlush)
-						{
-							try
-							{
-								((IFlush)classInstance).Flush();
-							}
-							catch (Exception ex)
-							{
-								logger.LogError("Flush error on output stream:{0}", ex);
-							}
-						}
-						// reeset the Execute to false on all steps inside if statement
+						// reset the Execute to false on all steps inside if statement
 						if (goalStep.Indent > 0)
 						{
 							goalStep.Execute = false;

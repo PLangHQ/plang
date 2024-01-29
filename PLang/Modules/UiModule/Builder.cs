@@ -41,7 +41,7 @@ Goal has series of steps. Steps start with dash(-), steps can have sub steps, su
 Variables are defined with starting and ending %. They are case sensitive so keep them as defined
 Goals are prefixed with !, they are for calling a method, e.g. Call !NewUser or reference a goal, such as Edit.goal. To call it use javascript function callGoal(name:string, parameters:object)
 DO NOT generate the function callGoal, it will be provided
-All object.Id or object.id are long and needs to be wrapped with single quote(')
+All object.Id or object.id are long and needs to be wrapped with single quote('). This does not apply to other id properties e.g. object.object_id
 All properties on variables are case sensitive, keep formatting defined by user.
 
 {contentToBeAdded}  

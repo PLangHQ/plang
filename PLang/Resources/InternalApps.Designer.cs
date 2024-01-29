@@ -68,9 +68,9 @@ namespace PLang.Resources {
         /// * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
         /// */:root{--bs-blue:#0d6efd;--bs-indigo:#6610f2;--bs-purple:#6f42c1;--bs-pink:#d63384;--bs-red:#dc3545;--bs-orange:#fd7e14;--bs-yellow:#ffc107;--bs-green:#198754;--bs-teal:#20c997;--bs-cyan:#0dcaf0;--bs-white:#fff;--bs-gray:#6c757d;--bs-gray-dark:#343a40;--bs-primary:#0d6efd;--bs-secon [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string bootstrap_5_0_2_min {
+        internal static string bootstrap_5_0_2_min_css {
             get {
-                return ResourceManager.GetString("bootstrap_5_0_2_min", resourceCulture);
+                return ResourceManager.GetString("bootstrap_5_0_2_min_css", resourceCulture);
             }
         }
         
@@ -82,9 +82,9 @@ namespace PLang.Resources {
         ///  */
         ///!function(t,e){&quot;object&quot;==typeof exports&amp;&amp;&quot;undefined&quot;!=typeof module?module.exports=e():&quot;function&quot;==typeof define&amp;&amp;define.amd?define(e):(t=&quot;undefined&quot;!=typeof globalThis?globalThis:t||self).bootstrap=e()}(this,(function(){&quot;use strict&quot;;const t={find:(t,e=document.documentEleme [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string bootstrap_bundle_5_0_2_min {
+        internal static string bootstrap_bundle_5_0_2_min_js {
             get {
-                return ResourceManager.GetString("bootstrap_bundle_5_0_2_min", resourceCulture);
+                return ResourceManager.GetString("bootstrap_bundle_5_0_2_min_js", resourceCulture);
             }
         }
         
@@ -105,9 +105,9 @@ namespace PLang.Resources {
         /// */
         ///.fa,.fab,.fad,.fal,.far,.fas{-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1}.fa-lg{font-size:1.33333em;line-height:.75em;vertical-align:-.0667em}.fa-xs{font-size:.75em}.fa-sm{font-size:.875em}.fa-1x{font-size:1e [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string fontawesome_5_15_3_min {
+        internal static string fontawesome_5_15_3_min_css {
             get {
-                return ResourceManager.GetString("fontawesome_5_15_3_min", resourceCulture);
+                return ResourceManager.GetString("fontawesome_5_15_3_min_css", resourceCulture);
             }
         }
         
@@ -118,9 +118,9 @@ namespace PLang.Resources {
         /// */
         ///!function(){&quot;use strict&quot;;var c={},l={};try{&quot;undefined&quot;!=typeof window&amp;&amp;(c=window),&quot;undefined&quot;!=typeof document&amp;&amp;(l=document)}catch(c){}var h=(c.navigator||{}).userAgent,z=void 0===h?&quot;&quot;:h,a=c,v=l,m=(a.document,!!v.documentElement&amp;&amp;!!v.head&amp;&amp;&quot;function&quot;==typeof v.addEventListener&amp;&amp;v.createElement,~z.indexOf(&quot;MSIE&quot;)||z.indexOf(&quot; [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string fontawesome_5_15_3_min1 {
+        internal static string fontawesome_5_15_3_min_js {
             get {
-                return ResourceManager.GetString("fontawesome_5_15_3_min1", resourceCulture);
+                return ResourceManager.GetString("fontawesome_5_15_3_min_js", resourceCulture);
             }
         }
     }

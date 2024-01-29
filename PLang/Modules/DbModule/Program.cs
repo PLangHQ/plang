@@ -241,13 +241,27 @@ namespace PLang.Modules.DbModule
 			var rows = (await prep.connection.QueryAsync<dynamic>(sql, prep.param)).ToList();
 			Done(prep.connection);
 
-			if (rows.Count == 0) return null;
+			if (rows.Count == 0)
+			{
+				if (this.function.ReturnValue != null)
+				{
+					if (this.function.ReturnValue.Count == 1) return GetDefaultValue(this.function.ReturnValue[0].Type);
+
+					var dict = new Dictionary<string, object?>();
+					foreach (var rv in this.function.ReturnValue)
+					{						
+						dict.Add(rv.VariableName, GetDefaultValue(rv.Type));
+					}
+					return dict;					
+				}
+				return new List<object>();
+			}
 			if (!selectOneRow_Top1OrLimit1 || rows.Count != 1) return rows;
 
 			var rowsAsList = ((IList<object>)rows);
 			var columns = ((IDictionary<string, object>)rowsAsList[0]);
 
-			if (this.function == null || this.function.ReturnValue == null) return null;
+			if (this.function == null || this.function.ReturnValue == null) return new List<object>();
 
 			if (columns.Count == 1)
 			{
@@ -256,6 +270,15 @@ namespace PLang.Modules.DbModule
 
 			return (selectOneRow_Top1OrLimit1) ? rows[0] : rows;
 
+		}
+
+		private object? GetDefaultValue(string strType)
+		{
+			if (strType == "dynamic") return new List<object>();
+			if (strType == "string") return null;
+
+			var type = Type.GetType(strType);
+			return type.IsValueType && !type.IsPrimitive ? Activator.CreateInstance(type) : null;
 		}
 
 		public async Task<int> Update(string sql, List<object>? Parameters = null)
@@ -333,7 +356,7 @@ namespace PLang.Modules.DbModule
 			}
 
 		}
-		
+
 		[Description("Insert a list(bulk) into database, return number of rows inserted")]
 		public async Task<int> InsertBulk(string tableName, List<object> items)
 		{
@@ -349,12 +372,12 @@ namespace PLang.Modules.DbModule
 			if (sql == null) return 0;
 
 			var param = new List<object>();
-			
+
 			int affectedRows = 0;
 			var generator = new IdGenerator(items.Count);
 			await BeginTransaction();
 
-			for (int i=0;i<items.Count;i++)
+			for (int i = 0; i < items.Count; i++)
 			{
 				var row = (JObject)items[i];
 
@@ -363,13 +386,15 @@ namespace PLang.Modules.DbModule
 					if (column.name == "id")
 					{
 						param.Add(new ParameterInfo("id", generator.ElementAt(i), typeof(Int64).FullName));
-					} else if (row.ContainsKey(column.name))
+					}
+					else if (row.ContainsKey(column.name))
 					{
 						var obj = row[column.name];
 						if (obj is ObjectValue ov)
 						{
 							param.Add(new ParameterInfo(column.name, ov.Value, ov.Type.FullName));
-						} else
+						}
+						else
 						{
 							param.Add(new ParameterInfo(column.name, obj, obj.GetType().FullName));
 						}

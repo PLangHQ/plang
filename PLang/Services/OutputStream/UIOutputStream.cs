@@ -7,6 +7,7 @@ using PLang.Runtime;
 using RazorEngineCore;
 using System.Dynamic;
 using System.IO;
+using System.IO.Abstractions;
 using System.Text;
 
 namespace PLang.Services.OutputStream
@@ -14,6 +15,7 @@ namespace PLang.Services.OutputStream
 	public class UIOutputStream : IOutputStream
 	{
 		private readonly IRazorEngine razorEngine;
+		private readonly IFileSystem fileSystem;
 
 		public MemoryStack? MemoryStack { get; internal set; }
 		public Goal? Goal { get; internal set; }
@@ -22,9 +24,10 @@ namespace PLang.Services.OutputStream
 		public Stream ErrorStream { get; private set; }
 		StringBuilder sb;
 		public Action<string>? onFlush { get; set; }
-		public UIOutputStream(IRazorEngine razorEngine)
+		public UIOutputStream(IRazorEngine razorEngine, IFileSystem fileSystem)
 		{
 			this.razorEngine = razorEngine;
+			this.fileSystem = fileSystem;
 			Stream = new MemoryStream();
 			ErrorStream = new MemoryStream();
 
@@ -39,7 +42,11 @@ namespace PLang.Services.OutputStream
 
 		public string Flush()
 		{
-			if (sb.Length == 0) return "";
+			if (sb.Length == 0)
+			{
+				if (onFlush != null) onFlush("Loading...");
+				return "";
+			}
 
 			sb.Append(@"</body>
 </html>");
@@ -97,7 +104,7 @@ namespace PLang.Services.OutputStream
 				compiled = await razorEngine.CompileAsync(obj.ToString(), (compileOptions) => {
 					compileOptions.Options.IncludeDebuggingInfo = true; 
 				});
-
+				SetupCssAndJsFiles();
 				var content = compiled.Run(expandoObject as dynamic);
 				if (sb.Length == 0)
 				{
@@ -108,17 +115,17 @@ namespace PLang.Services.OutputStream
     <meta charset=""UTF-8"">
     <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
     <title></title>
-	<link href=""https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"" rel=""stylesheet"" integrity=""sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"" crossorigin=""anonymous"">
-	<script src=""https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"" integrity=""sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"" crossorigin=""anonymous""></script>
-<script src=""https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.0/js/all.min.js""></script>
-<link href=""https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.0/css/fontawesome.min.css"" rel=""stylesheet"">
-<script>
-		function callGoal(goalName, args) {{
-console.log(args);
-			window.chrome.webview.postMessage({{GoalName:goalName, args:args}});
-		}}
-</script>
-<style>body{{margin:2rem;}}</style>
+	<link href=""local:ui/bootstrap.min.css"" rel=""stylesheet"">
+	<link href=""local:ui/fontawesome.min.css"" rel=""stylesheet"">
+	<script src=""local:ui/bootstrap.bundle.min.js""></script>
+	<script src=""local:ui/fontawesome.min.js""></script>
+	<script>
+			function callGoal(goalName, args) {{
+	console.log(args);
+				window.chrome.webview.postMessage({{GoalName:goalName, args:args}});
+			}}
+	</script>
+	<style>body{{margin:2rem;}}</style>
 </head>
 
 <body>
@@ -152,7 +159,12 @@ console.log(args);
 				string searchIndex = "cshtml:line";
 				int lineIdx = stackTrace.IndexOf(searchIndex);
 				if (lineIdx != -1) {
-					int.TryParse(stackTrace.Substring(lineIdx + searchIndex.Length, stackTrace.IndexOf(Environment.NewLine) - lineIdx - searchIndex.Length).Trim(), out line); ;
+					int endIdx = stackTrace.IndexOf(Environment.NewLine) - lineIdx - searchIndex.Length;
+					int startIdx = lineIdx + searchIndex.Length;
+					if (endIdx > 0 && startIdx > 0 && startIdx < stackTrace.Length)
+					{
+						int.TryParse(stackTrace.Substring(startIdx, endIdx).Trim(), out line); ;
+					}
 				}
 				if (compiled != null)
 				{
@@ -171,7 +183,8 @@ console.log(args);
 					string error = $@"{errorMessage} at line: {line}";
 					if (lines.Length > line)
 					{
-						error += Environment.NewLine + Environment.NewLine + lines[line - 1];
+						int lineIndex = (line -1 >= 0) ? line : 0;	
+						error += Environment.NewLine + Environment.NewLine + lines[lineIndex];
 					}
 					error += Environment.NewLine + Environment.NewLine + $@"Following is the generated source code:
 
@@ -198,6 +211,27 @@ console.log(args);
 
 					throw;
 				}
+			}
+		}
+
+		private void SetupCssAndJsFiles()
+		{
+
+			if (!fileSystem.File.Exists("ui/bootstrap.min.css"))
+			{
+				fileSystem.File.WriteAllText("ui/bootstrap.min.css", Resources.InternalApps.bootstrap_5_0_2_min_css);
+			}
+			if (!fileSystem.File.Exists("ui/bootstrap.bundle.min.js"))
+			{
+				fileSystem.File.WriteAllText("ui/bootstrap.bundle.min.js", Resources.InternalApps.bootstrap_bundle_5_0_2_min_js);
+			}
+			if (!fileSystem.File.Exists("ui/fontawesome.min.css"))
+			{
+				fileSystem.File.WriteAllText("ui/fontawesome.min.css", Resources.InternalApps.fontawesome_5_15_3_min_css);
+			}
+			if (!fileSystem.File.Exists("ui/fontawesome.min.js"))
+			{
+				fileSystem.File.WriteAllText("ui/fontawesome.min.js", Resources.InternalApps.fontawesome_5_15_3_min_js);
 			}
 		}
 

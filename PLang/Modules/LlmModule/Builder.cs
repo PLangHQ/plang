@@ -20,7 +20,6 @@ namespace PLang.Modules.LlmModule
 			AppendToSystemCommand(@"The following user request is for constructing a message to LLM engine
 
 llmResponseType can be null, text, json, markdown or html. default is null. If scheme is defined then use json, unless user defines otherwise
-when llmResponseType is json, the statement ""You MUST respond in JSON, scheme:'{....}'"" must be appened to system role as a string
 
 promptMessages contains the system, assistant and user messages. assistant or user message is required.
 Determine what part is system, assistant and user properties. If you cannot map it, the whole user request should be on user role

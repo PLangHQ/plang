@@ -106,6 +106,13 @@ namespace PLang.Building.Model
 		//this allows for validating the publisher and that code has not changed.
 		public string Signature { get; set; }
 		public string Hash { get; set; }
+
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+
+		[System.Text.Json.Serialization.JsonIgnore]
+		public Goal? ParentGoal { get; set; }
+
 		public string GetGoalAsString()
 		{
 			string goal = this.GoalName;

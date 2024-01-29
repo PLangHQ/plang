@@ -86,14 +86,16 @@ namespace PLang.Utils
 		}
 		public static void RegisterForPLangWindowApp(this ServiceContainer container, string path, string appPath, IAskUserDialog askUserDialog, Action<string> onFlush)
 		{
+			RegisterForPLang(container, path, appPath);
+
 			container.RegisterSingleton<IOutputStream>(factory =>
 			{
-				var outputStream = new UIOutputStream(container.GetInstance<IRazorEngine>());
+				var outputStream = new UIOutputStream(container.GetInstance<IRazorEngine>(), container.GetInstance<IPLangFileSystem>());
 				outputStream.onFlush = onFlush;
 				return outputStream;
 			});
 
-			RegisterForPLang(container, path, appPath);
+			
 
 			var context = container.GetInstance<PLangAppContext>();
 			context.AddOrReplace(ReservedKeywords.Inject_AskUserHandler, typeof(AskUserWindowHandler).FullName);

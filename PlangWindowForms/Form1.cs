@@ -1,4 +1,5 @@
 using LightInject;
+using Microsoft.Web.WebView2.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang;
@@ -9,6 +10,7 @@ using PLang.Services.OutputStream;
 using PLang.Utils;
 using PLangWindowForms;
 using System.Diagnostics;
+using System.IO.Abstractions;
 using System.Reflection;
 using System.Text;
 
@@ -21,6 +23,7 @@ namespace PlangWindowForms
 		bool debug = false;
 		ServiceContainer container;
 		IEngine engine;
+		IPLangFileSystem fileSystem;
 		Executor pLang;
 		private string[] args;
 		public Form1(string[] args)
@@ -30,6 +33,7 @@ namespace PlangWindowForms
 			container = new ServiceContainer();
 			container.RegisterForPLangWindowApp(Environment.CurrentDirectory, "\\", new AskUserDialog(), RenderContent);
 
+			fileSystem = container.GetInstance<IPLangFileSystem>();
 			pLang = new Executor(container);
 
 			InitializeComponent();
@@ -60,7 +64,14 @@ namespace PlangWindowForms
 		IPseudoRuntime pseudoRuntime;
 		private async Task SetInitialHtmlContent()
 		{
-			await webView.EnsureCoreWebView2Async();
+			var task = webView.EnsureCoreWebView2Async();
+			await task;
+
+			if (task.Exception != null)
+			{
+				Console.WriteLine(task.Exception);
+			}
+
 			this.webView.CoreWebView2.WebMessageReceived += async (object sender, Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs e) =>
 			{
 				await CoreWebView2_WebMessageReceived(sender, e);
@@ -71,12 +82,12 @@ namespace PlangWindowForms
 			}
 			var context = container.GetInstance<PLangAppContext>();
 			context.AddOrReplace("__WindowApp__", this);
-			
+
 			engine = container.GetInstance<IEngine>();
 
 			await pLang.Execute(args);
-			
-			
+
+
 
 		}
 
@@ -92,7 +103,7 @@ namespace PlangWindowForms
 			{
 				errorStream.Position = 0;
 
-				using (StreamReader reader = new StreamReader(errorStream, Encoding.UTF8, leaveOpen:true))
+				using (StreamReader reader = new StreamReader(errorStream, Encoding.UTF8, leaveOpen: true))
 				{
 					errorConsole = reader.ReadToEnd();
 				}
@@ -109,7 +120,7 @@ namespace PlangWindowForms
 				}
 
 			}
-			
+
 			webView.CoreWebView2.NavigationCompleted += async (object? sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e) =>
 			{
 				if (string.IsNullOrEmpty(errorConsole)) return;
@@ -146,14 +157,66 @@ These variables are available:
 				await webView.CoreWebView2.ExecuteScriptAsync($"console.info('Help:\\n\\n{EscapeChars(result)}');");
 
 			};
+			webView.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
+			webView.CoreWebView2.WebResourceResponseReceived += CoreWebView2_WebResourceResponseReceived;
+			webView.CoreWebView2.ContentLoading += CoreWebView2_ContentLoading;
+			webView.CoreWebView2.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
 			webView.CoreWebView2.NavigateToString(html);
+			webView.CoreWebView2.NavigationCompleted += CoreWebView2_NavigationCompleted;
+			webView.CoreWebView2.WebResourceRequested += (sender, args) =>
+			{
+				var resourceType = args.ResourceContext;
+				if (args.Request.Uri.StartsWith("local:ui/"))
+				{
+					string fileName = args.Request.Uri.Replace("local:", "");
+					if (fileSystem.File.Exists(fileName))
+					{
+						var fs = fileSystem.File.Open(fileName, FileMode.Open, FileAccess.Read);
+
+						fs.Position = 0;
+						string mimeType = (Path.GetExtension(fileName) == ".css") ? "text/css" : "application/javascript";
+						args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(fs, 200, "Ok", $"Content-Type: {mimeType}");
+
+						fileStreams.Add(fs);
+						return;
+
+					}
+				}
+				// Allow only image, video, and audio requests
+				if (resourceType != CoreWebView2WebResourceContext.Image &&
+					resourceType != CoreWebView2WebResourceContext.Media)
+				{
+					args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(null, 404, "Blocked", "");
+				}
+			};
 			outputStream.Stream.Position = 0;
-
-
-			
-
 		}
 
+		List<FileSystemStream> fileStreams = new List<FileSystemStream>();
+
+		private void CoreWebView2_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
+		{
+			foreach (var fs in fileStreams)
+			{
+				fs.Close();
+			}
+			fileStreams.Clear();
+		}
+
+		private void CoreWebView2_ContentLoading(object? sender, CoreWebView2ContentLoadingEventArgs e)
+		{
+			int i = 0;
+		}
+
+		private void CoreWebView2_WebResourceResponseReceived(object? sender, CoreWebView2WebResourceResponseReceivedEventArgs e)
+		{
+			int i = 0;
+		}
+
+		private void CoreWebView2_NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
+		{
+			int i = 0;
+		}
 
 		private string EscapeChars(string? content)
 		{
@@ -182,6 +245,7 @@ These variables are available:
 			}
 			try
 			{
+				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
 				await pseudoRuntime.RunGoal(engine, engine.GetContext(), "", dynamic.GoalName.ToString(), parameters);
 
 			}

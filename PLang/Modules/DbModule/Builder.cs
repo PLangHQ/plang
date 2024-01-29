@@ -146,14 +146,14 @@ Choose the best method to use, if the method is not provided that fits the SQL, 
 			SetSystem(@$"Map user command to this c# function: 
 
 ## csharp function ##
-dynamic Select(String sql, List<object>()? Parameters = null, bool selectOneRow_Top1OrLimit1 = false)
+object? Select(String sql, List<object>()? Parameters = null, bool selectOneRow_Top1OrLimit1 = false)
 ## csharp function ##
 
 ## Rules ##
 Variable is defined with starting and ending %, e.g. %filePath%.
 Parameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
 TypeFullName is Full name of the type in c#, System.String, System.Double, etc.
-ReturnValue: Columns being returned with type if defined by user. * will return dynamic. integer/int should always be System.Int64. 
+ReturnValue: User defined variable to write to, e.g. 'write to %result%, or if no variable is defined then Columns being returned with type if defined by user. * will return dynamic. integer/int should always be System.Int64. 
 {appendToSystem}
 
 If table name is a variable, keep the variable in the sql statement

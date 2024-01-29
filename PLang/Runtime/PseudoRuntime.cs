@@ -51,6 +51,9 @@ namespace PLang.Runtime
 				{
 					engine.AddContext(ReservedKeywords.IsEvent, true);
 				}
+			} else
+			{
+				goal.ParentGoal = callingGoal;
 			}
 			
 			var memoryStack = engine.GetMemoryStack();
@@ -61,7 +64,7 @@ namespace PLang.Runtime
 					memoryStack.Put(param.Key.Replace("%", ""), param.Value);
 				}
 			}
-
+			
 			await engine.RunGoal(goal);
 
 			if (container != null)

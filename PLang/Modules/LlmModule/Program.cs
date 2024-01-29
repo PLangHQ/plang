@@ -112,7 +112,12 @@ namespace PLang.Modules.LlmModule
 			}
 			else if (llmResponseType == "json" || !string.IsNullOrEmpty(scheme))
 			{
-				//system += $"\n\nYou MUST respond in JSON, scheme: {scheme}";
+				var systemMessage = promptMessages.FirstOrDefault(p => p.role == "system");
+				if (systemMessage == null)
+				{
+					systemMessage = new Message() { role = "system", content = new() };
+				}
+				systemMessage.content.Add(new Content() { text = $"You MUST respond in JSON, scheme: {scheme}" });
 			}
 			else
 			{
