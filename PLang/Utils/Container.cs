@@ -581,10 +581,11 @@ namespace PLang.Utils
 				var moduleFolderPath = Path.Combine(fileSystem.GoalsPath, "services", dllFilePath);
 				if (!fileSystem.Directory.Exists(moduleFolderPath))
 				{
-					logger.LogError($"{injectorType} injection folder could not be found");
+					logger.LogError($"{injectorType} injection folder could not be found. Path {moduleFolderPath}");
 					return null;
 				}
-				
+
+
 				dllFiles = fileSystem.Directory.GetFiles(moduleFolderPath, "*.dll", SearchOption.AllDirectories);				
 			}
 

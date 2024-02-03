@@ -37,7 +37,7 @@ namespace PLang.Modules.WebserverModule
 
 		public Program(ILogger logger, IEventRuntime eventRuntime, IPLangFileSystem fileSystem
 			, ISettings settings, IOutputStream outputStream
-			, PrParser prParser, 
+			, PrParser prParser,
 			IPseudoRuntime pseudoRuntime, IEngine engine, IPLangSigningService signingService) : base()
 		{
 			this.logger = logger;
@@ -135,7 +135,7 @@ namespace PLang.Modules.WebserverModule
 						var resp = httpContext.Response;
 
 						httpContext.Response.Headers.Add("Server", "plang v" + version);
-						
+
 						if (signedRequestRequired && string.IsNullOrEmpty(request.Headers.Get("X-Signature")))
 						{
 							await WriteError(httpContext.Response, $"You must sign your request to user this web service. Using plang, you simply say. '- GET http://... sign request");
@@ -152,6 +152,7 @@ namespace PLang.Modules.WebserverModule
 
 							requestedFile = httpContext.Request.Url?.LocalPath;
 							goalPath = GetGoalPath(publicPaths, httpContext.Request);
+
 							if (string.IsNullOrEmpty(goalPath))
 							{
 								ProcessGeneralRequest(httpContext);
@@ -243,8 +244,10 @@ namespace PLang.Modules.WebserverModule
 								var content = reader.ReadToEndAsync();
 								// content should be signed by server. 
 							}*/
-							resp.StatusCode = (int)HttpStatusCode.OK;
-							resp.StatusDescription = "Status OK";
+
+							//resp.StatusCode = (int)HttpStatusCode.OK;
+							//resp.StatusDescription = "Status OK";
+
 						}
 						catch (Exception ex)
 						{
@@ -258,7 +261,8 @@ namespace PLang.Modules.WebserverModule
 									await writer.WriteAsync(JsonConvert.SerializeObject(ex));
 									await writer.FlushAsync();
 								}
-							} catch (Exception ex2)
+							}
+							catch (Exception ex2)
 							{
 								Console.WriteLine(ex2);
 							}
@@ -292,16 +296,18 @@ namespace PLang.Modules.WebserverModule
 			container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath, httpContext);
 
 			requestedFile = requestedFile.Replace("/", Path.DirectorySeparatorChar.ToString()).Replace(@"\", Path.DirectorySeparatorChar.ToString());
-			
-			var fileSystem = container.GetInstance<IPLangFileSystem>();
-			var filePath = Path.Join(fileSystem.GoalsPath!, requestedFile);			
 
-			if (fileSystem.File.Exists(filePath))
+			var fileSystem = container.GetInstance<IPLangFileSystem>();
+			var filePath = Path.Join(fileSystem.GoalsPath!, requestedFile);
+			var fileExtension = Path.GetExtension(filePath);
+			var mimeType = GetMimeType(fileExtension);
+
+			if (mimeType != null && fileSystem.File.Exists(filePath))
 			{
 				var buffer = fileSystem.File.ReadAllBytes(filePath);
 				httpContext.Response.ContentLength64 = buffer.Length;
-				var extension = Path.GetExtension(filePath);
-				httpContext.Response.ContentType = GetMimeType(extension);
+
+				httpContext.Response.ContentType = mimeType;
 				httpContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
 			}
 			else
@@ -323,7 +329,7 @@ namespace PLang.Modules.WebserverModule
 				case ".js": return "application/javascript";
 				case ".mp4": return "video/mp4";
 				// add more MIME types here as required
-				default: return "application/octet-stream";
+				default: return null;
 			}
 		}
 		private async Task WriteNotfound(HttpListenerResponse resp, string error)
@@ -430,28 +436,26 @@ namespace PLang.Modules.WebserverModule
 		private string GetGoalPath(List<string> publicPaths, HttpListenerRequest request)
 		{
 			if (request == null || request.Url == null) return "";
+			var goalName = request.Url.LocalPath.AdjustPathToOs();
 
-			var goalName = request.Url.LocalPath;
 			if (goalName.StartsWith("/"))
 			{
 				goalName = goalName.Substring(1);
 			}
-			goalName = Path.GetFileNameWithoutExtension(goalName);
+			goalName = goalName.RemoveExtension();
+			var goalBuildDirPath = Path.Join(fileSystem.BuildPath, goalName);
 
-			var directories = fileSystem.Directory.GetDirectories(fileSystem.BuildPath, goalName, SearchOption.AllDirectories);
+			if (!fileSystem.Directory.Exists(goalBuildDirPath)) return "";
 
-			foreach (var directory in directories)
+			foreach (var publicPath in publicPaths)
 			{
-				foreach (var publicPath in publicPaths)
+				if (goalBuildDirPath.StartsWith(Path.Combine(fileSystem.BuildPath, publicPath)))
 				{
-
-					if (directory.StartsWith(Path.Combine(fileSystem.BuildPath, publicPath)))
-					{
-						return directory;
-					}
-
+					return goalBuildDirPath;
 				}
+
 			}
+
 			return "";
 		}
 
@@ -484,16 +488,17 @@ namespace PLang.Modules.WebserverModule
 			if (contentType.StartsWith("application/json") && !string.IsNullOrEmpty(body))
 			{
 				var obj = JsonConvert.DeserializeObject(body) as JObject;
-				
-				if (nvc.AllKeys.Length > 0) {
+
+				if (nvc.AllKeys.Length > 0)
+				{
 					if (obj == null) obj = new JObject();
 					foreach (var key in nvc.AllKeys)
 					{
 						if (key == null) continue;
-						obj.Add(key, nvc[key]);						
+						obj.Add(key, nvc[key]);
 					}
 				}
-				
+
 				memoryStack.Put("request", obj);
 
 
@@ -522,7 +527,7 @@ namespace PLang.Modules.WebserverModule
 				return;
 			}
 
-			
+
 			memoryStack.Put("request", nvc);
 
 			/*
@@ -723,7 +728,7 @@ namespace PLang.Modules.WebserverModule
 						var signatureData = websocketData.SignatureData;
 						var identity = await signingService.VerifySignature(JsonConvert.SerializeObject(websocketData), websocketData.Method, websocketData.Url, signatureData);
 
-						websocketData.SignatureData = null;						
+						websocketData.SignatureData = null;
 						websocketData.Parameters.AddOrReplace(identity);
 
 						await pseudoRuntime.RunGoal(engine, context, fileSystem.RootDirectory, websocketData.GoalToCall, websocketData.Parameters);

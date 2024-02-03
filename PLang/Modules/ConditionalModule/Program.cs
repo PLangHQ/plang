@@ -22,13 +22,28 @@ namespace PLang.Modules.ConditionalModule
 			this.pseudoRuntime = pseudoRuntime;
 			this.fileSystem = fileSystem;
 		}
+		/*
+		 * Needs more change then expected, leaving it commented out
+		 * 
+		public async Task<bool> FileExists(string filePathOrVariableName)
+		{
+			return fileSystem.File.Exists(filePathOrVariableName);
+		}
 
-
+		public async Task<bool> DirectoryExists(string dirPathOrVariableName)
+		{
+			return fileSystem.File.Exists(dirPathOrVariableName);
+		}
+		public async Task<bool> HasAccessToPath(string dirOrFilePathOrVariableName)
+		{
+			return fileSystem.ValidatePath(dirOrFilePathOrVariableName) != null;
+		}*/
 
 		public override async Task Run()
 		{
 			try
 			{
+				
 				var answer = JsonConvert.DeserializeObject<Implementation>(instruction.Action.ToString());
 				string dllName = goalStep.PrFileName.Replace(".pr", ".dll");
 				Assembly assembly = Assembly.LoadFile(Path.Combine(Goal.AbsolutePrFolderPath, dllName));

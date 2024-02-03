@@ -149,7 +149,8 @@ namespace PLang.Modules.LlmModule
 					memoryStack.Put(property.Name, property.Value);
 				}
 			}
-			else if (function != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
+			
+			if (function != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
 			{
 				foreach (var returnValue in function.ReturnValue)
 				{

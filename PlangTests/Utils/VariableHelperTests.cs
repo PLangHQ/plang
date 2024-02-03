@@ -31,7 +31,7 @@ namespace PLang.Utils.Tests
 		public void LoadVariablesTest()
 		{
 
-			var memoryStack = new Runtime.MemoryStack(pseudoRuntime, engine, context);
+			var memoryStack = new Runtime.MemoryStack(pseudoRuntime, engine, settings, context);
 			memoryStack.Put("name", "John");
 			memoryStack.Put("age", 12);
 			memoryStack.Put("userInfo", new { address = "Location 32", zip = 662 });
@@ -56,7 +56,7 @@ namespace PLang.Utils.Tests
 		public void TestVariableWithMethods()
 		{
 			// set 'name' as %Name.Trim()%
-			var memoryStack = new Runtime.MemoryStack(pseudoRuntime, engine, context);
+			var memoryStack = new Runtime.MemoryStack(pseudoRuntime, engine, settings, context);
 			memoryStack.Put("TestName", " John ");
 			memoryStack.Put("name", "%TestName.Trim()%");
 
@@ -86,7 +86,7 @@ namespace PLang.Utils.Tests
 		[TestMethod()]
 		public void LoadVariablesTest2()
 		{
-			var memoryStack = new MemoryStack(pseudoRuntime, engine, context);
+			var memoryStack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			memoryStack.Put("text", "world");
 			memoryStack.Put("text2", "plang");
 
@@ -108,7 +108,7 @@ namespace PLang.Utils.Tests
 		[TestMethod()]
 		public void LoadVariables_TestContextRervedKeywords()
 		{
-			var memoryStack = new MemoryStack(pseudoRuntime, engine, context);
+			var memoryStack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			memoryStack.Put("text", "world");
 			memoryStack.Put("text2", "plang");
 

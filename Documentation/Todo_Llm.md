@@ -45,7 +45,7 @@ NewTask
 - write out %id%
 
 Categorize
-- [llm]: system: categories the user input by 3 categories, 'Work', "home", 'hobby'
+- [llm]: system: categories the user input by 3 categories, 'Work', "Home", 'Hobby'
     user: %task%
     scheme: {category:string}
 - update table Todos, set %category% where %id%
@@ -53,8 +53,8 @@ Categorize
 
 #### Explanation
 
-- The `call !Categorize, dont wait` step is an example of the "run and forget" pattern. It tells plang to invoke the `!Categorize` goal but not to wait for its completion. This is useful when the operation (like LLM processing) might take a few seconds, and you don't want to delay the user's workflow.
-- The `[llm]` tag int the `system:` step indicates that this step should utilize the LLM module. It's helpfull for the plang builder, not necesary.
+- The `call !Categorize, dont wait` step is an example of the "run and forget" pattern. It tells plang to call the `!Categorize` goal but not to wait for its completion. This is useful when the operation (like LLM processing) might take a few seconds, and you don't want to delay the user's workflow.
+- The `[llm]` tag in the `system:` step indicates that this step should utilize the LLM module. It's helpfull for the plang builder, not necesary.
 - The `scheme` keyword within the llm step defines the expected structure of the LLM's response. In this case, it expects a string value for `category`. The returned structure is automatically converted into variables, allowing you to use `%category%` in the subsequent step.
 - If you need a structured response from LLM, the `scheme` is essential. It's a powerful feature that ensures the LLM's output matches the expected format.
 - For more information on how to use the LLM module in plang, please refer to the LLM Module documentation: [PLang.Modules.LlmModule.md](./modules/PLang.Modules.LlmModule.md).
@@ -102,6 +102,6 @@ To create a new task, send a POST request to `http://localhost:8080/api/newtask`
 
 # Next tutorials
 
-- Learn how to use [%Identity% in plang](./Todo_Identity.md)
 - If you are running on a Windows machine (sorry, only Windows for now), let's change the web service [into a desktop app](./Todo_UI.md)
+- Learn how to use [%Identity% in plang](./Todo_Identity.md)
 - Or, check out some more [Examples](https://github.com/PLangHQ/plang/tree/main/Tests) or other [Apps written by others](https://github.com/PLangHQ/apps) to start learning. It is all open source and you can view all the code.

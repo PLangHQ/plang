@@ -5,6 +5,8 @@ using PLang.Interfaces;
 using PLang.Runtime;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using static PLang.Services.LlmService.PLangLlmService;
+using static PLang.Utils.VariableHelper;
 
 namespace PLang.Utils
 {
@@ -40,7 +42,7 @@ namespace PLang.Utils
 			string? content = obj.ToString();
 			if (content == null) return null;
 
-			if (content.StartsWith("%") && content.EndsWith("%"))
+			if (IsVariable(content))
 			{
 				if (content.StartsWith("%Settings."))
 				{
@@ -50,8 +52,9 @@ namespace PLang.Utils
 				}
 				else
 				{
-					return memoryStack.Get(content);
-				}
+					var value = memoryStack.Get(content);
+					if (value != null) return value;
+                }
 			}
 
 			var variables = GetVariables(content, emptyIfNotFound);
@@ -338,54 +341,62 @@ namespace PLang.Utils
 		}
 		private void LoadSetting(List<Variable> variables, string variable, string content)
 		{
-
-			var settingsPattern = @"Settings\.Get\(\\?('|"")(?<key>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<default>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<explain>[^\('|"")]*)\\?('|"")\)";
-			var settingsRegex = new Regex(settingsPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-			var settingsMatch = settingsRegex.Match(variable);
-			if (settingsMatch.Success)
+			var settingsObjects = GetSettingObjectsValue(content);
+			foreach (var settingObject in settingsObjects)
 			{
-				var setting = settings.Get<string>(typeof(Settings), settingsMatch.Groups["key"].Value, settingsMatch.Groups["default"].Value, settingsMatch.Groups["explain"].Value);
-
-				variables.Add(new Variable("%" + settingsMatch.Value + "%", "%" + settingsMatch.Value + "%", setting));
+				variables.Add(new Variable(settingObject.Name.AsVar(), settingObject.Name.AsVar(), settingObject.Value));
 			}
-
-			settingsPattern = "%Settings.(?<key>[a-z0-9]*)%";
-			settingsRegex = new Regex(settingsPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-			var settingsMatches = settingsRegex.Matches(variable);
-			foreach (Match match in settingsMatches)
-			{
-				var setting = settings.Get<string>(typeof(Settings), match.Groups["key"].Value, "", match.Groups["key"].Value);
-
-				variables.Add(new Variable(match.Value, match.Value, setting));
-			}
+			
 		}
 
-		private void LoadSettings(List<Variable> variables, string content)
+		public static bool IsVariable(object variable)
 		{
-			var settingsPattern = @"Settings\.Get\(\\?('|"")(?<key>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<default>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<explain>[^\('|"")]*)\\?('|"")\)";
-			var settingsRegex = new Regex(settingsPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-			var settingsMatch = settingsRegex.Match(content);
-			if (settingsMatch.Success)
-			{
-				var setting = settings.Get<string>(typeof(Settings), settingsMatch.Groups["key"].Value, settingsMatch.Groups["default"].Value, settingsMatch.Groups["explain"].Value);
-
-				variables.Add(new Variable("%" + settingsMatch.Value + "%", "%" + settingsMatch.Value + "%", setting));
-			}
-
-			settingsPattern = "%Settings.(?<key>[a-z0-9]*)%";
-			settingsRegex = new Regex(settingsPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-			var settingsMatches = settingsRegex.Matches(content);
-			foreach (Match match in settingsMatches)
-			{
-				var setting = settings.Get<string>(typeof(Settings), match.Groups["key"].Value, "", match.Groups["key"].Value);
-
-				variables.Add(new Variable("%" + match.Value + "%", "%" + match.Value + "%", setting));
-			}
-		}
-
-		internal bool IsVariable(object variable)
-		{
+			if (variable == null || string.IsNullOrEmpty(variable.ToString())) return false;
 			return Regex.IsMatch(variable.ToString()!, @"^%[a-zA-Z0-9\[\]_\.\+]*%$");
+		}
+
+		public static bool IsSetting(string variableName)
+		{
+			return variableName.StartsWith("Setting.") || variableName.StartsWith("%Setting.");
+		}
+
+		internal ObjectValue? GetObjectValue(string? variableName, bool staticVariable)
+		{
+			if (variableName == null) return null;
+			if (IsSetting(variableName))
+			{
+				return GetSettingObjectValue(variableName);
+			}
+			return memoryStack.GetObjectValue(variableName, staticVariable);
+		}
+		public List<ObjectValue> GetSettingObjectsValue(string variableName)
+		{
+			var list = new List<ObjectValue>();
+			var settingsPattern = @"Settings\.Get\(\\?('|"")(?<key>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<default>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<explain>[^\('|"")]*)\\?('|"")\)";
+			var settingsRegex = new Regex(settingsPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+			var settingsMatch = settingsRegex.Match(variableName);
+			if (settingsMatch.Success)
+			{
+				var setting = settings.Get<string>(typeof(Settings), settingsMatch.Groups["key"].Value, settingsMatch.Groups["default"].Value, settingsMatch.Groups["explain"].Value);
+				list.Add(new ObjectValue(settingsMatch.ToString(), setting, typeof(string)));
+
+			}
+
+			settingsPattern = "%Settings.(?<key>[a-z0-9]*)%|%Setting.(?<key>[a-z0-9]*)%";
+			settingsRegex = new Regex(settingsPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+			var settingsMatches = settingsRegex.Matches(variableName);
+			foreach (Match match in settingsMatches)
+			{
+				var setting = settings.Get<string>(typeof(Settings), match.Groups["key"].Value, "", match.Groups["key"].Value);
+				list.Add(new ObjectValue(variableName, setting, typeof(string)));
+			}
+			return list;
+		}
+		public ObjectValue? GetSettingObjectValue(string variableName)
+		{
+			var list = GetSettingObjectsValue(variableName);
+			return (list.Count > 0) ? list[0]  : null;
+
 		}
 	}
 }

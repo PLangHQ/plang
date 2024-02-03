@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>PLangLibrary</AssemblyName>
-    <TargetFrameworks></TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SignAssembly>False</SignAssembly>

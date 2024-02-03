@@ -22,7 +22,7 @@ namespace PLang.Modules.WebCrawlerModule.Tests
 			base.Initialize();
 
 			settings.Get(typeof(PLangLlmService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var aiService = new PLangLlmService(cacheHelper, outputStream, signingService);
+			var aiService = new PLangLlmService(cacheHelper, outputStream, signingService, logger);
 			
 			typeHelper = new TypeHelper(fileSystem, settings);
 

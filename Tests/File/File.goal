@@ -19,6 +19,7 @@ File
 - delete file file2.txt
 - delete file file3.txt
 - get file info on Employees.xlsx   into %fileInfo%
+/ See https://learn.microsoft.com/en-us/dotnet/api/system.io.fileinfo?view=net-8.0#properties for properties on FileInfo
 - write out 'fileInfo: CreationTime: %fileInfo.CreationTime%, LastWriteTime: %fileInfo.LastWriteTime%'
 - write to  demo.xlsx, %csvData%,  overwrite file
 - write to demo.csv, %csvData%,  overwrite file

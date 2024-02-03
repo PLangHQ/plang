@@ -234,7 +234,7 @@ namespace PLang.Building.Parsers
 
 			string path = appStartupPath;
 			// if goalName has . then it's referencing an app
-			if (goalName.Contains("/"))
+			if (goalName.Contains("/") || goalName.Contains("\\"))
 			{
 				var paths = goalName.Split('/').ToList();
 				paths.Insert(0, appStartupPath);

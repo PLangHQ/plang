@@ -117,7 +117,7 @@
     "PlangServer Run": {
       "commandName": "Project",
       "commandLineArgs": "exec",
-      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PrivatePlangApps\\PLangServer"
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\plangserver"
     },
     "PlangClient Run": {
       "commandName": "Project",

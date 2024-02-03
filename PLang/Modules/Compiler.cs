@@ -15,6 +15,7 @@ using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis.Text;
 using PLang.Runtime;
 using Newtonsoft.Json;
+using PLang.Utils;
 
 namespace PLang.Modules
 {
@@ -69,7 +70,7 @@ namespace PLang.Modules
 				foreach (var dllFile in dllFiles)
 				{
 					if (excludedName != "") excludedName += ", ";
-					excludedName += Path.GetFileNameWithoutExtension(dllFile);
+					excludedName += dllFile.AdjustPathToOs().RemoveExtension();
 				}
 				if (string.IsNullOrEmpty(excludedName)) return "";
 				return "Name cannot be: " + excludedName + "\n";
@@ -108,7 +109,7 @@ namespace PLang.Modules
 			var sourceText = SourceText.From(code, Encoding.UTF8);
 
 			string dllFilePath = Path.Combine(step.Goal.AbsolutePrFolderPath, step.PrFileName.Replace(".pr", ".dll"));
-			string dllFileName = Path.GetFileNameWithoutExtension(dllFilePath);
+			string dllFileName = Path.GetFileName(dllFilePath.AdjustPathToOs().RemoveExtension());
 			string pdbFilePath = dllFilePath.Replace(".dll", ".pdb");
 			string sourceCodePath = dllFileName + ".cs";
 
@@ -134,7 +135,7 @@ namespace PLang.Modules
 				if (parameter.Type?.ToString().Trim() == "PLang.SafeFileSystem.PLangFileSystem" || parameter.Type?.ToString().Trim() == "PLangFileSystem")
 				{
 					inputParameters.Add(parameterName, parameter.Type.ToString());
-				} else if (!stepText.Contains("%" + parameterName.ToLower()))
+				} else if (!StepTextContainsParameter(step, parameterName))
 				{
 					Console.WriteLine(parameter.Type + " " + parameterName + " is not in step.Text. Should retry with LLM");
 					//retry with gpt with error that parameter is not in step text.
@@ -222,9 +223,17 @@ These are the rules with variables:
 			return new BuildStatus(implementation);
 		}
 
+		private bool StepTextContainsParameter(GoalStep step, string parameterName)
+		{
+			string stepText = step.Text.ToLower();
+			if (stepText.Contains("%" + parameterName.ToLower())) return true;
+			if (stepText.Replace(".", "α").Contains("%" + parameterName.ToLower())) return true;
+			
+			return false;
+		}
+
 		private string Transform(string implementation, GoalStep step)
 		{
-			implementation = implementation.Replace("'", "\"");
 			if (implementation.Contains("Regex(\""))
 			{
 

@@ -11,7 +11,7 @@ namespace PLang.Runtime
 {
     public interface IPseudoRuntime
 	{
-		Task RunGoal(IEngine engine, PLangAppContext context, string appPath, string goalName, Dictionary<string, object?>? parameters, Goal? callingGoal = null);
+		Task RunGoal(IEngine engine, PLangAppContext context, string appPath, string goalName, Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50);
 	}
 
 	public class PseudoRuntime : IPseudoRuntime
@@ -27,7 +27,7 @@ namespace PLang.Runtime
 			this.fileSystem = fileSystem;
 		}
 
-		public async Task RunGoal(IEngine engine, PLangAppContext context, string appPath, string goalName, Dictionary<string, object?>? parameters, Goal? callingGoal = null)
+		public async Task RunGoal(IEngine engine, PLangAppContext context, string appPath, string goalName, Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50)
 		{
 			Goal? goal = prParser.GetGoalByAppAndGoalName(appPath, goalName, callingGoal);
 
@@ -51,11 +51,23 @@ namespace PLang.Runtime
 				{
 					engine.AddContext(ReservedKeywords.IsEvent, true);
 				}
-			} else
-			{
-				goal.ParentGoal = callingGoal;
 			}
 			
+			if (waitForExecution) 
+			{
+				goal.ParentGoal = callingGoal;
+
+			} else
+			{
+				var newContext = new PLangAppContext();
+				foreach (var item in context)
+				{
+					newContext.Add(item.Key, item.Value);
+				}
+				engine.GetContext().Clear();
+				engine.GetContext().AddOrReplace(newContext);
+			}
+
 			var memoryStack = engine.GetMemoryStack();
 			if (parameters != null)
 			{
@@ -64,13 +76,28 @@ namespace PLang.Runtime
 					memoryStack.Put(param.Key.Replace("%", ""), param.Value);
 				}
 			}
-			
-			await engine.RunGoal(goal);
 
+			var task = engine.RunGoal(goal);
+			
+
+			if (waitForExecution)
+			{
+				await task;
+			} else if (delayWhenNotWaitingInMilliseconds > 0)
+			{
+				await Task.Delay((int) delayWhenNotWaitingInMilliseconds);
+			}
+			
 			if (container != null)
 			{
 				container.Dispose();
 			}
+
+			if (task.Exception != null)
+			{
+				throw task.Exception;
+			}
+
 		}
 
 	}

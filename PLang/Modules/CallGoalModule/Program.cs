@@ -38,26 +38,12 @@ namespace PLang.Modules.CallGoalModule
 			if (goalName.Contains("/"))
 			{
 				ValidateAppInstall(goalName);
-
 			}
-			if (waitForExecution)
-			{
-				await pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName, variableHelper.LoadVariables(parameters), Goal);
-			}
-			else
-			{
-				var newContext = new PLangAppContext();
-				foreach (var item in context)
-				{
-					newContext.Add(item.Key, item.Value);
-				}
-
-				pseudoRuntime.RunGoal(engine, newContext, Goal.RelativeAppStartupFolderPath, goalName, variableHelper.LoadVariables(parameters), Goal);
-				if (delayWhenNotWaitingInMilliseconds > 0)
-				{
-					await Task.Delay(delayWhenNotWaitingInMilliseconds);
-				}
-			}
+			
+			await pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName,
+					variableHelper.LoadVariables(parameters), Goal, 
+					waitForExecution, delayWhenNotWaitingInMilliseconds);
+			
 		}
 
 		private void ValidateAppInstall(string goalName)

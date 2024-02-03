@@ -1,0 +1,40 @@
+ModulesOverview
+/- call !CreateDetailOverview
+- call !CreateSimpleOverview
+
+
+CreateDetailOverview
+- get all '.md'  files in modules/ 
+    exclude '_advanced.md', write to %moduleFiles%
+- foreach %moduleFiles% call !CreateDetail item=%file%
+
+CreateDetail
+- [code] get file name without extension from %file.Path%(string) , remove 'PLang.Modules.', 'Module' from the name, write to %moduleName%
+- read file template/modules/Overview/detail_overview.txt, into %system_detail%, load vars
+- [llm] system:%system_detail%
+        user: %file.Content%
+        model: 'gpt-4-0125-preview'
+        respond in .md
+        write to %doc_details%
+- write %doc_details% to output/modules_overview/%moduleName%.md
+
+CreateSimpleOverview
+- get all '.md' files in output/modules_overview/, write to %moduleFiles%
+- foreach %moduleFiles% call !CreateSimple item=%file%
+- get all '.md' files in output/modules_simple/, write to %moduleFiles%
+- foreach %moduleFiles% call !GenerateOverview item=%file%
+- write %content% to output/modules_simple/README.md
+
+
+CreateSimple
+- [code] get file name without extension from %file.Path%(string), write to %moduleName%
+- read file template/modules/Overview/simple_overview.txt, into %system_simple%, load vars
+- [llm] system:%system_simple%
+        user: %file.Content%
+        model: 'gpt-4-0125-preview'
+        respond in .md
+        write to %doc_simple%
+- write %doc_simple% to output/modules_simple/%moduleName%.md
+
+GenerateOverview
+- append to %content%, %file.Content%

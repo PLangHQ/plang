@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Exceptions.AskUser;
@@ -16,15 +17,17 @@ namespace PLang.Services.LlmService
 		private readonly CacheHelper cacheHelper;
 		private readonly IOutputStream outputStream;
 		private readonly IPLangSigningService signingService;
+		private readonly ILogger logger;
 		private readonly string url = "http://localhost:10000";
 
 		public IContentExtractor Extractor { get; set; }
 
-		public PLangLlmService(CacheHelper cacheHelper, IOutputStream outputStream, IPLangSigningService signingService)
+		public PLangLlmService(CacheHelper cacheHelper, IOutputStream outputStream, IPLangSigningService signingService, ILogger logger)
 		{
 			this.cacheHelper = cacheHelper;
 			this.outputStream = outputStream;
 			this.signingService = signingService;
+			this.logger = logger;
 			this.Extractor = new JsonExtractor();
 		}
 
@@ -63,7 +66,7 @@ namespace PLang.Services.LlmService
 			parameters.Add("maxLength", question.maxLength);
 			var httpClient = new HttpClient();
 			var httpMethod = new HttpMethod("POST");
-			var request = new HttpRequestMessage(httpMethod, url + "/api/llm");
+			var request = new HttpRequestMessage(httpMethod, url + "/api/Llm");
 			request.Headers.UserAgent.ParseAdd("plang llm v0.1");
 
 			string body = StringHelper.ConvertToString(parameters);
@@ -78,6 +81,8 @@ namespace PLang.Services.LlmService
 
 			if (response.IsSuccessStatusCode)
 			{
+				ShowCosts(response);
+				
 				var obj = Extractor.Extract(responseBody, responseType);
 
 				if (question.caching)
@@ -105,6 +110,32 @@ namespace PLang.Services.LlmService
 			throw new HttpRequestException(responseBody, null, response.StatusCode);
 
 
+		}
+
+		private void ShowCosts(HttpResponseMessage response)
+		{
+			string? costWarning = "";
+			if (response.Headers.Contains("X-User-Balance"))
+			{
+				string strBalance = response.Headers.GetValues("X-User-Balance").FirstOrDefault();
+				if (strBalance != null && long.TryParse(strBalance, out long balance))
+				{
+					costWarning += "$" + (((double)balance) / 1000000).ToString("N2");
+				}
+			}
+			if (response.Headers.Contains("X-User-Used"))
+			{
+				string strUsed = response.Headers.GetValues("X-User-Used").FirstOrDefault();
+				if (strUsed != null && long.TryParse(strUsed, out long used))
+				{
+					costWarning += " - used now $" + (((double)used) / 1000000).ToString("N2");
+				}
+			}
+
+			if (!string.IsNullOrEmpty(costWarning))
+			{
+				logger.LogWarning($"Current balance with LLM service: {costWarning}");
+			}
 		}
 
 		private string nameOfPayer = "";

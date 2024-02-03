@@ -78,7 +78,7 @@ LLM
         user: %prompt%
         model: 'gpt-4'
         temperature: 0.7
-        maxLength: '2 pages'
+        maxLength: '2000'
         write to %story%
 - write out 'Here is your story: %story%'
 ```
@@ -100,7 +100,6 @@ LLM
 - set %phrase% as 'Hello, how are you?'
 - [llm] system: translate the phrase to Spanish
         user: %phrase%
-        scheme: {language:Spanish}
         write to %translation%
 - write out 'The translation is: %translation%'
 ```

@@ -84,7 +84,7 @@ namespace PLang.Modules
 			var instruction = new Instruction(result);
 			instruction.LlmQuestion = question;
 
-			var methodHelper = new MethodHelper(step, variableHelper, typeHelper, aiService);
+			var methodHelper = new MethodHelper(step, variableHelper, memoryStack, typeHelper, aiService);
 			var invalidFunctions = methodHelper.ValidateFunctions(instruction.GetFunctions(), step.ModuleType, memoryStack);
 
 			if (invalidFunctions.Count > 0)
@@ -242,6 +242,8 @@ ReturnValue: Only if the function returns a value AND if user defines %variable%
 			}
 			return vars;
 		}
+
+		
 
 
 	}

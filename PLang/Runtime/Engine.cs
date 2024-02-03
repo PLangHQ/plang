@@ -74,7 +74,7 @@ namespace PLang.Runtime
 		}
 
 		public MemoryStack GetMemoryStack() => this.memoryStack;
-
+		
 		public void AddContext(string key, object value)
 		{
 			if (ReservedKeywords.IsReserved(key))
@@ -97,7 +97,7 @@ namespace PLang.Runtime
 				await eventRuntime.RunStartEndEvents(context, EventType.Before, EventScope.StartOfApp);
 
 				await RunSetup();
-				if (goalsToRun.Count == 1 && Path.GetFileNameWithoutExtension(goalsToRun[0].ToLower()) == "setup") return;
+				if (goalsToRun.Count == 1 && goalsToRun[0].ToLower().RemoveExtension() == "setup") return;
 
 				StartScheduler();
 

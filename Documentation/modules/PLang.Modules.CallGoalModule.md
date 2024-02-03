@@ -36,7 +36,7 @@ The `CallGoal` module in PLang allows you to call another goal within your scrip
 This is the most basic form of calling a goal. It simply triggers another goal to run.
 
 ```plang
-- call !HelloWorld / calls apps/HelloWorld Start.goal
+- call !HelloWorld / calls HelloWorld.goal
 ```
 
 ## 2. Calling a Goal With Parameters
@@ -55,7 +55,7 @@ Sometimes, you might want to call a goal at a specific time. Here's an example o
 
 ```plang
 - set variable %greetings% to 'Hello'
-- call !Show %greetings%, 2.1.2024 21:31:02 / greetings & Now are parameters
+- call !Show %greetings%, %Now% / greetings & Now are parameters
 ```
 
 ## 4. Calling a Goal and Waiting for Execution

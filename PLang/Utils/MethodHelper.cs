@@ -16,13 +16,15 @@ namespace PLang.Utils
 	{
 		private GoalStep goalStep;
 		private readonly VariableHelper variableHelper;
+		private readonly MemoryStack memoryStack;
 		private readonly ITypeHelper typeHelper;
 		private readonly ILlmService llmService;
 
-		public MethodHelper(GoalStep goalStep, VariableHelper variableHelper, ITypeHelper typeHelper, ILlmService llmService)
+		public MethodHelper(GoalStep goalStep, VariableHelper variableHelper, MemoryStack memoryStack, ITypeHelper typeHelper, ILlmService llmService)
 		{
 			this.goalStep = goalStep;
 			this.variableHelper = variableHelper;
+			this.memoryStack = memoryStack;
 			this.typeHelper = typeHelper;
 			this.llmService = llmService;
 		}
@@ -184,14 +186,16 @@ you must answer in JSON, scheme:
 				if (parameter.Name == null) continue;
 
 				var inputParameter = function.Parameters.FirstOrDefault(p => p.Name == parameter.Name);
+                
 				if (inputParameter == null && !parameter.IsOptional && !parameter.ParameterType.Name.StartsWith("Nullable"))
 				{
 					throw new ParameterException($"Could not find parameter {parameter.Name}", goalStep);
 				}
-
+				
 				var variableValue = inputParameter?.Value;
 				try
 				{
+					
 					if (variableValue == null || string.IsNullOrEmpty(variableValue.ToString()))
 					{
 						SetEmptyParameter(parameterValues, parameter, variableValue);
@@ -199,7 +203,16 @@ you must answer in JSON, scheme:
 					}
 
 					var handlesAttribute = parameter.CustomAttributes.FirstOrDefault(p => p.AttributeType == typeof(HandlesVariableAttribute));
+					if (handlesAttribute == null && VariableHelper.IsVariable(variableValue))
+					{
+						var ov = variableHelper.GetObjectValue(variableValue.ToString(), false);
+						if (ov != null && ov.Value != null && parameter.ParameterType.IsInstanceOfType(ov.Value))
+						{
+							parameterValues.Add(inputParameter.Name, ov.Value);
+							continue;
+						}
 
+					}
 					if (parameter.ParameterType.Name.StartsWith("Dictionary"))
 					{
 						SetDictionaryParameter(parameter, variableValue, handlesAttribute, parameterValues);
@@ -283,7 +296,7 @@ you must answer in JSON, scheme:
 			if (parameter.Name == null) return;
 
 			System.Collections.IList? list = null;
-			if (variableHelper.IsVariable(variableValue))
+			if (VariableHelper.IsVariable(variableValue))
 			{
 				variableValue = variableHelper.LoadVariables(variableValue);
 			}
@@ -335,7 +348,7 @@ you must answer in JSON, scheme:
 		private void SetDictionaryParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
 		{
 			Dictionary<string, object?>? dict = null;
-			if (variableHelper.IsVariable(variableValue))
+			if (VariableHelper.IsVariable(variableValue))
 			{
 				dict = variableHelper.LoadVariables(variableValue) as Dictionary<string, object?>;
 			}

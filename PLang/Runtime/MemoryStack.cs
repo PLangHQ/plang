@@ -9,6 +9,7 @@ using PLang.Interfaces;
 using PLang.Utils;
 using System.Collections;
 using System.Data;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
@@ -30,7 +31,7 @@ namespace PLang.Runtime
 
 	public class ObjectValue
 	{
-		public ObjectValue(string name, object? value, Type? type, ObjectValue? parent, bool Initiated = true)
+		public ObjectValue(string name, object? value, Type? type, ObjectValue? parent = null, bool Initiated = true)
 		{
 			Name = name;
 			Value = value;
@@ -52,12 +53,14 @@ namespace PLang.Runtime
 		static Dictionary<string, ObjectValue> staticVariables = new Dictionary<string, ObjectValue>();
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
+		private readonly ISettings settings;
 		private readonly PLangAppContext context;
 
-		public MemoryStack(IPseudoRuntime pseudoRuntime, IEngine engine, PLangAppContext context)
+		public MemoryStack(IPseudoRuntime pseudoRuntime, IEngine engine, ISettings settings, PLangAppContext context)
 		{
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
+			this.settings = settings;
 			this.context = context;
 		}
 
@@ -69,6 +72,8 @@ namespace PLang.Runtime
 		{
 			return staticVariables;
 		}
+
+		
 
 		public record VariableExecutionPlan(string VariableName, ObjectValue ObjectValue, List<string> Calls, int Index = 0, string? JsonPath = null);
 
@@ -108,6 +113,7 @@ namespace PLang.Runtime
 
 			key = Clean(key);
 
+			// position%. %item.title
 			if (variables.ContainsKey(key))
 			{
 				return new VariableExecutionPlan(key, variables[key], new List<string>());
@@ -262,12 +268,13 @@ namespace PLang.Runtime
 		{
 			if (key == null) return new ObjectValue("", null, typeof(Nullable), null, false);
 			key = Clean(key);
+
 			var keyLower = key.ToLower();
 			if (keyLower == "now" || keyLower.StartsWith("now+") || keyLower.StartsWith("now-") || keyLower.StartsWith("now."))
 			{
 				return GetNow(key);
 			}
-
+			
 			if (ReservedKeywords.IsReserved(key))
 			{
 				if (keyLower == ReservedKeywords.MemoryStack.ToLower())
@@ -296,7 +303,7 @@ namespace PLang.Runtime
 			{
 				return variables[varKey.Key];
 			}
-
+			
 			var plan = GetVariableExecutionPlan(key, staticVariable);
 			if (!plan.ObjectValue.Initiated)
 			{
@@ -408,6 +415,13 @@ namespace PLang.Runtime
 				return;
 			}
 
+			if (key.StartsWith("Settings."))
+			{
+				string settingKey = key.ToLower().Replace("%", "").Replace("settings.", "");
+				settings.Set(typeof(Settings), settingKey, value);
+				return;
+			}
+
 			string strValue = value.ToString()!.Trim();
 			if (convertToJson && !value.GetType().Name.StartsWith("<>f__Anonymous") && JsonHelper.IsJson(strValue))
 			{
@@ -420,7 +434,7 @@ namespace PLang.Runtime
 					value = JObject.Parse(strValue);
 				}
 			}
-			if (strValue.StartsWith("%") && strValue.EndsWith("%"))
+			if (VariableHelper.IsVariable(strValue))
 			{
 				var plan = GetVariableExecutionPlan(strValue, staticVariable);
 				ObjectValue variableValue = plan.ObjectValue;
@@ -562,8 +576,11 @@ namespace PLang.Runtime
 		public string Clean(string str)
 		{
 			str = str.Trim();
-			if (str.StartsWith("%")) str = str.Substring(1);
-			if (str.EndsWith("%")) str = str.Remove(str.Length - 1);
+			bool isVariable = IsVariable(str);
+			
+			if (isVariable && str.StartsWith("%")) str = str.Substring(1);
+			if (isVariable && str.EndsWith("%")) str = str.Remove(str.Length - 1);
+
 			if (str.StartsWith("$.")) str = str.Remove(0, 2);
 			return str.Replace("α", ".");
 		}
@@ -589,7 +606,9 @@ namespace PLang.Runtime
 			if (targetType.FullName.EndsWith("&"))
 			{
 				targetType = Type.GetType(targetType.FullName.Substring(0, targetType.FullName.Length - 1));
+				if (targetType == null) return null;
 			}
+			
 
 
 			if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(Nullable<>))
@@ -604,8 +623,9 @@ namespace PLang.Runtime
 				// Convert the value to the underlying type and then convert it to the nullable type
 				try
 				{
-					return Activator.CreateInstance(targetType, Convert.ChangeType(value, underlyingType));
-				} catch (Exception ex)
+					return GetInstance(value, targetType, underlyingType);
+				}
+				catch (Exception ex)
 				{
 					throw new RuntimeException($"Could not convert %{key}% to {underlyingType.Name} because it is a type of {value.GetType().Name}");
 				}
@@ -641,6 +661,11 @@ namespace PLang.Runtime
 				throw new RuntimeException($"Could not convert %{key}% to {targetType.Name} because it is a type of {value.GetType().Name}");
 			}
 			
+		}
+
+		private static object? GetInstance(object? value, Type targetType, Type underlyingType)
+		{
+			return Activator.CreateInstance(targetType, Convert.ChangeType(value, underlyingType));
 		}
 
 		private ObjectValue GetNow(string key)
@@ -695,6 +720,8 @@ namespace PLang.Runtime
 
 			object? value = null;
 			var type = obj.GetType();
+			
+			propertyDescription = propertyDescription.Trim();
 
 			AppContext.TryGetSwitch("builder", out bool isBuilder);
 
@@ -1052,5 +1079,13 @@ namespace PLang.Runtime
 
 			}
 		}
+
+		internal void Clear()
+		{
+			this.variables.Clear();
+			staticVariables.Clear();
+		}
+
+		
 	}
 }

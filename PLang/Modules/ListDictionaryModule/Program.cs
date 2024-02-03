@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using PLang.Attributes;
 using PLang.Runtime;
 using PLang.Utils;
 using System.ComponentModel;
@@ -17,14 +18,14 @@ namespace PLang.Modules.ListDictionaryModule
 		{
 			return listInstance.Remove(item);
 		}
-		
+
 
 		public async Task<bool> DeleteKeyFromDictionary(string key, Dictionary<string, object> dictionary)
 		{
 			return dictionary.Remove(key);
 		}
 
-		[Description("Method always returns instance of listInstance, it creates a new instance if it is null")]
+		[Description("Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToList")]
 		public async Task<List<object>> AddToList(object? value, List<object>? listInstance = null)
 		{
 			if (value == null) return new();
@@ -51,21 +52,47 @@ namespace PLang.Modules.ListDictionaryModule
 			return listInstance;
 		}
 
-		[Description("Method always returns instance of dictionaryInstance, it creates a new instance if it is null")]
-		public async Task<Dictionary<string, object>> AddToDictionary(string key, object value, Dictionary<string, object>? dictionaryInstance = null, bool updateIfExists = false)
+		[Description("Gets an item from a list by position")]
+		public async Task<object?> GetFromList(int position, List<object>? listInstance = null)
+		{
+			if (position < 1) position = 1;
+			if (listInstance == null) listInstance = new List<object>();
+			return (listInstance.Count >= position) ? listInstance[position - 1] : null;
+		}
+
+		[Description("Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToDictionary")]
+		public async Task<Dictionary<string, object>> AddToDictionary(string key, object value, Dictionary<string, object>? dictionaryInstance = null, bool updateIfExists = true)
 		{
 			if (value == null) return new();
-
+			if (function != null && function.ReturnValue != null)
+			{
+				dictionaryInstance = memoryStack.Get(function.ReturnValue[0].VariableName) as Dictionary<string, object>;
+			}
 			if (dictionaryInstance == null) dictionaryInstance = new Dictionary<string, object>();
-			
+
 			if (updateIfExists)
 			{
 				dictionaryInstance.AddOrReplace(key, value);
-			} else
+			}
+			else
 			{
-				dictionaryInstance.Add(key, value);
+				if (!dictionaryInstance.ContainsKey(key))
+				{
+					dictionaryInstance.Add(key, value);
+				}
 			}
 			return dictionaryInstance;
+		}
+		[Description("Gets an object from dictionary. ReturnValue should always be used with GetFromDictionary")]
+		public async Task<object?> GetFromDictionary(string key, Dictionary<string, object>? dictionaryInstance = null)
+		{
+			if (dictionaryInstance == null) dictionaryInstance = new Dictionary<string, object>();
+
+			if (dictionaryInstance.ContainsKey(key))
+			{
+				return dictionaryInstance[key];
+			}
+			return null;
 		}
 	}
 }

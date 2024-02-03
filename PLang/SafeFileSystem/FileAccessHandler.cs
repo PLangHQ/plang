@@ -37,7 +37,7 @@ namespace PLang.SafeFileSystem
 
 			if (answer == "y" || answer == "yes" || answer == "ok")
 			{
-				var expires = DateTime.UtcNow.AddSeconds(10);
+				var expires = DateTime.UtcNow.AddSeconds(90);
 				AddFileAccess(appName, path, expires);
 
 				logger.LogDebug($"{appName} has access to {path} until {expires}");

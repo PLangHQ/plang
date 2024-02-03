@@ -61,7 +61,7 @@ namespace PLang.Runtime.Tests
 			serviceFactory.CreateContainer(context, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStream>()).Returns(p =>
 			{
 				var container = CreateServiceContainer();
-				container.GetInstance<IEngine>().GetMemoryStack().Returns(new MemoryStack(container.GetInstance<IPseudoRuntime>(), container.GetInstance<IEngine>(), context));
+				container.GetInstance<IEngine>().GetMemoryStack().Returns(new MemoryStack(container.GetInstance<IPseudoRuntime>(), container.GetInstance<IEngine>(), settings, context));
 				return container;
 			});
 
@@ -70,7 +70,7 @@ namespace PLang.Runtime.Tests
 
 			context.Add("Test", 1);
 
-			engine.GetMemoryStack().Returns(new MemoryStack(pseudoRuntime, engine, context));
+			engine.GetMemoryStack().Returns(new MemoryStack(pseudoRuntime, engine, settings, context));
 
 			var parameters = new PLangAppContext();
 			parameters.Add("Name", "Jim");

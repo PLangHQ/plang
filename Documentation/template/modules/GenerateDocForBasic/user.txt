@@ -12,6 +12,7 @@ Give best practices for %module.moduleName% when writing plang code.
 Use an example, as abstract description can be difficult to understand.
 
 ## Examples
+- link to source code of module, located at, https://github.com/PLangHQ/plang/blob/main/PLang/Modules/%module.moduleName%/Program.cs
 - examples will be injected into your response. Place [PlangCodeExamples] into your response where you believe it should be located.
 - Provide a link to full list of examples at https://github.com/PLangHQ/plang/tree/main/Tests/%module.moduleName% 
 

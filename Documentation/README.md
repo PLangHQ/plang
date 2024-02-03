@@ -18,7 +18,7 @@ Plang is a new type of programming language that provides various features over 
 
 Plang provides the developer with features that he already are familiar with such as variables, condition and for statements as well as powerfull standard library, and is easily extendable.
 
-Plang provides increased security and privacy to both developer and users of their application. 
+Plang provides increased security and privacy to both developer and users of their application, for free as in beer.
 
 ## Hello plang world
 This is an example of a hello world app written in plang

@@ -15,9 +15,9 @@ You can also watch it in [this video](https://www.youtube.com/watch?v=abew4btk34
 
 ### 1. Create a Project Directory
 
-Create a new directory named `Todo` at your preferred location. For instance, you can create it at `c:\plang\Todo` on Windows.
+Create a new directory named `Todo` at your preferred location. For instance, you can create it at `c:\apps\Todo` on Windows.
 
-For Linux and MacOS, you can create it at `~/plang/Todo`.
+For Linux and MacOS, you can create it at `~/apps/Todo`.
 
 ### 2. Create `Setup.goal` 
 
@@ -117,7 +117,7 @@ Then, execute the `TestNewTask.goal` file:
 - or if you prefer terminal
 
     ```bash
-    plang exec test/TestNewTask
+    plang exec TestNewTask
     ```
 
 You should receive the `id` of the new task in the response.

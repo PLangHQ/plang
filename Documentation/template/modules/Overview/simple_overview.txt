@@ -1,0 +1,16 @@
+Lets create an overview page for %moduleName%. Lets imagine the user has little knowledge of plang and want to perform some action. The overview file needs to cover wide arrange of topics but also not be to overwhelming
+
+This overview page will be merged with 25 other overview pages into 1 page, so use the space carefully, so not to create to long of a 1 pager
+
+The structure of overview doc should be following
+
+    Name of module
+    Short general description (max 300 chars)
+
+    Key Actions
+    Short description of the key actions that this module does
+
+    Quick Start
+    Give example of how to use it. Choose some popular (in your opinion) actions
+
+    (Link to docs)[./PLang.Modules.%moduleName%Module.md]

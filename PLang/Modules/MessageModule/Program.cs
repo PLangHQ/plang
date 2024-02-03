@@ -196,6 +196,18 @@ namespace PLang.Modules.MessageModule
 
 		public async Task SendPrivateMessage(string content, string npubReceiverPublicKey)
 		{
+			if (string.IsNullOrEmpty(content.Trim()))
+			{
+				logger.LogWarning("Message content empty. Nothing sent");
+				return;
+			}
+
+			if (string.IsNullOrEmpty(npubReceiverPublicKey))
+			{
+				logger.LogWarning("Address missing. Nothing sent");
+				return;
+			}
+
 			var currentKey = GetCurrentKey();
 			var sender = GetPrivateKey(currentKey.Bech32PublicKey);
 			var receiver = NostrPublicKey.FromBech32(npubReceiverPublicKey);

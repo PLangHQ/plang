@@ -87,7 +87,7 @@ namespace PLang.Utils
 			settingsRepository.Set(setting);
 
 			var settings = settingsRepository.GetSettings().ToList();
-			int idx = settings.FindIndex(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key == key);
+			int idx = settings.FindIndex(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
 			if (idx == -1)
 			{
 				settings.Add(setting);
@@ -132,7 +132,7 @@ namespace PLang.Utils
 			if (key == null) key = type;
 
 			var settings = settingsRepository.GetSettings();
-			var setting = settings.FirstOrDefault(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key == key);
+			var setting = settings.FirstOrDefault(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
 			if (setting == null) return null;
 
 			var verifiedData = signingService.VerifySignature(setting.Value, "Setting", callingType.FullName, setting.SignatureData).Result;
@@ -174,7 +174,7 @@ namespace PLang.Utils
 			var type = defaultValue.GetType().FullName;
 
 			var settings = settingsRepository.GetSettings();
-			var setting = settings.FirstOrDefault(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key == key);
+			var setting = settings.FirstOrDefault(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
 			if (setting == null)
 			{
 				throw new MissingSettingsException(callingType, type, key, defaultValue, explain, SetInternal);
@@ -193,7 +193,7 @@ namespace PLang.Utils
 			if (key == null) key = type;
 
 			var settings = settingsRepository.GetSettings();
-			var setting = settings.FirstOrDefault(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key == key);
+			var setting = settings.FirstOrDefault(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
 
 			if (setting == null) return defaultValue;
 
@@ -209,7 +209,7 @@ namespace PLang.Utils
 			if (key == null) key = type;
 
 			var settings = settingsRepository.GetSettings();
-			return settings.FirstOrDefault(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key == key) != null;
+			return settings.FirstOrDefault(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase)) != null;
 		}
 
 		public IEnumerable<Setting> GetAllSettings()
@@ -219,7 +219,7 @@ namespace PLang.Utils
 
 		private void LoadSalt()
 		{
-			var setting = GetAllSettings().FirstOrDefault(p => p.ClassOwnerFullName == GetType().FullName && p.ValueType == typeof(string).ToString() && p.Key == "Salt");
+			var setting = GetAllSettings().FirstOrDefault(p => p.ClassOwnerFullName == GetType().FullName && p.ValueType == typeof(string).ToString() && p.Key.Equals("Salt", StringComparison.OrdinalIgnoreCase));
 			if (setting != null)
 			{
 				context.AddOrReplace(ReservedKeywords.Salt, setting.Value);

@@ -35,7 +35,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void GetVariableExecutionPlan_Test()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			stack.Put("data", "1");
 			var plan = stack.GetVariableExecutionPlan("data", false);
 
@@ -139,7 +139,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void GetTest()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			var list = new List<DataTestClass>();
 			list.Add(new DataTestClass() { Number = 1, Title = "Hello", Date = DateTime.Now });
 			list.Add(new DataTestClass() { Number = 2, Title = "Hello2", Date = DateTime.Now.AddDays(1) });
@@ -153,7 +153,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void GetTestListWithIndex()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			var list = new List<DataTestClass>();
 			list.Add(new DataTestClass() { Number = 1, Title = "Hello", Date = DateTime.Now });
 			list.Add(new DataTestClass() { Number = 2, Title = "Hello2", Date = DateTime.Now.AddDays(1) });
@@ -167,7 +167,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void GetTest_GetJson()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			var list = new List<DataTestClass>();
 			list.Add(new DataTestClass() { Number = 1, Title = "Hello", Date = new DateTime(2023, 9, 28) });
 			list.Add(new DataTestClass() { Number = 2, Title = "Hello2", Date = new DateTime(2023, 9, 28) });
@@ -182,7 +182,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void GetTest_GetJson_Record()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			var item = new JsonTester("Hello", 1);
 			stack.Put("item", item);
 			var obj = stack.Get("item.ToJson()");
@@ -193,7 +193,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void GetTest_GetJson_OnJsonContent()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			var item = @"{""name"":""Hello2"",""number"":2}";
 			stack.Put("item", item);
 			var obj = stack.Get("item.ToJson()");
@@ -204,7 +204,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void TestNow()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			var dateTime = stack.Get("Now");
 			Assert.IsNotNull(dateTime);
 		}
@@ -212,7 +212,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void TestNow_Add()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			var dateTime = (DateTime)stack.Get("Now+1day");
 			Assert.AreEqual(DateTime.Now.AddDays(1).ToShortDateString(), dateTime.ToShortDateString());
 
@@ -245,7 +245,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void TestRemove()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			stack.Put("item", 1);
 			var item = stack.Get("item");
 			Assert.IsNotNull(item);
@@ -261,7 +261,7 @@ namespace PLang.Runtime.Tests
 			var context = new PLangAppContext();
 			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
-			var stack = new MemoryStack(pseudoRuntime, engine, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			stack.AddOnCreateEvent("item", "Test", new());
 
 			stack.Put("item", 1);
@@ -275,8 +275,8 @@ namespace PLang.Runtime.Tests
 			var context = new PLangAppContext();
 			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
-			var stack = new MemoryStack(pseudoRuntime, engine, context);
-			stack.AddOnChangeEvent("item", "Test", new());
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			stack.AddOnChangeEvent("item", "Test", new(), false);
 
 			//first add the item, no event called
 			stack.Put("item", 1);
@@ -287,6 +287,24 @@ namespace PLang.Runtime.Tests
 			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test", Arg.Any<Dictionary<string, object>>());
 		}
 
+		[TestMethod]
+		public void TestOnChangeVariable_NotifyWhenCreated()
+		{
+			var context = new PLangAppContext();
+			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
+			engine.GetContext().Returns(context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			stack.AddOnChangeEvent("item", "Test", new(), true);
+
+			//first add the item, no event called
+			stack.Put("item", 1);
+
+			//change the item, now the event is called
+			stack.Put("item", 2);
+
+			pseudoRuntime.Received(2).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test", Arg.Any<Dictionary<string, object>>());
+		}
+
 
 		[TestMethod]
 		public void TestOnRemoveVariable()
@@ -294,7 +312,7 @@ namespace PLang.Runtime.Tests
 			var context = new PLangAppContext();
 			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
-			var stack = new MemoryStack(pseudoRuntime, engine, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			stack.AddOnRemoveEvent("item", "Test", new());
 
 			//first add the item, no event called
@@ -317,7 +335,7 @@ namespace PLang.Runtime.Tests
 			FieldInfo fieldInfo = typeof(MemoryStack).GetField("staticVariables", BindingFlags.Static | BindingFlags.NonPublic);
 			fieldInfo.SetValue(null, new Dictionary<string, ObjectValue>());
 
-			var stack = new MemoryStack(pseudoRuntime, engine, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			stack.AddOnRemoveEvent("item", "Test", true, new());
 
 			//first add the item, no event called
@@ -339,7 +357,7 @@ namespace PLang.Runtime.Tests
 			var context = new PLangAppContext();
 			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
-			var stack = new MemoryStack(pseudoRuntime, engine, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			
 			stack.AddOnCreateEvent("item", "Test", true, new());
 
@@ -361,7 +379,7 @@ namespace PLang.Runtime.Tests
 			var context = new PLangAppContext();
 			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
-			var stack = new MemoryStack(pseudoRuntime, engine, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			stack.AddOnChangeEvent("item", "Test", true, new());
 
 			//first add the item, no event called
@@ -376,7 +394,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void PutTest()
 		{
-			var stack = new MemoryStack(pseudoRuntime, engine, context);
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			stack.Put("name", "John");
 			stack.Put("age", 29);
 			stack.Put("weight", 80.5);
@@ -459,99 +477,7 @@ namespace PLang.Runtime.Tests
 			var airlines = stack.Get("jsonArray.airlines") as IEnumerable;
 			Assert.AreEqual(2, airlines.Cast<object>().Count());
 		}
-		/*
-		[TestMethod()]
-		public void PutTest()
-		{
-			
-			var stack = new MemoryStack(pseudoRuntime, engine, context);
-			stack.Put("name", "John");
-			stack.Put("age", 29);
-			stack.Put("weight", 80.5);
-			stack.Put("data", new {foo=1, bar=2});
-
-			var variables = stack.GetMemoryStack();
-			Assert.AreEqual(4, variables.Count);
-
-			Assert.AreEqual("John", stack.Get("name"));
-
-			Assert.AreEqual(29, stack.Get("age"));
-			Assert.AreEqual(80.5, stack.Get("weight"));
-			Assert.AreEqual(1, stack.Get<int>("data.foo"));
-
-			stack.Put("user", new { id = 1, name = "John" });
-			var obj = stack.Get<dynamic>("user");
-			Assert.AreEqual(obj.id, 1);
-
-			stack.Put("user.id", 2);
-			obj = stack.Get<dynamic>("user");
-			Assert.AreEqual(obj.id, 2);
-
-			string json = $@"{{
-  ""id"": 123456,
-  ""name"": ""John Doe"",
-  ""email"": ""john.doe@example.com"",
-  ""isVerified"": true,
-  ""profile"": {{
-    ""age"": 32,
-    ""gender"": ""Male"",
-    ""address"": {{
-      ""street"": ""123 Main St"",
-      ""city"": ""Springfield"",
-      ""state"": ""IL"",
-      ""zip"": ""62701""
-    }},
-    ""interests"": [""Reading"", ""Traveling"", ""Cooking""]
-  }},
-  ""accountCreationDate"": ""2021-08-08T14:30:00Z"",
-  ""lastLogin"": ""2023-08-08T10:20:00Z""
-}}
-";
-			stack.Put("userInfo", json);
-			var city = stack.Get("userInfo.profile.address.city");
-			Assert.AreEqual("Springfield", city);
-
-
-			var products = $@"[
-  {{
-    ""productId"": 101,
-    ""productName"": ""Laptop"",
-    ""price"": 999.99,
-    ""inStock"": true
-  }},
-  {{
-    ""productId"": 102,
-    ""productName"": ""Smartphone"",
-    ""price"": 499.99,
-    ""inStock"": false
-  }},
-  {{
-    ""productId"": 103,
-    ""productName"": ""Tablet"",
-    ""price"": 299.99,
-    ""inStock"": true
-  }}
-]
-";
-			stack.Put("products", products);
-			var list = stack.Get<List<dynamic>>("products");
-			Assert.AreEqual(3, list.Count);
-
-			var userInfoList = stack.Get<List<dynamic>>("userInfo");
-			Assert.AreEqual(1, userInfoList.Count);
-
-			List<Item> items = new List<Item>();
-			items.Add(new Item(100, "Hello"));
-			items.Add(new Item(200, "World"));
-			stack.Put("ItemsList", items);
-			var listItems = stack.Get("ItemsList");
-			Assert.AreEqual(2, ((List<Item>)listItems).Count);
-
-			var id = stack.Get<int>("ItemsList[1].Id");
-			Assert.AreEqual(200, id);
-
-		}
-		*/
+		
 		public record Item(int Id, string Name);
 	}
 }

@@ -13,6 +13,7 @@ using PLang.Services.SettingsService;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using PLangTests.Mocks;
+using System.Configuration;
 using System.Data;
 using System.Runtime.CompilerServices;
 using static PLang.Modules.BaseBuilder;
@@ -75,7 +76,7 @@ namespace PLangTests
 				var container = CreateServiceContainer();
 				container.GetInstance<IEngine>().GetMemoryStack().Returns(a =>
 				{
-					return new MemoryStack(pseudoRuntime, engine, context);
+					return new MemoryStack(pseudoRuntime, engine, settings, context);
 				});
 				return container;
 			});
@@ -137,7 +138,7 @@ namespace PLangTests
 			errorHelper = Substitute.For<IErrorHelper>();
 			container.RegisterInstance(errorHelper);
 
-			memoryStack = new MemoryStack(pseudoRuntime, engine, context);
+			memoryStack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			container.RegisterInstance(memoryStack);
 
 			archiver = Substitute.For<IArchiver>();

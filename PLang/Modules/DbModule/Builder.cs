@@ -387,7 +387,7 @@ You MUST provide Parameters if SQL has @parameter.
 			foreach (var item in tableNames)
 			{
 				string tableName = item;
-				if (variableHelper.IsVariable(tableName))
+				if (VariableHelper.IsVariable(tableName))
 				{
 					var obj = memoryStack.Get(tableName);
 					if (obj != null)

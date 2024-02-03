@@ -11,6 +11,7 @@ using PLang.Services.EventSourceService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Data;
+using System.Data.SQLite;
 using System.Globalization;
 using static Dapper.SqlMapper;
 
@@ -27,12 +28,16 @@ namespace PLang.Modules.DbModule
 
 		private ModuleSettings moduleSettings;
 		private readonly IDbConnection dbConnection;
+		private readonly IPLangFileSystem fileSystem;
 		private readonly IEventSourceRepository eventSourceRepository;
+		private readonly ILogger logger;
 
 		public Program(IDbConnection dbConnection, IPLangFileSystem fileSystem, ISettings settings, ILlmService aiService, IEventSourceRepository eventSourceRepository, PLangAppContext context, ILogger logger) : base()
 		{
 			this.dbConnection = dbConnection;
+			this.fileSystem = fileSystem;
 			this.eventSourceRepository = eventSourceRepository;
+			this.logger = logger;
 			this.context = context;
 			this.moduleSettings = new ModuleSettings(fileSystem, settings, context, aiService, dbConnection, logger);
 		}
@@ -60,6 +65,7 @@ namespace PLang.Modules.DbModule
 			var transaction = dbConnection.BeginTransaction();
 			context.AddOrReplace(DbConnectionContextKey, dbConnection);
 			context.AddOrReplace(DbTransactionContextKey, transaction);
+
 		}
 
 		public async Task EndTransaction()
@@ -74,6 +80,23 @@ namespace PLang.Modules.DbModule
 			{
 				((IDbConnection)connection).Close();
 				context.Remove(DbConnectionContextKey);
+			}
+		}
+
+		public async Task LoadExtension(string fileName, string? procName = null)
+		{
+			fileName = GetPath(fileName);
+			if (!fileSystem.File.Exists(fileName))
+			{
+				throw new RuntimeException("File could not be found.");
+			}
+
+			if (dbConnection is SQLiteConnection)
+			{
+				((SQLiteConnection)dbConnection).LoadExtension(fileName, procName); return;
+			} else
+			{
+				logger.LogWarning("Loading extension only works for Sqlite");
 			}
 		}
 
@@ -241,7 +264,7 @@ namespace PLang.Modules.DbModule
 			var rows = (await prep.connection.QueryAsync<dynamic>(sql, prep.param)).ToList();
 			Done(prep.connection);
 
-			if (rows.Count == 0)
+			if (rows.Count == 0 && this.function != null)
 			{
 				if (this.function.ReturnValue != null)
 				{
@@ -256,7 +279,7 @@ namespace PLang.Modules.DbModule
 				}
 				return new List<object>();
 			}
-			if (!selectOneRow_Top1OrLimit1 || rows.Count != 1) return rows;
+			if (!selectOneRow_Top1OrLimit1 && rows.Count != 1) return rows;
 
 			var rowsAsList = ((IList<object>)rows);
 			var columns = ((IDictionary<string, object>)rowsAsList[0]);
@@ -276,8 +299,10 @@ namespace PLang.Modules.DbModule
 		{
 			if (strType == "dynamic") return new List<object>();
 			if (strType == "string") return null;
-
+			
 			var type = Type.GetType(strType);
+			if (type == null) return null;
+
 			return type.IsValueType && !type.IsPrimitive ? Activator.CreateInstance(type) : null;
 		}
 

@@ -28,6 +28,7 @@ namespace PLang
 		public Executor(IServiceContainer container)
 		{
 			this.container = container;
+			
 			this.settings = container.GetInstance<ISettings>();
 			this.prParser = container.GetInstance<PrParser>();
 			this.errorHelper = container.GetInstance<IErrorHelper>();
@@ -183,11 +184,13 @@ namespace PLang
 
 		public async Task<IEngine> Run(bool debug = false, bool test = false, string[]? args = null)
 		{
-			
-		
 			if (test) AppContext.SetSwitch(ReservedKeywords.Test, true);
-
+			
 			this.engine = container.GetInstance<IEngine>();
+
+			// should create new instance of the container, but for now just clear memoryStack
+			container.GetInstance<MemoryStack>().Clear();
+
 			this.engine.Init(container);
 
 			var goalsToRun = new List<string>();

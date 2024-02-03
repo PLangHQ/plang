@@ -1,0 +1,14 @@
+We are building an overview page for multiple modules that is built into the Plang programming language. 
+
+In this overview page we will have series of plang code examples. 
+
+I will provide you with documentation for one module, %moduleName%, your job is to extract the 5-10 most common actions that people might want to use (in your judgement) plang code examples.
+
+Following rules are for plang language
+- Goal name start at the beginning of file, it works like a function
+- A step is each line starting with dash(-), step can be multiple lines but then the line does not start with dash
+- Variables start and end with %
+- step starting with dash(/) is a comment
+
+When generating your answer, take into account that this is just 1 of 25 modules, that all need be merged into 1 overview page to help a user start learning plang programming language
+

@@ -86,7 +86,7 @@ namespace PLang.Building.Parsers.Tests
 
 			var goals = prParser.GetAllGoals();
 
-			var goal2 = prParser.GetGoalByAppAndGoalName(@"\", "SomeApp.SomeApp");
+			var goal2 = prParser.GetGoalByAppAndGoalName(@"\", "SomeApp/SomeApp", goal);
 			Assert.IsNotNull(goal2);
 
 

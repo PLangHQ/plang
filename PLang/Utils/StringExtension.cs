@@ -9,6 +9,10 @@ namespace PLang.Utils
 {
 	public static class StringExtension
 	{
+		public static string AsVar(this string str)
+		{
+			return "%" + str.Replace("%", "") + "%";
+		}
 		public static string ClearWhitespace(this string text)
 		{
 			if (string.IsNullOrEmpty(text)) return text;

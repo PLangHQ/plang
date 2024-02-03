@@ -112,7 +112,7 @@ You have 3 options.
 			List<InvalidFunction> invalidFunctions = new List<InvalidFunction>();
 			if (functions == null || functions[0] == null) return invalidFunctions;
 
-			var methodHelper = new MethodHelper(step, variableHelper, typeHelper, llmService.Value);
+			var methodHelper = new MethodHelper(step, variableHelper, memoryStack, typeHelper, llmService.Value);
 			return methodHelper.ValidateFunctions(functions, module, memoryStack);
 		}
 

@@ -98,9 +98,9 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			}
 			else
 			{
-				//todo: wrong thing, how do you append to object?
-				val = value;
+				throw new Exception("Cannot append to an object");
 			}
+			memoryStack.Put(key, val);
 			return val;
 		}
 		public async Task<object> GetVariable([HandlesVariableAttribute] string key)

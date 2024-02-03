@@ -1,4 +1,5 @@
 ﻿using PLang.Interfaces;
+using System.ComponentModel;
 
 namespace PLang.Modules.CompressionModule
 {
@@ -13,6 +14,7 @@ namespace PLang.Modules.CompressionModule
 			this.archiver = archiver;
 		}
 
+		[Description("compressionLevel: 0=Optimal, 1=Fastest, 2=No compression, 3=Smallest size")]
 		public async Task CompressFile(string filePath, string saveToPath, int compressionLevel = 0)
 		{
 			filePath = GetPath(filePath);
@@ -33,14 +35,6 @@ namespace PLang.Modules.CompressionModule
 			await archiver.CompressFiles(new string[] { filePath }, saveToPath, compressionLevel);
 		}
 
-		private string GetPath(string path)
-		{
-			if (!Path.IsPathRooted(path))
-			{
-				path = Path.Join(fileSystem.RootDirectory, path);
-			}
-			return path;
-		}
 
 		public async Task CompressFiles(string[] filePaths, string saveToPath, int compressionLevel = 0)
 		{
@@ -78,7 +72,8 @@ namespace PLang.Modules.CompressionModule
 			
 		}
 
-		public async Task CompressDirectory(string sourceDirectoryName, string destinationArchiveFileName, int compressionLevel = 0, bool includeBaseDirectory = true)
+		public async Task CompressDirectory(string sourceDirectoryName, string destinationArchiveFileName, int compressionLevel = 0,
+			bool includeBaseDirectory = true, bool createDestinationDirectory = true, bool overwriteDestinationFile = false)
 		{
 			sourceDirectoryName = GetPath(sourceDirectoryName);
 			if (!fileSystem.Directory.Exists(sourceDirectoryName))
@@ -89,9 +84,17 @@ namespace PLang.Modules.CompressionModule
 			destinationArchiveFileName = GetPath(destinationArchiveFileName);
 			if (!fileSystem.Directory.Exists(Path.GetDirectoryName(destinationArchiveFileName)))
 			{
-				throw new DirectoryNotFoundException($"Directory {Path.GetDirectoryName(destinationArchiveFileName)} does not exist.");
+				if (createDestinationDirectory)
+				{
+					fileSystem.Directory.CreateDirectory(Path.GetDirectoryName(destinationArchiveFileName));
+				} else {
+					throw new DirectoryNotFoundException($"Directory {Path.GetDirectoryName(destinationArchiveFileName)} does not exist.");
+				}
 			}
-
+			if (overwriteDestinationFile && fileSystem.File.Exists(destinationArchiveFileName))
+			{
+				fileSystem.File.Delete(destinationArchiveFileName);
+			}
 			await archiver.CompressDirectory(sourceDirectoryName, destinationArchiveFileName, compressionLevel, includeBaseDirectory);
 		}
 	}

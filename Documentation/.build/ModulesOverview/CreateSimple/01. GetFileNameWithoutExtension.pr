@@ -1,0 +1,29 @@
+{
+  "Action": {
+    "Name": "GetFileNameWithoutExtension",
+    "Code": "\npublic static class GetFileNameWithoutExtension\n{\n    public static void Process(object fileαPath, out object moduleName, PLang.SafeFileSystem.PLangFileSystem fileSystem)\n    {\n        if(fileαPath == null)\n            throw new Exception(\"File path is not provided.\");\n        \n        string filePath = fileαPath.ToString();\n        string fileName = fileSystem.Path.GetFileNameWithoutExtension(filePath);\n        \n        moduleName = fileName;\n    }\n}\n",
+    "Using": [
+      "System",
+      "PLang.SafeFileSystem"
+    ],
+    "Parameters": {
+      "file.Path": "object",
+      "moduleName": "object",
+      "fileSystem": "PLang.SafeFileSystem.PLangFileSystem"
+    },
+    "OutParameterDefinition": {
+      "moduleName": [
+        {
+          "Name": "moduleName",
+          "FullTypeName": "System.Object"
+        }
+      ]
+    },
+    "GoalToCallOnTrue": null,
+    "GoalToCallOnFalse": null
+  },
+  "Text": "[code] get file name without extension from %file.Path%(string), write to %moduleName%",
+  "Reload": false,
+  "LlmQuestion": null,
+  "RunOnBuild": false
+}

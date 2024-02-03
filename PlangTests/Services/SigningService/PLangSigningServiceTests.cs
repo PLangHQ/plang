@@ -67,6 +67,7 @@ namespace PLang.Services.SigningService.Tests
 			{
 				return nonce;
 			};
+			context.AddOrReplace(ReservedKeywords.Salt, "123");
 
 
 			var signature = signingService.Sign(body, method, url, contract);
@@ -147,7 +148,7 @@ namespace PLang.Services.SigningService.Tests
 			string method = "POST";
 			string url = "http://plang.is";
 			string contract = "C0";
-
+			context.AddOrReplace(ReservedKeywords.Salt, "123");
 			var signature = signingService.Sign(body, method, url, contract);
 
 			var result = await signingService.VerifySignature(body, method, url, signature);

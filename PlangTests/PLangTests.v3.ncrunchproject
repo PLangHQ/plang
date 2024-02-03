@@ -93,9 +93,6 @@
         <FixtureName>PLang.Runtime.Tests.PseudoRuntimeTests</FixtureName>
       </FixtureTestSelector>
       <FixtureTestSelector>
-        <FixtureName>PLang.Runtime.Tests.MemoryStackTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
         <FixtureName>PLang.Runtime.Tests.EngineTests</FixtureName>
       </FixtureTestSelector>
       <FixtureTestSelector>
@@ -137,15 +134,9 @@
       <FixtureTestSelector>
         <FixtureName>PLang.Building.Tests.BuilderTests</FixtureName>
       </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Building.Parsers.Tests.PrParserTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Building.Events.Tests.EventRuntimeTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Building.Events.Tests.EventBuilderTests</FixtureName>
-      </FixtureTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Parsers.Tests.PrParserTests.ParsePrFile_NullGoalTest</TestName>
+      </NamedTestSelector>
       <NamedTestSelector>
         <TestName>PLang.Modules.CompressionModule.Tests.BuilderTests.CompressDir_Test (10248605234983889722)</TestName>
       </NamedTestSelector>
@@ -224,6 +215,18 @@
       <FixtureTestSelector>
         <FixtureName>PLangTests.Modules.WebCrawlerModule.ProgramTests</FixtureName>
       </FixtureTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Parsers.Tests.PrParserTests.ParseInstructionFile_NewInstructionTest</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Parsers.Tests.PrParserTests.LoadAllGoals_LoadAndFilterTest</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Parsers.Tests.PrParserTests.GetApps_Test</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Parsers.Tests.PrParserTests.GetAllGoals_ExistingGoalsTest</TestName>
+      </NamedTestSelector>
     </IgnoredTests>
   </Settings>
 </ProjectConfiguration>

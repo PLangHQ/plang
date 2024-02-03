@@ -3,6 +3,7 @@ using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Utils;
 using System.IO.Abstractions;
+using Websocket.Client.Logging;
 
 namespace PLang.SafeFileSystem
 {
@@ -123,6 +124,7 @@ or in more natural language, e.g.
 Your answer:
 ");
 			}
+
 			return path;
 		}
 

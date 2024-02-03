@@ -9,6 +9,9 @@ namespace PLang.Services.OutputStream
 {
 	public class ConsoleOutputStream : IOutputStream
 	{
+		public ConsoleOutputStream() {
+			Console.OutputEncoding = Encoding.UTF8;
+		}
 		public Stream Stream => Console.OpenStandardOutput();
 		public Stream ErrorStream => Console.OpenStandardError();
 

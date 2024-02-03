@@ -24,7 +24,7 @@ namespace PLangTests.Modules.LlmModule
 		private void RealOpenAIService()
 		{
 			settings.Get(typeof(PLangLlmService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var aiService = new PLangLlmService(cacheHelper, outputStream, signingService);
+			var aiService = new PLangLlmService(cacheHelper, outputStream, signingService, logger);
 
 			typeHelper = new TypeHelper(fileSystem, settings);
 			p = new Program(aiService);

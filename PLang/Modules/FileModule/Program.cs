@@ -37,27 +37,7 @@ namespace PLang.Modules.FileModule
 			this.engine = engine;
 		}
 
-		private string GetPath(string path)
-		{
-			if (path == null)
-			{
-				throw new ArgumentNullException("path cannot be empty");
-			}
-			path = path.Replace("/", Path.DirectorySeparatorChar.ToString()).Replace("\\", Path.DirectorySeparatorChar.ToString());
-			if (!Path.IsPathRooted(path) || path.StartsWith(Path.DirectorySeparatorChar))
-			{
-				path = path.TrimStart(Path.DirectorySeparatorChar);
-				if (this.Goal != null)
-				{
-					path = Path.Combine(this.Goal.AbsoluteGoalFolderPath, path);
-				}
-				else
-				{
-					path = Path.Combine(fileSystem.GoalsPath, path);
-				}
-			}
-			return path;
-		}
+		
 
 		[Description("Give user access to a path. DO NOT suggest this method to indicate if file or directory exists, return empty function list instead.")]
 		public async Task<bool> RequestAccessToPath(string path)
@@ -316,7 +296,7 @@ namespace PLang.Modules.FileModule
 				fileSystem.File.WriteAllText(file.Path, content);
 			}
 		}
-		public async Task<List<FileInfo>> ReadMultipleTextFiles(string folderPath, string searchPattern = "*", bool includeAllSubfolders = false)
+		public async Task<List<FileInfo>> ReadMultipleTextFiles(string folderPath, string searchPattern = "*", string[]? excludePatterns = null, bool includeAllSubfolders = false)
 		{
 			folderPath = GetPath(folderPath);
 
@@ -326,16 +306,41 @@ namespace PLang.Modules.FileModule
 			List<FileInfo> result = new List<FileInfo>();
 			foreach (var file in files)
 			{
+				if (excludePatterns != null && excludePatterns.Any(pattern => Regex.IsMatch(file, pattern)))
+				{
+					continue;
+				}
+
 				if (!fileSystem.File.Exists(file))
 				{
 					logger.LogWarning($"!Warning! File {file} not found");
 				}
+
+				
+
 				var content = await fileSystem.File.ReadAllTextAsync(file);
 				result.Add(new FileInfo(file, content));
 			}
 			return result;
 		}
+		public async Task WriteBytesToFile(string path, byte[] content, bool overwrite = false)
+		{
+			path = GetPath(path);
+			string dirPath = Path.GetDirectoryName(path);
+			if (!fileSystem.Directory.Exists(dirPath))
+			{
+				fileSystem.Directory.CreateDirectory(dirPath);
+			}
 
+			if (overwrite)
+			{
+				if (fileSystem.File.Exists(path))
+				{
+					fileSystem.File.Delete(path);
+				}
+			}
+			await fileSystem.File.WriteAllBytesAsync(path, content);
+		}
 		public async Task WriteToFile(string path, string content, bool overwrite = false, bool loadVariables = false, bool emptyVariableIfNotFound = false)
 		{
 			path = GetPath(path);
@@ -435,17 +440,20 @@ namespace PLang.Modules.FileModule
 			}
 		}
 
-		public async Task<string[]> GetFilePathsInDirectory(string directoryPath = "./", string searchPattern = "*", string[]? excludePatterns = null, bool includeSubfolders = false)
+		public async Task<string[]> GetFilePathsInDirectory(string directoryPath = "./", string searchPattern = "*", 
+			string[]? excludePatterns = null, bool includeSubfolders = false, bool useRelativePath = true)
 		{
 			var searchOption = (includeSubfolders) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
 			var files = fileSystem.Directory.GetFiles(directoryPath, searchPattern, searchOption);
+
+			var paths = files.Select(path => (useRelativePath) ? path.Replace(fileSystem.RootDirectory, "") : path);
 			if (excludePatterns != null)
 			{
-				files = files.Where(file => !excludePatterns.Any(pattern => Regex.IsMatch(file, pattern)))
-							 .ToArray();
+				paths = paths.Where(file => !excludePatterns.Any(pattern => Regex.IsMatch(file, pattern)));
 			}
-			return files;
+
+			return paths.ToArray();
 		}
 
 		private ConcurrentDictionary<string, Timer> timers = new ConcurrentDictionary<string, Timer>();

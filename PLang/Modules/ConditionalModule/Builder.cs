@@ -45,6 +45,7 @@ namespace PLang.Modules.ConditionalModule
 				throw new BuilderException($"Could not create condition. Please try to refine the step text:{step.Text}");
 			}
 
+			
 			var compiler = new Compiler(fileSystem, prParser);
 			var dllName = compiler.GetPreviousBuildDllNamesToExclude(step);
 			AppendToAssistantCommand(dllName);
@@ -75,11 +76,11 @@ You must return ```csharp for the code implementation and ```json scheme
 'if %isValid% is true then', this condition would return true if %isValid% is true. 
 'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false.
 
-'if %data% (string) is null, call !CreateData, else !AppendData' => public static bool Process(string? dataαuser_id) { return string.IsNullOrEmpty(userIdentity); }
-'if %exists% (bool) is null, call !CreateUser' => public static bool Process(bool? dataαuser_id) { return exists == null;}
-'if %exists% (bool) is not null, call !CreateUser' => public static bool Process(bool? dataαuser_id) { return exists != null;}
-'if %data.user_id% is empty, call !CreateUser' => public static bool Process(dynamic? dataαuser_id) { return (dataαuser_id == null || (dataαuser_id is string str && string.IsNullOrEmpty(str))); } //if we dont know the type of %data.user_id%
-'if !%isValid% then => public static bool Process(bool? isValid) { return !isValid; }
+'if %data% (string) is null, call !CreateData, else !AppendData' => public static bool Process(string? dataαuser_id) { return string.IsNullOrEmpty(userIdentity); }, GoalToCallOnTrue=CreateData, GoalToCallOnFalse=AppendData
+'if %exists% (bool) is null, call !CreateUser' => public static bool Process(bool? dataαuser_id) { return exists == null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null
+'if %exists% (bool) is not null, call !CreateUser' => public static bool Process(bool? dataαuser_id) { return exists != null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null
+'if %data.user_id% is empty, call !CreateUser' => public static bool Process(dynamic? dataαuser_id) { return (dataαuser_id == null || (dataαuser_id is string str && string.IsNullOrEmpty(str))); } //if we dont know the type of %data.user_id%, , GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null
+'if !%isValid% then => public static bool Process(bool? isValid) { return !isValid; }, GoalToCallOnTrue=null, GoalToCallOnFalse=null
 ## examples ##
 ");
 			if (error != null)
@@ -88,11 +89,11 @@ You must return ```csharp for the code implementation and ```json scheme
 			}
 
 			base.SetContentExtractor(new CSharpExtractor());
-			var instruction = await Build<CodeImplementationResponse>(step);
+			var codeInstruction = await Build<CodeImplementationResponse>(step);
 			//go back to default extractor
 			base.SetContentExtractor(new JsonExtractor());
 
-			var answer = (CodeImplementationResponse)instruction.Action;
+			var answer = (CodeImplementationResponse)codeInstruction.Action;
 
 			var buildStatus = await compiler.BuildCode(answer, step, memoryStack);
 			if (buildStatus.Error != null)
@@ -101,7 +102,7 @@ You must return ```csharp for the code implementation and ```json scheme
 			}
 
 			var newInstruction = new Instruction(buildStatus.Implmentation!);
-			newInstruction.LlmQuestion = instruction.LlmQuestion;
+			newInstruction.LlmQuestion = codeInstruction.LlmQuestion;
 			return newInstruction;
 
 		}

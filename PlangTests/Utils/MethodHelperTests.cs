@@ -28,7 +28,7 @@ namespace PLang.Utils.Tests
             goalStep.Text = "";
 
             var typeHelper = new TypeHelper(fileSystem, settings);
-			methodHelper = new MethodHelper(goalStep, variableHelper, typeHelper, aiService);
+			methodHelper = new MethodHelper(goalStep, variableHelper, memoryStack, typeHelper, aiService);
 
 		}
 	

@@ -33,6 +33,7 @@ namespace PLang.Modules
 		private IServiceContainer container;
 		private IAppCache appCache;
 		private IOutputStream outputStream;
+		private IPLangFileSystem fileSystem;
 
 		public HttpListenerContext HttpListenerContext { 
 			get {
@@ -61,7 +62,7 @@ namespace PLang.Modules
 			this.context = context;
 			this.appCache = appCache;
 			this.outputStream = container.GetInstance<IOutputStream>();
-
+			this.fileSystem = container.GetInstance<IPLangFileSystem>();
 			_listenerContext = httpListenerContext;
 
 			this.goal = goal;
@@ -91,7 +92,7 @@ namespace PLang.Modules
 		{
 			this.function = function; // this is to give sub classes access to current function running.
 
-			var methodHelper = new MethodHelper(goalStep, variableHelper, typeHelper, llmService);
+			var methodHelper = new MethodHelper(goalStep, variableHelper, memoryStack, typeHelper, llmService);
 			(MethodInfo? method, Dictionary<string, object?> parameterValues) = await methodHelper.GetMethodAndParameters(this, function);
 			logger.LogDebug("Method:{0}", method);
 			logger.LogDebug("Parameters:{0}", parameterValues);
@@ -320,6 +321,30 @@ Calling {this.GetType().FullName}.{function.FunctionName}
 		public virtual async Task<string> GetAdditionalSystemErrorInfo() {
 			return ""; 
 		}
+
+
+		protected string GetPath(string path)
+		{
+			if (path == null)
+			{
+				throw new ArgumentNullException("path cannot be empty");
+			}
+			path = path.Replace("/", Path.DirectorySeparatorChar.ToString()).Replace("\\", Path.DirectorySeparatorChar.ToString());
+			if (!Path.IsPathRooted(path) || path.StartsWith(Path.DirectorySeparatorChar))
+			{
+				path = path.TrimStart(Path.DirectorySeparatorChar);
+				if (this.Goal != null)
+				{
+					path = Path.Combine(this.Goal.AbsoluteGoalFolderPath, path);
+				}
+				else
+				{
+					path = Path.Combine(fileSystem.GoalsPath, path);
+				}
+			}
+			return path;
+		}
+
 		protected async Task<string?> AssistWithError(string error, GoalStep step, GenericFunction function)
 		{
 			string additionSystemErrorInfo = await GetAdditionalSystemErrorInfo();

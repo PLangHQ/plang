@@ -34,10 +34,10 @@ Watch this helpful video tutorial: [Hello World in Plang](https://www.youtube.co
 > Cost estimate: $0.118
 
 
-    ```plang
-    Start
-    - write out 'Hello plang world'
-    ```
+```plang
+Start
+- write out 'Hello plang world'
+```
 
 4. **Save the File**: After writing the code, save the `Start.goal` file.
 
@@ -47,7 +47,7 @@ Watch this helpful video tutorial: [Hello World in Plang](https://www.youtube.co
      ```bash
      plang exec
      ```
-6. **Purchase voucher in plang service** ([for non OpenAI api key](./PlangOrOpenAI.md)):
+6. **Purchase voucher in plang service** ([see for OpenAI API key](./PlangOrOpenAI.md)):
     - On your first run, you will be asked to fill up your account. 
     - Click the link that is provided
     - Purchase for the amount of your choosing. If you are trying for the first time, we recommend something small, like $5.
@@ -59,3 +59,6 @@ Watch this helpful video tutorial: [Hello World in Plang](https://www.youtube.co
 
 
 Congratulations! You've now made your first plang app, next let's [create a Todo app](Todo_webservice.md) where you will learn how to talk with a database and  connect to an LLM (AI) service
+
+
+# [Create a Todo app >>](Todo_webservice.md)
