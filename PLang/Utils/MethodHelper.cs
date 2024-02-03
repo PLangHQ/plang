@@ -150,6 +150,9 @@ you must answer in JSON, scheme:
 				if (parameter == null && methodType != "nullable" && !methodParameter.HasDefaultValue && !methodParameter.IsOptional)
 				{
 					error += $"{methodParameter.Name} ({methodType}) is missing from parameters. {methodParameter.Name} is a required parameter\n";
+				} else if (parameter != null && methodType == "string" && methodParameter.CustomAttributes.Count() > 0 && methodParameter.CustomAttributes.First().AttributeType.Name == "NullableAttribute" && parameter.Value == null)
+				{
+					error += $"{methodParameter.Name} ({methodType}) is missing from parameters. {methodParameter.Name} is a required parameter\n";
 				}
 
 				if (methodType == "nullable" && methodParameter.ParameterType.GenericTypeArguments.Length > 0)

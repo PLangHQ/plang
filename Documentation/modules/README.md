@@ -1,3 +1,41 @@
+# Writing plang code
+
+This document serves as your gateway to programming in PLang, providing an overview of the built-in modules and their capabilities. 
+
+Here, you'll find concise descriptions of each module's core functions along with practical examples to kickstart your programming tasks. Whether you're handling data, automating processes, securing information, or interacting with web services, these modules equip you with a broad range of tools to implement solutions efficiently. 
+
+Explore the possibilities and leverage these examples as a foundation for your PLang projects.
+
+## Table of Contents
+
+1. [Http](#http) - Conduct web communications and handle HTTP requests seamlessly.
+2. [File](#file) - Read, write, and manage files and directories with ease.
+3. [Db](#db) - Interact with databases for comprehensive data manipulation.
+4. [CallGoal](#callgoal-overview)  - Modularize your PLang scripts by invoking other goals.
+19. [Llm](#llm) - Leverage language models for text analysis, generation, and translation.
+15. [Output](#output) - Display information and interact with users through various output formats.
+20. [LocalOrGlobalVariable](#localorglobalvariable) - Manage local and global variables within your PLang environment.
+11. [Conditional](#conditional-overview) - Implement dynamic decision-making within your PLang scripts.
+12. [Loop](#loop) - Iterate through collections and execute repetitive tasks.
+5. [Compression](#compression-overview) - Optimize storage and manage data with compression techniques.
+6. [Cryptographic](#cryptographic) - Protect your data with encryption, decryption, and hashing tools.
+7. [Caching](#caching) - Enhance data retrieval efficiency with caching strategies.
+8. [WebCrawler](#webcrawler) - Automate web browsing tasks for data interaction and extraction.
+9. [Python](#python) - Seamlessly integrate and execute Python scripts within PLang.
+10. [Schedule](#schedule) - Schedule tasks efficiently based on specific timing requirements.
+13. [Webserver](#webserver) - Set up and manage web servers to handle web content and requests.
+14. [Blockchain](#blockchain) - Interact with blockchain technologies for wallet and smart contract management.
+16. [Terminal](#terminal) - Execute terminal commands directly from your PLang scripts.
+17. [Message](#message) - Secure your communication channels within applications.
+18. [CultureInfo](#cultureinfo) - Utilize cultural and regional settings for localized applications.
+21. [Code](#code-overview) - Code generation
+
+Each entry provides a glimpse into the module's primary functions, illustrating how you can incorporate these tools into your PLang projects. For detailed guidance and further exploration, the linked documentation offers comprehensive insights into each module's full capabilities.
+
+Each section provides a snapshot of the module's capabilities, key actions, and quick start examples, guiding you through the initial steps to leverage these powerful features in your PLang projects. 
+
+For more detailed information on each module, follow the provided documentation links.
+
 # Blockchain
 
 The Blockchain in Plang enables users to interact with various blockchain technologies, facilitating tasks like wallet management, message signing, smart contract interaction, and more.
@@ -508,26 +546,26 @@ The Message facilitates secure and private communication, leveraging encryption 
   ```
 
 [Link to docs](./PLang.Modules.MessageModule.md)
-# Overview of PLang Output
+### Output
 
 The Output in PLang is designed for displaying information and interacting with users in a console environment. It supports a variety of output formats and user inputs, making it a versatile tool for developers.
 
-## Key Actions
+#### Key Actions
 
 - **Displaying Messages**: Easily output text to the console, including dynamic content from variables.
 - **User Input**: Prompt users for input, supporting both text and numeric data.
 - **Formatted Output**: Use buffers and types to format messages, enhancing readability.
 - **Conditional Output**: Display messages or request input based on specific conditions or types.
 
-## Quick Start
+#### Quick Start
 
-### Display a Greeting
+##### Display a Greeting
 ```plang
 Output
 - write out 'Welcome to PLang!'
 ```
 
-### Ask for User Name and Greet
+#### Ask for User Name and Greet
 ```plang
 Output
 - ask 'What is your name?', write to %name%
@@ -577,26 +615,6 @@ Python
 
 [Link to docs](./PLang.Modules.PythonModule.md)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Schedule
 
 The Schedule in PLang facilitates the organization and execution of tasks based on time, supporting one-time, recurring, and delayed tasks with ease.
@@ -618,9 +636,9 @@ To get started with scheduling tasks in PLang, here are some popular actions:
 - **Schedule a Task for a Specific Time**: `ScheduleSpecificTime - at 2.1.2024 22:19:49, call !TaskAtSpecificTime`
 
 [Link to docs](./PLang.Modules.ScheduleModule.md)
-# Selenium
+# WebCrawler
 
-The Selenium in Plang enables users to automate web browser tasks, such as navigating pages, interacting with elements, and extracting data.
+The WebCrawler in Plang enables users to automate web browser tasks, such as navigating pages, interacting with elements, and extracting data.
 
 ### Key Actions
 - **Navigation:** Open web pages and navigate through them.
