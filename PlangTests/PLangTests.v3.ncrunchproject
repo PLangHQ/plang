@@ -6,12 +6,6 @@
       <FixtureTestSelector>
         <FixtureName>PLangTests.Modules.SeleniumModule.ProgramTests</FixtureName>
       </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLangTests.Modules.ScheduleModule.ProgramTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLangTests.Modules.PythonModule.ProgramTests</FixtureName>
-      </FixtureTestSelector>
       <NamedTestSelector>
         <TestName>PLangTests.Modules.LlmModule.ProgramTests.AskLlm_WriteToVariables</TestName>
       </NamedTestSelector>
@@ -120,6 +114,9 @@
       <NamedTestSelector>
         <TestName>PLangTests.Modules.BlockchainModule.ProgramTests.ListenToTranferContractEvent</TestName>
       </NamedTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLangTests.Modules.PythonModule.ProgramTests</FixtureName>
+      </FixtureTestSelector>
     </IgnoredTests>
   </Settings>
 </ProjectConfiguration>

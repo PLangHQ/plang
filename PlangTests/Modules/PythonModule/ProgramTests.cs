@@ -13,10 +13,15 @@ namespace PLangTests.Modules.PythonModule
     [TestClass]
 	public class ProgramTests : BasePLangTest
 	{
+		PLang.Modules.TerminalModule.Program terminalProgram;
+
 		[TestInitialize]
 		public void Init()
 		{
 			base.Initialize();
+			terminalProgram = new PLang.Modules.TerminalModule.Program(logger, settings, outputStream, fileSystem);
+			terminalProgram.Init(container, null, null, null, memoryStack, logger, context, typeHelper, aiService, settings, appCache, null);
+
 		}
 
 		[TestMethod]
@@ -32,8 +37,10 @@ namespace PLangTests.Modules.PythonModule
 			fileSystem.AddFile("main.py", new System.IO.Abstractions.TestingHelpers.MockFileData(content));
 			fileSystem.AddFile("requirements.txt", new System.IO.Abstractions.TestingHelpers.MockFileData(requirements));
 			var outputStream = NSubstitute.Substitute.For<IOutputStream>();
-			var p = new Program(fileSystem, logger, settings, outputStream, signingService);
 
+			
+			var p = new Program(fileSystem, logger, settings, outputStream, signingService, terminalProgram);
+			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, aiService, settings, appCache, null);
 			string[] vars = new string[] { "result" };
 			var result = await p.RunPythonScript("main.py", variablesToExtractFromPythonScript: vars,
 				stdOutVariableName : "stdOut", stdErrorVariableName: "stdError");
@@ -54,7 +61,8 @@ namespace PLangTests.Modules.PythonModule
 			fileSystem.AddFile("main_params.py", new System.IO.Abstractions.TestingHelpers.MockFileData(content));
 
 			var outputStream = NSubstitute.Substitute.For<IOutputStream>();
-			var p = new Program(fileSystem, logger, settings, outputStream, signingService);
+			var p = new Program(fileSystem, logger, settings, outputStream, signingService, terminalProgram);
+			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, aiService, settings, appCache, null);
 
 			string[] vars = new string[] { "result" };
 			var result = await p.RunPythonScript("main_params.py", variablesToExtractFromPythonScript: vars,

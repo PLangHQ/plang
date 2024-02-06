@@ -23,14 +23,16 @@ namespace PLang.Modules.PythonModule
 		private readonly ISettings settings;
 		private readonly IOutputStream outputStream;
 		private readonly IPLangSigningService signingService;
+		private readonly TerminalModule.Program terminalProgram;
 
-		public Program(IPLangFileSystem fileSystem, ILogger logger, ISettings settings, IOutputStream outputStream, IPLangSigningService signingService) : base()
+		public Program(IPLangFileSystem fileSystem, ILogger logger, ISettings settings, IOutputStream outputStream, IPLangSigningService signingService, TerminalModule.Program terminalProgram) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.logger = logger;
 			this.settings = settings;
 			this.outputStream = outputStream;
 			this.signingService = signingService;
+			this.terminalProgram = terminalProgram;
 		}
 
 		[Description("Run a python script. parameterNames should be equal length as parameterValues. Parameter example name=%name%. variablesToExtractFromPythonScript are keys in the format [a-zA-Z0-9_\\.]+ that the user want to write to")]
@@ -42,14 +44,17 @@ namespace PLang.Modules.PythonModule
 		{
 
 			var result = new Dictionary<string, object>();
-			var program = new TerminalModule.Program(logger, settings, outputStream, fileSystem);
+			
 
 			if (fileSystem.File.Exists("requirements.txt"))
 			{
-				result = await program.RunTerminal("pip install -r requirements.txt");
-				foreach (var item in result)
+				var requiredmentsResult = await terminalProgram.RunTerminal("pip install -r requirements.txt");
+				if (requiredmentsResult != null)
 				{
-					result.AddOrReplace(item.Key, item.Value);
+					foreach (var item in requiredmentsResult)
+					{
+						result.AddOrReplace(item.Key, item.Value);
+					}
 				}
 			}
 
