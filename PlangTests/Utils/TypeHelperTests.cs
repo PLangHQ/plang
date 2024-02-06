@@ -27,7 +27,7 @@ namespace PLang.Utils.Tests
 			Assert.IsTrue(methods.Contains("Select") && methods.Contains("Insert"));
 
 			methods = typeHelper.GetMethodsAsString(typeof(PLang.Modules.LocalOrGlobalVariableModule.Program));
-			Assert.IsTrue(methods.Contains("SetVariable") && methods.Contains("Set local variable"));
+			Assert.IsTrue(methods.Contains("SetVariable") && methods.Contains("SetDefaultValueOnVariables"));
 		}
 
 		[TestMethod()]

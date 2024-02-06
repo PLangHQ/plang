@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "remove %item% from '%productList' dictionay",
-    "response": "{\"FunctionName\": \"DeleteKeyFromDictionary\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"key\",\n\"Value\": \"%item%\"},\n{\"Type\": \"Dictionary`2<String, Object>\",\n\"Name\": \"dictionary\",\n\"Value\": \"%productList%\"}]}",
-    "created": "2024-01-04T09:21:52.8956783+00:00"
-  }
-]

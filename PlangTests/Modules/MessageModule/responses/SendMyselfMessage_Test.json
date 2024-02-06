@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "Send message to me, %message%",
+    "response": "{\"FunctionName\": \"SendPrivateMessageToMyself\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"content\",\n\"Value\": \"%message%\"}],\n\"ReturnValue\": null}",
+    "created": "2024-02-05T10:15:28.8770755+00:00"
+  }
+]

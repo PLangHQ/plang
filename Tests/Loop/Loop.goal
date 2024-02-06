@@ -8,7 +8,7 @@ Loop
 - loop through %dict%, call !PrintDict
 
 ShowProduct
-- write out %product.Name% - %product.Price% - %products.Count% idx:%idx%, listCount:%listCount%, key:%key%
+- write out %product.Name% - %product.Price% - %products.Count% position:%position%, listCount:%listCount%, key:%key%
 
 PrintDict
 / listCount give -1 on dictionary objects

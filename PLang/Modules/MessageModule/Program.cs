@@ -70,7 +70,7 @@ namespace PLang.Modules.MessageModule
 			context.AddOrReplace(CurrentAccountIdx, idx);
 		}
 
-		[Description("goalName should be prefixed by ! and be whole word with possible dot(.)")]
+		[Description("goalName should be prefixed by ! and be whole word with possible slash(/)")]
 		public async Task Listen(string goalName, [HandlesVariable] string contentVariableName = "content", [HandlesVariable] string senderVariableName = "sender", [HandlesVariable] string eventVariableName = "__NosrtEventKey__", DateTimeOffset? listenFromDateTime = null)
 		{
 			var client2 = (NostrMultiWebsocketClient)client;

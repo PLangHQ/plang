@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "set 'name' as %name%",
+    "response": "{\"FunctionName\": \"SetVariable\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"key\",\n\"Value\": \"name\"},\n{\"Type\": \"Object\",\n\"Name\": \"value\",\n\"Value\": \"%name%\"}]}",
+    "created": "2024-02-05T10:02:51.4401966+00:00"
+  }
+]

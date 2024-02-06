@@ -41,7 +41,14 @@ namespace PLang.Modules.ListDictionaryModule.Tests
 			builder = new GenericFunctionBuilder();
 			builder.InitBaseBuilder("PLang.Modules.ListDictionaryModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
-		
+		public GoalStep GetStep(string text)
+		{
+			var step = new Building.Model.GoalStep();
+			step.Text = text;
+			step.ModuleType = "PLang.Modules.ListDictionaryModule";
+			return step;
+		}
+
 
 		[DataTestMethod]
 		[DataRow("remove %item% from '%producDict%' dictionay")]
@@ -49,8 +56,7 @@ namespace PLang.Modules.ListDictionaryModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -71,8 +77,7 @@ namespace PLang.Modules.ListDictionaryModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -95,8 +100,7 @@ namespace PLang.Modules.ListDictionaryModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;

@@ -1,7 +1,7 @@
 [
   {
     "stepText": "add %item% to %productList%",
-    "response": "{\"FunctionName\": \"AddToList\",\n\"Parameters\": [{\"Type\": \"Object\",\n\"Name\": \"value\",\n\"Value\": \"%item%\"},\n{\"Type\": \"List`1<Object>\",\n\"Name\": \"listInstance\",\n\"Value\": \"%productList%\"}]}",
-    "created": "2024-01-04T09:32:42.4872562+00:00"
+    "response": "{\"FunctionName\": \"AddToList\",\n\"Parameters\": [{\"Type\": \"Object\",\n\"Name\": \"value\",\n\"Value\": \"%item%\"},\n{\"Type\": \"List`1<Object>\",\n\"Name\": \"listInstance\",\n\"Value\": \"%productList%\"}],\n\"ReturnValue\": [{\"Type\": \"List`1<Object>\",\n\"VariableName\": \"productList\"}]}",
+    "created": "2024-02-05T09:48:09.3609957+00:00"
   }
 ]

@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "get user ip, write to %ip%",
+    "response": "{\"FunctionName\": \"GetUserIp\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"headerKey\",\n\"Value\": null}],\n\"ReturnValue\": [{\"Type\": \"String\",\n\"VariableName\": \"ip\"}]}",
+    "created": "2024-02-05T10:34:49.0567783+00:00"
+  }
+]

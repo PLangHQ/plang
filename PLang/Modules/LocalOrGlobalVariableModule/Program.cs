@@ -28,7 +28,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		{
 			memoryStack.AddOnRemoveEvent(key, goalName, false, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
 		}
-		/*
+		
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
 		public async Task OnCreateStaticVariableListener([HandlesVariable] string key, string goalName, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
 		{
@@ -44,7 +44,6 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		{
 			memoryStack.AddOnRemoveEvent(key, goalName, true, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
 		}
-		*/
 
 		public async Task<object?> LoadVariables([HandlesVariable] string key)
 		{
@@ -115,9 +114,6 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		}
 
 
-		/*
-		 * dont think we need static variable, so removed for now.
-		 * 
 		public async Task SetStaticVariable([HandlesVariableAttribute] string key, object value)
 		{
 			if (value.ToString().StartsWith("%") && value.ToString().EndsWith("%"))
@@ -135,7 +131,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		{
 			memoryStack.RemoveStatic(key);
 		}
-		 */
+	
 
 		public async Task<string> ConvertToBase64([HandlesVariableAttribute] string key)
 		{

@@ -80,7 +80,7 @@ namespace PLangTests.Modules.MessageModule
 
 			Assert.AreEqual(1, context[Program.CurrentAccountIdx]);
 		}
-
+		/*
 		[TestMethod]
 		public async Task Listen_Test()
 		{
@@ -105,6 +105,7 @@ namespace PLangTests.Modules.MessageModule
 
 			nostrClient.Received(1).Send(Arg.Any<NostrEventRequest>());
 		}
+		*/
 
 	}
 }

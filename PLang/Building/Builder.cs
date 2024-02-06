@@ -48,7 +48,7 @@ namespace PLang.Building
 				AppContext.SetSwitch("builder", true);
 				InitFolders();
 
-				var goalFiles = GoalFiles.GetGoalFilesToBuild(fileSystem, fileSystem.GoalsPath);
+				var goalFiles = GoalHelper.GetGoalFilesToBuild(fileSystem, fileSystem.GoalsPath);
 				logger.LogDebug("Build Start:" + DateTime.Now.ToLongTimeString());
 
 				var eventGoalFiles = await eventBuilder.BuildEventsPr();

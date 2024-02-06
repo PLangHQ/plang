@@ -15,127 +15,128 @@ using System.Xml;
 namespace PLang.Modules.HttpModule
 {
 	[Description("Make Http request")]
-	public class Program : BaseProgram
+	public class Program(IPLangFileSystem fileSystem, IPLangSigningService signingService, IHttpClientFactory httpClientFactory) : BaseProgram()
 	{
-		private readonly IPLangFileSystem fileSystem;
-		private readonly IPLangSigningService signingService;
 
-		public Program(IPLangFileSystem fileSystem, IPLangSigningService signingService) : base()
-		{
-			this.fileSystem = fileSystem;
-			this.signingService = signingService;
-		}
-
-		public async Task<object> Post(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<object?> Post(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "POST", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
-		public async Task<object> Patch(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<object?> Patch(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "PATCH", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
-		public async Task<object> Get(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<object?> Get(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "GET", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
-		public async Task<object> Option(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<object?> Option(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "OPTION", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
-		public async Task<object> Head(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<object?> Head(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "HEAD", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
-		public async Task<object> Put(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<object?> Put(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "PUT", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
-		public async Task<object> Delete(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<object?> Delete(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "DELETE", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
 
 		[Description("Post a FileStream to url. When a variable is defined with @ sign, it defines that it should be a FileStream.")]
-		public async Task<object> PostMultipartFormData(string url, object data, string httpMethod = "POST", bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", int timeoutInSeconds = 30)
+		public async Task<object?> PostMultipartFormData(string url, object data, string httpMethod = "POST", bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", int timeoutInSeconds = 30)
 		{
-			var httpClient = new HttpClient();
-			httpClient.Timeout = new TimeSpan(0, 0, timeoutInSeconds);
-			var request = new HttpRequestMessage(new HttpMethod(httpMethod), variableHelper.LoadVariables(url).ToString());
-			using (var content = new MultipartFormDataContent())
+			using (var httpClient = httpClientFactory.CreateClient())
 			{
-				FileSystemStream fileStream = null;
-				var properties = JObject.Parse(data.ToString()).Properties();
-				foreach (var property in properties)
-				{
-					if (property.Value == null) continue;
+				httpClient.Timeout = new TimeSpan(0, 0, timeoutInSeconds);
 
-					if (property.Value.ToString().StartsWith("@"))
+				var requestUrl = variableHelper.LoadVariables(url);
+				if (requestUrl == null)
+				{
+					throw new RuntimeException("url cannot be empty");
+				}
+
+				var request = new HttpRequestMessage(new HttpMethod(httpMethod), requestUrl.ToString());
+				using (var content = new MultipartFormDataContent())
+				{
+					FileSystemStream fileStream = null;
+					var properties = JObject.Parse(data.ToString()).Properties();
+					foreach (var property in properties)
 					{
-						string fileName = property.Value.ToString().Substring(1);
-						string typeValue = null;
-						if (fileName.Contains(";"))
+						if (property.Value == null) continue;
+
+						if (property.Value.ToString().StartsWith("@"))
 						{
-							string type = fileName.Substring(fileName.IndexOf(";") + 1);
-							typeValue = type.Substring(type.IndexOf("=") + 1);
+							string fileName = property.Value.ToString().Substring(1);
+							string typeValue = null;
+							if (fileName.Contains(";"))
+							{
+								string type = fileName.Substring(fileName.IndexOf(";") + 1);
+								typeValue = type.Substring(type.IndexOf("=") + 1);
 
-							string newFileName = fileName.Substring(0, fileName.IndexOf(";"));
-							fileName = newFileName; //todo: some compile caching issue, fix, can be removed (I think)
+								string newFileName = fileName.Substring(0, fileName.IndexOf(";"));
+								fileName = newFileName; //todo: some compile caching issue, fix, can be removed (I think)
+							}
+							fileStream = fileSystem.FileStream.New(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+							var fileContent = new StreamContent(fileStream);
+							if (typeValue != null)
+							{
+								fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(typeValue);
+							}
+							content.Add(fileContent, property.Name, Path.GetFileName(fileStream.Name));
 						}
-						fileStream = fileSystem.FileStream.New(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-						var fileContent = new StreamContent(fileStream);
-						if (typeValue != null)
+						else
 						{
-							fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(typeValue);
+							content.Add(new StringContent(property.Value.ToString()), property.Name);
 						}
-						content.Add(fileContent, property.Name, Path.GetFileName(fileStream.Name));
+
 					}
-					else
+					if (headers != null)
 					{
-						content.Add(new StringContent(property.Value.ToString()), property.Name);
+						foreach (var header in headers)
+						{
+							var value = variableHelper.LoadVariables(header.Value).ToString();
+							request.Headers.TryAddWithoutValidation(header.Key, value);
+						}
 					}
-
-				}
-				if (headers != null)
-				{
-					foreach (var header in headers)
+					request.Headers.UserAgent.ParseAdd("plang v0.1");
+					if (!doNotSignRequest)
 					{
-						var value = variableHelper.LoadVariables(header.Value).ToString();
-						request.Headers.TryAddWithoutValidation(header.Key, value);
+						await SignRequest(request);
 					}
-				}
-				request.Headers.UserAgent.ParseAdd("plang v0.1");
-				if (!doNotSignRequest)
-				{
-					await SignRequest(request);
-				}
 
-				request.Content = content;
-				try
-				{
-					var response = await httpClient.SendAsync(request);
-					string responseBody = await response.Content.ReadAsStringAsync();
-
-					if (response.Content.Headers.ContentType.MediaType == "application/json")
+					request.Content = content;
+					try
 					{
-						return JsonConvert.DeserializeObject(responseBody);
+						var response = await httpClient.SendAsync(request);
+						string responseBody = await response.Content.ReadAsStringAsync();
+
+						if (response.Content.Headers.ContentType != null && response.Content.Headers.ContentType.MediaType == "application/json")
+						{
+							return JsonConvert.DeserializeObject(responseBody);
+						}
+						else if (response.Content.Headers.ContentType != null && IsXml(response.Content.Headers.ContentType.MediaType))
+						{
+							// todo: here we convert any xml to json so user can use JSONPath to get the content. 
+							// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
+							XmlDocument xmlDoc = new XmlDocument();
+							xmlDoc.LoadXml(responseBody);
+
+							string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
+							return JsonConvert.DeserializeObject(jsonString);
+
+						}
+						return responseBody;
 					}
-					else if (IsXml(response.Content.Headers.ContentType.MediaType))
+					finally
 					{
-						// todo: here we convert any xml to json so user can use JSONPath to get the content. 
-						// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
-						XmlDocument xmlDoc = new XmlDocument();
-						xmlDoc.LoadXml(responseBody);
-
-						string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
-						return JsonConvert.DeserializeObject(jsonString);
-
+						if (fileStream != null) fileStream.Dispose();
+						if (httpClient != null) httpClient.Dispose();
 					}
-					return responseBody;
-				}
-				finally
-				{
-					if (fileStream != null) fileStream.Dispose();
-					if (httpClient != null) httpClient.Dispose();
 				}
 
 			}
@@ -143,10 +144,12 @@ namespace PLang.Modules.HttpModule
 
 		private bool IsXml(string? mediaType)
 		{
+			if (mediaType == null) return false;
+
 			return (mediaType.Contains("application/xml") || mediaType.Contains("text/xml") || mediaType.Contains("application/rss+xml"));
 		}
 
-		public async Task<object> Request(string url, string method, object? data = null, bool doNotSignRequest = false,
+		public async Task<object?> Request(string url, string method, object? data = null, bool doNotSignRequest = false,
 			Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			var requestUrl = variableHelper.LoadVariables(url);
@@ -155,66 +158,68 @@ namespace PLang.Modules.HttpModule
 				throw new RuntimeException("url cannot be empty");
 			}
 
-			var httpClient = new HttpClient();
-			var httpMethod = new HttpMethod(method);
-			var request = new HttpRequestMessage(httpMethod, requestUrl.ToString());
-
-			if (headers != null)
+			using (var httpClient = httpClientFactory.CreateClient())
 			{
-				foreach (var header in headers)
+				var httpMethod = new HttpMethod(method);
+				var request = new HttpRequestMessage(httpMethod, requestUrl.ToString());
+
+				if (headers != null)
 				{
-					var value = variableHelper.LoadVariables(header.Value);
-					if (value != null)
+					foreach (var header in headers)
 					{
-						request.Headers.TryAddWithoutValidation(header.Key, value.ToString());
+						var value = variableHelper.LoadVariables(header.Value);
+						if (value != null)
+						{
+							request.Headers.TryAddWithoutValidation(header.Key, value.ToString());
+						}
 					}
 				}
-			}
-			request.Headers.UserAgent.ParseAdd("plang v0.1");
+				request.Headers.UserAgent.ParseAdd("plang v0.1");
 
-			string body = StringHelper.ConvertToString(data);
+				string body = StringHelper.ConvertToString(data);
 
-			request.Content = new StringContent(body, System.Text.Encoding.GetEncoding(encoding), contentType);
-			if (!doNotSignRequest)
-			{
-				await SignRequest(request);
-			}
-			httpClient.Timeout = new TimeSpan(0, 0, timeoutInSeconds);
-			var response = await httpClient.SendAsync(request);
-
-			string responseBody = await response.Content.ReadAsStringAsync();
-
-			if (response.IsSuccessStatusCode)
-			{
-				if (response.Content.Headers.ContentType?.MediaType == "application/json" && JsonHelper.IsJson(responseBody))
+				request.Content = new StringContent(body, System.Text.Encoding.GetEncoding(encoding), contentType);
+				if (!doNotSignRequest)
 				{
-					try
-					{
-						return JsonConvert.DeserializeObject(responseBody);
-					}
-					catch (Exception ex)
-					{
-						throw;
-					}
+					await SignRequest(request);
 				}
-				else if (IsXml(response.Content.Headers.ContentType.MediaType))
+				httpClient.Timeout = new TimeSpan(0, 0, timeoutInSeconds);
+				var response = await httpClient.SendAsync(request);
+
+				string responseBody = await response.Content.ReadAsStringAsync();
+
+				if (response.IsSuccessStatusCode)
 				{
-					// todo: here we convert any xml to json so user can use JSONPath to get the content. 
-					// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
-					XmlDocument xmlDoc = new XmlDocument();
-					xmlDoc.LoadXml(Regex.Replace(responseBody, "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
+					if (response.Content.Headers.ContentType?.MediaType == "application/json" && JsonHelper.IsJson(responseBody))
+					{
+						try
+						{
+							return JsonConvert.DeserializeObject(responseBody);
+						}
+						catch (Exception ex)
+						{
+							throw;
+						}
+					}
+					else if (IsXml(response.Content.Headers.ContentType?.MediaType))
+					{
+						// todo: here we convert any xml to json so user can use JSONPath to get the content. 
+						// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
+						XmlDocument xmlDoc = new XmlDocument();
+						xmlDoc.LoadXml(Regex.Replace(responseBody, "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
 
-					string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
-					return JsonConvert.DeserializeObject(jsonString);
+						string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
+						return JsonConvert.DeserializeObject(jsonString);
 
+					}
+
+					return responseBody;
 				}
-
-				return responseBody;
-			}
-			else
-			{
-				throw new RuntimeException(responseBody, goal);
-				//throw new HttpRequestException(responseBody, null, response.StatusCode);
+				else
+				{
+					throw new RuntimeException(responseBody, goal);
+					//throw new HttpRequestException(responseBody, null, response.StatusCode);
+				}
 			}
 		}
 

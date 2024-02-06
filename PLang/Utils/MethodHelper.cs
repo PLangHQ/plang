@@ -213,6 +213,10 @@ you must answer in JSON, scheme:
 						{
 							parameterValues.Add(inputParameter.Name, ov.Value);
 							continue;
+						} else if (ov != null && ov.Value == null)
+						{
+							parameterValues.Add(inputParameter.Name, ov.Value);
+							continue;
 						}
 
 					}

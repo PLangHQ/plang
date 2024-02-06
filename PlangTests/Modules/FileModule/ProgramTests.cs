@@ -1,14 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using NSubstitute;
 using PLang.Modules.FileModule;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Dynamic;
-using System.IO.Abstractions;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PLangTests.Modules.FileModule
 {
@@ -21,6 +12,7 @@ namespace PLangTests.Modules.FileModule
 		{
 			base.Initialize();
 			p = new Program(fileSystem, settings, logger, pseudoRuntime, engine);
+			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, aiService, settings, appCache, null);
 		}
 
 		[TestMethod]

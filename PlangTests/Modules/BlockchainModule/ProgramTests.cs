@@ -19,6 +19,7 @@ namespace PLangTests.Modules.BlockchainModule
 	[TestClass()]
 	public class ProgramTests : BasePLangTest
 	{
+		Program p;
 		[TestInitialize]
 		public void Init()
 		{
@@ -52,6 +53,8 @@ namespace PLangTests.Modules.BlockchainModule
 
 				settings.GetValues<Wallet>(typeof(ModuleSettings)).Returns(wallets);
 			}
+			p = new Program(settings, aiService, pseudoRuntime, engine, logger, context);
+			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, aiService, settings, appCache, null);
 		}
 
 		[TestMethod()]
@@ -66,7 +69,6 @@ namespace PLangTests.Modules.BlockchainModule
 			settings.GetValues<Wallet>(typeof(ModuleSettings)).Returns(wallets);
 
 
-			var p = new Program(settings, aiService, null, null, null);
 			var decimals = await p.GetBalanceInWei("0xe1e78247c06191089126fc8dd55e1bd383dc8f22");
 			Assert.AreNotEqual((uint)0, decimals);
 
@@ -85,7 +87,6 @@ namespace PLangTests.Modules.BlockchainModule
 			settings.GetValues<Wallet>(typeof(ModuleSettings)).Returns(wallets);
 
 
-			var p = new Program(settings, aiService, null, null, null);
 			var decimals = await p.GetBalanceToDecimalPoint("0xe1e78247c06191089126fc8dd55e1bd383dc8f22");
 			Assert.AreEqual(0.2M, decimals);
 
@@ -141,8 +142,7 @@ namespace PLangTests.Modules.BlockchainModule
 				settings.GetValues<RpcServer>(typeof(ModuleSettings)).Returns(rpcServers);
 			}
             context.AddOrReplace(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
-			var p = new Program(settings, aiService, pseudoRuntime, engine, null);
-            p.Init(container, null, null, null, null, null, null, null, null, null, null, null);
+			
             
 
 			BigInteger mintAmount = BigInteger.Parse("100") * BigInteger.Pow(10, 18);
@@ -182,9 +182,7 @@ namespace PLangTests.Modules.BlockchainModule
 			}
 			var goal = new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() };
 			
-			var p = new Program(settings, aiService, pseudoRuntime, engine, null);
-			p.Init(container, goal, null, null, null, null, null, null, null, null, null, null);
-
+			
 			await p.ListenToBlock("TransferGoal");
 
 
@@ -203,8 +201,7 @@ namespace PLangTests.Modules.BlockchainModule
 			settings.GetValues<Wallet>(typeof(ModuleSettings)).Returns(wallets);
 
 
-			var p = new Program(settings, aiService, null, null, null);
-			var decimals = await p.GetDecimal("0x4aB611f42DDF97D4DAc87d3EC290BAe959D5D9Be");
+				var decimals = await p.GetDecimal("0x4aB611f42DDF97D4DAc87d3EC290BAe959D5D9Be");
 			Assert.AreEqual((uint)18, decimals);
 
 			//

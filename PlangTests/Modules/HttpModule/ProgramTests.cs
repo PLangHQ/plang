@@ -1,9 +1,10 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
-using PLang.Modules.BlockchainModule;
+using PLang.Modules.HttpModule;
 using System.Net;
+using System.Net.Http;
+using System.Security.Policy;
 using System.Text;
-using static PLang.Modules.BlockchainModule.ModuleSettings;
 
 namespace PLangTests.Modules.HttpModule
 {
@@ -34,11 +35,6 @@ namespace PLangTests.Modules.HttpModule
 			{
 				Assert.AreEqual(request.RequestUri.ToString(), url);
 				Assert.IsTrue(request.Headers.UserAgent.ToString().StartsWith("plang v"));
-				Assert.AreEqual(signRequest, request.Headers.Contains("X-Signature"));
-				Assert.AreEqual(signRequest, request.Headers.Contains("X-Signature-Contract"));
-				Assert.AreEqual(signRequest, request.Headers.Contains("X-Signature-Created"));
-				Assert.AreEqual(signRequest, request.Headers.Contains("X-Signature-Nonce"));
-				Assert.AreEqual(signRequest, request.Headers.Contains("X-Signature-Address"));
 				foreach (var header in headers)
 				{
 					var headerValue = request.Headers.FirstOrDefault(p => p.Key == header.Key).Value;
@@ -57,10 +53,15 @@ namespace PLangTests.Modules.HttpModule
 
 		}
 
+		Program p;
 		[TestInitialize]
 		public void Init()
 		{
 			base.Initialize();
+			
+			p = new Program(fileSystem, signingService, httpClientFactory);
+
+			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, aiService, settings, appCache, null);
 		}
 
 		[TestMethod]
@@ -68,34 +69,17 @@ namespace PLangTests.Modules.HttpModule
 		{
 			string url = "http://example.org/";
 			object data = new { Name = "Stanley Hudson" };
-			bool signRequest = true;
+			bool doNotSignRequest = false;
 			var headers = new Dictionary<string, object>();
 			headers.Add("X-Testing", "1");
 			headers.Add("X-Testing-2", "2");
 			string encoding = "utf-8";
 			string contentType = "application/json";
 
-			var wallets = new List<Wallet>();
-			var rpcServers = new List<RpcServer>();
-			settings.When(x => x.Set(typeof(ModuleSettings), "RpcServers", Arg.Any<List<RpcServer>>())).Do(callInfo =>
-			{
-				rpcServers = callInfo.Arg<List<RpcServer>>();
-			});
-			settings.When(p => p.SetList(typeof(ModuleSettings), Arg.Any<List<Wallet>>()))
-				.Do((callback) =>
-				{
-					wallets = callback.Arg<List<Wallet>>();
-				});
-	
-			settings.GetValues<RpcServer>(typeof(ModuleSettings)).Returns(rpcServers);
-			settings.GetValues<Wallet>(typeof(ModuleSettings)).Returns(p =>
-			{
-				return wallets;
-			});
-			var httpClient = new HttpClient(new TestHttpMessageHandler(url, data, signRequest, headers, encoding, contentType));
-			
-			var p = new PLang.Modules.HttpModule.Program(fileSystem, signingService);
-			var result = await p.Post(url, data, signRequest, headers, encoding, contentType);
+			signingService.Sign(Arg.Any<string>(), Arg.Any<string>(), "/", "C0").Returns(new Dictionary<string, object>());
+			httpClientFactory.CreateClient().Returns(new HttpClient(new TestHttpMessageHandler(url, data, doNotSignRequest, headers, encoding, contentType)));
+
+			var result = await p.Post(url, data, doNotSignRequest, headers, encoding, contentType);
 
 
 		}

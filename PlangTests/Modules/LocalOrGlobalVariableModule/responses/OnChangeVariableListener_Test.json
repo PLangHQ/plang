@@ -1,0 +1,12 @@
+[
+  {
+    "stepText": "listen to change on variable 'name', call !Process name=%full_name%, %key%",
+    "response": "{\"FunctionName\": \"OnChangeVariableListener\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"key\", \"Value\": \"%key%\"},\n    {\"Type\": \"String\", \"Name\": \"goalName\", \"Value\": \"!Process\"},\n    {\"Type\": \"Dictionary`2<String, Object>\", \"Name\": \"parameters\", \"Value\": {\"name\": \"%full_name%\", \"key\": \"%key%\"}},\n    {\"Type\": \"Boolean\", \"Name\": \"waitForResponse\", \"Value\": true},\n    {\"Type\": \"Int32\", \"Name\": \"delayWhenNotWaitingInMilliseconds\", \"Value\": 50}\n],\n\"ReturnValue\": null}",
+    "created": "2024-02-05T10:04:13.799094+00:00"
+  },
+  {
+    "stepText": "listen to change on variable 'name', call !Process name=%full_name%, %phone%",
+    "response": "{\"FunctionName\": \"OnChangeVariableListener\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"key\", \"Value\": \"name\"},\n    {\"Type\": \"String\", \"Name\": \"goalName\", \"Value\": \"!Process\"},\n    {\"Type\": \"Boolean\", \"Name\": \"notifyWhenCreated\", \"Value\": true},\n    {\"Type\": \"Dictionary`2<String, Object>\", \"Name\": \"parameters\", \"Value\": {\"name\": \"%full_name%\", \"phone\": \"%phone%\"}},\n    {\"Type\": \"Boolean\", \"Name\": \"waitForResponse\", \"Value\": true},\n    {\"Type\": \"Int32\", \"Name\": \"delayWhenNotWaitingInMilliseconds\", \"Value\": 50}\n]}",
+    "created": "2024-02-05T10:07:36.2894894+00:00"
+  }
+]

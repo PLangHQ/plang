@@ -7,7 +7,12 @@ using System.Threading.Tasks;
 namespace PLangTests.Utils
 {
 	public static class AssertVar
-	{
+	{	
+		
+		public static void AreEqual(string expected, object actual)
+		{
+			AreEqual(expected, actual.ToString());
+		}
 		public static void AreEqual(string expected, string actual)
 		{
 			if (expected.StartsWith("%") && expected.EndsWith("%"))

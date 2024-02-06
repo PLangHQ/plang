@@ -12,6 +12,8 @@ namespace PLang.Building.Model
 		public double frequencyPenalty = 0;
 		public double presencePenalty = 0;
 		public int maxLength = 4000;
+		public string llmResponseType = "json";
+		public string? scheme = null;
 
 		[Newtonsoft.Json.JsonIgnore]
 [IgnoreDataMemberAttribute]

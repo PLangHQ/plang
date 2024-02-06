@@ -6,6 +6,7 @@ using NSubstitute;
 using PLang.Building.Model;
 using PLang.Interfaces;
 using PLang.Runtime;
+using PLang.Utils;
 using PLangTests;
 using PLangTests.Helpers;
 using PLangTests.Mocks;
@@ -70,9 +71,11 @@ namespace PLang.Building.Parsers.Tests
 			string start = PrReaderHelper.GetPrFileRaw("Start.pr");
 			string helloWorld = PrReaderHelper.GetPrFileRaw("HelloWorld.pr");
 			string someApp = PrReaderHelper.GetPrFileRaw("SomeApp.pr");
+			string todos = PrReaderHelper.GetPrFileRaw("ui/Todos.pr");
 
 			// this is build file belonging to the app user is creating
 			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, ISettings.GoalFileName), new MockFileData(start));
+			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "ui", "todos", ISettings.GoalFileName), new MockFileData(todos));
 
 			// apps that he has installed
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "SomeApp", ".build", ISettings.GoalFileName), new MockFileData(someApp));
@@ -80,16 +83,25 @@ namespace PLang.Building.Parsers.Tests
 
 			prParser.ForceLoadAllGoals();
 
-			var goal = prParser.GetGoalByAppAndGoalName(@"\", "Start.goal");
+			var goal = prParser.GetGoalByAppAndGoalName(Path.DirectorySeparatorChar.ToString(), "Start.goal");
 			Assert.IsNotNull(goal);
 
+			goal = prParser.GetGoalByAppAndGoalName(Path.DirectorySeparatorChar.ToString(), "Start");
+			Assert.IsNotNull(goal);
+
+			var todoGoal = prParser.GetGoalByAppAndGoalName(Path.DirectorySeparatorChar.ToString(), "Todos");
+			Assert.IsNotNull(todoGoal);
+
+			todoGoal = prParser.GetGoalByAppAndGoalName(Path.DirectorySeparatorChar.ToString(), "ui/todos");
+			Assert.IsNotNull(todoGoal);
 
 			var goals = prParser.GetAllGoals();
 
-			var goal2 = prParser.GetGoalByAppAndGoalName(@"\", "SomeApp/SomeApp", goal);
+			var goal2 = prParser.GetGoalByAppAndGoalName(Path.DirectorySeparatorChar.ToString(), "apps/SomeApp/SomeApp", goal);
 			Assert.IsNotNull(goal2);
 
-
+			var goal3 = prParser.GetGoalByAppAndGoalName("/apps/SomeApp".AdjustPathToOs(), "apps/SomeApp/SomeApp", goal);
+			Assert.IsNotNull(goal3);
 
 		}
 

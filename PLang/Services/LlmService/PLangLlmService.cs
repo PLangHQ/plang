@@ -43,7 +43,8 @@ namespace PLang.Services.LlmService
 		}
 		public virtual async Task<object?> Query(LlmRequest question, Type responseType, int errorCount = 0)
 		{
-			
+			SetExtractor(question);
+
 			var cachedLlmQuestion = cacheHelper.GetCachedQuestion(question);
 			if (!question.Reload && question.caching && cachedLlmQuestion != null)
 			{
@@ -110,6 +111,28 @@ namespace PLang.Services.LlmService
 			throw new HttpRequestException(responseBody, null, response.StatusCode);
 
 
+		}
+
+		private void SetExtractor(LlmRequest question)
+		{
+			if (question.llmResponseType == "text")
+			{
+				Extractor = new TextExtractor();
+			}
+			else if (question.llmResponseType == "json" || !string.IsNullOrEmpty(question.scheme))
+			{
+				var systemMessage = question.promptMessage.FirstOrDefault(p => p.role == "system");
+				if (systemMessage == null)
+				{
+					systemMessage = new Message() { role = "system", content = new() };
+				}
+				systemMessage.content.Add(new Content() { text = $"You MUST respond in JSON, scheme: {question.scheme}" });
+				Extractor = new JsonExtractor();
+			}
+			else
+			{
+				Extractor = new GenericExtractor(question.llmResponseType);
+			}
 		}
 
 		private void ShowCosts(HttpResponseMessage response)
@@ -282,7 +305,9 @@ namespace PLang.Services.LlmService
 			}
 
 			LlmRequest llmRequest = new LlmRequest(question.type, promptMessage, question.model, question.caching);
-			return await Query(llmRequest, responseType);
+			var response = await Query(llmRequest, responseType);
+			question.RawResponse = llmRequest.RawResponse;
+			return response;
 
 		}
 	}

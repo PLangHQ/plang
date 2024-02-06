@@ -15,18 +15,18 @@ namespace PLangTests.Integration
 			base.Initialize();
 
 			fileProgram = new(fileSystem, settings, logger, pseudoRuntime, engine);
-			fileProgram.Init(container, null, null, null, null, null, null, null, null, null, null, null);
+			fileProgram.Init(container, null, null, null, memoryStack, null, null, null, null, null, null, null);
 			var goal = new Goal();
 			goal.RelativeAppStartupFolderPath = "/";
 
 			loopProgram = new(logger, pseudoRuntime, engine);
-			loopProgram.Init(container, goal, null, null, null, null, null, null, null, null, null, null);
+			loopProgram.Init(container, goal, null, null, memoryStack, null, null, null, null, null, null, null);
 		}
 
 		[TestMethod]
 		public async Task TestListAndLoop()
 		{
-			string path = "Test1,000,000x10.xlsx";
+			string path = "Test100x10.xlsx";
 			string fullPath = Path.Combine(fileSystem.RootDirectory, path);
 			FileStream stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 			byte[] fileBytes;

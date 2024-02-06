@@ -4,9 +4,12 @@ using NSubstitute;
 using PLang.Building.Model;
 using PLang.Interfaces;
 using PLang.Modules.LlmModule;
+using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Services.LlmService;
 using PLang.Utils;
+using System.Reflection;
+using static PLang.Modules.BaseBuilder;
 
 namespace PLangTests.Modules.LlmModule
 {
@@ -14,58 +17,62 @@ namespace PLangTests.Modules.LlmModule
 	public class ProgramTests : BasePLangTest
 	{
 		Program p;
+		MemoryStack memoryStack;
 		[TestInitialize]
 		public void Init()
 		{
 			base.Initialize();
-			
-		}
-
-		private void RealOpenAIService()
-		{
-			settings.Get(typeof(PLangLlmService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var aiService = new PLangLlmService(cacheHelper, outputStream, signingService, logger);
-
-			typeHelper = new TypeHelper(fileSystem, settings);
-			p = new Program(aiService);
-
+			memoryStack = new MemoryStack(pseudoRuntime, engine, settings, context);
 		}
 
 
 		private void SetupResponse(string response)
 		{
-			var aiService = Substitute.For<ILlmService>();
-			aiService.Query<string>(Arg.Any<LlmQuestion>()).Returns(p => {
+			aiService.Query<object>(Arg.Any<LlmRequest>()).Returns(p =>
+			{
 				return response;
 			});
 
 			p = new Program(aiService);
+			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, aiService, settings, appCache, null);
 		}
 
 		[TestMethod]
 		public async Task AskLlm()
 		{
-			//RealOpenAIService();
-			SetupResponse("{\"sentiment\":\"positive\"}");
-			/*
-			await p.AskLlm2("determine sentiment of user input. ", "", "This is awesome", "{sentiment:negative|neutral|positive}");
-			Assert.AreEqual("positive", memoryStack.Get("sentiment"));
-			*/
+			List<PLangLlmService.Message> messages = new();
+			string scheme = null;
+			string model = "gpt-4-test";
+			double temperature = 0;
+			double topP = 0;
+			double frequencyPenalty = 0;
+			double presencePenalty = 0;
+			int maxLength = 4000;
+			bool cacheResponse = true;
+			string llmResponseType = "markup";
+
+			SetupResponse(@"Hello world");
+
+			var propertyInfo = typeof(Program).GetField("function", BindingFlags.NonPublic | BindingFlags.Instance);
+
+			if (propertyInfo != null)
+			{
+				var rf = new List<ReturnValue>()
+				{
+					new ReturnValue("string", "markup")
+				};
+				var gf = new GenericFunction("AskLlm", new(), rf);
+				propertyInfo.SetValue(p, gf); // Replace 'valueToSet' with the actual value you want to set
+			}
+
+			await p.AskLlm(messages, scheme, model, temperature, topP, frequencyPenalty, presencePenalty, maxLength, cacheResponse, llmResponseType);
+			string markup = memoryStack.Get("markup").ToString();
+
+			Assert.AreEqual("Hello world", markup);
+
 
 		}
 
-		[TestMethod]
-		public async Task AskLlm_WriteToVariables()
-		{
-			//RealOpenAIService();
-			SetupResponse(@"{""firstName"":""Darryl"", ""lastName"":""Philbin"" }");
-			/*
-			await p.AskLlm("Find first and last name", "", "Darryl Philbin", "{firstName:string, lastName:string}");
-			Assert.AreEqual("Darryl", memoryStack.Get("firstName"));
-			Assert.AreEqual("Philbin", memoryStack.Get("lastName"));
-			*/
-
-		}
 
 	}
 }

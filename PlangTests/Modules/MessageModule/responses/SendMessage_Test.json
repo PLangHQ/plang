@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "Send message to %key%, %message%",
+    "response": "{\"FunctionName\": \"SendPrivateMessage\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"content\",\n\"Value\": \"%message%\"},\n{\"Type\": \"String\",\n\"Name\": \"npubReceiverPublicKey\",\n\"Value\": \"%key%\"}],\n\"ReturnValue\": null}",
+    "created": "2024-02-05T10:15:24.6735643+00:00"
+  }
+]

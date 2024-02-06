@@ -7,6 +7,7 @@ using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Interfaces;
 using PLang.Runtime;
+using PLang.Services.AppsRepository;
 using PLang.Services.CachingService;
 using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
@@ -49,6 +50,8 @@ namespace PLangTests
 		protected IAppCache appCache;
 		protected IPLangIdentityService identityService;
 		protected IPLangSigningService signingService;
+		protected IPLangAppsRepository appsRepository;
+		protected IHttpClientFactory httpClientFactory;
 		protected void Initialize()
 		{
 
@@ -105,10 +108,14 @@ namespace PLangTests
 			outputStream = Substitute.For<IOutputStream>();
 			container.RegisterInstance(outputStream);
 
-
+			httpClientFactory = Substitute.For<IHttpClientFactory>();
+			container.RegisterInstance(httpClientFactory);
 
 			encryption = Substitute.For<IEncryption>();
 			container.RegisterInstance(encryption);
+
+			appsRepository = Substitute.For<IPLangAppsRepository>();
+			container.RegisterInstance(appsRepository);
 
 			engine = Substitute.For<IEngine>();
 			container.RegisterInstance(engine);

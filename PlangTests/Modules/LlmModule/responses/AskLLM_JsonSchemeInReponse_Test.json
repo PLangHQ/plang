@@ -1,7 +1,7 @@
 [
   {
     "stepText": "system: determine sentiment of user input. \nuser:This is awesome, scheme: {sentiment:negative|neutral|positive}",
-    "response": "{\"FunctionName\": \"AskLlm\",\n\"Parameters\": [\n    {\"Type\": \"string\", \"Name\": \"system\", \"Value\": \"determine sentiment of user input.\"},\n    {\"Type\": \"string\", \"Name\": \"user\", \"Value\": \"This is awesome\"},\n    {\"Type\": \"string\", \"Name\": \"scheme\", \"Value\": \"{sentiment:negative|neutral|positive}\"},\n    {\"Type\": \"string\", \"Name\": \"llmResponseType\", \"Value\": \"json\"}\n],\n\"ReturnValue\": null}",
-    "created": "2024-01-04T09:37:03.8449768+00:00"
+    "response": "{\n  \"FunctionName\": \"AskLlm\",\n  \"Parameters\": [\n    {\n      \"Type\": \"List<Message>\",\n      \"Name\": \"promptMessages\",\n      \"Value\": [\n        {\n          \"role\": \"system\",\n          \"content\": [\n            {\n              \"type\": \"text\",\n              \"text\": \"determine sentiment of user input.\"\n            }\n          ]\n        },\n        {\n          \"role\": \"user\",\n          \"content\": [\n            {\n              \"type\": \"text\",\n              \"text\": \"This is awesome\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"scheme\",\n      \"Value\": \"{sentiment:negative|neutral|positive}\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"model\",\n      \"Value\": \"gpt-4\"\n    }\n  ],\n  \"ReturnValue\": null\n}",
+    "created": "2024-02-05T09:51:52.4036449+00:00"
   }
 ]

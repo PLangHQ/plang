@@ -1,7 +1,7 @@
 [
   {
     "stepText": "system: get first name and last name from user request. \nuser:Andy Bernard, write to %firstName%, %lastName%",
-    "response": "{\"FunctionName\": \"AskLlm\",\n\"Parameters\": [\n    {\"Type\": \"string\", \"Name\": \"system\", \"Value\": \"get first name and last name from user request.\"},\n    {\"Type\": \"string\", \"Name\": \"user\", \"Value\": \"Andy Bernard\"}\n],\n\"ReturnValue\": [\n    {\"Type\": \"string\", \"VariableName\": \"firstName\"},\n    {\"Type\": \"string\", \"VariableName\": \"lastName\"}\n]}",
-    "created": "2024-01-04T09:39:28.0519674+00:00"
+    "response": "{\n  \"FunctionName\": \"AskLlm\",\n  \"Parameters\": [\n    {\n      \"Type\": \"List<Message>\",\n      \"Name\": \"promptMessages\",\n      \"Value\": [\n        {\n          \"role\": \"system\",\n          \"content\": [\n            {\n              \"type\": \"text\",\n              \"text\": \"get first name and last name from user request.\"\n            }\n          ]\n        },\n        {\n          \"role\": \"user\",\n          \"content\": [\n            {\n              \"type\": \"text\",\n              \"text\": \"Andy Bernard\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"scheme\",\n      \"Value\": \"{firstName:string, lastName:string}\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"model\",\n      \"Value\": \"gpt-4\"\n    }\n  ],\n  \"ReturnValue\": [\n    {\n      \"Type\": \"string\",\n      \"VariableName\": \"%firstName%\"\n    },\n    {\n      \"Type\": \"string\",\n      \"VariableName\": \"%lastName%\"\n    }\n  ]\n}",
+    "created": "2024-02-05T09:52:15.6928946+00:00"
   }
 ]

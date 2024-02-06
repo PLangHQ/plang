@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "set static 'name' as %name%",
+    "response": "{\"FunctionName\": \"SetStaticVariable\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"key\",\n\"Value\": \"name\"},\n{\"Type\": \"Object\",\n\"Name\": \"value\",\n\"Value\": \"%name%\"}],\n\"ReturnValue\": null}",
+    "created": "2024-02-05T10:02:42.8729353+00:00"
+  }
+]

@@ -352,7 +352,7 @@ namespace PLang.Utils
 		public static bool IsVariable(object variable)
 		{
 			if (variable == null || string.IsNullOrEmpty(variable.ToString())) return false;
-			return Regex.IsMatch(variable.ToString()!, @"^%[a-zA-Z0-9\[\]_\.\+]*%$");
+			return Regex.IsMatch(variable.ToString()!, @"^%[a-zA-Z0-9\[\]_\.\+\(\)]*%$");
 		}
 
 		public static bool IsSetting(string variableName)
@@ -360,7 +360,7 @@ namespace PLang.Utils
 			return variableName.StartsWith("Setting.") || variableName.StartsWith("%Setting.");
 		}
 
-		internal ObjectValue? GetObjectValue(string? variableName, bool staticVariable)
+		internal ObjectValue GetObjectValue(string? variableName, bool staticVariable)
 		{
 			if (variableName == null) return null;
 			if (IsSetting(variableName))

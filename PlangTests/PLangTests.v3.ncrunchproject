@@ -1,165 +1,40 @@
 ﻿<ProjectConfiguration>
   <Settings>
+    <FrameworkUtilisationTypeForMSTest>UseDynamicAnalysis</FrameworkUtilisationTypeForMSTest>
     <HiddenComponentWarnings />
     <IgnoredTests>
       <FixtureTestSelector>
         <FixtureName>PLangTests.Modules.SeleniumModule.ProgramTests</FixtureName>
       </FixtureTestSelector>
-      <NamedTestSelector>
-        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.Transfer_Test (4609791680715163980)</TestName>
-      </NamedTestSelector>
       <FixtureTestSelector>
         <FixtureName>PLangTests.Modules.ScheduleModule.ProgramTests</FixtureName>
       </FixtureTestSelector>
       <FixtureTestSelector>
         <FixtureName>PLangTests.Modules.PythonModule.ProgramTests</FixtureName>
       </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLangTests.Modules.OutputModule.ProgramTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLangTests.Modules.MessageModule.ProgramTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLangTests.Modules.MessageModule.ModuleSettingsTest</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLangTests.Modules.LoopModule.ProgramTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLangTests.Modules.LlmModule.ProgramTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLangTests.Modules.HttpModule.ProgramTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLangTests.Modules.FileModule.ProgramTests</FixtureName>
-      </FixtureTestSelector>
+      <NamedTestSelector>
+        <TestName>PLangTests.Modules.LlmModule.ProgramTests.AskLlm_WriteToVariables</TestName>
+      </NamedTestSelector>
       <FixtureTestSelector>
         <FixtureName>PLangTests.Modules.DbModule.ProgramTest</FixtureName>
       </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLangTests.Modules.CultureInfoModule.ProgramTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLangTests.Modules.CryptographicModule.ProgramTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLangTests.Modules.CompressionModule.ProgramTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLangTests.Modules.CallGoalModule.ProgramTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLangTests.Modules.CachingModule.ProgramTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLangTests.Modules.BlockchainModule.ProgramTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLangTests.LinqConditionTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLangTests.Integration.ListAndLoopTest</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Utils.Tests.VariableHelperTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Utils.Tests.TypeHelperTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Utils.Tests.StringHelperTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Utils.Tests.MethodHelperTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Utils.Tests.JsonHelperTests</FixtureName>
-      </FixtureTestSelector>
+      <NamedTestSelector>
+        <TestName>PLangTests.Modules.BlockchainModule.ProgramTests.CallFunction_Test</TestName>
+      </NamedTestSelector>
       <FixtureTestSelector>
         <FixtureName>PLang.Utils.Tests.HttpHelperTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Utils.Tests.DateTimeExtensionTests</FixtureName>
       </FixtureTestSelector>
       <FixtureTestSelector>
         <FixtureName>PLang.Utils.Tests.CacheHelperTests</FixtureName>
       </FixtureTestSelector>
       <FixtureTestSelector>
-        <FixtureName>PLang.Utils.Extractors.Tests.JsonExtractorTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Runtime.Tests.PseudoRuntimeTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Runtime.Tests.EngineTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Repository.Tests.SqliteSettingsRepositoryTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.WebserverModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
         <FixtureName>PLang.Modules.SeleniumModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.ScheduleModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.PythonModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.OutputModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.MessageModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.LoopModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.LocalOrGlobalVariableModule.Tests.BuilderTests</FixtureName>
       </FixtureTestSelector>
       <NamedTestSelector>
         <TestName>PLang.Modules.ListDictionaryModule.Tests.BuilderTests.AddToDictionary_Test (3954079681493669255)</TestName>
       </NamedTestSelector>
       <NamedTestSelector>
-        <TestName>PLang.Modules.DbModule.Tests.BuilderTests.BeginTransaction_Test (18406868645524288623)</TestName>
-      </NamedTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.BlockchainModule.Tests.ModuleSettingsTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Building.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <NamedTestSelector>
-        <TestName>PLang.Building.Parsers.Tests.PrParserTests.ParsePrFile_NullGoalTest</TestName>
-      </NamedTestSelector>
-      <NamedTestSelector>
         <TestName>PLang.Modules.CompressionModule.Tests.BuilderTests.CompressDir_Test (10248605234983889722)</TestName>
-      </NamedTestSelector>
-      <NamedTestSelector>
-        <TestName>PLang.Modules.DbModule.Tests.BuilderTests.Delete_Test (17014146512023230871)</TestName>
-      </NamedTestSelector>
-      <NamedTestSelector>
-        <TestName>PLang.Modules.DbModule.Tests.BuilderTests.EndTransaction_Test (8941263171547931015)</TestName>
-      </NamedTestSelector>
-      <NamedTestSelector>
-        <TestName>PLang.Modules.DbModule.Tests.BuilderTests.Insert_Test (11364697645693467237)</TestName>
-      </NamedTestSelector>
-      <NamedTestSelector>
-        <TestName>PLang.Modules.DbModule.Tests.BuilderTests.InsertAndSelectId_Test (3671259360967118269)</TestName>
-      </NamedTestSelector>
-      <NamedTestSelector>
-        <TestName>PLang.Modules.DbModule.Tests.BuilderTests.Select_Test (356300087015231612)</TestName>
-      </NamedTestSelector>
-      <NamedTestSelector>
-        <TestName>PLang.Modules.DbModule.Tests.BuilderTests.Update_Test (18187191963032715332)</TestName>
-      </NamedTestSelector>
-      <NamedTestSelector>
-        <TestName>PLang.Modules.DbModule.Tests.BuilderTests.SetDataSouceName_Test (18072990088768911052)</TestName>
       </NamedTestSelector>
       <NamedTestSelector>
         <TestName>PLang.Modules.ListDictionaryModule.Tests.BuilderTests.AddToList_Test (13964603655912831026)</TestName>
@@ -176,56 +51,74 @@
       <NamedTestSelector>
         <TestName>PLang.Modules.ListDictionaryModule.Tests.BuilderTests.GetDictionary_Test (7781740190198366092)</TestName>
       </NamedTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.BlockchainModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.CachingModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.CallGoalModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.CompressionModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.CryptographicModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.CultureInfoModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.DbModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.FileModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.HttpModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.ListDictionaryModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.LlmModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Modules.WebCrawlerModule.Tests.BuilderTests</FixtureName>
-      </FixtureTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.CallFunction (12529105401430407800)</TestName>
+      </NamedTestSelector>
       <FixtureTestSelector>
         <FixtureName>PLangTests.Modules.WebCrawlerModule.ProgramTests</FixtureName>
       </FixtureTestSelector>
       <NamedTestSelector>
-        <TestName>PLang.Building.Parsers.Tests.PrParserTests.ParseInstructionFile_NewInstructionTest</TestName>
+        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.GetBalanceToDecimalPoint_Test (12529105401430407800)</TestName>
       </NamedTestSelector>
       <NamedTestSelector>
-        <TestName>PLang.Building.Parsers.Tests.PrParserTests.LoadAllGoals_LoadAndFilterTest</TestName>
+        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.GetCurrentRpcServer_Test (12529105401430407800)</TestName>
       </NamedTestSelector>
       <NamedTestSelector>
-        <TestName>PLang.Building.Parsers.Tests.PrParserTests.GetApps_Test</TestName>
+        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.GetDecimal_Test (12529105401430407800)</TestName>
       </NamedTestSelector>
       <NamedTestSelector>
-        <TestName>PLang.Building.Parsers.Tests.PrParserTests.GetAllGoals_ExistingGoalsTest</TestName>
+        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.GetOrCreateWallet_Test (12529105401430407800)</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.GetWallets_Test (12529105401430407800)</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.SendTransaction_Test (12529105401430407800)</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.SetAddress_Test (12529105401430407800)</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.SetCurrentRpcServer_Test (12529105401430407800)</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.SetCurrentWallet_Test (12529105401430407800)</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.SignMessage_Test (12529105401430407800)</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.Transfer_Test (12529105401430407800)</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.TransferErc20_Test (12529105401430407800)</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.VerifySignature_Test (12529105401430407800)</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Tests.BuilderTests.StartTest</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.GetBalanceInWei_Test (12529105401430407800)</TestName>
+      </NamedTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.DbModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <NamedTestSelector>
+        <TestName>PLangTests.Modules.BlockchainModule.ProgramTests.GetBalance</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLangTests.Modules.BlockchainModule.ProgramTests.GetBalanceInWei</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLangTests.Modules.BlockchainModule.ProgramTests.GetDecimal</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLangTests.Modules.BlockchainModule.ProgramTests.ListenToBlockEvent</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLangTests.Modules.BlockchainModule.ProgramTests.ListenToTranferContractEvent</TestName>
       </NamedTestSelector>
     </IgnoredTests>
   </Settings>

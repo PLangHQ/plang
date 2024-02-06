@@ -16,6 +16,7 @@ using PLang.Modules;
 using PLang.Modules.MessageModule;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
+using PLang.Services.AppsRepository;
 using PLang.Services.ArchiveService;
 using PLang.Services.CachingService;
 using PLang.Services.EncryptionService;
@@ -168,6 +169,9 @@ namespace PLang.Utils
 			container.Register<SettingsBuilder, SettingsBuilder>();
 			container.Register<CacheHelper, CacheHelper>();
 			container.Register<VariableHelper, VariableHelper>();
+
+			container.Register<IPLangAppsRepository, PLangAppsRepository>();
+			container.Register<IHttpClientFactory, SimpleHttpClientFactory>();
 
 			container.RegisterSingleton<INostrClient>(factory =>
 			{

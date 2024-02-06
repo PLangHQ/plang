@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "get cache-control header, write to %cacheControl%",
+    "response": "{\"FunctionName\": \"GetRequestHeader\",\n\"Parameters\": [{\"Type\": \"string\",\n\"Name\": \"key\",\n\"Value\": \"cache-control\"}],\n\"ReturnValue\": [{\"Type\": \"string\",\n\"VariableName\": \"cacheControl\"}]}",
+    "created": "2024-02-05T10:34:45.0346442+00:00"
+  }
+]

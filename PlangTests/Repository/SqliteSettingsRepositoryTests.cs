@@ -16,6 +16,7 @@ namespace PLang.Repository.Tests
 		public void Init()
 		{
 			base.Initialize();
+			context.AddOrReplace(ReservedKeywords.Salt, "123");
 		}
 
 
@@ -69,13 +70,18 @@ namespace PLang.Repository.Tests
 
 			Assert.IsNotNull(context[ReservedKeywords.Salt]);
 
-			var settings = settingsRepository.GetSettings().Where(p => p.ValueType == "DunderMifflin");
+			var settings = settingsRepository.GetSettings().Where(p => p.ClassOwnerFullName == classType);
 			foreach (var setting in settings)
 			{
 				settingsRepository.Remove(setting);
 			}
 			List<DunderMifflin> list = new List<DunderMifflin>();
 			list.Add(value);
+			DateTime now = DateTime.Now;
+			SystemTime.Now = () =>
+			{
+				return now;
+			};
 
 			var setting2 = new Setting(appId, classType, typeof(string).Name, key, JsonConvert.SerializeObject(list));
 			settingsRepository.Set(setting2);

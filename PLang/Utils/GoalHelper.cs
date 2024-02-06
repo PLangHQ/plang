@@ -3,7 +3,7 @@ using PLang.Interfaces;
 
 namespace PLang.Utils
 {
-	public class GoalFiles
+	public class GoalHelper
 	{
 		public static bool IsSetup(string rootDirectory, string fileName)
 		{
@@ -51,37 +51,39 @@ namespace PLang.Utils
 
 
 			return orderedFiles;
+		}
 
-			/*
 
-			List<string> files = new List<string>();
-			for (int i = 0; i < goalFiles.Count; i++)
+		public static string GetAppName(string goalToRun)
+		{
+			// apps/MyApp/Start.goal => MyApp
+			goalToRun = goalToRun.AdjustPathToOs().TrimStart(Path.DirectorySeparatorChar);
+
+			string appName = goalToRun.Substring(goalToRun.IndexOf(Path.DirectorySeparatorChar) + 1);
+			if (appName.Contains(Path.DirectorySeparatorChar))
 			{
-				var filePath = goalFiles[i].Replace(goalPath, "");
-				string[] dirsToExclude = new string[] { "apps", "modules", ".build", ".deploy", ".db" };
-
-				int insertIndex = files.Count;
-				if (Path.GetFileName(filePath).ToLower() == "setup.goal")
-				{
-					insertIndex = 0;
-				}
-
-				int idx = filePath.Remove(0, 1).IndexOf(Path.DirectorySeparatorChar);
-				if (idx != -1 && idx != 0)
-				{
-					string baseFolderName = filePath.Substring(1, idx);
-
-					if (dirsToExclude.FirstOrDefault(p => p == baseFolderName) == null)
-					{
-						files.Insert(insertIndex, goalFiles[i]);
-					}
-				}
-				else
-				{
-					files.Insert(insertIndex, goalFiles[i]);
-				}
+				appName = appName.Substring(0, appName.IndexOf(Path.DirectorySeparatorChar));
 			}
-			return files;*/
+			return appName;
+		}
+
+		public static string GetGoalPath(string goalToRun)
+		{
+			// apps/MyApp/ => Start
+			// apps/MyApp/Start => Start
+			// apps/MyApp/Process => Process
+			// apps/MyApp/Process/MoreStuff => Process/MoreStuff
+
+			goalToRun = goalToRun.AdjustPathToOs().TrimStart(Path.DirectorySeparatorChar);
+			var appName = GetAppName(goalToRun);
+
+			string goalPath = goalToRun.Substring(goalToRun.IndexOf(appName) + appName.Length).TrimStart(Path.DirectorySeparatorChar).TrimEnd(Path.DirectorySeparatorChar);
+			if (string.IsNullOrEmpty(goalPath))
+			{
+				return "Start";
+			}
+
+			return goalPath;
 		}
 	}
 }

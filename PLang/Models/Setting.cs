@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using PLang.Utils;
 
 namespace PLang.Models
 {
@@ -12,7 +13,7 @@ namespace PLang.Models
 			this.Key = Key;
 			this.Value = Value;
 			this.SignatureData = (string.IsNullOrEmpty(SignatureData)) ? [] : JsonConvert.DeserializeObject<Dictionary<string, object>>(SignatureData) ?? [];
-			this.Created = Created ?? DateTimeOffset.UtcNow.DateTime;
+			this.Created = Created ?? SystemTime.Now();
 		}
 
 		public Setting(string AppId, string ClassOwnerFullName, string ValueType, string Key, string Value, Dictionary<string, object> SignatureData, DateTime? Created = null)
@@ -23,7 +24,7 @@ namespace PLang.Models
 			this.Key = Key;
 			this.Value = Value;
 			this.SignatureData = SignatureData;
-			this.Created = Created ?? DateTimeOffset.UtcNow.DateTime;
+			this.Created = Created ?? SystemTime.Now();
 		}
 
 

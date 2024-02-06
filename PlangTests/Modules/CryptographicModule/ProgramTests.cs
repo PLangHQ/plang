@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using PLang.Modules.CryptographicModule;
+using PLang.Utils;
 using static PLang.Modules.CryptographicModule.ModuleSettings;
 
 namespace PLangTests.Modules.CryptographicModule
@@ -8,18 +9,22 @@ namespace PLangTests.Modules.CryptographicModule
 	[TestClass]
 	public class ProgramTests : BasePLangTest
 	{
+		Program p;
 
 		[TestInitialize] 
 		public void Init() {
 			base.Initialize();
+
+			context.AddOrReplace(ReservedKeywords.Salt, "123");
+			p = new Program(settings, encryption);
+			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, aiService, settings, appCache, null);
 		}
 
 		[TestMethod]
 		public async Task HashUsing_And_VerifyHash_Test()
 		{
 			string password = "jfkla;sjfikwopefakl;asdf";
-
-			var p = new Program(settings, encryption);
+			
 			var hash = await p.HashInput(password);
 
 			var result = await p.VerifyHashedValues(password, hash);
@@ -30,7 +35,6 @@ namespace PLangTests.Modules.CryptographicModule
 		{
 			string password = "jfkla;sjfikwopefakl;asdf";
 
-			var p = new Program(settings, encryption);
 			var hash = await p.HashInput(password, false);
 
 			var result = await p.VerifyHashedValues(password, hash, useSalt: false);
@@ -42,12 +46,10 @@ namespace PLangTests.Modules.CryptographicModule
 		public async Task HashUsing_And_VerifyHash_WithFixedSalt_Test()
 		{
 			string password = "jfkla;sjfikwopefakl;asdf";
-
-			var p = new Program(settings, encryption);
 			var salt = BCrypt.Net.BCrypt.GenerateSalt();
-			var hash = await p.HashInput(password, true, salt);
+			var hash = await p.HashInput(password, true, salt, "bcrypt");
 
-			var result = await p.VerifyHashedValues(password, hash);
+			var result = await p.VerifyHashedValues(password, hash, "bcrypt");
 			Assert.IsTrue(result);
 		}
 
@@ -59,7 +61,7 @@ namespace PLangTests.Modules.CryptographicModule
 				new BearerSecret("Default", "wGl3A42CAMGEvsy5T11Jv7JqXKCLRsa5BJlPFZ1x2TI="),
 				new BearerSecret("Default2", "2")
 			});
-			var p = new Program(settings, encryption);
+
 			await p.SetCurrentBearerToken("Default2");
 			var bearerSecret = await p.GetBearerSecret();
 			Assert.AreEqual("2", bearerSecret);
@@ -73,12 +75,6 @@ namespace PLangTests.Modules.CryptographicModule
 			{
 				new BearerSecret("Default", "wGl3A42CAMGEvsy5T11Jv7JqXKCLRsa5BJlPFZ1x2TI=")
 			});
-			/*
-			var moduleSettings = new ModuleSettings(settings);
-			moduleSettings.GenerateNewBearerSecretKey();
-			*/
-
-			var p = new Program(settings, encryption);
 			var token = await p.GenerateBearerToken("email@example.org");
 			var result = await p.ValidateBearerToken(token);
 

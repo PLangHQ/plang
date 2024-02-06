@@ -129,7 +129,7 @@ namespace PLang.Utils.Tests
 			Assert.AreEqual("Hello world", dict["stuff"]);
 			Assert.AreEqual("Hello plang", dict["stuff2"]);
 			Assert.AreEqual("This is it mega", dict["stuff3"]);
-			Assert.AreEqual("This is { GoalObject = True }", dict["goal"]);
+			Assert.AreEqual("This is {  \"GoalObject\": true}", dict["goal"].ToString().Replace("\n", "").Replace("\r", ""));
 		}
 	}
 }

@@ -1,7 +1,7 @@
 [
   {
     "stepText": "remove %item% from '%producDict%' dictionay",
-    "response": "{\"FunctionName\": \"DeleteKeyFromDictionary\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"key\",\n\"Value\": \"%item%\"},\n{\"Type\": \"Dictionary`2<String, Object>\",\n\"Name\": \"dictionary\",\n\"Value\": \"%producDict%\"}]}",
-    "created": "2024-01-04T09:23:29.7606028+00:00"
+    "response": "{\"FunctionName\": \"DeleteKeyFromDictionary\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"key\",\n\"Value\": \"%item%\"},\n{\"Type\": \"Dictionary`2<String, Object>\",\n\"Name\": \"dictionary\",\n\"Value\": \"%producDict%\"}],\n\"ReturnValue\": null}",
+    "created": "2024-02-05T09:48:00.6865258+00:00"
   }
 ]

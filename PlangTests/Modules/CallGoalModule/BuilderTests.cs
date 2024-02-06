@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using NSubstitute;
+using PLang.Building.Model;
 using PLang.Services.OpenAi;
 using PLang.Utils;
 using PLangTests;
@@ -37,6 +38,13 @@ namespace PLang.Modules.CallGoalModule.Tests
 			builder = new Builder();
 			builder.InitBaseBuilder("PLang.Modules.CallGoalModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
+		public GoalStep GetStep(string text)
+		{
+			var step = new Building.Model.GoalStep();
+			step.Text = text;
+			step.ModuleType = "PLang.Modules.CallGoalModule";
+			return step;
+		}
 
 		[DataTestMethod]
 		[DataRow("call !Process.Image name=%full_name%, %address%")]
@@ -44,8 +52,7 @@ namespace PLang.Modules.CallGoalModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;			
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -69,8 +76,7 @@ namespace PLang.Modules.CallGoalModule.Tests
 		public async Task RunGoal2_Test(string text)
 		{
 			SetupResponse(text);
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;

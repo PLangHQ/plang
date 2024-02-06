@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "Set current account to Default",
+    "response": "{\"FunctionName\": \"SetCurrentAccount\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"publicKeyOrName\",\n\"Value\": \"Default\"}],\n\"ReturnValue\": null}",
+    "created": "2024-02-05T10:14:56.1982492+00:00"
+  }
+]

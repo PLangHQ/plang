@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
+using Nethereum.Hex.HexTypes;
 using Nethereum.JsonRpc.Client;
 using Nethereum.JsonRpc.WebSocketClient;
 using Nethereum.JsonRpc.WebSocketStreamingClient;
@@ -45,20 +46,21 @@ namespace PLang.Modules.BlockchainModule
 		public static readonly string CurrentRpcServerContextKey = "PLang.Modules.BlockchainModule.ModuleSettings.CurrentRpcServer";
 
 		public Program(ISettings settings, ILlmService aiService, 
-			IPseudoRuntime pseudoRuntime, IEngine engine, ILogger logger) : base()
+			IPseudoRuntime pseudoRuntime, IEngine engine, ILogger logger,PLangAppContext context) : base()
 		{
 			this.settings = settings;
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
 			this.logger = logger;
+			this.context = context;
 			this.moduleSettings = new ModuleSettings(settings, aiService);
 
 			var rpcServer = _GetCurrentRpcServer();
 			var wallet = GetCurrentWallet();
-			this.web3 = new Web3(getAccount(wallet, rpcServer.ChainId), new WebSocketClient(rpcServer.Url));
+			this.web3 = new Web3(GetAccount(wallet, rpcServer.ChainId), new WebSocketClient(rpcServer.Url));
 		}
 
-		private IAccount getAccount(Wallet wallet, int chainId)
+		private IAccount GetAccount(Wallet wallet, int chainId)
 		{
 			if (!string.IsNullOrEmpty(wallet.PrivateKey))
 			{
@@ -120,7 +122,7 @@ namespace PLang.Modules.BlockchainModule
 			}
 
 			var wallet = GetCurrentWallet();
-			var web3 = new Web3(getAccount(wallet, rpcServer.ChainId), new WebSocketClient(rpcServer.Url));
+			var web3 = new Web3(GetAccount(wallet, rpcServer.ChainId), new WebSocketClient(rpcServer.Url));
 			if (!abi.Trim().StartsWith("[")) abi = "[" + abi + "]";
 
 			var contract = web3.Eth.GetContract(abi, contractAddressOrSymbol);
@@ -215,6 +217,29 @@ namespace PLang.Modules.BlockchainModule
 			{
 				client.RemoveSubscription(subscriptionId);
 			}
+		}
+
+		public async Task<string> SignTransfer(string recipient, string smartContractSymbolOrAddress, long value)
+		{
+			/*
+			var thisAddress = await this.GetCurrentAddress();
+
+			// Specify the transaction details
+			var transaction = new TransactionInput()
+			{
+				From = thisAddress,
+				To = recipient, // USDC contract address
+				Value = new HexBigInteger(value), // Sending tokens, so 'Value' is 0
+				Gas = new HexBigInteger(Web3.Convert.ToWei(21, UnitConversion.EthUnit.Gwei)), // Set your gas limit
+				GasPrice = new HexBigInteger(Web3.Convert.ToWei(10, UnitConversion.EthUnit.Gwei)), // Set your gas price
+																								   // For ERC20 token transfers, you need to encode the data field with the transfer method and arguments
+				Data = web3.Eth.ERC20.Eth.ERC20.Contract.GetFunction("transfer").GetData(recipientAddress, new BigInteger(amountToSend * (decimal)Math.Pow(10, 6))) // Assuming 6 decimal places for USDC
+			};
+
+			// Sign the transaction
+			var signedTransaction = web3.OfflineTransactionSigning.SignTransaction(privateKey, transaction.To, transaction.Value.Value, transaction.Nonce, transaction.GasPrice.Value, transaction.Gas.Value, transaction.Data);
+			*/
+			throw new NotImplementedException();
 		}
 
 
@@ -448,7 +473,7 @@ namespace PLang.Modules.BlockchainModule
 			var currentAddress = await GetCurrentAddress();
 			var txInput = function.CreateTransactionInput(currentAddress, functionInputs);
 			//txInput.Type = TransactionType.Legacy.AsHexBigInteger();// TransactionType.EIP1559.AsHexBigInteger();
-			var account = getAccount(wallet, rpcServer.ChainId);
+			var account = GetAccount(wallet, rpcServer.ChainId);
 
 			var nounce = await web3.TransactionManager.Account.NonceService.GetNextNonceAsync();
 			txInput.Nonce = nounce;

@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "Listen for new message, call !Process.Message %message%",
+    "response": "{\"FunctionName\": \"Listen\",\n\"Parameters\": [\n    {\"Type\": \"String\",\n    \"Name\": \"goalName\",\n    \"Value\": \"!Process.Message\"},\n    {\"Type\": \"String\",\n    \"Name\": \"contentVariableName\",\n    \"Value\": \"message\"}\n],\n\"ReturnValue\": null}",
+    "created": "2024-02-05T10:15:19.5063569+00:00"
+  }
+]

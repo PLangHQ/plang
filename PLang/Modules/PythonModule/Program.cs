@@ -37,7 +37,7 @@ namespace PLang.Modules.PythonModule
 		public async Task<Dictionary<string, object>> RunPythonScript(string fileName = "main.py",
 			string[]? parameterValues = null, string[]? parameterNames = null,
 			[HandlesVariable] string[]? variablesToExtractFromPythonScript = null,
-			bool useNamedArguments = false, bool useTerminal = false, string? pythonPath = null,
+			bool useNamedArguments = false, string? pythonPath = null,
 			string? stdOutVariableName = null, string? stdErrorVariableName = null)
 		{
 
@@ -161,6 +161,7 @@ namespace PLang.Modules.PythonModule
 							dynamic variablesDict = Py.Import("__main__").GetAttr("plang_export_variables_dict");
 
 							dynamic iterItems = variablesDict.items();
+
 							foreach (PyObject item in iterItems)
 							{
 								var key = item[0].ToString();
@@ -208,14 +209,8 @@ namespace PLang.Modules.PythonModule
 					}
 				}
 
-
-
+				return result;
 			}
-			catch (System.TypeInitializationException ex1)
-			{
-				useTerminal = true;
-			}
-
 			catch (Exception ex)
 			{
 				throw;
@@ -227,68 +222,6 @@ namespace PLang.Modules.PythonModule
 			}
 
 
-
-			if (useTerminal)
-			{
-
-				if (pythonPath == null)
-				{
-
-					if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-					{
-						pythonPath = "python.exe";
-					}
-					else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-					{
-						pythonPath = "python3";
-					}
-					else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-					{
-						pythonPath = "python3";
-					}
-					else
-					{
-						logger.LogWarning("Unsupported OS platform.");
-					}
-
-					if (pythonPath == null) throw new NullReferenceException("pythonPath is empty, please define it");
-				}
-				var parameterList = new List<string>();
-				parameterList.Add(fileName);
-				for (int i = 0; parameterValues != null && parameterNames != null && i < parameterNames.Length; i++)
-				{
-					parameterList.Add($"--{parameterNames[i]}={parameterValues[i]} ");
-				}
-				string dataOutputVariable = "";
-				string errorDebugInfoOutputVariable = "";
-
-				var action = instruction.Action as JArray;
-				if (action != null)
-				{
-					var outputs = action.SelectTokens("$.[0].Outputs");
-					var jobj = outputs.FirstOrDefault();
-					if (outputs != null)
-					{
-						foreach (var output in jobj)
-						{
-							var item = output.FirstOrDefault()?.ToString();
-							if (item == null) continue;
-
-							if ("dataOutputVariable".ToLower().Contains(item.Replace("%", "").ToLower()))
-							{
-								dataOutputVariable = item;
-							}
-							if ("errorDebugInfoOutputVariable".ToLower().Contains(item.Replace("%", "").ToLower()))
-							{
-								errorDebugInfoOutputVariable = item;
-							}
-						}
-					}
-				}
-
-				result = await program.RunTerminal(pythonPath, parameterList, dataOutputVariable, errorDebugInfoOutputVariable);
-			}
-			return result;
 
 		}
 

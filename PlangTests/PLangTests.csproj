@@ -28,11 +28,11 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
     <PackageReference Include="NSubstitute" Version="5.1.0" />
-    <PackageReference Include="OpenAI" Version="1.10.0" />
     <PackageReference Include="TestableIO.System.IO.Abstractions.TestingHelpers" Version="20.0.4" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\services\OpenAiService\OpenAiService.csproj" />
     <ProjectReference Include="..\PLang\PLang.csproj" />
   </ItemGroup>
 
@@ -100,10 +100,16 @@
     <None Update="PrFiles\Start.pr">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="PrFiles\ui\Todos.pr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="requirements.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Test1,000,000x10.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Test100x10.xlsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Test5x2.csv">
@@ -115,12 +121,7 @@
     <Folder Include="Modules\BlockchainModule\Responses2\" />
     <Folder Include="Modules\CryptographicModule\responses2\" />
     <Folder Include="PrFiles\Apps\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="OpenAiService">
-      <HintPath>lib\OpenAiService.dll</HintPath>
-    </Reference>
+    <Folder Include="PrFiles\ui\" />
   </ItemGroup>
 
 </Project>

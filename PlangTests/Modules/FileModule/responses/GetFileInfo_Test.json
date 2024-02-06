@@ -1,12 +1,7 @@
 [
   {
-    "stepText": "get file info on %file%",
-    "response": "{\"FunctionName\": \"GetFileInfo\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"fileName\",\n\"Value\": \"%file%\"}]}",
-    "created": "2024-01-03T14:31:20.9882582+00:00"
-  },
-  {
     "stepText": "get file info on %file%, write to %fileInfo",
-    "response": "{\"FunctionName\": \"GetFileInfo\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"fileName\",\n\"Value\": \"%file%\"}],\n\"ReturnValue\": {\"Type\": \"IFileInfo\",\n\"VariableName\": \"%fileInfo%\"}}",
-    "created": "2024-01-03T14:31:43.5331262+00:00"
+    "response": "{\"FunctionName\": \"GetFileInfo\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"fileName\",\n\"Value\": \"%file%\"}],\n\"ReturnValue\": [{\"Type\": \"IFileInfo\",\n\"VariableName\": \"fileInfo\"}]}",
+    "created": "2024-02-05T09:30:01.2955582+00:00"
   }
 ]

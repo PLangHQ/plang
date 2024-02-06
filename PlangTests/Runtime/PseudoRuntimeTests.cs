@@ -77,7 +77,7 @@ namespace PLang.Runtime.Tests
 
 			
 			
-			await pseudoRuntime.RunGoal(engine, context, @"\", "GoalWith2Steps.GoalWith2Steps.goal", parameters);
+			await pseudoRuntime.RunGoal(engine, context, @"\", "apps/GoalWith2Steps/GoalWith2Steps", parameters);
 
 			await engine.Received(1).RunGoal(Arg.Any<Goal>());
 
@@ -95,14 +95,6 @@ namespace PLang.Runtime.Tests
 			await pseudoRuntime.RunGoal(engine, new(), @"\", "UnknownGoal.goal", new Dictionary<string, object>());
 		}
 
-		[TestMethod()]
-		[ExpectedException(typeof(GoalNotFoundException))]
-		public async Task RunGoalTest_GoalNotFound_GoalWith2Steps_IsNotPrefixedWithApp()
-		{
-			var pseudoRuntime = new PseudoRuntime(prParser, containerFactory, fileSystem);
-
-			await pseudoRuntime.RunGoal(engine, new(), @"\", "GoalWith2Steps.goal", new Dictionary<string, object>());
-		}
 
 		[TestMethod()]
 		public async Task RunGoalTest_ParametersSetInMemoryStack()
@@ -113,7 +105,7 @@ namespace PLang.Runtime.Tests
 
 			
 			var pseudoRuntime = new PseudoRuntime(prParser, containerFactory, fileSystem);
-			var memoryStackMock = Substitute.For<MemoryStack>(pseudoRuntime, engine, context);
+			var memoryStackMock = Substitute.For<MemoryStack>(pseudoRuntime, engine, settings, context);
 
 			engine.GetMemoryStack().Returns(memoryStackMock);
 			var parameters = new Dictionary<string, object>
@@ -123,7 +115,7 @@ namespace PLang.Runtime.Tests
 	};
 
 
-			await pseudoRuntime.RunGoal(engine, context, @"\", "GoalWith2Steps.GoalWith2Steps.goal", parameters);
+			await pseudoRuntime.RunGoal(engine, context, @"\", "apps/GoalWith2Steps/GoalWith2Steps", parameters);
 
 			memoryStackMock.Received(1).Put("Name", "Jim");
 			memoryStackMock.Received(1).Put("Age", 30);

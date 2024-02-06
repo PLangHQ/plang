@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "add 'key' with value %item% to 'productDict'",
-    "response": "{\"FunctionName\": \"AddToDictionary\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"key\", \"Value\": \"key\"},\n    {\"Type\": \"Object\", \"Name\": \"value\", \"Value\": \"%item%\"},\n    {\"Type\": \"Dictionary`2<String, Object>\", \"Name\": \"dictionaryInstance\", \"Value\": \"productDict\"},\n    {\"Type\": \"Boolean\", \"Name\": \"updateIfExists\", \"Value\": false}\n]}",
-    "created": "2024-01-04T09:23:25.355222+00:00"
-  }
-]

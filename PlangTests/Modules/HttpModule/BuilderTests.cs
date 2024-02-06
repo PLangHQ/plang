@@ -42,7 +42,13 @@ namespace PLang.Modules.HttpModule.Tests
 			builder = new GenericFunctionBuilder();
 			builder.InitBaseBuilder("PLang.Modules.HttpModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
-
+		public GoalStep GetStep(string text)
+		{
+			var step = new Building.Model.GoalStep();
+			step.Text = text;
+			step.ModuleType = "PLang.Modules.HttpModule";
+			return step;
+		}
 
 
 		[DataTestMethod]
@@ -51,8 +57,7 @@ namespace PLang.Modules.HttpModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;			
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -74,8 +79,7 @@ namespace PLang.Modules.HttpModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -96,8 +100,7 @@ namespace PLang.Modules.HttpModule.Tests
 
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -117,8 +120,7 @@ namespace PLang.Modules.HttpModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -138,8 +140,7 @@ namespace PLang.Modules.HttpModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -159,8 +160,7 @@ namespace PLang.Modules.HttpModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -180,8 +180,7 @@ namespace PLang.Modules.HttpModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -202,8 +201,7 @@ namespace PLang.Modules.HttpModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;

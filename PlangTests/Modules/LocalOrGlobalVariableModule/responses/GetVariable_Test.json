@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "get 'name' var into %name%",
+    "response": "{\"FunctionName\": \"GetVariable\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"key\",\n\"Value\": \"name\"}],\n\"ReturnValue\": [{\"Type\": \"Object\",\n\"VariableName\": \"name\"}]}",
+    "created": "2024-02-05T10:03:32.7006194+00:00"
+  }
+]

@@ -5,8 +5,10 @@ using PLang.Building.Model;
 using PLang.Interfaces;
 using PLang.SafeFileSystem;
 using PLang.Services.LlmService;
+using PLang.Services.OpenAi;
 using PLang.Utils;
 using PLangTests;
+using System.Runtime.CompilerServices;
 using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Modules.OutputModule.Tests
@@ -21,25 +23,32 @@ namespace PLang.Modules.OutputModule.Tests
 		{
 			base.Initialize();
 
-			settings.Get(typeof(PLangLlmService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var aiService = new PLangLlmService(cacheHelper, outputStream, signingService, logger);
-			
+			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
+			var llmService = new OpenAiService(settings, logger, cacheHelper, context);
+
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.OutputModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.OutputModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
-		private void SetupResponse(string response, Type type)
+
+		private void SetupResponse(string stepText, Type? type = null, [CallerMemberName] string caller = "")
 		{
-			var aiService = Substitute.For<ILlmService>();
-			aiService.Query(Arg.Any<LlmQuestion>(), type).Returns(p => { 
-				return JsonConvert.DeserializeObject(response, type); 
-			});			
+			var llmService = GetLlmService(stepText, caller, type);
+			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.OutputModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.OutputModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
+		}
+
+		public GoalStep GetStep(string text)
+		{
+			var step = new Building.Model.GoalStep();
+			step.Text = text;
+			step.ModuleType = "PLang.Modules.OutputModule";
+			return step;
 		}
 
 
@@ -48,22 +57,15 @@ namespace PLang.Modules.OutputModule.Tests
 		[DataRow("ask, what should the settings be? write to %settings%")]
 		public async Task Ask_Test(string text)
 		{
-			string response = @"{""FunctionName"": ""Ask"",
-""Parameters"": [{""Type"": ""String"",
-""Name"": ""text"",
-""Value"": ""what should the settings be?""}],
-""ReturnValue"": {""Type"": ""String"",
-""VariableName"": ""settings""}}";
+			SetupResponse(text);
 
-			SetupResponse(response, typeof(GenericFunction));
+			var step = GetStep(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;			
-			 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			//Assert.AreEqual("1", instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmQuestion.RawResponse);
+
 			Assert.AreEqual("Ask", gf.FunctionName);
 			Assert.AreEqual("text", gf.Parameters[0].Name);
 			Assert.AreEqual("what should the settings be?", gf.Parameters[0].Value);
@@ -75,26 +77,16 @@ namespace PLang.Modules.OutputModule.Tests
 		[DataRow("write out 'Hello PLang world'")]
 		public async Task Write_Test(string text)
 		{
-			string response = @"{""FunctionName"": ""Write"",
-""Parameters"": [{""Type"": ""string"",
-""Name"": ""text"",
-""Value"": ""Hello PLang world""},
-{""Type"": ""Boolean"",
-""Name"": ""writeToBuffer"",
-""Value"": false}],
-""ReturnValue"": null}";
+			SetupResponse(text);
 
-			SetupResponse(response, typeof(GenericFunction));
-
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			//Assert.AreEqual("1", instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmQuestion.RawResponse);
 			Assert.AreEqual("Write", gf.FunctionName);
-			Assert.AreEqual("text", gf.Parameters[0].Name);
+			Assert.AreEqual("content", gf.Parameters[0].Name);
 			Assert.AreEqual("Hello PLang world", gf.Parameters[0].Value);
 			Assert.AreEqual("writeToBuffer", gf.Parameters[1].Name);
 			Assert.AreEqual(false, gf.Parameters[1].Value);

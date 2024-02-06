@@ -10,7 +10,7 @@ namespace PLang.Modules.CultureInfoModule
 		{
 		}
 
-		[Description("Make sure to convert user code to valid BCP 47 code")]
+		[Description("Make sure to convert user code to valid BCP 47 code, language-country")]
 		public async Task SetCultureLanguageCode(string code = "en-US")
 		{
 			var ci = new CultureInfo(code);
@@ -20,7 +20,7 @@ namespace PLang.Modules.CultureInfoModule
 			CultureInfo.DefaultThreadCurrentUICulture = ci;
 		}
 
-		[Description("Make sure to convert user code to valid BCP 47 code")]
+		[Description("Make sure to convert user code to valid BCP 47 code, language-country")]
 		public async Task SetCultureUILanguageCode(string code = "en-US")
 		{
 			var ci = new CultureInfo(code);

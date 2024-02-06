@@ -11,7 +11,7 @@ using static PLang.Services.LlmService.PLangLlmService;
 
 namespace PLang.Modules.LlmModule
 {
-    [Description("Ask LLM a question and recieve and answer")]
+	[Description("Ask LLM a question and recieve and answer")]
 	public class Program : BaseProgram
 	{
 		private readonly ILlmService llmService;
@@ -96,7 +96,7 @@ namespace PLang.Modules.LlmModule
 		[Description("")]
 		public async Task AskLlm(
 			[HandlesVariable] List<Message> promptMessages,
-			string scheme = "", 
+			string? scheme = null,
 			string model = "gpt-4",
 			double temperature = 0,
 			double topP = 0,
@@ -106,23 +106,7 @@ namespace PLang.Modules.LlmModule
 			bool cacheResponse = true,
 			string? llmResponseType = null)
 		{
-			if (llmResponseType == "text")
-			{
-				llmService.Extractor = new TextExtractor();
-			}
-			else if (llmResponseType == "json" || !string.IsNullOrEmpty(scheme))
-			{
-				var systemMessage = promptMessages.FirstOrDefault(p => p.role == "system");
-				if (systemMessage == null)
-				{
-					systemMessage = new Message() { role = "system", content = new() };
-				}
-				systemMessage.content.Add(new Content() { text = $"You MUST respond in JSON, scheme: {scheme}" });
-			}
-			else
-			{
-				llmService.Extractor = new GenericExtractor(llmResponseType);
-			}
+
 			foreach (var message in promptMessages)
 			{
 				foreach (var c in message.content)
@@ -138,6 +122,8 @@ namespace PLang.Modules.LlmModule
 			llmQuestion.top_p = topP;
 			llmQuestion.frequencyPenalty = frequencyPenalty;
 			llmQuestion.presencePenalty = presencePenalty;
+			llmQuestion.llmResponseType = llmResponseType;
+			llmQuestion.scheme = scheme;
 
 			var response = await llmService.Query<object>(llmQuestion);
 
@@ -149,7 +135,7 @@ namespace PLang.Modules.LlmModule
 					memoryStack.Put(property.Name, property.Value);
 				}
 			}
-			
+
 			if (function != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
 			{
 				foreach (var returnValue in function.ReturnValue)
@@ -158,7 +144,7 @@ namespace PLang.Modules.LlmModule
 				}
 			}
 
-			
+
 		}
 
 		private string? LoadVariables(string? content)

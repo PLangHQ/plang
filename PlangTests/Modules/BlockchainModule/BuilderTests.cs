@@ -70,14 +70,21 @@ namespace PLang.Modules.BlockchainModule.Tests
 			builder.InitBaseBuilder("PLang.Modules.BlockchainModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
+		public GoalStep GetStep(string text)
+		{
+			var step = new Building.Model.GoalStep();
+			step.Text = text;
+			step.ModuleType = "PLang.Modules.BlockchainModule";
+			return step;
+		}
+
 		[DataTestMethod]
 		[DataRow("get rpc servers, write to %servers%")]
 		public async Task GetRpcServers_Test(string text)
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;			
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -93,8 +100,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -119,8 +125,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -145,8 +150,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 		public async Task GetCurrentRpcServer_Test(string text)
 		{
 			SetupResponse(text);
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
@@ -163,8 +167,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -187,8 +190,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -213,8 +215,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -237,8 +238,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -250,52 +250,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 		}
 
 
-		[DataTestMethod]
-		[DataRow("sign 'Hello world', write to %signature%")]
-		[DataRow("sign using my wallet 'Hello world', write to %signature%")]
-		[DataRow("sign a message 'Hello world', write to %signature%")]
-		public async Task SignMessage_Test(string text)
-		{
-			SetupResponse(text);
-
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
-
-			var instruction = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
-			Store(text, instruction.LlmQuestion.RawResponse);
-
-			Assert.AreEqual("SignMessage", gf.FunctionName);
-			Assert.AreEqual("message", gf.Parameters[0].Name);
-			Assert.AreEqual("Hello world", gf.Parameters[0].Value);
-
-		}
-
-		[DataTestMethod]
-		[DataRow("verify that %message% matches %signature% for address 0x1234, write to %isVerified%")]
-		public async Task VerifySignature_Test(string text)
-		{
-
-			SetupResponse(text);
-
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
-
-			var instruction = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
-
-			Store(text, instruction.LlmQuestion.RawResponse);
-			
-			Assert.AreEqual("VerifySignature", gf.FunctionName);
-			Assert.AreEqual("message", gf.Parameters[0].Name);
-			Assert.AreEqual("signature", gf.Parameters[1].Name);
-			Assert.AreEqual("expectedAddress", gf.Parameters[2].Name);
-			Assert.AreEqual("%message%", gf.Parameters[0].Value);
-			Assert.AreEqual("%signature%", gf.Parameters[1].Value);
-			Assert.AreEqual("0x1234", gf.Parameters[2].Value);
-			AssertVar.AreEqual("isVerified", gf.ReturnValue[0].VariableName);
-
-		}
+		
 
 		[DataTestMethod]
 		[DataRow("get wei balance 0x1234, write to %balance%")]
@@ -306,8 +261,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -328,8 +282,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -355,8 +308,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -378,9 +330,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
-
+			var step = GetStep(text);
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
@@ -401,8 +351,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -429,8 +378,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;

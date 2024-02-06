@@ -42,14 +42,22 @@ namespace PLang.Modules.CryptographicModule.Tests
 			builder = new GenericFunctionBuilder();
 			builder.InitBaseBuilder("PLang.Modules.CryptographicModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
+
+		public GoalStep GetStep(string text)
+		{
+			var step = new Building.Model.GoalStep();
+			step.Text = text;
+			step.ModuleType = "PLang.Modules.CryptographicModule";
+			return step;
+		}
+
 		[DataTestMethod]
 		[DataRow("encrypt %text%, write to %encryptedText%")]
 		public async Task EcryptText(string text)
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -68,8 +76,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -88,8 +95,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;			
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -113,8 +119,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -138,8 +143,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -162,8 +166,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -184,8 +187,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;

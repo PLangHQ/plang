@@ -253,7 +253,7 @@ namespace PLang.Runtime
 			int goalStepIndex = 0;
 			try
 			{
-				bool isSetup = GoalFiles.IsSetup(fileSystem.RootDirectory, goal.AbsoluteGoalPath);
+				bool isSetup = GoalHelper.IsSetup(fileSystem.RootDirectory, goal.AbsoluteGoalPath);
 				logger.LogTrace("RootDirectory:{0}", fileSystem.RootDirectory);
 				foreach (var injection in goal.Injections)
 				{

@@ -63,6 +63,14 @@ namespace PLang.Modules.DbModule.Tests
 			builder.InitBaseBuilder("PLang.Modules.DbModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
+		public GoalStep GetStep(string text)
+		{
+			var step = new Building.Model.GoalStep();
+			step.Text = text;
+			step.ModuleType = "PLang.Modules.DbModule";
+			return step;
+		}
+
 		[DataTestMethod]
 		[DataRow("set datasource as 'MainDb'")]
 		public async Task SetDataSouceName_Test(string text)
@@ -70,8 +78,7 @@ namespace PLang.Modules.DbModule.Tests
 		
 			SetupResponse(text, "SetDataSouceName");
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -91,8 +98,7 @@ namespace PLang.Modules.DbModule.Tests
 
 			SetupResponse(text, "BeginTransaction");
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -111,8 +117,7 @@ namespace PLang.Modules.DbModule.Tests
 
 			SetupResponse(text, "EndTransaction");
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -133,8 +138,7 @@ namespace PLang.Modules.DbModule.Tests
 
 			SetupResponse(text, "Select");
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -163,8 +167,7 @@ namespace PLang.Modules.DbModule.Tests
 
 			SetupResponse(text, "Update");
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as DbGenericFunction;
@@ -190,8 +193,7 @@ namespace PLang.Modules.DbModule.Tests
 		{
 			SetupResponse(text, "Insert");
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -218,8 +220,7 @@ namespace PLang.Modules.DbModule.Tests
 		{
 			SetupResponse(text, "Insert");
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -247,8 +248,7 @@ namespace PLang.Modules.DbModule.Tests
 		{
 			SetupResponse(text, "Delete");
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as DbGenericFunction;

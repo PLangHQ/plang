@@ -101,10 +101,10 @@ namespace PLang.Utils.Tests
         ""Value"": false
       }
     ],
-    ""ReturnValue"": {
+    ""ReturnValue"": [{
       ""Type"": ""String"",
       ""VariableName"": ""content""
-    }
+    }]
   }");
 
 
@@ -252,10 +252,10 @@ namespace PLang.Utils.Tests
         ""Value"": ""%password%""
       }
     ],
-    ""ReturnValue"": {
+    ""ReturnValue"": [{
       ""Type"": ""String"",
       ""VariableName"": ""hashedPassword""
-    }
+    }]
   }");
             memoryStack.Put("password", "123");
             goalStep.Text = "hash %password%, write to %hashedPassword%";
@@ -318,10 +318,10 @@ namespace PLang.Utils.Tests
         }
       }
     ],
-    ""ReturnValue"": {
+    ""ReturnValue"": [{
       ""Type"": ""Int32"",
       ""VariableName"": ""rows""
-    }
+    }]
   }");
             var dt = DateTime.Now;
 			memoryStack.Put("id", 1);
@@ -358,10 +358,10 @@ namespace PLang.Utils.Tests
         ""Value"": ""%dict%""
       }
     ],
-    ""ReturnValue"": {
+    ""ReturnValue"": [{
       ""Type"": ""Int32"",
       ""VariableName"": ""rows""
-    }
+    }]
   }");
 			var dt = DateTime.Now;
 
@@ -407,10 +407,10 @@ namespace PLang.Utils.Tests
         }
       }
     ],
-    ""ReturnValue"": {
+    ""ReturnValue"": [{
       ""Type"": ""Int32"",
       ""VariableName"": ""rows""
-    }
+    }]
   }");
 			var dt = DateTime.Now;
 			memoryStack.Put("id", 1);
@@ -498,6 +498,7 @@ namespace PLang.Utils.Tests
 			var list = new List<object>();
 
 			memoryStack.Put("list", list);
+			memoryStack.Put("%obj%", null);
 			var result = await methodHelper.GetMethodAndParameters(this, gf);
 
 			Assert.AreEqual("AddToList", result.method.Name);

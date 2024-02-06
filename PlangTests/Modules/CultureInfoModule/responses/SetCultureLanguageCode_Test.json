@@ -1,7 +1,7 @@
 [
   {
     "stepText": "set language to icelandic",
-    "response": "{\"FunctionName\": \"SetCultureLanguageCode\",\n\"Parameters\": [{\"Type\": \"string\",\n\"Name\": \"code\",\n\"Value\": \"is\"}],\n\"ReturnValue\": null}",
-    "created": "2024-01-05T10:12:23.8431226+00:00"
+    "response": "{\n\"FunctionName\": \"SetCultureLanguageCode\",\n\"Parameters\": [\n    {\n    \"Type\": \"string\",\n    \"Name\": \"code\",\n    \"Value\": \"is-IS\"\n    }\n],\n\"ReturnValue\": null\n}",
+    "created": "2024-02-05T09:29:09.0665528+00:00"
   }
 ]

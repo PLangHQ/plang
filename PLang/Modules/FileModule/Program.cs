@@ -323,6 +323,24 @@ namespace PLang.Modules.FileModule
 			}
 			return result;
 		}
+
+
+		public async Task<string[]> GetFilePathsInDirectory(string directoryPath = "./", string searchPattern = "*",
+			string[]? excludePatterns = null, bool includeSubfolders = false, bool useRelativePath = true)
+		{
+			var searchOption = (includeSubfolders) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+
+			var files = fileSystem.Directory.GetFiles(directoryPath, searchPattern, searchOption);
+
+			var paths = files.Select(path => (useRelativePath) ? path.Replace(fileSystem.RootDirectory, "") : path);
+			if (excludePatterns != null)
+			{
+				paths = paths.Where(file => !excludePatterns.Any(pattern => Regex.IsMatch(file, pattern)));
+			}
+
+			return paths.ToArray();
+		}
+
 		public async Task WriteBytesToFile(string path, byte[] content, bool overwrite = false)
 		{
 			path = GetPath(path);
@@ -440,21 +458,6 @@ namespace PLang.Modules.FileModule
 			}
 		}
 
-		public async Task<string[]> GetFilePathsInDirectory(string directoryPath = "./", string searchPattern = "*", 
-			string[]? excludePatterns = null, bool includeSubfolders = false, bool useRelativePath = true)
-		{
-			var searchOption = (includeSubfolders) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-
-			var files = fileSystem.Directory.GetFiles(directoryPath, searchPattern, searchOption);
-
-			var paths = files.Select(path => (useRelativePath) ? path.Replace(fileSystem.RootDirectory, "") : path);
-			if (excludePatterns != null)
-			{
-				paths = paths.Where(file => !excludePatterns.Any(pattern => Regex.IsMatch(file, pattern)));
-			}
-
-			return paths.ToArray();
-		}
 
 		private ConcurrentDictionary<string, Timer> timers = new ConcurrentDictionary<string, Timer>();
 

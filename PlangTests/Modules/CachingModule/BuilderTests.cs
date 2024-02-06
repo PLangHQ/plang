@@ -42,6 +42,13 @@ namespace PLang.Modules.CachingModule.Tests
 			builder = new GenericFunctionBuilder();
 			builder.InitBaseBuilder("PLang.Modules.CachingModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
+		public GoalStep GetStep(string text)
+		{
+			var step = new Building.Model.GoalStep();
+			step.Text = text;
+			step.ModuleType = "PLang.Modules.CachingModule";
+			return step;
+		}
 
 		[DataTestMethod]
 		[DataRow("get 'BigData' from cache, write to %obj%", "BigData")]
@@ -50,8 +57,7 @@ namespace PLang.Modules.CachingModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;			
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -73,8 +79,7 @@ namespace PLang.Modules.CachingModule.Tests
 
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -103,8 +108,7 @@ namespace PLang.Modules.CachingModule.Tests
 
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;

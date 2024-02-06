@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "set cookie 'service' to 1",
+    "response": "{\"FunctionName\": \"WriteCookie\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"name\",\n\"Value\": \"service\"},\n{\"Type\": \"String\",\n\"Name\": \"value\",\n\"Value\": \"1\"}],\n\"ReturnValue\": null}",
+    "created": "2024-02-05T10:35:23.3147508+00:00"
+  }
+]

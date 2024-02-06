@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
+using PLang.Building.Model;
 using PLang.Services.OpenAi;
 using PLang.Utils;
 using PLangTests;
@@ -36,6 +37,13 @@ namespace PLang.Modules.CultureInfoModule.Tests
 			builder = new GenericFunctionBuilder();
 			builder.InitBaseBuilder("PLang.Modules.CultureInfoModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
+		public GoalStep GetStep(string text)
+		{
+			var step = new Building.Model.GoalStep();
+			step.Text = text;
+			step.ModuleType = "PLang.Modules.CultureInfoModule";
+			return step;
+		}
 
 		[DataTestMethod]
 		[DataRow("set language to icelandic")]
@@ -43,8 +51,7 @@ namespace PLang.Modules.CultureInfoModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;			
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -62,8 +69,7 @@ namespace PLang.Modules.CultureInfoModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;

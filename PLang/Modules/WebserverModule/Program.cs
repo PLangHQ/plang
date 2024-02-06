@@ -422,11 +422,11 @@ namespace PLang.Modules.WebserverModule
 		}
 
 
-		public async Task DeleteCookie(string name, string value)
+		public async Task DeleteCookie(string name)
 		{
 			if (HttpListenerContext == null) return;
 
-			var cookie = new Cookie(name, value);
+			var cookie = new Cookie(name, null);
 			cookie.Expires = DateTime.Now.AddSeconds(-1);
 
 			HttpListenerContext.Response.Cookies.Add(cookie);

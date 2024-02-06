@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "write header 'X-Set-Data' as value 123",
+    "response": "{\"FunctionName\": \"WriteToResponseHeader\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"key\",\n\"Value\": \"X-Set-Data\"},\n{\"Type\": \"String\",\n\"Name\": \"value\",\n\"Value\": \"123\"}],\n\"ReturnValue\": null}",
+    "created": "2024-02-05T10:34:55.1160576+00:00"
+  }
+]

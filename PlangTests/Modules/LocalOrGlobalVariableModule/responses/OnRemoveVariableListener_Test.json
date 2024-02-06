@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "listen to remove on variable 'name', call !Process name=%full_name%, %key%",
+    "response": "{\"FunctionName\": \"OnRemoveVariableListener\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"key\", \"Value\": \"name\"},\n    {\"Type\": \"String\", \"Name\": \"goalName\", \"Value\": \"!Process\"},\n    {\"Type\": \"Dictionary`2<String, Object>\", \"Name\": \"parameters\", \"Value\": {\"name\": \"%full_name%\", \"key\": \"%key%\"}}\n]}",
+    "created": "2024-02-05T10:04:49.6700628+00:00"
+  }
+]

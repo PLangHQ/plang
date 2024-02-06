@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "get cookie 'TOS', write to %cookieValue%",
+    "response": "{\"FunctionName\": \"GetCookie\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"name\",\n\"Value\": \"TOS\"}],\n\"ReturnValue\": [{\"Type\": \"String\",\n\"VariableName\": \"cookieValue\"}]}",
+    "created": "2024-02-05T10:34:40.676157+00:00"
+  }
+]

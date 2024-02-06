@@ -43,16 +43,21 @@ namespace PLang.Modules.FileModule.Tests
 			builder.InitBaseBuilder("PLang.Modules.FileModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
-
+		public GoalStep GetStep(string text)
+		{
+			var step = new Building.Model.GoalStep();
+			step.Text = text;
+			step.ModuleType = "PLang.Modules.FileModule";
+			return step;
+		}
 
 		[DataTestMethod]
 		[DataRow("read %mp4File% to %mp4ContentBase64%")]
 		public async Task ReadBinaryFileAndConvertToBase64_Test(string text)
 		{
 			SetupResponse(text);
-
-			var step = new Building.Model.GoalStep();
-			step.Text = text;			
+			 
+			var step = GetStep(text);		
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -73,8 +78,7 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;			
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -94,8 +98,7 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;			
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -116,8 +119,7 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;			
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -150,8 +152,7 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -176,8 +177,7 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -204,8 +204,7 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -226,8 +225,7 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -244,10 +242,9 @@ namespace PLang.Modules.FileModule.Tests
 		[DataRow("get file info on %file%, write to %fileInfo")]
 		public async Task GetFileInfo_Test(string text)
 		{
-			SetupResponse(text);
+			SetupResponse(text); 
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -268,8 +265,7 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -289,8 +285,7 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;

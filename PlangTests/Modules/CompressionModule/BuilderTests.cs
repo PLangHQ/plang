@@ -41,7 +41,13 @@ namespace PLang.Modules.CompressionModule.Tests
 			builder = new GenericFunctionBuilder();
 			builder.InitBaseBuilder("PLang.Modules.CompressionModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
 		}
-
+		public GoalStep GetStep(string text)
+		{
+			var step = new Building.Model.GoalStep();
+			step.Text = text;
+			step.ModuleType = "PLang.Modules.CompressionModule";
+			return step;
+		}
 		[DataTestMethod]
 		[DataRow("compress %filePath% to %destination%")]
 		[DataRow("compress %filePath% to %destination% with high compression")]
@@ -49,8 +55,7 @@ namespace PLang.Modules.CompressionModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;			
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -77,8 +82,7 @@ namespace PLang.Modules.CompressionModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -104,8 +108,7 @@ namespace PLang.Modules.CompressionModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
@@ -128,8 +131,7 @@ namespace PLang.Modules.CompressionModule.Tests
 
 			SetupResponse(text);
 
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
+			var step = GetStep(text);
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;

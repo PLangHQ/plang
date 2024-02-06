@@ -182,42 +182,36 @@ namespace PLang.Building.Parsers
 			return publicGoals.FirstOrDefault(p => p.AbsolutePrFilePath == absolutePrFilePath);
 		}
 
-		public Goal? GetGoalByAppAndGoalName(string appStartupPath, string goalName, Goal? callingGoal = null)
+		public Goal? GetGoalByAppAndGoalName(string appStartupPath, string goalNameOrPath, Goal? callingGoal = null)
 		{
-			if (Path.IsPathRooted(goalName) && Path.GetExtension(goalName) == ".pr")
+			/*
+			 * ProcessVideo - goal belonging to same appStartupPath, located in any folder, root first, then by alphabetical order of folders
+			 * ui/List - in ui folder, 
+			 * apps/HelloWorld - finds a goal located in apps named HelloWorld
+			 * apps/Ffmpeg/Convert - maps to apps/Ffmpeg/Convert.goal
+			 * if you want to use app, path must start with apps/
+			 */
+			appStartupPath = (Path.DirectorySeparatorChar.ToString() == appStartupPath) ? appStartupPath : appStartupPath.TrimEnd(Path.DirectorySeparatorChar);
+			goalNameOrPath = goalNameOrPath.AdjustPathToOs().Replace(".goal", "");
+
+			List<Goal> availableGoals = allGoals;           
+            if (appStartupPath != Path.DirectorySeparatorChar.ToString())
 			{
-				return ParsePrFile(goalName);
+				availableGoals = allGoals.Where(p => p.RelativeGoalFolderPath == appStartupPath).ToList();
 			}
 
-			(goalName, appStartupPath) = GetGoalAndPath(appStartupPath, goalName);
-			Goal? goal;
-			if (callingGoal != null)
+			// when goal is ProcessVideo, find it anywhere in the available goals
+			if (!goalNameOrPath.Contains(Path.DirectorySeparatorChar))
 			{
-				var goalPath = Path.DirectorySeparatorChar + Path.GetRelativePath(callingGoal.AbsoluteAppStartupFolderPath, goalName.Replace(".goal", "")).ToLower() + ".goal";
-				goal = allGoals.FirstOrDefault(p => p.RelativeAppStartupFolderPath == appStartupPath && (p.GoalName == goalName || p.RelativeGoalPath.ToLower() == goalPath));
-				if (goal != null) return goal;
+				return availableGoals.FirstOrDefault(p => p.GoalName.Equals(goalNameOrPath, StringComparison.OrdinalIgnoreCase));
 			}
-			else if (appStartupPath == fileSystem.SharedPath)
+			if (!goalNameOrPath.StartsWith(Path.DirectorySeparatorChar))
 			{
-				var goalPath = Path.Combine(appStartupPath, goalName);
-				goal = ParsePrFile(goalPath);
-				if (goal != null) return goal;
+				goalNameOrPath = Path.DirectorySeparatorChar + goalNameOrPath;
 			}
+			return availableGoals.FirstOrDefault(p => p.RelativeGoalPath.Equals(goalNameOrPath + ".goal", StringComparison.OrdinalIgnoreCase));
 
-			if (goalName.Contains("\\") || goalName.Contains("/"))
-			{
-				var formatted = goalName.Replace("\\", "/").Replace("/", Path.DirectorySeparatorChar.ToString());
-				var path = formatted.Substring(0, formatted.LastIndexOf(Path.DirectorySeparatorChar.ToString()));
 
-				goalName = formatted.Substring(formatted.LastIndexOf(Path.DirectorySeparatorChar.ToString()) + 1).ToLower();
-				var buildPath = Path.Join(".build", path, goalName).ToLower();
-
-				goal = allGoals.FirstOrDefault(p => p.RelativeAppStartupFolderPath == appStartupPath && p.RelativePrFolderPath.ToLower() == buildPath && p.GoalName.ToLower() == goalName);
-				if (goal != null) return goal;
-			}
-
-			return allGoals.FirstOrDefault(p => p.RelativeAppStartupFolderPath == appStartupPath && p.GoalName == goalName);
-		
 		}
 
 		private (string, string) GetGoalAndPath(string appStartupPath, string goalName)
