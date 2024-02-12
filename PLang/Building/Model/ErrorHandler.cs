@@ -10,5 +10,6 @@ namespace PLang.Building.Model
 	{
 		public bool IgnoreErrors { get; set; } = false;
 		public Dictionary<string, string>? OnExceptionContainingTextCallGoal { get; set; } = null;
+		public bool ContinueToNextStep { get; set; } = false;
 	}
 }

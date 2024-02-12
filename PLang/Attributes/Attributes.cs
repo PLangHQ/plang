@@ -11,7 +11,6 @@ namespace PLang.Attributes
 	{
 	}
 
-
 	[AttributeUsage(AttributeTargets.Method)]
 	public class BuilderHelperAttribute : Attribute
 	{
@@ -30,5 +29,15 @@ namespace PLang.Attributes
 
 	[AttributeUsage(AttributeTargets.Method)]
 	public class RunOnBuildAttribute : Attribute { }
+
+	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter)]
+	public class DefaultValueAttribute : Attribute
+	{
+		public object Value { get; set; }
+		public DefaultValueAttribute(object value)
+		{
+			Value = value;
+		}
+	}
 
 }

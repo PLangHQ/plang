@@ -1,0 +1,9 @@
+## For the Application Developer ##
+- status codes follow http status codes
+- when doing 'write out ....', the status code is 200. This is the default and does not need to be defined in the step.
+- when doing 'write out error ...., the default status code is 400 and does not need to be defined in the step.
+- developer can define status code, write out (402) ...., this will give status code 402
+- any write out that is not in the the 200-299 area will end execution of goal by throwing RuntimeGoalEndException, this will end any execution up the stack.
+- Output module might handle status codes differently. 
+- type can be text|warning|error|info|debug|trace
+## For the Application Developer ##

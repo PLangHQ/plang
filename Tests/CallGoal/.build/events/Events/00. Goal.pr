@@ -13,7 +13,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-01-08T13:00:44.4294914+00:00",
+      "Generated": "2024-02-09T21:00:34.1127982+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -29,12 +29,13 @@
           "StepNumber": null,
           "StepText": null,
           "WaitForExecution": true,
-          "RunOnlyInDebugMode": true
+          "RunOnlyInDebugMode": true,
+          "OnErrorContinueNextStep": false
         }
       },
       "Number": 1,
       "LineNumber": 1,
-      "LlmQuestion": null
+      "LlmRequest": null
     },
     {
       "Text": "before goal ends, include private goals, call !SendDebug, only in debug mode",
@@ -47,7 +48,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-01-08T13:00:44.4370389+00:00",
+      "Generated": "2024-02-09T21:00:40.3795643+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -57,18 +58,19 @@
         "Event": {
           "EventType": 1,
           "EventScope": 20,
-          "GoalToBindTo": null,
+          "GoalToBindTo": "EndOfGoal",
           "GoalToCall": "!SendDebug",
           "IncludePrivate": true,
           "StepNumber": null,
           "StepText": null,
           "WaitForExecution": true,
-          "RunOnlyInDebugMode": true
+          "RunOnlyInDebugMode": true,
+          "OnErrorContinueNextStep": false
         }
       },
       "Number": 2,
       "LineNumber": 2,
-      "LlmQuestion": null
+      "LlmRequest": null
     }
   ],
   "Description": null,

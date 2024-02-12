@@ -104,8 +104,8 @@ else
 			base.SetContentExtractor(new HtmlExtractor());
 			
 
-			var result =  await base.Build<Instruction>(step);
-			string html = result.Action.ToString().Replace("{content}", childrenStr);
+			var result =  await base.Build<string>(step);
+			string html = result.ToString().Replace("{content}", childrenStr);
 
 			List<Parameter> parameters = new List<Parameter>();
 			parameters.Add(new Parameter("string", "html", html));
@@ -117,7 +117,7 @@ else
 			base.SetContentExtractor(new JsonExtractor());
 			var instruction = new Instruction(gf);
 			step.Execute = true;
-			instruction.LlmQuestion = result.LlmQuestion;
+			instruction.LlmRequest = result.LlmRequest;
 			return instruction;
 		}
 

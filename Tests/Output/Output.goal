@@ -1,4 +1,10 @@
 Output
+- write out 'This is an text shown to user'
 - write out '{', use buffer
-- write out '}'
-- write out 'Hello PLang world'
+- write out '"name":"John"', use buffer
+- write out '}', use buffer
+- ask 'How old are you?', should be number, write to %age%
+- ask 'What is your name', cannot be empty, write to %name%
+- ask 'Type in url', must be valid url, write to %url%
+- ask 'Are you sure you want to do this?", either 'yes' or 'no', write to %response%
+- write out, 'Hello %name%, you are %age% years old, website %url%, and do you want to do this? Your answer is %response%'

@@ -3,12 +3,13 @@ using PLang.Building.Parsers;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
+using PLang.Services.CompilerService;
 using PLang.Utils.Extractors;
-using static PLang.Modules.Compiler;
+using static PLang.Services.CompilerService.CSharpCompiler;
 
 namespace PLang.Modules.CodeModule
 {
-	internal class Builder : BaseBuilder
+    internal class Builder : BaseBuilder
 	{
 	
 		private readonly IPLangFileSystem fileSystem;
@@ -37,38 +38,53 @@ namespace PLang.Modules.CodeModule
 				throw new BuilderException($"Could not compile code. Code:\n\n{error}");
 			}
 
-			var compiler = new Compiler(fileSystem, prParser);
+			var compiler = new CSharpCompiler(fileSystem, prParser);
 			var dllName = compiler.GetPreviousBuildDllNamesToExclude(step);
-			AppendToAssistantCommand(dllName);
 			
 			//TODO: Any file access should have IPLangFileSystem fileSystem injected and use it as fileSystem.File... or fileSystem.Directory....
-			SetSystem(@$"Act as a senior c# developer, that converts the user statement into a c#(Ver. 9) code. 
+			SetSystem(@$"Act as a senior C# developer, that converts the user statement into a C#(Version. 9) code. 
 
-A variable is defined by starting and ending %.
-Generate static class. The class generated should have 1 method with the static method named Process and return void. 
-Variables defined in the user statement can be passed into the Process function by value, but only if defined in statement. 
+## Rules ##
+- Generate static class. The code generated should have 1 method with the static method named Process and return void. 
+- A variable in user intent is defined by starting and ending %.
+- Variables defined in the user intent can be passed into the Process function by value, but only if defined by user intent. 
+- Variable names passed to Process function MUST be unmodified from the user statement
+- The code will not be modified after you generate it.
+- If condition fails, throw Exception, unless defined otherwise by user command
+- Exception message should be for non-technical user
+- ALWAYS use long or long? instead of int or int?
+- Do not reference any DTO classes. Use dynamic? if complex object is needed, else use object?.
+- Strings are defined with double quote ("")
+- Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. 
+- If PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into Process method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.
+- When condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. Process(dynamic? variable)
+- Variables that are injected into Process method and contain dot(.), then replace dot(.) with the letter α in the parameter list. e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α
+- Keep underscore in variables if defined by user, e.g.  if %data.user_id%(string) is null => Process(string? dataαuser_id)
+- Consider top security measures when generating code and validate code
+- When checking type and converting variables to type, use Convert.ChangeType method
+## Rules ##
 
-The code will not be modified after it's generated.
-If condition fails, throw Exception, unless defined otherwise by user command
-Exception message should be for non-technical user
+## Response information ##
+- Name: is name of class, it should represent the intent of what the code is doing. 
+{dllName}
+- Using: must include namespaces that are needed to compile code.
+- Assemblies: dll to reference to compile using Roslyn
+- ParameterType: {{ Name:string, FullTypeName:string }}
+- OutParameterDefinition: If there is out parameter that is ExpandoObject return the names and types that are in the ExpandoObject in OutParameterDefinition, the string in the Dictionary is the name of the out object
+## Response information ##
+");
 
-Name: is CamelCase name of class
-Assemblies: dll to reference to compile using Roslyn
-Variables that user expect to be written to should be provided with out, parameter in the function.
-Replace the dot(.) in variables with the letter α e.g. %user.id% to userαid, %product.items[0].title% to productαitemsαtitle
-Keep underscore in variables if defined by user, e.g.  if %user_id% is null => return user_id == null.
-Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into method, but ONLY if needed. Assembly is already include, do not list it in Assemblies response.
-
-String are defined with double quote ("")
-Do not reference any dto classes. Use ExpandoObject.
-If there is out parameter that is ExpandoObject return the names and types that are in the ExpandoObject in OutParameterDefinition, the string in the Dictionary is the name of the out object
-
-You must return ```csharp for the code implementation and ```json scheme 
-{{Name:string, OutParameterDefinition:Dictionary<string, ParameterType[]>?=null, Using:string[]?= null,  Assemblies:string[]? = null,  GoalToCallOnTrue:string? = null, string? GoalToCallOnFalse:string? = null}}
-
-record ParameterType(string Name, string FullTypeName)
-
-Be Concise");
+			AppendToAssistantCommand($@"
+## examples ##
+%list.Count%*50, write to %result% => Process(long? listαCount,  out long result) {{
+    //validate input parameter 
+    result = listαCount*50;
+}}
+%response.data.total%*%response.data.total_amount%, write to %allTotal%, => Process(dynamic? response, out long allTotal) {{ 
+      //validate input parameter 
+      long allTotal = response.data.total*response.data.total_amount;
+}}
+## examples ##");
 			
 			if (error != null)
 			{
@@ -88,9 +104,9 @@ Be Concise");
 				return await Build(step, buildStatus.Error);
 			}
 			
-			instruction = new Instruction(buildStatus.Implmentation!);
-			instruction.LlmQuestion = instruction.LlmQuestion;
-			return instruction;
+			var newInstruction = new Instruction(buildStatus.Implementation!);
+			newInstruction.LlmRequest = instruction.LlmRequest;
+			return newInstruction;
 
 
 		}

@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "- open example.org, use user session",
-    "response": "{\"FunctionName\": \"NavigateToUrl\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"url\", \"Value\": \"example.org\"},\n    {\"Type\": \"Boolean\", \"Name\": \"useUserSession\", \"Value\": true}\n],\n\"ReturnValue\": null}",
-    "created": "2024-02-05T10:30:45.7235699+00:00"
-  }
-]

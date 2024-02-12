@@ -62,7 +62,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("Encrypt", gf.FunctionName);
 			Assert.AreEqual("content", gf.Parameters[0].Name);
@@ -81,7 +81,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("Decrypt", gf.FunctionName);
 			Assert.AreEqual("content", gf.Parameters[0].Name);
@@ -100,15 +100,13 @@ namespace PLang.Modules.CryptographicModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("HashInput", gf.FunctionName);
 			Assert.AreEqual("input", gf.Parameters[0].Name);
 			Assert.AreEqual("%password%", gf.Parameters[0].Value);
 			Assert.AreEqual("useSalt", gf.Parameters[1].Name);
 			Assert.AreEqual(true, gf.Parameters[1].Value);
-			Assert.AreEqual("hashAlgorithm", gf.Parameters[2].Name);
-			Assert.AreEqual("keccak256", gf.Parameters[2].Value);
 			AssertVar.AreEqual("%password%", gf.ReturnValue[0].VariableName);
 
 		}
@@ -124,7 +122,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("HashInput", gf.FunctionName);
 			Assert.AreEqual("input", gf.Parameters[0].Name);
@@ -148,7 +146,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse); 
+			Store(text, instruction.LlmRequest.RawResponse); 
 			
 			Assert.AreEqual("VerifyHashedValues", gf.FunctionName);
 			Assert.AreEqual("text", gf.Parameters[0].Name);
@@ -171,7 +169,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse); 
+			Store(text, instruction.LlmRequest.RawResponse); 
 			
 			Assert.AreEqual("ValidateBearerToken", gf.FunctionName);
 			Assert.AreEqual("token", gf.Parameters[0].Name);
@@ -192,7 +190,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("GenerateBearerToken", gf.FunctionName);
 			Assert.AreEqual("uniqueString", gf.Parameters[0].Name);

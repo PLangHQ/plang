@@ -41,7 +41,7 @@ namespace PLang.Building.Parsers
 			(content, var injections) = HandleInjections(content, true);
 
 			var stepParser = from indent in Parse.WhiteSpace.Many()
-							 from dash in Parse.Char('-').Once()
+							 from dash in Parse.Char('-').Once() 
 							 from stepText in Parse.AnyChar.Except(Parse.LineEnd).Many().Text()
 							 select new GoalStep
 							 {
@@ -195,7 +195,7 @@ namespace PLang.Building.Parsers
 						goals[i].GoalSteps[b].RelativePrPath = Path.Join(goal.RelativePrFolderPath, prevStep.PrFileName);
 						goals[i].GoalSteps[b].AbsolutePrFilePath = absolutePrFilePath;
 						goals[i].GoalSteps[b].Number = prevStep.Number;
-						goals[i].GoalSteps[b].LlmQuestion = prevStep.LlmQuestion;
+						goals[i].GoalSteps[b].LlmRequest = prevStep.LlmRequest;
 						
 						goals[i].GoalSteps[b].Description = prevStep.Description;
 						goals[i].GoalSteps[b].WaitForExecution = prevStep.WaitForExecution;

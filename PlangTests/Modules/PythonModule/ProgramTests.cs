@@ -42,10 +42,10 @@ namespace PLangTests.Modules.PythonModule
 			var p = new Program(fileSystem, logger, settings, outputStream, signingService, terminalProgram);
 			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, aiService, settings, appCache, null);
 			string[] vars = new string[] { "result" };
-			var result = await p.RunPythonScript("main.py", variablesToExtractFromPythonScript: vars,
+			 await p.RunPythonScript("main.py", variablesToExtractFromPythonScript: vars,
 				stdOutVariableName : "stdOut", stdErrorVariableName: "stdError");
 
-			Assert.AreEqual(6.0, result["result"]);
+			Assert.AreEqual(6.0, memoryStack.Get("result"));
 
 		}
 
@@ -65,12 +65,12 @@ namespace PLangTests.Modules.PythonModule
 			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, aiService, settings, appCache, null);
 
 			string[] vars = new string[] { "result" };
-			var result = await p.RunPythonScript("main_params.py", variablesToExtractFromPythonScript: vars,
+			await p.RunPythonScript("main_params.py", variablesToExtractFromPythonScript: vars,
 				parameterNames: new string[] { "--num1", "num2" },
 				parameterValues: new string[] { "2", "3" },
 				stdOutVariableName: "stdOut", stdErrorVariableName: "stdError");
 
-			Assert.AreEqual(5.0, result["result"]);
+			Assert.AreEqual(5.0, memoryStack.Get("result"));
 
 		}
 

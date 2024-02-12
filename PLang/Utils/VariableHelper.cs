@@ -59,6 +59,10 @@ namespace PLang.Utils
 
 			var variables = GetVariables(content, emptyIfNotFound);
 			if (variables.Count == 0) return obj;
+			if (obj.ToString().Contains("[*]"))
+			{
+				obj = JObject.Parse("{}");
+			}
 			if (obj is JObject jobject)
 			{
 				foreach (var variable in variables)
@@ -352,7 +356,7 @@ namespace PLang.Utils
 		public static bool IsVariable(object variable)
 		{
 			if (variable == null || string.IsNullOrEmpty(variable.ToString())) return false;
-			return Regex.IsMatch(variable.ToString()!, @"^%[a-zA-Z0-9\[\]_\.\+\(\)]*%$");
+			return Regex.IsMatch(variable.ToString()!, @"^%[a-zA-Z0-9\[\]_\.\+\(\)\*\<\>]*%$");
 		}
 
 		public static bool IsSetting(string variableName)

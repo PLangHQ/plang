@@ -5,6 +5,7 @@ using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Runtime;
 using System.Reflection;
 using System.Runtime.Caching;
@@ -29,28 +30,18 @@ namespace PLang.Utils
 			this.llmService = llmService;
 		}
 
-		public async Task<(MethodInfo method, Dictionary<string, object?> parameterValues)> GetMethodAndParameters(object callingInstance, GenericFunction function)
+		public async Task<MethodInfo> GetMethod(object callingInstance, GenericFunction function)
 		{
 			string cacheKey = callingInstance.GetType().FullName + "_" + function.FunctionName;
-			MethodInfo? method = null;
-			if ((AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebug) && isDebug) || !MethodCache.Cache.TryGetValue(cacheKey, out method))
-			{
-				var methods = callingInstance.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
-				method = methods.FirstOrDefault(p => p.Name == function.FunctionName && IsParameterMatch(p, function.Parameters) == null);
-				if (method == null)
-				{
-					await HandleMethodNotFound(callingInstance, function);
-				}
-
-				if (!isDebug && method != null)
-				{
-					MethodCache.Cache.AddOrReplace(cacheKey, method);
-				}
-			}
-
-			Dictionary<string, object?> parameterValues = GetParameterValues(method, function);
-			return (method, parameterValues);
+			
+			var methods = callingInstance.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
+			var method = methods.FirstOrDefault(p => p.Name == function.FunctionName && IsParameterMatch(p, function.Parameters) == null);
+			if (method != null) return method;
+			
+			await HandleMethodNotFound(callingInstance, function);
+			return null;
 		}
+
 
 		private async Task HandleMethodNotFound(object callingInstance, GenericFunction function)
 		{
@@ -64,16 +55,20 @@ Your answer cannot be same as user statement.
 example of answer:
 {text:""read file.txt, write into %content%""}
 {text:""add %item% to list, write to %list%""}
-
-you must answer in JSON, scheme:
-{text:string}";
+";
 			string assistant = @$"## methods available ##
 {methods}
 ## methods available ##";
 			string user = goalStep.Text;
-			var llmQuestion = new LlmQuestion("HandleMethodNotFound", system, user, assistant);
 
-			var response = await llmService.Query<MethodNotFoundResponse>(llmQuestion);
+			var promptMessage = new List<LlmMessage>();
+			promptMessage.Add(new LlmMessage("system", system));
+			promptMessage.Add(new LlmMessage("assistant", assistant));
+			promptMessage.Add(new LlmMessage("user", user));
+
+			var llmRequeset = new LlmRequest("HandleMethodNotFound", promptMessage);
+
+			var response = await llmService.Query<MethodNotFoundResponse>(llmRequeset);
 			throw new MissingMethodException($"Method {function.FunctionName} could not be found that matches with your statement. Example of command could be: {response.Text}");
 		}
 		public record MethodNotFoundResponse(string Text);
@@ -213,7 +208,7 @@ you must answer in JSON, scheme:
 						{
 							parameterValues.Add(inputParameter.Name, ov.Value);
 							continue;
-						} else if (ov != null && ov.Value == null)
+						} else if (ov != null && ov.Initiated && ov.Value == null)
 						{
 							parameterValues.Add(inputParameter.Name, ov.Value);
 							continue;

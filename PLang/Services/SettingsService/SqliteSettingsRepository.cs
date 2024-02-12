@@ -1,6 +1,5 @@
 ﻿using Dapper;
 using Newtonsoft.Json;
-using PLang.Building.Model;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Utils;
@@ -10,7 +9,7 @@ using System.Reflection;
 
 namespace PLang.Services.SettingsService
 {
-	public class SqliteSettingsRepository : ISettingsRepository
+    public class SqliteSettingsRepository : ISettingsRepository
 	{
 		private readonly IPLangFileSystem fileSystem;
 		private readonly PLangAppContext context;

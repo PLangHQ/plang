@@ -1,7 +1,7 @@
 [
   {
     "stepText": "add %productId%, %item% to dictionary %products%",
-    "response": "{\"FunctionName\": \"AddToDictionary\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"key\",\n\"Value\": \"%productId%\"},\n{\"Type\": \"Object\",\n\"Name\": \"value\",\n\"Value\": \"%item%\"},\n{\"Type\": \"Dictionary`2<String, Object>\",\n\"Name\": \"dictionaryInstance\",\n\"Value\": \"%products%\"},\n{\"Type\": \"Boolean\",\n\"Name\": \"updateIfExists\",\n\"Value\": true}],\n\"ReturnValue\": [{\"Type\": \"Dictionary`2<String, Object>\",\n\"VariableName\": \"products\"}]}",
-    "created": "2024-02-05T09:48:26.9917255+00:00"
+    "response": "{\"FunctionName\": \"AddToDictionary\",\n\"Parameters\": [\n    {\"Type\": \"string\", \"Name\": \"key\", \"Value\": \"%productId%\"},\n    {\"Type\": \"object\", \"Name\": \"value\", \"Value\": \"%item%\"},\n    {\"Type\": \"Dictionary`2<String, Object>\", \"Name\": \"dictionaryInstance\", \"Value\": \"%products%\"},\n    {\"Type\": \"Boolean\", \"Name\": \"updateIfExists\", \"Value\": true}\n],\n\"ReturnValue\": [\n    {\"Type\": \"Dictionary`2<String, Object>\", \"VariableName\": \"products\"}\n]}",
+    "created": "2024-02-07T14:14:39.2690264+00:00"
   }
 ]

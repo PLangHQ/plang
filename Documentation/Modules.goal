@@ -11,7 +11,7 @@ GenerateModuleDocumentation
     max length: 4000
     scheme: {moduleName:string, namespace:string, desc:string, [{functions:string[], parameters:[{type:string, name:string, (defaultValue:string|required:yes)}, ...], returns:type|void}]}
     write to %module%
-- get folder permission on '../Tests'
+- get folder access to '../Tests'
 - [cond] if dir '../Tests/%module.moduleName%/' exists, then
     - write out 'Doing %module.moduleName%'
     - call !LoadVars   

@@ -3,7 +3,9 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Exceptions;
+using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Utils;
@@ -34,12 +36,14 @@ namespace PLang.Modules
 		private IAppCache appCache;
 		private IOutputStream outputStream;
 		private IPLangFileSystem fileSystem;
-
-		public HttpListenerContext HttpListenerContext { 
-			get {
+		private MethodHelper methodHelper;
+		public HttpListenerContext HttpListenerContext
+		{
+			get
+			{
 				if (_listenerContext == null) throw new NullReferenceException("_listenerContext is null. It should not be null");
 
-				return _listenerContext; 
+				return _listenerContext;
 			}
 		}
 		public Goal Goal { get { return goal; } }
@@ -50,8 +54,8 @@ namespace PLang.Modules
 		{
 		}
 
-		public void Init(IServiceContainer container, Goal goal, GoalStep step, 
-			Instruction instruction, MemoryStack memoryStack, ILogger logger, 
+		public void Init(IServiceContainer container, Goal goal, GoalStep step,
+			Instruction instruction, MemoryStack memoryStack, ILogger logger,
 			PLangAppContext context, ITypeHelper typeHelper, ILlmService llmService, ISettings settings,
 			IAppCache appCache, HttpListenerContext? httpListenerContext)
 		{
@@ -68,34 +72,28 @@ namespace PLang.Modules
 			this.goal = goal;
 			this.goalStep = step;
 			this.instruction = instruction;
-			
+
 			variableHelper = new VariableHelper(context, memoryStack, settings);
 			this.typeHelper = typeHelper;
 			this.llmService = llmService;
+			methodHelper = new MethodHelper(goalStep, variableHelper, memoryStack, typeHelper, llmService);
 		}
 
 		public virtual async Task Run()
 		{
-			var stopwatch = new Stopwatch();
-			stopwatch.Start();
 			var functions = instruction.GetFunctions();
 			foreach (var function in functions)
 			{
 				await RunFunction(function);
-
 			}
-
-
 		}
 
 		public async Task RunFunction(GenericFunction function)
 		{
 			this.function = function; // this is to give sub classes access to current function running.
 
-			var methodHelper = new MethodHelper(goalStep, variableHelper, memoryStack, typeHelper, llmService);
-			(MethodInfo? method, Dictionary<string, object?> parameterValues) = await methodHelper.GetMethodAndParameters(this, function);
+			MethodInfo method = await methodHelper.GetMethod(this, function);
 			logger.LogDebug("Method:{0}", method);
-			logger.LogDebug("Parameters:{0}", parameterValues);
 
 			//TODO: Should move this caching check up the call stack. code is doing to much work before returning cache
 			if (await LoadCached(method, function)) return;
@@ -104,20 +102,23 @@ namespace PLang.Modules
 			{
 				throw new RuntimeException($"The method {method.Name} does not return Task. Method that are called must return Task");
 			}
+
+			var parameterValues = methodHelper.GetParameterValues(method, function);
+			logger.LogDebug("Parameters:{0}", parameterValues);
+
 			try
 			{
-				var invokeResult = method.Invoke(this, parameterValues.Values.ToArray());
-				Task? task = invokeResult as Task;
+				// This is for memoryStack event handler. Should find a better way
+				context.AddOrReplace(ReservedKeywords.Goal, goal);
 
+				var task = method.Invoke(this, parameterValues.Values.ToArray()) as Task;
 				if (task == null)
 				{
 					logger.LogWarning("Method called is not an async function. Make sure it is marked as 'public async Task' or 'public async Task<YourReturnType>'");
 					return;
 				}
 
-
-				// when calling ScheduleModule.Sleep, system always must wait for the execution
-				if (goalStep.WaitForExecution || this.GetType() == typeof(PLang.Modules.ScheduleModule.Program) && function.FunctionName == "Sleep")
+				if (goalStep.WaitForExecution)
 				{
 					try
 					{
@@ -125,68 +126,70 @@ namespace PLang.Modules
 					}
 					catch { }
 				}
-				if (task.Status == TaskStatus.Faulted)
+
+				if (task.Status == TaskStatus.Faulted && task.Exception != null)
 				{
-					await HandleException(task, function, goalStep);
+					if (task.Exception.InnerException != null) throw task.Exception.InnerException;
+					throw task.Exception;
+					//await HandleException(task, function, goalStep);
 				}
-				if (method.ReturnType == typeof(Task))
+
+				if (!goalStep.WaitForExecution || method.ReturnType == typeof(Task))
 				{
 					return;
 				}
 
-				if (goalStep.WaitForExecution)
-				{
-					object? result = await (dynamic)task;
+				object? result = await (dynamic)task;
 
+				SetReturnValue(function, result);
 
-					if (function.ReturnValue == null || function.ReturnValue.Count == 0) return;
+				await SetCachedItem(result);
 
-					if (function.ReturnValue.Count == 1)
-					{
-						memoryStack.Put(function.ReturnValue[0].VariableName, result);
-					}
-					else if (result == null)
-					{
-						foreach (var returnValue in function.ReturnValue)
-						{
-							memoryStack.Put(returnValue.VariableName, null);
-						}
-					}
-					else
-					{
-						var dict = (IDictionary<string, object>)result;
-						foreach (var returnValue in function.ReturnValue)
-						{
-							var key = dict.Keys.FirstOrDefault(p => p.ToLower() == returnValue.VariableName.Replace("%", "").ToLower());
-							if (key == null) continue;
-
-							memoryStack.Put(returnValue.VariableName, dict[key]);
-						}
-					}
-					await SetCachedItem(result);
-				}
 			}
+			catch (FileAccessException) { throw; }
+			catch (AskUserException) { throw; }
 			catch (RuntimeUserStepException) { throw; }
 			catch (RuntimeGoalEndException) { throw; }
 			catch (RunGoalException) { throw; }
 			catch (Exception ex)
 			{
-				string str = $@"
-Step: {goalStep.Text}
-Goal: {goal.GoalName} at {goal.GoalFileName}
-Calling {this.GetType().FullName}.{function.FunctionName} 
-	Parameters:
-		{JsonConvert.SerializeObject(function.Parameters)} 
-	";
-				if (AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isEnabled) && isEnabled)
-				{
-					str += @$"Parameter values:
-{JsonConvert.SerializeObject(parameterValues)}
-";
-				}
-				str += $"\nReturn value {JsonConvert.SerializeObject(function.ReturnValue)}";
+				throw new RuntimeProgramException(ex.Message, goalStep, function, parameterValues, ex);
+			}
+		}
 
-				throw new RuntimeException(str, goal, ex);
+		private void SetReturnValue(GenericFunction function, object? result)
+		{
+			if (function.ReturnValue == null || function.ReturnValue.Count == 0) return;
+
+
+			if (result == null)
+			{
+				foreach (var returnValue in function.ReturnValue)
+				{
+					memoryStack.Put(returnValue.VariableName, null);
+				}
+			}
+			else if (result is IReturnDictionary || result.GetType().Name == "DapperRow")
+			{
+				var dict = (IDictionary<string, object>)result;
+				foreach (var returnValue in function.ReturnValue)
+				{
+					var key = dict.Keys.FirstOrDefault(p => p.Replace("%", "").ToLower() == returnValue.VariableName.Replace("%", "").ToLower());
+					if (key == null)
+					{
+						memoryStack.Put(returnValue.VariableName, dict);
+						continue;
+					}
+
+					memoryStack.Put(returnValue.VariableName, dict[key]);
+				}
+			}
+			else
+			{
+				foreach (var returnValue in function.ReturnValue)
+				{
+					memoryStack.Put(returnValue.VariableName, result);
+				}
 			}
 		}
 
@@ -218,7 +221,7 @@ Calling {this.GetType().FullName}.{function.FunctionName}
 				// an event that binds to on error on step, 
 				string error = (task.Exception.InnerException != null) ? task.Exception.InnerException.ToString() : task.Exception.ToString();
 
-				
+
 				await outputStream.Write(error, "error", 400);
 				await outputStream.Write("\n\n.... Asking LLM to explain, wait few seconds ....\n", "error", 400);
 				var result = await AssistWithError(error, step, function);
@@ -265,7 +268,10 @@ Calling {this.GetType().FullName}.{function.FunctionName}
 			}
 			else
 			{
-				var obj = await appCache.Get(goalStep.CacheHandler.CacheKey);
+				var cacheKey = variableHelper.LoadVariables(goalStep.CacheHandler.CacheKey)?.ToString();
+				if (cacheKey == null) return false;
+
+				var obj = await appCache.Get(cacheKey);
 				if (obj != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
 				{
 					foreach (var returnValue in function.ReturnValue)
@@ -315,11 +321,13 @@ Calling {this.GetType().FullName}.{function.FunctionName}
 		{
 			this.container.RegisterForPLangUserInjections(type, pathToDll, globalForWholeApp);
 		}
-		public virtual async Task<string> GetAdditionalAssistantErrorInfo() {
-			return ""; 
+		public virtual async Task<string> GetAdditionalAssistantErrorInfo()
+		{
+			return "";
 		}
-		public virtual async Task<string> GetAdditionalSystemErrorInfo() {
-			return ""; 
+		public virtual async Task<string> GetAdditionalSystemErrorInfo()
+		{
+			return "";
 		}
 
 
@@ -347,6 +355,9 @@ Calling {this.GetType().FullName}.{function.FunctionName}
 
 		protected async Task<string?> AssistWithError(string error, GoalStep step, GenericFunction function)
 		{
+			AppContext.TryGetSwitch("llmerror", out bool isEnabled);
+			if (!isEnabled) return null;
+
 			string additionSystemErrorInfo = await GetAdditionalSystemErrorInfo();
 			string system = @$"You are c# expert developer debugging an error that c# throws.
 The user is programming in a programming language called Plang, a pseudo language, that is built on top of c#.
@@ -372,16 +383,23 @@ Be Concise";
 
 			try
 			{
-				var llmQuestion = new LlmQuestion("AssistWithError", system, error, assistant);
-				//var result = await llmService.Query(llmQuestion, typeof(string));
-				string result = "";
+				var promptMesage = new List<LlmMessage>();
+				promptMesage.Add(new LlmMessage("system", system));
+				promptMesage.Add(new LlmMessage("assistant", assistant));
+				promptMesage.Add(new LlmMessage("user", error));
+
+				var llmRequest = new LlmRequest("AssistWithError", promptMesage);
+
+				var result = await llmService.Query<string>(llmRequest);
+
 				return result?.ToString();
-			} catch
+			}
+			catch
 			{
 				return "Could not connect to LLM service";
 			}
-			
-			
+
+
 		}
 	}
 }

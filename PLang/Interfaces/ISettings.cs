@@ -1,11 +1,8 @@
-﻿
-
-using PLang.Building.Model;
-using PLang.Models;
+﻿using PLang.Models;
 
 namespace PLang.Interfaces
 {
-	public interface ISettings
+    public interface ISettings
 	{
 		public static readonly string GoalFileName = "00. Goal.pr";
 

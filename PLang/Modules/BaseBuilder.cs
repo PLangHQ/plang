@@ -2,6 +2,7 @@
 using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Runtime;
 using PLang.Utils;
 using PLang.Utils.Extractors;
@@ -9,19 +10,20 @@ using System.Runtime.InteropServices;
 using Websocket.Client.Logging;
 using static PLang.Modules.DbModule.Builder;
 using static PLang.Modules.DbModule.ModuleSettings;
+using static System.Net.Mime.MediaTypeNames;
 using Instruction = PLang.Building.Model.Instruction;
 
 namespace PLang.Modules
 {
 
 
-	public abstract class BaseBuilder : IBaseBuilder
+    public abstract class BaseBuilder : IBaseBuilder
 	{
 
 		private string? system;
 		private string? assistant;
-		private string? appendedSystemCommand;
-		private string? appendedAssistantCommand;
+		private List<string> appendedSystemCommand;
+		private List<string> appendedAssistantCommand;
 		private string module;
 		private IPLangFileSystem fileSystem;
 		private ILlmService aiService;
@@ -36,7 +38,7 @@ namespace PLang.Modules
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		{ }
 
-		public void InitBaseBuilder(string module, IPLangFileSystem fileSystem, ILlmService llmService, ITypeHelper typeHelper, 
+		public void InitBaseBuilder(string module, IPLangFileSystem fileSystem, ILlmService llmService, ITypeHelper typeHelper,
 			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ILogger logger)
 		{
 			this.module = module;
@@ -47,6 +49,9 @@ namespace PLang.Modules
 			this.context = context;
 			this.variableHelper = variableHelper;
 			this.logger = logger;
+
+			appendedSystemCommand = new List<string>();
+			appendedAssistantCommand = new List<string>();
 		}
 
 
@@ -72,7 +77,7 @@ namespace PLang.Modules
 			}
 			if (responseType == null) responseType = typeof(GenericFunction);
 
-			var question = GetQuestion(step, responseType);
+			var question = GetLlmRequest(step, responseType, errorMessage);
 			question.Reload = step.Reload;
 
 			var result = await aiService.Query(question, responseType);
@@ -82,13 +87,18 @@ namespace PLang.Modules
 			}
 
 			var instruction = new Instruction(result);
-			instruction.LlmQuestion = question;
+			instruction.LlmRequest = question;
 
 			var methodHelper = new MethodHelper(step, variableHelper, memoryStack, typeHelper, aiService);
 			var invalidFunctions = methodHelper.ValidateFunctions(instruction.GetFunctions(), step.ModuleType, memoryStack);
 
 			if (invalidFunctions.Count > 0)
 			{
+				if (invalidFunctions[0].functionName == "N/A")
+				{
+					throw new FunctionNotFoundException(step.ModuleType);
+				}
+
 				errorMessage = @$"## Error from previous LLM request ## 
 Previous response from LLM caused error. This was your response.
 {instruction.Action.ToString()}
@@ -107,8 +117,8 @@ This is the error(s)
 			}
 
 			//cleanup for next time
-			appendedSystemCommand = "";
-			appendedAssistantCommand = "";
+			appendedSystemCommand.Clear();
+			appendedAssistantCommand.Clear();
 			assistant = "";
 			system = "";
 
@@ -125,7 +135,7 @@ This is the error(s)
 
 		public void AppendToSystemCommand(string appendedSystemCommand)
 		{
-			this.appendedSystemCommand += appendedSystemCommand;
+			this.appendedSystemCommand.Add(appendedSystemCommand);
 		}
 		public void SetSystem(string systemCommand)
 		{
@@ -133,47 +143,61 @@ This is the error(s)
 		}
 		public void AppendToAssistantCommand(string appendedAssistantCommand)
 		{
-			this.appendedAssistantCommand += appendedAssistantCommand;
+			this.appendedAssistantCommand.Add(appendedAssistantCommand);
 		}
 		public void SetAssistant(string assistantCommand)
 		{
 			this.assistant = assistantCommand;
 		}
 
-		public virtual LlmQuestion GetQuestion(GoalStep step, Type responseType)
-		{
+		public virtual LlmRequest GetLlmRequest(GoalStep step, Type responseType, string? errorMessage = null)
+		{			
+			var promptMessage = new List<LlmMessage>();
+
 			if (string.IsNullOrEmpty(system))
 			{
-				this.system = getDefaultSystemText();
+				system = GetDefaultSystemText();
 			}
+			var systemContent = new List<LlmContent>();
+			systemContent.Add(new LlmContent(system));
+			foreach (var append in appendedSystemCommand) 
+			{
+				systemContent.Add(new LlmContent(append));
+			}
+			promptMessage.Add(new LlmMessage("system", systemContent));
+
 			if (string.IsNullOrEmpty(assistant))
 			{
-				assistant = getDefaultAssistantText(step);
+				assistant = GetDefaultAssistantText(step);
 			}
-
-			if (!string.IsNullOrEmpty(appendedSystemCommand))
+			var assistantContent = new List<LlmContent>();
+			assistantContent.Add(new LlmContent(assistant));
+			foreach (var append in appendedAssistantCommand)
 			{
-				system += "\n" + appendedSystemCommand;
+				assistantContent.Add(new LlmContent(append));
 			}
-			if (!string.IsNullOrEmpty(appendedAssistantCommand))
+			promptMessage.Add(new LlmMessage("assistant", assistantContent));
+			if (errorMessage != null)
 			{
-				assistant += "\n" + appendedAssistantCommand;
+				promptMessage.Add(new LlmMessage("assistant", errorMessage));
 			}
+			var userContent = new List<LlmContent>();
+			userContent.Add(new LlmContent(step.Text));
+			promptMessage.Add(new LlmMessage("user", userContent));
 
-			string requiredResponse = aiService.Extractor.GetRequiredResponse(responseType);
-			
-			var question = new LlmQuestion(GetType().FullName,
-				system + "\n\n" + requiredResponse,
-				step.Text,
-				assistant);
+			var llmRequest = new LlmRequest(GetType().FullName, promptMessage);
+			llmRequest.llmResponseType = aiService.Extractor.LlmResponseType;
+			llmRequest.scheme = TypeHelper.GetJsonSchema(responseType);
+			llmRequest.top_p = 0;
+			llmRequest.temperature = 0;
+			llmRequest.frequencyPenalty = 0;
+			llmRequest.presencePenalty = 0;
 
-			
-
-			return question;
+			return llmRequest;
 
 		}
 
-		private string? getDefaultSystemText()
+		private string GetDefaultSystemText()
 		{
 
 			return $@"
@@ -182,7 +206,9 @@ Your job is:
 2. Map the intent to one of C# function provided to you
 3. Return a valid JSON
 
-Variable is defined with starting and ending %, e.g. %filePath%. Variables MUST be wrapped in quotes("") in json response, e.g. {{ ""name"":""%name%"" }}
+Variable is defined with starting and ending %, e.g. %filePath%. 
+Variables MUST be wrapped in quotes("") in json response, e.g. {{ ""name"":""%name%"" }}
+Variables should not be changed, they can include dot(.) and parentheses()
 
 If there is some api key, settings, config replace it with %Settings.Get(""settingName"", ""defaultValue"", ""Explain"")% 
 - settingName would be the api key, config key, 
@@ -195,11 +221,13 @@ Parameters: List of parameters that are needed according to the user intent.
 - Type: the object type in c#
 - Name: name of the variable
 - Value: ""%variable%"" or hardcode string that should be used
-ReturnValue: Only if the function returns a value AND if user defines %variable% to write into. If no %variable% is defined then set as null.
+ReturnValue rules
+- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable
+- If no %variable% is defined then set as null.
 ".Trim();
 		}
 
-		private string getDefaultAssistantText(GoalStep step)
+		private string GetDefaultAssistantText(GoalStep step)
 		{
 			var programType = typeHelper.GetRuntimeType(module);
 			var variables = GetVariablesInStep(step).Replace("%", "");
@@ -234,16 +262,17 @@ ReturnValue: Only if the function returns a value AND if user defines %variable%
 				if (objectValue.Initiated)
 				{
 					vars += variable.OriginalKey + " (" + objectValue.Value + "), ";
-				} else
+				}
+				else
 				{
 					vars += variable.OriginalKey + " (type:" + (objectValue.Value ?? "object") + "), ";
-					
+
 				}
 			}
 			return vars;
 		}
 
-		
+
 
 
 	}

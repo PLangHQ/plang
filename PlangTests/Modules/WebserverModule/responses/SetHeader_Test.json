@@ -1,7 +1,7 @@
 [
   {
     "stepText": "write header 'X-Set-Data' as value 123",
-    "response": "{\"FunctionName\": \"WriteToResponseHeader\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"key\",\n\"Value\": \"X-Set-Data\"},\n{\"Type\": \"String\",\n\"Name\": \"value\",\n\"Value\": \"123\"}],\n\"ReturnValue\": null}",
-    "created": "2024-02-05T10:34:55.1160576+00:00"
+    "response": "{\"FunctionName\": \"WriteToResponseHeader\",\n\"Parameters\": [{\"Type\": \"Dictionary`2<String, String>\",\n\"Name\": \"headers\",\n\"Value\": {\"X-Set-Data\": \"123\"}}],\n\"ReturnValue\": null}",
+    "created": "2024-02-08T14:14:38.2958958+00:00"
   }
 ]

@@ -1,107 +1,92 @@
 
 # Output
-
 ## Introduction
-The Output module in PLang is a crucial component that allows programs to communicate with users. It provides the functionality to display messages, request input, and show results. Understanding how to use the Output module effectively is key to creating interactive and user-friendly applications.
+Output in plang is a fundamental concept that allows your program to communicate with the end-user by displaying text or other information on the screen.
 
-## For Beginners
-If you're new to programming, think of the Output module as your program's way of talking to the world. It's how your code can send messages to the screen, ask questions, and get responses from a user. It's like having a conversation where your program can say "Hello," ask "What's your name?" and remember the answer for later use.
+## For beginners
+Output is the way your program talks back to you. When you ask a question or give a command, the output is how the program responds, showing you messages, errors, or any other kind of information.
 
 ## Best Practices for Output
-When using the Output module, it's important to keep your messages clear and concise. Users should easily understand what information is being displayed or what is being asked of them. Always ensure that variable content is properly formatted and that any user input is validated to prevent errors.
+When using output in plang, it's important to follow certain best practices to ensure clear communication with the end-user. For instance, always use meaningful messages and consider the status codes to indicate the success or failure of an operation.
 
 ### Example:
 ```plang
-Output
-- write out 'Welcome to PLang! Please enter your name:'
-- ask 'Name:', write to %userName%
-- write out 'Hello, %userName%! Nice to meet you.'
+- write out 'Processing your request...'
+- if %success% then
+  / status code will be 200, status text='text'
+  - write out 'Operation completed successfully'
+- if %success% is false, then
+  / status code will be 400, status text='error'
+  - write out error 'Operation had error'
 ```
-In this example, we first output a welcome message, then ask for the user's name and store it in a variable called `%userName%`. Finally, we use the stored name to greet the user personally.
+
+The output module might handle each status code diffrently.
+
+## Examples
+For practical examples of how to use the Output module in plang, please refer to the source code of the module located at [Output Module Source](https://github.com/PLangHQ/plang/blob/main/PLang/Modules/Output/Program.cs).
 
 
-# Output Module Documentation
-
-The Output module in PLang is designed to interact with the user interface, such as a console, by outputting text or variables and by asking the user for input. Below are examples of how to use the Output module in PLang, sorted by the most common usage scenarios.
-
-## 1. Writing Output to the Console
-
-The `Write` method is used to output content to the UI. It can output text, variables, and even write to a buffer if needed.
 
 ### Example 1: Simple Text Output
-
 ```plang
-Output
-- write out 'Hello PLang world'
+- write out 'This is a text shown to user'
 ```
 
-### Example 2: Writing with Buffer
-
+### Example 2: Buffered Output
 ```plang
-Output
 - write out '{', use buffer
-- write out '}'
+- write out '"name":"John"', use buffer
+- write out '}', use buffer
 ```
 
-### Example 3: Writing a Variable
+## Ask Method Examples
 
+### Example 1: Asking for a Number
 ```plang
-Output
-- read file.txt, write to %content%
-- write out %content%
+- ask 'How old are you?', should be number, write to %age%
 ```
 
-## 2. Asking for User Input
-
-The `Ask` method is used to prompt the user for input. The method can specify the type of input expected and can also provide a status code.
-
-### Example 1: Asking for Text Input
-
+### Example 2: Asking for Non-empty Input
 ```plang
-Output
-- ask 'What is your name?', write to %userName%
+- ask 'What is your name?', cannot be empty, write to %name%
 ```
 
-### Example 2: Asking for Numeric Input
-
+### Example 3: Asking for a Valid URL
 ```plang
-Output
-- ask 'Enter your age:', type 'number', write to %userAge%
+- ask 'Type in a URL', must be valid URL, write to %url%
 ```
 
 ## Additional Examples
 
-### Example: Writing a Variable with a Specific Type
-
+### Example 1: Asking with a Regular Expression Pattern
 ```plang
-Output
-- calculate size in mb, write to %fileSize%
-- write out 'The file size is %fileSize% MB', type 'info'
+- ask 'Enter your email', must match pattern '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', write to %email%
 ```
 
-### Example: Asking for Input with a Custom Status Code
-
+### Example 2: Writing Out a Variable
 ```plang
-Output
-- ask 'Do you agree to the terms and conditions? (yes/no)', type 'confirm', status code 400, write to %userConsent%
+- ask 'What is your favorite color?', cannot be empty, write to %favoriteColor%
+- write out 'Your favorite color is %favoriteColor%'
 ```
 
-Note: When creating examples for methods that were not provided, natural language has been used to ensure the compiler can map them with module methods. Large numbers are represented in a human-readable form, and parameters are described in natural language for clarity.
+### Example 3: Writing Out with a Specific Status Code
+```plang
+- write out 'Operation completed successfully', with status code 200
+```
 
 
-For a full list of examples, visit [PLang Output Examples](https://github.com/PLangHQ/plang/tree/main/Tests/Output).
+For a comprehensive list of examples, visit the [Output Examples Repository](https://github.com/PLangHQ/plang/tree/main/Tests/Output).
 
-## Step Options
-When writing your PLang code, you can enhance the functionality of each step with these options. Click on the links below for more detailed information on how to use them:
-
-- [CacheHandler](/modules/cacheHandler.md)
-- [ErrorHandler](/modules/ErrorHandler.md)
-- [RetryHandler](/modules/RetryHandler.md)
-- [CancellationHandler](/modules/CancelationHandler.md)
-- [Run and Forget](/modules/RunAndForget.md)
+## Step options
+Each step in plang can be enhanced with additional options for more complex scenarios. Click on the links below for detailed usage instructions:
+- [CacheHandler](/moduels/cacheHandler.md)
+- [ErrorHandler](/moduels/ErrorHandler.md)
+- [RetryHandler](/moduels/RetryHandler.md)
+- [CancelationHandler](/moduels/CancelationHandler.md)
+- [Run and forget](/moduels/RunAndForget.md)
 
 ## Advanced
-For those who are ready to dive deeper into the Output module and understand how it maps to underlying C# code, check out the [advanced documentation](./PLang.Modules.OutputModule_advanced.md).
+For developers seeking a deeper understanding of the Output module's integration with C#, please refer to the [advanced documentation](./PLang.Modules.OutputModule_advanced.md).
 
 ## Created
-This documentation was created on 2024-01-02T22:11:49.
+This documentation was created on 2024-02-10T14:26:32.

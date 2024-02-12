@@ -1,24 +1,8 @@
-﻿using LightInject;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using NSubstitute;
-using PLang.Building.Events;
-using PLang.Building.Parsers;
-
-using PLang.Repository;
-using PLang.Runtime;
-using PLang.Utils;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PLangTests;
-using PLangTests.Mocks;
-using System;
-using System.Collections.Generic;
-using System.IO.Abstractions.TestingHelpers;
-using System.IO.Abstractions;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using PLangTests.Helpers;
-using System.ComponentModel.Design;
+using PLangTests.Mocks;
+using System.IO.Abstractions.TestingHelpers;
 
 namespace PLang.Runtime.Tests
 {

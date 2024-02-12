@@ -1,6 +1,6 @@
 ﻿using PLang.Building.Parsers;
 using PLang.Exceptions;
-using PLang.SafeFileSystem;
+using PLang.Interfaces;
 using System.IO.Compression;
 
 namespace PLang.Services.AppsRepository
@@ -9,7 +9,7 @@ namespace PLang.Services.AppsRepository
 	{
 		void InstallApp(string appName);
 	}
-	public class PLangAppsRepository(PLangFileSystem fileSystem, IHttpClientFactory httpClient, PrParser prParser) : IPLangAppsRepository
+	public class PLangAppsRepository(IPLangFileSystem fileSystem, IHttpClientFactory httpClient, PrParser prParser) : IPLangAppsRepository
 	{
 		public void InstallApp(string appName)
 		{

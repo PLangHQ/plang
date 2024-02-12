@@ -1,10 +1,10 @@
 ﻿using Newtonsoft.Json;
-using PLang.Building.Model;
 using PLang.Interfaces;
+using PLang.Models;
 
 namespace PLang.Utils
 {
-	public class CacheHelper
+    public class CacheHelper
 	{
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ISettings settings;

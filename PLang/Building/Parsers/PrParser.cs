@@ -192,7 +192,7 @@ namespace PLang.Building.Parsers
 			 * if you want to use app, path must start with apps/
 			 */
 			appStartupPath = (Path.DirectorySeparatorChar.ToString() == appStartupPath) ? appStartupPath : appStartupPath.TrimEnd(Path.DirectorySeparatorChar);
-			goalNameOrPath = goalNameOrPath.AdjustPathToOs().Replace(".goal", "");
+			goalNameOrPath = goalNameOrPath.AdjustPathToOs().Replace(".goal", "").Replace("!", "");
 
 			List<Goal> availableGoals = allGoals;           
             if (appStartupPath != Path.DirectorySeparatorChar.ToString())

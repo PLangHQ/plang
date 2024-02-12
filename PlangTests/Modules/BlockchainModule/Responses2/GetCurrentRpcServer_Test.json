@@ -1,6 +1,0 @@
-[
-  {
-    "stepText": "get currenct rpc server, write to %rpcServer%",
-    "response": "{\"FunctionName\": \"GetCurrentRpcServer\", \"Parameters\": [], \"ReturnValue\": {\"Type\": \"RpcServer\", \"VariableName\": \"rpcServer\"}}"
-  }
-]

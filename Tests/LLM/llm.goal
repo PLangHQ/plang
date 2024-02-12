@@ -8,5 +8,5 @@ LLM
 - set %text% as 'AI is taking over the world'
 - [llm] system: give me 2 categories from the user text
         user: %text% 
-        write to %cat1% and %cat2%
-- write out 'The category is: %cat1% and %cat2%'
+        write to %categories%
+- write out 'The categories are: %categories%'

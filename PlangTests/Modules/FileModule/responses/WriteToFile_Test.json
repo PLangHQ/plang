@@ -1,7 +1,7 @@
 [
   {
     "stepText": "write %content% to file.txt, overwrite it",
-    "response": "{\"FunctionName\": \"WriteToFile\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"path\",\n\"Value\": \"file.txt\"},\n{\"Type\": \"String\",\n\"Name\": \"content\",\n\"Value\": \"%content%\"},\n{\"Type\": \"Boolean\",\n\"Name\": \"overwrite\",\n\"Value\": true}]}",
-    "created": "2024-01-03T14:28:16.217016+00:00"
+    "response": "{\"FunctionName\": \"WriteToFile\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"path\", \"Value\": \"file.txt\"},\n    {\"Type\": \"String\", \"Name\": \"content\", \"Value\": \"%content%\"},\n    {\"Type\": \"Boolean\", \"Name\": \"overwrite\", \"Value\": true}\n],\n\"ReturnValue\": null}",
+    "created": "2024-02-07T13:02:59.8884532+00:00"
   }
 ]

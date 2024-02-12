@@ -157,6 +157,10 @@ namespace PLang.Modules.HttpModule
 			{
 				throw new RuntimeException("url cannot be empty");
 			}
+			if (!requestUrl.ToString().ToLower().StartsWith("http"))
+			{
+				requestUrl = "https://" + requestUrl;
+			}
 
 			using (var httpClient = httpClientFactory.CreateClient())
 			{

@@ -13,23 +13,64 @@
         "Value": 3
       }
     ],
-    "ReturnValue": {
-      "Type": "Int32",
-      "VariableName": "result"
-    }
+    "ReturnValue": [
+      {
+        "Type": "Int32",
+        "VariableName": "result"
+      }
+    ]
   },
   "Text": "use complex algo to add 2 and 3, write to %result%",
   "Reload": false,
-  "LlmQuestion": {
-    "type": "PLang.Modules.BaseBuilder",
-    "system": "Parse user command.\r\n\r\nSelect the correct function from list of available functions based on user command\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")%\r\nwhere the settingName would be the api key, config key, \r\ndefaultValue for settings is the usual value given, make it \"\" if no value can be default\r\nExplain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nType: the object type in c#\r\nName: name of the variable\r\nValue: %variable% or hardcode string that should be used\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nReturnValue: Only if the function returns a value, else null\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: {\"Type\": string,\n\"VariableName\": string}}",
-    "question": "command: use complex algo to add 2 and 3, write to %result%",
-    "assistant": "## functions available defined in csharp ##\r\nInt32 ComplexCalculate(Int32 a, Int32 b) \n\r\n## functions available ends ##",
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+    "type": "PLang.Modules.GenericFunctionBuilder",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\nVariables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue: Only if the function returns a value AND if user defines %variable% to write into. If no %variable% is defined then set as null.",
+            "image_url": null
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+            "image_url": null
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nInt32 ComplexCalculate(Int32 a, Int32 b)\r\n## functions available ends ##\r\n## defined variables ##\r\nresult (type:object), \r\n## defined variables ##",
+            "image_url": null
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "use complex algo to add 2 and 3, write to %result%",
+            "image_url": null
+          }
+        ]
+      }
+    ],
     "model": "gpt-4",
     "caching": true,
-    "Reload": false,
-    "PreviousResult": null,
-    "RawResponse": "{\"FunctionName\": \"ComplexCalculate\",\n\"Parameters\": [{\"Type\": \"Int32\",\n\"Name\": \"a\",\n\"Value\": 2},\n{\"Type\": \"Int32\",\n\"Name\": \"b\",\n\"Value\": 3}],\n\"ReturnValue\": {\"Type\": \"Int32\",\n\"VariableName\": \"result\"}}"
+    "RawResponse": "{\r\n  \"FunctionName\": \"ComplexCalculate\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"Int32\",\r\n      \"Name\": \"a\",\r\n      \"Value\": 2\r\n    },\r\n    {\r\n      \"Type\": \"Int32\",\r\n      \"Name\": \"b\",\r\n      \"Value\": 3\r\n    }\r\n  ],\r\n  \"ReturnValue\": [\r\n    {\r\n      \"Type\": \"Int32\",\r\n      \"VariableName\": \"result\"\r\n    }\r\n  ]\r\n}"
   },
   "RunOnBuild": false
 }

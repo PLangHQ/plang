@@ -14,7 +14,7 @@ namespace PLang.Modules.CompressionModule
 			this.archiver = archiver;
 		}
 
-		[Description("compressionLevel: 0=Optimal, 1=Fastest, 2=No compression, 3=Smallest size")]
+		[Description("compressionLevel: 0=Optimal, 1=Fastest, 2=No compression, 3=Smallest size(highest compression)")]
 		public async Task CompressFile(string filePath, string saveToPath, int compressionLevel = 0)
 		{
 			filePath = GetPath(filePath);

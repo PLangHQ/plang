@@ -2,6 +2,7 @@
 using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Models;
 
 namespace PLang.SafeFileSystem
 {
@@ -45,8 +46,9 @@ namespace PLang.SafeFileSystem
 			else
 			{
 				var dateTimeStr = DateTimeOffset.UtcNow.ToString("G");
-				var llmQuestion = new LlmQuestion("FileAccess",
-@$"The user response should answer the question: Should give access to a file path
+
+				var promptMessage = new List<LlmMessage>();
+				promptMessage.Add(new LlmMessage("system", @$"The user response should answer the question: Should give access to a file path
 
 Determine the answer from the user that fits the json scheme. 
 If you cannot determine, GiveAccess should be null
@@ -54,10 +56,12 @@ if user likes to give never ending expire time, set Expires to 99 years into the
 Expires should be in the format yyyy-MM-ddTHH:mm:ss
 
 current time is {dateTimeStr}
+GiveAccess : yes|no|null"));
+				promptMessage.Add(new LlmMessage("user", answer));
 
-you must return in json scheme
-{{ GiveAccess : yes|no|null, Expires: datetime }}", "user response: " + answer, "");
-				var result = await llmService.Query<FileAccessResponse>(llmQuestion);
+				var llmRequest = new LlmRequest("FileAccess", promptMessage);
+	
+				var result = await llmService.Query<FileAccessResponse>(llmRequest);
 				
 				if (result == null || result.GiveAccess == null) throw new FileAccessException(appName, path, $"{appName} is trying to access {path}. Do you accept that?");
 				if (result.GiveAccess.ToLower() == "no") return;

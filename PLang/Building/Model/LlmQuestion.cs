@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace PLang.Building.Model
 {
 
-
+	/*
 		public record LlmQuestion(string type, string? system, string question, string? assistant, string model = "gpt-4", bool caching = true)
 	{
 		public double? temperature;
@@ -24,5 +24,5 @@ namespace PLang.Building.Model
 [System.Text.Json.Serialization.JsonIgnore]
 		public string? PreviousResult { get; internal set; }
 		public string? RawResponse { get; set; }
-	}
+	}*/
 }

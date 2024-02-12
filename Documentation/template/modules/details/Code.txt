@@ -1,0 +1,13 @@
+## For the Application Developer ##
+- It is good to use [code] in front of your statements, this helps the llm to select the code module
+- Application Developer should be clear in his statement
+
+Here is example of plang code using the code module
+```plang
+- [code] give me first name from %name%, write to %firstName%
+```
+
+The plang code above will probably try to find first space in a name and return the first part of it. This is not for certain, so you need to validate what the code does
+## For the Application Developer ##
+
+Note regarding possible benefit having llm generate the code. There is a potential for the code module to do better than what programmers usually do, it is instructred to follow security measures and to validate inputs. This is something that we programmers tend to forget or miss.

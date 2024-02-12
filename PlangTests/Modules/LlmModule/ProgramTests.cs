@@ -1,8 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using NSubstitute;
-using PLang.Building.Model;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Modules.LlmModule;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
@@ -13,7 +13,7 @@ using static PLang.Modules.BaseBuilder;
 
 namespace PLangTests.Modules.LlmModule
 {
-	[TestClass]
+    [TestClass]
 	public class ProgramTests : BasePLangTest
 	{
 		Program p;
@@ -33,14 +33,14 @@ namespace PLangTests.Modules.LlmModule
 				return response;
 			});
 
-			p = new Program(aiService);
+			p = new Program(aiService, identityService);
 			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, aiService, settings, appCache, null);
 		}
 
 		[TestMethod]
 		public async Task AskLlm()
 		{
-			List<PLangLlmService.Message> messages = new();
+			List<LlmMessage> messages = new();
 			string scheme = null;
 			string model = "gpt-4-test";
 			double temperature = 0;

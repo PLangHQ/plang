@@ -13,14 +13,15 @@ using PLang.Building;
 using PLang.Building.Parsers;
 using Sprache;
 using PLang.Interfaces;
-using static PLang.Modules.Compiler;
+using static PLang.Services.CompilerService.CSharpCompiler;
 using PLang.Exceptions;
 using PLang.Utils.Extractors;
 using PLang.Runtime;
+using PLang.Services.CompilerService;
 
 namespace PLang.Modules.ConditionalModule
 {
-	public class Builder : BaseBuilder
+    public class Builder : BaseBuilder
 	{
 		private readonly IPLangFileSystem fileSystem;
 		private readonly PrParser prParser;
@@ -46,31 +47,35 @@ namespace PLang.Modules.ConditionalModule
 			}
 
 			
-			var compiler = new Compiler(fileSystem, prParser);
+			var compiler = new CSharpCompiler(fileSystem, prParser);
 			var dllName = compiler.GetPreviousBuildDllNamesToExclude(step);
-			AppendToAssistantCommand(dllName);
 
-			SetSystem(@$"Act as a senior c# developer, that converts the user statement into a c#(Ver. 9) code. 
+			SetSystem(@$"Act as a senior C# developer, that converts the user statement into a C#(Version. 9) code. 
 
-A variable is defined by starting and ending %.
-Generate static class. The code generated should have 1 method with the static method named Process and return bool. 
-Variables defined in the user statement can be passed into the Process function by value, but only if defined in statement. 
-Statement should return true
+## Rules ##
+- Generate static class. The code generated should have 1 method with the static method named Process and return bool. 
+- A variable in user intent is defined by starting and ending %.
+- Variables defined in the user intent can be passed into the Process function by value, but only if defined by user intent. 
+- Variable names passed to Process function MUST be unmodified from the user statement
+- The code will not be modified after you generate it.
+- ALWAYS use long or long? instead of int or int?
+- Do not reference any DTO classes. Use dynamic? if complex object is needed, else use object?.
+- Strings are defined with double quote ("")
+- Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. 
+- If PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into Process method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.
+- When condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. Process(dynamic? variable)
+- Replace the dot(.) in variables with the letter α e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α
+- Keep underscore in variables if defined by user, e.g.  if %user_id%(string) is null => Process(string? user_id)
+- Consider top security measures when generating code and validate code
+## Rules ##
 
-The code will not be modified after it's generated.
-ALWAYS use long or long? instead of int or int?
-Name: should be in the CamelCase format
-Goals should be prefixed with !, e.g. Call !Process, Call !ConditionFalse
-Do not reference any DTO classes. Use dynamic? if complex object is needed, else use object?.
-Strings are defined with double quote ("")
-Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into method, but ONLY if needed. Assembly is already include, do not list it in Assemblies response.
-if condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. Process(dynamic? variable)
-
-Replace the dot(.) in variables with the letter α e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α
-Keep underscore in variables if defined by user, e.g.  if %user_id% is null => return user_id == null.
-
-You must return ```csharp for the code implementation and ```json scheme 
-{{Name:string, Using:string[]?= null,  Assemblies:string[]? = null,  GoalToCallOnTrue:string? = null, string? GoalToCallOnFalse:string? = null}}
+## Response information ##
+- Name: is name of class, it should represent the intent of what the code is doing. 
+{dllName}
+- Goals should be prefixed with !, e.g. Call !Process, Call !ConditionFalse
+- Using: must include namespaces that are needed to compile code.
+- Assemblies: dll to reference to compile using Roslyn
+## Response information ##
 ");
 			AppendToAssistantCommand(@"## examples ##
 'if %isValid% is true then', this condition would return true if %isValid% is true. 
@@ -81,6 +86,7 @@ You must return ```csharp for the code implementation and ```json scheme
 'if %exists% (bool) is not null, call !CreateUser' => public static bool Process(bool? dataαuser_id) { return exists != null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null
 'if %data.user_id% is empty, call !CreateUser' => public static bool Process(dynamic? dataαuser_id) { return (dataαuser_id == null || (dataαuser_id is string str && string.IsNullOrEmpty(str))); } //if we dont know the type of %data.user_id%, , GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null
 'if !%isValid% then => public static bool Process(bool? isValid) { return !isValid; }, GoalToCallOnTrue=null, GoalToCallOnFalse=null
+'if %first_name% is null, call !UpdateFirstName' => public static bool Process(string? first_name) { return (first_name == null || string.IsNullOrEmpty(str)); }
 ## examples ##
 ");
 			if (error != null)
@@ -89,11 +95,11 @@ You must return ```csharp for the code implementation and ```json scheme
 			}
 
 			base.SetContentExtractor(new CSharpExtractor());
-			var codeInstruction = await Build<CodeImplementationResponse>(step);
+			var codeInstruction = await Build<ConditionImplementationResponse>(step);
 			//go back to default extractor
 			base.SetContentExtractor(new JsonExtractor());
 
-			var answer = (CodeImplementationResponse)codeInstruction.Action;
+			var answer = (ImplementationResponse)codeInstruction.Action;
 
 			var buildStatus = await compiler.BuildCode(answer, step, memoryStack);
 			if (buildStatus.Error != null)
@@ -101,8 +107,8 @@ You must return ```csharp for the code implementation and ```json scheme
 				return await Build(step, buildStatus.Error, ++errorCount);
 			}
 
-			var newInstruction = new Instruction(buildStatus.Implmentation!);
-			newInstruction.LlmQuestion = codeInstruction.LlmQuestion;
+			var newInstruction = new Instruction(buildStatus.Implementation!);
+			newInstruction.LlmRequest = codeInstruction.LlmRequest;
 			return newInstruction;
 
 		}

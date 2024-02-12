@@ -3,6 +3,7 @@
 using Microsoft.Extensions.Logging;
 using PLang.Attributes;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using System.ComponentModel;
@@ -34,7 +35,7 @@ namespace PLang.Modules.TerminalModule
 			memoryStack.Put(variableName, result);
 		}
 
-		public async Task<Dictionary<string, object>> RunTerminal(string appExecutableName, List<string>? parameters = null,
+		public async Task<ReturnDictionary<string, object>> RunTerminal(string appExecutableName, List<string>? parameters = null,
 			string? pathToWorkingDirInTerminal = null,
 			[HandlesVariable] string? dataOutputVariable = null, [HandlesVariable] string? errorDebugInfoOutputVariable = null,
 			[HandlesVariable] string? dataStreamDelta = null, [HandlesVariable] string? debugErrorStreamDelta = null
@@ -70,10 +71,10 @@ namespace PLang.Modules.TerminalModule
 			else
 			{
 				Console.WriteLine("Unsupported OS");
-				return new Dictionary<string, object>();
+				return new ReturnDictionary<string, object>();
 			}
 
-			var dict = new Dictionary<string, object>();
+			var dict = new ReturnDictionary<string, object>();
 
 			// Start the process
 			using (Process process = new Process { StartInfo = startInfo })
@@ -103,7 +104,7 @@ namespace PLang.Modules.TerminalModule
 					//logger.LogInformation(e.Data);
 					if (string.IsNullOrWhiteSpace(e.Data)) return;
 
-					if (e.Data.ToLower().Contains(appExecutableName))
+					if (!canWriteDataOutputNext && e.Data.ToLower().Contains(appExecutableName))
 					{
 						canWriteDataOutputNext = true;
 						return;
@@ -159,8 +160,15 @@ namespace PLang.Modules.TerminalModule
 				sw.Close(); // Close the input stream to signal completion
 				await process.WaitForExitAsync();
 
-				memoryStack.Put(dataOutputVariable, RemoveLastLine(dataOutput?.Trim()));
-				memoryStack.Put(errorDebugInfoOutputVariable, errorOutput);
+				if (!string.IsNullOrEmpty(dataOutputVariable))
+				{
+					dict.Add(dataOutputVariable, RemoveLastLine(dataOutput?.Trim()));
+				}
+
+				if (!string.IsNullOrEmpty(errorDebugInfoOutputVariable))
+				{
+					dict.Add(errorDebugInfoOutputVariable, errorOutput);
+				}
 			}
 
 			return dict;

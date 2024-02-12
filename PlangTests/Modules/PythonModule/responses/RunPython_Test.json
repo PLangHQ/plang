@@ -1,17 +1,7 @@
 [
   {
-    "stepText": "run main.py, name=%full_name%, %zip%, use named args",
-    "response": "{\"FunctionName\": \"RunPythonScript\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"fileName\", \"Value\": \"main.py\"},\n    {\"Type\": \"String[]\", \"Name\": \"parameterValues\", \"Value\": [\"%full_name%\", \"%zip%\"]},\n    {\"Type\": \"String[]\", \"Name\": \"parameterNames\", \"Value\": [\"name\", \"zip\"]},\n    {\"Type\": \"Boolean\", \"Name\": \"useNamedArguments\", \"Value\": true}\n],\n\"ReturnValue\": null}",
-    "created": "2024-02-05T10:23:23.8611971+00:00"
-  },
-  {
-    "stepText": "run main.py, name=%full_name%, %zip%, use named args, write to %",
-    "response": "{\"FunctionName\": \"RunPythonScript\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"fileName\", \"Value\": \"main.py\"},\n    {\"Type\": \"String[]\", \"Name\": \"parameterValues\", \"Value\": [\"%full_name%\", \"%zip%\"]},\n    {\"Type\": \"String[]\", \"Name\": \"parameterNames\", \"Value\": [\"name\", \"zip\"]},\n    {\"Type\": \"Boolean\", \"Name\": \"useNamedArguments\", \"Value\": true}\n],\n\"ReturnValue\": [\n    {\"Type\": \"Dictionary`2\", \"VariableName\": \"%\"}\n]}",
-    "created": "2024-02-05T10:26:29.2417123+00:00"
-  },
-  {
     "stepText": "run main.py, name=%full_name%, %zip%, use named args, write to %result%",
-    "response": "{\"FunctionName\": \"RunPythonScript\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"fileName\", \"Value\": \"main.py\"},\n    {\"Type\": \"String[]\", \"Name\": \"parameterValues\", \"Value\": [\"%full_name%\", \"%zip%\"]},\n    {\"Type\": \"String[]\", \"Name\": \"parameterNames\", \"Value\": [\"name\", \"zip\"]},\n    {\"Type\": \"Boolean\", \"Name\": \"useNamedArguments\", \"Value\": true},\n    {\"Type\": \"String[]\", \"Name\": \"variablesToExtractFromPythonScript\", \"Value\": [\"%result%\"]}\n],\n\"ReturnValue\": [\n    {\"Type\": \"Dictionary`2\", \"VariableName\": \"result\"}\n]}",
-    "created": "2024-02-05T10:26:46.3963481+00:00"
+    "response": "{\"FunctionName\": \"RunPythonScript\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"fileName\", \"Value\": \"main.py\"},\n    {\"Type\": \"String[]\", \"Name\": \"parameterValues\", \"Value\": [\"%full_name%\", \"%zip%\"]},\n    {\"Type\": \"String[]\", \"Name\": \"parameterNames\", \"Value\": [\"name\", \"zip\"]},\n    {\"Type\": \"Boolean\", \"Name\": \"useNamedArguments\", \"Value\": true}\n],\n\"ReturnValue\": [\n    {\"Type\": \"Dictionary`2\", \"VariableName\": \"result\"}\n]}",
+    "created": "2024-02-07T14:15:28.9839729+00:00"
   }
 ]

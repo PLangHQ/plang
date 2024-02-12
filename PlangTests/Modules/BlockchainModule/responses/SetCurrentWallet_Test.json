@@ -1,7 +1,7 @@
 [
   {
     "stepText": "set business wallet as current wallet",
-    "response": "{\"FunctionName\": \"SetCurrentWallet\", \"Parameters\": [{\"Type\": \"string\", \"Name\": \"walletName\", \"Value\": \"My business wallet\"}]}",
-    "created": "2024-01-04T09:59:56.1423877+00:00"
+    "response": "{\"FunctionName\": \"SetCurrentWallet\", \n\"Parameters\": [{\"Type\": \"String\", \n\"Name\": \"walletName\", \n\"Value\": \"My business wallet\"}], \n\"ReturnValue\": null}",
+    "created": "2024-02-07T12:13:46.9402053+00:00"
   }
 ]

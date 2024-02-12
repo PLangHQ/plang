@@ -131,5 +131,28 @@ namespace PLang.Utils.Tests
 			Assert.AreEqual("This is it mega", dict["stuff3"]);
 			Assert.AreEqual("This is {  \"GoalObject\": true}", dict["goal"].ToString().Replace("\n", "").Replace("\r", ""));
 		}
+
+
+		[TestMethod()]
+		public void LoadVariables_TestNow()
+		{
+			DateTime now = DateTime.Now;
+			SystemTime.Now = () =>
+			{
+				return now;
+			};
+
+			string content = "Hello %Now%";
+
+			var result = variableHelper.LoadVariables(content, false);
+
+			Assert.AreEqual("Hello " + now.ToString(), result);
+
+			content = "Hello %Now.ToString(\"s\")%";
+
+			result = variableHelper.LoadVariables(content, false);
+
+			Assert.AreEqual("Hello " + now.ToString("s"), result);
+		}
 	}
 }

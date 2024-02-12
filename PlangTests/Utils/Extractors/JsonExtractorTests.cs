@@ -1,11 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PLang.Utils.Extractors;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static PLang.Modules.Compiler;
+using PLang.Services.CompilerService;
 
 namespace PLang.Utils.Extractors.Tests
 {

@@ -55,7 +55,7 @@ namespace PLang.Runtime
 		private readonly IEngine engine;
 		private readonly ISettings settings;
 		private readonly PLangAppContext context;
-
+		public Goal Goal { get; set; }
 		public MemoryStack(IPseudoRuntime pseudoRuntime, IEngine engine, ISettings settings, PLangAppContext context)
 		{
 			this.pseudoRuntime = pseudoRuntime;
@@ -73,7 +73,7 @@ namespace PLang.Runtime
 			return staticVariables;
 		}
 
-		
+
 
 		public record VariableExecutionPlan(string VariableName, ObjectValue ObjectValue, List<string> Calls, int Index = 0, string? JsonPath = null);
 
@@ -118,7 +118,7 @@ namespace PLang.Runtime
 			{
 				return new VariableExecutionPlan(key, variables[key], new List<string>());
 			}
-			if (!key.Contains(".") && !key.Contains("[")) return new VariableExecutionPlan(key, new ObjectValue(key, null, null, null,false), new List<string>());
+			if (!key.Contains(".") && !key.Contains("[")) return new VariableExecutionPlan(key, new ObjectValue(key, null, null, null, false), new List<string>());
 
 			string[] keySplit = key.Split('.');
 			int index = 0;
@@ -177,8 +177,13 @@ namespace PLang.Runtime
 				objectValue = GetItemFromListOrDictionary(objectValue, index, dictKey, variableName);
 			}
 
-			if (objectValue.Value.GetType() == typeof(JObject) || objectValue.Value.GetType() == typeof(JArray))
+			if ((index == 0 && dictKey == "" && key.Contains("[") && key.Contains("]")) || (objectValue.Value.GetType() == typeof(JObject) || objectValue.Value.GetType() == typeof(JArray)))
 			{
+				if (objectValue.Type is IDictionary)
+				{
+
+				}
+
 				jsonPath = "$" + ((valueType == typeof(JObject)) ? "" : "..");
 				for (int i = 1; i < keySplit.Length; i++)
 				{
@@ -250,7 +255,7 @@ namespace PLang.Runtime
 					{
 						if (counter++ == index)
 						{
-							objectValue = new ObjectValue(variableName,item, item.GetType(), objectValue);
+							objectValue = new ObjectValue(variableName, item, item.GetType(), objectValue);
 							break;
 						}
 					}
@@ -270,11 +275,11 @@ namespace PLang.Runtime
 			key = Clean(key);
 
 			var keyLower = key.ToLower();
-			if (keyLower == "now" || keyLower.StartsWith("now+") || keyLower.StartsWith("now-") || keyLower.StartsWith("now."))
+			if (IsNow(keyLower))
 			{
 				return GetNow(key);
 			}
-			
+
 			if (ReservedKeywords.IsReserved(key))
 			{
 				if (keyLower == ReservedKeywords.MemoryStack.ToLower())
@@ -294,7 +299,7 @@ namespace PLang.Runtime
 				{
 					return new ObjectValue(key, value.Value, value.Value.GetType(), null);
 				}
-				
+
 			}
 
 			var variables = (staticVariable) ? staticVariables : this.variables;
@@ -303,7 +308,7 @@ namespace PLang.Runtime
 			{
 				return variables[varKey.Key];
 			}
-			
+
 			var plan = GetVariableExecutionPlan(key, staticVariable);
 			if (!plan.ObjectValue.Initiated)
 			{
@@ -332,11 +337,23 @@ namespace PLang.Runtime
 			return objectValue;
 		}
 
+
+
 		private ObjectValue ApplyJsonPath(ObjectValue objectValue, VariableExecutionPlan plan)
 		{
 			if (objectValue.Value == null) return objectValue;
 
 			var objType = objectValue.Value.GetType();
+			if (objType != typeof(JObject) || objType != typeof(JArray))
+			{
+				var json = JsonConvert.SerializeObject(objectValue.Value);
+				var jsonObject = JsonConvert.DeserializeObject(json);
+
+				var newObjectValue = new ObjectValue(objectValue.Name, jsonObject, jsonObject.GetType(), objectValue.Parent, objectValue.Initiated);
+				newObjectValue.Events = objectValue.Events;
+				objectValue = newObjectValue;
+				objType = objectValue.Value.GetType();
+			}
 			IEnumerable<JToken>? tokens = null;
 			if (objType == typeof(JObject) && plan.JsonPath != null)
 			{
@@ -348,7 +365,8 @@ namespace PLang.Runtime
 				try
 				{
 					tokens = ((JArray)objectValue.Value).SelectTokens(plan.JsonPath);
-				} catch
+				}
+				catch
 				{
 					if (plan.JsonPath == "$..")
 					{
@@ -381,7 +399,9 @@ namespace PLang.Runtime
 			string objName = objectValue.Name;
 			if (plan.JsonPath != null && plan.JsonPath != "$.." && plan.JsonPath.StartsWith("$."))
 			{
-				objName += plan.JsonPath.Substring(1);
+				var jsonPath = plan.JsonPath.Substring(1);
+				if (jsonPath.StartsWith("..")) jsonPath = jsonPath.Substring(1);
+				objName += jsonPath;
 			}
 
 			return new ObjectValue(objName, val, val.GetType(), objectValue);
@@ -391,7 +411,9 @@ namespace PLang.Runtime
 
 		public void PutForBuilder(string key, object? value)
 		{
-			Put(key, value, false, false);
+			//Put(key, value, false, false);
+			var objectValue = new ObjectValue(key, value, null, null, false);
+			variables.AddOrReplace(key, objectValue);
 		}
 
 		public void PutStatic(string key, object? value)
@@ -411,7 +433,7 @@ namespace PLang.Runtime
 			var variables = (staticVariable) ? staticVariables : this.variables;
 			if (value == null)
 			{
-				AddOrReplace(variables, key, new ObjectValue(key, null, null, null, false));
+				AddOrReplace(variables, key, new ObjectValue(key, null, null, null, initialize));
 				return;
 			}
 
@@ -521,6 +543,7 @@ namespace PLang.Runtime
 		private void AddOrReplace(Dictionary<string, ObjectValue> variables, string key, ObjectValue objectValue)
 		{
 			VariableEventType eventType;
+			key = Clean(key);
 
 			if (variables.TryGetValue(key, out ObjectValue? prevValue) && prevValue != null && prevValue.Initiated)
 			{
@@ -577,7 +600,7 @@ namespace PLang.Runtime
 		{
 			str = str.Trim();
 			bool isVariable = IsVariable(str);
-			
+
 			if (isVariable && str.StartsWith("%")) str = str.Substring(1);
 			if (isVariable && str.EndsWith("%")) str = str.Remove(str.Length - 1);
 
@@ -597,7 +620,7 @@ namespace PLang.Runtime
 
 		public static object? ConvertToType(object? value, string key, Type targetType)
 		{
-			if (value == null) return null; 
+			if (value == null) return null;
 			if (targetType.Name == "Object")
 			{
 				return value;
@@ -608,7 +631,7 @@ namespace PLang.Runtime
 				targetType = Type.GetType(targetType.FullName.Substring(0, targetType.FullName.Length - 1));
 				if (targetType == null) return null;
 			}
-			
+
 
 
 			if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(Nullable<>))
@@ -639,7 +662,7 @@ namespace PLang.Runtime
 			{
 				if (value.GetType() == typeof(JArray))
 				{
-					list = (IList) ((JArray)value).ToObject(targetType);
+					list = (IList)((JArray)value).ToObject(targetType);
 				}
 				return list;
 			}
@@ -660,7 +683,7 @@ namespace PLang.Runtime
 			{
 				throw new RuntimeException($"Could not convert %{key}% to {targetType.Name} because it is a type of {value.GetType().Name}");
 			}
-			
+
 		}
 
 		private static object? GetInstance(object? value, Type targetType, Type underlyingType)
@@ -668,8 +691,17 @@ namespace PLang.Runtime
 			return Activator.CreateInstance(targetType, Convert.ChangeType(value, underlyingType));
 		}
 
+		private bool IsNow(string keyLower)
+		{
+			keyLower = keyLower.Replace("%", "");
+			return keyLower == "now" || keyLower.StartsWith("now+") || keyLower.StartsWith("now-") || keyLower.StartsWith("now.") ||
+				keyLower == "nowutc" || keyLower.StartsWith("nowutc+") || keyLower.StartsWith("nowutc-") || keyLower.StartsWith("nowutc.")
+				;
+		}
+
 		private ObjectValue GetNow(string key)
 		{
+			var nowFunc = (key.StartsWith("nowutc")) ? SystemTime.UtcNow : SystemTime.Now;
 
 			if (key.Contains("="))
 			{
@@ -685,17 +717,17 @@ namespace PLang.Runtime
 			{
 				string[] strings = key.Split("+");
 				string addString = strings[1];
-				return new ObjectValue(key, CalculateDate("+", addString), typeof(DateTime), null);
+				return new ObjectValue(key, CalculateDate(nowFunc, "+", addString), typeof(DateTime), null);
 			}
 			if (key.Contains("-") && !key.Contains("."))
 			{
 				string[] strings = key.Split("-");
 				string addString = strings[1];
-				return new ObjectValue(key, CalculateDate("-", addString), typeof(DateTime), null);
+				return new ObjectValue(key, CalculateDate(nowFunc, "-", addString), typeof(DateTime), null);
 			}
 			if (key.Contains("."))
 			{
-				var objectValue = new ObjectValue(key, SystemTime.UtcNow(), typeof(DateTime), null);
+				var objectValue = new ObjectValue(key, nowFunc(), typeof(DateTime), null);
 				if (key.Contains("("))
 				{
 					objectValue = ExecuteMethod(objectValue, key.Substring(key.IndexOf(".") + 1), "Now");
@@ -709,7 +741,7 @@ namespace PLang.Runtime
 
 			}
 
-			return new ObjectValue(key, SystemTime.UtcNow(), typeof(DateTime), null);
+			return new ObjectValue(key, nowFunc(), typeof(DateTime), null);
 		}
 
 
@@ -720,7 +752,7 @@ namespace PLang.Runtime
 
 			object? value = null;
 			var type = obj.GetType();
-			
+
 			propertyDescription = propertyDescription.Trim();
 
 			AppContext.TryGetSwitch("builder", out bool isBuilder);
@@ -732,7 +764,8 @@ namespace PLang.Runtime
 				if (key != null)
 				{
 					value = expando[key];
-				} else
+				}
+				else
 				{
 					value = null;
 				}
@@ -824,7 +857,7 @@ namespace PLang.Runtime
 			}
 
 			var methodName = methodDescription.Substring(0, methodDescription.IndexOf("("));
-			var paramString = methodDescription.Substring(methodName.Length + 1, methodDescription.Length - methodName.Length - 2);
+			var paramString = methodDescription.Substring(methodName.Length + 1, methodDescription.Length - methodName.Length - 2).TrimEnd(')');
 
 			var splitParams = paramString.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
 			List<object> paramValues = new List<object>();
@@ -940,11 +973,11 @@ namespace PLang.Runtime
 
 		}
 
-		private DateTime CalculateDate(string sign, string command)
+		private DateTime CalculateDate(Func<DateTime> nowFunc, string sign, string command)
 		{
 			var regex = new Regex(@"^([0-9]+)\s*([a-zA-Z]+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 			var matches = regex.Matches(command);
-			if (matches.Count == 0 || matches[0].Groups.Count != 3) return DateTime.UtcNow;
+			if (matches.Count == 0 || matches[0].Groups.Count != 3) return nowFunc();
 
 			int multiplier = (sign == "+") ? 1 : -1;
 			string number = matches[0].Groups[1].Value;
@@ -953,44 +986,44 @@ namespace PLang.Runtime
 
 			if (!int.TryParse(number, out int intValue))
 			{
-				return DateTime.UtcNow;
+				return nowFunc();
 			}
 
 			if (function == "micro")
 			{
-				return DateTime.UtcNow.AddMicroseconds(multiplier * intValue);
+				return nowFunc().AddMicroseconds(multiplier * intValue);
 			}
 			if (function == "ms")
 			{
-				return DateTime.UtcNow.AddMilliseconds(multiplier * intValue);
+				return nowFunc().AddMilliseconds(multiplier * intValue);
 			}
 			if (function.StartsWith("sec"))
 			{
-				return DateTime.UtcNow.AddSeconds(multiplier * intValue);
+				return nowFunc().AddSeconds(multiplier * intValue);
 			}
 			if (function.StartsWith("min"))
 			{
-				return DateTime.UtcNow.AddMinutes(multiplier * intValue);
+				return nowFunc().AddMinutes(multiplier * intValue);
 			}
 			if (function.StartsWith("hour"))
 			{
-				return DateTime.UtcNow.AddHours(multiplier * intValue);
+				return nowFunc().AddHours(multiplier * intValue);
 			}
 			if (function.StartsWith("day"))
 			{
-				return DateTime.UtcNow.AddDays(multiplier * intValue);
+				return nowFunc().AddDays(multiplier * intValue);
 			}
 			if (function.StartsWith("month"))
 			{
-				return DateTime.UtcNow.AddMonths(multiplier * intValue);
+				return nowFunc().AddMonths(multiplier * intValue);
 			}
 			if (function.StartsWith("year"))
 			{
-				return DateTime.UtcNow.AddYears(multiplier * intValue);
+				return nowFunc().AddYears(multiplier * intValue);
 			}
 
 
-			return DateTime.UtcNow;
+			return nowFunc();
 		}
 
 
@@ -1032,11 +1065,12 @@ namespace PLang.Runtime
 
 		public void AddOnCreateEvent(string key, string goalName, bool staticVariable = false, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 0)
 		{
+			key = Clean(key);
 			var variables = (staticVariable) ? staticVariables : this.variables;
 			var objectValue = GetObjectValue(key, staticVariable);
 			if (!objectValue.Initiated)
 			{
-				Put(key, null);
+				Put(key, null, staticVariable, false);
 				objectValue = GetObjectValue(key, staticVariable);
 			}
 			var eve = objectValue.Events.FirstOrDefault(p => p.EventType == VariableEventType.OnCreate && p.goalName == goalName);
@@ -1048,11 +1082,12 @@ namespace PLang.Runtime
 		}
 		public void AddOnChangeEvent(string key, string goalName, bool staticVariable = false, bool notifyWhenCreated = true, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 0)
 		{
+			key = Clean(key);
 			var variables = (staticVariable) ? staticVariables : this.variables;
 			var objectValue = GetObjectValue(key, staticVariable, notifyWhenCreated);
 			if (!objectValue.Initiated)
 			{
-				Put(key, null);
+				Put(key, null, staticVariable, notifyWhenCreated);
 				objectValue = GetObjectValue(key, staticVariable, notifyWhenCreated);
 			};
 			var eve = objectValue.Events.FirstOrDefault(p => p.EventType == VariableEventType.OnChange && p.goalName == goalName);
@@ -1066,6 +1101,7 @@ namespace PLang.Runtime
 
 		public void AddOnRemoveEvent(string key, string goalName, bool staticVariable = false, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 0)
 		{
+			key = Clean(key);
 			var variables = (staticVariable) ? staticVariables : this.variables;
 
 			var objectValue = GetObjectValue(key, staticVariable);
@@ -1086,6 +1122,6 @@ namespace PLang.Runtime
 			staticVariables.Clear();
 		}
 
-		
+
 	}
 }

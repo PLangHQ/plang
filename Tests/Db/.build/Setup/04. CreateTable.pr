@@ -1,0 +1,62 @@
+{
+  "Action": {
+    "FunctionName": "CreateTable",
+    "Parameters": [
+      {
+        "Type": "string",
+        "Name": "sql",
+        "Value": "CREATE TABLE items (id INTEGER PRIMARY KEY, name TEXT NOT NULL)"
+      }
+    ],
+    "ReturnValue": null
+  },
+  "Text": "create table items, columns: name(string, not null)",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+    "type": "PLang.Modules.DbModule.Builder",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nvoid CreateTable(String sql)  \r\n## csharp function ##\r\n\r\nIf table name is a variable, keep the variable in the sql statement\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nYou MUST generate a valid sql statement for SQLiteConnection.\r\nYou MUST add id to create statement.\r\nIf id is not defined then add id to the create statement. \r\nThe id MUST NOT be auto incremental, but is primary key.\r\nThe id should be datatype long/bigint/.. which fits SQLiteConnection.\r\n"
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nvoid CreateDataSource(String name) \nvoid SetDataSouceName(String name) \nvoid BeginTransaction() \nvoid EndTransaction() \nvoid LoadExtension(String fileName, String? procName) \nInt32 Execute(String sql) \nvoid CreateTable(String sql) \nObject Select(String sql, List`1<Object>? Parameters, Boolean? selectOneRow_Top1OrLimit1 = False) \nInt32 Update(String sql, List`1<Object>? Parameters) \nInt32 Delete(String sql, List`1<Object>? Parameters) \nInt32 Insert(String sql, List`1<Object>? Parameters)  // Basic insert statement. Will return affected row count. \nObject InsertAndSelectIdOfInsertedRow(String sql, List`1<Object>? Parameters)  // Insert statement that will return the id of the inserted row. Use only if user requests the id. \nInt32 InsertBulk(String tableName, List`1<Object> items)  // Insert a list(bulk) into database, return number of rows inserted. \nString GetAdditionalSystemErrorInfo() \nString GetAdditionalAssistantErrorInfo()\r\n## functions available ends ##"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "create table items, columns: name(string, not null)"
+          }
+        ]
+      }
+    ],
+    "model": "gpt-4",
+    "caching": true,
+    "RawResponse": null
+  },
+  "RunOnBuild": false
+}

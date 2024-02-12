@@ -1,7 +1,7 @@
 [
   {
     "stepText": "post http://example.org, file=%@file%, write to %json%",
-    "response": "{\"FunctionName\": \"PostMultipartFormData\",\n\"Parameters\": [\n    {\"Type\": \"string\", \"Name\": \"url\", \"Value\": \"http://example.org\"},\n    {\"Type\": \"object\", \"Name\": \"data\", \"Value\": \"%@file%\"}\n],\n\"ReturnValue\": [\n    {\"Type\": \"object\", \"VariableName\": \"json\"}\n]}",
-    "created": "2024-02-05T09:36:07.2473551+00:00"
+    "response": "{\"FunctionName\": \"PostMultipartFormData\",\n\"Parameters\": [\n    {\"Type\": \"string\", \"Name\": \"url\", \"Value\": \"http://example.org\"},\n    {\"Type\": \"object\", \"Name\": \"data\", \"Value\": \"%@file%\"},\n    {\"Type\": \"string\", \"Name\": \"httpMethod\", \"Value\": \"POST\"}\n],\n\"ReturnValue\": [\n    {\"Type\": \"object\", \"VariableName\": \"json\"}\n]}",
+    "created": "2024-02-07T13:05:08.8626254+00:00"
   }
 ]

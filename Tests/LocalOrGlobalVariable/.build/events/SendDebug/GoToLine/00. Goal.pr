@@ -1,0 +1,40 @@
+{
+  "GoalName": "GoToLine",
+  "Comment": null,
+  "GoalSteps": [
+    {
+      "Text": "set %__StepIndex__% as %line%",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.LocalOrGlobalVariableModule",
+      "Name": "SetStepIndex",
+      "Description": "This step involves setting the value of the variable '__StepIndex__' as the value of the variable 'line'.",
+      "PrFileName": "01. SetStepIndex.pr",
+      "RelativePrPath": ".build\\Events\\SendDebug\\GoToLine\\01. SetStepIndex.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-01-08T13:00:45.6979346+00:00",
+      "WaitForExecution": true,
+      "ErrorHandler": null,
+      "RetryHandler": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 0,
+      "LineNumber": 18,
+      "LlmRequest": null
+    }
+  ],
+  "Description": null,
+  "Visibility": 0,
+  "GoalFileName": "SendDebug.goal",
+  "RelativeGoalPath": "\\Events\\SendDebug.goal",
+  "RelativeGoalFolderPath": "\\Events",
+  "RelativePrPath": ".build\\Events\\SendDebug\\GoToLine\\00. Goal.pr",
+  "RelativePrFolderPath": ".build\\Events\\SendDebug\\GoToLine",
+  "BuilderVersion": "0.1.0.0",
+  "GoalApiInfo": null,
+  "Injections": [],
+  "Signature": null,
+  "Hash": "cfe226cc824b4cb386cce7fc711eba903908169259ef71a859ee93363e565b0c"
+}

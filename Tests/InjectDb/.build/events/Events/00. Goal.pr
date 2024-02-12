@@ -8,12 +8,12 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": null,
-      "RelativePrPath": null,
+      "PrFileName": "Events.pr",
+      "RelativePrPath": ".build\\events\\Events\\Events.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-01-24T12:43:18.806928+00:00",
+      "Generated": "2024-02-09T22:48:59.576243+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -23,18 +23,19 @@
         "Event": {
           "EventType": 0,
           "EventScope": 0,
-          "GoalToBindTo": null,
+          "GoalToBindTo": "All",
           "GoalToCall": "!InjectTypes",
           "IncludePrivate": false,
           "StepNumber": null,
           "StepText": null,
           "WaitForExecution": true,
-          "RunOnlyInDebugMode": false
+          "RunOnlyInDebugMode": false,
+          "OnErrorContinueNextStep": false
         }
       },
       "Number": 1,
       "LineNumber": 1,
-      "LlmQuestion": null
+      "LlmRequest": null
     }
   ],
   "Description": null,

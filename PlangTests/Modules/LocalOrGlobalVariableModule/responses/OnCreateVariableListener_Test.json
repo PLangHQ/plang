@@ -1,12 +1,7 @@
 [
   {
-    "stepText": "listen to variable 'name', call !Process name=%full_name%, %key%",
-    "response": "{\"FunctionName\": \"OnCreateVariableListener\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"key\", \"Value\": \"%key%\"},\n    {\"Type\": \"String\", \"Name\": \"goalName\", \"Value\": \"!Process\"},\n    {\"Type\": \"Dictionary`2<String, Object>\", \"Name\": \"parameters\", \"Value\": {\"name\": \"%full_name%\"}}\n]}",
-    "created": "2024-02-05T10:05:57.0584017+00:00"
-  },
-  {
     "stepText": "listen to variable 'name', call !Process name=%full_name%, %zip%",
-    "response": "{\"FunctionName\": \"OnCreateVariableListener\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"key\", \"Value\": \"name\"},\n    {\"Type\": \"String\", \"Name\": \"goalName\", \"Value\": \"!Process\"},\n    {\"Type\": \"Dictionary`2<String, Object>\", \"Name\": \"parameters\", \"Value\": {\"name\": \"%full_name%\", \"zip\": \"%zip%\"}},\n    {\"Type\": \"Boolean\", \"Name\": \"waitForResponse\", \"Value\": true},\n    {\"Type\": \"Int32\", \"Name\": \"delayWhenNotWaitingInMilliseconds\", \"Value\": 50}\n]}",
-    "created": "2024-02-05T10:06:46.1835656+00:00"
+    "response": "{\"FunctionName\": \"OnCreateVariableListener\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"key\", \"Value\": \"name\"},\n    {\"Type\": \"String\", \"Name\": \"goalName\", \"Value\": \"!Process\"},\n    {\"Type\": \"Dictionary`2<String, Object>\", \"Name\": \"parameters\", \"Value\": {\"name\": \"%full_name%\", \"zip\": \"%zip%\"}},\n    {\"Type\": \"Boolean\", \"Name\": \"waitForResponse\", \"Value\": true},\n    {\"Type\": \"Int32\", \"Name\": \"delayWhenNotWaitingInMilliseconds\", \"Value\": 50}\n],\n\"ReturnValue\": null}",
+    "created": "2024-02-07T14:11:19.9305016+00:00"
   }
 ]

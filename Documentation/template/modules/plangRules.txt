@@ -6,7 +6,19 @@
 - Variables start and end with %
 - \% is an escape character for variables so the language does not load the variable in text
 - single slash (/) is a start of a comment
-- if statment are in the following format: if %variable% then call !IsTrue, else !IsFalse
-- indented steps belong to and if statement
-- \%Now\% give access to DateTime in c#
+- if statment are in the following format(where IsTrue and IsFalse are goals being called): 
+    ```plang
+    - if %variable% then call !IsTrue, else call !IsFalse     
+    ```
+- else statement as start of step is not legal
+    ```plang 
+    - else /this is not legal
+    ```
+- indented steps belong to an if statement
+    ```plang
+    - if %isTrue% then
+        - write out 'It is true'
+        - write out 'another step inside if statement'
+    ```
+- \%Now\% & \%NowUtc\% give access to DateTime.Now & DateTime.NowUtc in c#
 # plang rules #

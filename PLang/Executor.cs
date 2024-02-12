@@ -41,7 +41,8 @@ namespace PLang
 		public async Task Execute(string[] args)
 		{
 			if (args.Length == 0) args = new string[1] { "run" };
-			
+			if (args.FirstOrDefault(p => p == "run") == null && args.FirstOrDefault(p => p == "build") == null) args = args.Append("run").ToArray();
+
 			var debug = args.FirstOrDefault(p => p == "--debug") != null;
 			if (debug)
 			{
@@ -57,6 +58,11 @@ namespace PLang
 			if (loggerLovel != null)
 			{
 				AppContext.SetData("--logger", loggerLovel.Replace("--logger=", ""));
+			}
+			var llmerror = args.FirstOrDefault(p => p.ToLower().StartsWith("--llmerror"));
+			if (llmerror != null)
+			{
+				AppContext.SetSwitch("llmerror", true);
 			}
 
 			if (args.FirstOrDefault(p => p == "exec") != null)

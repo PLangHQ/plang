@@ -1,4 +1,6 @@
-﻿namespace PLang.Building.Events
+﻿using PLang.Attributes;
+
+namespace PLang.Building.Events
 {
 	public enum EventType
     {
@@ -29,5 +31,6 @@
 	    [property: DefaultValue("false")] bool IncludePrivate = false, 
         int? StepNumber = null, string? StepText = null,
 		[property: DefaultValue("true")] bool WaitForExecution = true,
-		[property: DefaultValue("false")] bool RunOnlyInDebugMode = false);
+		[property: DefaultValue("false")] bool RunOnlyInDebugMode = false,
+		bool OnErrorContinueNextStep = false);
 }

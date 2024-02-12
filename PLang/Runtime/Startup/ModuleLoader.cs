@@ -1,40 +1,33 @@
-﻿using Microsoft.Extensions.Configuration;
-using PLang.Building.Model;
-using PLang.Services.LlmService;
-using PLang.Utils;
+﻿using PLang.Models;
 
 namespace PLang.Runtime.Startup
 {
-    internal class ModuleLoader
+	internal class ModuleLoader
 	{
 		public static Dictionary<string, string> Modules = new Dictionary<string, string>();
 
-		PLangLlmService openAIService;
-		IConfiguration configuration;
-		public ModuleLoader(PLangLlmService openAIService, IConfiguration configuration)
+		public ModuleLoader()
 		{
-			this.openAIService = openAIService;
-			this.configuration = configuration;
 		}
-		public LlmQuestion GetQuestion(string content)
+		public LlmRequest GetQuestion(string content)
 		{
-			return new LlmQuestion("ModuleLoader",
-				$@"You are deciding what modules to use in the system. 
+			var promptMessage = new List<LlmMessage>();
+			promptMessage.Add(new LlmMessage("system", $@"You are deciding what modules to use in the system. 
 
 module is the module name
 type is the module type that should be used
 arguments should have the scheme: {{name:string, status:object}}
-keep argument name simple as possible
+keep argument name simple as possible))
+"));
+			promptMessage.Add(new LlmMessage("user", content));
 
-You MUST respond in JSON, scheme:
-[{{module:string,
+			var request = new LlmRequest("ModuleLoader", promptMessage);
+			request.scheme = @"[{{module:string,
 type:string,
 arguments:object
-}}]
-",
-content,
-$@""
-				);
+}}]";
+
+			return request;
 		}
 
 		public record Answer(string Module, string Type);

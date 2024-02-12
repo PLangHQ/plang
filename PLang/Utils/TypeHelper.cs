@@ -1,4 +1,5 @@
-﻿using PLang.Building.Events;
+﻿using PLang.Attributes;
+using PLang.Building.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Modules;
@@ -108,7 +109,7 @@ namespace PLang.Utils
 				}
 				else
 				{
-					
+
 					Console.WriteLine($"WARNING return type of {method.Name} is not Task");
 				}
 
@@ -121,7 +122,7 @@ namespace PLang.Utils
 					if (param.ParameterType.GenericTypeArguments.Length > 0)
 					{
 						strMethod += "<";
-						for (int i=0;i<param.ParameterType.GenericTypeArguments.Length;i++) 
+						for (int i = 0; i < param.ParameterType.GenericTypeArguments.Length; i++)
 						{
 							if (i != 0) strMethod += ", ";
 							strMethod += param.ParameterType.GenericTypeArguments[i].Name;
@@ -246,7 +247,8 @@ namespace PLang.Utils
 					{
 						value = parameter.DefaultValue.ToString()!;
 					}
-				} else
+				}
+				else
 				{
 					value = parameter.ParameterType.Name.ToLower().ToString();
 				}
@@ -259,8 +261,13 @@ namespace PLang.Utils
 		{
 			var json = (type.IsArray || type == typeof(List<>)) ? "[" : "{";
 
+			var primaryConstructor = type.GetConstructors().OrderByDescending(c => c.GetParameters().Length).FirstOrDefault();
+			var constructorParameters = primaryConstructor?.GetParameters().ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
+
 			foreach (var prop in type.GetProperties())
 			{
+				if (prop.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "JsonIgnoreAttribute") != null) continue;
+
 				var propName = "\"" + prop.Name + "\"";
 				if (prop.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "NullableAttribute") != null)
 				{
@@ -323,10 +330,19 @@ namespace PLang.Utils
 					//schema[prop.Name] = " = " + ((DefaultValueAttribute) attribute).Value;
 					json += " = " + attribute.Value;
 				}
+				else if (constructorParameters != null && constructorParameters.ContainsKey(prop.Name))
+				{
+					var item = constructorParameters[prop.Name];
+					if (item.HasDefaultValue)
+					{
+						json += " = " + ((item.DefaultValue == null) ? "null" : item.DefaultValue);
+					}
+				}
 				else if (prop.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "NullableAttribute") != null)
 				{
 					//json += " = null";
 				}
+
 
 			}
 			json += (type.IsArray || type == typeof(List<>)) ? "]" : "}";

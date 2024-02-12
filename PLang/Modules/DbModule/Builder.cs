@@ -141,31 +141,36 @@ Choose the best method to use, if the method is not provided that fits the SQL, 
 			string appendToSystem = "";
 			if (dataSource.KeepHistory)
 			{
-				appendToSystem = "Parameter @id MUST be type System.Int64";
+				appendToSystem = "SqlParameters @id MUST be type System.Int64";
 			}
 			SetSystem(@$"Map user command to this c# function: 
 
 ## csharp function ##
-object? Select(String sql, List<object>()? Parameters = null, bool selectOneRow_Top1OrLimit1 = false)
+object? Select(String sql, List<object>()? SqlParameters = null, bool selectOneRow_Top1OrLimit1 = false)
 ## csharp function ##
 
 ## Rules ##
 Variable is defined with starting and ending %, e.g. %filePath%.
-Parameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
+SqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName). {appendToSystem}
 TypeFullName is Full name of the type in c#, System.String, System.Double, etc.
-ReturnValue: User defined variable to write to, e.g. 'write to %result%, or if no variable is defined then Columns being returned with type if defined by user. * will return dynamic. integer/int should always be System.Int64. 
-{appendToSystem}
+ReturnValue rules: 
+- If user defines variable to write into, e.g. 'write to %result%' then ReturnValue=%result%, 
+- If there does not define 'write to ..' statement then Columns being returned with type if defined by user. 
+- * will return dynamic. 
+- integer/int should always be System.Int64. 
 
 If table name is a variable, keep the variable in the sql statement
 You MUST generate a valid sql statement for {databaseType}.
-You MUST provide Parameters if SQL has @parameter.
+You MUST provide SqlParameters if SQL has @parameter.
 ## Rules ##
 ");
 
 			SetAssistant(@"# examples #
-""select everything from tableX"" => sql: ""SELECT * FROM tableX""
-""select from tableB where id=%id%"" => sql: ""SELECT * FROM tableB WHERE id=@id""
-""select * from %table% WHERE %name% => sql: ""SELECT * FROM %table% WHERE name=@name""
+- select everything from tableX, write to %table% => sql: SELECT * FROM tableX, ReturnValue: %table%
+- select from tableB where id=%id%, into %table% => sql: SELECT * FROM tableB WHERE id=@id, ReturnValue: %table%
+- select * from %table% WHERE %name%, write to %result% => sql: SELECT * FROM %table% WHERE name=@name, ReturnValue: %result%
+- select id, name from users, write to %user% => then ReturnValue is %user% object
+- select id, name from users => then ReturnValue is %id%, %name% objects
 # examples #");
 
 
@@ -214,17 +219,17 @@ You MUST generate a valid sql statement for {databaseType}.
 			SetSystem(@$"Map user command to this c# function: 
 
 ## csharp function ##
-Int32 Delete(String sql, List<object>()? Parameters = null)
+Int32 Delete(String sql, List<object>()? SqlParameters = null)
 ## csharp function ##
 
 Variable is defined with starting and ending %, e.g. %filePath%.
-Parameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
+SqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
 TypeFullName is Full name of the type in c#, System.String, System.Double, etc.
 {appendToSystem}
 
 If table name is a variable, keep the variable in the sql statement
 You MUST generate a valid sql statement for {databaseType}.
-You MUST provide Parameters if SQL has @parameter.
+You MUST provide SqlParameters if SQL has @parameter.
 ");
 
 			SetAssistant(@"# examples #
@@ -249,18 +254,18 @@ You MUST provide Parameters if SQL has @parameter.
 3. Return a valid JSON: 
 
 ## csharp function ##
-Int32 Update(String sql, List<object>()? Parameters = null)
+Int32 Update(String sql, List<object>()? SqlParameters = null)
 ## csharp function ##
 
 variable is defined with starting and ending %, e.g. %filePath%. Do not remove %
-Sql is the SQL statement that should be executed. Sql MAY NOT contain a variable(except table name), it MUST be injected using Parameter to prevent SQL injection
-Parameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
+Sql is the SQL statement that should be executed. Sql MAY NOT contain a variable(except table name), it MUST be injected using SqlParameters to prevent SQL injection
+SqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
 TypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.
 All integers are type of System.Int64.
 {appendToSystem}
 If table name is a variable, keep the variable in the sql statement
 You MUST generate a valid sql statement for {databaseType}.
-You MUST provide Parameters if SQL has @parameter.
+You MUST provide SqlParameters if SQL has @parameter.
 ");
 
 			SetAssistant(@"# examples #
@@ -302,17 +307,17 @@ You MUST provide Parameters if SQL has @parameter.
 			SetSystem(@$"Map user command to this c# function: 
 
 ## csharp function ##
-Int32 Insert(String sql, List<object>()? Parameters = null)
+Int32 Insert(String sql, List<object>()? SqlParameters = null)
 ## csharp function ##
 
 variable is defined with starting and ending %, e.g. %filePath%.
-Parameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
+SqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
 TypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.
 {appendToSystem}
 {eventSourcing}
 If table name is a variable, keep the variable in the sql statement
 You MUST generate a valid sql statement for {databaseType}.
-You MUST provide Parameters if SQL has @parameter.
+You MUST provide SqlParameters if SQL has @parameter.
 ");
 			if (dataSource.KeepHistory)
 			{
@@ -343,22 +348,22 @@ You MUST provide Parameters if SQL has @parameter.
 			string appendToSystem = "";
 			if (dataSource.KeepHistory)
 			{
-				appendToSystem = "Parameter @id MUST be type System.Int64";
+				appendToSystem = "SqlParameters @id MUST be type System.Int64";
 			}
 			SetSystem(@$"Map user command to this c# function: 
 
 ## csharp function ##
-Object InsertAndSelectIdOfInsertedRow(String sql, List<object>()? Parameters = null)
+Object InsertAndSelectIdOfInsertedRow(String sql, List<object>()? SqlParameters = null)
 ## csharp function ##
 
 variable is defined with starting and ending %, e.g. %filePath%.
-Parameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
+SqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
 TypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.
 {appendToSystem}
 {eventSourcing}
 If table name is a variable, keep the variable in the sql statement
 You MUST generate a valid sql statement for {databaseType}.
-You MUST provide Parameters if SQL has @parameter.
+You MUST provide SqlParameters if SQL has @parameter.
 ");
 			if (dataSource.KeepHistory)
 			{

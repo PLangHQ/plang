@@ -18,7 +18,7 @@ using System.Text.RegularExpressions;
 
 namespace PLang.Modules.FileModule
 {
-	[Description("Handle file system access. Listen to files and dirs")]
+	[Description("Handle file system access. Listen to files and dirs. Get permission to file and folder paths")]
 	public class Program : BaseProgram, IDisposable
 	{
 		private readonly IPLangFileSystem fileSystem;

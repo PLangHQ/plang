@@ -64,7 +64,7 @@ namespace PLang.Modules.LoopModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("RunLoop", gf.FunctionName);
 			Assert.AreEqual("variableToLoopThrough", gf.Parameters[0].Name);

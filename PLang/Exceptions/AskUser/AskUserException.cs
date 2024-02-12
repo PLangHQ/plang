@@ -1,6 +1,7 @@
 ﻿using CsvHelper.Configuration;
 using PLang.Building.Model;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Utils;
 using System.Data;
 using System.Data.SQLite;
@@ -121,15 +122,18 @@ dataSourceConnectionStringExample: create an example of a connection string for 
 regexToExtractDatabaseNameFromConnectionString: generate regex to extract the database name from a connection string from user selected databaseType
 keepHistoryEventSourcing: true when typeFullName is SQLite and not defined by user, else false
 isDefault: true if user asks to make it default, else it is false
-
-
-You must return JSON scheme:
-{TypeHelper.GetJsonSchema(typeof(MethodResponse))}
 ";
 			string assistant = $"## database types ##\r\n{supportedDbTypes}\r\n## database types ##";
 
-			var llmQuestion = new LlmQuestion("AskUserDatabaseType", system, answer.ToString(), assistant);
-			var result = await aiService.Query<MethodResponse>(llmQuestion);
+			var promptMessage = new List<LlmMessage>();
+			promptMessage.Add(new LlmMessage("system", system));
+			promptMessage.Add(new LlmMessage("assistant", assistant));
+			promptMessage.Add(new LlmMessage("user", answer.ToString()));
+
+			var llmRequest = new LlmRequest("AskUserDatabaseType", promptMessage);
+			llmRequest.scheme = TypeHelper.GetJsonSchema(typeof(MethodResponse));
+
+			var result = await aiService.Query<MethodResponse>(llmRequest);
 
 			if (result == null) throw new Exception("Could not use LLM to format your answer");
 			if (Callback == null) return;
@@ -209,8 +213,14 @@ keepHistoryEventSourcing: {keepHistoryEventSourcing}
 ## previously defined ##
 ";
 
-			var llmQuestion = new LlmQuestion("AskUserDatabaseType", $"Map user request", answer.ToString()!, "");
-			var result = await aiService.Query<MethodResponse>(llmQuestion);
+			var promptMessage = new List<LlmMessage>();
+			promptMessage.Add(new LlmMessage("system", "Map user request"));
+			promptMessage.Add(new LlmMessage("assistant", assistant));
+			promptMessage.Add(new LlmMessage("user", answer.ToString()!));
+
+
+			var llmRequest = new LlmRequest("AskUserDatabaseType", promptMessage);
+			var result = await aiService.Query<MethodResponse>(llmRequest);
 			if (result == null) return;
 
 			await Callback.Invoke(new object[] {

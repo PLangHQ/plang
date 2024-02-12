@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "- input %name% into #name",
-    "response": "{\"FunctionName\": \"Input\",\n\"Parameters\": [{\"Type\": \"string\",\n\"Name\": \"value\",\n\"Value\": \"%name%\"},\n{\"Type\": \"string\",\n\"Name\": \"cssSelector\",\n\"Value\": \"#name\"}],\n\"ReturnValue\": null}",
-    "created": "2024-02-05T10:30:26.4992767+00:00"
-  }
-]

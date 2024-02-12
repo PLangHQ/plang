@@ -5,7 +5,9 @@ using NSubstitute;
 using PLang.Building.Events;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
+using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.AppsRepository;
 using PLang.Services.CachingService;
@@ -21,7 +23,7 @@ using static PLang.Modules.BaseBuilder;
 
 namespace PLangTests
 {
-    public class BasePLangTest
+	public class BasePLangTest
 	{
 		protected ServiceContainer container;
 
@@ -52,6 +54,8 @@ namespace PLangTests
 		protected IPLangSigningService signingService;
 		protected IPLangAppsRepository appsRepository;
 		protected IHttpClientFactory httpClientFactory;
+		protected IAskUserHandler askUserHandler;
+		protected IExceptionHandler exceptionHandler;
 		protected void Initialize()
 		{
 
@@ -105,6 +109,9 @@ namespace PLangTests
 			aiService = Substitute.For<ILlmService>();
 			container.RegisterInstance(aiService);
 
+			askUserHandler = Substitute.For<IAskUserHandler>();
+			container.RegisterInstance(askUserHandler);
+
 			outputStream = Substitute.For<IOutputStream>();
 			container.RegisterInstance(outputStream);
 
@@ -129,6 +136,8 @@ namespace PLangTests
 			eventRuntime = Substitute.For<IEventRuntime>();
 			container.RegisterInstance(eventRuntime);
 
+			exceptionHandler = Substitute.For<IExceptionHandler>();
+			container.RegisterInstance(exceptionHandler);
 			db = Substitute.For<IDbConnection>();
 			//container.RegisterInstance(db);
 
@@ -169,16 +178,16 @@ namespace PLangTests
 		public void Store(string stepText, string? response, [CallerMemberName] string caller = "")
 		{
 			if (string.IsNullOrWhiteSpace(response)) return;
-		
+
 			if (string.IsNullOrWhiteSpace(stepText)) throw new Exception("stepText cannot be empty");
 			if (string.IsNullOrWhiteSpace(caller)) throw new Exception("caller cannot be empty");
-			
+
 			var dir = GetSourceResponseDir();
 			if (!Directory.Exists(dir))
 			{
 				Directory.CreateDirectory(dir);
 			}
-			
+
 			string filePath = Path.Combine(dir, caller + ".json");
 
 			List<TestResponse> responses = new List<TestResponse>();
@@ -203,7 +212,8 @@ namespace PLangTests
 			if (type == null) type = typeof(GenericFunction);
 
 			var llmService = Substitute.For<ILlmService>();
-			llmService.Query(Arg.Any<LlmQuestion>(), type).Returns(p => {
+			llmService.Query(Arg.Any<LlmRequest>(), type).Returns(p =>
+			{
 				return JsonConvert.DeserializeObject(testResponse, type);
 			});
 			return llmService;
@@ -215,7 +225,7 @@ namespace PLangTests
 
 			var dir = GetSourceResponseDir();
 			if (!Directory.Exists(dir))
-			{ 
+			{
 				return null;
 			}
 			string filePath = Path.Combine(dir, caller + ".json");
@@ -241,7 +251,7 @@ namespace PLangTests
 			else
 			{
 				string derivedClassDirectory = Path.GetDirectoryName(derivedClassPath);
-				
+
 				string responsesDir = Path.GetFullPath(Path.Combine(derivedClassDirectory, $"../../../Modules/{moduleFolder}/responses"));
 				return responsesDir;
 			}

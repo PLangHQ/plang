@@ -64,7 +64,7 @@ namespace PLang.Modules.PythonModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("RunPythonScript", gf.FunctionName);
 			Assert.AreEqual("fileName", gf.Parameters[0].Name);

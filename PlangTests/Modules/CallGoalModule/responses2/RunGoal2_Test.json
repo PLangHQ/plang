@@ -1,6 +1,0 @@
-[
-  {
-    "stepText": "call !RunReporting, dont wait, delay for 3 sec",
-    "response": "{\n\"FunctionName\": \"RunGoal\",\n\"Parameters\": [\n    {\n        \"Type\": \"String\",\n        \"Name\": \"goalName\",\n        \"Value\": \"RunReporting\"\n    },\n    {\n        \"Type\": \"Boolean\",\n        \"Name\": \"waitForExecution\",\n        \"Value\": false\n    },\n    {\n        \"Type\": \"Int32\",\n        \"Name\": \"delayWhenNotWaitingInMilliseconds\",\n        \"Value\": 3000\n    }\n]\n}"
-  }
-]

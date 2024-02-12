@@ -178,6 +178,11 @@ namespace PLang.Modules.WebserverModule
 							if (httpContext.Request.ContentLength64 > maxContentLength)
 							{
 								httpContext.Response.StatusCode = 413;
+								using (var writer = new StreamWriter(resp.OutputStream, resp.ContentEncoding ?? Encoding.UTF8))
+								{
+									await writer.WriteAsync($"Content sent to server is to big. Max {maxContentLength} bytes");
+									await writer.FlushAsync();
+								}
 								httpContext.Response.Close();
 								continue;
 							}
@@ -233,7 +238,7 @@ namespace PLang.Modules.WebserverModule
 							engine.Init(container);
 							engine.HttpContext = httpContext;
 
-							var requestMemoryStack = container.GetInstance<MemoryStack>();
+							var requestMemoryStack = engine.GetMemoryStack();
 							var identityService = container.GetInstance<IPLangIdentityService>();
 							await ParseRequest(httpContext, identityService, goal.GoalApiInfo!.Method, requestMemoryStack);
 							await engine.RunGoal(goal);
@@ -362,13 +367,16 @@ namespace PLang.Modules.WebserverModule
 			HttpListenerContext.Response.Redirect(url);
 		}
 
-		public async Task WriteToResponseHeader(string key, string value)
+		public async Task WriteToResponseHeader(Dictionary<string, object> headers)
 		{
 			if (HttpListenerContext == null)
 			{
 				throw new HttpListenerException(500, "Context is null. Start a webserver before calling me.");
 			}
-			HttpListenerContext.Response.AddHeader(key, value);
+			foreach (var header in headers)
+			{
+				HttpListenerContext.Response.AddHeader(header.Key, header.Value.ToString());
+			}
 		}
 
 		[Description("headerKey should be null unless specified by user")]
@@ -482,7 +490,7 @@ namespace PLang.Modules.WebserverModule
 			{
 				body = await reader.ReadToEndAsync();
 			}
-			await VerifySignature(request, body);
+			await VerifySignature(request, body, memoryStack);
 
 			var nvc = request.QueryString;
 			if (contentType.StartsWith("application/json") && !string.IsNullOrEmpty(body))
@@ -550,7 +558,7 @@ namespace PLang.Modules.WebserverModule
 
 		}
 
-		public async Task VerifySignature(HttpListenerRequest request, string body)
+		public async Task VerifySignature(HttpListenerRequest request, string body, MemoryStack memoryStack)
 		{
 			if (request.Headers.Get("X-Signature") == null ||
 				request.Headers.Get("X-Signature-Created") == null ||

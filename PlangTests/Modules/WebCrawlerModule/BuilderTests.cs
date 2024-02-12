@@ -62,7 +62,7 @@ namespace PLangTests.Modules.WebCrawlerModule
             var instruction = await builder.Build(step);
             var gf = instruction.Action as GenericFunction;
 
-            Store(text, instruction.LlmQuestion.RawResponse);
+            Store(text, instruction.LlmRequest.RawResponse);
 
 
             Assert.AreEqual("NavigateToUrl", gf.FunctionName);
@@ -83,7 +83,7 @@ namespace PLangTests.Modules.WebCrawlerModule
             var instruction = await builder.Build(step);
             var gf = instruction.Action as GenericFunction;
 
-            Store(text, instruction.LlmQuestion.RawResponse);
+            Store(text, instruction.LlmRequest.RawResponse);
 
 
             Assert.AreEqual("Input", gf.FunctionName);

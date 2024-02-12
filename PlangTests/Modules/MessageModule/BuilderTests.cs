@@ -65,7 +65,7 @@ namespace PLang.Modules.MessageModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("GetPublicKey", gf.FunctionName);
 			Assert.AreEqual("publicKey", gf.ReturnValue[0].VariableName);
@@ -85,7 +85,7 @@ namespace PLang.Modules.MessageModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("SetCurrentAccount", gf.FunctionName);
 			Assert.AreEqual("publicKeyOrName", gf.Parameters[0].Name);
@@ -103,7 +103,7 @@ namespace PLang.Modules.MessageModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("Listen", gf.FunctionName);
 			Assert.AreEqual("goalName", gf.Parameters[0].Name);
@@ -124,7 +124,7 @@ namespace PLang.Modules.MessageModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 			
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("SendPrivateMessageToMyself", gf.FunctionName);
 			Assert.AreEqual("content", gf.Parameters[0].Name);
@@ -142,7 +142,7 @@ namespace PLang.Modules.MessageModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("SendPrivateMessage", gf.FunctionName);
 			Assert.AreEqual("content", gf.Parameters[0].Name);

@@ -14,10 +14,12 @@ namespace PLang.Building.Events.Tests
 	[TestClass()]
 	public class EventRuntimeTests : BasePLangTest
 	{
+		EventRuntime eventRuntime;
 		[TestInitialize]
 		public void Init()
 		{
 			base.Initialize();
+			eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper, exceptionHandler);
 		}
 
 		[TestMethod()]
@@ -28,7 +30,7 @@ namespace PLang.Building.Events.Tests
 
 			var eventBinding = new EventBinding(EventType.Before, EventScope.Goal, "Start", "");
 
-			var eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper);
+			
 			var result = eventRuntime.GoalHasBinding(goal, eventBinding);
 			Assert.IsFalse(result);
 		}
@@ -41,7 +43,6 @@ namespace PLang.Building.Events.Tests
 			goal.Visibility = Visibility.Public;
 			var eventBinding = new EventBinding(EventType.Before, EventScope.Goal, "Start", "");
 
-			var eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper);
 			var result = eventRuntime.GoalHasBinding(goal, eventBinding);
 			Assert.IsTrue(result);
 		}
@@ -51,10 +52,7 @@ namespace PLang.Building.Events.Tests
 		[TestMethod()]
 		public void IsGoalMatchTest_Should_Match_GoalName_Matches_Pattern2()
 		{
-			var settings = container.GetInstance<ISettings>();
-
-			var fileSystem = (PLangMockFileSystem)container.GetInstance<IPLangFileSystem>();
-
+			
 			string goalFilePath = Path.Join(fileSystem.BuildPath, "Start", "Start.pr");
 			var content = PrReaderHelper.GetPrFileRaw("Start.pr");
 			fileSystem.AddFile(goalFilePath, new MockFileData(content));
@@ -62,8 +60,6 @@ namespace PLang.Building.Events.Tests
 			var goal = prParser.ParsePrFile(goalFilePath);
 
 			var events = JsonConvert.DeserializeObject<List<EventBinding>>(eventJson);
-
-			var eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper);
 
 			// Test GoalToBindTo = Start
 			var result = eventRuntime.GoalHasBinding(goal, events[0]);
@@ -121,9 +117,6 @@ namespace PLang.Building.Events.Tests
 		[TestMethod()]
 		public async Task RunStepEventsTest_CallEventBeforeAppStart()
 		{
-			var settings = container.GetInstance<ISettings>();
-			var fileSystem = (PLangMockFileSystem)container.GetInstance<IPLangFileSystem>();
-
 			// setup mocked events files
 			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
 			var content = PrReaderHelper.GetPrFileRaw("Events/BeforeAppStartEvent.pr");
@@ -140,7 +133,6 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			var eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper);
 			await eventRuntime.Load(container);
 				
 			await eventRuntime.RunStartEndEvents(new(), EventType.Before, EventScope.StartOfApp);
@@ -153,8 +145,6 @@ namespace PLang.Building.Events.Tests
 		[TestMethod()]
 		public async Task RunStepEventsTest_CallEventAfterAppStart()
 		{
-			var settings = container.GetInstance<ISettings>();
-			var fileSystem = (PLangMockFileSystem)container.GetInstance<IPLangFileSystem>();
 
 			// setup mocked events files
 			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
@@ -172,7 +162,6 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			var eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper);
 			await eventRuntime.Load(container);
 
 			await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.After, EventScope.StartOfApp);
@@ -185,9 +174,6 @@ namespace PLang.Building.Events.Tests
 		[TestMethod()]
 		public async Task RunStepEventsTest_CallEventOnErrorAppStart()
 		{
-			var settings = container.GetInstance<ISettings>();
-			var fileSystem = (PLangMockFileSystem)container.GetInstance<IPLangFileSystem>();
-
 			// setup mocked events files
 			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
 			var content = PrReaderHelper.GetPrFileRaw("Events/OnErrorAppStartEvent.pr");
@@ -204,7 +190,6 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			var eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper);
 			await eventRuntime.Load(container);
 
 			await eventRuntime.RunStartEndEvents(new(), EventType.OnError, EventScope.StartOfApp);
@@ -216,8 +201,6 @@ namespace PLang.Building.Events.Tests
 		[TestMethod()]
 		public async Task RunStepEventsTest_CallEventAppEnd()
 		{
-			var settings = container.GetInstance<ISettings>();
-			var fileSystem = (PLangMockFileSystem)container.GetInstance<IPLangFileSystem>();
 
 			// setup mocked events files
 			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
@@ -235,7 +218,6 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			var eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper);
 			await eventRuntime.Load(container);
 
 			await eventRuntime.RunStartEndEvents(new(), EventType.Before, EventScope.EndOfApp);
@@ -250,9 +232,6 @@ namespace PLang.Building.Events.Tests
 		[TestMethod()]
 		public async Task RunStepEventsTest_CallEventOnErrorOnApp()
 		{
-			var settings = container.GetInstance<ISettings>();
-			var fileSystem = (PLangMockFileSystem)container.GetInstance<IPLangFileSystem>();
-
 			// setup mocked events files
 			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
 			var content = PrReaderHelper.GetPrFileRaw("Events/OnErrorAppRunningEvent.pr");
@@ -269,7 +248,6 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			var eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper);
 			await eventRuntime.Load(container);
 
 			await eventRuntime.RunStartEndEvents(new(), EventType.OnError, EventScope.RunningApp);
@@ -282,8 +260,6 @@ namespace PLang.Building.Events.Tests
 		[TestMethod()]
 		public async Task RunStepEventsTest_CallEventBeforeGoalHasRun()
 		{
-			var settings = container.GetInstance<ISettings>();
-			var fileSystem = (PLangMockFileSystem)container.GetInstance<IPLangFileSystem>();
 
 			// setup mocked events files
 			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
@@ -301,7 +277,6 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			var eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper);
 			await eventRuntime.Load(container);
 
 			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
@@ -318,8 +293,6 @@ namespace PLang.Building.Events.Tests
 		[TestMethod()]
 		public async Task RunStepEventsTest_CallEventAfterGoalHasRun()
 		{
-			var settings = container.GetInstance<ISettings>();
-			var fileSystem = (PLangMockFileSystem)container.GetInstance<IPLangFileSystem>();
 
 			// setup mocked events files
 			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
@@ -337,7 +310,6 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			var eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper);
 			await eventRuntime.Load(container);
 
 			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
@@ -354,9 +326,6 @@ namespace PLang.Building.Events.Tests
 		[TestMethod()]
 		public async Task RunStepEventsTest_CallEventBeforeStepHasRun()
 		{
-			var settings = container.GetInstance<ISettings>();
-			var fileSystem = (PLangMockFileSystem)container.GetInstance<IPLangFileSystem>();
-
 			// setup mocked events files
 			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
 			var content = PrReaderHelper.GetPrFileRaw("Events/BeforeStepEvent.pr");
@@ -373,7 +342,6 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			var eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper);
 			await eventRuntime.Load(container);
 
 			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
@@ -392,9 +360,6 @@ namespace PLang.Building.Events.Tests
 		[TestMethod()]
 		public async Task RunStepEventsTest_CallEventAfterStepHasRun()
 		{
-			var settings = container.GetInstance<ISettings>();
-			var fileSystem = (PLangMockFileSystem)container.GetInstance<IPLangFileSystem>();
-
 			// setup mocked events files
 			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
 			var content = PrReaderHelper.GetPrFileRaw("Events/AfterStepEvent.pr");
@@ -411,7 +376,6 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			var eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper);
 			await eventRuntime.Load(container);
 
 			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
@@ -430,8 +394,6 @@ namespace PLang.Building.Events.Tests
 		[TestMethod()]
 		public async Task RunStepEventsTest_CallEventOnGoalError()
 		{
-			var settings = container.GetInstance<ISettings>();
-			var fileSystem = (PLangMockFileSystem)container.GetInstance<IPLangFileSystem>();
 
 			// setup mocked events files
 			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
@@ -449,7 +411,6 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			var eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper);
 			await eventRuntime.Load(container);
 
 			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
@@ -465,9 +426,6 @@ namespace PLang.Building.Events.Tests
 		[TestMethod()]
 		public async Task RunStepEventsTest_CallEventOnStepError()
 		{
-			var settings = container.GetInstance<ISettings>();
-			var fileSystem = (PLangMockFileSystem)container.GetInstance<IPLangFileSystem>();
-
 			// setup mocked events files
 			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
 			var content = PrReaderHelper.GetPrFileRaw("Events/OnErrorStepEvent.pr");
@@ -484,7 +442,6 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			var eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper);
 			await eventRuntime.Load(container);
 
 			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
@@ -502,8 +459,6 @@ namespace PLang.Building.Events.Tests
 		[TestMethod()]
 		public void GetRuntimeEventsFilesTest_MakeSureRootEventsIsLast()
 		{
-			var settings = container.GetInstance<ISettings>();
-			var fileSystem = (PLangMockFileSystem)container.GetInstance<IPLangFileSystem>();
 
 			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName), new MockFileData(""));
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "TestApp", ".build", "Events", ISettings.GoalFileName), new MockFileData(""));
@@ -511,7 +466,6 @@ namespace PLang.Building.Events.Tests
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "Process", ISettings.GoalFileName), new MockFileData(""));
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "HelloWorld", ISettings.GoalFileName), new MockFileData(""));
 
-			var eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper);
 			var eventFiles = eventRuntime.GetRuntimeEventsFiles(fileSystem.GoalsPath, "Events");
 
 			Assert.AreEqual(3, eventFiles.Count);
@@ -522,8 +476,6 @@ namespace PLang.Building.Events.Tests
 		[TestMethod()]
 		public void GetRuntimeEventsFilesTest_MakeSureRootBuilderEventsIsLast()
 		{
-			var settings = container.GetInstance<ISettings>();
-			var fileSystem = (PLangMockFileSystem)container.GetInstance<IPLangFileSystem>();
 
 			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "BuilderEvents", ISettings.GoalFileName), new MockFileData(""));
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "TestApp", ".build", "BuilderEvents", ISettings.GoalFileName), new MockFileData(""));
@@ -531,7 +483,6 @@ namespace PLang.Building.Events.Tests
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "Process", ISettings.GoalFileName), new MockFileData(""));
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "HelloWorld", ISettings.GoalFileName), new MockFileData(""));
 
-			var eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper);
 			var eventFiles = eventRuntime.GetRuntimeEventsFiles(fileSystem.GoalsPath, "BuilderEvents");
 
 			Assert.AreEqual(2, eventFiles.Count);
@@ -543,12 +494,10 @@ namespace PLang.Building.Events.Tests
 		public async Task LoadEvents()
 		{
 
-			var settings = container.GetInstance<ISettings>();
-			var fileSystem = (PLangMockFileSystem) container.GetInstance<IPLangFileSystem>();
 			var content = PrReaderHelper.GetPrFileRaw("Events/Events.pr");
 			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName), new MockFileData(content));
 			prParser.ForceLoadAllGoals();
-			var eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper);
+
 			await eventRuntime.Load(container);
 			var events = await eventRuntime.GetRuntimeEvents();
 

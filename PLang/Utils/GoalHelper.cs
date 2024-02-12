@@ -1,14 +1,22 @@
-﻿using PLang.Exceptions;
+﻿using PLang.Building.Model;
+using PLang.Exceptions;
 using PLang.Interfaces;
 
 namespace PLang.Utils
 {
 	public class GoalHelper
 	{
-		public static bool IsSetup(string rootDirectory, string fileName)
+		public static bool IsSetup(GoalStep step)
 		{
+			return IsSetup(step.Goal.AbsoluteAppStartupFolderPath, step.RelativePrPath);
+		}
+		public static bool IsSetup(string rootDirectory, string fileName)
+		{	
+
 			if (fileName.ToLower() == Path.Join(rootDirectory, "setup.goal").ToLower()) return true;
-			return fileName.ToLower().StartsWith(Path.Join(rootDirectory, "setup"));
+			if (fileName.ToLower().StartsWith(Path.Join(rootDirectory, "setup"))) return true;
+			if (fileName.ToLower().StartsWith(Path.Join(".build", "setup"))) return true;
+			return false;
 		}
 
 		public static List<string> GetGoalFilesToBuild(IPLangFileSystem fileSystem, string goalPath)

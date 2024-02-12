@@ -2,6 +2,6 @@
   {
     "stepText": "encrypt %text%, write to %encryptedText%",
     "response": "{\"FunctionName\": \"Encrypt\",\n\"Parameters\": [{\"Type\": \"Object\",\n\"Name\": \"content\",\n\"Value\": \"%text%\"}],\n\"ReturnValue\": [{\"Type\": \"String\",\n\"VariableName\": \"encryptedText\"}]}",
-    "created": "2024-01-05T10:10:09.3604332+00:00"
+    "created": "2024-02-07T12:54:46.871991+00:00"
   }
 ]

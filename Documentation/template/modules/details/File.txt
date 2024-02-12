@@ -1,5 +1,20 @@
-# Guide for LLM when generating doc #
-files dont need to exists, the variable will simply be empty
-no need to close streams, plang with handle that
-use relative path (/this/is/a/path) instead of absolute(c:\this\is\path)
-# Guide for LLM when generating doc #
+## For the Application Developer ##
+Files dont need to exists, the variable will simply be empty
+No need to close streams, plang with handle that
+Use relative path (/this/is/a/path) instead of absolute(c:\this\is\path)
+When reading file, user can define to load variables. This is usefull for example when storing llm instruction in file, here is example
+
+Filename: system.txt
+```txt 
+User name is %name%, make a funny joke around the name
+```
+
+Then plang reads the file and load the variables
+```plang
+Start
+- set variable 'name' to 'Micheal'
+- read system.txt into %system%, load variables
+- [llm] system: %system%
+    write to %result%
+- write out %result%
+## For the Application Developer ##

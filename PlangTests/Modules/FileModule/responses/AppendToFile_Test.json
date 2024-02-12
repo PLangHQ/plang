@@ -1,12 +1,12 @@
 [
   {
     "stepText": "append %content% to file.txt",
-    "response": "{\"FunctionName\": \"AppendToFile\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"path\", \"Value\": \"file.txt\"},\n    {\"Type\": \"String\", \"Name\": \"content\", \"Value\": \"%content%\"}\n]}",
-    "created": "2024-01-03T14:28:35.7493926+00:00"
+    "response": "{\"FunctionName\": \"AppendToFile\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"path\", \"Value\": \"file.txt\"},\n    {\"Type\": \"String\", \"Name\": \"content\", \"Value\": \"%content%\"},\n    {\"Type\": \"String\", \"Name\": \"seperator\", \"Value\": \"\\n\"},\n    {\"Type\": \"Boolean\", \"Name\": \"loadVariables\", \"Value\": false},\n    {\"Type\": \"Boolean\", \"Name\": \"emptyVariableIfNotFound\", \"Value\": false}\n],\n\"ReturnValue\": null}",
+    "created": "2024-02-07T13:01:44.3461573+00:00"
   },
   {
     "stepText": "append %content% to file.txt, seperator -",
-    "response": "{\"FunctionName\": \"AppendToFile\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"path\", \"Value\": \"file.txt\"},\n    {\"Type\": \"String\", \"Name\": \"content\", \"Value\": \"%content%\"},\n    {\"Type\": \"String\", \"Name\": \"seperator\", \"Value\": \"-\"}\n]}",
-    "created": "2024-01-03T14:30:13.0973813+00:00"
+    "response": "{\"FunctionName\": \"AppendToFile\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"path\", \"Value\": \"file.txt\"},\n    {\"Type\": \"Object\", \"Name\": \"content\", \"Value\": \"%content%\"},\n    {\"Type\": \"String\", \"Name\": \"seperator\", \"Value\": \"-\"}\n],\n\"ReturnValue\": null}",
+    "created": "2024-02-07T13:01:53.6208384+00:00"
   }
 ]

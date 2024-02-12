@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using NSubstitute;
 using PLang.Attributes;
 using PLang.Building.Model;
+using PLang.Models;
 using PLang.Utils;
 using PLangTests;
 using System;
@@ -64,13 +65,13 @@ namespace PLang.Utils.Tests
 
 
 		
-			var result = await methodHelper.GetMethodAndParameters(this, gf);
+			var method = await methodHelper.GetMethod(this, gf);
+            var parameters = methodHelper.GetParameterValues(method, gf);
+			Assert.AreEqual("AddToList", method.Name);
+			Assert.AreEqual(2, method.GetParameters().Length);
+			Assert.IsTrue(parameters["value"].ToString().Contains("Product3"));
 
-			Assert.AreEqual("AddToList", result.method.Name);
-			Assert.AreEqual(2, result.method.GetParameters().Length);
-			Assert.IsTrue(result.parameterValues["value"].ToString().Contains("Product3"));
-
-			var list = result.parameterValues["listInstance"] as List<object>;
+			var list = parameters["listInstance"] as List<object>;
 			Assert.AreEqual(2, list.Count);
 		}
 		public async Task<string> ReadTextFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false) { return returnValueIfFileNotExisting; }
@@ -108,13 +109,13 @@ namespace PLang.Utils.Tests
   }");
 
 
-			var result = await methodHelper.GetMethodAndParameters(this, gf);
-
-			Assert.AreEqual("ReadTextFile", result.method.Name);
-			Assert.AreEqual(3, result.method.GetParameters().Length);
-			Assert.AreEqual("file.txt", result.parameterValues["path"]);
-			Assert.AreEqual("", result.parameterValues["returnValueIfFileNotExisting"]);
-			Assert.AreEqual(false, result.parameterValues["throwErrorOnNotFound"]);
+			var method = await methodHelper.GetMethod(this, gf);
+			var parameters = methodHelper.GetParameterValues(method, gf);
+			Assert.AreEqual("ReadTextFile", method.Name);
+			Assert.AreEqual(3, method.GetParameters().Length);
+			Assert.AreEqual("file.txt", parameters["path"]);
+			Assert.AreEqual("", parameters["returnValueIfFileNotExisting"]);
+			Assert.AreEqual(false, parameters["throwErrorOnNotFound"]);
 
 		}
 		public async Task WriteExcelFile(string path, string[] variablesToWriteToExcel, int excelType = 0, char seperator = ',', bool printHeader = true, bool overwrite = false) { }
@@ -148,10 +149,10 @@ namespace PLang.Utils.Tests
   }");
 
 
-			var result = await methodHelper.GetMethodAndParameters(this, gf);
-
-			Assert.AreEqual("WriteExcelFile", result.method.Name);
-			Assert.AreEqual(1, ((string[])result.parameterValues["variablesToWriteToExcel"]).Length);
+			var method = await methodHelper.GetMethod(this, gf);
+			var parameters = methodHelper.GetParameterValues(method, gf);
+			Assert.AreEqual("WriteExcelFile", method.Name);
+			Assert.AreEqual(1, ((string[])parameters["variablesToWriteToExcel"]).Length);
 
 		}
 
@@ -189,10 +190,10 @@ namespace PLang.Utils.Tests
   }");
 
 
-			var result = await methodHelper.GetMethodAndParameters(this, gf);
-
-			Assert.AreEqual("WriteExcelFile", result.method.Name);
-			Assert.AreEqual(2, ((string[])result.parameterValues["variablesToWriteToExcel"]).Length);
+			var method = await methodHelper.GetMethod(this, gf);
+			var parameters = methodHelper.GetParameterValues(method, gf);
+			Assert.AreEqual("WriteExcelFile", method.Name);
+			Assert.AreEqual(2, ((string[])parameters["variablesToWriteToExcel"]).Length);
 
 		}
 
@@ -231,10 +232,10 @@ namespace PLang.Utils.Tests
   }");
 
 
-			var result = await methodHelper.GetMethodAndParameters(this, gf);
-
-			Assert.AreEqual("WriteExcelFile2", result.method.Name);
-			Assert.AreEqual(2, ((string[])result.parameterValues["variablesToWriteToExcel"]).Length);
+			var method = await methodHelper.GetMethod(this, gf);
+			var parameters = methodHelper.GetParameterValues(method, gf);
+			Assert.AreEqual("WriteExcelFile2", method.Name);
+			Assert.AreEqual(2, ((string[])parameters["variablesToWriteToExcel"]).Length);
 
 		}
 
@@ -259,14 +260,14 @@ namespace PLang.Utils.Tests
   }");
             memoryStack.Put("password", "123");
             goalStep.Text = "hash %password%, write to %hashedPassword%";
-			var result = await methodHelper.GetMethodAndParameters(this, gf);
-
-			Assert.AreEqual("HashInput", result.method.Name);
-			Assert.AreEqual("123", result.parameterValues["input"]);
-			Assert.AreEqual(null, result.parameterValues["ble"]);
-			Assert.AreEqual(true, result.parameterValues["useSalt"]);
-			Assert.AreEqual(null, result.parameterValues["salt"]);
-			Assert.AreEqual("keccak256", result.parameterValues["hashAlgorithm"]);
+			var method = await methodHelper.GetMethod(this, gf);
+			var parameters = methodHelper.GetParameterValues(method, gf);
+			Assert.AreEqual("HashInput", method.Name);
+			Assert.AreEqual("123", parameters["input"]);
+			Assert.AreEqual(null, parameters["ble"]);
+			Assert.AreEqual(true, parameters["useSalt"]);
+			Assert.AreEqual(null, parameters["salt"]);
+			Assert.AreEqual("keccak256", parameters["hashAlgorithm"]);
 
 		}
 
@@ -288,8 +289,8 @@ namespace PLang.Utils.Tests
   }");
 			memoryStack.Put("password", "123");
 			goalStep.Text = "hash %password%, write to %hashedPassword%";
-			aiService.Query<MethodNotFoundResponse>(Arg.Any<LlmQuestion>()).Returns(new MethodNotFoundResponse("hash %password%, write into %hashedPassword%"));
-			var result = await methodHelper.GetMethodAndParameters(this, gf);
+			aiService.Query<MethodNotFoundResponse>(Arg.Any<LlmRequest>()).Returns(new MethodNotFoundResponse("hash %password%, write into %hashedPassword%"));
+			var method = await methodHelper.GetMethod(this, gf);
 
 
 		}
@@ -329,16 +330,16 @@ namespace PLang.Utils.Tests
 			memoryStack.Put("due_date", dt);
 
 			goalStep.Text = "hash %password%, write to %hashedPassword%";
-			var result = await methodHelper.GetMethodAndParameters(this, gf);
+			var method = await methodHelper.GetMethod(this, gf);
+			var parameters = methodHelper.GetParameterValues(method, gf);
+			Assert.AreEqual("Insert", method.Name);
+			Assert.AreEqual("insert into tasks (id, description, due_date) values (@id, @description, @due_date)", parameters["sql"]);
 
-			Assert.AreEqual("Insert", result.method.Name);
-			Assert.AreEqual("insert into tasks (id, description, due_date) values (@id, @description, @due_date)", result.parameterValues["sql"]);
-
-            var parameters = (Dictionary<string, object>)result.parameterValues["Parameters"];
-			Assert.AreEqual(3, parameters.Count);
-            Assert.AreEqual(1, parameters["@id"]);
-			Assert.AreEqual("desc", parameters["@description"]);
-			Assert.AreEqual(dt, parameters["@due_date"]);
+			var innerParameters = parameters["Parameters"] as Dictionary<string, object>;
+			Assert.AreEqual(3, innerParameters.Count);
+            Assert.AreEqual(1, innerParameters["@id"]);
+			Assert.AreEqual("desc", innerParameters["@description"]);
+			Assert.AreEqual(dt, innerParameters["@due_date"]);
 		}
 
 		[TestMethod()]
@@ -373,16 +374,16 @@ namespace PLang.Utils.Tests
 			memoryStack.Put("dict", dict);
 
 			goalStep.Text = "hash %password%, write to %hashedPassword%";
-			var result = await methodHelper.GetMethodAndParameters(this, gf);
+			var method = await methodHelper.GetMethod(this, gf);
+			var parameters = methodHelper.GetParameterValues(method, gf);
+			Assert.AreEqual("Insert", method.Name);
+			Assert.AreEqual("insert into tasks (id, description, due_date) values (@id, @description, @due_date)", parameters["sql"]);
 
-			Assert.AreEqual("Insert", result.method.Name);
-			Assert.AreEqual("insert into tasks (id, description, due_date) values (@id, @description, @due_date)", result.parameterValues["sql"]);
-
-			var parameters = (Dictionary<string, object>)result.parameterValues["Parameters"];
-			Assert.AreEqual(3, parameters.Count);
-			Assert.AreEqual(1, parameters["id"]);
-			Assert.AreEqual("desc", parameters["description"]);
-			Assert.AreEqual(dt, parameters["due_date"]);
+			var innerParameters = parameters["Parameters"] as Dictionary<string, object>;
+			Assert.AreEqual(3, innerParameters.Count);
+			Assert.AreEqual(1, innerParameters["id"]);
+			Assert.AreEqual("desc", innerParameters["description"]);
+			Assert.AreEqual(dt, innerParameters["due_date"]);
 		}
 
 		public async Task<int> Insert2(string sql, [HandlesVariable] Dictionary<string, object>? Parameters = null) { return 1; }
@@ -418,16 +419,16 @@ namespace PLang.Utils.Tests
 			memoryStack.Put("due_date", dt);
 
 			goalStep.Text = "hash %password%, write to %hashedPassword%";
-			var result = await methodHelper.GetMethodAndParameters(this, gf);
+			var method = await methodHelper.GetMethod(this, gf);
+			var parameters = methodHelper.GetParameterValues(method, gf);
+			Assert.AreEqual("Insert2", method.Name);
+			Assert.AreEqual("insert into tasks (id, description, due_date) values (@id, @description, @due_date)", parameters["sql"]);
 
-			Assert.AreEqual("Insert2", result.method.Name);
-			Assert.AreEqual("insert into tasks (id, description, due_date) values (@id, @description, @due_date)", result.parameterValues["sql"]);
-
-			var parameters = (Dictionary<string, object>)result.parameterValues["Parameters"];
-			Assert.AreEqual(3, parameters.Count);
-			Assert.AreEqual("%id%", parameters["@id"]);
-			Assert.AreEqual("%description%", parameters["@description"]);
-			Assert.AreEqual("%due_date%", parameters["@due_date"]);
+            var innerParameters = parameters["Parameters"] as Dictionary<string, object>;
+			Assert.AreEqual(3, innerParameters.Count);
+			Assert.AreEqual("%id%", innerParameters["@id"]);
+			Assert.AreEqual("%description%", innerParameters["@description"]);
+			Assert.AreEqual("%due_date%", innerParameters["@due_date"]);
 		}
 
 
@@ -465,15 +466,15 @@ namespace PLang.Utils.Tests
 			memoryStack.Put("due_date", dt);
 
 			goalStep.Text = "hash %password%, write to %hashedPassword%";
-			var result = await methodHelper.GetMethodAndParameters(this, gf);
-
-			Assert.AreEqual("AddToList", result.method.Name);
+			var method = await methodHelper.GetMethod(this, gf);
+			var parameters = methodHelper.GetParameterValues(method, gf);
+			Assert.AreEqual("AddToList", method.Name);
 			Assert.AreEqual(@"{
   ""name"": ""Product3"",
   ""price"": 333
-}", result.parameterValues["value"].ToString());
+}", parameters["value"].ToString());
 
-			Assert.AreEqual(2, result.parameterValues.Count);
+			Assert.AreEqual(2, parameters.Count);
 		}
 
 		[TestMethod()]
@@ -499,12 +500,12 @@ namespace PLang.Utils.Tests
 
 			memoryStack.Put("list", list);
 			memoryStack.Put("%obj%", null);
-			var result = await methodHelper.GetMethodAndParameters(this, gf);
-
-			Assert.AreEqual("AddToList", result.method.Name);
-			Assert.AreEqual(null, result.parameterValues["value"]);
-			Assert.AreEqual(list, result.parameterValues["listInstance"]);
-			Assert.AreEqual(2, result.parameterValues.Count);
+			var method = await methodHelper.GetMethod(this, gf);
+			var parameters = methodHelper.GetParameterValues(method, gf);
+			Assert.AreEqual("AddToList", method.Name);
+			Assert.AreEqual(null, parameters["value"]);
+			Assert.AreEqual(list, parameters["listInstance"]);
+			Assert.AreEqual(2, parameters.Count);
 		}
 
 		public void AddToList2([HandlesVariable] object value, List<object> listInstance) { }
@@ -530,12 +531,12 @@ namespace PLang.Utils.Tests
             var list = new List<object>();
 
 			memoryStack.Put("list", list);
-			var result = await methodHelper.GetMethodAndParameters(this, gf);
-
-			Assert.AreEqual("AddToList2", result.method.Name);
-			Assert.AreEqual(@"%obj%", result.parameterValues["value"]);
-			Assert.AreEqual(list, result.parameterValues["listInstance"]);
-			Assert.AreEqual(2, result.parameterValues.Count);
+			var method = await methodHelper.GetMethod(this, gf);
+			var parameters = methodHelper.GetParameterValues(method, gf);
+			Assert.AreEqual("AddToList2", method.Name);
+			Assert.AreEqual(@"%obj%", parameters["value"]);
+			Assert.AreEqual(list, parameters["listInstance"]);
+			Assert.AreEqual(2, parameters.Count);
 		}
 
 

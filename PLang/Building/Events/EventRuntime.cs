@@ -1,12 +1,15 @@
 ﻿using LightInject;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Exceptions;
+using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Utils;
 using System.Text.RegularExpressions;
+using Websocket.Client.Logging;
 
 namespace PLang.Building.Events
 {
@@ -24,6 +27,8 @@ namespace PLang.Building.Events
 		Task RunGoalEvents(PLangAppContext context, EventType eventType, Goal goal);
 		Task RunStartEndEvents(PLangAppContext context, EventType eventType, EventScope eventScope);
 		Task RunStepEvents(PLangAppContext context, EventType eventType, Goal goal, GoalStep step);
+		Task<bool> RunOnErrorStepEvents(PLangAppContext context, Exception ex, Goal goal, GoalStep goalStep, ErrorHandler? errorHandler = null);
+		Task RunGoalErrorEvents(PLangAppContext context, Goal goal, int goalStepIndex, Exception ex);
 	}
 	public class EventRuntime : IEventRuntime
 	{
@@ -33,11 +38,12 @@ namespace PLang.Building.Events
 		private readonly PrParser prParser;
 		private readonly IEngine engine;
 		private readonly IErrorHelper errorHelper;
+		private readonly IExceptionHandler exceptionHandler;
 		private static List<EventBinding>? events = null;
 
 
 		public EventRuntime(IPLangFileSystem fileSystem, ISettings settings, IPseudoRuntime pseudoRuntime,
-			PrParser prParser, IEngine engine, IErrorHelper errorHelper)
+			PrParser prParser, IEngine engine, IErrorHelper errorHelper, IExceptionHandler exceptionHandler)
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
@@ -45,6 +51,7 @@ namespace PLang.Building.Events
 			this.prParser = prParser;
 			this.engine = engine;
 			this.errorHelper = errorHelper;
+			this.exceptionHandler = exceptionHandler;
 		}
 
 		public async Task<List<EventBinding>> GetBuilderEvents()
@@ -187,13 +194,43 @@ namespace PLang.Building.Events
 
 		}
 
-		private async Task Run(PLangAppContext context, EventBinding eve, Goal goal, GoalStep? step = null)
+		public async Task RunGoalErrorEvents(PLangAppContext context, Goal goal, int goalStepIndex, Exception ex)
+		{
+			if (events == null || context.ContainsKey(ReservedKeywords.IsEvent)) return;
+
+			var step = (goalStepIndex < goal.GoalSteps.Count) ? goal.GoalSteps[goalStepIndex] : null;
+			var eventsToRun = events.Where(p => p.EventType == EventType.OnError && p.EventScope == EventScope.Goal).ToList();
+
+			if (eventsToRun.Count == 0)
+			{
+				ShowDefaultError(ex);
+			}
+			else
+			{
+				for (var i = 0; i < eventsToRun.Count; i++)
+				{
+					var eve = eventsToRun[i];
+					if (!GoalHasBinding(goal, eve)) continue;
+
+					await Run(context, eve, goal, step, ex);
+				}
+			}
+
+		}
+
+		private void ShowDefaultError(Exception ex)
+		{
+			exceptionHandler.Handle(ex, 500, "error", ex.Message);
+		}
+
+		private async Task Run(PLangAppContext context, EventBinding eve, Goal goal, GoalStep? step = null, Exception? ex = null)
 		{
 			try
 			{
-				var parameters = new Dictionary<string, object>();
+				var parameters = new Dictionary<string, object?>();
 				parameters.Add(ReservedKeywords.Event, eve);
 				parameters.Add(ReservedKeywords.Goal, goal);
+				parameters.Add(ReservedKeywords.Exception, ex);
 				context.TryAdd(ReservedKeywords.IsEvent, true);
 				if (step != null) parameters.Add(ReservedKeywords.Step, step);
 
@@ -207,7 +244,9 @@ namespace PLang.Building.Events
 				{
 					throw task.Exception;
 				}
-
+			}
+			finally
+			{
 				context.Remove(ReservedKeywords.IsEvent);
 				if (context.TryGetValue(ReservedKeywords.MemoryStack, out var obj0) && obj0 != null)
 				{
@@ -217,14 +256,7 @@ namespace PLang.Building.Events
 					memoryStack.Remove(ReservedKeywords.Step);
 				}
 			}
-			catch (Exception ex)
-			{
-				await errorHelper.ShowFriendlyErrorMessage(ex, 
-					callBackForAskUser : async () =>
-					{
-						await Run(context, eve, goal, step);
-					});
-			}
+
 
 		}
 		public async Task RunBuildStepEvents(EventType eventType, Goal goal, GoalStep step, int stepIdx)
@@ -250,9 +282,62 @@ namespace PLang.Building.Events
 					await Run(context, eve, goal, step);
 				}
 			}
+		}
+		public async Task<bool> RunOnErrorStepEvents(PLangAppContext context, Exception ex, Goal goal, GoalStep step, ErrorHandler? stepErrorHandler = null)
+		{
+			if (events == null || context.ContainsKey(ReservedKeywords.IsEvent)) return false;
+			
+			bool shouldContinueNextStep = false;
+			if (stepErrorHandler != null)
+			{
+				var goalToCall = GetErrorHandlerStep(step, ex);
+				if (goalToCall != null)
+				{
+					shouldContinueNextStep = stepErrorHandler.ContinueToNextStep;
+					var eventBinding = new EventBinding(EventType.OnError, EventScope.Step, goal.RelativeGoalPath, goalToCall, true, step.Number, step.Text, true, false, false);
+					await Run(context, eventBinding, goal, step, ex);
+				}
+			}
 
+			var eventsToRun = events.Where(p => p.EventType == EventType.OnError && p.EventScope == EventScope.Step);
+
+			if (eventsToRun.Count() == 0)
+			{
+				ShowDefaultError(ex);
+			}
+			else
+			{
+				foreach (var eve in eventsToRun)
+				{
+					if (GoalHasBinding(goal, eve) && IsStepMatch(step, eve))
+					{
+						await Run(context, eve, goal, step, ex);
+					}
+
+					//comment: this might be a bad idea, what happens when you have multiple events, on should continue other not
+					if (!shouldContinueNextStep) shouldContinueNextStep = eve.OnErrorContinueNextStep;
+				}
+			}
+			return shouldContinueNextStep;
 		}
 
+		private string? GetErrorHandlerStep(GoalStep step, Exception stepException)
+		{
+			if (step.ErrorHandler == null) return null;
+			var except = step.ErrorHandler.OnExceptionContainingTextCallGoal;
+
+			if (except == null) return null;
+			if (step.ErrorHandler.IgnoreErrors && except.Count == 0) return null;
+
+			foreach (var error in except)
+			{
+				if (error.Key == "*" || stepException.ToString().ToLower().Contains(error.Key.ToLower()))
+				{
+					return error.Value;
+				}
+			}
+			return null;
+		}
 		/*
 		 * 
 		 */
@@ -345,15 +430,8 @@ namespace PLang.Building.Events
 
 		}
 
-		private string FormatPath(string goalToBindTo)
-		{
-			goalToBindTo = goalToBindTo.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
-			if (!goalToBindTo.StartsWith(Path.DirectorySeparatorChar))
-			{
-				goalToBindTo = Path.DirectorySeparatorChar + goalToBindTo;
-			}
-			return goalToBindTo;
-		}
+
+
 	}
 
 }

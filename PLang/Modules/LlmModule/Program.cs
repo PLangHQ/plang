@@ -1,7 +1,9 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Runtime;
 using PLang.Utils;
 using PLang.Utils.Extractors;
@@ -15,87 +17,18 @@ namespace PLang.Modules.LlmModule
 	public class Program : BaseProgram
 	{
 		private readonly ILlmService llmService;
+		private readonly IPLangIdentityService identityService;
 
-		public Program(ILlmService llmService) : base()
+		public Program(ILlmService llmService, IPLangIdentityService identityService) : base()
 		{
 			this.llmService = llmService;
+			this.identityService = identityService;
 		}
 
 		public record AskLlmResponse(string Result);
-		/*
-		[Description("")]
+		
 		public async Task AskLlm(
-			string scheme = "",
-			string? system = null, string? assistant = null, string? user = null,
-			string model = "gpt-4",
-			double temperature = 0,
-			double topP = 0,
-			double frequencyPenalty = 0.0,
-			double presencePenalty = 0.0,
-			int maxLength = 4000,
-			bool cacheResponse = true,
-			string? llmResponseType = null)
-		{
-			if (llmResponseType == "text")
-			{
-				llmService.Extractor = new TextExtractor();
-			}
-			else if (llmResponseType == "json")
-			{
-				system += $"\n\nYou MUST respond in JSON, scheme: {scheme}";
-			} else
-			{
-				llmService.Extractor = new GenericExtractor(llmResponseType); 
-			}
-
-			user = LoadVariables(user) ?? "";
-			system = LoadVariables(system);
-			assistant = LoadVariables(assistant);
-			
-			var llmQuestion = new LlmQuestion("LlmModule", system, user, assistant, model, cacheResponse);
-			int tokenLength = user.Length + ((system == null) ? 0 : system.Length) + ((assistant == null) ? 0 : assistant.Length) / 4;
-			int ml = maxLength + tokenLength;
-			if (ml > maxLength)
-			{
-				ml = maxLength - (ml - maxLength);
-			}
-
-			llmQuestion.maxLength = maxLength;
-			llmQuestion.temperature = temperature;
-			llmQuestion.top_p = topP;
-			llmQuestion.frequencyPenalty = frequencyPenalty;
-			llmQuestion.presencePenalty = presencePenalty;
-			
-			var response = await llmService.Query(llmQuestion, typeof(ExpandoObject));
-
-			if (scheme.StartsWith("{") && scheme.EndsWith("}"))
-			{
-				var variables = scheme.Replace("{", "").Replace("}", "").Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-				var objResult = (IDictionary<string, object>)response;
-				foreach (var variable in variables)
-				{
-					string varName = (variable.Contains(":")) ? variable.Substring(0, variable.IndexOf(":")) : variable;
-					if (objResult.TryGetValue(varName, out object? val))
-					{
-						memoryStack.Put(varName, val);
-					}
-				}
-			}
-			if (function != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
-			{
-				foreach (var returnValue in function.ReturnValue)
-				{
-					memoryStack.Put(returnValue.VariableName, response);
-				}
-			}
-
-			llmService.Extractor = new JsonExtractor();
-		}
-		*/
-
-		[Description("")]
-		public async Task AskLlm(
-			[HandlesVariable] List<Message> promptMessages,
+			[HandlesVariable] List<LlmMessage> promptMessages,
 			string? scheme = null,
 			string model = "gpt-4",
 			double temperature = 0,
@@ -109,9 +42,15 @@ namespace PLang.Modules.LlmModule
 
 			foreach (var message in promptMessages)
 			{
-				foreach (var c in message.content)
+				foreach (var c in message.Content)
 				{
-					c.text = variableHelper.LoadVariables(c.text).ToString();
+					if (c.Text != null)
+					{
+						c.Text = variableHelper.LoadVariables(c.Text).ToString();
+					} else if (c.ImageUrl != null)
+					{
+						c.ImageUrl.Url = variableHelper.LoadVariables(c.ImageUrl.Url).ToString();
+					}
 				}
 
 			}
@@ -132,7 +71,16 @@ namespace PLang.Modules.LlmModule
 				var objResult = (JObject)response;
 				foreach (var property in objResult.Properties())
 				{
-					memoryStack.Put(property.Name, property.Value);
+					if (property.Value is JValue)
+					{
+						var value = ((JValue)property.Value).Value;
+						memoryStack.Put(property.Name, value);
+					} else
+					{
+						memoryStack.Put(property.Name, property.Value);
+					}
+					
+					
 				}
 			}
 
@@ -147,22 +95,11 @@ namespace PLang.Modules.LlmModule
 
 		}
 
-		private string? LoadVariables(string? content)
+		public async Task<string> GetLlmIdentity()
 		{
-			if (content == null) return null;
-
-			var variables = variableHelper.GetVariables(content);
-			foreach (var variable in variables)
-			{
-				var varValue = memoryStack.Get(variable.Key);
-				if (varValue != null)
-				{
-					content = content.Replace(variable.OriginalKey, varValue.ToString());
-				}
-			}
-			return content;
+			identityService.UseSharedIdentity(llmService.GetType().FullName);
+			return identityService.GetCurrentIdentity().Identifier;
 		}
-
 
 
 	}

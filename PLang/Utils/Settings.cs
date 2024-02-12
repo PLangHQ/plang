@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
@@ -11,7 +10,7 @@ using System.Text.RegularExpressions;
 namespace PLang.Utils
 {
 
-	public class Settings : ISettings
+    public class Settings : ISettings
 	{
 		private readonly ISettingsRepository settingsRepository;
 		private readonly IPLangFileSystem fileSystem;

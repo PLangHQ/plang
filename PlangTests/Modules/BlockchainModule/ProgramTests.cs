@@ -69,7 +69,7 @@ namespace PLangTests.Modules.BlockchainModule
 			settings.GetValues<Wallet>(typeof(ModuleSettings)).Returns(wallets);
 
 
-			var decimals = await p.GetBalanceInWei("0xe1e78247c06191089126fc8dd55e1bd383dc8f22");
+			var decimals = await p.GetNativeBalanceOfAddressInWei("0xe1e78247c06191089126fc8dd55e1bd383dc8f22");
 			Assert.AreNotEqual((uint)0, decimals);
 
 			//
@@ -87,7 +87,7 @@ namespace PLangTests.Modules.BlockchainModule
 			settings.GetValues<Wallet>(typeof(ModuleSettings)).Returns(wallets);
 
 
-			var decimals = await p.GetBalanceToDecimalPoint("0xe1e78247c06191089126fc8dd55e1bd383dc8f22");
+			var decimals = await p.GetNativeBalanceOfAddressToDecimalPoint("0xe1e78247c06191089126fc8dd55e1bd383dc8f22");
 			Assert.AreEqual(0.2M, decimals);
 
 			//

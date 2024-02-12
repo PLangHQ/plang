@@ -55,13 +55,6 @@ Code
 - write out %randomDataList%
 ```
 
-### Writing to a File
-
-```plang
-Code
-- write out ["c:\\Users\\Ingi Gauti\\source\\repos\\plang\\Tests\\Code\\Code.goal"]
-```
-
 ### Removing File Extension
 
 ```plang
@@ -72,14 +65,6 @@ Code
 ```
 
 ### Additional Examples
-
-#### Running a Task
-
-```plang
-Code
-- [code] Run, write to %taskResult%
-- write out %taskResult%
-```
 
 #### Formatting File Sizes
 

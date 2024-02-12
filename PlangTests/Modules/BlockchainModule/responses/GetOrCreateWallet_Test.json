@@ -2,6 +2,6 @@
   {
     "stepText": "get current wallet, write to %wallet%",
     "response": "{\"FunctionName\": \"GetOrCreateWallet\", \"Parameters\": [], \"ReturnValue\": [{\"Type\": \"Wallet\", \"VariableName\": \"wallet\"}]}",
-    "created": "2024-01-04T09:57:16.2346506+00:00"
+    "created": "2024-02-07T12:15:05.1174511+00:00"
   }
 ]

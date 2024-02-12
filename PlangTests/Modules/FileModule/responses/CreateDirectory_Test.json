@@ -1,7 +1,7 @@
 [
   {
     "stepText": "create %dirName%",
-    "response": "{\"FunctionName\": \"CreateDirectory\",\n\"Parameters\": [{\"Type\": \"string\",\n\"Name\": \"directoryPath\",\n\"Value\": \"%dirName%\"}]}",
-    "created": "2024-01-03T14:32:07.9682226+00:00"
+    "response": "{\"FunctionName\": \"CreateDirectory\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"directoryPath\",\n\"Value\": \"%dirName%\"}],\n\"ReturnValue\": null}",
+    "created": "2024-02-07T13:02:03.0571728+00:00"
   }
 ]

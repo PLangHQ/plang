@@ -2,6 +2,8 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
+using PLang.Exceptions;
+using PLang.Services.CompilerService;
 using Sprache;
 using System;
 using System.Collections.Generic;
@@ -10,12 +12,13 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static PLang.Modules.BaseBuilder;
-using static PLang.Modules.Compiler;
+using static PLang.Services.CompilerService.CSharpCompiler;
 
 namespace PLang.Utils.Extractors
 {
-	public interface IContentExtractor
+    public interface IContentExtractor
 	{
+		public string LlmResponseType { get; set; }
 		public object Extract(string content, Type responseType);
 		public T Extract<T>(string content);
 		string GetRequiredResponse(Type scheme);
@@ -23,6 +26,8 @@ namespace PLang.Utils.Extractors
 
 	public class TextExtractor : IContentExtractor
 	{
+		public string LlmResponseType { get { return "text"; } set { } }
+
 		public object Extract(string content, Type responseType)
 		{
 			return content;
@@ -41,10 +46,12 @@ namespace PLang.Utils.Extractors
 	public class GenericExtractor : IContentExtractor
 	{
 		string? type;
+		public string LlmResponseType { get { return type; } set { type = value; } }
 		public GenericExtractor(string? type)
 		{
 			this.type = type;
 		}
+
 		public T Extract<T>(string content)
 		{
 			return (T)Extract(content, typeof(T));
@@ -80,7 +87,6 @@ namespace PLang.Utils.Extractors
 	public class HtmlExtractor : GenericExtractor, IContentExtractor
 	{
 		public HtmlExtractor() : base("html") { }
-
 		public new object Extract(string content, Type responseType)
 		{
 			var css = ExtractByType(content, "css", true).ToString()?.Trim();
@@ -140,6 +146,8 @@ namespace PLang.Utils.Extractors
 
 	public class CSharpExtractor : IContentExtractor
 	{
+		public string LlmResponseType { get => "csharp"; set { } }
+
 		public object Extract(string content, Type responseType)
 		{
 			var htmlExtractor = new HtmlExtractor();
@@ -147,16 +155,31 @@ namespace PLang.Utils.Extractors
 			var json = htmlExtractor.ExtractByType(content, "json");
 
 			var jsonExtractor = new JsonExtractor();
-			var jsonObject = jsonExtractor.Extract(json.ToString()!, typeof(CodeImplementationResponse)) as CodeImplementationResponse;
+			var jsonObject = jsonExtractor.Extract(json.ToString()!, responseType);
 
 			if (implementation != null && implementation.Contains("System.IO."))
 			{
 				implementation = implementation.Replace("System.IO.", "PLang.SafeFileSystem.");
 			}
-			var ci = new CodeImplementationResponse(jsonObject.Name, implementation, jsonObject.OutParameterDefinition, jsonObject.Using, jsonObject.Assemblies, jsonObject.GoalToCallOnTrue, jsonObject.GoalToCallOnFalse);
 
-			return ci;
+			if (responseType == typeof(CodeImplementationResponse))
+			{
+				var cir = jsonObject as CodeImplementationResponse;
+				var ci = new CodeImplementationResponse(cir.Name, implementation, cir.OutParameterDefinition, cir.Using, cir.Assemblies);
+
+				return ci;
+			} else
+			{
+				var cir = jsonObject as ConditionImplementationResponse;
+				var ci = new ConditionImplementationResponse(cir.Name, implementation, cir.Using, cir.Assemblies, cir.GoalToCallOnTrue, cir.GoalToCallOnFalse);
+
+				return ci;
+			}
+
+			throw new BuilderException($"Response type '{responseType}' is not valid");
 		}
+
+			
 
 		public T Extract<T>(string content)
 		{
@@ -165,7 +188,9 @@ namespace PLang.Utils.Extractors
 		
 		public string GetRequiredResponse(Type scheme)
 		{
-			return "Only write the raw c# code and json scheme, no summary, no extra text to explain, be concise";
+			return @$"Only write the raw c# code and json scheme, no summary, no extra text to explain, be concise.
+	YOU MUST implement all code needed and valid c# code. 
+	You must return ```csharp for the code implementation and ```json scheme: {TypeHelper.GetJsonSchema(scheme)}";
 		}
 	}
 
@@ -276,9 +301,12 @@ namespace PLang.Utils.Extractors
 		public new string GetRequiredResponse(Type scheme)
 		{
 			string strScheme = TypeHelper.GetJsonSchema(scheme);
-			return $"You MUST respond in JSON, scheme:\r\n {strScheme}";
+			return GetRequiredResponse(strScheme);
 		}
 
-
+		public new string GetRequiredResponse(string scheme)
+		{
+			return $"You MUST respond in JSON, scheme:\r\n {scheme}";
+		}
 	}
 }

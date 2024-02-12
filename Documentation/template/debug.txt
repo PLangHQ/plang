@@ -22,3 +22,12 @@ will bind to run before each step in the goal files to call !SendDebug.goal
 The SendDebug goal sends a post request to http://localhost:60877/ 
 this server is started as soon as you start you VS code
 the VS code plang extension recieves the data and displays it in the editor
+
+Logger
+You can enable log levels by adding a comment to a goal, format is [trace], [debug], [info] [warning], [error]
+e.g. 
+```plang
+/ This is the start [trace]
+Start
+- write out 'hello'
+```

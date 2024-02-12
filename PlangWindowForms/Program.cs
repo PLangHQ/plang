@@ -1,3 +1,4 @@
+using PLang.Utils;
 using System.Diagnostics;
 
 namespace PlangWindowForms
@@ -14,6 +15,7 @@ namespace PlangWindowForms
 			if (debug && !Debugger.IsAttached)
 			{
 				Debugger.Launch();
+				AppContext.SetSwitch(ReservedKeywords.Debug, true);
 			}
 
 			// To customize application configuration such as set high DPI settings or default font,

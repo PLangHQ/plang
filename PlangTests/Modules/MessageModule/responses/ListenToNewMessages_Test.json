@@ -1,7 +1,7 @@
 [
   {
     "stepText": "Listen for new message, call !Process.Message %message%",
-    "response": "{\"FunctionName\": \"Listen\",\n\"Parameters\": [\n    {\"Type\": \"String\",\n    \"Name\": \"goalName\",\n    \"Value\": \"!Process.Message\"},\n    {\"Type\": \"String\",\n    \"Name\": \"contentVariableName\",\n    \"Value\": \"message\"}\n],\n\"ReturnValue\": null}",
-    "created": "2024-02-05T10:15:19.5063569+00:00"
+    "response": "{\"FunctionName\": \"Listen\",\n\"Parameters\": [\n    {\"Type\": \"string\",\n    \"Name\": \"goalName\",\n    \"Value\": \"!Process.Message\"},\n    {\"Type\": \"string\",\n    \"Name\": \"contentVariableName\",\n    \"Value\": \"message\"}\n],\n\"ReturnValue\": null}",
+    "created": "2024-02-07T14:13:44.8568054+00:00"
   }
 ]

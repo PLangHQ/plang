@@ -6,15 +6,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static PLang.Modules.BaseBuilder;
+using PLang.Models;
 
 namespace PLang.Building.Model
 {
 
-	public record Instruction(object Action)
+    public record Instruction(object Action)
 	{
 		public string? Text { get; set; }
 		public bool Reload { get; set; }
-		public LlmQuestion LlmQuestion { get; set; }
+		public LlmRequest LlmRequest { get; set; }
 		public bool RunOnBuild { get; set; }
 		public GenericFunction[] GetFunctions()
 		{

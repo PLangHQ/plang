@@ -62,7 +62,7 @@ namespace PLang.Modules.CachingModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 			
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("Get", gf.FunctionName);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
@@ -84,7 +84,7 @@ namespace PLang.Modules.CachingModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("SetForSlidingExpiration", gf.FunctionName);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
@@ -113,7 +113,7 @@ namespace PLang.Modules.CachingModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("SetForAbsoluteExpiration", gf.FunctionName);
 			Assert.AreEqual("key", gf.Parameters[0].Name);

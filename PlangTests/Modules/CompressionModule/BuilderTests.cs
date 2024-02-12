@@ -60,7 +60,7 @@ namespace PLang.Modules.CompressionModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("CompressFile", gf.FunctionName);
 			Assert.AreEqual("filePath", gf.Parameters[0].Name);
@@ -70,7 +70,7 @@ namespace PLang.Modules.CompressionModule.Tests
 			if (text.Contains("with high compression"))
 			{
 				Assert.AreEqual("compressionLevel", gf.Parameters[2].Name);
-				Assert.AreEqual((long) 2, gf.Parameters[2].Value);
+				Assert.AreEqual((long) 3, gf.Parameters[2].Value);
 			}
 
 		}
@@ -87,7 +87,7 @@ namespace PLang.Modules.CompressionModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("CompressDirectory", gf.FunctionName);
 			Assert.AreEqual("sourceDirectoryName", gf.Parameters[0].Name);
@@ -113,7 +113,7 @@ namespace PLang.Modules.CompressionModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("CompressFiles", gf.FunctionName);
 			Assert.AreEqual("filePaths", gf.Parameters[0].Name);
@@ -136,7 +136,7 @@ namespace PLang.Modules.CompressionModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("DecompressFile", gf.FunctionName);
 			Assert.AreEqual("sourceArchiveFileName", gf.Parameters[0].Name);

@@ -1,5 +1,3 @@
-@llm=PLangOpenAIModule
-
 Start
 - [llm] system: Say hello to  me
 		{hello:string}

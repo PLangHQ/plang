@@ -1,6 +1,0 @@
-[
-  {
-    "stepText": "compress %files% to %destination%",
-    "response": "{\"FunctionName\": \"CompressFiles\",\n\"Parameters\": [{\"Type\": \"String[]\",\n\"Name\": \"filePaths\",\n\"Value\": \"%files%\"},\n{\"Type\": \"String\",\n\"Name\": \"saveToPath\",\n\"Value\": \"%destination%\"},\n{\"Type\": \"Int32?\",\n\"Name\": \"compressionLevel\",\n\"Value\": 0}]}"
-  }
-]

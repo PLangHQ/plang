@@ -1,10 +1,9 @@
 ﻿using Newtonsoft.Json;
-using PLang.Building.Model;
 using PLang.Models;
 
 namespace PLang.Interfaces
 {
-	
+
     public interface ISettingsRepository
     {
         public void Init();

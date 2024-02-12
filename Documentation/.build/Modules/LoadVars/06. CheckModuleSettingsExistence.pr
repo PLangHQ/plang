@@ -1,13 +1,13 @@
 {
   "Action": {
-    "Name": "CheckModuleBuilderExistence",
-    "Code": "\npublic static class CheckModuleBuilderExistence\n{\n    public static bool Process(PLang.SafeFileSystem.PLangFileSystem fileSystem, string moduleαmoduleName)\n    {\n        var path = $\"../PLang/Modules/{moduleαmoduleName}Module/ModuleSettings.cs\";\n        return fileSystem.File.Exists(path);\n    }\n}\n",
+    "Name": "CheckModuleSettingsExistence",
+    "Code": "\npublic static class CheckModuleSettingsExistence\n{\n    public static bool Process(dynamic? moduleαmoduleName, PLang.SafeFileSystem.PLangFileSystem fileSystem)\n    {\n        string path = $\"../PLang/Modules/{moduleαmoduleName}Module/ModuleSettings.cs\";\n        return fileSystem.File.Exists(path);\n    }\n}\n",
     "Using": [
       "PLang.SafeFileSystem"
     ],
-    "Parameters": {
-      "fileSystem": "PLang.SafeFileSystem.PLangFileSystem",
-      "module.moduleName": "string"
+    "InputParameters": {
+      "module.moduleName": "dynamic?",
+      "fileSystem": "PLang.SafeFileSystem.PLangFileSystem"
     },
     "OutParameterDefinition": null,
     "GoalToCallOnTrue": null,
@@ -15,21 +15,55 @@
   },
   "Text": "if ../PLang/Modules/%module.moduleName%Module/ModuleSettings.cs exists, then",
   "Reload": false,
-  "LlmQuestion": {
-    "temperature": null,
-    "top_p": null,
-    "frequencyPenalty": null,
-    "presencePenalty": null,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
     "maxLength": 4000,
+    "llmResponseType": "csharp",
+    "scheme": "{\"GoalToCallOnTrue\": string = null,\n\"GoalToCallOnFalse\": string = null,\n\"Name\": string,\n\"Using\"?: string[] = null,\n\"Assemblies\"?: string[] = null}",
     "type": "PLang.Modules.ConditionalModule.Builder",
-    "system": "Act as a senior c# developer, that converts the user statement into a c#(Ver. 9) code. \r\n\r\nA variable is defined by starting and ending %.\r\nGenerate static class. The code generated should have 1 method with the static method named Process and return bool. \r\nVariables defined in the user statement can be passed into the Process function by value, but only if defined in statement. \r\nStatement should return true\r\n\r\nThe code will not be modified after it's generated.\r\nALWAYS use long or long? instead of int or int?\r\nName: should be in the CamelCase format\r\nGoals should be prefixed with !, e.g. Call !Process, Call !ConditionFalse\r\nDo not reference any DTO classes. Use dynamic? if complex object is needed, else use object?.\r\nStrings are defined with double quote (\")\r\nAny class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into method, but ONLY if needed. Assembly is already include, do not list it in Assemblies response.\r\nif condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. Process(dynamic? variable)\r\n\r\nReplace the dot(.) in variables with the letter α e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α\r\nKeep underscore in variables if defined by user, e.g.  if %user_id% is null => return user_id == null.\r\n\r\nYou must return ```csharp for the code implementation and ```json scheme \r\n{Name:string, Using:string[]?= null,  Assemblies:string[]? = null,  GoalToCallOnTrue:string? = null, string? GoalToCallOnFalse:string? = null}\r\n\n\nOnly write the raw c# code and json scheme, no summary, no extra text to explain, be concise",
-    "question": "command: if ../PLang/Modules/%module.moduleName%Module/ModuleSettings.cs exists, then",
-    "assistant": "\nName cannot be: 04. CheckModuleBuilderExistence\n## examples ##\r\n'if %isValid% is true then', this condition would return true if %isValid% is true. \r\n'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false.\r\n\r\n'if %data% (string) is null, call !CreateData, else !AppendData' => public static bool Process(string? dataαuser_id) { return string.IsNullOrEmpty(userIdentity); }\r\n'if %exists% (bool) is null, call !CreateUser' => public static bool Process(bool? dataαuser_id) { return exists == null;}\r\n'if %exists% (bool) is not null, call !CreateUser' => public static bool Process(bool? dataαuser_id) { return exists != null;}\r\n'if %data.user_id% is empty, call !CreateUser' => public static bool Process(dynamic? dataαuser_id) { return (dataαuser_id == null || (dataαuser_id is string str && string.IsNullOrEmpty(str))); } //if we dont know the type of %data.user_id%\r\n## examples ##\r\n",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Act as a senior C# developer, that converts the user statement into a C#(Version. 9) code. \r\n\r\n## Rules ##\r\n- Generate static class. The code generated should have 1 method with the static method named Process and return bool. \r\n- A variable in user intent is defined by starting and ending %.\r\n- Variables defined in the user intent can be passed into the Process function by value, but only if defined by user intent. \r\n- Variable names passed to Process function MUST be unmodified from the user statement\r\n- The code will not be modified after you generate it.\r\n- ALWAYS use long or long? instead of int or int?\r\n- Do not reference any DTO classes. Use dynamic? if complex object is needed, else use object?.\r\n- Strings are defined with double quote (\")\r\n- Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. \r\n- If PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into Process method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.\r\n- When condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. Process(dynamic? variable)\r\n- Replace the dot(.) in variables with the letter α e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α\r\n- Keep underscore in variables if defined by user, e.g.  if %user_id%(string) is null => Process(string? user_id)\r\n- Consider top security measures when generating code and validate code\r\n## Rules ##\r\n\r\n## Response information ##\r\n- Name: is name of class, it should represent the intent of what the code is doing. \r\n\r\n- Goals should be prefixed with !, e.g. Call !Process, Call !ConditionFalse\r\n- Using: must include namespaces that are needed to compile code.\r\n- Assemblies: dll to reference to compile using Roslyn\r\n## Response information ##\r\n"
+          },
+          {
+            "type": "text",
+            "text": "Only write the raw c# code and json scheme, no summary, no extra text to explain, be concise.\r\n\tYOU MUST implement all code needed and valid c# code. \r\n\tYou must return ```csharp for the code implementation and ```json scheme: {\"GoalToCallOnTrue\": string = null,\n\"GoalToCallOnFalse\": string = null,\n\"Name\": string,\n\"Using\"?: string[] = null,\n\"Assemblies\"?: string[] = null}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## defined variables ##\r\nmodule.moduleName (type:object), \r\n## defined variables ##"
+          },
+          {
+            "type": "text",
+            "text": "## examples ##\r\n'if %isValid% is true then', this condition would return true if %isValid% is true. \r\n'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false.\r\n\r\n'if %data% (string) is null, call !CreateData, else !AppendData' => public static bool Process(string? dataαuser_id) { return string.IsNullOrEmpty(userIdentity); }, GoalToCallOnTrue=CreateData, GoalToCallOnFalse=AppendData\r\n'if %exists% (bool) is null, call !CreateUser' => public static bool Process(bool? dataαuser_id) { return exists == null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null\r\n'if %exists% (bool) is not null, call !CreateUser' => public static bool Process(bool? dataαuser_id) { return exists != null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null\r\n'if %data.user_id% is empty, call !CreateUser' => public static bool Process(dynamic? dataαuser_id) { return (dataαuser_id == null || (dataαuser_id is string str && string.IsNullOrEmpty(str))); } //if we dont know the type of %data.user_id%, , GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null\r\n'if !%isValid% then => public static bool Process(bool? isValid) { return !isValid; }, GoalToCallOnTrue=null, GoalToCallOnFalse=null\r\n'if %first_name% is null, call !UpdateFirstName' => public static bool Process(string? first_name) { return (first_name == null || string.IsNullOrEmpty(str)); }\r\n## examples ##\r\n"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "if ../PLang/Modules/%module.moduleName%Module/ModuleSettings.cs exists, then"
+          }
+        ]
+      }
+    ],
     "model": "gpt-4",
     "caching": true,
-    "Reload": false,
-    "PreviousResult": null,
-    "RawResponse": "```csharp\npublic static class CheckModuleBuilderExistence\n{\n    public static bool Process(PLang.SafeFileSystem.PLangFileSystem fileSystem, string moduleαmoduleName)\n    {\n        var path = $\"../PLang/Modules/{moduleαmoduleName}Module/ModuleSettings.cs\";\n        return fileSystem.File.Exists(path);\n    }\n}\n```\n```json\n{\n    \"Name\": \"CheckModuleBuilderExistence\",\n    \"Using\": [\"PLang.SafeFileSystem\"]\n}\n```"
+    "RawResponse": null
   },
   "RunOnBuild": false
 }

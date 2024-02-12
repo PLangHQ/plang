@@ -1,12 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using PLang.Attributes;
 using PLang.Building.Events;
+using PLang.Models;
 using System.Runtime.Serialization;
-using System.Text.Json.Serialization;
 
 namespace PLang.Building.Model
 {
 
-	public class GoalStep
+    public class GoalStep
 	{
 		public GoalStep()
 		{
@@ -67,10 +67,10 @@ namespace PLang.Building.Model
 
 		[System.Text.Json.Serialization.JsonIgnore]
 		public Goal Goal { get; set; }
-		//public LlmQuestion LlmQuestion { get; set; }
+
 		public Dictionary<string, object> Custom { get; set; } = new Dictionary<string, object>();
 		public int Number { get; set; }
 		public int LineNumber { get; set; }
-		public LlmQuestion LlmQuestion { get; set; }
+		public LlmRequest LlmRequest { get; set; }
 	}
 }

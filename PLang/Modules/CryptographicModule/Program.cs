@@ -85,6 +85,12 @@ namespace PLang.Modules.CryptographicModule
 			}
 		}
 
+		[Description("Hashes Identity string to standard hash")]
+		public async Task<string> HashIdentityString(string identity)
+		{
+			return identity.ComputeHash(mode: "keccak256", salt: context[ReservedKeywords.Salt]!.ToString());
+		}
+
 		[Description("Used to verify hash. hashAlgorithm: keccak256 | sha256 | bcrypt")]
 		public async Task<bool> VerifyHashedValues(string text, string hash, string hashAlgorithm = "keccak256", bool useSalt = true, string? salt = null)
 		{

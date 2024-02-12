@@ -57,11 +57,11 @@ namespace PLang.Modules.CallGoalModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("RunGoal", gf.FunctionName);
 			Assert.AreEqual("goalName", gf.Parameters[0].Name);
-			Assert.AreEqual("Process.Image", gf.Parameters[0].Value);
+			Assert.AreEqual("!Process.Image", gf.Parameters[0].Value);
 			Assert.AreEqual("parameters", gf.Parameters[1].Name);
 
 			var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(gf.Parameters[1].Value.ToString());
@@ -81,16 +81,17 @@ namespace PLang.Modules.CallGoalModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("RunGoal", gf.FunctionName);
 			Assert.AreEqual("goalName", gf.Parameters[0].Name);
-			Assert.AreEqual("RunReporting", gf.Parameters[0].Value);
-		
-			Assert.AreEqual("waitForExecution", gf.Parameters[1].Name);
-			Assert.AreEqual(false, gf.Parameters[1].Value);
-			Assert.AreEqual("delayWhenNotWaitingInMilliseconds", gf.Parameters[2].Name);
-			Assert.AreEqual((long) 3*1000, gf.Parameters[2].Value);
+			Assert.AreEqual("!RunReporting", gf.Parameters[0].Value);
+			Assert.AreEqual("parameters", gf.Parameters[1].Name);
+			Assert.AreEqual(null, gf.Parameters[1].Value);
+			Assert.AreEqual("waitForExecution", gf.Parameters[2].Name);
+			Assert.AreEqual(false, gf.Parameters[2].Value);
+			Assert.AreEqual("delayWhenNotWaitingInMilliseconds", gf.Parameters[3].Name);
+			Assert.AreEqual((long) 3*1000, gf.Parameters[3].Value);
 
 		}
 

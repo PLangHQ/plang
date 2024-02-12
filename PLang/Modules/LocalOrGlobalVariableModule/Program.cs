@@ -22,6 +22,11 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		public async Task OnChangeVariableListener([HandlesVariable] string key, string goalName, bool notifyWhenCreated = true, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
 		{
 			memoryStack.AddOnChangeEvent(key, goalName, false, notifyWhenCreated, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+			if (notifyWhenCreated)
+			{
+				memoryStack.AddOnCreateEvent(key, goalName, false, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+
+			}
 		}
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
 		public async Task OnRemoveVariableListener([HandlesVariable] string key, string goalName, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
@@ -51,6 +56,31 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			if (content == null) return null;
 
 			return variableHelper.LoadVariables(content);
+		}
+		[Description(@"Set string variable. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
+		public async Task SetStringVariable([HandlesVariable] string key, string? value = null)
+		{
+			memoryStack.Put(key, variableHelper.LoadVariables(value));
+		}
+		[Description(@"Set int/long variable.")]
+		public async Task SetNumberVariable([HandlesVariable] string key, long? value = null)
+		{
+			memoryStack.Put(key, variableHelper.LoadVariables(value));
+		}
+		[Description(@"Set double variable.")]
+		public async Task SetDoubleVariable([HandlesVariable] string key, double? value = null)
+		{
+			memoryStack.Put(key, variableHelper.LoadVariables(value));
+		}
+		[Description(@"Set float variable.")]
+		public async Task SetFloatVariable([HandlesVariable] string key, float? value = null)
+		{
+			memoryStack.Put(key, variableHelper.LoadVariables(value));
+		}
+		[Description(@"Set bool variable.")]
+		public async Task SetBoolVariable([HandlesVariable] string key, bool? value = null)
+		{
+			memoryStack.Put(key, variableHelper.LoadVariables(value));
 		}
 
 		[Description(@"Set variable. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
@@ -94,6 +124,10 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			else if (val is string)
 			{
 				val = val + seperator.ToString() + value;
+			}
+			else if (val is System.Collections.IList list)
+			{
+				list.Add(value);
 			}
 			else
 			{

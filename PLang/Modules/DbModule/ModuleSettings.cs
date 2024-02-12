@@ -3,6 +3,7 @@ using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Utils;
 using System;
 using System.Data;
@@ -140,18 +141,17 @@ Connection string:",
 			{
 				dbName = dbName.TrimEnd(';');
 			}
-			var llmQuestion = new LlmQuestion("DbModule", "",
-					@$"
+
+			var promptMessage = new List<LlmMessage>();
+			promptMessage.Add(new LlmMessage("system", @$"
 Give me sql statement to list all the tables and views in my database {dbName} on {typeFullName}.
 Give me sql statement on how to get all column names and type in a table
 Table name should be @TableName, database name is @Database if needed as parameters
 
-Give your response in JSON, scheme
-{TypeHelper.GetJsonSchema(typeof(SqlStatement))}
+Be concise"));
 
-Be concise"
-					, "");
-			var statement = await aiService.Query<SqlStatement>(llmQuestion);
+			var llmRequest = new LlmRequest("DbModule", promptMessage);
+			var statement = await aiService.Query<SqlStatement>(llmRequest);
 			if (statement == null)
 			{
 				throw new BuilderException("Could not get select statement for tables, views and columns. Try again.");

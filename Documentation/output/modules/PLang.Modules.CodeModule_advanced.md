@@ -1,93 +1,77 @@
-
-# Code Module for plang
+# Code
 
 ## Introduction
-The Code module in plang is a powerful tool designed for advanced users who are familiar with programming concepts and C# language specifics. It allows users to write plang code in a natural language format, which is then interpreted by a Language Learning Model (LLM) and mapped to corresponding C# methods. This documentation provides an overview of how plang integrates with C# methods and includes examples of common usage patterns.
+The Code module in plang is a powerful tool designed to bridge the gap between natural language instructions and C# method execution. It leverages a Language Learning Model (LLM) to interpret user-defined steps and map them to corresponding C# methods. This documentation is tailored for advanced users who are familiar with programming concepts and are looking to understand the intricacies of how plang integrates with C#.
 
 ## Plang code examples
-For simple documentation and examples, refer to [PLang.Modules.CodeModule.md](./PLang.Modules.CodeModule.md). The repository containing a comprehensive list of examples can be found at [PLang Code Examples](https://github.com/PLangHQ/plang/tree/main/Tests/Code).
+For a quick start and common usage patterns, refer to the simple documentation and examples at ('./PLang.Modules.CodeModule.md') and the repository at https://github.com/PLangHQ/plang/tree/main/Tests/Code.
 
-### Example: Writing to a File
-This is a common operation where the user wants to write data to a file. The plang code example below demonstrates how to perform this action, which maps to the `WriteToFile` method in C#.
+### Example: Generating a New GUID
+A common task in programming is generating a new GUID (Globally Unique Identifier). In plang, this can be done with a simple step that maps to a C# method for GUID generation.
 
-#### plang code
 ```plang
-Code
-- set %filePath% as 'C:\\path\\to\\file.txt'
-- set %content% as 'Hello, World!'
-- [code] write %content% to file at %filePath%
+- [code] create a new GUID, write to %newGuid%
 ```
 
-#### C# method signature
+Default C# signature:
 ```csharp
-void WriteToFile(string content, string filePath)
+Guid NewGuid()
 ```
 
-### Example: Reading from a File
-Reading data from a file is another frequent operation. The following plang code example shows how to read the contents of a file, which corresponds to the `ReadFromFile` method in C#.
-
-#### plang code
-```plang
-Code
-- set %filePath% as 'C:\\path\\to\\file.txt'
-- [code] read from file at %filePath%, write to %fileContent%
-```
-
-#### C# method signature
-```csharp
-string ReadFromFile(string filePath)
-```
-
-For more detailed documentation and all examples, please refer to [PLang.Modules.CodeModule.md](./PLang.Modules.CodeModule.md) and the [PLang Code Examples Repository](https://github.com/PLangHQ/plang/tree/main/Tests/Code). Additionally, inspect the Program.cs source code for a deeper understanding of the runtime behavior at [Program.cs Source Code](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CodeModule/Program.cs).
+For more detailed examples and documentation, visit:
+- ('./PLang.Modules.CodeModule.md')
+- https://github.com/PLangHQ/plang/tree/main/Tests/Code
+- Program.cs source code at https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CodeModule/Program.cs
 
 ## Source code
-The runtime code for the Code module, Program.cs, can be found at [Program.cs Source](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CodeModule/Program.cs).
-The Builder.cs, responsible for the construction of steps, is available at [Builder.cs Source](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/CodeModule/Builder.cs).
+The source code for the runtime execution is available at https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CodeModule/Program.cs. For the building of steps, refer to https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.CodeModule/Builder.cs.
 
 ## How plang is mapped to C#
-The mapping of plang to C# methods is a two-step process involving the Builder and Runtime.
+Modules in plang are utilized through a two-phase process: Building and Runtime.
 
 ### Builder
-1. During the build process, the .goal file is read, and each step (line starting with '-') is parsed.
-2. The StepBuilder sends a question to LLM along with a list of all available modules, suggesting the use of PLang.Modules.CodeModule for the given step.
-3. The LLM returns a JSON mapping the step text to a C# method with the required parameters.
-4. Depending on availability, either Builder.cs or BaseBuilder.cs creates a hash of the response and saves a JSON instruction file with the .pr extension in the .build/{GoalName}/ directory.
+During the build phase:
+1. The .goal file is read, and each step (line starting with '-') is parsed.
+2. The StepBuilder sends a question to LLM along with a list of all available modules.
+3. LLM suggests a module, typically PLang.Modules.CodeModule, based on the step.
+4. Builder.cs (or BaseBuilder.cs if Builder.cs is not available) sends the methods in the Code module to LLM with the step.
+5. LLM returns a JSON mapping the step text to a C# method with the required parameters.
+6. Builder.cs or BaseBuilder.cs creates a hash of the response and saves a JSON instruction file with the .pr extension in the .build/{GoalName}/ directory.
 
 ### Runtime
-1. The plang runtime loads the .pr file.
+During the runtime phase:
+1. The .pr file is loaded by the plang runtime.
 2. Reflection is used to load the PLang.Modules.CodeModule.
-3. The "Function" property in the .pr file specifies the C# method to call.
-4. Parameters are provided if required by the method.
+3. The "Function" property in the .pr file dictates the C# method to call.
+4. If required, parameters are passed to the method.
 
 ### plang example to csharp
-Below is a plang code example and its mapping to a C# method in the Code module, along with the corresponding .pr file content.
+Here's how a plang code example maps to a .pr file and subsequently to a C# method:
 
 #### plang code example
 ```plang
-Code
-- set %data% as 'Sample data'
-- [code] process %data%, write to %result%
+- [code] format %fileSizeBytes% to human readable form, write to %readableSize%
 ```
 
 #### Example Instruction .pr file
 ```json
 {
   "Action": {
-    "FunctionName": "ProcessData",
+    "FunctionName": "FormatBytesToHumanReadable",
     "Parameters": [
       {
-        "Type": "string",
-        "Name": "data",
-        "Value": "Sample data"
+        "Type": "long",
+        "Name": "fileSizeBytes",
+        "Value": "10485760"
       }
     ],
     "ReturnValue": {
       "Type": "string",
-      "VariableName": "result"
+      "VariableName": "readableSize"
     }
   }
 }
 ```
 
 ## Created
-This documentation was created on 2024-01-02T21:35:48.
+This documentation is created 2024-02-10T13:51:23

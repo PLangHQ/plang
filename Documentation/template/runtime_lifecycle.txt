@@ -28,3 +28,12 @@ plang run
 ```
 
 The plang runtime will search for a Start.goal file in the directory you are located in. If it does not find it it will print out error message 'Could not find Start.goal to run......'. It will still run the Setup.goal and Events that occure before the goal file is executed.
+
+Logger
+You can enable log levels by adding a comment to a goal, format is [trace], [debug], [info] [warning], [error]
+e.g. 
+```plang
+/ This is the start [trace]
+Start
+- write out 'hello'
+```

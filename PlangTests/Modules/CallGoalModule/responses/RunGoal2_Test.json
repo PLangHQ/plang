@@ -1,7 +1,7 @@
 [
   {
     "stepText": "call !RunReporting, dont wait, delay for 3 sec",
-    "response": "{\n\"FunctionName\": \"RunGoal\",\n\"Parameters\": [\n    {\n        \"Type\": \"String\",\n        \"Name\": \"goalName\",\n        \"Value\": \"RunReporting\"\n    },\n    {\n        \"Type\": \"Boolean\",\n        \"Name\": \"waitForExecution\",\n        \"Value\": false\n    },\n    {\n        \"Type\": \"Int32\",\n        \"Name\": \"delayWhenNotWaitingInMilliseconds\",\n        \"Value\": 3000\n    }\n]\n}",
-    "created": "2024-01-04T10:22:24.8414184+00:00"
+    "response": "{\"FunctionName\": \"RunGoal\",\n\"Parameters\": [\n    {\"Type\": \"string\",\n    \"Name\": \"goalName\",\n    \"Value\": \"!RunReporting\"},\n    {\"Type\": \"Dictionary`2<String, Object>\",\n    \"Name\": \"parameters\",\n    \"Value\": null},\n    {\"Type\": \"Boolean\",\n    \"Name\": \"waitForExecution\",\n    \"Value\": false},\n    {\"Type\": \"Int32\",\n    \"Name\": \"delayWhenNotWaitingInMilliseconds\",\n    \"Value\": 3000}\n],\n\"ReturnValue\": null}",
+    "created": "2024-02-07T12:44:28.2945848+00:00"
   }
 ]

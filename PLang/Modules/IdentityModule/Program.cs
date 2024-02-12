@@ -2,11 +2,12 @@
 using PLang.Model;
 using PLang.Modules;
 using PLang.Services.SigningService;
+using PLang.Utils;
 using System.ComponentModel;
 
 namespace PLang.Modules.IdentityModule
 {
-	[Description("Handles Identity in plang. Sign content and verifies signature with the identity")]
+	[Description("Handles Identity in plang. Sign content and verifies signature with the identity.")]
 	public class Program : BaseProgram
 	{
 		private readonly IPLangIdentityService identityService;
@@ -75,5 +76,7 @@ namespace PLang.Modules.IdentityModule
 		{
 			return await signingService.VerifySignature(content, method, url, validationKeyValues);
 		}
+
+		
 	}
 }

@@ -1,5 +1,6 @@
 ﻿using PLang.Building.Model;
 using PLang.Exceptions;
+using PLang.Models;
 using PLang.Utils;
 using static PLang.Services.LlmService.PLangLlmService;
 
@@ -16,7 +17,6 @@ namespace PLang.Modules.LlmModule
 
 		public async Task<Instruction> Build(GoalStep step, string? error = null, int errorCount = 0)
 		{
-            string schemea = TypeHelper.GetJsonSchema(typeof(List<Message>));
 			AppendToSystemCommand(@"The following user request is for constructing a message to LLM engine
 
 llmResponseType can be null, text, json, markdown or html. default is null. If scheme is defined then use json, unless user defines otherwise

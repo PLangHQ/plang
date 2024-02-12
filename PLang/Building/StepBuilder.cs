@@ -4,11 +4,13 @@ using PLang.Building.Events;
 using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Runtime;
+using PLang.Services.CompilerService;
 using PLang.Utils;
 using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
-using static PLang.Modules.Compiler;
+using static PLang.Services.CompilerService.CSharpCompiler;
 
 namespace PLang.Building
 {
@@ -46,6 +48,8 @@ namespace PLang.Building
 
 		public async Task BuildStep(Goal goal, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
 		{
+			if (excludeModules == null) { excludeModules = new List<string>(); }
+
 			var step = goal.GoalSteps[stepIndex];
 			try
 			{
@@ -54,7 +58,7 @@ namespace PLang.Building
 
 				await eventRuntime.RunBuildStepEvents(EventType.Before, goal, step, stepIndex);
 
-				LlmQuestion llmQuestion = GetBuildStepQuestion(goal, step, excludeModules);
+				LlmRequest llmQuestion = GetBuildStepQuestion(goal, step, excludeModules);
 
 				logger.Value.LogDebug($"- Find module for {step.Text}");
 				llmQuestion.Reload = false;
@@ -95,7 +99,7 @@ namespace PLang.Building
 				step.PrFileName = strStepNr + ". " + step.Name + ".pr";
 				step.AbsolutePrFilePath = Path.Join(goal.AbsolutePrFolderPath, step.PrFileName);
 				step.RelativePrPath = Path.Join(goal.RelativePrFolderPath, step.PrFileName);
-				step.LlmQuestion = llmQuestion;
+				step.LlmRequest = llmQuestion;
 				step.Number = stepIndex;
 				if (goal.GoalSteps.Count > stepIndex + 1)
 				{
@@ -113,6 +117,11 @@ namespace PLang.Building
 
 					await eventRuntime.RunBuildStepEvents(EventType.After, goal, step, stepIndex);
 				}
+				catch (FunctionNotFoundException ffe)
+				{
+					excludeModules.Add(ffe.Message);
+					await BuildStep(goal, stepIndex, excludeModules, ++errorCount);
+				}
 				catch (SkipStepException) { }
 
 			}
@@ -124,10 +133,10 @@ namespace PLang.Building
 		}
 
 
-		private bool StepHasBeenBuild(GoalStep step, int stepIndex, List<string>? excludeModules)
+		private bool StepHasBeenBuild(GoalStep step, int stepIndex, List<string> excludeModules)
 		{
 			if (step.Number != stepIndex) return false;
-			if (step.PrFileName == null || excludeModules != null) return false;
+			if (step.PrFileName == null || excludeModules.Count > 0) return false;
 
 			if (!fileSystem.File.Exists(step.AbsolutePrFilePath))
 			{
@@ -185,6 +194,14 @@ namespace PLang.Building
 			// might have to structure the build
 			if (gf == null || gf.Parameters == null || gf.Parameters.Count == 0) return;
 
+			foreach (var parameter in gf.Parameters)
+			{
+				if (VariableHelper.IsVariable(parameter.Value))
+				{
+					memoryStack.PutForBuilder(parameter.Name, parameter.Type);
+				}
+			}
+
 			if (gf.FunctionName == "RunGoal")
 			{
 				var json = gf.Parameters.FirstOrDefault(p => p.Name == "parameters")?.Value;
@@ -202,18 +219,12 @@ namespace PLang.Building
 
 		}
 
-		private LlmQuestion GetBuildStepQuestion(Goal goal, GoalStep step, List<string>? excludeModules = null)
+		private LlmRequest GetBuildStepQuestion(Goal goal, GoalStep step, List<string>? excludeModules = null)
 		{
 			// user might define in his step specific module.
 
 			var modulesAvailable = typeHelper.GetModulesAsString(excludeModules);
 			var userRequestedModule = GetUserRequestedModule(step);
-			if (step.Goal.RelativeGoalFolderPath.ToLower() == Path.DirectorySeparatorChar + "ui")
-			{
-				userRequestedModule.Add("{ \"module\": \"PLang.Modules.HtmlModule\", \"description\": \"Takes any user command and tries to convert it to html\" }");
-				userRequestedModule.Add("{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, e.g. !RenameFile\" }");
-				userRequestedModule.Add("{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database query, select, update, insert, delete and execute sql statement\" }");
-			}
 			if (userRequestedModule.Count > 0)
 			{
 				modulesAvailable = string.Join(", ", userRequestedModule);
@@ -238,11 +249,14 @@ RetryHandler: How to retry the step if there is error, default is null
 CachingHandler: How caching is handled, default is null
 Read the description of each module, then determine which module to use
 
-Your response MUST be JSON, scheme
-{jsonScheme}
 Be Concise
 ";
-			var question = step.Text;
+			if (step.Goal.RelativeGoalFolderPath.ToLower() == Path.DirectorySeparatorChar + "ui")
+			{
+				system += "\n\nUser is programming in the UI folder, this put priority on PLang.Modules.UiModule. The user is trying to create UI";
+			}
+
+				var question = step.Text;
 			var assistant = $@"This is a list of modules you can choose from
 ## modules available starts ##
 {modulesAvailable}
@@ -261,13 +275,18 @@ Sliding = 0, Absolute = 1
 ";
 			}
 
-			var llmQuestion = new LlmQuestion("StepBuilder", system, question, assistant);
+			List<LlmMessage> promptMessage = new();
+			promptMessage.Add(new LlmMessage("system", system));
+			promptMessage.Add(new LlmMessage("assistant", assistant));
+			promptMessage.Add(new LlmMessage("user", question));
 
-			if (step.PrFileName == null || (excludeModules != null && excludeModules.Count > 0)) llmQuestion.Reload = true;
-			return llmQuestion;
+			var llmRequest = new LlmRequest("StepBuilder", promptMessage);
+			llmRequest.scheme = jsonScheme;
 
-
+			if (step.PrFileName == null || (excludeModules != null && excludeModules.Count > 0)) llmRequest.Reload = true;
+			return llmRequest;
 		}
+
 		protected string GetVariablesInStep(GoalStep step)
 		{
 			var variables = variableHelper.GetVariables(step.Text);

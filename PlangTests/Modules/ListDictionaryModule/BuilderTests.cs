@@ -61,7 +61,7 @@ namespace PLang.Modules.ListDictionaryModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 			
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("DeleteKeyFromDictionary", gf.FunctionName);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
@@ -82,7 +82,7 @@ namespace PLang.Modules.ListDictionaryModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("AddToList", gf.FunctionName);
 			Assert.AreEqual("value", gf.Parameters[0].Name);
@@ -105,7 +105,7 @@ namespace PLang.Modules.ListDictionaryModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("AddToDictionary", gf.FunctionName);
 			Assert.AreEqual("key", gf.Parameters[0].Name);

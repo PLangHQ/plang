@@ -56,7 +56,7 @@ namespace PLang.Modules.CultureInfoModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("SetCultureLanguageCode", gf.FunctionName);
 			Assert.AreEqual("code", gf.Parameters[0].Name);
@@ -74,7 +74,7 @@ namespace PLang.Modules.CultureInfoModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("SetCultureUILanguageCode", gf.FunctionName);
 			Assert.AreEqual("code", gf.Parameters[0].Name);

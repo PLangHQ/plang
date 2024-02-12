@@ -610,14 +610,14 @@ namespace PLang.Modules.BlockchainModule
 
 		}
 
-		public async Task<BigInteger> GetBalanceInWei(string address)
+		public async Task<BigInteger> GetNativeBalanceOfAddressInWei(string address)
 		{
 			var balance = await web3.Eth.GetBalance.SendRequestAsync(address);
 			return balance.Value;
 		}
 
 		[Description("Get the balance in ETH, converts from Wei to Eth")]
-		public async Task<decimal> GetBalanceToDecimalPoint(string address, int decimalPlacesToUnit = 18)
+		public async Task<decimal> GetNativeBalanceOfAddressToDecimalPoint(string address, int decimalPlacesToUnit = 18)
 		{
 			var balance = await web3.Eth.GetBalance.SendRequestAsync(address);
 			var balanceInEther = Web3.Convert.FromWei(balance.Value, decimalPlacesToUnit);
@@ -645,7 +645,8 @@ namespace PLang.Modules.BlockchainModule
 				.TransferEtherAndWaitForReceiptAsync(to, etherAmount, gasPriceWei, gas, nonce);
 			return transaction;
 		}
-		
+
+		[Description("Send a transaction and returns transaction hash")]
 		public async Task<string> SendTransaction(string contractAddress, string abi, params object[] args)
 		{
 			var contract = web3.Eth.GetContract(abi, contractAddress);
@@ -655,6 +656,7 @@ namespace PLang.Modules.BlockchainModule
 			return transactionHash;
 		}
 
+		[Description("Send a transaction and waits for the transaction to finish")]
 		public async Task<TransactionReceipt> SendTransactionAndWaitForReceipt(string contractAddress, string abi, params object[] args)
 		{
 			CancellationToken cancellationToken = new CancellationToken();

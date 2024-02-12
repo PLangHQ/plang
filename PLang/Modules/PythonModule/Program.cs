@@ -36,7 +36,7 @@ namespace PLang.Modules.PythonModule
 		}
 
 		[Description("Run a python script. parameterNames should be equal length as parameterValues. Parameter example name=%name%. variablesToExtractFromPythonScript are keys in the format [a-zA-Z0-9_\\.]+ that the user want to write to")]
-		public async Task<Dictionary<string, object>> RunPythonScript(string fileName = "main.py",
+		public async Task RunPythonScript(string fileName = "main.py",
 			string[]? parameterValues = null, string[]? parameterNames = null,
 			[HandlesVariable] string[]? variablesToExtractFromPythonScript = null,
 			bool useNamedArguments = false, string? pythonPath = null,
@@ -174,7 +174,7 @@ namespace PLang.Modules.PythonModule
 								if (key != null && variablesToExtractFromPythonScript.FirstOrDefault(p => p == key) != null)
 								{
 									var value = ConvertValue(item[1]);
-									result.AddOrReplace(key, value);
+									memoryStack.Put(key, value);
 								}
 							}
 
@@ -214,7 +214,6 @@ namespace PLang.Modules.PythonModule
 					}
 				}
 
-				return result;
 			}
 			catch (Exception ex)
 			{
@@ -223,7 +222,12 @@ namespace PLang.Modules.PythonModule
 			finally
 			{
 				// Shutdown the Python engine when done
-				PythonEngine.Shutdown();
+				try
+				{
+					PythonEngine.Shutdown();
+				} catch (Exception ex)
+				{
+				}
 			}
 
 

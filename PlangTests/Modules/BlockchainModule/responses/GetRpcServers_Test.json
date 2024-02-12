@@ -1,7 +1,7 @@
 [
   {
     "stepText": "get rpc servers, write to %servers%",
-    "response": "{\"FunctionName\": \"GetRpcServers\", \"Parameters\": [], \"ReturnValue\": [{\"Type\": \"List`1\", \"VariableName\": \"servers\"}]}",
-    "created": "2024-01-04T09:57:21.6018364+00:00"
+    "response": "{\"FunctionName\": \"GetRpcServers\", \n\"Parameters\": [], \n\"ReturnValue\": [{\"Type\": \"List`1\", \n\"VariableName\": \"servers\"}]}",
+    "created": "2024-02-07T12:15:09.886464+00:00"
   }
 ]

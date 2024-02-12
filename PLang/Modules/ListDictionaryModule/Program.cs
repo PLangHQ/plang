@@ -14,6 +14,19 @@ namespace PLang.Modules.ListDictionaryModule
 		{
 		}
 
+		public async Task ClearList(List<object> listInstance)
+		{
+			if (listInstance == null) return;
+
+			listInstance.Clear();
+		}
+		public async Task ClearDictionary(Dictionary<string, object> dictionary)
+		{
+			if (dictionary == null) return;
+
+			dictionary.Clear();
+		}
+
 		public async Task<bool> DeleteFromList(object item, List<object> listInstance)
 		{
 			return listInstance.Remove(item);

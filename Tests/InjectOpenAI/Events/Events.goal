@@ -1,0 +1,5 @@
+/ You might have to modify the path depending on your operating system
+@llm=OpenAIService/win-x64/OpenAiService
+
+Events
+- Before each goal, call !DoStuff

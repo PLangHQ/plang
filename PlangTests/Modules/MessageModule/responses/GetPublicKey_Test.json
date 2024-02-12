@@ -2,6 +2,6 @@
   {
     "stepText": "Get message public key, write to %publicKey%",
     "response": "{\"FunctionName\": \"GetPublicKey\",\n\"Parameters\": [],\n\"ReturnValue\": [{\"Type\": \"string\",\n\"VariableName\": \"publicKey\"}]}",
-    "created": "2024-02-05T10:14:43.925695+00:00"
+    "created": "2024-02-07T14:11:51.4004552+00:00"
   }
 ]

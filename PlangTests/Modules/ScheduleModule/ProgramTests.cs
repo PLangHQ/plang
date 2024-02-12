@@ -1,16 +1,10 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using PLang.Modules.ScheduleModule;
-using System.Diagnostics;
 using NSubstitute;
-using static PLang.Modules.ScheduleModule.Program;
 using PLang.Interfaces;
+using PLang.Modules.ScheduleModule;
 using PLang.Utils;
-using PLang.Building.Parsers;
+using System.Diagnostics;
+using static PLang.Modules.ScheduleModule.Program;
 
 namespace PLangTests.Modules.ScheduleModule
 {
@@ -29,6 +23,7 @@ namespace PLangTests.Modules.ScheduleModule
 			Stopwatch stopwatch = new Stopwatch();
 			stopwatch.Start();
 			var p = new Program(settings, prParser);
+			p.Init(container, null, new PLang.Building.Model.GoalStep(), null, memoryStack, logger, context, typeHelper, aiService, settings, appCache, null);
 			await p.Sleep(100);
 			stopwatch.Stop();
 			Assert.IsTrue(stopwatch.ElapsedMilliseconds > 99);

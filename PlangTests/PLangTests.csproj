@@ -118,8 +118,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Modules\BlockchainModule\Responses2\" />
-    <Folder Include="Modules\CryptographicModule\responses2\" />
     <Folder Include="PrFiles\Apps\" />
     <Folder Include="PrFiles\ui\" />
   </ItemGroup>

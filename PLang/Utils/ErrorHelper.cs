@@ -10,7 +10,7 @@ namespace PLang.Utils
 	public interface IErrorHelper
 	{
 		Task ShowFriendlyErrorMessage(Exception ex, GoalStep? step = null,
-				Func<Task>? callBackForAskUser = null, Func<Exception?, Task<bool>>? eventToRun = null, Func<Task?, Task<bool>>? retryCallback = null);
+				Func<Task>? callBackForAskUser = null, Func<Exception?, Task<bool>>? errorHandler = null, Func<Task?, Task<bool>>? retryCallback = null);
 	}
 
 	public class ErrorHelper : IErrorHelper
@@ -34,67 +34,21 @@ namespace PLang.Utils
 				Func<Task>? callBackForAskUser = null, Func<Exception?, Task<bool>>? eventToRun = null,
 				Func<Task?, Task<bool>>? retryCallback = null)
 		{
-			if (ex is RunStepAgainException) throw ex;
-
-			AskUserException? aue = null;
-
+			if (step == null && ex is RuntimeStepException rse)
+			{
+				step = rse.Step;
+			}
 
 			List<Exception> errors = new List<Exception>();
 			Exception? loopException = ex;
-			FileAccessException? fae = null;
 
 			while (loopException != null)
 			{
 				errors.Add(loopException);
-				if (loopException is AskUserException)
-				{
-					aue = loopException as AskUserException;
-				}
-				if (loopException is FileAccessException)
-				{
-					fae = loopException as FileAccessException;
-				}
 				loopException = loopException.InnerException;
 			}
 
-			// check
-			if (fae != null && step != null)
-			{
-				await FileAccessRequest(fae, step.Goal, callBackForAskUser);
-				return;
-			}
 
-			if (aue != null)
-			{
-				try
-				{
-					if (!await askUserHandler.Handle(aue)) throw aue;
-					if (callBackForAskUser != null)
-					{
-						await callBackForAskUser();
-					}
-					else
-					{
-						throw new RunStepAgainException();
-					}
-
-				}
-				catch (Exception ex2)
-				{
-					await ShowFriendlyErrorMessage(ex2, step, callBackForAskUser);
-				}
-
-
-				return;
-			}
-
-			if (retryCallback != null && step != null && step.RetryHandler != null)
-			{
-				if (await retryCallback(null))
-				{
-					return;
-				}
-			}
 
 			context.AddOrReplace(ReservedKeywords.Exception, ex);
 			if (eventToRun != null)

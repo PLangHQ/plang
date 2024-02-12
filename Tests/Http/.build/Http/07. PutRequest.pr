@@ -3,7 +3,7 @@
     "FunctionName": "Put",
     "Parameters": [
       {
-        "Type": "String",
+        "Type": "string",
         "Name": "url",
         "Value": "https://httpbin.org/put"
       },
@@ -23,12 +23,12 @@
         "Value": null
       },
       {
-        "Type": "String",
+        "Type": "string",
         "Name": "encoding",
         "Value": "utf-8"
       },
       {
-        "Type": "String",
+        "Type": "string",
         "Name": "contentType",
         "Value": "application/json"
       },
@@ -40,26 +40,62 @@
     ],
     "ReturnValue": [
       {
-        "Type": "Object",
-        "VariableName": "%putResponse%"
+        "Type": "object",
+        "VariableName": "putResponse"
       }
     ]
   },
   "Text": "put https://httpbin.org/put, write to %putResponse%",
   "Reload": false,
-  "LlmQuestion": {
-    "temperature": null,
-    "top_p": null,
-    "frequencyPenalty": null,
-    "presencePenalty": null,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
     "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
     "type": "PLang.Modules.HttpModule.Builder",
-    "system": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. Variables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue: Only if the function returns a value AND if user defines %variable% to write into. If no %variable% is defined then set as null.\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}]}",
-    "question": "put https://httpbin.org/put, write to %putResponse%",
-    "assistant": "## functions available starts ##\r\nObject Post(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject Patch(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject Get(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject Option(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject Head(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject Put(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject Delete(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject PostMultipartFormData(String url, Object data, String? httpMethod = \"POST\", Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", Int32? timeoutInSeconds = 30)  // Post a FileStream to url. When a variable is defined with @ sign, it defines that it should be a FileStream.. \nObject Request(String url, String method, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30)\r\n## functions available ends ##\r\n## defined variables ##\r\nputResponse (type:object), \r\n## defined variables ##\nUser might use JSONPath to describe how to load variable in ReturnValue, keep the $ for the ReturnValue.VariableName.\\n",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\nVariables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue: Only if the function returns a value AND if user defines %variable% to write into. If no %variable% is defined then set as null."
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nObject Post(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject Patch(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject Get(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject Option(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject Head(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject Put(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject Delete(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject PostMultipartFormData(String url, Object data, String? httpMethod = \"POST\", Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", Int32? timeoutInSeconds = 30)  // Post a FileStream to url. When a variable is defined with @ sign, it defines that it should be a FileStream.. \nObject Request(String url, String method, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30)\r\n## functions available ends ##\r\n## defined variables ##\r\nputResponse (type:object), \r\n## defined variables ##"
+          },
+          {
+            "type": "text",
+            "text": "If user uses JSONPath to describe how to load variable in ReturnValue, keep the $ for the ReturnValue.VariableName, but only if he defines JSONPath.\\n"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "put https://httpbin.org/put, write to %putResponse%"
+          }
+        ]
+      }
+    ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "{\r\n  \"FunctionName\": \"Put\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"url\",\r\n      \"Value\": \"https://httpbin.org/put\"\r\n    },\r\n    {\r\n      \"Type\": \"Object\",\r\n      \"Name\": \"data\",\r\n      \"Value\": null\r\n    },\r\n    {\r\n      \"Type\": \"Boolean\",\r\n      \"Name\": \"doNotSignRequest\",\r\n      \"Value\": false\r\n    },\r\n    {\r\n      \"Type\": \"Dictionary`2<String, Object>\",\r\n      \"Name\": \"headers\",\r\n      \"Value\": null\r\n    },\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"encoding\",\r\n      \"Value\": \"utf-8\"\r\n    },\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"contentType\",\r\n      \"Value\": \"application/json\"\r\n    },\r\n    {\r\n      \"Type\": \"Int32\",\r\n      \"Name\": \"timeoutInSeconds\",\r\n      \"Value\": 30\r\n    }\r\n  ],\r\n  \"ReturnValue\": [\r\n    {\r\n      \"Type\": \"object\",\r\n      \"VariableName\": \"putResponse\"\r\n    }\r\n  ]\r\n}"
   },
   "RunOnBuild": false
 }

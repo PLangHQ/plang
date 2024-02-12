@@ -1,7 +1,7 @@
 [
   {
     "stepText": "transfer %amount% to 0x123, write to %txHash%",
-    "response": "{\"FunctionName\": \"Transfer\", \n\"Parameters\": [\n    {\"Type\": \"string\", \"Name\": \"to\", \"Value\": \"0x123\"}, \n    {\"Type\": \"decimal\", \"Name\": \"etherAmount\", \"Value\": \"%amount%\"}, \n    {\"Type\": \"Nullable`1<Decimal>\", \"Name\": \"gasPriceWei\", \"Value\": null}, \n    {\"Type\": \"Nullable`1<BigInteger>\", \"Name\": \"gas\", \"Value\": null}, \n    {\"Type\": \"Nullable`1<BigInteger>\", \"Name\": \"nonce\", \"Value\": null}\n], \n\"ReturnValue\": [\n    {\"Type\": \"string\", \"VariableName\": \"%txHash%\"}\n]}",
-    "created": "2024-02-05T09:16:11.8855161+00:00"
+    "response": "{\n  \"FunctionName\": \"Transfer\",\n  \"Parameters\": [\n    {\n      \"Type\": \"string\",\n      \"Name\": \"to\",\n      \"Value\": \"0x123\"\n    },\n    {\n      \"Type\": \"decimal\",\n      \"Name\": \"etherAmount\",\n      \"Value\": \"%amount%\"\n    }\n  ],\n  \"ReturnValue\": [\n    {\n      \"Type\": \"string\",\n      \"VariableName\": \"%txHash%\"\n    }\n  ]\n}",
+    "created": "2024-02-07T12:14:30.7999807+00:00"
   }
 ]

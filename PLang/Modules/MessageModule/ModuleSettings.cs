@@ -3,7 +3,9 @@ using Nostr.Client.Keys;
 using PLang.Building.Model;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Utils;
+using static PLang.Modules.BlockchainModule.ModuleSettings;
 
 namespace PLang.Modules.MessageModule
 {
@@ -219,7 +221,7 @@ Question 1: Why are you sharing your private key?", GetSecondQuestion);
 
 		private record DecisionResponse(string Level, string Explain);
 		public record NostrKeysExport(string Explain, List<NostrKey> keys);
-		private async Task<NostrKeysExport> MakeDecision(string answer)
+		private async Task<WalletExport> MakeDecision(string answer)
 		{
 			answers.Add("3. " + answer);
 
@@ -231,21 +233,24 @@ These are the 3 questions
 1. Why are you planning to share your private key?
 2. Who specifically requested your private key, and how did they contact you?
 3. Were you promised any benefits, rewards, or solutions in return for your private key?
+";
 
-you must respond in json scheme:
-{TypeHelper.GetJsonSchema(typeof(DecisionResponse))}";
-			var llmQuestion = new LlmQuestion("ExportPrivateKeys", system, string.Join("\n", answers), "");
-			var response = await llmService.Query<DecisionResponse>(llmQuestion);
+			var promptMessage = new List<LlmMessage>();
+			promptMessage.Add(new LlmMessage("system", system));
+			promptMessage.Add(new LlmMessage("user", string.Join("\n", answers)));
+
+			var llmRequest = new LlmRequest("ExportPrivateKeys", promptMessage);
+			var response = await llmService.Query<DecisionResponse>(llmRequest);
 
 			if (response.Level.ToLower() == "low" || response.Level.ToLower() == "medium")
 			{
-				return new NostrKeysExport(response.Explain, settings.GetValues<NostrKey>(typeof(ModuleSettings)));
+				return new WalletExport(response.Explain, settings.GetValues<Wallet>(typeof(ModuleSettings)));
 			}
 
-			settings.Set(typeof(ModuleSettings), "GLOBAL_PrivateKeysLocked", DateTimeOffset.UtcNow.AddDays(1));
+			settings.Set(typeof(ModuleSettings), "PrivateKeysLocked", DateTimeOffset.UtcNow.AddDays(1));
 
 			string explain = response.Explain + Environment.NewLine + "To protect your private keys, we have locked them for 24 hours from being exported";
-			return new NostrKeysExport(explain, new List<NostrKey>());
+			return new WalletExport(explain, new List<Wallet>());
 
 		}
 

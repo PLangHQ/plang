@@ -2,6 +2,6 @@
   {
     "stepText": "get static 'name' var into %name%",
     "response": "{\"FunctionName\": \"GetStaticVariable\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"key\",\n\"Value\": \"name\"}],\n\"ReturnValue\": [{\"Type\": \"Object\",\n\"VariableName\": \"name\"}]}",
-    "created": "2024-02-05T10:03:46.336663+00:00"
+    "created": "2024-02-07T14:10:35.1007222+00:00"
   }
 ]

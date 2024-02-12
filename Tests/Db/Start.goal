@@ -1,0 +1,24 @@
+Start
+- set var 'description' as 'This is a task description'
+- set var due_date as %Now+5days%
+- add rows into items, name='John'
+- select * from items, write to %items%
+- write out %items%
+- begin transaction
+- Insert into tasks, %description%, %due_date%
+- Insert into tasks, description='This is a desc', due_date=%Now+10days%, write to %id%
+- select * from tasks, write to %tasks%
+- go through %tasks%, call !PrintOut
+- update tasks, set description='Updated first task' where id=%tasks[1].id%
+- update tasks set description='Hello PLang world'  where id=%id%
+- select * from tasks, write to %tasks%
+- go through %tasks%, call !PrintOut
+- delete from  table tasks
+- end transaction
+- select * from tasks
+    cache for 10 minutes
+    retry 2 times over 1 minutes
+    write to %tasks%
+
+PrintOut
+- write %item.description% - %item.due_date%

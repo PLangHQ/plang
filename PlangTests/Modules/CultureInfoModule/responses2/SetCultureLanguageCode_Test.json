@@ -1,7 +1,0 @@
-[
-  {
-    "stepText": "set language to icelandic",
-    "response": "{\"FunctionName\": \"SetCultureLanguageCode\",\n\"Parameters\": [{\"Type\": \"string\",\n\"Name\": \"code\",\n\"Value\": \"is-IS\"}],\n\"ReturnValue\": null}",
-    "created": "2024-01-03T13:12:09.0816948+00:00"
-  }
-]

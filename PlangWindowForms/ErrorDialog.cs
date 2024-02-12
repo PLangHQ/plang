@@ -1,0 +1,57 @@
+﻿using Newtonsoft.Json;
+using PLang.Utils;
+
+namespace PLangWindowForms
+{
+
+	public class ErrorDialog : IErrorDialog
+	{
+		public string ShowDialog(Exception ex, string text, string caption, int formWidth = 300, int formHeight = 200)
+		{
+			var prompt = new Form
+			{
+				Width = formWidth,
+				Height = formHeight,
+				FormBorderStyle = FormBorderStyle.Sizable,
+				Text = caption,
+				StartPosition = FormStartPosition.CenterScreen,
+				MaximizeBox = true, 
+				ShowIcon = false
+			};
+			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebug);
+			if (isDebug)
+			{
+				text += "\n\n" + JsonConvert.SerializeObject(ex);
+			}
+
+			var textBox = new TextBox
+			{
+				Left = 4,
+				Top = 4,
+				Multiline = true,
+				Dock = DockStyle.Fill,
+				Width = prompt.Width - 24,
+				Anchor = AnchorStyles.Left | AnchorStyles.Top,
+				Text = text
+			};
+
+			var confirmationButton = new Button
+			{
+				Text = @"OK",
+				Cursor = Cursors.Hand,
+				DialogResult = DialogResult.OK,
+				Dock = DockStyle.Bottom,
+			};
+
+			confirmationButton.Click += (sender, e) =>
+			{
+				prompt.Close();
+			};
+
+			prompt.Controls.Add(textBox);
+			prompt.Controls.Add(confirmationButton);
+			prompt.Focus();
+			return prompt.ShowDialog() == DialogResult.OK ? "Ok" : string.Empty;
+		}
+	}
+}

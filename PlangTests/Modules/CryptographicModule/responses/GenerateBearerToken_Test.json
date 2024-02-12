@@ -1,7 +1,7 @@
 [
   {
     "stepText": "generate bearer, %email%, valid for 15 minutes, write to %token%",
-    "response": "{\"FunctionName\": \"GenerateBearerToken\",\n\"Parameters\": [{\"Type\": \"string\",\n\"Name\": \"uniqueString\",\n\"Value\": \"%email%\"},\n{\"Type\": \"string\",\n\"Name\": \"issuer\",\n\"Value\": \"PLangRuntime\"},\n{\"Type\": \"string\",\n\"Name\": \"audience\",\n\"Value\": \"user\"},\n{\"Type\": \"int\",\n\"Name\": \"expireTimeInSeconds\",\n\"Value\": 900}],\n\"ReturnValue\": [{\"Type\": \"string\",\n\"VariableName\": \"token\"}]}",
-    "created": "2024-01-05T10:10:21.7576503+00:00"
+    "response": "{\"FunctionName\": \"GenerateBearerToken\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"uniqueString\",\n\"Value\": \"%email%\"},\n{\"Type\": \"String\",\n\"Name\": \"issuer\",\n\"Value\": \"PLangRuntime\"},\n{\"Type\": \"String\",\n\"Name\": \"audience\",\n\"Value\": \"user\"},\n{\"Type\": \"Int32\",\n\"Name\": \"expireTimeInSeconds\",\n\"Value\": 900}],\n\"ReturnValue\": [{\"Type\": \"String\",\n\"VariableName\": \"token\"}]}",
+    "created": "2024-02-07T12:54:58.6814203+00:00"
   }
 ]

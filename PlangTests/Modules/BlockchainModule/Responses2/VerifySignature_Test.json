@@ -1,6 +1,0 @@
-[
-  {
-    "stepText": "verify that %message% matches %signature% for address 0x1234, write to %isVerified%",
-    "response": "{\"FunctionName\": \"VerifySignature\", \n\"Parameters\": [\n    {\"Type\": \"string\", \"Name\": \"message\", \"Value\": \"%message%\"},\n    {\"Type\": \"string\", \"Name\": \"signature\", \"Value\": \"%signature%\"},\n    {\"Type\": \"string\", \"Name\": \"expectedAddress\", \"Value\": \"0x1234\"}\n    ],\n\"ReturnValue\": {\"Type\": \"bool\", \"VariableName\": \"isVerified\"}}"
-  }
-]

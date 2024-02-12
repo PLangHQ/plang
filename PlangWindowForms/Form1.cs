@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using PLang;
 using PLang.Building.Model;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Utils;
@@ -31,7 +32,7 @@ namespace PlangWindowForms
 			debug = args.FirstOrDefault(p => p == "--debug") != null;
 			this.args = args;
 			container = new ServiceContainer();
-			container.RegisterForPLangWindowApp(Environment.CurrentDirectory, "\\", new AskUserDialog(), RenderContent);
+			container.RegisterForPLangWindowApp(Environment.CurrentDirectory, Path.DirectorySeparatorChar.ToString(), new AskUserDialog(), new ErrorDialog(), RenderContent);
 
 			fileSystem = container.GetInstance<IPLangFileSystem>();
 			pLang = new Executor(container);
@@ -148,12 +149,16 @@ Be Concise";
 These variables are available:
 {strVariables}
 ";
-				LlmQuestion llmQuestion = new LlmQuestion("UIError", system, question, null);
+				var promptMessage = new List<LlmMessage>();
+				promptMessage.Add(new LlmMessage("system", system));
+				promptMessage.Add(new LlmMessage("user", question));
 
+				var llmRequest = new LlmRequest("UIError", promptMessage);
+				llmRequest.llmResponseType = "text";
 
 				await webView.CoreWebView2.ExecuteScriptAsync($"console.info('Analyzing error... will be back with more info in few seconds....');");
 				var llmService = container.GetInstance<ILlmService>();
-				var result = await llmService.Query<string>(llmQuestion);
+				var result = await llmService.Query<string>(llmRequest);
 				await webView.CoreWebView2.ExecuteScriptAsync($"console.info('Help:\\n\\n{EscapeChars(result)}');");
 
 			};

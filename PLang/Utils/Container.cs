@@ -11,6 +11,7 @@ using PLang.Building;
 using PLang.Building.Events;
 using PLang.Building.Parsers;
 using PLang.Exceptions.AskUser;
+using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Modules;
 using PLang.Modules.MessageModule;
@@ -44,7 +45,7 @@ namespace PLang.Utils
 		private static readonly Dictionary<string, InjectedType> injectedTypes = [];
 
 
-		public static void RegisterForPLang(this ServiceContainer container, string path, string appPath, string askUserHandlerFullName, IOutputStream outputStream)
+		public static void RegisterForPLang(this ServiceContainer container, string appStartupPath, string relativeAppPath, string askUserHandlerFullName, IOutputStream outputStream)
 		{
 			if (string.IsNullOrEmpty(askUserHandlerFullName))
 			{
@@ -52,7 +53,7 @@ namespace PLang.Utils
 			}
 			container.RegisterInstance<IOutputStream>(outputStream);
 
-			RegisterForPLang(container, path, appPath);
+			RegisterForPLang(container, appStartupPath, relativeAppPath);
 
 			var context = container.GetInstance<PLangAppContext>();
 			askUserHandlerFullName = AppContext.GetData(ReservedKeywords.Inject_AskUserHandler) as string ?? askUserHandlerFullName;
@@ -61,9 +62,9 @@ namespace PLang.Utils
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			RegisterModules(container, fileSystem);
 		}
-		public static void RegisterForPLangWebserver(this ServiceContainer container, string path, string appPath, HttpListenerContext httpContext)
+		public static void RegisterForPLangWebserver(this ServiceContainer container, string appStartupPath, string relativeAppPath, HttpListenerContext httpContext)
 		{
-			RegisterForPLang(container, path, appPath);
+			RegisterForPLang(container, appStartupPath, relativeAppPath);
 
 			var context = container.GetInstance<PLangAppContext>();
 			string askUserHandlerFullName = AppContext.GetData(ReservedKeywords.Inject_AskUserHandler) as string ?? typeof(AskUserConsoleHandler).FullName;
@@ -81,13 +82,16 @@ namespace PLang.Utils
 				});
 				return outputStream;
 			});
-
+			container.RegisterSingleton<IExceptionHandler>(factory =>
+			{
+				return new HttpExceptionHandler(httpContext);
+			});
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			RegisterModules(container, fileSystem);
 		}
-		public static void RegisterForPLangWindowApp(this ServiceContainer container, string path, string appPath, IAskUserDialog askUserDialog, Action<string> onFlush)
+		public static void RegisterForPLangWindowApp(this ServiceContainer container, string appStartupPath, string relativeAppPath, IAskUserDialog askUserDialog, IErrorDialog errorDialog, Action<string> onFlush)
 		{
-			RegisterForPLang(container, path, appPath);
+			RegisterForPLang(container, appStartupPath, relativeAppPath);
 
 			container.RegisterSingleton<IOutputStream>(factory =>
 			{
@@ -96,6 +100,10 @@ namespace PLang.Utils
 				return outputStream;
 			});
 
+			container.RegisterSingleton<IExceptionHandler>(factory =>
+			{
+				return new UiExceptionHandler(errorDialog);
+			});
 			
 
 			var context = container.GetInstance<PLangAppContext>();
@@ -113,28 +121,32 @@ namespace PLang.Utils
 		}
 
 
-		public static void RegisterForPLangConsole(this ServiceContainer container, string path, string appPath)
+		public static void RegisterForPLangConsole(this ServiceContainer container, string appStartupPath, string relativeAppPath)
 		{
 			container.RegisterSingleton<IOutputStream, ConsoleOutputStream>();
 
-			RegisterForPLang(container, path, appPath);
+			RegisterForPLang(container, appStartupPath, relativeAppPath);
 
 			var context = container.GetInstance<PLangAppContext>();
 			context.AddOrReplace(ReservedKeywords.Inject_AskUserHandler, typeof(AskUserConsoleHandler).FullName);
 			container.Register<IAskUserHandler, AskUserConsoleHandler>(typeof(AskUserConsoleHandler).FullName);
+			container.RegisterSingleton<IExceptionHandler>(factory =>
+			{
+				return new ConsoleExceptionHandler();
+			});
 
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			RegisterModules(container, fileSystem);
 		}
 
-		private static void RegisterForPLang(this ServiceContainer container, string path, string appPath)
+		private static void RegisterForPLang(this ServiceContainer container, string appStartupPath, string relativeAppPath)
 		{
 
 			container.Register<IServiceContainerFactory, ServiceContainerFactory>();
 			container.RegisterSingleton<IPLangFileSystem>(factory =>
 			{
-				return new PLangFileSystem(path, appPath);
+				return new PLangFileSystem(appStartupPath, relativeAppPath);
 			});
 			container.RegisterSingleton<IEngine, Engine>();
 			container.RegisterSingleton<ISettings, Settings>();
@@ -166,7 +178,7 @@ namespace PLang.Utils
 			container.Register<IStepBuilder, StepBuilder>();
 			container.Register<IInstructionBuilder, InstructionBuilder>();
 			container.Register<IErrorHelper, ErrorHelper>();
-			container.Register<SettingsBuilder, SettingsBuilder>();
+			//container.Register<SettingsBuilder, SettingsBuilder>();
 			container.Register<CacheHelper, CacheHelper>();
 			container.Register<VariableHelper, VariableHelper>();
 
@@ -180,7 +192,7 @@ namespace PLang.Utils
 				
 				var multi = nostrClientManager.GetClient(moduleSettings.GetRelays());
 				return multi;
-			}, path);
+			}, appStartupPath);
 
 			container.RegisterSingleton<IWeb3>(factory =>
 			{
@@ -203,7 +215,7 @@ namespace PLang.Utils
 
 				var web3 = new Web3(account, new WebSocketClient(rpcServer.Url));
 				return web3;
-			}, path);
+			}, appStartupPath);
 
 
 			// These are injectable by user

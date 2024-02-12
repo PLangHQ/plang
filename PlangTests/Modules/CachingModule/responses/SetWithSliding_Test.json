@@ -1,12 +1,12 @@
 [
   {
     "stepText": "set %obj% to cache, 'ObjCache', cache for 1 minutes from last usage",
-    "response": "{\"FunctionName\": \"SetForSlidingExpiration\",\n\"Parameters\": [\n    {\"Type\": \"string\", \"Name\": \"key\", \"Value\": \"ObjCache\"},\n    {\"Type\": \"object\", \"Name\": \"value\", \"Value\": \"%obj%\"},\n    {\"Type\": \"int\", \"Name\": \"timeInSeconds\", \"Value\": 60}\n]}",
-    "created": "2024-01-04T10:11:30.3238171+00:00"
+    "response": "{\"FunctionName\": \"SetForSlidingExpiration\",\n\"Parameters\": [\n    {\"Type\": \"String\", \"Name\": \"key\", \"Value\": \"ObjCache\"},\n    {\"Type\": \"Object\", \"Name\": \"value\", \"Value\": \"%obj%\"},\n    {\"Type\": \"Int32\", \"Name\": \"timeInSeconds\", \"Value\": 60}\n],\n\"ReturnValue\": null}",
+    "created": "2024-02-07T12:10:17.5416544+00:00"
   },
   {
     "stepText": "set %obj% to cache, 'ObjCache', cache for 10 minutes from last usage",
-    "response": "{\"FunctionName\": \"SetForSlidingExpiration\",\n\"Parameters\": [\n    {\"Type\": \"string\", \"Name\": \"key\", \"Value\": \"ObjCache\"},\n    {\"Type\": \"object\", \"Name\": \"value\", \"Value\": \"%obj%\"},\n    {\"Type\": \"int\", \"Name\": \"timeInSeconds\", \"Value\": 600}\n]}",
-    "created": "2024-01-04T10:11:37.8503137+00:00"
+    "response": "{\"FunctionName\": \"SetForSlidingExpiration\",\n\"Parameters\": [\n    {\"Type\": \"string\", \"Name\": \"key\", \"Value\": \"ObjCache\"},\n    {\"Type\": \"object\", \"Name\": \"value\", \"Value\": \"%obj%\"},\n    {\"Type\": \"Int32\", \"Name\": \"timeInSeconds\", \"Value\": 600}\n],\n\"ReturnValue\": null}",
+    "created": "2024-02-07T12:10:26.1275649+00:00"
   }
 ]

@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using PLang.Building.Model;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Services.OutputStream;
 using PLang.Services.SigningService;
 using PLang.Utils;
@@ -12,7 +12,7 @@ using System.Text;
 
 namespace PLang.Services.LlmService
 {
-	public class PLangLlmService : ILlmService
+    public class PLangLlmService : ILlmService
 	{
 		private readonly CacheHelper cacheHelper;
 		private readonly IOutputStream outputStream;
@@ -43,7 +43,7 @@ namespace PLang.Services.LlmService
 		}
 		public virtual async Task<object?> Query(LlmRequest question, Type responseType, int errorCount = 0)
 		{
-			SetExtractor(question);
+			SetExtractor(question, responseType);
 
 			var cachedLlmQuestion = cacheHelper.GetCachedQuestion(question);
 			if (!question.Reload && question.caching && cachedLlmQuestion != null)
@@ -51,7 +51,7 @@ namespace PLang.Services.LlmService
 				try
 				{
 					var result = Extractor.Extract(cachedLlmQuestion.RawResponse, responseType);
-					if (result != null) return result;
+					if (result != null && !string.IsNullOrEmpty(result.ToString())) return result;
 				}
 				catch { }
 			}
@@ -113,25 +113,50 @@ namespace PLang.Services.LlmService
 
 		}
 
-		private void SetExtractor(LlmRequest question)
+		private void SetExtractor(LlmRequest question, Type responseType)
 		{
 			if (question.llmResponseType == "text")
 			{
 				Extractor = new TextExtractor();
 			}
-			else if (question.llmResponseType == "json" || !string.IsNullOrEmpty(question.scheme))
+			else if (question.llmResponseType == "csharp")
 			{
-				var systemMessage = question.promptMessage.FirstOrDefault(p => p.role == "system");
+				Extractor = new CSharpExtractor();
+				var systemMessage = question.promptMessage.FirstOrDefault(p => p.Role == "system");
 				if (systemMessage == null)
 				{
-					systemMessage = new Message() { role = "system", content = new() };
+					systemMessage = new LlmMessage() { Role = "system", Content = new() };
 				}
-				systemMessage.content.Add(new Content() { text = $"You MUST respond in JSON, scheme: {question.scheme}" });
+				systemMessage.Content.Add(new LlmContent(Extractor.GetRequiredResponse(responseType)));
+
+			}
+			else if (question.llmResponseType == "json" || !string.IsNullOrEmpty(question.scheme))
+			{
 				Extractor = new JsonExtractor();
+				var systemMessage = question.promptMessage.FirstOrDefault(p => p.Role == "system");
+				if (systemMessage == null)
+				{
+					systemMessage = new LlmMessage() { Role = "system", Content = new() };
+				}
+				if (string.IsNullOrEmpty(question.scheme))
+				{
+					question.scheme = TypeHelper.GetJsonSchema(responseType);
+					systemMessage.Content.Add(new LlmContent(Extractor.GetRequiredResponse(responseType)));
+				} else
+				{
+					systemMessage.Content.Add(new LlmContent(((JsonExtractor)Extractor).GetRequiredResponse(question.scheme)));
+				}
 			}
 			else
 			{
+				var systemMessage = question.promptMessage.FirstOrDefault(p => p.Role == "system");
+				if (systemMessage == null)
+				{
+					systemMessage = new LlmMessage() { Role = "system", Content = new() };
+				}
 				Extractor = new GenericExtractor(question.llmResponseType);
+				systemMessage.Content.Add(new LlmContent(Extractor.GetRequiredResponse(responseType)));
+				
 			}
 		}
 
@@ -155,6 +180,15 @@ namespace PLang.Services.LlmService
 				}
 			}
 
+			if (response.Headers.Contains("X-User-PaymentUrl"))
+			{
+				string strUrl = response.Headers.GetValues("X-User-PaymentUrl").FirstOrDefault();
+				if (!string.IsNullOrEmpty(strUrl))
+				{
+					costWarning += $" - add to balance: {strUrl}";
+				}
+			}			
+			
 			if (!string.IsNullOrEmpty(costWarning))
 			{
 				logger.LogWarning($"Current balance with LLM service: {costWarning}");
@@ -231,84 +265,5 @@ namespace PLang.Services.LlmService
 
 
 
-
-
-		/* All this is depricated */
-		public virtual async Task<T?> Query<T>(LlmQuestion question)
-		{
-			return (T?)await Query(question, typeof(T));
-		}
-
-		public virtual async Task<object?> Query(LlmQuestion question, Type responseType)
-		{
-			return await Query(question, responseType, 0);
-		}
-
-
-		public class Message
-		{
-			public Message()
-			{
-				content = new();
-			}
-			public string role { get; set; }
-			public List<Content> content { get; set; }
-		}
-		public class Content
-		{
-			public string type = "text";
-			public string text { get; set; }
-		}
-		public virtual async Task<object?> Query(LlmQuestion question, Type responseType, int errorCount = 0)
-		{
-			// todo: should remove this function, should just use LlmRequest.
-			// old setup, and should be removed.
-			var promptMessage = new List<Message>();
-			if (!string.IsNullOrEmpty(question.system))
-			{
-				var contents = new List<Content>();
-				contents.Add(new Content
-				{
-					text = question.system
-				});
-				promptMessage.Add(new Message()
-				{
-					role = "system",
-					content = contents
-				});
-			}
-			if (!string.IsNullOrEmpty(question.assistant))
-			{
-				var contents = new List<Content>();
-				contents.Add(new Content
-				{
-					text = question.assistant
-				});
-				promptMessage.Add(new Message()
-				{
-					role = "assistant",
-					content = contents
-				});
-			}
-			if (!string.IsNullOrEmpty(question.question))
-			{
-				var contents = new List<Content>();
-				contents.Add(new Content
-				{
-					text = question.question
-				});
-				promptMessage.Add(new Message()
-				{
-					role = "user",
-					content = contents
-				});
-			}
-
-			LlmRequest llmRequest = new LlmRequest(question.type, promptMessage, question.model, question.caching);
-			var response = await Query(llmRequest, responseType);
-			question.RawResponse = llmRequest.RawResponse;
-			return response;
-
-		}
 	}
 }

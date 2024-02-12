@@ -32,19 +32,51 @@
   },
   "Text": "sign using identity, %body%, %method%, %url%, write to %signature%",
   "Reload": false,
-  "LlmQuestion": {
-    "temperature": null,
-    "top_p": null,
-    "frequencyPenalty": null,
-    "presencePenalty": null,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
     "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
     "type": "PLang.Modules.GenericFunctionBuilder",
-    "system": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. Variables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue: Only if the function returns a value AND if user defines %variable% to write into. If no %variable% is defined then set as null.\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}]}",
-    "question": "sign using identity, %body%, %method%, %url%, write to %signature%",
-    "assistant": "## functions available starts ##\r\nIdentity GetMyIdentity()  // Get the current identity, also called %MyIdentity%. \nIdentity GetIdentity(String nameOrIdentity)  // Get an identity by name or identification. \nIdentity CreateIdentity(String name, Boolean? setAsDefault = False)  // Create a new identity in the system. \nIdentity SetCurrentIdentity(String nameOrIdentity)  // Set the current identity(MyIdentity). Name or identity, identity could be a public address, 0x123..... \nIdentity ArchiveIdentity(String nameOrIdentity)  // Archives a identity. Name or identity, identity could be a public address, 0x123..... \nIEnumerable`1 GetIdentities()  // Gets all identites in the system. \nvoid UseSharedIdentity()  // Set the app to use shared identity. This is usefull when app is running on multiple location but want to use one identity for them all. \nvoid RemoveSharedIdentity() \nDictionary`2 Sign(String content, String method, String url, String? contract = \"C0\")  // Sign a content with specific method, url and contract. Returns key value object that contains the values to validate the signature. \nString VerifySignature(String content, String method, String url, Dictionary`2<String, Object> validationKeyValues)  // validationKeyValues should have these keys: X-Signature, X-Signature-Created(type is long, unix time), X-Signature-Nonce, X-Signature-Address, X-Signature-Contract=\"CO\".\r\n## functions available ends ##\r\n## defined variables ##\r\nbody (type:object), method (type:object), url (type:object), signature (type:object), \r\n## defined variables ##",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\nVariables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue: Only if the function returns a value AND if user defines %variable% to write into. If no %variable% is defined then set as null."
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nIdentity GetMyIdentity()  // Get the current identity, also called %MyIdentity%. \nIdentity GetIdentity(String nameOrIdentity)  // Get an identity by name or identification. \nIdentity CreateIdentity(String name, Boolean? setAsDefault = False)  // Create a new identity in the system. \nIdentity SetCurrentIdentity(String nameOrIdentity)  // Set the current identity(MyIdentity). Name or identity, identity could be a public address, 0x123..... \nIdentity ArchiveIdentity(String nameOrIdentity)  // Archives a identity. Name or identity, identity could be a public address, 0x123..... \nIEnumerable`1 GetIdentities()  // Gets all identites in the system. \nvoid UseSharedIdentity()  // Set the app to use shared identity. This is usefull when app is running on multiple location but want to use one identity for them all. \nvoid RemoveSharedIdentity() \nDictionary`2 Sign(String content, String method, String url, String? contract = \"C0\")  // Sign a content with specific method, url and contract. Returns key value object that contains the values to validate the signature. \nDictionary`2 VerifySignature(String content, String method, String url, Dictionary`2<String, Object> validationKeyValues)  // validationKeyValues should have these keys: X-Signature, X-Signature-Created(type is long, unix time), X-Signature-Nonce, X-Signature-Address, X-Signature-Contract=\"CO\". Return dictionary with Identity and IdentityNotHashed.\r\n## functions available ends ##\r\n## defined variables ##\r\nbody (type:object), method (type:object), url (type:object), signature (type:object), \r\n## defined variables ##"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "sign using identity, %body%, %method%, %url%, write to %signature%"
+          }
+        ]
+      }
+    ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "{\r\n  \"FunctionName\": \"Sign\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"String\",\r\n      \"Name\": \"content\",\r\n      \"Value\": \"%body%\"\r\n    },\r\n    {\r\n      \"Type\": \"String\",\r\n      \"Name\": \"method\",\r\n      \"Value\": \"%method%\"\r\n    },\r\n    {\r\n      \"Type\": \"String\",\r\n      \"Name\": \"url\",\r\n      \"Value\": \"%url%\"\r\n    },\r\n    {\r\n      \"Type\": \"String\",\r\n      \"Name\": \"contract\",\r\n      \"Value\": \"C0\"\r\n    }\r\n  ],\r\n  \"ReturnValue\": [\r\n    {\r\n      \"Type\": \"Dictionary`2\",\r\n      \"VariableName\": \"signature\"\r\n    }\r\n  ]\r\n}"
   },
   "RunOnBuild": false
 }

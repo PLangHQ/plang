@@ -165,6 +165,20 @@ namespace PLang.Runtime.Tests
 		}
 
 		[TestMethod]
+		public void GetTestList_GetAllTitle()
+		{
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			var list = new List<DataTestClass>();
+			list.Add(new DataTestClass() { Number = 1, Title = "Hello", Date = DateTime.Now });
+			list.Add(new DataTestClass() { Number = 2, Title = "Hello2", Date = DateTime.Now.AddDays(1) });
+			stack.Put("dataTestList", list);
+
+			var obj = stack.Get("dataTestList.[*].Title");
+			Assert.AreEqual("Hello", ((IList)obj)[0].ToString());
+			Assert.AreEqual("Hello2", ((IList)obj)[1].ToString());
+
+		}
+		[TestMethod]
 		public void GetTest_GetJson()
 		{
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
@@ -262,7 +276,7 @@ namespace PLang.Runtime.Tests
 			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
-			stack.AddOnCreateEvent("item", "Test", new());
+			stack.AddOnCreateEvent("item", "Test", false);
 
 			stack.Put("item", 1);
 
@@ -276,7 +290,7 @@ namespace PLang.Runtime.Tests
 			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
-			stack.AddOnChangeEvent("item", "Test", new(), false);
+			stack.AddOnChangeEvent("item", "Test", false, false);
 
 			//first add the item, no event called
 			stack.Put("item", 1);

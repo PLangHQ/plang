@@ -62,7 +62,7 @@ namespace PLang.Modules.FileModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("ReadBinaryFileAndConvertToBase64", gf.FunctionName);
 			Assert.AreEqual("path", gf.Parameters[0].Name);
@@ -83,7 +83,7 @@ namespace PLang.Modules.FileModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("ReadTextFile", gf.FunctionName);
 			Assert.AreEqual("path", gf.Parameters[0].Name);
@@ -103,7 +103,7 @@ namespace PLang.Modules.FileModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("ReadFileAsStream", gf.FunctionName);
 			Assert.AreEqual("path", gf.Parameters[0].Name);
@@ -124,7 +124,7 @@ namespace PLang.Modules.FileModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("ReadMultipleTextFiles", gf.FunctionName);
 			Assert.AreEqual("folderPath", gf.Parameters[0].Name);
@@ -157,7 +157,7 @@ namespace PLang.Modules.FileModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("WriteToFile", gf.FunctionName);
 			Assert.AreEqual("path", gf.Parameters[0].Name);
@@ -182,7 +182,7 @@ namespace PLang.Modules.FileModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("AppendToFile", gf.FunctionName);
 			Assert.AreEqual("path", gf.Parameters[0].Name);
@@ -209,7 +209,7 @@ namespace PLang.Modules.FileModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("CopyFile", gf.FunctionName);
 			Assert.AreEqual("sourceFileName", gf.Parameters[0].Name);
@@ -230,7 +230,7 @@ namespace PLang.Modules.FileModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("DeleteFile", gf.FunctionName);
 			Assert.AreEqual("fileName", gf.Parameters[0].Name);
@@ -249,7 +249,7 @@ namespace PLang.Modules.FileModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("GetFileInfo", gf.FunctionName);
 			Assert.AreEqual("fileName", gf.Parameters[0].Name);
@@ -270,7 +270,7 @@ namespace PLang.Modules.FileModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("CreateDirectory", gf.FunctionName);
 			Assert.AreEqual("directoryPath", gf.Parameters[0].Name);
@@ -290,7 +290,7 @@ namespace PLang.Modules.FileModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("DeleteDirectory", gf.FunctionName);
 			Assert.AreEqual("directoryPath", gf.Parameters[0].Name);

@@ -62,7 +62,7 @@ namespace PLang.Modules.HttpModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("Get", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
@@ -84,7 +84,7 @@ namespace PLang.Modules.HttpModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("Post", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
@@ -105,7 +105,7 @@ namespace PLang.Modules.HttpModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("Patch", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
@@ -125,7 +125,7 @@ namespace PLang.Modules.HttpModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("Delete", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
@@ -145,7 +145,7 @@ namespace PLang.Modules.HttpModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("Put", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
@@ -165,7 +165,7 @@ namespace PLang.Modules.HttpModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("Head", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
@@ -185,7 +185,7 @@ namespace PLang.Modules.HttpModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("Option", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
@@ -206,7 +206,7 @@ namespace PLang.Modules.HttpModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("PostMultipartFormData", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);

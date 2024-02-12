@@ -1,7 +1,7 @@
 [
   {
     "stepText": "ask, what should the settings be? write to %settings%",
-    "response": "{\"FunctionName\": \"Ask\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"text\",\n\"Value\": \"what should the settings be?\"}, \n{\"Type\": \"String\",\n\"Name\": \"type\",\n\"Value\": \"text\"},\n{\"Type\": \"Int32\",\n\"Name\": \"statusCode\",\n\"Value\": 200}],\n\"ReturnValue\": [{\"Type\": \"String\",\n\"VariableName\": \"settings\"}]}",
-    "created": "2024-02-05T10:19:18.9815405+00:00"
+    "response": "{\"FunctionName\": \"Ask\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"text\",\n\"Value\": \"what should the settings be?\"}],\n\"ReturnValue\": [{\"Type\": \"String\",\n\"VariableName\": \"settings\"}]}",
+    "created": "2024-02-07T14:12:10.1124452+00:00"
   }
 ]

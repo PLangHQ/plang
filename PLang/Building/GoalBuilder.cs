@@ -6,6 +6,7 @@ using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Services.SettingsService;
 using PLang.Utils;
 using System.ComponentModel;
@@ -150,16 +151,17 @@ namespace PLang.Building
 
 			if (isWebApiMethod && (goal.GoalApiInfo == null || goal.GoalName != oldGoal?.GoalName))
 			{
-				var jsonScheme = TypeHelper.GetJsonSchemaForRecord(typeof(GoalApiInfo));
-				var goalQuestion = new LlmQuestion("GoalApiInfo", $@"Determine the Method and write description of this api, using the content of the file.
+				var promptMessage = new List<LlmMessage>();
+				promptMessage.Add(new LlmMessage("system", $@"Determine the Method and write description of this api, using the content of the file.
 Method can be: GET, POST, DELETE, PUT, PATCH, OPTIONS, HEAD. The content will describe a function in multiple steps.
 From the first line, you should extrapolate the CacheControl if the user defines it.
 CacheControlPrivateOrPublic: public or private
-NoCacheOrNoStore: no-cache or no-store
+NoCacheOrNoStore: no-cache or no-store"));
+				promptMessage.Add(new LlmMessage("user", goal.GetGoalAsString()));
+				var llmRequest = new LlmRequest("GoalApiInfo", promptMessage);
 
-You MUST response in JSON, scheme: {jsonScheme}
-", goal.GetGoalAsString(), "");
-				var result = await aiService.Value.Query<GoalApiInfo>(goalQuestion);
+			
+				var result = await aiService.Value.Query<GoalApiInfo>(llmRequest);
 				if (result != null)
 				{
 					goal.GoalApiInfo = result;

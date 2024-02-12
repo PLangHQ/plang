@@ -89,7 +89,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			Assert.AreEqual("GetRpcServers", gf.FunctionName);
 			AssertVar.AreEqual("%servers%", gf.ReturnValue[0].VariableName);
 		}
@@ -105,7 +105,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text,instruction.LlmQuestion.RawResponse);
+			Store(text,instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("SetCurrentRpcServer", gf.FunctionName);
 			Assert.AreEqual("Mumbai - Polygon testnet", gf.Parameters[0].Value);
@@ -130,7 +130,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text,instruction.LlmQuestion.RawResponse);
+			Store(text,instruction.LlmRequest.RawResponse);
 			//Assert.AreEqual("1", instruction.LlmQuestion.RawResponse);
 			Assert.AreEqual("CallFunction", gf.FunctionName);
 			Assert.AreEqual("contractAddressOrSymbol", gf.Parameters[0].Name);
@@ -154,7 +154,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("GetCurrentRpcServer", gf.FunctionName);
 			AssertVar.AreEqual("rpcServer", gf.ReturnValue[0].VariableName);
@@ -171,7 +171,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("GetWallets", gf.FunctionName);
 			AssertVar.AreEqual("wallets", gf.ReturnValue[0].VariableName);
@@ -194,7 +194,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("SetCurrentWallet", gf.FunctionName);
 			Assert.AreEqual("walletName", gf.Parameters[0].Name);
@@ -219,7 +219,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("GetOrCreateWallet", gf.FunctionName);
 			AssertVar.AreEqual("wallet", gf.ReturnValue[0].VariableName);
@@ -242,7 +242,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("SetCurrentAddress", gf.FunctionName);
 			Assert.AreEqual("address", gf.Parameters[0].Name);
@@ -253,9 +253,9 @@ namespace PLang.Modules.BlockchainModule.Tests
 		
 
 		[DataTestMethod]
-		[DataRow("get wei balance 0x1234, write to %balance%")]
-		[DataRow("get balance in wei 0x1234, output to %balance%")]
-		[DataRow("get balance on 0x1234, write to %balance%")]
+		[DataRow("get native wei balance 0x1234, write to %balance%")]
+		[DataRow("get native balance in wei 0x1234, output to %balance%")]
+		[DataRow("get native balance on 0x1234, write to %balance%")]
 		public async Task GetBalanceInWei_Test(string text)
 		{
 
@@ -266,9 +266,9 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
-			Assert.AreEqual("GetBalanceInWei", gf.FunctionName);
+			Assert.AreEqual("GetNativeBalanceOfAddressInWei", gf.FunctionName);
 			Assert.AreEqual("address", gf.Parameters[0].Name);
 			Assert.AreEqual("0x1234", gf.Parameters[0].Value);
 			Assert.AreEqual("balance", gf.ReturnValue[0].VariableName);
@@ -287,9 +287,9 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse); 
+			Store(text, instruction.LlmRequest.RawResponse); 
 			
-			Assert.AreEqual("GetBalanceToDecimalPoint", gf.FunctionName);
+			Assert.AreEqual("GetNativeBalanceOfAddressToDecimalPoint", gf.FunctionName);
 			Assert.AreEqual("address", gf.Parameters[0].Name);
 			Assert.AreEqual("0x1234", gf.Parameters[0].Value);
 			if (text.Contains("decimal count is 8"))
@@ -313,7 +313,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("GetDecimal", gf.FunctionName);
 			Assert.AreEqual("contractAddress", gf.Parameters[0].Name);
@@ -334,7 +334,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("Transfer", gf.FunctionName);
 			Assert.AreEqual("to", gf.Parameters[0].Name);
@@ -356,11 +356,11 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("TransferFromSmartContract", gf.FunctionName);
 			Assert.AreEqual("contractAddressOrSymbol", gf.Parameters[0].Name);
-			Assert.AreEqual("usdc", gf.Parameters[0].Value);
+			Assert.AreEqual("USDC", gf.Parameters[0].Value);
 			Assert.AreEqual("from", gf.Parameters[1].Name);
 			Assert.AreEqual("0x2333", gf.Parameters[1].Value);
 			Assert.AreEqual("to", gf.Parameters[2].Name);
@@ -383,7 +383,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("SendTransaction", gf.FunctionName);
 			Assert.AreEqual("contractAddress", gf.Parameters[0].Name);

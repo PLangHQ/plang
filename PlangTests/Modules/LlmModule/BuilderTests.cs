@@ -62,7 +62,7 @@ namespace PLang.Modules.LlmModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("AskLlm", gf.FunctionName);
 			Assert.AreEqual("promptMessages", gf.Parameters[0].Name);
@@ -83,12 +83,14 @@ namespace PLang.Modules.LlmModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("AskLlm", gf.FunctionName);
 			Assert.AreEqual("promptMessages", gf.Parameters[0].Name);
 			Assert.AreEqual("scheme", gf.Parameters[1].Name);
-			Assert.AreEqual("{firstName:string, lastName:string}", gf.Parameters[1].Value);
+			Assert.AreEqual("firstName", gf.ReturnValue[0].VariableName);
+			Assert.AreEqual("lastName", gf.ReturnValue[1].VariableName);
+			
 
 		}
 

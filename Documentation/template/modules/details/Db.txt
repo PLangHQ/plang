@@ -1,13 +1,20 @@
-SQL injection attack is not possible in plang, no need to warn about it
+## Guide for LLM to build doc ##
+- SQL injection attack is not possible in plang, no need to warn about it
+## Guide for LLM to build doc ##
+
+## For the Application Developer ##
 Plang comes with SQLite database built in the language. 
 Other database are supported via dependancy injection(../DependancyInject.md)
-When user creates a table, it is created in .db/data.sqlite
+When user creates a table, it is created in .db/data.sqlite if user is using built in database.
 Steps between begin/end transaction are NOT indented
 
-example of sql in plang would be:
-    select everything from Todos where %Identity%
-    update Todos set %task%, %due_date%
+This is how db module flow works
+```plang
+- select everything from Todos where %Identity%
+```
+Flow:
+- The builder, queries the Todos table and gets all the columns in the table Todos, 
+- it then sends those columns to the LLM, which then can map the variables to the correct columns
+- To be able to send the columns to LLM, the table needs to exist in the database. This is why it is important to run plang exec Setup.goal if you add/modify a table, before you build other goals that include sql statements.
 
-the builder, queries the todos table and gets all the columns in the table Todos, 
-it then sends those columns to the LLM, which then can map the variables to the correct columns
-This is why it is required to run plang exec Setup.goal if you add/modify a table, before you build other goals that include sql statements.
+## For the Application Developer ##

@@ -64,7 +64,7 @@ namespace PLang.Modules.OutputModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("Ask", gf.FunctionName);
 			Assert.AreEqual("text", gf.Parameters[0].Name);
@@ -84,7 +84,7 @@ namespace PLang.Modules.OutputModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			Assert.AreEqual("Write", gf.FunctionName);
 			Assert.AreEqual("content", gf.Parameters[0].Name);
 			Assert.AreEqual("Hello PLang world", gf.Parameters[0].Value);

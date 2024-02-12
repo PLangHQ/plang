@@ -64,7 +64,7 @@ namespace PLang.Modules.ScheduleModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("Sleep", gf.FunctionName);
 			Assert.AreEqual("sleepTimeInMilliseconds", gf.Parameters[0].Name);
@@ -85,7 +85,7 @@ namespace PLang.Modules.ScheduleModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("Schedule", gf.FunctionName);
 			Assert.AreEqual("cronCommand", gf.Parameters[0].Name);

@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using NSubstitute;
 using PLang.Building.Model;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Services.OpenAi;
 using PLang.Utils;
 using PLangTests;
@@ -50,7 +51,7 @@ namespace PLang.Modules.DbModule.Tests
 			var db = new SQLiteConnection("DataSource=In memory;Version=3");
 			var aiService = Substitute.For<ILlmService>();
 
-			llmService.Query(Arg.Any<LlmQuestion>(), typeof(FunctionInfo)).Returns(p => {
+			llmService.Query(Arg.Any<LlmRequest>(), typeof(FunctionInfo)).Returns(p => {
 				return JsonConvert.DeserializeObject(@$"{{""FunctionName"": ""{functionName}""}}", typeof(FunctionInfo));
 			});
 
@@ -83,7 +84,7 @@ namespace PLang.Modules.DbModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("SetDataSouceName", gf.FunctionName);
 			Assert.AreEqual("name", gf.Parameters[0].Name);
@@ -103,7 +104,7 @@ namespace PLang.Modules.DbModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("BeginTransaction", gf.FunctionName);
 			Assert.AreEqual(0, gf.Parameters.Count);
@@ -122,7 +123,7 @@ namespace PLang.Modules.DbModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("EndTransaction", gf.FunctionName);
 			Assert.AreEqual(0, gf.Parameters.Count);
@@ -143,7 +144,7 @@ namespace PLang.Modules.DbModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("Select", gf.FunctionName);
 			Assert.AreEqual("sql", gf.Parameters[0].Name);
@@ -172,7 +173,7 @@ namespace PLang.Modules.DbModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as DbGenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("Update", gf.FunctionName);
 			Assert.AreEqual("sql", gf.Parameters[0].Name);
@@ -198,7 +199,7 @@ namespace PLang.Modules.DbModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("Insert", gf.FunctionName);
 			Assert.AreEqual("sql", gf.Parameters[0].Name);
@@ -225,7 +226,7 @@ namespace PLang.Modules.DbModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("InsertAndSelectIdOfInsertedRow", gf.FunctionName);
 			Assert.AreEqual("sql", gf.Parameters[0].Name);
@@ -253,7 +254,7 @@ namespace PLang.Modules.DbModule.Tests
 			var instruction = await builder.Build(step);
 			var gf = instruction.Action as DbGenericFunction;
 
-			Store(text, instruction.LlmQuestion.RawResponse);
+			Store(text, instruction.LlmRequest.RawResponse);
 			
 			Assert.AreEqual("Delete", gf.FunctionName);
 			Assert.AreEqual("sql", gf.Parameters[0].Name);

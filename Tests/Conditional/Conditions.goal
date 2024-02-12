@@ -1,7 +1,14 @@
+/ Note: There is no "- else ..." step in plang conditions.
 Conditions
 - set var 'Valid' as  true
-- if %Valid% (bool) then 
+- if %Valid% (bool) then call !IsValid, else call !NotValid
     - write out 'It is valid'
 - set var 'NotValid' as false
 - if %NotValid% is false then
     - write out 'Not valid variable is set to false'
+
+IsValid
+- write out 'it is valid'
+
+NotValid
+- write out 'it is not valid'

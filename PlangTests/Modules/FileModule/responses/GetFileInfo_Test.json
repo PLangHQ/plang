@@ -2,6 +2,6 @@
   {
     "stepText": "get file info on %file%, write to %fileInfo",
     "response": "{\"FunctionName\": \"GetFileInfo\",\n\"Parameters\": [{\"Type\": \"String\",\n\"Name\": \"fileName\",\n\"Value\": \"%file%\"}],\n\"ReturnValue\": [{\"Type\": \"IFileInfo\",\n\"VariableName\": \"fileInfo\"}]}",
-    "created": "2024-02-05T09:30:01.2955582+00:00"
+    "created": "2024-02-07T13:02:17.629869+00:00"
   }
 ]

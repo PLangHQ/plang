@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using PLang.Building.Model;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Runtime;
 using PLang.Utils;
 
@@ -11,7 +12,7 @@ namespace PLang.Modules
 		Task<Instruction> Build<T>(GoalStep step);
 		Task<Instruction> Build(GoalStep step, Type responseType, string? errorMessage = null, int errorCount = 0);
 		Task<Instruction> Build(GoalStep step);
-		LlmQuestion GetQuestion(GoalStep step, Type responseType);
+		LlmRequest GetLlmRequest(GoalStep step, Type responseType, string? errorMessage = null);
 		void InitBaseBuilder(string module, IPLangFileSystem fileSystem, ILlmService llmService, ITypeHelper typeHelper, MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ILogger logger);
 	}
 }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using NBitcoin;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OpenAI_API.Moderation;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
@@ -13,6 +14,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Data.SQLite;
 using System.Globalization;
+using System.Text;
 using static Dapper.SqlMapper;
 
 namespace PLang.Modules.DbModule
@@ -107,7 +109,7 @@ namespace PLang.Modules.DbModule
 
 		public record ParameterInfo(string ParameterName, object VariableNameOrValue, string TypeFullName);
 
-		private (IDbConnection connection, DynamicParameters param) Prepare(List<object>? Parameters = null, bool isInsert = false)
+		private (IDbConnection connection, DynamicParameters param, string sql) Prepare(string sql, List<object>? Parameters = null, bool isInsert = false)
 		{
 			IDbConnection connection = context.ContainsKey(DbConnectionContextKey) ? context[DbConnectionContextKey] as IDbConnection : dbConnection;
 
@@ -134,6 +136,21 @@ namespace PLang.Modules.DbModule
 					else if (p.VariableNameOrValue == null)
 					{
 						param.Add("@" + p.ParameterName.Replace("@", ""), null);
+					} else if (p.VariableNameOrValue is JArray)
+					{
+						var jarray = (JArray)p.VariableNameOrValue;
+						StringBuilder placeholders = new StringBuilder();
+						for (int i = 0; i < jarray.Count; i++)
+						{
+							placeholders.Append($"@category{i}");
+							if (i < jarray.Count - 1)
+							{
+								placeholders.Append(", ");
+							}
+							param.Add($"@category{i}", ConvertObjectToType(jarray[i], p.TypeFullName));
+						}
+						sql = sql.Replace(p.ParameterName.ToString(), placeholders.ToString());
+
 					}
 					else
 					{
@@ -143,7 +160,7 @@ namespace PLang.Modules.DbModule
 				}
 			}
 			if (connection.State != ConnectionState.Open) connection.Open();
-			return (connection, param);
+			return (connection, param, sql);
 
 		}
 
@@ -165,7 +182,7 @@ namespace PLang.Modules.DbModule
 				}
 				catch { }
 			}
-
+			
 			return Convert.ChangeType(obj, targetType);
 
 
@@ -217,15 +234,15 @@ namespace PLang.Modules.DbModule
 			try
 			{
 				int rowsAffected = 0;
-				var prepare = Prepare(null);
+				var prepare = Prepare(sql, null);
 				var transaction = context[DbTransactionContextKey] as IDbTransaction;
 				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 				{
-					rowsAffected = await eventSourceRepository.Add(prepare.connection, sql, null);
+					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, null);
 				}
 				else
 				{
-					rowsAffected = await prepare.connection.ExecuteAsync(sql, prepare.param, transaction);
+					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param, transaction);
 				}
 
 				Done(prepare.connection);
@@ -233,9 +250,12 @@ namespace PLang.Modules.DbModule
 			}
 			catch (Exception ex)
 			{
-				if (ex.ToString().Contains("relation") && ex.ToString().Contains("already exists"))
+				if (GoalHelper.IsSetup(goalStep) && dbConnection is SQLiteConnection)
 				{
-					return 0;
+					if (ex.ToString().Contains("relation") || ex.ToString().Contains("already exists") || ex.ToString().Contains("duplicate column name"))
+					{
+						return 0;
+					}
 				}
 				throw;
 
@@ -258,17 +278,17 @@ namespace PLang.Modules.DbModule
 			}
 		}
 
-		public async Task<object?> Select(string sql, List<object>? Parameters = null, bool selectOneRow_Top1OrLimit1 = false)
+		public async Task<object?> Select(string sql, List<object>? SqlParameters = null, bool selectOneRow_Top1OrLimit1 = false)
 		{
-			var prep = Prepare(Parameters);
-			var rows = (await prep.connection.QueryAsync<dynamic>(sql, prep.param)).ToList();
+			var prep = Prepare(sql, SqlParameters);
+			var rows = (await prep.connection.QueryAsync<dynamic>(prep.sql, prep.param)).ToList();
 			Done(prep.connection);
 
 			if (rows.Count == 0 && this.function != null)
 			{
 				if (this.function.ReturnValue != null)
 				{
-					if (this.function.ReturnValue.Count == 1) return GetDefaultValue(this.function.ReturnValue[0].Type);
+					if (this.function.ReturnValue.Count == 1) return rows;
 
 					var dict = new Dictionary<string, object?>();
 					foreach (var rv in this.function.ReturnValue)
@@ -306,70 +326,70 @@ namespace PLang.Modules.DbModule
 			return type.IsValueType && !type.IsPrimitive ? Activator.CreateInstance(type) : null;
 		}
 
-		public async Task<int> Update(string sql, List<object>? Parameters = null)
+		public async Task<int> Update(string sql, List<object>? SqlParameters = null)
 		{
-			var prepare = Prepare(Parameters);
+			var prepare = Prepare(sql, SqlParameters);
 			int result;
 			if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 			{
-				result = await eventSourceRepository.Add(prepare.connection, sql, prepare.param);
+				result = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
 			}
 			else
 			{
-				result = await prepare.connection.ExecuteAsync(sql, prepare.param);
+				result = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param);
 			}
 			Done(prepare.connection);
 			return result;
 		}
 
-		public async Task<int> Delete(string sql, List<object>? Parameters = null)
+		public async Task<int> Delete(string sql, List<object>? SqlParameters = null)
 		{
 			int rowsAffected;
-			var prepare = Prepare(Parameters);
+			var prepare = Prepare(sql, SqlParameters);
 			if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 			{
-				rowsAffected = await eventSourceRepository.Add(prepare.connection, sql, prepare.param);
+				rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
 			}
 			else
 			{
-				rowsAffected = await prepare.connection.ExecuteAsync(sql, prepare.param);
+				rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param);
 			}
 			Done(prepare.connection);
 			return rowsAffected;
 		}
 
 		[Description("Basic insert statement. Will return affected row count")]
-		public async Task<int> Insert(string sql, List<object>? Parameters = null)
+		public async Task<int> Insert(string sql, List<object>? SqlParameters = null)
 		{
 
 			int rowsAffected;
-			var prepare = Prepare(Parameters, true);
+			var prepare = Prepare(sql, SqlParameters, true);
 			if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 			{
-				rowsAffected = await eventSourceRepository.Add(prepare.connection, sql, prepare.param);
+				rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
 			}
 			else
 			{
-				rowsAffected = await prepare.connection.ExecuteAsync(sql, prepare.param);
+				rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param);
 			}
 			Done(prepare.connection);
 			return rowsAffected;
 
 		}
 		[Description("Insert statement that will return the id of the inserted row. Use only if user requests the id")]
-		public async Task<object> InsertAndSelectIdOfInsertedRow(string sql, List<object>? Parameters = null)
+		public async Task<object> InsertAndSelectIdOfInsertedRow(string sql, List<object>? SqlParameters = null)
 		{
-			var prepare = Prepare(Parameters, true);
+			var prepare = Prepare(sql, SqlParameters, true);
 
 			if (eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
 			{
-				var value = await prepare.connection.QuerySingleOrDefaultAsync(sql, prepare.param) as IDictionary<string, object>;
+				var value = await prepare.connection.QuerySingleOrDefaultAsync(prepare.sql, prepare.param) as IDictionary<string, object>;
 				Done(prepare.connection);
 				return value.FirstOrDefault().Value;
 			}
 			else
 			{
-				await eventSourceRepository.Add(prepare.connection, sql, prepare.param);
+				await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
 				Done(prepare.connection);
 
 				if (prepare.param.ParameterNames.Contains("id"))
@@ -470,7 +490,7 @@ namespace PLang.Modules.DbModule
 			List<object> parameters = new List<object>();
 			parameters.Add(new ParameterInfo("Database", dataSource.DbName, "System.String"));
 
-			(var connection, var par) = Prepare(parameters);
+			(var connection, var par, _) = Prepare("", parameters);
 
 			var result = await connection.QueryAsync(dataSource.SelectTablesAndViews, par);
 

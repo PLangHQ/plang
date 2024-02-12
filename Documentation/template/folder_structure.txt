@@ -1,0 +1,14 @@
+Root folder is the folder your Start.goal and Setup.goal is located
+Root folder always contains .build and .db folder
+if you create your plang in c:\apps\TestApp, then TestApp is the root folder
+.db contains the system.sqlite and data.sqlite. data.sqlite is only created if you have tables in your app
+
+api folder contains the REST services, this is by default but can be changed when starting the webserver
+
+public goals in the api folder, these are the first goal in each file, will have api related information, such as method, content encoding, content type, max content length, and caching control. this can be set by desrcribing in the goal name. e.g. GetList - POST, max length=1mb, public cache.
+
+ui folder contains file related to User interface. The ui does not define the device the user interface is applied to, only what data should be available and structure. 
+By default plang will build it using html/javascript/css and using the bootstrap framework. Font awesome is also available.
+
+events folder contains [events that should run](./Events.md) in the application.
+
