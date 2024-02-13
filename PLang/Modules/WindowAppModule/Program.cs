@@ -31,7 +31,7 @@ namespace PLang.Modules.WindowAppModule
 					iform.SetTitle(windowTitle);
 				}
 			}
-            await pseudoRuntime.RunGoal(engine, context, "", goalName, parameters, Goal);
+            await pseudoRuntime.RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), goalName, parameters, Goal);
 
 			return "";
 		}

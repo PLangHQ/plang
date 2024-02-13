@@ -188,6 +188,16 @@ namespace PLang.Modules
 			{
 				foreach (var returnValue in function.ReturnValue)
 				{
+					var returnType = returnValue.Type;
+					if (result.GetType().Name.StartsWith("List"))
+					{
+						var list = (System.Collections.IList)result;
+						if (list.Count == 0 && !returnType.StartsWith("List"))
+						{
+							memoryStack.Put(returnValue.VariableName, null);
+							continue;
+						}
+					}
 					memoryStack.Put(returnValue.VariableName, result);
 				}
 			}

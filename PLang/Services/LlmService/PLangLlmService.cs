@@ -43,10 +43,9 @@ namespace PLang.Services.LlmService
 		}
 		public virtual async Task<object?> Query(LlmRequest question, Type responseType, int errorCount = 0)
 		{
-			SetExtractor(question, responseType);
+			Extractor = ExtractorFactory.GetExtractor(question, responseType);
 
-			var cachedLlmQuestion = cacheHelper.GetCachedQuestion(question);
-			cachedLlmQuestion = null;
+			var cachedLlmQuestion = cacheHelper.GetCachedQuestion(question);			
 			if (!question.Reload && question.caching && cachedLlmQuestion != null)
 			{
 				try
@@ -114,52 +113,6 @@ namespace PLang.Services.LlmService
 
 		}
 
-		private void SetExtractor(LlmRequest question, Type responseType)
-		{
-			if (question.llmResponseType == "text")
-			{
-				Extractor = new TextExtractor();
-			}
-			else if (question.llmResponseType == "csharp")
-			{
-				Extractor = new CSharpExtractor();
-				var systemMessage = question.promptMessage.FirstOrDefault(p => p.Role == "system");
-				if (systemMessage == null)
-				{
-					systemMessage = new LlmMessage() { Role = "system", Content = new() };
-				}
-				systemMessage.Content.Add(new LlmContent(Extractor.GetRequiredResponse(responseType)));
-
-			}
-			else if (question.llmResponseType == "json" || !string.IsNullOrEmpty(question.scheme))
-			{
-				Extractor = new JsonExtractor();
-				var systemMessage = question.promptMessage.FirstOrDefault(p => p.Role == "system");
-				if (systemMessage == null)
-				{
-					systemMessage = new LlmMessage() { Role = "system", Content = new() };
-				}
-				if (string.IsNullOrEmpty(question.scheme))
-				{
-					question.scheme = TypeHelper.GetJsonSchema(responseType);
-					systemMessage.Content.Add(new LlmContent(Extractor.GetRequiredResponse(responseType)));
-				} else
-				{
-					systemMessage.Content.Add(new LlmContent(((JsonExtractor)Extractor).GetRequiredResponse(question.scheme)));
-				}
-			}
-			else
-			{
-				var systemMessage = question.promptMessage.FirstOrDefault(p => p.Role == "system");
-				if (systemMessage == null)
-				{
-					systemMessage = new LlmMessage() { Role = "system", Content = new() };
-				}
-				Extractor = new GenericExtractor(question.llmResponseType);
-				systemMessage.Content.Add(new LlmContent(Extractor.GetRequiredResponse(responseType)));
-				
-			}
-		}
 
 		private void ShowCosts(HttpResponseMessage response)
 		{

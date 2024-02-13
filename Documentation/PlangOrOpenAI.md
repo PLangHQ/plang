@@ -19,13 +19,15 @@ If you have an OpenAI API key, you can use GPT4 to build your code. Here's how y
 
 1. First, you need to get an API key from [OpenAI](https://openai.com/).
 2. Next, download the OpenAI service into your project from [here](https://github.com/PLangHQ/services/tree/main/OpenAiService).
+
+    When you download the OpenAI module, there are 3 directories for each OS. 
+    - Windows: OpenAIService/win-x64
+    - Linux: OpenAIService/linux-x64
+    - Linux ARM: OpenAIService/linux-arm64
 3. Create a folder named `.services` in your project.
 4. In your `Start.goal` or `Events.goal` file, type in the following at the top:
 
-When you download the OpenAI module, there are 3 directories for each OS. 
-- Windows: OpenAIService/win-x64
-- Linux: OpenAIService/linux-x64
-- Linux ARM: OpenAIService/linux-arm64
+
 
 This example uses Windows version
 

@@ -15,14 +15,15 @@ namespace PLang.Modules.UiModule
 			bool children = false;
 			string childrenStr = "";
 			string str = $"(Goal) {step.Goal.GoalName}\n";
-			for (int i = 0;i<step.Goal.GoalSteps.Count;i++)
+			for (int i = 0; i < step.Goal.GoalSteps.Count; i++)
 			{
-				str +=  $"- (%step{step.Goal.GoalSteps[i].Number}%) {step.Goal.GoalSteps[i].Text}\n".PadLeft(step.Goal.GoalSteps[i].Indent, ' ');
+				str += $"- (%step{step.Goal.GoalSteps[i].Number}%) {step.Goal.GoalSteps[i].Text}\n".PadLeft(step.Goal.GoalSteps[i].Indent, ' ');
 				if (step.Goal.GoalSteps[i].Text == step.Text) children = true;
 				if (children && step.Indent < step.Goal.GoalSteps[i].Indent)
 				{
 					childrenStr += $"{{step{step.Goal.GoalSteps[i].Number}}}\n";
-				} else if (step.Goal.GoalSteps[i].Text != step.Text)
+				}
+				else if (step.Goal.GoalSteps[i].Text != step.Text)
 				{
 					children = false;
 				}
@@ -101,20 +102,17 @@ else
 }}
 ### Razor ###");
 
-			base.SetContentExtractor(new HtmlExtractor());
-			
+			var result = await base.Build<UiResponse>(step);
 
-			var result =  await base.Build<string>(step);
-			string html = result.ToString().Replace("{content}", childrenStr);
-
+			var uiResponse = result.Action as UiResponse;
 			List<Parameter> parameters = new List<Parameter>();
-			parameters.Add(new Parameter("string", "html", html));
+			parameters.Add(new Parameter("string", "html", uiResponse.html));
+			parameters.Add(new Parameter("string", "css", uiResponse.css));
+			parameters.Add(new Parameter("string", "javascript", uiResponse.javascript));
 
 			var gf = new GenericFunction("RenderHtml", parameters, null);
-			
 
-			//go back to default extractor
-			base.SetContentExtractor(new JsonExtractor());
+
 			var instruction = new Instruction(gf);
 			step.Execute = true;
 			instruction.LlmRequest = result.LlmRequest;
@@ -124,6 +122,8 @@ else
 
 
 
-		}
+	}
+
+	public record UiResponse(string html, string javascript, string css);
 }
 

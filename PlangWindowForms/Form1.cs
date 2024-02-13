@@ -92,12 +92,17 @@ namespace PlangWindowForms
 
 		}
 
+		bool initialLoad = false;
 		private void RenderContent(string html)
 		{
 			var outputStream = container.GetInstance<IOutputStream>();
 			var stream = outputStream.Stream;
 			var errorStream = outputStream.ErrorStream;
-
+			if (html == "Loading...")
+			{
+				if (initialLoad) return;
+				initialLoad = true;
+			}
 			var strVariables = "";
 			string errorConsole = "";
 			if (errorStream != null)
@@ -132,8 +137,10 @@ namespace PlangWindowForms
 
 				await webView.CoreWebView2.ExecuteScriptAsync($"console.error('{EscapeChars(errorConsole)}');");
 				await webView.CoreWebView2.ExecuteScriptAsync($"console.info('Available Variables:\\n\\n{EscapeChars(strVariables)}');");
-
-				string system = @"You are c# expert developer debugging an error. You job is to identify why an error occured that user provides. 
+				AppContext.TryGetSwitch("llmerror", out bool llmError);
+				if (llmError)
+				{
+					string system = @"You are c# expert developer debugging an error. You job is to identify why an error occured that user provides. 
 
 Model variable is an ExpandoObject. 
 Objects in Model are Json serialized for you, it maps to an object, e.g. 
@@ -144,23 +151,23 @@ The ""Model."" object is not visible in plang, dont mention it in your output. I
 
 Be straight to the point, point out the most obvious reason and how to fix in plang source code. 
 Be Concise";
-				string question = $@"I am getting this error:{errorConsole}
+					string question = $@"I am getting this error:{errorConsole}
 
 These variables are available:
 {strVariables}
 ";
-				var promptMessage = new List<LlmMessage>();
-				promptMessage.Add(new LlmMessage("system", system));
-				promptMessage.Add(new LlmMessage("user", question));
+					var promptMessage = new List<LlmMessage>();
+					promptMessage.Add(new LlmMessage("system", system));
+					promptMessage.Add(new LlmMessage("user", question));
 
-				var llmRequest = new LlmRequest("UIError", promptMessage);
-				llmRequest.llmResponseType = "text";
+					var llmRequest = new LlmRequest("UIError", promptMessage);
+					llmRequest.llmResponseType = "text";
 
-				await webView.CoreWebView2.ExecuteScriptAsync($"console.info('Analyzing error... will be back with more info in few seconds....');");
-				var llmService = container.GetInstance<ILlmService>();
-				var result = await llmService.Query<string>(llmRequest);
-				await webView.CoreWebView2.ExecuteScriptAsync($"console.info('Help:\\n\\n{EscapeChars(result)}');");
-
+					await webView.CoreWebView2.ExecuteScriptAsync($"console.info('Analyzing error... will be back with more info in few seconds....');");
+					var llmService = container.GetInstance<ILlmService>();
+					var result = await llmService.Query<string>(llmRequest);
+					await webView.CoreWebView2.ExecuteScriptAsync($"console.info('Help:\\n\\n{EscapeChars(result)}');");
+				}
 			};
 			webView.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
 			webView.CoreWebView2.WebResourceResponseReceived += CoreWebView2_WebResourceResponseReceived;

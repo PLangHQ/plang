@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Exceptions;
+using PLang.Modules.UiModule;
 using PLang.Services.CompilerService;
 using Sprache;
 using System;
@@ -119,7 +120,7 @@ namespace PLang.Utils.Extractors
 					javascript = "<script>" + javascript + "</script>\n";
 				}
 			}
-			var result = css + html + javascript;
+			var result = new UiResponse(html, javascript, css);
 			return result;
 		}
 

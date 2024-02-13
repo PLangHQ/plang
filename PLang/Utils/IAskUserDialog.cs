@@ -7,6 +7,6 @@
 
 	public interface IErrorDialog
 	{
-		string ShowDialog(Exception ex, string text, string caption, int formWidth = 300, int formHeight = 200);
+		string ShowDialog(Exception ex, string text, string caption, int formWidth = 500, int formHeight = 400);
 	}
 }

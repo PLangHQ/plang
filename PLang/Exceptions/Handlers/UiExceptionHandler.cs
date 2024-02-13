@@ -18,7 +18,7 @@ namespace PLang.Exceptions.Handlers
 
 		public async Task Handle(Exception exception, int statusCode, string statusText, string message)
 		{
-			dialog.ShowDialog(exception, message, "Error");
+			dialog.ShowDialog(exception, message + "\n\n" + exception.ToString(), "Error");
 		}
 	}
 }

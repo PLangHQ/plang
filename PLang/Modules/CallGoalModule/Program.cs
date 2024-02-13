@@ -12,7 +12,7 @@ using System.Net;
 
 namespace PLang.Modules.CallGoalModule
 {
-	[Description("Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search.")]
+	[Description("Call another Goal, when ! is prefixed, example: call goal !RenameFile, call app !Google/Search, call !ui/ShowItems")]
 	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine, PrParser prParser, IPLangAppsRepository appsRepository) : BaseProgram()
 	{
 

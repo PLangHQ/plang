@@ -148,8 +148,17 @@ namespace PLang.Runtime
 
 		private void StartScheduler()
 		{
-			var containerForScheduler = new ServiceContainer();
-			containerForScheduler.RegisterForPLangConsole(fileSystem.GoalsPath, "\\");
+			IServiceContainer containerForScheduler;
+			if (this.OutputStream is UIOutputStream)
+			{
+				containerForScheduler = container;
+			}
+			else
+			{
+				containerForScheduler = new ServiceContainer();
+				((ServiceContainer) containerForScheduler).RegisterForPLangConsole(fileSystem.GoalsPath, Path.DirectorySeparatorChar.ToString());
+			}
+			
 
 			var schedulerEngine = containerForScheduler.GetInstance<IEngine>();
 			schedulerEngine.Init(containerForScheduler);

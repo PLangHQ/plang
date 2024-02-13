@@ -19,14 +19,18 @@ namespace PLang.Modules.UiModule
 			
 		}
 
-		public async Task RenderHtml(string html)
+		public async Task RenderHtml(string html, string css, string javascript)
 		{
-			html = variableHelper.LoadVariables(html).ToString();
-
-			if (string.IsNullOrEmpty(html)) return;
-			if (outputStream is ConsoleOutputStream) {
+			if (outputStream is ConsoleOutputStream)
+			{
 				throw new RuntimeException("Incorrect output stream. You probably ran the command: plang run, but you should run: plangw run");
 			}
+
+			string content = css + "\n" + html + "\n" + javascript;
+			content = variableHelper.LoadVariables(content).ToString();
+
+			if (string.IsNullOrEmpty(content)) return;
+			
 			var os = (UIOutputStream) outputStream;
 			os.MemoryStack = memoryStack;
 			os.Goal = goal;
@@ -38,7 +42,7 @@ namespace PLang.Modules.UiModule
 				nextStep.Execute = true;
 				nextStep = nextStep.NextStep;
 			}
-			await os.Write(html, "text", 200, (goalStep.Indent > 0) ? goalStep.Number : -1);
+			await os.Write(content, "text", 200, (goalStep.Indent > 0) ? goalStep.Number : -1);
 		}
 
 		public async Task AskUserHtml(string html)

@@ -6,7 +6,7 @@ namespace PLangWindowForms
 
 	public class ErrorDialog : IErrorDialog
 	{
-		public string ShowDialog(Exception ex, string text, string caption, int formWidth = 300, int formHeight = 200)
+		public string ShowDialog(Exception ex, string text, string caption, int formWidth = 500, int formHeight = 400)
 		{
 			var prompt = new Form
 			{
