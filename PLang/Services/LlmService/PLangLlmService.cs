@@ -18,16 +18,18 @@ namespace PLang.Services.LlmService
 		private readonly IOutputStream outputStream;
 		private readonly IPLangSigningService signingService;
 		private readonly ILogger logger;
+		private readonly PLangAppContext context;
 		private readonly string url = "http://localhost:10000";
 
 		public IContentExtractor Extractor { get; set; }
 
-		public PLangLlmService(CacheHelper cacheHelper, IOutputStream outputStream, IPLangSigningService signingService, ILogger logger)
+		public PLangLlmService(CacheHelper cacheHelper, IOutputStream outputStream, IPLangSigningService signingService, ILogger logger, PLangAppContext context)
 		{
 			this.cacheHelper = cacheHelper;
 			this.outputStream = outputStream;
 			this.signingService = signingService;
 			this.logger = logger;
+			this.context = context;
 			this.Extractor = new JsonExtractor();
 		}
 
@@ -44,12 +46,17 @@ namespace PLang.Services.LlmService
 		public virtual async Task<object?> Query(LlmRequest question, Type responseType, int errorCount = 0)
 		{
 			Extractor = ExtractorFactory.GetExtractor(question, responseType);
-
+			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebug);
 			var cachedLlmQuestion = cacheHelper.GetCachedQuestion(question);			
 			if (!question.Reload && question.caching && cachedLlmQuestion != null)
 			{
 				try
 				{
+					if (isDebug)
+					{
+						context.AddOrReplace(ReservedKeywords.Llm, cachedLlmQuestion.RawResponse);
+					}
+
 					var result = Extractor.Extract(cachedLlmQuestion.RawResponse, responseType);
 					if (result != null && !string.IsNullOrEmpty(result.ToString())) return result;
 				}
@@ -79,6 +86,10 @@ namespace PLang.Services.LlmService
 			var response = await httpClient.SendAsync(request);
 
 			string responseBody = await response.Content.ReadAsStringAsync();
+			if (isDebug)
+			{
+				context.AddOrReplace(ReservedKeywords.Llm, responseBody);
+			}
 
 			if (response.IsSuccessStatusCode)
 			{

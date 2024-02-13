@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Building.Model;
+using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
@@ -26,7 +27,7 @@ namespace PLang.Modules.LlmModule
 		}
 
 		public record AskLlmResponse(string Result);
-		
+
 		public async Task AskLlm(
 			[HandlesVariable] List<LlmMessage> promptMessages,
 			string? scheme = null,
@@ -42,14 +43,14 @@ namespace PLang.Modules.LlmModule
 
 			foreach (var message in promptMessages)
 			{
-				
+
 				foreach (var c in message.Content)
 				{
 					if (c.Text != null)
 					{
 						c.Text = variableHelper.LoadVariables(c.Text).ToString();
 					}
-					
+
 					if (c.ImageUrl != null)
 					{
 						c.ImageUrl.Url = variableHelper.LoadVariables(c.ImageUrl.Url).ToString();
@@ -68,8 +69,8 @@ namespace PLang.Modules.LlmModule
 			llmQuestion.llmResponseType = llmResponseType;
 			llmQuestion.scheme = scheme;
 
-			var response = await llmService.Query<object>(llmQuestion);
-
+			var response = await llmService.Query<object?>(llmQuestion);
+			bool hasSetValue = false;
 			if (response is JObject)
 			{
 				var objResult = (JObject)response;
@@ -79,12 +80,14 @@ namespace PLang.Modules.LlmModule
 					{
 						var value = ((JValue)property.Value).Value;
 						memoryStack.Put(property.Name, value);
-					} else
+					}
+					else
 					{
 						memoryStack.Put(property.Name, property.Value);
 					}
-					
-					
+					hasSetValue = true;
+
+
 				}
 			}
 
@@ -93,10 +96,9 @@ namespace PLang.Modules.LlmModule
 				foreach (var returnValue in function.ReturnValue)
 				{
 					memoryStack.Put(returnValue.VariableName, response);
+					hasSetValue = true;
 				}
 			}
-
-
 		}
 
 		public async Task<string> GetLlmIdentity()

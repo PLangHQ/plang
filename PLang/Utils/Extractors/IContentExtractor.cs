@@ -233,7 +233,7 @@ namespace PLang.Utils.Extractors
 			{
 				try
 				{
-					if (content.Trim().StartsWith("```json"))
+					if (content.Trim().Contains("```" + this.LlmResponseType))
 					{
 						content = ExtractByType(content, "json").ToString()!;
 					}
@@ -299,9 +299,9 @@ namespace PLang.Utils.Extractors
 			}
 		}
 
-		public new string GetRequiredResponse(Type scheme)
+		public new string GetRequiredResponse(Type type)
 		{
-			string strScheme = TypeHelper.GetJsonSchema(scheme);
+			string strScheme = TypeHelper.GetJsonSchema(type);
 			return GetRequiredResponse(strScheme);
 		}
 

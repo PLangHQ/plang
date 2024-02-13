@@ -12,6 +12,7 @@ namespace PLang.Utils.Extractors
 	{
 		public static IContentExtractor GetExtractor(LlmRequest question, Type responseType)
 		{
+			string? requiredResponse = null;
 			IContentExtractor extractor;
 			if (question.llmResponseType == "text")
 			{
@@ -34,6 +35,7 @@ namespace PLang.Utils.Extractors
 				{
 					question.scheme = TypeHelper.GetJsonSchema(responseType);
 				}
+				requiredResponse = ((JsonExtractor) extractor).GetRequiredResponse(question.scheme);
 			}
 			else
 			{
@@ -46,7 +48,11 @@ namespace PLang.Utils.Extractors
 				systemMessage = new LlmMessage() { Role = "system", Content = new() };
 			}
 
-			systemMessage.Content.Add(new LlmContent(extractor.GetRequiredResponse(responseType)));
+			if (requiredResponse == null)
+			{
+				requiredResponse = extractor.GetRequiredResponse(responseType);
+			}
+			systemMessage.Content.Add(new LlmContent(requiredResponse));
 			return extractor;
 		}
 	}

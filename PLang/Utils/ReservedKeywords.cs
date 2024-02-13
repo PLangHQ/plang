@@ -24,6 +24,7 @@ namespace PLang.Utils
 		public static readonly string CurrentDataSourceName = "__CurrentDataSourceName__";
 		public static readonly string Exception = "__Exception__";
 		public static readonly string LlmDocumentation = "__DOC__";
+		public static readonly string Llm = "__LLM__";
 		public static readonly string Salt = "__Salt__";
 
 		public static readonly string Inject_IDbConnection = "__Inject_IDbConnection__";
