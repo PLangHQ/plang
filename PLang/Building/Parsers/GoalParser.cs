@@ -234,13 +234,13 @@ namespace PLang.Building.Parsers
 		
 		private (string content, Dictionary<string, string> injections) HandleInjections(string content, bool isSetup)
 		{
-			var regex = new Regex(@"^@([a-z0-9]+)\s*=\s*([a-z0-9\./\\]+)", RegexOptions.IgnoreCase);
+			var regex = new Regex(@"^@([a-z0-9]+)\s*=(.*)$", RegexOptions.IgnoreCase | RegexOptions.Multiline);
 			var matches = regex.Matches(content);
 			var injections = new Dictionary<string, string>();
 			foreach (Match match in matches) 
 			{
-				var injectName = match.Groups[1].Value;
-				var injectType = match.Groups[2].Value;
+				var injectName = match.Groups[1].Value.Trim();
+				var injectType = match.Groups[2].Value.Trim();
 
 				((ServiceContainer) container).RegisterForPLangUserInjections(injectName, injectType, isSetup);
 				content = content.Replace(match.Value, "");

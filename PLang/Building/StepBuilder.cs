@@ -8,6 +8,7 @@ using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.CompilerService;
 using PLang.Utils;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
 using static PLang.Services.CompilerService.CSharpCompiler;
@@ -59,7 +60,7 @@ namespace PLang.Building
 				await eventRuntime.RunBuildStepEvents(EventType.Before, goal, step, stepIndex);
 
 				LlmRequest llmQuestion = GetBuildStepQuestion(goal, step, excludeModules);
-
+				
 				logger.Value.LogDebug($"- Find module for {step.Text}");
 				llmQuestion.Reload = false;
 				var stepAnswer = await aiService.Value.Query<StepAnswer>(llmQuestion);

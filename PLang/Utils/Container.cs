@@ -406,9 +406,9 @@ namespace PLang.Utils
 			}
 			container.Register<BaseBuilder, BaseBuilder>();
 
-			if (fileSystem.Directory.Exists("modules"))
+			if (fileSystem.Directory.Exists(".modules"))
 			{
-				var assemblyFiles = fileSystem.Directory.GetFiles("modules", "*.dll");
+				var assemblyFiles = fileSystem.Directory.GetFiles(".modules", "*.dll");
 				foreach (var file in assemblyFiles)
 				{
 
@@ -581,7 +581,7 @@ namespace PLang.Utils
 			var logger = container.GetInstance<ILogger>();
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 
-			if (!fileSystem.Directory.Exists("services"))
+			if (!fileSystem.Directory.Exists(".services"))
 			{
 				logger.LogError($"services folder not found in {fileSystem.RootDirectory}");
 				return null;
@@ -589,12 +589,12 @@ namespace PLang.Utils
 
 			//injectorType = (injectorType.EndsWith(".dll")) ? injectorType : injectorType + ".dll";
 
-			string dllFilePath = Path.Combine(fileSystem.GoalsPath, "services", injectorType);
+			string dllFilePath = Path.GetDirectoryName(Path.Combine(fileSystem.GoalsPath, ".services", injectorType));
 			string[] dllFiles = new string[] { dllFilePath };
 			if (!fileSystem.File.Exists(dllFilePath))
 			{
 				//var dirName = Path.GetDirectoryName(injectorType);
-				var moduleFolderPath = Path.Combine(fileSystem.GoalsPath, "services", dllFilePath);
+				var moduleFolderPath = Path.Combine(fileSystem.GoalsPath, ".services", dllFilePath);
 				if (!fileSystem.Directory.Exists(moduleFolderPath))
 				{
 					logger.LogError($"{injectorType} injection folder could not be found. Path {moduleFolderPath}");

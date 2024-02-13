@@ -15,14 +15,14 @@ Services in PLang are powerful tools that extend its functionality through depen
 - **archiver**: File compression and decompression.
 
 #### Services Location
-Services must be located under the `services` folder in your folder where your Start.goal and Setup.goal files are located.
+Services must be located under the `.services` folder in your folder where your Start.goal and Setup.goal files are located.
 
 #### Detailed Service Implementation
 
 ##### db Service
 You can download nuget package for the database you need support for. Find the package and click Download package, unzip the package (see instruction at bottom). 
 
-The unzipped should be located in /lib/.net8.0/NameOfDll.dll, put it into `services` folder that fits you.
+The unzipped should be located in /lib/.net8.0/NameOfDll.dll, put it into  folder that fits you.
 
 ```plang
 - inject db, /npgsql/lib/net8.0/Npgsql.dll, global
@@ -137,7 +137,7 @@ PLang supports the integration of NuGet libraries, especially those implementing
 
 1. **Download the Package**: Visit the NuGet library page and click "Download Package" to receive a `.nuget` file.
 2. **Convert to Zip**: Rename the downloaded `.nuget` file to `.zip`.
-3. **Unzip and Place in Services Folder**: Unzip the file and place its contents into the PLang `services` folder.
+3. **Unzip and Place in Services Folder**: Unzip the file and place its contents into the PLang `.services` folder.
 4. **Reference in PLang**: Point to the unzipped library in your PLang `inject` step.
 
 This process allows you to leverage the vast array of existing libraries in NuGet for enhancing your PLang applications.

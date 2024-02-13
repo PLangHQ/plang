@@ -6,11 +6,14 @@ using PLang.Interfaces;
 using PLang.Services;
 using PLang.Services.SigningService;
 using PLang.Utils;
+using System.Collections;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO.Abstractions;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Xml;
+using Websocket.Client.Logging;
 
 namespace PLang.Modules.HttpModule
 {
@@ -188,8 +191,8 @@ namespace PLang.Modules.HttpModule
 					await SignRequest(request);
 				}
 				httpClient.Timeout = new TimeSpan(0, 0, timeoutInSeconds);
-				var response = await httpClient.SendAsync(request);
 
+				var response = await httpClient.SendAsync(request);
 				string responseBody = await response.Content.ReadAsStringAsync();
 
 				if (response.IsSuccessStatusCode)

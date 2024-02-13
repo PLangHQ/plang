@@ -42,18 +42,22 @@ namespace PLang.Modules.LlmModule
 
 			foreach (var message in promptMessages)
 			{
+				
 				foreach (var c in message.Content)
 				{
 					if (c.Text != null)
 					{
 						c.Text = variableHelper.LoadVariables(c.Text).ToString();
-					} else if (c.ImageUrl != null)
+					}
+					
+					if (c.ImageUrl != null)
 					{
 						c.ImageUrl.Url = variableHelper.LoadVariables(c.ImageUrl.Url).ToString();
 					}
 				}
 
 			}
+
 
 			var llmQuestion = new LlmRequest("LlmModule", promptMessages, model, cacheResponse);
 			llmQuestion.maxLength = maxLength;

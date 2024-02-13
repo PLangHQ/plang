@@ -1,17 +1,121 @@
 {
   "Action": {
-    "Name": "CreateListFromZeroToTen",
-    "Code": "public static void Process(out List<int> list)\n{\n    list = new List<int>();\n    for (int i = 0; i <= 10; i++)\n    {\n        list.Add(i);\n    }\n}",
-    "Using": [
-      "System",
-      "System.Collections.Generic"
+    "FunctionName": "AddToList",
+    "Parameters": [
+      {
+        "Type": "Object",
+        "Name": "value",
+        "Value": "0"
+      },
+      {
+        "Type": "Object",
+        "Name": "value",
+        "Value": "1"
+      },
+      {
+        "Type": "Object",
+        "Name": "value",
+        "Value": "2"
+      },
+      {
+        "Type": "Object",
+        "Name": "value",
+        "Value": "3"
+      },
+      {
+        "Type": "Object",
+        "Name": "value",
+        "Value": "4"
+      },
+      {
+        "Type": "Object",
+        "Name": "value",
+        "Value": "5"
+      },
+      {
+        "Type": "Object",
+        "Name": "value",
+        "Value": "6"
+      },
+      {
+        "Type": "Object",
+        "Name": "value",
+        "Value": "7"
+      },
+      {
+        "Type": "Object",
+        "Name": "value",
+        "Value": "8"
+      },
+      {
+        "Type": "Object",
+        "Name": "value",
+        "Value": "9"
+      },
+      {
+        "Type": "Object",
+        "Name": "value",
+        "Value": "10"
+      }
     ],
-    "Parameters": {
-      "list": "List<int>"
-    }
+    "ReturnValue": [
+      {
+        "Type": "List`1",
+        "VariableName": "%list%"
+      }
+    ]
   },
   "Text": "create List<int> from 0 to 10, write to %list%",
   "Reload": false,
-  "LlmQuestion": null,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+    "type": "PLang.Modules.GenericFunctionBuilder",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\nVariables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.",
+            "image_url": null
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+            "image_url": null
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nvoid ClearList(List`1<Object> listInstance) \nvoid ClearDictionary(Dictionary`2<String, Object> dictionary) \nBoolean DeleteFromList(Object item, List`1<Object> listInstance) \nBoolean DeleteKeyFromDictionary(String key, Dictionary`2<String, Object> dictionary) \nList`1 AddItemsToList(List`1<Object> value, List`1<Object>? listInstance)  // Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddItemsToList. \nList`1 AddToList(Object value, List`1<Object>? listInstance)  // Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToList. \nObject GetFromList(Int32 position, List`1<Object>? listInstance)  // Gets an item from a list by position. \nDictionary`2 AddItemsToDictionary(String key, Dictionary`2<String, Object> value, Dictionary`2<String, Object>? dictionaryInstance, Boolean? updateIfExists = True)  // Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddItemsToDictionary. \nDictionary`2 AddToDictionary(String key, Object value, Dictionary`2<String, Object>? dictionaryInstance, Boolean? updateIfExists = True)  // Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToDictionary. \nObject GetFromDictionary(String key, Dictionary`2<String, Object>? dictionaryInstance)  // Gets an object from dictionary. ReturnValue should always be used with GetFromDictionary.\r\n## functions available ends ##\r\n## defined variables ##\r\nlist (type:object), \r\n## defined variables ##",
+            "image_url": null
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "create List<int> from 0 to 10, write to %list%",
+            "image_url": null
+          }
+        ]
+      }
+    ],
+    "model": "gpt-4",
+    "caching": true,
+    "RawResponse": "{\r\n  \"FunctionName\": \"AddToList\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"Object\",\r\n      \"Name\": \"value\",\r\n      \"Value\": \"0\"\r\n    },\r\n    {\r\n      \"Type\": \"Object\",\r\n      \"Name\": \"value\",\r\n      \"Value\": \"1\"\r\n    },\r\n    {\r\n      \"Type\": \"Object\",\r\n      \"Name\": \"value\",\r\n      \"Value\": \"2\"\r\n    },\r\n    {\r\n      \"Type\": \"Object\",\r\n      \"Name\": \"value\",\r\n      \"Value\": \"3\"\r\n    },\r\n    {\r\n      \"Type\": \"Object\",\r\n      \"Name\": \"value\",\r\n      \"Value\": \"4\"\r\n    },\r\n    {\r\n      \"Type\": \"Object\",\r\n      \"Name\": \"value\",\r\n      \"Value\": \"5\"\r\n    },\r\n    {\r\n      \"Type\": \"Object\",\r\n      \"Name\": \"value\",\r\n      \"Value\": \"6\"\r\n    },\r\n    {\r\n      \"Type\": \"Object\",\r\n      \"Name\": \"value\",\r\n      \"Value\": \"7\"\r\n    },\r\n    {\r\n      \"Type\": \"Object\",\r\n      \"Name\": \"value\",\r\n      \"Value\": \"8\"\r\n    },\r\n    {\r\n      \"Type\": \"Object\",\r\n      \"Name\": \"value\",\r\n      \"Value\": \"9\"\r\n    },\r\n    {\r\n      \"Type\": \"Object\",\r\n      \"Name\": \"value\",\r\n      \"Value\": \"10\"\r\n    }\r\n  ],\r\n  \"ReturnValue\": [\r\n    {\r\n      \"Type\": \"List`1\",\r\n      \"VariableName\": \"%list%\"\r\n    }\r\n  ]\r\n}"
+  },
   "RunOnBuild": false
 }

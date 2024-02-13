@@ -46,6 +46,7 @@ namespace PLang.Services.LlmService
 			SetExtractor(question, responseType);
 
 			var cachedLlmQuestion = cacheHelper.GetCachedQuestion(question);
+			cachedLlmQuestion = null;
 			if (!question.Reload && question.caching && cachedLlmQuestion != null)
 			{
 				try

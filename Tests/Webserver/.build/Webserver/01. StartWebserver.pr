@@ -4,6 +4,11 @@
     "Parameters": [
       {
         "Type": "String",
+        "Name": "webserverName",
+        "Value": "default"
+      },
+      {
+        "Type": "String",
         "Name": "scheme",
         "Value": "http"
       },
@@ -18,9 +23,19 @@
         "Value": 8080
       },
       {
-        "Type": "Int32",
+        "Type": "Int64",
         "Name": "maxContentLengthInBytes",
-        "Value": 4096
+        "Value": 4194304
+      },
+      {
+        "Type": "String",
+        "Name": "defaultResponseContentEncoding",
+        "Value": "utf-8"
+      },
+      {
+        "Type": "Boolean",
+        "Name": "signedRequestRequired",
+        "Value": false
       },
       {
         "Type": "List`1<String>",
@@ -32,16 +47,55 @@
   },
   "Text": "start webserver",
   "Reload": false,
-  "LlmQuestion": {
-    "type": "PLang.Modules.BaseBuilder",
-    "system": "Parse user command.\r\n\r\nSelect the correct function from list of available functions based on user command\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")%\r\nwhere the settingName would be the api key, config key, \r\ndefaultValue for settings is the usual value given, make it \"\" if no value can be default\r\nExplain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nType: the object type in c#\r\nName: name of the variable\r\nValue: %variable% or hardcode string that should be used\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nReturnValue: Only if the function returns a value, else null\n\nYou MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: {\"Type\": string,\n\"VariableName\": string}}",
-    "question": "command: start webserver",
-    "assistant": "## functions available defined in csharp ##\r\nvoid StartWebserver(String? scheme = http, String? host = localhost, Int32? port = 8080, Int32? maxContentLengthInBytes = 4096, List`1<String>? publicPaths) \nvoid WriteToResponseHeader(String key, String value) \nString GetUserIp(String? headerKey)  // headerKey should be null unless specified by user. \nString GetRequestHeader(String key) \nString GetCookie(String name) \nvoid WriteCookie(String name, String value, Int32? expiresInSeconds = 604800) \nvoid DeleteCookie(String name, String value) \n\r\n## functions available ends ##",
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+    "type": "PLang.Modules.GenericFunctionBuilder",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\nVariables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.",
+            "image_url": null
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+            "image_url": null
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nWebserverInfo ShutdownWebserver(String webserverName) \nBoolean RestartWebserver(String? webserverName = \"default\") \nWebserverInfo StartWebserver(String? webserverName = \"default\", String? scheme = \"http\", String? host = \"localhost\", Int32? port = 8080, Int64? maxContentLengthInBytes = 4194304, String? defaultResponseContentEncoding = \"utf-8\", Boolean? signedRequestRequired = False, List`1<String>? publicPaths) \nvoid Redirect(String url) \nvoid WriteToResponseHeader(Dictionary`2<String, Object> headers) \nString GetUserIp(String? headerKey)  // headerKey should be null unless specified by user. \nString GetRequestHeader(String key) \nString GetCookie(String name) \nvoid WriteCookie(String name, String value, Int32? expiresInSeconds = 604800) \nvoid DeleteCookie(String name) \nvoid VerifySignature(HttpListenerRequest request, String body, MemoryStack memoryStack) \nvoid SendToWebSocket(String goalToCall, Dictionary`2<String, Object>? parameters, String? webSocketName = \"default\") \nWebSocketInfo StartWebSocketConnection(String url, String goalToCall, String? webSocketName = \"default\", String? contentRecievedVariableName = \"%content%\")\r\n## functions available ends ##",
+            "image_url": null
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "start webserver",
+            "image_url": null
+          }
+        ]
+      }
+    ],
     "model": "gpt-4",
     "caching": true,
-    "Reload": false,
-    "PreviousResult": null,
-    "RawResponse": "{\"FunctionName\": \"StartWebserver\",\n\"Parameters\": [{\"Type\": \"String\", \"Name\": \"scheme\", \"Value\": \"http\"},\n               {\"Type\": \"String\", \"Name\": \"host\", \"Value\": \"localhost\"},\n               {\"Type\": \"Int32\", \"Name\": \"port\", \"Value\": 8080},\n               {\"Type\": \"Int32\", \"Name\": \"maxContentLengthInBytes\", \"Value\": 4096},\n               {\"Type\": \"List`1<String>\", \"Name\": \"publicPaths\", \"Value\": null}]}"
+    "RawResponse": "{\r\n  \"FunctionName\": \"StartWebserver\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"String\",\r\n      \"Name\": \"webserverName\",\r\n      \"Value\": \"default\"\r\n    },\r\n    {\r\n      \"Type\": \"String\",\r\n      \"Name\": \"scheme\",\r\n      \"Value\": \"http\"\r\n    },\r\n    {\r\n      \"Type\": \"String\",\r\n      \"Name\": \"host\",\r\n      \"Value\": \"localhost\"\r\n    },\r\n    {\r\n      \"Type\": \"Int32\",\r\n      \"Name\": \"port\",\r\n      \"Value\": 8080\r\n    },\r\n    {\r\n      \"Type\": \"Int64\",\r\n      \"Name\": \"maxContentLengthInBytes\",\r\n      \"Value\": 4194304\r\n    },\r\n    {\r\n      \"Type\": \"String\",\r\n      \"Name\": \"defaultResponseContentEncoding\",\r\n      \"Value\": \"utf-8\"\r\n    },\r\n    {\r\n      \"Type\": \"Boolean\",\r\n      \"Name\": \"signedRequestRequired\",\r\n      \"Value\": false\r\n    },\r\n    {\r\n      \"Type\": \"List`1<String>\",\r\n      \"Name\": \"publicPaths\",\r\n      \"Value\": null\r\n    }\r\n  ],\r\n  \"ReturnValue\": null\r\n}"
   },
   "RunOnBuild": false
 }

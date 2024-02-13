@@ -35,9 +35,9 @@ namespace PLang.Models
 		}
 		[JsonProperty("type")]
 		public string Type = "text";
-		[JsonProperty("text")]
+		[JsonProperty("text", NullValueHandling = NullValueHandling.Ignore)]
 		public string Text { get; set; }
-		[JsonProperty("image_url")]
+		[JsonProperty("image_url", NullValueHandling = NullValueHandling.Ignore)]
 		public ImageUrl ImageUrl { get; set; }
 	}
 

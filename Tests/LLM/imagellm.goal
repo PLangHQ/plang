@@ -1,10 +1,12 @@
 ImageLlm
 - read 'invoice.png' into %base64%
+- [code] get datatype of text(not file) 'invoice.png', format to 'data:{dataType};base64', write to %dataType%
 - [llm] system: analyze this invoice
-        user: image is png,  %base64%
+        user: image is png, %base64%
         scheme:{name:string, address:string, phone:string, total_balance:number, total_tax:number, [description:string, qty:number, price:number, total:number]}
         write to %invoiceInfo%
 - write out %invoiceInfo%
+- write out 'Analyzing contract'
 - [llm] system: You should act a lawyer, specialising in non disclosure contracts.
         user: give me an overview of what this image is about.
         image: https://images.examples.com/wp-content/uploads/2018/07/non-disclosure-template-example.jpg

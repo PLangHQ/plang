@@ -1,0 +1,59 @@
+{
+  "GoalName": "Events",
+  "Comment": "You might have to modify the path depending on your operating system. point to the directory located in .services folder, not the dll",
+  "GoalSteps": [
+    {
+      "Text": "Before each goal, call !DoStuff",
+      "Comment": null,
+      "ModuleType": null,
+      "Name": null,
+      "Description": null,
+      "PrFileName": null,
+      "RelativePrPath": null,
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-02-13T12:30:16.4504662+00:00",
+      "WaitForExecution": true,
+      "ErrorHandler": null,
+      "RetryHandler": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {
+        "Event": {
+          "EventType": 0,
+          "EventScope": 20,
+          "GoalToBindTo": "*",
+          "GoalToCall": "!DoStuff",
+          "IncludePrivate": false,
+          "StepNumber": null,
+          "StepText": null,
+          "WaitForExecution": true,
+          "RunOnlyInDebugMode": false,
+          "OnErrorContinueNextStep": false
+        }
+      },
+      "Number": 1,
+      "LineNumber": 5,
+      "LlmRequest": null
+    }
+  ],
+  "Description": null,
+  "Visibility": 1,
+  "GoalFileName": "Events.goal",
+  "RelativeGoalPath": "\\events\\Events.goal",
+  "RelativeGoalFolderPath": "\\events",
+  "RelativePrPath": ".build\\events\\Events\\00. Goal.pr",
+  "RelativePrFolderPath": ".build\\events\\Events",
+  "BuilderVersion": null,
+  "GoalApiInfo": null,
+  "Injections": [
+    {
+      "Type": "llm",
+      "Path": "OpenAIService/win-x64/",
+      "IsGlobal": true
+    }
+  ],
+  "Signature": null,
+  "Hash": null
+}

@@ -62,7 +62,7 @@ namespace PLang.Utils
 				}
 			}
 
-			string modulesDirectory = Path.Combine(fileSystem.GoalsPath, "modules");
+			string modulesDirectory = Path.Combine(fileSystem.GoalsPath, ".modules");
 			if (!fileSystem.Directory.Exists(modulesDirectory)) return types;
 
 			foreach (var dll in fileSystem.Directory.GetFiles(modulesDirectory, "*.dll"))
@@ -373,7 +373,7 @@ namespace PLang.Utils
 			.ToList();
 			baseBuilderModules.AddRange(runtimeModules);
 
-			string modulesDirectory = Path.Combine(goalPath, "modules");
+			string modulesDirectory = Path.Combine(goalPath, ".modules");
 			if (!fileSystem.Directory.Exists(modulesDirectory)) return;
 
 			foreach (var dll in fileSystem.Directory.GetFiles(modulesDirectory, "*.dll"))
@@ -401,7 +401,7 @@ namespace PLang.Utils
 			.ToList();
 			baseRuntimeModules.AddRange(runtimeModules);
 
-			string modulesDirectory = Path.Combine(goalPath, "modules");
+			string modulesDirectory = Path.Combine(goalPath, ".modules");
 			if (!fileSystem.Directory.Exists(modulesDirectory)) return;
 
 			foreach (var dll in fileSystem.Directory.GetFiles(modulesDirectory, "*.dll"))

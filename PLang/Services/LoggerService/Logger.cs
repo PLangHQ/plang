@@ -3,13 +3,12 @@
 namespace PLang.Services.LoggerService
 {
 
-    public class Logger<T> : ILogger<T>
-    {
+	public class Logger<T> : ILogger<T>
+	{
+		public virtual void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+		{
+			LogLevel? logLevelByUser = LogLevel.Trace;
 
-        public virtual void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
-        {
-            LogLevel? logLevelByUser = LogLevel.Trace;
-            
 			if (AppContext.TryGetSwitch("Runtime", out bool isEnabled) && isEnabled)
 			{
 				logLevelByUser = LogLevel.Information;
@@ -33,28 +32,30 @@ namespace PLang.Services.LoggerService
 					{
 						logLevelByUser = logLevelStartup;
 					}
-				} else { 
+				}
+				else
+				{
 					Console.WriteLine($"Could not set logger level to {loggerLevel}. You can set: Debug, Information, Warning, Error, Trace");
 				}
 
 			}
 
 			if (logLevel < logLevelByUser)
-            {
-                return;
-            }
+			{
+				return;
+			}
 
-            if (logLevel == LogLevel.Debug)
-            {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-            }
-            else if (logLevel == LogLevel.Information)
-            {
-                Console.ForegroundColor = ConsoleColor.Blue;
-            }
-            else if (logLevel == LogLevel.Warning)
-            {
-                Console.ForegroundColor = ConsoleColor.Yellow;
+			if (logLevel == LogLevel.Debug)
+			{
+				Console.ForegroundColor = ConsoleColor.Cyan;
+			}
+			else if (logLevel == LogLevel.Information)
+			{
+				Console.ForegroundColor = ConsoleColor.Blue;
+			}
+			else if (logLevel == LogLevel.Warning)
+			{
+				Console.ForegroundColor = ConsoleColor.Yellow;
 			}
 			else if (logLevel == LogLevel.Error)
 			{
@@ -66,17 +67,18 @@ namespace PLang.Services.LoggerService
 			}
 
 			Console.WriteLine($"{state} - ({logLevel}) - {exception}");
-            Console.ResetColor();
-        }
+			Console.ResetColor();
 
-        public bool IsEnabled(LogLevel logLevel)
-        {
-            return true;
-        }
+		}
 
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
-        {
-            return null;
-        }
-    }
+		public bool IsEnabled(LogLevel logLevel)
+		{
+			return true;
+		}
+
+		public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+		{
+			return null;
+		}
+	}
 }

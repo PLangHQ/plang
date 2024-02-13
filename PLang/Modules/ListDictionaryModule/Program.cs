@@ -37,7 +37,18 @@ namespace PLang.Modules.ListDictionaryModule
 		{
 			return dictionary.Remove(key);
 		}
+		[Description("Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddItemsToList")]
+		public async Task<List<object>> AddItemsToList(List<object?> value, List<object>? listInstance = null)
+		{
+			if (value == null) return new();
 
+			if (listInstance == null) listInstance = new List<object>();
+
+			listInstance.AddRange(value);
+			
+			return listInstance;
+		}
+		
 		[Description("Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToList")]
 		public async Task<List<object>> AddToList(object? value, List<object>? listInstance = null)
 		{
@@ -72,7 +83,22 @@ namespace PLang.Modules.ListDictionaryModule
 			if (listInstance == null) listInstance = new List<object>();
 			return (listInstance.Count >= position) ? listInstance[position - 1] : null;
 		}
+		[Description("Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddItemsToDictionary")]
+		public async Task<Dictionary<string, object>> AddItemsToDictionary(string key, Dictionary<string, object> value, Dictionary<string, object>? dictionaryInstance = null, bool updateIfExists = true)
+		{
+			if (value == null) return new();
+			if (function != null && function.ReturnValue != null)
+			{
+				dictionaryInstance = memoryStack.Get(function.ReturnValue[0].VariableName) as Dictionary<string, object>;
+			}
+			if (dictionaryInstance == null) dictionaryInstance = new Dictionary<string, object>();
+			foreach (var item in value)
+			{
+				dictionaryInstance.Add(item.Key, item.Value);
+			}
+			return dictionaryInstance;
 
+		}
 		[Description("Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToDictionary")]
 		public async Task<Dictionary<string, object>> AddToDictionary(string key, object value, Dictionary<string, object>? dictionaryInstance = null, bool updateIfExists = true)
 		{

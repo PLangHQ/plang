@@ -13,6 +13,11 @@ if (debug && !Debugger.IsAttached)
 var container = new ServiceContainer();
 container.RegisterForPLangConsole(Environment.CurrentDirectory, Path.DirectorySeparatorChar.ToString());
 
+if (args.FirstOrDefault("stuff") != null)
+{
+	AppContext.SetData("stuff", "stuff");
+}
+
 var pLanguage = new Executor(container);
 	pLanguage.Execute(args).GetAwaiter().GetResult();
 

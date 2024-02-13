@@ -38,6 +38,22 @@ namespace PLang.Utils
 			{
 				step = rse.Step;
 			}
+			if (ex is MissingSettingsException mse)
+			{
+				if (await askUserHandler.Handle(mse))
+				{
+					await callBackForAskUser();
+					return;
+				}
+			}
+			if (ex is AskUserException ase)
+			{
+				if (await askUserHandler.Handle(ase))
+				{
+					await callBackForAskUser();
+					return;
+				}
+			}
 
 			List<Exception> errors = new List<Exception>();
 			Exception? loopException = ex;

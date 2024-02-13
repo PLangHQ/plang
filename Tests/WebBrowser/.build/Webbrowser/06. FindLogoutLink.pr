@@ -1,0 +1,81 @@
+{
+  "Action": {
+    "FunctionName": "ExtractContent",
+    "Parameters": [
+      {
+        "Type": "Boolean",
+        "Name": "clearHtml",
+        "Value": true
+      },
+      {
+        "Type": "String",
+        "Name": "cssSelector",
+        "Value": "a[href='/logout']"
+      }
+    ],
+    "ReturnValue": [
+      {
+        "Type": "List`1",
+        "VariableName": "isLoggedIn"
+      }
+    ]
+  },
+  "Text": "find href=\"/logout\", write to %isLoggedIn%",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+    "type": "PLang.Modules.WebCrawlerModule.Builder",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\nVariables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.",
+            "image_url": null
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+            "image_url": null
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nvoid StartBrowser(String? browserType = \"Chrome\", Boolean? headless = False, Boolean? useUserSession = False, String? userSessionPath, Boolean? incognito = False, Boolean? kioskMode = False, Dictionary`2<String, String>? argumentOptions)  // browserType=Chrome|Edge|Firefox|IE|Safari. \nvoid CloseBrowser() \nvoid NavigateToUrl(String url, String? browserType = \"Chrome\", Boolean? headless = False, Boolean? useUserSession = False, String? userSessionPath, Boolean? incognito = False, Boolean? kioskMode = False, Dictionary`2<String, String>? argumentOptions) \nvoid SetFocus(String? cssSelector) \nvoid Click(String cssSelector) \nvoid SendKey(String value, String? cssSelector) \nvoid Input(String value, String? cssSelector)  // set the value of an input by cssSelector. \nvoid Submit(String? cssSelector) \nList`1 ExtractContent(Boolean? clearHtml = True, String? cssSelector) \nvoid SwitchTab(Int32 tabIndex) \nvoid Wait(Int32? milliseconds = 1000) \nvoid TakeScreenshotOfWebsite(String saveToPath)\r\n## functions available ends ##\r\n## defined variables ##\r\nisLoggedIn (type:object), \r\n## defined variables ##",
+            "image_url": null
+          },
+          {
+            "type": "text",
+            "text": "Make sure to convert html tags into correct css selector format",
+            "image_url": null
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "find href=\"/logout\", write to %isLoggedIn%",
+            "image_url": null
+          }
+        ]
+      }
+    ],
+    "model": "gpt-4",
+    "caching": true,
+    "RawResponse": "{\r\n  \"FunctionName\": \"ExtractContent\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"Boolean\",\r\n      \"Name\": \"clearHtml\",\r\n      \"Value\": true\r\n    },\r\n    {\r\n      \"Type\": \"String\",\r\n      \"Name\": \"cssSelector\",\r\n      \"Value\": \"a[href='/logout']\"\r\n    }\r\n  ],\r\n  \"ReturnValue\": [\r\n    {\r\n      \"Type\": \"List`1\",\r\n      \"VariableName\": \"isLoggedIn\"\r\n    }\r\n  ]\r\n}"
+  },
+  "RunOnBuild": false
+}

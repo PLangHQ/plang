@@ -95,12 +95,13 @@ promptMessages:
     }
 ]
 
-content can also have the type of image_url, the content of image_url json property can be a URL or a base64 of image
+content can also have the type of image_url, the content of image_url json property can be a URL or a base64 of image.
+when using base64 append data:XXXX/YYYY;base64, where XXXX/YYYY is the data type, such as image/jpg, image/png, image/gif
 ""content"": [
     {
         ""type"": ""image_url"",
         ""image_url"": {
-            ""url"": ""%base64OfImage%""
+            ""url"": ""data:image/jpeg;base64,%base64OfImage%""
         }
     }
 ]
