@@ -41,7 +41,7 @@ If you need to debug the C# code that plang generates or you want to debug the p
 - **Visual Studio Community Edition**: For those who need to debug the generated C# code, you can download and install the free Visual Studio Community Edition from [this link](https://visualstudio.microsoft.com/vs/community/).
 
 ### Debugging C#
-1. Enable C# debugging by adding the `--debugcs` flag to your terminal command.
+1. Enable C# debugging by adding the `--csdebug` flag to your terminal command.
 2. Download the plang project from the official GitHub repository at [PLangHQ/plang](https://github.com/PLangHQ/plang/).
 3. With Visual Studio installed, you can proceed to debug the generated C# code:
    - Enter debug mode and press `Ctrl+Alt+U`, or go to `Debug -> Windows -> Modules` from the menu.

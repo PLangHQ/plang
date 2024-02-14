@@ -250,11 +250,12 @@ namespace PLang.Modules.DbModule
 			}
 			catch (Exception ex)
 			{
-				if (GoalHelper.IsSetup(goalStep) && dbConnection is SQLiteConnection)
+				if (GoalHelper.IsSetup(goalStep))
 				{
-					if (ex.ToString().Contains("relation") || ex.ToString().Contains("already exists") || ex.ToString().Contains("duplicate column name"))
+					if (ex.ToString().Contains("already exists") || ex.ToString().Contains("duplicate column name"))
 					{
-						return 0;
+						logger.LogWarning($"Had error running Setup but will continue. Error message:{ex.Message}");
+						return 1;
 					}
 				}
 				throw;

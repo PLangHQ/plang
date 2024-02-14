@@ -13,7 +13,7 @@ using System.Text.RegularExpressions;
 
 namespace PLang.Building.Parsers
 {
-    public interface IGoalParser
+	public interface IGoalParser
 	{
 		List<Goal> ParseGoalFile(string fileName);
 	}
@@ -31,7 +31,7 @@ namespace PLang.Building.Parsers
 			this.settings = settings;
 		}
 
-		
+
 		public List<Goal> ParseGoalFile(string goalFileAbsolutePath)
 		{
 			Goal? currentGoal = null;
@@ -41,7 +41,7 @@ namespace PLang.Building.Parsers
 			(content, var injections) = HandleInjections(content, true);
 
 			var stepParser = from indent in Parse.WhiteSpace.Many()
-							 from dash in Parse.Char('-').Once() 
+							 from dash in Parse.Char('-').Once()
 							 from stepText in Parse.AnyChar.Except(Parse.LineEnd).Many().Text()
 							 select new GoalStep
 							 {
@@ -66,7 +66,7 @@ namespace PLang.Building.Parsers
 			string? uncertainComment = null;
 			bool whitespace = false;
 			int stepNr = 1;
-			for (int i=0;i<lines.Length;i++)
+			for (int i = 0; i < lines.Length; i++)
 			{
 				var line = lines[i];
 				if (string.IsNullOrWhiteSpace(line))
@@ -131,7 +131,8 @@ namespace PLang.Building.Parsers
 				currentGoal.GoalSteps = new List<GoalStep>();
 				goals.Add(currentGoal);
 			}
-			var dict = settings.GetOrDefault<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", new());
+			var setupOnceDictionary = settings.GetOrDefault<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", new());
+			
 			for (int i = 0; i < goals.Count; i++)
 			{
 				string prFileAbsolutePath;
@@ -165,8 +166,9 @@ namespace PLang.Building.Parsers
 					{
 						goal.Injections.Add(new Injections(injection.Key, injection.Value, true));
 					}
-					
+
 				}
+				
 				if (!fileSystem.File.Exists(prFileAbsolutePath)) continue;
 
 				var prevBuildGoal = JsonHelper.ParseFilePath<Goal>(fileSystem, prFileAbsolutePath);
@@ -179,14 +181,14 @@ namespace PLang.Building.Parsers
 						goal.Injections.Add(injection);
 					}
 				}
-				
+
 				for (int b = 0; prevBuildGoal != null && b < goals[i].GoalSteps.Count; b++)
 				{
 					var prevStep = prevBuildGoal.GoalSteps.FirstOrDefault(p => p.Text == goals[i].GoalSteps[b].Text);
 					if (prevStep != null)
 					{
 						goals[i].GoalSteps[b].Custom = prevStep.Custom;
-						goals[i].GoalSteps[b].Generated = prevStep.Generated; 						
+						goals[i].GoalSteps[b].Generated = prevStep.Generated;
 
 						var absolutePrFilePath = Path.Join(goal.AbsolutePrFolderPath, prevStep.PrFileName);
 						if (!fileSystem.File.Exists(absolutePrFilePath)) continue;
@@ -196,24 +198,25 @@ namespace PLang.Building.Parsers
 						goals[i].GoalSteps[b].AbsolutePrFilePath = absolutePrFilePath;
 						goals[i].GoalSteps[b].Number = prevStep.Number;
 						goals[i].GoalSteps[b].LlmRequest = prevStep.LlmRequest;
-						
+
 						goals[i].GoalSteps[b].Description = prevStep.Description;
 						goals[i].GoalSteps[b].WaitForExecution = prevStep.WaitForExecution;
 						goals[i].GoalSteps[b].ErrorHandler = prevStep.ErrorHandler;
 						goals[i].GoalSteps[b].CancellationHandler = prevStep.CancellationHandler;
 						goals[i].GoalSteps[b].CacheHandler = prevStep.CacheHandler;
-						
+
 						goals[i].GoalSteps[b].PrFileName = prevStep.PrFileName;
 						goals[i].GoalSteps[b].ModuleType = prevStep.ModuleType;
 						goals[i].GoalSteps[b].Name = prevStep.Name;
 						goals[i].GoalSteps[b].RetryHandler = prevStep.RetryHandler;
 						goals[i].GoalSteps[b].RunOnce = prevStep.RunOnce;
 
-						if (dict.ContainsKey(goals[i].RelativePrPath))
-						{
-							goals[i].GoalSteps[b].Executed = dict[goals[i].RelativePrPath];
-						}
 
+						if (setupOnceDictionary.ContainsKey(goals[i].RelativePrPath))
+						{
+							goals[i].GoalSteps[b].Executed = setupOnceDictionary[goals[i].RelativePrPath];
+						}
+						
 						if (prevStep.Text.Trim() != goals[i].GoalSteps[b].Text.Trim())
 						{
 							goals[i].GoalSteps[b].PreviousText = prevStep.Text;
@@ -231,25 +234,25 @@ namespace PLang.Building.Parsers
 
 			return goals;
 		}
-		
+
 		private (string content, Dictionary<string, string> injections) HandleInjections(string content, bool isSetup)
 		{
 			var regex = new Regex(@"^@([a-z0-9]+)\s*=(.*)$", RegexOptions.IgnoreCase | RegexOptions.Multiline);
 			var matches = regex.Matches(content);
 			var injections = new Dictionary<string, string>();
-			foreach (Match match in matches) 
+			foreach (Match match in matches)
 			{
 				var injectName = match.Groups[1].Value.Trim();
 				var injectType = match.Groups[2].Value.Trim();
 
-				((ServiceContainer) container).RegisterForPLangUserInjections(injectName, injectType, isSetup);
+				((ServiceContainer)container).RegisterForPLangUserInjections(injectName, injectType, isSetup);
 				content = content.Replace(match.Value, "");
 
 				injections.Add(injectName, injectType);
 			}
 			return (content.Trim(), injections);
 		}
-		
+
 
 		public string GetBuildPathOfGoalFile(string goalFilePath)
 		{

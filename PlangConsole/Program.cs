@@ -4,6 +4,8 @@ using PLang;
 using System.Diagnostics;
 using PLang.Utils;
 
+Console.WriteLine("Hello Render.com");
+
 var debug = args.FirstOrDefault(p => p == "--csdebug") != null;
 if (debug && !Debugger.IsAttached)
 {
@@ -12,11 +14,6 @@ if (debug && !Debugger.IsAttached)
 }
 var container = new ServiceContainer();
 container.RegisterForPLangConsole(Environment.CurrentDirectory, Path.DirectorySeparatorChar.ToString());
-
-if (args.FirstOrDefault("stuff") != null)
-{
-	AppContext.SetData("stuff", "stuff");
-}
 
 var pLanguage = new Executor(container);
 	pLanguage.Execute(args).GetAwaiter().GetResult();

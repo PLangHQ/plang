@@ -64,7 +64,7 @@ namespace PLang.Building.Parsers
 
 			AdjustPathsToOS(goal);
 
-			var dict = settings.GetOrDefault<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", new());
+			var setupOnceDictionary = settings.GetOrDefault<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", new());
 			for (int i = 0; i < goal.GoalSteps.Count; i++)
 			{
 				goal.GoalSteps[i].AbsolutePrFilePath = Path.Join(goal.AbsolutePrFolderPath, goal.GoalSteps[i].PrFileName).AdjustPathToOs();
@@ -76,9 +76,9 @@ namespace PLang.Building.Parsers
 					goal.GoalSteps[i].NextStep = goal.GoalSteps[i + 1];
 				}
 
-				if (dict != null && dict.ContainsKey(goal.GoalSteps[i].RelativePrPath))
+				if (setupOnceDictionary != null && setupOnceDictionary.ContainsKey(goal.GoalSteps[i].RelativePrPath))
 				{
-					goal.GoalSteps[i].Executed = dict[goal.GoalSteps[i].RelativePrPath];
+					goal.GoalSteps[i].Executed = setupOnceDictionary[goal.GoalSteps[i].RelativePrPath];
 				}
 			}
 			return goal;

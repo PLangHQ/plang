@@ -411,6 +411,7 @@ namespace PLang.Runtime
 
 		public void PutForBuilder(string key, object? value)
 		{
+			if (string.IsNullOrEmpty(key)) return;
 			//Put(key, value, false, false);
 			var objectValue = new ObjectValue(key, value, null, null, false);
 			variables.AddOrReplace(key, objectValue);
