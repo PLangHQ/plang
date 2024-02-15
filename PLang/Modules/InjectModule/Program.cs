@@ -11,11 +11,9 @@ namespace PLang.Modules.InjectModule
 		}
 
 		[Description("type can be: db, settings, caching, logger, llm, askuser, encryption, archiver")]
-		public async Task Inject(string type, string pathToDll, bool? globalForWholeApp)
+		public async Task Inject(string type, string pathToDll, bool isDefaultOrGlobalForWholeApp = false)
 		{
-			if (globalForWholeApp == null) globalForWholeApp = false;
-
-			base.RegisterForPLangUserInjections(type, pathToDll, (bool) globalForWholeApp);
+			base.RegisterForPLangUserInjections(type, pathToDll, (bool)isDefaultOrGlobalForWholeApp);
 		
 		}
 	}

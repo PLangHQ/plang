@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using PLang.Building.Events;
 using PLang.Building.Parsers;
 using PLang.Exceptions.AskUser;
+using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Utils;
 using System.Diagnostics;
@@ -23,10 +24,11 @@ namespace PLang.Building
 		private readonly IEventRuntime eventRuntime;
 		private readonly IErrorHelper errorHelper;
 		private readonly PrParser prParser;
+		private readonly IExceptionHandler exceptionHandler;
 
 		public Builder(ILogger logger, IPLangFileSystem fileSystem, ISettings settings, IGoalBuilder goalBuilder,
 			IEventBuilder eventBuilder, IEventRuntime eventRuntime, IErrorHelper errorHelper,
-			PrParser prParser)
+			PrParser prParser, IExceptionHandler exceptionHandler)
 		{
 
 			this.fileSystem = fileSystem;
@@ -37,6 +39,7 @@ namespace PLang.Building
 			this.eventRuntime = eventRuntime;
 			this.errorHelper = errorHelper;
 			this.prParser = prParser;
+			this.exceptionHandler = exceptionHandler;
 		}
 
 
@@ -66,9 +69,10 @@ namespace PLang.Building
 			}
 			catch (Exception ex)
 			{
+				await exceptionHandler.Handle(ex, 500, "error", ex.Message);
 				if (ex.Message != "FriendlyError")
 				{
-					await errorHelper.ShowFriendlyErrorMessage(ex, callBackForAskUser: async () => { await Start(container); });
+				//	await errorHelper.ShowFriendlyErrorMessage(ex, callBackForAskUser: async () => { await Start(container); });
 				}
 				
 			}

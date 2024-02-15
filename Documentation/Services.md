@@ -1,10 +1,10 @@
-### Services in PLang
+# Services in PLang
 
 Services in PLang are powerful tools that extend its functionality through dependency injection. Developers can customize PLang by injecting various service types, enhancing its capabilities to suit specific needs.
 
 > Note: More services will be added in the future. This implentation came late in development.
 
-#### List of Services
+## List of Services
 - **db**: Database connections.
 - **settings**: Configuration management.
 - **caching**: Data caching functions.
@@ -14,18 +14,29 @@ Services in PLang are powerful tools that extend its functionality through depen
 - **encryption**: Data encryption and decryption.
 - **archiver**: File compression and decompression.
 
-#### Services Location
+## Services Location
 Services must be located under the `.services` folder in your folder where your Start.goal and Setup.goal files are located.
 
-#### Detailed Service Implementation
+## Location of injection code
 
-##### db Service
-You can download nuget package for the database you need support for. Find the package and click Download package, unzip the package (see instruction at bottom). 
+To inject a library you use the syntax (approx.)
+```plang
+- inject db, /npgsql/lib/net8.0/Npgsql.dll
+```
+The only location you should NOT put this, is in the Setup.goal. This is because each step in Setup.goal is only executed one time. Not each time on startup, but one time of the whole lifetime (years?) of your app.
 
-The unzipped should be located in /lib/.net8.0/NameOfDll.dll, put it into  folder that fits you.
+If you want to have this accessable throughout your app, then Start.goal or Events.goal would be the place to put it. If you only need to use the library in specific goal, you can include it in that.
+
+
+## Detailed Service Implementation
+
+### db Service
+You can download nuget package for the database you need support for. [Find the package on nuget.org](https://www.nuget.org/) and click Download package, unzip the package (see instruction at bottom). 
+
+The unzipped file should be located in /lib/.net8.0/NameOfDll.dll, put it into  folder that fits you.
 
 ```plang
-- inject db, /npgsql/lib/net8.0/Npgsql.dll, global
+- inject db, /npgsql/lib/net8.0/Npgsql.dll
 - inject db, /MySqlConnector/lib/net8.0/MySqlConnector.dll
 - inject db, SqlConnector
 ```
@@ -41,6 +52,11 @@ Setup
 Start
 - Set data source 'TheProductionDb'
 ```
+#### Options
+You can set the injected library as the default library to use. 
+```plang
+- inject db, /npgsql/lib/net8.0/Npgsql.dll, set as default
+```
 
 #### Nuget locations
 - [Postgresql](https://www.nuget.org/packages/Npgsql)
@@ -49,7 +65,7 @@ Start
 
 Any library that implements IDbConnection should work.
 
-##### settings Service
+### settings Service
 
 This allows you to change where the settings are stored. You need to implement the [ISettingsRepository](https://github.com/PLangHQ/plang/blob/main/PLang/Interfaces/ISettingsRepository.cs). 
 
@@ -58,7 +74,7 @@ This will allow you to create implementation to read .env files, Azure Vault, AW
 ```plang
 - inject settings, /environment_vars/myimplementation.dll
 ```
-##### caching Service
+### caching Service
 
 Plang uses in memory caching. For services that need distributed caching, you can implement the abstract class [AppCache](https://github.com/PLangHQ/plang/blob/main/PLang/Interfaces/IAppCache.cs)
 
@@ -68,7 +84,7 @@ Check out the InMemory cache implementation that plang uses, [InMemoryCaching.cs
 - inject caching, /mycaching/mycaching.dll
 ```
 
-##### llm Service
+### llm Service
 
 You can overwrite the LLM service that comes with plang. There is already [OpenAIService](https://github.com/PLangHQ/services/blob/main/OpenAiService/OpenAiService.cs) that you can use instead of the built in LLM plang service (Note: plang uses OpenAI but you dont need API key).
 
@@ -78,13 +94,13 @@ You need to implement the [ILlmService](https://github.com/PLangHQ/plang/blob/ma
 - inject llm, /myllm/myll.dll
 ```
 
-If you want to build your code using your own LLM service, you MUST inject it like this in you Start.goal or Events.goal.
+If you want to build your code using your own LLM service, you MUST inject it like this in you Events.goal or Start.goal.
 
 ```plang
 @llm=/myllm/myll.dll
 ```
 
-##### askuser Service
+### askuser Service
 
 The plang language asks the user for information when it needs it. You need to implement the [IAskUserHandler](https://github.com/PLangHQ/plang/blob/main/PLang/Interfaces/IAskUserHandler.cs).
 
@@ -92,7 +108,7 @@ The plang language asks the user for information when it needs it. You need to i
 - inject askuser, /myAskUser/myAskUser.dll
 ```
 
-##### encryption Service
+### encryption Service
 
 The plang language uses AES256 for encryption. The private key is stored using the ISettingsRepository in the default implementation. 
 
@@ -102,7 +118,7 @@ You can change the implementation by implementing the [IEncryption](https://gith
 - inject encryption, /myEncryption/myEncryption.dll
 ```
 
-##### archiver Service
+### archiver Service
 
 Archiver service handles compression and decomression in the plang language. Plang language uses zip compression.
 
@@ -110,7 +126,7 @@ Archiver service handles compression and decomression in the plang language. Pla
 - inject archiver, /myarchiver/myarchiver.dll
 ```
 
-##### logger Service
+### logger Service
 
 You can overwrite the logger in the language by implementing the Microsoft.Extensions.Logging.ILogger interface.
 
@@ -118,7 +134,7 @@ You can overwrite the logger in the language by implementing the Microsoft.Exten
 - inject logger, /MyLogger/MyLogger.dll
 ```
 
-### Implementing a Custom Service
+#Implementing a Custom Service
 A step-by-step guide to creating a custom service. For example, creating a custom logger:
 
 ```csharp
@@ -131,7 +147,7 @@ public class MyLogger<T> : ILogger<T>
 }
 ```
 
-### Using NuGet Packages in PLang
+#Using NuGet Packages in PLang
 
 PLang supports the integration of NuGet libraries, especially those implementing service contracts like `IDbConnection`. To use a NuGet library in PLang:
 

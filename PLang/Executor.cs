@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using PLang.Building;
 using PLang.Building.Parsers;
+using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Resources;
 using PLang.Runtime;
@@ -19,6 +20,7 @@ namespace PLang
 		private readonly PrParser prParser;
 		private readonly IErrorHelper errorHelper;
 		private readonly IPLangFileSystem fileSystem;
+		private readonly IExceptionHandler exceptionHandler;
 		private IEngine engine;
 
 		private IBuilder builder;
@@ -33,7 +35,8 @@ namespace PLang
 			this.prParser = container.GetInstance<PrParser>();
 			this.errorHelper = container.GetInstance<IErrorHelper>();
 			this.fileSystem = container.GetInstance<IPLangFileSystem>();
-			
+			this.exceptionHandler = container.GetInstance<IExceptionHandler>();
+
 		}
 
 
@@ -54,16 +57,8 @@ namespace PLang
 			var watch = args.FirstOrDefault(p => p == "watch") != null;
 			var run = args.FirstOrDefault(p => p == "run") != null;
 
-			var loggerLovel = args.FirstOrDefault(p => p.StartsWith("--logger"));
-			if (loggerLovel != null)
-			{
-				AppContext.SetData("--logger", loggerLovel.Replace("--logger=", ""));
-			}
-			var llmerror = args.FirstOrDefault(p => p.ToLower().StartsWith("--llmerror"));
-			if (llmerror != null)
-			{
-				AppContext.SetSwitch("llmerror", true);
-			}
+			LoadParametersToAppContext(args);
+			
 
 			if (args.FirstOrDefault(p => p == "exec") != null)
 			{
@@ -96,6 +91,25 @@ namespace PLang
 				await Run(debug, test, args);
 			}
 
+		}
+
+		private void LoadParametersToAppContext(string[] args)
+		{
+			var loggerLovel = args.FirstOrDefault(p => p.StartsWith("--logger"));
+			if (loggerLovel != null)
+			{
+				AppContext.SetData("--logger", loggerLovel.Replace("--logger=", ""));
+			}
+			var llmerror = args.FirstOrDefault(p => p.ToLower().StartsWith("--llmerror"));
+			if (llmerror != null)
+			{
+				AppContext.SetSwitch("llmerror", true);
+			}
+			var sharedPath = args.FirstOrDefault(p => p.ToLower().StartsWith("--sharedpath"));
+			if (sharedPath != null)
+			{
+				AppContext.SetData("sharedPath", sharedPath);
+			}
 		}
 
 		public void SetupDebug()
@@ -183,7 +197,8 @@ namespace PLang
 			}
 			catch (Exception ex)
 			{
-				await errorHelper.ShowFriendlyErrorMessage(ex, callBackForAskUser: Build);				
+				await exceptionHandler.Handle(ex, 500, "error", ex.Message);
+				//await errorHelper.ShowFriendlyErrorMessage(ex, callBackForAskUser: Build);				
 			}
 		}
 

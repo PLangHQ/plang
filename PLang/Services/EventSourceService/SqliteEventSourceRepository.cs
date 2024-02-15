@@ -1,10 +1,10 @@
 ﻿using Dapper;
 using IdGen;
+using Microsoft.Data.Sqlite;
 using PLang.Interfaces;
 using PLang.Utils;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
-using System.Data.SQLite;
 using static PLang.Modules.DbModule.ModuleSettings;
 using static PLang.Modules.DbModule.Program;
 
@@ -77,7 +77,7 @@ namespace PLang.Services.EventSourceService
 		public async Task<List<EventData>> GetUnprocessedData()
 		{
 			IEnumerable<EventRow> encrytpedEvents;
-			using (IDbConnection db = new SQLiteConnection(DataSource.ConnectionString))
+			using (IDbConnection db = new SqliteConnection(DataSource.ConnectionString))
 			{
 				encrytpedEvents = await db.QueryAsync<EventRow>("SELECT * FROM __Events__ WHERE processed=0 ORDER BY id");
 			}
@@ -93,7 +93,7 @@ namespace PLang.Services.EventSourceService
 
 		public async Task MarkAsProccesd(long id)
 		{
-			using (IDbConnection db = new SQLiteConnection(DataSource.ConnectionString))
+			using (IDbConnection db = new SqliteConnection(DataSource.ConnectionString))
 			{
 				await db.ExecuteAsync("UPDATE __Events__ SET processed=1 WHERE id=@id",
 				new { id });

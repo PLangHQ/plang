@@ -1,7 +1,9 @@
 ﻿using Dapper;
 using IdGen;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
+using Nethereum.ABI.CompilationMetadata;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OpenAI_API.Moderation;
@@ -12,7 +14,6 @@ using PLang.Services.EventSourceService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Data;
-using System.Data.SQLite;
 using System.Globalization;
 using System.Text;
 using static Dapper.SqlMapper;
@@ -31,30 +32,35 @@ namespace PLang.Modules.DbModule
 		private ModuleSettings moduleSettings;
 		private readonly IDbConnection dbConnection;
 		private readonly IPLangFileSystem fileSystem;
+		private readonly ISettings settings;
+		private readonly ILlmService llmService;
 		private readonly IEventSourceRepository eventSourceRepository;
 		private readonly ILogger logger;
 
-		public Program(IDbConnection dbConnection, IPLangFileSystem fileSystem, ISettings settings, ILlmService aiService, IEventSourceRepository eventSourceRepository, PLangAppContext context, ILogger logger) : base()
+		public Program(IDbConnection dbConnection, IPLangFileSystem fileSystem, ISettings settings, ILlmService llmService, IEventSourceRepository eventSourceRepository, PLangAppContext context, ILogger logger) : base()
 		{
 			this.dbConnection = dbConnection;
 			this.fileSystem = fileSystem;
+			this.settings = settings;
+			this.llmService = llmService;
 			this.eventSourceRepository = eventSourceRepository;
 			this.logger = logger;
-			this.context = context;
-			this.moduleSettings = new ModuleSettings(fileSystem, settings, context, aiService, dbConnection, logger);
+			this.context = context;			
 		}
 
-		public async Task CreateDataSource(string name)
+		public async Task CreateDataSource(string name, bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
 		{
-			await moduleSettings.CreateDataSource(name);
+			this.moduleSettings = new ModuleSettings(fileSystem, settings, context, llmService, dbConnection, logger);
+			await moduleSettings.CreateDataSource(name, setAsDefaultForApp, keepHistoryEventSourcing);
 		}
 
 		public async Task SetDataSouceName(string name)
 		{
+			this.moduleSettings = new ModuleSettings(fileSystem, settings, context, llmService, dbConnection, logger);
 			var dataSource = await moduleSettings.GetDataSource(name);
 			if (dataSource == null)
 			{
-				throw new ArgumentException($"Datasource with the name '{name}' could not be found. You need to create a datasource first, e.g. \n\n- Create data source {name}");
+				throw new ArgumentException($"Datasource with the name '{name}' could not be found. You need to create a datasource first, e.g. \n\n- Create data source {name}\n- Create data source {name}, set as default\n- Create data source {name}, keep history");
 			}
 			context[ReservedKeywords.CurrentDataSourceName] = dataSource;
 		}
@@ -93,9 +99,9 @@ namespace PLang.Modules.DbModule
 				throw new RuntimeException("File could not be found.");
 			}
 
-			if (dbConnection is SQLiteConnection)
+			if (dbConnection is SqliteConnection)
 			{
-				((SQLiteConnection)dbConnection).LoadExtension(fileName, procName); return;
+				((SqliteConnection)dbConnection).LoadExtension(fileName, procName); return;
 			} else
 			{
 				logger.LogWarning("Loading extension only works for Sqlite");

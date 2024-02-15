@@ -51,7 +51,7 @@ namespace PLang.Repository.Tests
 			Assert.AreEqual(setting.AppId, returnedSetting.AppId);
 			Assert.AreEqual(setting.Created, returnedSetting.Created);
 			Assert.AreEqual(setting.ClassOwnerFullName, returnedSetting.ClassOwnerFullName);
-			Assert.AreEqual("hello", returnedSetting.SignatureData["Test"]);
+			Assert.AreEqual("hello", returnedSetting.Signature["Test"]);
 
 		}
 
@@ -98,7 +98,7 @@ namespace PLang.Repository.Tests
 
 			var value2 = new DunderMifflin("Pamela");
 			list.Add(value2);
-			setting2 = new Setting(appId, classType, typeof(string).Name, key, JsonConvert.SerializeObject(list), returnedSetting.SignatureData, returnedSetting.Created);
+			setting2 = new Setting(appId, classType, typeof(string).Name, key, JsonConvert.SerializeObject(list), returnedSetting.Signature, returnedSetting.Created);
 
 			settingsRepository.Set(setting2);
 

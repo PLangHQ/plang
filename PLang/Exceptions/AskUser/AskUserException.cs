@@ -1,10 +1,10 @@
 ﻿using CsvHelper.Configuration;
+using Microsoft.Data.Sqlite;
 using PLang.Building.Model;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Utils;
 using System.Data;
-using System.Data.SQLite;
 using System.Drawing.Text;
 using System.Reflection;
 using static PLang.Runtime.Startup.ModuleLoader;
@@ -67,13 +67,16 @@ namespace PLang.Exceptions.AskUser
 	public class AskUserDbConnectionString : AskUserException
 	{
 		private readonly string typeFullName;
+		private readonly bool setAsDefaultForApp;
+		private readonly bool keepHistoryEventSourcing;
 		private readonly string dataSourceName;
 		string regexToExtractDatabaseNameFromConnectionString;
 		private readonly bool keepHistory;
 		private readonly bool isDefault;
 
 		public AskUserDbConnectionString(string dataSourceName, string typeFullName,
-			string regexToExtractDatabaseNameFromConnectionString, bool keepHistory, bool isDefault, string question, Func<string, string, string, string, bool, bool, Task> callback) : base(question, CreateAdapter(callback))
+			string regexToExtractDatabaseNameFromConnectionString, bool keepHistory, bool isDefault, string question, 
+				Func<string, string, string, string, bool, bool, Task> callback) : base(question, CreateAdapter(callback))
 		{
 			this.dataSourceName = dataSourceName;
 			this.regexToExtractDatabaseNameFromConnectionString = regexToExtractDatabaseNameFromConnectionString;
@@ -95,19 +98,24 @@ namespace PLang.Exceptions.AskUser
 	public class AskUserDatabaseType : AskUserException
 	{
 		private readonly ILlmService aiService;
+		private readonly bool setAsDefaultForApp;
+		private readonly bool keepHistoryEventSourcing;
 		private readonly string supportedDbTypes;
 		private readonly string dataSourceName;
 
-		public AskUserDatabaseType(ILlmService aiService, string supportedDbTypes, string dataSourceName, string question, Func<string, string, string, string, string, bool, bool, Task> callback) : base(question, CreateAdapter(callback))
+		public AskUserDatabaseType(ILlmService aiService, bool setAsDefaultForApp, bool keepHistoryEventSourcing, 
+				string supportedDbTypes, string dataSourceName, string question, 
+				Func<string, string, string, string, string, bool, bool, Task> callback) : base(question, CreateAdapter(callback))
 		{
 			this.aiService = aiService;
+			this.setAsDefaultForApp = setAsDefaultForApp;
+			this.keepHistoryEventSourcing = keepHistoryEventSourcing;
 			this.supportedDbTypes = supportedDbTypes;
 			this.dataSourceName = dataSourceName;
 		}
 
-		private record MethodResponse(string typeFullName, string nugetCommand,
-				string regexToExtractDatabaseNameFromConnectionString, string dataSourceConnectionStringExample,
-				bool keepHistoryEventSourcing, bool isDefault = false);
+		private record DatabaseTypeResponse(string typeFullName, string nugetCommand,
+				string regexToExtractDatabaseNameFromConnectionString, string dataSourceConnectionStringExample);
 
 		public override async Task InvokeCallback(object answer)
 		{
@@ -120,8 +128,6 @@ dataSourceName: give name to the datasource if not defined by user
 nugetCommand: nuget package name, for running ""nuget install ...""
 dataSourceConnectionStringExample: create an example of a connection string for this type of databaseType
 regexToExtractDatabaseNameFromConnectionString: generate regex to extract the database name from a connection string from user selected databaseType
-keepHistoryEventSourcing: true when typeFullName is SQLite and not defined by user, else false
-isDefault: true if user asks to make it default, else it is false
 ";
 			string assistant = $"## database types ##\r\n{supportedDbTypes}\r\n## database types ##";
 
@@ -131,9 +137,9 @@ isDefault: true if user asks to make it default, else it is false
 			promptMessage.Add(new LlmMessage("user", answer.ToString()));
 
 			var llmRequest = new LlmRequest("AskUserDatabaseType", promptMessage);
-			llmRequest.scheme = TypeHelper.GetJsonSchema(typeof(MethodResponse));
+			llmRequest.scheme = TypeHelper.GetJsonSchema(typeof(DatabaseTypeResponse));
 
-			var result = await aiService.Query<MethodResponse>(llmRequest);
+			var result = await aiService.Query<DatabaseTypeResponse>(llmRequest);
 
 			if (result == null) throw new Exception("Could not use LLM to format your answer");
 			if (Callback == null) return;
@@ -144,8 +150,8 @@ isDefault: true if user asks to make it default, else it is false
 				result.nugetCommand,
 				result.dataSourceConnectionStringExample,
 				result.regexToExtractDatabaseNameFromConnectionString,
-				result.keepHistoryEventSourcing,
-				result.isDefault]);
+				keepHistoryEventSourcing,
+				setAsDefaultForApp]);
 			
 		}
 	}
@@ -167,7 +173,7 @@ isDefault: true if user asks to make it default, else it is false
 			string dbAbsolutePath = Path.Join(rootPath, dbPath);
 
 			await Callback.Invoke([
-				dbName.ToString(), typeof(SQLiteConnection).FullName!, dbName.ToString() + ".sqlite", $"Data Source={dbAbsolutePath};Version=3;", true, false]);
+				dbName.ToString(), typeof(SqliteConnection).FullName!, dbName.ToString() + ".sqlite", $"Data Source={dbAbsolutePath};Version=3;", true, false]);
 
 		}
 	}

@@ -9,7 +9,6 @@ using PLang.Services.EventSourceService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Data;
-using System.Data.SQLite;
 using static PLang.Modules.DbModule.Builder;
 using static PLang.Modules.DbModule.ModuleSettings;
 using static PLang.Modules.DbModule.Program;

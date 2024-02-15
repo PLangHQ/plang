@@ -1,10 +1,10 @@
 ﻿using Dapper;
+using Microsoft.Data.Sqlite;
 using Newtonsoft.Json;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Utils;
 using System.Data;
-using System.Data.SQLite;
 using System.Reflection;
 
 namespace PLang.Services.SettingsService
@@ -62,12 +62,12 @@ namespace PLang.Services.SettingsService
 					}
 					
 
-					return $"Data Source={dbName};Mode=Memory;Cache=Shared;Version=3;";
+					return $"Data Source={dbName};Mode=Memory;Cache=Shared;";
 
 				}
 
 				string systemDbPath = Path.Join(".", ".db", "system.sqlite");
-				string datasource = $"Data Source={systemDbPath};Version=3;";				
+				string datasource = $"Data Source={systemDbPath};";				
 				
 				return datasource;
 			}
@@ -79,17 +79,17 @@ namespace PLang.Services.SettingsService
 			{
 				if (inMemory)
 				{
-					return "Data Source=InMemorySharedDb;Mode=Memory;Cache=Shared;Version=3;";
+					return "Data Source=InMemorySharedDb;Mode=Memory;Cache=Shared;";
 				}
 
 				string shareDataSourcePath = Path.Join(fileSystem.SharedPath, ".db", "system.sqlite");
-				return $"Data Source={shareDataSourcePath};Version=3;";
+				return $"Data Source={shareDataSourcePath};";
 			}
 		}
 
 		private void CreateLlmCacheTable(string datasource)
 		{
-			using (IDbConnection connection = new SQLiteConnection(datasource))
+			using (IDbConnection connection = new SqliteConnection(datasource))
 			{
 				string sql = $@"CREATE TABLE IF NOT EXISTS LlmCache (
 					Id INTEGER PRIMARY KEY,
@@ -106,8 +106,8 @@ namespace PLang.Services.SettingsService
 		}
 		private void CreateSettingsTable(string datasource)
 		{
-
 			var dbPath = datasource.Between("=", ";");
+
 			//only time System.IO is used in the system.
 			if (!File.Exists(dbPath))
 			{
@@ -126,7 +126,7 @@ namespace PLang.Services.SettingsService
 				File.Create(dbPath).Close();
 			}
 
-			using (IDbConnection connection = new SQLiteConnection(datasource))
+			using (IDbConnection connection = new SqliteConnection(datasource))
 			{
 				string sql = $@"
 CREATE TABLE IF NOT EXISTS Settings (
@@ -148,7 +148,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 
 		public void Init()
 		{
-
 			CheckSettingsTable(LocalDataSourcePath);
 			CheckSettingsTable(SharedDataSourcePath);
 
@@ -159,7 +158,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 		private void CheckSettingsTable(string dataSource)
 		{
 			CreateSettingsTable(dataSource);
-			using (IDbConnection connection = new SQLiteConnection(dataSource))
+			using (IDbConnection connection = new SqliteConnection(dataSource))
 			{
 				var settingsExists = connection.Query<dynamic>("PRAGMA table_info(Settings)");
 				if (settingsExists.Count() == 0)
@@ -222,7 +221,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 
 		public LlmRequest? GetLlmRequestCache(string hash)
 		{
-			using (IDbConnection connection = new SQLiteConnection(SharedDataSourcePath))
+			using (IDbConnection connection = new SqliteConnection(SharedDataSourcePath))
 			{
 				var cache = connection.QueryFirstOrDefault<dynamic>("SELECT * FROM LlmCache WHERE Hash=@hash", new { hash });
 				if (cache == null) return null;
@@ -233,7 +232,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 		}
 		public void SetLlmRequestCache(string hash, LlmRequest llmQuestion)
 		{
-			using (IDbConnection connection = new SQLiteConnection(SharedDataSourcePath))
+			using (IDbConnection connection = new SqliteConnection(SharedDataSourcePath))
 			{
 				var cache = connection.QueryFirstOrDefault<dynamic>("SELECT * FROM LlmCache WHERE Hash=@hash", new { hash });
 				if (cache != null) return;
@@ -246,7 +245,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 
 		public IEnumerable<Setting> GetSettings()
 		{
-			using (IDbConnection connection = new SQLiteConnection(DataSource))
+			using (IDbConnection connection = new SqliteConnection(DataSource))
 			{
 				return connection.Query<Setting>("SELECT * FROM Settings");
 			
@@ -258,7 +257,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 		{
 			if (setting == null) return;
 
-			using (IDbConnection connection = new SQLiteConnection(DataSource))
+			using (IDbConnection connection = new SqliteConnection(DataSource))
 			{
 				connection.Execute("DELETE FROM Settings WHERE AppId=@AppId AND [ClassOwnerFullName]=@ClassOwnerFullName AND [ValueType]=@ValueType",
 					new { setting.AppId, setting.ClassOwnerFullName, setting.ValueType });
@@ -269,12 +268,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 
 		public void Set(Setting setting)
 		{
-			using (IDbConnection connection = new SQLiteConnection(DataSource))
+			using (IDbConnection connection = new SqliteConnection(DataSource))
 			{
 				connection.Execute(@"
 					INSERT OR IGNORE INTO Settings (AppId, ClassOwnerFullName, ValueType, [Key], [Value], SignatureData, Created) VALUES (@AppId, @ClassOwnerFullName, @ValueType, @Key, @Value, @SignatureData, @Created)
 					ON CONFLICT(AppId, [ClassOwnerFullName], [ValueType], [Key]) DO UPDATE SET Value = excluded.Value, SignatureData=@SignatureData;
-					", new { setting.AppId, setting.ClassOwnerFullName, setting.ValueType, setting.Key, setting.Value, SignatureData = JsonConvert.SerializeObject(setting.SignatureData), setting.Created });
+					", new { setting.AppId, setting.ClassOwnerFullName, setting.ValueType, setting.Key, setting.Value, SignatureData = JsonConvert.SerializeObject(setting.Signature), setting.Created });
 
 			}
 		}

@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using PLang.Building.Events;
 using PLang.Building.Model;
 using PLang.Exceptions;
+using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
@@ -31,10 +32,11 @@ namespace PLang.Building
 		private readonly IErrorHelper errorHelper;
 		private readonly MemoryStack memoryStack;
 		private readonly VariableHelper variableHelper;
+		private readonly IExceptionHandler exceptionHandler;
 
 		public StepBuilder(Lazy<ILogger> logger, IPLangFileSystem fileSystem, Lazy<ILlmService> aiService,
 					IInstructionBuilder instructionBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
-					IErrorHelper errorHelper, MemoryStack memoryStack, VariableHelper variableHelper)
+					IErrorHelper errorHelper, MemoryStack memoryStack, VariableHelper variableHelper, IExceptionHandler exceptionHandler)
 		{
 			this.fileSystem = fileSystem;
 			this.aiService = aiService;
@@ -45,6 +47,7 @@ namespace PLang.Building
 			this.errorHelper = errorHelper;
 			this.memoryStack = memoryStack;
 			this.variableHelper = variableHelper;
+			this.exceptionHandler = exceptionHandler;
 		}
 
 		public async Task BuildStep(Goal goal, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
@@ -128,7 +131,11 @@ namespace PLang.Building
 			}
 			catch (Exception ex)
 			{
-				await errorHelper.ShowFriendlyErrorMessage(ex, step);
+				if (await exceptionHandler.Handle(ex, 500, "error", ex.Message))
+				{
+					await BuildStep(goal, stepIndex, excludeModules, errorCount);
+				}
+				//await errorHelper.ShowFriendlyErrorMessage(ex, step);
 			}
 
 		}

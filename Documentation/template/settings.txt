@@ -32,3 +32,14 @@ Start
 - inject askuser, 'myaskuser'
 ```
 it looks for your service in the folder, 'services/myaskuser' folder
+this service needs to implement 
+```csharp
+public async Task<bool> Handle(AskUserException ex)
+```
+and when you have done the logic needed, call 
+```csharp
+await ex.InvokeCallback(value);
+```
+where variable 'value' is the expected response. 
+
+For example, when creating database connection, the answer can be any natural language. The LLM will try to map it correctly to create the database connection

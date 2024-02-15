@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.Data.Sqlite;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using NSubstitute;
 using PLang.Building.Model;
@@ -8,7 +9,6 @@ using PLang.Services.OpenAi;
 using PLang.Utils;
 using PLangTests;
 using System.Data;
-using System.Data.SQLite;
 using System.Runtime.CompilerServices;
 using static PLang.Modules.BaseBuilder;
 using static PLang.Modules.DbModule.Builder;
@@ -36,7 +36,7 @@ namespace PLang.Modules.DbModule.Tests
 
 			typeHelper = new TypeHelper(fileSystem, settings);
 
-			var db = new SQLiteConnection("DataSource=In memory;Version=3");
+			var db = new SqliteConnection("DataSource=In memory;Version=3");
 
 			builder = new Builder(fileSystem, db, settings, context, llmService, typeHelper, logger, memoryStack, variableHelper);
 			builder.InitBaseBuilder("PLang.Modules.DbModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
@@ -48,7 +48,7 @@ namespace PLang.Modules.DbModule.Tests
 			var llmService = GetLlmService(stepText, caller, type);
 			if (llmService == null) return;
 
-			var db = new SQLiteConnection("DataSource=In memory;Version=3");
+			var db = new SqliteConnection("DataSource=In memory;Version=3");
 			var aiService = Substitute.For<ILlmService>();
 
 			llmService.Query(Arg.Any<LlmRequest>(), typeof(FunctionInfo)).Returns(p => {

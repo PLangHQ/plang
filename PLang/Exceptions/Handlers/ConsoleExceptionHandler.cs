@@ -1,13 +1,24 @@
 ﻿using Newtonsoft.Json;
 using PLang.Building.Model;
+using PLang.Exceptions.AskUser;
+using PLang.Interfaces;
 using PLang.Utils;
 
 namespace PLang.Exceptions.Handlers
 {
-	public class ConsoleExceptionHandler : IExceptionHandler
+	
+	public class ConsoleExceptionHandler : ExceptionHandler, IExceptionHandler
 	{
-		public async Task Handle(Exception exception, int statusCode, string statusText, string message)
+		private readonly IAskUserHandler askUserHandler;
+
+		public ConsoleExceptionHandler(IAskUserHandler askUserHandler) : base(askUserHandler)
 		{
+			this.askUserHandler = askUserHandler;
+		}
+		public async Task<bool> Handle(Exception exception, int statusCode, string statusText, string message)
+		{
+			if (await base.Handle(exception)) { return true; }
+
 			if (statusCode < 200)
 			{
 				Console.ForegroundColor = ConsoleColor.Green;
@@ -43,6 +54,7 @@ namespace PLang.Exceptions.Handlers
 				Console.WriteLine(JsonConvert.SerializeObject(exception));
 			}
 			Console.ResetColor();
+			return false;
 		}
 	}
 }

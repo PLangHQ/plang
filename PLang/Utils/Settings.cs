@@ -134,7 +134,7 @@ namespace PLang.Utils
 			var setting = settings.FirstOrDefault(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
 			if (setting == null) return null;
 
-			var verifiedData = signingService.VerifySignature(setting.Value, "Setting", callingType.FullName, setting.SignatureData).Result;
+			var verifiedData = signingService.VerifySignature(setting.Value, "Setting", callingType.FullName, setting.Signature).Result;
 			if (verifiedData == null) {
 				logger.LogWarning($"Signature for setting {setting.Key} | {setting.ClassOwnerFullName} is not valid.");
 			}

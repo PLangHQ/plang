@@ -22,7 +22,7 @@
     "HelloWorld run": {
       "commandName": "Project",
       "commandLineArgs": "run",
-      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\ingig\\PLangExamples\\apps\\HelloWorld"
+      "workingDirectory": "C:\\Users\\Ingi Gauti\\source\\repos\\apps\\HelloWorld"
     },
     "Install build": {
       "commandName": "Project",

@@ -1,6 +1,7 @@
 ﻿
 
 using LightInject;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Nethereum.JsonRpc.WebSocketClient;
 using Nethereum.RPC.Accounts;
@@ -29,7 +30,6 @@ using PLang.Services.SettingsService;
 using PLang.Services.SigningService;
 using RazorEngineCore;
 using System.Data;
-using System.Data.SQLite;
 using System.Net;
 using System.Reflection;
 using System.Text;
@@ -84,7 +84,7 @@ namespace PLang.Utils
 			});
 			container.RegisterSingleton<IExceptionHandler>(factory =>
 			{
-				return new HttpExceptionHandler(httpContext);
+				return new HttpExceptionHandler(httpContext, container.GetInstance<IAskUserHandler>());
 			});
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			RegisterModules(container, fileSystem);
@@ -102,7 +102,7 @@ namespace PLang.Utils
 
 			container.RegisterSingleton<IExceptionHandler>(factory =>
 			{
-				return new UiExceptionHandler(errorDialog);
+				return new UiExceptionHandler(errorDialog, container.GetInstance<IAskUserHandler>());
 			});
 			
 
@@ -132,7 +132,7 @@ namespace PLang.Utils
 			container.Register<IAskUserHandler, AskUserConsoleHandler>(typeof(AskUserConsoleHandler).FullName);
 			container.RegisterSingleton<IExceptionHandler>(factory =>
 			{
-				return new ConsoleExceptionHandler();
+				return new ConsoleExceptionHandler(container.GetInstance<IAskUserHandler>());
 			});
 
 
@@ -331,9 +331,9 @@ namespace PLang.Utils
 				return factory.GetInstance<ISettingsRepository>(type);
 			});
 
-			var dbConnectionFullName = AppContext.GetData(ReservedKeywords.Inject_IDbConnection) ?? typeof(SQLiteConnection).FullName;
+			var dbConnectionFullName = AppContext.GetData(ReservedKeywords.Inject_IDbConnection) ?? typeof(SqliteConnection).FullName;
 			context.AddOrReplace(ReservedKeywords.Inject_IDbConnection, dbConnectionFullName);
-			container.Register<IDbConnection, SQLiteConnection>(typeof(SQLiteConnection).FullName);
+			container.Register<IDbConnection, SqliteConnection>(typeof(SqliteConnection).FullName);
 			container.Register<IDbConnection>(factory =>
 			{
 				var context = container.GetInstance<PLangAppContext>();

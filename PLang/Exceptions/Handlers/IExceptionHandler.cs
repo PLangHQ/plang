@@ -2,6 +2,6 @@
 {
 	public interface IExceptionHandler
 	{
-		Task Handle(Exception exception, int statusCode, string statusText, string message);
+		Task<bool> Handle(Exception exception, int statusCode, string statusText, string message);
 	}
 }

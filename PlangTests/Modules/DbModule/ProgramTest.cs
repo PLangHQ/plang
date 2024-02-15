@@ -1,11 +1,11 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.Data.Sqlite;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using PLang.Modules.DbModule;
 using PLang.SafeFileSystem;
 using PLang.Services.EncryptionService;
 using PLang.Services.EventSourceService;
 using PLang.Utils;
-using System.Data.SQLite;
 using static PLang.Modules.DbModule.ModuleSettings;
 using static PLang.Modules.DbModule.Program;
 using static PLang.Services.EncryptionService.Encryption;
@@ -23,7 +23,7 @@ namespace PLangTests.Modules.DbModule
 			base.Initialize();
 
 			
-			datasources.Add(new DataSource("local", "System.Data.SQLite.SQLiteConnection", "Data Source=:memory:", "", "", ""));
+			datasources.Add(new DataSource("local", "System.Data.SQLite.SqliteConnection", "Data Source=:memory:", "", "", ""));
 			datasources.Add(new DataSource("MainDb", "", "", "", "", ""));
 			settings.GetValues<DataSource>(typeof(ModuleSettings)).Returns(datasources);
 
@@ -36,13 +36,13 @@ namespace PLangTests.Modules.DbModule
 		[TestMethod]
 		public async Task TestSetDatasource()
 		{
-			db = new SQLiteConnection("DataSource=:memory:");
+			db = new SqliteConnection("DataSource=:memory:");
 			eventSourceRepository = new DisableEventSourceRepository();
 			p = new Program(db, fileSystem, settings, aiService, eventSourceRepository, context, logger);
 
 			var dataSources = new List<DataSource>();
-			dataSources.Add(new DataSource("db", "System.Data.SQLite.SQLiteConnection", "", "", "", ""));
-			dataSources.Add(new DataSource("MainDb", "System.Data.SQLite.SQLiteConnection", "", "", "", ""));
+			dataSources.Add(new DataSource("db", "System.Data.SQLite.SqliteConnection", "", "", "", ""));
+			dataSources.Add(new DataSource("MainDb", "System.Data.SQLite.SqliteConnection", "", "", "", ""));
 
 			settings.GetValues<DataSource>(typeof(ModuleSettings)).Returns(dataSources);
 
@@ -55,7 +55,7 @@ namespace PLangTests.Modules.DbModule
 		[TestMethod]
 		public async Task TestTransaction()
 		{
-			db = new SQLiteConnection("DataSource=:memory:");
+			db = new SqliteConnection("DataSource=:memory:");
 			eventSourceRepository = new DisableEventSourceRepository();
 			p = new Program(db, fileSystem, settings, aiService, eventSourceRepository, context, logger);
 			await p.BeginTransaction();
@@ -110,7 +110,7 @@ namespace PLangTests.Modules.DbModule
 
 			var encryption = new Encryption(settings);
 			
-			db = new SQLiteConnection("DataSource=:memory:");
+			db = new SqliteConnection("DataSource=:memory:");
 			eventSourceRepository = new SqliteEventSourceRepository(fileSystem, encryption);
 			eventSourceRepository.DataSource = datasources[0];
 

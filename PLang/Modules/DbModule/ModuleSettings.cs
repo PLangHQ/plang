@@ -1,17 +1,13 @@
-﻿using Microsoft.Extensions.Logging;
-using PLang.Building.Model;
+﻿using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Utils;
-using System;
 using System.Data;
-using System.Data.SQLite;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using static PLang.Modules.DbModule.ModuleSettings;
 
 namespace PLang.Modules.DbModule
 {
@@ -40,7 +36,7 @@ namespace PLang.Modules.DbModule
 		public record DataSource(string Name, string TypeFullName, string ConnectionString, string DbName, string SelectTablesAndViews, string SelectColumns, bool KeepHistory = true, bool IsDefault = false);
 
 
-		public async Task CreateDataSource(string dataSourceName = "data")
+		public async Task CreateDataSource(string dataSourceName = "data", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
 		{
 			var dataSources = await GetDataSourcesByType();
 			var dataSource = dataSources.FirstOrDefault(p => p.Name.ToLower() == dataSourceName.ToLower());
@@ -48,45 +44,41 @@ namespace PLang.Modules.DbModule
 				logger.LogWarning($"Data source with the name '{dataSourceName}' already exists.");
 				return;
 			}
-
 			var listOfDbSupported = GetSupportedDbTypes();
-			
 			if (listOfDbSupported.Count == 1 && dataSources.Count == 0)
 			{
 				string dbPath = Path.Join(".db", "data.sqlite");
 				AppContext.TryGetSwitch(ReservedKeywords.Test, out bool inMemory);
 				if (inMemory)
 				{
-					dbPath = "data;Mode=Memory;Cache=Shared";
+					dbPath = "Data Source=InMemoryDataDb;Mode=Memory;Cache=Shared;";
 				}
-				await SetDatabaseConnectionString("data", typeof(SQLiteConnection).FullName, "data.sqlite", $"Data Source={dbPath};Version=3;", true, true);
+				await SetDatabaseConnectionString("data", typeof(SqliteConnection).FullName, "data.sqlite", $"Data Source={dbPath};", true, true);
 				return;
 			}
-
+			
 			if (listOfDbSupported.Count == 1)
 			{
 				throw new AskUserSqliteName(fileSystem.RootDirectory, $"What is the name you want to give to your database?", SetDatabaseConnectionString);
 			}
 
 			var supportedDbTypes = GetSupportedDbTypesAsString();
-			throw new AskUserDatabaseType(aiService, supportedDbTypes, dataSourceName, @$"------ Data source setup --------------
+			throw new AskUserDatabaseType(aiService, setAsDefaultForApp, keepHistoryEventSourcing, supportedDbTypes, dataSourceName, @$"------ Data source setup --------------
+Lets create connection for data source: {dataSourceName}
+
 Following databases are supported:
 {supportedDbTypes}. 
-
-Learn how to add more databases at https://github.com/PLangHQ/plang/blob/main/Documentation/Services.md
 
 Type in what database you would like to use?
 
 You can set the connection as the default, or not to keep history
 
-Options:
-	- set as default datasource
-	- keep history, this enables event sourcing for your data
-
 Examples you can type in:
 	sqllite
-	postresql, set as default, dont keep history
+	postgresql
 
+
+If you want to add a different database type, check https://github.com/PLangHQ/plang/blob/main/Documentation/Services.md#db-service
 ", AddDataSource);
 		}
 
@@ -104,7 +96,7 @@ Examples you can type in:
 			if (!IsModuleInstalled(typeFullName))
 			{
 				var listOfDbSupported = GetSupportedDbTypesAsString();
-				throw new AskUserDatabaseType(aiService, listOfDbSupported, dataSourceName, $"{typeFullName} is not supported. Following databases are supported: {listOfDbSupported}. If you need {typeFullName}, you must install it into modules folder in your app using {nugetCommand}.", AddDataSource);
+				throw new AskUserDatabaseType(aiService, isDefault, keepHistory, listOfDbSupported, dataSourceName, $"{typeFullName} is not supported. Following databases are supported: {listOfDbSupported}. If you need {typeFullName}, you must install it into modules folder in your app using {nugetCommand}.", AddDataSource);
 			}
 
 
@@ -164,7 +156,7 @@ Be concise"));
 			var dataSource = dataSources.FirstOrDefault(p => p.Name == dataSourceName);
 			if (dataSource != null)
 			{
-				throw new AskUserDbConnectionString(dataSourceName, typeFullName, regexToExtractDatabaseNameFromConnectionString, keepHistory, isDefault, $"{dataSourceName} alrady exists. Please choose a different name.", SetDatabaseConnectionString);
+				throw new AskUserDbConnectionString(dataSourceName, typeFullName, regexToExtractDatabaseNameFromConnectionString, keepHistory, isDefault, $"{dataSourceName} already exists. Please choose a different name.", SetDatabaseConnectionString);
 			}
 			
 			dataSource = new DataSource(dataSourceName, typeFullName, databaseConnectionString.Replace(fileSystem.RootDirectory, ""), dbName,
@@ -233,9 +225,9 @@ Be concise"));
 			typeHelper.GetTypesByType(typeof(IDbConnection)).ToList();
 			var types = new List<Type>();
 			types.Add(db.GetType());
-			if (types.FirstOrDefault(p => p == typeof(SQLiteConnection)) == null)
+			if (types.FirstOrDefault(p => p == typeof(SqliteConnection)) == null)
 			{
-				types.Add(typeof(SQLiteConnection));
+				types.Add(typeof(SqliteConnection));
 			}
 			return types;
 		}
@@ -261,7 +253,7 @@ Be concise"));
 		private string? Test(Type dbType, string connectionString)
 		{
 			if (connectionString.Contains(";Mode=Memory;")) return null;
-			if (dbType == typeof(SQLiteConnection))
+			if (dbType == typeof(SqliteConnection))
 			{
 				var startIdx = connectionString.IndexOf('=') + 1;
 				var endIdx = connectionString.IndexOf(';') - startIdx;

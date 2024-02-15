@@ -1,21 +1,24 @@
 ﻿using Newtonsoft.Json;
+using PLang.Interfaces;
 using PLang.Utils;
 using System.Net;
 using System.Text;
 
 namespace PLang.Exceptions.Handlers
 {
-	public class HttpExceptionHandler : IExceptionHandler
+	public class HttpExceptionHandler : ExceptionHandler, IExceptionHandler
 	{
 		private readonly HttpListenerContext httpListenerContext;
 
-		public HttpExceptionHandler(HttpListenerContext httpListenerContext)
+		public HttpExceptionHandler(HttpListenerContext httpListenerContext, IAskUserHandler askUserHandler) : base(askUserHandler)
 		{
 			this.httpListenerContext = httpListenerContext;
 		}
 
-		public async Task Handle(Exception exception, int statusCode, string statusText, string message)
+		public async Task<bool> Handle(Exception exception, int statusCode, string statusText, string message)
 		{
+			if (await base.Handle(exception)) { return true; }
+
 			var resp = httpListenerContext.Response;
 			resp.StatusCode = statusCode;
 			resp.StatusDescription = statusText;
@@ -41,6 +44,7 @@ namespace PLang.Exceptions.Handlers
 			{
 				Console.WriteLine(ex2);
 			}
+			return false;
 		}
 	}
 }

@@ -41,7 +41,7 @@ namespace PLang.Services.IdentityService
 		private Setting? GetSetting()
 		{
 			var setting = settingsRepository.GetSettings().FirstOrDefault(p => p.ClassOwnerFullName == this.GetType().FullName && p.Key == SettingKey);
-			if (setting != null && PLangSigningService.VerifySignature(appCache, context, setting.Value, "Identity", GetType().FullName, setting.SignatureData).Result == null)
+			if (setting != null && PLangSigningService.VerifySignature(appCache, context, setting.Value, "Identity", GetType().FullName, setting.Signature).Result == null)
 			{
 				logger.LogWarning($"Signature for {setting.Key} is not valid. It has been modified outside of plang language.");
 			}

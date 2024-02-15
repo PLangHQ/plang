@@ -4,8 +4,6 @@ using PLang;
 using System.Diagnostics;
 using PLang.Utils;
 
-Console.WriteLine("Hello Render.com");
-
 var debug = args.FirstOrDefault(p => p == "--csdebug") != null;
 if (debug && !Debugger.IsAttached)
 {

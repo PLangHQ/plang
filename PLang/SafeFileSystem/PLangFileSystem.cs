@@ -49,10 +49,25 @@ namespace PLang.SafeFileSystem
 			FileSystemWatcher = new PLangFileSystemWatcherFactory(this);
 
 			this.IsRootApp = (relativeAppPath == Path.DirectorySeparatorChar.ToString());
-			this.SharedPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "plang");
-			if (SharedPath == "plang")
+			if (AppContext.GetData("sharedPath") != null)
 			{
-				SharedPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "plang");
+				this.SharedPath = AppContext.GetData("sharedPath")!.ToString()!;
+			}
+			else if (Environment.GetEnvironmentVariable("sharedpath") != null)
+			{
+				this.SharedPath = Environment.GetEnvironmentVariable("sharedpath")!;
+			}
+			else
+			{
+				this.SharedPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "plang");
+				if (string.IsNullOrEmpty(SharedPath) || SharedPath == "plang")
+				{
+					SharedPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "plang");
+					if (string.IsNullOrEmpty(SharedPath) || SharedPath == "plang")
+					{
+						SharedPath = AppDomain.CurrentDomain.BaseDirectory;
+					}
+				}
 			}
 			this.GoalsPath = this.RootDirectory;
 			this.BuildPath = Path.Join(this.GoalsPath, ".build");
