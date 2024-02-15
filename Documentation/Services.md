@@ -108,6 +108,8 @@ The plang language asks the user for information when it needs it. You need to i
 - inject askuser, /myAskUser/myAskUser.dll
 ```
 
+You can check out [AskUserMessage](https://github.com/PLangHQ/services/tree/main/PLang.AskUserMessage), an implementation of using Message and plang code to implement a service. 
+
 ### encryption Service
 
 The plang language uses AES256 for encryption. The private key is stored using the ISettingsRepository in the default implementation. 
