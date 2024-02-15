@@ -127,6 +127,7 @@ Archiver service handles compression and decomression in the plang language. Pla
 ```plang
 - inject archiver, /myarchiver/myarchiver.dll
 ```
+Checkout the [plang implementation](https://github.com/PLangHQ/plang/blob/main/PLang/Services/ArchiveService/ZipArchive.cs)
 
 ### logger Service
 
@@ -135,21 +136,57 @@ You can overwrite the logger in the language by implementing the Microsoft.Exten
 ```plang
 - inject logger, /MyLogger/MyLogger.dll
 ```
+Checkout the [plang implementation](https://github.com/PLangHQ/plang/blob/main/PLang/Services/LoggerService/Logger.cs)
 
-#Implementing a Custom Service
-A step-by-step guide to creating a custom service. For example, creating a custom logger:
+## Implementing a Custom Service
+
+Step-by-step:
+
+- You need to have [Visual Studio Community](https://visualstudio.microsoft.com/vs/community/) installed (it's free). 
+- [Download the PLang](https://github.com/PLangHQ/plang/tree/main) project
+- Create a new project in Visual Studio, give it a name. For this example, `MyAmazingCompression`
+- Add the PLang project as reference 
+- Create your service.cs file, e.g. `MyAmazingCompression.cs`
+- Implement the interface for the service you want to inject.
+
+For example, creating a custom logger:
 
 ```csharp
-public class MyLogger<T> : ILogger<T>
+using PLang.Interfaces;
+
+public class MyAmazingCompression : IArchiver
 {
-     public virtual void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+    public async Task CompressDirectory(string sourceDirectoryName, string destinationArchiveFileName, int compressionLevel = 0, bool includeBaseDirectory = true)
+	{		
+        // Custom logic
+    }
+    public async Task CompressFile(string filePath, string saveToPath, int compressionLevel = 0)
     {
-        // Custom logging logic
+        // Custom logic
+    }
+
+    public async Task CompressFiles(string[] filePaths, string saveToPath, int compressionLevel = 0)
+    {
+        // Custom logic
+    }
+
+    public async Task DecompressFile(string sourceArchiveFileName, string destinationDirectoryName, bool overwrite = false)
+    {
+        // Custom logic
     }
 }
 ```
+Now compile the project, copy the `MyAmazingCompression.dll` into your `.services/MyAmazingCompression/` folder.
 
-#Using NuGet Packages in PLang
+Now add to your Start.goal
+```plang
+Start
+...
+- inject archiver, MyAmazingCompression
+...
+```
+
+## Using NuGet Packages in PLang
 
 PLang supports the integration of NuGet libraries, especially those implementing service contracts like `IDbConnection`. To use a NuGet library in PLang:
 
