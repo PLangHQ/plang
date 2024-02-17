@@ -16,7 +16,7 @@ using System.Text.RegularExpressions;
 namespace PLang.Building
 {
 
-    public interface IGoalBuilder
+	public interface IGoalBuilder
 	{
 		Task BuildGoal(IServiceContainer container, string goalFileAbsolutePath, int errorCount = 0);
 	}
@@ -66,17 +66,9 @@ namespace PLang.Building
 
 				for (int i = 0; i < goal.GoalSteps.Count; i++)
 				{
-					try
-					{
-						await stepBuilder.BuildStep(goal, i);
-						
-						WriteToGoalPrFile(goal);
-					} catch (RunStepAgainException)
-					{
-						i--;
-					}
+					await stepBuilder.BuildStep(goal, i);
 
-
+					WriteToGoalPrFile(goal);
 				}
 				RemoveUnusedPrFiles(goal);
 
@@ -108,7 +100,7 @@ namespace PLang.Building
 					goal.Injections.Add(dependancyInjection);
 				}
 
-			}			
+			}
 
 			foreach (var injection in goal.Injections)
 			{
@@ -160,7 +152,7 @@ NoCacheOrNoStore: no-cache or no-store"));
 				promptMessage.Add(new LlmMessage("user", goal.GetGoalAsString()));
 				var llmRequest = new LlmRequest("GoalApiInfo", promptMessage);
 
-			
+
 				var result = await aiService.Value.Query<GoalApiInfo>(llmRequest);
 				if (result != null)
 				{

@@ -22,7 +22,7 @@ namespace PLang.Exceptions.Handlers
 			var resp = httpListenerContext.Response;
 			resp.StatusCode = statusCode;
 			resp.StatusDescription = statusText;
-			
+
 			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebug);
 
 			var response = new Dictionary<string, object>();
@@ -39,11 +39,13 @@ namespace PLang.Exceptions.Handlers
 					await writer.WriteAsync(JsonConvert.SerializeObject(response));
 					await writer.FlushAsync();
 				}
-			}
-			catch (Exception ex2)
+			} catch (Exception ex)
 			{
-				Console.WriteLine(ex2);
+				Console.WriteLine(JsonConvert.SerializeObject(response));
+				Console.WriteLine(ex);
+			
 			}
+
 			return false;
 		}
 	}

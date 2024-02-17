@@ -124,7 +124,7 @@ namespace PLang.Runtime
 			int index = 0;
 			string dictKey = "";
 			string? jsonPath = null;
-			string variableName = keySplit[0];
+			string variableName = keySplit[0].TrimStart('%').TrimEnd('%');
 			if (keySplit.Length > 1 && Regex.IsMatch(keySplit[1], "^[0-9]+$"))
 			{
 				variableName += $"[{keySplit[1]}]";

@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using OpenAI_API.Moderation;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.EventSourceService;
 using PLang.Utils;
@@ -297,7 +298,7 @@ namespace PLang.Modules.DbModule
 				{
 					if (this.function.ReturnValue.Count == 1) return rows;
 
-					var dict = new Dictionary<string, object?>();
+					var dict = new ReturnDictionary<string, object?>();
 					foreach (var rv in this.function.ReturnValue)
 					{						
 						dict.Add(rv.VariableName, GetDefaultValue(rv.Type));

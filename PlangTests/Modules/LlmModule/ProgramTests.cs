@@ -33,7 +33,7 @@ namespace PLangTests.Modules.LlmModule
 				return response;
 			});
 
-			p = new Program(aiService, identityService);
+			p = new Program(aiService, identityService, settings);
 			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, aiService, settings, appCache, null);
 		}
 

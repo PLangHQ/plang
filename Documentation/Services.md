@@ -182,8 +182,16 @@ Now add to your Start.goal
 ```plang
 Start
 ...
-- inject archiver, MyAmazingCompression
+- inject archiver, MyAmazingCompression, set as default
 ...
+```
+
+Now when you use the compression library, you will use MyAmazingCompression
+```plang
+CompressFile
+/ will compress using MyAmazingCompression
+- compress file.txt to file.amazing 
+- uncompress file.amazing to file_uncompressed.txt
 ```
 
 ## Using NuGet Packages in PLang

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using PLang.Building.Events;
 using PLang.Building.Parsers;
+using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
@@ -67,6 +68,7 @@ namespace PLang.Building
 
 				logger.LogDebug("\n\nBuild done - Time:" + stopwatch.Elapsed.TotalSeconds.ToString("#,##.##") + " sec");
 			}
+			catch (StopBuilderException) { }
 			catch (Exception ex)
 			{
 				await exceptionHandler.Handle(ex, 500, "error", ex.Message);

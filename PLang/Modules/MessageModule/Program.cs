@@ -156,10 +156,16 @@ namespace PLang.Modules.MessageModule
 
 					//For preventing multiple calls on same message. I don't think this is the correct way, but only way I saw.
 					if (memoryCache.Contains("NostrId_" + hash)) return;
-					memoryCache.Add("NostrId_" + hash, true, DateTimeOffset.UtcNow.AddMinutes(5));
+					memoryCache.Add("NostrId_" + hash, true, DateTimeOffset.UtcNow.AddMinutes(5));					
 
 					var parameters = new Dictionary<string, object?>();
-					parameters.Add(contentVariableName.Replace("%", ""), content);
+					if (JsonHelper.IsJson(content, out object? parsedObject))
+					{
+						parameters.Add(contentVariableName.Replace("%", ""), parsedObject);
+					} else
+					{
+						parameters.Add(contentVariableName.Replace("%", ""), content);
+					}					
 					parameters.Add(eventVariableName, ev);
 					parameters.Add(senderVariableName, ev.Pubkey);
 
@@ -178,7 +184,7 @@ namespace PLang.Modules.MessageModule
 						}
 					}
 
-					var identites = signingService.VerifySignature(content, "EncryptedDm", ev.Pubkey, validationKeyValues).Result;
+					var identites = signingService.VerifySignature(settings.GetSalt(), content, "EncryptedDm", ev.Pubkey, validationKeyValues).Result;
 					parameters.AddOrReplace(identites);
 
 					pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName, parameters, goal).Wait();

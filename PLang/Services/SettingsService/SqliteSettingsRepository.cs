@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Microsoft.Data.Sqlite;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
+using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Utils;
@@ -9,35 +10,41 @@ using System.Reflection;
 
 namespace PLang.Services.SettingsService
 {
-    public class SqliteSettingsRepository : ISettingsRepository
+	public class SqliteSettingsRepository : ISettingsRepository
 	{
 		private readonly IPLangFileSystem fileSystem;
 		private readonly PLangAppContext context;
+		private readonly ILogger logger;
 		private bool inMemory = false;
 		private readonly string contextKey = "__SqliteSettingsRepository_DataSource__";
 		
-		public SqliteSettingsRepository(IPLangFileSystem fileSystem, PLangAppContext context)
+		public SqliteSettingsRepository(IPLangFileSystem fileSystem, PLangAppContext context, ILogger logger)
 		{
 			this.fileSystem = fileSystem;
-			this.context = context;			
-
+			this.context = context;
+			this.logger = logger;
 			AppContext.TryGetSwitch(ReservedKeywords.Test, out inMemory);
 
 			context.AddOrReplace(contextKey, LocalDataSourcePath);
 
 			Init();
 		}
+		
 
-		public void UseSharedDataSource(bool activateSharedDataSource = false)
+		public void SetSharedDataSource(string? appId = null)
 		{
-			if (activateSharedDataSource)
+			if (appId != null)
 			{
-				context.AddOrReplace(contextKey, SharedDataSourcePath);
+				var sharedPath = GetSharedDataSourcePath(appId);
+				CheckSettingsTable(sharedPath);
+				context.AddOrReplace(contextKey, sharedPath);
 			} else
 			{
 				context.AddOrReplace(contextKey, LocalDataSourcePath);
 			}			
 		}
+
+		
 
 		public string DataSource
 		{
@@ -73,37 +80,24 @@ namespace PLang.Services.SettingsService
 			}
 		}
 
-		public string SharedDataSourcePath
+		public string GetSharedDataSourcePath(string appId) 
 		{
-			get
+			if (string.IsNullOrEmpty(appId))
 			{
-				if (inMemory)
-				{
-					return "Data Source=InMemorySharedDb;Mode=Memory;Cache=Shared;";
-				}
-
-				string shareDataSourcePath = Path.Join(fileSystem.SharedPath, ".db", "system.sqlite");
-				return $"Data Source={shareDataSourcePath};";
+				throw new RuntimeException("name of share data source cannot be empty");
 			}
+
+			if (inMemory)
+			{
+				return "Data Source=InMemorySharedDb" + appId + ";Mode=Memory;Cache=Shared;";
+			}
+
+			string sharedDataSourcePath = Path.Join(fileSystem.SharedPath, appId, ".db", "system.sqlite");
+			return $"Data Source={sharedDataSourcePath};";
+			
 		}
 
-		private void CreateLlmCacheTable(string datasource)
-		{
-			using (IDbConnection connection = new SqliteConnection(datasource))
-			{
-				string sql = $@"CREATE TABLE IF NOT EXISTS LlmCache (
-					Id INTEGER PRIMARY KEY,
-					Hash TEXT NOT NULL,
-					LlmQuestion TEXT NOT NULL,
-					Created DATETIME DEFAULT CURRENT_TIMESTAMP,
-					LastUsed DATETIME DEFAULT CURRENT_TIMESTAMP
-				);
-				CREATE UNIQUE INDEX IF NOT EXISTS idx_hash ON LlmCache (Hash);
-				";
-				connection.Execute(sql);
-
-			}
-		}
+		
 		private void CreateSettingsTable(string datasource)
 		{
 			var dbPath = datasource.Between("=", ";");
@@ -140,7 +134,7 @@ CREATE TABLE IF NOT EXISTS Settings (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassOwnerFullName], [ValueType], [Key]);
 ";
-				connection.Execute(sql);
+				int rowsAffected = connection.Execute(sql);
 
 			}
 		}
@@ -149,10 +143,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 		public void Init()
 		{
 			CheckSettingsTable(LocalDataSourcePath);
-			CheckSettingsTable(SharedDataSourcePath);
-
-			CreateLlmCacheTable(SharedDataSourcePath);
-
 		}
 
 		private void CheckSettingsTable(string dataSource)
@@ -219,38 +209,15 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 			}
 		}
 
-		public LlmRequest? GetLlmRequestCache(string hash)
-		{
-			using (IDbConnection connection = new SqliteConnection(SharedDataSourcePath))
-			{
-				var cache = connection.QueryFirstOrDefault<dynamic>("SELECT * FROM LlmCache WHERE Hash=@hash", new { hash });
-				if (cache == null) return null;
-
-				connection.Execute("UPDATE LlmCache SET LastUsed=CURRENT_TIMESTAMP WHERE Id=@id", new { id = cache.Id });
-				return JsonConvert.DeserializeObject<LlmRequest>(cache.LlmQuestion);
-			}
-		}
-		public void SetLlmRequestCache(string hash, LlmRequest llmQuestion)
-		{
-			using (IDbConnection connection = new SqliteConnection(SharedDataSourcePath))
-			{
-				var cache = connection.QueryFirstOrDefault<dynamic>("SELECT * FROM LlmCache WHERE Hash=@hash", new { hash });
-				if (cache != null) return;
-
-				connection.Execute("INSERT INTO LlmCache (Hash, LlmQuestion) VALUES (@hash, @llmQuestion)",
-						new { hash, llmQuestion = JsonConvert.SerializeObject(llmQuestion) });
-			}
-		}
+		
 
 
 		public IEnumerable<Setting> GetSettings()
 		{
 			using (IDbConnection connection = new SqliteConnection(DataSource))
 			{
-				return connection.Query<Setting>("SELECT * FROM Settings");
-			
+				return connection.Query<Setting>("SELECT * FROM Settings");			
 			}
-
 		}
 
 		public void Remove(Setting? setting)
@@ -270,14 +237,30 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 		{
 			using (IDbConnection connection = new SqliteConnection(DataSource))
 			{
-				connection.Execute(@"
+				try
+				{
+					int affectedRows = connection.Execute(@"
 					INSERT OR IGNORE INTO Settings (AppId, ClassOwnerFullName, ValueType, [Key], [Value], SignatureData, Created) VALUES (@AppId, @ClassOwnerFullName, @ValueType, @Key, @Value, @SignatureData, @Created)
 					ON CONFLICT(AppId, [ClassOwnerFullName], [ValueType], [Key]) DO UPDATE SET Value = excluded.Value, SignatureData=@SignatureData;
-					", new { setting.AppId, setting.ClassOwnerFullName, setting.ValueType, setting.Key, setting.Value, SignatureData = JsonConvert.SerializeObject(setting.Signature), setting.Created });
-
+					", new { setting.AppId, setting.ClassOwnerFullName, setting.ValueType, setting.Key, setting.Value, setting.SignatureData, setting.Created });
+				} catch (Exception ex)
+				{
+					int i =0;
+				}
 			}
 		}
 
-		
+		public Setting? Get(string salt, string? fullName, string? type, string? key)
+		{
+			var setting = GetSettings().FirstOrDefault(p => p.ClassOwnerFullName == fullName && p.ValueType == type && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+			/*
+			var verifiedData = signingService.VerifySignature(salt, setting.Value, "Setting", fullName, setting.Signature).Result;
+			if (verifiedData == null)
+			{
+				logger.LogWarning($"Signature for setting {setting.Key} | {setting.ClassOwnerFullName} is not valid.");
+			}
+			*/
+			return setting;
+		}
 	}
 }

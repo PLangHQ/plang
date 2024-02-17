@@ -11,6 +11,7 @@ using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.AppsRepository;
 using PLang.Services.CachingService;
+using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
 using PLang.Services.SigningService;
@@ -40,7 +41,7 @@ namespace PLangTests
 		protected PrParser prParser;
 		protected PLangAppContext context;
 		protected HttpClient httpClient;
-		protected CacheHelper cacheHelper;
+		protected LlmCaching llmCaching;
 		protected IServiceContainerFactory containerFactory;
 		protected MemoryStack memoryStack;
 		protected VariableHelper variableHelper;
@@ -74,7 +75,7 @@ namespace PLangTests
 
 			container.RegisterInstance<IPLangFileSystem>(fileSystem);
 			container.RegisterInstance<IServiceContainer>(container);
-			this.settingsRepository = new SqliteSettingsRepository(fileSystem, context);
+			this.settingsRepository = new SqliteSettingsRepository(fileSystem, context, logger);
 			container.RegisterInstance<ISettingsRepository>(settingsRepository);
 
 			containerFactory = Substitute.For<IServiceContainerFactory>();
@@ -163,8 +164,8 @@ namespace PLangTests
 			prParser = new PrParser(fileSystem, settings);
 			container.RegisterInstance(prParser);
 
-			cacheHelper = new CacheHelper(fileSystem, settings);
-			container.RegisterInstance(cacheHelper);
+			llmCaching = new LlmCaching(fileSystem, settings);
+			container.RegisterInstance(llmCaching);
 
 			variableHelper = new VariableHelper(context, memoryStack, settings);
 			container.RegisterInstance(variableHelper);

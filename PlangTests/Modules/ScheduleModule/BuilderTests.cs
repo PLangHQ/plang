@@ -24,7 +24,7 @@ namespace PLang.Modules.ScheduleModule.Tests
 			base.Initialize();
 
 			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var llmService = new OpenAiService(settings, logger, cacheHelper, context);
+			var llmService = new OpenAiService(settings, logger, llmCaching, context);
 
 			typeHelper = new TypeHelper(fileSystem, settings);
 

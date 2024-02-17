@@ -10,34 +10,28 @@ using System.Text.RegularExpressions;
 namespace PLang.Utils
 {
 
-    public class Settings : ISettings
+	public class Settings : ISettings
 	{
 		private readonly ISettingsRepository settingsRepository;
 		private readonly IPLangFileSystem fileSystem;
-		private readonly IPLangSigningService signingService;
 		private readonly ILogger logger;
 		private readonly PLangAppContext context;
+		private readonly IPLangIdentityService identityService;
+		private readonly IPLangSigningService signingService;
 
-		public Settings(ISettingsRepository settingsRepository, IPLangFileSystem fileSystem, IPLangSigningService signingService, ILogger logger, PLangAppContext context)
+		public Settings(ISettingsRepository settingsRepository, IPLangFileSystem fileSystem, ILogger logger, PLangAppContext context, IPLangIdentityService identityService, IPLangSigningService signingService)
 		{
 			this.settingsRepository = settingsRepository;
 			this.fileSystem = fileSystem;
-			this.signingService = signingService;
 			this.logger = logger;
 			this.context = context;
-
+			this.identityService = identityService;
+			this.signingService = signingService;
+			string appId = AppId;
 			LoadSalt();
 		}
 
-		public LlmRequest? GetLlmRequest(string hash)
-		{
-			return settingsRepository.GetLlmRequestCache(hash);
-		}
 
-		public void SetLlmQuestion(string hash, LlmRequest question)
-		{
-			settingsRepository.SetLlmRequestCache(hash, question);
-		}
 		public string AppId
 		{
 			get
@@ -74,15 +68,16 @@ namespace PLang.Utils
 
 		private void SetInternal<T>(Type callingType, string type, string key, T? value)
 		{
-			if (string.IsNullOrEmpty(callingType.FullName))
+			if (string.IsNullOrEmpty(callingType.FullName) || !callingType.FullName.Contains("."))
 			{
-				throw new BuilderException("Class must have a name and namespace");
+				throw new BuilderException($"Class '{callingType}' must have a name and namespace");
 			}
 
 			string settingValue = JsonConvert.SerializeObject(value);
-			var signatureData = signingService.Sign(settingValue, "Setting", callingType.FullName);
 
-			var setting = new Setting(AppId, callingType.FullName, type, key, settingValue, signatureData);
+			var signature = ""; //todo sign settings
+			var setting = new Setting(AppId, callingType.FullName, type, key, settingValue);
+			
 			settingsRepository.Set(setting);
 
 			var settings = settingsRepository.GetSettings().ToList();
@@ -125,31 +120,16 @@ namespace PLang.Utils
 			SetInternal<T>(callingType, typeName, key, value);
 		}
 
-		private Setting? GetSetting<T>(Type callingType, string? key = null)
+
+		public List<T> GetValues<T>(Type callingType, string? key = null)
 		{
 			var type = typeof(T).FullName;
 			if (key == null) key = type;
 
-			var settings = settingsRepository.GetSettings();
-			var setting = settings.FirstOrDefault(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
-			if (setting == null) return null;
+			var setting = settingsRepository.Get(GetSalt(), callingType.FullName, type, key);
+			if (setting == null) return new();
 
-			var verifiedData = signingService.VerifySignature(setting.Value, "Setting", callingType.FullName, setting.Signature).Result;
-			if (verifiedData == null) {
-				logger.LogWarning($"Signature for setting {setting.Key} | {setting.ClassOwnerFullName} is not valid.");
-			}
-			return setting;
-		}
-
-		public List<T> GetValues<T>(Type callingType)
-		{
-			var type = typeof(T).FullName;
-
-			var settings = settingsRepository.GetSettings();
-			var setts = settings.Where(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type).ToList();
-			if (setts.Count == 0) return new();
-
-			List<T> list = JsonConvert.DeserializeObject<List<T>>(setts[0].Value) ?? new();
+			List<T> list = JsonConvert.DeserializeObject<List<T>>(setting.Value) ?? new();
 			return list;
 		}
 
@@ -157,7 +137,8 @@ namespace PLang.Utils
 		{
 			var type = typeof(T).FullName;
 			if (key == null) key = type;
-			var setting = GetSetting<T>(callingType, key);
+
+			var setting = settingsRepository.Get(GetSalt(), callingType.FullName, type, key);
 			if (setting == null) return;
 
 			settingsRepository.Remove(setting);
@@ -172,8 +153,7 @@ namespace PLang.Utils
 			}
 			var type = defaultValue.GetType().FullName;
 
-			var settings = settingsRepository.GetSettings();
-			var setting = settings.FirstOrDefault(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+			var setting = settingsRepository.Get(GetSalt(), callingType.FullName, type, key);
 			if (setting == null)
 			{
 				throw new MissingSettingsException(callingType, type, key, defaultValue, explain, SetInternal);
@@ -216,23 +196,27 @@ namespace PLang.Utils
 			return settingsRepository.GetSettings();
 		}
 
-		private void LoadSalt()
+		public string GetSalt()
 		{
 			var setting = GetAllSettings().FirstOrDefault(p => p.ClassOwnerFullName == GetType().FullName && p.ValueType == typeof(string).ToString() && p.Key.Equals("Salt", StringComparison.OrdinalIgnoreCase));
 			if (setting != null)
 			{
-				context.AddOrReplace(ReservedKeywords.Salt, setting.Value);
-				return;
+				return setting.Value;
 			}
 
 			var salt = GenerateSalt(32);
 
-			var signatureData = signingService.SignWithTimeout(salt, "Salt", GetType().FullName, SystemTime.OffsetUtcNow().AddYears(500));
-
-			setting = new Setting("1", GetType().FullName, salt.GetType().ToString(), "Salt", salt, signatureData);
+		
+			setting = new Setting("1", GetType().FullName, salt.GetType().ToString(), "Salt", salt);
 			settingsRepository.Set(setting);
 
-			context.AddOrReplace(ReservedKeywords.Salt, salt);
+			return setting.Value;
+		}
+
+		private void LoadSalt()
+		{
+			var setting = GetSalt();
+			context.AddOrReplace(ReservedKeywords.Salt, setting);
 		}
 
 		private string GenerateSalt(int length)

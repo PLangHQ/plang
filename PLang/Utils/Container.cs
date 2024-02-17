@@ -178,8 +178,7 @@ namespace PLang.Utils
 			container.Register<IStepBuilder, StepBuilder>();
 			container.Register<IInstructionBuilder, InstructionBuilder>();
 			container.Register<IErrorHelper, ErrorHelper>();
-			//container.Register<SettingsBuilder, SettingsBuilder>();
-			container.Register<CacheHelper, CacheHelper>();
+			container.Register<LlmCaching, LlmCaching>();
 			container.Register<VariableHelper, VariableHelper>();
 
 			container.Register<IPLangAppsRepository, PLangAppsRepository>();

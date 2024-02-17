@@ -1,11 +1,16 @@
-﻿using NBitcoin.Secp256k1;
+﻿using BCrypt.Net;
+using Microsoft.IdentityModel.Tokens;
+using NBitcoin.Secp256k1;
 using Nethereum.Signer;
 using Nethereum.Util;
 using Newtonsoft.Json;
+using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Services.IdentityService;
 using PLang.Utils;
 using System.Text;
+using static Dapper.SqlMapper;
+using Identity = PLang.Interfaces.Identity;
 
 namespace PLang.Services.SigningService
 {
@@ -20,11 +25,11 @@ namespace PLang.Services.SigningService
 
 	public interface IPLangSigningService
 	{
-		Dictionary<string, object> Sign(string content, string method, string url, string contract = "C0", string? sharedIdentity = null);
 		Dictionary<string, object> Sign(byte[] seed, string content, string method, string url, string contract = "C0");
+		Dictionary<string, object> Sign(string content, string method, string url, string contract = "C0", string? appId = null);
 		Dictionary<string, object> SignWithTimeout(byte[] seed, string content, string method, string url, DateTimeOffset expires, string contract = "C0");
-		Dictionary<string, object> SignWithTimeout(string content, string method, string url, DateTimeOffset expires, string contract = "C0", string? sharedIdentity = null);
-		Task<Dictionary<string, object?>> VerifySignature(string body, string method, string url, Dictionary<string, object> validationKeyValues);
+		Dictionary<string, object> SignWithTimeout(string content, string method, string url, DateTimeOffset expires, string contract = "C0", string? appId = null);
+		Task<Dictionary<string, object?>> VerifySignature(string salt, string body, string method, string url, Dictionary<string, object> validationKeyValues);
 	}
 
 	public class PLangSigningService : IPLangSigningService
@@ -40,37 +45,31 @@ namespace PLang.Services.SigningService
 			this.context = context;
 		}
 
-		public Dictionary<string, object> SignWithTimeout(string content, string method, string url, DateTimeOffset expires, string contract = "C0", string? sharedIdentity = null)
+		public Dictionary<string, object> SignWithTimeout(string content, string method, string url, DateTimeOffset expires, string contract = "C0", string? appId = null)
 		{
-			return SignInternal(content, method, url, contract, expires, sharedIdentity);
+			return SignInternal(content, method, url, contract, expires, appId);
 		}
 		public Dictionary<string, object> SignWithTimeout(byte[] seed, string content, string method, string url, DateTimeOffset expires, string contract = "C0")
 		{
 			return SignInternal(seed, content, method, url, contract, expires);
 		}
-		public Dictionary<string, object> Sign(string content, string method, string url, string contract = "C0", string? sharedIdentity = null)
+		public Dictionary<string, object> Sign(string content, string method, string url, string contract = "C0", string? appId = null)
 		{
-			return SignInternal(content, method, url, contract, null, sharedIdentity);
+			return SignInternal(content, method, url, contract, null, appId);
 		}
 		public Dictionary<string, object> Sign(byte[] seed, string content, string method, string url, string contract = "C0")
 		{
 			return SignInternal(seed, content, method, url, contract, null);
 		}
 
-		private Dictionary<string, object> SignInternal(string content, string method, string url, string contract = "C0", DateTimeOffset? expires = null, string? sharedIdentity = null)
+		private Dictionary<string, object> SignInternal(string content, string method, string url, string contract = "C0", DateTimeOffset? expires = null, string? appId = null)
 		{
-			try
-			{
-				identityService.UseSharedIdentity(sharedIdentity);
-				var identity = identityService.GetCurrentIdentityWithPrivateKey();
-				var seed = Encoding.UTF8.GetBytes(identity.Value!.ToString()!);
-				return SignInternal(seed, content, method, url, contract, expires);
-			}
-			finally
-			{
-				identityService.UseSharedIdentity(null);
-			}
+			identityService.UseSharedIdentity(appId);
+			var identity = identityService.GetCurrentIdentityWithPrivateKey();
+			var seed = Encoding.UTF8.GetBytes(identity.Value!.ToString()!);
+			return SignInternal(seed, content, method, url, contract, expires);
 		}
+
 		private Dictionary<string, object> SignInternal(byte[] seed, string content, string method, string url, string contract = "C0", DateTimeOffset? expires = null)
 		{
 			// TODO: signing a message should trigger a AskUserException. 
@@ -115,16 +114,16 @@ namespace PLang.Services.SigningService
 
 		}
 
-		
-		public async Task<Dictionary<string, object?>> VerifySignature(string body, string method, string url, Dictionary<string, object> validationKeyValues)
+
+		public async Task<Dictionary<string, object?>> VerifySignature(string salt, string body, string method, string url, Dictionary<string, object> validationKeyValues)
 		{
-			return await VerifySignature(appCache, context, body, method, url, validationKeyValues);
+			return await VerifySignature(appCache, salt, body, method, url, validationKeyValues);
 		}
 
 		/*
 		 * Return Identity(string) if signature is valid, else null  
 		 */
-		public static async Task<Dictionary<string, object?>> VerifySignature(IAppCache appCache, PLangAppContext context, string body, string method, string url, Dictionary<string, object> validationKeyValues)
+		public static async Task<Dictionary<string, object?>> VerifySignature(IAppCache appCache, string salt, string body, string method, string url, Dictionary<string, object> validationKeyValues)
 		{
 			var identities = new Dictionary<string, object?>();
 
@@ -182,7 +181,7 @@ namespace PLang.Services.SigningService
 
 			string address = (recoveredAddress2 == expectedAddress2) ? recoveredAddress2 : null;
 
-			
+
 			if (address == null)
 			{
 				identities.AddOrReplace(ReservedKeywords.Identity, null);
@@ -190,11 +189,12 @@ namespace PLang.Services.SigningService
 				return identities;
 			}
 
-			
-			identities.AddOrReplace(ReservedKeywords.Identity, address.ComputeHash(mode: "keccak256", salt: context[ReservedKeywords.Salt]!.ToString()));
+			identities.AddOrReplace(ReservedKeywords.Identity, address.ComputeHash(mode: "keccak256", salt: salt));
 			identities.AddOrReplace(ReservedKeywords.IdentityNotHashed, address);
 
 			return identities;
 		}
+
+
 	}
 }

@@ -63,7 +63,7 @@ namespace PLang.Building
 				await eventRuntime.RunBuildStepEvents(EventType.Before, goal, step, stepIndex);
 
 				LlmRequest llmQuestion = GetBuildStepQuestion(goal, step, excludeModules);
-				
+
 				logger.Value.LogDebug($"- Find module for {step.Text}");
 				llmQuestion.Reload = false;
 				var stepAnswer = await aiService.Value.Query<StepAnswer>(llmQuestion);
@@ -129,6 +129,7 @@ namespace PLang.Building
 				catch (SkipStepException) { }
 
 			}
+			catch (StopBuilderException) { throw; }
 			catch (Exception ex)
 			{
 				if (await exceptionHandler.Handle(ex, 500, "error", ex.Message))

@@ -10,8 +10,7 @@ namespace PLang.Interfaces
         public IEnumerable<Setting> GetSettings();
         public void Set(Setting setting);
         void Remove(Setting setting);
-		LlmRequest? GetLlmRequestCache(string hash);
-		void SetLlmRequestCache(string hash, LlmRequest question);
-		void UseSharedDataSource(bool activateSharedDataSource = false);
+		void SetSharedDataSource(string? appId = null);
+		Setting? Get(string salt, string? fullName, string? type, string? key);
 	}
 }

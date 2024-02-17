@@ -19,11 +19,13 @@ namespace PLang.Modules.LlmModule
 	{
 		private readonly ILlmService llmService;
 		private readonly IPLangIdentityService identityService;
+		private readonly ISettings settings;
 
-		public Program(ILlmService llmService, IPLangIdentityService identityService) : base()
+		public Program(ILlmService llmService, IPLangIdentityService identityService, ISettings settings) : base()
 		{
 			this.llmService = llmService;
 			this.identityService = identityService;
+			this.settings = settings;
 		}
 
 		public record AskLlmResponse(string Result);
@@ -70,7 +72,7 @@ namespace PLang.Modules.LlmModule
 			llmQuestion.scheme = scheme;
 
 			var response = await llmService.Query<object?>(llmQuestion);
-			bool hasSetValue = false;
+
 			if (response is JObject)
 			{
 				var objResult = (JObject)response;
@@ -85,9 +87,6 @@ namespace PLang.Modules.LlmModule
 					{
 						memoryStack.Put(property.Name, property.Value);
 					}
-					hasSetValue = true;
-
-
 				}
 			}
 
@@ -96,14 +95,18 @@ namespace PLang.Modules.LlmModule
 				foreach (var returnValue in function.ReturnValue)
 				{
 					memoryStack.Put(returnValue.VariableName, response);
-					hasSetValue = true;
 				}
 			}
 		}
 
+		public async Task UseSharedIdentity(bool useSharedIdentity = true)
+		{
+			identityService.UseSharedIdentity(useSharedIdentity ? settings.AppId : null);
+		}
+
+
 		public async Task<string> GetLlmIdentity()
 		{
-			identityService.UseSharedIdentity(llmService.GetType().FullName);
 			return identityService.GetCurrentIdentity().Identifier;
 		}
 

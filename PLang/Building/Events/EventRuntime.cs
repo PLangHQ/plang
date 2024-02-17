@@ -203,7 +203,7 @@ namespace PLang.Building.Events
 
 			if (eventsToRun.Count == 0)
 			{
-				ShowDefaultError(ex);
+				await ShowDefaultError(ex);
 			}
 			else
 			{
@@ -218,9 +218,9 @@ namespace PLang.Building.Events
 
 		}
 
-		private void ShowDefaultError(Exception ex)
+		private async Task ShowDefaultError(Exception ex)
 		{
-			exceptionHandler.Handle(ex, 500, "error", ex.Message);
+			await exceptionHandler.Handle(ex, 500, "error", ex.Message);
 		}
 
 		private async Task Run(PLangAppContext context, EventBinding eve, Goal goal, GoalStep? step = null, Exception? ex = null)
@@ -303,7 +303,7 @@ namespace PLang.Building.Events
 
 			if (eventsToRun.Count() == 0)
 			{
-				ShowDefaultError(ex);
+				await ShowDefaultError(ex);
 			}
 			else
 			{

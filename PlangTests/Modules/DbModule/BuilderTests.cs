@@ -27,7 +27,7 @@ namespace PLang.Modules.DbModule.Tests
 			base.Initialize();
 
 			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var llmService = new OpenAiService(settings, logger, cacheHelper, context);
+			var llmService = new OpenAiService(settings, logger, llmCaching, context);
 
 			var datasources =new  List<DataSource>();
 			datasources.Add(new DataSource("local", "", "", "", "", ""));

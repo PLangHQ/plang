@@ -36,14 +36,18 @@ namespace PLang.Models
 		public string Key { get; set; }
 		public string Value { get; set; }
 		public DateTime? Created { get; set; }
-		string signatureData;
+		string signatureData = "";
 		public string SignatureData { 
 			get { return signatureData; }
 			set { signature = (string.IsNullOrEmpty(value)) ? [] : JsonConvert.DeserializeObject<Dictionary<string, object>>(value) ?? []; } 
 		}
 
 		private Dictionary<string, object> signature = new();
-		public Dictionary<string, object> Signature { get { return signature; } }
+		public Dictionary<string, object> Signature { get { return signature; } set { 
+				signature = value;
+				signatureData = JsonConvert.SerializeObject(value);
+		} 
+		}
 
 	}
 }

@@ -47,7 +47,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 					tokens = callback.Arg<List<Token>>();
 				});
 			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var aiService = new OpenAiService(settings, logger, cacheHelper, context);
+			var aiService = new OpenAiService(settings, logger, llmCaching, context);
 			var moduleSettings = new ModuleSettings(settings, aiService);
 
 			//var fileSystem = new PLangMockFileSystem();

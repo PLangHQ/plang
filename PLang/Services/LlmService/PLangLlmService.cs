@@ -1,6 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Bcpg;
+using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
@@ -8,28 +11,32 @@ using PLang.Services.OutputStream;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using PLang.Utils.Extractors;
+using System.Data;
 using System.Text;
 
 namespace PLang.Services.LlmService
 {
     public class PLangLlmService : ILlmService
 	{
-		private readonly CacheHelper cacheHelper;
+		private readonly LlmCaching llmCaching;
 		private readonly IOutputStream outputStream;
 		private readonly IPLangSigningService signingService;
 		private readonly ILogger logger;
 		private readonly PLangAppContext context;
+		private readonly IPLangFileSystem fileSystem;
 		private readonly string url = "http://localhost:10000";
+		private readonly string appId = "206bb559-8c41-4c4a-b0b7-283ef73dc8ce";
 
 		public IContentExtractor Extractor { get; set; }
 
-		public PLangLlmService(CacheHelper cacheHelper, IOutputStream outputStream, IPLangSigningService signingService, ILogger logger, PLangAppContext context)
+		public PLangLlmService(LlmCaching llmCaching, IOutputStream outputStream, IPLangSigningService signingService, ILogger logger, PLangAppContext context, IPLangFileSystem fileSystem)
 		{
-			this.cacheHelper = cacheHelper;
+			this.llmCaching = llmCaching;
 			this.outputStream = outputStream;
 			this.signingService = signingService;
 			this.logger = logger;
 			this.context = context;
+			this.fileSystem = fileSystem;
 			this.Extractor = new JsonExtractor();
 		}
 
@@ -47,7 +54,7 @@ namespace PLang.Services.LlmService
 		{
 			Extractor = ExtractorFactory.GetExtractor(question, responseType);
 			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebug);
-			var cachedLlmQuestion = cacheHelper.GetCachedQuestion(question);			
+			var cachedLlmQuestion = llmCaching.GetCachedQuestion(question);			
 			if (!question.Reload && question.caching && cachedLlmQuestion != null)
 			{
 				try
@@ -100,7 +107,7 @@ namespace PLang.Services.LlmService
 				if (question.caching)
 				{
 					question.RawResponse = responseBody;
-					cacheHelper.SetCachedQuestion(question);
+					llmCaching.SetCachedQuestion(question);
 				}
 				return obj;
 			}
@@ -111,6 +118,7 @@ namespace PLang.Services.LlmService
 				if (obj != null && obj["url"].ToString() != "")
 				{
 					await outputStream.Write("You need to fill up your account at plang.is. You can buy at this url: " + obj["url"] + ". Try again after payment", "error", 402);
+					throw new StopBuilderException();
 				}
 				else
 				{
@@ -202,6 +210,7 @@ namespace PLang.Services.LlmService
 				if (obj["url"] != null)
 				{
 					await outputStream.Write("You can buy more voucher at this url: " + obj["url"] + ". Restart after payment", "error", 402);
+					throw new StopBuilderException();
 				} else
 				{
 					throw new AskUserConsole("Could not create url. Lets try again. What is your name?", GetCountry);
@@ -219,7 +228,7 @@ namespace PLang.Services.LlmService
 			{
 				string body = await reader.ReadToEndAsync();
 				
-				var signature = signingService.Sign(body, method, url, contract, GetType().FullName);
+				var signature = signingService.Sign(body, method, url, contract, appId);
 
 				foreach (var item in signature)
 				{
@@ -227,8 +236,6 @@ namespace PLang.Services.LlmService
 				}
 			}
 		}
-
-
 
 	}
 }

@@ -7,7 +7,7 @@ using System;
 
 namespace PLang.Exceptions.Handlers
 {
-	
+
 	public abstract class ExceptionHandler
 	{
 		private readonly IAskUserHandler askUserHandler;
@@ -21,16 +21,31 @@ namespace PLang.Exceptions.Handlers
 			var ex = exception;
 			while (ex != null && ex.InnerException != null)
 			{
-				ex = exception.InnerException;
+				ex = ex.InnerException;
 			}
 
 			if (ex is MissingSettingsException mse)
 			{
-				return await askUserHandler.Handle(mse);
+				try
+				{
+					return await askUserHandler.Handle(mse);
+				}
+				catch (AskUserException ex2)
+				{
+					return await Handle(ex2);
+				}
 			}
 			if (ex is AskUserException ase)
 			{
-				return await askUserHandler.Handle(ase);
+				try
+				{
+					var result = await askUserHandler.Handle(ase);
+					return result;
+				}
+				catch (AskUserException ex2)
+				{
+					return await Handle(ex2);
+				}
 			}
 			return false;
 		}

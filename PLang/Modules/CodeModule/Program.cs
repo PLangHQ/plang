@@ -27,7 +27,7 @@ namespace PLang.Modules.CodeModule
 
 		public override async Task Run()
 		{
-
+			
 			var answer = JsonConvert.DeserializeObject<Implementation>(instruction.Action.ToString());
 			string dllName = goalStep.PrFileName.Replace(".pr", ".dll");
 			Assembly assembly = Assembly.LoadFile(Path.Combine(Goal.AbsolutePrFolderPath, dllName));
@@ -85,53 +85,13 @@ namespace PLang.Modules.CodeModule
 			}
 			catch (Exception ex)
 			{
-				if (ex.InnerException == null) throw;
-
-				var inner = ex.InnerException;
-				var match = Regex.Match(inner.StackTrace, "cs:line (?<LineNr>[0-9]+)");
-				if (match.Success)
-				{
-					var strLineNr = match.Groups["LineNr"].Value;
-					if (int.TryParse(strLineNr, out int lineNr))
-					{
-						(string errorLine, lineNr) = GetErrorLine(lineNr, answer, inner.Message);
-
-						throw new RuntimeStepException($@"{inner.Message} in line: {lineNr}. You might have to define your step bit more, try including variable type, such as %name%(string), %age%(number), %tags%(array).
-The error occured in this line:
-{errorLine}
-
-The C# code is this:
-{answer.Code}
-
-", goalStep);
-
-					}
-				}
+				CodeExceptionHandler.Handle(ex, answer, goalStep);
 
 				throw;
 			}
 
 		}
 
-		private (string errorLine, int lineNr) GetErrorLine(int lineNr, Implementation answer, string message)
-		{
-			lineNr -= (answer.Using.Length + 4);
-			string[] codeLines = answer.Code.ReplaceLineEndings().Split(Environment.NewLine);
-			if (lineNr == 0) return ("", -1);
-
-			if (codeLines.Length > lineNr && !string.IsNullOrEmpty(codeLines[lineNr]))
-			{
-				return (codeLines[lineNr], lineNr);
-			}
-
-			for (int i=0;i<codeLines.Length;i++)
-			{
-				if (codeLines[i].Contains(message)) return (codeLines[i], i);
-			}
-
-
-			return GetErrorLine((lineNr - 1), answer, message);
-		}
 	}
 
 }

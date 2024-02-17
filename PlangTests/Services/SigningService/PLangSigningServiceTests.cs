@@ -80,7 +80,7 @@ namespace PLang.Services.SigningService.Tests
 			validationKeyValues.Add("X-Signature-Address", "0x39AdD0ff2cb924fe6f268305324f3cBD9873A323");
 			validationKeyValues.Add("X-Signature-Contract", contract);
 
-			var result = await signingService.VerifySignature(body, method, url, validationKeyValues);
+			var result = await signingService.VerifySignature("123", body, method, url, validationKeyValues);
 			Assert.IsNotNull(result);
 		}
 
@@ -107,7 +107,7 @@ namespace PLang.Services.SigningService.Tests
 				return DateTimeOffset.UtcNow;
 			};
 
-			var result = await signingService.VerifySignature(body, method, url, signature);
+			var result = await signingService.VerifySignature("123", body, method, url, signature);
 		}
 
 		[TestMethod()]
@@ -136,7 +136,7 @@ namespace PLang.Services.SigningService.Tests
 				return DateTimeOffset.UtcNow.AddMinutes(1);
 			};
 
-			var result = await signingService.VerifySignature(body, method, url, signature);
+			var result = await signingService.VerifySignature("123", body, method, url, signature);
 		}
 
 		[TestMethod()]
@@ -151,8 +151,8 @@ namespace PLang.Services.SigningService.Tests
 			context.AddOrReplace(ReservedKeywords.Salt, "123");
 			var signature = signingService.Sign(body, method, url, contract);
 
-			var result = await signingService.VerifySignature(body, method, url, signature);
-			var result2 = await signingService.VerifySignature(body, method, url, signature);
+			var result = await signingService.VerifySignature("123", body, method, url, signature);
+			var result2 = await signingService.VerifySignature("123", body, method, url, signature);
 		}
 
 	}

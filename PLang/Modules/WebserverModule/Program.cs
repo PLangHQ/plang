@@ -33,12 +33,13 @@ namespace PLang.Modules.WebserverModule
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
 		private readonly IPLangSigningService signingService;
+		private readonly IPLangIdentityService identityService;
 		private readonly static List<WebserverInfo> listeners = new();
 
 		public Program(ILogger logger, IEventRuntime eventRuntime, IPLangFileSystem fileSystem
 			, ISettings settings, IOutputStream outputStream
 			, PrParser prParser,
-			IPseudoRuntime pseudoRuntime, IEngine engine, IPLangSigningService signingService) : base()
+			IPseudoRuntime pseudoRuntime, IEngine engine, IPLangSigningService signingService, IPLangIdentityService identityService) : base()
 		{
 			this.logger = logger;
 			this.eventRuntime = eventRuntime;
@@ -49,6 +50,7 @@ namespace PLang.Modules.WebserverModule
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
 			this.signingService = signingService;
+			this.identityService = identityService;
 		}
 
 		public async Task<WebserverInfo?> ShutdownWebserver(string webserverName)
@@ -242,16 +244,6 @@ namespace PLang.Modules.WebserverModule
 							var identityService = container.GetInstance<IPLangIdentityService>();
 							await ParseRequest(httpContext, identityService, goal.GoalApiInfo!.Method, requestMemoryStack);
 							await engine.RunGoal(goal);
-
-							/*
-							using (var reader = new StreamReader(resp.OutputStream, resp.ContentEncoding ?? Encoding.UTF8))
-							{
-								var content = reader.ReadToEndAsync();
-								// content should be signed by server. 
-							}*/
-
-							//resp.StatusCode = (int)HttpStatusCode.OK;
-							//resp.StatusDescription = "Status OK";
 
 						}
 						catch (Exception ex)
@@ -576,7 +568,7 @@ namespace PLang.Modules.WebserverModule
 
 			var url = request.Url?.PathAndQuery ?? "";
 
-			var identies = await signingService.VerifySignature(body, request.HttpMethod, url, validationHeaders);
+			var identies = await signingService.VerifySignature(settings.GetSalt(), body, request.HttpMethod, url, validationHeaders);
 			if (identies == null) return;
 			foreach (var identity in identies)
 			{
@@ -734,7 +726,7 @@ namespace PLang.Modules.WebserverModule
 						}
 
 						var signatureData = websocketData.SignatureData;
-						var identity = await signingService.VerifySignature(JsonConvert.SerializeObject(websocketData), websocketData.Method, websocketData.Url, signatureData);
+						var identity = await signingService.VerifySignature(settings.GetSalt(), JsonConvert.SerializeObject(websocketData), websocketData.Method, websocketData.Url, signatureData);
 
 						websocketData.SignatureData = null;
 						websocketData.Parameters.AddOrReplace(identity);
