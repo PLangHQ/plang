@@ -9,7 +9,7 @@
       },
       {
         "Type": "System.Collections.Generic.List`1[System.Object]",
-        "Name": "Parameters",
+        "Name": "SqlParameters",
         "Value": [
           {
             "ParameterName": "@id",
@@ -32,7 +32,7 @@
     "ReturnValue": [
       {
         "Type": "System.Int64",
-        "VariableName": "id"
+        "VariableName": "%id%"
       }
     ]
   },
@@ -53,7 +53,7 @@
         "content": [
           {
             "type": "text",
-            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nObject InsertAndSelectIdOfInsertedRow(String sql, List<object>()? Parameters = null)\r\n## csharp function ##\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.\r\nParameter @id MUST be type System.Int64\r\nYou MUST modify the user command by adding id to the sql statement and parameter %id%.\r\nIf table name is a variable, keep the variable in the sql statement\r\nYou MUST generate a valid sql statement for SQLiteConnection.\r\nYou MUST provide Parameters if SQL has @parameter.\r\n"
+            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nObject InsertAndSelectIdOfInsertedRow(String sql, List<object>()? SqlParameters = null)\r\n## csharp function ##\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nSqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.\r\nSqlParameters @id MUST be type System.Int64\r\nYou MUST modify the user command by adding id to the sql statement and parameter %id%.\r\nIf table name is a variable, keep the variable in the sql statement\r\nYou MUST generate a valid sql statement for SqliteConnection.\r\nYou MUST provide SqlParameters if SQL has @parameter.\r\n"
           },
           {
             "type": "text",
@@ -86,7 +86,7 @@
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "{\r\n  \"FunctionName\": \"InsertAndSelectIdOfInsertedRow\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"System.String\",\r\n      \"Name\": \"sql\",\r\n      \"Value\": \"insert into tasks (id, description, due_date) values (@id, @description, @due_date)\"\r\n    },\r\n    {\r\n      \"Type\": \"System.Collections.Generic.List`1[System.Object]\",\r\n      \"Name\": \"SqlParameters\",\r\n      \"Value\": [\r\n        {\r\n          \"ParameterName\": \"@id\",\r\n          \"VariableNameOrValue\": \"%id%\",\r\n          \"TypeFullName\": \"System.Int64\"\r\n        },\r\n        {\r\n          \"ParameterName\": \"@description\",\r\n          \"VariableNameOrValue\": \"This is a desc\",\r\n          \"TypeFullName\": \"System.String\"\r\n        },\r\n        {\r\n          \"ParameterName\": \"@due_date\",\r\n          \"VariableNameOrValue\": \"%Now+10days%\",\r\n          \"TypeFullName\": \"System.DateTime\"\r\n        }\r\n      ]\r\n    }\r\n  ],\r\n  \"ReturnValue\": [\r\n    {\r\n      \"Type\": \"System.Int64\",\r\n      \"VariableName\": \"%id%\"\r\n    }\r\n  ]\r\n}"
   },
   "RunOnBuild": false
 }

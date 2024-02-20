@@ -1,5 +1,7 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OpenQA.Selenium.DevTools.V119.Fetch;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Services.SigningService;
@@ -45,8 +47,10 @@ namespace PLang.Modules.HttpModule
 			return await Request(url, "DELETE", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
 
-		[Description("Post a FileStream to url. When a variable is defined with @ sign, it defines that it should be a FileStream.")]
-		public async Task<object?> PostMultipartFormData(string url, object data, string httpMethod = "POST", bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", int timeoutInSeconds = 30)
+		[Description("Post a FileStream to url. When a variable is defined with @ sign, it defines that it should be a FileStream. data may contain something like file=@%fileName%;type=%fileType%, then keep as one value for the file parameter. The function will parse the file and type")]
+		public async Task<object?> PostMultipartFormData(string url, object data, string httpMethod = "POST", 
+			bool doNotSignRequest = false, Dictionary<string, object>? headers = null,
+			string encoding = "utf-8", int timeoutInSeconds = 30)
 		{
 			using (var httpClient = httpClientFactory.CreateClient())
 			{
@@ -59,6 +63,7 @@ namespace PLang.Modules.HttpModule
 				}
 
 				var request = new HttpRequestMessage(new HttpMethod(httpMethod), requestUrl.ToString());
+				
 				using (var content = new MultipartFormDataContent())
 				{
 					FileSystemStream fileStream = null;
@@ -71,6 +76,8 @@ namespace PLang.Modules.HttpModule
 						{
 							string fileName = property.Value.ToString().Substring(1);
 							string typeValue = null;
+							fileName = variableHelper.LoadVariables(fileName).ToString();
+
 							if (fileName.Contains(";"))
 							{
 								string type = fileName.Substring(fileName.IndexOf(";") + 1);
@@ -79,13 +86,23 @@ namespace PLang.Modules.HttpModule
 								string newFileName = fileName.Substring(0, fileName.IndexOf(";"));
 								fileName = newFileName; //todo: some compile caching issue, fix, can be removed (I think)
 							}
+							if (!fileSystem.File.Exists(fileName))
+							{
+								throw new RuntimeException($"{fileName} could not be found");
+							}
+
 							fileStream = fileSystem.FileStream.New(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 							var fileContent = new StreamContent(fileStream);
-							if (typeValue != null)
+							if (!string.IsNullOrEmpty(typeValue))
 							{
 								fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(typeValue);
+							} else
+							{
+								var mediaTypeHeader = GetMimeTypeHeader(fileName);
+								fileContent.Headers.ContentType = mediaTypeHeader;
 							}
 							content.Add(fileContent, property.Name, Path.GetFileName(fileStream.Name));
+							//content.Headers.Add("Content-Type", "multipart/form-data");
 						}
 						else
 						{
@@ -104,9 +121,9 @@ namespace PLang.Modules.HttpModule
 					request.Headers.UserAgent.ParseAdd("plang v0.1");
 					if (!doNotSignRequest)
 					{
-						await SignRequest(request);
+						//await SignRequest(request);
 					}
-
+					//request.Content.Headers.ContentType = "multipart/form-data";
 					request.Content = content;
 					try
 					{
@@ -138,6 +155,64 @@ namespace PLang.Modules.HttpModule
 				}
 
 			}
+		}
+
+		private MediaTypeHeaderValue GetMimeTypeHeader(string fileName)
+		{
+			string extension = Path.GetExtension(fileName).ToLowerInvariant();
+
+			string mimeType = extension switch
+			{
+				".mp3" => "audio/mpeg",
+				".wav" => "audio/wav",
+				".ogg" => "audio/ogg",
+				".m4a" => "audio/mp4",
+				".aac" => "audio/aac",
+				".midi" => "audio/midi",
+				".mid" => "audio/midi",
+				".flac" => "audio/flac",
+				".weba" => "audio/webm",
+				".mp4" => "video/mp4",
+				".avi" => "video/x-msvideo",
+				".mpeg" => "video/mpeg",
+				".ogv" => "video/ogg",
+				".webm" => "video/webm",
+				".3gp" => "video/3gpp",
+				".3g2" => "video/3gpp2",
+				".mkv" => "video/x-matroska",
+				".jpeg, .jpg" => "image/jpeg",
+				".png" => "image/png",
+				".gif" => "image/gif",
+				".bmp" => "image/bmp",
+				".svg" => "image/svg+xml",
+				".webp" => "image/webp",
+				".ico" => "image/vnd.microsoft.icon",
+				".tif, .tiff" => "image/tiff",
+				".txt" => "text/plain",
+				".html, .htm" => "text/html",
+				".css" => "text/css",
+				".csv" => "text/csv",
+				".json" => "application/json",
+				".pdf" => "application/pdf",
+				".doc" => "application/msword",
+				".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+				".xls" => "application/vnd.ms-excel",
+				".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+				".ppt" => "application/vnd.ms-powerpoint",
+				".pptx" => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+				".xml" => "application/xml",
+				".zip" => "application/zip",
+				".tar" => "application/x-tar",
+				".rar" => "application/vnd.rar",
+				".7z" => "application/x-7z-compressed",
+				".js" => "application/javascript",
+				".php" => "application/x-httpd-php",
+				".bin" => "application/octet-stream",
+				_ => "application/octet-stream", // Default MIME type if no match is found
+
+			};
+
+			return MediaTypeHeaderValue.Parse(mimeType);
 		}
 
 		private bool IsXml(string? mediaType)

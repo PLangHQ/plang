@@ -7,13 +7,13 @@ using PLang.SafeFileSystem;
 
 namespace PLang.Utils
 {
-	public interface IErrorHelper
+	public interface IErrorHelper2
 	{
 		Task ShowFriendlyErrorMessage(Exception ex, GoalStep? step = null,
 				Func<Task>? callBackForAskUser = null, Func<Exception?, Task<bool>>? errorHandler = null, Func<Task?, Task<bool>>? retryCallback = null);
 	}
 
-	public class ErrorHelper : IErrorHelper
+	public class ErrorHelper2 : IErrorHelper2
 	{
 		private readonly ILogger logger;
 		private readonly ILlmService aiService;
@@ -21,7 +21,7 @@ namespace PLang.Utils
 		private readonly PLangAppContext context;
 		private readonly FileAccessHandler fileAccessHandler;
 
-		public ErrorHelper(ILogger logger, ILlmService aiService, IAskUserHandler askUserHandler, PLangAppContext context, FileAccessHandler fileAccessHandler)
+		public ErrorHelper2(ILogger logger, ILlmService aiService, IAskUserHandler askUserHandler, PLangAppContext context, FileAccessHandler fileAccessHandler)
 		{
 			this.logger = logger;
 			this.aiService = aiService;

@@ -1,10 +1,5 @@
-﻿using PLang.Interfaces;
+﻿using PLang.Exceptions.AskUser;
 using PLang.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PLang.Exceptions.Handlers
 {
@@ -12,7 +7,7 @@ namespace PLang.Exceptions.Handlers
 	{
 		private readonly IErrorDialog dialog;
 
-		public UiExceptionHandler(IErrorDialog dialog, IAskUserHandler askUserHandler) : base(askUserHandler)
+		public UiExceptionHandler(IErrorDialog dialog, IAskUserHandlerFactory askUserHandlerFactory) : base(askUserHandlerFactory)
 		{
 			this.dialog = dialog;
 		}

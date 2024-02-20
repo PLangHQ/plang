@@ -20,8 +20,8 @@ namespace PLangTests.Modules.CallGoalModule
 			base.Initialize();
 			var goal = new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() };
 			
-			p = new Program(pseudoRuntime, engine, prParser, appsRepository);
-			p.Init(container, goal, null, null, memoryStack, logger, context, typeHelper, aiService, settings, null, null);
+			p = new Program(pseudoRuntime, engine);
+			p.Init(container, goal, null, null, memoryStack, logger, context, typeHelper, llmService, settings, null, null);
 		}
 
 
@@ -30,7 +30,7 @@ namespace PLangTests.Modules.CallGoalModule
 		{	
 			await p.RunGoal("!Process");
 
-			await pseudoRuntime.Received(1).RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), "Process", Arg.Any<Dictionary<string, object>>(), Arg.Any<Goal>());
+			await pseudoRuntime.Received(1).RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), "!Process", Arg.Any<Dictionary<string, object>>(), Arg.Any<Goal>());
 		}
 
 		[TestMethod]
@@ -44,7 +44,7 @@ namespace PLangTests.Modules.CallGoalModule
 			parameters.Add("h", "1");
 			await p.RunGoal("!apps/GoalWith1Step", parameters);
 
-			await pseudoRuntime.Received(1).RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), "apps/GoalWith1Step", Arg.Is<Dictionary<string, object?>>(p => p.ContainsKey("h")), Arg.Any<Goal>());
+			await pseudoRuntime.Received(1).RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), "!apps/GoalWith1Step", Arg.Is<Dictionary<string, object?>>(p => p.ContainsKey("h")), Arg.Any<Goal>());
 		}
 
 
@@ -60,7 +60,7 @@ namespace PLangTests.Modules.CallGoalModule
 			await p.RunGoal("!Process/File", parameters, waitForExecution);			
 
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Is<PLangAppContext>(p => p.ContainsKey("test")), 
-					Path.DirectorySeparatorChar.ToString(), "Process/File", 
+					Path.DirectorySeparatorChar.ToString(), "!Process/File", 
 					Arg.Is<Dictionary<string, object?>>(p => p.ContainsKey("h")), Arg.Any<Goal>(), waitForExecution);
 		}
 	}

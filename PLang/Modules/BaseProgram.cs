@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Building.Model;
+using PLang.Container;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
@@ -18,7 +19,7 @@ using Instruction = PLang.Building.Model.Instruction;
 namespace PLang.Modules
 {
 
-	public abstract class BaseProgram
+    public abstract class BaseProgram
 	{
 		private HttpListenerContext? _listenerContext = null;
 
@@ -34,7 +35,7 @@ namespace PLang.Modules
 		private ILogger logger;
 		private IServiceContainer container;
 		private IAppCache appCache;
-		private IOutputStream outputStream;
+		private IOutputStreamFactory outputStreamFactory;
 		private IPLangFileSystem fileSystem;
 		private MethodHelper methodHelper;
 		public HttpListenerContext HttpListenerContext
@@ -65,7 +66,7 @@ namespace PLang.Modules
 			this.memoryStack = memoryStack;
 			this.context = context;
 			this.appCache = appCache;
-			this.outputStream = container.GetInstance<IOutputStream>();
+			this.outputStreamFactory = container.GetInstance<IOutputStreamFactory>();
 			this.fileSystem = container.GetInstance<IPLangFileSystem>();
 			_listenerContext = httpListenerContext;
 
@@ -231,6 +232,7 @@ namespace PLang.Modules
 				// an event that binds to on error on step, 
 				string error = (task.Exception.InnerException != null) ? task.Exception.InnerException.ToString() : task.Exception.ToString();
 
+				var outputStream = outputStreamFactory.CreateHandler();
 
 				await outputStream.Write(error, "error", 400);
 				await outputStream.Write("\n\n.... Asking LLM to explain, wait few seconds ....\n", "error", 400);

@@ -24,10 +24,11 @@ namespace PLang.Services.OutputStream
 		public Stream ErrorStream { get; private set; }
 		StringBuilder sb;
 		public Action<string>? onFlush { get; set; }
-		public UIOutputStream(IRazorEngine razorEngine, IFileSystem fileSystem)
+		public UIOutputStream(IRazorEngine razorEngine, IFileSystem fileSystem, Action<string> onFlush)
 		{
 			this.razorEngine = razorEngine;
 			this.fileSystem = fileSystem;
+			this.onFlush = onFlush;
 			Stream = new MemoryStream();
 			ErrorStream = new MemoryStream();
 

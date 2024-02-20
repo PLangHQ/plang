@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using Nostr.Client.Client;
 using Nostr.Client.Communicator;
+using Nostr.Client.Responses;
 using System.Net.WebSockets;
 using Websocket.Client;
 
@@ -56,7 +57,6 @@ namespace PLang.Modules.MessageModule
 		private void SetCommunicatorParam(NostrWebsocketCommunicator comm, Uri uri)
 		{
 			comm.Name = uri.Host;
-			
 		}
 	}
 }

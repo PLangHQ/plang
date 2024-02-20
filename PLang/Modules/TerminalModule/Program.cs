@@ -17,21 +17,21 @@ namespace PLang.Modules.TerminalModule
 	{
 		private readonly ILogger logger;
 		private readonly ISettings settings;
-		private readonly IOutputStream outputStream;
+		private readonly IOutputStreamFactory outputStreamFactory;
 		private readonly IPLangFileSystem fileSystem;
 		public static readonly string DefaultOutputVariable = "__Terminal_Output__";
 		public static readonly string DefaultErrorOutputVariable = "__Terminal_Error_Output__";
-		public Program(ILogger logger, ISettings settings, IOutputStream outputStream, IPLangFileSystem fileSystem) : base()
+		public Program(ILogger logger, ISettings settings, IOutputStreamFactory outputStreamFactory, IPLangFileSystem fileSystem) : base()
 		{
 			this.logger = logger;
 			this.settings = settings;
-			this.outputStream = outputStream;
+			this.outputStreamFactory = outputStreamFactory;
 			this.fileSystem = fileSystem;
 		}
 
 		public async Task Read(string? variableName)
 		{
-			var result = outputStream.Read();
+			var result = outputStreamFactory.CreateHandler().Read();
 			memoryStack.Put(variableName, result);
 		}
 
@@ -126,7 +126,7 @@ namespace PLang.Modules.TerminalModule
 				{
 					if (string.IsNullOrWhiteSpace(e.Data)) return;
 					//logger.LogInformation(e.Data);
-					if (debugErrorStreamDelta != null)
+					if (!string.IsNullOrEmpty(debugErrorStreamDelta))
 					{
 						memoryStack.Put(debugErrorStreamDelta, e.Data);
 					} else

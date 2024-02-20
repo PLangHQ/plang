@@ -1,6 +1,7 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using Nethereum.ABI;
 using PLang.Interfaces;
+using PLang.Services.EncryptionService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.IdentityModel.Tokens.Jwt;
@@ -16,9 +17,9 @@ namespace PLang.Modules.CryptographicModule
 		private readonly IEncryption encryption;
 		private readonly ModuleSettings moduleSettings;
 
-		public Program(ISettings settings, IEncryption encryption) : base()
+		public Program(ISettings settings, IEncryptionFactory encryptionFactory) : base()
 		{
-			this.encryption = encryption;
+			this.encryption = encryptionFactory.CreateHandler();
 			this.moduleSettings = new ModuleSettings(settings);
 		}
 

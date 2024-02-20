@@ -19,7 +19,7 @@ namespace PLang.Services.LlmService
     public class PLangLlmService : ILlmService
 	{
 		private readonly LlmCaching llmCaching;
-		private readonly IOutputStream outputStream;
+		private readonly IOutputStreamFactory outputStreamFactory;
 		private readonly IPLangSigningService signingService;
 		private readonly ILogger logger;
 		private readonly PLangAppContext context;
@@ -29,10 +29,10 @@ namespace PLang.Services.LlmService
 
 		public IContentExtractor Extractor { get; set; }
 
-		public PLangLlmService(LlmCaching llmCaching, IOutputStream outputStream, IPLangSigningService signingService, ILogger logger, PLangAppContext context, IPLangFileSystem fileSystem)
+		public PLangLlmService(LlmCaching llmCaching, IOutputStreamFactory outputStreamFactory, IPLangSigningService signingService, ILogger logger, PLangAppContext context, IPLangFileSystem fileSystem)
 		{
 			this.llmCaching = llmCaching;
-			this.outputStream = outputStream;
+			this.outputStreamFactory = outputStreamFactory;
 			this.signingService = signingService;
 			this.logger = logger;
 			this.context = context;
@@ -117,7 +117,7 @@ namespace PLang.Services.LlmService
 				var obj = JObject.Parse(responseBody);
 				if (obj != null && obj["url"].ToString() != "")
 				{
-					await outputStream.Write("You need to fill up your account at plang.is. You can buy at this url: " + obj["url"] + ". Try again after payment", "error", 402);
+					await outputStreamFactory.CreateHandler().Write("You need to fill up your account at plang.is. You can buy at this url: " + obj["url"] + ". Try again after payment", "error", 402);
 					throw new StopBuilderException();
 				}
 				else
@@ -209,7 +209,7 @@ namespace PLang.Services.LlmService
 				var obj = JObject.Parse(responseBody);
 				if (obj["url"] != null)
 				{
-					await outputStream.Write("You can buy more voucher at this url: " + obj["url"] + ". Restart after payment", "error", 402);
+					await outputStreamFactory.CreateHandler().Write("You can buy more voucher at this url: " + obj["url"] + ". Restart after payment", "error", 402);
 					throw new StopBuilderException();
 				} else
 				{

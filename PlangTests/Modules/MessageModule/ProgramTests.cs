@@ -39,8 +39,8 @@ namespace PLangTests.Modules.MessageModule
 			nostrClient.Streams.Returns(new NostrClientStreams());
 			nostrClient.Streams.EventStream.Subscribe();
 
-			p = new Program(settings, logger, pseudoRuntime, engine, aiService, nostrClient, signingService);
-			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, aiService, settings, null, null);
+			p = new Program(settings, logger, pseudoRuntime, engine, llmService, nostrClient, signingService);
+			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmService, settings, null, null);
 		}
 
 		[TestMethod]	
@@ -72,7 +72,7 @@ namespace PLangTests.Modules.MessageModule
 					nostrKeys = callInfo.Arg<List<NostrKey>>();
 				});
 
-			p = new Program(settings, logger, pseudoRuntime, engine, aiService, null, signingService);
+			p = new Program(settings, logger, pseudoRuntime, engine, llmService, null, signingService);
 			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, null, settings, null, null);
 
 

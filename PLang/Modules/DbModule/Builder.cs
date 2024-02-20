@@ -51,20 +51,11 @@ namespace PLang.Modules.DbModule
 			var gf = buildInstruction.Action as GenericFunction;
 			if (gf != null && gf.FunctionName == "CreateDataSource")
 			{
-				if (string.IsNullOrEmpty(gf.Parameters[0].Value.ToString()))
-				{
-					throw new BuilderStepException("Name of the datasource is missing. Please define it. Example: \"Create data source 'myDatabase'\"");
-				}
-				var dbSourceName = variableHelper.LoadVariables(gf.Parameters[0].Value.ToString());
-				await moduleSettings.CreateDataSource(dbSourceName.ToString());
+				await CreateDataSource(gf);
 				return buildInstruction;
 			}
-
 			
-			var dataSource = await moduleSettings.GetCurrentDatasource();
-
-			
-
+			var dataSource = await moduleSettings.GetCurrentDataSource();
 			SetSystem(@"Parse user command.
 
 Select the correct function from list of available functions based on user command
@@ -133,6 +124,37 @@ Choose the best method to use, if the method is not provided that fits the SQL, 
 			return await base.Build(goalStep);
 		
 		}
+
+		private async Task CreateDataSource(GenericFunction gf)
+		{
+			var dataSourceName = gf.Parameters.FirstOrDefault(p => p.Name == "name");
+			if (dataSourceName == null || dataSourceName.Value == null || string.IsNullOrEmpty(dataSourceName.Value.ToString()))
+			{
+				throw new BuilderStepException("Name for the data source is missing. Please define it. Example: \"- Create sqlite data source 'myDatabase'\"");
+			}
+
+			var supportedDbTypesAsString = moduleSettings.GetSupportedDbTypesAsString();
+			var dbTypeParam = gf.Parameters.FirstOrDefault(p => p.Name == "dbType");
+			if (dbTypeParam == null || dbTypeParam.Value == null || string.IsNullOrEmpty(dbTypeParam.Value.ToString()))
+			{
+				var supportedDbTypes = moduleSettings.GetSupportedDbTypes();
+				if (supportedDbTypes.Count > 2)
+				{
+					throw new BuilderStepException(@$"Database type is missing. Add the database type into your step, Example: ""- Create postgres data source 'myDatabase'"". 
+These are the supported databases (you dont need to be precise)
+{supportedDbTypesAsString}
+");
+				}
+			}
+			var setAsDefaultForApp = gf.Parameters.FirstOrDefault(p => p.Name == "setAsDefaultForApp");
+			var keepHistoryEventSourcing = gf.Parameters.FirstOrDefault(p => p.Name == "keepHistoryEventSourcing");
+
+			bool isDefault = (setAsDefaultForApp != null && setAsDefaultForApp.Value != null) ? (bool)setAsDefaultForApp.Value : false;
+			bool keepHistory = (keepHistoryEventSourcing != null && keepHistoryEventSourcing.Value != null) ? (bool)keepHistoryEventSourcing.Value : false;
+
+			await moduleSettings.CreateDataSource((string) dataSourceName.Value, (string) dbTypeParam.Value, isDefault, keepHistory);
+		}
+	
 
 		private async Task<Instruction> CreateSelect(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
 		{

@@ -19,7 +19,7 @@ namespace PLang.Building.Events.Tests
 		public void Init()
 		{
 			base.Initialize();
-			eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHelper, exceptionHandler);
+			eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, exceptionHandlerFactory);
 		}
 
 		[TestMethod()]

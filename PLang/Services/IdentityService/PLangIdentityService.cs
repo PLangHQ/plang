@@ -109,11 +109,6 @@ namespace PLang.Services.IdentityService
 		}
 		public Identity GetCurrentIdentity()
 		{
-			if (context.TryGetValue(ReservedKeywords.MyIdentity, out object? value) && value != null)
-			{
-				return (Identity)value;
-			}
-
 			Identity? identity;
 			var identities = GetIdentities();
 
@@ -127,7 +122,6 @@ namespace PLang.Services.IdentityService
 			identity = CreateIdentity("MyIdentity", true);
 
 			var currentIdentity = GetIdentityInstance(identity);
-			context.AddOrReplace(ReservedKeywords.MyIdentity, currentIdentity);
 			
 			return currentIdentity;
 		}

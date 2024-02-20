@@ -25,7 +25,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			settings.GetValues<Wallet>(typeof(ModuleSettings)).Returns(wallets);
 
 
-			moduleSettings = new ModuleSettings(settings, aiService);
+			moduleSettings = new ModuleSettings(settings, llmService);
 		}
 
 
@@ -37,7 +37,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 
 			settings.GetValues<RpcServer>(typeof(ModuleSettings)).Returns(new List<RpcServer>());
 			settings.GetValues<Wallet>(typeof(ModuleSettings)).Returns(new List<Wallet>());
-			var ms = new ModuleSettings(settings, aiService);
+			var ms = new ModuleSettings(settings, llmService);
 		}
 
 		[TestMethod()]

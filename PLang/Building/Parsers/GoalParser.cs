@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NBitcoin;
 using Newtonsoft.Json;
 using PLang.Building.Model;
+using PLang.Container;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.SettingsService;
@@ -13,7 +14,7 @@ using System.Text.RegularExpressions;
 
 namespace PLang.Building.Parsers
 {
-	public interface IGoalParser
+    public interface IGoalParser
 	{
 		List<Goal> ParseGoalFile(string fileName);
 	}

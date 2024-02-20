@@ -21,7 +21,7 @@
         "content": [
           {
             "type": "text",
-            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\nVariables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue: Only if the function returns a value AND if user defines %variable% to write into. If no %variable% is defined then set as null."
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\nVariables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
           },
           {
             "type": "text",
@@ -34,11 +34,11 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available defined in csharp ##\r\nvoid CreateDataSource(String name) \nvoid SetDataSouceName(String name) \nvoid BeginTransaction() \nvoid EndTransaction() \nvoid LoadExtension(String fileName, String? procName) \nInt32 Execute(String sql) \nvoid CreateTable(String sql) \nObject Select(String sql, List`1<Object>? Parameters, Boolean? selectOneRow_Top1OrLimit1 = False) \nInt32 Update(String sql, List`1<Object>? Parameters) \nInt32 Delete(String sql, List`1<Object>? Parameters) \nInt32 Insert(String sql, List`1<Object>? Parameters)  // Basic insert statement. Will return affected row count. \nObject InsertAndSelectIdOfInsertedRow(String sql, List`1<Object>? Parameters)  // Insert statement that will return the id of the inserted row. Use only if user requests the id. \nInt32 InsertBulk(String tableName, List`1<Object> items)  // Insert a list(bulk) into database, return number of rows inserted. \nString GetAdditionalSystemErrorInfo() \nString GetAdditionalAssistantErrorInfo() \n\r\n## functions available ends ##\r\n"
+            "text": "## functions available defined in csharp ##\r\nvoid CreateDataSource(String name, String? dbType, Boolean? setAsDefaultForApp = False, Boolean? keepHistoryEventSourcing = False) \nvoid SetDataSouceName(String name) \nvoid BeginTransaction() \nvoid EndTransaction() \nvoid LoadExtension(String fileName, String? procName) \nInt32 Execute(String sql) \nvoid CreateTable(String sql) \nObject Select(String sql, List`1<Object>? SqlParameters, Boolean? selectOneRow_Top1OrLimit1 = False) \nInt32 Update(String sql, List`1<Object>? SqlParameters) \nInt32 Delete(String sql, List`1<Object>? SqlParameters) \nInt32 Insert(String sql, List`1<Object>? SqlParameters)  // Basic insert statement. Will return affected row count. \nObject InsertAndSelectIdOfInsertedRow(String sql, List`1<Object>? SqlParameters)  // Insert statement that will return the id of the inserted row. Use only if user requests the id. \nInt32 InsertBulk(String tableName, List`1<Object> items)  // Insert a list(bulk) into database, return number of rows inserted. \nString GetAdditionalSystemErrorInfo() \nString GetAdditionalAssistantErrorInfo() \n\r\n## functions available ends ##\r\n"
           },
           {
             "type": "text",
-            "text": "Create SQL statement that works with System.Data.SQLite.SQLiteConnection.\r\nYou MUST provide Parameters if SQL has @parameter.\r\nChoose the best method to use, if the method is not provided that fits the SQL, you can use Execute to run SQL statement.\r\n"
+            "text": "Create SQL statement that works with Microsoft.Data.Sqlite.SqliteConnection.\r\nYou MUST provide Parameters if SQL has @parameter.\r\nChoose the best method to use, if the method is not provided that fits the SQL, you can use Execute to run SQL statement.\r\n"
           }
         ]
       },
@@ -54,7 +54,7 @@
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "{\r\n  \"FunctionName\": \"BeginTransaction\",\r\n  \"Parameters\": [],\r\n  \"ReturnValue\": null\r\n}"
   },
   "RunOnBuild": false
 }

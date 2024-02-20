@@ -513,7 +513,7 @@ namespace PLang.Modules.FileModule
 							parameters.Add("ChangeType", e.ChangeType);
 							parameters.Add("Sender", sender);
 
-							var task = pseudoRuntime.RunGoal(engine, context, "", goalToCall, parameters);
+							var task = pseudoRuntime.RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), goalToCall, parameters);
 							task.Wait();
 						}, e.FullPath, debounceTime, Timeout.Infinite);
 						timers.TryAdd(e.FullPath, timer);
@@ -540,7 +540,9 @@ namespace PLang.Modules.FileModule
 			}
 			else
 			{
-				timer = new Timer((state) => { WatcherCallGoal(sender, e, goalToCall, excludeFiles); }, e.FullPath, debounceTime, Timeout.Infinite);
+				timer = new Timer((state) => { 
+					WatcherCallGoal(sender, e, goalToCall, excludeFiles); 
+				}, e.FullPath, debounceTime, Timeout.Infinite);
 				timers.TryAdd(e.FullPath, timer);
 			}
 		}
@@ -560,7 +562,7 @@ namespace PLang.Modules.FileModule
 
 				try
 				{
-					var task = pseudoRuntime.RunGoal(engine, context, "", goalToCall, parameters);
+					var task = pseudoRuntime.RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), goalToCall, parameters);
 					task.Wait();
 				} catch (Exception ex) {
 					logger.LogError(goalStep.Text, ex);

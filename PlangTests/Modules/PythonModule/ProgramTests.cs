@@ -19,8 +19,8 @@ namespace PLangTests.Modules.PythonModule
 		public void Init()
 		{
 			base.Initialize();
-			terminalProgram = new PLang.Modules.TerminalModule.Program(logger, settings, outputStream, fileSystem);
-			terminalProgram.Init(container, null, null, null, memoryStack, logger, context, typeHelper, aiService, settings, appCache, null);
+			terminalProgram = new PLang.Modules.TerminalModule.Program(logger, settings, outputStreamFactory, fileSystem);
+			terminalProgram.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmService, settings, appCache, null);
 
 		}
 
@@ -36,11 +36,11 @@ namespace PLangTests.Modules.PythonModule
 			string requirements = File.ReadAllText(Path.Join(Environment.CurrentDirectory, "requirements.txt"));
 			fileSystem.AddFile("main.py", new System.IO.Abstractions.TestingHelpers.MockFileData(content));
 			fileSystem.AddFile("requirements.txt", new System.IO.Abstractions.TestingHelpers.MockFileData(requirements));
-			var outputStream = NSubstitute.Substitute.For<IOutputStream>();
+			var outputStream = NSubstitute.Substitute.For<IOutputStreamFactory>();
 
 			
 			var p = new Program(fileSystem, logger, settings, outputStream, signingService, terminalProgram);
-			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, aiService, settings, appCache, null);
+			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmService, settings, appCache, null);
 			string[] vars = new string[] { "result" };
 			 await p.RunPythonScript("main.py", variablesToExtractFromPythonScript: vars,
 				stdOutVariableName : "stdOut", stdErrorVariableName: "stdError");
@@ -60,9 +60,9 @@ namespace PLangTests.Modules.PythonModule
 			string content = File.ReadAllText(Path.Join(Environment.CurrentDirectory, "main_params.py"));
 			fileSystem.AddFile("main_params.py", new System.IO.Abstractions.TestingHelpers.MockFileData(content));
 
-			var outputStream = NSubstitute.Substitute.For<IOutputStream>();
+			var outputStream = NSubstitute.Substitute.For<IOutputStreamFactory>();
 			var p = new Program(fileSystem, logger, settings, outputStream, signingService, terminalProgram);
-			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, aiService, settings, appCache, null);
+			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmService, settings, appCache, null);
 
 			string[] vars = new string[] { "result" };
 			await p.RunPythonScript("main_params.py", variablesToExtractFromPythonScript: vars,

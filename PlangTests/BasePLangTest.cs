@@ -5,12 +5,15 @@ using NSubstitute;
 using PLang.Building.Events;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
+using PLang.Container;
+using PLang.Exceptions.AskUser;
 using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.AppsRepository;
 using PLang.Services.CachingService;
+using PLang.Services.EncryptionService;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
@@ -24,20 +27,20 @@ using static PLang.Modules.BaseBuilder;
 
 namespace PLangTests
 {
-	public class BasePLangTest
+    public class BasePLangTest
 	{
-		protected ServiceContainer container;
+		protected IServiceContainer container;
 
 		protected MockLogger logger;
 		protected PLangMockFileSystem fileSystem;
-		protected ILlmService aiService;
+		protected ILlmService llmService;
+		protected ILlmServiceFactory llmServiceFactory;
 		protected IPseudoRuntime pseudoRuntime;
 		protected IEngine engine;
 		protected ISettingsRepository settingsRepository;
 		protected ISettings settings;
 		protected IEventRuntime eventRuntime;
 		protected ITypeHelper typeHelper;
-		protected IErrorHelper errorHelper;
 		protected PrParser prParser;
 		protected PLangAppContext context;
 		protected HttpClient httpClient;
@@ -49,14 +52,18 @@ namespace PLangTests
 		protected IArchiver archiver;
 		protected IEventSourceRepository eventSourceRepository;
 		protected IEncryption encryption;
+		protected IEncryptionFactory encryptionFactory;
 		protected IOutputStream outputStream;
+		protected IOutputStreamFactory outputStreamFactory;
 		protected IAppCache appCache;
 		protected IPLangIdentityService identityService;
 		protected IPLangSigningService signingService;
 		protected IPLangAppsRepository appsRepository;
 		protected IHttpClientFactory httpClientFactory;
+		protected IAskUserHandlerFactory askUserHandlerFactory;
 		protected IAskUserHandler askUserHandler;
 		protected IExceptionHandler exceptionHandler;
+		protected IExceptionHandlerFactory exceptionHandlerFactory;
 		protected void Initialize()
 		{
 
@@ -64,7 +71,7 @@ namespace PLangTests
 
 		}
 
-		protected ServiceContainer CreateServiceContainer()
+		protected IServiceContainer CreateServiceContainer()
 		{
 			AppContext.SetSwitch(ReservedKeywords.Test, true);
 			container = new ServiceContainer();
@@ -79,10 +86,12 @@ namespace PLangTests
 			container.RegisterInstance<ISettingsRepository>(settingsRepository);
 
 			containerFactory = Substitute.For<IServiceContainerFactory>();
-			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStream>()).Returns(p =>
+			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), Arg.Any<IExceptionHandlerFactory>(), Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
 			{
 				var container = CreateServiceContainer();
-				container.GetInstance<IEngine>().GetMemoryStack().Returns(a =>
+
+				IEngine engine = container.GetInstance<IEngine>();
+				engine.GetMemoryStack().Returns(a =>
 				{
 					return new MemoryStack(pseudoRuntime, engine, settings, context);
 				});
@@ -107,20 +116,33 @@ namespace PLangTests
 			signingService = Substitute.For<IPLangSigningService>();
 			container.RegisterInstance(signingService);
 
-			aiService = Substitute.For<ILlmService>();
-			container.RegisterInstance(aiService);
+			llmService = Substitute.For<ILlmService>();
+			container.RegisterInstance(llmService);
+			llmServiceFactory = Substitute.For<ILlmServiceFactory>();
+			llmServiceFactory.CreateHandler().Returns(llmService);
+			container.RegisterInstance(llmServiceFactory);
 
 			askUserHandler = Substitute.For<IAskUserHandler>();
 			container.RegisterInstance(askUserHandler);
+			askUserHandlerFactory = Substitute.For<IAskUserHandlerFactory>();
+			askUserHandlerFactory.CreateHandler().Returns(askUserHandler);
+			container.RegisterInstance(askUserHandlerFactory);
 
 			outputStream = Substitute.For<IOutputStream>();
 			container.RegisterInstance(outputStream);
+			outputStreamFactory = Substitute.For<IOutputStreamFactory>();
+			outputStreamFactory.CreateHandler().Returns(outputStream);
+			container.RegisterInstance(outputStreamFactory);
 
 			httpClientFactory = Substitute.For<IHttpClientFactory>();
 			container.RegisterInstance(httpClientFactory);
 
 			encryption = Substitute.For<IEncryption>();
 			container.RegisterInstance(encryption);
+			encryptionFactory = Substitute.For<IEncryptionFactory>();
+			encryptionFactory.CreateHandler().Returns(encryption);
+
+			container.RegisterInstance(encryptionFactory);
 
 			appsRepository = Substitute.For<IPLangAppsRepository>();
 			container.RegisterInstance(appsRepository);
@@ -139,6 +161,9 @@ namespace PLangTests
 
 			exceptionHandler = Substitute.For<IExceptionHandler>();
 			container.RegisterInstance(exceptionHandler);
+			exceptionHandlerFactory = Substitute.For<IExceptionHandlerFactory>();
+			container.RegisterInstance(exceptionHandlerFactory);
+
 			db = Substitute.For<IDbConnection>();
 			//container.RegisterInstance(db);
 
@@ -151,9 +176,6 @@ namespace PLangTests
 
 			typeHelper = Substitute.For<ITypeHelper>();
 			container.RegisterInstance(typeHelper);
-
-			errorHelper = Substitute.For<IErrorHelper>();
-			container.RegisterInstance(errorHelper);
 
 			memoryStack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			container.RegisterInstance(memoryStack);

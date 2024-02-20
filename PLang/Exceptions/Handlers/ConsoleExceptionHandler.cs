@@ -9,11 +9,9 @@ namespace PLang.Exceptions.Handlers
 	
 	public class ConsoleExceptionHandler : ExceptionHandler, IExceptionHandler
 	{
-		private readonly IAskUserHandler askUserHandler;
 
-		public ConsoleExceptionHandler(IAskUserHandler askUserHandler) : base(askUserHandler)
+		public ConsoleExceptionHandler(IAskUserHandlerFactory askUserHandlerFactory) : base(askUserHandlerFactory)
 		{
-			this.askUserHandler = askUserHandler;
 		}
 		public async Task<bool> Handle(Exception exception, int statusCode, string statusText, string message)
 		{

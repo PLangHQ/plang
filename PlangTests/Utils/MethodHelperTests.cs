@@ -29,7 +29,7 @@ namespace PLang.Utils.Tests
             goalStep.Text = "";
 
             var typeHelper = new TypeHelper(fileSystem, settings);
-			methodHelper = new MethodHelper(goalStep, variableHelper, memoryStack, typeHelper, aiService);
+			methodHelper = new MethodHelper(goalStep, variableHelper, memoryStack, typeHelper, llmService);
 
 		}
 	
@@ -289,7 +289,7 @@ namespace PLang.Utils.Tests
   }");
 			memoryStack.Put("password", "123");
 			goalStep.Text = "hash %password%, write to %hashedPassword%";
-			aiService.Query<MethodNotFoundResponse>(Arg.Any<LlmRequest>()).Returns(new MethodNotFoundResponse("hash %password%, write into %hashedPassword%"));
+			llmService.Query<MethodNotFoundResponse>(Arg.Any<LlmRequest>()).Returns(new MethodNotFoundResponse("hash %password%, write into %hashedPassword%"));
 			var method = await methodHelper.GetMethod(this, gf);
 
 

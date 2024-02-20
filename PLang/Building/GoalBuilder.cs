@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using PLang.Building.Events;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
+using PLang.Container;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
@@ -16,7 +17,7 @@ using System.Text.RegularExpressions;
 namespace PLang.Building
 {
 
-	public interface IGoalBuilder
+    public interface IGoalBuilder
 	{
 		Task BuildGoal(IServiceContainer container, string goalFileAbsolutePath, int errorCount = 0);
 	}

@@ -29,14 +29,14 @@ namespace PLang.Building
 		private readonly IInstructionBuilder instructionBuilder;
 		private readonly IEventRuntime eventRuntime;
 		private readonly ITypeHelper typeHelper;
-		private readonly IErrorHelper errorHelper;
 		private readonly MemoryStack memoryStack;
 		private readonly VariableHelper variableHelper;
-		private readonly IExceptionHandler exceptionHandler;
+		private readonly IExceptionHandlerFactory exceptionHandlerFactory;
+		private readonly PLangAppContext context;
 
 		public StepBuilder(Lazy<ILogger> logger, IPLangFileSystem fileSystem, Lazy<ILlmService> aiService,
 					IInstructionBuilder instructionBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
-					IErrorHelper errorHelper, MemoryStack memoryStack, VariableHelper variableHelper, IExceptionHandler exceptionHandler)
+					MemoryStack memoryStack, VariableHelper variableHelper, IExceptionHandlerFactory exceptionHandlerFactory, PLangAppContext context)
 		{
 			this.fileSystem = fileSystem;
 			this.aiService = aiService;
@@ -44,10 +44,10 @@ namespace PLang.Building
 			this.instructionBuilder = instructionBuilder;
 			this.eventRuntime = eventRuntime;
 			this.typeHelper = typeHelper;
-			this.errorHelper = errorHelper;
 			this.memoryStack = memoryStack;
 			this.variableHelper = variableHelper;
-			this.exceptionHandler = exceptionHandler;
+			this.exceptionHandlerFactory = exceptionHandlerFactory;
+			this.context = context;
 		}
 
 		public async Task BuildStep(Goal goal, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
@@ -132,7 +132,7 @@ namespace PLang.Building
 			catch (StopBuilderException) { throw; }
 			catch (Exception ex)
 			{
-				if (await exceptionHandler.Handle(ex, 500, "error", ex.Message))
+				if (await exceptionHandlerFactory.CreateHandler().Handle(ex, 500, "error", ex.Message))
 				{
 					await BuildStep(goal, stepIndex, excludeModules, errorCount);
 				}
@@ -164,7 +164,7 @@ namespace PLang.Building
 			if (action.Contains("ReturnValue"))
 			{
 				var gf = JsonConvert.DeserializeObject<GenericFunction>(action);
-				LoadVariablesIntoMemoryStack(gf, memoryStack);
+				LoadVariablesIntoMemoryStack(gf, memoryStack, context);
 			}
 			else if (action.Contains("OutParameterDefinition"))
 			{
@@ -182,7 +182,7 @@ namespace PLang.Building
 			return true;
 		}
 
-		public static void LoadVariablesIntoMemoryStack(GenericFunction? gf, MemoryStack memoryStack)
+		public static void LoadVariablesIntoMemoryStack(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context)
 		{
 			if (gf == null) return;
 
@@ -194,10 +194,10 @@ namespace PLang.Building
 				}
 			}
 
-			LoadParameters(gf, memoryStack);
+			LoadParameters(gf, memoryStack, context);
 		}
 
-		private static void LoadParameters(GenericFunction? gf, MemoryStack memoryStack)
+		private static void LoadParameters(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context)
 		{
 			// todo: hack for now, should be able to load dynamically variables that are being set at build time
 			// might have to structure the build
@@ -211,6 +211,9 @@ namespace PLang.Building
 				}
 			}
 
+
+			// this is bad implementation, the Builder.cs of the module should 
+			// handle any custom loading into memoryStack
 			if (gf.FunctionName == "RunGoal")
 			{
 				var json = gf.Parameters.FirstOrDefault(p => p.Name == "parameters")?.Value;
@@ -222,6 +225,12 @@ namespace PLang.Building
 				{
 					memoryStack.PutForBuilder(parameter.Key, parameter.Value);
 				}
+			}
+
+			if (gf.FunctionName == "CreateDataSource")
+			{
+				var parameter = gf.Parameters.FirstOrDefault(p => p.Name == "name");
+				context.AddOrReplace(ReservedKeywords.CurrentDataSourceName + "_string", parameter.Value);
 			}
 
 

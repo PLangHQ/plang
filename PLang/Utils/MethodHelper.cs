@@ -417,6 +417,9 @@ example of answer:
 			if (value == null) return null;
 
 			var targetType = parameterInfo.ParameterType;
+			if (targetType.Name == "String" && (value is JObject || value is JArray || value is  JToken || value is JProperty)) {
+				return value.ToString();
+			}
 
 			if (targetType == null)
 				throw new ArgumentNullException(nameof(targetType));

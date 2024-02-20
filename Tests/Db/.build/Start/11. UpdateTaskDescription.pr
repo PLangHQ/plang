@@ -9,8 +9,8 @@
         "Value": "UPDATE tasks SET description=@description WHERE id=@id"
       },
       {
-        "Type": "System.Collections.Generic.List`1[System.Object]",
-        "Name": "Parameters",
+        "Type": "System.Collections.Generic.List<System.Object>",
+        "Name": "SqlParameters",
         "Value": [
           {
             "ParameterName": "@description",
@@ -44,7 +44,7 @@
         "content": [
           {
             "type": "text",
-            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON: \r\n\r\n## csharp function ##\r\nInt32 Update(String sql, List<object>()? Parameters = null)\r\n## csharp function ##\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%. Do not remove %\r\nSql is the SQL statement that should be executed. Sql MAY NOT contain a variable(except table name), it MUST be injected using Parameter to prevent SQL injection\r\nParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.\r\nAll integers are type of System.Int64.\r\nParameter @id MUST be type System.Int64\r\nIf table name is a variable, keep the variable in the sql statement\r\nYou MUST generate a valid sql statement for SQLiteConnection.\r\nYou MUST provide Parameters if SQL has @parameter.\r\n"
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON: \r\n\r\n## csharp function ##\r\nInt32 Update(String sql, List<object>()? SqlParameters = null)\r\n## csharp function ##\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%. Do not remove %\r\nSql is the SQL statement that should be executed. Sql MAY NOT contain a variable(except table name), it MUST be injected using SqlParameters to prevent SQL injection\r\nSqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.\r\nAll integers are type of System.Int64.\r\nParameter @id MUST be type System.Int64\r\nIf table name is a variable, keep the variable in the sql statement\r\nYou MUST generate a valid sql statement for SqliteConnection.\r\nYou MUST provide SqlParameters if SQL has @parameter.\r\n"
           },
           {
             "type": "text",
@@ -77,7 +77,7 @@
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "{\r\n  \"FunctionName\": \"Update\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"System.String\",\r\n      \"Name\": \"sql\",\r\n      \"Value\": \"UPDATE tasks SET description=@description WHERE id=@id\"\r\n    },\r\n    {\r\n      \"Type\": \"System.Collections.Generic.List<System.Object>\",\r\n      \"Name\": \"SqlParameters\",\r\n      \"Value\": [\r\n        {\r\n          \"ParameterName\": \"@description\",\r\n          \"VariableNameOrValue\": \"Updated first task\",\r\n          \"TypeFullName\": \"System.String\"\r\n        },\r\n        {\r\n          \"ParameterName\": \"@id\",\r\n          \"VariableNameOrValue\": \"%tasks[1].id%\",\r\n          \"TypeFullName\": \"System.Int64\"\r\n        }\r\n      ]\r\n    }\r\n  ]\r\n}"
   },
   "RunOnBuild": false
 }

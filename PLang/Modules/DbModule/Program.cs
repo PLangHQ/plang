@@ -7,6 +7,7 @@ using Nethereum.ABI.CompilationMetadata;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OpenAI_API.Moderation;
+using OpenQA.Selenium.DevTools.V119.FedCm;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
@@ -46,22 +47,22 @@ namespace PLang.Modules.DbModule
 			this.llmService = llmService;
 			this.eventSourceRepository = eventSourceRepository;
 			this.logger = logger;
-			this.context = context;			
+			this.context = context;
+
+			this.moduleSettings = new ModuleSettings(fileSystem, settings, context, llmService, dbConnection, logger);
 		}
 
-		public async Task CreateDataSource(string name, bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
+		public async Task CreateDataSource(string name, string dbType = "", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
 		{
-			this.moduleSettings = new ModuleSettings(fileSystem, settings, context, llmService, dbConnection, logger);
-			await moduleSettings.CreateDataSource(name, setAsDefaultForApp, keepHistoryEventSourcing);
+			await moduleSettings.CreateDataSource(name, dbType, setAsDefaultForApp, keepHistoryEventSourcing);
 		}
 
 		public async Task SetDataSouceName(string name)
 		{
-			this.moduleSettings = new ModuleSettings(fileSystem, settings, context, llmService, dbConnection, logger);
 			var dataSource = await moduleSettings.GetDataSource(name);
 			if (dataSource == null)
 			{
-				throw new ArgumentException($"Datasource with the name '{name}' could not be found. You need to create a datasource first, e.g. \n\n- Create data source {name}\n- Create data source {name}, set as default\n- Create data source {name}, keep history");
+				throw new ArgumentException($"Datasource with the name '{name}' could not be found. You need to create a datasource first, e.g. \n\n- Create data source {name}\n- Create postgres data source {name}, set as default\n- Create sqlserver data source {name}, keep history");
 			}
 			context[ReservedKeywords.CurrentDataSourceName] = dataSource;
 		}
@@ -261,13 +262,18 @@ namespace PLang.Modules.DbModule
 				{
 					if (ex.ToString().Contains("already exists") || ex.ToString().Contains("duplicate column name"))
 					{
-						logger.LogWarning($"Had error running Setup but will continue. Error message:{ex.Message}");
+						ShowWarning(ex);
 						return 1;
 					}
 				}
 				throw;
 
 			}
+		}
+
+		private void ShowWarning(Exception ex)
+		{
+			logger.LogWarning($"Had error running Setup ({goalStep.Text}) but will continue. Error message:{ex.Message}");
 		}
 
 		public async Task CreateTable(string sql)
@@ -278,8 +284,9 @@ namespace PLang.Modules.DbModule
 			}
 			catch (Exception ex)
 			{
-				if (ex.ToString().Contains("relation") && ex.ToString().Contains("already exists"))
+				if (GoalHelper.IsSetup(goalStep) && ex.ToString().Contains("relation") && ex.ToString().Contains("already exists"))
 				{
+					ShowWarning(ex);
 					return;
 				}
 
@@ -370,17 +377,33 @@ namespace PLang.Modules.DbModule
 		public async Task<int> Insert(string sql, List<object>? SqlParameters = null)
 		{
 
-			int rowsAffected;
+			int rowsAffected = 0;
 			var prepare = Prepare(sql, SqlParameters, true);
-			if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
+			try
 			{
-				rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
+				
+				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
+				{
+					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
+				}
+				else
+				{
+					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param);
+				}
 			}
-			else
+			catch (Exception ex)
 			{
-				rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param);
+				if (GoalHelper.IsSetup(goalStep) && ex.ToString().Contains("duplicate key"))
+				{
+					ShowWarning(ex);
+					return rowsAffected;
+				}
+				throw;
 			}
-			Done(prepare.connection);
+			finally
+			{
+				Done(prepare.connection);
+			}
 			return rowsAffected;
 
 		}
@@ -413,7 +436,7 @@ namespace PLang.Modules.DbModule
 		[Description("Insert a list(bulk) into database, return number of rows inserted")]
 		public async Task<int> InsertBulk(string tableName, List<object> items)
 		{
-			var dataSource = await moduleSettings.GetCurrentDatasource();
+			var dataSource = await moduleSettings.GetCurrentDataSource();
 			var sqlSelectColumns = await moduleSettings.FormatSelectColumnsStatement(tableName);
 			var columnsInTable = await Select(sqlSelectColumns) as List<dynamic>;
 			if (columnsInTable == null)
@@ -493,7 +516,7 @@ namespace PLang.Modules.DbModule
 
 		public async override Task<string> GetAdditionalAssistantErrorInfo()
 		{
-			var dataSource = await moduleSettings.GetCurrentDatasource();
+			var dataSource = await moduleSettings.GetCurrentDataSource();
 
 			List<object> parameters = new List<object>();
 			parameters.Add(new ParameterInfo("Database", dataSource.DbName, "System.String"));

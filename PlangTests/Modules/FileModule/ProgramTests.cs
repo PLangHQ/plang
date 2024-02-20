@@ -12,7 +12,7 @@ namespace PLangTests.Modules.FileModule
 		{
 			base.Initialize();
 			p = new Program(fileSystem, settings, logger, pseudoRuntime, engine);
-			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, aiService, settings, appCache, null);
+			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmService, settings, appCache, null);
 		}
 
 		[TestMethod]

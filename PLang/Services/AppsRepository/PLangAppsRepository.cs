@@ -1,6 +1,7 @@
 ﻿using PLang.Building.Parsers;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Utils;
 using System.IO.Compression;
 
 namespace PLang.Services.AppsRepository
@@ -13,6 +14,9 @@ namespace PLang.Services.AppsRepository
 	{
 		public void InstallApp(string appName)
 		{
+			appName = appName.AdjustPathToOs().Replace("!", "");
+			appName = GoalHelper.GetAppName(appName);
+
 			if (fileSystem.Directory.Exists(Path.Join("apps", appName))) return;
 
 			string zipPath = Path.Join(fileSystem.RootDirectory, "apps", appName, appName + ".zip");

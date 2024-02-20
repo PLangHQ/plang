@@ -43,7 +43,7 @@ The C# code is this:
 
 		private static (string errorLine, int lineNr) GetErrorLine(int lineNr, Implementation implementation, string message)
 		{
-			lineNr -= (implementation.Using.Length + 4);
+			lineNr -= ((implementation.Using != null) ? implementation.Using.Length : 0) + 4;
 			string[] codeLines = implementation.Code.ReplaceLineEndings().Split(Environment.NewLine);
 			if (lineNr == 0) return ("", -1);
 

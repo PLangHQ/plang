@@ -38,7 +38,6 @@ namespace PLang.Exceptions.AskUser.Database
 If user provides a full data source connection, return {{error:explainWhyConnectionStringShouldNotBeInCodeMax100Characters}}.
 
 typeFullName: from database types provided, is the type.FullName for IDbConnection in c# for this database type for .net 7
-dataSourceName: give name to the datasource if not defined by user 
 nugetCommand: nuget package name, for running ""nuget install ...""
 dataSourceConnectionStringExample: create an example of a connection string for this type of databaseType
 regexToExtractDatabaseNameFromConnectionString: generate regex to extract the database name from a connection string from user selected databaseType

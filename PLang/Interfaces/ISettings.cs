@@ -18,5 +18,6 @@ namespace PLang.Interfaces
 		void SetList<T>(Type callingType, T value, string? key = null);
 
 		string GetSalt();
+		void SetSharedSettings(string appId);
 	}
 }

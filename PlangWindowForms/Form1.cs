@@ -4,11 +4,11 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang;
 using PLang.Building.Model;
+using PLang.Container;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
-using PLang.Utils;
 using PLangWindowForms;
 using System.Diagnostics;
 using System.IO.Abstractions;
@@ -19,7 +19,7 @@ namespace PlangWindowForms
 {
 
 
-	public partial class Form1 : Form, IForm
+    public partial class Form1 : Form, IForm
 	{
 		bool debug = false;
 		ServiceContainer container;
@@ -95,7 +95,9 @@ namespace PlangWindowForms
 		bool initialLoad = false;
 		private void RenderContent(string html)
 		{
-			var outputStream = container.GetInstance<IOutputStream>();
+			var outputStreamFactory = container.GetInstance<IOutputStreamFactory>();
+			var outputStream = outputStreamFactory.CreateHandler();
+
 			var stream = outputStream.Stream;
 			var errorStream = outputStream.ErrorStream;
 			if (html == "Loading...")

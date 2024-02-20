@@ -72,7 +72,7 @@ namespace PLang.Building
 			}
 			foreach (var function in functions)
 			{
-				StepBuilder.LoadVariablesIntoMemoryStack(function, memoryStack);
+				StepBuilder.LoadVariablesIntoMemoryStack(function, memoryStack, context);
 			}
 			// since the no invalid function, we can save the instruction file
 			WriteInstructionFile(step, instruction);

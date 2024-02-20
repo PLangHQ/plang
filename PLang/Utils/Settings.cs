@@ -79,17 +79,6 @@ namespace PLang.Utils
 			var setting = new Setting(AppId, callingType.FullName, type, key, settingValue);
 			
 			settingsRepository.Set(setting);
-
-			var settings = settingsRepository.GetSettings().ToList();
-			int idx = settings.FindIndex(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
-			if (idx == -1)
-			{
-				settings.Add(setting);
-			}
-			else
-			{
-				settings[idx] = setting;
-			}
 		}
 
 
@@ -172,7 +161,7 @@ namespace PLang.Utils
 			if (key == null) key = type;
 
 			var settings = settingsRepository.GetSettings();
-			var setting = settings.FirstOrDefault(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+			var setting = settings.FirstOrDefault(p => p.AppId == AppId && p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
 
 			if (setting == null) return defaultValue;
 
@@ -181,6 +170,14 @@ namespace PLang.Utils
 			return obj;
 		}
 
+		public void SetSharedSettings(string appId)
+		{
+			settingsRepository.SetSharedDataSource(appId);
+		}
+		public void RemoveSharedSettings()
+		{
+			settingsRepository.SetSharedDataSource();
+		}
 
 		public bool Contains<T>(Type callingType, string? key = null)
 		{
@@ -188,7 +185,7 @@ namespace PLang.Utils
 			if (key == null) key = type;
 
 			var settings = settingsRepository.GetSettings();
-			return settings.FirstOrDefault(p => p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase)) != null;
+			return settings.FirstOrDefault(p => p.AppId == AppId && p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase)) != null;
 		}
 
 		public IEnumerable<Setting> GetAllSettings()

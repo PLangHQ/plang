@@ -28,13 +28,13 @@ namespace PLangTests.Modules.LlmModule
 
 		private void SetupResponse(string response)
 		{
-			aiService.Query<object>(Arg.Any<LlmRequest>()).Returns(p =>
+			llmService.Query<object>(Arg.Any<LlmRequest>()).Returns(p =>
 			{
 				return response;
 			});
 
-			p = new Program(aiService, identityService, settings);
-			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, aiService, settings, appCache, null);
+			p = new Program(llmService, identityService, settings);
+			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmService, settings, appCache, null);
 		}
 
 		[TestMethod]

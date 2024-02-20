@@ -33,6 +33,7 @@ namespace PLang.Utils
 		public static readonly string Inject_Caching = "__Inject_Caching__";
 		public static readonly string Inject_LLMService = "__Inject_LLMService__";
 		public static readonly string Inject_AskUserHandler = "__Inject_AskUserHandler__";
+		public static readonly string Inject_ExceptionHandler = "__Inject_ExceptionHandler__";
 		public static readonly string Inject_EncryptionService = "__Inject_EncryptionService__";
 		public static readonly string Inject_IEventSourceRepository = "__Inject_IEventSourceRepository__";
 		public static readonly string Inject_Archiving = "__Inject_Archiving__";

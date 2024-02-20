@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using LightInject;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
@@ -6,9 +7,13 @@ using PLang.Exceptions.AskUser.Database;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Utils;
+using System.ComponentModel;
 using System.Data;
+using System.Data.Common;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using static PLang.Modules.DbModule.ModuleSettings;
+using static PLang.Runtime.Startup.ModuleLoader;
 
 namespace PLang.Modules.DbModule
 {
@@ -17,18 +22,18 @@ namespace PLang.Modules.DbModule
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ISettings settings;
 		private readonly PLangAppContext context;
-		private readonly ILlmService aiService;
+		private readonly ILlmService llmService;
 		private readonly IDbConnection db;
 		private readonly ILogger logger;
 
 		public record SqlStatement(string SelectTablesAndViewsInMyDatabaseSqlStatement, string SelectColumnsFromTablesSqlStatement);
 
-		public ModuleSettings(IPLangFileSystem fileSystem, ISettings settings, PLangAppContext context, ILlmService aiService, IDbConnection db, ILogger logger)
+		public ModuleSettings(IPLangFileSystem fileSystem, ISettings settings, PLangAppContext context, ILlmService llmService, IDbConnection db, ILogger logger)
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
 			this.context = context;
-			this.aiService = aiService;
+			this.llmService = llmService;
 			this.db = db;
 			this.logger = logger;
 		}
@@ -37,9 +42,9 @@ namespace PLang.Modules.DbModule
 		public record DataSource(string Name, string TypeFullName, string ConnectionString, string DbName, string SelectTablesAndViews, string SelectColumns, bool KeepHistory = true, bool IsDefault = false);
 
 
-		public async Task CreateDataSource(string dataSourceName = "data", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
+		public async Task CreateDataSource(string dataSourceName = "data", string dbType = "", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
 		{
-			var dataSources = await GetDataSourcesByType();
+			var dataSources = await GetAllDataSources();
 			var dataSource = dataSources.FirstOrDefault(p => p.Name.ToLower() == dataSourceName.ToLower());
 			if (dataSource != null) {
 				logger.LogWarning($"Data source with the name '{dataSourceName}' already exists.");
@@ -64,32 +69,47 @@ namespace PLang.Modules.DbModule
 			}
 
 			var supportedDbTypes = GetSupportedDbTypesAsString();
-			throw new AskUserDatabaseType(aiService, setAsDefaultForApp, keepHistoryEventSourcing, supportedDbTypes, dataSourceName, @$"------ Data source setup --------------
-Lets create connection for data source: {dataSourceName}
+			var system = @$"Map user request
 
-Following databases are supported:
-{supportedDbTypes}. 
+If user provides a full data source connection, return {{error:explainWhyConnectionStringShouldNotBeInCodeMax100Characters}}.
 
-Type in what database you would like to use?
+typeFullName: from database types provided, is the type.FullName for IDbConnection in c# for this database type for .net 7
+nugetCommand: nuget package name, for running ""nuget install ...""
+dataSourceConnectionStringExample: create an example of a connection string for this type of databaseType
+regexToExtractDatabaseNameFromConnectionString: generate regex to extract the database name from a connection string from user selected databaseType
+";
+			string assistant = $"## database types ##\r\n{supportedDbTypes}\r\n## database types ##";
 
-You can set the connection as the default, or not to keep history
+			var promptMessage = new List<LlmMessage>();
+			promptMessage.Add(new LlmMessage("system", system));
+			promptMessage.Add(new LlmMessage("assistant", assistant));
+			promptMessage.Add(new LlmMessage("user", $"Create {dbType} for data source named: {dataSourceName}"));
 
-Examples you can type in:
-	sqllite
-	postgresql
+			var llmRequest = new LlmRequest("AskUserDatabaseType", promptMessage);
+			llmRequest.scheme = TypeHelper.GetJsonSchema(typeof(DatabaseTypeResponse));
 
+			var result = await llmService.Query<DatabaseTypeResponse>(llmRequest);
+			if (result == null)
+			{
+				throw new BuilderException("Could not get information from LLM service. Try again.");
+			}
+			if (dataSources.Count == 0) setAsDefaultForApp = true;
 
-If you want to add a different database type, check https://github.com/PLangHQ/plang/blob/main/Documentation/Services.md#db-service
-", AddDataSource);
+			await AddDataSource(result.typeFullName, dataSourceName, result.nugetCommand, 
+									result.dataSourceConnectionStringExample, result.regexToExtractDatabaseNameFromConnectionString, 
+									keepHistoryEventSourcing, setAsDefaultForApp);
 		}
+
+		private record DatabaseTypeResponse(string typeFullName, string nugetCommand, string regexToExtractDatabaseNameFromConnectionString, string dataSourceConnectionStringExample);
+
 
 		public async Task AddDataSource(string typeFullName, string dataSourceName, string nugetCommand,
 			string dataSourceConnectionStringExample, string regexToExtractDatabaseNameFromConnectionString, bool keepHistory, bool isDefault = false)
 		{
-			var datasources = settings.GetValues<DataSource>(this.GetType());
+			var datasources = await GetAllDataSources();
 			if (datasources.FirstOrDefault(p => p.Name.ToLower() == dataSourceName.ToLower()) != null)
 			{
-				throw new AskUserDataSourceNameExists(aiService, typeFullName, dataSourceName, nugetCommand,
+				throw new AskUserDataSourceNameExists(llmService, typeFullName, dataSourceName, nugetCommand,
 						dataSourceConnectionStringExample, regexToExtractDatabaseNameFromConnectionString, keepHistory, isDefault,
 						$"'{dataSourceName}' already exists. Give me different name if you like to add it.", AddDataSource);
 			}
@@ -97,7 +117,7 @@ If you want to add a different database type, check https://github.com/PLangHQ/p
 			if (!IsModuleInstalled(typeFullName))
 			{
 				var listOfDbSupported = GetSupportedDbTypesAsString();
-				throw new AskUserDatabaseType(aiService, isDefault, keepHistory, listOfDbSupported, dataSourceName, $"{typeFullName} is not supported. Following databases are supported: {listOfDbSupported}. If you need {typeFullName}, you must install it into modules folder in your app using {nugetCommand}.", AddDataSource);
+				throw new AskUserDatabaseType(llmService, isDefault, keepHistory, listOfDbSupported, dataSourceName, $"{typeFullName} is not supported. Following databases are supported: {listOfDbSupported}. If you need {typeFullName}, you must install it into modules folder in your app using {nugetCommand}.", AddDataSource);
 			}
 
 
@@ -106,6 +126,8 @@ If you want to add a different database type, check https://github.com/PLangHQ/p
 
 This is an example of a connection string:
 	{dataSourceConnectionStringExample}
+
+Your connection string needs to be 100% correct to work (LLM will not read this).
 
 Connection string:",
 				SetDatabaseConnectionString);
@@ -143,8 +165,8 @@ Table name should be @TableName, database name is @Database if needed as paramet
 
 Be concise"));
 
-			var llmRequest = new LlmRequest("DbModule", promptMessage);
-			var statement = await aiService.Query<SqlStatement>(llmRequest);
+			var llmRequest = new LlmRequest("SetDatabaseConnectionString", promptMessage);
+			var statement = await llmService.Query<SqlStatement>(llmRequest);
 			if (statement == null)
 			{
 				throw new BuilderException("Could not get select statement for tables, views and columns. Try again.");
@@ -166,11 +188,19 @@ Be concise"));
 
 			dataSources.Add(dataSource);
 			settings.SetList(this.GetType(), dataSources);
+
+			if (isDefault || dataSources.Count == 1) {
+				AppContext.SetData(ReservedKeywords.Inject_IDbConnection, typeFullName);
+				context.AddOrReplace(ReservedKeywords.Inject_IDbConnection, typeFullName);
+
+				AppContext.SetData(ReservedKeywords.CurrentDataSourceName, dataSource);
+				context.AddOrReplace(ReservedKeywords.CurrentDataSourceName, dataSource);
+			}
 		}
 
 		public async Task RemoveDataSource(string dataSourceName)
 		{
-			var dataSources = await GetDataSourcesByType();
+			var dataSources = await GetAllDataSources();
 			var dataSource = dataSources.FirstOrDefault(p => p.Name == dataSourceName);
 			if (dataSource != null)
 			{
@@ -178,10 +208,7 @@ Be concise"));
 			}
 			settings.SetList(typeof(ModuleSettings), dataSources);
 		}
-		public async Task<List<DataSource>> GetDataSourcesByType()
-		{
-			return settings.GetValues<DataSource>(this.GetType()).Where(p => p.TypeFullName == db.GetType().FullName).ToList();
-		}
+
 		public async Task<List<DataSource>> GetAllDataSources()
 		{
 			return settings.GetValues<DataSource>(this.GetType()).ToList();
@@ -189,30 +216,41 @@ Be concise"));
 
 		public async Task<DataSource?> GetDataSource(string dataSourceName)
 		{
-			var dataSources = await GetDataSourcesByType();
-			return dataSources.FirstOrDefault(p => p.Name == dataSourceName);
+			var dataSources = await GetAllDataSources();
+			var dataSource = dataSources.FirstOrDefault(p => p.Name == dataSourceName);
+			context.AddOrReplace(ReservedKeywords.CurrentDataSourceName, dataSource);
+			return dataSource;
 		}
 
-		public async Task<DataSource> GetCurrentDatasource()
+		public async Task<DataSource> GetCurrentDataSource()
 		{
 			if (context.ContainsKey(ReservedKeywords.CurrentDataSourceName))
 			{
 				return context[ReservedKeywords.CurrentDataSourceName] as DataSource;
 			}
 
-			var dataSources = await GetDataSourcesByType();
+
+			var dataSources = await GetAllDataSources();
 			if (dataSources.Count == 0)
 			{
-				await CreateDataSource();
-				dataSources = await GetDataSourcesByType();
+				string name = context.ContainsKey(ReservedKeywords.CurrentDataSourceName + "_string") ? context[ReservedKeywords.CurrentDataSourceName + "_string"].ToString() : "data";
+				await CreateDataSource(name);
+				dataSources = await GetAllDataSources();
 			}
 
 			var dataSource = dataSources.FirstOrDefault(p => p.IsDefault);
-			if (dataSource == null)
+			if (dataSource != null)
 			{
-				dataSource = dataSources[0];
+				context.AddOrReplace(ReservedKeywords.CurrentDataSourceName, dataSource);
+				return dataSource;
 			}
-			return dataSource;
+			dataSources = await GetAllDataSources();
+			if (dataSources.Count == 0)
+			{
+				throw new RuntimeException("Could not find any data source.");
+			}
+			context.AddOrReplace(ReservedKeywords.CurrentDataSourceName, dataSources[0]);
+			return dataSources[0];
 		}
 		private Type GetDbType(string typeFullName)
 		{
@@ -220,19 +258,19 @@ Be concise"));
 			return types.FirstOrDefault(p => p.FullName == typeFullName);
 		}
 
-		private List<Type> GetSupportedDbTypes()
+		public  List<Type> GetSupportedDbTypes()
 		{
 			var typeHelper = new TypeHelper(fileSystem, settings);
-			typeHelper.GetTypesByType(typeof(IDbConnection)).ToList();
-			var types = new List<Type>();
-			types.Add(db.GetType());
+			var types = typeHelper.GetTypesByType(typeof(IDbConnection)).ToList();
+			types.Remove(typeof(DbConnectionUndefined));
+
 			if (types.FirstOrDefault(p => p == typeof(SqliteConnection)) == null)
 			{
 				types.Add(typeof(SqliteConnection));
 			}
 			return types;
 		}
-		private string GetSupportedDbTypesAsString()
+		public string GetSupportedDbTypesAsString()
 		{
 			var types = GetSupportedDbTypes();
 			return "\n- " + string.Join("\n- ", types.Select(p => p.FullName));
@@ -293,7 +331,7 @@ Be concise"));
 
 		public async Task<string> FormatSelectColumnsStatement(string tableName)
 		{
-			var dataSource = await GetCurrentDatasource();
+			var dataSource = await GetCurrentDataSource();
 			string selectColumns = dataSource.SelectColumns.ToLower();
 
 			if (selectColumns.Contains("'@tablename'"))
@@ -315,7 +353,42 @@ Be concise"));
 			return selectColumns;
 		}
 
+		public async Task<IDbConnection> GetDefaultDbConnection(IServiceFactory factory)
+		{
+			IDbConnection dbConnection;
+			var dataSources = await GetAllDataSources();
+			var dataSource = dataSources.FirstOrDefault(p => p.IsDefault);
+			if (dataSource != null)
+			{
+				dbConnection = factory.GetInstance<IDbConnection>(dataSource.TypeFullName);
+				dbConnection.ConnectionString = dataSource.ConnectionString;
+				AppContext.SetData(ReservedKeywords.Inject_IDbConnection, dataSource.TypeFullName);
+				context.AddOrReplace(ReservedKeywords.Inject_IDbConnection, dataSource.TypeFullName);
+				
+				AppContext.SetData(ReservedKeywords.CurrentDataSourceName, dataSource);
+				context.AddOrReplace(ReservedKeywords.CurrentDataSourceName, dataSource);
+								
+				return dbConnection;
+			}
+
+			var dbtypes = GetSupportedDbTypes();
+			if (dbtypes.Count == 1)
+			{
+				dbConnection = factory.GetInstance<IDbConnection>(typeof(SqliteConnection).FullName);
+				dbConnection.ConnectionString = "DataSource=" + Path.Join(".db", "data.sqlite");
+				AppContext.SetData(ReservedKeywords.Inject_IDbConnection, dbConnection.GetType().FullName);
+				context.AddOrReplace(ReservedKeywords.Inject_IDbConnection, dbConnection.GetType().FullName);
+
+			}
+			else
+			{
+
+				dbConnection = factory.GetInstance<IDbConnection>(typeof(DbConnectionUndefined).FullName);
+				context.AddOrReplace(ReservedKeywords.Inject_IDbConnection, dbConnection.GetType().FullName);
+			}
+			return dbConnection;
 
 
+		}
 	}
 }

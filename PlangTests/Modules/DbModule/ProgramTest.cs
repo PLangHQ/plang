@@ -38,7 +38,7 @@ namespace PLangTests.Modules.DbModule
 		{
 			db = new SqliteConnection("DataSource=:memory:");
 			eventSourceRepository = new DisableEventSourceRepository();
-			p = new Program(db, fileSystem, settings, aiService, eventSourceRepository, context, logger);
+			p = new Program(db, fileSystem, settings, llmService, eventSourceRepository, context, logger);
 
 			var dataSources = new List<DataSource>();
 			dataSources.Add(new DataSource("db", "System.Data.SQLite.SqliteConnection", "", "", "", ""));
@@ -57,7 +57,7 @@ namespace PLangTests.Modules.DbModule
 		{
 			db = new SqliteConnection("DataSource=:memory:");
 			eventSourceRepository = new DisableEventSourceRepository();
-			p = new Program(db, fileSystem, settings, aiService, eventSourceRepository, context, logger);
+			p = new Program(db, fileSystem, settings, llmService, eventSourceRepository, context, logger);
 			await p.BeginTransaction();
 
 			await p.CreateTable("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, address TEXT, phone TEXT)");
@@ -114,7 +114,7 @@ namespace PLangTests.Modules.DbModule
 			eventSourceRepository = new SqliteEventSourceRepository(fileSystem, encryption);
 			eventSourceRepository.DataSource = datasources[0];
 
-			p = new Program(db, fileSystem, settings, aiService, eventSourceRepository, context, logger);
+			p = new Program(db, fileSystem, settings, llmService, eventSourceRepository, context, logger);
 			await p.BeginTransaction();
 
 			await p.CreateTable("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, address TEXT, phone TEXT)");

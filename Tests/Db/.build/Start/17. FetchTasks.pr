@@ -9,7 +9,7 @@
       },
       {
         "Type": "System.Collections.Generic.List<object>",
-        "Name": "Parameters",
+        "Name": "SqlParameters",
         "Value": null
       },
       {
@@ -20,7 +20,7 @@
     ],
     "ReturnValue": [
       {
-        "Type": "System.Object",
+        "Type": "dynamic",
         "VariableName": "tasks"
       }
     ]
@@ -42,7 +42,7 @@
         "content": [
           {
             "type": "text",
-            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nobject? Select(String sql, List<object>()? Parameters = null, bool selectOneRow_Top1OrLimit1 = false)\r\n## csharp function ##\r\n\r\n## Rules ##\r\nVariable is defined with starting and ending %, e.g. %filePath%.\r\nParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, etc.\r\nReturnValue: User defined variable to write to, e.g. 'write to %result%, or if no variable is defined then Columns being returned with type if defined by user. * will return dynamic. integer/int should always be System.Int64. \r\nParameter @id MUST be type System.Int64\r\n\r\nIf table name is a variable, keep the variable in the sql statement\r\nYou MUST generate a valid sql statement for SQLiteConnection.\r\nYou MUST provide Parameters if SQL has @parameter.\r\n## Rules ##\r\n"
+            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nobject? Select(String sql, List<object>()? SqlParameters = null, bool selectOneRow_Top1OrLimit1 = false)\r\n## csharp function ##\r\n\r\n## Rules ##\r\nVariable is defined with starting and ending %, e.g. %filePath%.\r\nSqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName). SqlParameters @id MUST be type System.Int64\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, etc.\r\nReturnValue rules: \r\n- If user defines variable to write into, e.g. 'write to %result%' then ReturnValue=%result%, \r\n- If there does not define 'write to ..' statement then Columns being returned with type if defined by user. \r\n- * will return dynamic. \r\n- integer/int should always be System.Int64. \r\n\r\nIf table name is a variable, keep the variable in the sql statement\r\nYou MUST generate a valid sql statement for SqliteConnection.\r\nYou MUST provide SqlParameters if SQL has @parameter.\r\n## Rules ##\r\n"
           },
           {
             "type": "text",
@@ -55,7 +55,7 @@
         "content": [
           {
             "type": "text",
-            "text": "# examples #\r\n\"select everything from tableX\" => sql: \"SELECT * FROM tableX\"\r\n\"select from tableB where id=%id%\" => sql: \"SELECT * FROM tableB WHERE id=@id\"\r\n\"select * from %table% WHERE %name% => sql: \"SELECT * FROM %table% WHERE name=@name\"\r\n# examples #"
+            "text": "# examples #\r\n- select everything from tableX, write to %table% => sql: SELECT * FROM tableX, ReturnValue: %table%\r\n- select from tableB where id=%id%, into %table% => sql: SELECT * FROM tableB WHERE id=@id, ReturnValue: %table%\r\n- select * from %table% WHERE %name%, write to %result% => sql: SELECT * FROM %table% WHERE name=@name, ReturnValue: %result%\r\n- select id, name from users, write to %user% => then ReturnValue is %user% object\r\n- select id, name from users => then ReturnValue is %id%, %name% objects\r\n# examples #"
           },
           {
             "type": "text",
@@ -75,7 +75,7 @@
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "{\r\n  \"FunctionName\": \"Select\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"System.String\",\r\n      \"Name\": \"sql\",\r\n      \"Value\": \"SELECT * FROM tasks\"\r\n    },\r\n    {\r\n      \"Type\": \"System.Collections.Generic.List<object>\",\r\n      \"Name\": \"SqlParameters\",\r\n      \"Value\": null\r\n    },\r\n    {\r\n      \"Type\": \"System.Boolean\",\r\n      \"Name\": \"selectOneRow_Top1OrLimit1\",\r\n      \"Value\": false\r\n    }\r\n  ],\r\n  \"ReturnValue\": [\r\n    {\r\n      \"Type\": \"dynamic\",\r\n      \"VariableName\": \"tasks\"\r\n    }\r\n  ]\r\n}"
   },
   "RunOnBuild": false
 }

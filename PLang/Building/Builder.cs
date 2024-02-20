@@ -23,13 +23,12 @@ namespace PLang.Building
 		private readonly IGoalBuilder goalBuilder;
 		private readonly IEventBuilder eventBuilder;
 		private readonly IEventRuntime eventRuntime;
-		private readonly IErrorHelper errorHelper;
 		private readonly PrParser prParser;
-		private readonly IExceptionHandler exceptionHandler;
+		private readonly IExceptionHandlerFactory exceptionHandlerFactory;
 
 		public Builder(ILogger logger, IPLangFileSystem fileSystem, ISettings settings, IGoalBuilder goalBuilder,
-			IEventBuilder eventBuilder, IEventRuntime eventRuntime, IErrorHelper errorHelper,
-			PrParser prParser, IExceptionHandler exceptionHandler)
+			IEventBuilder eventBuilder, IEventRuntime eventRuntime,
+			PrParser prParser, IExceptionHandlerFactory exceptionHandlerFactory)
 		{
 
 			this.fileSystem = fileSystem;
@@ -38,9 +37,8 @@ namespace PLang.Building
 			this.goalBuilder = goalBuilder;
 			this.eventBuilder = eventBuilder;
 			this.eventRuntime = eventRuntime;
-			this.errorHelper = errorHelper;
 			this.prParser = prParser;
-			this.exceptionHandler = exceptionHandler;
+			this.exceptionHandlerFactory = exceptionHandlerFactory;
 		}
 
 
@@ -71,7 +69,7 @@ namespace PLang.Building
 			catch (StopBuilderException) { }
 			catch (Exception ex)
 			{
-				await exceptionHandler.Handle(ex, 500, "error", ex.Message);
+				await exceptionHandlerFactory.CreateHandler().Handle(ex, 500, "error", ex.Message);
 				if (ex.Message != "FriendlyError")
 				{
 				//	await errorHelper.ShowFriendlyErrorMessage(ex, callBackForAskUser: async () => { await Start(container); });

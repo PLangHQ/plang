@@ -13,7 +13,7 @@ using System.Net;
 namespace PLang.Modules.CallGoalModule
 {
 	[Description("Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff")]
-	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine, PrParser prParser, IPLangAppsRepository appsRepository) : BaseProgram()
+	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine) : BaseProgram()
 	{
 
 		[Description("If backward slash(\\) is used by user, change to forward slash(/)")]
@@ -21,12 +21,7 @@ namespace PLang.Modules.CallGoalModule
 		{
 			if (string.IsNullOrEmpty(goalName))
 			{
-				throw new RuntimeException($"Could not find goal to call from step: {goalStep.Text}");
-			}
-			goalName = goalName.Replace("!", "");
-			if (goalName.ToLower().Contains("apps/"))
-			{
-				ValidateAppInstall(goalName);
+				throw new RuntimeException($"Goal name is missing from step: {goalStep.Text}");
 			}
 			
 			await pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName,
@@ -36,21 +31,6 @@ namespace PLang.Modules.CallGoalModule
 		}
 
 
-		private void ValidateAppInstall(string goalToRun)
-		{
-			goalToRun = goalToRun.AdjustPathToOs().Replace("!", "");
-
-			string appName = GoalHelper.GetAppName(goalToRun);
-			string goalName = GoalHelper.GetGoalPath(goalToRun);
-
-			string buildPath = Path.Join(Path.DirectorySeparatorChar.ToString(), "apps", appName, ".build", goalName);
-			var goal = prParser.GetAllGoals().FirstOrDefault(p => p.RelativePrFolderPath.ToLower() == buildPath.ToLower());
-			if (goal != null) return;
-
-			appsRepository.InstallApp(appName);
-
-
-		}
 	}
 
 

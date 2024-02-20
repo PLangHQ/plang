@@ -4,27 +4,33 @@ using Microsoft.Extensions.Logging;
 using PLang.Building.Events;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
+using PLang.Container;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Modules;
 using PLang.SafeFileSystem;
+using PLang.Services.AppsRepository;
 using PLang.Services.OutputStream;
 using PLang.Utils;
 using System.Diagnostics;
 using System.Net;
+using System.Reflection.Metadata.Ecma335;
 
 namespace PLang.Runtime
 {
-	public interface IEngine
+    public interface IEngine
 	{
-		IOutputStream OutputStream { get; }
+		IOutputStreamFactory OutputStreamFactory { get; }
 		void AddContext(string key, object value);
 		PLangAppContext GetContext();
 		MemoryStack GetMemoryStack();
 		void Init(IServiceContainer container);
 		Task Run(List<string> goalsToRun);
 		Task RunGoal(Goal goal);
+		Goal? GetGoal(string goalName);
+		List<Goal> GetGoalsAvailable(string appPath, string goalName);
+
 		public HttpListenerContext? HttpContext { get; set; }
 	}
 	public record Alive(Type Type, string Key);
@@ -38,10 +44,9 @@ namespace PLang.Runtime
 		private ISettings settings;
 		private IEventRuntime eventRuntime;
 		private ITypeHelper typeHelper;
-		private IErrorHelper errorHelper;
-		private IAskUserHandler askUserHandler;
-		public IOutputStream OutputStream { get; private set; }
-
+		private IAskUserHandlerFactory askUserHandlerFactory;
+		public IOutputStreamFactory OutputStreamFactory { get; private set; }
+		private IPLangAppsRepository appsRepository;
 		private PrParser prParser;
 		private MemoryStack memoryStack;
 		private PLangAppContext context;
@@ -62,13 +67,12 @@ namespace PLang.Runtime
 			this.settings = container.GetInstance<ISettings>();
 			this.eventRuntime = container.GetInstance<IEventRuntime>();
 			this.typeHelper = container.GetInstance<ITypeHelper>();
-			this.errorHelper = container.GetInstance<IErrorHelper>();
-			this.askUserHandler = container.GetInstance<IAskUserHandler>();
+			this.askUserHandlerFactory = container.GetInstance<IAskUserHandlerFactory>();
 
-			this.OutputStream = container.GetInstance<IOutputStream>();
+			this.OutputStreamFactory = container.GetInstance<IOutputStreamFactory>();
 			this.prParser = container.GetInstance<PrParser>();
 			this.memoryStack = container.GetInstance<MemoryStack>();
-
+			this.appsRepository = container.GetInstance<IPLangAppsRepository>();
 			context.AddOrReplace(ReservedKeywords.MyIdentity, identityService.GetCurrentIdentity());
 
 			prParser.LoadAllGoals();
@@ -142,14 +146,13 @@ namespace PLang.Runtime
 			var fileAccessHandler = new FileAccessHandler(settings, container.GetInstance<ILlmService>(), logger, fileSystem);
 			var askUserFileException = new AskUserFileAccess(ex.AppName, ex.Path, ex.Message, fileAccessHandler.ValidatePathResponse);
 
-			var askUserHandler = container.GetInstance<IAskUserHandler>(context[ReservedKeywords.Inject_AskUserHandler].ToString());
-			return await askUserHandler.Handle(askUserFileException);
+			return await askUserHandlerFactory.CreateHandler().Handle(askUserFileException);
 		}
 
 		private void StartScheduler()
 		{
 			IServiceContainer containerForScheduler;
-			if (this.OutputStream is UIOutputStream)
+			if (this.OutputStreamFactory.CreateHandler() is UIOutputStream)
 			{
 				containerForScheduler = container;
 			}
@@ -287,7 +290,7 @@ namespace PLang.Runtime
 				}
 				else
 				{
-					await OutputStream.Write(rse.Message, rse.Type, rse.StatusCode);
+					await OutputStreamFactory.CreateHandler().Write(rse.Message, rse.Type, rse.StatusCode);
 				}
 			}
 			catch (RuntimeGoalEndException ex)
@@ -308,9 +311,10 @@ namespace PLang.Runtime
 				{
 					AppContext.SetData("GoalLogLevelByUser", null);
 				}
-				if (OutputStream is UIOutputStream && goal.ParentGoal == null)
+				var os = OutputStreamFactory.CreateHandler();
+				if (os is UIOutputStream && goal.ParentGoal == null)
 				{
-					((UIOutputStream)OutputStream).Flush();
+					((UIOutputStream) os).Flush();
 				}
 			}
 
@@ -349,7 +353,7 @@ namespace PLang.Runtime
 			}
 			catch (AskUserException aue)
 			{
-				var result = await askUserHandler.Handle(aue);
+				var result = await askUserHandlerFactory.CreateHandler().Handle(aue);
 				if (result)
 				{
 					await RunStep(goal, goalStepIndex);
@@ -368,6 +372,7 @@ namespace PLang.Runtime
 				}
 				else
 				{
+					var eventRuntime = container.GetInstance<IEventRuntime>();
 					var continueNextStep = await eventRuntime.RunOnErrorStepEvents(context, stepException, goal, goal.GoalSteps[goalStepIndex], step.ErrorHandler);
 					if (continueNextStep) return;
 
@@ -380,7 +385,10 @@ namespace PLang.Runtime
 
 		public async Task ProcessPrFile(Goal goal, GoalStep goalStep, int stepIndex)
 		{
-			if (goalStep.RunOnce && goalStep.Executed != null) return;
+			if (goalStep.RunOnce && goalStep.Executed != null)
+			{
+				return;
+			}
 
 			if (!fileSystem.File.Exists(goalStep.AbsolutePrFilePath))
 			{
@@ -406,6 +414,10 @@ namespace PLang.Runtime
 				logger.LogWarning("Could not find module:" + goalStep.ModuleType);
 				return;
 			}
+
+			context.AddOrReplace(ReservedKeywords.Goal, goal);
+			context.AddOrReplace(ReservedKeywords.Step, goalStep);
+			context.AddOrReplace(ReservedKeywords.Instruction, instruction);
 
 			var classInstance = container.GetInstance(classType) as BaseProgram;
 			if (classInstance == null) return;
@@ -524,7 +536,23 @@ namespace PLang.Runtime
 
 		}
 
+		public Goal? GetGoal(string goalName)
+		{
+			goalName = goalName.AdjustPathToOs();
+			var goal = prParser.GetGoalByAppAndGoalName(fileSystem.RootDirectory, goalName);
+			if (goal == null && goalName.TrimStart(Path.DirectorySeparatorChar).StartsWith("apps"))
+			{
+				appsRepository.InstallApp(goalName);
+				goal = prParser.GetGoalByAppAndGoalName(fileSystem.RootDirectory, goalName);
+			}
+			return goal;
+		}
 
 
+
+		public List<Goal> GetGoalsAvailable(string appPath, string goalName)
+		{
+			return prParser.GetAllGoals();
+		}
 	}
 }

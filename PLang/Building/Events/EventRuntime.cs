@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
+using PLang.Container;
 using PLang.Exceptions;
 using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
@@ -14,7 +15,7 @@ using Websocket.Client.Logging;
 namespace PLang.Building.Events
 {
 
-	public interface IEventRuntime
+    public interface IEventRuntime
 	{
 		Task<List<EventBinding>> GetBuilderEvents();
 		Task<List<EventBinding>> GetRuntimeEvents();
@@ -37,21 +38,19 @@ namespace PLang.Building.Events
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly PrParser prParser;
 		private readonly IEngine engine;
-		private readonly IErrorHelper errorHelper;
-		private readonly IExceptionHandler exceptionHandler;
+		private readonly IExceptionHandlerFactory exceptionHandlerFactory;
 		private static List<EventBinding>? events = null;
 
 
 		public EventRuntime(IPLangFileSystem fileSystem, ISettings settings, IPseudoRuntime pseudoRuntime,
-			PrParser prParser, IEngine engine, IErrorHelper errorHelper, IExceptionHandler exceptionHandler)
+			PrParser prParser, IEngine engine, IExceptionHandlerFactory exceptionHandlerFactory)
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
 			this.pseudoRuntime = pseudoRuntime;
 			this.prParser = prParser;
 			this.engine = engine;
-			this.errorHelper = errorHelper;
-			this.exceptionHandler = exceptionHandler;
+			this.exceptionHandlerFactory = exceptionHandlerFactory;
 		}
 
 		public async Task<List<EventBinding>> GetBuilderEvents()
@@ -220,7 +219,7 @@ namespace PLang.Building.Events
 
 		private async Task ShowDefaultError(Exception ex)
 		{
-			await exceptionHandler.Handle(ex, 500, "error", ex.Message);
+			await exceptionHandlerFactory.CreateHandler().Handle(ex, 500, "error", ex.Message);
 		}
 
 		private async Task Run(PLangAppContext context, EventBinding eve, Goal goal, GoalStep? step = null, Exception? ex = null)

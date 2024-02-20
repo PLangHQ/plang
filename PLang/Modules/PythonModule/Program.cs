@@ -21,11 +21,11 @@ namespace PLang.Modules.PythonModule
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ILogger logger;
 		private readonly ISettings settings;
-		private readonly IOutputStream outputStream;
+		private readonly IOutputStreamFactory outputStream;
 		private readonly IPLangSigningService signingService;
 		private readonly TerminalModule.Program terminalProgram;
 
-		public Program(IPLangFileSystem fileSystem, ILogger logger, ISettings settings, IOutputStream outputStream, IPLangSigningService signingService, TerminalModule.Program terminalProgram) : base()
+		public Program(IPLangFileSystem fileSystem, ILogger logger, ISettings settings, IOutputStreamFactory outputStream, IPLangSigningService signingService, TerminalModule.Program terminalProgram) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.logger = logger;

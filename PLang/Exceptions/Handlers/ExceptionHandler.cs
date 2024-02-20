@@ -10,43 +10,28 @@ namespace PLang.Exceptions.Handlers
 
 	public abstract class ExceptionHandler
 	{
-		private readonly IAskUserHandler askUserHandler;
+		private readonly IAskUserHandlerFactory askUserHandlerFactory;
 
-		public ExceptionHandler(IAskUserHandler askUserHandler)
+		public ExceptionHandler(IAskUserHandlerFactory askUserHandlerFactory)
 		{
-			this.askUserHandler = askUserHandler;
+			this.askUserHandlerFactory = askUserHandlerFactory;
 		}
 		public async Task<bool> Handle(Exception exception)
 		{
-			var ex = exception;
-			while (ex != null && ex.InnerException != null)
-			{
-				ex = ex.InnerException;
-			}
-
-			if (ex is MissingSettingsException mse)
+			var ex = (exception.InnerException != null) ? exception.InnerException : exception;
+			
+			if (ex is AskUserException aue)
 			{
 				try
 				{
-					return await askUserHandler.Handle(mse);
+					return await askUserHandlerFactory.CreateHandler().Handle(aue);
 				}
 				catch (AskUserException ex2)
 				{
 					return await Handle(ex2);
 				}
 			}
-			if (ex is AskUserException ase)
-			{
-				try
-				{
-					var result = await askUserHandler.Handle(ase);
-					return result;
-				}
-				catch (AskUserException ex2)
-				{
-					return await Handle(ex2);
-				}
-			}
+			
 			return false;
 		}
 

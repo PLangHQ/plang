@@ -50,34 +50,60 @@ namespace PLang.Utils
 				types = executingAssembly.GetTypes().Where(t => t == type).ToList();
 			}
 
-			// Get all types in the assembly
-			Type[] types2 = executingAssembly.GetTypes();
-
-			// Filter and print types that implement IDbConnection
-			foreach (Type type1 in types)
-			{
-				if (typeof(IDbConnection).IsAssignableFrom(type1) && !type1.IsInterface)
-				{
-					Console.WriteLine(type.FullName);
-				}
-			}
-
 			string modulesDirectory = Path.Combine(fileSystem.GoalsPath, ".modules");
-			if (!fileSystem.Directory.Exists(modulesDirectory)) return types;
-
-			foreach (var dll in fileSystem.Directory.GetFiles(modulesDirectory, "*.dll"))
+			if (fileSystem.Directory.Exists(modulesDirectory))
 			{
-				// Load the assembly
-				Assembly loadedAssembly = Assembly.LoadFile(dll);
 
-				// Get types that implement IProgram from the loaded assembly
-				var typesFromAssembly = loadedAssembly.GetTypes().Where(t => t == type).ToList();
-				if (typesFromAssembly.Count > 0)
+				foreach (var dll in fileSystem.Directory.GetFiles(modulesDirectory, "*.dll", SearchOption.AllDirectories))
 				{
-					// Add the found types to the main list
-					types.AddRange(typesFromAssembly);
+					// Load the assembly
+					Assembly loadedAssembly = Assembly.LoadFile(dll);
+					List<Type> typesFromAssembly;
+					// Get types that implement IProgram from the loaded assembly
+					if (type.IsInterface || type.IsAbstract)
+					{
+						typesFromAssembly = loadedAssembly.GetTypes().Where(t => type.IsAssignableFrom(t)).ToList();
+					}
+					else
+					{
+						typesFromAssembly = loadedAssembly.GetTypes().Where(t => t == type).ToList();
+					}
+
+					if (typesFromAssembly.Count > 0)
+					{
+						// Add the found types to the main list
+						types.AddRange(typesFromAssembly);
+					}
 				}
 			}
+
+			string servicesDirectory = Path.Combine(fileSystem.GoalsPath, ".services");
+			if (fileSystem.Directory.Exists(servicesDirectory))
+			{
+
+				foreach (var dll in fileSystem.Directory.GetFiles(servicesDirectory, "*.dll", SearchOption.AllDirectories))
+				{
+					
+					// Load the assembly
+					Assembly loadedAssembly = Assembly.LoadFile(dll);
+					List<Type> typesFromAssembly;
+					if (type.IsInterface || type.IsAbstract)
+					{
+						typesFromAssembly = loadedAssembly.GetTypes().Where(t => type.IsAssignableFrom(t)).ToList();
+					}
+					else
+					{
+						typesFromAssembly = loadedAssembly.GetTypes().Where(t => t == type).ToList();
+					}
+
+					if (typesFromAssembly.Count > 0)
+					{
+						// Add the found types to the main list
+						types.AddRange(typesFromAssembly);
+					}
+				}
+			}
+
 			return types;
 		}
 

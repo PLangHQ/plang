@@ -11,17 +11,17 @@ namespace PLang.Modules.UiModule
     [Description("Takes any user command and tries to convert it to html")]
 	public class Program : BaseProgram, IFlush
 	{
-		private readonly IOutputStream outputStream;
+		private readonly IOutputStreamFactory outputStreamFactory;
 
-		public Program(IOutputStream outputStream) : base()
+		public Program(IOutputStreamFactory outputStream) : base()
 		{
-			this.outputStream = outputStream;
+			this.outputStreamFactory = outputStream;
 			
 		}
 
 		public async Task RenderHtml(string html, string css, string javascript)
 		{
-			if (outputStream is ConsoleOutputStream)
+			if (outputStreamFactory is ConsoleOutputStream)
 			{
 				throw new RuntimeException("Incorrect output stream. You probably ran the command: plang run, but you should run: plangw run");
 			}
@@ -31,7 +31,7 @@ namespace PLang.Modules.UiModule
 
 			if (string.IsNullOrEmpty(content)) return;
 			
-			var os = (UIOutputStream) outputStream;
+			var os = (UIOutputStream) outputStreamFactory;
 			os.MemoryStack = memoryStack;
 			os.Goal = goal;
 			os.GoalStep = goalStep;
@@ -50,15 +50,22 @@ namespace PLang.Modules.UiModule
 			html = variableHelper.LoadVariables(html).ToString();
 
 			if (string.IsNullOrEmpty(html)) return;
-			((UIOutputStream)outputStream).MemoryStack = memoryStack;
-			await outputStream.Ask(html);
+
+			var os = outputStreamFactory.CreateHandler();
+			if (os is UIOutputStream uios)
+			{
+				uios.MemoryStack = memoryStack;
+			}
+
+			await os.Ask(html);
 		}
 
 		public void Flush()
 		{
-			if (outputStream is UIOutputStream)
+			var os = outputStreamFactory.CreateHandler();
+			if (os is UIOutputStream)
 			{
-				((UIOutputStream)outputStream).Flush();
+				((UIOutputStream)os).Flush();
 			}
 		}
 	}

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Utils;
 using System.Net;
@@ -10,7 +11,7 @@ namespace PLang.Exceptions.Handlers
 	{
 		private readonly HttpListenerContext httpListenerContext;
 
-		public HttpExceptionHandler(HttpListenerContext httpListenerContext, IAskUserHandler askUserHandler) : base(askUserHandler)
+		public HttpExceptionHandler(HttpListenerContext httpListenerContext, IAskUserHandlerFactory askUserHandlerFactory) : base(askUserHandlerFactory)
 		{
 			this.httpListenerContext = httpListenerContext;
 		}

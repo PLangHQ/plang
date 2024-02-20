@@ -2,7 +2,10 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using PLang.Building.Model;
+using PLang.Container;
 using PLang.Exceptions;
+using PLang.Exceptions.AskUser;
+using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Services.OutputStream;
 using PLang.Utils;
@@ -16,6 +19,7 @@ namespace PLang.Runtime.Tests
     [TestClass()]
 	public class PseudoRuntimeTests : BasePLangTest
 	{
+		PseudoRuntime pseudoRuntime;
 		[TestInitialize()]
 		public void Init()
 		{
@@ -38,6 +42,9 @@ namespace PLang.Runtime.Tests
 
 			prParser.ForceLoadAllGoals();
 
+
+			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, exceptionHandlerFactory, askUserHandlerFactory);
+
 		}
 
 		[TestMethod()]
@@ -45,8 +52,8 @@ namespace PLang.Runtime.Tests
 		{
 			var context = new PLangAppContext();
 			context.Add("Test", 1);
-			var pseudoRuntime = new PseudoRuntime(prParser, containerFactory, fileSystem);
-			await pseudoRuntime.RunGoal(engine, context, @"\", "GoalWith1Step.goal", new Dictionary<string, object>());
+			engine.GetGoal("GoalWith1Step.goal").Returns(new Goal());
+			await pseudoRuntime.RunGoal(engine, context, @"\", "GoalWith1Step.goal", new Dictionary<string, object?>());
 
 			await engine.Received(1).RunGoal(Arg.Any<Goal>());
 		}
@@ -57,17 +64,22 @@ namespace PLang.Runtime.Tests
 		[TestMethod()]
 		public async Task RunGoalTest_AppInAppsFolder_ShouldNotGetContext()
 		{
-			var serviceFactory = Substitute.For<IServiceContainerFactory>();
-			serviceFactory.CreateContainer(context, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStream>()).Returns(p =>
+			containerFactory = Substitute.For<IServiceContainerFactory>();
+			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), Arg.Any<IExceptionHandlerFactory>(), Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
 			{
 				var container = CreateServiceContainer();
-				container.GetInstance<IEngine>().GetMemoryStack().Returns(new MemoryStack(container.GetInstance<IPseudoRuntime>(), container.GetInstance<IEngine>(), settings, context));
+
+				IEngine engine = container.GetInstance<IEngine>();
+				engine.GetMemoryStack().Returns(a =>
+				{
+					return new MemoryStack(pseudoRuntime, engine, settings, context);
+				});
+				engine.GetGoal("GoalWith2Steps").Returns(new Goal());
 				return container;
 			});
 
 
-			var pseudoRuntime = new PseudoRuntime(prParser, serviceFactory, fileSystem);
-
+			
 			context.Add("Test", 1);
 
 			engine.GetMemoryStack().Returns(new MemoryStack(pseudoRuntime, engine, settings, context));
@@ -75,8 +87,8 @@ namespace PLang.Runtime.Tests
 			var parameters = new PLangAppContext();
 			parameters.Add("Name", "Jim");
 
-			
-			
+			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, exceptionHandlerFactory, askUserHandlerFactory);
+
 			await pseudoRuntime.RunGoal(engine, context, @"\", "apps/GoalWith2Steps/GoalWith2Steps", parameters);
 
 			await engine.Received(1).RunGoal(Arg.Any<Goal>());
@@ -90,21 +102,68 @@ namespace PLang.Runtime.Tests
 		public async Task RunGoalTest_GoalNotFound()
 		{
 		
-			var pseudoRuntime = new PseudoRuntime(prParser, containerFactory, fileSystem);
 
 			await pseudoRuntime.RunGoal(engine, new(), @"\", "UnknownGoal.goal", new Dictionary<string, object>());
 		}
+
+		[TestMethod]
+		public void GetAppAbsolutePath()
+		{
+			string absolutePathToGoal = Path.Join(fileSystem.RootDirectory, "", "apps/GoalWith2Steps/GoalWith2Steps");
+			var result = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoal);
+
+			Assert.AreEqual(Path.Join(fileSystem.RootDirectory, "apps", "GoalWith2Steps"), result.absolutePath);
+			Assert.AreEqual("GoalWith2Steps", result.goalName);
+
+			string absolutePathToGoalInService = Path.Join(fileSystem.RootDirectory, "", ".services/MyService/SendStuff");
+			var pathToService = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoalInService);
+
+			Assert.AreEqual(Path.Join(fileSystem.RootDirectory, ".services", "MyService"), pathToService.absolutePath);
+			Assert.AreEqual("SendStuff", pathToService.goalName);
+
+			string absolutePathToGoalInModule = Path.Join(fileSystem.RootDirectory, "", ".modules/MyModule");
+			var pathToModule = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoalInModule);
+
+			Assert.AreEqual(Path.Join(fileSystem.RootDirectory, ".modules", "MyModule"), pathToModule.absolutePath);
+			Assert.AreEqual("Start", pathToModule.goalName);
+
+
+			string absolutePathToGoalInModuleInApp = Path.Join(fileSystem.RootDirectory, "", ".modules/MyModule/apps/MyInternalApp/Start");
+			var pathToAppInModule = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoalInModuleInApp);
+
+			Assert.AreEqual(Path.Join(fileSystem.RootDirectory, ".modules/MyModule/apps/".AdjustPathToOs(), "MyInternalApp"), pathToAppInModule.absolutePath);
+			Assert.AreEqual("Start", pathToAppInModule.goalName);
+
+			string absolutePathToGoalInModuleInApp2 = Path.Join(fileSystem.RootDirectory, "", ".modules/MyModule/apps/MyInternalApp/DoStuff");
+			var pathToAppInModule2 = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoalInModuleInApp2);
+
+			Assert.AreEqual(Path.Join(fileSystem.RootDirectory, ".modules/MyModule/apps/".AdjustPathToOs(), "MyInternalApp"), pathToAppInModule2.absolutePath);
+			Assert.AreEqual("DoStuff", pathToAppInModule2.goalName);
+		}
+
 
 
 		[TestMethod()]
 		public async Task RunGoalTest_ParametersSetInMemoryStack()
 		{
+			containerFactory = Substitute.For<IServiceContainerFactory>();
+			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), Arg.Any<IExceptionHandlerFactory>(), Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
+			{
+				var container = CreateServiceContainer();
+
+				IEngine engine = container.GetInstance<IEngine>();
+				engine.GetMemoryStack().Returns(a =>
+				{
+					return new MemoryStack(pseudoRuntime, engine, settings, new PLangAppContext());
+				});
+				engine.GetGoal("GoalWith2Steps").Returns(new Goal());
+				return container;
+			});
+
+
 			var context = new PLangAppContext();
 			context.Add("Test", 1);
 			
-
-			
-			var pseudoRuntime = new PseudoRuntime(prParser, containerFactory, fileSystem);
 			var memoryStackMock = Substitute.For<MemoryStack>(pseudoRuntime, engine, settings, context);
 
 			engine.GetMemoryStack().Returns(memoryStackMock);
@@ -114,6 +173,7 @@ namespace PLang.Runtime.Tests
 		{"Age", 30}
 	};
 
+			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, exceptionHandlerFactory, askUserHandlerFactory);
 
 			await pseudoRuntime.RunGoal(engine, context, @"\", "apps/GoalWith2Steps/GoalWith2Steps", parameters);
 

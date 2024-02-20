@@ -22,7 +22,10 @@
 				if (result != null)
 				{
 					await result;
+					if (result.Exception != null) throw result.Exception;
 				}
+
+				
 			};
 		}
 

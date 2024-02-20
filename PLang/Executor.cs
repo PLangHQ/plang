@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using PLang.Building;
 using PLang.Building.Parsers;
+using PLang.Container;
 using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Resources;
@@ -13,12 +14,11 @@ using System.IO.Compression;
 
 namespace PLang
 {
-	public class Executor
+    public class Executor
 	{
 		private readonly ISettings settings;
 		private readonly IServiceContainer container;
 		private readonly PrParser prParser;
-		private readonly IErrorHelper errorHelper;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly IExceptionHandler exceptionHandler;
 		private IEngine engine;
@@ -33,9 +33,7 @@ namespace PLang
 			
 			this.settings = container.GetInstance<ISettings>();
 			this.prParser = container.GetInstance<PrParser>();
-			this.errorHelper = container.GetInstance<IErrorHelper>();
 			this.fileSystem = container.GetInstance<IPLangFileSystem>();
-			this.exceptionHandler = container.GetInstance<IExceptionHandler>();
 
 		}
 
@@ -197,8 +195,8 @@ namespace PLang
 			}
 			catch (Exception ex)
 			{
-				await exceptionHandler.Handle(ex, 500, "error", ex.Message);
-				//await errorHelper.ShowFriendlyErrorMessage(ex, callBackForAskUser: Build);				
+				var factory = container.GetInstance<IExceptionHandlerFactory>();
+				await factory.CreateHandler().Handle(ex, 500, "error", ex.Message);
 			}
 		}
 

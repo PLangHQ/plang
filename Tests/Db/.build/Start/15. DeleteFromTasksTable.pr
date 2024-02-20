@@ -28,7 +28,7 @@
         "content": [
           {
             "type": "text",
-            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nInt32 Delete(String sql, List<object>()? Parameters = null)\r\n## csharp function ##\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%.\r\nParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, etc.\r\nParameter @id MUST be type System.Int64\r\n\r\nIf table name is a variable, keep the variable in the sql statement\r\nYou MUST generate a valid sql statement for SQLiteConnection.\r\nYou MUST provide Parameters if SQL has @parameter.\r\n"
+            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nInt32 Delete(String sql, List<object>()? SqlParameters = null)\r\n## csharp function ##\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%.\r\nSqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, etc.\r\nParameter @id MUST be type System.Int64\r\n\r\nIf table name is a variable, keep the variable in the sql statement\r\nYou MUST generate a valid sql statement for SqliteConnection.\r\nYou MUST provide SqlParameters if SQL has @parameter.\r\n"
           },
           {
             "type": "text",
@@ -61,7 +61,7 @@
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "{\r\n  \"Warning\": \"Missing WHERE statement can affect rows that should not\",\r\n  \"FunctionName\": \"Delete\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"System.String\",\r\n      \"Name\": \"sql\",\r\n      \"Value\": \"DELETE FROM tasks\"\r\n    }\r\n  ]\r\n}"
   },
   "RunOnBuild": false
 }

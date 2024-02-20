@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using PLang.Building.Events;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
+using PLang.Container;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
@@ -21,14 +22,14 @@ using System.Web;
 
 namespace PLang.Modules.WebserverModule
 {
-	[Description("Start webserver, write to Body, Header, Cookie")]
+    [Description("Start webserver, write to Body, Header, Cookie")]
 	internal class Program : BaseProgram
 	{
 		private readonly ILogger logger;
 		private readonly IEventRuntime eventRuntime;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ISettings settings;
-		private readonly IOutputStream outputStream;
+		private readonly IOutputStreamFactory outputStreamFactory;
 		private readonly PrParser prParser;
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
@@ -37,7 +38,7 @@ namespace PLang.Modules.WebserverModule
 		private readonly static List<WebserverInfo> listeners = new();
 
 		public Program(ILogger logger, IEventRuntime eventRuntime, IPLangFileSystem fileSystem
-			, ISettings settings, IOutputStream outputStream
+			, ISettings settings, IOutputStreamFactory outputStreamFactory
 			, PrParser prParser,
 			IPseudoRuntime pseudoRuntime, IEngine engine, IPLangSigningService signingService, IPLangIdentityService identityService) : base()
 		{
@@ -45,7 +46,7 @@ namespace PLang.Modules.WebserverModule
 			this.eventRuntime = eventRuntime;
 			this.fileSystem = fileSystem;
 			this.settings = settings;
-			this.outputStream = outputStream;
+			this.outputStreamFactory = outputStreamFactory;
 			this.prParser = prParser;
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
@@ -58,7 +59,7 @@ namespace PLang.Modules.WebserverModule
 			var webserverInfo = listeners.FirstOrDefault(p => p.WebserverName == webserverName);
 			if (webserverInfo == null)
 			{
-				await outputStream.Write($"Webserver named '{webserverName}' does not exist");
+				await outputStreamFactory.CreateHandler().Write($"Webserver named '{webserverName}' does not exist");
 				return null;
 			}
 
@@ -333,7 +334,7 @@ namespace PLang.Modules.WebserverModule
 		{
 			resp.StatusCode = (int)HttpStatusCode.NotFound;
 
-			await outputStream.Write(JsonConvert.SerializeObject(error), "text");
+			await outputStreamFactory.CreateHandler().Write(JsonConvert.SerializeObject(error), "text");
 
 		}
 		private async Task WriteError(HttpListenerResponse resp, string error)
@@ -345,7 +346,7 @@ namespace PLang.Modules.WebserverModule
 				await writer.WriteAsync(JsonConvert.SerializeObject(error));
 				await writer.FlushAsync();
 			}
-			await outputStream.Write(JsonConvert.SerializeObject(error), "text");
+			await outputStreamFactory.CreateHandler().Write(JsonConvert.SerializeObject(error), "text");
 
 		}
 
@@ -578,6 +579,9 @@ namespace PLang.Modules.WebserverModule
 
 		private async Task ProcessWebsocketRequest(HttpListenerContext httpContext)
 		{
+			/*
+			 * Not tested, so remove for now.
+			 * 
 			HttpListenerWebSocketContext webSocketContext = await httpContext.AcceptWebSocketAsync(subProtocol: null);
 			WebSocket webSocket = webSocketContext.WebSocket;
 
@@ -586,8 +590,7 @@ namespace PLang.Modules.WebserverModule
 
 				var outputStream = new WebsocketOutputStream(webSocket, signingService);
 				var container = new ServiceContainer();
-
-				container.RegisterForPLang(goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath, "PLang.Exceptions.AskUser.AskUserConsoleHandler", outputStream);
+				container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath, httpContext);
 
 				var context = container.GetInstance<PLangAppContext>();
 				context.Add(ReservedKeywords.IsHttpRequest, true);
@@ -625,6 +628,7 @@ namespace PLang.Modules.WebserverModule
 				if (webSocket != null)
 					webSocket.Dispose();
 			}
+			*/
 		}
 
 

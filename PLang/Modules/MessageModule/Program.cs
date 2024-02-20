@@ -7,13 +7,18 @@ using Nostr.Client.Messages;
 using Nostr.Client.Messages.Direct;
 using Nostr.Client.Requests;
 using Nostr.Client.Responses;
+using Nostr.Client.Utils;
+using Org.BouncyCastle.Asn1.X9;
 using PLang.Attributes;
+using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Reactive.Linq;
+using System.Security.Cryptography.X509Certificates;
+using Websocket.Client;
 
 
 namespace PLang.Modules.MessageModule
@@ -71,28 +76,50 @@ namespace PLang.Modules.MessageModule
 		}
 
 		[Description("goalName should be prefixed by ! and be whole word with possible slash(/)")]
-		public async Task Listen(string goalName, [HandlesVariable] string contentVariableName = "content", [HandlesVariable] string senderVariableName = "sender", [HandlesVariable] string eventVariableName = "__NosrtEventKey__", DateTimeOffset? listenFromDateTime = null)
+		public async Task Listen(string goalName, [HandlesVariable] string contentVariableName = "content", [HandlesVariable] string senderVariableName = "sender", [HandlesVariable] string eventVariableName = "__NosrtEventKey__", DateTimeOffset? listenFromDateTime = null, string? onlyMessageFromSender = null)
 		{
 			var client2 = (NostrMultiWebsocketClient)client;
+			if (onlyMessageFromSender != null && onlyMessageFromSender.StartsWith("npub"))
+			{
+				onlyMessageFromSender = NostrConverter.ToHex(onlyMessageFromSender, out string? hrp);
+			}
 
 			foreach (var c in client2.Clients)
 			{
 				c.Communicator.DisconnectionHappened.Subscribe(happened =>
 				{
-					Send(c, goalName, contentVariableName, senderVariableName, eventVariableName, listenFromDateTime);
+					Send(c, listenFromDateTime);
+				});
+				c.Communicator.MessageReceived.Subscribe(async (ResponseMessage message) =>
+				{
+					if (message.MessageType != System.Net.WebSockets.WebSocketMessageType.Text) return;
+					if (!message.Text.StartsWith("[\"EVENT\"")) return;
+
+					var eve = JsonConvert.DeserializeObject<NostrEventResponse>(message.Text);
+					if (eve == null || eve.Event == null) return;					
+
+					if (onlyMessageFromSender != null && eve.Event.Pubkey != onlyMessageFromSender)
+					{
+						return;
+					}
+
+					var key = GetCurrentKey();
+					var publicKey = key.Bech32PublicKey;
+
+					await ProcessEvent(engine, eve, contentVariableName, eventVariableName, senderVariableName, publicKey, goalName);
 				});
 			}
 
 			logger.LogInformation("Starting listener");
 
-			Send(client2, goalName, contentVariableName, senderVariableName, eventVariableName, listenFromDateTime);
+			Send(client2, listenFromDateTime);
 			
 			KeepAlive(this, "ListenToMessages");
 
 
 		}
 
-		private void Send(INostrClient client, string goalName, string contentVariableName, string senderVariableName, string eventVariableName, DateTimeOffset? listenFromDateTime)
+		private void Send(INostrClient client, DateTimeOffset? listenFromDateTime)
 		{
 			var key = GetCurrentKey();
 			var publicKey = key.Bech32PublicKey;
@@ -116,83 +143,72 @@ namespace PLang.Modules.MessageModule
 					Kinds = [NostrKind.EncryptedDm],
 					Since = since.DateTime
 				}));
+			
+
 			if (listenFromDateTime == null)
 			{
 				settings.Set<DateTimeOffset>(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_" + publicKey, until);
 			}
 
-			client.Streams.EoseStream.Subscribe(async (NostrEoseResponse response) =>
-			{
-				logger.LogDebug("EoseStream:{0}", response);
-			});
-			client.Streams.NoticeStream.Subscribe(async (NostrNoticeResponse response) =>
-			{
-				logger.LogDebug("NoticeStream:{0}", response);
-			});
-			client.Streams.OkStream.Subscribe(async (NostrOkResponse response) =>
-			{
-				logger.LogDebug("OkStream:{0}", response);
-				int i = 0;
-			});
+		}
 
-			client.Streams.UnknownMessageStream.Subscribe(async (NostrResponse response) =>
+		private async Task ProcessEvent(IEngine engine, NostrEventResponse response, string contentVariableName, string eventVariableName, string senderVariableName, string publicKey, string goalName)
+		{
+			var ev = response.Event as NostrEncryptedEvent;
+			if (ev == null || ev.Content == null) return;
+
+			var memoryCache = System.Runtime.Caching.MemoryCache.Default;
+			lock (_lock)
 			{
-				logger.LogDebug("UnknownMessageStream:{0}", response);
-				int i = 0;
-			});
 
+				var content = ev.DecryptContent(GetPrivateKey(ev.RecipientPubkey));
+				var hash = ev.CreatedAt.ToString().ComputeHash() + content.ComputeHash() + ev.Pubkey.ComputeHash();
 
-			client.Streams.EventStream.Subscribe(async (NostrEventResponse response) =>
-			{
-				var ev = response.Event as NostrEncryptedEvent;
-				if (ev == null || ev.Content == null) return;
+				//For preventing multiple calls on same message. I don't think this is the correct way, but only way I saw.
+				if (memoryCache.Contains("NostrId_" + hash)) return;
+				memoryCache.Add("NostrId_" + hash, true, DateTimeOffset.UtcNow.AddMinutes(5));
 
-				var memoryCache = System.Runtime.Caching.MemoryCache.Default;
-				lock (_lock)
+				var parameters = new Dictionary<string, object?>();
+				if (JsonHelper.IsJson(content, out object? parsedObject))
 				{
+					parameters.Add(contentVariableName.Replace("%", ""), parsedObject);
+				}
+				else
+				{
+					parameters.Add(contentVariableName.Replace("%", ""), content);
+				}
+				parameters.Add(eventVariableName, ev);
+				parameters.Add(senderVariableName, ev.Pubkey);
 
-					var content = ev.DecryptContent(GetPrivateKey(ev.RecipientPubkey));
-					var hash = content.ComputeHash();
+				var tags = ev.Tags;
 
-					//For preventing multiple calls on same message. I don't think this is the correct way, but only way I saw.
-					if (memoryCache.Contains("NostrId_" + hash)) return;
-					memoryCache.Add("NostrId_" + hash, true, DateTimeOffset.UtcNow.AddMinutes(5));					
-
-					var parameters = new Dictionary<string, object?>();
-					if (JsonHelper.IsJson(content, out object? parsedObject))
+				if (ev.CreatedAt != null)
+				{
+					settings.Set<DateTimeOffset>(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_" + publicKey, new DateTimeOffset(ev.CreatedAt.Value));
+				}
+				Dictionary<string, object> validationKeyValues = new Dictionary<string, object>();
+				foreach (var tag in tags)
+				{
+					if (tag.AdditionalData.Length == 1)
 					{
-						parameters.Add(contentVariableName.Replace("%", ""), parsedObject);
-					} else
-					{
-						parameters.Add(contentVariableName.Replace("%", ""), content);
-					}					
-					parameters.Add(eventVariableName, ev);
-					parameters.Add(senderVariableName, ev.Pubkey);
-
-					var tags = ev.Tags;
-
-					if (ev.CreatedAt != null)
-					{
-						settings.Set<DateTimeOffset>(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_" + publicKey, new DateTimeOffset(ev.CreatedAt.Value));
+						validationKeyValues.Add(tag.TagIdentifier, tag.AdditionalData[0]);
 					}
-					Dictionary<string, object> validationKeyValues = new Dictionary<string, object>();
-					foreach (var tag in tags)
-					{
-						if (tag.AdditionalData.Length == 1)
-						{
-							validationKeyValues.Add(tag.TagIdentifier, tag.AdditionalData[0]);
-						}
-					}
+				}
 
-					var identites = signingService.VerifySignature(settings.GetSalt(), content, "EncryptedDm", ev.Pubkey, validationKeyValues).Result;
-					parameters.AddOrReplace(identites);
+				var identites = signingService.VerifySignature(settings.GetSalt(), content, "EncryptedDm", ev.Pubkey, validationKeyValues).Result;
+				parameters.AddOrReplace(identites);
 
-					pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName, parameters, goal).Wait();
+				var task = pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName, parameters, goal);
+				if (task != null)
+				{
+					task.Wait();
 
+					if (task.Exception != null) throw task.Exception;
 
 				}
-			});
 
+
+			}
 		}
 
 		public async Task SendPrivateMessageToMyself(string content)
@@ -234,7 +250,7 @@ namespace PLang.Modules.MessageModule
 			var ev = new NostrEvent
 			{
 				Kind = NostrKind.EncryptedDm,
-				CreatedAt = DateTime.UtcNow,
+				CreatedAt = SystemTime.UtcNow(),
 				Content = content, 
 				Tags = eventTags
 			};
