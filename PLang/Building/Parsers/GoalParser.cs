@@ -165,7 +165,7 @@ namespace PLang.Building.Parsers
 				{
 					foreach (var injection in injections)
 					{
-						goal.Injections.Add(new Injections(injection.Key, injection.Value, true));
+						goal.Injections.Add(new Injections(injection.Key, injection.Value, true, null, null));
 					}
 
 				}

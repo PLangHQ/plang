@@ -4,6 +4,7 @@ using PLang.Building.Model;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Services.LlmService;
 using PLang.Utils;
 using static PLang.Modules.BlockchainModule.ModuleSettings;
 
@@ -21,16 +22,16 @@ namespace PLang.Modules.MessageModule
 	public class ModuleSettings : IModuleSettings
 	{
 		private readonly ISettings settings;
-		private readonly ILlmService llmService;
+		private readonly ILlmServiceFactory llmServiceFactory;
 		public static readonly string NostrKeys = "NostrKeys";
 		public static readonly string NostrRelays = "NostrRelays";
 		public static readonly string NostrDMSince = "DMSince";
 		public static readonly string AllowedList = "AllowedList";
 
-		public ModuleSettings(ISettings settings, ILlmService llmService)
+		public ModuleSettings(ISettings settings, ILlmServiceFactory llmServiceFactory)
 		{
 			this.settings = settings;
-			this.llmService = llmService;
+			this.llmServiceFactory = llmServiceFactory;
 		}
 
 		public List<string> GetRelays()
@@ -240,7 +241,7 @@ These are the 3 questions
 			promptMessage.Add(new LlmMessage("user", string.Join("\n", answers)));
 
 			var llmRequest = new LlmRequest("ExportPrivateKeys", promptMessage);
-			var response = await llmService.Query<DecisionResponse>(llmRequest);
+			var response = await llmServiceFactory.CreateHandler().Query<DecisionResponse>(llmRequest);
 
 			if (response.Level.ToLower() == "low" || response.Level.ToLower() == "medium")
 			{

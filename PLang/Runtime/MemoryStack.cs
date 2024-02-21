@@ -6,6 +6,7 @@ using PLang.Building.Events;
 using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Services.SettingsService;
 using PLang.Utils;
 using System.Collections;
 using System.Data;
@@ -18,7 +19,7 @@ using static PLang.Utils.VariableHelper;
 
 namespace PLang.Runtime
 {
-	public class MemoryStackPrimativeException : Exception
+    public class MemoryStackPrimativeException : Exception
 	{
 		public MemoryStackPrimativeException(string message) : base(message) { }
 	}

@@ -13,8 +13,9 @@ using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.AppsRepository;
 using PLang.Services.CachingService;
-using PLang.Services.EncryptionService;
 using PLang.Services.LlmService;
+using PLang.Services.LlmService;
+using PLang.Services.OpenAi;
 using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
 using PLang.Services.SigningService;
@@ -71,6 +72,13 @@ namespace PLangTests
 
 		}
 
+		protected void LoadOpenAI()
+		{
+			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
+
+			var llmService = new OpenAiService(settings, logger, llmCaching, context);
+			llmServiceFactory.CreateHandler().Returns(llmService);
+		}
 		protected IServiceContainer CreateServiceContainer()
 		{
 			AppContext.SetSwitch(ReservedKeywords.Test, true);
@@ -183,7 +191,7 @@ namespace PLangTests
 			archiver = Substitute.For<IArchiver>();
 			container.RegisterInstance(archiver);
 
-			prParser = new PrParser(fileSystem, settings);
+			prParser = new PrParser(fileSystem);
 			container.RegisterInstance(prParser);
 
 			llmCaching = new LlmCaching(fileSystem, settings);
@@ -239,6 +247,8 @@ namespace PLangTests
 			{
 				return JsonConvert.DeserializeObject(testResponse, type);
 			});
+			llmServiceFactory.CreateHandler().Returns(llmService);
+
 			return llmService;
 
 		}

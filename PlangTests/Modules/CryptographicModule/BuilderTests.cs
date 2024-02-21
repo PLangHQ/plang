@@ -24,13 +24,12 @@ namespace PLang.Modules.CryptographicModule.Tests
 		{
 			base.Initialize();
 
-			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var llmService = new OpenAiService(settings, logger, llmCaching, context);
+			LoadOpenAI();
 
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CryptographicModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.CryptographicModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -40,7 +39,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CryptographicModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.CryptographicModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
 		public GoalStep GetStep(string text)

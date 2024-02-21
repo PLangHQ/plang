@@ -6,6 +6,7 @@ using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Modules;
 using PLang.Runtime;
+using PLang.Services.LlmService;
 using PLang.Utils;
 using static PLang.Modules.BaseBuilder;
 using static PLang.Utils.MethodHelper;
@@ -21,7 +22,7 @@ namespace PLang.Building
 	public class InstructionBuilder : IInstructionBuilder
 	{
 		private readonly ITypeHelper typeHelper;
-		private readonly Lazy<ILlmService> llmService;
+		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly IBuilderFactory builderFactory;
 		private readonly ILogger logger;
 		private readonly IPLangFileSystem fileSystem;
@@ -31,11 +32,11 @@ namespace PLang.Building
 		private readonly MethodHelper methodHelper;
 
 		public InstructionBuilder(ILogger logger, IPLangFileSystem fileSystem, ITypeHelper typeHelper,
-			Lazy<ILlmService> llmService, IBuilderFactory builderFactory, 
+			ILlmServiceFactory llmServiceFactory, IBuilderFactory builderFactory, 
 			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper)
 		{
 			this.typeHelper = typeHelper;
-			this.llmService = llmService;
+			this.llmServiceFactory = llmServiceFactory;
 			this.builderFactory = builderFactory;
 			this.logger = logger;
 			this.fileSystem = fileSystem;
@@ -48,7 +49,7 @@ namespace PLang.Building
 		public async Task BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep step, string module, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
 		{
 			var classInstance = builderFactory.Create(module);
-			classInstance.InitBaseBuilder(module, fileSystem, llmService.Value, typeHelper, memoryStack, context, variableHelper, logger);
+			classInstance.InitBaseBuilder(module, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 			logger.LogDebug($"- Build using {module}");
 
@@ -112,7 +113,7 @@ You have 3 options.
 			List<InvalidFunction> invalidFunctions = new List<InvalidFunction>();
 			if (functions == null || functions[0] == null) return invalidFunctions;
 
-			var methodHelper = new MethodHelper(step, variableHelper, memoryStack, typeHelper, llmService.Value);
+			var methodHelper = new MethodHelper(step, variableHelper, memoryStack, typeHelper, llmServiceFactory);
 			return methodHelper.ValidateFunctions(functions, module, memoryStack);
 		}
 

@@ -16,6 +16,7 @@ using PLang.Attributes;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
+using PLang.Services.LlmService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Numerics;
@@ -45,7 +46,7 @@ namespace PLang.Modules.BlockchainModule
 		public static readonly string CurrentAddressContextKey = "PLang.Modules.BlockchainModule.ModuleSettings.CurrentAddress";
 		public static readonly string CurrentRpcServerContextKey = "PLang.Modules.BlockchainModule.ModuleSettings.CurrentRpcServer";
 
-		public Program(ISettings settings, ILlmService aiService, 
+		public Program(ISettings settings, ILlmServiceFactory llmServiceFactory, 
 			IPseudoRuntime pseudoRuntime, IEngine engine, ILogger logger,PLangAppContext context) : base()
 		{
 			this.settings = settings;
@@ -53,7 +54,7 @@ namespace PLang.Modules.BlockchainModule
 			this.engine = engine;
 			this.logger = logger;
 			this.context = context;
-			this.moduleSettings = new ModuleSettings(settings, aiService);
+			this.moduleSettings = new ModuleSettings(settings, llmServiceFactory);
 
 			var rpcServer = _GetCurrentRpcServer();
 			var wallet = GetCurrentWallet();

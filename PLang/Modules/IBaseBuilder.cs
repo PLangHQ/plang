@@ -3,6 +3,7 @@ using PLang.Building.Model;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
+using PLang.Services.LlmService;
 using PLang.Utils;
 
 namespace PLang.Modules
@@ -13,6 +14,6 @@ namespace PLang.Modules
 		Task<Instruction> Build(GoalStep step, Type responseType, string? errorMessage = null, int errorCount = 0);
 		Task<Instruction> Build(GoalStep step);
 		LlmRequest GetLlmRequest(GoalStep step, Type responseType, string? errorMessage = null);
-		void InitBaseBuilder(string module, IPLangFileSystem fileSystem, ILlmService llmService, ITypeHelper typeHelper, MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ILogger logger);
+		void InitBaseBuilder(string module, IPLangFileSystem fileSystem, ILlmServiceFactory llmService, ITypeHelper typeHelper, MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ILogger logger);
 	}
 }

@@ -11,6 +11,7 @@ using PLang.Interfaces;
 using PLang.Modules;
 using PLang.SafeFileSystem;
 using PLang.Services.AppsRepository;
+using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Utils;
 using System.Diagnostics;
@@ -75,7 +76,6 @@ namespace PLang.Runtime
 			this.appsRepository = container.GetInstance<IPLangAppsRepository>();
 			context.AddOrReplace(ReservedKeywords.MyIdentity, identityService.GetCurrentIdentity());
 
-			prParser.LoadAllGoals();
 		}
 
 		public MemoryStack GetMemoryStack() => this.memoryStack;
@@ -112,11 +112,7 @@ namespace PLang.Runtime
 			}
 			catch (Exception ex)
 			{
-				context.AddOrReplace(ReservedKeywords.Exception, ex);
-				await eventRuntime.RunStartEndEvents(context, EventType.OnError, EventScope.RunningApp);
-
-				
-				context.Remove(ReservedKeywords.Exception);
+				await eventRuntime.AppErrorEvents(context, ex);
 			}
 			finally
 			{
@@ -143,7 +139,7 @@ namespace PLang.Runtime
 
 		private async Task<bool> HandleFileAccessException(FileAccessException ex)
 		{
-			var fileAccessHandler = new FileAccessHandler(settings, container.GetInstance<ILlmService>(), logger, fileSystem);
+			var fileAccessHandler = container.GetInstance<FileAccessHandler>();
 			var askUserFileException = new AskUserFileAccess(ex.AppName, ex.Path, ex.Message, fileAccessHandler.ValidatePathResponse);
 
 			return await askUserHandlerFactory.CreateHandler().Handle(askUserFileException);
@@ -251,6 +247,7 @@ namespace PLang.Runtime
 
 		public async Task RunGoal(Goal goal)
 		{
+			AppContext.SetSwitch("Runtime", true);
 			if (goal.Comment != null && IsLogLevel(goal.Comment))
 			{
 				AppContext.SetData("GoalLogLevelByUser", Microsoft.Extensions.Logging.LogLevel.Trace);
@@ -262,7 +259,7 @@ namespace PLang.Runtime
 				logger.LogTrace("RootDirectory:{0}", fileSystem.RootDirectory);
 				foreach (var injection in goal.Injections)
 				{
-					container.RegisterForPLangUserInjections(injection.Type, injection.Path, injection.IsGlobal);
+					container.RegisterForPLangUserInjections(injection.Type, injection.Path, injection.IsGlobal, injection.EnvironmentVariable, injection.EnvironmentVariableValue);
 				}
 
 				logger.LogDebug("Goal: " + goal.GoalName);
@@ -325,7 +322,7 @@ namespace PLang.Runtime
 			var step = goal.GoalSteps[goalStepIndex];
 			try
 			{
-				if (step.Execute && step.Executed == null)
+				if (step.Execute && HasExecuted(step))
 				{
 					await eventRuntime.RunStepEvents(context, EventType.Before, goal, step);
 				}
@@ -333,7 +330,7 @@ namespace PLang.Runtime
 				logger.LogDebug($"- {step.Text.Replace("\n", "").Replace("\r", "").MaxLength(80)}");
 
 				await ProcessPrFile(goal, step, goalStepIndex);
-				if (step.Execute && step.Executed == null)
+				if (step.Execute && HasExecuted(step))
 				{
 					await eventRuntime.RunStepEvents(context, EventType.After, goal, step);
 				}
@@ -381,11 +378,25 @@ namespace PLang.Runtime
 			}
 		}
 
+		private bool HasExecuted(GoalStep step)
+		{
+			if (step.Executed == DateTime.MinValue) return false;
+			if (step.Executed != null && step.Executed != DateTime.MinValue) return true;
+			
+			var setupOnceDictionary = settings.GetOrDefault<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", new());
+			
+			if (setupOnceDictionary == null || !setupOnceDictionary.ContainsKey(step.RelativePrPath)) {
+				step.Executed = DateTime.MinValue;
+				return false;
+			}
 
+			step.Executed = setupOnceDictionary[step.RelativePrPath];
+			return true;
+		}
 
 		public async Task ProcessPrFile(Goal goal, GoalStep goalStep, int stepIndex)
 		{
-			if (goalStep.RunOnce && goalStep.Executed != null)
+			if (goalStep.RunOnce && HasExecuted(goalStep))
 			{
 				return;
 			}
@@ -422,11 +433,11 @@ namespace PLang.Runtime
 			var classInstance = container.GetInstance(classType) as BaseProgram;
 			if (classInstance == null) return;
 
-			var llmService = container.GetInstance<ILlmService>();
-			var appCache = container.GetInstance<IAppCache>(context[ReservedKeywords.Inject_Caching]!.ToString());
+			var llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
+			var appCache = container.GetInstance<IAppCache>();
 
 			classInstance.Init(container, goal, goalStep, instruction, memoryStack, logger, context,
-				typeHelper, llmService, settings, appCache, this.HttpContext);
+				typeHelper, llmServiceFactory, settings, appCache, this.HttpContext);
 
 			using (var cts = new CancellationTokenSource())
 			{

@@ -1,12 +1,14 @@
 ﻿using Dapper;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Utils;
 using System.Data;
 using System.Reflection;
+using System.Text;
 
 namespace PLang.Services.SettingsService
 {
@@ -250,7 +252,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 			}
 		}
 
-		public Setting? Get(string salt, string? fullName, string? type, string? key)
+		public Setting? Get(string? fullName, string? type, string? key)
 		{
 			var setting = GetSettings().FirstOrDefault(p => p.ClassOwnerFullName == fullName && p.ValueType == type && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
 			/*
@@ -261,6 +263,19 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 			}
 			*/
 			return setting;
+		}
+
+		public string SerializeSettings()
+		{
+			StringBuilder sb = new StringBuilder();
+			var settings = GetSettings();
+			foreach (var setting in settings)
+			{
+				var key = setting.ClassOwnerFullName.Replace("+", "-") + "_" + setting.Key.Replace("+", "-");
+				var json = JsonConvert.SerializeObject(setting);
+				sb.Append(key + "=" + json + Environment.NewLine);
+			}
+			return sb.ToString();
 		}
 	}
 }

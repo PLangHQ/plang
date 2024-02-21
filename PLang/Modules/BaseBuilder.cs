@@ -4,6 +4,7 @@ using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
+using PLang.Services.LlmService;
 using PLang.Utils;
 using PLang.Utils.Extractors;
 using System.Runtime.InteropServices;
@@ -26,24 +27,24 @@ namespace PLang.Modules
 		private List<string> appendedAssistantCommand;
 		private string module;
 		private IPLangFileSystem fileSystem;
-		private ILlmService aiService;
+		private ILlmServiceFactory llmServiceFactory;
 		private ITypeHelper typeHelper;
 		private ILogger logger;
 		private MemoryStack memoryStack;
 		private PLangAppContext context;
 		private VariableHelper variableHelper;
-
+		private IContentExtractor contentExtractor;
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		protected BaseBuilder()
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		{ }
 
-		public void InitBaseBuilder(string module, IPLangFileSystem fileSystem, ILlmService llmService, ITypeHelper typeHelper,
+		public void InitBaseBuilder(string module, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper,
 			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ILogger logger)
 		{
 			this.module = module;
 			this.fileSystem = fileSystem;
-			this.aiService = llmService;
+			this.llmServiceFactory = llmServiceFactory;
 			this.typeHelper = typeHelper;
 			this.memoryStack = memoryStack;
 			this.context = context;
@@ -57,7 +58,7 @@ namespace PLang.Modules
 
 		public void SetContentExtractor(IContentExtractor contentExtractor)
 		{
-			this.aiService.Extractor = contentExtractor;
+			this.contentExtractor = contentExtractor;
 		}
 		public virtual async Task<Instruction> Build<T>(GoalStep step)
 		{
@@ -80,7 +81,7 @@ namespace PLang.Modules
 			var question = GetLlmRequest(step, responseType, errorMessage);
 			question.Reload = step.Reload;
 
-			var result = await aiService.Query(question, responseType);
+			var result = await llmServiceFactory.CreateHandler().Query(question, responseType);
 			if (result == null)
 			{
 				throw new BuilderException($"Could not build for {responseType.Name}");
@@ -89,7 +90,7 @@ namespace PLang.Modules
 			var instruction = new Instruction(result);
 			instruction.LlmRequest = question;
 
-			var methodHelper = new MethodHelper(step, variableHelper, memoryStack, typeHelper, aiService);
+			var methodHelper = new MethodHelper(step, variableHelper, memoryStack, typeHelper, llmServiceFactory);
 			var invalidFunctions = methodHelper.ValidateFunctions(instruction.GetFunctions(), step.ModuleType, memoryStack);
 
 			if (invalidFunctions.Count > 0)
@@ -183,7 +184,10 @@ This is the error(s)
 			promptMessage.Add(new LlmMessage("user", userContent));
 
 			var llmRequest = new LlmRequest(GetType().FullName, promptMessage);
-			llmRequest.llmResponseType = aiService.Extractor.LlmResponseType;
+			if (contentExtractor != null)
+			{
+				llmRequest.llmResponseType = contentExtractor.LlmResponseType;
+			}
 			llmRequest.scheme = TypeHelper.GetJsonSchema(responseType);
 			llmRequest.top_p = 0;
 			llmRequest.temperature = 0;

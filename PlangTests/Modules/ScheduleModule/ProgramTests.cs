@@ -23,7 +23,7 @@ namespace PLangTests.Modules.ScheduleModule
 			Stopwatch stopwatch = new Stopwatch();
 			stopwatch.Start();
 			var p = new Program(settings, prParser);
-			p.Init(container, null, new PLang.Building.Model.GoalStep(), null, memoryStack, logger, context, typeHelper, llmService, settings, appCache, null);
+			p.Init(container, null, new PLang.Building.Model.GoalStep(), null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, null);
 			await p.Sleep(100);
 			stopwatch.Stop();
 			Assert.IsTrue(stopwatch.ElapsedMilliseconds > 99);

@@ -6,6 +6,7 @@ using PLang.Exceptions.AskUser;
 using PLang.Exceptions.AskUser.Database;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Services.LlmService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Data;
@@ -22,18 +23,18 @@ namespace PLang.Modules.DbModule
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ISettings settings;
 		private readonly PLangAppContext context;
-		private readonly ILlmService llmService;
+		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly IDbConnection db;
 		private readonly ILogger logger;
 
 		public record SqlStatement(string SelectTablesAndViewsInMyDatabaseSqlStatement, string SelectColumnsFromTablesSqlStatement);
 
-		public ModuleSettings(IPLangFileSystem fileSystem, ISettings settings, PLangAppContext context, ILlmService llmService, IDbConnection db, ILogger logger)
+		public ModuleSettings(IPLangFileSystem fileSystem, ISettings settings, PLangAppContext context, ILlmServiceFactory llmServiceFactory, IDbConnection db, ILogger logger)
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
 			this.context = context;
-			this.llmService = llmService;
+			this.llmServiceFactory = llmServiceFactory;
 			this.db = db;
 			this.logger = logger;
 		}
@@ -88,7 +89,7 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 			var llmRequest = new LlmRequest("AskUserDatabaseType", promptMessage);
 			llmRequest.scheme = TypeHelper.GetJsonSchema(typeof(DatabaseTypeResponse));
 
-			var result = await llmService.Query<DatabaseTypeResponse>(llmRequest);
+			var result = await llmServiceFactory.CreateHandler().Query<DatabaseTypeResponse>(llmRequest);
 			if (result == null)
 			{
 				throw new BuilderException("Could not get information from LLM service. Try again.");
@@ -109,7 +110,7 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 			var datasources = await GetAllDataSources();
 			if (datasources.FirstOrDefault(p => p.Name.ToLower() == dataSourceName.ToLower()) != null)
 			{
-				throw new AskUserDataSourceNameExists(llmService, typeFullName, dataSourceName, nugetCommand,
+				throw new AskUserDataSourceNameExists(llmServiceFactory, typeFullName, dataSourceName, nugetCommand,
 						dataSourceConnectionStringExample, regexToExtractDatabaseNameFromConnectionString, keepHistory, isDefault,
 						$"'{dataSourceName}' already exists. Give me different name if you like to add it.", AddDataSource);
 			}
@@ -117,7 +118,7 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 			if (!IsModuleInstalled(typeFullName))
 			{
 				var listOfDbSupported = GetSupportedDbTypesAsString();
-				throw new AskUserDatabaseType(llmService, isDefault, keepHistory, listOfDbSupported, dataSourceName, $"{typeFullName} is not supported. Following databases are supported: {listOfDbSupported}. If you need {typeFullName}, you must install it into modules folder in your app using {nugetCommand}.", AddDataSource);
+				throw new AskUserDatabaseType(llmServiceFactory, isDefault, keepHistory, listOfDbSupported, dataSourceName, $"{typeFullName} is not supported. Following databases are supported: {listOfDbSupported}. If you need {typeFullName}, you must install it into modules folder in your app using {nugetCommand}.", AddDataSource);
 			}
 
 
@@ -166,7 +167,7 @@ Table name should be @TableName, database name is @Database if needed as paramet
 Be concise"));
 
 			var llmRequest = new LlmRequest("SetDatabaseConnectionString", promptMessage);
-			var statement = await llmService.Query<SqlStatement>(llmRequest);
+			var statement = await llmServiceFactory.CreateHandler().Query<SqlStatement>(llmRequest);
 			if (statement == null)
 			{
 				throw new BuilderException("Could not get select statement for tables, views and columns. Try again.");

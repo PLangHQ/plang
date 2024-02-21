@@ -1,8 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PLang.Modules.CultureInfoModule;
+using PLang.Modules.EnvironmentModule;
 using System.Globalization;
 
-namespace PLangTests.Modules.CultureInfoModule
+namespace PLangTests.Modules.EnvironmentModule
 {
 	[TestClass]
 	public class ProgramTests : BasePLangTest
@@ -16,7 +16,7 @@ namespace PLangTests.Modules.CultureInfoModule
 		[TestMethod]
 		public async Task Test_SetCultureLanguageCode()
 		{
-			var p = new Program();
+			var p = new Program(settings);
 			await p.SetCultureLanguageCode("is-IS");
 
 			Assert.AreEqual("is-IS", Thread.CurrentThread.CurrentCulture.Name);

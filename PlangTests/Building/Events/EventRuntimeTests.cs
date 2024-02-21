@@ -469,7 +469,7 @@ namespace PLang.Building.Events.Tests
 			var eventFiles = eventRuntime.GetRuntimeEventsFiles(fileSystem.GoalsPath, "Events");
 
 			Assert.AreEqual(3, eventFiles.Count);
-			Assert.AreEqual(Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName), eventFiles[eventFiles.Count - 1]);
+			Assert.AreEqual(Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName), eventFiles[0]);
 
 		}
 
@@ -486,7 +486,7 @@ namespace PLang.Building.Events.Tests
 			var eventFiles = eventRuntime.GetRuntimeEventsFiles(fileSystem.GoalsPath, "BuilderEvents");
 
 			Assert.AreEqual(2, eventFiles.Count);
-			Assert.AreEqual(Path.Join(fileSystem.BuildPath, "BuilderEvents", ISettings.GoalFileName), eventFiles[eventFiles.Count - 1]);
+			Assert.AreEqual(Path.Join(fileSystem.BuildPath, "BuilderEvents", ISettings.GoalFileName), eventFiles[0]);
 
 		}
 

@@ -8,6 +8,7 @@ using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.CompilerService;
+using PLang.Services.LlmService;
 using PLang.Utils;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -24,7 +25,7 @@ namespace PLang.Building
 	public class StepBuilder : IStepBuilder
 	{
 		private readonly IPLangFileSystem fileSystem;
-		private readonly Lazy<ILlmService> aiService;
+		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly Lazy<ILogger> logger;
 		private readonly IInstructionBuilder instructionBuilder;
 		private readonly IEventRuntime eventRuntime;
@@ -34,12 +35,12 @@ namespace PLang.Building
 		private readonly IExceptionHandlerFactory exceptionHandlerFactory;
 		private readonly PLangAppContext context;
 
-		public StepBuilder(Lazy<ILogger> logger, IPLangFileSystem fileSystem, Lazy<ILlmService> aiService,
+		public StepBuilder(Lazy<ILogger> logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 					IInstructionBuilder instructionBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
 					MemoryStack memoryStack, VariableHelper variableHelper, IExceptionHandlerFactory exceptionHandlerFactory, PLangAppContext context)
 		{
 			this.fileSystem = fileSystem;
-			this.aiService = aiService;
+			this.llmServiceFactory = llmServiceFactory;
 			this.logger = logger;
 			this.instructionBuilder = instructionBuilder;
 			this.eventRuntime = eventRuntime;
@@ -66,7 +67,7 @@ namespace PLang.Building
 
 				logger.Value.LogDebug($"- Find module for {step.Text}");
 				llmQuestion.Reload = false;
-				var stepAnswer = await aiService.Value.Query<StepAnswer>(llmQuestion);
+				var stepAnswer = await llmServiceFactory.CreateHandler().Query<StepAnswer>(llmQuestion);
 				if (stepAnswer == null)
 				{
 					if (errorCount > 2)
@@ -136,7 +137,10 @@ namespace PLang.Building
 				{
 					await BuildStep(goal, stepIndex, excludeModules, errorCount);
 				}
-				//await errorHelper.ShowFriendlyErrorMessage(ex, step);
+				else
+				{
+					throw new BuilderStepException(ex.Message, step);
+				}
 			}
 
 		}

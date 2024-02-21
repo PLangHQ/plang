@@ -3,12 +3,13 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using PLang.Modules.DbModule;
 using PLang.SafeFileSystem;
-using PLang.Services.EncryptionService;
+using PLang.Services.LlmService;
 using PLang.Services.EventSourceService;
 using PLang.Utils;
 using static PLang.Modules.DbModule.ModuleSettings;
 using static PLang.Modules.DbModule.Program;
 using static PLang.Services.EncryptionService.Encryption;
+using PLang.Services.EncryptionService;
 
 namespace PLangTests.Modules.DbModule
 {
@@ -38,7 +39,7 @@ namespace PLangTests.Modules.DbModule
 		{
 			db = new SqliteConnection("DataSource=:memory:");
 			eventSourceRepository = new DisableEventSourceRepository();
-			p = new Program(db, fileSystem, settings, llmService, eventSourceRepository, context, logger);
+			p = new Program(db, fileSystem, settings, llmServiceFactory, eventSourceRepository, context, logger);
 
 			var dataSources = new List<DataSource>();
 			dataSources.Add(new DataSource("db", "System.Data.SQLite.SqliteConnection", "", "", "", ""));
@@ -57,7 +58,7 @@ namespace PLangTests.Modules.DbModule
 		{
 			db = new SqliteConnection("DataSource=:memory:");
 			eventSourceRepository = new DisableEventSourceRepository();
-			p = new Program(db, fileSystem, settings, llmService, eventSourceRepository, context, logger);
+			p = new Program(db, fileSystem, settings, llmServiceFactory, eventSourceRepository, context, logger);
 			await p.BeginTransaction();
 
 			await p.CreateTable("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, address TEXT, phone TEXT)");
@@ -114,7 +115,7 @@ namespace PLangTests.Modules.DbModule
 			eventSourceRepository = new SqliteEventSourceRepository(fileSystem, encryption);
 			eventSourceRepository.DataSource = datasources[0];
 
-			p = new Program(db, fileSystem, settings, llmService, eventSourceRepository, context, logger);
+			p = new Program(db, fileSystem, settings, llmServiceFactory, eventSourceRepository, context, logger);
 			await p.BeginTransaction();
 
 			await p.CreateTable("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, address TEXT, phone TEXT)");

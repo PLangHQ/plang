@@ -19,5 +19,6 @@ namespace PLang.Interfaces
 
 		string GetSalt();
 		void SetSharedSettings(string appId);
+		string SerializeSettings();
 	}
 }

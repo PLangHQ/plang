@@ -15,7 +15,16 @@ namespace PlangWindowForms
 			if (debug && !Debugger.IsAttached)
 			{
 				Debugger.Launch();
-				AppContext.SetSwitch(ReservedKeywords.Debug, true);
+				AppContext.SetSwitch(ReservedKeywords.CSharpDebug, true);
+			}
+			var build = args.FirstOrDefault(p => p == "build") != null;
+			if (build)
+			{
+				AppContext.SetSwitch("builder", true);
+			}
+			else
+			{
+				AppContext.SetSwitch("runtime", true);
 			}
 
 			// To customize application configuration such as set high DPI settings or default font,

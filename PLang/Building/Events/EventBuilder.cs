@@ -6,6 +6,7 @@ using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
+using PLang.Services.LlmService;
 using PLang.Services.SettingsService;
 using PLang.Utils;
 using System.Runtime.ConstrainedExecution;
@@ -23,18 +24,18 @@ namespace PLang.Building.Events
 	public class EventBuilder : IEventBuilder
 	{
 		private readonly IPLangFileSystem fileSystem;
-		private readonly Lazy<ILlmService> aiService;
+		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly ILogger logger;
 		private readonly ISettings settings;
 		private readonly IGoalParser goalParser;
 		private readonly MemoryStack memoryStack;
 		private readonly PrParser prParser;
 
-		public EventBuilder(ILogger logger, IPLangFileSystem fileSystem, Lazy<ILlmService> aiService,
+		public EventBuilder(ILogger logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 			ISettings settings, IGoalParser goalParser, MemoryStack memoryStack, PrParser prParser)
 		{
 			this.fileSystem = fileSystem;
-			this.aiService = aiService;
+			this.llmServiceFactory = llmServiceFactory;
 			this.logger = logger;
 			this.settings = settings;
 			this.goalParser = goalParser;
@@ -82,12 +83,12 @@ IncludePrivate defines if user wants to include private goals, he needs to speci
 					promptMessage.Add(new LlmMessage("assistant", $@"	
 Map correct number to EventType and EventScope
 
-enum EventType {{ Before = 0, After = 1, OnError = 40 }}
+enum EventType {{ Before = 0, After = 1, OnError = 2 }}
 enum EventScope {{ StartOfApp = 0, EndOfApp = 1,RunningApp = 2,	Goal = 20, Step = 30 }}"));
 					promptMessage.Add(new LlmMessage("user", step.Text));
 
 					var llmRequest = new LlmRequest("Events", promptMessage);
-					var eventModel = await aiService.Value.Query<EventBinding>(llmRequest);
+					var eventModel = await llmServiceFactory.CreateHandler().Query<EventBinding>(llmRequest);
 					if (eventModel == null)
 					{
 						throw new BuilderStepException($"Could not build an events from step {step.Text} in {filePath}. LLM didn't give any response. Try to rewriting the event.", step);

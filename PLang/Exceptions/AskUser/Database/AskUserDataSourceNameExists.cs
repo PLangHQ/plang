@@ -1,11 +1,12 @@
 ﻿using PLang.Interfaces;
 using PLang.Models;
+using PLang.Services.LlmService;
 
 namespace PLang.Exceptions.AskUser.Database
 {
 	public class AskUserDataSourceNameExists : AskUserException
 	{
-		private readonly ILlmService aiService;
+		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly string typeFullName;
 		private readonly string dataSourceName;
 		private readonly string nugetCommand;
@@ -14,11 +15,11 @@ namespace PLang.Exceptions.AskUser.Database
 		private readonly bool keepHistoryEventSourcing;
 		private readonly bool isDefault;
 
-		public AskUserDataSourceNameExists(ILlmService aiService, string typeFullName, string dataSourceName, string nugetCommand,
+		public AskUserDataSourceNameExists(ILlmServiceFactory llmServiceFactory, string typeFullName, string dataSourceName, string nugetCommand,
 			string dataSourceConnectionStringExample, string regexToExtractDatabaseNameFromConnectionString,
 			bool keepHistoryEventSourcing, bool isDefault, string message, Func<string, string, string, string, string, bool, bool, Task> callback) : base(message, CreateAdapter(callback))
 		{
-			this.aiService = aiService;
+			this.llmServiceFactory = llmServiceFactory;
 			this.typeFullName = typeFullName;
 			this.dataSourceName = dataSourceName;
 			this.nugetCommand = nugetCommand;
@@ -52,7 +53,7 @@ keepHistoryEventSourcing: {keepHistoryEventSourcing}
 
 
 			var llmRequest = new LlmRequest("AskUserDatabaseType", promptMessage);
-			var result = await aiService.Query<MethodResponse>(llmRequest);
+			var result = await llmServiceFactory.CreateHandler().Query<MethodResponse>(llmRequest);
 			if (result == null) return;
 
 			await Callback.Invoke(new object[] {

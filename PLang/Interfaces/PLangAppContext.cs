@@ -4,8 +4,7 @@ namespace PLang.Interfaces
 {
 	public class PLangAppContext : Dictionary<string, object?>
 	{
-
-		public object? this[string key]
+		public new object? this[string key]
 		{
 			get
 			{

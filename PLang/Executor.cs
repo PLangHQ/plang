@@ -16,7 +16,6 @@ namespace PLang
 {
     public class Executor
 	{
-		private readonly ISettings settings;
 		private readonly IServiceContainer container;
 		private readonly PrParser prParser;
 		private readonly IPLangFileSystem fileSystem;
@@ -31,7 +30,6 @@ namespace PLang
 		{
 			this.container = container;
 			
-			this.settings = container.GetInstance<ISettings>();
 			this.prParser = container.GetInstance<PrParser>();
 			this.fileSystem = container.GetInstance<IPLangFileSystem>();
 

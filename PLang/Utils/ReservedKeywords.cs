@@ -8,6 +8,7 @@ namespace PLang.Utils
 		public static readonly string MyIdentity = "MyIdentity";
 
 		public static readonly string Debug = "__Debug__";
+		public static readonly string CSharpDebug = "__CSharpDebug__";
 		public static readonly string Test = "__Test__";
 		public static readonly string Goal = "__Goal__";
 		public static readonly string Step = "__Step__";

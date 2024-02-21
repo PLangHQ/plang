@@ -15,11 +15,11 @@ using Websocket.Client.Logging;
 namespace PLang.Building.Events
 {
 
-    public interface IEventRuntime
+	public interface IEventRuntime
 	{
 		Task<List<EventBinding>> GetBuilderEvents();
 		Task<List<EventBinding>> GetRuntimeEvents();
-		List<string> GetRuntimeEventsFiles(string goalsPath, string eventFolder);
+		List<string> GetRuntimeEventsFiles(string buildPath, string eventFolder);
 		bool GoalHasBinding(Goal goal, EventBinding eventBinding);
 		bool IsStepMatch(GoalStep step, EventBinding eventBinding);
 		Task Load(IServiceContainer container, bool builder = false);
@@ -30,6 +30,7 @@ namespace PLang.Building.Events
 		Task RunStepEvents(PLangAppContext context, EventType eventType, Goal goal, GoalStep step);
 		Task<bool> RunOnErrorStepEvents(PLangAppContext context, Exception ex, Goal goal, GoalStep goalStep, ErrorHandler? errorHandler = null);
 		Task RunGoalErrorEvents(PLangAppContext context, Goal goal, int goalStepIndex, Exception ex);
+		Task AppErrorEvents(PLangAppContext context, Exception ex);
 	}
 	public class EventRuntime : IEventRuntime
 	{
@@ -75,8 +76,8 @@ namespace PLang.Building.Events
 			events = new List<EventBinding>();
 
 			string buildEventsFolder = (builder) ? "BuilderEvents" : "Events";
-			var eventsFiles = GetRuntimeEventsFiles(fileSystem.GoalsPath, buildEventsFolder);
-
+			var eventsFiles = GetRuntimeEventsFiles(fileSystem.BuildPath, buildEventsFolder);
+			
 			foreach (var eventFile in eventsFiles)
 			{
 				var goal = prParser.GetGoal(eventFile);
@@ -106,19 +107,20 @@ namespace PLang.Building.Events
 					}
 				}
 			}
+			prParser.ForceLoadAllGoals();
 		}
 
-		public List<string> GetRuntimeEventsFiles(string goalsPath, string eventFolder)
+		public List<string> GetRuntimeEventsFiles(string buildPath, string eventFolder)
 		{
-			var dirs = fileSystem.Directory.GetDirectories(goalsPath, eventFolder, SearchOption.AllDirectories);
+			var dirs = fileSystem.Directory.GetDirectories(buildPath, eventFolder, SearchOption.AllDirectories);
 
-			var eventFiles = fileSystem.Directory.GetDirectories(goalsPath, eventFolder, SearchOption.AllDirectories)
+			var eventFiles = fileSystem.Directory.GetDirectories(buildPath, eventFolder, SearchOption.AllDirectories)
 					.SelectMany(dir => fileSystem.Directory.GetFiles(dir, ISettings.GoalFileName))
 					.ToList();
 
 			if (eventFiles.Count == 1) return eventFiles;
 
-			var rootEvent = eventFiles.FirstOrDefault(p => p == Path.Join(goalsPath, ".build", eventFolder, ISettings.GoalFileName));
+			var rootEvent = eventFiles.FirstOrDefault(p => p == Path.Join(buildPath, eventFolder, ISettings.GoalFileName));
 			if (rootEvent != null)
 			{
 				eventFiles.Remove(rootEvent);
@@ -166,8 +168,32 @@ namespace PLang.Building.Events
 			}
 
 		}
-		public async Task RunBuildGoalEvents(EventType eventType,
-			Goal goal)
+
+
+		public async Task AppErrorEvents(PLangAppContext context, Exception ex)
+		{
+			await ShowDefaultError(ex);
+		}
+
+		private async Task HandleError(PLangAppContext context, Goal goal, Exception ex, GoalStep? step, List<EventBinding> eventsToRun)
+		{
+			if (eventsToRun.Count == 0)
+			{
+				await ShowDefaultError(ex);
+			}
+			else
+			{
+				for (var i = 0; i < eventsToRun.Count; i++)
+				{
+					var eve = eventsToRun[i];
+					if (!GoalHasBinding(goal, eve)) continue;
+
+					await Run(context, eve, goal, step, ex);
+				}
+			}
+		}
+
+		public async Task RunBuildGoalEvents(EventType eventType, Goal goal)
 		{
 
 			var events = await GetBuilderEvents();
@@ -200,20 +226,7 @@ namespace PLang.Building.Events
 			var step = (goalStepIndex < goal.GoalSteps.Count) ? goal.GoalSteps[goalStepIndex] : null;
 			var eventsToRun = events.Where(p => p.EventType == EventType.OnError && p.EventScope == EventScope.Goal).ToList();
 
-			if (eventsToRun.Count == 0)
-			{
-				await ShowDefaultError(ex);
-			}
-			else
-			{
-				for (var i = 0; i < eventsToRun.Count; i++)
-				{
-					var eve = eventsToRun[i];
-					if (!GoalHasBinding(goal, eve)) continue;
-
-					await Run(context, eve, goal, step, ex);
-				}
-			}
+			await HandleError(context, goal, ex, step, eventsToRun);
 
 		}
 
@@ -285,7 +298,7 @@ namespace PLang.Building.Events
 		public async Task<bool> RunOnErrorStepEvents(PLangAppContext context, Exception ex, Goal goal, GoalStep step, ErrorHandler? stepErrorHandler = null)
 		{
 			if (events == null || context.ContainsKey(ReservedKeywords.IsEvent)) return false;
-			
+
 			bool shouldContinueNextStep = false;
 			if (stepErrorHandler != null)
 			{
@@ -337,6 +350,8 @@ namespace PLang.Building.Events
 			}
 			return null;
 		}
+
+
 		/*
 		 * 
 		 */
@@ -428,7 +443,6 @@ namespace PLang.Building.Events
 			return Regex.IsMatch(goalRelativePath, @"^" + goalToBindTo + "$");
 
 		}
-
 
 
 	}

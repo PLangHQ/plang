@@ -5,9 +5,9 @@ namespace PLang.Utils
 {
 	public abstract class BaseFactory
 	{
-		protected ServiceContainer container;
+		protected IServiceContainer container;
 
-		public BaseFactory(ServiceContainer container)
+		public BaseFactory(IServiceContainer container)
 		{
 			this.container = container;
 		}

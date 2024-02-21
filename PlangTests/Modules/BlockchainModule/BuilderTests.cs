@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using NSubstitute;
 using PLang.Building.Model;
 using PLang.Interfaces;
+using PLang.Services.LlmService;
 using PLang.Services.OpenAi;
 using PLang.Utils;
 using PLangTests;
@@ -46,15 +47,15 @@ namespace PLang.Modules.BlockchainModule.Tests
 				{
 					tokens = callback.Arg<List<Token>>();
 				});
-			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var aiService = new OpenAiService(settings, logger, llmCaching, context);
-			var moduleSettings = new ModuleSettings(settings, aiService);
-
+			LoadOpenAI();
+			
+			var moduleSettings = new ModuleSettings(settings, llmServiceFactory);
+			
 			//var fileSystem = new PLangMockFileSystem();
 			typeHelper = new TypeHelper(fileSystem, settings);
 
-			builder = new Builder(settings, context, aiService);
-			builder.InitBaseBuilder("PLang.Modules.BlockchainModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper, logger);
+			builder = new Builder(settings, context, llmServiceFactory);
+			builder.InitBaseBuilder("PLang.Modules.BlockchainModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 			
 		}
@@ -64,10 +65,10 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var llmService = GetLlmService(stepText, caller, type);
 			if (llmService == null) return;
 
-			var moduleSettings = new ModuleSettings(settings, llmService);
+			var moduleSettings = new ModuleSettings(settings, llmServiceFactory);
 
-			builder = new Builder(settings, context, llmService);
-			builder.InitBaseBuilder("PLang.Modules.BlockchainModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
+			builder = new Builder(settings, context, llmServiceFactory);
+			builder.InitBaseBuilder("PLang.Modules.BlockchainModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
 		public GoalStep GetStep(string text)

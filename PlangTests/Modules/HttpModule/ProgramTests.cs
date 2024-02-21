@@ -61,7 +61,7 @@ namespace PLangTests.Modules.HttpModule
 			
 			p = new Program(fileSystem, signingService, httpClientFactory);
 
-			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmService, settings, appCache, null);
+			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, null);
 		}
 
 		[TestMethod]

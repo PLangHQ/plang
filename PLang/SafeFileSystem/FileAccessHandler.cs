@@ -3,20 +3,21 @@ using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Services.LlmService;
 
 namespace PLang.SafeFileSystem
 {
 	public class FileAccessHandler
 	{
 		private readonly ISettings settings;
-		private readonly ILlmService llmService;
+		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly ILogger logger;
 		private readonly IPLangFileSystem fileSystem;
 
-		public FileAccessHandler(ISettings settings, ILlmService llmService, ILogger logger, IPLangFileSystem fileSystem)
+		public FileAccessHandler(ISettings settings, ILlmServiceFactory llmServiceFactory, ILogger logger, IPLangFileSystem fileSystem)
 		{
 			this.settings = settings;
-			this.llmService = llmService;
+			this.llmServiceFactory = llmServiceFactory;
 			this.logger = logger;
 			this.fileSystem = fileSystem;
 		}
@@ -61,7 +62,7 @@ GiveAccess : yes|no|null"));
 
 				var llmRequest = new LlmRequest("FileAccess", promptMessage);
 	
-				var result = await llmService.Query<FileAccessResponse>(llmRequest);
+				var result = await llmServiceFactory.CreateHandler().Query<FileAccessResponse>(llmRequest);
 				
 				if (result == null || result.GiveAccess == null) throw new FileAccessException(appName, path, $"{appName} is trying to access {path}. Do you accept that?");
 				if (result.GiveAccess.ToLower() == "no") return;

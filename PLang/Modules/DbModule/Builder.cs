@@ -6,6 +6,7 @@ using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.EventSourceService;
+using PLang.Services.LlmService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Data;
@@ -21,7 +22,7 @@ namespace PLang.Modules.DbModule
 		private readonly IDbConnection db;
 		private readonly ISettings settings;
 		private readonly PLangAppContext context;
-		private readonly ILlmService aiService;
+		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly ITypeHelper typeHelper;
 		private readonly ILogger logger;
 		private readonly MemoryStack memoryStack;
@@ -29,13 +30,13 @@ namespace PLang.Modules.DbModule
 		private ModuleSettings moduleSettings;
 
 		public Builder(IPLangFileSystem fileSystem, IDbConnection db, ISettings settings, PLangAppContext context, 
-			ILlmService aiService, ITypeHelper typeHelper, ILogger logger, MemoryStack memoryStack, VariableHelper variableHelper) : base()
+			ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper, ILogger logger, MemoryStack memoryStack, VariableHelper variableHelper) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.db = db;
 			this.settings = settings;
 			this.context = context;
-			this.aiService = aiService;
+			this.llmServiceFactory = llmServiceFactory;
 			this.typeHelper = typeHelper;
 			this.logger = logger;
 			this.memoryStack = memoryStack;
@@ -46,7 +47,7 @@ namespace PLang.Modules.DbModule
 		public record DbGenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValue = null, string? Warning = null) : GenericFunction(FunctionName, Parameters, ReturnValue);
 		public override async Task<Instruction> Build(GoalStep goalStep)
 		{
-			moduleSettings = new ModuleSettings(fileSystem, settings, context, aiService, db, logger);
+			moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, db, logger);
 			var buildInstruction = await base.Build(goalStep);
 			var gf = buildInstruction.Action as GenericFunction;
 			if (gf != null && gf.FunctionName == "CreateDataSource")
@@ -69,7 +70,7 @@ TableNames: table names in sql statement, leave variables as is");
 {typeHelper.GetMethodsAsString(typeof(Program))}
 ## functions available ends ##
 ");
-			var program = new Program(db, fileSystem, settings, aiService, new DisableEventSourceRepository(), context, logger);
+			var program = new Program(db, fileSystem, settings, llmServiceFactory, new DisableEventSourceRepository(), context, logger);
 			if (!string.IsNullOrEmpty(dataSource.SelectTablesAndViews))
 			{
 

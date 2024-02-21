@@ -5,7 +5,7 @@ using NSubstitute;
 using PLang.Building;
 
 using PLang.Runtime;
-using PLang.Utils;
+using PLang.Services.SettingsService;
 using PLangTests;
 using System;
 using System.Collections.Generic;
@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 
 namespace PLang.Utils.Tests
 {
-	[TestClass()]
+    [TestClass()]
 	public class VariableHelperTests : BasePLangTest
 	{
 		[TestInitialize]

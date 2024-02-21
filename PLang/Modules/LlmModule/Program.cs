@@ -6,6 +6,7 @@ using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
+using PLang.Services.LlmService;
 using PLang.Utils;
 using PLang.Utils.Extractors;
 using System.ComponentModel;
@@ -17,13 +18,13 @@ namespace PLang.Modules.LlmModule
 	[Description("Ask LLM a question and recieve and answer")]
 	public class Program : BaseProgram
 	{
-		private readonly ILlmService llmService;
+		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly IPLangIdentityService identityService;
 		private readonly ISettings settings;
 
-		public Program(ILlmService llmService, IPLangIdentityService identityService, ISettings settings) : base()
+		public Program(ILlmServiceFactory llmServiceFactory, IPLangIdentityService identityService, ISettings settings) : base()
 		{
-			this.llmService = llmService;
+			this.llmServiceFactory = llmServiceFactory;
 			this.identityService = identityService;
 			this.settings = settings;
 		}
@@ -71,7 +72,7 @@ namespace PLang.Modules.LlmModule
 			llmQuestion.llmResponseType = llmResponseType;
 			llmQuestion.scheme = scheme;
 
-			var response = await llmService.Query<object?>(llmQuestion);
+			var response = await llmServiceFactory.CreateHandler().Query<object?>(llmQuestion);
 
 			if (response is JObject)
 			{

@@ -1,20 +1,15 @@
-﻿
-
-using CsvHelper;
-using LightInject;
+﻿using LightInject;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
-using NBitcoin.Secp256k1;
 using Nethereum.JsonRpc.WebSocketClient;
 using Nethereum.RPC.Accounts;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
-using Newtonsoft.Json;
 using Nostr.Client.Client;
-using Org.BouncyCastle.Utilities.Zlib;
 using PLang.Building;
 using PLang.Building.Events;
 using PLang.Building.Parsers;
+using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
@@ -35,14 +30,12 @@ using PLang.Services.SigningService;
 using PLang.Utils;
 using RazorEngineCore;
 using System.Data;
-using System.Data.Common;
 using System.Net;
-using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using Websocket.Client.Logging;
-using static PLang.Modules.BaseBuilder;
 using static PLang.Modules.DbModule.ModuleSettings;
+
 
 namespace PLang.Container
 {
@@ -50,32 +43,37 @@ namespace PLang.Container
 	{
 		private static readonly string PrefixForTempInjection = "__Temp__";
 		public record InjectedType(string InjectorName, Type ServiceType, Type ImplementationType);
-		private static readonly Dictionary<string, InjectedType> injectedTypes = [];
+		private static readonly Dictionary<Type, InjectedType> injectedTypes = [];
 
 
 		public static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeAppStartupPath,
 			IAskUserHandlerFactory askUserHandlerFactory, IOutputStreamFactory outputStreamFactory, IExceptionHandlerFactory exceptionHandlerFactory)
 		{
+			container.RegisterBaseForPLang(absoluteAppStartupPath, relativeAppStartupPath);
+			RegisterModules(container);
 			container.RegisterForPLang(absoluteAppStartupPath, relativeAppStartupPath);
 
 			container.RegisterInstance<IOutputStreamFactory>(outputStreamFactory);
 			container.RegisterInstance<IExceptionHandlerFactory>(exceptionHandlerFactory);
 			container.RegisterInstance<IAskUserHandlerFactory>(askUserHandlerFactory);
 
-			RegisterModules(container);
+
 		}
 		public static void RegisterForPLangWebserver(this ServiceContainer container, string appStartupPath, string relativeAppPath, HttpListenerContext httpContext)
 		{
+			container.RegisterBaseForPLang(appStartupPath, relativeAppPath);
+			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
 			container.RegisterOutputStreamFactory(typeof(JsonOutputStream), true, new JsonOutputStream(httpContext));
 			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler());
 			container.RegisterExceptionHandlerFactory(typeof(HttpExceptionHandler), true, new HttpExceptionHandler(httpContext, container.GetInstance<IAskUserHandlerFactory>()));
-			
-			RegisterModules(container);
+
 		}
 		public static void RegisterForPLangWindowApp(this ServiceContainer container, string appStartupPath, string relativeAppPath, IAskUserDialog askUserDialog, IErrorDialog errorDialog, Action<string> onFlush)
 		{
+			container.RegisterBaseForPLang(appStartupPath, relativeAppPath);
+			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
 			container.RegisterOutputStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IRazorEngine>(), container.GetInstance<IPLangFileSystem>(), onFlush));
@@ -84,11 +82,12 @@ namespace PLang.Container
 
 			container.RegisterSingleton<IRazorEngine, RazorEngine>();
 
-			RegisterModules(container);
 		}
 
 		public static void RegisterForPLangConsole(this ServiceContainer container, string appStartupPath, string relativeAppPath)
 		{
+			container.RegisterBaseForPLang(appStartupPath, relativeAppPath);
+			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
 			container.RegisterOutputStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
@@ -96,13 +95,9 @@ namespace PLang.Container
 			container.RegisterExceptionHandlerFactory(typeof(ConsoleExceptionHandler), true, new ConsoleExceptionHandler(container.GetInstance<IAskUserHandlerFactory>()));
 
 
-			RegisterModules(container);
 		}
 
-
-
-
-		private static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeStartupAppPath)
+		private static void RegisterBaseForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeStartupAppPath)
 		{
 
 			container.Register<IServiceContainerFactory, ServiceContainerFactory>();
@@ -110,8 +105,17 @@ namespace PLang.Container
 			{
 				return new PLangFileSystem(absoluteAppStartupPath, relativeStartupAppPath);
 			});
+			container.RegisterSingleton<PLangAppContext>();
+			container.RegisterSingleton<PrParser>();
+		}
+
+
+		private static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeStartupAppPath)
+		{
+			container.RegisterSingleton<MemoryStack>();			
+			container.RegisterSingleton<FileAccessHandler>();
 			container.RegisterSingleton<IEngine, Engine>();
-			container.Register<ISettings, Settings>();
+			container.RegisterSingleton<ISettings, Settings>();
 			container.RegisterSingleton<IBuilder, Building.Builder>();
 			container.RegisterSingleton<ITypeHelper, TypeHelper>();
 			container.RegisterSingleton<IPseudoRuntime, PseudoRuntime>();
@@ -120,10 +124,7 @@ namespace PLang.Container
 				return new BuilderFactory(container, container.GetInstance<ITypeHelper>());
 			});
 
-			container.RegisterSingleton<PrParser>();
-			container.RegisterSingleton<MemoryStack>();
-			container.RegisterSingleton<PLangAppContext>();
-			container.RegisterSingleton<FileAccessHandler>();
+
 
 			container.RegisterSingleton<IEventBuilder, EventBuilder>();
 			container.RegisterSingleton<IEventRuntime, EventRuntime>();
@@ -148,7 +149,7 @@ namespace PLang.Container
 
 			container.RegisterSingleton<INostrClient>(factory =>
 			{
-				var moduleSettings = new ModuleSettings(container.GetInstance<ISettings>(), container.GetInstance<ILlmService>());
+				var moduleSettings = new ModuleSettings(container.GetInstance<ISettings>(), container.GetInstance<ILlmServiceFactory>());
 				var nostrClientManager = new NostrClientManager();
 
 				var multi = nostrClientManager.GetClient(moduleSettings.GetRelays());
@@ -157,7 +158,7 @@ namespace PLang.Container
 
 			container.RegisterSingleton<IWeb3>(factory =>
 			{
-				var moduleSettings = new Modules.BlockchainModule.ModuleSettings(container.GetInstance<ISettings>(), container.GetInstance<ILlmService>());
+				var moduleSettings = new Modules.BlockchainModule.ModuleSettings(container.GetInstance<ISettings>(), container.GetInstance<ILlmServiceFactory>());
 
 				var rpcServer = moduleSettings.GetRpcServers().FirstOrDefault(p => p.IsDefault);
 				var wallet = moduleSettings.GetWallets().FirstOrDefault(p => p.IsDefault);
@@ -182,27 +183,25 @@ namespace PLang.Container
 			// These are injectable by user
 			var context = container.GetInstance<PLangAppContext>();
 
-			container.RegisterEncryptionFactory(typeof(Encryption), true);
-			//container.RegisterLlmFactory(typeof(PLangLlmService), true);
+
+			container.RegisterSingleton<ILlmService, PLangLlmService>(typeof(PLangLlmService).FullName);
+			container.RegisterSingleton(factory =>
+			{
+				var type = GetImplementation(context, ReservedKeywords.Inject_LLMService, typeof(PLangLlmService));
+				return factory.GetInstance<ILlmService>(type);
+			});
+			container.RegisterLlmFactory(typeof(PLangLlmService), true);
 
 
-
-			var llmFullName = AppContext.GetData(ReservedKeywords.Inject_LLMService) ?? typeof(PLangLlmService).FullName;
-			context.AddOrReplace(ReservedKeywords.Inject_LLMService, llmFullName);
-			container.Register<ILlmService, PLangLlmService>(typeof(PLangLlmService).FullName);
-			container.Register(factory =>
+			/*container.Register(factory =>
 			{
 				return new Lazy<ILlmService>(() =>
 				{
-					var context = container.GetInstance<PLangAppContext>();
-					string type = context[ReservedKeywords.Inject_LLMService].ToString();
-					if (context.ContainsKey(PrefixForTempInjection + ReservedKeywords.Inject_LLMService))
-					{
-						type = context[PrefixForTempInjection + ReservedKeywords.Inject_LLMService].ToString();
-					}
+					var type = GetImplementation(context, ReservedKeywords.Inject_LLMService, typeof(PLangLlmService));
 					return factory.GetInstance<ILlmService>(type);
 				});
 			});
+
 			container.Register(factory =>
 			{
 				ILlmService? llmService = null;
@@ -210,19 +209,14 @@ namespace PLang.Container
 				{
 					try
 					{
-						var context = container.GetInstance<PLangAppContext>();
-						string type = context[ReservedKeywords.Inject_LLMService].ToString();
-						if (context.ContainsKey(PrefixForTempInjection + ReservedKeywords.Inject_LLMService))
-						{
-							type = context[PrefixForTempInjection + ReservedKeywords.Inject_LLMService].ToString();
-						}
+						var type = GetImplementation(context, ReservedKeywords.Inject_LLMService, typeof(PLangLlmService));
 						llmService = factory.GetInstance<ILlmService>(type);
 					}
 					catch (Exception ex)
 					{
 						if (ex is AskUserException)
 						{
-							var askUserHandler = context[ReservedKeywords.Inject_AskUserHandler].ToString();
+							var askUserHandler = GetImplementation(context, ReservedKeywords.Inject_AskUserHandler);
 							var askUser = factory.GetInstance<IAskUserHandler>(askUserHandler);
 
 							var task = askUser.Handle(ex as AskUserException);
@@ -236,50 +230,37 @@ namespace PLang.Container
 					}
 				}
 				return llmService;
-			});
+			});*/
 
-			var loggerFullName = AppContext.GetData(ReservedKeywords.Inject_Logger) ?? typeof(Logger).FullName;
-			context.AddOrReplace(ReservedKeywords.Inject_Logger, loggerFullName);
 			container.RegisterSingleton<ILogger, Services.LoggerService.Logger<Executor>>(typeof(Logger).FullName);
 			container.RegisterSingleton(factory =>
 			{
-				var context = container.GetInstance<PLangAppContext>();
-				string type = context[ReservedKeywords.Inject_Logger].ToString();
+				var type = GetImplementation(context, ReservedKeywords.Inject_Logger, typeof(Logger));
 				return factory.GetInstance<ILogger>(type);
 			});
 
-			var cachingFullName = AppContext.GetData(ReservedKeywords.Inject_Caching) ?? typeof(InMemoryCaching).FullName;
-			context.AddOrReplace(ReservedKeywords.Inject_Caching, cachingFullName);
 			container.RegisterSingleton<IAppCache, InMemoryCaching>(typeof(InMemoryCaching).FullName);
 			container.RegisterSingleton(factory =>
 			{
-				var context = container.GetInstance<PLangAppContext>();
-				string type = context[ReservedKeywords.Inject_Caching].ToString();
+				string type = GetImplementation(context, ReservedKeywords.Inject_Caching, typeof(InMemoryCaching));
 				return factory.GetInstance<IAppCache>(type);
 			});
 
-			var zipFullName = AppContext.GetData(ReservedKeywords.Inject_Archiving) ?? typeof(Zip).FullName;
-			context.AddOrReplace(ReservedKeywords.Inject_Archiving, zipFullName);
 			container.RegisterSingleton<IArchiver, Zip>(typeof(Zip).FullName);
 			container.RegisterSingleton(factory =>
 			{
-				var context = container.GetInstance<PLangAppContext>();
-				string type = context[ReservedKeywords.Inject_Archiving].ToString();
+				string type = GetImplementation(context, ReservedKeywords.Inject_Archiving, typeof(Zip));
 				return factory.GetInstance<IArchiver>(type);
 			});
 
-			var settingRepositoryFullName = AppContext.GetData(ReservedKeywords.Inject_SettingsRepository) ?? typeof(SqliteSettingsRepository).FullName;
-			context.AddOrReplace(ReservedKeywords.Inject_SettingsRepository, settingRepositoryFullName);
-			container.RegisterSingleton<ISettingsRepository, SqliteSettingsRepository>(typeof(SqliteSettingsRepository).FullName);
+			
+			container.RegisterSettingsRepositoryFactory(typeof(SqliteSettingsRepository), true, new SqliteSettingsRepository(container.GetInstance<IPLangFileSystem>(), context, container.GetInstance<ILogger>()));
 			container.RegisterSingleton(factory =>
 			{
-				var context = container.GetInstance<PLangAppContext>();
-				string type = context[ReservedKeywords.Inject_SettingsRepository].ToString();
+				string type = GetImplementation(context, ReservedKeywords.Inject_SettingsRepository, typeof(SqliteSettingsRepository));
 				return factory.GetInstance<ISettingsRepository>(type);
 			});
 
-			var dbConnectionFullName = AppContext.GetData(ReservedKeywords.Inject_IDbConnection) ?? typeof(DbConnectionUndefined).FullName;
-			context.AddOrReplace(ReservedKeywords.Inject_IDbConnection, dbConnectionFullName);
 			container.Register<IDbConnection, SqliteConnection>(typeof(SqliteConnection).FullName);
 			container.Register<IDbConnection, DbConnectionUndefined>(typeof(DbConnectionUndefined).FullName);
 			container.Register(factory =>
@@ -287,17 +268,16 @@ namespace PLang.Container
 				var context = container.GetInstance<PLangAppContext>();
 				var fileSystem = container.GetInstance<IPLangFileSystem>();
 				var settings = container.GetInstance<ISettings>();
-				var llService = container.GetInstance<ILlmService>();
+				var llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
 				var logger = container.GetInstance<ILogger>();
+
 
 				IDbConnection? dbConnection = GetDbConnection(factory, context);
 				if (dbConnection != null) return dbConnection;
 
-				
-
 				dbConnection = factory.GetInstance<IDbConnection>(typeof(DbConnectionUndefined).FullName);
-				var moduleSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llService, dbConnection, logger);
-				
+				var moduleSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmServiceFactory, dbConnection, logger);
+
 				dbConnection = moduleSettings.GetDefaultDbConnection(factory).Result;
 				if (dbConnection != null) return dbConnection;
 
@@ -319,24 +299,19 @@ namespace PLang.Container
 				return dbConnection;
 			});
 
-
-			var eventSourceFullName = AppContext.GetData(ReservedKeywords.Inject_IEventSourceRepository) ?? typeof(SqliteEventSourceRepository).FullName;
-			context.AddOrReplace(ReservedKeywords.Inject_IEventSourceRepository, eventSourceFullName);
-			container.RegisterSingleton<IEventSourceRepository, SqliteEventSourceRepository>(typeof(SqliteEventSourceRepository).FullName);
-			container.RegisterSingleton<IEventSourceRepository, DisableEventSourceRepository>(typeof(DisableEventSourceRepository).FullName);
-			container.RegisterSingleton(factory =>
+			container.Register<IEventSourceRepository, SqliteEventSourceRepository>(typeof(SqliteEventSourceRepository).FullName);
+			container.Register<IEventSourceRepository, DisableEventSourceRepository>(typeof(DisableEventSourceRepository).FullName);
+			container.Register(factory =>
 			{
 				var context = container.GetInstance<PLangAppContext>();
 				var fileSystem = container.GetInstance<IPLangFileSystem>();
 				var settings = container.GetInstance<ISettings>();
-				string dbType = context[ReservedKeywords.Inject_IDbConnection].ToString();
+				string dbType = GetImplementation(context, ReservedKeywords.Inject_IDbConnection);
 				var dbConnection = factory.GetInstance<IDbConnection>(dbType);
 				var logger = container.GetInstance<ILogger>();
-				var llmService = container.GetInstance<ILlmService>();
+				var llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
 
-
-				
-				var moduleSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmService, dbConnection, logger);
+				var moduleSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmServiceFactory, dbConnection, logger);
 				var dataSources = moduleSettings.GetAllDataSources().Result;
 				if (dataSources.Count == 0)
 				{
@@ -349,16 +324,13 @@ namespace PLang.Container
 					context.AddOrReplace(ReservedKeywords.Inject_IEventSourceRepository, typeof(DisableEventSourceRepository).FullName);
 					return factory.GetInstance<IEventSourceRepository>(typeof(DisableEventSourceRepository).FullName);
 				}
-				
-				string type = context[ReservedKeywords.Inject_IEventSourceRepository].ToString();
+
+				string type = GetImplementation(context, ReservedKeywords.Inject_IEventSourceRepository, typeof(SqliteEventSourceRepository));
 				var eventSourceRepo = factory.GetInstance<IEventSourceRepository>(type);
 				eventSourceRepo.DataSource = dataSource;
 
 				return eventSourceRepo;
 			});
-
-
-			
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			var settings = container.GetInstance<ISettings>();
@@ -367,7 +339,26 @@ namespace PLang.Container
 			fileSystem.SetFileAccess(settings.GetValues<FileAccessControl>(typeof(PLangFileSystem)));
 		}
 
+		private static string GetImplementation(PLangAppContext context, string reservedKeyword, Type? defaultType = null)
+		{
+			if (context.TryGetValue(reservedKeyword, out object? value) && value != null)
+			{
+				return value.ToString()!;
+			}
 
+			object? obj = AppContext.GetData(reservedKeyword);
+			if (obj != null)
+			{
+				return obj.ToString()!;
+			}
+			if (defaultType != null)
+			{
+				AppContext.SetData(reservedKeyword, defaultType.FullName);
+				return defaultType.FullName!;
+			}
+
+			throw new RuntimeException($"Could not get implementaion name for {reservedKeyword}");
+		}
 
 		private static void RegisterModules(ServiceContainer container)
 		{
@@ -412,31 +403,23 @@ namespace PLang.Container
 		}
 		private static void RegisterGlobalInjections(ServiceContainer container)
 		{
-			foreach (var type in injectedTypes)
-			{
-				container.RegisterForPLangUserInjections(type.Value.InjectorName, null, true, type.Value.ImplementationType);
-				//container.Register(type.Value.ServiceType, type.Value.ImplementationType, type.Key);
-			}
-		}
-
-		private static void RegisterSetup(ServiceContainer container, IPLangFileSystem fileSystem)
-		{
-			var setupBuildPath = Path.Combine(fileSystem.RootDirectory, ".build", "Setup", ISettings.GoalFileName);
-			if (fileSystem.File.Exists(setupBuildPath))
-			{
-				var prParser = container.GetInstance<PrParser>();
-				var goal = prParser.ParsePrFile(setupBuildPath);
-				if (goal == null || goal.Injections.Count == 0) return;
-
+			var prParser = container.GetInstance<PrParser>();
+			var goals = prParser.GetAllGoals();
+			var goalsWithInjections = goals.Where(p => p.Injections.FirstOrDefault(x => x.IsGlobal) != null);
+			foreach (var goal in goalsWithInjections) {
 				foreach (var injection in goal.Injections)
 				{
-					container.RegisterForPLangUserInjections(injection.Type, injection.Path, injection.IsGlobal);
+					container.RegisterForPLangUserInjections(injection.Type, injection.Path, true);
 				}
 			}
 		}
 
-		public static void RegisterForPLangUserInjections(this IServiceContainer container, string injectorType, string pathToModule, bool isGlobalForApp, Type? injectionType = null)
+		public static void RegisterForPLangUserInjections(this IServiceContainer container, string injectorType, string pathToModule, bool isGlobalForApp, string? environmentVariable = null, string? environmentVariableValue = null, Type? injectionType = null)
 		{
+			if (environmentVariable != null && environmentVariableValue != null)
+			{
+				if (Environment.GetEnvironmentVariable(environmentVariable) != environmentVariableValue) return;
+			}
 
 			var context = container.GetInstance<PLangAppContext>();
 			if (injectorType.ToLower() == "db")
@@ -447,7 +430,8 @@ namespace PLang.Container
 					container.Register(typeof(IDbConnection), type, type.FullName);
 					if (isGlobalForApp)
 					{
-						injectedTypes.AddOrReplace(type.FullName, new InjectedType("db", typeof(IDbConnection), type));
+						injectedTypes.AddOrReplace(typeof(IDbConnection), new InjectedType("db", typeof(IDbConnection), type));
+						AppContext.SetData(ReservedKeywords.Inject_IDbConnection, type.FullName);
 					}
 				}
 			}
@@ -457,11 +441,14 @@ namespace PLang.Container
 				var type = injectionType ?? GetInjectionType(container, typeof(ISettingsRepository), pathToModule);
 				if (type != null)
 				{
-					container.Register(typeof(ISettingsRepository), type, type.FullName);
+					if (container.CanGetInstance(typeof(ISettingsRepository), type.FullName)) return;
+
+					container.RegisterSingleton(typeof(ISettingsRepository), type, type.FullName);
+					context.AddOrReplace(ReservedKeywords.Inject_SettingsRepository, type.FullName);
 					if (isGlobalForApp)
 					{
-						injectedTypes.AddOrReplace(type.FullName, new InjectedType("settings", typeof(ISettingsRepository), type));
-						context.AddOrReplace(ReservedKeywords.Inject_SettingsRepository, type.FullName);
+						injectedTypes.AddOrReplace(typeof(ISettingsRepository), new InjectedType("settings", typeof(ISettingsRepository), type));
+						AppContext.SetData(ReservedKeywords.Inject_SettingsRepository, type.FullName);
 					}
 				}
 			}
@@ -472,10 +459,11 @@ namespace PLang.Container
 				if (type != null)
 				{
 					container.Register(typeof(IAppCache), type, type.FullName);
+					context.AddOrReplace(ReservedKeywords.Inject_Caching, type.FullName);
 					if (isGlobalForApp)
 					{
-						injectedTypes.AddOrReplace(type.FullName, new InjectedType("caching", typeof(IAppCache), type));
-						context.AddOrReplace(ReservedKeywords.Inject_Caching, type.FullName);
+						injectedTypes.AddOrReplace(typeof(IAppCache), new InjectedType("caching", typeof(IAppCache), type));
+						AppContext.SetData(ReservedKeywords.Inject_Caching, type.FullName);
 					}
 				}
 			}
@@ -486,10 +474,11 @@ namespace PLang.Container
 				if (type != null)
 				{
 					container.Register(typeof(ILogger), type, type.FullName);
+					context.AddOrReplace(ReservedKeywords.Inject_Logger, type.FullName);
 					if (isGlobalForApp)
 					{
-						injectedTypes.AddOrReplace(type.FullName, new InjectedType("logger", typeof(ILogger), type));
-						context.AddOrReplace(ReservedKeywords.Inject_Logger, type.FullName);
+						injectedTypes.AddOrReplace(typeof(ILogger), new InjectedType("logger", typeof(ILogger), type));
+						AppContext.SetData(ReservedKeywords.Inject_Logger, type.FullName);
 					}
 				}
 			}
@@ -500,14 +489,11 @@ namespace PLang.Container
 				if (type != null)
 				{
 					container.Register(typeof(ILlmService), type, type.FullName);
+					context.AddOrReplace(ReservedKeywords.Inject_LLMService, type.FullName);
 					if (isGlobalForApp)
 					{
-						injectedTypes.AddOrReplace(type.FullName, new InjectedType("llm", typeof(ILlmService), type));
-						context.AddOrReplace(ReservedKeywords.Inject_LLMService, type.FullName);
-					}
-					else
-					{
-						context.AddOrReplace(PrefixForTempInjection + ReservedKeywords.Inject_LLMService, type.FullName);
+						injectedTypes.AddOrReplace(typeof(ILlmService), new InjectedType("llm", typeof(ILlmService), type));
+						AppContext.SetData(ReservedKeywords.Inject_LLMService, type.FullName);
 					}
 				}
 			}
@@ -518,10 +504,11 @@ namespace PLang.Container
 				if (type != null)
 				{
 					container.Register(typeof(IAskUserHandler), type, type.FullName);
+					context.AddOrReplace(ReservedKeywords.Inject_AskUserHandler, type.FullName);
 					if (isGlobalForApp)
 					{
-						injectedTypes.AddOrReplace(type.FullName, new InjectedType("askuser", typeof(IAskUserHandler), type));
-						context.AddOrReplace(ReservedKeywords.Inject_AskUserHandler, type.FullName);
+						injectedTypes.AddOrReplace(typeof(IAskUserHandler), new InjectedType("askuser", typeof(IAskUserHandler), type));
+						AppContext.SetData(ReservedKeywords.Inject_AskUserHandler, type.FullName);
 					}
 				}
 			}
@@ -532,10 +519,11 @@ namespace PLang.Container
 				if (type != null)
 				{
 					container.Register(typeof(IEncryption), type, type.FullName);
+					context.AddOrReplace(ReservedKeywords.Inject_EncryptionService, type.FullName);
 					if (isGlobalForApp)
 					{
-						injectedTypes.AddOrReplace(type.FullName, new InjectedType("encryption", typeof(IEncryption), type));
-						context.AddOrReplace(ReservedKeywords.Inject_EncryptionService, type.FullName);
+						injectedTypes.AddOrReplace(typeof(IEncryption), new InjectedType("encryption", typeof(IEncryption), type));
+						AppContext.SetData(ReservedKeywords.Inject_EncryptionService, type.FullName);
 					}
 				}
 			}
@@ -543,13 +531,15 @@ namespace PLang.Container
 			if (injectorType.ToLower() == "archiver")
 			{
 				var type = injectionType ?? GetInjectionType(container, typeof(IArchiver), pathToModule);
+
 				if (type != null)
 				{
 					container.Register(typeof(IArchiver), type, type.FullName);
+					context.AddOrReplace(ReservedKeywords.Inject_Archiving, type.FullName);
 					if (isGlobalForApp)
 					{
-						injectedTypes.AddOrReplace(type.FullName, new InjectedType("archiver", typeof(IArchiver), type));
-						context.AddOrReplace(ReservedKeywords.Inject_Archiving, type.FullName);
+						injectedTypes.AddOrReplace(typeof(IArchiver), new InjectedType("archiver", typeof(IArchiver), type));
+						AppContext.SetData(ReservedKeywords.Inject_Archiving, type.FullName);
 					}
 				}
 			}
@@ -558,14 +548,11 @@ namespace PLang.Container
 
 		public static Type? GetInjectionType(IServiceContainer container, Type typeToFind, string injectorType)
 		{
-			var settings = container.GetInstance<ISettings>();
-			var logger = container.GetInstance<ILogger>();
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 
 			if (!fileSystem.Directory.Exists(".services"))
 			{
-				logger.LogError($"services folder not found in {fileSystem.RootDirectory}");
-				return null;
+				throw new RuntimeException($".services folder not found in {fileSystem.RootDirectory}");
 			}
 
 			//injectorType = (injectorType.EndsWith(".dll")) ? injectorType : injectorType + ".dll";
@@ -578,8 +565,7 @@ namespace PLang.Container
 				var moduleFolderPath = Path.Combine(fileSystem.GoalsPath, ".services", dllFilePath);
 				if (!fileSystem.Directory.Exists(moduleFolderPath))
 				{
-					logger.LogError($"{injectorType} injection folder could not be found. Path {moduleFolderPath}");
-					return null;
+					throw new RuntimeException($"{injectorType} injection folder could not be found. Path {moduleFolderPath}");
 				}
 
 
@@ -614,8 +600,7 @@ namespace PLang.Container
 				return type;
 			}
 
-			logger.LogError($"Cannot find {injectorType} in {dllFilePath}. Make sure that the class inherits from {typeToFind.Name} and the name of the dll is {injectorType}.dll");
-			return null;
+			throw new RuntimeException($"Cannot find {injectorType} in {dllFilePath}. Make sure that the class inherits from {typeToFind.Name} and the name of the dll is {injectorType}.dll");
 		}
 
 		private static IDbConnection? GetDbConnection(IServiceFactory factory, PLangAppContext context)
@@ -631,11 +616,11 @@ namespace PLang.Container
 			}
 
 			if (dataSource == null) return null;
-			
+
 			var dbConnection = factory.GetInstance<IDbConnection>(dataSource.TypeFullName);
 			dbConnection.ConnectionString = dataSource.ConnectionString;
 			return dbConnection;
-			
+
 		}
 
 	}

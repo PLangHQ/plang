@@ -50,6 +50,10 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			memoryStack.AddOnRemoveEvent(key, goalName, true, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
 		}
 
+		public async Task<string?> GetEnvironmentVariable(string key)
+		{
+			return Environment.GetEnvironmentVariable(key);
+		}
 		public async Task<object?> LoadVariables([HandlesVariable] string key)
 		{
 			var content = memoryStack.Get(key);

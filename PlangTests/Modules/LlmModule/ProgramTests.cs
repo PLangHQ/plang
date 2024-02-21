@@ -32,9 +32,9 @@ namespace PLangTests.Modules.LlmModule
 			{
 				return response;
 			});
-
-			p = new Program(llmService, identityService, settings);
-			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmService, settings, appCache, null);
+			llmServiceFactory.CreateHandler().Returns(llmService);
+			p = new Program(llmServiceFactory, identityService, settings);
+			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, null);
 		}
 
 		[TestMethod]

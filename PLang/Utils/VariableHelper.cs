@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Interfaces;
 using PLang.Runtime;
+using PLang.Services.SettingsService;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using static PLang.Services.LlmService.PLangLlmService;
@@ -10,7 +11,7 @@ using static PLang.Utils.VariableHelper;
 
 namespace PLang.Utils
 {
-	public class VariableHelper
+    public class VariableHelper
 	{
 		private readonly PLangAppContext context;
 		private readonly ISettings settings;

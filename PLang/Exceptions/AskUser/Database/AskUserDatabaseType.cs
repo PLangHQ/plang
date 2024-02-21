@@ -1,5 +1,6 @@
 ﻿using PLang.Interfaces;
 using PLang.Models;
+using PLang.Services.LlmService;
 using PLang.Utils;
 using System;
 using System.Collections.Generic;
@@ -11,17 +12,17 @@ namespace PLang.Exceptions.AskUser.Database
 {
 	public class AskUserDatabaseType : AskUserException
 	{
-		private readonly ILlmService aiService;
+		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly bool setAsDefaultForApp;
 		private readonly bool keepHistoryEventSourcing;
 		private readonly string supportedDbTypes;
 		private readonly string dataSourceName;
 
-		public AskUserDatabaseType(ILlmService aiService, bool setAsDefaultForApp, bool keepHistoryEventSourcing,
+		public AskUserDatabaseType(ILlmServiceFactory llmServiceFactory, bool setAsDefaultForApp, bool keepHistoryEventSourcing,
 				string supportedDbTypes, string dataSourceName, string question,
 				Func<string, string, string, string, string, bool, bool, Task> callback) : base(question, CreateAdapter(callback))
 		{
-			this.aiService = aiService;
+			this.llmServiceFactory = llmServiceFactory;
 			this.setAsDefaultForApp = setAsDefaultForApp;
 			this.keepHistoryEventSourcing = keepHistoryEventSourcing;
 			this.supportedDbTypes = supportedDbTypes;
@@ -52,7 +53,7 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 			var llmRequest = new LlmRequest("AskUserDatabaseType", promptMessage);
 			llmRequest.scheme = TypeHelper.GetJsonSchema(typeof(DatabaseTypeResponse));
 
-			var result = await aiService.Query<DatabaseTypeResponse>(llmRequest);
+			var result = await llmServiceFactory.CreateHandler().Query<DatabaseTypeResponse>(llmRequest);
 
 			if (result == null) throw new Exception("Could not use LLM to format your answer");
 			if (Callback == null) return;

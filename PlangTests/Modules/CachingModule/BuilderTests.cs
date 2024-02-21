@@ -26,11 +26,12 @@ namespace PLang.Modules.CachingModule.Tests
 
 			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
 			var aiService = new OpenAiService(settings, logger, llmCaching, context);
+			llmServiceFactory.CreateHandler().Returns(aiService);
 
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CachingModule", fileSystem, aiService, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.CachingModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -40,7 +41,7 @@ namespace PLang.Modules.CachingModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CachingModule", fileSystem, llmService, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.CachingModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 		public GoalStep GetStep(string text)
 		{

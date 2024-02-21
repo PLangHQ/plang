@@ -13,6 +13,7 @@ using PLang.Attributes;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
+using PLang.Services.LlmService;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using System.ComponentModel;
@@ -42,7 +43,7 @@ namespace PLang.Modules.MessageModule
 		public static readonly string CurrentAccountIdx = "PLang.Modules.MessageModule.CurrentAccountIdx";
 		public static readonly string NosrtEventKey = "__NosrtEventKey__";
 
-		public Program(ISettings settings, ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine, ILlmService llmService, INostrClient client, IPLangSigningService signingService) : base()
+		public Program(ISettings settings, ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine, ILlmServiceFactory llmServiceFactory, INostrClient client, IPLangSigningService signingService) : base()
 		{
 			this.settings = settings;
 			this.logger = logger;
@@ -50,7 +51,7 @@ namespace PLang.Modules.MessageModule
 			this.engine = engine;
 			this.client = client;
 			this.signingService = signingService;
-			this.moduleSettings = new ModuleSettings(settings, llmService);
+			this.moduleSettings = new ModuleSettings(settings, llmServiceFactory);
 		}
 
 

@@ -1,7 +1,7 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using Nethereum.ABI;
 using PLang.Interfaces;
-using PLang.Services.EncryptionService;
+using PLang.Services.LlmService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.IdentityModel.Tokens.Jwt;

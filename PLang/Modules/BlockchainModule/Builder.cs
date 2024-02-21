@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Interfaces;
+using PLang.Services.LlmService;
 using PLang.Services.SettingsService;
 using System.Dynamic;
 
@@ -11,20 +12,20 @@ namespace PLang.Modules.BlockchainModule
 	{
 		private readonly ISettings settings;
 		private readonly PLangAppContext context;
-		private readonly ILlmService aiService;
+		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly Program program;
 
-		public Builder(ISettings settings, PLangAppContext context, ILlmService aiService)
+		public Builder(ISettings settings, PLangAppContext context, ILlmServiceFactory llmServiceFactory)
 		{
 			this.settings = settings;
 			this.context = context;
-			this.aiService = aiService;
+			this.llmServiceFactory = llmServiceFactory;
 		}
 
 		public override async Task<Instruction> Build(GoalStep step)
 		{
 			
-			var moduleSettings = new ModuleSettings(settings, aiService);
+			var moduleSettings = new ModuleSettings(settings, llmServiceFactory);
 			var rpcServers = moduleSettings.GetRpcServers();
 	
 			var wallets = moduleSettings.GetWallets();

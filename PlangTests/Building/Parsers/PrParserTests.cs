@@ -52,11 +52,11 @@ namespace PLang.Building.Parsers.Tests
 
 
 
-			Assert.AreEqual("SomeApp", goals[1].AppName);
-			Assert.AreEqual(@"\apps\SomeApp", goals[1].RelativeAppStartupFolderPath);
-			Assert.AreEqual(@"\apps\SomeApp", goals[1].RelativeGoalFolderPath);
-			Assert.AreEqual(@"\apps\SomeApp\SomeApp.goal", goals[1].RelativeGoalPath);
-			Assert.AreEqual(Path.Join(fileSystem.GoalsPath, "apps", "SomeApp", ".build", "SomeApp", ISettings.GoalFileName), goals[1].AbsolutePrFilePath);
+			Assert.AreEqual("HelloWorld", goals[1].AppName);
+			Assert.AreEqual(@"\apps\HelloWorld", goals[1].RelativeAppStartupFolderPath);
+			Assert.AreEqual(@"\apps\HelloWorld", goals[1].RelativeGoalFolderPath);
+			Assert.AreEqual(@"\apps\HelloWorld\HelloWorld.goal", goals[1].RelativeGoalPath);
+			Assert.AreEqual(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "HelloWorld", ISettings.GoalFileName), goals[1].AbsolutePrFilePath);
 
 		}
 

@@ -6,6 +6,7 @@ using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Services.LlmService;
 using PLang.Utils;
 using System.Text;
 using static Dapper.SqlMapper;
@@ -16,13 +17,13 @@ namespace PLang.Modules.BlockchainModule
     public class ModuleSettings : IModuleSettings
 	{
 		private readonly ISettings settingsService;
-		private readonly ILlmService aiService;
+		private readonly ILlmServiceFactory llmServiceFactory;
 
 
-		public ModuleSettings(ISettings settings, ILlmService aiService)
+		public ModuleSettings(ISettings settings, ILlmServiceFactory llmServiceFactory)
 		{
 			this.settingsService = settings;
-			this.aiService = aiService;
+			this.llmServiceFactory = llmServiceFactory;
 			var rpcServers = settings.GetValues<RpcServer>(typeof(ModuleSettings)) ?? new List<RpcServer>();
 			if (rpcServers.Count == 0)
 			{
@@ -322,7 +323,7 @@ These are the 3 questions
 			promptMessage.Add(new LlmMessage("user", string.Join("\n", answers)));
 
 			var llmRequest = new LlmRequest("ExportPrivateKeys", promptMessage);
-			var response = await aiService.Query<DecisionResponse>(llmRequest);
+			var response = await llmServiceFactory.CreateHandler().Query<DecisionResponse>(llmRequest);
 
 			if (response.Level.ToLower() == "low" || response.Level.ToLower() == "medium")
 			{

@@ -2,7 +2,7 @@
 using PLang.Interfaces;
 using PLang.Utils;
 
-namespace PLang.Services.EncryptionService
+namespace PLang.Services.LlmService
 {
 	public interface ILlmServiceFactory
 	{

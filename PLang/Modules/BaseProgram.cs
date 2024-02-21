@@ -8,6 +8,7 @@ using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
+using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Utils;
 using System.Diagnostics;
@@ -31,7 +32,7 @@ namespace PLang.Modules
 		protected VariableHelper variableHelper;
 		protected ITypeHelper typeHelper;
 		protected GenericFunction function;
-		private ILlmService llmService;
+		private ILlmServiceFactory llmServiceFactory;
 		private ILogger logger;
 		private IServiceContainer container;
 		private IAppCache appCache;
@@ -57,7 +58,7 @@ namespace PLang.Modules
 
 		public void Init(IServiceContainer container, Goal goal, GoalStep step,
 			Instruction instruction, MemoryStack memoryStack, ILogger logger,
-			PLangAppContext context, ITypeHelper typeHelper, ILlmService llmService, ISettings settings,
+			PLangAppContext context, ITypeHelper typeHelper, ILlmServiceFactory llmServiceFactory, ISettings settings,
 			IAppCache appCache, HttpListenerContext? httpListenerContext)
 		{
 			this.container = container;
@@ -76,8 +77,8 @@ namespace PLang.Modules
 
 			variableHelper = new VariableHelper(context, memoryStack, settings);
 			this.typeHelper = typeHelper;
-			this.llmService = llmService;
-			methodHelper = new MethodHelper(goalStep, variableHelper, memoryStack, typeHelper, llmService);
+			this.llmServiceFactory = llmServiceFactory;
+			methodHelper = new MethodHelper(goalStep, variableHelper, memoryStack, typeHelper, llmServiceFactory);
 		}
 
 		public virtual async Task Run()
@@ -329,9 +330,9 @@ namespace PLang.Modules
 			}
 		}
 
-		protected void RegisterForPLangUserInjections(string type, string pathToDll, bool globalForWholeApp = false)
+		protected void RegisterForPLangUserInjections(string type, string pathToDll, bool globalForWholeApp = false, string? environmentVariable = null, string? environmentVariableValue = null)
 		{
-			this.container.RegisterForPLangUserInjections(type, pathToDll, globalForWholeApp);
+			this.container.RegisterForPLangUserInjections(type, pathToDll, globalForWholeApp, environmentVariable, environmentVariableValue);
 		}
 		public virtual async Task<string> GetAdditionalAssistantErrorInfo()
 		{
@@ -402,7 +403,7 @@ Be Concise";
 
 				var llmRequest = new LlmRequest("AssistWithError", promptMesage);
 
-				var result = await llmService.Query<string>(llmRequest);
+				var result = await llmServiceFactory.CreateHandler().Query<string>(llmRequest);
 
 				return result?.ToString();
 			}

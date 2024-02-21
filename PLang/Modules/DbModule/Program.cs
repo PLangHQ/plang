@@ -13,6 +13,7 @@ using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.EventSourceService;
+using PLang.Services.LlmService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Data;
@@ -35,21 +36,21 @@ namespace PLang.Modules.DbModule
 		private readonly IDbConnection dbConnection;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ISettings settings;
-		private readonly ILlmService llmService;
+		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly IEventSourceRepository eventSourceRepository;
 		private readonly ILogger logger;
 
-		public Program(IDbConnection dbConnection, IPLangFileSystem fileSystem, ISettings settings, ILlmService llmService, IEventSourceRepository eventSourceRepository, PLangAppContext context, ILogger logger) : base()
+		public Program(IDbConnection dbConnection, IPLangFileSystem fileSystem, ISettings settings, ILlmServiceFactory llmServiceFactory, IEventSourceRepository eventSourceRepository, PLangAppContext context, ILogger logger) : base()
 		{
 			this.dbConnection = dbConnection;
 			this.fileSystem = fileSystem;
 			this.settings = settings;
-			this.llmService = llmService;
+			this.llmServiceFactory = llmServiceFactory;
 			this.eventSourceRepository = eventSourceRepository;
 			this.logger = logger;
 			this.context = context;
 
-			this.moduleSettings = new ModuleSettings(fileSystem, settings, context, llmService, dbConnection, logger);
+			this.moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, dbConnection, logger);
 		}
 
 		public async Task CreateDataSource(string name, string dbType = "", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)

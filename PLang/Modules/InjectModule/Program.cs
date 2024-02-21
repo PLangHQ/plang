@@ -10,10 +10,10 @@ namespace PLang.Modules.InjectModule
 
 		}
 
-		[Description("type can be: db, settings, caching, logger, llm, askuser, encryption, archiver")]
-		public async Task Inject(string type, string pathToDll, bool isDefaultOrGlobalForWholeApp = false)
+		[Description("type can be: db, settings, caching, logger, llm, askuser, encryption, archiver. Injection can be for runtime, builder or both.")]
+		public async Task Inject(string type, string pathToDll, bool isDefaultOrGlobalForWholeApp = false, string? environmentVariable = "PLANG_ENV", string? environmentVariableValue = null)
 		{
-			base.RegisterForPLangUserInjections(type, pathToDll, (bool)isDefaultOrGlobalForWholeApp);
+			base.RegisterForPLangUserInjections(type, pathToDll, (bool)isDefaultOrGlobalForWholeApp, environmentVariable, environmentVariableValue);
 		
 		}
 	}

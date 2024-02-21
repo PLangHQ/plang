@@ -160,11 +160,11 @@ namespace PLang.Services.IdentityService
 
 		private IEnumerable<Identity> GetIdentitiesWithPrivateKey()
 		{
-			var setting = settingsRepository.Get("1", GetType().FullName, typeof(List<Identity>).ToString(), SettingKey);
+			var setting = settingsRepository.Get(GetType().FullName, typeof(List<Identity>).ToString(), SettingKey);
 			if (setting == null)
 			{
 				CreatePrivatePublicKeyIdentity(new(), "MyIdentity", true);
-				setting = settingsRepository.Get("1", GetType().FullName, typeof(List<Identity>).ToString(), SettingKey);
+				setting = settingsRepository.Get(GetType().FullName, typeof(List<Identity>).ToString(), SettingKey);
 			}
 			var identities = JsonConvert.DeserializeObject<List<Identity>>(setting.Value);
 

@@ -7,6 +7,7 @@ using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
+using PLang.Services.LlmService;
 using System.Reflection;
 using System.Runtime.Caching;
 using static PLang.Modules.BaseBuilder;
@@ -19,15 +20,15 @@ namespace PLang.Utils
 		private readonly VariableHelper variableHelper;
 		private readonly MemoryStack memoryStack;
 		private readonly ITypeHelper typeHelper;
-		private readonly ILlmService llmService;
+		private readonly ILlmServiceFactory llmServiceFactory;
 
-		public MethodHelper(GoalStep goalStep, VariableHelper variableHelper, MemoryStack memoryStack, ITypeHelper typeHelper, ILlmService llmService)
+		public MethodHelper(GoalStep goalStep, VariableHelper variableHelper, MemoryStack memoryStack, ITypeHelper typeHelper, ILlmServiceFactory llmServiceFactory)
 		{
 			this.goalStep = goalStep;
 			this.variableHelper = variableHelper;
 			this.memoryStack = memoryStack;
 			this.typeHelper = typeHelper;
-			this.llmService = llmService;
+			this.llmServiceFactory = llmServiceFactory;
 		}
 
 		public async Task<MethodInfo> GetMethod(object callingInstance, GenericFunction function)
@@ -68,7 +69,7 @@ example of answer:
 
 			var llmRequeset = new LlmRequest("HandleMethodNotFound", promptMessage);
 
-			var response = await llmService.Query<MethodNotFoundResponse>(llmRequeset);
+			var response = await llmServiceFactory.CreateHandler().Query<MethodNotFoundResponse>(llmRequeset);
 			throw new MissingMethodException($"Method {function.FunctionName} could not be found that matches with your statement. Example of command could be: {response.Text}");
 		}
 		public record MethodNotFoundResponse(string Text);

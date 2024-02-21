@@ -8,6 +8,7 @@ using PLang.Container;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Services.LlmService;
 using PLang.Services.SettingsService;
 using PLang.Utils;
 using System.ComponentModel;
@@ -26,7 +27,7 @@ namespace PLang.Building
 	public class GoalBuilder : IGoalBuilder
 	{
 		private readonly IPLangFileSystem fileSystem;
-		private readonly Lazy<ILlmService> aiService;
+		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly ILogger logger;
 		private readonly IGoalParser goalParser;
 		private readonly IEventRuntime eventRuntime;
@@ -34,12 +35,12 @@ namespace PLang.Building
 		private readonly PrParser prParser;
 		private readonly IStepBuilder stepBuilder;
 
-		public GoalBuilder(ILogger logger, IPLangFileSystem fileSystem, Lazy<ILlmService> aiService,
+		public GoalBuilder(ILogger logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 				IGoalParser goalParser, IStepBuilder stepBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper, PrParser prParser)
 		{
 
 			this.fileSystem = fileSystem;
-			this.aiService = aiService;
+			this.llmServiceFactory = llmServiceFactory;
 			this.logger = logger;
 			this.goalParser = goalParser;
 			this.stepBuilder = stepBuilder;
@@ -96,7 +97,16 @@ namespace PLang.Building
 				if (gfs != null && gfs.Length > 0)
 				{
 					var gf = gfs[0];
-					var dependancyInjection = new Injections(gf.Parameters[0].Value.ToString(), gf.Parameters[1].Value.ToString(), (bool)gf.Parameters[2].Value);
+
+					var isGlobalParam = gf.Parameters.FirstOrDefault(p => p.Name == "IsGlobal");
+					var environmentVariableParam = gf.Parameters.FirstOrDefault(p => p.Name == "environmentVariable");
+					var environmentVariableValueParam = gf.Parameters.FirstOrDefault(p => p.Name == "environmentVariableValue");
+
+					bool isGlobal = (isGlobalParam == null) ? false : (bool)isGlobalParam.Value;
+					string? environmentVariable = (environmentVariableParam == null) ? null : (string?)environmentVariableParam.Value;
+					string environmentVariableValue = (environmentVariableValueParam == null) ? null : (string?)environmentVariableValueParam.Value;
+
+					var dependancyInjection = new Injections(gf.Parameters[0].Value.ToString(), gf.Parameters[1].Value.ToString(), isGlobal, environmentVariable, environmentVariableValue);
 
 					goal.Injections.Add(dependancyInjection);
 				}
@@ -105,13 +115,13 @@ namespace PLang.Building
 
 			foreach (var injection in goal.Injections)
 			{
-				RegisterForPLangUserInjections(container, injection.Type, injection.Path, injection.IsGlobal);
+				RegisterForPLangUserInjections(container, injection.Type, injection.Path, injection.IsGlobal, injection.EnvironmentVariable, injection.EnvironmentVariableValue);
 			}
 		}
 
-		private void RegisterForPLangUserInjections(IServiceContainer container, string type, string path, bool isGlobal)
+		private void RegisterForPLangUserInjections(IServiceContainer container, string type, string path, bool isGlobal, string? environmentVariable = null, string? environmentVariableValue = null)
 		{
-			container.RegisterForPLangUserInjections(type, path, isGlobal);
+			container.RegisterForPLangUserInjections(type, path, isGlobal, environmentVariable, environmentVariableValue);
 		}
 
 		private void WriteToGoalPrFile(Goal goal)
@@ -154,7 +164,7 @@ NoCacheOrNoStore: no-cache or no-store"));
 				var llmRequest = new LlmRequest("GoalApiInfo", promptMessage);
 
 
-				var result = await aiService.Value.Query<GoalApiInfo>(llmRequest);
+				var result = await llmServiceFactory.CreateHandler().Query<GoalApiInfo>(llmRequest);
 				if (result != null)
 				{
 					goal.GoalApiInfo = result;
