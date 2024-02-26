@@ -100,7 +100,15 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 				memoryStack.Put(key.Key, variableHelper.LoadVariables(key.Value));
 			}
 		}
+		[Description(@"Set value on variables. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
+		public async Task SetValuesOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues)
+		{
+			foreach (var key in keyValues)
+			{				
+				memoryStack.Put(key.Key, variableHelper.LoadVariables(key.Value));	
+			}
 
+		}
 		[Description(@"Set default value on variables if not set. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
 		public async Task SetDefaultValueOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues)
 		{

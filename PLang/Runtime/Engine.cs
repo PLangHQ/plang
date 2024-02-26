@@ -29,7 +29,7 @@ namespace PLang.Runtime
 		void Init(IServiceContainer container);
 		Task Run(List<string> goalsToRun);
 		Task RunGoal(Goal goal);
-		Goal? GetGoal(string goalName);
+		Goal? GetGoal(string goalName, Goal? callingGoal = null);
 		List<Goal> GetGoalsAvailable(string appPath, string goalName);
 
 		public HttpListenerContext? HttpContext { get; set; }
@@ -154,11 +154,11 @@ namespace PLang.Runtime
 			}
 			else
 			{
+				logger.LogDebug("Initiate new engine for scheduler");
 				containerForScheduler = new ServiceContainer();
 				((ServiceContainer) containerForScheduler).RegisterForPLangConsole(fileSystem.GoalsPath, Path.DirectorySeparatorChar.ToString());
 			}
 			
-
 			var schedulerEngine = containerForScheduler.GetInstance<IEngine>();
 			schedulerEngine.Init(containerForScheduler);
 			Modules.ScheduleModule.Program.Start(containerForScheduler.GetInstance<ISettings>(),
@@ -547,10 +547,10 @@ namespace PLang.Runtime
 
 		}
 
-		public Goal? GetGoal(string goalName)
+		public Goal? GetGoal(string goalName, Goal? callingGoal)
 		{
 			goalName = goalName.AdjustPathToOs();
-			var goal = prParser.GetGoalByAppAndGoalName(fileSystem.RootDirectory, goalName);
+			var goal = prParser.GetGoalByAppAndGoalName(fileSystem.RootDirectory, goalName, callingGoal);
 			if (goal == null && goalName.TrimStart(Path.DirectorySeparatorChar).StartsWith("apps"))
 			{
 				appsRepository.InstallApp(goalName);

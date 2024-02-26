@@ -93,9 +93,9 @@ namespace PLang.Modules
 		public async Task RunFunction(GenericFunction function)
 		{
 			this.function = function; // this is to give sub classes access to current function running.
-
+			
 			MethodInfo method = await methodHelper.GetMethod(this, function);
-			logger.LogDebug("Method:{0}", method);
+			logger.LogDebug("Method:{0}.{1}({2})", goalStep.ModuleType, method.Name, method.GetParameters());
 
 			//TODO: Should move this caching check up the call stack. code is doing to much work before returning cache
 			if (await LoadCached(method, function)) return;
@@ -106,7 +106,7 @@ namespace PLang.Modules
 			}
 
 			var parameterValues = methodHelper.GetParameterValues(method, function);
-			logger.LogDebug("Parameters:{0}", parameterValues);
+			logger.LogTrace("Parameters:{0}", parameterValues);
 
 			try
 			{

@@ -41,7 +41,13 @@ namespace PLang.Services.IdentityService.Tests
 		public void CreateIdentityTest_NoIdentityExists()
 		{
 			var settings = new List<Setting>();
+			Setting? setting = null;
 			settingsRepository.GetSettings().Returns(settings);
+			settingsRepository.Get(typeof(PLangIdentityService).FullName, typeof(List<Identity>).ToString(), PLangIdentityService.SettingKey)
+				.Returns(setting);
+
+			
+			settingsRepository.Set(setting);
 
 			publicPrivateKeyCreator.Create().Returns(new PublicPrivateKey("123", "abc"));
 

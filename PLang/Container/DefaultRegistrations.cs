@@ -11,19 +11,7 @@ namespace PLang.Container
 {
 	public static class DefaultRegistrations
 	{
-		private static void SetContext(ServiceContainer container, Type type, string serviceReservedKeyword, bool isDefault = false)
-		{
-			var context = container.GetInstance<PLangAppContext>();
-			if (!context.ContainsKey(serviceReservedKeyword))
-			{
-				context.AddOrReplace(serviceReservedKeyword, type.FullName);
-			}
-
-			if (isDefault && AppContext.GetData(serviceReservedKeyword) == null)
-			{
-				AppContext.SetData(serviceReservedKeyword, type.FullName);
-			}
-		}
+		
 
 		public static void RegisterExceptionHandlerFactory(this ServiceContainer container, Type type, bool isDefault = false, IExceptionHandler? instance = null)
 		{
@@ -119,10 +107,25 @@ namespace PLang.Container
 
 			if (instance != null)
 			{
-				container.Register(factor =>
+				container.RegisterSingleton(factor =>
 				{
 					return instance;
 				}, instance.GetType().FullName);
+			}
+		}
+
+
+		private static void SetContext(ServiceContainer container, Type type, string serviceReservedKeyword, bool isDefault = false)
+		{
+			var context = container.GetInstance<PLangAppContext>();
+			if (!context.ContainsKey(serviceReservedKeyword))
+			{
+				context.AddOrReplace(serviceReservedKeyword, type.FullName);
+			}
+
+			if (isDefault && AppContext.GetData(serviceReservedKeyword) == null)
+			{
+				AppContext.SetData(serviceReservedKeyword, type.FullName);
 			}
 		}
 	}

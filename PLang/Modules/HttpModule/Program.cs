@@ -252,10 +252,12 @@ namespace PLang.Modules.HttpModule
 					}
 				}
 				request.Headers.UserAgent.ParseAdd("plang v0.1");
+				if (data != null)
+				{
+					string body = StringHelper.ConvertToString(data);
 
-				string body = StringHelper.ConvertToString(data);
-
-				request.Content = new StringContent(body, System.Text.Encoding.GetEncoding(encoding), contentType);
+					request.Content = new StringContent(body, System.Text.Encoding.GetEncoding(encoding), contentType);
+				}
 				if (!doNotSignRequest)
 				{
 					await SignRequest(request);

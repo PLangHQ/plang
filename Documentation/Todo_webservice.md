@@ -62,8 +62,8 @@ In the `api` directory, create a new file named `NewTask.goal` and add the follo
 
 ```plang
 NewTask
-- make sure that %task% and %due_date% is not empty, throw error
-- insert into Todos %task%, %due_date%, write to %id%
+- make sure that %request.task% and %request.due_date% is not empty, throw error
+- insert into Todos %request.task%, %request.due_date%, write to %id%
 - write out %id%
 ```
 

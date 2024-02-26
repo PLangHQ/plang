@@ -24,7 +24,7 @@ namespace PlangWindowForms
 			}
 			else
 			{
-				AppContext.SetSwitch("runtime", true);
+				AppContext.SetSwitch("Runtime", true);
 			}
 
 			// To customize application configuration such as set high DPI settings or default font,

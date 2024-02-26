@@ -19,9 +19,11 @@ namespace PLang.Services.SettingsService
 		private readonly ILogger logger;
 		private bool inMemory = false;
 		private readonly string contextKey = "__SqliteSettingsRepository_DataSource__";
-		
+		private static Dictionary<string, IDbConnection> inMemoryDbCache = new();
 		public SqliteSettingsRepository(IPLangFileSystem fileSystem, PLangAppContext context, ILogger logger)
 		{
+
+			
 			this.fileSystem = fileSystem;
 			this.context = context;
 			this.logger = logger;
@@ -137,7 +139,12 @@ CREATE TABLE IF NOT EXISTS Settings (
 CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassOwnerFullName], [ValueType], [Key]);
 ";
 				int rowsAffected = connection.Execute(sql);
-
+				if (datasource.Contains("Mode=Memory"))
+				{
+					var memoryCon = new SqliteConnection(datasource);
+					memoryCon.Open();
+					SqliteSettingsRepository.inMemoryDbCache.AddOrReplace(datasource, memoryCon);
+				}
 			}
 		}
 
@@ -238,17 +245,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 		public void Set(Setting setting)
 		{
 			using (IDbConnection connection = new SqliteConnection(DataSource))
-			{
-				try
-				{
-					int affectedRows = connection.Execute(@"
-					INSERT OR IGNORE INTO Settings (AppId, ClassOwnerFullName, ValueType, [Key], [Value], SignatureData, Created) VALUES (@AppId, @ClassOwnerFullName, @ValueType, @Key, @Value, @SignatureData, @Created)
-					ON CONFLICT(AppId, [ClassOwnerFullName], [ValueType], [Key]) DO UPDATE SET Value = @Value, SignatureData=@SignatureData;
-					", new { setting.AppId, setting.ClassOwnerFullName, setting.ValueType, setting.Key, setting.Value, setting.SignatureData, setting.Created });
-				} catch (Exception ex)
-				{
-					int i =0;
-				}
+			{				
+				connection.Execute(@"
+				INSERT OR IGNORE INTO Settings (AppId, ClassOwnerFullName, ValueType, [Key], [Value], SignatureData, Created) VALUES (@AppId, @ClassOwnerFullName, @ValueType, @Key, @Value, @SignatureData, @Created)
+				ON CONFLICT(AppId, [ClassOwnerFullName], [ValueType], [Key]) DO UPDATE SET Value = @Value, SignatureData=@SignatureData;
+				", new { setting.AppId, setting.ClassOwnerFullName, setting.ValueType, setting.Key, setting.Value, setting.SignatureData, setting.Created });
+				
 			}
 		}
 

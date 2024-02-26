@@ -230,9 +230,10 @@ namespace PLang.Modules.WebserverModule
 									httpContext.Response.Headers["Cache-Control"] = $"{publicOrPrivate}, {goal.GoalApiInfo.CacheControlMaxAge}";
 								}
 							}
-
+							
+							logger.LogDebug($"Register container for webserver - AbsoluteAppStartupFolderPath:{goal.AbsoluteAppStartupFolderPath}");
 							var container = new ServiceContainer();
-							container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath, httpContext);
+							container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, Path.DirectorySeparatorChar.ToString(), httpContext);
 
 							var context = container.GetInstance<PLangAppContext>();
 							context.Add(ReservedKeywords.IsHttpRequest, true);
@@ -249,9 +250,8 @@ namespace PLang.Modules.WebserverModule
 						}
 						catch (Exception ex)
 						{
-							logger.LogError("WebServerError - requestedFile:{0} - goalPath:{1} - goal:{2} - Exception:{3}", requestedFile, goalPath, goal, ex);
-							resp.StatusCode = (int)HttpStatusCode.InternalServerError;
-							resp.StatusDescription = "Error";
+							logger.LogError(ex, "WebServerError - requestedFile:{0} - goalPath:{1} - goal:{2} - Exception:{3}", requestedFile, goalPath, goal, ex.ToString());
+							
 							try
 							{
 								using (var writer = new StreamWriter(resp.OutputStream, resp.ContentEncoding ?? Encoding.UTF8))
@@ -275,7 +275,7 @@ namespace PLang.Modules.WebserverModule
 				}
 				catch (Exception ex)
 				{
-					logger.LogError("Webserver crashed", ex);
+					logger.LogError(ex, "Webserver crashed");
 				}
 			});
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
@@ -439,18 +439,22 @@ namespace PLang.Modules.WebserverModule
 			if (request == null || request.Url == null) return "";
 			var goalName = request.Url.LocalPath.AdjustPathToOs();
 
-			if (goalName.StartsWith("/"))
+			if (goalName.StartsWith(Path.DirectorySeparatorChar))
 			{
 				goalName = goalName.Substring(1);
 			}
 			goalName = goalName.RemoveExtension();
-			var goalBuildDirPath = Path.Join(fileSystem.BuildPath, goalName);
+			var goalBuildDirPath = Path.Join(fileSystem.BuildPath, goalName).AdjustPathToOs();
 
-			if (!fileSystem.Directory.Exists(goalBuildDirPath)) return "";
-
+			if (!fileSystem.Directory.Exists(goalBuildDirPath))
+			{
+				logger.LogDebug($"Path doesnt exists - goalBuildDirPath:{goalBuildDirPath}");
+				return "";
+			}
 			foreach (var publicPath in publicPaths)
 			{
-				if (goalBuildDirPath.StartsWith(Path.Combine(fileSystem.BuildPath, publicPath)))
+				string path = Path.Join(fileSystem.BuildPath, publicPath).AdjustPathToOs();
+				if (goalBuildDirPath.StartsWith(path, StringComparison.OrdinalIgnoreCase))
 				{
 					return goalBuildDirPath;
 				}

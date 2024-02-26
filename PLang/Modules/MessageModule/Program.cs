@@ -77,12 +77,13 @@ namespace PLang.Modules.MessageModule
 		}
 
 		[Description("goalName should be prefixed by ! and be whole word with possible slash(/)")]
-		public async Task Listen(string goalName, [HandlesVariable] string contentVariableName = "content", [HandlesVariable] string senderVariableName = "sender", [HandlesVariable] string eventVariableName = "__NosrtEventKey__", DateTimeOffset? listenFromDateTime = null, string? onlyMessageFromSender = null)
+		public async Task Listen(string goalName, [HandlesVariable] string contentVariableName = "content", [HandlesVariable] string senderVariableName = "sender", [HandlesVariable] string eventVariableName = "__NosrtEventKey__", DateTimeOffset? listenFromDateTime = null, string[]? onlyMessageFromSenders = null)
 		{
 			var client2 = (NostrMultiWebsocketClient)client;
-			if (onlyMessageFromSender != null && onlyMessageFromSender.StartsWith("npub"))
+
+			for (int i = 0; onlyMessageFromSenders != null && i < onlyMessageFromSenders.Length; i++)
 			{
-				onlyMessageFromSender = NostrConverter.ToHex(onlyMessageFromSender, out string? hrp);
+				onlyMessageFromSenders[i] = NostrConverter.ToHex(onlyMessageFromSenders[i], out string? hrp);
 			}
 
 			foreach (var c in client2.Clients)
@@ -97,9 +98,10 @@ namespace PLang.Modules.MessageModule
 					if (!message.Text.StartsWith("[\"EVENT\"")) return;
 
 					var eve = JsonConvert.DeserializeObject<NostrEventResponse>(message.Text);
-					if (eve == null || eve.Event == null) return;					
+					if (eve == null || eve.Event == null) return;
 
-					if (onlyMessageFromSender != null && eve.Event.Pubkey != onlyMessageFromSender)
+					string? fromAddress = onlyMessageFromSenders.FirstOrDefault(p => p == eve.Event.Pubkey);
+					if (fromAddress == null)
 					{
 						return;
 					}
@@ -111,10 +113,10 @@ namespace PLang.Modules.MessageModule
 				});
 			}
 
-			logger.LogInformation("Starting listener");
+			logger.LogInformation("Starting message listener");
 
 			Send(client2, listenFromDateTime);
-			
+
 			KeepAlive(this, "ListenToMessages");
 
 
@@ -144,7 +146,7 @@ namespace PLang.Modules.MessageModule
 					Kinds = [NostrKind.EncryptedDm],
 					Since = since.DateTime
 				}));
-			
+
 
 			if (listenFromDateTime == null)
 			{
@@ -239,10 +241,10 @@ namespace PLang.Modules.MessageModule
 
 			var signedContent = signingService.SignWithTimeout(content, "EncryptedDm", currentKey.HexPublicKey, DateTimeOffset.UtcNow.AddYears(100));
 			List<NostrEventTag> tags = new List<NostrEventTag>();
-            foreach (var item in signedContent)
-            {
+			foreach (var item in signedContent)
+			{
 				tags.Add(new NostrEventTag(item.Key, item.Value.ToString()));
-            }
+			}
 
 			// Todo: Just noticed that tags are not ecrypted. Signature is therefor visible and gives information that shouldn't be public. 
 			// Need to find a way to encrypt the tags. 
@@ -252,16 +254,16 @@ namespace PLang.Modules.MessageModule
 			{
 				Kind = NostrKind.EncryptedDm,
 				CreatedAt = SystemTime.UtcNow(),
-				Content = content, 
+				Content = content,
 				Tags = eventTags
 			};
-		
-			
+
+
 			var encrypted = ev.EncryptDirect(sender, receiver);
 			var signed = encrypted.Sign(sender);
 
 			var eventRequest = new NostrEventRequest(signed);
-			
+
 			client.Send(eventRequest);
 		}
 

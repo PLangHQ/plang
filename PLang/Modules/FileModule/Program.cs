@@ -565,7 +565,7 @@ namespace PLang.Modules.FileModule
 					var task = pseudoRuntime.RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), goalToCall, parameters);
 					task.Wait();
 				} catch (Exception ex) {
-					logger.LogError(goalStep.Text, ex);
+					logger.LogError(ex, goalStep.Text);
 				}
 			}
 		}

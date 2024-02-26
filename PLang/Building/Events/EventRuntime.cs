@@ -40,11 +40,12 @@ namespace PLang.Building.Events
 		private readonly PrParser prParser;
 		private readonly IEngine engine;
 		private readonly IExceptionHandlerFactory exceptionHandlerFactory;
+		private readonly ILogger logger;
 		private static List<EventBinding>? events = null;
 
 
 		public EventRuntime(IPLangFileSystem fileSystem, ISettings settings, IPseudoRuntime pseudoRuntime,
-			PrParser prParser, IEngine engine, IExceptionHandlerFactory exceptionHandlerFactory)
+			PrParser prParser, IEngine engine, IExceptionHandlerFactory exceptionHandlerFactory, ILogger logger)
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
@@ -52,6 +53,7 @@ namespace PLang.Building.Events
 			this.prParser = prParser;
 			this.engine = engine;
 			this.exceptionHandlerFactory = exceptionHandlerFactory;
+			this.logger = logger;
 		}
 
 		public async Task<List<EventBinding>> GetBuilderEvents()
@@ -232,7 +234,14 @@ namespace PLang.Building.Events
 
 		private async Task ShowDefaultError(Exception ex)
 		{
-			await exceptionHandlerFactory.CreateHandler().Handle(ex, 500, "error", ex.Message);
+			try
+			{
+				await exceptionHandlerFactory.CreateHandler().Handle(ex, 500, "error", ex.Message);
+			} catch 
+			{
+				logger.LogError(ex, "Exception showing exception:" + JsonConvert.SerializeObject(ex));
+				throw;
+			}
 		}
 
 		private async Task Run(PLangAppContext context, EventBinding eve, Goal goal, GoalStep? step = null, Exception? ex = null)

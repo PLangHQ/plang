@@ -63,7 +63,7 @@ namespace PLang.Runtime
 				goal = engine.GetGoal(goalName);
 			} else
 			{
-				goal = engine.GetGoal(goalName);
+				goal = engine.GetGoal(goalName, callingGoal);
 			}
 			
 

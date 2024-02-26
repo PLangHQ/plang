@@ -42,14 +42,14 @@ Incorporate `%Identity%` into the insert statement within `NewTask.goal`:
 
 ```plang
 NewTask
-- make sure that %task% and %due_date% is not empty, throw error
-- insert into Todos %task%, %due_date%, %Identity%, write to %id%
+- make sure that %request.task% and %request.due_date% is not empty, throw error
+- insert into Todos %request.task%, %request.due_date%, %Identity%, write to %id%
 - call !Categorize, dont wait
 - write out %id%
 
 Categorize
 - [llm]: system: categories the user input by 3 categories, 'Work', "home", 'hobby'
-    user: %task%
+    user: %request.task%
     scheme: {category:string}
 - update table tasks, set %category% where %id%
 ```

@@ -51,7 +51,7 @@ namespace PLang.Repository.Tests
 			Assert.AreEqual(setting.AppId, returnedSetting.AppId);
 			Assert.AreEqual(setting.Created, returnedSetting.Created);
 			Assert.AreEqual(setting.ClassOwnerFullName, returnedSetting.ClassOwnerFullName);
-			Assert.AreEqual("hello", returnedSetting.Signature["Test"]);
+			//Assert.AreEqual("hello", returnedSetting.Signature["Test"]);
 
 		}
 

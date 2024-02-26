@@ -757,7 +757,7 @@ namespace PLang.Runtime
 
 			propertyDescription = propertyDescription.Trim();
 
-			AppContext.TryGetSwitch("builder", out bool isBuilder);
+			AppContext.TryGetSwitch("Builder", out bool isBuilder);
 
 			if (type == typeof(ExpandoObject) || type.Name == "DapperRow")
 			{
@@ -802,7 +802,7 @@ namespace PLang.Runtime
 			var obj = objValue.Value;
 			if (obj == null) return objValue;
 
-			AppContext.TryGetSwitch("builder", out bool isBuilder);
+			AppContext.TryGetSwitch("Builder", out bool isBuilder);
 
 			if (methodDescription.ToLower().StartsWith("tojson("))
 			{

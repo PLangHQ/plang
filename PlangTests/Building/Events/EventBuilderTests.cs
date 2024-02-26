@@ -99,7 +99,7 @@ namespace PLang.Building.Events.Tests
 
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "Events", "Events.goal"), new MockFileData(content));
 
-			var prParser = Substitute.For<PrParser>(fileSystem, settings);
+			var prParser = Substitute.For<PrParser>(fileSystem);
 			prParser.ParsePrFile(Arg.Any<string>()).Returns(new Goal());
 
 			var eventBuilder = container.GetInstance<EventBuilder>();

@@ -1,5 +1,7 @@
 ## For the Application Developer ##
 Webserver module does not support SSL. Use it with a proxy that can provide SSL
 StartWebserver keeps the application alive.
+By default, the webserver exposes goals in the folder api and api.goal file. This is defined in the publicPaths property when starting a webserver
+By default, the port is 8080, host is localhost, encoding is utf-8, max content length 4MB
 ## For the Application Developer ##
 

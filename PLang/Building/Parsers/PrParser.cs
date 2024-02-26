@@ -140,11 +140,11 @@ namespace PLang.Building.Parsers
 		{
 			if (allGoals.Count > 0 && !force) return allGoals;
 
-			if (!fileSystem.Directory.Exists(fileSystem.RootDirectory))
+			if (!fileSystem.Directory.Exists(Path.Join(fileSystem.RootDirectory, ".build")))
 			{
 				return new List<Goal>();
 			}
-
+		
 			var files = fileSystem.Directory.GetFiles(Path.Join(fileSystem.RootDirectory, ".build"), ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
 
 			files = files.Select(file => new
@@ -251,6 +251,13 @@ namespace PLang.Building.Parsers
 
 			var goal = GetAllGoals().FirstOrDefault(p => p.RelativePrFolderPath.Equals(Path.Join(".build", goalNameOrPath), StringComparison.OrdinalIgnoreCase));
 			if (goal != null) return goal;
+
+			// first check for goal inside same goal file as the calling goal
+			if (callingGoal != null)
+			{
+				goal = GetAllGoals().FirstOrDefault(p => p.RelativeGoalFolderPath == callingGoal.RelativeGoalFolderPath && p.GoalName.Equals(goalNameOrPath, StringComparison.OrdinalIgnoreCase));
+				if (goal != null) return goal;
+			}
 
 			goal = GetAllGoals().FirstOrDefault(p => p.GoalName == goalNameOrPath);
 			return goal;

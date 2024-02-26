@@ -181,13 +181,16 @@ namespace PLang.Services.SigningService
 
 			string address = (recoveredAddress2 == expectedAddress2) ? recoveredAddress2 : null;
 
-
 			if (address == null)
 			{
 				identities.AddOrReplace(ReservedKeywords.Identity, null);
 				identities.AddOrReplace(ReservedKeywords.IdentityNotHashed, null);
 				return identities;
 			}
+			
+			Console.WriteLine($"address:{address}");
+			Console.WriteLine($"salt:{salt}");
+			Console.WriteLine($"hash:{address.ComputeHash(mode: "keccak256", salt: salt)}");
 
 			identities.AddOrReplace(ReservedKeywords.Identity, address.ComputeHash(mode: "keccak256", salt: salt));
 			identities.AddOrReplace(ReservedKeywords.IdentityNotHashed, address);

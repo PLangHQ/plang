@@ -39,14 +39,14 @@ To categorize tasks automatically using LLM, you'll need to adjust the `NewTask.
 Here's the updated code:
 ```plang
 NewTask
-- make sure that %task% and %due_date% is not empty, throw error
-- insert into Todos %task%, %due_date%, write to %id%
+- make sure that %request.task% and %request.due_date% is not empty, throw error
+- insert into Todos %request.task%, %request.due_date%, write to %id%
 - call !Categorize, dont wait
 - write out %id%
 
 Categorize
 - [llm]: system: categories the user input by 3 categories, 'Work', "Home", 'Hobby'
-    user: %task%
+    user: %request.task%
     scheme: {category:string}
 - update table Todos, set %category% where %id%
 ```

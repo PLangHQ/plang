@@ -47,11 +47,11 @@ namespace PLang.Building
 			try
 			{
 				Stopwatch stopwatch = Stopwatch.StartNew();
-				AppContext.SetSwitch("builder", true);
+				AppContext.SetSwitch("Builder", true);
 				InitFolders();
 
 				var goalFiles = GoalHelper.GetGoalFilesToBuild(fileSystem, fileSystem.GoalsPath);
-				logger.LogDebug("Build Start:" + DateTime.Now.ToLongTimeString());
+				logger.LogInformation("Build Start:" + DateTime.Now.ToLongTimeString());
 
 				var eventGoalFiles = await eventBuilder.BuildEventsPr();
 				await eventRuntime.Load(container, true);
@@ -64,7 +64,7 @@ namespace PLang.Building
 				goalFiles.AddRange(eventGoalFiles);
 				CleanGoalFiles(goalFiles);
 
-				logger.LogDebug("\n\nBuild done - Time:" + stopwatch.Elapsed.TotalSeconds.ToString("#,##.##") + " sec");
+				logger.LogInformation("\n\nBuild done - Time:" + stopwatch.Elapsed.TotalSeconds.ToString("#,##.##") + " sec");
 			}
 			catch (StopBuilderException) { }
 			catch (Exception ex)

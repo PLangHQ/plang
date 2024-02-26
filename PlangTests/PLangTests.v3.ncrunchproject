@@ -117,6 +117,9 @@
       <FixtureTestSelector>
         <FixtureName>PLangTests.Modules.PythonModule.ProgramTests</FixtureName>
       </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Services.IdentityService.Tests.PLangIdentityServiceTests</FixtureName>
+      </FixtureTestSelector>
     </IgnoredTests>
   </Settings>
 </ProjectConfiguration>

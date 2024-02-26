@@ -150,7 +150,7 @@ namespace PLang.Modules.ScheduleModule
 			}
 			catch (Exception ex)
 			{
-				logger.LogError(ex.ToString(), ex);
+				logger.LogError(ex, ex.ToString());
 			}
 		}
 	}

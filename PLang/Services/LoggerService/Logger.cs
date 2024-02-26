@@ -35,6 +35,7 @@ namespace PLang.Services.LoggerService
 				}
 				else
 				{
+					AppContext.SetData("--logger", null);
 					Console.WriteLine($"Could not set logger level to {loggerLevel}. You can set: Debug, Information, Warning, Error, Trace");
 				}
 

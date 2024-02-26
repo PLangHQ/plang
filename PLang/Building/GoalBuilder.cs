@@ -60,7 +60,7 @@ namespace PLang.Building
 			for (int b = 0; b < goals.Count; b++)
 			{
 				var goal = goals[b];
-				logger.LogDebug($"\nStart to build {goal.GoalName}");
+				logger.LogInformation($"\nStart to build {goal.GoalName}");
 				// if this api, check for http method. Also give description.					
 				goal = await LoadMethodAndDescription(goal);
 
@@ -73,17 +73,24 @@ namespace PLang.Building
 					WriteToGoalPrFile(goal);
 				}
 				RemoveUnusedPrFiles(goal);
-
-				LoadInjections(goal, container);
+				RegisterForPLangUserInjections(container, goal);
 
 				await eventRuntime.RunBuildGoalEvents(EventType.After, goal);
 
 				WriteToGoalPrFile(goal);
-				logger.LogDebug($"Done building goal {goal.GoalName}");
+				logger.LogInformation($"Done building goal {goal.GoalName}");
 			}
 		}
 
-		private void LoadInjections(Goal goal, IServiceContainer container)
+		private void RegisterForPLangUserInjections(IServiceContainer container, Goal goal)
+		{
+			foreach (var injection in goal.Injections)
+			{
+				RegisterForPLangUserInjections(container, injection.Type, injection.Path, injection.IsGlobal, injection.EnvironmentVariable, injection.EnvironmentVariableValue);
+			}
+		}
+
+		private void LoadInjections(Goal goal)
 		{
 			goal.Injections.Clear();
 
@@ -98,25 +105,26 @@ namespace PLang.Building
 				{
 					var gf = gfs[0];
 
-					var isGlobalParam = gf.Parameters.FirstOrDefault(p => p.Name == "IsGlobal");
+					var typeParam = gf.Parameters.FirstOrDefault(p => p.Name == "type");
+					var pathToDllParam = gf.Parameters.FirstOrDefault(p => p.Name == "pathToDll");
+					var isGlobalParam = gf.Parameters.FirstOrDefault(p => p.Name == "isDefaultOrGlobalForWholeApp");
 					var environmentVariableParam = gf.Parameters.FirstOrDefault(p => p.Name == "environmentVariable");
 					var environmentVariableValueParam = gf.Parameters.FirstOrDefault(p => p.Name == "environmentVariableValue");
 
+					string type = (typeParam == null) ? null : (string)typeParam.Value;
+					string pathToDll = (pathToDllParam == null) ? null : (string)pathToDllParam.Value;
 					bool isGlobal = (isGlobalParam == null) ? false : (bool)isGlobalParam.Value;
 					string? environmentVariable = (environmentVariableParam == null) ? null : (string?)environmentVariableParam.Value;
 					string environmentVariableValue = (environmentVariableValueParam == null) ? null : (string?)environmentVariableValueParam.Value;
 
-					var dependancyInjection = new Injections(gf.Parameters[0].Value.ToString(), gf.Parameters[1].Value.ToString(), isGlobal, environmentVariable, environmentVariableValue);
+					var dependancyInjection = new Injections(type, pathToDll, isGlobal, environmentVariable, environmentVariableValue);
 
 					goal.Injections.Add(dependancyInjection);
 				}
 
 			}
 
-			foreach (var injection in goal.Injections)
-			{
-				RegisterForPLangUserInjections(container, injection.Type, injection.Path, injection.IsGlobal, injection.EnvironmentVariable, injection.EnvironmentVariableValue);
-			}
+			
 		}
 
 		private void RegisterForPLangUserInjections(IServiceContainer container, string type, string path, bool isGlobal, string? environmentVariable = null, string? environmentVariableValue = null)
@@ -131,10 +139,12 @@ namespace PLang.Building
 				fileSystem.Directory.CreateDirectory(goal.AbsolutePrFolderPath);
 			}
 
+			LoadInjections(goal);
+
 			var assembly = Assembly.GetAssembly(this.GetType());
 			goal.BuilderVersion = assembly.GetName().Version.ToString();
 			goal.Hash = JsonConvert.SerializeObject(goal).ComputeHash();
-
+			
 			fileSystem.File.WriteAllText(goal.AbsolutePrFilePath, JsonConvert.SerializeObject(goal, Formatting.Indented));
 		}
 

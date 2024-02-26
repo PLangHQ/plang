@@ -10,10 +10,8 @@ using PLang.Runtime;
 using PLang.Services.CompilerService;
 using PLang.Services.LlmService;
 using PLang.Utils;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
-using static PLang.Services.CompilerService.CSharpCompiler;
 
 namespace PLang.Building
 {
@@ -65,7 +63,7 @@ namespace PLang.Building
 
 				LlmRequest llmQuestion = GetBuildStepQuestion(goal, step, excludeModules);
 
-				logger.Value.LogDebug($"- Find module for {step.Text}");
+				logger.Value.LogInformation($"- Find module for {step.Text}");
 				llmQuestion.Reload = false;
 				var stepAnswer = await llmServiceFactory.CreateHandler().Query<StepAnswer>(llmQuestion);
 				if (stepAnswer == null)
@@ -182,7 +180,7 @@ namespace PLang.Building
 				}
 			}
 
-			logger.Value.LogDebug($"- Step {step.Name} is already built");
+			logger.Value.LogInformation($"- Step {step.Name} is already built");
 			return true;
 		}
 

@@ -51,7 +51,7 @@ namespace PLang.Building
 			var classInstance = builderFactory.Create(module);
 			classInstance.InitBaseBuilder(module, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
-			logger.LogDebug($"- Build using {module}");
+			logger.LogInformation($"- Build using {module}");
 
 			var instruction = await classInstance.Build(step);
 			instruction.Text = step.Text;

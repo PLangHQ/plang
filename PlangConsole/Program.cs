@@ -14,10 +14,10 @@ if (debug && !Debugger.IsAttached)
 var build = args.FirstOrDefault(p => p == "build") != null;
 if (build)
 {
-	AppContext.SetSwitch("builder", true);
+	AppContext.SetSwitch("Builder", true);
 } else
 {
-	AppContext.SetSwitch("runtime", true);
+	AppContext.SetSwitch("Runtime", true);
 }
 var container = new ServiceContainer();
 container.RegisterForPLangConsole(Environment.CurrentDirectory, Path.DirectorySeparatorChar.ToString());

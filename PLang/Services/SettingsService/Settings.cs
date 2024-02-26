@@ -52,7 +52,10 @@ namespace PLang.Services.SettingsService
                         return match.Value;
                     }
                 }
-
+                if (!fileSystem.Directory.Exists(buildPath))
+                {
+                    fileSystem.Directory.CreateDirectory(buildPath);
+                }
                 string guid = Guid.NewGuid().ToString();
                 appId = $"\n\nAppId: {guid}";
                 if (fileSystem.File.Exists(infoFile))
@@ -161,12 +164,18 @@ namespace PLang.Services.SettingsService
             var type = typeof(T).FullName;
             if (key == null) key = type;
 
-            var settings = settingsRepositoryFactory.CreateHandler().GetSettings();
-            var setting = settings.FirstOrDefault(p => p.AppId == AppId && p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+			var setting = settingsRepositoryFactory.CreateHandler().Get(callingType.FullName, type, key);
+			if (setting == null) return defaultValue;
 
-            if (setting == null) return defaultValue;
-
-            var obj = JsonConvert.DeserializeObject<T>(setting.Value);
+            T? obj;
+            if (typeof(T) == typeof(string) && !string.IsNullOrEmpty(setting.Value) && !setting.Value.StartsWith("\""))
+            {
+                obj = (T) Convert.ChangeType(setting.Value, typeof(T));
+            }
+            else
+            {
+                obj = JsonConvert.DeserializeObject<T>(setting.Value);
+            }
             if (obj == null) return defaultValue;
             return obj;
         }
@@ -185,9 +194,10 @@ namespace PLang.Services.SettingsService
             var type = typeof(T).FullName;
             if (key == null) key = type;
 
-            var settings = settingsRepositoryFactory.CreateHandler().GetSettings();
-            return settings.FirstOrDefault(p => p.AppId == AppId && p.ClassOwnerFullName == callingType.FullName && p.ValueType == type && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase)) != null;
-        }
+            var setting = settingsRepositoryFactory.CreateHandler().Get(GetType().FullName, type, key);
+            return setting != null;
+
+		}
 
         public IEnumerable<Setting> GetAllSettings()
         {
@@ -196,16 +206,14 @@ namespace PLang.Services.SettingsService
 
         public string GetSalt()
         {
-            var setting = GetAllSettings().FirstOrDefault(p => p.ClassOwnerFullName == GetType().FullName && p.ValueType == typeof(string).ToString() && p.Key.Equals("Salt", StringComparison.OrdinalIgnoreCase));
-            if (setting != null)
+            var salt = GetOrDefault<string>(GetType(), ReservedKeywords.Salt, null); 
+            if (salt != null)
             {
-                return setting.Value;
+                return salt;
             }
 
-            var salt = GenerateSalt(32);
-
-
-            setting = new Setting("1", GetType().FullName, salt.GetType().ToString(), "Salt", salt);
+            salt = GenerateSalt(32);
+            var setting = new Setting("1", GetType().FullName, salt.GetType().ToString(), ReservedKeywords.Salt, JsonConvert.SerializeObject(salt));
             settingsRepositoryFactory.CreateHandler().Set(setting);
 
             return setting.Value;

@@ -20,6 +20,19 @@ namespace PLang.Exceptions
 
 		public override string ToString()
 		{
+			string innerEx = "";
+			var ex = this.InnerException;
+			while (ex != null)
+			{
+				innerEx += $@"
+------
+Message: {ex.Message}
+StackTrace: {ex.StackTrace}
+------
+";
+				ex = ex.InnerException;
+			}
+
 			return $@"
 
 Error happend at
@@ -33,7 +46,12 @@ Error happend at
 		Parameter values:
 {JsonConvert.SerializeObject(ParameterValues)}
 
-		Return value {JsonConvert.SerializeObject(GenericFunction.ReturnValue)}";
+		Return value {JsonConvert.SerializeObject(GenericFunction.ReturnValue)}
+	
+	------
+	Exception: {this.Message}
+	StackTrace: {this.StackTrace}
+	{innerEx}";
 		}
 	}
 }

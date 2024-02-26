@@ -43,7 +43,7 @@ namespace PLang.Modules.DbModule
 			this.variableHelper = variableHelper;
 		}
 
-		public record FunctionInfo(string FunctionName, string[]? TableNames = null);
+		public record FunctionInfo(string DatabaseType, string FunctionName, string[]? TableNames = null);
 		public record DbGenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValue = null, string? Warning = null) : GenericFunction(FunctionName, Parameters, ReturnValue);
 		public override async Task<Instruction> Build(GoalStep goalStep)
 		{
@@ -57,13 +57,13 @@ namespace PLang.Modules.DbModule
 			}
 			
 			var dataSource = await moduleSettings.GetCurrentDataSource();
-			SetSystem(@"Parse user command.
-
-Select the correct function from list of available functions based on user command
+			SetSystem(@$"Parse user command.
 
 variable is defined with starting and ending %, e.g. %filePath%
 
-TableNames: table names in sql statement, leave variables as is");
+FunctionName: Select the correct function from list of available functions based on user command
+TableNames: Table names in sql statement, leave variables as is
+DatabaseType: Define the database type. The .net library being used is ""Npgsql.NpgsqlConnection"", determine the database type from the library");
 
 
 			SetAssistant($@"## functions available defined in csharp ##
@@ -111,13 +111,14 @@ TableNames: table names in sql statement, leave variables as is");
 				return await CreateSelect(goalStep, program, functionInfo, dataSource);
 			}
 
+			SetSystem($@"Generate the SQL statement from user command. 
+The SQL statement MUST be a valid SQL statement for {functionInfo.DatabaseType}. 
+Make sure to use correct data types that match {functionInfo.DatabaseType}
+You MUST provide Parameters if SQL has @parameter.
+");
 			SetAssistant($@"## functions available defined in csharp ##
 {typeHelper.GetMethodsAsString(typeof(Program))}
 ## functions available ends ##
-");
-			AppendToAssistantCommand(@$"Create SQL statement that works with {dataSource.TypeFullName}.
-You MUST provide Parameters if SQL has @parameter.
-Choose the best method to use, if the method is not provided that fits the SQL, you can use Execute to run SQL statement.
 ");
 
 			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
@@ -182,7 +183,7 @@ ReturnValue rules:
 - integer/int should always be System.Int64. 
 
 If table name is a variable, keep the variable in the sql statement
-You MUST generate a valid sql statement for {databaseType}.
+You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
 You MUST provide SqlParameters if SQL has @parameter.
 ## Rules ##
 ");
@@ -209,7 +210,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 				keepHistoryCommand = @$"You MUST add id to create statement.
 If id is not defined then add id to the create statement. 
 The id MUST NOT be auto incremental, but is primary key.
-The id should be datatype long/bigint/.. which fits {databaseType}.";
+The id should be datatype long/bigint/.. which fits {functionInfo.DatabaseType}.";
 			} else
 			{
 				keepHistoryCommand = @"If user does not define a primary key, add it to the create statement as id as auto increment";
@@ -223,7 +224,7 @@ void CreateTable(String sql)
 
 If table name is a variable, keep the variable in the sql statement
 variable is defined with starting and ending %, e.g. %filePath%.
-You MUST generate a valid sql statement for {databaseType}.
+You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
 {keepHistoryCommand}
 ");
 			SetAssistant("");
@@ -250,7 +251,7 @@ TypeFullName is Full name of the type in c#, System.String, System.Double, etc.
 {appendToSystem}
 
 If table name is a variable, keep the variable in the sql statement
-You MUST generate a valid sql statement for {databaseType}.
+You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
 You MUST provide SqlParameters if SQL has @parameter.
 ");
 
@@ -264,7 +265,6 @@ You MUST provide SqlParameters if SQL has @parameter.
 		}
 		private async Task<Instruction> CreateUpdate(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
 		{
-			string databaseType = dataSource.TypeFullName.Substring(dataSource.TypeFullName.LastIndexOf(".") + 1);
 			string appendToSystem = "";
 			if (dataSource.KeepHistory)
 			{
@@ -286,7 +286,7 @@ TypeFullName is Full name of the type in c#, System.String, System.Double, Syste
 All integers are type of System.Int64.
 {appendToSystem}
 If table name is a variable, keep the variable in the sql statement
-You MUST generate a valid sql statement for {databaseType}.
+You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
 You MUST provide SqlParameters if SQL has @parameter.
 ");
 
@@ -319,7 +319,6 @@ You MUST provide SqlParameters if SQL has @parameter.
 
 		private async Task<Instruction> CreateInsert(GoalStep goalStep, Program program, FunctionInfo functionInfo, ModuleSettings.DataSource dataSource)
 		{
-			string databaseType = dataSource.TypeFullName.Substring(dataSource.TypeFullName.LastIndexOf(".") + 1);
 			string eventSourcing = (dataSource.KeepHistory) ? "You MUST modify the user command by adding id to the sql statement and parameter %id%." : "";
 			string appendToSystem = "";
 			if (dataSource.KeepHistory)
@@ -338,7 +337,7 @@ TypeFullName is Full name of the type in c#, System.String, System.Double, Syste
 {appendToSystem}
 {eventSourcing}
 If table name is a variable, keep the variable in the sql statement
-You MUST generate a valid sql statement for {databaseType}.
+You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
 You MUST provide SqlParameters if SQL has @parameter.
 ");
 			if (dataSource.KeepHistory)
@@ -365,7 +364,6 @@ You MUST provide SqlParameters if SQL has @parameter.
 
 		private async Task<Instruction> CreateInsertAndSelectIdOfInsertedRow(GoalStep goalStep, Program program, FunctionInfo functionInfo, ModuleSettings.DataSource dataSource)
 		{
-			string databaseType = dataSource.TypeFullName.Substring(dataSource.TypeFullName.LastIndexOf(".") + 1);
 			string eventSourcing = (dataSource.KeepHistory) ? "You MUST modify the user command by adding id to the sql statement and parameter %id%." : "";
 			string appendToSystem = "";
 			if (dataSource.KeepHistory)
@@ -384,7 +382,7 @@ TypeFullName is Full name of the type in c#, System.String, System.Double, Syste
 {appendToSystem}
 {eventSourcing}
 If table name is a variable, keep the variable in the sql statement
-You MUST generate a valid sql statement for {databaseType}.
+You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
 You MUST provide SqlParameters if SQL has @parameter.
 ");
 			if (dataSource.KeepHistory)
@@ -397,8 +395,8 @@ You MUST provide SqlParameters if SQL has @parameter.
 			else
 			{
 				SetAssistant(@$"# examples #
-""insert into users, name=%name%, write to %id%"" => sql: ""insert into users (name) values (@name);"", select inserted id ({databaseType})
-""insert into tableX, %phone%, write to %id%"" => sql: ""insert into tableX (phone) values (@phone);"", select inserted id ({databaseType})
+""insert into users, name=%name%, write to %id%"" => sql: ""insert into users (name) values (@name);"", select inserted id ({functionInfo.DatabaseType})
+""insert into tableX, %phone%, write to %id%"" => sql: ""insert into tableX (phone) values (@phone);"", select inserted id ({functionInfo.DatabaseType})
 # examples #");
 			}
 

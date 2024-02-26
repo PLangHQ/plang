@@ -13,6 +13,7 @@ using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using Newtonsoft.Json;
 using PLang.Attributes;
+using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
@@ -182,7 +183,7 @@ namespace PLang.Modules.BlockchainModule
 
 			client.Error += async (object sender, Exception ex) =>
 			{
-				logger.LogError(goalStep.Text, ex);
+				logger.LogError(ex, goalStep.Text);
 				logger.LogInformation("Waiting 5 seconds and trying to reconnect");
 
 				await Task.Delay(1000 * 5);			

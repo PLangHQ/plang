@@ -16,7 +16,7 @@ Plang is a programming language written in natural language.
 
 Plang is a new type of programming language that provides various features over other operation programming languages. It has built in Identity, built in database, built in messaging, solves syncing between device, and more. 
 
-Plang provides the developer with features that he already are familiar with such as variables, condition and for statements as well as powerfull standard library, and is easily extendable.
+Plang provides the developer with features that he already is familiar with such as variables, condition and for statements as well as powerfull standard library, and language is easily extendable.
 
 Plang provides increased security and privacy to both developer and users of their application, for free as in beer.
 
@@ -28,7 +28,7 @@ Start
 - write out 'Hello plang world'
 ```
 
-Then you run it
+Then you build & run it
 ```bash
 $ plang exec
 ```

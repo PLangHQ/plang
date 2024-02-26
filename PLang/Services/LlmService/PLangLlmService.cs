@@ -1,8 +1,6 @@
-﻿using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Org.BouncyCastle.Bcpg;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
@@ -11,12 +9,11 @@ using PLang.Services.OutputStream;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using PLang.Utils.Extractors;
-using System.Data;
 using System.Text;
 
 namespace PLang.Services.LlmService
 {
-    public class PLangLlmService : ILlmService
+	public class PLangLlmService : ILlmService
 	{
 		private readonly LlmCaching llmCaching;
 		private readonly IOutputStreamFactory outputStreamFactory;
@@ -24,7 +21,8 @@ namespace PLang.Services.LlmService
 		private readonly ILogger logger;
 		private readonly PLangAppContext context;
 		private readonly IPLangFileSystem fileSystem;
-		private readonly string url = "http://localhost:10000";
+		private readonly string url = "https://llm.plang.is";
+		//private readonly string url = "http://localhost:10000";
 		private readonly string appId = "206bb559-8c41-4c4a-b0b7-283ef73dc8ce";
 
 		public IContentExtractor Extractor { get; set; }

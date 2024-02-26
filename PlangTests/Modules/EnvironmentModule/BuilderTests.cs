@@ -7,7 +7,7 @@ using PLangTests;
 using System.Runtime.CompilerServices;
 using static PLang.Modules.BaseBuilder;
 
-namespace PLang.Modules.CultureInfoModule.Tests
+namespace PLang.Modules.EnvironmentModule.Tests
 {
 	[TestClass()]
 	public class BuilderTests : BasePLangTest
@@ -23,7 +23,7 @@ namespace PLang.Modules.CultureInfoModule.Tests
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CultureInfoModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.EnvironmentModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -33,13 +33,13 @@ namespace PLang.Modules.CultureInfoModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CultureInfoModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.EnvironmentModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 		public GoalStep GetStep(string text)
 		{
 			var step = new Building.Model.GoalStep();
 			step.Text = text;
-			step.ModuleType = "PLang.Modules.CultureInfoModule";
+			step.ModuleType = "PLang.Modules.EnvironmentModule";
 			return step;
 		}
 
