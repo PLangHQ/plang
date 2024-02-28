@@ -9,7 +9,7 @@
       },
       {
         "Type": "System.Collections.Generic.List`1[System.Object]",
-        "Name": "Parameters",
+        "Name": "SqlParameters",
         "Value": [
           {
             "ParameterName": "@id",
@@ -18,12 +18,12 @@
           },
           {
             "ParameterName": "@Name",
-            "VariableNameOrValue": "SupportedAI",
+            "VariableNameOrValue": "FolderStructure",
             "TypeFullName": "System.String"
           },
           {
             "ParameterName": "@Guide",
-            "VariableNameOrValue": "template/supported_ai.txt",
+            "VariableNameOrValue": "template/folder_structure.txt",
             "TypeFullName": "System.String"
           },
           {
@@ -33,7 +33,7 @@
           },
           {
             "ParameterName": "@OutputFilename",
-            "VariableNameOrValue": "./SupportedAI.md",
+            "VariableNameOrValue": "./FolderStructure.md",
             "TypeFullName": "System.String"
           }
         ]
@@ -41,7 +41,7 @@
     ],
     "ReturnValue": null
   },
-  "Text": "insert into docs Name='SupportedAI'\n            Guide='template/supported_ai.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./SupportedAI.md'   ",
+  "Text": "insert into docs Name='FolderStructure'\n            Guide='template/folder_structure.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./FolderStructure.md'                        ",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -58,7 +58,7 @@
         "content": [
           {
             "type": "text",
-            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nInt32 Insert(String sql, List<object>()? Parameters = null)\r\n## csharp function ##\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.\r\nParameter @id MUST be type System.Int64\r\nYou MUST modify the user command by adding id to the sql statement and parameter %id%.\r\nIf table name is a variable, keep the variable in the sql statement\r\nYou MUST generate a valid sql statement for SQLiteConnection.\r\nYou MUST provide Parameters if SQL has @parameter.\r\n"
+            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nInt32 Insert(String sql, List<object>()? SqlParameters = null)\r\n## csharp function ##\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nSqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.\r\nParameter @id MUST be type System.Int64\r\nYou MUST modify the user command by adding id to the sql statement and parameter %id%.\r\nIf table name is a variable, keep the variable in the sql statement\r\nYou MUST generate a valid sql statement for PostgreSQL.\r\nYou MUST provide SqlParameters if SQL has @parameter.\r\n"
           },
           {
             "type": "text",
@@ -84,7 +84,7 @@
         "content": [
           {
             "type": "text",
-            "text": "insert into docs Name='SupportedAI'\n            Guide='template/supported_ai.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./SupportedAI.md'   "
+            "text": "insert into docs Name='FolderStructure'\n            Guide='template/folder_structure.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./FolderStructure.md'                        "
           }
         ]
       }

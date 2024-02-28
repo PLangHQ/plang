@@ -9,7 +9,7 @@
       },
       {
         "Type": "System.Collections.Generic.List`1[System.Object]",
-        "Name": "Parameters",
+        "Name": "SqlParameters",
         "Value": [
           {
             "ParameterName": "@id",
@@ -18,12 +18,12 @@
           },
           {
             "ParameterName": "@Name",
-            "VariableNameOrValue": "Debug",
+            "VariableNameOrValue": "PlangDevelopment",
             "TypeFullName": "System.String"
           },
           {
             "ParameterName": "@Guide",
-            "VariableNameOrValue": "template/debug.txt",
+            "VariableNameOrValue": "template/plang_development.txt",
             "TypeFullName": "System.String"
           },
           {
@@ -33,7 +33,7 @@
           },
           {
             "ParameterName": "@OutputFilename",
-            "VariableNameOrValue": "./Debug.md",
+            "VariableNameOrValue": "./PlangDevelopment.md",
             "TypeFullName": "System.String"
           }
         ]
@@ -41,7 +41,7 @@
     ],
     "ReturnValue": null
   },
-  "Text": "insert into docs Name='Debug'\n            Guide='template/debug.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./Debug.md'     ",
+  "Text": "insert into docs Name='PlangDevelopment'\n            Guide='template/plang_development.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./PlangDevelopment.md'                ",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -58,7 +58,7 @@
         "content": [
           {
             "type": "text",
-            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nInt32 Insert(String sql, List<object>()? Parameters = null)\r\n## csharp function ##\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.\r\nParameter @id MUST be type System.Int64\r\nYou MUST modify the user command by adding id to the sql statement and parameter %id%.\r\nIf table name is a variable, keep the variable in the sql statement\r\nYou MUST generate a valid sql statement for SQLiteConnection.\r\nYou MUST provide Parameters if SQL has @parameter.\r\n"
+            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nInt32 Insert(String sql, List<object>()? SqlParameters = null)\r\n## csharp function ##\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nSqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.\r\nParameter @id MUST be type System.Int64\r\nYou MUST modify the user command by adding id to the sql statement and parameter %id%.\r\nIf table name is a variable, keep the variable in the sql statement\r\nYou MUST generate a valid sql statement for PostgreSQL.\r\nYou MUST provide SqlParameters if SQL has @parameter.\r\n"
           },
           {
             "type": "text",
@@ -84,14 +84,14 @@
         "content": [
           {
             "type": "text",
-            "text": "insert into docs Name='Debug'\n            Guide='template/debug.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./Debug.md'     "
+            "text": "insert into docs Name='PlangDevelopment'\n            Guide='template/plang_development.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./PlangDevelopment.md'                "
           }
         ]
       }
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "{\n  \"FunctionName\": \"Insert\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"sql\",\n      \"Value\": \"insert into docs (id, Name, Guide, System, OutputFilename) values (@id, @Name, @Guide, @System, @OutputFilename)\"\n    },\n    {\n      \"Type\": \"System.Collections.Generic.List`1[System.Object]\",\n      \"Name\": \"SqlParameters\",\n      \"Value\": [\n        {\n          \"ParameterName\": \"@id\",\n          \"VariableNameOrValue\": \"%id%\",\n          \"TypeFullName\": \"System.Int64\"\n        },\n        {\n          \"ParameterName\": \"@Name\",\n          \"VariableNameOrValue\": \"PlangDevelopment\",\n          \"TypeFullName\": \"System.String\"\n        },\n        {\n          \"ParameterName\": \"@Guide\",\n          \"VariableNameOrValue\": \"template/plang_development.txt\",\n          \"TypeFullName\": \"System.String\"\n        },\n        {\n          \"ParameterName\": \"@System\",\n          \"VariableNameOrValue\": \"template/guidance/teacher.txt\",\n          \"TypeFullName\": \"System.String\"\n        },\n        {\n          \"ParameterName\": \"@OutputFilename\",\n          \"VariableNameOrValue\": \"./PlangDevelopment.md\",\n          \"TypeFullName\": \"System.String\"\n        }\n      ]\n    }\n  ]\n}"
   },
   "RunOnBuild": false
 }

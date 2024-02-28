@@ -213,7 +213,7 @@ namespace PLang.Building.Parsers
 						goals[i].GoalSteps[b].RunOnce = prevStep.RunOnce;
 
 
-						if (setupOnceDictionary.ContainsKey(goals[i].RelativePrPath))
+						if (goals[i].GoalSteps[b].RunOnce && setupOnceDictionary.ContainsKey(goals[i].RelativePrPath))
 						{
 							goals[i].GoalSteps[b].Executed = setupOnceDictionary[goals[i].RelativePrPath];
 						}

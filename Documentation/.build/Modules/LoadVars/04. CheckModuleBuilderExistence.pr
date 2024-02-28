@@ -1,12 +1,12 @@
 {
   "Action": {
-    "Name": "CheckIfBuilderCsExists",
-    "Code": "\npublic static class CheckIfBuilderCsExists\n{\n    public static bool Process(dynamic? moduleαmoduleName, PLang.SafeFileSystem.PLangFileSystem fileSystem)\n    {\n        string path = $\"../PLang/Modules/{moduleαmoduleName}Module/Builder.cs\";\n        return fileSystem.File.Exists(path);\n    }\n}\n",
+    "Name": "CheckIfBuilderExists",
+    "Code": "\npublic static class CheckIfBuilderExists\n{\n    public static bool Process(object? moduleαmoduleName, PLang.SafeFileSystem.PLangFileSystem fileSystem)\n    {\n        string path = $\"../PLang/Modules/{moduleαmoduleName}Module/Builder.cs\";\n        return fileSystem.File.Exists(path);\n    }\n}\n",
     "Using": [
       "PLang.SafeFileSystem"
     ],
     "InputParameters": {
-      "module.moduleName": "dynamic?",
+      "module.moduleName": "object?",
       "fileSystem": "PLang.SafeFileSystem.PLangFileSystem"
     },
     "OutParameterDefinition": null,
@@ -63,7 +63,7 @@
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "```csharp\npublic static class CheckIfBuilderExists\n{\n    public static bool Process(object? moduleαmoduleName, PLang.SafeFileSystem.PLangFileSystem fileSystem)\n    {\n        string path = $\"../PLang/Modules/{moduleαmoduleName}Module/Builder.cs\";\n        return fileSystem.File.Exists(path);\n    }\n}\n```\n```json\n{\n  \"GoalToCallOnTrue\": null,\n  \"GoalToCallOnFalse\": null,\n  \"Name\": \"CheckIfBuilderExists\",\n  \"Using\": [\"PLang.SafeFileSystem\"]\n}\n```"
   },
   "RunOnBuild": false
 }

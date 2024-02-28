@@ -12,6 +12,11 @@ namespace PLang.Utils.Extractors
 	{
 		public static IContentExtractor GetExtractor(LlmRequest question, Type responseType)
 		{
+			if (string.IsNullOrEmpty(question.llmResponseType) && JsonHelper.LookAsJsonScheme(question.scheme))
+			{
+				question.llmResponseType = "json";
+			}
+
 			string? requiredResponse = null;
 			IContentExtractor extractor;
 			if (question.llmResponseType == "text")
@@ -27,7 +32,7 @@ namespace PLang.Utils.Extractors
 			{
 				extractor = new CSharpExtractor();
 			}
-			else if (question.llmResponseType == "json" || !string.IsNullOrEmpty(question.scheme))
+			else if (question.llmResponseType == "json")
 			{
 				extractor = new JsonExtractor();
 

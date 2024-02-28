@@ -70,7 +70,7 @@ namespace PLang.Modules.TerminalModule
 			}
 			else
 			{
-				Console.WriteLine("Unsupported OS");
+				logger.LogError("Unsupported OS");
 				return new ReturnDictionary<string, object>();
 			}
 

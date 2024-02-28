@@ -21,7 +21,7 @@ Setup
     columns:    task(string, not null), due_date(datetime, not null), 
                 completed(bool, false), created(datetime, now)
 - add column 'category' to tbl 'Todos'    
-- add column 'Identity' to tbl 'Todos'             
+- add column 'Identity'(string) to tbl 'Todos'             
 ```
 
 ### Step 2: Ensure `%Identity%` is not empty
@@ -30,6 +30,12 @@ Create an `events` folder at the root of your Todos project and add a file named
 
 ```plang
 Events
+- before each goal in 'api/*', call !CheckIdentity
+```
+
+Create a new file, `CheckIdentity.goal` in Events folder
+```plang
+CheckIdentity
 - if %Identity% is empty, call !ShowError
 
 ShowError
@@ -75,7 +81,7 @@ TestNewTask
 - post http://localhost:8080/api/newtask
     {
         "task":"Do some grocery shopping",
-        "due_date": "2023-27-12"
+        "due_date": "%Now+2days%"
     }
     write to %result%
 - write out %result%
@@ -112,8 +118,8 @@ Execute the `TestTasks.goal` file:
     plang exec test/TestTasks
     ```
 
-## Additional Resources
-
-To further your understanding and see practical examples, check out some [Examples](https://github.com/PLangHQ/plang/tree/main/Tests) or explore other [Apps written by others](https://github.com/PLangHQ/apps). All resources are open source, allowing you to view and learn from the code.
+## Next tutorial
+- If you are running on a Windows machine (sorry, only Windows for now), let's change the web service [into a desktop app](./Todo_UI.md)
+- Else, check out some more [Examples](https://github.com/PLangHQ/plang/tree/main/Tests) or other [Apps written by others](https://github.com/PLangHQ/apps) to start learning. It is all open source and you can view all the code.
 
 Happy coding with `plang`!

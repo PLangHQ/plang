@@ -21,7 +21,8 @@ namespace PLang.Modules.UiModule
 
 		public async Task RenderHtml(string html, string css, string javascript)
 		{
-			if (outputStreamFactory is ConsoleOutputStream)
+			var outputStream = outputStreamFactory.CreateHandler();
+			if (outputStream is ConsoleOutputStream)
 			{
 				throw new RuntimeException("Incorrect output stream. You probably ran the command: plang run, but you should run: plangw run");
 			}
@@ -31,7 +32,7 @@ namespace PLang.Modules.UiModule
 
 			if (string.IsNullOrEmpty(content)) return;
 			
-			var os = (UIOutputStream) outputStreamFactory;
+			var os = (UIOutputStream)outputStream;
 			os.MemoryStack = memoryStack;
 			os.Goal = goal;
 			os.GoalStep = goalStep;

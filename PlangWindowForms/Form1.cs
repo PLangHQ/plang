@@ -9,6 +9,7 @@ using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
+using PLang.Utils;
 using PLangWindowForms;
 using System.Diagnostics;
 using System.IO.Abstractions;
@@ -29,6 +30,12 @@ namespace PlangWindowForms
 		private string[] args;
 		public Form1(string[] args)
 		{
+
+			AppContext.TryGetSwitch(ReservedKeywords.Debug, out debug);
+			if (!debug)
+			{
+				AppContext.TryGetSwitch(ReservedKeywords.CSharpDebug, out debug);
+			}
 			debug = args.FirstOrDefault(p => p == "--debug") != null;
 			this.args = args;
 			container = new ServiceContainer();

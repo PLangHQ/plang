@@ -77,12 +77,14 @@ namespace PLang.Container
 			container.RegisterBaseForPLang(appStartupPath, relativeAppPath);
 			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
+			
+			container.RegisterSingleton<IRazorEngine, RazorEngine>();
 
 			container.RegisterOutputStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IRazorEngine>(), container.GetInstance<IPLangFileSystem>(), onFlush));
 			container.RegisterAskUserHandlerFactory(typeof(AskUserWindowHandler), true, new AskUserWindowHandler(askUserDialog));
 			container.RegisterExceptionHandlerFactory(typeof(UiExceptionHandler), true, new UiExceptionHandler(errorDialog, container.GetInstance<IAskUserHandlerFactory>()));
 
-			container.RegisterSingleton<IRazorEngine, RazorEngine>();
+			
 
 		}
 
@@ -254,7 +256,7 @@ namespace PLang.Container
 				var supportedTypes = moduleSettings.GetSupportedDbTypes();
 				if (supportedTypes.Count == 1)
 				{
-					moduleSettings.CreateDataSource().Wait();
+					moduleSettings.CreateDataSource("data", "sqlite", true, true).Wait();
 					dbConnection = GetDbConnection(factory, context);
 					if (dbConnection != null) return dbConnection;
 				}

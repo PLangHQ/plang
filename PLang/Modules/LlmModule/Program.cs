@@ -1,4 +1,5 @@
 ﻿using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Building.Model;
@@ -46,12 +47,13 @@ namespace PLang.Modules.LlmModule
 
 			foreach (var message in promptMessages)
 			{
-
 				foreach (var c in message.Content)
 				{
 					if (c.Text != null)
 					{
-						c.Text = variableHelper.LoadVariables(c.Text).ToString();
+						var obj = variableHelper.LoadVariables(c.Text);
+						c.Text = GetObjectRepresentation(obj);
+						
 					}
 
 					if (c.ImageUrl != null)
@@ -109,6 +111,30 @@ namespace PLang.Modules.LlmModule
 		public async Task<string> GetLlmIdentity()
 		{
 			return identityService.GetCurrentIdentity().Identifier;
+		}
+
+
+		private string? GetObjectRepresentation(object obj)
+		{
+			if (obj == null) return "";
+
+			Type type = obj.GetType();
+
+			// Check for null, primitive types, string, DateTime, Guid, Decimal, TimeSpan, Enum, or any type you find suitable
+			if (type.IsPrimitive || obj is string || obj is DateTime || obj is Guid || obj is Decimal || obj is TimeSpan || type.IsEnum || obj is Uri)
+			{
+				return obj.ToString();
+			}
+			else if (Nullable.GetUnderlyingType(type) != null && ((obj == null) || obj.ToString() != ""))
+			{
+				// Handle nullable types that are not null and have a meaningful ToString
+				return obj.ToString();
+			}
+			else
+			{
+				// For complex types or null values in nullable types, use JSON serialization
+				return JsonConvert.SerializeObject(obj);
+			}
 		}
 
 

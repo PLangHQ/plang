@@ -1,0 +1,18 @@
+## For the Application Developer ##
+When loop call a goal, it creates default variables
+- list = the list that is being looped through
+- listCount = the count of the list
+- item = the item being sent into the calling goal
+- position = the position where the call is in the list. position starts at 1 (not at 0 like we are used to with other languages)
+
+you can overwrite each default variable name, e.g.
+
+```plang
+...
+- foreach %products%, call !ProcessProduct item=%product%
+
+ProcessProduct
+- if %product.IsActive% ....
+```
+
+## For the Application Developer ##

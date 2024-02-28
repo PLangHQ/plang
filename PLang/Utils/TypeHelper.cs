@@ -103,6 +103,7 @@ namespace PLang.Utils
 					}
 				}
 			}
+			types = types.GroupBy(p => p.FullName).Select(p => p.FirstOrDefault()).ToList();
 
 			return types;
 		}

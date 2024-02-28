@@ -45,7 +45,7 @@ NewTask
 - write out %id%
 
 Categorize
-- [llm]: system: categories the user input by 3 categories, 'Work', "Home", 'Hobby'
+- [llm] system: categories the user input by 3 categories, 'Work', "Home", 'Hobby'
     user: %request.task%
     scheme: {category:string}
 - update table Todos, set %category% where %id%
@@ -72,7 +72,7 @@ Lets modify our `TestNewTask.goal` file (just change the task text)
     - post http://localhost:8080/api/newtask
         {
             "task":"Buy some Lego",
-            "due_date": "2023-27-12"
+            "due_date": "%Now+2days%"
         }
         write to %result%
     - write out %result%
@@ -96,12 +96,12 @@ To create a new task, send a POST request to `http://localhost:8080/api/newtask`
 ```json
 {
     "task":"Buy some Lego",
-    "due_date": "2023-27-12"
+    "due_date": "2023-12-27"
 }    
 ```
 
 # Next tutorials
 
-- If you are running on a Windows machine (sorry, only Windows for now), let's change the web service [into a desktop app](./Todo_UI.md)
-- Learn how to use [%Identity% in plang](./Todo_Identity.md)
-- Or, check out some more [Examples](https://github.com/PLangHQ/plang/tree/main/Tests) or other [Apps written by others](https://github.com/PLangHQ/apps) to start learning. It is all open source and you can view all the code.
+
+- Learn how to use [%Identity% in plang](./Todo_Identity.md), instead of username & password.
+

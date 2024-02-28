@@ -48,7 +48,7 @@ namespace PLang.Modules.HttpModule
 		}
 
 		[Description("Post a FileStream to url. When a variable is defined with @ sign, it defines that it should be a FileStream. data may contain something like file=@%fileName%;type=%fileType%, then keep as one value for the file parameter. The function will parse the file and type")]
-		public async Task<object?> PostMultipartFormData(string url, object data, string httpMethod = "POST", 
+		public async Task<object?> PostMultipartFormData(string url, object data, string httpMethod = "POST",
 			bool doNotSignRequest = false, Dictionary<string, object>? headers = null,
 			string encoding = "utf-8", int timeoutInSeconds = 30)
 		{
@@ -63,7 +63,7 @@ namespace PLang.Modules.HttpModule
 				}
 
 				var request = new HttpRequestMessage(new HttpMethod(httpMethod), requestUrl.ToString());
-				
+
 				using (var content = new MultipartFormDataContent())
 				{
 					FileSystemStream fileStream = null;
@@ -96,7 +96,8 @@ namespace PLang.Modules.HttpModule
 							if (!string.IsNullOrEmpty(typeValue))
 							{
 								fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(typeValue);
-							} else
+							}
+							else
 							{
 								var mediaTypeHeader = GetMimeTypeHeader(fileName);
 								fileContent.Headers.ContentType = mediaTypeHeader;
@@ -305,24 +306,28 @@ namespace PLang.Modules.HttpModule
 		private async Task SignRequest(HttpRequestMessage request)
 		{
 
-			if (request.Content == null) return;
 			if (request.RequestUri == null) return;
 
 			string method = request.Method.Method;
 			string url = request.RequestUri.PathAndQuery;
 			string contract = "C0";
+			string? body = null;
 
-			using (var reader = new StreamReader(request.Content.ReadAsStream()))
+			if (request.Content != null)
 			{
-				string body = await reader.ReadToEndAsync();
-
-				var dict = signingService.Sign(body, method, url, contract);
-				foreach (var item in dict)
+				using (var reader = new StreamReader(request.Content.ReadAsStream()))
 				{
-					request.Headers.TryAddWithoutValidation(item.Key, item.Value.ToString());
+					body = await reader.ReadToEndAsync();
 				}
 			}
 
+			var dict = signingService.Sign(body, method, url, contract);
+			foreach (var item in dict)
+			{
+				request.Headers.TryAddWithoutValidation(item.Key, item.Value.ToString());
+			}
 		}
+
+
 	}
 }

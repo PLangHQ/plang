@@ -11,8 +11,11 @@ namespace PlangWindowForms
 		[STAThread]
 		static void Main(string[] args)
 		{
-			var debug = args.FirstOrDefault(p => p == "--csdebug") != null;
-			if (debug && !Debugger.IsAttached)
+			if (args.FirstOrDefault(p => p == "--debug") != null)
+			{
+				AppContext.SetSwitch(ReservedKeywords.Debug, true);
+			}
+			if (args.FirstOrDefault(p => p == "--csdebug") != null && !Debugger.IsAttached)
 			{
 				Debugger.Launch();
 				AppContext.SetSwitch(ReservedKeywords.CSharpDebug, true);
@@ -20,7 +23,7 @@ namespace PlangWindowForms
 			var build = args.FirstOrDefault(p => p == "build") != null;
 			if (build)
 			{
-				AppContext.SetSwitch("builder", true);
+				AppContext.SetSwitch("Builder", true);
 			}
 			else
 			{

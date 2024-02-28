@@ -5,7 +5,7 @@
       {
         "Type": "string",
         "Name": "sql",
-        "Value": "CREATE TABLE docs (id INTEGER PRIMARY KEY, Name TEXT NOT NULL, Guide TEXT NOT NULL, System TEXT NOT NULL, OutputFilename TEXT NOT NULL, Created DATETIME DEFAULT CURRENT_TIMESTAMP, LastUpdate DATETIME DEFAULT CURRENT_TIMESTAMP)"
+        "Value": "CREATE TABLE docs (id BIGINT PRIMARY KEY, Name TEXT NOT NULL, Guide TEXT NOT NULL, System TEXT NOT NULL, OutputFilename TEXT NOT NULL, Created TIMESTAMP DEFAULT CURRENT_TIMESTAMP, LastUpdate TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
       }
     ],
     "ReturnValue": null
@@ -27,7 +27,7 @@
         "content": [
           {
             "type": "text",
-            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nvoid CreateTable(String sql)  \r\n## csharp function ##\r\n\r\nIf table name is a variable, keep the variable in the sql statement\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nYou MUST generate a valid sql statement for SQLiteConnection.\r\nYou MUST add id to create statement.\r\nIf id is not defined then add id to the create statement. \r\nThe id MUST NOT be auto incremental, but is primary key.\r\nThe id should be datatype long/bigint/.. which fits SQLiteConnection.\r\n"
+            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nvoid CreateTable(String sql)  \r\n## csharp function ##\r\n\r\nIf table name is a variable, keep the variable in the sql statement\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nYou MUST generate a valid sql statement for PostgreSQL.\r\nYou MUST add id to create statement.\r\nIf id is not defined then add id to the create statement. \r\nThe id MUST NOT be auto incremental, but is primary key.\r\nThe id should be datatype long/bigint/.. which fits PostgreSQL.\r\n"
           },
           {
             "type": "text",
@@ -40,7 +40,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nvoid CreateDataSource(String name) \nvoid SetDataSouceName(String name) \nvoid BeginTransaction() \nvoid EndTransaction() \nvoid LoadExtension(String fileName, String? procName) \nInt32 Execute(String sql) \nvoid CreateTable(String sql) \nObject Select(String sql, List`1<Object>? Parameters, Boolean? selectOneRow_Top1OrLimit1 = False) \nInt32 Update(String sql, List`1<Object>? Parameters) \nInt32 Delete(String sql, List`1<Object>? Parameters) \nInt32 Insert(String sql, List`1<Object>? Parameters)  // Basic insert statement. Will return affected row count. \nObject InsertAndSelectIdOfInsertedRow(String sql, List`1<Object>? Parameters)  // Insert statement that will return the id of the inserted row. Use only if user requests the id. \nInt32 InsertBulk(String tableName, List`1<Object> items)  // Insert a list(bulk) into database, return number of rows inserted. \nString GetAdditionalSystemErrorInfo() \nString GetAdditionalAssistantErrorInfo()\r\n## functions available ends ##"
+            "text": "## functions available starts ##\r\nvoid CreateDataSource(String name, String? dbType, Boolean? setAsDefaultForApp = False, Boolean? keepHistoryEventSourcing = False) \nvoid SetDataSouceName(String name) \nvoid BeginTransaction() \nvoid EndTransaction() \nvoid LoadExtension(String fileName, String? procName) \nInt32 Execute(String sql) \nvoid CreateTable(String sql) \nObject Select(String sql, List`1<Object>? SqlParameters, Boolean? selectOneRow_Top1OrLimit1 = False) \nInt32 Update(String sql, List`1<Object>? SqlParameters) \nInt32 Delete(String sql, List`1<Object>? SqlParameters) \nInt32 Insert(String sql, List`1<Object>? SqlParameters)  // Basic insert statement. Will return affected row count. \nObject InsertAndSelectIdOfInsertedRow(String sql, List`1<Object>? SqlParameters)  // Insert statement that will return the id of the inserted row. Use only if user requests the id. \nInt32 InsertBulk(String tableName, List`1<Object> items)  // Insert a list(bulk) into database, return number of rows inserted. \nString GetAdditionalSystemErrorInfo() \nString GetAdditionalAssistantErrorInfo()\r\n## functions available ends ##"
           }
         ]
       },
@@ -56,7 +56,7 @@
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "{\n  \"FunctionName\": \"CreateTable\",\n  \"Parameters\": [\n    {\n      \"Type\": \"string\",\n      \"Name\": \"sql\",\n      \"Value\": \"CREATE TABLE docs (id BIGINT PRIMARY KEY, Name TEXT NOT NULL, Guide TEXT NOT NULL, System TEXT NOT NULL, OutputFilename TEXT NOT NULL, Created TIMESTAMP DEFAULT CURRENT_TIMESTAMP, LastUpdate TIMESTAMP DEFAULT CURRENT_TIMESTAMP)\"\n    }\n  ]\n}"
   },
   "RunOnBuild": false
 }

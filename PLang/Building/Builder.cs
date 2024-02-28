@@ -48,9 +48,10 @@ namespace PLang.Building
 			{
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				AppContext.SetSwitch("Builder", true);
-				InitFolders();
-
+				
 				var goalFiles = GoalHelper.GetGoalFilesToBuild(fileSystem, fileSystem.GoalsPath);
+				
+				InitFolders();
 				logger.LogInformation("Build Start:" + DateTime.Now.ToLongTimeString());
 
 				var eventGoalFiles = await eventBuilder.BuildEventsPr();
@@ -98,7 +99,6 @@ namespace PLang.Building
 		private void CleanGoalFiles(List<string> goalFiles)
 		{
 			var dirs = fileSystem.Directory.GetDirectories(".build", "", SearchOption.AllDirectories);
-			dirs = dirs.Where(dir => !dir.EndsWith(Path.DirectorySeparatorChar + "cache")).ToArray();
 
 			var prGoalFiles = prParser.ForceLoadAllGoals();
 			foreach (var dir in dirs)

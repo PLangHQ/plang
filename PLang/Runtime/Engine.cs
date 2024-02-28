@@ -322,7 +322,7 @@ namespace PLang.Runtime
 			var step = goal.GoalSteps[goalStepIndex];
 			try
 			{
-				if (step.Execute && HasExecuted(step))
+				if (step.Execute && !HasExecuted(step))
 				{
 					await eventRuntime.RunStepEvents(context, EventType.Before, goal, step);
 				}
@@ -330,7 +330,7 @@ namespace PLang.Runtime
 				logger.LogDebug($"- {step.Text.Replace("\n", "").Replace("\r", "").MaxLength(80)}");
 
 				await ProcessPrFile(goal, step, goalStepIndex);
-				if (step.Execute && HasExecuted(step))
+				if (step.Execute && !HasExecuted(step))
 				{
 					await eventRuntime.RunStepEvents(context, EventType.After, goal, step);
 				}
@@ -380,6 +380,7 @@ namespace PLang.Runtime
 
 		private bool HasExecuted(GoalStep step)
 		{
+			if (!step.RunOnce) return false;
 			if (step.Executed == DateTime.MinValue) return false;
 			if (step.Executed != null && step.Executed != DateTime.MinValue) return true;
 			

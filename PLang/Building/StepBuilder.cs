@@ -219,7 +219,7 @@ namespace PLang.Building
 			if (gf.FunctionName == "RunGoal")
 			{
 				var json = gf.Parameters.FirstOrDefault(p => p.Name == "parameters")?.Value;
-				if (json == null) return;
+				if (json == null || !JsonHelper.IsJson(json)) return;
 				var parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(json.ToString());
 				if (parameters == null) return;
 
@@ -267,7 +267,8 @@ WaitForExecution: Indicates if code should wait for execution to finish, default
 ErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key
 RetryHandler: How to retry the step if there is error, default is null
 CachingHandler: How caching is handled, default is null
-Read the description of each module, then determine which module to use
+Read the description of each module, then determine which module to use.
+Make sure to return valid JSON, escape double quote if needed
 
 Be Concise
 ";

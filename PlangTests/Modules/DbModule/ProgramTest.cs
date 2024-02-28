@@ -24,7 +24,7 @@ namespace PLangTests.Modules.DbModule
 			base.Initialize();
 
 			
-			datasources.Add(new DataSource("local", "System.Data.SQLite.SqliteConnection", "Data Source=:memory:", "", "", ""));
+			datasources.Add(new DataSource("local", "Microsoft.Data.Sqlite.SqliteConnection", "Data Source=:memory:", "", "", ""));
 			datasources.Add(new DataSource("MainDb", "", "", "", "", ""));
 			settings.GetValues<DataSource>(typeof(ModuleSettings)).Returns(datasources);
 
@@ -42,8 +42,8 @@ namespace PLangTests.Modules.DbModule
 			p = new Program(db, fileSystem, settings, llmServiceFactory, eventSourceRepository, context, logger);
 
 			var dataSources = new List<DataSource>();
-			dataSources.Add(new DataSource("db", "System.Data.SQLite.SqliteConnection", "", "", "", ""));
-			dataSources.Add(new DataSource("MainDb", "System.Data.SQLite.SqliteConnection", "", "", "", ""));
+			dataSources.Add(new DataSource("db", "Microsoft.Data.Sqlite.SqliteConnection", "", "", "", ""));
+			dataSources.Add(new DataSource("MainDb", "Microsoft.Data.Sqlite.SqliteConnection", "", "", "", ""));
 
 			settings.GetValues<DataSource>(typeof(ModuleSettings)).Returns(dataSources);
 

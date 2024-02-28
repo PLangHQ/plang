@@ -14,6 +14,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.IO.Abstractions;
 using System.Linq.Dynamic.Core;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace PLang.Modules.FileModule
@@ -65,7 +66,7 @@ namespace PLang.Modules.FileModule
 		}
 
 		public async Task<string> ReadTextFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false, 
-			bool loadVariables = false, bool emptyVariableIfNotFound = false)
+			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			path = GetPath(path);
 
@@ -81,7 +82,7 @@ namespace PLang.Modules.FileModule
 			
 			using (var stream = fileSystem.FileStream.New(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 			{
-				using (var reader = new StreamReader(stream))
+				using (var reader = new StreamReader(stream, encoding: Encoding.GetEncoding(encoding)))
 				{
 					var content = await reader.ReadToEndAsync();
 					if (loadVariables && !string.IsNullOrEmpty(content))
@@ -106,7 +107,7 @@ namespace PLang.Modules.FileModule
 				logger.LogWarning($"!Warning! File {path} not found");
 				return null;
 			}
-			var fileStream = fileSystem.FileStream.Create(path, FileMode.OpenOrCreate, FileAccess.Read);
+			var fileStream = fileSystem.FileStream.New(path, FileMode.OpenOrCreate, FileAccess.Read);
 			context.Add("FileStream_" + path, fileStream);
 			return fileStream;
 		}
@@ -184,11 +185,21 @@ namespace PLang.Modules.FileModule
 
 			await MiniExcel.SaveAsAsync(path, sheetName: sheetName, printHeader: printHeader, overwriteFile: overwrite, value: variableToWriteToExcel);
 		}
-		public async Task WriteCsvFile(string path, object variableToWriteToCsv, bool append = false, bool hasHeaderRecord = true, string delimiter = ",",
+		public async Task WriteCsvFile(string path, object variableToWriteToCsv, bool append = false, bool hasHeaderRecord = true, 
+			string delimiter = ",",
 			string newLine = "\n", string encoding = "utf-8", bool ignoreBlankLines = true,
 				bool allowComments = false, char comment = '#', string? goalToCallOnBadData = null)
 		{
 			path = GetPath(path);
+
+			if (variableToWriteToCsv is string str)
+			{
+				if (str.Contains(delimiter) && (str.Contains("\r") || str.Contains("\n")))
+				{
+					await WriteToFile(path, str.Trim(), encoding: encoding);
+					return;
+				}
+			}
 
 			IWriterConfiguration writeConfig = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
 			{
@@ -202,7 +213,7 @@ namespace PLang.Modules.FileModule
 					pseudoRuntime.RunGoal(engine, context, fileSystem.RelativeAppPath, goalToCallOnBadData, parameters, Goal);
 				},
 				NewLine = newLine,
-				Encoding = System.Text.Encoding.GetEncoding(encoding),
+				Encoding = Encoding.GetEncoding(encoding),
 				AllowComments = allowComments,
 				Comment = comment,
 				IgnoreBlankLines = ignoreBlankLines,
@@ -214,7 +225,6 @@ namespace PLang.Modules.FileModule
 			using (var writer = new StreamWriter(path, append))
 			using (var csv = new CsvWriter(writer, writeConfig))
 			{
-
 				if (variableToWriteToCsv is IEnumerable enumer)
 				{
 					await csv.WriteRecordsAsync(enumer);
@@ -284,7 +294,8 @@ namespace PLang.Modules.FileModule
 		public record FileInfo(string Path, string Content);
 
 
-		public async Task SaveMultipleFiles(List<FileInfo> files, bool loadVariables = false, bool emptyVariableIfNotFound = false)
+		public async Task SaveMultipleFiles(List<FileInfo> files, bool loadVariables = false, 
+			bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			foreach (var file in files)
 			{
@@ -293,7 +304,7 @@ namespace PLang.Modules.FileModule
 				{
 					content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
 				}
-				fileSystem.File.WriteAllText(file.Path, content);
+				fileSystem.File.WriteAllText(file.Path, content, encoding: Encoding.GetEncoding(encoding));
 			}
 		}
 		public async Task<List<FileInfo>> ReadMultipleTextFiles(string folderPath, string searchPattern = "*", string[]? excludePatterns = null, bool includeAllSubfolders = false)
@@ -359,7 +370,8 @@ namespace PLang.Modules.FileModule
 			}
 			await fileSystem.File.WriteAllBytesAsync(path, content);
 		}
-		public async Task WriteToFile(string path, string content, bool overwrite = false, bool loadVariables = false, bool emptyVariableIfNotFound = false)
+		public async Task WriteToFile(string path, string content, bool overwrite = false, 
+			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			path = GetPath(path);
 			string dirPath = Path.GetDirectoryName(path);
@@ -379,10 +391,11 @@ namespace PLang.Modules.FileModule
 			{
 				content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
 			}
-			await fileSystem.File.WriteAllTextAsync(path, content);
+			await fileSystem.File.WriteAllTextAsync(path, content, encoding: Encoding.GetEncoding(encoding));
 		}
 
-		public async Task AppendToFile(string path, string content, string? seperator = null, bool loadVariables = false, bool emptyVariableIfNotFound = false)
+		public async Task AppendToFile(string path, string content, string? seperator = null, 
+				bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			path = GetPath(path);
 			string dirPath = Path.GetDirectoryName(path);
@@ -394,7 +407,7 @@ namespace PLang.Modules.FileModule
 			{
 				content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
 			}
-			await fileSystem.File.AppendAllTextAsync(path, content + seperator);
+			await fileSystem.File.AppendAllTextAsync(path, content + seperator, encoding: Encoding.GetEncoding(encoding));
 		}
 
 		public async Task CopyFiles(string directoryPath, string destinationPath, string searchPattern = "*", string[]? excludePatterns = null,

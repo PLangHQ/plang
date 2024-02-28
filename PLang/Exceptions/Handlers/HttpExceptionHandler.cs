@@ -41,7 +41,7 @@ namespace PLang.Exceptions.Handlers
 
 				using (var writer = new StreamWriter(resp.OutputStream, resp.ContentEncoding ?? Encoding.UTF8))
 				{
-					await writer.WriteAsync(JsonConvert.SerializeObject(response));
+					await writer.WriteAsync(exception.ToString());
 					await writer.FlushAsync();
 				}
 

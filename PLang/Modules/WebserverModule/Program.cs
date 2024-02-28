@@ -8,6 +8,7 @@ using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Exceptions;
+using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
@@ -18,11 +19,12 @@ using System.Net;
 using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using System.Web;
 
 namespace PLang.Modules.WebserverModule
 {
-    [Description("Start webserver, write to Body, Header, Cookie")]
+	[Description("Start webserver, write to Body, Header, Cookie")]
 	internal class Program : BaseProgram
 	{
 		private readonly ILogger logger;
@@ -150,6 +152,7 @@ namespace PLang.Modules.WebserverModule
 						Goal? goal = null;
 						string? goalPath = null;
 						string? requestedFile = null;
+						var container = new ServiceContainer();
 						try
 						{
 
@@ -230,9 +233,9 @@ namespace PLang.Modules.WebserverModule
 									httpContext.Response.Headers["Cache-Control"] = $"{publicOrPrivate}, {goal.GoalApiInfo.CacheControlMaxAge}";
 								}
 							}
-							
+
 							logger.LogDebug($"Register container for webserver - AbsoluteAppStartupFolderPath:{goal.AbsoluteAppStartupFolderPath}");
-							var container = new ServiceContainer();
+
 							container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, Path.DirectorySeparatorChar.ToString(), httpContext);
 
 							var context = container.GetInstance<PLangAppContext>();
@@ -248,21 +251,23 @@ namespace PLang.Modules.WebserverModule
 							await engine.RunGoal(goal);
 
 						}
+						catch (RuntimeProgramException ex)
+						{
+							var exceptionHandlerFactory = container.GetInstance<IExceptionHandlerFactory>();
+							await exceptionHandlerFactory.CreateHandler().Handle(ex, ex.StatusCode, ex.Type, ex.Message);
+						}
 						catch (Exception ex)
 						{
 							logger.LogError(ex, "WebServerError - requestedFile:{0} - goalPath:{1} - goal:{2} - Exception:{3}", requestedFile, goalPath, goal, ex.ToString());
-							
 							try
 							{
-								using (var writer = new StreamWriter(resp.OutputStream, resp.ContentEncoding ?? Encoding.UTF8))
-								{
-									await writer.WriteAsync(JsonConvert.SerializeObject(ex));
-									await writer.FlushAsync();
-								}
+								var exceptionHandlerFactory = container.GetInstance<IExceptionHandlerFactory>();
+								await exceptionHandlerFactory.CreateHandler().Handle(ex, 500, "error", ex.Message);
 							}
 							catch (Exception ex2)
 							{
-								Console.WriteLine(ex2);
+								Console.WriteLine("Original exception:" + JsonConvert.SerializeObject(ex));
+								Console.WriteLine("Exception while handling original exception:" + JsonConvert.SerializeObject(ex2));
 							}
 
 						}

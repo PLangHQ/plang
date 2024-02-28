@@ -1,0 +1,58 @@
+
+## Todo New Approach
+Lets rethink how we are doing the todo app. (and for all apps in general) 
+
+Lets look at how we create a todo list in the real world. We take pen and paper, and start writing down. This is natural to us. 
+
+So lets do that.
+
+Lets create a new folder `llm`, in there create `system.txt`, this is going to make simpler for us to change system commands to the llm without constantly rebuilding the code
+
+Add this to your `system.txt` file
+```txt
+User will be provid you with a text of tasks. 
+You job is to analyze the text and create list of tasks to return.
+
+Current date & time is %Now%
+
+task: the description of the task
+due_date: when the task is due, if not defined, set default to 2 days from now
+category: categorize the user input by 3 categories, 'Work', "Home", 'Hobby'
+```
+
+Lets create the file `NewLlmTask.goal` in `api` folder to 
+```plang
+NewLlmTask
+- read file llm/system.txt, write to %system%, load vars
+- [llm] system:%system%
+        user: %request.tasks%
+        scheme:[{task:string, due_date:date, category:string}]
+        write to %taskList%
+- for each %taskList%, call !SaveTask
+
+SaveTask
+- insert into Todos table, %item.task%, %item.due_date%, %Identity%
+```
+
+in the code apove, we read the system command to the llm, and send the users tasks that he sends in the http request, we define schema and write the result to `%taskList%` variable. then loop through the list and save each item to database.
+
+tip: You can write `for each %taskList%, call !SaveTask %task%=item`, so you can reference the %task% variable in SaveTask goal
+
+Lets test this now, create a new file in `test` folder, `TestNewLlmTask'
+
+```plang
+TestNewTask
+- post http://localhost:8080/api/NewLlmTask
+    {
+        "tasks":"toothbrush
+            toothpaste
+            new oil for car, tomorrow
+            milk
+            talk with boss about salary, 2 days before end of month
+            solve credit card payment in system, in 7 days
+            "
+    }
+    write to %result%
+- write out %result%
+```
+

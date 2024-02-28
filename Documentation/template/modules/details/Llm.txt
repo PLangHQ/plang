@@ -14,4 +14,6 @@ Important Note: the Linux and Macos have not been validated.
 build steps are cached, only way to get llm to ask request new data is to modify the step or to delete cached result in db
 
 .db/system.sqlite can become big because of caching, system does not clean up automatically.
+
+Link to https://github.com/PLangHQ/plang/blob/main/Documentation/SupportedAI.md for list of supported models. 
 ## For the Application Developer ##

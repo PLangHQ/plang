@@ -83,6 +83,8 @@ namespace PLang.Modules.CodeModule
 					}
 				}
 			}
+			catch (RuntimeStepException) { throw; }
+			catch (RuntimeProgramException) { throw; }
 			catch (Exception ex)
 			{
 				CodeExceptionHandler.Handle(ex, answer, goalStep);

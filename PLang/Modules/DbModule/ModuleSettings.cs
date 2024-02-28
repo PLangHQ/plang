@@ -69,7 +69,7 @@ namespace PLang.Modules.DbModule
 				throw new AskUserSqliteName(fileSystem.RootDirectory, $"What is the name you want to give to your database?", SetDatabaseConnectionString);
 			}
 
-			var supportedDbTypes = GetSupportedDbTypesAsString();
+			var supportedDbTypes = GetSupportedDbTypesAsString();		
 			var system = @$"Map user request
 
 If user provides a full data source connection, return {{error:explainWhyConnectionStringShouldNotBeInCodeMax100Characters}}.
@@ -118,7 +118,7 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 			if (!IsModuleInstalled(typeFullName))
 			{
 				var listOfDbSupported = GetSupportedDbTypesAsString();
-				throw new AskUserDatabaseType(llmServiceFactory, isDefault, keepHistory, listOfDbSupported, dataSourceName, $"{typeFullName} is not supported. Following databases are supported: {listOfDbSupported}. If you need {typeFullName}, you must install it into modules folder in your app using {nugetCommand}.", AddDataSource);
+				throw new AskUserDatabaseType(llmServiceFactory, isDefault, keepHistory, listOfDbSupported, dataSourceName, $"{typeFullName} is not supported. Following databases are supported: {listOfDbSupported}.\n\n If you need {typeFullName}, you must install it into modules folder in your app using {nugetCommand}.", AddDataSource);
 			}
 
 
@@ -375,11 +375,8 @@ Be concise"));
 			var dbtypes = GetSupportedDbTypes();
 			if (dbtypes.Count == 1)
 			{
-				dbConnection = factory.GetInstance<IDbConnection>(typeof(SqliteConnection).FullName);
-				dbConnection.ConnectionString = "DataSource=" + Path.Join(".db", "data.sqlite");
-				AppContext.SetData(ReservedKeywords.Inject_IDbConnection, dbConnection.GetType().FullName);
-				context.AddOrReplace(ReservedKeywords.Inject_IDbConnection, dbConnection.GetType().FullName);
-
+				await CreateDataSource("data", "sqlite", true, true);
+				return await GetDefaultDbConnection(factory);
 			}
 			else
 			{

@@ -2,7 +2,6 @@ Setup
 - create table docs
     column: Name(required), Guide(string, required), System(string, required), 
             OutputFilename(string, required), Created(datetime, now), LastUpdate(datetime, now)
-- delete everything from docs
 - insert into docs Name='Get Started'
             Guide='template/getstarted.txt'
             System='template/guidance/teacher.txt'
@@ -71,3 +70,7 @@ Setup
             Guide='template/folder_structure.txt'
             System='template/guidance/teacher.txt'
             OutputFilename='./FolderStructure.md'                        
+- insert into docs Name='TodoNewApproach'
+            Guide='template/todo_new_approch.txt'
+            System='template/guidance/teacher.txt'
+            OutputFilename='./todo_new_approch.md'

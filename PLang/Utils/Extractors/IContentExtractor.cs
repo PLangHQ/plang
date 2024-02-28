@@ -81,7 +81,7 @@ namespace PLang.Utils.Extractors
 
 		public string GetRequiredResponse(Type scheme)
 		{
-			return "Only write the raw " + this.type + " no summary, no extra text to explain, be concise";
+			return "Do NOT write summary, no extra text to explain, be concise. Only write the raw response in ```" + this.type;
 		}
 	}
 
@@ -282,9 +282,9 @@ namespace PLang.Utils.Extractors
 							{
 								return JsonConvert.DeserializeObject(match.Value.ToString(), responseType) ?? "";
 							}
-							catch
+							catch (Exception ex) 
 							{
-								throw;
+								throw new ParsingException($"Error parsing content to json. Content:\n\n{content}", ex);
 							}
 
 						}

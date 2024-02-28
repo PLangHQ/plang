@@ -45,7 +45,7 @@ namespace PLang.Services.SigningService
 			this.context = context;
 		}
 
-		public Dictionary<string, object> SignWithTimeout(string content, string method, string url, DateTimeOffset expires, string contract = "C0", string? appId = null)
+		public Dictionary<string, object> SignWithTimeout(string? content, string method, string url, DateTimeOffset expires, string contract = "C0", string? appId = null)
 		{
 			return SignInternal(content, method, url, contract, expires, appId);
 		}
@@ -53,7 +53,7 @@ namespace PLang.Services.SigningService
 		{
 			return SignInternal(seed, content, method, url, contract, expires);
 		}
-		public Dictionary<string, object> Sign(string content, string method, string url, string contract = "C0", string? appId = null)
+		public Dictionary<string, object> Sign(string? content, string method, string url, string contract = "C0", string? appId = null)
 		{
 			return SignInternal(content, method, url, contract, null, appId);
 		}
@@ -62,7 +62,7 @@ namespace PLang.Services.SigningService
 			return SignInternal(seed, content, method, url, contract, null);
 		}
 
-		private Dictionary<string, object> SignInternal(string content, string method, string url, string contract = "C0", DateTimeOffset? expires = null, string? appId = null)
+		private Dictionary<string, object> SignInternal(string? content, string method, string url, string contract = "C0", DateTimeOffset? expires = null, string? appId = null)
 		{
 			identityService.UseSharedIdentity(appId);
 			var identity = identityService.GetCurrentIdentityWithPrivateKey();
@@ -70,7 +70,7 @@ namespace PLang.Services.SigningService
 			return SignInternal(seed, content, method, url, contract, expires);
 		}
 
-		private Dictionary<string, object> SignInternal(byte[] seed, string content, string method, string url, string contract = "C0", DateTimeOffset? expires = null)
+		private Dictionary<string, object> SignInternal(byte[] seed, string? content, string method, string url, string contract = "C0", DateTimeOffset? expires = null)
 		{
 			// TODO: signing a message should trigger a AskUserException. 
 			// this would then ask the user if he want to sign the message
@@ -91,8 +91,9 @@ namespace PLang.Services.SigningService
 
 		}
 
-		private static Dictionary<string, object> CreateSignatureData(string body, string method, string url, DateTimeOffset created, string nonce, string contract = "C0", DateTimeOffset? expires = null)
+		private static Dictionary<string, object> CreateSignatureData(string? body, string method, string url, DateTimeOffset created, string nonce, string contract = "C0", DateTimeOffset? expires = null)
 		{
+			if (body == null) body = "";
 
 			string hashedBody = body.ComputeHash("keccak256");
 
@@ -188,10 +189,6 @@ namespace PLang.Services.SigningService
 				return identities;
 			}
 			
-			Console.WriteLine($"address:{address}");
-			Console.WriteLine($"salt:{salt}");
-			Console.WriteLine($"hash:{address.ComputeHash(mode: "keccak256", salt: salt)}");
-
 			identities.AddOrReplace(ReservedKeywords.Identity, address.ComputeHash(mode: "keccak256", salt: salt));
 			identities.AddOrReplace(ReservedKeywords.IdentityNotHashed, address);
 

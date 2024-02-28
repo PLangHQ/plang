@@ -1,4 +1,5 @@
-﻿using PLang.Services.OutputStream;
+﻿using PLang.Exceptions;
+using PLang.Services.OutputStream;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 
@@ -28,9 +29,10 @@ namespace PLang.Modules.OutputModule
 			return result;
 		}
 
-		[Description("Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user.")]
+		[Description("Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text")]
 		public async Task Write(object? content = null, bool writeToBuffer = false, string type = "text", int statusCode = 200)
 		{
+			if (statusCode >= 400) throw new RuntimeProgramException(content?.ToString(), statusCode, type, goalStep);
 			if (writeToBuffer)
 			{
 				await outputStream.CreateHandler().WriteToBuffer(content, type, statusCode);

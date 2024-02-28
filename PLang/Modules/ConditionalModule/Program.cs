@@ -116,6 +116,8 @@ namespace PLang.Modules.ConditionalModule
 				}
 
 			}
+			catch (RuntimeStepException) { throw; }
+			catch (RuntimeProgramException) { throw; }
 			catch (Exception ex)
 			{
 				CodeExceptionHandler.Handle(ex, answer, goalStep);

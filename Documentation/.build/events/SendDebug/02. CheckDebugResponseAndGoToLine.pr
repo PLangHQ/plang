@@ -1,18 +1,16 @@
 {
   "Action": {
-    "Name": "CheckIfDocNotEmpty",
-    "Code": "\npublic static class CheckIfDocNotEmpty\n{\n    public static bool Process(object? doc)\n    {\n        return doc != null && doc.ToString().Length > 0;\n    }\n}\n",
-    "Using": [
-      "System"
-    ],
+    "Name": "CheckDebugResponseGoTo",
+    "Code": "\npublic static class CheckDebugResponseGoTo\n{\n    public static bool Process(dynamic? debugReponseαgo_to)\n    {\n        return debugReponseαgo_to != null;\n    }\n}\n",
+    "Using": null,
     "InputParameters": {
-      "doc": "object?"
+      "debugReponse.go_to": "dynamic?"
     },
     "OutParameterDefinition": null,
-    "GoalToCallOnTrue": "LoadDoc",
-    "GoalToCallOnFalse": "LoadDocs"
+    "GoalToCallOnTrue": "GoToLine",
+    "GoalToCallOnFalse": null
   },
-  "Text": "if %doc% is not empty then, LoadDoc, LoadDocs",
+  "Text": "if %debugReponse.go_to% is not null then call GoToLine line=%debugReponse.go_to%",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -42,7 +40,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## defined variables ##\r\ndoc (type:object), \r\n## defined variables ##"
+            "text": "## defined variables ##\r\ndebugReponse.go_to (type:object), \r\n## defined variables ##"
           },
           {
             "type": "text",
@@ -55,14 +53,14 @@
         "content": [
           {
             "type": "text",
-            "text": "if %doc% is not empty then, LoadDoc, LoadDocs"
+            "text": "if %debugReponse.go_to% is not null then call GoToLine line=%debugReponse.go_to%"
           }
         ]
       }
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "```csharp\npublic static class CheckDebugResponseGoTo\n{\n    public static bool Process(dynamic? debugReponseαgo_to)\n    {\n        return debugReponseαgo_to != null;\n    }\n}\n```\n```json\n{\n  \"GoalToCallOnTrue\": \"GoToLine\",\n  \"GoalToCallOnFalse\": null,\n  \"Name\": \"CheckDebugResponseGoTo\"\n}\n```"
   },
   "RunOnBuild": false
 }

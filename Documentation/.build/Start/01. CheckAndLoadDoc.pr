@@ -1,18 +1,18 @@
 {
   "Action": {
-    "Name": "CheckDebugResponseGoTo",
-    "Code": "\npublic static class CheckDebugResponseGoTo\n{\n    public static bool Process(dynamic? debugReponseαgo_to)\n    {\n        return debugReponseαgo_to != null;\n    }\n}\n",
+    "Name": "CheckIfDocNotEmpty",
+    "Code": "\npublic static class CheckIfDocNotEmpty\n{\n    public static bool Process(object? doc)\n    {\n        return doc != null && doc.ToString() != string.Empty;\n    }\n}\n",
     "Using": [
       "System"
     ],
     "InputParameters": {
-      "debugReponse.go_to": "dynamic?"
+      "doc": "object?"
     },
     "OutParameterDefinition": null,
-    "GoalToCallOnTrue": "GoToLine",
-    "GoalToCallOnFalse": null
+    "GoalToCallOnTrue": "LoadDoc",
+    "GoalToCallOnFalse": "LoadDocs"
   },
-  "Text": "if %debugReponse.go_to% is not null then call GoToLine line=%debugReponse.go_to%",
+  "Text": "if %doc% is not empty then, LoadDoc, LoadDocs",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -42,7 +42,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## defined variables ##\r\ndebugReponse.go_to (type:object), \r\n## defined variables ##"
+            "text": "## defined variables ##\r\ndoc (type:object), \r\n## defined variables ##"
           },
           {
             "type": "text",
@@ -55,14 +55,14 @@
         "content": [
           {
             "type": "text",
-            "text": "if %debugReponse.go_to% is not null then call GoToLine line=%debugReponse.go_to%"
+            "text": "if %doc% is not empty then, LoadDoc, LoadDocs"
           }
         ]
       }
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "```csharp\npublic static class CheckIfDocNotEmpty\n{\n    public static bool Process(object? doc)\n    {\n        return doc != null && doc.ToString() != string.Empty;\n    }\n}\n```\n```json\n{\n  \"GoalToCallOnTrue\": \"LoadDoc\",\n  \"GoalToCallOnFalse\": \"LoadDocs\",\n  \"Name\": \"CheckIfDocNotEmpty\",\n  \"Using\": [\"System\"]\n}\n```"
   },
   "RunOnBuild": false
 }

@@ -57,7 +57,7 @@ namespace PLang.Modules.DbModule.Tests
 
 
 			var dataSources = new List<DataSource>();
-			dataSources.Add(new DataSource("Main", "System.Data.SQLite.SQLiteConnection", "", "", "", ""));
+			dataSources.Add(new DataSource("data", "Microsoft.Data.Sqlite.SqliteConnection", "", "", "", ""));
 			settings.GetValues<DataSource>(typeof(ModuleSettings)).Returns(dataSources);
 
 			builder = new Builder(fileSystem, db, settings, context, llmServiceFactory, typeHelper, logger, memoryStack, variableHelper);

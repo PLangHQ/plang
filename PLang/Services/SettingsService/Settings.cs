@@ -28,8 +28,6 @@ namespace PLang.Services.SettingsService
             this.context = context;
             this.identityService = identityService;
             this.signingService = signingService;
-            string appId = AppId;
-            LoadSalt();
         }
 
 
@@ -52,10 +50,7 @@ namespace PLang.Services.SettingsService
                         return match.Value;
                     }
                 }
-                if (!fileSystem.Directory.Exists(buildPath))
-                {
-                    fileSystem.Directory.CreateDirectory(buildPath);
-                }
+
                 string guid = Guid.NewGuid().ToString();
                 appId = $"\n\nAppId: {guid}";
                 if (fileSystem.File.Exists(infoFile))
@@ -69,6 +64,23 @@ namespace PLang.Services.SettingsService
                 return guid;
             }
         }
+
+        private void InitFolders()
+		{
+			var buildPath = Path.Join(fileSystem.RootDirectory, ".build");
+			if (!fileSystem.Directory.Exists(buildPath))
+			{
+				var dir = fileSystem.Directory.CreateDirectory(buildPath);
+				dir.Attributes = FileAttributes.Directory | FileAttributes.Hidden;
+			}
+
+			var dbPath = Path.Join(fileSystem.RootDirectory, ".db");
+			if (!fileSystem.Directory.Exists(dbPath))
+			{
+				var dir = fileSystem.Directory.CreateDirectory(dbPath);
+				dir.Attributes = FileAttributes.Directory | FileAttributes.Hidden;
+			}
+		}
 
         private void SetInternal<T>(Type callingType, string type, string key, T? value)
         {
@@ -217,12 +229,6 @@ namespace PLang.Services.SettingsService
             settingsRepositoryFactory.CreateHandler().Set(setting);
 
             return setting.Value;
-        }
-
-        private void LoadSalt()
-        {
-            var setting = GetSalt();
-            context.AddOrReplace(ReservedKeywords.Salt, setting);
         }
 
         private string GenerateSalt(int length)

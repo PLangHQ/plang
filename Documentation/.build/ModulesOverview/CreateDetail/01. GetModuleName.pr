@@ -1,20 +1,19 @@
 {
   "Action": {
     "Name": "GetModuleNameFromFile",
-    "Code": "\npublic static class GetModuleNameFromFile\n{\n    public static void Process(PLang.SafeFileSystem.PLangFileSystem fileSystem, string? fileαPath, out string moduleName)\n    {\n        if (string.IsNullOrEmpty(fileαPath))\n            throw new Exception(\"File path is not provided.\");\n\n        var fileName = fileSystem.Path.GetFileNameWithoutExtension(fileαPath);\n        if (string.IsNullOrEmpty(fileName))\n            throw new Exception(\"File name is not valid.\");\n\n        moduleName = fileName.Replace(\"PLang.Modules.\", \"\").Replace(\"Module\", \"\");\n    }\n}\n",
+    "Code": "\npublic static class GetModuleNameFromFile\n{\n    public static void Process(string? fileαPath, PLang.SafeFileSystem.PLangFileSystem fileSystem, out string moduleName)\n    {\n        if (string.IsNullOrEmpty(fileαPath))\n            throw new Exception(\"File path is not provided.\");\n\n        var fileName = fileSystem.Path.GetFileNameWithoutExtension(fileαPath);\n        if (string.IsNullOrEmpty(fileName))\n            throw new Exception(\"File name is not found in the provided path.\");\n\n        moduleName = fileName.Replace(\"PLang.Modules.\", \"\").Replace(\"Module\", \"\");\n    }\n}\n",
     "Using": [
-      "System",
-      "PLang.SafeFileSystem"
+      "System"
     ],
     "InputParameters": {
-      "fileSystem": "PLang.SafeFileSystem.PLangFileSystem",
       "file.Path": "string?",
+      "fileSystem": "PLang.SafeFileSystem.PLangFileSystem",
       "moduleName": "string"
     },
     "OutParameterDefinition": {
       "moduleName": {
         "Name": "moduleName",
-        "FullTypeName": "string"
+        "FullTypeName": "System.String"
       }
     },
     "GoalToCallOnTrue": null,
@@ -37,7 +36,7 @@
         "content": [
           {
             "type": "text",
-            "text": "Act as a senior C# developer, that converts the user statement into a C#(Version. 9) code. \r\n\r\n## Rules ##\r\n- Generate static class. The code generated should have 1 method with the static method named Process and return void. \r\n- A variable in user intent is defined by starting and ending %.\r\n- Variables defined in the user intent can be passed into the Process function by value, but only if defined by user intent. \r\n- Variable names passed to Process function MUST be unmodified from the user statement\r\n- The code will not be modified after you generate it.\r\n- If condition fails, throw Exception, unless defined otherwise by user command\r\n- Exception message should be for non-technical user\r\n- ALWAYS use long or long? instead of int or int?\r\n- Do not reference any DTO classes. Use dynamic? if complex object is needed, else use object?.\r\n- Strings are defined with double quote (\")\r\n- Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. \r\n- If PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into Process method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.\r\n- When condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. Process(dynamic? variable)\r\n- Variables that are injected into Process method and contain dot(.), then replace dot(.) with the letter α in the parameter list. e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α\r\n- Keep underscore in variables if defined by user, e.g.  if %data.user_id%(string) is null => Process(string? dataαuser_id)\r\n- Consider top security measures when generating code and validate code\r\n## Rules ##\r\n\r\n## Response information ##\r\n- Name: is name of class, it should represent the intent of what the code is doing. \r\n\r\n- Using: must include namespaces that are needed to compile code.\r\n- Assemblies: dll to reference to compile using Roslyn\r\n- ParameterType: { Name:string, FullTypeName:string }\r\n- OutParameterDefinition: If there is out parameter that is ExpandoObject return the names and types that are in the ExpandoObject in OutParameterDefinition, the string in the Dictionary is the name of the out object\r\n## Response information ##\r\n"
+            "text": "Act as a senior C# developer, that converts the user statement into a C#(Version. 9) code. \r\n\r\n## Rules ##\r\n- Generate static class. The code generated should have 1 method with the static method named Process and return void. \r\n- A variable in user intent is defined by starting and ending %.\r\n- Variables defined in the user intent can be passed into the Process function by value, but only if defined by user intent. \r\n- Variable names passed to Process function MUST be unmodified from the user statement\r\n- The code will not be modified after you generate it.\r\n- If condition fails, throw Exception, unless defined otherwise by user command\r\n- Exception message should be for non-technical user\r\n- ALWAYS use long or long? instead of int or int?\r\n- Do not reference any DTO classes. Use dynamic? if complex object is needed, else use object?.\r\n- Strings are defined with double quote (\")\r\n- Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. \r\n- If PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into Process method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.\r\n- When condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. Process(dynamic? variable)\r\n- Variables that are injected into Process method and contain dot(.), then replace dot(.) with the letter α in the parameter list. e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α\r\n- Keep underscore in variables if defined by user, e.g.  if %data.user_id%(string) is null => Process(string? dataαuser_id)\r\n- Consider top security measures when generating code and validate code\r\n- When checking type and converting variables to type, use Convert.ChangeType method\r\n## Rules ##\r\n\r\n## Response information ##\r\n- Name: is name of class, it should represent the intent of what the code is doing. \r\n\r\n- Using: must include namespaces that are needed to compile code.\r\n- Assemblies: dll to reference to compile using Roslyn\r\n- ParameterType: { Name:string, FullTypeName:string }\r\n- OutParameterDefinition: If there is out parameter that is ExpandoObject return the names and types that are in the ExpandoObject in OutParameterDefinition, the string in the Dictionary is the name of the out object\r\n## Response information ##\r\n"
           },
           {
             "type": "text",
@@ -70,7 +69,7 @@
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "```csharp\npublic static class GetModuleNameFromFile\n{\n    public static void Process(string? fileαPath, PLang.SafeFileSystem.PLangFileSystem fileSystem, out string moduleName)\n    {\n        if (string.IsNullOrEmpty(fileαPath))\n            throw new Exception(\"File path is not provided.\");\n\n        var fileName = fileSystem.Path.GetFileNameWithoutExtension(fileαPath);\n        if (string.IsNullOrEmpty(fileName))\n            throw new Exception(\"File name is not found in the provided path.\");\n\n        moduleName = fileName.Replace(\"PLang.Modules.\", \"\").Replace(\"Module\", \"\");\n    }\n}\n```\n```json\n{\n  \"Name\": \"GetModuleNameFromFile\",\n  \"Using\": [\"System\"],\n  \"OutParameterDefinition\": {\n    \"moduleName\": {\n      \"Name\": \"moduleName\",\n      \"FullTypeName\": \"System.String\"\n    }\n  }\n}\n```"
   },
   "RunOnBuild": false
 }

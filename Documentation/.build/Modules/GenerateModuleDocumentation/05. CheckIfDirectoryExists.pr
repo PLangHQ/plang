@@ -63,7 +63,7 @@
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "```csharp\npublic static class CheckIfDirectoryExists\n{\n    public static bool Process(dynamic? moduleαmoduleName, PLang.SafeFileSystem.PLangFileSystem fileSystem)\n    {\n        string path = $\"../Tests/{moduleαmoduleName}/\";\n        return fileSystem.Directory.Exists(path);\n    }\n}\n```\n```json\n{\n  \"GoalToCallOnTrue\": null,\n  \"GoalToCallOnFalse\": null,\n  \"Name\": \"CheckIfDirectoryExists\",\n  \"Using\": [\"PLang.SafeFileSystem\"]\n}\n```"
   },
   "RunOnBuild": false
 }

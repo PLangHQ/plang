@@ -177,7 +177,7 @@ namespace PLang.Modules.BlockchainModule
 
 			subscription.GetUnsubscribeResponseAsObservable().Subscribe(response =>
 			{
-				Console.WriteLine("DISCONNECTED");
+				logger.LogDebug("DISCONNECTED");
 				memoryStack.Remove(subscriptIdVariableName);
 			});
 

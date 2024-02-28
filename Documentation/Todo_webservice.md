@@ -102,10 +102,10 @@ Lets create some data in your Todo list.
 - Create a new `TestNewTask.goal` file in the `test` directory with the following code:
     ```plang
     TestNewTask
-    - post http://localhost:8080/api/newtask
+    - post http://localhost:8080/api/NewTask
         {
             "task":"Do homework",
-            "due_date": "2023-12-27"
+            "due_date": "%Now+2days%"
         }
         write to %result%
     - write out %result%
@@ -124,7 +124,7 @@ You should receive the `id` of the new task in the response.
 
 Alternativly, you can test the API endpoints using your favorite REST client.
 
-To create a new task, send a POST request to `http://localhost:8080/api/newtask` with the following JSON body:
+To create a new task, send a POST request to `http://localhost:8080/api/NewTask` with the following JSON body:
 
 ```json
 {
@@ -134,7 +134,7 @@ To create a new task, send a POST request to `http://localhost:8080/api/newtask`
 ```
 ### 10. Retrieve all tasks
 
-To retrieve the list of tasks, send a GET request to [http://localhost:8080/api/list](http://localhost:8080/api/list) (you can click the link). This should return a list of tasks you've created.
+To retrieve the list of tasks, send a GET request to [http://localhost:8080/api/List](http://localhost:8080/api/List) (you can click the link). This should return a list of tasks you've created.
 
 Alternatively, you can create a new `TestList.goal` file in the `test` directory with the following code:
 
@@ -142,7 +142,7 @@ Alternatively, you can create a new `TestList.goal` file in the `test` directory
 
 ```plang
 TestList 
-- get http://localhost:8080/api/list, write to %todos%
+- get http://localhost:8080/api/List, write to %todos%
 - write out %todos%
 ```
 

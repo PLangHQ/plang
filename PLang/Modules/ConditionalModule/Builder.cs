@@ -18,6 +18,7 @@ using PLang.Exceptions;
 using PLang.Utils.Extractors;
 using PLang.Runtime;
 using PLang.Services.CompilerService;
+using Microsoft.Extensions.Logging;
 
 namespace PLang.Modules.ConditionalModule
 {
@@ -26,12 +27,14 @@ namespace PLang.Modules.ConditionalModule
 		private readonly IPLangFileSystem fileSystem;
 		private readonly PrParser prParser;
 		private readonly MemoryStack memoryStack;
+		private readonly ILogger logger;
 
-		public Builder(IPLangFileSystem fileSystem, PrParser prParser, MemoryStack memoryStack) : base()
+		public Builder(IPLangFileSystem fileSystem, PrParser prParser, MemoryStack memoryStack, ILogger logger) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.prParser = prParser;
 			this.memoryStack = memoryStack;
+			this.logger = logger;
 		}
 
 		public override async Task<Instruction> Build(GoalStep step)
@@ -47,7 +50,7 @@ namespace PLang.Modules.ConditionalModule
 			}
 
 			
-			var compiler = new CSharpCompiler(fileSystem, prParser);
+			var compiler = new CSharpCompiler(fileSystem, prParser,logger);
 			var dllName = compiler.GetPreviousBuildDllNamesToExclude(step);
 
 			SetSystem(@$"Act as a senior C# developer, that converts the user statement into a C#(Version. 9) code. 

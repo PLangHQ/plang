@@ -114,6 +114,10 @@ namespace PLang.Building.Events
 
 		public List<string> GetRuntimeEventsFiles(string buildPath, string eventFolder)
 		{
+			if (!fileSystem.Directory.Exists(buildPath))
+			{
+				throw new RuntimeException(".build folder does not exists. Run 'plang build' first.");
+			}
 			var dirs = fileSystem.Directory.GetDirectories(buildPath, eventFolder, SearchOption.AllDirectories);
 
 			var eventFiles = fileSystem.Directory.GetDirectories(buildPath, eventFolder, SearchOption.AllDirectories)
@@ -439,17 +443,23 @@ namespace PLang.Building.Events
 
 		private string ChangeDirectorySeperators(string path)
 		{
-			path = path.Replace(@"\", @"/").Replace("*", ".*");
+			path = path.Replace(@"\", @"/");
+			if (path == "/*")
+			{
+				path = path.Replace("*", ".*");
+			}
 			if (!path.StartsWith(@"/")) path = @"/" + path;
 			return path.ToLower();
 		}
 
 		private bool IsMatchingStarPattern(Goal goal, string goalToBindTo)
 		{
+			
 			goalToBindTo = ChangeDirectorySeperators(goalToBindTo);
-			var goalRelativePath = ChangeDirectorySeperators(goal.RelativeGoalFolderPath);
+			var goalRelativeFolderPath = ChangeDirectorySeperators(goal.RelativeGoalFolderPath);
+			if (!goalRelativeFolderPath.EndsWith("/")) goalRelativeFolderPath += "/";
 
-			return Regex.IsMatch(goalRelativePath, @"^" + goalToBindTo + "$");
+			return Regex.IsMatch(goalRelativeFolderPath, @"^" + goalToBindTo + "$");
 
 		}
 

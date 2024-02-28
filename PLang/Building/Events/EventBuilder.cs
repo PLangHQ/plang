@@ -75,7 +75,7 @@ User will provide event binding, you will be provided with c# model to map the c
 
 EventType is required
 EventScope is required
-GoalToBindTo is required. This can a specific Goal or more generic, such as bind to all goals in specific folder.
+GoalToBindTo is required. This can a specific Goal or more generic, such as bind to all goals in specific folder. Convert to matching pattern(regex) for folder matching. e.g. input value could be /api, if bind to goal is api/*, it should match
 GoalToCall is required. This should be a specific goal, should start with !. Example: !AppName/GoalName.  
 StepNumber & StepText reference a specific step that the user wants to bind to
 IncludePrivate defines if user wants to include private goals, he needs to specify this specifically to be true

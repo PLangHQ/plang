@@ -131,7 +131,8 @@ or url
 			if (genericFunction != null)
 			{
 				var scheme = genericFunction.Parameters.FirstOrDefault(p => p.Name == "scheme");
-				if (scheme != null && scheme.Value != null && !JsonHelper.LookAsJsonScheme(scheme.Value.ToString()))
+				var responseType = genericFunction.Parameters.FirstOrDefault(p => p.Name == "llmResponseType");
+				if (scheme != null && scheme.Value != null && responseType?.Value.ToString() == "json" && !JsonHelper.LookAsJsonScheme(scheme.Value.ToString()))
 				{
 					if (errorCount < 2)
 					{

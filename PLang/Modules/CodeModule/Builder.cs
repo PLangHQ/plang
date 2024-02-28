@@ -1,4 +1,5 @@
-﻿using PLang.Building.Model;
+﻿using Microsoft.Extensions.Logging;
+using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Exceptions;
 using PLang.Interfaces;
@@ -15,13 +16,15 @@ namespace PLang.Modules.CodeModule
 		private readonly IPLangFileSystem fileSystem;
 		private readonly PrParser prParser;
 		private readonly MemoryStack memoryStack;
+		private readonly ILogger logger;
 		private int errorCount = 0;
 
-		public Builder(IPLangFileSystem fileSystem, PrParser prParser, MemoryStack memoryStack) : base()
+		public Builder(IPLangFileSystem fileSystem, PrParser prParser, MemoryStack memoryStack, ILogger logger) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.prParser = prParser;
 			this.memoryStack = memoryStack;
+			this.logger = logger;
 		}
 
 
@@ -38,7 +41,7 @@ namespace PLang.Modules.CodeModule
 				throw new BuilderException($"Could not compile code. Code:\n\n{error}");
 			}
 
-			var compiler = new CSharpCompiler(fileSystem, prParser);
+			var compiler = new CSharpCompiler(fileSystem, prParser, logger);
 			var dllName = compiler.GetPreviousBuildDllNamesToExclude(step);
 			
 			//TODO: Any file access should have IPLangFileSystem fileSystem injected and use it as fileSystem.File... or fileSystem.Directory....

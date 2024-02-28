@@ -19,7 +19,7 @@ namespace PLang.Services.SettingsService
 		private readonly ILogger logger;
 		private bool inMemory = false;
 		private readonly string contextKey = "__SqliteSettingsRepository_DataSource__";
-		private static Dictionary<string, IDbConnection> inMemoryDbCache = new();
+		public static Dictionary<string, IDbConnection> InMemoryDbCache = new();
 		public SqliteSettingsRepository(IPLangFileSystem fileSystem, PLangAppContext context, ILogger logger)
 		{
 
@@ -143,7 +143,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 				{
 					var memoryCon = new SqliteConnection(datasource);
 					memoryCon.Open();
-					SqliteSettingsRepository.inMemoryDbCache.AddOrReplace(datasource, memoryCon);
+					SqliteSettingsRepository.InMemoryDbCache.AddOrReplace(datasource, memoryCon);
 				}
 			}
 		}
