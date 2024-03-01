@@ -37,7 +37,7 @@ namespace PLang.Modules.LoopModule
 			{
 				if (list == null || list.Count == 0)
 				{
-					logger.LogWarning($"{variableToLoopThrough} is an empty list. Nothing to loop through");
+					logger.LogDebug($"{variableToLoopThrough} is an empty list. Nothing to loop through");
 					return;
 				}
 

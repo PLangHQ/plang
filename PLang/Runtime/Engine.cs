@@ -273,6 +273,7 @@ namespace PLang.Runtime
 				await eventRuntime.RunGoalEvents(context, EventType.After, goal);
 
 			}
+			catch (RuntimeStepException) { throw; }
 			catch (RuntimeProgramException)
 			{
 				throw;
@@ -300,7 +301,6 @@ namespace PLang.Runtime
 				if (context.ContainsKey(ReservedKeywords.IsEvent)) throw;
 
 				await eventRuntime.RunGoalErrorEvents(context, goal, goalStepIndex, ex);
-				throw;
 			}
 			finally
 			{

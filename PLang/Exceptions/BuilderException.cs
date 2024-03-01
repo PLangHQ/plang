@@ -17,12 +17,10 @@ namespace PLang.Exceptions
 	
 	}
 
-	public class BuilderStepException : Exception
+	public class BuilderStepException : BaseStepException
 	{
-		public GoalStep? GoalStep { get; set; }
-		public BuilderStepException(string message, GoalStep? step = null) : base(message)
+		public BuilderStepException(string message, GoalStep? step = null, Exception? innerException = null) : base(step, message, innerException)
 		{
-			this.GoalStep = step;
 		}
 	}
 }

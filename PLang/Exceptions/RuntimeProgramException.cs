@@ -9,11 +9,11 @@ namespace PLang.Exceptions
 	{
 		public int StatusCode { get; }
 		public string Type { get; }
-		public GoalStep Step { get; set; }
+		public GoalStep? Step { get; set; }
 		public Dictionary<string, object?>? ParameterValues { get; }
 		public GenericFunction? GenericFunction { get; }
 
-		public RuntimeProgramException(string message, int statusCode, string type, GoalStep step) : base(message)
+		public RuntimeProgramException(string message, int statusCode, string type, GoalStep? step) : base(message)
 		{
 			StatusCode = statusCode;
 			Type = type;
@@ -49,7 +49,7 @@ StackTrace: {ex.StackTrace}
 				AppContext.TryGetSwitch(ReservedKeywords.CSharpDebug, out isDebug);
 			}
 
-			if (isDebug && GenericFunction != null)
+			if (isDebug && Step != null && GenericFunction != null)
 			{
 				error += $@"
 

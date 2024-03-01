@@ -11,10 +11,13 @@ namespace PLang.Exceptions.Handlers
 		{
 			this.dialog = dialog;
 		}
-
 		public async Task<bool> Handle(Exception exception, int statusCode, string statusText, string message)
 		{
-			if (await base.Handle(exception)) { return true; }
+			return await base.Handle(exception);
+		}
+		public async Task<bool> ShowError(Exception exception, int statusCode, string statusText, string message)
+		{
+			//if (await base.Handle(exception)) { return true; }
 			dialog.ShowDialog(exception, message + "\n\n" + exception.ToString(), "Error");
 			return false;
 		}

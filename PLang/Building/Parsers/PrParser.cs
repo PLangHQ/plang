@@ -248,8 +248,15 @@ namespace PLang.Building.Parsers
 					appStartupPath = Path.DirectorySeparatorChar.ToString() + appStartupPath;
 				}
 			}
+			Goal? goal = null;
+			if (callingGoal != null && !goalNameOrPath.Contains(Path.DirectorySeparatorChar))
+			{
+				var newGoalPath = Path.Join(callingGoal.RelativePrFolderPath, goalNameOrPath);
+				goal = GetAllGoals().FirstOrDefault(p => p.RelativePrFolderPath.Equals(newGoalPath, StringComparison.OrdinalIgnoreCase));
+				if (goal != null) return goal;
+			}
 
-			var goal = GetAllGoals().FirstOrDefault(p => p.RelativePrFolderPath.Equals(Path.Join(".build", goalNameOrPath), StringComparison.OrdinalIgnoreCase));
+			goal = GetAllGoals().FirstOrDefault(p => p.RelativePrFolderPath.Equals(Path.Join(".build", goalNameOrPath), StringComparison.OrdinalIgnoreCase));
 			if (goal != null) return goal;
 
 			// first check for goal inside same goal file as the calling goal

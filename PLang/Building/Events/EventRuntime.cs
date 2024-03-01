@@ -185,7 +185,8 @@ namespace PLang.Building.Events
 		{
 			if (eventsToRun.Count == 0)
 			{
-				await ShowDefaultError(ex);
+				throw ex;
+				//await ShowDefaultError(ex);
 			}
 			else
 			{
@@ -240,10 +241,10 @@ namespace PLang.Building.Events
 		{
 			try
 			{
-				await exceptionHandlerFactory.CreateHandler().Handle(ex, 500, "error", ex.Message);
+				await exceptionHandlerFactory.CreateHandler().ShowError(ex, 500, "error", ex.Message);
 			} catch 
 			{
-				logger.LogError(ex, "Exception showing exception:" + JsonConvert.SerializeObject(ex));
+				logger.LogError(ex, "Exception showing exception:" + ex);
 				throw;
 			}
 		}
@@ -267,7 +268,7 @@ namespace PLang.Building.Events
 				}
 				if (task.Exception != null)
 				{
-					throw task.Exception;
+					throw task.Exception.InnerException ?? task.Exception;
 				}
 			}
 			finally
@@ -328,7 +329,16 @@ namespace PLang.Building.Events
 
 			if (eventsToRun.Count() == 0)
 			{
-				await ShowDefaultError(ex);
+				if (goal.ParentGoal == null)
+				{
+					await ShowDefaultError(ex);
+				}
+				else if (ex is RuntimeStepException) { throw ex; }
+				else if (ex is RuntimeUserStepException) { throw ex; }
+				else
+				{
+					throw new RuntimeStepException(ex.Message, step, ex);
+				}
 			}
 			else
 			{
@@ -444,11 +454,12 @@ namespace PLang.Building.Events
 		private string ChangeDirectorySeperators(string path)
 		{
 			path = path.Replace(@"\", @"/");
+			if (!path.StartsWith(@"/")) path = @"/" + path;
 			if (path == "/*")
 			{
 				path = path.Replace("*", ".*");
 			}
-			if (!path.StartsWith(@"/")) path = @"/" + path;
+			
 			return path.ToLower();
 		}
 

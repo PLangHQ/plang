@@ -107,7 +107,11 @@ namespace PLang.Runtime
 
 			if (waitForExecution)
 			{
-				await task;
+				try
+				{
+					await task;
+				}
+				catch { }
 			} else if (delayWhenNotWaitingInMilliseconds > 0)
 			{
 				await Task.Delay((int) delayWhenNotWaitingInMilliseconds);
@@ -118,14 +122,14 @@ namespace PLang.Runtime
 				container.Dispose();
 			}
 
-			if (task.Exception != null)
+			if (task.IsFaulted && task.Exception != null)
 			{
 				if (await exceptionHandlerFactory.CreateHandler().Handle(task.Exception, 500, "error", task.Exception.Message))
 				{
 					await RunGoal(engine, context, appPath, goalName, parameters, callingGoal, waitForExecution, delayWhenNotWaitingInMilliseconds);
 				} else
 				{
-					throw task.Exception;
+					throw task.Exception.InnerException ?? task.Exception;
 				}
 
 			}

@@ -2,16 +2,10 @@
 
 namespace PLang.Exceptions
 {
-	public class RuntimeStepException : Exception
+	public class RuntimeStepException : BaseStepException
 	{
-		public GoalStep Step { get; set; }
-		public RuntimeStepException(string message, GoalStep step) : base(message)
+		public RuntimeStepException(string message, GoalStep step, Exception? innerException = null) : base(step, message, innerException)
 		{
-			this.Step = step;
-		}
-		public RuntimeStepException(GoalStep step, Exception ex) : base($"Step '{step.Text}' had exception", ex)
-		{
-			this.Step = step;
 		}
 	}
 }

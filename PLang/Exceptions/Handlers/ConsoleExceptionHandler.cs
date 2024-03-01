@@ -13,9 +13,15 @@ namespace PLang.Exceptions.Handlers
 		public ConsoleExceptionHandler(IAskUserHandlerFactory askUserHandlerFactory) : base(askUserHandlerFactory)
 		{
 		}
+
 		public async Task<bool> Handle(Exception exception, int statusCode, string statusText, string message)
 		{
-			if (await base.Handle(exception)) { return true; }
+			return await base.Handle(exception);
+		}
+
+		public async Task<bool> ShowError(Exception exception, int statusCode, string statusText, string message)
+		{
+			//if (await base.Handle(exception)) { return true; }
 
 			if (statusCode < 200)
 			{
@@ -31,25 +37,26 @@ namespace PLang.Exceptions.Handlers
 			}
 			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebug);
 
-			Console.WriteLine("\n\nError: " + message);
+			
 			if (exception is RuntimeProgramException rpe)
 			{
+				
 				Console.WriteLine(rpe.ToString());
+				Console.WriteLine("\n\nError: " + message);
+
 			}
 			else
 			{
-				if (exception is RuntimeStepException rse)
+				if (exception is BaseStepException rse)
 				{
 					var step = rse.Step;
-					string errorInfo = $"GoalName '{step.Goal.GoalName}' at {step.Goal.AbsoluteGoalPath}";
+					string errorInfo = $"\n\n === Error Info === \nGoalName '{step.Goal.GoalName}' at {step.Goal.AbsoluteGoalPath}";
 					errorInfo += $"\nStep '{step.Text}'";
 					Console.WriteLine(errorInfo);
 				}
-				
+				Console.WriteLine("\n\nError: " + message);
 				Console.WriteLine("\n=== Stack trace ===");
 				Console.WriteLine(exception.StackTrace);
-				Console.WriteLine("\n\n=== Full Exception ===");
-				Console.WriteLine(JsonConvert.SerializeObject(exception));
 			}
 			Console.ResetColor();
 			return false;

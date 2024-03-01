@@ -131,9 +131,7 @@ namespace PLang.Modules
 
 				if (task.Status == TaskStatus.Faulted && task.Exception != null)
 				{
-					if (task.Exception.InnerException != null) throw task.Exception.InnerException;
-					throw task.Exception;
-					//await HandleException(task, function, goalStep);
+					throw task.Exception.InnerException ?? task.Exception;
 				}
 
 				if (!goalStep.WaitForExecution || method.ReturnType == typeof(Task))
@@ -191,6 +189,7 @@ namespace PLang.Modules
 			{
 				foreach (var returnValue in function.ReturnValue)
 				{
+					/*
 					var returnType = returnValue.Type;
 					if (result.GetType().Name.StartsWith("List"))
 					{
@@ -200,7 +199,7 @@ namespace PLang.Modules
 							memoryStack.Put(returnValue.VariableName, null);
 							continue;
 						}
-					}
+					}*/
 					memoryStack.Put(returnValue.VariableName, result);
 				}
 			}

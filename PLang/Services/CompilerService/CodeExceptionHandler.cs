@@ -1,5 +1,6 @@
 ﻿using PLang.Building.Model;
 using PLang.Exceptions;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace PLang.Services.CompilerService
@@ -29,17 +30,31 @@ The C# code is this:
 
 			(string errorLine, lineNr) = GetErrorLine(lineNr, implementation, inner.Message);
 
-			throw new RuntimeStepException($@"{inner.Message} in line: {lineNr}. You might have to define your step bit more, try including variable type, such as %name%(string), %age%(number), %tags%(array).
+			throw new RuntimeStepException($@"{inner.Message} in line {lineNr} in C# code 👇. 
+
+You might have to define your step bit more, try including variable type, such as %name%(string), %age%(number), %tags%(array).
+
 The error occured in this line:
-{errorLine}
+
+	{lineNr}. {errorLine.Trim()}
 
 The C# code is this:
-{implementation.Code}
+{InsertLineNumbers(implementation.Code)}
 
-", step);
+", step, inner);
 
 		}
 
+		private static string InsertLineNumbers(string code)
+		{
+			var lines = code.Trim().Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+			for (int i = 0; i < lines.Length; i++)
+			{
+				// Format line number with padding for alignment, if needed
+				lines[i] = $"{i + 1}. {lines[i]}";
+			}
+			return string.Join(Environment.NewLine, lines);
+		}
 
 		private static (string errorLine, int lineNr) GetErrorLine(int lineNr, Implementation implementation, string message)
 		{

@@ -258,7 +258,10 @@ namespace PLang.Modules.WebserverModule
 						}
 						catch (Exception ex)
 						{
-							logger.LogError(ex, "WebServerError - requestedFile:{0} - goalPath:{1} - goal:{2} - Exception:{3}", requestedFile, goalPath, goal, ex.ToString());
+							logger.LogError(ex, @"WebServerError - requestedFile:{0} - goalPath:{1} - goal:{2} - 
+
+Error:
+{3}", requestedFile, goalPath, goal, ex.ToString());
 							try
 							{
 								var exceptionHandlerFactory = container.GetInstance<IExceptionHandlerFactory>();

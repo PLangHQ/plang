@@ -76,6 +76,7 @@ namespace PLang.Modules.ConditionalModule
 - Name: is name of class, it should represent the intent of what the code is doing. 
 {dllName}
 - Goals should be prefixed with !, e.g. Call !Process, Call !ConditionFalse
+- Goals can be called with parameters using GoalToCallOnTrueParameters and GoalToCallOnFalseParameters, e.g. Call !Process id=%id%, call !FalseCall status='false'. Then id is parameter for True, and status for False
 - Using: must include namespaces that are needed to compile code.
 - Assemblies: dll to reference to compile using Roslyn
 ## Response information ##

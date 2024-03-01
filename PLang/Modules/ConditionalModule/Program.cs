@@ -84,19 +84,31 @@ namespace PLang.Modules.ConditionalModule
 				// The first parameter is the instance you want to call the method on. For static methods, you should pass null.
 				// The second parameter is an object array containing the arguments of the method.
 				bool result = (bool)method.Invoke(null, parametersObject.ToArray());
+				Task? task = null;
 				if (result && answer.GoalToCallOnTrue != null)
 				{
-					Dictionary<string, object> param = new Dictionary<string, object>();
-					param.Add("result", result);
-					await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, answer.GoalToCallOnTrue, param, goal);
+					Dictionary<string, object?>? param = answer.GoalToCallOnTrueParameters;
+					task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, answer.GoalToCallOnTrue, param, goal);
 				}
 				else if (!result && answer.GoalToCallOnFalse != null)
 				{
-					Dictionary<string, object> param = new Dictionary<string, object>();
-					param.Add("result", result);
-					await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, answer.GoalToCallOnFalse, param, goal);
+					Dictionary<string, object?>? param = answer.GoalToCallOnFalseParameters;
+					task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, answer.GoalToCallOnFalse, param, goal);
 				}
 
+				if (task != null)
+				{
+					try
+					{
+						await task;
+					}
+					catch { }
+
+					if (task.IsFaulted)
+					{
+						throw task.Exception;
+					}
+				}
 
 				if (result)
 				{

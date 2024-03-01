@@ -70,10 +70,10 @@ namespace PLang.Building
 			catch (StopBuilderException) { }
 			catch (Exception ex)
 			{
-				await exceptionHandlerFactory.CreateHandler().Handle(ex, 500, "error", ex.Message);
-				if (ex.Message != "FriendlyError")
+				var handler = exceptionHandlerFactory.CreateHandler();
+				if (!await handler.Handle(ex, 500, "error", ex.Message))
 				{
-				//	await errorHelper.ShowFriendlyErrorMessage(ex, callBackForAskUser: async () => { await Start(container); });
+					await handler.ShowError(ex, 500, "error", ex.Message);
 				}
 				
 			}

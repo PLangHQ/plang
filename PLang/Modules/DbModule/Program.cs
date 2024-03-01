@@ -191,7 +191,11 @@ namespace PLang.Modules.DbModule
 				}
 				catch { }
 			}
-			
+
+			if (targetType == typeof(string) && (obj is JObject || obj is JArray || obj is JProperty || obj is JValue)) {
+				return obj.ToString();
+			}
+
 			return Convert.ChangeType(obj, targetType);
 
 
@@ -304,7 +308,14 @@ namespace PLang.Modules.DbModule
 			{
 				if (this.function.ReturnValue != null)
 				{
-					if (this.function.ReturnValue.Count == 1) return rows;
+					if (this.function.ReturnValue.Count == 1)
+					{
+						if (selectOneRow_Top1OrLimit1)
+						{
+							return (rows.Count > 0) ? rows[0] : null;
+						}
+						return rows;
+					}
 
 					var dict = new ReturnDictionary<string, object?>();
 					foreach (var rv in this.function.ReturnValue)
@@ -315,7 +326,7 @@ namespace PLang.Modules.DbModule
 				}
 				return new List<object>();
 			}
-			if (!selectOneRow_Top1OrLimit1 && rows.Count != 1) return rows;
+			if (!selectOneRow_Top1OrLimit1) return rows;
 
 			var rowsAsList = ((IList<object>)rows);
 			var columns = ((IDictionary<string, object>)rowsAsList[0]);
@@ -326,8 +337,8 @@ namespace PLang.Modules.DbModule
 			{
 				return columns.FirstOrDefault().Value;
 			}
-
-			return (selectOneRow_Top1OrLimit1) ? rows[0] : rows;
+			if (rows.Count == 0) return null;
+			return rows[0];
 
 		}
 

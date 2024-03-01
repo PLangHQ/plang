@@ -106,6 +106,9 @@ namespace PLang
 			{
 				AppContext.SetData("sharedPath", sharedPath);
 			}
+
+			AppContext.SetSwitch("skipCode", args.FirstOrDefault(p => p.ToLower() == "--skipcode") != null);
+			
 		}
 
 		public void SetupDebug()

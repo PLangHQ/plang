@@ -207,7 +207,7 @@ namespace PLang.Services.LlmService
 				var obj = JObject.Parse(responseBody);
 				if (obj["url"] != null)
 				{
-					await outputStreamFactory.CreateHandler().Write("You can buy more voucher at this url: " + obj["url"] + ". Restart after payment", "error", 402);
+					await outputStreamFactory.CreateHandler().Write("You can buy more voucher at this url: " + obj["url"] + ". Try again after payment.", "error", 402);
 					throw new StopBuilderException();
 				} else
 				{

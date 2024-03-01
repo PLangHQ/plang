@@ -18,11 +18,12 @@ namespace PLang.Exceptions.Handlers
 			this.httpListenerContext = httpListenerContext;
 			this.logger = logger;
 		}
-
 		public async Task<bool> Handle(Exception exception, int statusCode, string statusText, string message)
 		{
-			if (await base.Handle(exception)) { return true; }
-
+			return await base.Handle(exception);
+		}
+		public async Task<bool> ShowError(Exception exception, int statusCode, string statusText, string message)
+		{
 			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebug);
 
 			var response = new Dictionary<string, object>();
@@ -34,14 +35,21 @@ namespace PLang.Exceptions.Handlers
 
 			try
 			{
-				var resp = httpListenerContext.Response;
-				
+				var resp = httpListenerContext.Response;				
+
 				resp.StatusCode = statusCode;
 				resp.StatusDescription = statusText;
 
 				using (var writer = new StreamWriter(resp.OutputStream, resp.ContentEncoding ?? Encoding.UTF8))
 				{
-					await writer.WriteAsync(exception.ToString());
+					if (JsonHelper.IsJson(exception.ToString())) {
+						await writer.WriteAsync(exception.ToString());
+					}
+					else
+					{
+						await writer.WriteAsync(JsonConvert.SerializeObject(exception.ToString(), Formatting.Indented));
+
+					}
 					await writer.FlushAsync();
 				}
 

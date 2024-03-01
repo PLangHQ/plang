@@ -67,13 +67,7 @@ namespace PLang.Services.OutputStream
 						}
 						else
 						{
-							if (type != "text")
-							{
-								JObject jsonObj = new JObject();
-								jsonObj[type] = JToken.FromObject(obj);
-								writer.Write(jsonObj.ToString());
-								return;
-							}
+							
 
 							string content = obj.ToString()!;
 							if (!JsonHelper.IsJson(content))

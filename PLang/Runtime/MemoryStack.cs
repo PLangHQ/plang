@@ -140,6 +140,10 @@ namespace PLang.Runtime
 				objectValue = GetObjectValue(variableName, staticVariable);
 
 				numberData = numberData.Substring(0, numberData.IndexOf("]")).Trim();
+				if (numberData == "0")
+				{
+					throw new ArgumentException("Index starts from 1, not 0.");
+				}
 				if (objectValue.Initiated && objectValue.Value.GetType().Name.StartsWith("Dictionary"))
 				{
 					if (numberData.StartsWith("%") && numberData.EndsWith("%"))
@@ -780,7 +784,7 @@ namespace PLang.Runtime
 					// Not to throw exception on build if property is not found.
 					if (!isBuilder)
 					{
-						throw new PropertyNotFoundException($"Property '{propertyDescription}' was not found on %{variableName}%. The %{variableName}% value is {obj}");
+						throw new PropertyNotFoundException($"Property '{propertyDescription}' was not found on %{variableName}%. The %{variableName}% value is '{obj}'");
 					}
 				}
 				else
