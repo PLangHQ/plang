@@ -3,7 +3,7 @@
     "FunctionName": "AskLlm",
     "Parameters": [
       {
-        "Type": "List<LlmMessage>",
+        "Type": "List`1<LlmMessage>",
         "Name": "promptMessages",
         "Value": [
           {
@@ -34,11 +34,6 @@
             ]
           }
         ]
-      },
-      {
-        "Type": "String",
-        "Name": "scheme",
-        "Value": null
       },
       {
         "Type": "String",
@@ -92,7 +87,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nvoid AskLlm(List`1<LlmMessage> promptMessages, String? scheme, String? model = \"gpt-4\", Double? temperature = 0, Double? topP = 0, Double? frequencyPenalty = 0, Double? presencePenalty = 0, Int32? maxLength = 4000, Boolean? cacheResponse = True, String? llmResponseType) \nvoid UseSharedIdentity(Boolean? useSharedIdentity = True) \nString GetLlmIdentity()\r\n## functions available ends ##\r\n## defined variables ##\r\nsystem (type:Object), assistant (type:object), content (type:String), result (type:object), \r\n## defined variables ##"
+            "text": "## functions available starts ##\r\nvoid AskLlm(List`1<LlmMessage> promptMessages, String? scheme, String? model = \"gpt-4\", Double? temperature = 0, Double? topP = 0, Double? frequencyPenalty = 0, Double? presencePenalty = 0, Int32? maxLength = 4000, Boolean? cacheResponse = True, String? llmResponseType) \nvoid UseSharedIdentity(Boolean? useSharedIdentity = True) \nString GetLlmIdentity()\r\n## functions available ends ##\r\n## defined variables ##\r\nsystem (type:object), assistant (type:object), content (type:String), result (type:object), \r\n## defined variables ##"
           }
         ]
       },
@@ -108,7 +103,7 @@
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": "{\n  \"FunctionName\": \"AskLlm\",\n  \"Parameters\": [\n    {\n      \"Type\": \"List<LlmMessage>\",\n      \"Name\": \"promptMessages\",\n      \"Value\": [\n        {\n          \"role\": \"system\",\n          \"content\": [\n            {\n              \"type\": \"text\",\n              \"text\": \"%system%\"\n            }\n          ]\n        },\n        {\n          \"role\": \"assistant\",\n          \"content\": [\n            {\n              \"type\": \"text\",\n              \"text\": \"## previously generated doc ## \\n%assistant%\\n## previously generated doc ## \"\n            }\n          ]\n        },\n        {\n          \"role\": \"user\",\n          \"content\": [\n            {\n              \"type\": \"text\",\n              \"text\": \"%content%\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"scheme\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"model\",\n      \"Value\": \"gpt-4-1106-preview\"\n    },\n    {\n      \"Type\": \"Int32\",\n      \"Name\": \"maxLength\",\n      \"Value\": 4000\n    }\n  ],\n  \"ReturnValue\": [\n    {\n      \"Type\": \"String\",\n      \"VariableName\": \"%result%\"\n    }\n  ]\n}"
+    "RawResponse": "The user intent is to send a message to the LLM engine with the system, assistant, and user content. The model to be used is 'gpt-4-1106-preview' and the maximum length of the response is set to 4000 characters. The response from the LLM engine should be written into the variable %result%.\n\nThe corresponding C# function is AskLlm() and the parameters are promptMessages, model, and maxLength. The return value should be written into %result%.\n\nHere is the corresponding JSON:\n\n```json\n{\n    \"FunctionName\": \"AskLlm\",\n    \"Parameters\": [\n        {\n            \"Type\": \"List`1<LlmMessage>\",\n            \"Name\": \"promptMessages\",\n            \"Value\": [\n                {\n                    \"role\": \"system\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"%system%\"\n                        }\n                    ]\n                },\n                {\n                    \"role\": \"assistant\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"## previously generated doc ## \\n%assistant%\\n## previously generated doc ## \"\n                        }\n                    ]\n                },\n                {\n                    \"role\": \"user\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"%content%\"\n                        }\n                    ]\n                }\n            ]\n        },\n        {\n            \"Type\": \"String\",\n            \"Name\": \"model\",\n            \"Value\": \"gpt-4-1106-preview\"\n        },\n        {\n            \"Type\": \"Int32\",\n            \"Name\": \"maxLength\",\n            \"Value\": 4000\n        }\n    ],\n    \"ReturnValue\": [\n        {\n            \"Type\": \"String\",\n            \"VariableName\": \"%result%\"\n        }\n    ]\n}\n```"
   },
   "RunOnBuild": false
 }

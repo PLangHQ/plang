@@ -67,7 +67,9 @@ namespace PLang.Services.SigningService
 			identityService.UseSharedIdentity(appId);
 			var identity = identityService.GetCurrentIdentityWithPrivateKey();
 			var seed = Encoding.UTF8.GetBytes(identity.Value!.ToString()!);
-			return SignInternal(seed, content, method, url, contract, expires);
+			var result = SignInternal(seed, content, method, url, contract, expires);
+			identityService.UseSharedIdentity(null);
+			return result;
 		}
 
 		private Dictionary<string, object> SignInternal(byte[] seed, string? content, string method, string url, string contract = "C0", DateTimeOffset? expires = null)

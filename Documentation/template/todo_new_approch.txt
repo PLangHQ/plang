@@ -31,7 +31,7 @@ NewLlmTask
 - for each %taskList%, call !SaveTask
 
 SaveTask
-- insert into Todos table, %item.task%, %item.due_date%, %Identity%
+- insert into Todos table, %item.task%, %item.due_date%, %item.category%, %Identity%
 ```
 
 in the code apove, we read the system command to the llm, and send the users tasks that he sends in the http request, we define schema and write the result to `%taskList%` variable. then loop through the list and save each item to database.
@@ -52,6 +52,7 @@ TestNewTask
             solve credit card payment in system, in 7 days
             "
     }
+    timeout 2 min
     write to %result%
 - write out %result%
 ```

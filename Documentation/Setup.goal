@@ -69,7 +69,7 @@ Setup
 - insert into docs Name='FolderStructure'
             Guide='template/folder_structure.txt'
             System='template/guidance/teacher.txt'
-            OutputFilename='./FolderStructure.md'                        
+            OutputFilename='./FolderStructure.md'            
 - insert into docs Name='TodoNewApproach'
             Guide='template/todo_new_approch.txt'
             System='template/guidance/teacher.txt'

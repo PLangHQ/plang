@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using PLang.Building.Model;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Utils;
@@ -22,7 +23,7 @@ namespace PLang.Exceptions.Handlers
 		{
 			return await base.Handle(exception);
 		}
-		public async Task<bool> ShowError(Exception exception, int statusCode, string statusText, string message)
+		public async Task<bool> ShowError(Exception exception, int statusCode, string statusText, string message, GoalStep? step)
 		{
 			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebug);
 

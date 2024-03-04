@@ -30,6 +30,11 @@ Setup
 
 By adding the `- add column 'category' to tbl 'Todos'` step, you instruct plang to update the database schema to include a new column named 'category'.
 
+Before you continue, run this
+```bash
+plang exec Setup
+```
+
 ## 2. Modify `NewTask.goal`
 
 > Cost estimated: $0.55

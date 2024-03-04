@@ -1,4 +1,5 @@
-﻿using PLang.Exceptions.AskUser;
+﻿using PLang.Building.Model;
+using PLang.Exceptions.AskUser;
 using PLang.Utils;
 
 namespace PLang.Exceptions.Handlers
@@ -15,10 +16,10 @@ namespace PLang.Exceptions.Handlers
 		{
 			return await base.Handle(exception);
 		}
-		public async Task<bool> ShowError(Exception exception, int statusCode, string statusText, string message)
+		public async Task<bool> ShowError(Exception exception, int statusCode, string statusText, string message, GoalStep? step)
 		{
 			//if (await base.Handle(exception)) { return true; }
-			dialog.ShowDialog(exception, message + "\n\n" + exception.ToString(), "Error");
+			dialog.ShowDialog(exception, $"Step: {step.Text} in goal {step.Goal.GoalName}\n\n{message}\n\n{exception.ToString()}", "Error");
 			return false;
 		}
 	}

@@ -24,6 +24,13 @@ Setup
 - add column 'Identity'(string) to tbl 'Todos'             
 ```
 
+Now build & run `Setup` to create the column in database.
+
+```bash
+plang exec Setup
+```
+
+
 ### Step 2: Ensure `%Identity%` is not empty
 
 Create an `events` folder at the root of your Todos project and add a file named `Events.goal` with the following content:
@@ -33,7 +40,7 @@ Events
 - before each goal in 'api/*', call !CheckIdentity
 ```
 
-Create a new file, `CheckIdentity.goal` in Events folder
+Create a new file, `CheckIdentity.goal` in `events` folder
 ```plang
 CheckIdentity
 - if %Identity% is empty, call !ShowError
@@ -69,8 +76,18 @@ List
 - select everything from Todos where %Identity%, write to %todos%
 - write out %todos%
 ```
+### Step 5: Build & run
 
-### Step 5: Test Creating a New Task
+Now build and run the code 
+
+- In VS Code, press F5, leave the input box empty (it will default to Start.goal).
+- Or, in the terminal, run:
+
+    ```bash
+    plang exec
+    ```
+
+### Step 6: Test Creating a New Task
 
 Testing with a REST client is no longer an option due to the need for `%Identity%` generation. Instead, write the test in `plang`:
 
@@ -89,14 +106,15 @@ TestNewTask
 
 Execute the `TestNewTask.goal` file:
 
-- In VS Code, press F5, type `TestNewTask`, and press enter.
-- Or, in the terminal, run:
+
+- In VS Code, You already started the webserver in Step 5, so we need to use the terminal. Create New Terminal from the Terminal menu, navigate to you Todo folder.
+- Run:
 
     ```bash
     plang exec test/TestNewTask
     ```
 
-### Step 6: Retrieve Your New Task
+### Step 7: Retrieve Your New Task
 
 Create a `plang` client to fetch the task list, which should now return only tasks associated with the `%Identity%`:
 
@@ -111,8 +129,8 @@ TestTasks
 
 Execute the `TestTasks.goal` file:
 
-- In VS Code, press F5, type `TestTasks`, and press enter.
-- Or, in the terminal, run:
+- In VS Code, You already started the webserver in Step 5, so we need to use the terminal. Create New Terminal from the Terminal menu, navigate to you Todo folder.
+- In the terminal, run:
 
     ```bash
     plang exec test/TestTasks
@@ -120,6 +138,6 @@ Execute the `TestTasks.goal` file:
 
 ## Next tutorial
 - If you are running on a Windows machine (sorry, only Windows for now), let's change the web service [into a desktop app](./Todo_UI.md)
-- Else, check out some more [Examples](https://github.com/PLangHQ/plang/tree/main/Tests) or other [Apps written by others](https://github.com/PLangHQ/apps) to start learning. It is all open source and you can view all the code.
+- Else, [learn how you can rethink](./todo_new_approch.md) how you make apps, making the computer adapt to the user.
 
 Happy coding with `plang`!

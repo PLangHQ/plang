@@ -21,9 +21,7 @@ namespace PLang.Services.SettingsService
 		private readonly string contextKey = "__SqliteSettingsRepository_DataSource__";
 		public static Dictionary<string, IDbConnection> InMemoryDbCache = new();
 		public SqliteSettingsRepository(IPLangFileSystem fileSystem, PLangAppContext context, ILogger logger)
-		{
-
-			
+		{			
 			this.fileSystem = fileSystem;
 			this.context = context;
 			this.logger = logger;
@@ -128,7 +126,6 @@ namespace PLang.Services.SettingsService
 			{
 				string sql = $@"
 CREATE TABLE IF NOT EXISTS Settings (
-    AppId TEXT NOT NULL,
     [ClassOwnerFullName] TEXT NOT NULL,
     [ValueType] TEXT NOT NULL,
     [Key] TEXT NOT NULL,
@@ -136,7 +133,7 @@ CREATE TABLE IF NOT EXISTS Settings (
     [Created] DATETIME DEFAULT CURRENT_TIMESTAMP,
 	SignatureData TEXT NOT NULL
 );
-CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassOwnerFullName], [ValueType], [Key]);
+CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings ([ClassOwnerFullName], [Key]);
 ";
 				int rowsAffected = connection.Execute(sql);
 				if (datasource.Contains("Mode=Memory"))
@@ -235,8 +232,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 
 			using (IDbConnection connection = new SqliteConnection(DataSource))
 			{
-				connection.Execute("DELETE FROM Settings WHERE AppId=@AppId AND [ClassOwnerFullName]=@ClassOwnerFullName AND [ValueType]=@ValueType",
-					new { setting.AppId, setting.ClassOwnerFullName, setting.ValueType });
+				connection.Execute("DELETE FROM Settings WHERE [ClassOwnerFullName]=@ClassOwnerFullName AND [Key]=@Key",
+					new { setting.ClassOwnerFullName, setting.Key });
 				return;
 			}
 		}
@@ -247,16 +244,17 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings (AppId, [ClassO
 			using (IDbConnection connection = new SqliteConnection(DataSource))
 			{				
 				connection.Execute(@"
-				INSERT OR IGNORE INTO Settings (AppId, ClassOwnerFullName, ValueType, [Key], [Value], SignatureData, Created) VALUES (@AppId, @ClassOwnerFullName, @ValueType, @Key, @Value, @SignatureData, @Created)
-				ON CONFLICT(AppId, [ClassOwnerFullName], [ValueType], [Key]) DO UPDATE SET Value = @Value, SignatureData=@SignatureData;
-				", new { setting.AppId, setting.ClassOwnerFullName, setting.ValueType, setting.Key, setting.Value, setting.SignatureData, setting.Created });
+				INSERT OR IGNORE INTO Settings (ClassOwnerFullName, ValueType, [Key], [Value], SignatureData, Created) 
+					VALUES (@ClassOwnerFullName, @ValueType, @Key, @Value, @SignatureData, @Created)
+				ON CONFLICT([ClassOwnerFullName], [Key]) DO UPDATE SET Value = @Value, SignatureData=@SignatureData;
+				", new { setting.ClassOwnerFullName, setting.ValueType, setting.Key, setting.Value, setting.SignatureData, setting.Created });
 				
 			}
 		}
 
 		public Setting? Get(string? fullName, string? type, string? key)
 		{
-			var setting = GetSettings().FirstOrDefault(p => p.ClassOwnerFullName == fullName && p.ValueType == type && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+			var setting = GetSettings().FirstOrDefault(p => p.ClassOwnerFullName == fullName && p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
 			/*
 			var verifiedData = signingService.VerifySignature(salt, setting.Value, "Setting", fullName, setting.Signature).Result;
 			if (verifiedData == null)

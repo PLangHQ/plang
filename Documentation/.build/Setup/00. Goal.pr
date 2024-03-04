@@ -1142,7 +1142,7 @@
       }
     },
     {
-      "Text": "insert into docs Name='FolderStructure'\n            Guide='template/folder_structure.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./FolderStructure.md'                        ",
+      "Text": "insert into docs Name='FolderStructure'\n            Guide='template/folder_structure.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./FolderStructure.md'            ",
       "Comment": null,
       "ModuleType": "PLang.Modules.DbModule",
       "Name": "InsertIntoDocs",
@@ -1152,7 +1152,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": true,
-      "Generated": "2024-02-27T13:39:20.7687461+00:00",
+      "Generated": "2024-03-04T11:12:50.1282826+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -1176,7 +1176,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -1198,14 +1198,14 @@
             "content": [
               {
                 "type": "text",
-                "text": "insert into docs Name='FolderStructure'\n            Guide='template/folder_structure.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./FolderStructure.md'                        "
+                "text": "insert into docs Name='FolderStructure'\n            Guide='template/folder_structure.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./FolderStructure.md'            "
               }
             ]
           }
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": null
+        "RawResponse": "{\n  \"StepName\": \"InsertIntoDocs\",\n  \"StepDescription\": \"Insert the following data into the 'docs' table: Name as 'FolderStructure', Guide as 'template/folder_structure.txt', System as 'template/guidance/teacher.txt', and OutputFilename as './FolderStructure.md'\",\n  \"Modules\": [\n    \"PLang.Modules.DbModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     },
     {
@@ -1219,7 +1219,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": true,
-      "Generated": "2024-02-27T15:48:39.1523166+00:00",
+      "Generated": "2024-03-04T11:12:50.1801628+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -1243,7 +1243,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -1272,7 +1272,7 @@
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"InsertIntoDocs\",\n  \"StepDescription\": \"Insert the provided data into the 'docs' table. The data includes 'Name' as 'TodoNewApproach', 'Guide' as 'template/todo_new_approch.txt', 'System' as 'template/guidance/teacher.txt', and 'OutputFilename' as './todo_new_approch.md'.\",\n  \"Modules\": [\n    \"PLang.Modules.DbModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": null
       }
     }
   ],
@@ -1287,5 +1287,5 @@
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "81d76ed6af72f7cebe911b98765693d729745e8107ea834e6f5a513c6eea1e7d"
+  "Hash": "d4202a4b189caefdea20dfa434ae91e6a843aec0f037e21bfd80674c24a394ad"
 }

@@ -28,6 +28,7 @@ namespace PLang.Utils
 
 		public static bool LookAsJsonScheme(string content)
 		{
+			if (string.IsNullOrEmpty(content)) return false;
 			content = content.Trim();
 			return (content.StartsWith("{") && content.EndsWith("}")) || (content.StartsWith("[") && content.EndsWith("]"));
 		}

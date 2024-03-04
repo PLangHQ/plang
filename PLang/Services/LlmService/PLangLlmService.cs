@@ -227,7 +227,7 @@ namespace PLang.Services.LlmService
 				string body = await reader.ReadToEndAsync();
 				
 				var signature = signingService.Sign(body, method, url, contract, appId);
-
+				
 				foreach (var item in signature)
 				{
 					request.Headers.TryAddWithoutValidation(item.Key, item.Value.ToString());

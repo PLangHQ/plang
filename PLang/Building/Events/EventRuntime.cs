@@ -77,7 +77,7 @@ namespace PLang.Building.Events
 		{
 			events = new List<EventBinding>();
 
-			string buildEventsFolder = (builder) ? "BuilderEvents" : "Events";
+			string buildEventsFolder = (builder) ? "builderEvents" : "events";
 			var eventsFiles = GetRuntimeEventsFiles(fileSystem.BuildPath, buildEventsFolder);
 			
 			foreach (var eventFile in eventsFiles)
@@ -178,7 +178,7 @@ namespace PLang.Building.Events
 
 		public async Task AppErrorEvents(PLangAppContext context, Exception ex)
 		{
-			await ShowDefaultError(ex);
+			await ShowDefaultError(ex, null);
 		}
 
 		private async Task HandleError(PLangAppContext context, Goal goal, Exception ex, GoalStep? step, List<EventBinding> eventsToRun)
@@ -237,11 +237,11 @@ namespace PLang.Building.Events
 
 		}
 
-		private async Task ShowDefaultError(Exception ex)
+		private async Task ShowDefaultError(Exception ex, GoalStep? step)
 		{
 			try
 			{
-				await exceptionHandlerFactory.CreateHandler().ShowError(ex, 500, "error", ex.Message);
+				await exceptionHandlerFactory.CreateHandler().ShowError(ex, 500, "error", ex.Message, step);
 			} catch 
 			{
 				logger.LogError(ex, "Exception showing exception:" + ex);
@@ -331,7 +331,7 @@ namespace PLang.Building.Events
 			{
 				if (goal.ParentGoal == null)
 				{
-					await ShowDefaultError(ex);
+					await ShowDefaultError(ex, step);
 				}
 				else if (ex is RuntimeStepException) { throw ex; }
 				else if (ex is RuntimeUserStepException) { throw ex; }

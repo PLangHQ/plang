@@ -118,7 +118,7 @@ namespace PLang.Building.Events.Tests
 		public async Task RunStepEventsTest_CallEventBeforeAppStart()
 		{
 			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
+			string eventPrFile = Path.Join(fileSystem.BuildPath, "e	ents", ISettings.GoalFileName);
 			var content = PrReaderHelper.GetPrFileRaw("Events/BeforeAppStartEvent.pr");
 			fileSystem.AddFile(eventPrFile, new MockFileData(content));
 
@@ -147,7 +147,7 @@ namespace PLang.Building.Events.Tests
 		{
 
 			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
+			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
 			var content = PrReaderHelper.GetPrFileRaw("Events/AfterAppStartEvent.pr");
 			fileSystem.AddFile(eventPrFile, new MockFileData(content));
 
@@ -175,7 +175,7 @@ namespace PLang.Building.Events.Tests
 		public async Task RunStepEventsTest_CallEventOnErrorAppStart()
 		{
 			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
+			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
 			var content = PrReaderHelper.GetPrFileRaw("Events/OnErrorAppStartEvent.pr");
 			fileSystem.AddFile(eventPrFile, new MockFileData(content));
 
@@ -203,7 +203,7 @@ namespace PLang.Building.Events.Tests
 		{
 
 			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
+			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
 			var content = PrReaderHelper.GetPrFileRaw("Events/AppEndEvent.pr");
 			fileSystem.AddFile(eventPrFile, new MockFileData(content));
 
@@ -233,7 +233,7 @@ namespace PLang.Building.Events.Tests
 		public async Task RunStepEventsTest_CallEventOnErrorOnApp()
 		{
 			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
+			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
 			var content = PrReaderHelper.GetPrFileRaw("Events/OnErrorAppRunningEvent.pr");
 			fileSystem.AddFile(eventPrFile, new MockFileData(content));
 
@@ -262,7 +262,7 @@ namespace PLang.Building.Events.Tests
 		{
 
 			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
+			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
 			var content = PrReaderHelper.GetPrFileRaw("Events/BeforeGoalEvent.pr");
 			fileSystem.AddFile(eventPrFile, new MockFileData(content));
 
@@ -295,7 +295,7 @@ namespace PLang.Building.Events.Tests
 		{
 
 			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
+			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
 			var content = PrReaderHelper.GetPrFileRaw("Events/AfterGoalEvent.pr");
 			fileSystem.AddFile(eventPrFile, new MockFileData(content));
 
@@ -327,7 +327,7 @@ namespace PLang.Building.Events.Tests
 		public async Task RunStepEventsTest_CallEventBeforeStepHasRun()
 		{
 			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
+			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
 			var content = PrReaderHelper.GetPrFileRaw("Events/BeforeStepEvent.pr");
 			fileSystem.AddFile(eventPrFile, new MockFileData(content));
 
@@ -361,7 +361,7 @@ namespace PLang.Building.Events.Tests
 		public async Task RunStepEventsTest_CallEventAfterStepHasRun()
 		{
 			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
+			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
 			var content = PrReaderHelper.GetPrFileRaw("Events/AfterStepEvent.pr");
 			fileSystem.AddFile(eventPrFile, new MockFileData(content));
 
@@ -396,7 +396,7 @@ namespace PLang.Building.Events.Tests
 		{
 
 			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
+			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
 			var content = PrReaderHelper.GetPrFileRaw("Events/OnErrorGoalEvent.pr");
 			fileSystem.AddFile(eventPrFile, new MockFileData(content));
 
@@ -427,7 +427,7 @@ namespace PLang.Building.Events.Tests
 		public async Task RunStepEventsTest_CallEventOnStepError()
 		{
 			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName);
+			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
 			var content = PrReaderHelper.GetPrFileRaw("Events/OnErrorStepEvent.pr");
 			fileSystem.AddFile(eventPrFile, new MockFileData(content));
 
@@ -460,16 +460,16 @@ namespace PLang.Building.Events.Tests
 		public void GetRuntimeEventsFilesTest_MakeSureRootEventsIsLast()
 		{
 
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName), new MockFileData(""));
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "TestApp", ".build", "Events", ISettings.GoalFileName), new MockFileData(""));
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "Events", ISettings.GoalFileName), new MockFileData(""));
+			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName), new MockFileData(""));
+			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "TestApp", ".build", "events", ISettings.GoalFileName), new MockFileData(""));
+			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "events", ISettings.GoalFileName), new MockFileData(""));
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "Process", ISettings.GoalFileName), new MockFileData(""));
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "HelloWorld", ISettings.GoalFileName), new MockFileData(""));
 
-			var eventFiles = eventRuntime.GetRuntimeEventsFiles(fileSystem.GoalsPath, "Events");
+			var eventFiles = eventRuntime.GetRuntimeEventsFiles(fileSystem.GoalsPath, "events");
 
 			Assert.AreEqual(3, eventFiles.Count);
-			Assert.AreEqual(Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName), eventFiles[0]);
+			Assert.AreEqual(Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName), eventFiles[0]);
 
 		}
 
@@ -479,7 +479,7 @@ namespace PLang.Building.Events.Tests
 
 			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "BuilderEvents", ISettings.GoalFileName), new MockFileData(""));
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "TestApp", ".build", "BuilderEvents", ISettings.GoalFileName), new MockFileData(""));
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "Events", ISettings.GoalFileName), new MockFileData(""));
+			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "events", ISettings.GoalFileName), new MockFileData(""));
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "Process", ISettings.GoalFileName), new MockFileData(""));
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "HelloWorld", ISettings.GoalFileName), new MockFileData(""));
 
@@ -495,7 +495,7 @@ namespace PLang.Building.Events.Tests
 		{
 
 			var content = PrReaderHelper.GetPrFileRaw("Events/Events.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "Events", ISettings.GoalFileName), new MockFileData(content));
+			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName), new MockFileData(content));
 			prParser.ForceLoadAllGoals();
 
 			await eventRuntime.Load(container);

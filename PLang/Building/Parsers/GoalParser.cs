@@ -213,9 +213,9 @@ namespace PLang.Building.Parsers
 						goals[i].GoalSteps[b].RunOnce = prevStep.RunOnce;
 
 
-						if (goals[i].GoalSteps[b].RunOnce && setupOnceDictionary.ContainsKey(goals[i].RelativePrPath))
+						if (setupOnceDictionary != null && goals[i].GoalSteps[b].RunOnce && setupOnceDictionary.ContainsKey(goals[i].GoalSteps[b].RelativePrPath))
 						{
-							goals[i].GoalSteps[b].Executed = setupOnceDictionary[goals[i].RelativePrPath];
+							goals[i].GoalSteps[b].Executed = setupOnceDictionary[goals[i].GoalSteps[b].RelativePrPath];
 						}
 						
 						if (prevStep.Text.Trim() != goals[i].GoalSteps[b].Text.Trim())

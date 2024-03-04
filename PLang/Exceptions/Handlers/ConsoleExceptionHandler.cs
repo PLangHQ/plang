@@ -19,7 +19,7 @@ namespace PLang.Exceptions.Handlers
 			return await base.Handle(exception);
 		}
 
-		public async Task<bool> ShowError(Exception exception, int statusCode, string statusText, string message)
+		public async Task<bool> ShowError(Exception exception, int statusCode, string statusText, string message, GoalStep? step)
 		{
 			//if (await base.Handle(exception)) { return true; }
 
@@ -49,11 +49,15 @@ namespace PLang.Exceptions.Handlers
 			{
 				if (exception is BaseStepException rse)
 				{
-					var step = rse.Step;
+					step = rse.Step;					
+				}
+				if (step != null)
+				{
 					string errorInfo = $"\n\n === Error Info === \nGoalName '{step.Goal.GoalName}' at {step.Goal.AbsoluteGoalPath}";
 					errorInfo += $"\nStep '{step.Text}'";
 					Console.WriteLine(errorInfo);
 				}
+
 				Console.WriteLine("\n\nError: " + message);
 				Console.WriteLine("\n=== Stack trace ===");
 				Console.WriteLine(exception.StackTrace);

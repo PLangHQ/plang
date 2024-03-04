@@ -91,7 +91,7 @@
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": "{\n  \"FunctionName\": \"Insert\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"sql\",\n      \"Value\": \"insert into docs (id, Name, Guide, System, OutputFilename) values (@id, @Name, @Guide, @System, @OutputFilename)\"\n    },\n    {\n      \"Type\": \"System.Collections.Generic.List`1[System.Object]\",\n      \"Name\": \"SqlParameters\",\n      \"Value\": [\n        {\n          \"ParameterName\": \"@id\",\n          \"VariableNameOrValue\": \"%id%\",\n          \"TypeFullName\": \"System.Int64\"\n        },\n        {\n          \"ParameterName\": \"@Name\",\n          \"VariableNameOrValue\": \"TodoNewApproach\",\n          \"TypeFullName\": \"System.String\"\n        },\n        {\n          \"ParameterName\": \"@Guide\",\n          \"VariableNameOrValue\": \"template/todo_new_approch.txt\",\n          \"TypeFullName\": \"System.String\"\n        },\n        {\n          \"ParameterName\": \"@System\",\n          \"VariableNameOrValue\": \"template/guidance/teacher.txt\",\n          \"TypeFullName\": \"System.String\"\n        },\n        {\n          \"ParameterName\": \"@OutputFilename\",\n          \"VariableNameOrValue\": \"./todo_new_approch.md\",\n          \"TypeFullName\": \"System.String\"\n        }\n      ]\n    }\n  ]\n}"
+    "RawResponse": null
   },
   "RunOnBuild": false
 }

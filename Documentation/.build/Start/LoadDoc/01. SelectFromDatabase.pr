@@ -81,7 +81,7 @@
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": "{\n  \"FunctionName\": \"Select\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"sql\",\n      \"Value\": \"SELECT * FROM docs WHERE Name=@Name\"\n    },\n    {\n      \"Type\": \"System.Collections.Generic.List`1[System.Object]\",\n      \"Name\": \"SqlParameters\",\n      \"Value\": [\n        {\n          \"ParameterName\": \"@Name\",\n          \"VariableNameOrValue\": \"%doc%\",\n          \"TypeFullName\": \"System.String\"\n        }\n      ]\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"selectOneRow_Top1OrLimit1\",\n      \"Value\": false\n    }\n  ],\n  \"ReturnValue\": [\n    {\n      \"Type\": \"dynamic\",\n      \"VariableName\": \"%docs%\"\n    }\n  ]\n}"
+    "RawResponse": null
   },
   "RunOnBuild": false
 }

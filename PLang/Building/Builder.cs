@@ -73,7 +73,7 @@ namespace PLang.Building
 				var handler = exceptionHandlerFactory.CreateHandler();
 				if (!await handler.Handle(ex, 500, "error", ex.Message))
 				{
-					await handler.ShowError(ex, 500, "error", ex.Message);
+					await handler.ShowError(ex, 500, "error", ex.Message, null);
 				}
 				
 			}

@@ -41,6 +41,7 @@ namespace PLang.Services.OutputStream
 			{
 				fullName = fullName.Substring(0, fullName.IndexOf("["));
 			}
+			SetColor(statusCode);
 			if (!content.StartsWith(fullName))
 			{
 				Console.WriteLine(content);
@@ -49,6 +50,7 @@ namespace PLang.Services.OutputStream
 			{
 				Console.WriteLine(JsonConvert.SerializeObject(obj, Formatting.Indented));
 			}
+			Console.ResetColor();
 
 		}
 
@@ -57,6 +59,33 @@ namespace PLang.Services.OutputStream
 			await Write(obj, type);
 		}
 
-		
+		private void SetColor(int statusCode)
+		{
+			if (statusCode >= 500)
+			{
+				Console.ForegroundColor = ConsoleColor.Red;
+				Console.BackgroundColor = ConsoleColor.Yellow;
+			}
+			else if (statusCode >= 400)
+			{
+				Console.ForegroundColor = ConsoleColor.Yellow;
+				Console.BackgroundColor = ConsoleColor.Red;
+			}
+			else if (statusCode >= 300)
+			{
+				Console.ForegroundColor = ConsoleColor.Magenta;
+			}
+			else if (statusCode >= 200)
+			{
+				Console.ResetColor();
+			}
+			else if (statusCode >= 100)
+			{
+				Console.ForegroundColor = ConsoleColor.Cyan;
+			} else
+			{
+				Console.ResetColor();
+			}
+		}
 	}
 }

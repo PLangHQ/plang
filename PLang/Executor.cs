@@ -113,7 +113,7 @@ namespace PLang
 
 		public void SetupDebug()
 		{
-			var eventsPath = Path.Join(fileSystem.GoalsPath, "Events");
+			var eventsPath = Path.Join(fileSystem.GoalsPath, "events");
 			var sendDebugPath = Path.Join(eventsPath, "SendDebug.goal");
 
 			Console.WriteLine("-- Debug mode");
@@ -121,9 +121,17 @@ namespace PLang
 			
 			if (fileSystem.File.Exists(sendDebugPath)) return;
 
-			if (!fileSystem.Directory.Exists(eventsPath))
+			if (!fileSystem.File.Exists(sendDebugPath))
 			{
-				fileSystem.Directory.CreateDirectory(eventsPath);
+				if (!fileSystem.Directory.Exists(eventsPath))
+				{
+					fileSystem.Directory.CreateDirectory(eventsPath);
+				} else
+				{
+					var logger = container.GetInstance<ILogger>();
+					logger.LogError("Installed debugger and may have overwritten your events/Events.goal file. Sorry about that :( Will fix in future.");
+				}
+
 				using (MemoryStream ms = new MemoryStream(InternalApps.Debugger))
 				using (ZipArchive archive = new ZipArchive(ms))
 				{

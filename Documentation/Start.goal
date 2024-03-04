@@ -11,9 +11,8 @@ LoadDocs
 GenerateDoc
 - set var Name=%item.Name%
 - read file %item.Guide%, into %content%
-- read file %item.System%, write to %system%
+- read file %item.System%, load vars, write to %system%
 - read file %item.OutputFilename%, write to %assistant%
-- [var] load variables into %system%
 - [llm] system:%system%
     assistant: '## previously generated doc ## 
                 %assistant%
