@@ -18,31 +18,27 @@ Here's how you can use the Plang service:
 If you have an OpenAI API key, you can use GPT4 to build your code. Here's how you can do it:
 
 1. First, you need to get an API key from [OpenAI](https://openai.com/).
-2. Next, download the OpenAI service into your project from [here](https://github.com/PLangHQ/services/tree/main/OpenAiService).
-
-    When you download the OpenAI module, there are 3 directories for each OS. 
-    - Windows: OpenAIService/win-x64
-    - Linux: OpenAIService/linux-x64
-    - Linux ARM: OpenAIService/linux-arm64
+2. Next, download the `OpenaAIService.dll` file from OpenAI service project from [here](https://github.com/PLangHQ/services/tree/main/OpenAiService).
 3. Create a folder named `.services` in your project.
+3. Create a folder named `OpenAIService` in the `.services` folder and put the `OpenaAIService.dll` into the `OpenAIService` folder
 4. In your `Start.goal` or `Events.goal` file, type in the following at the top:
 
-
-
-This example uses Windows version
+### Example
 
 ```plang
-@llm=OpenAIService/win-x64
+@llm=OpenAIService
 
 Start
-- write out 'hello world'
+- [llm] system: Say hello
+    write to %result%
+- write out %result%
 ```
 
 ## When to use `Start.goal` or `Events.goal`
-If you are using Events in Plang, then instead of putting in `Start.goal`, it needs to go into your `Events.goal` file:
+If you are using have `events` folder in Plang, then instead of putting it in `Start.goal`, it needs to go into your `Events.goal` file:
 
 ```plang
-@llm=OpenAIService/win-x64
+@llm=OpenAIService
 
 Events
 - before app start, call !DoStuff
@@ -50,10 +46,10 @@ Events
 
 This is because `Events.goal` file is built before the `Start.goal` file.
 
-The strict format of "@llm=OpenAIService/win-x64" allows the builder to parse it and load it before the LLM services starts doing request.
+The strict format of `@llm=OpenAIService/` allows the builder to parse it and load it before the LLM services starts doing request.
 
 ## Which is better?
 
 The Plang service uses GPT4 from OpenAI, so there is no difference in the results. We hope to provide you with a faster and much cheaper service in the future. 
 
-By using our service, you are supporting the project, its development, and hopefully enabling us to create a cheaper and more efficient language learning model (LLM).
+By using our service, you are supporting the project, its development, and hopefully enabling us to create a cheaper and more efficient language learning model (LLM) to build your code.

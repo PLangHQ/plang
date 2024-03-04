@@ -52,7 +52,7 @@ namespace PLang.Services.LlmService
 		{
 			Extractor = ExtractorFactory.GetExtractor(question, responseType);
 			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebug);
-			var cachedLlmQuestion = llmCaching.GetCachedQuestion(question);			
+			var cachedLlmQuestion = llmCaching.GetCachedQuestion(appId, question);			
 			if (!question.Reload && question.caching && cachedLlmQuestion != null)
 			{
 				try
@@ -77,6 +77,7 @@ namespace PLang.Services.LlmService
 			parameters.Add("presence_penalty", question.presencePenalty);
 			parameters.Add("type", question.type);
 			parameters.Add("maxLength", question.maxLength);
+			parameters.Add("responseType", question.llmResponseType);
 			var httpClient = new HttpClient();
 			var httpMethod = new HttpMethod("POST");
 			var request = new HttpRequestMessage(httpMethod, url + "/api/Llm");
@@ -105,7 +106,7 @@ namespace PLang.Services.LlmService
 				if (question.caching)
 				{
 					question.RawResponse = responseBody;
-					llmCaching.SetCachedQuestion(question);
+					llmCaching.SetCachedQuestion(appId, question);
 				}
 				return obj;
 			}

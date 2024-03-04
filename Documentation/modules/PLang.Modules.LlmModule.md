@@ -20,6 +20,8 @@ LLM
 
 In this example, we first set a prompt for the LLM. We then ask the LLM to generate content based on that prompt and store the result in a variable. Finally, we use an if statement to check if a joke was generated and call the appropriate function based on the result.
 
+## Supported AI
+You can [view the list of supported AI models](https://github.com/PLangHQ/plang/blob/main/Documentation/SupportedAI.md) that you can define in your code when using the Llm module.
 
 # LlmModule Documentation
 

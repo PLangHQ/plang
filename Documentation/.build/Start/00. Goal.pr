@@ -7,16 +7,23 @@
       "Comment": null,
       "ModuleType": "PLang.Modules.ConditionalModule",
       "Name": "CheckAndLoadDoc",
-      "Description": "This step checks if the variable 'doc' is not empty. If 'doc' is not empty, it proceeds to load the document and multiple documents.",
+      "Description": "Check if the variable 'doc' is not empty. If it is not empty, then load the document using the function 'LoadDoc' and 'LoadDocs'.",
       "PrFileName": "01. CheckAndLoadDoc.pr",
       "RelativePrPath": ".build\\Start\\01. CheckAndLoadDoc.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-27T13:39:30.1114306+00:00",
+      "Generated": "2024-03-04T14:35:27.8939345+00:00",
       "WaitForExecution": true,
-      "ErrorHandler": null,
-      "RetryHandler": null,
+      "ErrorHandler": {
+        "IgnoreErrors": false,
+        "OnExceptionContainingTextCallGoal": null,
+        "ContinueToNextStep": false
+      },
+      "RetryHandler": {
+        "RetryCount": 3,
+        "RetryDelayInMilliseconds": 50
+      },
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
@@ -37,7 +44,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -66,7 +73,7 @@
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"CheckAndLoadDoc\",\n  \"StepDescription\": \"This step checks if the variable 'doc' is not empty. If 'doc' is not empty, it proceeds to load the document and multiple documents.\",\n  \"Modules\": [\n    \"PLang.Modules.ConditionalModule\",\n    \"PLang.Modules.FileModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": "{\r\n  \"StepName\": \"CheckAndLoadDoc\",\r\n  \"StepDescription\": \"Check if the variable 'doc' is not empty. If it is not empty, then load the document using the function 'LoadDoc' and 'LoadDocs'.\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.ConditionalModule\",\r\n    \"PLang.Modules.LocalOrGlobalVariableModule\"\r\n  ],\r\n  \"WaitForExecution\": true,\r\n  \"ErrorHandler\": {\r\n    \"IgnoreErrors\": false,\r\n    \"ContinueToNextStep\": false\r\n  },\r\n  \"RetryHandler\": {\r\n    \"RetryCount\": 3,\r\n    \"RetryDelayInMilliseconds\": 50\r\n  }\r\n}"
       }
     },
     {
@@ -148,5 +155,5 @@
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "76305c4612e4bcd5664bc0cf5ef3d364a0c7c65aa846f190a988b7bfddf7b202"
+  "Hash": "2c9d144ba32b9b8896359bd081e7873f2b6a1bd9426dc5173564b376ac38fafd"
 }

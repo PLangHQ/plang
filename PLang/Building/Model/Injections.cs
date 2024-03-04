@@ -16,7 +16,7 @@ namespace PLang.Building.Model
 			EnvironmentVariable = environmentVariable;
 			EnvironmentVariableValue = environmentVariableValue;
 		}
-	
+		public bool AtSignInjection = false;
 
 		public string Type { get; set; }
 		public string Path { get; set; }

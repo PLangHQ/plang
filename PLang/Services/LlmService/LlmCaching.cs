@@ -51,33 +51,33 @@ namespace PLang.Services.LlmService
 			return question.type + JsonConvert.SerializeObject(question.promptMessage).ComputeHash() + question.model + question.maxLength + question.top_p + question.frequencyPenalty + question.presencePenalty + question.temperature;
 		}
 
-		public LlmRequest? GetCachedQuestion(LlmRequest question)
+		public LlmRequest? GetCachedQuestion(string appId, LlmRequest question)
 		{
 			var hash = GetStringToHash(question).ComputeHash();
 
-			return GetLlmRequestCache(hash);
+			return GetLlmRequestCache(appId, hash);
 
 		}
-		public string GetSharedDataSourcePath
+		public string GetSharedDataSourcePath(string? appId)
 		{
-			get
-			{
-				string dataSourcePath = Path.Join(fileSystem.SharedPath, settings.AppId, ".db", "system.sqlite");
+			appId = appId ?? settings.AppId;
+			string dataSourcePath = Path.Join(fileSystem.SharedPath, appId, ".db", "system.sqlite");
 				
-				string dataSource = $"Data Source={dataSourcePath};";
-				return dataSource;
-			}
+			string dataSource = $"Data Source={dataSourcePath};";
+			return dataSource;
+			
 		}
-		public void SetCachedQuestion(LlmRequest question)
+		public void SetCachedQuestion(string appId, LlmRequest question)
 		{
 			var hash = GetStringToHash(question).ComputeHash();
-			SetLlmRequestCache(hash, question);
+			SetLlmRequestCache(appId, hash, question);
 		}
 
-		public LlmRequest? GetLlmRequestCache(string hash)
+		public LlmRequest? GetLlmRequestCache(string appId, string hash)
 		{
-			CreateLlmCacheTable(GetSharedDataSourcePath);
-			using (IDbConnection connection = new SqliteConnection(GetSharedDataSourcePath))
+			var shareDataSourcePath = GetSharedDataSourcePath(appId);
+			CreateLlmCacheTable(shareDataSourcePath);
+			using (IDbConnection connection = new SqliteConnection(shareDataSourcePath))
 			{
 				var cache = connection.QueryFirstOrDefault<dynamic>("SELECT * FROM LlmCache WHERE Hash=@hash", new { hash });
 				if (cache == null) return null;
@@ -86,10 +86,11 @@ namespace PLang.Services.LlmService
 				return JsonConvert.DeserializeObject<LlmRequest>(cache.LlmQuestion);
 			}
 		}
-		public void SetLlmRequestCache(string hash, LlmRequest llmQuestion)
+		public void SetLlmRequestCache(string appId, string hash, LlmRequest llmQuestion)
 		{
-			CreateLlmCacheTable(GetSharedDataSourcePath);
-			using (IDbConnection connection = new SqliteConnection(GetSharedDataSourcePath))
+			var shareDataSourcePath = GetSharedDataSourcePath(appId);
+			CreateLlmCacheTable(shareDataSourcePath);
+			using (IDbConnection connection = new SqliteConnection(shareDataSourcePath))
 			{
 				var cache = connection.QueryFirstOrDefault<dynamic>("SELECT * FROM LlmCache WHERE Hash=@hash", new { hash });
 				if (cache != null) return;

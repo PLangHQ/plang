@@ -57,7 +57,10 @@ namespace PLang.Utils.Extractors
 			{
 				requiredResponse = extractor.GetRequiredResponse(responseType);
 			}
-			systemMessage.Content.Add(new LlmContent(requiredResponse));
+			if (!string.IsNullOrEmpty(requiredResponse))
+			{
+				systemMessage.Content.Add(new LlmContent(requiredResponse));
+			}
 			return extractor;
 		}
 	}

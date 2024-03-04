@@ -92,7 +92,7 @@ namespace PLang.Building
 
 		private void LoadInjections(Goal goal)
 		{
-			goal.Injections.Clear();
+			goal.Injections.RemoveAll(p => !p.AtSignInjection);
 
 			var injectionSteps = goal.GoalSteps.Where(p => p.ModuleType == "PLang.Modules.InjectModule");
 			foreach (var injection in injectionSteps)

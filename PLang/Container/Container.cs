@@ -525,7 +525,7 @@ namespace PLang.Container
 			}
 			if (container.CanGetInstance(interfaceType, implementationType.FullName)) return;
 
-			logger.LogDebug($"Loading '{injectorType}': interface:{injectorType} | type is:{implementationType} | reservedKeyword:{reservedKeyword} | isGlobalForApp:{isGlobalForApp}");
+			logger.LogDebug($"Loading '{injectorType}' in type of {implementationType}");
 
 			container.Register(interfaceType, implementationType, implementationType.FullName);
 
@@ -537,6 +537,7 @@ namespace PLang.Container
 
 			if (isGlobalForApp)
 			{
+				context.AddOrReplace(reservedKeyword, implementationType.FullName);
 				injectedTypes.AddOrReplace(interfaceType, new InjectedType(injectorType, interfaceType, implementationType));
 				AppContext.SetData(reservedKeyword, implementationType.FullName);
 			}
