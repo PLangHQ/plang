@@ -157,10 +157,10 @@ TestList
 - write out %todos%
 ```
 
-- Press F5 in VS Code, in the prompt window type in `GetList` and press enter
+- Press F5 in VS Code, in the prompt window type in `TestList` and press enter
 - or if you prefer terminal
     ```bash
-    plang exec test/GetList
+    plang exec test/TestList 
     ```
 
 ## [Next, add LLM to this todo app >](./Todo_Llm.md)

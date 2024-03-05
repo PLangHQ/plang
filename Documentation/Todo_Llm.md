@@ -83,7 +83,7 @@ Lets modify our `TestNewTask.goal` file (just change the task text)
 
     ```plang
     TestNewTask
-    - post http://localhost:8080/api/newtask
+    - post http://localhost:8080/api/NewTask
         {
             "task":"Buy some Lego",
             "due_date": "%Now+2days%"

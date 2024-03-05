@@ -73,7 +73,6 @@ The app is now ready to run.
 
     For Linux and MacOS, sorry, we don't support you at the moment
 
-
-Enjoy your new Todo Window App!
-
-Check out some more [Examples](https://github.com/PLangHQ/plang/tree/main/Tests) or other [Apps written by others](https://github.com/PLangHQ/apps) to start learning. It is all open source and you can view all the code.
+# Next tutorial
+- If you haven't looked at it, checkout how you can [rethink how you design](./todo_new_approch.md) your apps
+- Check out some more [Examples](https://github.com/PLangHQ/plang/tree/main/Tests) or other [Apps written by others](https://github.com/PLangHQ/apps) to start learning. It is all open source and you can view all the code.

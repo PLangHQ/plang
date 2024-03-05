@@ -72,7 +72,6 @@ namespace PLang
 				list.Remove("exec");
 				args = list.ToArray();
 
-				watch = true;
 				build = true;
 				run = true;
 			}
