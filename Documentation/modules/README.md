@@ -6,6 +6,8 @@ Here, you'll find concise descriptions of each module's core functions along wit
 
 Explore the possibilities and leverage these examples as a foundation for your PLang projects.
 
+You can also create your own [custom module](https://github.com/PLangHQ/modules)
+
 ## Table of Contents
 
 1. [Http](#http) - Conduct web communications and handle HTTP requests seamlessly.

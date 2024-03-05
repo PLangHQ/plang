@@ -12,3 +12,6 @@ By default plang will build it using html/javascript/css and using the bootstrap
 
 events folder contains [events that should run](./Events.md) in the application.
 
+.modules folder contains .dll's that you want to include in you build process. This allows you to extend plang to new features.[More information](./modules/README.md)
+
+.services folder allows you to overwrite the base functionality of plang language. If you want to change the LLM used, the caching, database, etc. you use the .services folder, drop in the .dll and inject it into you code. [More information](./Services.md)

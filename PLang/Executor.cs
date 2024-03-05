@@ -1,6 +1,7 @@
 ﻿using LightInject;
 using Microsoft.Extensions.Logging;
 using PLang.Building;
+using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Exceptions.Handlers;
@@ -11,6 +12,7 @@ using PLang.SafeFileSystem;
 using PLang.Utils;
 using System.Diagnostics;
 using System.IO.Compression;
+using System.Reflection;
 
 namespace PLang
 {
@@ -39,6 +41,14 @@ namespace PLang
 
 		public async Task Execute(string[] args)
 		{
+			var version = args.FirstOrDefault(p => p == "--version") != null;
+			if (version)
+			{
+				var assembly = Assembly.GetAssembly(this.GetType());
+
+				Console.WriteLine("PLang version: " + assembly.GetName().Version.ToString());
+				return;
+			}
 			if (args.Length == 0) args = new string[1] { "run" };
 			if (args.FirstOrDefault(p => p == "run") == null && args.FirstOrDefault(p => p == "build") == null) args = args.Append("run").ToArray();
 

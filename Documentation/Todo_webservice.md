@@ -117,7 +117,7 @@ Then, execute the `TestNewTask.goal` file:
 - or if you prefer terminal
 
     ```bash
-    plang exec TestNewTask
+    plang exec test/TestNewTask
     ```
 
 You should receive the `id` of the new task in the response.

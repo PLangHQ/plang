@@ -25,6 +25,17 @@ To install Plang on your Windows machine, follow these steps:
   - In the Edit Environment Variable window, click 'New' and add `C:\plang\` (or where you put it).
   - Click 'OK' to close each window.
 
+### Validate installation
+Validate the installation by opening up the cmd and type in 
+
+```bash
+plang --version
+```
+
+It should print out 
+```
+PLang version: x.x.x.x
+```
 ## Installing Plang on Linux
 
 For Linux users, the installation process is as follows:
@@ -43,6 +54,20 @@ export PATH=$PATH:/opt/plang/
   - Save the file and close the text editor.
   - Apply the changes by running `source ~/.bashrc` or `source ~/.zshrc`, depending on your shell.
 
+### Validate installation
+Validate the installation by opening up the terminal and type in 
+
+```bash
+plang --version
+```
+
+It should print out 
+```
+PLang version: x.x.x.x
+```
+
+
+
 ## Installing Plang on MacOS
 
 To install Plang on MacOS, please follow these instructions:
@@ -60,6 +85,18 @@ export PATH=$PATH:/usr/local/plang/
 
   - Save the changes and close the text editor.
   - To make the changes take effect, run `source ~/.bash_profile` or `source ~/.zshrc`.
+
+### Validate installation
+Validate the installation by opening up the terminal and type in 
+
+```bash
+plang --version
+```
+
+It should print out 
+```
+PLang version: x.x.x.x
+```
 
 ## Next Steps
 
