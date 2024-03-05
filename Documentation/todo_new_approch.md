@@ -4,6 +4,16 @@
 
 In the pursuit of creating a more intuitive and natural todo application, we are adopting a methodology that mirrors the simplicity of jotting down tasks on a piece of paper. This document will guide you through the process of setting up a system that can interpret and organize text-based task inputs into a structured todo list.
 
+## What will be covered
+In this tutorial we will cover the basics for working with plang. This includes.
+
+- Rethink how we make apps
+    - Computers adapt to user, not vice versa
+    - Keep the structured data
+- Read file from disk
+- For statements
+
+
 ## Setting Up the System Configuration
 
 ### Step 1: Create the Configuration Folder and File

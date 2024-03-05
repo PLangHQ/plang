@@ -9,6 +9,13 @@ Before you begin, make sure you're familiar with the concept of `%Identity%` by 
 - Understanding of `%Identity%` ([Identity](./Identity.md))
 - Completion of [previous tutorials](./Todo_webservice.md)
 
+## What will be covered
+In this tutorial we will cover the basics for working with plang. This includes.
+
+- Use %Identity% - no more passwords :)
+- Events
+
+
 ## Step-by-Step Integration
 
 ### Step 1: Modify `Setup.goal`

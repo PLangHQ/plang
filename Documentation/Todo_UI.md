@@ -6,6 +6,12 @@ For a more detailed walkthrough, you can watch this step-by-step video tutorial:
 
 > **Warning:** As of version 0.1, the window app only runs on Windows. Future versions are planned to support all platforms (desktop, mobile, tablets, TV, etc.). Please note that the window app is currently in early Alpha stage and serves more as a proof of concept than a fully functional application.
 
+## What will be covered
+In this tutorial we will cover the basics for working with plang. This includes.
+
+- Start window app
+- How to make layout
+
 ## Steps
 
 ### 1. Modify Start.goal

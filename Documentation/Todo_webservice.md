@@ -11,6 +11,20 @@ You can also watch it in [this video](https://www.youtube.com/watch?v=abew4btk34
 - Plang installed & IDE setup [installed on your system](Install.md)
 - Optional: A REST client for testing the API endpoints
 
+## What will be covered
+In this tutorial we will cover the basics for working with plang. This includes.
+
+- Database tables
+- Start web server
+- Goals (functions) / Variables / Date & time
+- Handle web request
+- Validation
+- Error handling
+- Insert into database
+- Respond to web request
+- Testing
+
+
 ## Steps
 
 ### 1. Create a Project Directory

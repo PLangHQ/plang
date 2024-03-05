@@ -6,6 +6,15 @@ This guide will walk you through the process of enhancing a Todo web service by 
 
 What we we want is to categorize the tasks in the todo list. Since we have the power of LLM in the language, lets use it to categories the task for us. Saving us the very precious time of selecting a category.
 
+## What will be covered
+In this tutorial we will cover the basics for working with plang. This includes.
+
+- Modify database
+- Use LLM
+- Run and forget
+- Update database record
+
+
 ## 1. Update `Setup.goal`
 
 Let's add a new column to your `Todos` table, you need to modify the `Setup.goal` file. 
