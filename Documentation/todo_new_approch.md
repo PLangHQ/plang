@@ -14,16 +14,16 @@ In this tutorial we will cover the basics for working with plang. This includes.
 - For statements
 
 
-## Setting Up the System Configuration
+## Setting Up the System command
 
-### Step 1: Create the Configuration Folder and File
+### Step 1: Create the Folder and File
 
 - Navigate to the `api` directory and create a new subdirectory named `llm`.
 - Within the `llm` directory, create a file named `system.txt`.
 
 ### Step 2: Define System Commands
 
-- Open the `system.txt` file and insert the following configuration:
+- Open the `system.txt` file and insert the following text:
 
 ```txt
 User will provide you with a text of tasks. 
@@ -48,7 +48,7 @@ category: categorize the user input by 3 categories, 'Work', 'Home', 'Hobby'
 
 ```plang
 NewLlmTask
-- read file llm/system.txt, write to %system%, load vars
+- read file llm/system.txt, write to %system%, load variable
 - [llm] system:%system%
         user: %request.tasks%
         scheme:[{task:string, due_date:date, category:string}]

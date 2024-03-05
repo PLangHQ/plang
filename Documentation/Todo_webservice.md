@@ -2,9 +2,6 @@
 
 This guide will walk you through the process of creating a Todo web service using the Plang programming language. 
 
-![Todo Webservice](https://img.youtube.com/vi/oE3NC4zmRA4/0.jpg)
-
-You can also watch it in [this video](https://www.youtube.com/watch?v=abew4btk34). There might be some insights that are not in the written guide.
 
 ## Prerequisites
 
