@@ -3,7 +3,7 @@
     "FunctionName": "RunWindowApp",
     "Parameters": [
       {
-        "Type": "string",
+        "Type": "String",
         "Name": "goalName",
         "Value": "!App"
       },
@@ -23,12 +23,12 @@
         "Value": 450
       },
       {
-        "Type": "string",
+        "Type": "String",
         "Name": "iconPath",
         "Value": null
       },
       {
-        "Type": "string",
+        "Type": "String",
         "Name": "windowTitle",
         "Value": "plang"
       }
@@ -52,13 +52,11 @@
         "content": [
           {
             "type": "text",
-            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\nVariables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue: Only if the function returns a value AND if user defines %variable% to write into. If no %variable% is defined then set as null.",
-            "image_url": null
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\nVariables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
           },
           {
             "type": "text",
-            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
-            "image_url": null
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
           }
         ]
       },
@@ -67,8 +65,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nString RunWindowApp(String goalName, Dictionary`2<String, Object>? parameters, Int32? width = 800, Int32? height = 450, String? iconPath, String? windowTitle = \"plang\")  // goalName is required. It is one word. Example: call !NameOfGoal, run !Google.Search. Do not use the names in your response unless defined by user.\r\n## functions available ends ##",
-            "image_url": null
+            "text": "## functions available starts ##\r\nString RunWindowApp(String goalName, Dictionary`2<String, Object>? parameters, Int32? width = 800, Int32? height = 450, String? iconPath, String? windowTitle = \"plang\")  // goalName is required. It is one word. Example: call !NameOfGoal, run !Google.Search. Do not use the names in your response unless defined by user.\r\n## functions available ends ##"
           }
         ]
       },
@@ -77,15 +74,14 @@
         "content": [
           {
             "type": "text",
-            "text": "start window app, call !App",
-            "image_url": null
+            "text": "start window app, call !App"
           }
         ]
       }
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": "{\r\n  \"FunctionName\": \"RunWindowApp\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"goalName\",\r\n      \"Value\": \"!App\"\r\n    },\r\n    {\r\n      \"Type\": \"Dictionary`2<String, Object>\",\r\n      \"Name\": \"parameters\",\r\n      \"Value\": null\r\n    },\r\n    {\r\n      \"Type\": \"Int32\",\r\n      \"Name\": \"width\",\r\n      \"Value\": 800\r\n    },\r\n    {\r\n      \"Type\": \"Int32\",\r\n      \"Name\": \"height\",\r\n      \"Value\": 450\r\n    },\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"iconPath\",\r\n      \"Value\": null\r\n    },\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"windowTitle\",\r\n      \"Value\": \"plang\"\r\n    }\r\n  ],\r\n  \"ReturnValue\": null\r\n}"
+    "RawResponse": "{\n  \"FunctionName\": \"RunWindowApp\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"goalName\",\n      \"Value\": \"!App\"\n    },\n    {\n      \"Type\": \"Dictionary`2<String, Object>\",\n      \"Name\": \"parameters\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"Int32\",\n      \"Name\": \"width\",\n      \"Value\": 800\n    },\n    {\n      \"Type\": \"Int32\",\n      \"Name\": \"height\",\n      \"Value\": 450\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"iconPath\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"windowTitle\",\n      \"Value\": \"plang\"\n    }\n  ],\n  \"ReturnValue\": null\n}"
   },
   "RunOnBuild": false
 }

@@ -16,7 +16,7 @@ In this tutorial we will cover the basics for working with plang. This includes.
 
 ### 1. Modify Start.goal
 
-> Cost estimated: $0.124
+> Cost estimated: $0.14
 
 Change the `Start.goal` file as follows:
 
@@ -32,7 +32,7 @@ Create a new folder named `ui`.
 
 ### 3. Create Todos.goal
 
-> Cost estimated: $0.359
+> Cost estimated: $0.45
 
 In the `ui` folder, create a new file named `Todos.goal` with the following content:
 

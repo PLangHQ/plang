@@ -21,11 +21,10 @@ Let's add a new column to your `Todos` table, you need to modify the `Setup.goal
 
 Add the following line into `Setup.goal`
 
-> Cost estimate $0.182
+> Cost estimate $0.20
 
-```plang
-- add column 'category' to tbl 'Todos'
-```
+
+
 
 The `Setup.goal` file will look like this
 
@@ -46,7 +45,7 @@ plang exec Setup
 
 ## 2. Modify `NewTask.goal`
 
-> Cost estimated: $0.55
+> Cost estimated: $0.51
 
 To categorize tasks automatically using LLM, you'll need to adjust the `NewTask.goal` file. 
 
@@ -75,7 +74,7 @@ Categorize
 
 ### Test the API Endpoints
 
-> Cost estimated: $0.153
+> Cost estimated: $0.18
 
 Lets modify our `TestNewTask.goal` file (just change the task text)
 

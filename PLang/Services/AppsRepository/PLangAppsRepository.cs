@@ -36,7 +36,7 @@ namespace PLang.Services.AppsRepository
 
 					if (fileSystem.File.Exists(zipPath))
 					{
-						ZipFile.ExtractToDirectory(zipPath, Path.Join(fileSystem.RootDirectory, "apps", appName), true);
+						ZipFile.ExtractToDirectory(zipPath, Path.Join(fileSystem.RootDirectory, "apps"), true);
 						prParser.ForceLoadAllGoals();
 					}
 

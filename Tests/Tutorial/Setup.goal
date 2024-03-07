@@ -1,5 +1,0 @@
-Setup
-- create table Todos 
-    columns:    task(string, not null), due_date(datetime, not null), 
-                completed(bool, false), created(datetime, now)
-- add column 'category' to tbl 'Todos'

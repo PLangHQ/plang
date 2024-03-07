@@ -1,0 +1,15 @@
+Environment
+- set culture to is-is
+- write out %Now%
+- set culture to en-US
+- write out %Now%
+- get environment variable 'PATH', write to %path%
+- write out %path%
+- get machine name, write to %machineName%
+- get environment username, write to %userName%
+- get processId, write to %processId%
+- is application running in debug mode, write to %debugMode%
+- is application running in cshart debug mode, write to %csharpDebugMode%
+- write out 'machineName:%machineName% | username:%userName% | processId: %processId% | isDebug:%debugMode% | csharpDebug:%csharpDebugMode%'
+- get all settings in environment, %settings%
+- write out %settings%

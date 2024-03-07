@@ -20,7 +20,7 @@ namespace PLangTests.Modules.CallGoalModule
 			base.Initialize();
 			var goal = new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() };
 			
-			p = new Program(pseudoRuntime, engine);
+			p = new Program(pseudoRuntime, engine, appsRepository, prParser);
 			p.Init(container, goal, null, null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, null, null);
 		}
 

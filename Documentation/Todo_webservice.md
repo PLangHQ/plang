@@ -45,7 +45,7 @@ Note: Plang will automatically create and manage an `id` column for the table. B
 
 ### 3. Build and Run `Setup.goal`
 
-> Cost estimate: $0.189
+> Cost estimate: $0.23
 
 Execute the `Setup.goal` file to create the `Todos` table in the database.
 
@@ -91,7 +91,7 @@ Note: if you are familiar with SQL, you could also write `select * from Todos`, 
 
 ### 8. Build and Run the Code 
 
-> Cost estimate: $0.941
+> Cost estimate: $1.10
 
 If you are using VS Code, then press F5 on your keyboard to build and run the code.
 
@@ -105,7 +105,7 @@ This will start a web server with the logic you've defined.
 
 ### 9. Test the API Endpoints
 
-> Cost estimate: $0.28
+> Cost estimate: $0.47
 
 Lets create some data in your Todo list.
 

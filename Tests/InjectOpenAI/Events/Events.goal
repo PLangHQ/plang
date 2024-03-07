@@ -1,6 +1,6 @@
 / You might have to modify the path depending on your operating system
 / point to the directory located in .services folder, not the dll
-@llm=OpenAIService/win-x64/
+@llm=OpenAIService
 
 Events
 - Before each goal, call !DoStuff

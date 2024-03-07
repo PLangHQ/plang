@@ -14,6 +14,8 @@ Plang integrates with a variety of OpenAI models, providing developers with the 
 | gpt-4-1106-vision-preview  | $0.02       | $0.06        |
 | gpt-4-vision-preview       | $0.02       | $0.06        |
 | gpt-4-0125-preview         | $0.02       | $0.06        |
+| claude-3                   | supported soon             |
+| gemini                     | supported soon             |
 
 ## Utilizing AI Models in Plang
 

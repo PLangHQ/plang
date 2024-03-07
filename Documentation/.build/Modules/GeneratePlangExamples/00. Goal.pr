@@ -3,17 +3,17 @@
   "Comment": null,
   "GoalSteps": [
     {
-      "Text": "get all *.goal files from '../Tests/%module.moduleName%/, write to %testFiles%",
+      "Text": "get all *.goal files from ../Tests/%module.moduleName%/, write to %testFiles%",
       "Comment": null,
       "ModuleType": "PLang.Modules.FileModule",
       "Name": "GetGoalFiles",
-      "Description": "Retrieve all files with the extension '.goal' from the directory '../Tests/%module.moduleName%/' and store the list of these files in the variable '%testFiles%'.",
+      "Description": "Retrieve all files with the extension '.goal' from the directory '../Tests/%module.moduleName%/' and store the list of files in the variable '%testFiles%'.",
       "PrFileName": "01. GetGoalFiles.pr",
       "RelativePrPath": ".build\\Modules\\GeneratePlangExamples\\01. GetGoalFiles.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-27T14:46:40.744381+01:00",
+      "Generated": "2024-03-07T09:52:15.3184796+01:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -37,7 +37,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -59,14 +59,14 @@
             "content": [
               {
                 "type": "text",
-                "text": "get all *.goal files from '../Tests/%module.moduleName%/, write to %testFiles%"
+                "text": "get all *.goal files from ../Tests/%module.moduleName%/, write to %testFiles%"
               }
             ]
           }
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"GetGoalFiles\",\n  \"StepDescription\": \"Retrieve all files with the extension '.goal' from the directory '../Tests/%module.moduleName%/' and store the list of these files in the variable '%testFiles%'.\",\n  \"Modules\": [\n    \"PLang.Modules.FileModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": "{\n  \"StepName\": \"GetGoalFiles\",\n  \"StepDescription\": \"Retrieve all files with the extension '.goal' from the directory '../Tests/%module.moduleName%/' and store the list of files in the variable '%testFiles%'.\",\n  \"Modules\": [\n    \"PLang.Modules.FileModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     },
     {
@@ -416,5 +416,5 @@
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "8f40f30b372904266daa7aebc22d78e79a83b0a1b3055595b5969428db3754ad"
+  "Hash": "1ea8d272987231cd1fb895480d19fbee7801a4f04a305a8acda259873f55fd58"
 }

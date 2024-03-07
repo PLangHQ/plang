@@ -105,7 +105,7 @@ namespace PLang.Building.Parsers
 					step.Comment = uncertainComment ?? stepComment;
 					step.Execute = step.Indent == 0;
 					step.Goal = currentGoal;
-					step.LineNumber = i;
+					step.LineNumber = (i+1);
 					step.Number = stepNr++;
 
 					currentGoal?.GoalSteps.Add(step);

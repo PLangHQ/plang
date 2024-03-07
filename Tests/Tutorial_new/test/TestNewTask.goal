@@ -1,8 +1,0 @@
-TestNewTask
-- post http://localhost:9090/api/newtask
-    {
-        "task":"Buy some Lego",
-        "due_date": "%Now+2days%"
-    }
-    write to %result%
-- write out %result%

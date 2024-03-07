@@ -100,10 +100,13 @@ namespace PLang.Modules.MessageModule
 					var eve = JsonConvert.DeserializeObject<NostrEventResponse>(message.Text);
 					if (eve == null || eve.Event == null) return;
 
-					string? fromAddress = onlyMessageFromSenders.FirstOrDefault(p => p == eve.Event.Pubkey);
-					if (fromAddress == null)
+					if (onlyMessageFromSenders != null && onlyMessageFromSenders.Length > 0)
 					{
-						return;
+						string? fromAddress = onlyMessageFromSenders.FirstOrDefault(p => p == eve.Event.Pubkey);
+						if (fromAddress == null)
+						{
+							return;
+						}
 					}
 
 					var key = GetCurrentKey();

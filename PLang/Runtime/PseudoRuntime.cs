@@ -41,7 +41,8 @@ namespace PLang.Runtime
 
 			Goal? goal = null;
 			ServiceContainer? container = null;
-			
+			goalName = goalName.Replace("!", "");
+
 			string absolutePathToGoal = Path.Join(fileSystem.RootDirectory, appPath, goalName).AdjustPathToOs();
 			if (CreateNewContainer(absolutePathToGoal))
 			{
@@ -181,6 +182,8 @@ namespace PLang.Runtime
 			string appsFolder = Path.Join(fileSystem.RootDirectory, "apps");
 			return absoluteGoalPath.StartsWith(servicesFolder) || absoluteGoalPath.StartsWith(modulesFolder) || absoluteGoalPath.StartsWith(appsFolder);
 		}
+
+
 
 
 	}

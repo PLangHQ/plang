@@ -149,6 +149,7 @@ namespace PLang.Modules
 			catch (FileAccessException) { throw; }
 			catch (AskUserException) { throw; }
 			catch (RuntimeUserStepException) { throw; }
+			catch (RuntimeStepException) { throw; }
 			catch (RuntimeProgramException) { throw; }
 			catch (RuntimeGoalEndException) { throw; }
 			catch (RunGoalException) { throw; }

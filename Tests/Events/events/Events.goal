@@ -1,0 +1,7 @@
+Events
+- before each step, include private goals,call !BeforeStep
+- after each step, include private goals,call !AfterStep
+- before each goal, call !BeforeGoal
+- after each goal, call !AfterGoal
+- on app start, call !AppStart
+- on app end call !AppEnd

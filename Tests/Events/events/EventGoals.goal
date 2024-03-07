@@ -1,0 +1,17 @@
+BeforeStep
+- write out 'Before Step'
+
+AfterStep
+- write out 'After step'
+
+BeforeGoal
+- write out 'Before goal'
+
+AfterGoal 
+- write out 'AfterGoal'
+
+AppStart
+- write out 'AppStart'
+
+AppEnd
+- write out 'AppEnd'

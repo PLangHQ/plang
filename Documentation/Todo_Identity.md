@@ -20,6 +20,8 @@ In this tutorial we will cover the basics for working with plang. This includes.
 
 ### Step 1: Modify `Setup.goal`
 
+> Cost estimated: $0.20
+
 First, you'll need to add an 'Identity' column to your 'Todos' table. Update your `Setup.goal` file with the following step:
 
 ```plang
@@ -39,6 +41,8 @@ plang exec Setup
 
 
 ### Step 2: Ensure `%Identity%` is not empty
+
+> Estimated cost: $1.07
 
 Create an `events` folder at the root of your Todos project and add a file named `Events.goal` with the following content:
 
@@ -71,7 +75,7 @@ Categorize
 - [llm]: system: categories the user input by 3 categories, 'Work', "home", 'hobby'
     user: %request.task%
     scheme: {category:string}
-- update table tasks, set %category% where %id%
+- update table todos, set %category% where %id%
 ```
 
 ### Step 4: Adjust `List.goal`
