@@ -4,5 +4,5 @@ While creating plang I have written down the process, the ideas & vision, the po
 
 I've called it [Programming 3.0 - Theory](https://docs.google.com/document/d/1ZEEq2WyXJlm9vLSxoA7iI_jJ0FKtNOmw2RtfrBh447E/edit?usp=sharing)
 
-It is a live document and might change over time. A pdf version that is fixed is in this repo.
+It is a live document and might change over time. A [pdf version](../Plang%20Paper.pdf) that is fixed is in this repo.
 

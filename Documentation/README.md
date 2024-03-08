@@ -73,12 +73,12 @@ Explore plang's features and capabilities:
     - **[Help create PLang](./PLangDevelopment.md)**: Information on how to help with development of plang programming language.
 - **Examples of actual apps**
     - List of apps at https://github.com/PLangHQ/apps
-    - We build this doc with plang
-        - https://github.com/PLangHQ/plang/blob/main/Documentation/Setup.goal
-        - https://github.com/PLangHQ/plang/blob/main/Documentation/Start.goal
-        - https://github.com/PLangHQ/plang/blob/main/Documentation/Modules.goal
-    - We build plang.is website using plang
-        - https://github.com/PLangHQ/plang.is/blob/main/Start.goal
+    - **Doc builder** - This doc is built with plang
+        - [Setup](https://github.com/PLangHQ/plang/blob/main/Documentation/Setup.goal)
+        - [Start](https://github.com/PLangHQ/plang/blob/main/Documentation/Start.goal)
+        - [Modules](https://github.com/PLangHQ/plang/blob/main/Documentation/Modules.goal)
+    - **Static content generator** - plang.is website is built using plang
+        - [Start](https://github.com/PLangHQ/plang.is/blob/main/Start.goal)
 
 ## Features
 
@@ -102,7 +102,7 @@ Plang comes with a wide range of features including:
 
 ## Paper
 
-You can read the ["paper" I wrote](paper/README.md) while developing plang. 
+You can read the ["paper" I wrote](./paper/README.md) while developing plang. 
 It goes into detail about the language and thoughts.
 
 ## Contributing
@@ -116,7 +116,7 @@ At version 0.1.
 ## Authors and Acknowledgment
 
 - Creator: [@ingig](https://twitter.com/ingig)
-- Contributors: [See the list of contributors](contributors.md)
+- Contributors: [See the list of contributors](./contributors.md)
 
 Special thanks to everyone who has developed an open source project that plang uses. ❤️
 
