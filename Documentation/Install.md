@@ -14,7 +14,7 @@ Welcome to the installation guide for the Plang programming language. This guide
 To install Plang on Windows, follow these steps:
 
 1. Visit the Plang releases page on GitHub at [https://github.com/PLangHQ/plang/releases](https://github.com/PLangHQ/plang/releases).
-2. Download the latest release zip file for Windows.
+2. Download the latest release zip file for Windows, plang-windows.zip
 3. Unzip the file to your preferred location, such as `C:\plang\`.
 
 ### Adding Plang to PATH
@@ -41,7 +41,7 @@ You should see the version of Plang displayed, confirming the installation.
 
 For Linux users, follow these steps:
 
-1. Navigate to [https://github.com/PLangHQ/plang/releases](https://github.com/PLangHQ/plang/releases) and download the latest release zip file for Linux.
+1. Navigate to [https://github.com/PLangHQ/plang/releases](https://github.com/PLangHQ/plang/releases) and download the latest release zip file for Linux, plang-linux-x64.zip or plang-linux-arm64.zip for ARM
 2. Extract the zip file to a directory such as `/usr/local/plang/`.
 
 ### Setting Permissions
@@ -79,7 +79,7 @@ You should see the version of Plang displayed, confirming the installation.
 
 To install Plang on MacOS, the steps are similar to Linux:
 
-1. Go to [https://github.com/PLangHQ/plang/releases](https://github.com/PLangHQ/plang/releases) and download the latest release zip file for MacOS.
+1. Go to [https://github.com/PLangHQ/plang/releases](https://github.com/PLangHQ/plang/releases) and download the latest release zip file for MacOS, plang-osx.zip
 2. Unzip the file to a location such as `/usr/local/plang/`.
 
 ### Adding Plang to PATH

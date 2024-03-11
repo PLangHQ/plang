@@ -36,7 +36,7 @@ $ plang exec
 
 ## Installation
 
-Set up Plang on your system. Download Plang from [the download page](http://plang.is/download) and follow our [Installation Guide](./Install.md).
+Set up Plang on your system. Download Plang from [the download page](https://github.com/PLangHQ/plang/releases) and follow our [Installation Guide](./Install.md).
 
 ## Getting Started
 
