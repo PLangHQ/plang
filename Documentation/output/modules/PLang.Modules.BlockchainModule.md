@@ -161,11 +161,11 @@ For a full list of examples, visit [PLang Blockchain Examples](https://github.co
 ## Step options
 Each step in plang can be enhanced with various options for better control and error handling. Click on the links below for more details on how to use each option:
 
-- [CacheHandler](/moduels/cacheHandler.md)
-- [ErrorHandler](/moduels/ErrorHandler.md)
-- [RetryHandler](/moduels/RetryHandler.md)
-- [CancelationHandler](/moduels/CancelationHandler.md)
-- [Run and forget](/moduels/RunAndForget.md)
+- [CacheHandler](/modules/handlers/CachingHandler.md)
+- [ErrorHandler](/modules/handlers/ErrorHandler.md)
+- [RetryHandler](/modules/handlers/RetryHandler.md)
+
+
 
 ## Advanced
 For those who are interested in diving deeper into the technical aspects of the Blockchain Module in plang, please refer to the [advanced documentation](./PLang.Modules.BlockchainModule_advanced.md). This section covers the intricate details of how plang interfaces with C# to provide blockchain functionalities.

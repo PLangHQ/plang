@@ -105,11 +105,11 @@ For a full list of examples, visit [PLang Cryptographic Examples](https://github
 ## Step Options
 When writing your PLang code, you can enhance your steps with these options for better control and error handling:
 
-- [CacheHandler](/moduels/cacheHandler.md): Manage caching to improve performance.
-- [ErrorHandler](/moduels/ErrorHandler.md): Handle errors gracefully.
-- [RetryHandler](/moduels/RetryHandler.md): Automatically retry steps on failure.
-- [CancelationHandler](/moduels/CancelationHandler.md): Manage the cancellation of long-running steps.
-- [Run and forget](/moduels/RunAndForget.md): Execute steps without waiting for completion.
+- [CacheHandler](/modules/handlers/CachingHandler.md): Manage caching to improve performance.
+- [ErrorHandler](/modules/handlers/ErrorHandler.md): Handle errors gracefully.
+- [RetryHandler](/modules/handlers/RetryHandler.md): Automatically retry steps on failure.
+: Manage the cancellation of long-running steps.
+: Execute steps without waiting for completion.
 
 ## Advanced
 For those interested in diving deeper into the Cryptographic module and understanding how it interfaces with C#, check out the [advanced documentation](./PLang.Modules.CryptographicModule_advanced.md).

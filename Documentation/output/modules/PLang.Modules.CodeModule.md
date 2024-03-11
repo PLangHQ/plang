@@ -76,11 +76,11 @@ For a comprehensive list of examples, visit [PLang Code Examples](https://github
 
 ## Step options
 Each step in your plang code can be enhanced with additional options for handling various scenarios:
-- [CacheHandler](/moduels/cacheHandler.md) - Manages caching of data for faster access.
-- [ErrorHandler](/moduels/ErrorHandler.md) - Handles errors that occur during code execution.
-- [RetryHandler](/moduels/RetryHandler.md) - Attempts to retry a step if it fails initially.
-- [CancelationHandler](/moduels/CancelationHandler.md) - Manages the cancellation of long-running steps.
-- [Run and forget](/moduels/RunAndForget.md) - Executes a step without waiting for its completion.
+- [CacheHandler](/modules/handlers/CachingHandler.md) - Manages caching of data for faster access.
+- [ErrorHandler](/modules/handlers/ErrorHandler.md) - Handles errors that occur during code execution.
+- [RetryHandler](/modules/handlers/RetryHandler.md) - Attempts to retry a step if it fails initially.
+ - Manages the cancellation of long-running steps.
+ - Executes a step without waiting for its completion.
 
 ## Advanced
 For those who want to delve deeper into the Code module and understand how it maps to underlying C# code, please refer to the [advanced documentation](./PLang.Modules.CodeModule_advanced.md).

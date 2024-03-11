@@ -92,11 +92,11 @@ For a full list of examples, visit [PLang Compression Examples](https://github.c
 
 ## Step Options
 When writing your plang code, you can enhance your steps with these options. Click on each for more details on how to use them:
-- [CacheHandler](/moduels/cacheHandler.md)
-- [ErrorHandler](/moduels/ErrorHandler.md)
-- [RetryHandler](/moduels/RetryHandler.md)
+- [CacheHandler](/modules/handlers/CachingHandler.md)
+- [ErrorHandler](/modules/handlers/ErrorHandler.md)
+- [RetryHandler](/modules/handlers/RetryHandler.md)
 - [CancellationHandler](/moduels/CancelationHandler.md)
-- [Run and Forget](/moduels/RunAndForget.md)
+
 
 ## Advanced
 For more advanced information on how plang's compression module maps to underlying C# functionality, see [PLang.Modules.CompressionModule Advanced Documentation](./PLang.Modules.CompressionModule_advanced.md).

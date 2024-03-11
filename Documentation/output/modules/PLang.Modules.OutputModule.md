@@ -79,11 +79,11 @@ For a comprehensive list of examples, visit the [Output Examples Repository](htt
 
 ## Step options
 Each step in plang can be enhanced with additional options for more complex scenarios. Click on the links below for detailed usage instructions:
-- [CacheHandler](/moduels/cacheHandler.md)
-- [ErrorHandler](/moduels/ErrorHandler.md)
-- [RetryHandler](/moduels/RetryHandler.md)
-- [CancelationHandler](/moduels/CancelationHandler.md)
-- [Run and forget](/moduels/RunAndForget.md)
+- [CacheHandler](/modules/handlers/CachingHandler.md)
+- [ErrorHandler](/modules/handlers/ErrorHandler.md)
+- [RetryHandler](/modules/handlers/RetryHandler.md)
+
+
 
 ## Advanced
 For developers seeking a deeper understanding of the Output module's integration with C#, please refer to the [advanced documentation](./PLang.Modules.OutputModule_advanced.md).

@@ -159,11 +159,11 @@ For a full list of examples, visit the [plang Selenium examples repository](http
 ## Step Options
 Each step in your Selenium goal can be enhanced with additional options for better control and reliability. Click the links below for more details on how to use each option:
 
-- [CacheHandler](/moduels/cacheHandler.md)
-- [ErrorHandler](/moduels/ErrorHandler.md)
-- [RetryHandler](/moduels/RetryHandler.md)
-- [CancelationHandler](/moduels/CancelationHandler.md)
-- [Run and Forget](/moduels/RunAndForget.md)
+- [CacheHandler](/modules/handlers/CachingHandler.md)
+- [ErrorHandler](/modules/handlers/ErrorHandler.md)
+- [RetryHandler](/modules/handlers/RetryHandler.md)
+
+
 
 ## Advanced
 For those who want to delve deeper into the capabilities of Selenium within plang, check out the [advanced documentation](./PLang.Modules.SeleniumModule_advanced.md). This section covers the underlying mapping with C# and provides insights into more complex scenarios.

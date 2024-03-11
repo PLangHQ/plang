@@ -19,9 +19,9 @@ Use an example, as abstract description can be difficult to understand.
 ## Step options
 These options are avaible for each step. 
 User can click link for more detail on how to use it
-- CacheHandler(/moduels/cacheHandler.md)
-- ErrorHandler(/moduels/ErrorHandler.md)
-- RetryHandler(/moduels/RetryHandler.md)
+- CacheHandler(/modules/handlers/CachingHandler.md)
+- ErrorHandler(/modules/handlers/ErrorHandler.md)
+- RetryHandler(/modules/handlers/RetryHandler.md)
 - CancelationHandler(/moduels/CancelationHandler.md)
 - Run and forget(/moduels/RunAndForget.md)
 

@@ -128,11 +128,11 @@ For a full list of examples, visit [PLang Db Module Examples](https://github.com
 ## Step Options
 When writing steps in PLang, you have several options to enhance the functionality of each step. Click the links below for more details on how to use each option:
 
-- [CacheHandler](/moduels/cacheHandler.md): Caches the results of database queries.
-- [ErrorHandler](/moduels/ErrorHandler.md): Manages errors that occur during database operations.
-- [RetryHandler](/moduels/RetryHandler.md): Retries a step if it fails due to transient issues.
-- [CancelationHandler](/moduels/CancelationHandler.md): Cancels a step if certain conditions are met.
-- [Run and forget](/moduels/RunAndForget.md): Executes a step without waiting for its completion.
+- [CacheHandler](/modules/handlers/CachingHandler.md): Caches the results of database queries.
+- [ErrorHandler](/modules/handlers/ErrorHandler.md): Manages errors that occur during database operations.
+- [RetryHandler](/modules/handlers/RetryHandler.md): Retries a step if it fails due to transient issues.
+: Cancels a step if certain conditions are met.
+: Executes a step without waiting for its completion.
 
 ## Advanced
 For more advanced information on the Db module, including how it maps to underlying C# functionality, refer to the [PLang.Modules.DbModule_advanced documentation](./PLang.Modules.DbModule_advanced.md).

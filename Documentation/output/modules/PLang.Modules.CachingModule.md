@@ -130,11 +130,11 @@ For a full list of caching examples in plang, please visit [PLang Caching Exampl
 ## Step Options
 When writing your plang code, you can enhance your steps with the following options. Click on the links for detailed usage instructions:
 
-- [CacheHandler](/moduels/cacheHandler.md)
-- [ErrorHandler](/moduels/ErrorHandler.md)
-- [RetryHandler](/moduels/RetryHandler.md)
-- [CancelationHandler](/moduels/CancelationHandler.md)
-- [Run and forget](/moduels/RunAndForget.md)
+- [CacheHandler](/modules/handlers/CachingHandler.md)
+- [ErrorHandler](/modules/handlers/ErrorHandler.md)
+- [RetryHandler](/modules/handlers/RetryHandler.md)
+
+
 
 ## Advanced
 For more advanced information on caching in plang and its underlying mapping with C#, refer to the [Advanced Caching Documentation](./PLang.Modules.CachingModule_advanced.md).

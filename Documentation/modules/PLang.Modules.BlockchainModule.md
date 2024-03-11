@@ -12,7 +12,7 @@ When writing plang code for blockchain applications, it's crucial to follow best
 
 ```plang
 - set to mumbai testnet
-- transfer to 0xRecipientAddress, ether amount 0.1, gas price 50 gwei, write to %transactionHash%
+- transfer to 0x1234....., ether amount 0.1, gas price 50 gwei, write to %transactionHash%
 - if %transactionHash% is not empty then call !TransactionSuccess, else !TransactionFailed
 
 TransactionSuccess
@@ -86,21 +86,13 @@ The following examples demonstrate how to use the Blockchain Module in plang. Th
 - set chain, matic
 - listen to usdc, Transfer event, call !Transfer
     if exception is 500, call !WriteOutSetupMessage
-```
 
-### Handle Transfer Event
-```plang
 Transfer
 - write out "from: %from% | to: %to% | value: %value%"
 - write out %__TxLog__.ToJson()%
 - stop listening %subscriptionId%
 ```
 
-### Setup Message for Listener
-```plang
-WriteOutSetupMessage
-- write out 'You need to setup rpc server, call plang settings in terminal'
-```
 
 ### Listen to New Blocks
 ```plang
@@ -118,13 +110,13 @@ BlockEvent
 
 ### Transfer Ether
 ```plang
-- transfer to 0xRecipientAddress, ether amount 0.1, gas price 50 gwei, write to %transactionHash%
+- transfer to 0x1234...., ether amount 0.1, gas price 50 gwei, write to %transactionHash%
 - write out "Transaction hash: %transactionHash%"
 ```
 
 ### Transfer Ether and Wait for Receipt
 ```plang
-- transfer to 0xRecipientAddress, ether amount 0.1, gas price 50 gwei, wait for receipt, write to %transactionReceipt%
+- transfer to 0x1234...., ether amount 0.1, gas price 50 gwei, wait for receipt, write to %transactionReceipt%
 - write out "Transaction receipt: %transactionReceipt.ToJson()%"
 ```
 
@@ -161,11 +153,11 @@ For a full list of examples, visit [PLang Blockchain Examples](https://github.co
 ## Step options
 Each step in plang can be enhanced with various options for better control and error handling. Click on the links below for more details on how to use each option:
 
-- [CacheHandler](/moduels/cacheHandler.md)
-- [ErrorHandler](/moduels/ErrorHandler.md)
-- [RetryHandler](/moduels/RetryHandler.md)
-- [CancelationHandler](/moduels/CancelationHandler.md)
-- [Run and forget](/moduels/RunAndForget.md)
+- [CacheHandler](/modules/handlers/CachingHandler.md)
+- [ErrorHandler](/modules/handlers/ErrorHandler.md)
+- [RetryHandler](/modules/handlers/RetryHandler.md)
+
+
 
 ## Advanced
 For those who are interested in diving deeper into the technical aspects of the Blockchain Module in plang, please refer to the [advanced documentation](./PLang.Modules.BlockchainModule_advanced.md). This section covers the intricate details of how plang interfaces with C# to provide blockchain functionalities.

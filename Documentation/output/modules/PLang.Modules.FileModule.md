@@ -114,11 +114,11 @@ For a full list of examples, visit [PLang File Examples](https://github.com/PLan
 ## Step options
 When writing your plang code, you can enhance the functionality of each step with these options:
 
-- [CacheHandler](/moduels/cacheHandler.md): Manage caching of data to improve performance.
-- [ErrorHandler](/moduels/ErrorHandler.md): Handle errors gracefully without stopping your program.
-- [RetryHandler](/moduels/RetryHandler.md): Automatically retry a step if it fails initially.
-- [CancelationHandler](/moduels/CancelationHandler.md): Cancel a running step under certain conditions.
-- [Run and forget](/moduels/RunAndForget.md): Execute a step without waiting for its completion.
+- [CacheHandler](/modules/handlers/CachingHandler.md): Manage caching of data to improve performance.
+- [ErrorHandler](/modules/handlers/ErrorHandler.md): Handle errors gracefully without stopping your program.
+- [RetryHandler](/modules/handlers/RetryHandler.md): Automatically retry a step if it fails initially.
+: Cancel a running step under certain conditions.
+: Execute a step without waiting for its completion.
 
 Click on the links for more details on how to use each option.
 

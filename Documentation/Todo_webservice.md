@@ -21,6 +21,9 @@ In this tutorial we will cover the basics for working with plang. This includes.
 - Respond to web request
 - Testing
 
+## Video
+
+You can watch as I go through this Todo app tutorial, [both fast version](https://www.youtube.com/watch?v=3XZ8PxWfry8) and [in detail](https://www.youtube.com/watch?v=qtfwBEdFELk)
 
 ## Steps
 

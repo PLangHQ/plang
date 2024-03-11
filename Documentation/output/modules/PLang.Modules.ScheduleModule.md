@@ -132,11 +132,11 @@ For a full list of examples on how to use the Schedule module in PLang, please v
 ## Step Options
 Each step in your PLang code can be enhanced with additional options to handle various scenarios. Click on the links below for more detailed information on how to use each option:
 
-- [CacheHandler](/moduels/cacheHandler.md)
-- [ErrorHandler](/moduels/ErrorHandler.md)
-- [RetryHandler](/moduels/RetryHandler.md)
-- [CancelationHandler](/moduels/CancelationHandler.md)
-- [Run and Forget](/moduels/RunAndForget.md)
+- [CacheHandler](/modules/handlers/CachingHandler.md)
+- [ErrorHandler](/modules/handlers/ErrorHandler.md)
+- [RetryHandler](/modules/handlers/RetryHandler.md)
+
+
 
 ## Advanced
 For those who are interested in diving deeper into the Schedule module and understanding how it maps to underlying C# functionality, please refer to the [advanced documentation](./PLang.Modules.ScheduleModule_advanced.md).

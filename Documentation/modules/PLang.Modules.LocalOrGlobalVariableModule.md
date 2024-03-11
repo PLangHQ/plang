@@ -136,11 +136,11 @@ For a full list of examples, visit [PLang LocalOrGlobalVariable Examples](https:
 ## Step Options
 When writing your PLang code, you can enhance your steps with additional functionalities. Click on the links below for more details on how to use each option:
 
-- [CacheHandler](/moduels/cacheHandler.md)
-- [ErrorHandler](/moduels/ErrorHandler.md)
-- [RetryHandler](/moduels/RetryHandler.md)
-- [CancelationHandler](/moduels/CancelationHandler.md)
-- [Run and Forget](/moduels/RunAndForget.md)
+- [CacheHandler](/modules/handlers/CachingHandler.md)
+- [ErrorHandler](/modules/handlers/ErrorHandler.md)
+- [RetryHandler](/modules/handlers/RetryHandler.md)
+
+
 
 ## Advanced
 For more advanced information on `LocalOrGlobalVariable`, including how it interfaces with C#, check out the [advanced documentation](./PLang.Modules.LocalOrGlobalVariableModule_advanced.md).

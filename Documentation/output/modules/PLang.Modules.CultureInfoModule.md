@@ -89,11 +89,11 @@ For a full list of examples on how to use the `CultureInfo` module in PLang, ple
 
 When writing your PLang code, you can enhance your steps with these options for better control and error handling:
 
-- [CacheHandler](/moduels/cacheHandler.md): Manage caching of data for improved performance.
-- [ErrorHandler](/moduels/ErrorHandler.md): Handle errors gracefully and maintain the flow of your program.
-- [RetryHandler](/moduels/RetryHandler.md): Automatically retry steps that fail due to transient issues.
-- [CancelationHandler](/moduels/CancelationHandler.md): Manage cancellation of long-running operations.
-- [Run and forget](/moduels/RunAndForget.md): Execute steps without waiting for them to complete.
+- [CacheHandler](/modules/handlers/CachingHandler.md): Manage caching of data for improved performance.
+- [ErrorHandler](/modules/handlers/ErrorHandler.md): Handle errors gracefully and maintain the flow of your program.
+- [RetryHandler](/modules/handlers/RetryHandler.md): Automatically retry steps that fail due to transient issues.
+: Manage cancellation of long-running operations.
+: Execute steps without waiting for them to complete.
 
 Click the links for more detail on how to use each option.
 

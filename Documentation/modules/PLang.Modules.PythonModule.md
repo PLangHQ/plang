@@ -112,11 +112,11 @@ For a full list of examples, visit [PLang Python Examples](https://github.com/PL
 ## Step Options
 When writing your PLang code, you can enhance your steps with these options. Click on the links for more details on how to use each one:
 
-- [CacheHandler](/moduels/cacheHandler.md)
-- [ErrorHandler](/moduels/ErrorHandler.md)
-- [RetryHandler](/moduels/RetryHandler.md)
-- [CancelationHandler](/moduels/CancelationHandler.md)
-- [Run and Forget](/moduels/RunAndForget.md)
+- [CacheHandler](/modules/handlers/CachingHandler.md)
+- [ErrorHandler](/modules/handlers/ErrorHandler.md)
+- [RetryHandler](/modules/handlers/RetryHandler.md)
+
+
 
 ## Advanced
 For those who want to dive deeper and understand how PLang's Python module works under the hood with C#, check out the [advanced documentation](./PLang.Modules.PythonModule_advanced.md).
