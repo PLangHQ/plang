@@ -11,12 +11,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PLangConsole", "PlangConsol
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PLangWindowForms", "PlangWindowForms\PLangWindowForms.csproj", "{A9D706C1-3AF7-4A96-8AB7-F8952549E21E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenAiService", "..\services\OpenAiService\OpenAiService.csproj", "{3D6389A1-CEED-40D6-BBC8-63E95C587DC5}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PLang.AskUserMessage", "..\services\PLang.AskUserMessage\PLang.AskUserMessage.csproj", "{173F0114-75E1-4A2E-9B8F-4D03D59C6450}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EnvironmentSettings", "..\services\EnvironmentSettings\EnvironmentSettings.csproj", "{3AA38E6D-87EB-4B81-991E-0F2418D674E4}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,18 +33,6 @@ Global
 		{A9D706C1-3AF7-4A96-8AB7-F8952549E21E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A9D706C1-3AF7-4A96-8AB7-F8952549E21E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A9D706C1-3AF7-4A96-8AB7-F8952549E21E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3D6389A1-CEED-40D6-BBC8-63E95C587DC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3D6389A1-CEED-40D6-BBC8-63E95C587DC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3D6389A1-CEED-40D6-BBC8-63E95C587DC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3D6389A1-CEED-40D6-BBC8-63E95C587DC5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{173F0114-75E1-4A2E-9B8F-4D03D59C6450}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{173F0114-75E1-4A2E-9B8F-4D03D59C6450}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{173F0114-75E1-4A2E-9B8F-4D03D59C6450}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{173F0114-75E1-4A2E-9B8F-4D03D59C6450}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3AA38E6D-87EB-4B81-991E-0F2418D674E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3AA38E6D-87EB-4B81-991E-0F2418D674E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3AA38E6D-87EB-4B81-991E-0F2418D674E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3AA38E6D-87EB-4B81-991E-0F2418D674E4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
