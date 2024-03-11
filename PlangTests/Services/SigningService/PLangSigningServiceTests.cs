@@ -42,7 +42,7 @@ namespace PLang.Services.SigningService.Tests
 			string contract = "C0";			
 
 			var signatureInfo = signingService.Sign(body, method, url, contract);
-			Assert.AreEqual("0xc9a7d841bbaa47642149d903b3c2114eb349b9542ed746879610e5ded5a6fe484b15376877f1e2ec76c285e7d101107163d3b1af96cf64b77a8542b75022d43c1b", signatureInfo["X-Signature"]);
+			Assert.AreEqual("0x877335ab08164c667f26aad41b03a6be542cf5f445dfba988acc636345881099673f7affcdbacaf2d741674ad60ed4690720e533403e377b2e6267170a4d2b111b", signatureInfo["X-Signature"]);
 
 		}
 

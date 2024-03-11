@@ -226,33 +226,39 @@ namespace PLang.Runtime.Tests
 		[TestMethod]
 		public void TestNow_Add()
 		{
+			var dt = DateTime.Now;
+			SystemTime.Now = () =>
+			{
+				return dt;
+			};
+
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			var dateTime = (DateTime)stack.Get("Now+1day");
-			Assert.AreEqual(DateTime.Now.AddDays(1).ToShortDateString(), dateTime.ToShortDateString());
+			Assert.AreEqual(SystemTime.Now().AddDays(1).ToShortDateString(), dateTime.ToShortDateString());
 
 			dateTime = (DateTime)stack.Get("Now+1hour");
-			Assert.AreEqual(DateTime.Now.AddHours(1).ToString("yyyy-MM-dd HH:mm"), dateTime.ToString("yyyy-MM-dd HH:mm"));
+			Assert.AreEqual(SystemTime.Now().AddHours(1).ToString("yyyy-MM-dd HH:mm"), dateTime.ToString("yyyy-MM-dd HH:mm"));
 
 			dateTime = (DateTime)stack.Get("Now+1 min");
-			Assert.AreEqual(DateTime.Now.AddMinutes(1).ToString("yyyy-MM-dd HH:mm"), dateTime.ToString("yyyy-MM-dd HH:mm"));
+			Assert.AreEqual(SystemTime.Now().AddMinutes(1).ToString("yyyy-MM-dd HH:mm"), dateTime.ToString("yyyy-MM-dd HH:mm"));
 
 			dateTime = (DateTime)stack.Get("Now+1year");
-			Assert.AreEqual(DateTime.Now.AddYears(1).ToString("yyyy-MM-dd"), dateTime.ToString("yyyy-MM-dd"));
+			Assert.AreEqual(SystemTime.Now().AddYears(1).ToString("yyyy-MM-dd"), dateTime.ToString("yyyy-MM-dd"));
 
 			dateTime = (DateTime)stack.Get("Now-1day");
-			Assert.AreEqual(DateTime.Now.AddDays(-1).ToShortDateString(), dateTime.ToShortDateString());
+			Assert.AreEqual(SystemTime.Now().AddDays(-1).ToShortDateString(), dateTime.ToShortDateString());
 
 			dateTime = (DateTime)stack.Get("Now-1hour");
-			Assert.AreEqual(DateTime.Now.AddHours(-1).ToString("yyyy-MM-dd HH:mm"), dateTime.ToString("yyyy-MM-dd HH:mm"));
+			Assert.AreEqual(SystemTime.Now().AddHours(-1).ToString("yyyy-MM-dd HH:mm"), dateTime.ToString("yyyy-MM-dd HH:mm"));
 
 			dateTime = (DateTime)stack.Get("Now-1 min");
-			Assert.AreEqual(DateTime.Now.AddMinutes(-1).ToString("yyyy-MM-dd HH:mm"), dateTime.ToString("yyyy-MM-dd HH:mm"));
+			Assert.AreEqual(SystemTime.Now().AddMinutes(-1).ToString("yyyy-MM-dd HH:mm"), dateTime.ToString("yyyy-MM-dd HH:mm"));
 
 			dateTime = (DateTime)stack.Get("Now-1year");
-			Assert.AreEqual(DateTime.Now.AddYears(-1).ToString("yyyy-MM-dd"), dateTime.ToString("yyyy-MM-dd"));
+			Assert.AreEqual(SystemTime.Now().AddYears(-1).ToString("yyyy-MM-dd"), dateTime.ToString("yyyy-MM-dd"));
 
 			string strDate = (string)stack.Get("Now.ToString(\"yyyy-MM-dd\")");
-			Assert.AreEqual(DateTime.Now.ToString("yyyy-MM-dd"), strDate);
+			Assert.AreEqual(SystemTime.Now().ToString("yyyy-MM-dd"), strDate);
 
 		}
 

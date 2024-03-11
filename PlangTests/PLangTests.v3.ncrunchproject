@@ -120,6 +120,9 @@
       <FixtureTestSelector>
         <FixtureName>PLang.Services.IdentityService.Tests.PLangIdentityServiceTests</FixtureName>
       </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Repository.Tests.SqliteSettingsRepositoryTests</FixtureName>
+      </FixtureTestSelector>
     </IgnoredTests>
   </Settings>
 </ProjectConfiguration>

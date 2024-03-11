@@ -118,7 +118,7 @@ namespace PLang.Building.Events.Tests
 		public async Task RunStepEventsTest_CallEventBeforeAppStart()
 		{
 			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "e	ents", ISettings.GoalFileName);
+			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
 			var content = PrReaderHelper.GetPrFileRaw("Events/BeforeAppStartEvent.pr");
 			fileSystem.AddFile(eventPrFile, new MockFileData(content));
 

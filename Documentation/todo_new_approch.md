@@ -54,6 +54,8 @@ NewLlmTask
         scheme:[{task:string, due_date:date, category:string}]
         write to %taskList%
 - for each %taskList%, call !SaveTask
+- select * from Todos where %Identity%, write to %todos%
+- write out %todos%
 
 SaveTask
 - insert into Todos table, %item.task%, %item.due_date%, %item.category%, %Identity%
