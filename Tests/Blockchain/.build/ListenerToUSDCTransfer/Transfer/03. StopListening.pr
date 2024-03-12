@@ -1,31 +1,16 @@
 {
   "Action": {
-    "FunctionName": "Write",
+    "FunctionName": "ShutdownWebserver",
     "Parameters": [
       {
-        "Type": "object",
-        "Name": "content",
-        "Value": "%__TxLog__.ToJson()%"
-      },
-      {
-        "Type": "Boolean",
-        "Name": "writeToBuffer",
-        "Value": false
-      },
-      {
-        "Type": "string",
-        "Name": "type",
-        "Value": "text"
-      },
-      {
-        "Type": "Int32",
-        "Name": "statusCode",
-        "Value": 200
+        "Type": "String",
+        "Name": "webserverName",
+        "Value": "%subscriptionId%"
       }
     ],
     "ReturnValue": null
   },
-  "Text": "write out %__TxLog__.ToJson()%",
+  "Text": "stop listening %subscriptionId%",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -55,7 +40,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nString Ask(String text, String? type = \"text\", Int32? statusCode = 200, String? regexPattern, String? errorMessage)  // Send response to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.. \nvoid Write(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  // Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text.\r\n## functions available ends ##\r\n## defined variables ##\r\n__TxLog__.ToJson() (type:object), \r\n## defined variables ##"
+            "text": "## functions available starts ##\r\nWebserverInfo ShutdownWebserver(String webserverName) \nBoolean RestartWebserver(String? webserverName = \"default\") \nWebserverInfo StartWebserver(String? webserverName = \"default\", String? scheme = \"http\", String? host = \"localhost\", Int32? port = 8080, Int64? maxContentLengthInBytes = 4194304, String? defaultResponseContentEncoding = \"utf-8\", Boolean? signedRequestRequired = False, List`1<String>? publicPaths) \nvoid Redirect(String url) \nvoid WriteToResponseHeader(Dictionary`2<String, Object> headers) \nString GetUserIp(String? headerKey)  // headerKey should be null unless specified by user. \nString GetRequestHeader(String key) \nString GetCookie(String name) \nvoid WriteCookie(String name, String value, Int32? expiresInSeconds = 604800) \nvoid DeleteCookie(String name) \nvoid VerifySignature(HttpListenerRequest request, String body, MemoryStack memoryStack) \nvoid SendToWebSocket(String goalToCall, Dictionary`2<String, Object>? parameters, String? webSocketName = \"default\") \nWebSocketInfo StartWebSocketConnection(String url, String goalToCall, String? webSocketName = \"default\", String? contentRecievedVariableName = \"%content%\")\r\n## functions available ends ##\r\n## defined variables ##\r\nsubscriptionId (type:object), \r\n## defined variables ##"
           }
         ]
       },
@@ -64,14 +49,14 @@
         "content": [
           {
             "type": "text",
-            "text": "write out %__TxLog__.ToJson()%"
+            "text": "stop listening %subscriptionId%"
           }
         ]
       }
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": "{\n  \"FunctionName\": \"Write\",\n  \"Parameters\": [\n    {\n      \"Type\": \"object\",\n      \"Name\": \"content\",\n      \"Value\": \"%__TxLog__.ToJson()%\"\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"writeToBuffer\",\n      \"Value\": false\n    },\n    {\n      \"Type\": \"string\",\n      \"Name\": \"type\",\n      \"Value\": \"text\"\n    },\n    {\n      \"Type\": \"Int32\",\n      \"Name\": \"statusCode\",\n      \"Value\": 200\n    }\n  ],\n  \"ReturnValue\": null\n}"
+    "RawResponse": "{\n  \"FunctionName\": \"ShutdownWebserver\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"webserverName\",\n      \"Value\": \"%subscriptionId%\"\n    }\n  ],\n  \"ReturnValue\": null\n}"
   },
   "RunOnBuild": false
 }

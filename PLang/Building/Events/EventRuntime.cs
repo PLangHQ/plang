@@ -77,14 +77,16 @@ namespace PLang.Building.Events
 		{
 			events = new List<EventBinding>();
 
-			string buildEventsFolder = (builder) ? "builderEvents" : "events";
-			var eventsFiles = GetRuntimeEventsFiles(fileSystem.BuildPath, buildEventsFolder);
+			string eventsFolder = (builder) ? "builderEvents" : "events";
+			var eventsFiles = GetRuntimeEventsFiles(fileSystem.BuildPath, eventsFolder);
 			
 			foreach (var eventFile in eventsFiles)
 			{
 				var goal = prParser.GetGoal(eventFile);
-				if (goal == null) continue;
-
+				if (goal == null)
+				{
+					continue;
+				}
 				foreach (var step in goal.GoalSteps)
 				{
 					if (!step.Custom.ContainsKey("Event") || step.Custom["Event"] == null) continue;
@@ -105,10 +107,12 @@ namespace PLang.Building.Events
 				{
 					foreach (var injection in goal.Injections)
 					{
-						container.RegisterForPLangUserInjections(injection.Type, injection.Path, injection.IsGlobal);
+						container.RegisterForPLangUserInjections(injection.Type, injection.Path, injection.IsGlobal, injection.EnvironmentVariable, injection.EnvironmentVariableValue);
 					}
 				}
 			}
+			logger.LogDebug("Loaded {0} events", events.Count);
+
 			prParser.ForceLoadAllGoals();
 		}
 
@@ -118,15 +122,15 @@ namespace PLang.Building.Events
 			{
 				throw new RuntimeException(".build folder does not exists. Run 'plang build' first.");
 			}
-			var dirs = fileSystem.Directory.GetDirectories(buildPath, eventFolder, SearchOption.AllDirectories);
+			var eventsFolder = Path.Join(buildPath, eventFolder);
+			if (!fileSystem.Directory.Exists(eventsFolder)) return new();
 
-			var eventFiles = fileSystem.Directory.GetDirectories(buildPath, eventFolder, SearchOption.AllDirectories)
-					.SelectMany(dir => fileSystem.Directory.GetFiles(dir, ISettings.GoalFileName))
+			var eventFiles = fileSystem.Directory.GetFiles(eventsFolder, ISettings.GoalFileName, SearchOption.AllDirectories)
 					.ToList();
 
 			if (eventFiles.Count == 1) return eventFiles;
 
-			var rootEvent = eventFiles.FirstOrDefault(p => p == Path.Join(buildPath, eventFolder, ISettings.GoalFileName));
+			var rootEvent = eventFiles.FirstOrDefault(p => p == Path.Join(buildPath, eventFolder, "Events", ISettings.GoalFileName));
 			if (rootEvent != null)
 			{
 				eventFiles.Remove(rootEvent);
@@ -154,10 +158,11 @@ namespace PLang.Building.Events
 			for (var i = 0; i < eventsToRun.Count; i++)
 			{
 				var eve = eventsToRun[i];
-				var parameters = new Dictionary<string, object>();
+				var parameters = new Dictionary<string, object?>();
 				parameters.Add(ReservedKeywords.Event, eve);
 				context.Add(ReservedKeywords.IsEvent, true);
 
+				logger.LogDebug("Run event type {0} on scope {1}, binding to {2} calling {3}", eventType, eventScope, eve.GoalToBindTo, eve.GoalToCall);
 				var task = pseudoRuntime.RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), eve.GoalToCall, parameters);
 				if (eve.WaitForExecution)
 				{
@@ -259,6 +264,8 @@ namespace PLang.Building.Events
 				parameters.Add(ReservedKeywords.Exception, ex);
 				context.TryAdd(ReservedKeywords.IsEvent, true);
 				if (step != null) parameters.Add(ReservedKeywords.Step, step);
+
+				logger.LogDebug("Run event type {0} on scope {1}, binding to {2} calling {3}", eve.EventType, eve.EventScope, eve.GoalToBindTo, eve.GoalToCall);
 
 				var task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, eve.GoalToCall, parameters, goal);
 

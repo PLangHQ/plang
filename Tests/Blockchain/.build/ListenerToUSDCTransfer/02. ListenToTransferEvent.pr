@@ -1,16 +1,26 @@
 {
   "Action": {
-    "FunctionName": "ListenToBlock",
+    "FunctionName": "ListenToTransferEventOnSmartContract",
     "Parameters": [
       {
-        "Type": "string",
-        "Name": "callGoal",
-        "Value": "!BlockEvent"
+        "Type": "String",
+        "Name": "contractAddressOrSymbol",
+        "Value": "usdc"
+      },
+      {
+        "Type": "String",
+        "Name": "goalToCall",
+        "Value": "!Transfer"
+      },
+      {
+        "Type": "String",
+        "Name": "subscriptIdVariableName",
+        "Value": "!WriteOutSetupMessage"
       }
     ],
     "ReturnValue": null
   },
-  "Text": "listen to new block, call !BlockEvent",
+  "Text": "listen to usdc, Transfer event , call !Transfer\n    if exception is 500, call !WriteOutSetupMessage",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -53,14 +63,14 @@
         "content": [
           {
             "type": "text",
-            "text": "listen to new block, call !BlockEvent"
+            "text": "listen to usdc, Transfer event , call !Transfer\n    if exception is 500, call !WriteOutSetupMessage"
           }
         ]
       }
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": "{\n  \"FunctionName\": \"ListenToBlock\",\n  \"Parameters\": [\n    {\n      \"Type\": \"string\",\n      \"Name\": \"callGoal\",\n      \"Value\": \"!BlockEvent\"\n    }\n  ],\n  \"ReturnValue\": null\n}"
+    "RawResponse": "{\n  \"FunctionName\": \"ListenToTransferEventOnSmartContract\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"contractAddressOrSymbol\",\n      \"Value\": \"usdc\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"goalToCall\",\n      \"Value\": \"!Transfer\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"subscriptIdVariableName\",\n      \"Value\": \"!WriteOutSetupMessage\"\n    }\n  ],\n  \"ReturnValue\": null\n}"
   },
   "RunOnBuild": false
 }

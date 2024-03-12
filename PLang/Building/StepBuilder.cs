@@ -51,6 +51,12 @@ namespace PLang.Building
 
 		public async Task BuildStep(Goal goal, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
 		{
+			if (errorCount > 2)
+			{
+				logger.Value.LogError($"Could not get answer from LLM. Will NOT try again. Tried {errorCount} times. Will continue to build next step.");
+				return;
+			}
+
 			if (excludeModules == null) { excludeModules = new List<string>(); }
 
 			var step = goal.GoalSteps[stepIndex];
@@ -245,6 +251,12 @@ namespace PLang.Building
 
 			var modulesAvailable = typeHelper.GetModulesAsString(excludeModules);
 			var userRequestedModule = GetUserRequestedModule(step);
+			if (excludeModules != null && excludeModules.Count == 1 && userRequestedModule.Count == 1
+				&& userRequestedModule.FirstOrDefault(p => p.Equals(excludeModules[0])) != null)
+			{
+				throw new BuilderStepException($"Could not map {step.Text} to {userRequestedModule[0]}");
+			}
+
 			if (userRequestedModule.Count > 0)
 			{
 				modulesAvailable = string.Join(", ", userRequestedModule);

@@ -33,7 +33,7 @@ namespace PLangTests.Modules.LlmModule
 				return response;
 			});
 			llmServiceFactory.CreateHandler().Returns(llmService);
-			p = new Program(llmServiceFactory, identityService, settings);
+			p = new Program(llmServiceFactory, identityService, settings, logger);
 			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, null);
 		}
 

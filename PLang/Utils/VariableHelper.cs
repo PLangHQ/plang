@@ -393,7 +393,7 @@ namespace PLang.Utils
 			foreach (Match match in settingsMatches)
 			{
 				var setting = settings.Get<string>(typeof(Settings), match.Groups["key"].Value, "", match.Groups["key"].Value);
-				list.Add(new ObjectValue(variableName, setting, typeof(string)));
+				list.Add(new ObjectValue(match.Value, setting, typeof(string)));
 			}
 			return list;
 		}

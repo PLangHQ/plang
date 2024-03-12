@@ -3,9 +3,9 @@
     "FunctionName": "Write",
     "Parameters": [
       {
-        "Type": "object",
+        "Type": "Object",
         "Name": "content",
-        "Value": "%__TxLog__.ToJson()%"
+        "Value": "%symbol% has the %decimal% decimals"
       },
       {
         "Type": "Boolean",
@@ -13,7 +13,7 @@
         "Value": false
       },
       {
-        "Type": "string",
+        "Type": "String",
         "Name": "type",
         "Value": "text"
       },
@@ -25,7 +25,7 @@
     ],
     "ReturnValue": null
   },
-  "Text": "write out %__TxLog__.ToJson()%",
+  "Text": "write out '%symbol% has the %decimal% decimals\"",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -55,7 +55,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nString Ask(String text, String? type = \"text\", Int32? statusCode = 200, String? regexPattern, String? errorMessage)  // Send response to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.. \nvoid Write(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  // Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text.\r\n## functions available ends ##\r\n## defined variables ##\r\n__TxLog__.ToJson() (type:object), \r\n## defined variables ##"
+            "text": "## functions available starts ##\r\nString Ask(String text, String? type = \"text\", Int32? statusCode = 200, String? regexPattern, String? errorMessage)  // Send response to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.. \nvoid Write(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  // Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text.\r\n## functions available ends ##\r\n## defined variables ##\r\nsymbol (type:Object), decimal (type:UInt32), \r\n## defined variables ##"
           }
         ]
       },
@@ -64,14 +64,14 @@
         "content": [
           {
             "type": "text",
-            "text": "write out %__TxLog__.ToJson()%"
+            "text": "write out '%symbol% has the %decimal% decimals\""
           }
         ]
       }
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": "{\n  \"FunctionName\": \"Write\",\n  \"Parameters\": [\n    {\n      \"Type\": \"object\",\n      \"Name\": \"content\",\n      \"Value\": \"%__TxLog__.ToJson()%\"\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"writeToBuffer\",\n      \"Value\": false\n    },\n    {\n      \"Type\": \"string\",\n      \"Name\": \"type\",\n      \"Value\": \"text\"\n    },\n    {\n      \"Type\": \"Int32\",\n      \"Name\": \"statusCode\",\n      \"Value\": 200\n    }\n  ],\n  \"ReturnValue\": null\n}"
+    "RawResponse": "{\n  \"FunctionName\": \"Write\",\n  \"Parameters\": [\n    {\n      \"Type\": \"Object\",\n      \"Name\": \"content\",\n      \"Value\": \"%symbol% has the %decimal% decimals\"\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"writeToBuffer\",\n      \"Value\": false\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"type\",\n      \"Value\": \"text\"\n    },\n    {\n      \"Type\": \"Int32\",\n      \"Name\": \"statusCode\",\n      \"Value\": 200\n    }\n  ],\n  \"ReturnValue\": null\n}"
   },
   "RunOnBuild": false
 }

@@ -78,13 +78,19 @@ namespace PLang.Modules.MessageModule
 		}
 
 		[Description("goalName should be prefixed by ! and be whole word with possible slash(/)")]
-		public async Task Listen(string goalName, [HandlesVariable] string contentVariableName = "content", [HandlesVariable] string senderVariableName = "sender", [HandlesVariable] string eventVariableName = "__NosrtEventKey__", DateTimeOffset? listenFromDateTime = null, string[]? onlyMessageFromSenders = null)
+		public async Task Listen(string goalName, [HandlesVariable] string contentVariableName = "content", 
+				[HandlesVariable] string senderVariableName = "sender", 
+				[HandlesVariable] string eventVariableName = "__NosrtEventKey__", DateTimeOffset? listenFromDateTime = null, 
+				string[]? onlyMessageFromSenders = null)
 		{
 			var client2 = (NostrMultiWebsocketClient)client;
 
 			for (int i = 0; onlyMessageFromSenders != null && i < onlyMessageFromSenders.Length; i++)
 			{
-				onlyMessageFromSenders[i] = NostrConverter.ToHex(onlyMessageFromSenders[i], out string? hrp);
+				if (onlyMessageFromSenders[i].ToString().StartsWith("npub"))
+				{
+					onlyMessageFromSenders[i] = NostrConverter.ToHex(onlyMessageFromSenders[i].ToString(), out string? hrp);
+				}
 			}
 
 			foreach (var c in client2.Clients)
@@ -103,7 +109,7 @@ namespace PLang.Modules.MessageModule
 
 					if (onlyMessageFromSenders != null && onlyMessageFromSenders.Length > 0)
 					{
-						string? fromAddress = onlyMessageFromSenders.FirstOrDefault(p => p == eve.Event.Pubkey);
+						string? fromAddress = onlyMessageFromSenders.FirstOrDefault(p => p.ToString().Equals(eve.Event.Pubkey))?.ToString();
 						if (fromAddress == null)
 						{
 							return;

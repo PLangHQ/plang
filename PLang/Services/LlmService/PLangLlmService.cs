@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
@@ -9,6 +10,7 @@ using PLang.Services.OutputStream;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using PLang.Utils.Extractors;
+using System.Reflection;
 using System.Text;
 
 namespace PLang.Services.LlmService
@@ -78,6 +80,12 @@ namespace PLang.Services.LlmService
 			parameters.Add("type", question.type);
 			parameters.Add("maxLength", question.maxLength);
 			parameters.Add("responseType", question.llmResponseType);
+
+			var assembly = Assembly.GetAssembly(this.GetType());
+			if (assembly != null && assembly.GetName().Version != null)
+			{
+				parameters.Add("buildVersion", assembly.GetName().Version?.ToString());
+			}
 			var httpClient = new HttpClient();
 			var httpMethod = new HttpMethod("POST");
 			var request = new HttpRequestMessage(httpMethod, url + "/api/Llm");

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using PLang.Attributes;
 using PLang.Interfaces;
 using System.ComponentModel;
@@ -196,7 +197,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		{
 			var settingKey = key.Substring(key.IndexOf('.')+1).Replace("%", "");
 			var settingValue = settings.GetOrDefault(typeof(PLang.Services.SettingsService.Settings), settingKey, value);
-			if (value == settingValue)
+			if (value == settingValue || settingValue == null || string.IsNullOrEmpty(settingValue.ToString()))
 			{
 				settings.Set(typeof(PLang.Services.SettingsService.Settings), settingKey, value);
 			}

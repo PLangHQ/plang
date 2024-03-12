@@ -411,9 +411,9 @@ namespace PLang.Modules.FileModule
 		}
 
 		public async Task CopyFiles(string directoryPath, string destinationPath, string searchPattern = "*", string[]? excludePatterns = null,
-			bool includeSubfolders = false, bool overwriteFiles = false)
+			bool includeSubfoldersAndFiles = false, bool overwriteFiles = false)
 		{
-			var files = await GetFilePathsInDirectory(directoryPath, searchPattern, excludePatterns, includeSubfolders);
+			var files = await GetFilePathsInDirectory(directoryPath, searchPattern, excludePatterns, includeSubfoldersAndFiles);
 			foreach (var file in files)
 			{
 				var copyDestinationFilePath = file.Replace(directoryPath, destinationPath);

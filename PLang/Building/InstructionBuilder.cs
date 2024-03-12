@@ -58,7 +58,7 @@ namespace PLang.Building
 
 			if (instruction.Action == null)
 			{
-				throw new BuilderException($"Could not map {step.Text} to function. Refined your text");
+				throw new BuilderException($"Could not map {step.Text} to function. Refine your text");
 			}
 
 			var functions = instruction.GetFunctions();

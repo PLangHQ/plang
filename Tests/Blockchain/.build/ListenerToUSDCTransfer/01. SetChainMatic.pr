@@ -1,16 +1,16 @@
 {
   "Action": {
-    "FunctionName": "ListenToBlock",
+    "FunctionName": "SetCurrentRpcServer",
     "Parameters": [
       {
-        "Type": "string",
-        "Name": "callGoal",
-        "Value": "!BlockEvent"
+        "Type": "String",
+        "Name": "nameOrUrl",
+        "Value": "Matic (Polygon) mainnet"
       }
     ],
     "ReturnValue": null
   },
-  "Text": "listen to new block, call !BlockEvent",
+  "Text": "set chain, matic",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -53,14 +53,14 @@
         "content": [
           {
             "type": "text",
-            "text": "listen to new block, call !BlockEvent"
+            "text": "set chain, matic"
           }
         ]
       }
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": "{\n  \"FunctionName\": \"ListenToBlock\",\n  \"Parameters\": [\n    {\n      \"Type\": \"string\",\n      \"Name\": \"callGoal\",\n      \"Value\": \"!BlockEvent\"\n    }\n  ],\n  \"ReturnValue\": null\n}"
+    "RawResponse": "{\n  \"FunctionName\": \"SetCurrentRpcServer\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"nameOrUrl\",\n      \"Value\": \"Matic (Polygon) mainnet\"\n    }\n  ],\n  \"ReturnValue\": null\n}"
   },
   "RunOnBuild": false
 }

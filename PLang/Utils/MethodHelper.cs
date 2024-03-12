@@ -8,6 +8,7 @@ using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.LlmService;
+using System.Collections;
 using System.Reflection;
 using System.Runtime.Caching;
 using static PLang.Modules.BaseBuilder;
@@ -207,8 +208,8 @@ example of answer:
 						var ov = variableHelper.GetObjectValue(variableValue.ToString(), false);
 						if (ov != null && ov.Value != null && parameter.ParameterType.IsInstanceOfType(ov.Value))
 						{
-							parameterValues.Add(inputParameter.Name, ov.Value);
-							continue;
+							//parameterValues.Add(inputParameter.Name, ov.Value);
+							//continue;
 						} else if (ov != null && ov.Initiated && ov.Value == null)
 						{
 							parameterValues.Add(inputParameter.Name, ov.Value);
@@ -280,10 +281,19 @@ example of answer:
 			for (int i = 0; i < arrayLength; i++)
 			{
 				var tmp = (variableValueIsArray) ? ((JArray)variableValue)[i] : variableValue;
-
+				
 				if (handlesAttribute == null)
 				{
-					newArray.SetValue(Convert.ChangeType(variableHelper.LoadVariables(tmp), elementType), i);
+					object? obj = variableHelper.LoadVariables(tmp);
+					if (obj is IList list && list.Count > 0)
+					{
+						var item = list[0];
+						if (item != null && item.GetType().Name == "DapperRow")
+						{
+							obj = variableHelper.LoadVariables(((IDictionary<string, object>)item).Values.FirstOrDefault());
+						}
+					}
+					newArray.SetValue(Convert.ChangeType(obj, elementType), i);
 				}
 				else
 				{
@@ -311,6 +321,9 @@ example of answer:
 			else if (variableValue is JObject)
 			{
 				list = JArray.FromObject(variableValue) as System.Collections.IList;
+			} else if (variableValue != null && variableValue.GetType().Name.StartsWith("List"))
+			{
+				list = (System.Collections.IList) variableValue;
 			}
 			
 			if (handlesAttribute != null)
@@ -321,15 +334,14 @@ example of answer:
 
 			for (int i = 0; list != null && i < list.Count; i++)
 			{
-				object? obj = variableHelper.LoadVariables(list[i]);
+				object? obj = variableHelper.LoadVariables(list[i]); 				
 				if (obj != null && parameter.ParameterType.GenericTypeArguments[0] == typeof(string))
-				{
-					
+				{					
 					list[i] = obj.ToString();
 				}
 				else
 				{
-					list[i] = variableHelper.LoadVariables(list[i]);
+					list[i] = obj;
 				}
 			}
 			parameterValues.Add(parameter.Name, list);

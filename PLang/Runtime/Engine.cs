@@ -122,7 +122,7 @@ namespace PLang.Runtime
 					logger.LogInformation("Keeping app alive, reasons:");
 					foreach (var alive in alives)
 					{
-						logger.LogInformation(alive.Key);
+						logger.LogInformation(" - " + alive.Key);
 					}
 
 					while (alives != null && alives.Count > 0)

@@ -129,6 +129,11 @@ namespace PLang.Services.SettingsService
         public List<T> GetValues<T>(Type callingType, string? key = null)
         {
             var type = typeof(T).FullName;
+            if (key == null && (callingType == typeof(string) || callingType.IsPrimitive))
+            {
+                throw new ArgumentException("key is missing");
+            }
+
             if (key == null) key = type;
 
             var setting = settingsRepositoryFactory.CreateHandler().Get(callingType.FullName, type, key);

@@ -1,19 +1,19 @@
 {
-  "GoalName": "GoToLine",
+  "GoalName": "WriteOutSetupMessage",
   "Comment": null,
   "GoalSteps": [
     {
-      "Text": "set %__StepIndex__% as %line%",
+      "Text": "write out 'You need to setup rpc server, call plang settings in terminal'",
       "Comment": null,
-      "ModuleType": "PLang.Modules.LocalOrGlobalVariableModule",
-      "Name": "SetStepIndex",
-      "Description": "This step involves setting the value of the variable '__StepIndex__' to the value of the variable 'line'.",
-      "PrFileName": "01. SetStepIndex.pr",
-      "RelativePrPath": ".build\\Events\\SendDebug\\GoToLine\\01. SetStepIndex.pr",
+      "ModuleType": "PLang.Modules.OutputModule",
+      "Name": "OutputMessage",
+      "Description": "Display the message 'You need to setup rpc server, call plang settings in terminal' to the user",
+      "PrFileName": "01. OutputMessage.pr",
+      "RelativePrPath": ".build\\ListenerToUSDCTransfer\\WriteOutSetupMessage\\01. OutputMessage.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-12T10:08:58.0432874+01:00",
+      "Generated": "2024-03-12T10:22:08.6750787+01:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -21,7 +21,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 19,
+      "LineNumber": 12,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -59,27 +59,27 @@
             "content": [
               {
                 "type": "text",
-                "text": "set %__StepIndex__% as %line%"
+                "text": "write out 'You need to setup rpc server, call plang settings in terminal'"
               }
             ]
           }
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"SetStepIndex\",\n  \"StepDescription\": \"This step involves setting the value of the variable '__StepIndex__' to the value of the variable 'line'.\",\n  \"Modules\": [\n    \"PLang.Modules.LocalOrGlobalVariableModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": "{\n  \"StepName\": \"OutputMessage\",\n  \"StepDescription\": \"Display the message 'You need to setup rpc server, call plang settings in terminal' to the user\",\n  \"Modules\": [\n    \"PLang.Modules.OutputModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     }
   ],
   "Description": null,
   "Visibility": 0,
-  "GoalFileName": "SendDebug.goal",
-  "RelativeGoalPath": "\\Events\\SendDebug.goal",
-  "RelativeGoalFolderPath": "\\Events",
-  "RelativePrPath": ".build\\Events\\SendDebug\\GoToLine\\00. Goal.pr",
-  "RelativePrFolderPath": ".build\\Events\\SendDebug\\GoToLine",
+  "GoalFileName": "ListenerToUSDCTransfer.goal",
+  "RelativeGoalPath": "\\ListenerToUSDCTransfer.goal",
+  "RelativeGoalFolderPath": "\\",
+  "RelativePrPath": ".build\\ListenerToUSDCTransfer\\WriteOutSetupMessage\\00. Goal.pr",
+  "RelativePrFolderPath": ".build\\ListenerToUSDCTransfer\\WriteOutSetupMessage",
   "BuilderVersion": "0.1.0.0",
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "81c61ef6f4f22cbe65bcfa4843e552ddd1a16e5eede80e89594212ec11234b78"
+  "Hash": "607702428e1fb38acb87e991f54b1b7b717010e491801f149fccef62f74720b1"
 }

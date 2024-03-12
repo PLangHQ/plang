@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
@@ -22,12 +23,14 @@ namespace PLang.Modules.LlmModule
 		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly IPLangIdentityService identityService;
 		private readonly ISettings settings;
+		private readonly ILogger logger;
 
-		public Program(ILlmServiceFactory llmServiceFactory, IPLangIdentityService identityService, ISettings settings) : base()
+		public Program(ILlmServiceFactory llmServiceFactory, IPLangIdentityService identityService, ISettings settings, ILogger logger) : base()
 		{
 			this.llmServiceFactory = llmServiceFactory;
 			this.identityService = identityService;
 			this.settings = settings;
+			this.logger = logger;
 		}
 
 		public record AskLlmResponse(string Result);
@@ -42,7 +45,8 @@ namespace PLang.Modules.LlmModule
 			double presencePenalty = 0.0,
 			int maxLength = 4000,
 			bool cacheResponse = true,
-			string? llmResponseType = null)
+			string? llmResponseType = null, 
+			string loggerLevel = "trace")
 		{
 
 			foreach (var message in promptMessages)
@@ -63,7 +67,7 @@ namespace PLang.Modules.LlmModule
 				}
 
 			}
-
+			
 
 			var llmQuestion = new LlmRequest("LlmModule", promptMessages, model, cacheResponse);
 			llmQuestion.maxLength = maxLength;
@@ -75,6 +79,11 @@ namespace PLang.Modules.LlmModule
 			llmQuestion.scheme = scheme;
 
 			var response = await llmServiceFactory.CreateHandler().Query<object?>(llmQuestion);
+
+			LogLevel logLevel = LogLevel.Trace;
+			Enum.TryParse(loggerLevel, true, out logLevel);
+			logger.Log(logLevel, "Llm question - prompt:{0}", JsonConvert.SerializeObject(llmQuestion.promptMessage));
+			logger.Log(logLevel, "Llm question - response:{0}", llmQuestion.RawResponse);
 
 			if (response is JObject)
 			{

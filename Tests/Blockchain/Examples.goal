@@ -5,9 +5,6 @@ Examples
 - write out %wallets.ToJson()%
 - [block] get current address, write to %address%
 - write out %address%
-- [block] sign "Hello world", write to %signature%
-- [block] verify signature, "Hello world", %signature%, %address%, write to %result%
-- write out "Is message verified:%result%"
 - set to mumbai testnet
 - get wei balance of 0x50041223216d8bfd392544562d70fda452df5042, write to %maticBalance%
 - get balance on 0x0FA8781a83E46826621b3BC094Ea2A0212e71B23 for address 0x50041223216d8bfd392544562d70fda452df5042, write to %usdcBalance%

@@ -1,0 +1,76 @@
+{
+  "Action": {
+    "FunctionName": "BalanceOfOnSmartContract",
+    "Parameters": [
+      {
+        "Type": "String",
+        "Name": "contractAddressOrSymbol",
+        "Value": "0x0FA8781a83E46826621b3BC094Ea2A0212e71B23"
+      },
+      {
+        "Type": "String",
+        "Name": "addressToCheckBalanceOf",
+        "Value": "0x50041223216d8bfd392544562d70fda452df5042"
+      }
+    ],
+    "ReturnValue": [
+      {
+        "Type": "Object",
+        "VariableName": "usdcBalance"
+      }
+    ]
+  },
+  "Text": "get balance on 0x0FA8781a83E46826621b3BC094Ea2A0212e71B23 for address 0x50041223216d8bfd392544562d70fda452df5042, write to %usdcBalance%",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+    "type": "PLang.Modules.BlockchainModule.Builder",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\nVariables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nvoid ListenToApprovalEventOnSmartContract(String contractAddressOrSymbol, String goalToCall, String? subscriptIdVariableName = \"subscriptionId\") \nvoid ListenToApprovalForAllEventOnSmartContract(String contractAddressOrSymbol, String goalToCall, String? subscriptIdVariableName = \"subscriptionId\") \nvoid ListenToTransferBatchEventOnSmartContract(String contractAddressOrSymbol, String goalToCall, String? subscriptIdVariableName = \"subscriptionId\") \nvoid ListenToUriEventOnSmartContract(String contractAddressOrSymbol, String goalToCall, String? subscriptIdVariableName = \"subscriptionId\") \nvoid ListenToTransferSingleEventOnSmartContract(String contractAddressOrSymbol, String goalToCall, String? subscriptIdVariableName = \"subscriptionId\") \nvoid ListenToTransferEventOnSmartContract(String contractAddressOrSymbol, String goalToCall, String? subscriptIdVariableName = \"subscriptionId\") \nvoid ListenToEventOnSmartContract(String contractAddressOrSymbol, String abi, String goalToCall, String? subscriptIdVariableName = \"subscriptionId\") \nvoid StopListening(String subscriptionId) \nString SignTransfer(String recipient, String smartContractSymbolOrAddress, Int64 value) \nvoid ListenToBlock(String callGoal, String? subcriptionId = \"subscriptionId\", String? callGoalOnUnsubscribe) \nObject NameOfSmartContract(String contractAddressOrSymbol) \nObject TotalSupplyOnSmartContract(String contractAddressOrSymbol) \nObject GetMyBalanceOnSmartContract(String contractAddressOrSymbol) \nObject BalanceOfOnSmartContract(String contractAddressOrSymbol, String addressToCheckBalanceOf) \nObject BalanceOfBatchOnSmartContract(String contractAddressOrSymbol, String[] addresses, BigInteger[] ids) \nObject IsApprovedForAllOnSmartContract(String contractAddressOrSymbol, String accountAddress, String operatorAddress) \nObject CecimalsOnSmartContract(String contractAddressOrSymbol) \nObject AllowanceFromSmartContract(String contractAddressOrSymbol, String from, String to, BigInteger value) \nObject SymbolOnSmartContract(String contractAddressOrSymbol) \nObject SupportsInterfaceOnSmartContract(String contractAddressOrSymbol, String interfaceId) \nObject GetUriOnSmartContract(String contractAddressOrSymbol, BigInteger id) \nObject GetApprovedOnSmartContract(String contractAddressOrSymbol) \nObject ApproveSmartContract(String contractAddressOrSymbol, String spender, BigInteger value, Boolean? waitForReceipt = False) \nObject MintSmartContract(String contractAddressOrSymbol, String to, BigInteger amount, Boolean? waitForReceipt = False) \nObject BurnSmartContract(String contractAddressOrSymbol, String account, BigInteger amount, Boolean? waitForReceipt = False) \nObject TransferSmartContract(String contractAddressOrSymbol, String to, BigInteger value, Boolean? waitForReceipt = False) \nObject TransferFromSmartContract(String contractAddressOrSymbol, String from, String to, BigInteger value, Boolean? waitForReceipt = False) \nObject SafeTransferFromErc721SmartContract(String contractAddressOrSymbol, String from, String to, BigInteger id, Boolean? waitForReceipt = False) \nObject SafeTransferFromErc1155SmartContract(String contractAddressOrSymbol, String from, String to, BigInteger[] ids, BigInteger[] amounts, Boolean? waitForReceipt = False) \nObject SafeBatchTransferFromSmartContract(String contractAddressOrSymbol, String from, String to, BigInteger value, Boolean? waitForReceipt = False) \nObject SetApprovalForAllOnSmartContract(String contractAddressOrSymbol, String operatorAddress, Boolean approved, Boolean? waitForReceipt = False) \nObject CallFunction(String contractAddressOrSymbol, String abi, Object[]? functionInputs) \nObject CallAndSignFunction(String contractAddressOrSymbol, String abi, Object[]? functionInputs, Boolean? waitForReceipt = False)  // Generate abi from functionName and functionInputs if not provided by user.. \nList`1 GetRpcServers() \nvoid SetCurrentRpcServer(String nameOrUrl) \nRpcServer GetCurrentRpcServer() \nList`1 GetWallets() \nvoid SetCurrentWallet(String walletName) \nWallet GetOrCreateWallet() \nvoid SetCurrentAddress(String address) \nString GetCurrentAddress() \nBigInteger GetNativeBalanceOfAddressInWei(String address) \nDecimal GetNativeBalanceOfAddressToDecimalPoint(String address, Int32? decimalPlacesToUnit = 18)  // Get the balance in ETH, converts from Wei to Eth. \nUInt32 GetDecimal(String contractAddress) \nString Transfer(String to, Decimal etherAmount, Nullable`1<Decimal>? gasPriceWei, Nullable`1<BigInteger>? gas, Nullable`1<BigInteger>? nonce) \nTransactionReceipt TransferWaitForReceipt(String to, Decimal etherAmount, Nullable`1<Decimal>? gasPriceWei, Nullable`1<BigInteger>? gas, Nullable`1<BigInteger>? nonce) \nString SendTransaction(String contractAddress, String abi, Object[] args)  // Send a transaction and returns transaction hash. \nTransactionReceipt SendTransactionAndWaitForReceipt(String contractAddress, String abi, Object[] args)  // Send a transaction and waits for the transaction to finish.\r\n## functions available ends ##\r\n## defined variables ##\r\nusdcBalance (type:object), \r\n## defined variables ##"
+          },
+          {
+            "type": "text",
+            "text": "# RPC servers available #\r\n[{\"IsDefault\":true,\"Name\":\"Mumbai - Polygon testnet\",\"Url\":\"wss://polygon-mumbai-bor.publicnode.com\",\"ChainId\":80001,\"IsTestNet\":true,\"HexChainId\":\"13881\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Matic (Polygon) mainnet\",\"Url\":\"wss://polygon-bor.publicnode.com\",\"ChainId\":137,\"IsTestNet\":false,\"HexChainId\":\"89\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Ethereum mainnet\",\"Url\":\"wss://ethereum.publicnode.com\",\"ChainId\":1,\"IsTestNet\":false,\"HexChainId\":\"1\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Ethereum testnet (Goerli)\",\"Url\":\"wss://ethereum-goerli.publicnode.com\",\"ChainId\":5,\"IsTestNet\":true,\"HexChainId\":\"5\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Binance mainnet\",\"Url\":\"wss://bsc.publicnode.com\",\"ChainId\":56,\"IsTestNet\":false,\"HexChainId\":\"38\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Binance testnet\",\"Url\":\"wss://bsc-testnet.publicnode.com\",\"ChainId\":97,\"IsTestNet\":true,\"HexChainId\":\"61\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Arbitrum One mainnet\",\"Url\":\"wss://arbitrum-one.publicnode.com\",\"ChainId\":42161,\"IsTestNet\":false,\"HexChainId\":\"A4B1\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Arbitrum Goerli testnet\",\"Url\":\"wss://arbitrum-goerli.publicnode.com\",\"ChainId\":421613,\"IsTestNet\":true,\"HexChainId\":\"66EED\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Optimism (OP) mainnet\",\"Url\":\"wss://optimism.publicnode.com\",\"ChainId\":10,\"IsTestNet\":false,\"HexChainId\":\"A\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Optimism (OP) Goerli testnet\",\"Url\":\"wss://optimism-goerli.publicnode.com\",\"ChainId\":420,\"IsTestNet\":true,\"HexChainId\":\"1A4\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Avalanche C-Chain mainnet\",\"Url\":\"wss://avalanche-c-chain.publicnode.com\",\"ChainId\":43114,\"IsTestNet\":false,\"HexChainId\":\"A86A\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Avalanche Fuji testnet\",\"Url\":\"wss://avalanche-fuji-c-chain.publicnode.com\",\"ChainId\":43113,\"IsTestNet\":true,\"HexChainId\":\"A869\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Gnosis mainnet\",\"Url\":\"wss://rpc.gnosischain.com/wss\",\"ChainId\":100,\"IsTestNet\":false,\"HexChainId\":\"64\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Gnosis Chiado Testnet\",\"Url\":\"wss://rpc.chiadochain.net/wss\",\"ChainId\":10200,\"IsTestNet\":true,\"HexChainId\":\"27D8\",\"Setting\":null}]\r\n# RPC servers available #\r\n# wallet addresses #\r\n[{\"IsDefault\":false,\"IsArchived\":false,\"Addresses\":[\"0x01D6856dE36517908387C68fb9D3c2d4b75C6713\",\"0xB44d692cc94dA426FFFe37c9091Bc6C22e574071\",\"0x73e13deFf26eF4D9880f8003Ce2969462a49E349\",\"0xF327d5b92292ea680B4eEaEa68853be95A971697\",\"0xe4C18B079EcBaEdd8c0080d8dDB2BEb632526e86\",\"0x33965992FaD33D0282ea23f8c6233AaCAc7c4dF6\",\"0x19a5F323D63841a76035172ba32c8dA2AA2B5Fa3\",\"0x57aD9a6a264A5EF46d26CddE666055241D3D4389\",\"0x16F9AAcc3FdCF72527bB878A9C5DA15bdf160fe6\",\"0xC73eC9E6E42079C2C132c8380F6b9382Db8afe91\",\"0x065F7CD4e30Ec4E867424b753a15f1949B18075D\",\"0xdEae07A7B66Ca7b194923d688911AbDB0cE50A65\",\"0x44C78134fA78c32Ab651F54710791cCCe78B9Eaa\",\"0x9Bd00aBC6Fa912afD04A9Df7844fBeD2eAf40b96\",\"0xB9F20d342c71372F0B5EBB8e5e2F9Af5dad0b755\",\"0x1B1d8F81eDC41F6f1db532b4f8148338fD586B06\",\"0xceFA102e6ebE222485F29ab0ebC67c55acAd5d84\",\"0x1A81b0CF08cbe803A3D16E45825B0D2F87F61E3c\",\"0x4C6472077E6b05e71a01d2aC3b14eac53AFfc377\",\"0x1961eaa2C5573379C3C358ffcfc0dFf938D7c853\"],\"Name\":\"First\",\"Seed\":\"\",\"PrivateKey\":\"\"}]\r\n# wallet addresses #"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "get balance on 0x0FA8781a83E46826621b3BC094Ea2A0212e71B23 for address 0x50041223216d8bfd392544562d70fda452df5042, write to %usdcBalance%"
+          }
+        ]
+      }
+    ],
+    "model": "gpt-4",
+    "caching": true,
+    "RawResponse": "{\n  \"FunctionName\": \"BalanceOfOnSmartContract\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"contractAddressOrSymbol\",\n      \"Value\": \"0x0FA8781a83E46826621b3BC094Ea2A0212e71B23\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"addressToCheckBalanceOf\",\n      \"Value\": \"0x50041223216d8bfd392544562d70fda452df5042\"\n    }\n  ],\n  \"ReturnValue\": [\n    {\n      \"Type\": \"Object\",\n      \"VariableName\": \"usdcBalance\"\n    }\n  ]\n}"
+  },
+  "RunOnBuild": false
+}

@@ -133,14 +133,21 @@ namespace PLang.Modules.DbModule
 						p = JsonConvert.DeserializeObject<ParameterInfo>(parameter.ToString());
 					}
 
-					if (isInsert && (p.ParameterName == "id" || p.ParameterName == "@id") && eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
+					var parameterName = p.ParameterName.Replace("@", "");
+					if (parameterName.Contains("."))
+					{
+						var oldParameterName = parameterName;
+						parameterName = parameterName.Replace(".", "");
+						sql = sql.Replace(oldParameterName, parameterName);
+					}
+					if (isInsert && parameterName == "id" && eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 					{
 						var generator = new IdGenerator(1);
-						param.Add("@" + p.ParameterName.Replace("@", ""), generator.ElementAt(0), DbType.Int64);
+						param.Add("@" + parameterName, generator.ElementAt(0), DbType.Int64);
 					}
 					else if (p.VariableNameOrValue == null)
 					{
-						param.Add("@" + p.ParameterName.Replace("@", ""), null);
+						param.Add("@" + parameterName, null);
 					} else if (p.VariableNameOrValue is JArray)
 					{
 						var jarray = (JArray)p.VariableNameOrValue;
@@ -160,7 +167,7 @@ namespace PLang.Modules.DbModule
 					else
 					{
 						object value = ConvertObjectToType(p.VariableNameOrValue, p.TypeFullName);
-						param.Add("@" + p.ParameterName.Replace("@", ""), value);
+						param.Add("@" + parameterName, value);
 					}
 				}
 			}

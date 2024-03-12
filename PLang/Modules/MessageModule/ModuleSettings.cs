@@ -36,7 +36,7 @@ namespace PLang.Modules.MessageModule
 
 		public List<string> GetRelays()
 		{
-			var relays = settings.GetValues<string>(typeof(ModuleSettings));
+			var relays = settings.GetValues<string>(typeof(ModuleSettings), "NostrRelays");
 			if (relays == null || relays.Count == 0)
 			{
 				relays = new List<string>() {
