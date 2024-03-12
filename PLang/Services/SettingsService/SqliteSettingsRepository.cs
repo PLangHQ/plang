@@ -7,6 +7,7 @@ using PLang.Interfaces;
 using PLang.Models;
 using PLang.Utils;
 using System.Data;
+using System.Linq.Dynamic.Core;
 using System.Reflection;
 using System.Text;
 
@@ -131,9 +132,9 @@ CREATE TABLE IF NOT EXISTS Settings (
     [Key] TEXT NOT NULL,
     Value TEXT NOT NULL,
     [Created] DATETIME DEFAULT CURRENT_TIMESTAMP,
-	SignatureData TEXT NOT NULL
+	SignatureData TEXT NOT NULL,
+	UNIQUE ([ClassOwnerFullName], [Key])
 );
-CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings ([ClassOwnerFullName], [Key]);
 ";
 				int rowsAffected = connection.Execute(sql);
 				if (datasource.Contains("Mode=Memory"))
@@ -243,12 +244,18 @@ CREATE UNIQUE INDEX IF NOT EXISTS Settings_appId_IDX ON Settings ([ClassOwnerFul
 		{
 			using (IDbConnection connection = new SqliteConnection(DataSource))
 			{				
-				connection.Execute(@"
-				INSERT OR IGNORE INTO Settings (ClassOwnerFullName, ValueType, [Key], [Value], SignatureData, Created) 
-					VALUES (@ClassOwnerFullName, @ValueType, @Key, @Value, @SignatureData, @Created)
-				ON CONFLICT([ClassOwnerFullName], [Key]) DO UPDATE SET Value = @Value, SignatureData=@SignatureData;
-				", new { setting.ClassOwnerFullName, setting.ValueType, setting.Key, setting.Value, setting.SignatureData, setting.Created });
-				
+				var result = connection.QueryFirstOrDefault<dynamic>("SELECT * FROM Settings WHERE [ClassOwnerFullName]=@ClassOwnerFullName AND [Key]=@Key",
+					new { setting.ClassOwnerFullName, setting.Key });
+				if (result == null)
+				{
+					connection.Execute(@"INSERT INTO Settings (ClassOwnerFullName, ValueType, [Key], [Value], SignatureData, Created) 
+						VALUES (@ClassOwnerFullName, @ValueType, @Key, @Value, @SignatureData, @Created)",
+						new { setting.ClassOwnerFullName, setting.ValueType, setting.Key, setting.Value, setting.SignatureData, setting.Created });
+				} else
+				{
+					connection.Execute(@"UPDATE Settings SET Value=@Value, SignatureData=@SignatureData WHERE [ClassOwnerFullName]=@ClassOwnerFullName AND [Key]=@Key",
+						new { setting.ClassOwnerFullName, setting.Key, setting.Value, setting.SignatureData });
+				}				
 			}
 		}
 

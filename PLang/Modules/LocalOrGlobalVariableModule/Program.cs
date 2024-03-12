@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using PLang.Attributes;
+using PLang.Interfaces;
 using System.ComponentModel;
 using System.Dynamic;
 using System.Security.Policy;
@@ -10,8 +11,11 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 	[Description("Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.")]
 	public class Program : BaseProgram
 	{
-		public Program() : base()
+		private readonly ISettings settings;
+
+		public Program(ISettings settings) : base()
 		{
+			this.settings = settings;
 		}
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
 		public async Task OnCreateVariableListener([HandlesVariable] string key, string goalName, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
@@ -143,7 +147,9 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			}
 			else
 			{
-				throw new Exception("Cannot append to an object");
+				val = new List<object>();
+				((List<object>) val).Add(value);
+				//throw new Exception("Cannot append to an object");
 			}
 			memoryStack.Put(key, val);
 			return val;
@@ -177,7 +183,24 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		{
 			memoryStack.RemoveStatic(key);
 		}
-	
+
+		[Description("Sets a value to %Settings.XXXX% variable")]
+		public async Task SetSettingValue([HandlesVariableAttribute] string key, object value)
+		{
+			var settingKey = key.Substring(key.IndexOf('.')+1).Replace("%", "");
+			settings.Set(typeof(PLang.Services.SettingsService.Settings), settingKey, value);
+		}
+
+		[Description("Sets a value to %Settings.XXXX% variable but only if it is not set before")]
+		public async Task SetDefaultSettingValue([HandlesVariableAttribute] string key, object value)
+		{
+			var settingKey = key.Substring(key.IndexOf('.')+1).Replace("%", "");
+			var settingValue = settings.GetOrDefault(typeof(PLang.Services.SettingsService.Settings), settingKey, value);
+			if (value == settingValue)
+			{
+				settings.Set(typeof(PLang.Services.SettingsService.Settings), settingKey, value);
+			}
+		}
 
 		public async Task<string> ConvertToBase64([HandlesVariableAttribute] string key)
 		{

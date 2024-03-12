@@ -7,7 +7,6 @@ using Nethereum.RPC.Accounts;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using Nostr.Client.Client;
-using OpenQA.Selenium.DevTools.V119.Emulation;
 using PLang.Building;
 using PLang.Building.Events;
 using PLang.Building.Parsers;

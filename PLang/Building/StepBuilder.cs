@@ -137,7 +137,7 @@ namespace PLang.Building
 				}
 				else
 				{
-					throw new BuilderStepException(ex.Message, step);
+					throw new BuilderStepException(ex.Message, step, ex);
 				}
 			}
 

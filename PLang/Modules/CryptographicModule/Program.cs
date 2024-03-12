@@ -1,5 +1,6 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using Nethereum.ABI;
+using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Services.LlmService;
 using PLang.Utils;
@@ -7,6 +8,7 @@ using System.ComponentModel;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using static Dapper.SqlMapper;
 
 namespace PLang.Modules.CryptographicModule
 {
@@ -16,11 +18,13 @@ namespace PLang.Modules.CryptographicModule
 		private readonly string CurrentBearerToken = "PLang.Modules.CryptographicModule.CurrentBearerToken";
 		private readonly IEncryption encryption;
 		private readonly ModuleSettings moduleSettings;
+		private readonly ISettings settings;
 
 		public Program(ISettings settings, IEncryptionFactory encryptionFactory) : base()
 		{
 			this.encryption = encryptionFactory.CreateHandler();
 			this.moduleSettings = new ModuleSettings(settings);
+			this.settings = settings;
 		}
 
 		public async Task<string> Encrypt(object content)
@@ -56,7 +60,7 @@ namespace PLang.Modules.CryptographicModule
 		[Description("Hmac hash sizes are 256, 384, 512")]
 		public async Task<string> HashHmacShaInput(string input, string? secretKey = null, int hashSize = 256)
 		{
-			if (secretKey == null) secretKey = context.GetOrDefault<string>(ReservedKeywords.Salt, "");
+			if (secretKey == null) secretKey = settings.GetSalt();
 			if (string.IsNullOrEmpty(secretKey))
 			{
 				throw new Exception("secretKey is missing");
@@ -79,7 +83,7 @@ namespace PLang.Modules.CryptographicModule
 			{
 				if (useSalt && salt == null)
 				{
-					salt = context[ReservedKeywords.Salt]?.ToString();
+					salt = settings.GetSalt();
 				}
 
 				return input.ComputeHash(hashAlgorithm, salt);
@@ -89,12 +93,21 @@ namespace PLang.Modules.CryptographicModule
 		[Description("Hashes Identity string to standard hash")]
 		public async Task<string> HashIdentityString(string identity)
 		{
-			return identity.ComputeHash(mode: "keccak256", salt: context[ReservedKeywords.Salt]!.ToString());
+			if (identity == null)
+			{
+				throw new RuntimeStepException("identity is null. It cannot be null for hashing", goalStep);
+			}
+			return identity.ComputeHash(mode: "keccak256", salt: settings.GetSalt());
 		}
 
 		[Description("Used to verify hash. hashAlgorithm: keccak256 | sha256 | bcrypt")]
 		public async Task<bool> VerifyHashedValues(string text, string hash, string hashAlgorithm = "keccak256", bool useSalt = true, string? salt = null)
 		{
+			if (text == null)
+			{
+				throw new RuntimeStepException("text is null. It cannot be null for verifying hash", goalStep);
+			}
+
 			if (hashAlgorithm == "bcrypt")
 			{
 				return BCrypt.Net.BCrypt.Verify(text, hash);
@@ -102,7 +115,7 @@ namespace PLang.Modules.CryptographicModule
 			{
 				if (useSalt && salt == null)
 				{
-					salt = context[ReservedKeywords.Salt]?.ToString();
+					salt = settings.GetSalt();
 				}
 				return (text.ComputeHash(hashAlgorithm, salt) == hash);
 			}

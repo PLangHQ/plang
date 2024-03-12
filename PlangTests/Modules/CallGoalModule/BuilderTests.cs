@@ -2,11 +2,11 @@
 using Newtonsoft.Json;
 using NSubstitute;
 using PLang.Building.Model;
-using PLang.Services.OpenAi;
 using PLang.Utils;
 using PLangTests;
 using System.Runtime.CompilerServices;
 using static PLang.Modules.BaseBuilder;
+using PLang.Services.OpenAi;
 
 namespace PLang.Modules.CallGoalModule.Tests
 {
@@ -21,7 +21,7 @@ namespace PLang.Modules.CallGoalModule.Tests
 			base.Initialize();
 
 			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var llmService = new OpenAiService(settings, logger, llmCaching, context);
+			var llmService = new PLang.Services.OpenAi.OpenAiService(settings, logger, llmCaching, context);
 			llmServiceFactory.CreateHandler().Returns(llmService);
 			typeHelper = new TypeHelper(fileSystem, settings);
 

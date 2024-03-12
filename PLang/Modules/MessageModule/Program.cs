@@ -17,6 +17,7 @@ using PLang.Services.LlmService;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using System.ComponentModel;
+using System.Configuration;
 using System.Reactive.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Websocket.Client;
@@ -190,6 +191,12 @@ namespace PLang.Modules.MessageModule
 
 				if (ev.CreatedAt != null)
 				{
+					var dt = settings.GetOrDefault(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_" + publicKey, DateTimeOffset.MinValue);
+					if (ev.CreatedAt.Value < dt)
+					{
+						return;
+					}
+
 					settings.Set<DateTimeOffset>(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_" + publicKey, new DateTimeOffset(ev.CreatedAt.Value));
 				}
 				Dictionary<string, object> validationKeyValues = new Dictionary<string, object>();

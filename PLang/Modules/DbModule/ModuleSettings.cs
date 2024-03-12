@@ -164,6 +164,8 @@ Give me sql statement to list all the tables and views in my database {dbName} o
 Give me sql statement on how to get all column names and type in a table
 Table name should be @TableName, database name is @Database if needed as parameters
 
+If you need to do subquery, make sure to use IN statement incase the subquery returns multiple rows
+
 Be concise"));
 
 			var llmRequest = new LlmRequest("SetDatabaseConnectionString", promptMessage);
@@ -172,22 +174,31 @@ Be concise"));
 			{
 				throw new BuilderException("Could not get select statement for tables, views and columns. Try again.");
 			}
+			DataSource dataSource;
+
 			var dataSources = await GetAllDataSources();
 			if (dataSources.Count == 0)
 			{
 				isDefault = true;
 			}
-			var dataSource = dataSources.FirstOrDefault(p => p.Name == dataSourceName);
-			if (dataSource != null)
+			var dataSourceIdx = dataSources.FindIndex(p => p.Name == dataSourceName);
+			if (dataSourceIdx != -1)
 			{
-				throw new AskUserDbConnectionString(dataSourceName, typeFullName, regexToExtractDatabaseNameFromConnectionString, keepHistory, isDefault, $"{dataSourceName} already exists. Please choose a different name.", SetDatabaseConnectionString);
+				dataSources[dataSourceIdx] = new DataSource(dataSourceName, typeFullName, databaseConnectionString.Replace(fileSystem.RootDirectory, ""), dbName,
+										statement.SelectTablesAndViewsInMyDatabaseSqlStatement, statement.SelectColumnsFromTablesSqlStatement,
+										keepHistory, isDefault);
+				dataSource = dataSources[dataSourceIdx];
 			}
-			
-			dataSource = new DataSource(dataSourceName, typeFullName, databaseConnectionString.Replace(fileSystem.RootDirectory, ""), dbName,
-									statement.SelectTablesAndViewsInMyDatabaseSqlStatement, statement.SelectColumnsFromTablesSqlStatement,
-									keepHistory, isDefault);
+			else
+			{
 
-			dataSources.Add(dataSource);
+				dataSource = new DataSource(dataSourceName, typeFullName, databaseConnectionString.Replace(fileSystem.RootDirectory, ""), dbName,
+										statement.SelectTablesAndViewsInMyDatabaseSqlStatement, statement.SelectColumnsFromTablesSqlStatement,
+										keepHistory, isDefault);
+				dataSources.Add(dataSource);
+			}
+
+			
 			settings.SetList(this.GetType(), dataSources);
 
 			if (isDefault || dataSources.Count == 1) {
