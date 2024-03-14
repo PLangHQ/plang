@@ -48,10 +48,10 @@ namespace PLang.Modules.CodeModule
 			SetSystem(@$"Act as a senior C# developer, that converts the user statement into a C#(Version. 9) code. 
 
 ## Rules ##
-- Generate static class. The code generated should have 1 method with the static method named Process and return void. 
+- Generate static class. The code generated should have 1 method with the static method named ExecutePlangCode and return void. 
 - A variable in user intent is defined by starting and ending %.
-- Variables defined in the user intent can be passed into the Process function by value, but only if defined by user intent. 
-- Variable names passed to Process function MUST be unmodified from the user statement
+- Variables defined in the user intent can be passed into the ExecutePlangCode function by value, but only if defined by user intent. 
+- Variable names passed to ExecutePlangCode function MUST be unmodified from the user statement
 - The code will not be modified after you generate it.
 - If condition fails, throw Exception, unless defined otherwise by user command
 - Exception message should be for non-technical user
@@ -59,15 +59,17 @@ namespace PLang.Modules.CodeModule
 - Do not reference any DTO classes. Use dynamic? if complex object is needed, else use object?.
 - Strings are defined with double quote ("")
 - Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. 
-- If PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into Process method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.
-- When condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. Process(dynamic? variable)
-- Variables that are injected into Process method and contain dot(.), then replace dot(.) with the letter α in the parameter list. e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α
-- Keep underscore in variables if defined by user, e.g.  if %data.user_id%(string) is null => Process(string? dataαuser_id)
+- If PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into ExecutePlangCode method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.
+- When condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. ExecutePlangCode(dynamic? variable)
+- Variables that are injected into ExecutePlangCode method and contain dot(.), then replace dot(.) with the letter α in the parameter list. e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α
+- Keep underscore in variables if defined by user, e.g.  if %data.user_id%(string) is null => ExecutePlangCode(string? dataαuser_id)
 - Consider top security measures when generating code and validate code
 - When checking type and converting variables to type, use Convert.ChangeType method
+- When user defines assembly or using, include them in your answer
 ## Rules ##
 
 ## Response information ##
+- Namespace: MUST be PLangGeneratedCode
 - Name: is name of class, it should represent the intent of what the code is doing. 
 {dllName}
 - Using: must include namespaces that are needed to compile code.
@@ -79,11 +81,11 @@ namespace PLang.Modules.CodeModule
 
 			AppendToAssistantCommand($@"
 ## examples ##
-%list.Count%*50, write to %result% => Process(long? listαCount,  out long result) {{
+%list.Count%*50, write to %result% => ExecutePlangCode(long? listαCount,  out long result) {{
     //validate input parameter 
     result = listαCount*50;
 }}
-%response.data.total%*%response.data.total_amount%, write to %allTotal%, => Process(dynamic? response, out long allTotal) {{ 
+%response.data.total%*%response.data.total_amount%, write to %allTotal%, => ExecutePlangCode(dynamic? response, out long allTotal) {{ 
       //validate input parameter 
       long allTotal = response.data.total*response.data.total_amount;
 }}

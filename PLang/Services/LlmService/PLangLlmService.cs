@@ -100,6 +100,10 @@ namespace PLang.Services.LlmService
 			var response = await httpClient.SendAsync(request);
 
 			string responseBody = await response.Content.ReadAsStringAsync();
+			if (string.IsNullOrWhiteSpace(responseBody))
+			{
+				throw new BuilderException("llm.plang.is appears to be down. Try again in few minutes. If it does not come back up soon, check out our Discord https://discord.gg/A8kYUymsDD for a chat");
+			}
 			if (isDebug)
 			{
 				context.AddOrReplace(ReservedKeywords.Llm, responseBody);

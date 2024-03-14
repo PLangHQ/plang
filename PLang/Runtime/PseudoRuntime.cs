@@ -77,7 +77,7 @@ namespace PLang.Runtime
 				}
 				var goals = string.Join('\n', goalsAvailable.Select(p => $" - {p.GoalName}"));
 				//throw new Exception($"Goal {goalName} couldn't be found. Did you type in correct name?");
-				throw new GoalNotFoundException($"WARNING! - Goal '{goalName}' was not found. These goals are available: \n{goals} ", appPath, goalName);
+				throw new GoalNotFoundException($"WARNING! - Goal '{goalName}' at {appPath} was not found. These goals are available: \n{goals} ", appPath, goalName);
 			}
 			if (waitForExecution) 
 			{

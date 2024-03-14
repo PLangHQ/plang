@@ -5,11 +5,12 @@ namespace PLang.Services.CompilerService
 	public class ConditionImplementationResponse : ImplementationResponse
 	{
 		public ConditionImplementationResponse() { }
-		public ConditionImplementationResponse(string name, string? implementation = null, string[]? @using = null, 
+		public ConditionImplementationResponse(string @namespace, string name, string? implementation = null, string[]? @using = null, 
 			string[]? assemblies = null, string? goalToCallOnTrue = null, string? goalToCallOnFalse = null, 
 			Dictionary<string, object>? goalToCallOnTrueParameters = null, 
 			Dictionary<string, object>? goalToCallOnFalseParameters = null)
 		{
+			Namespace = @namespace;
 			Name = name;
 			Implementation = implementation;
 			Using = @using;

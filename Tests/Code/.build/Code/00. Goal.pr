@@ -6,14 +6,14 @@
       "Text": "set %name%(string) as 'Toby Flenderson'",
       "Comment": null,
       "ModuleType": "PLang.Modules.LocalOrGlobalVariableModule",
-      "Name": "SetVariable",
+      "Name": "SetVariableName",
       "Description": "Set the variable 'name' with the value 'Toby Flenderson'",
-      "PrFileName": "01. SetVariable.pr",
-      "RelativePrPath": ".build\\Code\\01. SetVariable.pr",
+      "PrFileName": "01. SetVariableName.pr",
+      "RelativePrPath": ".build\\Code\\01. SetVariableName.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-09T21:39:44.3010561+00:00",
+      "Generated": "2024-03-13T15:11:59.3407224+01:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -21,73 +21,6 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 1,
-      "LlmRequest": {
-        "temperature": 0.0,
-        "top_p": 0.0,
-        "frequencyPenalty": 0.0,
-        "presencePenalty": 0.0,
-        "maxLength": 4000,
-        "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
-        "type": "StepBuilder",
-        "promptMessage": [
-          {
-            "role": "system",
-            "content": [
-              {
-                "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
-              },
-              {
-                "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
-              }
-            ]
-          },
-          {
-            "role": "assistant",
-            "content": [
-              {
-                "type": "text",
-                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CultureInfoModule\", \"description\": \"Various settings for the program, such as culture, date & number formatting. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search.. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
-              }
-            ]
-          },
-          {
-            "role": "user",
-            "content": [
-              {
-                "type": "text",
-                "text": "set %name%(string) as 'Toby Flenderson'"
-              }
-            ]
-          }
-        ],
-        "model": "gpt-4",
-        "caching": true,
-        "RawResponse": "{\r\n  \"StepName\": \"SetVariable\",\r\n  \"StepDescription\": \"Set the variable 'name' with the value 'Toby Flenderson'\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.LocalOrGlobalVariableModule\"\r\n  ],\r\n  \"WaitForExecution\": true\r\n}"
-      }
-    },
-    {
-      "Text": "[code] get first  name of %name%,  write to %firstName%",
-      "Comment": null,
-      "ModuleType": "PLang.Modules.CodeModule",
-      "Name": "GetFirstName",
-      "Description": "Extract the first name from the variable %name% and store it in the variable %firstName%",
-      "PrFileName": "02. GetFirstName.pr",
-      "RelativePrPath": ".build\\Code\\02. GetFirstName.pr",
-      "Indent": 0,
-      "Execute": true,
-      "RunOnce": false,
-      "Generated": "2024-02-09T21:49:28.6614149+00:00",
-      "WaitForExecution": true,
-      "ErrorHandler": null,
-      "RetryHandler": null,
-      "CacheHandler": null,
-      "CancellationHandler": null,
-      "Custom": {},
-      "Number": 1,
       "LineNumber": 2,
       "LlmRequest": {
         "temperature": 0.0,
@@ -104,7 +37,74 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "set %name%(string) as 'Toby Flenderson'"
+              }
+            ]
+          }
+        ],
+        "model": "gpt-4",
+        "caching": true,
+        "RawResponse": "{\n  \"StepName\": \"SetVariableName\",\n  \"StepDescription\": \"Set the variable 'name' with the value 'Toby Flenderson'\",\n  \"Modules\": [\n    \"PLang.Modules.LocalOrGlobalVariableModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+      }
+    },
+    {
+      "Text": "[code] get first  name of %name%,  write to %firstName%",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.CodeModule",
+      "Name": "GetFirstName",
+      "Description": "Extract the first name from the variable %name% and store it in the variable %firstName%",
+      "PrFileName": "02. GetFirstName.pr",
+      "RelativePrPath": ".build\\Code\\02. GetFirstName.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-03-13T15:12:08.670405+01:00",
+      "WaitForExecution": true,
+      "ErrorHandler": null,
+      "RetryHandler": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 1,
+      "LineNumber": 3,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
+        "type": "StepBuilder",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -133,7 +133,7 @@
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": null
+        "RawResponse": "{\n  \"StepName\": \"GetFirstName\",\n  \"StepDescription\": \"Extract the first name from the variable %name% and store it in the variable %firstName%\",\n  \"Modules\": [\n    \"PLang.Modules.CodeModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     },
     {
@@ -141,13 +141,13 @@
       "Comment": null,
       "ModuleType": "PLang.Modules.OutputModule",
       "Name": "WriteOutFirstName",
-      "Description": "Output the value of the variable 'firstName' to the user interface.",
+      "Description": "Output the value of the variable %firstName% to the user interface.",
       "PrFileName": "03. WriteOutFirstName.pr",
       "RelativePrPath": ".build\\Code\\03. WriteOutFirstName.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-09T21:15:50.6709649+00:00",
+      "Generated": "2024-03-13T15:12:17.2046483+01:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -155,73 +155,6 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 2,
-      "LineNumber": 3,
-      "LlmRequest": {
-        "temperature": 0.0,
-        "top_p": 0.0,
-        "frequencyPenalty": 0.0,
-        "presencePenalty": 0.0,
-        "maxLength": 4000,
-        "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
-        "type": "StepBuilder",
-        "promptMessage": [
-          {
-            "role": "system",
-            "content": [
-              {
-                "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
-              },
-              {
-                "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
-              }
-            ]
-          },
-          {
-            "role": "assistant",
-            "content": [
-              {
-                "type": "text",
-                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CultureInfoModule\", \"description\": \"Various settings for the program, such as culture, date & number formatting. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search.. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
-              }
-            ]
-          },
-          {
-            "role": "user",
-            "content": [
-              {
-                "type": "text",
-                "text": "write out %firstName%"
-              }
-            ]
-          }
-        ],
-        "model": "gpt-4",
-        "caching": true,
-        "RawResponse": "{\r\n  \"StepName\": \"WriteOutFirstName\",\r\n  \"StepDescription\": \"Output the value of the variable 'firstName' to the user interface.\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.OutputModule\"\r\n  ],\r\n  \"WaitForExecution\": true\r\n}"
-      }
-    },
-    {
-      "Text": "[code] get last name of %name%, write to %lastName%",
-      "Comment": null,
-      "ModuleType": "PLang.Modules.CodeModule",
-      "Name": "GetLastName",
-      "Description": "Extract the last name from the provided full name and store it in the variable 'lastName'",
-      "PrFileName": "04. GetLastName.pr",
-      "RelativePrPath": ".build\\Code\\04. GetLastName.pr",
-      "Indent": 0,
-      "Execute": true,
-      "RunOnce": false,
-      "Generated": "2024-02-09T21:49:49.5554662+00:00",
-      "WaitForExecution": true,
-      "ErrorHandler": null,
-      "RetryHandler": null,
-      "CacheHandler": null,
-      "CancellationHandler": null,
-      "Custom": {},
-      "Number": 3,
       "LineNumber": 4,
       "LlmRequest": {
         "temperature": 0.0,
@@ -238,7 +171,74 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "write out %firstName%"
+              }
+            ]
+          }
+        ],
+        "model": "gpt-4",
+        "caching": true,
+        "RawResponse": "{\n  \"StepName\": \"WriteOutFirstName\",\n  \"StepDescription\": \"Output the value of the variable %firstName% to the user interface.\",\n  \"Modules\": [\n    \"PLang.Modules.OutputModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+      }
+    },
+    {
+      "Text": "[code] get last name of %name%, write to %lastName%",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.CodeModule",
+      "Name": "GetLastName",
+      "Description": "Extract the last name from the provided full name and store it in the variable 'lastName'",
+      "PrFileName": "04. GetLastName.pr",
+      "RelativePrPath": ".build\\Code\\04. GetLastName.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-03-13T15:12:29.0702105+01:00",
+      "WaitForExecution": true,
+      "ErrorHandler": null,
+      "RetryHandler": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 3,
+      "LineNumber": 5,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
+        "type": "StepBuilder",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -267,7 +267,7 @@
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": null
+        "RawResponse": "{\n  \"StepName\": \"GetLastName\",\n  \"StepDescription\": \"Extract the last name from the provided full name and store it in the variable 'lastName'\",\n  \"Modules\": [\n    \"PLang.Modules.CodeModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     },
     {
@@ -275,13 +275,13 @@
       "Comment": null,
       "ModuleType": "PLang.Modules.OutputModule",
       "Name": "WriteOutLastName",
-      "Description": "Output the value of the variable %lastName% to the user interface.",
+      "Description": "This step involves outputting the value of the variable %lastName%.",
       "PrFileName": "05. WriteOutLastName.pr",
       "RelativePrPath": ".build\\Code\\05. WriteOutLastName.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-09T21:16:13.4001543+00:00",
+      "Generated": "2024-03-13T15:12:37.7457495+01:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -289,73 +289,6 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 4,
-      "LineNumber": 5,
-      "LlmRequest": {
-        "temperature": 0.0,
-        "top_p": 0.0,
-        "frequencyPenalty": 0.0,
-        "presencePenalty": 0.0,
-        "maxLength": 4000,
-        "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
-        "type": "StepBuilder",
-        "promptMessage": [
-          {
-            "role": "system",
-            "content": [
-              {
-                "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
-              },
-              {
-                "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
-              }
-            ]
-          },
-          {
-            "role": "assistant",
-            "content": [
-              {
-                "type": "text",
-                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CultureInfoModule\", \"description\": \"Various settings for the program, such as culture, date & number formatting. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search.. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
-              }
-            ]
-          },
-          {
-            "role": "user",
-            "content": [
-              {
-                "type": "text",
-                "text": "write out %lastName%"
-              }
-            ]
-          }
-        ],
-        "model": "gpt-4",
-        "caching": true,
-        "RawResponse": "{\r\n  \"StepName\": \"WriteOutLastName\",\r\n  \"StepDescription\": \"Output the value of the variable %lastName% to the user interface.\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.OutputModule\"\r\n  ],\r\n  \"WaitForExecution\": true\r\n}"
-      }
-    },
-    {
-      "Text": "[code] uppercase %name%, write to %uppercaseName%",
-      "Comment": null,
-      "ModuleType": "PLang.Modules.CodeModule",
-      "Name": "UppercaseName",
-      "Description": "Convert the value of the variable 'name' to uppercase and store the result in the variable 'uppercaseName'",
-      "PrFileName": "06. UppercaseName.pr",
-      "RelativePrPath": ".build\\Code\\06. UppercaseName.pr",
-      "Indent": 0,
-      "Execute": true,
-      "RunOnce": false,
-      "Generated": "2024-02-09T21:50:17.2715284+00:00",
-      "WaitForExecution": true,
-      "ErrorHandler": null,
-      "RetryHandler": null,
-      "CacheHandler": null,
-      "CancellationHandler": null,
-      "Custom": {},
-      "Number": 5,
       "LineNumber": 6,
       "LlmRequest": {
         "temperature": 0.0,
@@ -372,7 +305,74 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "write out %lastName%"
+              }
+            ]
+          }
+        ],
+        "model": "gpt-4",
+        "caching": true,
+        "RawResponse": "{\n  \"StepName\": \"WriteOutLastName\",\n  \"StepDescription\": \"This step involves outputting the value of the variable %lastName%.\",\n  \"Modules\": [\n    \"PLang.Modules.OutputModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+      }
+    },
+    {
+      "Text": "[code] uppercase %name%, write to %uppercaseName%",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.CodeModule",
+      "Name": "UppercaseName",
+      "Description": "Convert the value of the variable 'name' to uppercase and store the result in the variable 'uppercaseName'.",
+      "PrFileName": "06. UppercaseName.pr",
+      "RelativePrPath": ".build\\Code\\06. UppercaseName.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-03-13T15:12:49.1919485+01:00",
+      "WaitForExecution": true,
+      "ErrorHandler": null,
+      "RetryHandler": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 5,
+      "LineNumber": 7,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
+        "type": "StepBuilder",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -401,7 +401,7 @@
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": null
+        "RawResponse": "{\n  \"StepName\": \"UppercaseName\",\n  \"StepDescription\": \"Convert the value of the variable 'name' to uppercase and store the result in the variable 'uppercaseName'.\",\n  \"Modules\": [\n    \"PLang.Modules.CodeModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     },
     {
@@ -415,7 +415,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-09T21:16:41.8681777+00:00",
+      "Generated": "2024-03-13T15:12:58.5054997+01:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -423,73 +423,6 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 6,
-      "LineNumber": 7,
-      "LlmRequest": {
-        "temperature": 0.0,
-        "top_p": 0.0,
-        "frequencyPenalty": 0.0,
-        "presencePenalty": 0.0,
-        "maxLength": 4000,
-        "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
-        "type": "StepBuilder",
-        "promptMessage": [
-          {
-            "role": "system",
-            "content": [
-              {
-                "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
-              },
-              {
-                "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
-              }
-            ]
-          },
-          {
-            "role": "assistant",
-            "content": [
-              {
-                "type": "text",
-                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CultureInfoModule\", \"description\": \"Various settings for the program, such as culture, date & number formatting. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search.. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
-              }
-            ]
-          },
-          {
-            "role": "user",
-            "content": [
-              {
-                "type": "text",
-                "text": "write out %uppercaseName%"
-              }
-            ]
-          }
-        ],
-        "model": "gpt-4",
-        "caching": true,
-        "RawResponse": "{\r\n  \"StepName\": \"WriteOutUppercaseName\",\r\n  \"StepDescription\": \"This step involves outputting the value of the variable 'uppercaseName' to the user interface.\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.OutputModule\"\r\n  ],\r\n  \"WaitForExecution\": true\r\n}"
-      }
-    },
-    {
-      "Text": "[code] create string of list with 10 rows of random list data, write to %list%",
-      "Comment": null,
-      "ModuleType": "PLang.Modules.CodeModule",
-      "Name": "CreateRandomListData",
-      "Description": "Create a string of list with 10 rows of random list data and store it in the variable %list%",
-      "PrFileName": "08. CreateRandomListData.pr",
-      "RelativePrPath": ".build\\Code\\08. CreateRandomListData.pr",
-      "Indent": 0,
-      "Execute": true,
-      "RunOnce": false,
-      "Generated": "2024-02-09T21:50:40.7050464+00:00",
-      "WaitForExecution": true,
-      "ErrorHandler": null,
-      "RetryHandler": null,
-      "CacheHandler": null,
-      "CancellationHandler": null,
-      "Custom": {},
-      "Number": 7,
       "LineNumber": 8,
       "LlmRequest": {
         "temperature": 0.0,
@@ -506,7 +439,74 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "write out %uppercaseName%"
+              }
+            ]
+          }
+        ],
+        "model": "gpt-4",
+        "caching": true,
+        "RawResponse": "{\n  \"StepName\": \"WriteOutUppercaseName\",\n  \"StepDescription\": \"This step involves outputting the value of the variable 'uppercaseName' to the user interface.\",\n  \"Modules\": [\n    \"PLang.Modules.OutputModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+      }
+    },
+    {
+      "Text": "[code] create list string with 10 rows of random list data, write to %list%",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.CodeModule",
+      "Name": "CreateRandomListData",
+      "Description": "Create a list of strings with 10 rows of random data and store it in the variable %list%",
+      "PrFileName": "08. CreateRandomListData.pr",
+      "RelativePrPath": ".build\\Code\\08. CreateRandomListData.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-03-13T15:15:16.2583177+01:00",
+      "WaitForExecution": true,
+      "ErrorHandler": null,
+      "RetryHandler": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 7,
+      "LineNumber": 9,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
+        "type": "StepBuilder",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -528,28 +528,28 @@
             "content": [
               {
                 "type": "text",
-                "text": "[code] create string of list with 10 rows of random list data, write to %list%"
+                "text": "[code] create list string with 10 rows of random list data, write to %list%"
               }
             ]
           }
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\r\n  \"StepName\": \"CreateRandomListData\",\r\n  \"StepDescription\": \"Create a string of list with 10 rows of random list data and store it in the variable %list%\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.CodeModule\"\r\n  ],\r\n  \"WaitForExecution\": true\r\n}"
+        "RawResponse": "{\n  \"StepName\": \"CreateRandomListData\",\n  \"StepDescription\": \"Create a list of strings with 10 rows of random data and store it in the variable %list%\",\n  \"Modules\": [\n    \"PLang.Modules.CodeModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     },
     {
-      "Text": "write out %list.ToJson()%",
+      "Text": "write out %list%",
       "Comment": null,
       "ModuleType": "PLang.Modules.OutputModule",
-      "Name": "WriteOutJsonList",
-      "Description": "This step involves writing out the content of a list variable in JSON format.",
-      "PrFileName": "09. WriteOutJsonList.pr",
-      "RelativePrPath": ".build\\Code\\09. WriteOutJsonList.pr",
+      "Name": "WriteOutList",
+      "Description": "This step involves outputting the contents of the variable %list%.",
+      "PrFileName": "09. WriteOutList.pr",
+      "RelativePrPath": ".build\\Code\\09. WriteOutList.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-09T22:02:15.2787325+00:00",
+      "Generated": "2024-03-13T15:14:45.778324+01:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -557,73 +557,6 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 8,
-      "LineNumber": 9,
-      "LlmRequest": {
-        "temperature": 0.0,
-        "top_p": 0.0,
-        "frequencyPenalty": 0.0,
-        "presencePenalty": 0.0,
-        "maxLength": 4000,
-        "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
-        "type": "StepBuilder",
-        "promptMessage": [
-          {
-            "role": "system",
-            "content": [
-              {
-                "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
-              },
-              {
-                "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
-              }
-            ]
-          },
-          {
-            "role": "assistant",
-            "content": [
-              {
-                "type": "text",
-                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CultureInfoModule\", \"description\": \"Various settings for the program, such as culture, date & number formatting. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search.. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
-              }
-            ]
-          },
-          {
-            "role": "user",
-            "content": [
-              {
-                "type": "text",
-                "text": "write out %list.ToJson()%"
-              }
-            ]
-          }
-        ],
-        "model": "gpt-4",
-        "caching": true,
-        "RawResponse": null
-      }
-    },
-    {
-      "Text": "set %fileNameWithExtension% as 'video.mp4'",
-      "Comment": null,
-      "ModuleType": "PLang.Modules.LocalOrGlobalVariableModule",
-      "Name": "SetFileName",
-      "Description": "Set the variable 'fileNameWithExtension' with the value 'video.mp4'",
-      "PrFileName": "10. SetFileName.pr",
-      "RelativePrPath": ".build\\Code\\10. SetFileName.pr",
-      "Indent": 0,
-      "Execute": true,
-      "RunOnce": false,
-      "Generated": "2024-02-09T21:17:15.5181418+00:00",
-      "WaitForExecution": true,
-      "ErrorHandler": null,
-      "RetryHandler": null,
-      "CacheHandler": null,
-      "CancellationHandler": null,
-      "Custom": {},
-      "Number": 9,
       "LineNumber": 10,
       "LlmRequest": {
         "temperature": 0.0,
@@ -640,7 +573,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -653,7 +586,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CultureInfoModule\", \"description\": \"Various settings for the program, such as culture, date & number formatting. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search.. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
               }
             ]
           },
@@ -662,35 +595,35 @@
             "content": [
               {
                 "type": "text",
-                "text": "set %fileNameWithExtension% as 'video.mp4'"
+                "text": "write out %list%"
               }
             ]
           }
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\r\n  \"StepName\": \"SetFileName\",\r\n  \"StepDescription\": \"Set the variable 'fileNameWithExtension' with the value 'video.mp4'\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.LocalOrGlobalVariableModule\"\r\n  ],\r\n  \"WaitForExecution\": true\r\n}"
+        "RawResponse": "{\n  \"StepName\": \"WriteOutList\",\n  \"StepDescription\": \"This step involves outputting the contents of the variable %list%.\",\n  \"Modules\": [\n    \"PLang.Modules.OutputModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     },
     {
-      "Text": "[code] remove file extension from %fileNameWithExtension%, write to %fileName%",
+      "Text": "set %fileNameWithExtension% as 'video.mp4'",
       "Comment": null,
-      "ModuleType": "PLang.Modules.CodeModule",
-      "Name": "RemoveFileExtension",
-      "Description": "This step involves removing the file extension from the variable %fileNameWithExtension% and storing the result in the variable %fileName%",
-      "PrFileName": "11. RemoveFileExtension.pr",
-      "RelativePrPath": ".build\\Code\\11. RemoveFileExtension.pr",
+      "ModuleType": "PLang.Modules.LocalOrGlobalVariableModule",
+      "Name": "SetFileName",
+      "Description": "This step sets the variable 'fileNameWithExtension' with the value 'video.mp4'.",
+      "PrFileName": "10. SetFileName.pr",
+      "RelativePrPath": ".build\\Code\\10. SetFileName.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-09T21:22:41.5834677+00:00",
+      "Generated": "2024-03-13T15:13:27.1477194+01:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 10,
+      "Number": 9,
       "LineNumber": 11,
       "LlmRequest": {
         "temperature": 0.0,
@@ -707,7 +640,74 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "set %fileNameWithExtension% as 'video.mp4'"
+              }
+            ]
+          }
+        ],
+        "model": "gpt-4",
+        "caching": true,
+        "RawResponse": "{\n  \"StepName\": \"SetFileName\",\n  \"StepDescription\": \"This step sets the variable 'fileNameWithExtension' with the value 'video.mp4'.\",\n  \"Modules\": [\n    \"PLang.Modules.LocalOrGlobalVariableModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+      }
+    },
+    {
+      "Text": "[code] remove file extension from %fileNameWithExtension%, write to %fileName%",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.CodeModule",
+      "Name": "RemoveFileExtension",
+      "Description": "This step involves removing the file extension from the variable %fileNameWithExtension% and storing the result in the variable %fileName%",
+      "PrFileName": "11. RemoveFileExtension.pr",
+      "RelativePrPath": ".build\\Code\\11. RemoveFileExtension.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-03-13T15:13:39.3171699+01:00",
+      "WaitForExecution": true,
+      "ErrorHandler": null,
+      "RetryHandler": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 10,
+      "LineNumber": 12,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
+        "type": "StepBuilder",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -736,7 +736,7 @@
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": null
+        "RawResponse": "{\n  \"StepName\": \"RemoveFileExtension\",\n  \"StepDescription\": \"This step involves removing the file extension from the variable %fileNameWithExtension% and storing the result in the variable %fileName%\",\n  \"Modules\": [\n    \"PLang.Modules.CodeModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     },
     {
@@ -744,13 +744,13 @@
       "Comment": null,
       "ModuleType": "PLang.Modules.OutputModule",
       "Name": "WriteOutFileName",
-      "Description": "Output the value of the variable 'fileName' to the user interface.",
+      "Description": "Output the value of the variable %fileName% to the user interface.",
       "PrFileName": "12. WriteOutFileName.pr",
       "RelativePrPath": ".build\\Code\\12. WriteOutFileName.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-09T21:22:46.8507882+00:00",
+      "Generated": "2024-03-13T15:13:48.5250489+01:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -758,7 +758,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 11,
-      "LineNumber": 12,
+      "LineNumber": 13,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -774,7 +774,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -787,7 +787,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CultureInfoModule\", \"description\": \"Various settings for the program, such as culture, date & number formatting. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search.. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
               }
             ]
           },
@@ -803,7 +803,7 @@
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\r\n  \"StepName\": \"WriteOutFileName\",\r\n  \"StepDescription\": \"Output the value of the variable 'fileName' to the user interface.\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.OutputModule\"\r\n  ],\r\n  \"WaitForExecution\": true\r\n}"
+        "RawResponse": "{\n  \"StepName\": \"WriteOutFileName\",\n  \"StepDescription\": \"Output the value of the variable %fileName% to the user interface.\",\n  \"Modules\": [\n    \"PLang.Modules.OutputModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     }
   ],
@@ -818,5 +818,5 @@
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "b46553db5e472c35600d3dd26c9e6c68506eba9169bf2aef7e307220da8c9d67"
+  "Hash": "e556f7eabe400eba67a105be273496c700d3c99c25a327f5e63b70078aef651b"
 }

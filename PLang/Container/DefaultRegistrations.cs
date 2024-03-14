@@ -48,7 +48,7 @@ namespace PLang.Container
 
 		public static void RegisterOutputStreamFactory(this ServiceContainer container, Type type, bool isDefault = false, IOutputStream? instance = null)
 		{
-			container.Register<IOutputStreamFactory>(factory =>
+			container.RegisterSingleton<IOutputStreamFactory>(factory =>
 			{
 				SetContext(container, type, ReservedKeywords.Inject_OutputStream, isDefault);
 				return new OutputStreamFactory(container);
@@ -56,7 +56,7 @@ namespace PLang.Container
 
 			if (instance != null)
 			{
-				container.Register(factor =>
+				container.RegisterSingleton(factor =>
 				{
 					return instance;
 				}, instance.GetType().FullName);

@@ -39,7 +39,9 @@ namespace PlangWindowForms
 			debug = args.FirstOrDefault(p => p == "--debug") != null;
 			this.args = args;
 			container = new ServiceContainer();
-			container.RegisterForPLangWindowApp(Environment.CurrentDirectory, Path.DirectorySeparatorChar.ToString(), new AskUserDialog(), new ErrorDialog(), RenderContent);
+
+			container.RegisterForPLangWindowApp(Environment.CurrentDirectory, Path.DirectorySeparatorChar.ToString(), 
+				new AskUserDialog(), new ErrorDialog(), SynchronizationContext.Current, RenderContent);
 
 			fileSystem = container.GetInstance<IPLangFileSystem>();
 			pLang = new Executor(container);

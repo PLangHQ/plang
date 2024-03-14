@@ -76,6 +76,9 @@ namespace PLang
 				run = true;
 			}
 
+			AppContext.SetSwitch("Builder", build);
+			AppContext.SetSwitch("Runtime", run);
+
 			if (build)
 			{
 				await Build();

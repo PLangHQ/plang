@@ -13,7 +13,7 @@ In this tutorial we will cover the basics for working with plang. This includes.
 
 - Database tables
 - Start web server
-- Goals (functions) / Variables / Date & time
+- Goals (functions) / Steps / Variables / Date & time
 - Handle web request
 - Validation
 - Error handling

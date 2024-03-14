@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Razor.Language;
+using NBitcoin.Secp256k1;
 using Org.BouncyCastle.Utilities.IO;
 using Org.BouncyCastle.Utilities.Zlib;
 using PLang.Building.Model;
@@ -16,6 +17,7 @@ namespace PLang.Services.OutputStream
 	{
 		private readonly IRazorEngine razorEngine;
 		private readonly IFileSystem fileSystem;
+		private readonly SynchronizationContext uiContext;
 
 		public MemoryStack? MemoryStack { get; internal set; }
 		public Goal? Goal { get; internal set; }
@@ -24,15 +26,16 @@ namespace PLang.Services.OutputStream
 		public Stream ErrorStream { get; private set; }
 		StringBuilder sb;
 		public Action<string>? onFlush { get; set; }
-		public UIOutputStream(IRazorEngine razorEngine, IFileSystem fileSystem, Action<string> onFlush)
+		public UIOutputStream(IRazorEngine razorEngine, IFileSystem fileSystem, SynchronizationContext uiContext, Action<string> onFlush)
 		{
 			this.razorEngine = razorEngine;
 			this.fileSystem = fileSystem;
+			this.uiContext = uiContext;
 			this.onFlush = onFlush;
 			Stream = new MemoryStream();
 			ErrorStream = new MemoryStream();
 
-			sb = new StringBuilder(); 
+			sb = new StringBuilder();
 		}
 
 		public async Task<string> Ask(string text, string type = "ask", int statusCode = 104)
@@ -45,7 +48,13 @@ namespace PLang.Services.OutputStream
 		{
 			if (sb.Length == 0)
 			{
-				if (onFlush != null) onFlush("Loading...");
+				if (onFlush != null)
+				{
+					uiContext.Post(_ =>
+					{
+						onFlush("Loading...");
+					}, null);
+				}
 				return "";
 			}
 
@@ -54,9 +63,15 @@ namespace PLang.Services.OutputStream
 			string ble = sb.ToString();
 			sb.Clear();
 
-			if (onFlush != null) onFlush(ble);
+			if (onFlush != null)
+			{
+				uiContext.Post(_ =>
+				{
+					onFlush(ble);
+				}, null);
+			}
 			return ble;
-			
+
 		}
 
 		public string Read()
@@ -69,7 +84,7 @@ namespace PLang.Services.OutputStream
 		{
 			await Write(obj, type, statusCode, -1);
 		}
-		
+
 		public async Task Write(object? obj, string type = "text", int statusCode = 200, int stepNr = -1)
 		{
 			if (obj == null) return;
@@ -102,14 +117,17 @@ namespace PLang.Services.OutputStream
 			IRazorEngineCompiledTemplate compiled = null;
 			try
 			{
-				compiled = await razorEngine.CompileAsync(obj.ToString(), (compileOptions) => {
-					compileOptions.Options.IncludeDebuggingInfo = true; 
+				compiled = await razorEngine.CompileAsync("@using PLang.Modules.UiModule\n\n" + obj.ToString(), (compileOptions) =>
+				{
+					compileOptions.Options.IncludeDebuggingInfo = true;
+					compileOptions.AddAssemblyReference(typeof(Html).Assembly);
 				});
 				SetupCssAndJsFiles();
 				var content = compiled.Run(expandoObject as dynamic);
 				if (sb.Length == 0)
 				{
-					string html = $@"<!DOCTYPE html>
+					string html = $@"
+<!DOCTYPE html>
 <html lang=""en"">
 
 <head>
@@ -133,21 +151,23 @@ namespace PLang.Services.OutputStream
 ";
 					sb.Append(html);
 					sb.Append(content);
-				} else
+				}
+				else
 				{
 					if (stepNr == -1)
 					{
 						sb.Append(content.ToString());
-					} else
+					}
+					else
 					{
 						sb.Replace($"{{step{stepNr}}}", content.ToString());
 					}
 
 				}
 				//byte[] bytes = Encoding.UTF8.GetBytes(html);
-					
+
 				//await Stream.WriteAsync(bytes, 0, bytes.Length);
-				
+
 			}
 			catch (Exception ex)
 			{
@@ -159,7 +179,8 @@ namespace PLang.Services.OutputStream
 				int line = 0;
 				string searchIndex = "cshtml:line";
 				int lineIdx = stackTrace.IndexOf(searchIndex);
-				if (lineIdx != -1) {
+				if (lineIdx != -1)
+				{
 					int endIdx = stackTrace.IndexOf(Environment.NewLine) - lineIdx - searchIndex.Length;
 					int startIdx = lineIdx + searchIndex.Length;
 					if (endIdx > 0 && startIdx > 0 && startIdx < stackTrace.Length)
@@ -184,7 +205,7 @@ namespace PLang.Services.OutputStream
 					string error = $@"{errorMessage} at line: {line}";
 					if (lines.Length > line)
 					{
-						int lineIndex = (line -1 >= 0) ? line : 0;	
+						int lineIndex = (line - 1 >= 0) ? line : 0;
 						error += Environment.NewLine + Environment.NewLine + lines[lineIndex];
 					}
 					error += Environment.NewLine + Environment.NewLine + $@"Following is the generated source code:

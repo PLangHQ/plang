@@ -93,8 +93,9 @@ namespace PLang.Services.SettingsService
 
             var signature = ""; //todo sign settings
             var setting = new Setting(AppId, callingType.FullName, type, key, settingValue);
+            var handler = settingsRepositoryFactory.CreateHandler();
 
-            settingsRepositoryFactory.CreateHandler().Set(setting);
+			handler.Set(setting);
         }
 
 

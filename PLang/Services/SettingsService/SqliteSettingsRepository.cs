@@ -41,6 +41,7 @@ namespace PLang.Services.SettingsService
 				var sharedPath = GetSharedDataSourcePath(appId);
 				CheckSettingsTable(sharedPath);
 				context.AddOrReplace(contextKey, sharedPath);
+				logger.LogTrace("SetSharedDataSource to " + sharedPath);
 			} else
 			{
 				context.AddOrReplace(contextKey, LocalDataSourcePath);

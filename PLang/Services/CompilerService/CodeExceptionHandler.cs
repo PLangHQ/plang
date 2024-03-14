@@ -8,8 +8,13 @@ namespace PLang.Services.CompilerService
 	public class CodeExceptionHandler
 	{
 
-		public static void Handle(Exception ex, Implementation implementation, GoalStep step)
+		public static void Handle(Exception ex, Implementation? implementation, GoalStep step)
 		{
+			if (implementation == null)
+			{
+				implementation = new Implementation("No namespace", "No name provided", "No code provided", null, new(), new(), null, null);
+			}
+
 			if (ex.InnerException == null)
 			{
 				throw new RuntimeStepException($@"{ex.Message} in step {step.Text}. 

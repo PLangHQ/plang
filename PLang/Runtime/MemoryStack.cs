@@ -500,8 +500,10 @@ namespace PLang.Runtime
 					if (obj.GetType().Name.StartsWith("<>f__Anonymous"))
 					{
 						var anomType = obj.GetType();
-						var properties = new Dictionary<string, object?>();
-						foreach (var prop in anomType.GetProperties())
+						var properties = new ExpandoObject() as IDictionary<string, Object?>;
+						var objProperties = anomType.GetProperties();
+
+						foreach (var prop in objProperties)
 						{
 							if (prop.Name.ToLower() == call.ToLower())
 							{
@@ -512,11 +514,13 @@ namespace PLang.Runtime
 								properties[prop.Name] = prop.GetValue(obj);
 							}
 						}
+						var objProperty = objProperties.FirstOrDefault(p => p.Name.Equals(call, StringComparison.OrdinalIgnoreCase));
+						if (objProperty == null)
+						{
+							properties.Add(call, value);
+						}
 
-						var anomObject = Activator.CreateInstance(anomType, properties.Values.ToArray());
-						if (anomObject == null) throw new NullReferenceException($"{nameof(anomObject)} is null, it should not be null");
-
-						objectValue = new ObjectValue(objectValue.Name, anomObject, anomObject.GetType(), objectValue, initialize);
+						objectValue = new ObjectValue(objectValue.Name, properties, properties.GetType(), objectValue, initialize);
 					}
 					else if (call.Contains("("))
 					{

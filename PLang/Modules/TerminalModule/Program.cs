@@ -74,7 +74,7 @@ namespace PLang.Modules.TerminalModule
 				return new ReturnDictionary<string, object>();
 			}
 
-			var dict = new ReturnDictionary<string, object>();
+			var dict = new ReturnDictionary<string, object?>();
 
 			// Start the process
 			using (Process process = new Process { StartInfo = startInfo })
@@ -162,11 +162,13 @@ namespace PLang.Modules.TerminalModule
 
 				if (!string.IsNullOrEmpty(dataOutputVariable))
 				{
+					memoryStack.Put(dataOutputVariable, RemoveLastLine(dataOutput?.Trim()));
 					dict.Add(dataOutputVariable, RemoveLastLine(dataOutput?.Trim()));
 				}
 
 				if (!string.IsNullOrEmpty(errorDebugInfoOutputVariable))
 				{
+					memoryStack.Put(errorDebugInfoOutputVariable, errorOutput);
 					dict.Add(errorDebugInfoOutputVariable, errorOutput);
 				}
 			}

@@ -71,7 +71,8 @@ namespace PLang.Container
 			container.RegisterExceptionHandlerFactory(typeof(HttpExceptionHandler), true, new HttpExceptionHandler(httpContext, container.GetInstance<IAskUserHandlerFactory>(), container.GetInstance<ILogger>()));
 
 		}
-		public static void RegisterForPLangWindowApp(this ServiceContainer container, string appStartupPath, string relativeAppPath, IAskUserDialog askUserDialog, IErrorDialog errorDialog, Action<string> onFlush)
+		public static void RegisterForPLangWindowApp(this ServiceContainer container, string appStartupPath, string relativeAppPath,
+			IAskUserDialog askUserDialog, IErrorDialog errorDialog, SynchronizationContext uiContext, Action<string> onFlush)
 		{
 			container.RegisterBaseForPLang(appStartupPath, relativeAppPath);
 			RegisterModules(container);
@@ -79,7 +80,7 @@ namespace PLang.Container
 			
 			container.RegisterSingleton<IRazorEngine, RazorEngine>();
 
-			container.RegisterOutputStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IRazorEngine>(), container.GetInstance<IPLangFileSystem>(), onFlush));
+			container.RegisterOutputStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IRazorEngine>(), container.GetInstance<IPLangFileSystem>(), uiContext, onFlush));
 			container.RegisterAskUserHandlerFactory(typeof(AskUserWindowHandler), true, new AskUserWindowHandler(askUserDialog));
 			container.RegisterExceptionHandlerFactory(typeof(UiExceptionHandler), true, new UiExceptionHandler(errorDialog, container.GetInstance<IAskUserHandlerFactory>()));
 

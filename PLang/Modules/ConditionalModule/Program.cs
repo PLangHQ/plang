@@ -54,12 +54,12 @@ namespace PLang.Modules.ConditionalModule
 				{
 					throw new RuntimeStepException($"Could not find {dllName}. Stopping execution for step {goalStep.Text}", goalStep);
 				}
-				Type type = assembly.GetType(answer.Name);
+				Type type = assembly.GetType(answer.Namespace + "." + answer.Name);
 				if (type == null)
 				{
 					throw new RuntimeStepException($"Could not find type {answer.Name}. Stopping execution for step {goalStep.Text}", goalStep);
 				}
-				MethodInfo method = type.GetMethod("Process");
+				MethodInfo method = type.GetMethod("ExecutePlangCode");
 				var parameters = method.GetParameters();
 
 				List<object> parametersObject = new List<object>();

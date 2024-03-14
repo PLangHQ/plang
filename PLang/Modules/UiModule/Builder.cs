@@ -37,7 +37,7 @@ namespace PLang.Modules.UiModule
 
 
 			SetSystem(@$"Create the html, javascript and css needed from the user command using Bootstrap 5.0.2 & Fontawesome 5.15.3. 
-
+## Rules ##
 Goal has series of steps. Steps start with dash(-), steps can have sub steps, substeps are indented and are referenced in previous step by {{step#}} where # is a number, e.g. {{step1}}.
 Variables are defined with starting and ending %. They are case sensitive so keep them as defined
 Goals are prefixed with !, they are for calling a method, e.g. Call !NewUser or reference a goal, such as Edit.goal. To call it use javascript function callGoal(name:string, parameters:object)
@@ -52,12 +52,14 @@ HTML comments and <!-- --> are NOT allowed
 Javascript should be vanilla Javascript. popper.min.js and bootstrap.min.js are available. 
 
 Use @Razor templating engine for variables and to go through lists, displaying object or property, see example later
+DO NOT use any HtmlHelper library, this elimnates you from using @Html, such as @Html.Raw, @Html.Label, etc.
 
 Css should be using up to date css standards. colors should be in rgb.
 
 If a feedback is needed from the user using the html, provide the solution also for that, if it needs javascript, provide javascript, if it needs custom css, provide css
 
 Goalfile is only provide for context. 
+## Rules ##
 
 Your job is to build ```html, ```javascript, ```css from the user command and nothing else.
 ");

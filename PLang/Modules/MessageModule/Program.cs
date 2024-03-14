@@ -11,9 +11,11 @@ using Nostr.Client.Utils;
 using Org.BouncyCastle.Asn1.X9;
 using PLang.Attributes;
 using PLang.Exceptions;
+using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.LlmService;
+using PLang.Services.OutputStream;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using System.ComponentModel;
@@ -39,12 +41,17 @@ namespace PLang.Modules.MessageModule
 		private readonly IEngine engine;
 		private readonly INostrClient client;
 		private readonly IPLangSigningService signingService;
+		private readonly IOutputStreamFactory outputStreamFactory;
+		private readonly IExceptionHandlerFactory exceptionHandlerFactory;
 		private ModuleSettings moduleSettings;
 
 		public static readonly string CurrentAccountIdx = "PLang.Modules.MessageModule.CurrentAccountIdx";
 		public static readonly string NosrtEventKey = "__NosrtEventKey__";
 
-		public Program(ISettings settings, ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine, ILlmServiceFactory llmServiceFactory, INostrClient client, IPLangSigningService signingService) : base()
+		public Program(ISettings settings, ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine,
+			ILlmServiceFactory llmServiceFactory, INostrClient client, IPLangSigningService signingService,
+			IOutputStreamFactory outputStreamFactory, IExceptionHandlerFactory exceptionHandlerFactory
+			) : base()
 		{
 			this.settings = settings;
 			this.logger = logger;
@@ -52,6 +59,8 @@ namespace PLang.Modules.MessageModule
 			this.engine = engine;
 			this.client = client;
 			this.signingService = signingService;
+			this.outputStreamFactory = outputStreamFactory;
+			this.exceptionHandlerFactory = exceptionHandlerFactory;
 			this.moduleSettings = new ModuleSettings(settings, llmServiceFactory);
 		}
 
@@ -173,8 +182,10 @@ namespace PLang.Modules.MessageModule
 			var memoryCache = System.Runtime.Caching.MemoryCache.Default;
 			lock (_lock)
 			{
+				var privateKey = GetPrivateKey(ev.RecipientPubkey);
+				if (privateKey == null) return;
 
-				var content = ev.DecryptContent(GetPrivateKey(ev.RecipientPubkey));
+				var content = ev.DecryptContent(privateKey);
 				var hash = ev.CreatedAt.ToString().ComputeHash() + content.ComputeHash() + ev.Pubkey.ComputeHash();
 
 				//For preventing multiple calls on same message. I don't think this is the correct way, but only way I saw.
@@ -220,10 +231,30 @@ namespace PLang.Modules.MessageModule
 				var task = pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName, parameters, goal);
 				if (task != null)
 				{
-					task.Wait();
+					try
+					{
+						task.Wait();
+					}
+					catch { }
 
-					if (task.Exception != null) throw task.Exception;
+					if (task.Exception != null)
+					{
+						var exception = task.Exception.InnerException ?? task.Exception;
 
+						var handler = exceptionHandlerFactory.CreateHandler();
+						var exceptionHandlerTask = handler.Handle(exception, 500, "error", exception.Message);
+						var result = exceptionHandlerTask.Result;
+						if (!result)
+						{
+							handler.ShowError(exception, 500, "error", "Exception occured", goalStep);
+						}
+					}
+
+					var os = outputStreamFactory.CreateHandler();
+					if (os is UIOutputStream)
+					{
+						((UIOutputStream)os).Flush();
+					}
 				}
 
 
@@ -235,7 +266,7 @@ namespace PLang.Modules.MessageModule
 			await SendPrivateMessage(content, GetCurrentKey().Bech32PublicKey);
 		}
 
-		public async Task SendPrivateMessage(string content, string npubReceiverPublicKey)
+		public async Task SendPrivateMessage(string content, string receiverPublicKey)
 		{
 			if (string.IsNullOrEmpty(content.Trim()))
 			{
@@ -243,7 +274,7 @@ namespace PLang.Modules.MessageModule
 				return;
 			}
 
-			if (string.IsNullOrEmpty(npubReceiverPublicKey))
+			if (string.IsNullOrEmpty(receiverPublicKey))
 			{
 				logger.LogWarning("Address missing. Nothing sent");
 				return;
@@ -251,8 +282,16 @@ namespace PLang.Modules.MessageModule
 
 			var currentKey = GetCurrentKey();
 			var sender = GetPrivateKey(currentKey.Bech32PublicKey);
-			var receiver = NostrPublicKey.FromBech32(npubReceiverPublicKey);
+			NostrPublicKey receiver;
+			if (!receiverPublicKey.ToLower().StartsWith("npub"))
+			{
+				receiver = NostrPublicKey.FromHex(receiverPublicKey);
+			} else
+			{
+				receiver = NostrPublicKey.FromBech32(receiverPublicKey);
 
+			}
+			
 			content = variableHelper.LoadVariables(content).ToString();
 
 			var signedContent = signingService.SignWithTimeout(content, "EncryptedDm", currentKey.HexPublicKey, DateTimeOffset.UtcNow.AddYears(100));
@@ -319,8 +358,10 @@ namespace PLang.Modules.MessageModule
 			return key;
 		}
 
-		private NostrPrivateKey GetPrivateKey(string publicKey)
+		private NostrPrivateKey? GetPrivateKey(string? publicKey)
 		{
+			if (publicKey == null) return null;
+
 			var keys = settings.GetValues<NostrKey>(typeof(ModuleSettings));
 			if (keys.Count == 0)
 			{
@@ -330,7 +371,8 @@ namespace PLang.Modules.MessageModule
 			var key = keys.FirstOrDefault(p => p.Bech32PublicKey == publicKey || p.HexPublicKey == publicKey);
 			if (key == null)
 			{
-				throw new KeyNotFoundException($"Could not find {publicKey} key");
+				logger.LogError($"Could not find {publicKey} key");
+				return null;
 			}
 			return NostrPrivateKey.FromBech32(key.PrivateKeyBech32);
 

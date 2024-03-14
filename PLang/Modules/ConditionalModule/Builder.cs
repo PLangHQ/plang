@@ -56,27 +56,28 @@ namespace PLang.Modules.ConditionalModule
 			SetSystem(@$"Act as a senior C# developer, that converts the user statement into a C#(Version. 9) code. 
 
 ## Rules ##
-- Generate static class. The code generated should have 1 method with the static method named Process and return bool. 
+- Generate static class. The code generated should have 1 method with the static method named ExecutePlangCode and return bool. 
 - A variable in user intent is defined by starting and ending %.
-- Variables defined in the user intent can be passed into the Process function by value, but only if defined by user intent. 
-- Variable names passed to Process function MUST be unmodified from the user statement
+- Variables defined in the user intent can be passed into the ExecutePlangCode function by value, but only if defined by user intent. 
+- Variable names passed to ExecutePlangCode function MUST be unmodified from the user statement
 - The code will not be modified after you generate it.
 - ALWAYS use long or long? instead of int or int?
 - Do not reference any DTO classes. Use dynamic? if complex object is needed, else use object?.
 - Strings are defined with double quote ("")
 - Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. 
-- If PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into Process method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.
-- When condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. Process(dynamic? variable)
+- If PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into ExecutePlangCode method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.
+- When condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. ExecutePlangCode(dynamic? variable)
 - Replace the dot(.) in variables with the letter α e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α
-- Keep underscore in variables if defined by user, e.g.  if %user_id%(string) is null => Process(string? user_id)
+- Keep underscore in variables if defined by user, e.g.  if %user_id%(string) is null => ExecutePlangCode(string? user_id)
 - Consider top security measures when generating code and validate code
 ## Rules ##
 
 ## Response information ##
+- Namespace: MUST be PLangGeneratedCode
 - Name: is name of class, it should represent the intent of what the code is doing. 
 {dllName}
-- Goals should be prefixed with !, e.g. Call !Process, Call !ConditionFalse
-- Goals can be called with parameters using GoalToCallOnTrueParameters and GoalToCallOnFalseParameters, e.g. Call !Process id=%id%, call !FalseCall status='false'. Then id is parameter for True, and status for False
+- Goals should be prefixed with !, e.g. Call !ExecutePlangCode, Call !ConditionFalse
+- Goals can be called with parameters using GoalToCallOnTrueParameters and GoalToCallOnFalseParameters, e.g. Call !ExecutePlangCode id=%id%, call !FalseCall status='false'. Then id is parameter for True, and status for False
 - Using: must include namespaces that are needed to compile code.
 - Assemblies: dll to reference to compile using Roslyn
 ## Response information ##
@@ -85,12 +86,12 @@ namespace PLang.Modules.ConditionalModule
 'if %isValid% is true then', this condition would return true if %isValid% is true. 
 'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false.
 
-'if %data% (string) is null, call !CreateData, else !AppendData' => public static bool Process(string? dataαuser_id) { return string.IsNullOrEmpty(userIdentity); }, GoalToCallOnTrue=CreateData, GoalToCallOnFalse=AppendData
-'if %exists% (bool) is null, call !CreateUser' => public static bool Process(bool? dataαuser_id) { return exists == null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null
-'if %exists% (bool) is not null, call !CreateUser' => public static bool Process(bool? dataαuser_id) { return exists != null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null
-'if %data.user_id% is empty, call !CreateUser' => public static bool Process(dynamic? dataαuser_id) { return (dataαuser_id == null || (dataαuser_id is string str && string.IsNullOrEmpty(str))); } //if we dont know the type of %data.user_id%, , GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null
-'if !%isValid% then => public static bool Process(bool? isValid) { return !isValid; }, GoalToCallOnTrue=null, GoalToCallOnFalse=null
-'if %first_name% is null, call !UpdateFirstName' => public static bool Process(string? first_name) { return (first_name == null || string.IsNullOrEmpty(str)); }
+'if %data% (string) is null, call !CreateData, else !AppendData' => public static bool ExecutePlangCode(string? dataαuser_id) { return string.IsNullOrEmpty(userIdentity); }, GoalToCallOnTrue=CreateData, GoalToCallOnFalse=AppendData
+'if %exists% (bool) is null, call !CreateUser' => public static bool ExecutePlangCode(bool? dataαuser_id) { return exists == null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null
+'if %exists% (bool) is not null, call !CreateUser' => public static bool ExecutePlangCode(bool? dataαuser_id) { return exists != null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null
+'if %data.user_id% is empty, call !CreateUser' => public static bool ExecutePlangCode(dynamic? dataαuser_id) { return (dataαuser_id == null || (dataαuser_id is string str && string.IsNullOrEmpty(str))); } //if we dont know the type of %data.user_id%, , GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null
+'if !%isValid% then => public static bool ExecutePlangCode(bool? isValid) { return !isValid; }, GoalToCallOnTrue=null, GoalToCallOnFalse=null
+'if %first_name% is null, call !UpdateFirstName' => public static bool ExecutePlangCode(string? first_name) { return (first_name == null || string.IsNullOrEmpty(str)); }
 ## examples ##
 ");
 			if (error != null)

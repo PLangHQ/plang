@@ -7,9 +7,9 @@ namespace PLang.Services.LoggerService
 	{
 		public virtual void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
 		{
-			LogLevel? logLevelByUser = LogLevel.Trace;
+			LogLevel? logLevelByUser = LogLevel.Warning;
 
-			if (AppContext.TryGetSwitch("Runtime", out bool isEnabled) && isEnabled)
+			if (AppContext.TryGetSwitch("Builder", out bool isEnabled) && isEnabled)
 			{
 				logLevelByUser = LogLevel.Information;
 			}

@@ -413,10 +413,17 @@ namespace PLang.Modules.FileModule
 		public async Task CopyFiles(string directoryPath, string destinationPath, string searchPattern = "*", string[]? excludePatterns = null,
 			bool includeSubfoldersAndFiles = false, bool overwriteFiles = false)
 		{
+			directoryPath = directoryPath.AdjustPathToOs();
+			bool isAppFolder = false;
+			if (directoryPath.StartsWith("."))
+			{
+				isAppFolder = true;
+			}
+
 			var files = await GetFilePathsInDirectory(directoryPath, searchPattern, excludePatterns, includeSubfoldersAndFiles);
 			foreach (var file in files)
 			{
-				var copyDestinationFilePath = file.Replace(directoryPath, destinationPath);
+				var copyDestinationFilePath = (isAppFolder) ? Path.Join(destinationPath, file) : file.Replace(directoryPath, destinationPath);
 				await CopyFile(file, copyDestinationFilePath, true, overwriteFiles);
 			}
 

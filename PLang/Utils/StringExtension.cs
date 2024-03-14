@@ -54,8 +54,10 @@ namespace PLang.Utils
 			return txt.Substring(0, maxLength) + trailing;
 		}
 
-		public static string ComputeHash(this string input, string mode = "keccak256", string? salt = null)
+		public static string? ComputeHash(this string? input, string mode = "keccak256", string? salt = null)
 		{
+			if (input == null) return null;
+
 			if (!string.IsNullOrWhiteSpace(salt))
 			{
 				input = salt + ";" + input;

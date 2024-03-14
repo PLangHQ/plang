@@ -132,6 +132,10 @@ namespace PLang.Utils.Extractors
 		{
 			if (content.Contains($"```{contentType}"))
 			{
+				if (!content.TrimEnd().EndsWith("```"))
+				{
+					content += "```";
+				}
 				var regex = new Regex($"\\`\\`\\`{contentType}([^\\`\\`\\`]*)\\`\\`\\`");
 				var match = regex.Match(content);
 				if (match.Groups.Count > 1)
@@ -170,13 +174,13 @@ namespace PLang.Utils.Extractors
 			if (responseType == typeof(CodeImplementationResponse))
 			{
 				var cir = jsonObject as CodeImplementationResponse;
-				var ci = new CodeImplementationResponse(cir.Name, implementation, cir.OutParameterDefinition, cir.Using, cir.Assemblies);
+				var ci = new CodeImplementationResponse(cir.Namespace, cir.Name, implementation, cir.OutParameterDefinition, cir.Using, cir.Assemblies);
 
 				return ci;
 			} else
 			{
 				var cir = jsonObject as ConditionImplementationResponse;
-				var ci = new ConditionImplementationResponse(cir.Name, implementation, cir.Using, cir.Assemblies, cir.GoalToCallOnTrue, cir.GoalToCallOnFalse);
+				var ci = new ConditionImplementationResponse(cir.Namespace, cir.Name, implementation, cir.Using, cir.Assemblies, cir.GoalToCallOnTrue, cir.GoalToCallOnFalse);
 
 				return ci;
 			}

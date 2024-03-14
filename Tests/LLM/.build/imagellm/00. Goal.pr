@@ -13,7 +13,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-10T14:42:32.5445129+00:00",
+      "Generated": "2024-02-10T15:42:32.5445129+01:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -21,7 +21,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 1,
+      "LineNumber": 2,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -74,13 +74,13 @@
       "Comment": null,
       "ModuleType": "PLang.Modules.CodeModule",
       "Name": "GetDataTypeAndFormat",
-      "Description": "Get the data type of the text 'invoice.png', format it to 'data:{dataType};base64', and write the result to the variable %dataType%",
+      "Description": "This step involves getting the data type of a text (not a file) named 'invoice.png', formatting it to 'data:{dataType};base64', and then writing the result to a variable named %dataType%.",
       "PrFileName": "02. GetDataTypeAndFormat.pr",
       "RelativePrPath": ".build\\imagellm\\02. GetDataTypeAndFormat.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-13T11:31:17.6953471+00:00",
+      "Generated": "2024-03-13T15:17:38.326021+01:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -88,7 +88,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 1,
-      "LineNumber": 2,
+      "LineNumber": 3,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -104,7 +104,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -133,7 +133,7 @@
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\r\n  \"StepName\": \"GetDataTypeAndFormat\",\r\n  \"StepDescription\": \"Get the data type of the text 'invoice.png', format it to 'data:{dataType};base64', and write the result to the variable %dataType%\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.CodeModule\"\r\n  ],\r\n  \"WaitForExecution\": true\r\n}"
+        "RawResponse": "{\n  \"StepName\": \"GetDataTypeAndFormat\",\n  \"StepDescription\": \"This step involves getting the data type of a text (not a file) named 'invoice.png', formatting it to 'data:{dataType};base64', and then writing the result to a variable named %dataType%.\",\n  \"Modules\": [\n    \"PLang.Modules.CodeModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     },
     {
@@ -147,7 +147,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-13T11:39:42.5147715+00:00",
+      "Generated": "2024-02-13T12:39:42.5147715+01:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -155,7 +155,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 2,
-      "LineNumber": 3,
+      "LineNumber": 4,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -214,7 +214,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-13T11:33:22.9151387+00:00",
+      "Generated": "2024-02-13T12:33:22.9151387+01:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -222,7 +222,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 3,
-      "LineNumber": 7,
+      "LineNumber": 8,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -281,7 +281,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-13T11:39:54.2662067+00:00",
+      "Generated": "2024-02-13T12:39:54.2662067+01:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -289,7 +289,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 4,
-      "LineNumber": 8,
+      "LineNumber": 9,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -348,7 +348,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-13T11:40:14.120245+00:00",
+      "Generated": "2024-02-13T12:40:14.120245+01:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -356,7 +356,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 5,
-      "LineNumber": 9,
+      "LineNumber": 10,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -415,7 +415,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-13T11:40:27.0842728+00:00",
+      "Generated": "2024-02-13T12:40:27.0842728+01:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -423,7 +423,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 6,
-      "LineNumber": 13,
+      "LineNumber": 14,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -483,5 +483,5 @@
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "9bf34b955f586ef2758c5368d63c09ed82aa76d8be6ffccf0fdef6f0357d28b8"
+  "Hash": "a9284414d3cbc7b853204d751fb56af351a467fb98f4c84c2784f63b26dbdeda"
 }
