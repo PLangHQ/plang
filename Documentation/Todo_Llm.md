@@ -73,6 +73,14 @@ Categorize
 - If you need a structured response from LLM, the `scheme` is essential. It's a powerful feature that ensures the LLM's output matches the expected format.
 - For more information on how to use the LLM module in plang, please refer to the LLM Module documentation: [PLang.Modules.LlmModule.md](./modules/PLang.Modules.LlmModule.md).
 
+### Start server
+
+Let's build and start the webserver
+
+```bash
+plang exec
+```
+
 ### Test the API Endpoints
 
 > Cost estimated: $0.18
