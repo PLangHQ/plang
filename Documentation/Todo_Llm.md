@@ -10,6 +10,7 @@ What we we want is to categorize the tasks in the todo list. Since we have the p
 In this tutorial we will cover the basics for working with plang. This includes.
 
 - Modify database
+- Call a goal
 - Use LLM
 - Run and forget
 - Update database record
