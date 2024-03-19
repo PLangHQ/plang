@@ -114,13 +114,11 @@ Ensure that you restart the server if it was already running to apply the new ch
 Run the test with the following command:
 
 ```plang
-plang run test/TestNewLlmTask
+plang exec test/TestNewLlmTask
 ```
 
-After the test execution, you can retrieve all the tasks using:
+The program should have created multiple tasks in your database and printed out in the tasks that were created
 
-```plang
-plang run test/TestTasks
-```
+# Next
 
-This completes the setup and testing of the new approach for the todo application using plang.
+Check out some more [Examples](https://github.com/PLangHQ/plang/tree/main/Tests) or other [Apps written by others](https://github.com/PLangHQ/apps) to start learning. It is all open source and you can view all the code.
