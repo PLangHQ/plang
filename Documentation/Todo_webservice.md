@@ -23,7 +23,7 @@ In this tutorial we will cover the basics for working with plang. This includes.
 
 ## Video
 
-You can watch as I go through this Todo app tutorial, [both fast version](https://www.youtube.com/watch?v=3XZ8PxWfry8) and [in detail](https://www.youtube.com/watch?v=qtfwBEdFELk)
+You can watch as I go through [this Todo app tutorial](https://www.youtube.com/watch?v=m4QC19btS_I&list=PLbm1UMZKMaqfT4tqPtr-vhxMs4JGGFVEB)
 
 ## Steps
 
