@@ -128,43 +128,8 @@ The properties are as follows:
 - **X-Signature-Address**: The public address of the blockchain key.
 - **X-Signature-Contract**: Default is C0. This is to define contracts between the user and the service such as Terms of Service, etc.
 
-```csharp
-public Dictionary<string, string> Sign(string data, string method, string url, string contract)
-{
-	var dict = new Dictionary<string, string>();
-	DateTime created = SystemTime.UtcNow();
-	string nonce = Guid.NewGuid().ToString();
-	string dataToSign = StringHelper.CreateSignatureData(method, url, created.ToFileTimeUtc(), nonce, data, contract);
-
-	var p = new Modules.BlockchainModule.Program(settings, context, null, null, null, null, null);
-	string signedMessage = p.SignMessage(dataToSign).Result;
-	string address = p.GetCurrentAddress().Result;
-
-	dict.Add("X-Signature", signedMessage);
-	dict.Add("X-Signature-Contract", contract);
-	dict.Add("X-Signature-Created", created.ToFileTimeUtc().ToString());
-	dict.Add("X-Signature-Nonce", nonce);
-	dict.Add("X-Signature-Address", address);
-	return dict;
-}
-
-public string VerifySignature(string body, string method, string url, Dictionary<string, string> validationHeaders)
-{
-	var signature = validationHeaders["X-Signature"];
-	var created = validationHeaders["X-Signature-Created"];
-	var nonce = validationHeaders["X-Signature-Nonce"];
-	var address = validationHeaders["X-Signature-Address"];
-	var contract = validationHeaders["X-Signature-Contract"] ?? "C0";
-
-	string message = StringHelper.CreateSignatureData(method, url, long.Parse(created), nonce, body, contract);
-	var p = new Modules.BlockchainModule.Program(settings, context, null, null, null, null, null);
-	if (p.VerifySignature(message, signature, address).Result)
-	{
-		return address;
-	}
-	return null;
-}
-```
+Check out the source code at 
+https://github.com/PLangHQ/plang/blob/main/PLang/Services/IdentityService/PLangIdentityService.cs
 
 
 
