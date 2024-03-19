@@ -15,6 +15,8 @@ So as you can see, Identity has nothing to do with what your name and email is. 
 
 In plang, this `userId` is built into the programming language. It is not called `userId`; instead, it is referred to as `%Identity%`.
 
+plang creates this `%Identity%` on your computer and only your computer can create this specific `%Identity%`, so when we send it to a server, we can be sure that it is you and nobody else. 
+
 ## The Users' Advantage
 
 Users no longer need to remember a username and password to access services. They can enjoy a totally friction-free user experience along with great security.
@@ -51,6 +53,15 @@ Having a very strong `%Identity%` built into the programming language prevents m
 - Removes Man in the Middle attacks (MITM), as the signature not only proves the `%Identity%` but also that the content hasn't been manipulated.
 
 As you dig deeper and use plang more, you will be surprised by all the benefits of having the `%Identity%` created by the user.
+
+## Weakness
+There is only one weakness. That is if somebody can access your private key, then that person can act as you. 
+
+Since it is only one weakness, it is possible to implement extreme measures to protect it. 
+
+Mobile phones have for example extremly high security to store you private key, where you need the device, bio and pin code to get data signed with it. This can be taken even further with dongles, multiple signature, and other offline devices.
+
+> It should be noted that plang does not implement any security measure as of version 0.1 and the private key is stored in clear text on the computer. This will of course be fixed in future versions.
 
 ## Want to Dig Deeper, Want to Use `%Identity%`?
 
