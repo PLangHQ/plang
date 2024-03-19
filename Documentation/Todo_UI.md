@@ -32,7 +32,7 @@ Create a new folder named `ui`.
 
 ### 3. Create Todos.goal
 
-> Cost estimated: $0.45
+> Cost estimated: $0.51
 
 In the `ui` folder, create a new file named `Todos.goal` with the following content:
 
@@ -47,7 +47,7 @@ Todos
 
 ### 4. Create AddTask.goal
 
-> Cost estimated: $0.228
+> Cost estimated: $0.39
 
 In the `ui` folder, create another file named `AddTask.goal` with the following content:
 
