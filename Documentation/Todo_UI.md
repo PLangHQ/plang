@@ -14,14 +14,14 @@ In this tutorial we will cover the basics for working with plang. This includes.
 
 ## Steps
 
-### 1. Modify Start.goal
+### 1. Create StartWindow.goal
 
 > Cost estimated: $0.14
 
-Change the `Start.goal` file as follows:
+Create the `StartWindow.goal` file as follows:
 
 ```plang
-Start
+StartWindow
 - start window app, call !Todos
 ```
 Here we are telling plang to call the goal Todos when it start the window app
@@ -68,7 +68,7 @@ The app is now ready to run.
     For Windows:
 
     ```bash
-    plangw exec
+    plangw exec StartWindow
     ```
 
     For Linux and MacOS, sorry, we don't support you at the moment

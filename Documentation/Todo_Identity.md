@@ -13,7 +13,7 @@ Before you begin, make sure you're familiar with the concept of `%Identity%` by 
 In this tutorial we will cover the basics for working with plang. This includes.
 
 - Use %Identity% - no more passwords :)
-- Events
+- [Events](https://github.com/PLangHQ/plang/blob/main/Documentation/Events.md)
 
 
 ## Step-by-Step Integration
@@ -50,6 +50,7 @@ Create an `events` folder at the root of your Todos project and add a file named
 Events
 - before each goal in 'api/*', call !CheckIdentity
 ```
+__You can see available events in the [Events documentation](https://github.com/PLangHQ/plang/blob/main/Documentation/Events.md)__
 
 Create a new file, `CheckIdentity.goal` in `events` folder
 ```plang
@@ -129,22 +130,22 @@ Execute the `TestNewTask.goal` file:
 
 Create a `plang` client to fetch the task list, which should now return only tasks associated with the `%Identity%`:
 
-Create `TestTasks.goal` in the `tests` folder:
+Create `TestList.goal` in the `tests` folder:
 
 ```plang
-TestTasks
+TestList
 - get http://localhost:8080/api/list
     write to %todos%
 - write out %todos%
 ```
 
-Execute the `TestTasks.goal` file:
+Execute the `TestList.goal` file:
 
 - In VS Code, You already started the webserver in Step 5, so we need to use the terminal. Create New Terminal from the Terminal menu, navigate to you Todo folder.
 - In the terminal, run:
 
     ```bash
-    plang exec test/TestTasks
+    plang exec test/TestList
     ```
 
 ## Next tutorial
