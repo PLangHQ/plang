@@ -48,6 +48,12 @@ This is because `Events.goal` file is built before the `Start.goal` file.
 
 The strict format of `@llm=OpenAIService/` allows the builder to parse it and load it before the LLM services starts doing request.
 
+## Local LLM
+
+There is no local LLM available at the moment. 
+
+We do hope to make this available in the future. Building the code is not to complex in general, so a small LLM could possible be a solution, allowing you to build your code on your machine for free.
+
 ## Which is better?
 
 The Plang service uses GPT4 from OpenAI, so there is no difference in the results. We hope to provide you with a faster and much cheaper service in the future. 

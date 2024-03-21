@@ -67,10 +67,10 @@ Explore plang's features and capabilities:
     - **[Builder Lifecycle & Events](./BuilderLifcycle.md)**: Sequence of operations when building plang and build events
     - **[Modules](./modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
     - **[Services](./Services.md)**: Learn how flexible the plang language is, e.g. using the db engine of your choice, your own caching service and more.
-        - **[Use OpenAI directly](./PlangOrOpenAI.md)**: Shows how to use OpenAI API directly instead of PLang LLM service
+    - **[Use OpenAI API key or Local LLM](./PlangOrOpenAI.md)**: Shows how to use OpenAI API directly instead of PLang LLM service. Discusses status of local LLM
     - **[Reserved keywords](https://github.com/PLangHQ/plang/blob/main/PLang/Utils/ReservedKeywords.cs)**: See list of reserved keywords in the language
 - **Developing the plang language**
-    - **[Help create PLang](./PLangDevelopment.md)**: Information on how to help with development of plang programming language.
+    - **[Help us create PLang](./PLangDevelopment.md)**: Information on how to help with development of plang programming language.
 - **Examples of actual apps**
     - List of apps at https://github.com/PLangHQ/apps
     - **Doc builder** - This doc is built with plang

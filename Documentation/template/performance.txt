@@ -1,0 +1,11 @@
+Plang is slow, lets admit that
+Plang runs everything using Reflections
+how variables in Plang are access and set is not so fast
+
+Here comes the but....
+
+It has not been optimized in any way
+so reflection and the variable handling can be sped up multiple times
+It will most likely get close to native c# speed, give us time
+
+the language also isn't maybe for something that requires massive speed, it is automating things for you, something that a human takes minutes or hours to, that means that extra milliseconds dont really matter
