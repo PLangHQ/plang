@@ -1,20 +1,20 @@
 {
   "Action": {
     "Namespace": "PLangGeneratedCode",
-    "Name": "CheckIfNumber",
-    "Code": "\nnamespace PLangGeneratedCode\n{\n    public static class CheckIfNumber\n    {\n        public static bool ExecutePlangCode(object? nr)\n        {\n            if (nr == null)\n                return false;\n\n            if (long.TryParse(nr.ToString(), out _))\n                return true;\n\n            return false;\n        }\n    }\n}\n",
+    "Name": "GoToLineIfNotNull",
+    "Code": "\nnamespace PLangGeneratedCode\n{\n    public static class GoToLineIfNotNull\n    {\n        public static bool ExecutePlangCode(dynamic? debugReponseαgo_to)\n        {\n            return debugReponseαgo_to != null;\n        }\n    }\n}\n",
     "Using": null,
     "InputParameters": {
-      "nr": "object?"
+      "debugReponse.go_to": "dynamic?"
     },
     "OutParameterDefinition": null,
-    "GoalToCallOnTrue": "ModuleSetting",
-    "GoalToCallOnFalse": "Start",
+    "GoalToCallOnTrue": "GoToLine",
+    "GoalToCallOnFalse": null,
     "GoalToCallOnTrueParameters": null,
     "GoalToCallOnFalseParameters": null,
     "ServicesAssembly": []
   },
-  "Text": "if %nr% is a number then call !ModuleSetting , else call !Start",
+  "Text": "if %debugReponse.go_to% is not null then call GoToLine line=%debugReponse.go_to%",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -44,7 +44,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## defined variables ##\r\nnr (type:object), \r\n## defined variables ##"
+            "text": "## defined variables ##\r\ndebugReponse.go_to (type:object), \r\n## defined variables ##"
           },
           {
             "type": "text",
@@ -57,14 +57,14 @@
         "content": [
           {
             "type": "text",
-            "text": "if %nr% is a number then call !ModuleSetting , else call !Start"
+            "text": "if %debugReponse.go_to% is not null then call GoToLine line=%debugReponse.go_to%"
           }
         ]
       }
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": "```csharp\nnamespace PLangGeneratedCode\n{\n    public static class CheckIfNumber\n    {\n        public static bool ExecutePlangCode(object? nr)\n        {\n            if (nr == null)\n                return false;\n\n            if (long.TryParse(nr.ToString(), out _))\n                return true;\n\n            return false;\n        }\n    }\n}\n```\n\n```json\n{\n  \"GoalToCallOnTrue\": \"ModuleSetting\",\n  \"GoalToCallOnFalse\": \"Start\",\n  \"Namespace\": \"PLangGeneratedCode\",\n  \"Name\": \"CheckIfNumber\"\n}\n```"
+    "RawResponse": null
   },
   "RunOnBuild": false
 }

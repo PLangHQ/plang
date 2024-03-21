@@ -1,11 +1,14 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Net.Http.Headers;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Asn1;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.IO.Abstractions;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Xml;
@@ -15,7 +18,55 @@ namespace PLang.Modules.HttpModule
 	[Description("Make Http request")]
 	public class Program(IPLangFileSystem fileSystem, IPLangSigningService signingService, IHttpClientFactory httpClientFactory) : BaseProgram()
 	{
+		public async Task DownloadFile(string url, string pathToSaveTo,
+			bool overwriteFile = false,
+			Dictionary<string, object>? headers = null, bool createPathToSaveTo = true)
+		{
+			using (var client = httpClientFactory.CreateClient())
+			{
+				if (headers != null)
+				{
+					foreach (var header in headers)
+					{
+						var value = variableHelper.LoadVariables(header.Value);
+						if (value != null)
+						{
+							client.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, value.ToString());
+						}
+					}
+				}
+				client.DefaultRequestHeaders.UserAgent.ParseAdd("plang v0.1");
+				using (HttpResponseMessage response = await client.GetAsync(url))
+				{
+					response.EnsureSuccessStatusCode();
+					if (fileSystem.File.Exists(pathToSaveTo))
+					{
+						if (overwriteFile)
+						{
+							fileSystem.File.Delete(pathToSaveTo);
+						}
+						else
+						{
+							throw new RuntimeStepException($"File already exists at that location", goalStep);
+						}
+					}
+					if (createPathToSaveTo)
+					{
+						string? dirPath = Path.GetDirectoryName(pathToSaveTo);
+						if (dirPath != null && !fileSystem.Directory.Exists(dirPath))
+						{
+							fileSystem.Directory.CreateDirectory(dirPath);
+						}
+					}
 
+					await using (Stream contentStream = await response.Content.ReadAsStreamAsync(),
+								 fileStream = fileSystem.FileStream.New(pathToSaveTo, FileMode.Create, FileAccess.Write, FileShare.None))
+					{
+						await contentStream.CopyToAsync(fileStream);
+					}
+				}
+			}
+		}
 		public async Task<object?> Post(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "POST", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
@@ -93,7 +144,7 @@ namespace PLang.Modules.HttpModule
 							var fileContent = new StreamContent(fileStream);
 							if (!string.IsNullOrEmpty(typeValue))
 							{
-								fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(typeValue);
+								fileContent.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(typeValue);
 							}
 							else
 							{
@@ -156,7 +207,7 @@ namespace PLang.Modules.HttpModule
 			}
 		}
 
-		private MediaTypeHeaderValue GetMimeTypeHeader(string fileName)
+		private System.Net.Http.Headers.MediaTypeHeaderValue GetMimeTypeHeader(string fileName)
 		{
 			string extension = Path.GetExtension(fileName).ToLowerInvariant();
 
@@ -211,7 +262,7 @@ namespace PLang.Modules.HttpModule
 
 			};
 
-			return MediaTypeHeaderValue.Parse(mimeType);
+			return System.Net.Http.Headers.MediaTypeHeaderValue.Parse(mimeType);
 		}
 
 		private bool IsXml(string? mediaType)

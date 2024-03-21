@@ -174,6 +174,7 @@ object? Select(String sql, List<object>()? SqlParameters = null, bool selectOneR
 
 ## Rules ##
 Variable is defined with starting and ending %, e.g. %filePath%.
+\% is escape from start of variable, would be used in LIKE statements, then VariableNameOrValue should keep the escaped character, e.g. the user input \%%title%\%, should map to VariableNameOrValue=\%%title%\%
 SqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName). {appendToSystem}
 TypeFullName is Full name of the type in c#, System.String, System.Double, etc.
 ReturnValue rules: 
@@ -430,7 +431,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 				{
 					logger.LogWarning($@"Could not find information about table {tableName}. 
 I will not build this step. You need to run the setup file to create tables in database. This is the command: plang run Setup");
-					throw new SkipStepException();
+					throw new BuilderException("You need to run: 'plang run Setup.goal' to create or modify your database before you continue with your build");
 				}
 			}
 

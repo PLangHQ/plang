@@ -24,7 +24,7 @@ namespace PLang.Modules.HttpModule.Tests
 		{
 			base.Initialize();
 
-			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
+			settings.Get(typeof(OpenAiService), "OpenAiKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
 			var llmService = new OpenAiService(settings, logger, llmCaching, context);
 			llmServiceFactory.CreateHandler().Returns(llmService);
 			typeHelper = new TypeHelper(fileSystem, settings);
@@ -63,7 +63,7 @@ namespace PLang.Modules.HttpModule.Tests
 			var gf = instruction.Action as GenericFunction;
 
 			Store(text, instruction.LlmRequest.RawResponse);
-			
+
 			Assert.AreEqual("Get", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
 			Assert.AreEqual("http://example.org", gf.Parameters[0].Value);
@@ -85,7 +85,7 @@ namespace PLang.Modules.HttpModule.Tests
 			var gf = instruction.Action as GenericFunction;
 
 			Store(text, instruction.LlmRequest.RawResponse);
-			
+
 			Assert.AreEqual("Post", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
 			Assert.AreEqual("http://example.org", gf.Parameters[0].Value);
@@ -106,7 +106,7 @@ namespace PLang.Modules.HttpModule.Tests
 			var gf = instruction.Action as GenericFunction;
 
 			Store(text, instruction.LlmRequest.RawResponse);
-			
+
 			Assert.AreEqual("Patch", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
 			Assert.AreEqual("http://example.org", gf.Parameters[0].Value);
@@ -126,7 +126,7 @@ namespace PLang.Modules.HttpModule.Tests
 			var gf = instruction.Action as GenericFunction;
 
 			Store(text, instruction.LlmRequest.RawResponse);
-			
+
 			Assert.AreEqual("Delete", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
 			Assert.AreEqual("http://example.org", gf.Parameters[0].Value);
@@ -146,7 +146,7 @@ namespace PLang.Modules.HttpModule.Tests
 			var gf = instruction.Action as GenericFunction;
 
 			Store(text, instruction.LlmRequest.RawResponse);
-			
+
 			Assert.AreEqual("Put", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
 			Assert.AreEqual("http://example.org", gf.Parameters[0].Value);
@@ -207,7 +207,7 @@ namespace PLang.Modules.HttpModule.Tests
 			var gf = instruction.Action as GenericFunction;
 
 			Store(text, instruction.LlmRequest.RawResponse);
-			
+
 			Assert.AreEqual("PostMultipartFormData", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
 			Assert.AreEqual("http://example.org", gf.Parameters[0].Value);
@@ -215,5 +215,26 @@ namespace PLang.Modules.HttpModule.Tests
 
 		}
 
+
+		[DataTestMethod]
+		[DataRow("download https://file-examples.com/wp-content/storage/2017/02/file_example_JSON_1kb.json, and save to file.json")]
+		public async Task Download_Test(string text)
+		{
+			SetupResponse(text);
+
+			var step = GetStep(text);
+
+			var instruction = await builder.Build(step);
+			var gf = instruction.Action as GenericFunction;
+
+			Store(text, instruction.LlmRequest.RawResponse);
+
+			Assert.AreEqual("DownloadFile", gf.FunctionName);
+			Assert.AreEqual("url", gf.Parameters[0].Name);
+			Assert.AreEqual("https://file-examples.com/wp-content/storage/2017/02/file_example_JSON_1kb.json", gf.Parameters[0].Value);
+			Assert.AreEqual("pathToSaveTo", gf.Parameters[1].Name);
+			Assert.AreEqual("file.json", gf.Parameters[1].Value);
+			
+		}
 	}
 }

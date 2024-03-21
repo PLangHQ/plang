@@ -29,6 +29,12 @@ Once the extension is installed, you will be able to start writing and debugging
 
 Here is a screenshot of what the Plang extension looks like:
 
+# Important
+> [!IMPORTANT] You might need to restart VS Code after setting the PATH. If you run your code and nothing happens, restart VS Code
+
+## Next
+Now, you are all [set to start coding in Plang!](./GetStarted.md) Happy coding!
+
+
 ![Plang Extension Screenshot](https://raw.githubusercontent.com/PLangHQ/plang.vscodeextension/main/screenshot.jpg)
 
-Now, you are all [set to start coding in Plang!](./GetStarted.md) Happy coding!

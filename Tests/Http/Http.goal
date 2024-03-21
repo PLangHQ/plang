@@ -16,3 +16,4 @@ Http
 - write out %delResponse%
 - patch https://httpbin.org/patch, write to %patchResponse%
 - write out %patchResponse%
+- download https://plang.is/favicon-16x16.png and save to plang-icon.png, overwrite the file if it exists

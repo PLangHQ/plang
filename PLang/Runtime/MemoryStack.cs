@@ -184,18 +184,27 @@ namespace PLang.Runtime
 
 			if ((index == 0 && dictKey == "" && key.Contains("[") && key.Contains("]")) || (objectValue.Value.GetType() == typeof(JObject) || objectValue.Value.GetType() == typeof(JArray)))
 			{
-				if (objectValue.Type is IDictionary)
-				{
-
-				}
-
 				jsonPath = "$" + ((valueType == typeof(JObject)) ? "" : "..");
 				for (int i = 1; i < keySplit.Length; i++)
 				{
 					if (!keySplit[i].Contains("("))
 					{
 						if (!jsonPath.EndsWith(".")) jsonPath += ".";
+						if (keySplit[i].Contains("[") && keySplit[i].Contains("]"))
+						{
+							var match = Regex.Match(keySplit[i], @"\[(?<number>[0-9]+)\]");
+							if (match != null)
+							{
+								if (int.TryParse(match.Groups["number"].Value, out var number))
+								{
+									number--;
+									keySplit[i] = keySplit[i].Replace(match.Value, $"[{number}]");
+								}
+							}
+						}
+						
 						jsonPath += keySplit[i];
+						
 					}
 				}
 			}
