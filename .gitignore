@@ -11,5 +11,5 @@
 *.cache
 /Documentation/.db/system.sqlite
 /Documentation/output
-publish/
 /.deploy/
+/publish/*.zip
