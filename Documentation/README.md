@@ -65,6 +65,7 @@ Explore plang's features and capabilities:
     - **[Runtime Lifecycle](./RuntimeLifcycle.md)**: Sequence of operations when running plang
     - **[Runtime Events](./Events.md)**: Learn about event-driven programming in plang.
     - **[Builder Lifecycle & Events](./BuilderLifcycle.md)**: Sequence of operations when building plang and build events
+    - **[Performance](./Performance.md)**: What is the perfomance of plang? 
     - **[Modules](./modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
     - **[Services](./Services.md)**: Learn how flexible the plang language is, e.g. using the db engine of your choice, your own caching service and more.
     - **[Use OpenAI API key or Local LLM](./PlangOrOpenAI.md)**: Shows how to use OpenAI API directly instead of PLang LLM service. Discusses status of local LLM
