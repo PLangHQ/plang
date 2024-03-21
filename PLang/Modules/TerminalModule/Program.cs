@@ -119,6 +119,7 @@ namespace PLang.Modules.TerminalModule
 
 						dataOutput += e.Data + Environment.NewLine;
 					}
+					logger.LogTrace(e.Data);
 				};
 
 
@@ -138,6 +139,8 @@ namespace PLang.Modules.TerminalModule
 						logger.LogError(e.Data);
 					}
 					errorOutput += e.Data + Environment.NewLine;
+
+					logger.LogTrace(e.Data);
 				};
 
 				process.Exited += (sender, e) =>
