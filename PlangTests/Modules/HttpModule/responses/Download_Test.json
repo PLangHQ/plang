@@ -1,0 +1,7 @@
+[
+  {
+    "stepText": "download https://file-examples.com/wp-content/storage/2017/02/file_example_JSON_1kb.json, and save to file.json",
+    "response": "{\n\"FunctionName\": \"DownloadFile\",\n\"Parameters\": [\n    {\n        \"Type\": \"String\",\n        \"Name\": \"url\",\n        \"Value\": \"https://file-examples.com/wp-content/storage/2017/02/file_example_JSON_1kb.json\"\n    },\n    {\n        \"Type\": \"String\",\n        \"Name\": \"pathToSaveTo\",\n        \"Value\": \"file.json\"\n    },\n    {\n        \"Type\": \"Boolean\",\n        \"Name\": \"overwriteFile\",\n        \"Value\": false\n    }\n],\n\"ReturnValue\": null\n}",
+    "created": "2024-03-21T10:26:28.6297385+01:00"
+  }
+]
