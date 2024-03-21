@@ -164,6 +164,25 @@ namespace PLang.Modules.DbModule
 						sql = sql.Replace(p.ParameterName.ToString(), placeholders.ToString());
 
 					}
+					else if (p.VariableNameOrValue.ToString().StartsWith("\\%") || p.VariableNameOrValue.ToString().EndsWith("\\%"))
+					{
+						var variableName = p.VariableNameOrValue.ToString();
+						string prefix = "";
+						string postfix = "";
+						if (variableName.ToString().StartsWith("\\%"))
+						{
+							variableName = variableName.Substring(2);
+							prefix = "%";
+						}
+						if (variableName.ToString().EndsWith("\\%"))
+						{
+							variableName = variableName.TrimEnd('%').TrimEnd('\\');
+							postfix = "%";
+						}
+						var variableValue = variableHelper.LoadVariables(variableName);
+						object value = ConvertObjectToType(variableValue, p.TypeFullName);
+						param.Add("@" + parameterName, prefix + value + postfix);
+					}
 					else
 					{
 						object value = ConvertObjectToType(p.VariableNameOrValue, p.TypeFullName);
