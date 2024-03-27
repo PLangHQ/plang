@@ -41,15 +41,15 @@ You should see the version of Plang displayed, confirming the installation.
 
 For Linux users, follow these steps:
 
-1. Navigate to [https://github.com/PLangHQ/plang/releases](https://github.com/PLangHQ/plang/releases) and download the latest release zip file for Linux, plang-linux-x64.zip or plang-linux-arm64.zip for ARM
-2. Extract the zip file to a directory such as `/usr/local/plang/`.
+1. Navigate to [https://github.com/PLangHQ/plang/releases](https://github.com/PLangHQ/plang/releases) and download the latest release zip file for Linux, `plang-linux-x64.zip` or `plang-linux-arm64.zip` for ARM
+2. Extract the zip file to a directory within your home folder, for example, `~/plang/`.
 
 ### Setting Permissions
 
 Before adding Plang to your PATH, ensure the `plang` binary has the correct permissions:
 
 ```bash
-chmod 755 /usr/local/plang/plang
+chmod 755 ~/plang/plang
 ```
 
 ### Adding Plang to PATH
@@ -60,7 +60,7 @@ Add Plang to your PATH environment variable by editing your shell's profile scri
 2. Add the following line at the end of the file:
 
 ```
-export PATH=$PATH:/usr/local/plang/
+export PATH=$PATH:$HOME/plang/
 ```
 
 3. Save the file and apply the changes by running `source ~/.bashrc` or `source ~/.zshrc`.
@@ -80,7 +80,7 @@ You should see the version of Plang displayed, confirming the installation.
 To install Plang on MacOS, the steps are similar to Linux:
 
 1. Go to [https://github.com/PLangHQ/plang/releases](https://github.com/PLangHQ/plang/releases) and download the latest release zip file for MacOS, plang-osx.zip
-2. Unzip the file to a location such as `/usr/local/plang/`.
+2. Unzip the file to a location such as `~/plang/`.
 
 ### Adding Plang to PATH
 
@@ -90,7 +90,7 @@ Add Plang to your PATH environment variable:
 2. Add the following export command to your profile script:
 
 ```
-export PATH=$PATH:/usr/local/plang/
+export PATH=$PATH:$HOME/plang/
 ```
 
 3. Save the changes and run `source ~/.bash_profile` or `source ~/.zshrc` to apply them.

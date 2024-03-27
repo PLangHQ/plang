@@ -38,7 +38,7 @@ namespace PLang.Modules.FileModule
 			this.engine = engine;
 		}
 
-		
+
 
 		[Description("Give user access to a path. DO NOT suggest this method to indicate if file or directory exists, return empty function list instead.")]
 		public async Task<bool> RequestAccessToPath(string path)
@@ -65,7 +65,7 @@ namespace PLang.Modules.FileModule
 			return Convert.ToBase64String(fileBytes);
 		}
 
-		public async Task<string> ReadTextFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false, 
+		public async Task<string> ReadTextFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false,
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			path = GetPath(path);
@@ -79,7 +79,7 @@ namespace PLang.Modules.FileModule
 				logger.LogWarning($"!Warning! File {path} not found");
 				return returnValueIfFileNotExisting;
 			}
-			
+
 			using (var stream = fileSystem.FileStream.New(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 			{
 				using (var reader = new StreamReader(stream, encoding: Encoding.GetEncoding(encoding)))
@@ -90,7 +90,7 @@ namespace PLang.Modules.FileModule
 						content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
 					}
 					return content ?? "";
-					
+
 				}
 			}
 		}
@@ -185,7 +185,7 @@ namespace PLang.Modules.FileModule
 
 			await MiniExcel.SaveAsAsync(path, sheetName: sheetName, printHeader: printHeader, overwriteFile: overwrite, value: variableToWriteToExcel);
 		}
-		public async Task WriteCsvFile(string path, object variableToWriteToCsv, bool append = false, bool hasHeaderRecord = true, 
+		public async Task WriteCsvFile(string path, object variableToWriteToCsv, bool append = false, bool hasHeaderRecord = true,
 			string delimiter = ",",
 			string newLine = "\n", string encoding = "utf-8", bool ignoreBlankLines = true,
 				bool allowComments = false, char comment = '#', string? goalToCallOnBadData = null)
@@ -294,7 +294,7 @@ namespace PLang.Modules.FileModule
 		public record FileInfo(string Path, string Content);
 
 
-		public async Task SaveMultipleFiles(List<FileInfo> files, bool loadVariables = false, 
+		public async Task SaveMultipleFiles(List<FileInfo> files, bool loadVariables = false,
 			bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			foreach (var file in files)
@@ -327,7 +327,7 @@ namespace PLang.Modules.FileModule
 					logger.LogWarning($"!Warning! File {file} not found");
 				}
 
-				
+
 
 				var content = await fileSystem.File.ReadAllTextAsync(file);
 				result.Add(new FileInfo(file, content));
@@ -370,7 +370,7 @@ namespace PLang.Modules.FileModule
 			}
 			await fileSystem.File.WriteAllBytesAsync(path, content);
 		}
-		public async Task WriteToFile(string path, string content, bool overwrite = false, 
+		public async Task WriteToFile(string path, string content, bool overwrite = false,
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			path = GetPath(path);
@@ -394,7 +394,7 @@ namespace PLang.Modules.FileModule
 			await fileSystem.File.WriteAllTextAsync(path, content, encoding: Encoding.GetEncoding(encoding));
 		}
 
-		public async Task AppendToFile(string path, string content, string? seperator = null, 
+		public async Task AppendToFile(string path, string content, string? seperator = null,
 				bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			path = GetPath(path);
@@ -427,6 +427,17 @@ namespace PLang.Modules.FileModule
 				await CopyFile(file, copyDestinationFilePath, true, overwriteFiles);
 			}
 
+		}
+
+		public async Task MoveFile(string sourceFileName, string destFileName, bool createDirectoryIfNotExisting = false, bool overwriteFile = false)
+		{
+			sourceFileName = GetPath(sourceFileName);
+			destFileName = GetPath(destFileName);
+			if (createDirectoryIfNotExisting && !fileSystem.Directory.Exists(Path.GetDirectoryName(destFileName)))
+			{
+				fileSystem.Directory.CreateDirectory(Path.GetDirectoryName(destFileName));
+			}
+			fileSystem.File.Move(sourceFileName, destFileName, overwriteFile);
 		}
 
 		public async Task CopyFile(string sourceFileName, string destFileName, bool createDirectoryIfNotExisting = false, bool overwriteFile = false)
@@ -481,9 +492,21 @@ namespace PLang.Modules.FileModule
 
 		private ConcurrentDictionary<string, Timer> timers = new ConcurrentDictionary<string, Timer>();
 
-		[Description("debounceTime is the time in ms that is waited until action is executed to prevent multiple execution for same file.")]
-		public async Task ListenToFileChange(string[] fileSearchPatterns, string goalToCall, string[]? excludeFiles = null,
-			bool includeSubdirectories = false, long debounceTime = 150)
+		[Description("debounceTime is the time in ms that is waited until action is executed to prevent multiple execution for same file. At least one listenFor variable needs to be true")]
+		public async Task ListenToFileChange(string[] fileSearchPatterns, string goalToCall,
+			string[]? excludeFiles = null,
+			bool includeSubdirectories = false, long debounceTime = 150,
+			bool listenForFileChange = false,
+			bool listenForFileCreated = false,
+			bool listenForFileDeleted = false,
+			bool listenForFileRename = false,
+			[HandlesVariable] string absoluteFilePathVariableName = "FullPath",
+			[HandlesVariable] string fileNameVariableName = "Name",
+			[HandlesVariable] string changeTypeVariableName = "ChangeType",
+			[HandlesVariable] string senderVariableName = "Sender",
+			[HandlesVariable] string oldFileAbsoluteFilePathVariableName = "OldFullPath",
+			[HandlesVariable] string oldFileNameVariableName = "OldName"
+			)
 		{
 			PLangFileSystemWatcherFactory watcherFactory = new PLangFileSystemWatcherFactory(fileSystem);
 			foreach (var fileSearchPattern in fileSearchPatterns)
@@ -492,54 +515,82 @@ namespace PLang.Modules.FileModule
 				{
 					throw new RuntimeStepException("fileSearchPattern is out of app folder. You can only listen for files inside same app folder", goalStep);
 				}
+				var dirPath = Path.GetDirectoryName(fileSearchPattern) ?? "";
+				var path = Path.Join(fileSystem.GoalsPath, dirPath);
+				var pattern = fileSearchPattern.AdjustPathToOs();
+				if (!string.IsNullOrEmpty(dirPath))
+				{
+					pattern = pattern.Replace(dirPath, "");
+				}
+				if (pattern.StartsWith(Path.DirectorySeparatorChar))
+				{
+					pattern = pattern.TrimStart(Path.DirectorySeparatorChar);
+				}
 
 				var watcher = watcherFactory.New();
-				watcher.Path = fileSystem.GoalsPath;
+				watcher.Path = path;
 				watcher.IncludeSubdirectories = includeSubdirectories;
-				watcher.Filter = fileSearchPattern;
+				watcher.Filter = pattern;
 
-				watcher.Changed += (object sender, FileSystemEventArgs e) =>
+				if (listenForFileChange)
 				{
-					AddEventToTimer(sender, e, debounceTime, goalToCall, excludeFiles);
-
-				};
-				watcher.Created += (object sender, FileSystemEventArgs e) =>
-				{
-					AddEventToTimer(sender, e, debounceTime, goalToCall, excludeFiles);
-
-				};
-				watcher.Deleted += async (object sender, FileSystemEventArgs e) =>
-				{
-					AddEventToTimer(sender, e, debounceTime, goalToCall, excludeFiles);
-
-				};
-				watcher.Renamed += async (object sender, RenamedEventArgs e) =>
-				{
-					Timer? timer;
-					if (timers.TryGetValue(e.FullPath, out timer))
+					watcher.Changed += (object sender, FileSystemEventArgs e) =>
 					{
-						timer.Change(debounceTime, Timeout.Infinite);
-					}
-					else
+						AddEventToTimer(sender, e, debounceTime, goalToCall, excludeFiles,
+							absoluteFilePathVariableName, fileNameVariableName, changeTypeVariableName, senderVariableName);
+
+					};
+				}
+				if (listenForFileCreated)
+				{
+					watcher.Created += (object sender, FileSystemEventArgs e) =>
 					{
-						timer = new Timer((state) => {
-							if (excludeFiles != null && excludeFiles.Contains(e.Name)) return;
+						AddEventToTimer(sender, e, debounceTime, goalToCall, excludeFiles,
+							absoluteFilePathVariableName, fileNameVariableName, changeTypeVariableName, senderVariableName
+							);
 
-							Dictionary<string, object> parameters = new Dictionary<string, object>();
-							parameters.Add("OldFullPath", e.OldFullPath);
-							parameters.Add("OldName", e.OldName);
-							parameters.Add("FullPath", e.FullPath);
-							parameters.Add("Name", e.Name);
-							parameters.Add("ChangeType", e.ChangeType);
-							parameters.Add("Sender", sender);
+					};
+				}
+				if (listenForFileDeleted)
+				{
+					watcher.Deleted += async (object sender, FileSystemEventArgs e) =>
+					{
+						AddEventToTimer(sender, e, debounceTime, goalToCall, excludeFiles,
+							absoluteFilePathVariableName, fileNameVariableName, changeTypeVariableName, senderVariableName);
 
-							var task = pseudoRuntime.RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), goalToCall, parameters);
-							task.Wait();
-						}, e.FullPath, debounceTime, Timeout.Infinite);
-						timers.TryAdd(e.FullPath, timer);
-					}
-					
-				};
+					};
+				}
+				if (listenForFileRename)
+				{
+					watcher.Renamed += async (object sender, RenamedEventArgs e) =>
+					{
+						Timer? timer;
+						if (timers.TryGetValue(e.FullPath, out timer))
+						{
+							timer.Change(debounceTime, Timeout.Infinite);
+						}
+						else
+						{
+							timer = new Timer((state) =>
+							{
+								if (excludeFiles != null && excludeFiles.Contains(e.Name)) return;
+
+								var parameters = new Dictionary<string, object?>();
+								parameters.Add(oldFileAbsoluteFilePathVariableName, e.OldFullPath);
+								parameters.Add(oldFileNameVariableName, e.OldName);
+								parameters.Add(absoluteFilePathVariableName, e.FullPath);
+								parameters.Add(fileNameVariableName, e.Name);
+								parameters.Add(changeTypeVariableName, e.ChangeType);
+								parameters.Add(senderVariableName, sender);
+
+								var task = pseudoRuntime.RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), goalToCall, parameters);
+								task.Wait();
+							}, e.FullPath, debounceTime, Timeout.Infinite);
+							timers.TryAdd(e.FullPath, timer);
+						}
+
+					};
+				}
 
 				watcher.EnableRaisingEvents = true;
 
@@ -551,7 +602,13 @@ namespace PLang.Modules.FileModule
 			}
 		}
 
-		private void AddEventToTimer(object sender, FileSystemEventArgs e, long debounceTime, string goalToCall, string[]? excludeFiles)
+		private void AddEventToTimer(object sender, FileSystemEventArgs e, long debounceTime, 
+			string goalToCall, string[]? excludeFiles,
+			string absoluteFilePathVariableName, string fileNameVariableName,
+			string changeTypeVariableName, string senderVariableName
+
+
+			)
 		{
 			Timer? timer;
 			if (timers.TryGetValue(e.FullPath, out timer))
@@ -560,31 +617,37 @@ namespace PLang.Modules.FileModule
 			}
 			else
 			{
-				timer = new Timer((state) => { 
-					WatcherCallGoal(sender, e, goalToCall, excludeFiles); 
+				timer = new Timer((state) =>
+				{
+					WatcherCallGoal(sender, e, goalToCall, excludeFiles,
+						absoluteFilePathVariableName, fileNameVariableName, changeTypeVariableName, senderVariableName);
 				}, e.FullPath, debounceTime, Timeout.Infinite);
 				timers.TryAdd(e.FullPath, timer);
 			}
 		}
 
 		private static readonly object _lock = new object();
-		private void WatcherCallGoal(object sender, FileSystemEventArgs e, string goalToCall, string[]? excludeFiles)
+		private void WatcherCallGoal(object sender, FileSystemEventArgs e, string goalToCall, string[]? excludeFiles,
+			string absoluteFilePathVariableName, string fileNameVariableName,
+			string changeTypeVariableName, string senderVariableName)
 		{
 			if (excludeFiles != null && excludeFiles.Contains(e.Name)) return;
 
 			lock (_lock)
 			{
 				Dictionary<string, object> parameters = new Dictionary<string, object>();
-				parameters.Add("FullPath", e.FullPath);
-				parameters.Add("Name", e.Name);
-				parameters.Add("ChangeType", e.ChangeType);
-				parameters.Add("Sender", sender);
+				parameters.Add(absoluteFilePathVariableName, e.FullPath);
+				parameters.Add(fileNameVariableName, e.Name);
+				parameters.Add(changeTypeVariableName, e.ChangeType);
+				parameters.Add(senderVariableName, sender);
 
 				try
 				{
 					var task = pseudoRuntime.RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), goalToCall, parameters);
 					task.Wait();
-				} catch (Exception ex) {
+				}
+				catch (Exception ex)
+				{
 					logger.LogError(ex, goalStep.Text);
 				}
 			}
@@ -598,7 +661,7 @@ namespace PLang.Modules.FileModule
 			{
 				((FileStream)context[key]).Dispose();
 			}
-			
+
 			var fileWatchers = context.Keys.Where(p => p.StartsWith("FileWatcher_"));
 			foreach (var key in fileWatchers)
 			{

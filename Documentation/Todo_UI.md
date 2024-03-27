@@ -53,8 +53,8 @@ In the `ui` folder, create another file named `AddTask.goal` with the following 
 
 ```plang
 AddTask
-- form, inputs for "task"(required) and "due_date"(required, type is date)
-- [ui] button "Save", call !NewTask  %task%, %due_date%
+- form, inputs for "#task"(required) and "#due_date"(required, type is date)
+- [ui] button "Save", call !NewTask, values #task, #due_date
 - call !Todos
 ```
 Note: `NewTask.goal` was created in previous tutorial

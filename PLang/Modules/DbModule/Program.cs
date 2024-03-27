@@ -101,7 +101,8 @@ namespace PLang.Modules.DbModule
 			if (dbConnection is SqliteConnection)
 			{
 				((SqliteConnection)dbConnection).LoadExtension(fileName, procName); return;
-			} else
+			}
+			else
 			{
 				logger.LogWarning("Loading extension only works for Sqlite");
 			}
@@ -148,7 +149,8 @@ namespace PLang.Modules.DbModule
 					else if (p.VariableNameOrValue == null)
 					{
 						param.Add("@" + parameterName, null);
-					} else if (p.VariableNameOrValue is JArray)
+					}
+					else if (p.VariableNameOrValue is JArray)
 					{
 						var jarray = (JArray)p.VariableNameOrValue;
 						StringBuilder placeholders = new StringBuilder();
@@ -159,7 +161,7 @@ namespace PLang.Modules.DbModule
 							{
 								placeholders.Append(", ");
 							}
-							param.Add($"@category{i}", ConvertObjectToType(jarray[i], p.TypeFullName));
+							param.Add($"@category{i}", ConvertObjectToType(jarray[i], p.TypeFullName, parameterName));
 						}
 						sql = sql.Replace(p.ParameterName.ToString(), placeholders.ToString());
 
@@ -180,12 +182,12 @@ namespace PLang.Modules.DbModule
 							postfix = "%";
 						}
 						var variableValue = variableHelper.LoadVariables(variableName);
-						object value = ConvertObjectToType(variableValue, p.TypeFullName);
+						object value = ConvertObjectToType(variableValue, p.TypeFullName, parameterName);
 						param.Add("@" + parameterName, prefix + value + postfix);
 					}
 					else
 					{
-						object value = ConvertObjectToType(p.VariableNameOrValue, p.TypeFullName);
+						object value = ConvertObjectToType(p.VariableNameOrValue, p.TypeFullName, parameterName);
 						param.Add("@" + parameterName, value);
 					}
 				}
@@ -195,30 +197,45 @@ namespace PLang.Modules.DbModule
 
 		}
 
-		private object ConvertObjectToType(object obj, string typeFullName)
+		private object ConvertObjectToType(object obj, string typeFullName, string parameterName)
 		{
+
 			Type targetType = Type.GetType(typeFullName);
-			if (targetType == null)
+			try
 			{
-				throw new TypeLoadException($"Could not find {typeFullName}");
-			}
-
-			var parseMethod = targetType.GetMethod("Parse", new[] { typeof(string) });
-			if (parseMethod != null)
-			{
-				try
+				if (targetType == null)
 				{
-					string value = FormatType(obj.ToString(), targetType);
-					return parseMethod.Invoke(null, new object[] { value });
+					throw new TypeLoadException($"Could not find {typeFullName}");
 				}
-				catch { }
-			}
 
-			if (targetType == typeof(string) && (obj is JObject || obj is JArray || obj is JProperty || obj is JValue)) {
-				return obj.ToString();
-			}
+				var parseMethod = targetType.GetMethod("Parse", new[] { typeof(string) });
+				if (parseMethod != null)
+				{
+					try
+					{
+						string value = FormatType(obj.ToString(), targetType);
+						return parseMethod.Invoke(null, new object[] { value });
+					}
+					catch { }
+				}
 
-			return Convert.ChangeType(obj, targetType);
+				if (targetType == typeof(string) && (obj is JObject || obj is JArray || obj is JProperty || obj is JValue))
+				{
+					return obj.ToString();
+				}
+
+				return Convert.ChangeType(obj, targetType);
+			}
+			catch (Exception ex)
+			{
+				if (!AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool _) &&
+					!AppContext.TryGetSwitch(ReservedKeywords.CSharpDebug, out bool _))
+				{
+					throw;
+				}
+				throw new RuntimeException($"Error converting {obj} to type {targetType} for parameter {parameterName}", goal, ex);
+
+			}
 
 
 		}
@@ -341,10 +358,10 @@ namespace PLang.Modules.DbModule
 
 					var dict = new ReturnDictionary<string, object?>();
 					foreach (var rv in this.function.ReturnValue)
-					{						
+					{
 						dict.Add(rv.VariableName, GetDefaultValue(rv.Type));
 					}
-					return dict;					
+					return dict;
 				}
 				return new List<object>();
 			}
@@ -368,7 +385,7 @@ namespace PLang.Modules.DbModule
 		{
 			if (strType == "dynamic") return new List<object>();
 			if (strType == "string") return null;
-			
+
 			var type = Type.GetType(strType);
 			if (type == null) return null;
 
@@ -415,7 +432,7 @@ namespace PLang.Modules.DbModule
 			var prepare = Prepare(sql, SqlParameters, true);
 			try
 			{
-				
+
 				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 				{
 					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);

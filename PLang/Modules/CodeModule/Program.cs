@@ -98,13 +98,13 @@ namespace PLang.Modules.CodeModule
 						Type? outType = parameters[i].ParameterType.GetElementType();
 						if (outType == null) continue;
 
-						if (outType.IsValueType)
-						{							
+						var value = memoryStack.Get(parameters[i].Name!, parameters[i].ParameterType);
+						if (value == null && outType.IsValueType)
+						{
 							parametersObject.Add(Activator.CreateInstance(outType));
 						}
 						else
 						{
-							var value = memoryStack.Get(parameters[i].Name!, parameters[i].ParameterType);
 							parametersObject.Add(value);
 						}
 
