@@ -2,6 +2,9 @@
 
 This guide will walk you through the process of creating a Todo web service using the Plang programming language. 
 
+> [!CAUTION]
+> **Heads up: Building code costs money**
+> Each code line incurs usually between $0.03 - $0.15 fee via LLM. The payoff? Exceptional efficiency gains. You can choose to use [Plang service(simpler) or OpenAI(cheaper)](./PlangOrOpenAI.md). Using Plang service supports the project
 
 ## Prerequisites
 

@@ -21,6 +21,11 @@ Plang provides the developer with features that he already is familiar with such
 Plang provides increased security and privacy to both developer and users of their application, for free as in beer.
 
 ## Hello plang world
+
+> [!CAUTION]
+> **Heads up: Building code costs money**
+> Each code line incurs usually between $0.03 - $0.15 fee via LLM. The payoff? Exceptional efficiency gains. You can choose to use [Plang service(simpler) or OpenAI(cheaper)](./PlangOrOpenAI.md). Using Plang service supports the project
+
 This is an example of a hello world app written in plang
 
 ```plang
