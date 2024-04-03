@@ -16,7 +16,7 @@
           "-c",
           "Release",
           "-r",
-          "osx-x64",
+          "osx-arm64",
           "--self-contained",
           "true",
           "-p:PublishSingleFile=true",
@@ -32,7 +32,7 @@
     ],
     "ReturnValue": null
   },
-  "Text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/plang\n    working dir ../",
+  "Text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true -o ./publish/plang\n    working dir ../",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -75,14 +75,14 @@
         "content": [
           {
             "type": "text",
-            "text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/plang\n    working dir ../"
+            "text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true -o ./publish/plang\n    working dir ../"
           }
         ]
       }
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "{\r\n  \"FunctionName\": \"RunTerminal\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"appExecutableName\",\r\n      \"Value\": \"dotnet\"\r\n    },\r\n    {\r\n      \"Type\": \"List<string>\",\r\n      \"Name\": \"parameters\",\r\n      \"Value\": [\r\n        \"publish\",\r\n        \"PlangConsole/PLangConsole.csproj\",\r\n        \"-c\",\r\n        \"Release\",\r\n        \"-r\",\r\n        \"osx-arm64\",\r\n        \"--self-contained\",\r\n        \"true\",\r\n        \"-p:PublishSingleFile=true\",\r\n        \"-o\",\r\n        \"./publish/plang\"\r\n      ]\r\n    },\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"pathToWorkingDirInTerminal\",\r\n      \"Value\": \"../\"\r\n    }\r\n  ],\r\n  \"ReturnValue\": null\r\n}"
   },
   "RunOnBuild": false
 }
