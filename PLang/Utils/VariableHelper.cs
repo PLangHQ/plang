@@ -136,6 +136,13 @@ namespace PLang.Utils
 				// doing this bad code, because Newtonsoft give stackoverflow on objects
 				// e.g. when getting file info, then when it tries to serialize it crashes app.
 				// .net json serializer can survive it, so that is why this is like this :(
+				if (obj is Exception ex)
+				{
+					string message = ex.Message;
+					if (JsonHelper.IsJson(message)) return message;
+					return JsonConvert.SerializeObject(message);
+				}
+
 				var json = System.Text.Json.JsonSerializer.Serialize(obj, options);
 				return JToken.Parse(json);
 			}
@@ -146,7 +153,7 @@ namespace PLang.Utils
 			}
 			catch (Exception)
 			{
-				return "Exception";
+				return "[Exception retrieving value]";
 			}
 		}
 
@@ -183,7 +190,14 @@ namespace PLang.Utils
 				else
 				{
 					writer.WritePropertyName("Value");
-					System.Text.Json.JsonSerializer.Serialize(writer, value.Value, options);
+					if (value.Value is Exception ex)
+					{
+						System.Text.Json.JsonSerializer.Serialize(writer, ex.Message, options);
+					}
+					else
+					{
+						System.Text.Json.JsonSerializer.Serialize(writer, value.Value, options);
+					}
 				}
 				writer.WriteEndObject();
 			}

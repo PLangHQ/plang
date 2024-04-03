@@ -23,10 +23,10 @@ namespace PLang.Services.LlmService
 		private readonly ILogger logger;
 		private readonly PLangAppContext context;
 		private readonly IPLangFileSystem fileSystem;
-		private readonly string url = "https://llm.plang.is";
+		private string url = "https://llm.plang.is";
 		//private readonly string url = "http://localhost:10000";
 		private readonly string appId = "206bb559-8c41-4c4a-b0b7-283ef73dc8ce";
-		private readonly string BuyCreditInfo = "You need to purchase credits to use Plang LLM service, click this link to purchase: {0}. Try to build again after payment.\n\nMake sure to backup the folder {1} as it contains your private key. If you loose your private key your account at Plang will be lost";
+		private readonly string BuyCreditInfo = "You need to purchase credits to use Plang LLM service, click this link to purchase: {0}. Try to build again after payment.";
 
 		public IContentExtractor Extractor { get; set; }
 

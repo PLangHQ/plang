@@ -1,38 +1,31 @@
 {
   "Action": {
-    "FunctionName": "RunTerminal",
+    "FunctionName": "Write",
     "Parameters": [
       {
         "Type": "string",
-        "Name": "appExecutableName",
-        "Value": "dotnet"
+        "Name": "content",
+        "Value": "Publish Windows Window"
       },
       {
-        "Type": "List<string>",
-        "Name": "parameters",
-        "Value": [
-          "publish",
-          "PlangConsole/PLangConsole.csproj",
-          "-c",
-          "Release",
-          "-r",
-          "osx-x64",
-          "--self-contained",
-          "true",
-          "-p:PublishSingleFile=true",
-          "-o",
-          "./publish/plang"
-        ]
+        "Type": "Boolean",
+        "Name": "writeToBuffer",
+        "Value": false
       },
       {
         "Type": "string",
-        "Name": "pathToWorkingDirInTerminal",
-        "Value": "../"
+        "Name": "type",
+        "Value": "text"
+      },
+      {
+        "Type": "Int32",
+        "Name": "statusCode",
+        "Value": 200
       }
     ],
     "ReturnValue": null
   },
-  "Text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/plang\n    working dir ../",
+  "Text": "write out 'Publish Windows Window'",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -42,7 +35,7 @@
     "maxLength": 4000,
     "llmResponseType": "json",
     "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
-    "type": "PLang.Modules.TerminalModule.Builder",
+    "type": "PLang.Modules.GenericFunctionBuilder",
     "promptMessage": [
       {
         "role": "system",
@@ -62,11 +55,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nvoid Read(String variableName) \nReturnDictionary`2 RunTerminal(String appExecutableName, List`1<String>? parameters, String? pathToWorkingDirInTerminal, String? dataOutputVariable, String? errorDebugInfoOutputVariable, String? dataStreamDelta, String? debugErrorStreamDelta)\r\n## functions available ends ##"
-          },
-          {
-            "type": "text",
-            "text": "Remove % around dataOutputVariable and errorDebugInfoOutputVariable"
+            "text": "## functions available starts ##\r\nString Ask(String text, String? type = \"text\", Int32? statusCode = 200, String? regexPattern, String? errorMessage)  // Send response to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.. \nvoid Write(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  // Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text.\r\n## functions available ends ##"
           }
         ]
       },
@@ -75,14 +64,14 @@
         "content": [
           {
             "type": "text",
-            "text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/plang\n    working dir ../"
+            "text": "write out 'Publish Windows Window'"
           }
         ]
       }
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "{\r\n  \"FunctionName\": \"Write\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"content\",\r\n      \"Value\": \"Publish Windows Window\"\r\n    },\r\n    {\r\n      \"Type\": \"Boolean\",\r\n      \"Name\": \"writeToBuffer\",\r\n      \"Value\": false\r\n    },\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"type\",\r\n      \"Value\": \"text\"\r\n    },\r\n    {\r\n      \"Type\": \"Int32\",\r\n      \"Name\": \"statusCode\",\r\n      \"Value\": 200\r\n    }\r\n  ],\r\n  \"ReturnValue\": null\r\n}"
   },
   "RunOnBuild": false
 }

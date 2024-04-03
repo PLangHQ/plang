@@ -45,6 +45,7 @@ namespace PLang.Services.CompilerService
 			Assemblies.Add("System.Linq.Expressions.dll");
 			Assemblies.Add("Microsoft.CSharp.dll");
 			Assemblies.Add("System.Diagnostics.Process.dll");
+			Assemblies.Add("System.Memory.dll");
 		}
 
 		public string GetPreviousBuildDllNamesToExclude(GoalStep step)

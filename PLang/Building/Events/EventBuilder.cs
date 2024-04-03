@@ -65,16 +65,21 @@ namespace PLang.Building.Events
 				}
 
 				for (int i = 0; i < goal.GoalSteps.Count; i++)
-				{
+				{					
 					var step = goal.GoalSteps[i];
-					if (StepHasBeenBuild(step, i, null)) continue;
+					if (StepHasBeenBuild(step, i, null))
+					{
+						logger.LogInformation($"- Event step {goal.GoalSteps[i].Text} already built");
+						continue;
+					}
 
+					logger.LogInformation($"- Building event step {goal.GoalSteps[i].Text}");
 					var promptMessage = new List<LlmMessage>();
 					promptMessage.Add(new LlmMessage("system", $@"
 User will provide event binding, you will be provided with c# model to map the code to. 
 
 EventType is required
-EventScope is required
+EventScope is required, Error defaults to Before EventType if not defined by user.
 GoalToBindTo is required. This can a specific Goal or more generic, such as bind to all goals in specific folder. Convert to matching pattern(regex) for folder matching. e.g. input value could be /api, if bind to goal is api/*, it should match
 GoalToCall is required. This should be a specific goal, should start with !. Example: !AppName/GoalName.  
 StepNumber & StepText reference a specific step that the user wants to bind to
@@ -83,8 +88,8 @@ IncludePrivate defines if user wants to include private goals, he needs to speci
 					promptMessage.Add(new LlmMessage("assistant", $@"	
 Map correct number to EventType and EventScope
 
-enum EventType {{ Before = 0, After = 1, OnError = 2 }}
-enum EventScope {{ StartOfApp = 0, EndOfApp = 1,RunningApp = 2,	Goal = 20, Step = 30 }}"));
+EventType {{ Before , After }}
+EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError, StepError }}"));
 					promptMessage.Add(new LlmMessage("user", step.Text));
 
 					var llmRequest = new LlmRequest("Events", promptMessage);
@@ -105,7 +110,7 @@ enum EventScope {{ StartOfApp = 0, EndOfApp = 1,RunningApp = 2,	Goal = 20, Step 
 					step.AbsolutePrFilePath = Path.Join(goal.AbsolutePrFolderPath, step.PrFileName);
 					step.RelativePrPath = Path.Join(goal.RelativePrFolderPath, step.PrFileName);
 					step.Generated = DateTime.Now;
-					step.Custom.Add("Event", eventModel);
+					step.Custom.AddOrReplace("Event", eventModel);
 				}
 
 				if (!fileSystem.Directory.Exists(goal.AbsolutePrFolderPath))
