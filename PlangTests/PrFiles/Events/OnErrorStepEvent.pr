@@ -21,8 +21,8 @@
       "RetryHandler": null,
       "Custom": {
         "Event": {
-          "EventType": 2,
-          "EventScope": 30,
+          "EventType": "Before",
+          "EventScope": "StepError",
           "GoalToBindTo": "*",
           "GoalToCall": "!Process",
           "IncludePrivate": false,

@@ -2,32 +2,38 @@
 
 namespace PLang.Building.Events
 {
-	public enum EventType
+	public static class EventType
     {
-        Before = 0, After = 1, OnError = 2
+        public const string Before = "Before";
+        public const string After = "After";
     }
 
-    public enum VariableEventType
+    public static class VariableEventType
     {
-        OnCreate = 0,
-        OnChange = 1,
-        OnRemove = 2
-    }
+		public const string OnCreate = "OnCreate";
+		public const string OnChange = "OnChange";
+		public const string OnRemove = "OnRemove";
+	}
 
-    public enum EventScope
+    public static class EventScope
     {
-        StartOfApp = 0,
-        EndOfApp = 1,
-        RunningApp = 2,
+		public const string StartOfApp = "StartOfApp";
+		public const string EndOfApp = "EndOfApp";
+		public const string RunningApp = "RunningApp";
 
-        Goal = 20,
-        Step = 30
-    }
+		public const string Goal = "Goal";
+		public const string Step = "Step";
+
+		public const string AppError = "AppError";
+		public const string GoalError = "GoalError";
+		public const string StepError = "StepError";
+
+	}
 
 	// before each goal in api/* call !DoStuff
 	// before each step call !Debugger.SendInfo
     // after Run.goal, call !AfterRun
-	public record EventBinding(EventType EventType, EventScope EventScope, string GoalToBindTo, string GoalToCall,
+	public record EventBinding(string EventType, string EventScope, string GoalToBindTo, string GoalToCall,
 	    [property: DefaultValue("false")] bool IncludePrivate = false, 
         int? StepNumber = null, string? StepText = null,
 		[property: DefaultValue("true")] bool WaitForExecution = true,

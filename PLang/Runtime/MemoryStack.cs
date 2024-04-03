@@ -28,7 +28,7 @@ namespace PLang.Runtime
 		public MemoryStackPathNotFoundException(string message) : base(message) { }
 	}
 
-	public record VariableEvent(VariableEventType EventType, string goalName, Dictionary<string, object?>? Parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50);
+	public record VariableEvent(string EventType, string goalName, Dictionary<string, object?>? Parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50);
 
 	public class ObjectValue
 	{
@@ -561,7 +561,7 @@ namespace PLang.Runtime
 
 		private void AddOrReplace(Dictionary<string, ObjectValue> variables, string key, ObjectValue objectValue)
 		{
-			VariableEventType eventType;
+			string eventType;
 			key = Clean(key);
 
 			if (variables.TryGetValue(key, out ObjectValue? prevValue) && prevValue != null && prevValue.Initiated)
@@ -582,7 +582,7 @@ namespace PLang.Runtime
 			CallEvent(eventType, objectValue);
 		}
 
-		private void CallEvent(VariableEventType eventType, ObjectValue objectValue)
+		private void CallEvent(string eventType, ObjectValue objectValue)
 		{
 			var events = objectValue.Events.Where(p => p.EventType == eventType);
 			foreach (var eve in events)

@@ -23,11 +23,11 @@ namespace PLang.Building.Events
 		bool GoalHasBinding(Goal goal, EventBinding eventBinding);
 		bool IsStepMatch(GoalStep step, EventBinding eventBinding);
 		Task Load(IServiceContainer container, bool builder = false);
-		Task RunBuildGoalEvents(EventType eventType, Goal goal);
-		Task RunBuildStepEvents(EventType eventType, Goal goal, GoalStep step, int stepIdx);
-		Task RunGoalEvents(PLangAppContext context, EventType eventType, Goal goal);
-		Task RunStartEndEvents(PLangAppContext context, EventType eventType, EventScope eventScope);
-		Task RunStepEvents(PLangAppContext context, EventType eventType, Goal goal, GoalStep step);
+		Task RunBuildGoalEvents(string eventType, Goal goal);
+		Task RunBuildStepEvents(string eventType, Goal goal, GoalStep step, int stepIdx);
+		Task RunGoalEvents(PLangAppContext context, string eventType, Goal goal);
+		Task RunStartEndEvents(PLangAppContext context, string eventType, string eventScope);
+		Task RunStepEvents(PLangAppContext context, string eventType, Goal goal, GoalStep step);
 		Task<bool> RunOnErrorStepEvents(PLangAppContext context, Exception ex, Goal goal, GoalStep goalStep, ErrorHandler? errorHandler = null);
 		Task RunGoalErrorEvents(PLangAppContext context, Goal goal, int goalStepIndex, Exception ex);
 		Task AppErrorEvents(PLangAppContext context, Exception ex);
@@ -140,21 +140,14 @@ namespace PLang.Building.Events
 
 		}
 
-		public async Task RunStartEndEvents(PLangAppContext context, EventType eventType, EventScope eventScope)
+		public async Task RunStartEndEvents(PLangAppContext context, string eventType, string eventScope)
 		{
 			events = await GetRuntimeEvents();
 
 			if (events == null || context.ContainsKey(ReservedKeywords.IsEvent)) return;
 
-			List<EventBinding> eventsToRun;
-			if (eventScope == EventScope.EndOfApp)
-			{
-				eventsToRun = events.Where(p => p.EventScope == EventScope.EndOfApp).ToList();
-			}
-			else
-			{
-				eventsToRun = events.Where(p => p.EventType == eventType && p.EventScope == eventScope).ToList();
-			}
+			List<EventBinding> eventsToRun = events.Where(p => p.EventScope == eventScope).ToList();
+			
 			for (var i = 0; i < eventsToRun.Count; i++)
 			{
 				var eve = eventsToRun[i];
@@ -183,7 +176,18 @@ namespace PLang.Building.Events
 
 		public async Task AppErrorEvents(PLangAppContext context, Exception ex)
 		{
-			await ShowDefaultError(ex, null);
+			var eventsToRun = events.Where(p => p.EventScope == EventScope.AppError).ToList();
+			if (eventsToRun.Count > 0)
+			{
+				foreach (var eve in events)
+				{
+					await Run(context, eve, null, null, ex);
+				}
+			}
+			else
+			{
+				await ShowDefaultError(ex, null);
+			}
 		}
 
 		private async Task HandleError(PLangAppContext context, Goal goal, Exception ex, GoalStep? step, List<EventBinding> eventsToRun)
@@ -205,7 +209,7 @@ namespace PLang.Building.Events
 			}
 		}
 
-		public async Task RunBuildGoalEvents(EventType eventType, Goal goal)
+		public async Task RunBuildGoalEvents(string eventType, Goal goal)
 		{
 
 			var events = await GetBuilderEvents();
@@ -217,7 +221,7 @@ namespace PLang.Building.Events
 
 		}
 
-		public async Task RunGoalEvents(PLangAppContext context, EventType eventType, Goal goal)
+		public async Task RunGoalEvents(PLangAppContext context, string eventType, Goal goal)
 		{
 			if (events == null || context.ContainsKey(ReservedKeywords.IsEvent)) return;
 			var eventsToRun = events.Where(p => p.EventType == eventType && p.EventScope == EventScope.Goal).ToList();
@@ -234,9 +238,13 @@ namespace PLang.Building.Events
 		public async Task RunGoalErrorEvents(PLangAppContext context, Goal goal, int goalStepIndex, Exception ex)
 		{
 			if (events == null || context.ContainsKey(ReservedKeywords.IsEvent)) return;
+			if (ex is RuntimeUserStepException)
+			{
+				throw ex;
+			}
 
 			var step = (goalStepIndex < goal.GoalSteps.Count) ? goal.GoalSteps[goalStepIndex] : null;
-			var eventsToRun = events.Where(p => p.EventType == EventType.OnError && p.EventScope == EventScope.Goal).ToList();
+			var eventsToRun = events.Where(p => p.EventScope == EventScope.GoalError).ToList();
 
 			await HandleError(context, goal, ex, step, eventsToRun);
 
@@ -254,7 +262,7 @@ namespace PLang.Building.Events
 			}
 		}
 
-		private async Task Run(PLangAppContext context, EventBinding eve, Goal goal, GoalStep? step = null, Exception? ex = null)
+		private async Task Run(PLangAppContext context, EventBinding eve, Goal? goal, GoalStep? step = null, Exception? ex = null)
 		{
 			try
 			{
@@ -264,10 +272,11 @@ namespace PLang.Building.Events
 				parameters.Add(ReservedKeywords.Exception, ex);
 				context.TryAdd(ReservedKeywords.IsEvent, true);
 				if (step != null) parameters.Add(ReservedKeywords.Step, step);
+				string relativeAppStartupFolderPath = (goal != null) ? goal.RelativeAppStartupFolderPath : fileSystem.RelativeAppPath;
 
-				logger.LogDebug("Run event type {0} on scope {1}, binding to {2} calling {3}", eve.EventType, eve.EventScope, eve.GoalToBindTo, eve.GoalToCall);
+				logger.LogDebug("Run event type {0} on scope {1}, binding to {2} calling {3}", eve.EventType.ToString(), eve.EventScope.ToString(), eve.GoalToBindTo, eve.GoalToCall);
 
-				var task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, eve.GoalToCall, parameters, goal);
+				var task = pseudoRuntime.RunGoal(engine, context, relativeAppStartupFolderPath, eve.GoalToCall, parameters, goal);
 
 				if (eve.WaitForExecution)
 				{
@@ -292,7 +301,7 @@ namespace PLang.Building.Events
 
 
 		}
-		public async Task RunBuildStepEvents(EventType eventType, Goal goal, GoalStep step, int stepIdx)
+		public async Task RunBuildStepEvents(string eventType, Goal goal, GoalStep step, int stepIdx)
 		{
 			var context = new PLangAppContext();
 			context.Add(ReservedKeywords.Goal, goal);
@@ -303,7 +312,7 @@ namespace PLang.Building.Events
 		}
 
 
-		public async Task RunStepEvents(PLangAppContext context, EventType eventType, Goal goal, GoalStep step)
+		public async Task RunStepEvents(PLangAppContext context, string eventType, Goal goal, GoalStep step)
 		{
 			if (events == null || context.ContainsKey(ReservedKeywords.IsEvent)) return;
 			var eventsToRun = events.Where(p => p.EventType == eventType && p.EventScope == EventScope.Step).ToList();
@@ -319,6 +328,14 @@ namespace PLang.Building.Events
 		public async Task<bool> RunOnErrorStepEvents(PLangAppContext context, Exception ex, Goal goal, GoalStep step, ErrorHandler? stepErrorHandler = null)
 		{
 			if (events == null || context.ContainsKey(ReservedKeywords.IsEvent)) return false;
+			if (ex is RuntimeUserStepException)
+			{
+				throw ex;
+			}
+
+			List<EventBinding> eventsToRun = new();
+
+			eventsToRun.AddRange(events.Where(p => p.EventType == EventType.Before && p.EventScope == EventScope.StepError).ToList());
 
 			bool shouldContinueNextStep = false;
 			if (stepErrorHandler != null)
@@ -327,12 +344,12 @@ namespace PLang.Building.Events
 				if (goalToCall != null)
 				{
 					shouldContinueNextStep = stepErrorHandler.ContinueToNextStep;
-					var eventBinding = new EventBinding(EventType.OnError, EventScope.Step, goal.RelativeGoalPath, goalToCall, true, step.Number, step.Text, true, false, false);
-					await Run(context, eventBinding, goal, step, ex);
+					var eventBinding = new EventBinding(EventType.Before, EventScope.StepError, goal.RelativeGoalPath, goalToCall, true, step.Number, step.Text, true, false, false);
+					eventsToRun.Add(eventBinding);
 				}
 			}
 
-			var eventsToRun = events.Where(p => p.EventType == EventType.OnError && p.EventScope == EventScope.Step);
+			eventsToRun.AddRange(events.Where(p => p.EventType == EventType.After && p.EventScope == EventScope.StepError).ToList());
 
 			if (eventsToRun.Count() == 0)
 			{
@@ -428,7 +445,7 @@ namespace PLang.Building.Events
 			// GoalToBindTo = Hello.goal
 			if (goalToBindTo.Contains(".") && Path.GetExtension(goalToBindTo) == ".goal")
 			{
-				return goal.GoalFileName.ToLower() == goalToBindTo;
+				return goal.GoalFileName.ToLower() == goalToBindTo || goal.RelativeGoalPath.ToLower() == goalToBindTo;
 			}
 
 			if (goalToBindTo.Contains("*"))

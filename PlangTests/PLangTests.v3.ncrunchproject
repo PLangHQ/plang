@@ -127,9 +127,6 @@
         <FixtureName>PLang.Building.Events.Tests.EventBuilderTests</FixtureName>
       </FixtureTestSelector>
       <FixtureTestSelector>
-        <FixtureName>PLang.Building.Events.Tests.EventRuntimeTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
         <FixtureName>PLang.Modules.MessageModule.Tests.BuilderTests</FixtureName>
       </FixtureTestSelector>
       <FixtureTestSelector>
