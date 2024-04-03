@@ -26,6 +26,7 @@ namespace PLang.Services.LlmService
 		private readonly string url = "https://llm.plang.is";
 		//private readonly string url = "http://localhost:10000";
 		private readonly string appId = "206bb559-8c41-4c4a-b0b7-283ef73dc8ce";
+		private readonly string BuyCreditInfo = "You need to purchase credits to use Plang LLM service, click this link to purchase: {0}. Try to build again after payment.\n\nMake sure to backup the folder {1} as it contains your private key. If you loose your private key your account at Plang will be lost";
 
 		public IContentExtractor Extractor { get; set; }
 
@@ -128,12 +129,13 @@ namespace PLang.Services.LlmService
 				var obj = JObject.Parse(responseBody);
 				if (obj != null && obj["url"].ToString() != "")
 				{
-					await outputStreamFactory.CreateHandler().Write("You need to fill up your account at plang.is. You can buy at this url: " + obj["url"] + ". Try again after payment", "error", 402);
+					string dbLocation = Path.Join(fileSystem.SharedPath, appId);
+					await outputStreamFactory.CreateHandler().Write(string.Format(BuyCreditInfo, obj["url"], dbLocation), "error", 402);
 					throw new StopBuilderException();
 				}
 				else
 				{
-					throw new AskUserConsole("You need to fill up your account at plang.is. Lets do this now.\n\nWhat is name of payer?", GetCountry);
+					throw new AskUserConsole("You need to purchase credits to use Plang LLM service. Lets do this now.\n\nWhat is name of payer?", GetCountry);
 				}
 			}
 
@@ -220,10 +222,15 @@ namespace PLang.Services.LlmService
 				var obj = JObject.Parse(responseBody);
 				if (obj["url"] != null)
 				{
-					await outputStreamFactory.CreateHandler().Write("You can buy more voucher at this url: " + obj["url"] + ". Try again after payment.", "error", 402);
+					string dbLocation = Path.Join(fileSystem.SharedPath, appId);
+					await outputStreamFactory.CreateHandler().Write(string.Format(BuyCreditInfo, obj["url"], dbLocation), "error", 402);
 					throw new StopBuilderException();
 				} else
 				{
+					if (obj["status"] != null && obj["status"]["error_code"] != null && obj["status"]["error_code"].ToString().Contains("COUNTRY"))
+					{
+						throw new AskUserConsole("Country must be legal 2 country code.\n\nWhat is your two letter country? (e.g. US, UK, FR, ...)?", GetCountry);
+					}
 					throw new AskUserConsole("Could not create url. Lets try again. What is your name?", GetCountry);
 				}
 			});

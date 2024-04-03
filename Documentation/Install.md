@@ -79,8 +79,17 @@ You should see the version of Plang displayed, confirming the installation.
 
 To install Plang on MacOS, the steps are similar to Linux:
 
-1. Go to [https://github.com/PLangHQ/plang/releases](https://github.com/PLangHQ/plang/releases) and download the latest release zip file for MacOS, plang-osx.zip
+1. Go to [https://github.com/PLangHQ/plang/releases](https://github.com/PLangHQ/plang/releases) and download the latest release zip file for MacOS, plang-osx-x64.zip or plang-osx-arm64.zip (M1 or M2 CPU)
 2. Unzip the file to a location such as `~/plang/`.
+3. Run this command to allow plang to run
+```bash
+chmod +x plang
+```
+4. Since plang is not signed you need to run following command
+```bash
+codesign --sign - --force --preserve-metadata=entitlements,requirements,flags,runtime ./plang
+```
+
 
 ### Adding Plang to PATH
 

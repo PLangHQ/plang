@@ -57,6 +57,7 @@ namespace PLang.Services.LoggerService
 			else if (logLevel == LogLevel.Warning)
 			{
 				Console.ForegroundColor = ConsoleColor.Yellow;
+				Console.BackgroundColor = ConsoleColor.Black;
 			}
 			else if (logLevel == LogLevel.Error)
 			{
