@@ -32,7 +32,11 @@ namespace PLang.Modules.OutputModule
 		[Description("Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text")]
 		public async Task Write(object? content = null, bool writeToBuffer = false, string type = "text", int statusCode = 200)
 		{
-			if (statusCode >= 400) throw new RuntimeUserStepException(content?.ToString(), type, statusCode, goalStep);
+			if (statusCode >= 400)
+			{
+				await outputStream.CreateHandler().Write(content, type, statusCode);
+				throw new RuntimeUserStepException(content?.ToString(), type, statusCode, goalStep);
+			}
 			if (writeToBuffer)
 			{
 				await outputStream.CreateHandler().WriteToBuffer(content, type, statusCode);

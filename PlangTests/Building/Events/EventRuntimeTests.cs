@@ -192,7 +192,7 @@ namespace PLang.Building.Events.Tests
 			// load event runtime
 			await eventRuntime.Load(container);
 
-			await eventRuntime.RunStartEndEvents(new(), EventType.OnError, EventScope.StartOfApp);
+			await eventRuntime.RunStartEndEvents(new(), EventType.Before, EventScope.AppError);
 
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
 						@"\", "!Process", Arg.Any<Dictionary<string, object?>>());
@@ -250,7 +250,7 @@ namespace PLang.Building.Events.Tests
 			// load event runtime
 			await eventRuntime.Load(container);
 
-			await eventRuntime.RunStartEndEvents(new(), EventType.OnError, EventScope.RunningApp);
+			await eventRuntime.RunStartEndEvents(new(), EventType.After, EventScope.AppError);
 
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
 						@"\", "!Process", Arg.Any<Dictionary<string, object?>>());
@@ -416,7 +416,7 @@ namespace PLang.Building.Events.Tests
 			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
 			foreach (var goal in goals)
 			{
-				await eventRuntime.RunGoalEvents(new(), EventType.OnError, goal);
+				await eventRuntime.RunGoalErrorEvents(new(), goal, 0, new Exception());
 				await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
 							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
 			}
@@ -449,7 +449,7 @@ namespace PLang.Building.Events.Tests
 			{
 				foreach (var step in goal.GoalSteps)
 				{
-					await eventRuntime.RunStepEvents(new(), EventType.OnError, goal, step);
+					await eventRuntime.RunOnErrorStepEvents(new(), new Exception(), goal, step);
 				}
 				await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<PLangAppContext>(),
 							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
@@ -461,12 +461,12 @@ namespace PLang.Building.Events.Tests
 		{
 
 			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName), new MockFileData(""));
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "TestApp", ".build", "events", ISettings.GoalFileName), new MockFileData(""));
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "events", ISettings.GoalFileName), new MockFileData(""));
+			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "events", "Event1", ISettings.GoalFileName), new MockFileData(""));
+			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "events", "Event2", ISettings.GoalFileName), new MockFileData(""));
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "Process", ISettings.GoalFileName), new MockFileData(""));
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "HelloWorld", ISettings.GoalFileName), new MockFileData(""));
 
-			var eventFiles = eventRuntime.GetRuntimeEventsFiles(fileSystem.GoalsPath, "events");
+			var eventFiles = eventRuntime.GetRuntimeEventsFiles(fileSystem.BuildPath, "events");
 
 			Assert.AreEqual(3, eventFiles.Count);
 			Assert.AreEqual(Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName), eventFiles[0]);
@@ -478,12 +478,12 @@ namespace PLang.Building.Events.Tests
 		{
 
 			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "BuilderEvents", ISettings.GoalFileName), new MockFileData(""));
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "TestApp", ".build", "BuilderEvents", ISettings.GoalFileName), new MockFileData(""));
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "events", ISettings.GoalFileName), new MockFileData(""));
+			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "BuilderEvents", "Event1", ISettings.GoalFileName), new MockFileData(""));
+			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "apps", "HelloWorld", ".build", "events", ISettings.GoalFileName), new MockFileData(""));
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "Process", ISettings.GoalFileName), new MockFileData(""));
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "HelloWorld", ISettings.GoalFileName), new MockFileData(""));
 
-			var eventFiles = eventRuntime.GetRuntimeEventsFiles(fileSystem.GoalsPath, "BuilderEvents");
+			var eventFiles = eventRuntime.GetRuntimeEventsFiles(fileSystem.BuildPath, "BuilderEvents");
 
 			Assert.AreEqual(2, eventFiles.Count);
 			Assert.AreEqual(Path.Join(fileSystem.BuildPath, "BuilderEvents", ISettings.GoalFileName), eventFiles[0]);
@@ -516,43 +516,43 @@ namespace PLang.Building.Events.Tests
 
 		string eventJson = @"[
   {
-    ""EventType"": 1,
-    ""EventScope"": 30,
+    ""EventType"": ""After"",
+    ""EventScope"": ""Step"",
     ""GoalToBindTo"": ""Start"",
     ""GoalToCall"": ""!SendEmail"",
     ""StepText"": """",
     ""IncludePrivate"": false
   },{
-    ""EventType"": 1,
-    ""EventScope"": 30,
+    ""EventType"": ""After"",
+    ""EventScope"": ""Step"",
     ""GoalToBindTo"": ""TestApp.HelloWorld"",
     ""GoalToCall"": ""!SendEmail"",
     ""StepText"": ""write to db"",
     ""IncludePrivate"": false
   },
   {
-    ""EventType"": 0,
-    ""EventScope"": 20,
+    ""EventType"": ""Before"",
+    ""EventScope"": ""Goal"",
     ""GoalToBindTo"": ""api/*"",
     ""GoalToCall"": ""!DoStuff"",
     ""IncludePrivate"": true
   },
   {
-    ""EventType"": 0,
-    ""EventScope"": 30,
+    ""EventType"": ""Before"",
+    ""EventScope"": ""Step"",
     ""GoalToBindTo"": ""Start.goal"",
     ""GoalToCall"": ""!TestApp.HelloWorld""
   },
   {
-    ""EventType"": 0,
-    ""EventScope"": 0,
+    ""EventType"": ""Before"",
+    ""EventScope"": ""StartOfApp"",
     ""GoalToBindTo"": ""Start:Process"",
     ""GoalToCall"": ""!BeforeStart"",
     ""IncludePrivate"": true
   },
   {
-    ""EventType"": 0,
-    ""EventScope"": 1,
+    ""EventType"":""Before"",
+    ""EventScope"": ""EndOfApp"",
     ""GoalToBindTo"": ""*"",
     ""GoalToCall"": ""!SendEmail""
   }

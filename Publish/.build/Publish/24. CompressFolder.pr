@@ -1,31 +1,41 @@
 {
   "Action": {
-    "FunctionName": "Write",
+    "FunctionName": "CompressDirectory",
     "Parameters": [
       {
-        "Type": "string",
-        "Name": "content",
-        "Value": "Publish Console"
+        "Type": "String",
+        "Name": "sourceDirectoryName",
+        "Value": "plang"
       },
       {
-        "Type": "Boolean",
-        "Name": "writeToBuffer",
-        "Value": false
-      },
-      {
-        "Type": "string",
-        "Name": "type",
-        "Value": "text"
+        "Type": "String",
+        "Name": "destinationArchiveFileName",
+        "Value": "plang-osx-arm64.zip"
       },
       {
         "Type": "Int32",
-        "Name": "statusCode",
-        "Value": 200
+        "Name": "compressionLevel",
+        "Value": 0
+      },
+      {
+        "Type": "Boolean",
+        "Name": "includeBaseDirectory",
+        "Value": true
+      },
+      {
+        "Type": "Boolean",
+        "Name": "createDestinationDirectory",
+        "Value": true
+      },
+      {
+        "Type": "Boolean",
+        "Name": "overwriteDestinationFile",
+        "Value": true
       }
     ],
     "ReturnValue": null
   },
-  "Text": "write out 'Publish Console'",
+  "Text": "compress folder 'plang' to 'plang-osx-arm64.zip', overwrite",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -55,7 +65,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nString Ask(String text, String? type = \"text\", Int32? statusCode = 200, String? regexPattern, String? errorMessage)  // Send response to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.. \nvoid Write(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  // Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text.\r\n## functions available ends ##"
+            "text": "## functions available starts ##\r\nvoid CompressFile(String filePath, String saveToPath, Int32? compressionLevel = 0)  // compressionLevel: 0=Optimal, 1=Fastest, 2=No compression, 3=Smallest size(highest compression). \nvoid CompressFiles(String[] filePaths, String saveToPath, Int32? compressionLevel = 0) \nvoid DecompressFile(String sourceArchiveFileName, String destinationDirectoryName, Boolean? overwrite = False) \nvoid CompressDirectory(String sourceDirectoryName, String destinationArchiveFileName, Int32? compressionLevel = 0, Boolean? includeBaseDirectory = True, Boolean? createDestinationDirectory = True, Boolean? overwriteDestinationFile = False)\r\n## functions available ends ##"
           }
         ]
       },
@@ -64,14 +74,14 @@
         "content": [
           {
             "type": "text",
-            "text": "write out 'Publish Console'"
+            "text": "compress folder 'plang' to 'plang-osx-arm64.zip', overwrite"
           }
         ]
       }
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "{\r\n  \"FunctionName\": \"CompressDirectory\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"String\",\r\n      \"Name\": \"sourceDirectoryName\",\r\n      \"Value\": \"plang\"\r\n    },\r\n    {\r\n      \"Type\": \"String\",\r\n      \"Name\": \"destinationArchiveFileName\",\r\n      \"Value\": \"plang-osx-arm64.zip\"\r\n    },\r\n    {\r\n      \"Type\": \"Int32\",\r\n      \"Name\": \"compressionLevel\",\r\n      \"Value\": 0\r\n    },\r\n    {\r\n      \"Type\": \"Boolean\",\r\n      \"Name\": \"includeBaseDirectory\",\r\n      \"Value\": true\r\n    },\r\n    {\r\n      \"Type\": \"Boolean\",\r\n      \"Name\": \"createDestinationDirectory\",\r\n      \"Value\": true\r\n    },\r\n    {\r\n      \"Type\": \"Boolean\",\r\n      \"Name\": \"overwriteDestinationFile\",\r\n      \"Value\": true\r\n    }\r\n  ],\r\n  \"ReturnValue\": null\r\n}"
   },
   "RunOnBuild": false
 }
