@@ -1,31 +1,41 @@
 {
   "Action": {
-    "FunctionName": "Write",
+    "FunctionName": "CompressDirectory",
     "Parameters": [
       {
-        "Type": "Object",
-        "Name": "content",
-        "Value": "Publish MacOS-x64 Console"
-      },
-      {
-        "Type": "Boolean",
-        "Name": "writeToBuffer",
-        "Value": false
+        "Type": "String",
+        "Name": "sourceDirectoryName",
+        "Value": "plang"
       },
       {
         "Type": "String",
-        "Name": "type",
-        "Value": "text"
+        "Name": "destinationArchiveFileName",
+        "Value": "plang-windows.zip"
       },
       {
         "Type": "Int32",
-        "Name": "statusCode",
-        "Value": 200
+        "Name": "compressionLevel",
+        "Value": 0
+      },
+      {
+        "Type": "Boolean",
+        "Name": "includeBaseDirectory",
+        "Value": false
+      },
+      {
+        "Type": "Boolean",
+        "Name": "createDestinationDirectory",
+        "Value": true
+      },
+      {
+        "Type": "Boolean",
+        "Name": "overwriteDestinationFile",
+        "Value": true
       }
     ],
     "ReturnValue": null
   },
-  "Text": "write out 'Publish MacOS-x64 Console'",
+  "Text": "compress folder 'plang' to 'plang-windows.zip',\n    dont include base dir, overwrite",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -55,7 +65,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nString Ask(String text, String? type = \"text\", Int32? statusCode = 200, String? regexPattern, String? errorMessage)  // Send response to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.. \nvoid Write(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  // Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text.\r\n## functions available ends ##"
+            "text": "## functions available starts ##\r\nvoid CompressFile(String filePath, String saveToPath, Int32? compressionLevel = 0)  // compressionLevel: 0=Optimal, 1=Fastest, 2=No compression, 3=Smallest size(highest compression). \nvoid CompressFiles(String[] filePaths, String saveToPath, Int32? compressionLevel = 0) \nvoid DecompressFile(String sourceArchiveFileName, String destinationDirectoryName, Boolean? overwrite = False) \nvoid CompressDirectory(String sourceDirectoryName, String destinationArchiveFileName, Int32? compressionLevel = 0, Boolean? includeBaseDirectory = True, Boolean? createDestinationDirectory = True, Boolean? overwriteDestinationFile = False)\r\n## functions available ends ##"
           }
         ]
       },
@@ -64,14 +74,14 @@
         "content": [
           {
             "type": "text",
-            "text": "write out 'Publish MacOS-x64 Console'"
+            "text": "compress folder 'plang' to 'plang-windows.zip',\n    dont include base dir, overwrite"
           }
         ]
       }
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": "{\r\n  \"FunctionName\": \"Write\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"Object\",\r\n      \"Name\": \"content\",\r\n      \"Value\": \"Publish MacOS-x64 Console\"\r\n    },\r\n    {\r\n      \"Type\": \"Boolean\",\r\n      \"Name\": \"writeToBuffer\",\r\n      \"Value\": false\r\n    },\r\n    {\r\n      \"Type\": \"String\",\r\n      \"Name\": \"type\",\r\n      \"Value\": \"text\"\r\n    },\r\n    {\r\n      \"Type\": \"Int32\",\r\n      \"Name\": \"statusCode\",\r\n      \"Value\": 200\r\n    }\r\n  ],\r\n  \"ReturnValue\": null\r\n}"
+    "RawResponse": "{\n  \"FunctionName\": \"CompressDirectory\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"sourceDirectoryName\",\n      \"Value\": \"plang\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"destinationArchiveFileName\",\n      \"Value\": \"plang-windows.zip\"\n    },\n    {\n      \"Type\": \"Int32\",\n      \"Name\": \"compressionLevel\",\n      \"Value\": 0\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"includeBaseDirectory\",\n      \"Value\": false\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"createDestinationDirectory\",\n      \"Value\": true\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"overwriteDestinationFile\",\n      \"Value\": true\n    }\n  ],\n  \"ReturnValue\": null\n}"
   },
   "RunOnBuild": false
 }

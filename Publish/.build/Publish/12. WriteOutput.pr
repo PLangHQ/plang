@@ -1,41 +1,31 @@
 {
   "Action": {
-    "FunctionName": "CompressDirectory",
+    "FunctionName": "Write",
     "Parameters": [
       {
-        "Type": "String",
-        "Name": "sourceDirectoryName",
-        "Value": "plang"
+        "Type": "string",
+        "Name": "content",
+        "Value": "Publish Linux-x64 Console"
       },
       {
-        "Type": "String",
-        "Name": "destinationArchiveFileName",
-        "Value": "plang-linux-arm64.zip"
+        "Type": "Boolean",
+        "Name": "writeToBuffer",
+        "Value": false
       },
       {
-        "Type": "Int32?",
-        "Name": "compressionLevel",
-        "Value": 0
+        "Type": "string",
+        "Name": "type",
+        "Value": "text"
       },
       {
-        "Type": "Boolean?",
-        "Name": "includeBaseDirectory",
-        "Value": true
-      },
-      {
-        "Type": "Boolean?",
-        "Name": "createDestinationDirectory",
-        "Value": true
-      },
-      {
-        "Type": "Boolean?",
-        "Name": "overwriteDestinationFile",
-        "Value": true
+        "Type": "Int32",
+        "Name": "statusCode",
+        "Value": 200
       }
     ],
     "ReturnValue": null
   },
-  "Text": "compress folder 'plang' to 'plang-linux-arm64.zip', overwrite",
+  "Text": "write out 'Publish Linux-x64 Console'",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -65,7 +55,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nvoid CompressFile(String filePath, String saveToPath, Int32? compressionLevel = 0)  // compressionLevel: 0=Optimal, 1=Fastest, 2=No compression, 3=Smallest size(highest compression). \nvoid CompressFiles(String[] filePaths, String saveToPath, Int32? compressionLevel = 0) \nvoid DecompressFile(String sourceArchiveFileName, String destinationDirectoryName, Boolean? overwrite = False) \nvoid CompressDirectory(String sourceDirectoryName, String destinationArchiveFileName, Int32? compressionLevel = 0, Boolean? includeBaseDirectory = True, Boolean? createDestinationDirectory = True, Boolean? overwriteDestinationFile = False)\r\n## functions available ends ##"
+            "text": "## functions available starts ##\r\nString Ask(String text, String? type = \"text\", Int32? statusCode = 200, String? regexPattern, String? errorMessage)  // Send response to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.. \nvoid Write(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  // Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text.\r\n## functions available ends ##"
           }
         ]
       },
@@ -74,7 +64,7 @@
         "content": [
           {
             "type": "text",
-            "text": "compress folder 'plang' to 'plang-linux-arm64.zip', overwrite"
+            "text": "write out 'Publish Linux-x64 Console'"
           }
         ]
       }

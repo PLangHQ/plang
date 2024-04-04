@@ -1,37 +1,41 @@
 {
   "Action": {
-    "FunctionName": "RunTerminal",
+    "FunctionName": "CompressDirectory",
     "Parameters": [
       {
         "Type": "String",
-        "Name": "appExecutableName",
-        "Value": "dotnet"
-      },
-      {
-        "Type": "List`1<String>",
-        "Name": "parameters",
-        "Value": [
-          "publish",
-          "PlangConsole/PLangConsole.csproj",
-          "-c",
-          "Release",
-          "-r",
-          "win-x64",
-          "--self-contained",
-          "true",
-          "-o",
-          "./publish/plang"
-        ]
+        "Name": "sourceDirectoryName",
+        "Value": "plang"
       },
       {
         "Type": "String",
-        "Name": "pathToWorkingDirInTerminal",
-        "Value": "../"
+        "Name": "destinationArchiveFileName",
+        "Value": "plang-osx-x64.zip"
+      },
+      {
+        "Type": "Int32",
+        "Name": "compressionLevel",
+        "Value": 0
+      },
+      {
+        "Type": "Boolean",
+        "Name": "includeBaseDirectory",
+        "Value": false
+      },
+      {
+        "Type": "Boolean",
+        "Name": "createDestinationDirectory",
+        "Value": true
+      },
+      {
+        "Type": "Boolean",
+        "Name": "overwriteDestinationFile",
+        "Value": true
       }
     ],
     "ReturnValue": null
   },
-  "Text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r win-x64  --self-contained true -o ./publish/plang\n    working dir ../",
+  "Text": "compress folder 'plang' to 'plang-osx-x64.zip',\n    dont include base dir, overwrite",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -41,7 +45,7 @@
     "maxLength": 4000,
     "llmResponseType": "json",
     "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
-    "type": "PLang.Modules.TerminalModule.Builder",
+    "type": "PLang.Modules.GenericFunctionBuilder",
     "promptMessage": [
       {
         "role": "system",
@@ -61,11 +65,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nvoid Read(String variableName) \nReturnDictionary`2 RunTerminal(String appExecutableName, List`1<String>? parameters, String? pathToWorkingDirInTerminal, String? dataOutputVariable, String? errorDebugInfoOutputVariable, String? dataStreamDelta, String? debugErrorStreamDelta)\r\n## functions available ends ##"
-          },
-          {
-            "type": "text",
-            "text": "Remove % around dataOutputVariable and errorDebugInfoOutputVariable"
+            "text": "## functions available starts ##\r\nvoid CompressFile(String filePath, String saveToPath, Int32? compressionLevel = 0)  // compressionLevel: 0=Optimal, 1=Fastest, 2=No compression, 3=Smallest size(highest compression). \nvoid CompressFiles(String[] filePaths, String saveToPath, Int32? compressionLevel = 0) \nvoid DecompressFile(String sourceArchiveFileName, String destinationDirectoryName, Boolean? overwrite = False) \nvoid CompressDirectory(String sourceDirectoryName, String destinationArchiveFileName, Int32? compressionLevel = 0, Boolean? includeBaseDirectory = True, Boolean? createDestinationDirectory = True, Boolean? overwriteDestinationFile = False)\r\n## functions available ends ##"
           }
         ]
       },
@@ -74,14 +74,14 @@
         "content": [
           {
             "type": "text",
-            "text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r win-x64  --self-contained true -o ./publish/plang\n    working dir ../"
+            "text": "compress folder 'plang' to 'plang-osx-x64.zip',\n    dont include base dir, overwrite"
           }
         ]
       }
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": "{\n  \"FunctionName\": \"RunTerminal\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"appExecutableName\",\n      \"Value\": \"dotnet\"\n    },\n    {\n      \"Type\": \"List`1<String>\",\n      \"Name\": \"parameters\",\n      \"Value\": [\n        \"publish\",\n        \"PlangConsole/PLangConsole.csproj\",\n        \"-c\",\n        \"Release\",\n        \"-r\",\n        \"win-x64\",\n        \"--self-contained\",\n        \"true\",\n        \"-o\",\n        \"./publish/plang\"\n      ]\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"pathToWorkingDirInTerminal\",\n      \"Value\": \"../\"\n    }\n  ],\n  \"ReturnValue\": null\n}"
+    "RawResponse": "{\n  \"FunctionName\": \"CompressDirectory\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"sourceDirectoryName\",\n      \"Value\": \"plang\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"destinationArchiveFileName\",\n      \"Value\": \"plang-osx-x64.zip\"\n    },\n    {\n      \"Type\": \"Int32\",\n      \"Name\": \"compressionLevel\",\n      \"Value\": 0\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"includeBaseDirectory\",\n      \"Value\": false\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"createDestinationDirectory\",\n      \"Value\": true\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"overwriteDestinationFile\",\n      \"Value\": true\n    }\n  ],\n  \"ReturnValue\": null\n}"
   },
   "RunOnBuild": false
 }

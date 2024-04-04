@@ -10,7 +10,7 @@
       {
         "Type": "String",
         "Name": "destinationArchiveFileName",
-        "Value": "plang-windows.zip"
+        "Value": "plang-linux-arm64.zip"
       },
       {
         "Type": "Int32",
@@ -20,7 +20,7 @@
       {
         "Type": "Boolean",
         "Name": "includeBaseDirectory",
-        "Value": true
+        "Value": false
       },
       {
         "Type": "Boolean",
@@ -35,7 +35,7 @@
     ],
     "ReturnValue": null
   },
-  "Text": "compress folder 'plang' to 'plang-windows.zip', overwrite",
+  "Text": "compress folder 'plang' to 'plang-linux-arm64.zip',\n    dont include base dir, overwrite",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -74,14 +74,14 @@
         "content": [
           {
             "type": "text",
-            "text": "compress folder 'plang' to 'plang-windows.zip', overwrite"
+            "text": "compress folder 'plang' to 'plang-linux-arm64.zip',\n    dont include base dir, overwrite"
           }
         ]
       }
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": "{\n  \"FunctionName\": \"CompressDirectory\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"sourceDirectoryName\",\n      \"Value\": \"plang\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"destinationArchiveFileName\",\n      \"Value\": \"plang-windows.zip\"\n    },\n    {\n      \"Type\": \"Int32\",\n      \"Name\": \"compressionLevel\",\n      \"Value\": 0\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"includeBaseDirectory\",\n      \"Value\": true\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"createDestinationDirectory\",\n      \"Value\": true\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"overwriteDestinationFile\",\n      \"Value\": true\n    }\n  ],\n  \"ReturnValue\": null\n}"
+    "RawResponse": "{\n  \"FunctionName\": \"CompressDirectory\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"sourceDirectoryName\",\n      \"Value\": \"plang\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"destinationArchiveFileName\",\n      \"Value\": \"plang-linux-arm64.zip\"\n    },\n    {\n      \"Type\": \"Int32\",\n      \"Name\": \"compressionLevel\",\n      \"Value\": 0\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"includeBaseDirectory\",\n      \"Value\": false\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"createDestinationDirectory\",\n      \"Value\": true\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"overwriteDestinationFile\",\n      \"Value\": true\n    }\n  ],\n  \"ReturnValue\": null\n}"
   },
   "RunOnBuild": false
 }

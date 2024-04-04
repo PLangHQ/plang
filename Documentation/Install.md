@@ -43,14 +43,18 @@ For Linux users, follow these steps:
 
 1. Navigate to [https://github.com/PLangHQ/plang/releases](https://github.com/PLangHQ/plang/releases) and download the latest release zip file for Linux, `plang-linux-x64.zip` or `plang-linux-arm64.zip` for ARM
 2. Extract the zip file to a directory within your home folder, for example, `~/plang/`.
+```bash
+unzip plang-linux-x64.zip -d ~/plang/
+```
 
 ### Setting Permissions
 
-Before adding Plang to your PATH, ensure the `plang` binary has the correct permissions:
+Before adding Plang to your PATH, ensure the `plang` binary has the correct permissions to run:
 
 ```bash
-chmod 755 ~/plang/plang
+chmod 700 ~/plang/plang
 ```
+> This will give you a as user rights to run plang. If you need a deamon to run it, you might have to modify the permission.
 
 ### Adding Plang to PATH
 
@@ -79,17 +83,19 @@ You should see the version of Plang displayed, confirming the installation.
 
 To install Plang on MacOS, the steps are similar to Linux:
 
-1. Go to [https://github.com/PLangHQ/plang/releases](https://github.com/PLangHQ/plang/releases) and download the latest release zip file for MacOS, plang-osx-x64.zip or plang-osx-arm64.zip (M1 or M2 CPU)
+1. Go to [https://github.com/PLangHQ/plang/releases](https://github.com/PLangHQ/plang/releases) and download the latest release zip file for MacOS for your CPU ([What CPU do I have?](https://chat.openai.com/share/1b6a4867-aef7-4a89-87d7-64c107bae212)), 
+- `plang-osx-x64.zip` (Intel CPU)
+- `plang-osx-arm64.zip` (M-series CPU, such as M1 or M2)
 2. Unzip the file to a location such as `~/plang/`.
 3. Run this command to allow plang to run
 ```bash
-chmod +x plang
+chmod +x ~/plang/plang
 ```
 4. Since plang is not signed you need to run following command
 ```bash
-codesign --sign - --force --preserve-metadata=entitlements,requirements,flags,runtime ./plang
+codesign --sign - --force --preserve-metadata=entitlements,requirements,flags,runtime ~/plang/plang
 ```
-
+> Adjust the path of `~/plang/plang` to match your path
 
 ### Adding Plang to PATH
 

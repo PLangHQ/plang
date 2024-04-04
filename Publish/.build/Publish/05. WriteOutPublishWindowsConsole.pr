@@ -3,29 +3,29 @@
     "FunctionName": "Write",
     "Parameters": [
       {
-        "Type": "string",
+        "Type": "Object",
         "Name": "content",
-        "Value": "Publish MacOS-ARM64 Console"
+        "Value": "Publish Windows Console"
       },
       {
-        "Type": "bool",
+        "Type": "Boolean",
         "Name": "writeToBuffer",
         "Value": false
       },
       {
-        "Type": "string",
+        "Type": "String",
         "Name": "type",
         "Value": "text"
       },
       {
-        "Type": "int",
+        "Type": "Int32",
         "Name": "statusCode",
         "Value": 200
       }
     ],
     "ReturnValue": null
   },
-  "Text": "write out 'Publish MacOS-ARM64 Console'",
+  "Text": "write out 'Publish Windows Console'",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -64,14 +64,14 @@
         "content": [
           {
             "type": "text",
-            "text": "write out 'Publish MacOS-ARM64 Console'"
+            "text": "write out 'Publish Windows Console'"
           }
         ]
       }
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": "{\r\n  \"FunctionName\": \"Write\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"content\",\r\n      \"Value\": \"Publish MacOS-ARM64 Console\"\r\n    },\r\n    {\r\n      \"Type\": \"bool\",\r\n      \"Name\": \"writeToBuffer\",\r\n      \"Value\": false\r\n    },\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"type\",\r\n      \"Value\": \"text\"\r\n    },\r\n    {\r\n      \"Type\": \"int\",\r\n      \"Name\": \"statusCode\",\r\n      \"Value\": 200\r\n    }\r\n  ],\r\n  \"ReturnValue\": null\r\n}"
+    "RawResponse": null
   },
   "RunOnBuild": false
 }

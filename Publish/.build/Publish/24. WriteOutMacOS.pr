@@ -5,10 +5,10 @@
       {
         "Type": "string",
         "Name": "content",
-        "Value": "Publish Linux-ARM64 Console"
+        "Value": "Publish MacOS-ARM64 Console"
       },
       {
-        "Type": "Boolean",
+        "Type": "bool",
         "Name": "writeToBuffer",
         "Value": false
       },
@@ -18,14 +18,14 @@
         "Value": "text"
       },
       {
-        "Type": "Int32",
+        "Type": "int",
         "Name": "statusCode",
         "Value": 200
       }
     ],
     "ReturnValue": null
   },
-  "Text": "write out 'Publish Linux-ARM64 Console'",
+  "Text": "write out 'Publish MacOS-ARM64 Console'",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -64,14 +64,14 @@
         "content": [
           {
             "type": "text",
-            "text": "write out 'Publish Linux-ARM64 Console'"
+            "text": "write out 'Publish MacOS-ARM64 Console'"
           }
         ]
       }
     ],
     "model": "gpt-4",
     "caching": true,
-    "RawResponse": "{\r\n  \"FunctionName\": \"Write\",\r\n  \"Parameters\": [\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"content\",\r\n      \"Value\": \"Publish Linux-ARM64 Console\"\r\n    },\r\n    {\r\n      \"Type\": \"Boolean\",\r\n      \"Name\": \"writeToBuffer\",\r\n      \"Value\": false\r\n    },\r\n    {\r\n      \"Type\": \"string\",\r\n      \"Name\": \"type\",\r\n      \"Value\": \"text\"\r\n    },\r\n    {\r\n      \"Type\": \"Int32\",\r\n      \"Name\": \"statusCode\",\r\n      \"Value\": 200\r\n    }\r\n  ],\r\n  \"ReturnValue\": null\r\n}"
+    "RawResponse": null
   },
   "RunOnBuild": false
 }

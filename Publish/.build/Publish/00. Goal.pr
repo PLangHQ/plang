@@ -3,17 +3,17 @@
   "Comment": null,
   "GoalSteps": [
     {
-      "Text": "write out 'Build'",
+      "Text": "get file paths of .zip in ./, write to %zipFiles%",
       "Comment": null,
-      "ModuleType": "PLang.Modules.OutputModule",
-      "Name": "WriteOutBuild",
-      "Description": "Write out the string 'Build' to the console or UI.",
-      "PrFileName": "01. WriteOutBuild.pr",
-      "RelativePrPath": ".build\\Publish\\01. WriteOutBuild.pr",
+      "ModuleType": "PLang.Modules.FileModule",
+      "Name": "GetZipFilePaths",
+      "Description": "Retrieve the file paths of all .zip files in the current directory and store them in the variable %zipFiles%",
+      "PrFileName": "01. GetZipFilePaths.pr",
+      "RelativePrPath": ".build\\Publish\\01. GetZipFilePaths.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-21T15:00:55.1935768+00:00",
+      "Generated": "2024-04-04T08:44:07.3050854+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -22,6 +22,140 @@
       "Custom": {},
       "Number": 0,
       "LineNumber": 2,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
+        "type": "StepBuilder",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "get file paths of .zip in ./, write to %zipFiles%"
+              }
+            ]
+          }
+        ],
+        "model": "gpt-4",
+        "caching": true,
+        "RawResponse": "{\n  \"StepName\": \"GetZipFilePaths\",\n  \"StepDescription\": \"Retrieve the file paths of all .zip files in the current directory and store them in the variable %zipFiles%\",\n  \"Modules\": [\n    \"PLang.Modules.FileModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+      }
+    },
+    {
+      "Text": "foreach %zipFiles% call !RemoveFile",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.LoopModule",
+      "Name": "ForEachRemoveFile",
+      "Description": "For each file in the list of zip files, call the function to remove the file.",
+      "PrFileName": "02. ForEachRemoveFile.pr",
+      "RelativePrPath": ".build\\Publish\\02. ForEachRemoveFile.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-04-04T08:44:17.9483354+00:00",
+      "WaitForExecution": true,
+      "ErrorHandler": null,
+      "RetryHandler": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 1,
+      "LineNumber": 3,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
+        "type": "StepBuilder",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "foreach %zipFiles% call !RemoveFile"
+              }
+            ]
+          }
+        ],
+        "model": "gpt-4",
+        "caching": true,
+        "RawResponse": "{\n  \"StepName\": \"ForEachRemoveFile\",\n  \"StepDescription\": \"For each file in the list of zip files, call the function to remove the file.\",\n  \"Modules\": [\n    \"PLang.Modules.LoopModule\",\n    \"PLang.Modules.FileModule\",\n    \"PLang.Modules.CallGoalModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+      }
+    },
+    {
+      "Text": "write out 'Build'",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.OutputModule",
+      "Name": "WriteOutBuild",
+      "Description": "Write out the string 'Build' to the console or UI.",
+      "PrFileName": "03. WriteOutBuild.pr",
+      "RelativePrPath": ".build\\Publish\\03. WriteOutBuild.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-04-04T08:44:17.9869542+00:00",
+      "WaitForExecution": true,
+      "ErrorHandler": null,
+      "RetryHandler": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 2,
+      "LineNumber": 4,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -75,20 +209,20 @@
       "ModuleType": "PLang.Modules.TerminalModule",
       "Name": "BuildDotNetSolution",
       "Description": "Build the .NET solution 'Plang.sln' in Release configuration. The working directory for this operation is one level up from the current directory.",
-      "PrFileName": "02. BuildDotNetSolution.pr",
-      "RelativePrPath": ".build\\Publish\\02. BuildDotNetSolution.pr",
+      "PrFileName": "04. BuildDotNetSolution.pr",
+      "RelativePrPath": ".build\\Publish\\04. BuildDotNetSolution.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-21T15:00:55.2434846+00:00",
+      "Generated": "2024-04-04T08:44:18.0202084+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 1,
-      "LineNumber": 3,
+      "Number": 3,
+      "LineNumber": 5,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -142,20 +276,20 @@
       "ModuleType": "PLang.Modules.OutputModule",
       "Name": "WriteOutPublishWindowsConsole",
       "Description": "Output the text 'Publish Windows Console' to the user interface.",
-      "PrFileName": "03. WriteOutPublishWindowsConsole.pr",
-      "RelativePrPath": ".build\\Publish\\03. WriteOutPublishWindowsConsole.pr",
+      "PrFileName": "05. WriteOutPublishWindowsConsole.pr",
+      "RelativePrPath": ".build\\Publish\\05. WriteOutPublishWindowsConsole.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-03T14:40:45.4467801+00:00",
+      "Generated": "2024-04-04T08:44:18.0515516+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 2,
-      "LineNumber": 4,
+      "Number": 4,
+      "LineNumber": 6,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -200,7 +334,7 @@
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\r\n  \"StepName\": \"WriteOutPublishWindowsConsole\",\r\n  \"StepDescription\": \"Output the text 'Publish Windows Console' to the user interface.\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.OutputModule\"\r\n  ],\r\n  \"WaitForExecution\": true\r\n}"
+        "RawResponse": null
       }
     },
     {
@@ -209,20 +343,20 @@
       "ModuleType": "PLang.Modules.TerminalModule",
       "Name": "PublishDotnetProject",
       "Description": "Publish the .NET project located at 'PlangConsole/PLangConsole.csproj' with Release configuration for Windows x64 platform. The output should be self-contained and located in the './publish/plang' directory. The working directory for this operation is '../'.",
-      "PrFileName": "04. PublishDotnetProject.pr",
-      "RelativePrPath": ".build\\Publish\\04. PublishDotnetProject.pr",
+      "PrFileName": "06. PublishDotnetProject.pr",
+      "RelativePrPath": ".build\\Publish\\06. PublishDotnetProject.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-21T15:06:24.7160998+00:00",
+      "Generated": "2024-04-04T08:44:18.0790118+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 3,
-      "LineNumber": 5,
+      "Number": 5,
+      "LineNumber": 7,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -267,7 +401,7 @@
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"PublishDotnetProject\",\n  \"StepDescription\": \"Publish the .NET project located at 'PlangConsole/PLangConsole.csproj' with Release configuration for Windows x64 platform. The output should be self-contained and located in the './publish/plang' directory. The working directory for this operation is '../'.\",\n  \"Modules\": [\n    \"PLang.Modules.TerminalModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": null
       }
     },
     {
@@ -276,20 +410,20 @@
       "ModuleType": "PLang.Modules.OutputModule",
       "Name": "WriteOutPublishWindowsWindow",
       "Description": "Write out the string 'Publish Windows Window' to the user interface.",
-      "PrFileName": "05. WriteOutPublishWindowsWindow.pr",
-      "RelativePrPath": ".build\\Publish\\05. WriteOutPublishWindowsWindow.pr",
+      "PrFileName": "07. WriteOutPublishWindowsWindow.pr",
+      "RelativePrPath": ".build\\Publish\\07. WriteOutPublishWindowsWindow.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-03T14:40:53.4086697+00:00",
+      "Generated": "2024-04-04T08:44:18.1056846+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 4,
-      "LineNumber": 7,
+      "Number": 6,
+      "LineNumber": 9,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -334,7 +468,7 @@
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\r\n  \"StepName\": \"WriteOutPublishWindowsWindow\",\r\n  \"StepDescription\": \"Write out the string 'Publish Windows Window' to the user interface.\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.OutputModule\"\r\n  ],\r\n  \"WaitForExecution\": true\r\n}"
+        "RawResponse": null
       }
     },
     {
@@ -343,20 +477,20 @@
       "ModuleType": "PLang.Modules.TerminalModule",
       "Name": "PublishDotnetProject",
       "Description": "Publish the .NET project located at 'PlangWindowForms/PLangWindowForms.csproj' with Release configuration for Windows x64 platform. The output should be self-contained and placed in the './publish/plang' directory. The working directory for this operation is one level up from the current directory.",
-      "PrFileName": "06. PublishDotnetProject.pr",
-      "RelativePrPath": ".build\\Publish\\06. PublishDotnetProject.pr",
+      "PrFileName": "08. PublishDotnetProject.pr",
+      "RelativePrPath": ".build\\Publish\\08. PublishDotnetProject.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-21T15:06:38.1646091+00:00",
+      "Generated": "2024-04-04T08:44:18.1317905+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 5,
-      "LineNumber": 8,
+      "Number": 7,
+      "LineNumber": 10,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -401,7 +535,7 @@
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"PublishDotnetProject\",\n  \"StepDescription\": \"Publish the .NET project located at 'PlangWindowForms/PLangWindowForms.csproj' with Release configuration for Windows x64 platform. The output should be self-contained and placed in the './publish/plang' directory. The working directory for this operation is one level up from the current directory.\",\n  \"Modules\": [\n    \"PLang.Modules.TerminalModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": null
       }
     },
     {
@@ -410,20 +544,20 @@
       "ModuleType": "PLang.Modules.OutputModule",
       "Name": "WriteOutCompressFolder",
       "Description": "Output the text 'Compress plang folder' to the user interface.",
-      "PrFileName": "07. WriteOutCompressFolder.pr",
-      "RelativePrPath": ".build\\Publish\\07. WriteOutCompressFolder.pr",
+      "PrFileName": "09. WriteOutCompressFolder.pr",
+      "RelativePrPath": ".build\\Publish\\09. WriteOutCompressFolder.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-21T15:06:38.1834926+00:00",
+      "Generated": "2024-04-04T08:44:18.1583227+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 6,
-      "LineNumber": 10,
+      "Number": 8,
+      "LineNumber": 12,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -472,25 +606,25 @@
       }
     },
     {
-      "Text": "compress folder 'plang' to 'plang-windows.zip', overwrite",
+      "Text": "compress folder 'plang' to 'plang-windows.zip',\n    dont include base dir, overwrite",
       "Comment": null,
       "ModuleType": "PLang.Modules.CompressionModule",
       "Name": "CompressFolder",
-      "Description": "Compress the folder named 'plang' into a file named 'plang-windows.zip'. If a file with the same name already exists, overwrite it.",
-      "PrFileName": "08. CompressFolder.pr",
-      "RelativePrPath": ".build\\Publish\\08. CompressFolder.pr",
+      "Description": "Compress the folder named 'plang' into a file named 'plang-windows.zip'. The base directory should not be included in the compressed file and any existing file with the same name should be overwritten.",
+      "PrFileName": "10. CompressFolder.pr",
+      "RelativePrPath": ".build\\Publish\\10. CompressFolder.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-21T15:07:26.3207154+00:00",
+      "Generated": "2024-04-04T08:44:33.5098423+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 7,
-      "LineNumber": 11,
+      "Number": 9,
+      "LineNumber": 13,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -528,14 +662,14 @@
             "content": [
               {
                 "type": "text",
-                "text": "compress folder 'plang' to 'plang-windows.zip', overwrite"
+                "text": "compress folder 'plang' to 'plang-windows.zip',\n    dont include base dir, overwrite"
               }
             ]
           }
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"CompressFolder\",\n  \"StepDescription\": \"Compress the folder named 'plang' into a file named 'plang-windows.zip'. If a file with the same name already exists, overwrite it.\",\n  \"Modules\": [\n    \"PLang.Modules.CompressionModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": "{\n  \"StepName\": \"CompressFolder\",\n  \"StepDescription\": \"Compress the folder named 'plang' into a file named 'plang-windows.zip'. The base directory should not be included in the compressed file and any existing file with the same name should be overwritten.\",\n  \"Modules\": [\n    \"PLang.Modules.CompressionModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     },
     {
@@ -544,20 +678,20 @@
       "ModuleType": "PLang.Modules.FileModule",
       "Name": "DeleteFolder",
       "Description": "Delete the folder named 'plang'",
-      "PrFileName": "09. DeleteFolder.pr",
-      "RelativePrPath": ".build\\Publish\\09. DeleteFolder.pr",
+      "PrFileName": "11. DeleteFolder.pr",
+      "RelativePrPath": ".build\\Publish\\11. DeleteFolder.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-21T15:10:15.69126+00:00",
+      "Generated": "2024-04-04T08:44:33.5349128+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 8,
-      "LineNumber": 12,
+      "Number": 10,
+      "LineNumber": 15,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -611,146 +745,12 @@
       "ModuleType": "PLang.Modules.OutputModule",
       "Name": "WriteOutput",
       "Description": "Write the string 'Publish Linux-x64 Console' to the output.",
-      "PrFileName": "10. WriteOutput.pr",
-      "RelativePrPath": ".build\\Publish\\10. WriteOutput.pr",
+      "PrFileName": "12. WriteOutput.pr",
+      "RelativePrPath": ".build\\Publish\\12. WriteOutput.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-03T14:41:01.0967981+00:00",
-      "WaitForExecution": true,
-      "ErrorHandler": null,
-      "RetryHandler": null,
-      "CacheHandler": null,
-      "CancellationHandler": null,
-      "Custom": {},
-      "Number": 9,
-      "LineNumber": 13,
-      "LlmRequest": {
-        "temperature": 0.0,
-        "top_p": 0.0,
-        "frequencyPenalty": 0.0,
-        "presencePenalty": 0.0,
-        "maxLength": 4000,
-        "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
-        "type": "StepBuilder",
-        "promptMessage": [
-          {
-            "role": "system",
-            "content": [
-              {
-                "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
-              },
-              {
-                "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
-              }
-            ]
-          },
-          {
-            "role": "assistant",
-            "content": [
-              {
-                "type": "text",
-                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
-              }
-            ]
-          },
-          {
-            "role": "user",
-            "content": [
-              {
-                "type": "text",
-                "text": "write out 'Publish Linux-x64 Console'"
-              }
-            ]
-          }
-        ],
-        "model": "gpt-4",
-        "caching": true,
-        "RawResponse": "{\r\n  \"StepName\": \"WriteOutput\",\r\n  \"StepDescription\": \"Write the string 'Publish Linux-x64 Console' to the output.\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.OutputModule\"\r\n  ],\r\n  \"WaitForExecution\": true\r\n}"
-      }
-    },
-    {
-      "Text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r linux-x64  --self-contained true -o ./publish/plang\n    working dir ../",
-      "Comment": null,
-      "ModuleType": "PLang.Modules.TerminalModule",
-      "Name": "PublishDotnetProject",
-      "Description": "Publish the .NET project located at 'PlangConsole/PLangConsole.csproj' with the configuration set to 'Release' and runtime to 'linux-x64'. The output should be self-contained and directed to the './publish/plang' directory. The working directory for this operation is '../'.",
-      "PrFileName": "11. PublishDotnetProject.pr",
-      "RelativePrPath": ".build\\Publish\\11. PublishDotnetProject.pr",
-      "Indent": 0,
-      "Execute": true,
-      "RunOnce": false,
-      "Generated": "2024-03-21T15:10:30.0242936+00:00",
-      "WaitForExecution": true,
-      "ErrorHandler": null,
-      "RetryHandler": null,
-      "CacheHandler": null,
-      "CancellationHandler": null,
-      "Custom": {},
-      "Number": 10,
-      "LineNumber": 14,
-      "LlmRequest": {
-        "temperature": 0.0,
-        "top_p": 0.0,
-        "frequencyPenalty": 0.0,
-        "presencePenalty": 0.0,
-        "maxLength": 4000,
-        "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
-        "type": "StepBuilder",
-        "promptMessage": [
-          {
-            "role": "system",
-            "content": [
-              {
-                "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
-              },
-              {
-                "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
-              }
-            ]
-          },
-          {
-            "role": "assistant",
-            "content": [
-              {
-                "type": "text",
-                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
-              }
-            ]
-          },
-          {
-            "role": "user",
-            "content": [
-              {
-                "type": "text",
-                "text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r linux-x64  --self-contained true -o ./publish/plang\n    working dir ../"
-              }
-            ]
-          }
-        ],
-        "model": "gpt-4",
-        "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"PublishDotnetProject\",\n  \"StepDescription\": \"Publish the .NET project located at 'PlangConsole/PLangConsole.csproj' with the configuration set to 'Release' and runtime to 'linux-x64'. The output should be self-contained and directed to the './publish/plang' directory. The working directory for this operation is '../'.\",\n  \"Modules\": [\n    \"PLang.Modules.TerminalModule\"\n  ],\n  \"WaitForExecution\": true\n}"
-      }
-    },
-    {
-      "Text": "compress folder 'plang' to 'plang-linux-x64.zip', overwrite",
-      "Comment": null,
-      "ModuleType": "PLang.Modules.CompressionModule",
-      "Name": "CompressFolder",
-      "Description": "Compress the folder named 'plang' into a file named 'plang-linux-x64.zip'. If a file with the same name already exists, overwrite it.",
-      "PrFileName": "12. CompressFolder.pr",
-      "RelativePrPath": ".build\\Publish\\12. CompressFolder.pr",
-      "Indent": 0,
-      "Execute": true,
-      "RunOnce": false,
-      "Generated": "2024-03-21T15:10:43.7935118+00:00",
+      "Generated": "2024-04-04T08:44:33.5615381+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -796,28 +796,28 @@
             "content": [
               {
                 "type": "text",
-                "text": "compress folder 'plang' to 'plang-linux-x64.zip', overwrite"
+                "text": "write out 'Publish Linux-x64 Console'"
               }
             ]
           }
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"CompressFolder\",\n  \"StepDescription\": \"Compress the folder named 'plang' into a file named 'plang-linux-x64.zip'. If a file with the same name already exists, overwrite it.\",\n  \"Modules\": [\n    \"PLang.Modules.CompressionModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": null
       }
     },
     {
-      "Text": "delete folder 'plang'",
+      "Text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r linux-x64  --self-contained true -o ./publish/plang\n    working dir ../",
       "Comment": null,
-      "ModuleType": "PLang.Modules.FileModule",
-      "Name": "DeleteFolder",
-      "Description": "Delete the folder named 'plang'",
-      "PrFileName": "13. DeleteFolder.pr",
-      "RelativePrPath": ".build\\Publish\\13. DeleteFolder.pr",
+      "ModuleType": "PLang.Modules.TerminalModule",
+      "Name": "PublishDotnetProject",
+      "Description": "Publish the .NET project located at 'PlangConsole/PLangConsole.csproj' with the configuration set to 'Release' and runtime to 'linux-x64'. The output should be self-contained and directed to the './publish/plang' directory. The working directory for this operation is '../'.",
+      "PrFileName": "13. PublishDotnetProject.pr",
+      "RelativePrPath": ".build\\Publish\\13. PublishDotnetProject.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-03T14:44:20.8503439+00:00",
+      "Generated": "2024-04-04T08:44:33.5861976+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -826,6 +826,140 @@
       "Custom": {},
       "Number": 12,
       "LineNumber": 17,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
+        "type": "StepBuilder",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r linux-x64  --self-contained true -o ./publish/plang\n    working dir ../"
+              }
+            ]
+          }
+        ],
+        "model": "gpt-4",
+        "caching": true,
+        "RawResponse": null
+      }
+    },
+    {
+      "Text": "compress folder 'plang' to 'plang-linux-x64.zip',\n    dont include base dir,  overwrite",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.CompressionModule",
+      "Name": "CompressFolder",
+      "Description": "Compress the folder named 'plang' into a zip file named 'plang-linux-x64.zip'. The base directory should not be included in the zip file and if a file with the same name already exists, it should be overwritten.",
+      "PrFileName": "14. CompressFolder.pr",
+      "RelativePrPath": ".build\\Publish\\14. CompressFolder.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-04-04T08:44:47.7564268+00:00",
+      "WaitForExecution": true,
+      "ErrorHandler": null,
+      "RetryHandler": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 13,
+      "LineNumber": 19,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
+        "type": "StepBuilder",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n## CachingType int ##\r\nSliding = 0, Absolute = 1\r\n## CachingType int ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "compress folder 'plang' to 'plang-linux-x64.zip',\n    dont include base dir,  overwrite"
+              }
+            ]
+          }
+        ],
+        "model": "gpt-4",
+        "caching": true,
+        "RawResponse": "{\n  \"StepName\": \"CompressFolder\",\n  \"StepDescription\": \"Compress the folder named 'plang' into a zip file named 'plang-linux-x64.zip'. The base directory should not be included in the zip file and if a file with the same name already exists, it should be overwritten.\",\n  \"Modules\": [\n    \"PLang.Modules.CompressionModule\",\n    \"PLang.Modules.FileModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+      }
+    },
+    {
+      "Text": "delete folder 'plang'",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.FileModule",
+      "Name": "DeleteFolder",
+      "Description": "Delete the folder named 'plang'",
+      "PrFileName": "15. DeleteFolder.pr",
+      "RelativePrPath": ".build\\Publish\\15. DeleteFolder.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-04-04T08:44:47.7814924+00:00",
+      "WaitForExecution": true,
+      "ErrorHandler": null,
+      "RetryHandler": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 14,
+      "LineNumber": 21,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -879,20 +1013,20 @@
       "ModuleType": "PLang.Modules.OutputModule",
       "Name": "WriteOutPublishLinux",
       "Description": "Write out the string 'Publish Linux-ARM64 Console' to the console",
-      "PrFileName": "14. WriteOutPublishLinux.pr",
-      "RelativePrPath": ".build\\Publish\\14. WriteOutPublishLinux.pr",
+      "PrFileName": "16. WriteOutPublishLinux.pr",
+      "RelativePrPath": ".build\\Publish\\16. WriteOutPublishLinux.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-03T14:41:10.416194+00:00",
+      "Generated": "2024-04-04T08:44:47.804976+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 13,
-      "LineNumber": 18,
+      "Number": 15,
+      "LineNumber": 22,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -937,7 +1071,7 @@
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\r\n  \"StepName\": \"WriteOutPublishLinux\",\r\n  \"StepDescription\": \"Write out the string 'Publish Linux-ARM64 Console' to the console\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.OutputModule\"\r\n  ],\r\n  \"WaitForExecution\": true\r\n}"
+        "RawResponse": null
       }
     },
     {
@@ -946,20 +1080,20 @@
       "ModuleType": "PLang.Modules.TerminalModule",
       "Name": "PublishDotnetProject",
       "Description": "Publish the .NET project located at 'PlangConsole/PLangConsole.csproj' with the configuration set to 'Release' and runtime to 'linux-arm64'. The output should be self-contained and directed to the './publish/plang' directory. The working directory for this operation is set to the parent directory.",
-      "PrFileName": "15. PublishDotnetProject.pr",
-      "RelativePrPath": ".build\\Publish\\15. PublishDotnetProject.pr",
+      "PrFileName": "17. PublishDotnetProject.pr",
+      "RelativePrPath": ".build\\Publish\\17. PublishDotnetProject.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-21T15:17:01.1599712+00:00",
+      "Generated": "2024-04-04T08:44:47.831182+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 14,
-      "LineNumber": 19,
+      "Number": 16,
+      "LineNumber": 23,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1008,25 +1142,25 @@
       }
     },
     {
-      "Text": "compress folder 'plang' to 'plang-linux-arm64.zip', overwrite",
+      "Text": "compress folder 'plang' to 'plang-linux-arm64.zip',\n    dont include base dir, overwrite",
       "Comment": null,
       "ModuleType": "PLang.Modules.CompressionModule",
       "Name": "CompressFolder",
-      "Description": "Compress the folder named 'plang' into a file named 'plang-linux-arm64.zip', and overwrite the file if it already exists.",
-      "PrFileName": "16. CompressFolder.pr",
-      "RelativePrPath": ".build\\Publish\\16. CompressFolder.pr",
+      "Description": "Compress the folder named 'plang' into a zip file named 'plang-linux-arm64.zip'. The base directory should not be included in the zip file and if the zip file already exists, it should be overwritten.",
+      "PrFileName": "18. CompressFolder.pr",
+      "RelativePrPath": ".build\\Publish\\18. CompressFolder.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-21T15:13:37.6757534+00:00",
+      "Generated": "2024-04-04T08:45:00.5597632+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 15,
-      "LineNumber": 21,
+      "Number": 17,
+      "LineNumber": 25,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1064,14 +1198,14 @@
             "content": [
               {
                 "type": "text",
-                "text": "compress folder 'plang' to 'plang-linux-arm64.zip', overwrite"
+                "text": "compress folder 'plang' to 'plang-linux-arm64.zip',\n    dont include base dir, overwrite"
               }
             ]
           }
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": null
+        "RawResponse": "{\n  \"StepName\": \"CompressFolder\",\n  \"StepDescription\": \"Compress the folder named 'plang' into a zip file named 'plang-linux-arm64.zip'. The base directory should not be included in the zip file and if the zip file already exists, it should be overwritten.\",\n  \"Modules\": [\n    \"PLang.Modules.CompressionModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     },
     {
@@ -1080,20 +1214,20 @@
       "ModuleType": "PLang.Modules.FileModule",
       "Name": "DeleteFolder",
       "Description": "Delete the folder named 'plang'",
-      "PrFileName": "17. DeleteFolder.pr",
-      "RelativePrPath": ".build\\Publish\\17. DeleteFolder.pr",
+      "PrFileName": "19. DeleteFolder.pr",
+      "RelativePrPath": ".build\\Publish\\19. DeleteFolder.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-03T14:44:20.9235876+00:00",
+      "Generated": "2024-04-04T08:45:00.5842604+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 16,
-      "LineNumber": 22,
+      "Number": 18,
+      "LineNumber": 27,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1147,20 +1281,20 @@
       "ModuleType": "PLang.Modules.OutputModule",
       "Name": "WriteOutPublishMacOS",
       "Description": "Write out the string 'Publish MacOS-x64 Console' to the console",
-      "PrFileName": "18. WriteOutPublishMacOS.pr",
-      "RelativePrPath": ".build\\Publish\\18. WriteOutPublishMacOS.pr",
+      "PrFileName": "20. WriteOutPublishMacOS.pr",
+      "RelativePrPath": ".build\\Publish\\20. WriteOutPublishMacOS.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-03T14:41:18.6028792+00:00",
+      "Generated": "2024-04-04T08:45:00.6097156+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 17,
-      "LineNumber": 23,
+      "Number": 19,
+      "LineNumber": 28,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1205,7 +1339,7 @@
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\r\n  \"StepName\": \"WriteOutPublishMacOS\",\r\n  \"StepDescription\": \"Write out the string 'Publish MacOS-x64 Console' to the console\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.OutputModule\"\r\n  ],\r\n  \"WaitForExecution\": true\r\n}"
+        "RawResponse": null
       }
     },
     {
@@ -1214,20 +1348,20 @@
       "ModuleType": "PLang.Modules.TerminalModule",
       "Name": "PublishDotnetProject",
       "Description": "Publish the .NET project located at 'PlangConsole/PLangConsole.csproj' with Release configuration for osx-x64 runtime. The output should be self-contained in a single file and placed in the './publish/plang' directory. The working directory for this operation is '../'.",
-      "PrFileName": "19. PublishDotnetProject.pr",
-      "RelativePrPath": ".build\\Publish\\19. PublishDotnetProject.pr",
+      "PrFileName": "21. PublishDotnetProject.pr",
+      "RelativePrPath": ".build\\Publish\\21. PublishDotnetProject.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-03T14:44:20.9764368+00:00",
+      "Generated": "2024-04-04T08:45:00.6351858+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 18,
-      "LineNumber": 24,
+      "Number": 20,
+      "LineNumber": 29,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1276,25 +1410,25 @@
       }
     },
     {
-      "Text": "compress folder 'plang' to 'plang-osx-x64.zip', overwrite",
+      "Text": "compress folder 'plang' to 'plang-osx-x64.zip',\n    dont include base dir, overwrite",
       "Comment": null,
       "ModuleType": "PLang.Modules.CompressionModule",
       "Name": "CompressFolder",
-      "Description": "Compress the folder named 'plang' into a file named 'plang-osx-x64.zip', and overwrite the file if it already exists.",
-      "PrFileName": "20. CompressFolder.pr",
-      "RelativePrPath": ".build\\Publish\\20. CompressFolder.pr",
+      "Description": "Compress the folder named 'plang' into a file named 'plang-osx-x64.zip'. The base directory should not be included in the compressed file and any existing file with the same name should be overwritten.",
+      "PrFileName": "22. CompressFolder.pr",
+      "RelativePrPath": ".build\\Publish\\22. CompressFolder.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-21T15:13:37.8250789+00:00",
+      "Generated": "2024-04-04T08:45:13.5600818+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 19,
-      "LineNumber": 26,
+      "Number": 21,
+      "LineNumber": 31,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1332,14 +1466,14 @@
             "content": [
               {
                 "type": "text",
-                "text": "compress folder 'plang' to 'plang-osx-x64.zip', overwrite"
+                "text": "compress folder 'plang' to 'plang-osx-x64.zip',\n    dont include base dir, overwrite"
               }
             ]
           }
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": null
+        "RawResponse": "{\n  \"StepName\": \"CompressFolder\",\n  \"StepDescription\": \"Compress the folder named 'plang' into a file named 'plang-osx-x64.zip'. The base directory should not be included in the compressed file and any existing file with the same name should be overwritten.\",\n  \"Modules\": [\n    \"PLang.Modules.CompressionModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     },
     {
@@ -1348,20 +1482,20 @@
       "ModuleType": "PLang.Modules.FileModule",
       "Name": "DeleteFolder",
       "Description": "Delete the folder named 'plang'",
-      "PrFileName": "21. DeleteFolder.pr",
-      "RelativePrPath": ".build\\Publish\\21. DeleteFolder.pr",
+      "PrFileName": "23. DeleteFolder.pr",
+      "RelativePrPath": ".build\\Publish\\23. DeleteFolder.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-03T14:44:21.0258394+00:00",
+      "Generated": "2024-04-04T08:45:13.5853619+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 20,
-      "LineNumber": 27,
+      "Number": 22,
+      "LineNumber": 33,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1415,20 +1549,20 @@
       "ModuleType": "PLang.Modules.OutputModule",
       "Name": "WriteOutMacOS",
       "Description": "Write out the string 'Publish MacOS-ARM64 Console' to the console",
-      "PrFileName": "22. WriteOutMacOS.pr",
-      "RelativePrPath": ".build\\Publish\\22. WriteOutMacOS.pr",
+      "PrFileName": "24. WriteOutMacOS.pr",
+      "RelativePrPath": ".build\\Publish\\24. WriteOutMacOS.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-03T14:41:37.1431289+00:00",
+      "Generated": "2024-04-04T08:45:13.6081216+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 21,
-      "LineNumber": 28,
+      "Number": 23,
+      "LineNumber": 34,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1473,7 +1607,7 @@
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\r\n  \"StepName\": \"WriteOutMacOS\",\r\n  \"StepDescription\": \"Write out the string 'Publish MacOS-ARM64 Console' to the console\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.OutputModule\"\r\n  ],\r\n  \"WaitForExecution\": true\r\n}"
+        "RawResponse": null
       }
     },
     {
@@ -1482,20 +1616,20 @@
       "ModuleType": "PLang.Modules.TerminalModule",
       "Name": "PublishDotnetProject",
       "Description": "Publish the .NET project located at 'PlangConsole/PLangConsole.csproj' with the configuration set to 'Release' and runtime to 'osx-arm64'. The publish is self-contained and is set to be a single file. The output directory is './publish/plang'. The working directory is set to '../'.",
-      "PrFileName": "23. PublishDotnetProject.pr",
-      "RelativePrPath": ".build\\Publish\\23. PublishDotnetProject.pr",
+      "PrFileName": "25. PublishDotnetProject.pr",
+      "RelativePrPath": ".build\\Publish\\25. PublishDotnetProject.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-03T14:41:48.2798914+00:00",
+      "Generated": "2024-04-04T08:45:13.6331491+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 22,
-      "LineNumber": 29,
+      "Number": 24,
+      "LineNumber": 35,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1540,29 +1674,29 @@
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\r\n  \"StepName\": \"PublishDotnetProject\",\r\n  \"StepDescription\": \"Publish the .NET project located at 'PlangConsole/PLangConsole.csproj' with the configuration set to 'Release' and runtime to 'osx-arm64'. The publish is self-contained and is set to be a single file. The output directory is './publish/plang'. The working directory is set to '../'.\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.TerminalModule\"\r\n  ],\r\n  \"WaitForExecution\": true\r\n}"
+        "RawResponse": null
       }
     },
     {
-      "Text": "compress folder 'plang' to 'plang-osx-arm64.zip', overwrite",
+      "Text": "compress folder 'plang' to 'plang-osx-arm64.zip',\n    dont include base dir, overwrite",
       "Comment": null,
       "ModuleType": "PLang.Modules.CompressionModule",
       "Name": "CompressFolder",
-      "Description": "Compress the folder named 'plang' into a zip file named 'plang-osx-arm64.zip'. If a file with the same name already exists, overwrite it.",
-      "PrFileName": "24. CompressFolder.pr",
-      "RelativePrPath": ".build\\Publish\\24. CompressFolder.pr",
+      "Description": "Compress the folder named 'plang' into a zip file named 'plang-osx-arm64.zip'. The base directory should not be included in the zip file and if a file with the same name already exists, it should be overwritten.",
+      "PrFileName": "26. CompressFolder.pr",
+      "RelativePrPath": ".build\\Publish\\26. CompressFolder.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-03T14:41:57.5865528+00:00",
+      "Generated": "2024-04-04T08:45:30.804116+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 23,
-      "LineNumber": 31,
+      "Number": 25,
+      "LineNumber": 37,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1600,14 +1734,14 @@
             "content": [
               {
                 "type": "text",
-                "text": "compress folder 'plang' to 'plang-osx-arm64.zip', overwrite"
+                "text": "compress folder 'plang' to 'plang-osx-arm64.zip',\n    dont include base dir, overwrite"
               }
             ]
           }
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\r\n  \"StepName\": \"CompressFolder\",\r\n  \"StepDescription\": \"Compress the folder named 'plang' into a zip file named 'plang-osx-arm64.zip'. If a file with the same name already exists, overwrite it.\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.CompressionModule\"\r\n  ],\r\n  \"WaitForExecution\": true\r\n}"
+        "RawResponse": "{\n  \"StepName\": \"CompressFolder\",\n  \"StepDescription\": \"Compress the folder named 'plang' into a zip file named 'plang-osx-arm64.zip'. The base directory should not be included in the zip file and if a file with the same name already exists, it should be overwritten.\",\n  \"Modules\": [\n    \"PLang.Modules.CompressionModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     },
     {
@@ -1616,20 +1750,20 @@
       "ModuleType": "PLang.Modules.FileModule",
       "Name": "DeleteFolder",
       "Description": "Delete the folder named 'plang'",
-      "PrFileName": "25. DeleteFolder.pr",
-      "RelativePrPath": ".build\\Publish\\25. DeleteFolder.pr",
+      "PrFileName": "27. DeleteFolder.pr",
+      "RelativePrPath": ".build\\Publish\\27. DeleteFolder.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-03T14:44:21.0998485+00:00",
+      "Generated": "2024-04-04T08:45:30.830042+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 24,
-      "LineNumber": 32,
+      "Number": 26,
+      "LineNumber": 39,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1685,9 +1819,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Publish\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Publish",
-  "BuilderVersion": "0.1.0.2",
+  "BuilderVersion": "0.1.0.1",
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "1ba46ac5c3cd2ae2ad4401d5ea66cd0a47f8173501995df610ef65f02b9b36c1"
+  "Hash": "771d608518b4a04d8c05a8252218e7a982589b4181482f9b6621b8510a436a4f"
 }
