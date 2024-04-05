@@ -606,17 +606,17 @@
       }
     },
     {
-      "Text": "compress folder 'plang' to 'plang-windows.zip',\n    dont include base dir, overwrite",
+      "Text": "compress folder 'plang' to 'plang-windows.zip', overwrite",
       "Comment": null,
       "ModuleType": "PLang.Modules.CompressionModule",
       "Name": "CompressFolder",
-      "Description": "Compress the folder named 'plang' into a file named 'plang-windows.zip'. The base directory should not be included in the compressed file and any existing file with the same name should be overwritten.",
+      "Description": "Compress the folder named 'plang' into a file named 'plang-windows.zip'. If a file with the same name already exists, overwrite it.",
       "PrFileName": "10. CompressFolder.pr",
       "RelativePrPath": ".build\\Publish\\10. CompressFolder.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-04T08:44:33.5098423+00:00",
+      "Generated": "2024-04-05T07:09:16.9463732+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -662,14 +662,14 @@
             "content": [
               {
                 "type": "text",
-                "text": "compress folder 'plang' to 'plang-windows.zip',\n    dont include base dir, overwrite"
+                "text": "compress folder 'plang' to 'plang-windows.zip', overwrite"
               }
             ]
           }
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"CompressFolder\",\n  \"StepDescription\": \"Compress the folder named 'plang' into a file named 'plang-windows.zip'. The base directory should not be included in the compressed file and any existing file with the same name should be overwritten.\",\n  \"Modules\": [\n    \"PLang.Modules.CompressionModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": null
       }
     },
     {
@@ -691,7 +691,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 10,
-      "LineNumber": 15,
+      "LineNumber": 14,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -758,7 +758,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 11,
-      "LineNumber": 16,
+      "LineNumber": 15,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -825,7 +825,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 12,
-      "LineNumber": 17,
+      "LineNumber": 16,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -892,7 +892,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 13,
-      "LineNumber": 19,
+      "LineNumber": 18,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -951,7 +951,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-04T08:44:47.7814924+00:00",
+      "Generated": "2024-04-05T07:58:29.3126226+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -959,7 +959,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 14,
-      "LineNumber": 21,
+      "LineNumber": 20,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1026,7 +1026,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 15,
-      "LineNumber": 22,
+      "LineNumber": 21,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1093,7 +1093,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 16,
-      "LineNumber": 23,
+      "LineNumber": 22,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1160,7 +1160,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 17,
-      "LineNumber": 25,
+      "LineNumber": 24,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1219,7 +1219,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-04T08:45:00.5842604+00:00",
+      "Generated": "2024-04-05T07:58:29.4077864+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -1227,7 +1227,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 18,
-      "LineNumber": 27,
+      "LineNumber": 26,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1294,7 +1294,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 19,
-      "LineNumber": 28,
+      "LineNumber": 27,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1361,7 +1361,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 20,
-      "LineNumber": 29,
+      "LineNumber": 28,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1428,7 +1428,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 21,
-      "LineNumber": 31,
+      "LineNumber": 30,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1487,7 +1487,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-04T08:45:13.5853619+00:00",
+      "Generated": "2024-04-05T07:58:29.5147111+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -1495,7 +1495,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 22,
-      "LineNumber": 33,
+      "LineNumber": 32,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1562,7 +1562,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 23,
-      "LineNumber": 34,
+      "LineNumber": 33,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1629,7 +1629,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 24,
-      "LineNumber": 35,
+      "LineNumber": 34,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1696,7 +1696,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 25,
-      "LineNumber": 37,
+      "LineNumber": 36,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1755,7 +1755,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-04T08:45:30.830042+00:00",
+      "Generated": "2024-04-05T07:58:29.6253993+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -1763,7 +1763,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 26,
-      "LineNumber": 39,
+      "LineNumber": 38,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1819,9 +1819,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Publish\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Publish",
-  "BuilderVersion": "0.1.0.1",
+  "BuilderVersion": "0.1.0.3",
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "771d608518b4a04d8c05a8252218e7a982589b4181482f9b6621b8510a436a4f"
+  "Hash": "0a6fa4d27e867358e418f1a3dc496c1c5862d10032007e89612d36c70407ae9c"
 }

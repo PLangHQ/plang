@@ -1,19 +1,19 @@
 {
-  "GoalName": "RemoveFile",
+  "GoalName": "GoToLine",
   "Comment": null,
   "GoalSteps": [
     {
-      "Text": "delete file %item%",
+      "Text": "set %__StepIndex__% as %line%",
       "Comment": null,
-      "ModuleType": "PLang.Modules.FileModule",
-      "Name": "DeleteFile",
-      "Description": "Delete the file specified by the variable %item%",
-      "PrFileName": "01. DeleteFile.pr",
-      "RelativePrPath": ".build\\Publish\\RemoveFile\\01. DeleteFile.pr",
+      "ModuleType": "PLang.Modules.LocalOrGlobalVariableModule",
+      "Name": "SetStepIndex",
+      "Description": "This step involves setting the value of the variable '__StepIndex__' to the value of the variable 'line'.",
+      "PrFileName": "01. SetStepIndex.pr",
+      "RelativePrPath": ".build\\events\\SendDebug\\GoToLine\\01. SetStepIndex.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-04T08:45:39.430978+00:00",
+      "Generated": "2024-04-03T15:12:31.3410253+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -21,7 +21,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 41,
+      "LineNumber": 19,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -59,27 +59,27 @@
             "content": [
               {
                 "type": "text",
-                "text": "delete file %item%"
+                "text": "set %__StepIndex__% as %line%"
               }
             ]
           }
         ],
         "model": "gpt-4",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"DeleteFile\",\n  \"StepDescription\": \"Delete the file specified by the variable %item%\",\n  \"Modules\": [\n    \"PLang.Modules.FileModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": null
       }
     }
   ],
   "Description": null,
   "Visibility": 0,
-  "GoalFileName": "Publish.goal",
-  "RelativeGoalPath": "\\Publish.goal",
-  "RelativeGoalFolderPath": "\\",
-  "RelativePrPath": ".build\\Publish\\RemoveFile\\00. Goal.pr",
-  "RelativePrFolderPath": ".build\\Publish\\RemoveFile",
+  "GoalFileName": "SendDebug.goal",
+  "RelativeGoalPath": "\\events\\SendDebug.goal",
+  "RelativeGoalFolderPath": "\\events",
+  "RelativePrPath": ".build\\events\\SendDebug\\GoToLine\\00. Goal.pr",
+  "RelativePrFolderPath": ".build\\events\\SendDebug\\GoToLine",
   "BuilderVersion": "0.1.0.3",
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "be447b34b8960d66249cfae98327628d8e679211338c433f36c842c1a550ed79"
+  "Hash": "81ceac1923228a7690cf50d6758b7dddc7a167acf96eb71a07eaf3bd03b3d428"
 }

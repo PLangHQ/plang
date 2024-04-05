@@ -1,0 +1,91 @@
+{
+  "Action": {
+    "FunctionName": "Post",
+    "Parameters": [
+      {
+        "Type": "String",
+        "Name": "url",
+        "Value": "http://localhost:60877/"
+      },
+      {
+        "Type": "Object",
+        "Name": "data",
+        "Value": {
+          "goal": "%__GOAL__%",
+          "step": "%__STEP__%",
+          "event": "%__Event__%",
+          "isHttpRequest": "%__IsHttpRequest__%",
+          "stepIndex": "%__StepIndex__%",
+          "instruction": "%__Instruction__%",
+          "memoryStack": "%__memorystack__%",
+          "absolutePath": "%__GOAL__.AbsoluteGoalPath%",
+          "exception": "%__Exception__%"
+        }
+      },
+      {
+        "Type": "Int32",
+        "Name": "timeoutInSeconds",
+        "Value": 1800
+      }
+    ],
+    "ReturnValue": [
+      {
+        "Type": "Object",
+        "VariableName": "%debugReponse%"
+      }
+    ]
+  },
+  "Text": "post http://localhost:60877/\n    data: {\n        goal:\"%__GOAL__%\", \n        step:\"%__STEP__%\",\n        event:\"%__Event__%\",\n        isHttpRequest:\"%__IsHttpRequest__%\",\n        stepIndex:%__StepIndex__%,\n        instruction:%__Instruction__%,\n        memoryStack:\"%__memorystack__%\",\n        absolutePath:%__GOAL__.AbsoluteGoalPath%,        \n        exception:\"%__Exception__%\",\n        }\n    timeout 30 min\n    write to %debugReponse%",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+    "type": "PLang.Modules.HttpModule.Builder",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\nVariables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nvoid DownloadFile(String url, String pathToSaveTo, Boolean? overwriteFile = False, Dictionary`2<String, Object>? headers, Boolean? createPathToSaveTo = True) \nObject Post(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject Patch(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject Get(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject Option(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject Head(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject Put(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject Delete(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30) \nObject PostMultipartFormData(String url, Object data, String? httpMethod = \"POST\", Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", Int32? timeoutInSeconds = 30)  // Post a FileStream to url. When a variable is defined with @ sign, it defines that it should be a FileStream. data may contain something like file=@%fileName%;type=%fileType%, then keep as one value for the file parameter. The function will parse the file and type. \nObject Request(String url, String method, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30)\r\n## functions available ends ##\r\n## defined variables ##\r\n__GOAL__ (type:object), __STEP__ (type:object), __Event__ (type:object), __IsHttpRequest__ (type:object), __StepIndex__ (type:object), __Instruction__ (type:object), __memorystack__ (type:object), __GOAL__.AbsoluteGoalPath (type:object), __Exception__ (type:object), debugReponse (type:object), \r\n## defined variables ##"
+          },
+          {
+            "type": "text",
+            "text": "If user uses JSONPath to describe how to load variable in ReturnValue, keep the $ for the ReturnValue.VariableName, but only if he defines JSONPath.\\n"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "post http://localhost:60877/\n    data: {\n        goal:\"%__GOAL__%\", \n        step:\"%__STEP__%\",\n        event:\"%__Event__%\",\n        isHttpRequest:\"%__IsHttpRequest__%\",\n        stepIndex:%__StepIndex__%,\n        instruction:%__Instruction__%,\n        memoryStack:\"%__memorystack__%\",\n        absolutePath:%__GOAL__.AbsoluteGoalPath%,        \n        exception:\"%__Exception__%\",\n        }\n    timeout 30 min\n    write to %debugReponse%"
+          }
+        ]
+      }
+    ],
+    "model": "gpt-4",
+    "caching": true,
+    "RawResponse": "{\n  \"FunctionName\": \"Post\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"url\",\n      \"Value\": \"http://localhost:60877/\"\n    },\n    {\n      \"Type\": \"Object\",\n      \"Name\": \"data\",\n      \"Value\": {\n        \"goal\": \"%__GOAL__%\",\n        \"step\": \"%__STEP__%\",\n        \"event\": \"%__Event__%\",\n        \"isHttpRequest\": \"%__IsHttpRequest__%\",\n        \"stepIndex\": \"%__StepIndex__%\",\n        \"instruction\": \"%__Instruction__%\",\n        \"memoryStack\": \"%__memorystack__%\",\n        \"absolutePath\": \"%__GOAL__.AbsoluteGoalPath%\",\n        \"exception\": \"%__Exception__%\"\n      }\n    },\n    {\n      \"Type\": \"Int32\",\n      \"Name\": \"timeoutInSeconds\",\n      \"Value\": 1800\n    }\n  ],\n  \"ReturnValue\": [\n    {\n      \"Type\": \"Object\",\n      \"VariableName\": \"%debugReponse%\"\n    }\n  ]\n}"
+  },
+  "RunOnBuild": false
+}
