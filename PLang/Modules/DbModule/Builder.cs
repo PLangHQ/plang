@@ -106,7 +106,7 @@ DatabaseType: Define the database type. The .net library being used is ""Npgsql.
 			else if (functionInfo.FunctionName == "CreateTable")
 			{
 				return await CreateCreateTable(goalStep, program, functionInfo, dataSource);
-			} else if (functionInfo.FunctionName == "Select")
+			} else if (functionInfo.FunctionName == "Select" || functionInfo.FunctionName == "SelectOneRow")
 			{
 				return await CreateSelect(goalStep, program, functionInfo, dataSource);
 			}
@@ -162,17 +162,21 @@ These are the supported databases (you dont need to be precise)
 		{
 			string databaseType = dataSource.TypeFullName.Substring(dataSource.TypeFullName.LastIndexOf(".") + 1);
 			string appendToSystem = "";
+			string appendToSelectOneRow = "";
 			if (dataSource.KeepHistory)
 			{
 				appendToSystem = "SqlParameters @id MUST be type System.Int64";
+				appendToSelectOneRow = "or when selecting by %id%";
 			}
-			SetSystem(@$"Map user command to this c# function: 
+			SetSystem(@$"Map user command to either of these c# functions: 
 
 ## csharp function ##
-object? Select(String sql, List<object>()? SqlParameters = null, bool selectOneRow_Top1OrLimit1 = false)
+List<object> Select(String sql, List<object>()? SqlParameters = null)
+object? SelectOneRow(String sql, List<object>()? SqlParameters = null)
 ## csharp function ##
 
 ## Rules ##
+SelectOneRow function is used when user defines to select only one row {appendToSelectOneRow}
 Variable is defined with starting and ending %, e.g. %filePath%.
 \% is escape from start of variable, would be used in LIKE statements, then VariableNameOrValue should keep the escaped character, e.g. the user input \%%title%\%, should map to VariableNameOrValue=\%%title%\%
 SqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName). {appendToSystem}
@@ -180,7 +184,6 @@ TypeFullName is Full name of the type in c#, System.String, System.Double, etc.
 ReturnValue rules: 
 - If user defines variable to write into, e.g. 'write to %result%' then ReturnValue=%result%, 
 - If there does not define 'write to ..' statement then Columns being returned with type if defined by user. 
-- * will return dynamic. 
 - integer/int should always be System.Int64. 
 
 If table name is a variable, keep the variable in the sql statement
@@ -189,13 +192,17 @@ You MUST provide SqlParameters if SQL has @parameter.
 ## Rules ##
 ");
 
-			SetAssistant(@"# examples #
+			SetAssistant(@$"# examples #
 - select everything from tableX, write to %table% => sql: SELECT * FROM tableX, ReturnValue: %table%
 - select from tableB where id=%id%, into %table% => sql: SELECT * FROM tableB WHERE id=@id, ReturnValue: %table%
 - select * from %table% WHERE %name%, write to %result% => sql: SELECT * FROM %table% WHERE name=@name, ReturnValue: %result%
 - select id, name from users, write to %user% => then ReturnValue is %user% object
 - select id, name from users => then ReturnValue is %id%, %name% objects
-# examples #");
+# examples #
+# ParameterInfo scheme #
+{TypeHelper.GetJsonSchemaForRecord(typeof(ParameterInfo))}
+# ParameterInfo scheme #
+");
 
 
 			await AppendTableInfo(dataSource, program, functionInfo.TableNames);

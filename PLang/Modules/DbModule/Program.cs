@@ -337,48 +337,39 @@ namespace PLang.Modules.DbModule
 			}
 		}
 
-		public async Task<object?> Select(string sql, List<object>? SqlParameters = null, bool selectOneRow_Top1OrLimit1 = false)
+		public async Task<object?> SelectOneRow(string sql, List<object>? SqlParameters = null)
 		{
-			var prep = Prepare(sql, SqlParameters);
-			var rows = (await prep.connection.QueryAsync<dynamic>(prep.sql, prep.param)).ToList();
-			Done(prep.connection);
-
-			if (rows.Count == 0 && this.function != null)
+			var rows = await Select(sql, SqlParameters);
+			if (rows.Count == 0)
 			{
-				if (this.function.ReturnValue != null)
+				if (this.function == null || this.function.ReturnValue == null || this.function.ReturnValue.Count == 1) return null;
+
+				var dict = new ReturnDictionary<string, object?>();
+				foreach (var rv in this.function.ReturnValue)
 				{
-					if (this.function.ReturnValue.Count == 1)
-					{
-						if (selectOneRow_Top1OrLimit1)
-						{
-							return (rows.Count > 0) ? rows[0] : null;
-						}
-						return rows;
-					}
-
-					var dict = new ReturnDictionary<string, object?>();
-					foreach (var rv in this.function.ReturnValue)
-					{
-						dict.Add(rv.VariableName, GetDefaultValue(rv.Type));
-					}
-					return dict;
+					dict.Add(rv.VariableName, GetDefaultValue(rv.Type));
 				}
-				return new List<object>();
+				return dict;				
 			}
-			if (!selectOneRow_Top1OrLimit1) return rows;
-
+			
 			var rowsAsList = ((IList<object>)rows);
 			var columns = ((IDictionary<string, object>)rowsAsList[0]);
-
-			if (this.function == null || this.function.ReturnValue == null) return new List<object>();
 
 			if (columns.Count == 1)
 			{
 				return columns.FirstOrDefault().Value;
 			}
-			if (rows.Count == 0) return null;
 			return rows[0];
 
+		}
+
+		public async Task<List<object>> Select(string sql, List<object>? SqlParameters = null)
+		{
+			var prep = Prepare(sql, SqlParameters);
+			var rows = (await prep.connection.QueryAsync<dynamic>(prep.sql, prep.param)).ToList();
+			Done(prep.connection);
+
+			return (rows == null) ? new() : rows;
 		}
 
 		private object? GetDefaultValue(string strType)

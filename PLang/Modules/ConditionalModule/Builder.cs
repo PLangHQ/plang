@@ -62,6 +62,7 @@ namespace PLang.Modules.ConditionalModule
 - Variable names passed to ExecutePlangCode function MUST be unmodified from the user statement
 - The code will not be modified after you generate it.
 - ALWAYS use long or long? instead of int or int?
+- When validating if variable is long, also validate if it is int
 - Do not reference any DTO classes. Use dynamic? if complex object is needed, else use object?.
 - Strings are defined with double quote ("")
 - Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. 

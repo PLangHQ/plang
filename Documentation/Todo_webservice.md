@@ -38,6 +38,8 @@ For Linux and MacOS, you can create it at `~/apps/Todo`.
 
 ### 2. Create `Setup.goal` 
 
+We will start by creating our database table where we want store our todos.
+
 In the `Todo` directory, create a new file named `Setup.goal` and add the following code:
 
 ```plang
@@ -46,6 +48,8 @@ Setup
     columns:    task(string, not null), due_date(datetime, not null), 
                 completed(bool, false), created(datetime, now)
 ```
+
+Each step in the Setup.goal file is only execute one time in the lifecycle of your application. 
 
 Note: Plang will automatically create and manage an `id` column for the table. By allowing Plang to handle `id` you enable syncing between devices. It's a technique called Event sourcing. You don't need to know anything about it at this stage.
 
@@ -61,7 +65,10 @@ plang exec Setup
 
 ### 4. Create `Start.goal`
 
+The `Start.goal` is the default entry point into you application
+
 In the `Todo` directory, create a new file named `Start.goal` and add the following code:
+
 
 ```plang
 Start
