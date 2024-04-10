@@ -180,7 +180,7 @@ namespace PLang.Utils.Extractors
 			} else
 			{
 				var cir = jsonObject as ConditionImplementationResponse;
-				var ci = new ConditionImplementationResponse(cir.Namespace, cir.Name, implementation, cir.Using, cir.Assemblies, cir.GoalToCallOnTrue, cir.GoalToCallOnFalse);
+				var ci = new ConditionImplementationResponse(cir.Namespace, cir.Name, implementation, cir.Using, cir.Assemblies, cir.GoalToCallOnTrue, cir.GoalToCallOnFalse, cir.GoalToCallOnTrueParameters, cir.GoalToCallOnFalseParameters);
 
 				return ci;
 			}

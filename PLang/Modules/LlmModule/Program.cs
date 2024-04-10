@@ -38,7 +38,7 @@ namespace PLang.Modules.LlmModule
 		public async Task AskLlm(
 			[HandlesVariable] List<LlmMessage> promptMessages,
 			string? scheme = null,
-			string model = "gpt-4",
+			string model = "gpt-4-turbo",
 			double temperature = 0,
 			double topP = 0,
 			double frequencyPenalty = 0.0,

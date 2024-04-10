@@ -36,7 +36,8 @@ namespace PlangWindowForms
 			{
 				AppContext.TryGetSwitch(ReservedKeywords.CSharpDebug, out debug);
 			}
-			debug = args.FirstOrDefault(p => p == "--debug") != null;
+			AppContext.TryGetSwitch(ReservedKeywords.Debug, out debug);
+
 			this.args = args;
 			container = new ServiceContainer();
 

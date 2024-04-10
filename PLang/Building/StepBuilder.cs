@@ -276,7 +276,7 @@ Modules: Name of module. Suggest 1-3 modules that could be used to solve the ste
 StepName: Short name for step
 StepDescription: Rewrite the step as you understand it, make it detailed
 WaitForExecution: Indicates if code should wait for execution to finish, default is true
-ErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key
+ErrorHandler: How to handle errors defined by user, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key
 RetryHandler: How to retry the step if there is error, default is null
 CachingHandler: How caching is handled, default is null
 Read the description of each module, then determine which module to use.

@@ -7,7 +7,7 @@
 
 ***Plang is a modern programming language written in natural language.***
 
-Join our community on [Discord](https://discord.gg/A8kYUymsDD) | Follow us on [Twitter](https://twitter.com/planghq)
+Join our community on [Discord](https://discord.gg/A8kYUymsDD) | Follow us on [Twitter](https://twitter.com/planghq) | [Youtube channel](https://www.youtube.com/@plangHQ)
 
 
 ## Introduction
@@ -74,6 +74,7 @@ Explore plang's features and capabilities:
     - **[Modules](./modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
     - **[Services](./Services.md)**: Learn how flexible the plang language is, e.g. using the db engine of your choice, your own caching service and more.
     - **[Use OpenAI API key or Local LLM](./PlangOrOpenAI.md)**: Shows how to use OpenAI API directly instead of PLang LLM service. Discusses status of local LLM
+    - **[Supported LLM](./SupportedAI.md)**: List of supported LLM models
     - **[Reserved keywords](https://github.com/PLangHQ/plang/blob/main/PLang/Utils/ReservedKeywords.cs)**: See list of reserved keywords in the language
 - **Developing the plang language**
     - **[Help us create PLang](./PLangDevelopment.md)**: Information on how to help with development of plang programming language.

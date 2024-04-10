@@ -4,6 +4,7 @@ using PLang.Building;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
+using PLang.Exceptions;
 using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Resources;
@@ -118,6 +119,15 @@ namespace PLang
 			{
 				AppContext.SetData("sharedPath", sharedPath);
 			}
+
+			// This is only for development of plang as it is hardcoded to point to http://localhost:10000
+			// It will overwrite the default PlangLLMService class to use the local url
+			var llmurl = args.FirstOrDefault(p => p.ToLower().StartsWith("--localllm"));
+			if (llmurl != null)
+			{
+				AppContext.SetSwitch("localllm", true);
+			}
+			
 
 			AppContext.SetSwitch("skipCode", args.FirstOrDefault(p => p.ToLower() == "--skipcode") != null);
 			

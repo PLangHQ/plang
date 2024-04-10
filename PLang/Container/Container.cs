@@ -25,6 +25,7 @@ using PLang.Services.EncryptionService;
 using PLang.Services.EventSourceService;
 using PLang.Services.IdentityService;
 using PLang.Services.LlmService;
+using PLang.Services.OpenAi;
 using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
 using PLang.Services.SigningService;
@@ -196,15 +197,17 @@ namespace PLang.Container
 
 			// These are injectable by user
 			var context = container.GetInstance<PLangAppContext>();
-
+			string llmService = AppContext.GetData("llmservice") as string ?? "plang";
+			var defaultLlmService = (llmService == "openai") ? typeof(OpenAiService) : typeof(PLangLlmService);
 
 			container.RegisterSingleton<ILlmService, PLangLlmService>(typeof(PLangLlmService).FullName);
+			container.RegisterSingleton<ILlmService, OpenAiService>(typeof(OpenAiService).FullName);
 			container.RegisterSingleton(factory =>
 			{
-				var type = GetImplementation(context, ReservedKeywords.Inject_LLMService, typeof(PLangLlmService));
+				var type = GetImplementation(context, ReservedKeywords.Inject_LLMService, defaultLlmService);
 				return factory.GetInstance<ILlmService>(type);
 			});
-			container.RegisterLlmFactory(typeof(PLangLlmService), true);
+			container.RegisterLlmFactory(defaultLlmService, true);
 
 
 

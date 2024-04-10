@@ -312,6 +312,12 @@ namespace PLang.Modules.FileModule
 			folderPath = GetPath(folderPath);
 
 			var searchOption = (includeAllSubfolders) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+			if (!fileSystem.Directory.Exists(folderPath))
+			{
+				logger.LogWarning($"!Warning! Directory {folderPath} not found");
+				return new();
+			}
+
 			var files = fileSystem.Directory.GetFiles(folderPath, searchPattern, searchOption);
 
 			List<FileInfo> result = new List<FileInfo>();

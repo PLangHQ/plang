@@ -122,10 +122,4 @@
     <Folder Include="PrFiles\ui\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="OpenAiService">
-      <HintPath>..\..\services\OpenAiService\bin\Debug\net8.0\OpenAiService.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
 </Project>

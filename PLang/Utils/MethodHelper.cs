@@ -35,11 +35,11 @@ namespace PLang.Utils
 		public async Task<MethodInfo> GetMethod(object callingInstance, GenericFunction function)
 		{
 			string cacheKey = callingInstance.GetType().FullName + "_" + function.FunctionName;
-			
+
 			var methods = callingInstance.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
 			var method = methods.FirstOrDefault(p => p.Name == function.FunctionName && IsParameterMatch(p, function.Parameters) == null);
 			if (method != null) return method;
-			
+
 			await HandleMethodNotFound(callingInstance, function);
 			return null;
 		}
@@ -147,7 +147,8 @@ example of answer:
 				if (parameter == null && methodType != "nullable" && !methodParameter.HasDefaultValue && !methodParameter.IsOptional)
 				{
 					error += $"{methodParameter.Name} ({methodType}) is missing from parameters. {methodParameter.Name} is a required parameter\n";
-				} else if (parameter != null && methodType == "string" && methodParameter.CustomAttributes.Count() > 0 && methodParameter.CustomAttributes.First().AttributeType.Name == "NullableAttribute" && parameter.Value == null)
+				}
+				else if (parameter != null && methodType == "string" && methodParameter.CustomAttributes.Count() > 0 && methodParameter.CustomAttributes.First().AttributeType.Name == "NullableAttribute" && parameter.Value == null)
 				{
 					error += $"{methodParameter.Name} ({methodType}) is missing from parameters. {methodParameter.Name} is a required parameter\n";
 				}
@@ -186,16 +187,16 @@ example of answer:
 				if (parameter.Name == null) continue;
 
 				var inputParameter = function.Parameters.FirstOrDefault(p => p.Name == parameter.Name);
-                
+
 				if (inputParameter == null && !parameter.IsOptional && !parameter.ParameterType.Name.StartsWith("Nullable"))
 				{
 					throw new ParameterException($"Could not find parameter {parameter.Name}", goalStep);
 				}
-				
+
 				var variableValue = inputParameter?.Value;
 				try
 				{
-					
+
 					if (variableValue == null || string.IsNullOrEmpty(variableValue.ToString()))
 					{
 						SetEmptyParameter(parameterValues, parameter, variableValue);
@@ -210,7 +211,8 @@ example of answer:
 						{
 							//parameterValues.Add(inputParameter.Name, ov.Value);
 							//continue;
-						} else if (ov != null && ov.Initiated && ov.Value == null)
+						}
+						else if (ov != null && ov.Initiated && ov.Value == null)
 						{
 							parameterValues.Add(inputParameter.Name, ov.Value);
 							continue;
@@ -224,15 +226,15 @@ example of answer:
 					else if (parameter.ParameterType.Name.StartsWith("List"))
 					{
 						SetListParameter(parameter, variableValue, handlesAttribute, parameterValues);
-						
+
 					}
 					else if (parameter.ParameterType.IsArray)
 					{
-						SetArrayParameter(parameter, variableValue, handlesAttribute, parameterValues);						
+						SetArrayParameter(parameter, variableValue, handlesAttribute, parameterValues);
 					}
 					else
 					{
-						SetObjectParameter(parameter, variableValue, handlesAttribute, parameterValues);						
+						SetObjectParameter(parameter, variableValue, handlesAttribute, parameterValues);
 					}
 
 
@@ -276,15 +278,39 @@ example of answer:
 		{
 			bool variableValueIsArray = variableValue.ToString().StartsWith("[");
 			int arrayLength = variableValueIsArray ? ((JArray)variableValue).Count : 1;
-			var elementType = parameter.ParameterType.GetElementType();
-			Array newArray = Array.CreateInstance(elementType, arrayLength);
+			var rootElementType = parameter.ParameterType.GetElementType();
+			var mainElementType = parameter.ParameterType;
+			Type elementType;
+			if (mainElementType.IsArray && variableValueIsArray)
+			{
+				var value = variableHelper.LoadVariables(variableValue);
+				if (value is JArray array)
+				{
+					parameterValues.Add(parameter.Name, array.ToObject(mainElementType));
+					return;
+				}
+				parameterValues.Add(parameter.Name, value);
+				return;
+			}
+			if (!variableValueIsArray)
+			{
+				parameterValues.Add(parameter.Name, variableHelper.LoadVariables(variableValue));
+				return;
+			}
+
+
+			Array newArray = Array.CreateInstance(rootElementType, arrayLength);
 			for (int i = 0; i < arrayLength; i++)
 			{
 				var tmp = (variableValueIsArray) ? ((JArray)variableValue)[i] : variableValue;
-				
+
 				if (handlesAttribute == null)
 				{
 					object? obj = variableHelper.LoadVariables(tmp);
+					if (obj == null)
+					{
+						continue;
+					}
 					if (obj is IList list && list.Count > 0)
 					{
 						var item = list[0];
@@ -293,11 +319,11 @@ example of answer:
 							obj = variableHelper.LoadVariables(((IDictionary<string, object>)item).Values.FirstOrDefault());
 						}
 					}
-					newArray.SetValue(Convert.ChangeType(obj, elementType), i);
-				}
-				else
-				{
-					newArray.SetValue(Convert.ChangeType(tmp, elementType), i);
+
+					elementType = (obj.GetType() == rootElementType) ? rootElementType : mainElementType;
+					var objAsType = (obj.GetType() == elementType) ? obj : Convert.ChangeType(obj, elementType);
+
+					newArray.SetValue(objAsType, i);
 				}
 			}
 
@@ -321,11 +347,12 @@ example of answer:
 			else if (variableValue is JObject)
 			{
 				list = JArray.FromObject(variableValue) as System.Collections.IList;
-			} else if (variableValue != null && variableValue.GetType().Name.StartsWith("List"))
-			{
-				list = (System.Collections.IList) variableValue;
 			}
-			
+			else if (variableValue != null && variableValue.GetType().Name.StartsWith("List"))
+			{
+				list = (System.Collections.IList)variableValue;
+			}
+
 			if (handlesAttribute != null)
 			{
 				parameterValues.Add(parameter.Name, list);
@@ -334,9 +361,9 @@ example of answer:
 
 			for (int i = 0; list != null && i < list.Count; i++)
 			{
-				object? obj = variableHelper.LoadVariables(list[i]); 				
+				object? obj = variableHelper.LoadVariables(list[i]);
 				if (obj != null && parameter.ParameterType.GenericTypeArguments[0] == typeof(string))
-				{					
+				{
 					list[i] = obj.ToString();
 				}
 				else
@@ -373,15 +400,17 @@ example of answer:
 				{
 					dict = MapJArray(array);
 				}
-				else if (variableValue is JObject jobject) 
+				else if (variableValue is JObject jobject)
 				{
 					dict = MapJObject(jobject);
-				} else if (JsonHelper.IsJson(variableValue, out object? obj))
+				}
+				else if (JsonHelper.IsJson(variableValue, out object? obj))
 				{
 					if (obj is JArray array2)
 					{
 						dict = MapJArray(array2);
-					} else if (obj is JObject jobj)
+					}
+					else if (obj is JObject jobj)
 					{
 						dict = MapJObject(jobj);
 					}
@@ -430,7 +459,8 @@ example of answer:
 			if (value == null) return null;
 
 			var targetType = parameterInfo.ParameterType;
-			if (targetType.Name == "String" && (value is JObject || value is JArray || value is  JToken || value is JProperty)) {
+			if (targetType.Name == "String" && (value is JObject || value is JArray || value is JToken || value is JProperty))
+			{
 				return value.ToString();
 			}
 
@@ -456,7 +486,7 @@ example of answer:
 					return parseMethod.Invoke(null, new object[] { value.ToString() });
 				}
 
-				
+
 			}
 			catch { }
 
