@@ -37,7 +37,7 @@ Asks the LLM a question and receives an answer. This method can be used to analy
 - `system`: The specific system or context for the question.
 - `assistant`: The assistant's name or identifier.
 - `user`: The user's input or query.
-- `model`: The model of the LLM, default is `gpt-4`.
+- `model`: The model of the LLM, default is `gpt-4-turbo`.
 - `temperature`: The creativity level, default is `0`.
 - `topP`: The probability threshold for token selection, default is `0`.
 - `frequencyPenalty`: The penalty for frequency, default is `0.0`.

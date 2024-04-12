@@ -1,10 +1,10 @@
 ﻿using LightInject;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using PLang.Building.Events;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
+using PLang.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
@@ -86,7 +86,9 @@ namespace PLang.Building
 		{
 			foreach (var injection in goal.Injections)
 			{
+				
 				RegisterForPLangUserInjections(container, injection.Type, injection.Path, injection.IsGlobal, injection.EnvironmentVariable, injection.EnvironmentVariableValue);
+				
 			}
 		}
 

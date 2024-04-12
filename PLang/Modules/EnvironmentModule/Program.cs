@@ -9,10 +9,23 @@ namespace PLang.Modules.EnvironmentModule
 	public class Program : BaseProgram
 	{
 		private readonly ISettings settings;
+		private readonly IPLangFileSystem fileSystem;
 
-		public Program(ISettings settings)
+		public Program(ISettings settings, IPLangFileSystem fileSystem)
 		{
 			this.settings = settings;
+			this.fileSystem = fileSystem;
+		}
+
+		public async Task<string> GetAppName()
+		{
+			string appName = fileSystem.GoalsPath.Substring(fileSystem.GoalsPath.LastIndexOf(Path.DirectorySeparatorChar)+1);
+			return appName;
+		}
+
+		public async Task EndApp()
+		{
+			throw new Exceptions.RuntimeGoalEndException("End app", null);
 		}
 
 		public async Task<string?> GetEnvironmentVariable(string key)

@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using NSubstitute;
 using PLang.Building.Model;
+using PLang.Events;
 using PLang.Interfaces;
 using PLangTests;
 using PLangTests.Helpers;
@@ -11,7 +12,7 @@ using System.IO.Abstractions.TestingHelpers;
 
 namespace PLang.Building.Events.Tests
 {
-	[TestClass()]
+    [TestClass()]
 	public class EventRuntimeTests : BasePLangTest
 	{
 		EventRuntime eventRuntime;

@@ -13,7 +13,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-27T14:42:17.7032533+01:00",
+      "Generated": "2024-02-27T13:42:17.7032533+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -80,7 +80,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-27T14:42:29.5623845+01:00",
+      "Generated": "2024-02-27T13:42:29.5623845+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -144,9 +144,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules",
-  "BuilderVersion": "0.1.0.0",
+  "BuilderVersion": "0.1.0.4",
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "e9cf423afa635b4d7cb248dfcd5820f2a00d40e1c6b0a3ba4fcf5ba33fcf7a1e"
+  "Hash": "9c92377baf02b46a32e3716e58ab55c1f785ae94d4a183964588341b441ead8a"
 }

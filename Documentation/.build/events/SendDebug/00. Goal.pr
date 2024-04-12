@@ -13,7 +13,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-27T14:26:04.9784387+01:00",
+      "Generated": "2024-02-27T13:26:04.9784387+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -80,7 +80,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-27T14:26:19.1154929+01:00",
+      "Generated": "2024-02-27T13:26:19.1154929+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -144,9 +144,9 @@
   "RelativeGoalFolderPath": "\\events",
   "RelativePrPath": ".build\\events\\SendDebug\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\SendDebug",
-  "BuilderVersion": "0.1.0.0",
+  "BuilderVersion": "0.1.0.4",
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "84912aa9a16b1b49c4668ca063b5ff8a040de7dadf4a661545d61fdf4e62fa45"
+  "Hash": "78b719b299ed22bfe333c3859206e0b8aa67a4c674c1be789a0b4b1d29168a1f"
 }

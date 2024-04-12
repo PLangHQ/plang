@@ -124,19 +124,18 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 
 		}
 
-		[Description("Append to variable.")]
-		public async Task<object?> AppendToVariable([HandlesVariableAttribute] string key, object? value = null, char seperator = '\n')
+		[Description("Append to variable. valueLocation=postfix|prefix seperatorLocation=end|start")]
+		public async Task<object?> AppendToVariable([HandlesVariableAttribute] string key, object? value = null, char seperator = '\n', string valueLocation = "postfix", string seperatorLocation = "end")
 		{
 			if (value == null) return value;
 
 			object? val = memoryStack.Get(key);
-			if (val == null && value is string)
+			if ((val == null || val is string) && value is string)
 			{
-				val = value.ToString();
-			}
-			else if (val is string)
-			{
-				val = val + seperator.ToString() + value;
+				if (val == null) val = "";
+
+				string appendingValue = (seperatorLocation == "start") ? seperator.ToString() + value.ToString() : value.ToString() + seperator.ToString();
+				val = (valueLocation == "postfix") ? val + appendingValue : appendingValue + val;
 			}
 			else if (val is System.Collections.IList list)
 			{

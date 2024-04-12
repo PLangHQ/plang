@@ -1,13 +1,17 @@
 ﻿using LightInject;
 using Microsoft.Extensions.Logging;
-using PLang.Building.Events;
 using PLang.Building.Parsers;
+using PLang.Events;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
+using PLang.Services.SigningService;
 using PLang.Utils;
+using System;
 using System.Diagnostics;
+using System.Reflection;
+using System.Text;
 
 namespace PLang.Building
 {
@@ -46,6 +50,7 @@ namespace PLang.Building
 		{
 			try
 			{
+
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				AppContext.SetSwitch("Builder", true);
 				
@@ -78,6 +83,7 @@ namespace PLang.Building
 				
 			}
 		}
+
 
 		private void InitFolders()
 		{

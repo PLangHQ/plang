@@ -23,8 +23,7 @@ namespace PLang.Services.LlmService
 		private readonly ILogger logger;
 		private readonly PLangAppContext context;
 		private readonly IPLangFileSystem fileSystem;
-		private string url = "https://llm.plang.is";
-		//private readonly string url = "http://localhost:10000";
+		private string url = "https://llm.plang.is/api/Llm";
 		private readonly string appId = "206bb559-8c41-4c4a-b0b7-283ef73dc8ce";
 		private readonly string BuyCreditInfo = "You need to purchase credits to use Plang LLM service, click this link to purchase: {0}. Try to build again after payment.\n\nMake sure to backup the folder {1} as it contains your private key. If you loose your private key your account at Plang will be lost";
 
@@ -39,6 +38,13 @@ namespace PLang.Services.LlmService
 			this.context = context;
 			this.fileSystem = fileSystem;
 			this.Extractor = new JsonExtractor();
+
+			//Only for development of plang
+			var plangLlmService = Environment.GetEnvironmentVariable("PLangLllmServiceUrl");
+			if (!string.IsNullOrEmpty(plangLlmService) && plangLlmService.StartsWith("http"))
+			{
+				url = plangLlmService;
+			}
 		}
 
 
@@ -89,7 +95,7 @@ namespace PLang.Services.LlmService
 			}
 			var httpClient = new HttpClient();
 			var httpMethod = new HttpMethod("POST");
-			var request = new HttpRequestMessage(httpMethod, url + "/api/Llm");
+			var request = new HttpRequestMessage(httpMethod, url);
 			request.Headers.UserAgent.ParseAdd("plang llm v0.1");
 
 			string body = StringHelper.ConvertToString(parameters);

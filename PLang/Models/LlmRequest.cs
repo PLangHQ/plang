@@ -2,7 +2,7 @@
 
 namespace PLang.Models
 {
-    public record LlmRequest(string type, List<LlmMessage> promptMessage, string model = "gpt-4", bool caching = true)
+    public record LlmRequest(string type, List<LlmMessage> promptMessage, string model = "gpt-4-turbo", bool caching = true)
     {
         public double temperature = 0;
         public double top_p = 0;

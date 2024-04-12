@@ -41,7 +41,7 @@ namespace PLang.Modules.TerminalModule
 			[HandlesVariable] string? dataStreamDelta = null, [HandlesVariable] string? debugErrorStreamDelta = null
 			)
 		{
-			if (pathToWorkingDirInTerminal == null)
+			if (string.IsNullOrWhiteSpace(pathToWorkingDirInTerminal))
 			{
 				pathToWorkingDirInTerminal = fileSystem.GoalsPath;
 			}

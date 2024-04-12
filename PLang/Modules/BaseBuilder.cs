@@ -180,7 +180,9 @@ This is the error(s)
 				promptMessage.Add(new LlmMessage("assistant", errorMessage));
 			}
 			var userContent = new List<LlmContent>();
-			userContent.Add(new LlmContent(step.Text));
+			string user = step.LlmText ?? step.Text;
+			user = user.Replace("\\n", "\n").Replace("\\r", "\r").Replace("\\t", "\t");
+			userContent.Add(new LlmContent(user));
 			promptMessage.Add(new LlmMessage("user", userContent));
 
 			var llmRequest = new LlmRequest(GetType().FullName, promptMessage);
@@ -210,6 +212,7 @@ Your job is:
 Variable is defined with starting and ending %, e.g. %filePath%. 
 Variables MUST be wrapped in quotes("") in json response, e.g. {{ ""name"":""%name%"" }}
 Variables should not be changed, they can include dot(.) and parentheses()
+Keep \n, \r, \t that are submitted to you for string variables
 
 If there is some api key, settings, config replace it with %Settings.Get(""settingName"", ""defaultValue"", ""Explain"")% 
 - settingName would be the api key, config key, 

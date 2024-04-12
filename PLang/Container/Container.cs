@@ -8,8 +8,8 @@ using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using Nostr.Client.Client;
 using PLang.Building;
-using PLang.Building.Events;
 using PLang.Building.Parsers;
+using PLang.Events;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Exceptions.Handlers;
@@ -25,6 +25,7 @@ using PLang.Services.EncryptionService;
 using PLang.Services.EventSourceService;
 using PLang.Services.IdentityService;
 using PLang.Services.LlmService;
+using PLang.Services.OpenAi;
 using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
 using PLang.Services.SigningService;
@@ -40,7 +41,7 @@ using static PLang.Modules.DbModule.ModuleSettings;
 
 namespace PLang.Container
 {
-	public static class Instance
+    public static class Instance
 	{
 		private static readonly string PrefixForTempInjection = "__Temp__";
 		public record InjectedType(string InjectorName, Type ServiceType, Type ImplementationType);
@@ -196,15 +197,17 @@ namespace PLang.Container
 
 			// These are injectable by user
 			var context = container.GetInstance<PLangAppContext>();
-
+			string llmService = AppContext.GetData("llmservice") as string ?? "plang";
+			var defaultLlmService = (llmService == "openai") ? typeof(OpenAiService) : typeof(PLangLlmService);
 
 			container.RegisterSingleton<ILlmService, PLangLlmService>(typeof(PLangLlmService).FullName);
+			container.RegisterSingleton<ILlmService, OpenAiService>(typeof(OpenAiService).FullName);
 			container.RegisterSingleton(factory =>
 			{
-				var type = GetImplementation(context, ReservedKeywords.Inject_LLMService, typeof(PLangLlmService));
+				var type = GetImplementation(context, ReservedKeywords.Inject_LLMService, defaultLlmService);
 				return factory.GetInstance<ILlmService>(type);
 			});
-			container.RegisterLlmFactory(typeof(PLangLlmService), true);
+			container.RegisterLlmFactory(defaultLlmService, true);
 
 
 
@@ -466,7 +469,9 @@ namespace PLang.Container
 
 			if (!fileSystem.Directory.Exists(".services"))
 			{
-				throw new RuntimeException($".services folder not found in {fileSystem.RootDirectory}");
+				var logger = container.GetInstance<ILogger>();
+				logger.LogWarning($".services folder not found in {fileSystem.RootDirectory}. If you have modified injection you need to Delete the file Start/00. Goal.pr or events/00. Goal.pr. Will be fixed in future release.");
+				return null;
 			}
 
 			string dllFilePath = Path.GetDirectoryName(Path.Combine(fileSystem.GoalsPath, ".services", injectorType));
@@ -477,7 +482,9 @@ namespace PLang.Container
 				var moduleFolderPath = Path.Combine(fileSystem.GoalsPath, ".services", dllFilePath);
 				if (!fileSystem.Directory.Exists(moduleFolderPath))
 				{
-					throw new RuntimeException($"{injectorType} injection folder could not be found. Path {moduleFolderPath}");
+					var logger = container.GetInstance<ILogger>();
+					logger.LogWarning($"{injectorType} injection folder could not be found. Path {moduleFolderPath}");
+					return null;
 				}
 
 
@@ -521,7 +528,8 @@ namespace PLang.Container
 			if (implementationType == null)
 			{
 				logger.LogError($"ERROR: implementationType is null for {injectorType} - pathToModule:{pathToModule}");
-				throw new RuntimeException($"Loading '{injectorType}': interface:{injectorType} | type is:{implementationType} | reservedKeyword:{reservedKeyword} | isGlobalForApp:{isGlobalForApp} | pathToModule:{pathToModule}");
+				return;
+				//throw new RuntimeException($"Loading '{injectorType}': interface:{injectorType} | type is:{implementationType} | reservedKeyword:{reservedKeyword} | isGlobalForApp:{isGlobalForApp} | pathToModule:{pathToModule}");
 			}
 			if (container.CanGetInstance(interfaceType, implementationType.FullName)) return;
 

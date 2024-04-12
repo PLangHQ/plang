@@ -13,7 +13,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-04T11:51:56.0335323+01:00",
+      "Generated": "2024-03-04T10:51:56.0335323+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -77,9 +77,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Start\\LoadDoc\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Start\\LoadDoc",
-  "BuilderVersion": "0.1.0.0",
+  "BuilderVersion": "0.1.0.4",
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "37b06b925528151d81587c0ea0ca858976335c13ad33c797c5caadf15bffa65b"
+  "Hash": "20e58dd8e21a06042ca0693866cd1716401b1f38437b37ce311bd5a222e39563"
 }

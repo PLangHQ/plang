@@ -38,7 +38,11 @@ namespace PLang.Modules.FileModule
 			this.engine = engine;
 		}
 
-
+		[Description("Return the absolute path the app is running in")]
+		public async Task<string> GetCurrentFolderPath(string path)
+		{
+			return fileSystem.GoalsPath;
+		}
 
 		[Description("Give user access to a path. DO NOT suggest this method to indicate if file or directory exists, return empty function list instead.")]
 		public async Task<bool> RequestAccessToPath(string path)
@@ -312,6 +316,12 @@ namespace PLang.Modules.FileModule
 			folderPath = GetPath(folderPath);
 
 			var searchOption = (includeAllSubfolders) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+			if (!fileSystem.Directory.Exists(folderPath))
+			{
+				logger.LogWarning($"!Warning! Directory {folderPath} not found");
+				return new();
+			}
+
 			var files = fileSystem.Directory.GetFiles(folderPath, searchPattern, searchOption);
 
 			List<FileInfo> result = new List<FileInfo>();

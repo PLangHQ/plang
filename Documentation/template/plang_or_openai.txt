@@ -1,6 +1,7 @@
 Developers have 2 way of building code, using Plang service or OpenAI. This is a guide on how to use each
 
-You can use plang service to build your code or if you have OpenAI api key you can use GPT4.
+## plang 
+You can use plang service to build your code or if you have OpenAI api key you can use GPT4-Turbo.
 
 When you use plang service, you are supporting the project. 
 The plang service cost excatly 2x what using Open AI key would cost.
@@ -12,33 +13,33 @@ fill in the creditcard information, and submit.
 
 The build again with plang, and you should be on your way.
 
-# OpenAI
-to use OpenAI key, you first need a api key(https://openai.com/). 
-Next you need to download the OpenAI module into your project(https://github.com/PLangHQ/modules/OpenAIService), 
-create folder modules
+## openai
+To use OpenAI, you can run with the 
+ you first need a api key(https://openai.com/). 
 
-in you Start.goal file type in at the top
+then you can use the `--llmservice=openai` parameter, e.g. 
 
-```plang
-@llm=OpenAIService
+`plang --llmservice=openai`
+`plang build --llmservice=openai`
+`plang exec --llmservice=openai`
 
-Start
-- write out 'hello world'
-```
-if you are using Events in plang, then instead of putting in Start.goal, it needs to go into your Events.goal file
-```plang
-@llm=OpenAIService
+## environment variable
+You can  add to your environment variable, `PLangLllmService`, acceptable values are `plang`, `openai`. If you do this, you don't need to use --llmservice parameter when running plang
 
-Events
-- before app start, call !DoStuff
-```
+you might need to restart any tool that will use the variable
 
+## Visual code
+You can set Visual code to use either plang or openai as the default LLM service, in the Settings, search for `Select Plang LLM service`
 
-The strict format of "@llm=OpenAIService" allows the builder to pick it up and use it instead of the build
-in plang service.
+## LocalLLM
+
+There is no local llm as of yet, but if you want to create one and try it you can make plang to it. Add environment variable `PLangLllmServiceUrl`, the value must start with 'http'. If you have your local llm running on port 5000, your value should be http://localhost:5000/path/to/llm/
+
+You will recieve the standard OpenAI json request(https://platform.openai.com/docs/guides/text-generation/json-mode) from the plang language
+
 
 # Which is better
-Plang service uses gpt4 from OpenAI, so there is no difference in results. 
+Plang service uses gpt4-turbo from OpenAI, so there is no difference in results. 
 Hopefully in the future we can provide you with faster and much cheaper service
 By using our service your are supporting the project, development 
 and hopefully enabling us to create a cheaper llm 

@@ -1,5 +1,5 @@
 ﻿using PLang.Attributes;
-using PLang.Building.Events;
+using PLang.Events;
 using PLang.Models;
 using System.Runtime.Serialization;
 
@@ -14,15 +14,19 @@ namespace PLang.Building.Model
 		}
 
 		public string Text { get; set; }
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public string? LlmText { get; set; }
 		public string? Comment { get; set; }
 		public string ModuleType { get; set; }
 		public string Name { get; set; }
 		public string? Description { get; set; }
 		public string PrFileName { get; set; }
 		public string RelativePrPath { get; set; }
+		
 		[Newtonsoft.Json.JsonIgnore]
-[IgnoreDataMemberAttribute]
-
+		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
 		public string AbsolutePrFilePath { get; set; }
 		[Newtonsoft.Json.JsonIgnore]

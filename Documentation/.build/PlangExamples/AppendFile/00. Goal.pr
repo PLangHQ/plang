@@ -13,7 +13,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-27T14:54:35.8556526+01:00",
+      "Generated": "2024-02-27T13:54:35.8556526+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -77,9 +77,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\PlangExamples\\AppendFile\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\PlangExamples\\AppendFile",
-  "BuilderVersion": "0.1.0.0",
+  "BuilderVersion": "0.1.0.4",
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "b0405745618c2724144a7ae8c5e6ce137848ff1ae308a4aa12b04819460fa8a2"
+  "Hash": "0f7029bdbc2f543144eeeb6e9238548c3d6bfb13510cbd05114649bbbd8e5cd9"
 }

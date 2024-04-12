@@ -115,7 +115,7 @@ namespace PLang.Modules.HttpModule
 
 				using (var content = new MultipartFormDataContent())
 				{
-					FileSystemStream fileStream = null;
+					Stream? fileStream = null;
 					var properties = JObject.Parse(data.ToString()).Properties();
 					foreach (var property in properties)
 					{
@@ -137,10 +137,21 @@ namespace PLang.Modules.HttpModule
 							}
 							if (!fileSystem.File.Exists(fileName))
 							{
-								throw new RuntimeException($"{fileName} could not be found");
+								if (IsBase64(fileName, out byte[]? bytes))
+								{
+									fileStream = new MemoryStream(bytes, 0, bytes.Length);
+									fileName = Guid.NewGuid().ToString();
+								}
+								else
+								{
+									throw new RuntimeException($"{fileName} could not be found");
+								}
 							}
+							else
+							{
 
-							fileStream = fileSystem.FileStream.New(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+								fileStream = fileSystem.FileStream.New(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+							}
 							var fileContent = new StreamContent(fileStream);
 							if (!string.IsNullOrEmpty(typeValue))
 							{
@@ -151,8 +162,7 @@ namespace PLang.Modules.HttpModule
 								var mediaTypeHeader = GetMimeTypeHeader(fileName);
 								fileContent.Headers.ContentType = mediaTypeHeader;
 							}
-							content.Add(fileContent, property.Name, Path.GetFileName(fileStream.Name));
-							//content.Headers.Add("Content-Type", "multipart/form-data");
+							content.Add(fileContent, property.Name, Path.GetFileName(fileName));
 						}
 						else
 						{
@@ -204,6 +214,26 @@ namespace PLang.Modules.HttpModule
 					}
 				}
 
+			}
+		}
+
+		private bool IsBase64(string value, out byte[]? bytes)
+		{
+			bytes = null;
+			value = value.Trim();
+			if (value.Length % 4 != 0)
+			{
+				return false;
+			}
+
+			try
+			{
+				bytes = Convert.FromBase64String(value);
+				return true;
+			}
+			catch (FormatException)
+			{
+				return false;
 			}
 		}
 
@@ -315,40 +345,45 @@ namespace PLang.Modules.HttpModule
 				httpClient.Timeout = new TimeSpan(0, 0, timeoutInSeconds);
 
 				var response = await httpClient.SendAsync(request);
+				if (!response.IsSuccessStatusCode)
+				{
+					string erorBody = await response.Content.ReadAsStringAsync();
+					throw new RuntimeException(erorBody, goal);
+				}
+
+				var mediaType = response.Content.Headers.ContentType.MediaType;
+				if (!mediaType.StartsWith("text") && !mediaType.StartsWith("application/json") && !mediaType.StartsWith("application/xml"))
+				{
+					var bytes = await response.Content.ReadAsByteArrayAsync();
+					return bytes;
+				}
+
 				string responseBody = await response.Content.ReadAsStringAsync();
-
-				if (response.IsSuccessStatusCode)
+				if (response.Content.Headers.ContentType?.MediaType == "application/json" && JsonHelper.IsJson(responseBody))
 				{
-					if (response.Content.Headers.ContentType?.MediaType == "application/json" && JsonHelper.IsJson(responseBody))
+					try
 					{
-						try
-						{
-							return JsonConvert.DeserializeObject(responseBody);
-						}
-						catch (Exception ex)
-						{
-							throw;
-						}
+						return JsonConvert.DeserializeObject(responseBody);
 					}
-					else if (IsXml(response.Content.Headers.ContentType?.MediaType))
+					catch (Exception ex)
 					{
-						// todo: here we convert any xml to json so user can use JSONPath to get the content. 
-						// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
-						XmlDocument xmlDoc = new XmlDocument();
-						xmlDoc.LoadXml(Regex.Replace(responseBody, "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
-
-						string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
-						return JsonConvert.DeserializeObject(jsonString);
-
+						throw;
 					}
-
-					return responseBody;
 				}
-				else
+				else if (IsXml(response.Content.Headers.ContentType?.MediaType))
 				{
-					throw new RuntimeException(responseBody, goal);
-					//throw new HttpRequestException(responseBody, null, response.StatusCode);
+					// todo: here we convert any xml to json so user can use JSONPath to get the content. 
+					// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
+					XmlDocument xmlDoc = new XmlDocument();
+					xmlDoc.LoadXml(Regex.Replace(responseBody, "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
+
+					string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
+					return JsonConvert.DeserializeObject(jsonString);
+
 				}
+
+				return responseBody;
+
 			}
 		}
 

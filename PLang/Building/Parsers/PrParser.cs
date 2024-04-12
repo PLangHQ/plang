@@ -155,7 +155,7 @@ namespace PLang.Building.Parsers
 					file.ToLower().Contains(@"setup\") ? 2 :
 					file.ToLower().Contains(@"start\") ? 3 : 4
 			}).OrderBy(file => file.Order)
-				.ThenBy(file => file.FileName) // This secondary sort ensures that files in the same category are sorted alphabetically
+				.ThenBy(file => file.FileName) 
 				.Select(file => file.FileName).ToList();
 			if (fileSystem.Directory.Exists(Path.Join(fileSystem.RootDirectory, "apps")))
 			{
@@ -169,7 +169,7 @@ namespace PLang.Building.Parsers
 					file.ToLower().Contains(@"start\") ? 3 : 4
 				})
 					.OrderBy(file => file.Order)
-					.ThenBy(file => file.FileName) // This secondary sort ensures that files in the same category are sorted alphabetically
+					.ThenBy(file => file.FileName) 
 					.Select(file => file.FileName).ToList();
 				files.AddRange(unsortedFiles);
 			}
