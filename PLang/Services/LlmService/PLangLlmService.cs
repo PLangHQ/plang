@@ -25,7 +25,9 @@ namespace PLang.Services.LlmService
 		private readonly IPLangFileSystem fileSystem;
 		private string url = "https://llm.plang.is/api/Llm";
 		private readonly string appId = "206bb559-8c41-4c4a-b0b7-283ef73dc8ce";
-		private readonly string BuyCreditInfo = "You need to purchase credits to use Plang LLM service, click this link to purchase: {0}. Try to build again after payment.\n\nMake sure to backup the folder {1} as it contains your private key. If you loose your private key your account at Plang will be lost";
+		private readonly string BuyCreditInfo = @"You need to purchase credits to use Plang LLM service, click this link to purchase: {0}. Try to build again after payment.
+
+Make sure to backup the folder {1} as it contains your private key. If you loose your private key your account at Plang will be lost";
 
 		public IContentExtractor Extractor { get; set; }
 
@@ -141,7 +143,10 @@ namespace PLang.Services.LlmService
 				}
 				else
 				{
-					throw new AskUserConsole("You need to purchase credits to use Plang LLM service. Lets do this now.\n\nWhat is name of payer?", GetCountry);
+					throw new AskUserConsole(@"You need to purchase credits to use Plang LLM service. Lets do this now.
+(If you have OpenAI API key, you can run 'plang build --llmservice=openai')
+
+What is name of payer?", GetCountry);
 				}
 			}
 
@@ -208,10 +213,10 @@ namespace PLang.Services.LlmService
 					throw new AskUserConsole("Country must be legal 2 country code.\n\nWhat is your two letter country? (e.g. US, UK, FR, ...)?", GetCountry);
 				}
 				var country = countryArray[0].ToString();
-
+				var requestUrl = url.Replace("api/Llm", "").TrimEnd('/');
 				var httpClient = new HttpClient();
 				var httpMethod = new HttpMethod("POST");
-				var request = new HttpRequestMessage(httpMethod, url + "/api/GetOrCreatePaymentLink");
+				var request = new HttpRequestMessage(httpMethod, requestUrl + "/api/GetOrCreatePaymentLink");
 				request.Headers.UserAgent.ParseAdd("plang llm v0.1");
 				Dictionary<string, object?> parameters = new();
 				parameters.Add("name", nameOfPayer);
