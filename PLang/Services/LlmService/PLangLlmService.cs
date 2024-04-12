@@ -40,9 +40,10 @@ namespace PLang.Services.LlmService
 			this.Extractor = new JsonExtractor();
 
 			//Only for development of plang
-			if (AppContext.TryGetSwitch("localllm", out bool _))
+			var plangLlmService = Environment.GetEnvironmentVariable("PLangLllmService");
+			if (!string.IsNullOrEmpty(plangLlmService) && plangLlmService.StartsWith("http"))
 			{
-				url = "http://localhost:10000";
+				url = plangLlmService;
 			}
 		}
 

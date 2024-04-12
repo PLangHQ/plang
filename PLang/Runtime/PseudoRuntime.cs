@@ -44,12 +44,13 @@ namespace PLang.Runtime
 			goalName = goalName.Replace("!", "");
 
 			string absolutePathToGoal = Path.Join(fileSystem.RootDirectory, appPath, goalName).AdjustPathToOs();
+			string goalToRun = goalName;
 			if (CreateNewContainer(absolutePathToGoal))
 			{
 				var pathAndGoal = GetAppAbsolutePath(absolutePathToGoal);
 				string absoluteAppStartupPath = pathAndGoal.absolutePath;
 				string relativeAppStartupPath = Path.DirectorySeparatorChar.ToString();
-				goalName = pathAndGoal.goalName;
+				goalToRun = pathAndGoal.goalName;
 
 				container = serviceContainerFactory.CreateContainer(context, absoluteAppStartupPath, relativeAppStartupPath, outputStreamFactory, exceptionHandlerFactory, askUserHandlerFactory);
 
@@ -61,23 +62,25 @@ namespace PLang.Runtime
 					engine.AddContext(ReservedKeywords.IsEvent, true);
 				}
 
-				goal = engine.GetGoal(goalName);
+				goal = engine.GetGoal(goalToRun);
 			} else
 			{
-				goal = engine.GetGoal(goalName, callingGoal);
+				goal = engine.GetGoal(goalToRun, callingGoal);
 			}
 			
 
 			if (goal == null)
 			{
-				var goalsAvailable = engine.GetGoalsAvailable(appPath, goalName);
-				if (goalsAvailable == null)
-				{
-					throw new GoalNotFoundException($"WARNING! - Goal '{goalName}' was not found. No goals are loaded into the system. This should not happen. Please report bug.", appPath, goalName);
-				}
+				var goalsAvailable = engine.GetGoalsAvailable(appPath, goalToRun);
 				var goals = string.Join('\n', goalsAvailable.Select(p => $" - {p.GoalName}"));
+				string strGoalsAvailable = "";
+				if (!string.IsNullOrWhiteSpace(goals))
+				{
+					strGoalsAvailable = " These goals are available: \n{goals}";
+
+				}
 				//throw new Exception($"Goal {goalName} couldn't be found. Did you type in correct name?");
-				throw new GoalNotFoundException($"WARNING! - Goal '{goalName}' at {appPath} was not found. These goals are available: \n{goals} ", appPath, goalName);
+				throw new GoalNotFoundException($"WARNING! - Goal '{goalName}' at {fileSystem.RootDirectory} was not found.{strGoalsAvailable}", absolutePathToGoal, goalName);
 			}
 			if (waitForExecution) 
 			{

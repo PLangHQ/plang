@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using PLang.Building.Events;
 using PLang.Building.Model;
+using PLang.Events;
 using PLang.Exceptions;
 using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
@@ -15,7 +15,7 @@ using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Building
 {
-	public interface IStepBuilder
+    public interface IStepBuilder
 	{
 		Task BuildStep(Goal goal, int stepNr, List<string>? excludeModules = null, int errorCount = 0);
 	}

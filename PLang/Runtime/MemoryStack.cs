@@ -2,8 +2,8 @@
 using Nethereum.ABI;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using PLang.Building.Events;
 using PLang.Building.Model;
+using PLang.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Services.SettingsService;

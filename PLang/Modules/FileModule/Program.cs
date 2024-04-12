@@ -38,7 +38,11 @@ namespace PLang.Modules.FileModule
 			this.engine = engine;
 		}
 
-
+		[Description("Return the absolute path the app is running in")]
+		public async Task<string> GetCurrentFolderPath(string path)
+		{
+			return fileSystem.GoalsPath;
+		}
 
 		[Description("Give user access to a path. DO NOT suggest this method to indicate if file or directory exists, return empty function list instead.")]
 		public async Task<bool> RequestAccessToPath(string path)

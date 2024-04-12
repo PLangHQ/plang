@@ -288,9 +288,16 @@ example of answer:
 				{
 					parameterValues.Add(parameter.Name, array.ToObject(mainElementType));
 					return;
+				} else if (value is string && JsonHelper.IsJson(value, out object strArray))
+				{
+					parameterValues.Add(parameter.Name, ((JToken) strArray).ToObject(mainElementType));
+					return;
+				} else if (value.GetType().IsArray) 
+				{
+					parameterValues.Add(parameter.Name, value);
+					return;
 				}
-				parameterValues.Add(parameter.Name, value);
-				return;
+				
 			}
 			if (!variableValueIsArray)
 			{

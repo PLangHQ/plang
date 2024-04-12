@@ -1,4 +1,5 @@
 ﻿using PLang.Exceptions;
+using System;
 using System.Diagnostics;
 
 namespace PLang.Utils
@@ -27,6 +28,7 @@ namespace PLang.Utils
 			{
 				AppContext.SetSwitch("Runtime", true);
 			}
+
 			var llmservice = args.FirstOrDefault(p => p.ToLower().StartsWith("--llmservice"));
 			if (llmservice != null)
 			{

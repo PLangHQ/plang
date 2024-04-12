@@ -46,6 +46,7 @@ namespace PLang.Services.CompilerService
 			Assemblies.Add("Microsoft.CSharp.dll");
 			Assemblies.Add("System.Diagnostics.Process.dll");
 			Assemblies.Add("System.Memory.dll");
+			Assemblies.Add("TestableIO.System.IO.Abstractions.Wrappers.dll");
 		}
 
 		public string GetPreviousBuildDllNamesToExclude(GoalStep step)
@@ -224,7 +225,11 @@ These are the rules with variables:
 				}
 				else
 				{
-					var files = fileSystem.Directory.GetFiles(Path.Join(".services"), dllName, SearchOption.AllDirectories);
+					string[] files = [];
+					if (fileSystem.Directory.Exists(".services"))
+					{
+						files = fileSystem.Directory.GetFiles(".services", dllName, SearchOption.AllDirectories);
+					}
 					if (files.Length > 0)
 					{
 						foreach (var file in files)

@@ -15,7 +15,7 @@ namespace PLang.Modules.CompressionModule
 		}
 
 		[Description("compressionLevel: 0=Optimal, 1=Fastest, 2=No compression, 3=Smallest size(highest compression)")]
-		public async Task CompressFile(string filePath, string saveToPath, int compressionLevel = 0)
+		public async Task CompressFile(string filePath, string saveToPath, int compressionLevel = 0, bool overwrite = false)
 		{
 			filePath = GetPath(filePath);
 			saveToPath = GetPath(saveToPath);
@@ -32,11 +32,11 @@ namespace PLang.Modules.CompressionModule
 
 			
 
-			await archiver.CompressFiles(new string[] { filePath }, saveToPath, compressionLevel);
+			await archiver.CompressFiles(new string[] { filePath }, saveToPath, compressionLevel, overwrite);
 		}
 
 
-		public async Task CompressFiles(string[] filePaths, string saveToPath, int compressionLevel = 0)
+		public async Task CompressFiles(string[] filePaths, string saveToPath, int compressionLevel = 0, bool overwrite = false)
 		{
 			for (int i=0;i<filePaths.Length;i++) 
 			{
@@ -52,7 +52,7 @@ namespace PLang.Modules.CompressionModule
 			{
 				throw new DirectoryNotFoundException($"Directory {Path.GetDirectoryName(saveToPath)} does not exist.");
 			}
-			await archiver.CompressFiles(filePaths, saveToPath, compressionLevel);
+			await archiver.CompressFiles(filePaths, saveToPath, compressionLevel, overwrite);
 		}
 
 		public async Task DecompressFile(string sourceArchiveFileName, string destinationDirectoryName, bool overwrite = false)

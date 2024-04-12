@@ -1,5 +1,7 @@
-﻿using PLang.Building.Model;
+﻿using Microsoft.AspNetCore.Razor.Language;
+using PLang.Building.Model;
 using PLang.Exceptions;
+using PLang.Utils;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -25,6 +27,9 @@ The C# code is this:
 
 ", step);
 			}
+
+			var lowestException = ExceptionHelper.GetLowestException(ex);
+			if (lowestException.GetType().Namespace != null && lowestException.GetType().Namespace.StartsWith("PLang.Exceptions")) { throw lowestException; }
 
 			var inner = ex.InnerException;
 			var match = Regex.Match(inner.StackTrace, "cs:line (?<LineNr>[0-9]+)");

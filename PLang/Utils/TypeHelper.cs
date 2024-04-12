@@ -1,5 +1,5 @@
 ﻿using PLang.Attributes;
-using PLang.Building.Events;
+using PLang.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Modules;

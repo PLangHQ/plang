@@ -81,13 +81,18 @@ namespace PLang.Modules.CodeModule
 
 			AppendToAssistantCommand($@"
 ## examples ##
-%list.Count%*50, write to %result% => ExecutePlangCode(long? listαCount,  out long result) {{
+%list.Count%*50, write to %result% => ExecutePlangCode(long? listαCount, out long result) {{
     //validate input parameter 
     result = listαCount*50;
 }}
 %response.data.total%*%response.data.total_amount%, write to %allTotal%, => ExecutePlangCode(dynamic? response, out long allTotal) {{ 
       //validate input parameter 
       long allTotal = response.data.total*response.data.total_amount;
+}}
+
+check if %dirPath% exists, write to %folderExists% => ExecutePlangCode(IPlangFileSystem fileSystem, string dirPath, out bool folderExists) {{
+	//validate input parameter 
+	folderExists = fileSystem.Directory.Exists(dirPath);
 }}
 ## examples ##");
 			
