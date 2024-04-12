@@ -17,7 +17,7 @@ Plang integrates with a variety of OpenAI models, providing developers with the 
 
 ## Utilizing AI Models in Plang
 
-To use an AI model within Plang, you need to create a goal file. Here's an example of how to use a Large Language Model (LLM), with the default model set to gpt-4:
+To use an AI model within Plang, you need to create a goal file. Here's an example of how to use a Large Language Model (LLM), with the default model set to gpt-4-turbo:
 
 ```plang
 Start
@@ -33,7 +33,7 @@ Start
 When coding your LLM in Plang, you can customize its behavior using the following parameters:
 
 - `scheme`: A string that describes the JSON structure for structured responses from the LLM.
-- `model`: The default is gpt-4.
+- `model`: The default is gpt-4-turbo.
 - `temperature`: Default is 0.
 - `topP`: Default is 0.
 - `frequencyPenalty`: Default is 0.0.
@@ -50,7 +50,7 @@ Here are some examples of how to use these parameters within your Plang goal fil
 Start
 - [llm] system: generate a summary for the following article
         user: [Article content goes here]
-        model: gpt-4-32k
+        model: gpt-4-turbo
         temperature: 0.7
         topP: 1
         maxLength: 300

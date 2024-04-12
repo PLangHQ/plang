@@ -463,7 +463,7 @@ LLM
 - set %prompt% as 'Write a short story about a space adventure'
 - [llm] system: generate a story based on the prompt
         user: %prompt%
-        model: 'gpt-4'
+        model: 'gpt-4-turbo'
         temperature: 0.7
         maxLength: '2000'
         write to %story%

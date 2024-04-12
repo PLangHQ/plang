@@ -1,6 +1,6 @@
 ﻿# Plang Development Guide
 
-Welcome to the Plang Development Guide! This document is designed to help you understand how to build code using either the Plang service or OpenAI's GPT4-Turbo. Each method offers unique benefits, and this guide will assist you in making the best choice for your project needs.
+Welcome to the Plang Development Guide! This document provides detailed instructions on how to build code using the Plang service or OpenAI's GPT4-Turbo. Each method offers unique benefits, and this guide will help you choose and implement the best option for your project needs.
 
 ## Using Plang Service
 
