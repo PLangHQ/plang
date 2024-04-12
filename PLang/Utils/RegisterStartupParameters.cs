@@ -29,15 +29,15 @@ namespace PLang.Utils
 				AppContext.SetSwitch("Runtime", true);
 			}
 
-			var llmservice = args.FirstOrDefault(p => p.ToLower().StartsWith("--llmservice"));
-			if (llmservice != null)
+			var llmservice = args.FirstOrDefault(p => p.ToLower().StartsWith("--llmservice")) ?? Environment.GetEnvironmentVariable("PLangLllmService");
+			if (!string.IsNullOrEmpty(llmservice))
 			{
-				if (llmservice.IndexOf("=") == -1)
+				var serviceName = llmservice.ToLower();
+				if (llmservice.IndexOf("=") != -1)
 				{
-					throw new RuntimeException("Parameter --llmservice can only be 'plang' or 'openai'. For example --llmservice=openai");
+					serviceName = llmservice.Substring(llmservice.IndexOf("=") + 1);
 				}
-				var serviceName = llmservice.Substring(llmservice.IndexOf("=") + 1).ToLower();
-				if (string.IsNullOrWhiteSpace(serviceName)) serviceName = "plang";
+
 				if (serviceName != "plang" && serviceName != "openai")
 				{
 					throw new RuntimeException("Parameter --llmservice can only be 'plang' or 'openai'. For example --llmservice=openai");

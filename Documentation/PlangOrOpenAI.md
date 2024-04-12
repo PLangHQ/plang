@@ -1,61 +1,49 @@
-# Plang Guide
+﻿# Plang Development Guide
 
-We go over the default built in PLang LLM service or if you like to use OpenAI directly.
+Welcome to the Plang Development Guide! This document is designed to help you understand how to build code using either the Plang service or OpenAI's GPT4-Turbo. Each method offers unique benefits, and this guide will assist you in making the best choice for your project needs.
 
 ## Using Plang Service
 
-Plang service allows you to build your code. By using the Plang service, you are supporting the project. The cost of using the Plang service is exactly twice the cost of using the OpenAI key.
+The Plang service not only facilitates code building but also supports the ongoing development of the Plang project. Opting for this service costs twice as much as using an OpenAI API key but directly contributes to the project's growth.
 
-Here's how you can use the Plang service:
+### Steps to Use Plang Service:
 
-1. Start building your code using Plang.
-2. On your first build, if you don't have any voucher on the Plang service, you will be provided with a payment link.
-3. Click on the payment link, choose the amount you want to buy for (we recommend starting small, like $5), fill in your credit card information, and submit.
-4. Build again with Plang, and you should be good to go.
+1. **Initiate Build**: Start building your code using the Plang service.
+2. **Payment Process**: If it's your first build and you don't have a voucher, you will receive a payment link. Click on this link, choose a starting amount (a small amount like $5 is recommended for starters), enter your credit card details, and submit the form.
+3. **Continue Building**: Once the payment is complete, you can continue building with Plang.
 
 ## Using OpenAI
 
-If you have an OpenAI API key, you can use GPT4 to build your code. Here's how you can do it:
+For those who prefer using OpenAI or already have an OpenAI API key, integrating GPT4-Turbo into your Plang projects is straightforward.
 
-1. First, you need to get an API key from [OpenAI](https://openai.com/).
-2. Next, download the `OpenaAIService.dll` file from OpenAI service project from [here](https://github.com/PLangHQ/services/tree/main/OpenAiService).
-3. Create a folder named `.services` in your project.
-3. Create a folder named `OpenAIService` in the `.services` folder and put the `OpenaAIService.dll` into the `OpenAIService` folder
-4. In your `Start.goal` or `Events.goal` file, type in the following at the top:
+### How to Use OpenAI with Plang:
 
-### Example
+First, ensure you have an API key from OpenAI. You can obtain one from [OpenAI's website](https://openai.com/).
 
-```plang
-@llm=OpenAIService
+Next, use the `--llmservice=openai` parameter in your Plang commands as shown below:
 
-Start
-- [llm] system: Say hello
-    write to %result%
-- write out %result%
+```bash
+plang --llmservice=openai
+plang build --llmservice=openai
+plang exec --llmservice=openai
 ```
 
-## When to use `Start.goal` or `Events.goal`
-If you are using have `events` folder in Plang, then instead of putting it in `Start.goal`, it needs to go into your `Events.goal` file:
+## Setting Environment Variables
 
-```plang
-@llm=OpenAIService
+You can set the `PLangLllmService` environment variable to either 'plang' or 'openai' based on your preference. This variable configures which service Plang should use by default. Setting this variable eliminates the need to specify the `--llmservice` parameter in your commands.
 
-Events
-- before app start, call !DoStuff
-```
+You might need to restart any your terminal or Visual Code after you change environment settings.
 
-This is because `Events.goal` file is built before the `Start.goal` file.
+## Integration with Visual Studio Code
 
-The strict format of `@llm=OpenAIService/` allows the builder to parse it and load it before the LLM services starts doing request.
+Visual Studio Code users can enhance their development experience by configuring the editor to use either Plang or OpenAI as the default LLM service. This setting can be adjusted by searching for `Select Plang LLM service` in the Visual Studio Code settings.
 
-## Local LLM
+## Local LLM Development
 
-There is no local LLM available at the moment. 
+While there is currently no local LLM available, developers interested in experimenting with or developing a local version can set it up by adding the `PLangLllmServiceUrl` environment variable. The value should start with 'http' and point to your local server. For instance, if your local LLM is running on port 5000, set it to `http://localhost:5000/path/to/llm/`.
 
-We do hope to make this available in the future. Building the code is not to complex in general, so a small LLM could possible be a solution, allowing you to build your code on your machine for free.
+## Comparison and Future Prospects
 
-## Which is better?
+Both the Plang service and OpenAI use GPT4-Turbo, so there is no difference in the quality of results. The choice between the two may depend on your preference for supporting the Plang project or utilizing existing OpenAI services. We aim to provide a faster and more cost-effective service in the future, enhancing the efficiency of the build process which currently does not require a large-scale LLM.
 
-The Plang service uses GPT4 from OpenAI, so there is no difference in the results. We hope to provide you with a faster and much cheaper service in the future. 
-
-By using our service, you are supporting the project, its development, and hopefully enabling us to create a cheaper and more efficient language learning model (LLM) to build your code.
+By choosing the Plang service, you are directly supporting the development of the project and potentially enabling the creation of a more affordable LLM solution in the future.

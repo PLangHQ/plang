@@ -13,7 +13,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-27T14:40:35.9545225+01:00",
+      "Generated": "2024-02-27T13:40:35.9545225+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -80,7 +80,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-27T14:40:47.3768158+01:00",
+      "Generated": "2024-02-27T13:40:47.3768158+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -147,7 +147,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-04T12:26:33.7775707+01:00",
+      "Generated": "2024-03-04T11:26:33.7775707+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -214,7 +214,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-27T14:41:12.0191976+01:00",
+      "Generated": "2024-02-27T13:41:12.0191976+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -271,17 +271,17 @@
       }
     },
     {
-      "Text": "[llm] system:%system%\n    assistant: '## previously generated doc ## \n                %assistant%\n                ## previously generated doc ## '\n    user:%content%\n    model:'gpt-4-1106-preview'\n    max length = 4K\n    write to %result%",
+      "Text": "[llm] system:%system%\n    assistant: '## previously generated doc ## \n                %assistant%\n                ## previously generated doc ## '\n    user:%content%\n    model:'gpt-4-turbo'\n    max length = 4K\n    write to %result%",
       "Comment": null,
       "ModuleType": "PLang.Modules.LlmModule",
       "Name": "GenerateDocument",
-      "Description": "Use the LlmModule to generate a document with the provided system, assistant, user, and model parameters. The maximum length of the document is set to 4K. The result is written to the specified result variable.",
+      "Description": "Use the LLM module to generate a document based on the system, assistant's previously generated document, user content, and model specification. The output should be written to a specified result path.",
       "PrFileName": "05. GenerateDocument.pr",
       "RelativePrPath": ".build\\Start\\GenerateDoc\\05. GenerateDocument.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-04T12:27:17.9204846+01:00",
+      "Generated": "2024-04-12T18:19:54.2569999+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -305,7 +305,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors defined by user, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -327,14 +327,14 @@
             "content": [
               {
                 "type": "text",
-                "text": "[llm] system:%system%\n    assistant: '## previously generated doc ## \n                %assistant%\n                ## previously generated doc ## '\n    user:%content%\n    model:'gpt-4-1106-preview'\n    max length = 4K\n    write to %result%"
+                "text": "[llm] system:%system%\n    assistant: '## previously generated doc ## \n                %assistant%\n                ## previously generated doc ## '\n    user:%content%\n    model:'gpt-4-turbo'\n    max length = 4K\n    write to %result%"
               }
             ]
           }
         ],
-        "model": "gpt-4",
+        "model": "gpt-4-turbo",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"GenerateDocument\",\n  \"StepDescription\": \"Use the LlmModule to generate a document with the provided system, assistant, user, and model parameters. The maximum length of the document is set to 4K. The result is written to the specified result variable.\",\n  \"Modules\": [\n    \"PLang.Modules.LlmModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": "{\n  \"StepName\": \"GenerateDocument\",\n  \"StepDescription\": \"Use the LLM module to generate a document based on the system, assistant's previously generated document, user content, and model specification. The output should be written to a specified result path.\",\n  \"Modules\": [\n    \"PLang.Modules.LlmModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     },
     {
@@ -348,7 +348,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-04T12:27:29.3207474+01:00",
+      "Generated": "2024-03-04T11:27:29.3207474+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -415,7 +415,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-04T12:27:49.0900222+01:00",
+      "Generated": "2024-03-04T11:27:49.0900222+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -482,7 +482,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-04T12:28:10.7257334+01:00",
+      "Generated": "2024-03-04T11:28:10.7257334+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -546,9 +546,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Start\\GenerateDoc\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Start\\GenerateDoc",
-  "BuilderVersion": "0.1.0.0",
+  "BuilderVersion": "0.1.0.4",
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "9b2d9b148d50875024a35d2a4e2af16ed6907a6e55e43880efcb0a5c25b4358a"
+  "Hash": "77319be77a37ff01cb64a303be3ecc864dcc9ee9017eef411de1753cd9119238"
 }
