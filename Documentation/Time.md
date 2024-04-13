@@ -1,13 +1,14 @@
 # Time Management in plang
 
-Managing time effectively is crucial in software development, and plang provides a powerful yet simple way to handle time through the reserved keyword `%Now%`. This keyword represents the current UTC time, mirroring the C# `DateTime.UtcNow` object, and allows developers to perform various time-related operations with ease.
+Managing time effectively is crucial in software development, and plang provides a powerful yet simple way to handle time through the reserved keyword `%Now%` and `%NowUTC%`. This keyword represents the current time and in UTC, mirroring the C# `DateTime.Now` and `DateTime.UtcNow` object, and allows developers to perform various time-related operations with ease.
 
 ## Accessing Current Time
 
-To access the current UTC time in plang, use the reserved keyword `%Now%`. This keyword is directly linked to the C# `DateTime.UtcNow` object and can be used as shown below:
+To access the current time in plang, use the reserved keyword `%Now%`. This keyword is directly linked to the C# `DateTime.Now` object and can be used as shown below:
 
 ```plang
-%Now%
+- %Now%
+- %NowUtc%
 ```
 
 ## Setting a Specific Time
