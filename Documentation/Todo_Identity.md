@@ -20,7 +20,7 @@ In this tutorial we will cover the basics for working with plang. This includes.
 
 ### Step 1: Modify `Setup.goal`
 
-> Cost estimated: $0.20
+> Cost estimated: $0.06
 
 First, you'll need to add an 'Identity' column to your 'Todos' table. Update your `Setup.goal` file with the following step:
 

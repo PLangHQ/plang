@@ -35,7 +35,7 @@ Watch this helpful video tutorial: [Hello World in Plang](https://www.youtube.co
 
 3. **Write Your Code** 
 
-> Cost estimate: $0.118
+> Cost estimate: $0.04
 
 
 ```plang
