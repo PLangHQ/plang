@@ -814,9 +814,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\GenerateModuleDocumentation\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\GenerateModuleDocumentation",
-  "BuilderVersion": "0.1.0.4",
+  "BuilderVersion": "0.1.0.6",
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "7a50f1dba844515e0733d27d098dcec32ac8ed72e2c01a0bb979402d52da48aa"
+  "Hash": "8275212b2280cdd523c393767df377b92f9c6bf060bb5241323311348da0d598"
 }

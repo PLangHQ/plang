@@ -1,0 +1,49 @@
+This how plang builds your statement.
+
+lets give example of ReadFile.goal:
+
+```plang
+ReadFile
+- read file.txt to %content%
+```
+
+For this example, where we read a file.txt into the %content% variable, the builder start by reading the whole goal file. 
+it determines each goal in the ReadFile.goal as each .goal file can have multiple goals. It also gets all the steps that belong to each goal.
+
+It the goes through each step and tries to build it using the StepBuilder(https://github.com/PLangHQ/plang/blob/main/PLang/Building/StepBuilder.cs). In this case the step is `- read file.txt to %content%`, it sends this step to the LLM with list of all available Modules(./modules/README.md). 
+
+It ask the LLM in basic terms, "What module fits best with the intent of the user"
+
+The LLM wil then return a JSON response, with the name of the module to use, in this case it will return `FileModule`(https://github.com/PLangHQ/plang/blob/main/PLang/Modules/FileModule/Program.cs)
+
+At this point we construct the instruction that are needed to execute the user intent, this happens in the the InstructionBuilder(https://github.com/PLangHQ/plang/blob/main/PLang/Building/InstructionBuilder.cs)
+
+We send the LLM list of all available methods in the FileModule, one of which is called ReadTextFile, the LLM will return a JSON with the function name that should be called and the parameters, in this case it will look like this
+
+```json
+{
+  "Action": {
+    "FunctionName": "ReadTextFile",
+    "Parameters": [
+      {
+        "Type": "String",
+        "Name": "path",
+        "Value": "file.txt"
+      }
+    ],
+    "ReturnValue": [
+      {
+        "Type": "String",
+        "VariableName": "content"
+      }
+    ]
+  }
+  ```
+
+The builder then validates that the function exists in the FileModule and that the parameters match, if it fails, it will do another request to the LLM, with error info.
+
+Now that we have the instruction on what should happen, when the statement `- read file.txt to %content%` should be executed, it is up to the runtime to read the instructions and load the `var content = FileModule.ReadTextFile("file.txt")` code
+
+This is simplified a bit, I encourage you to dig deeper, checking out the Building(https://github.com/PLangHQ/plang/tree/main/PLang/Building) part of the source code of the Plang Builder
+
+

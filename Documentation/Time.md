@@ -7,7 +7,7 @@ Managing time effectively is crucial in software development, and plang provides
 To access the current time in plang, use the reserved keyword `%Now%`. This keyword is directly linked to the C# `DateTime.Now` object and can be used as shown below:
 
 ```plang
-- %Now%
+-  %Now%
 - %NowUtc%
 ```
 

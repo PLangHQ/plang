@@ -144,9 +144,9 @@
   "RelativeGoalFolderPath": "\\events",
   "RelativePrPath": ".build\\events\\SendDebug\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\SendDebug",
-  "BuilderVersion": "0.1.0.4",
+  "BuilderVersion": "0.1.0.6",
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "78b719b299ed22bfe333c3859206e0b8aa67a4c674c1be789a0b4b1d29168a1f"
+  "Hash": "5b63656e5593e2e86844529875f9ef64bcaa68df74af55254d2bc34a2761d2b4"
 }

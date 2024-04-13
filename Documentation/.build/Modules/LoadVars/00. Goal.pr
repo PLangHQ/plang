@@ -483,9 +483,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\LoadVars\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\LoadVars",
-  "BuilderVersion": "0.1.0.4",
+  "BuilderVersion": "0.1.0.6",
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "993fec7fac639b3fb1b4af0d578589220fd9bac035faa0b156c61aef83f214de"
+  "Hash": "d56725847533b1e5c5ce32261fcdb2d3b6bf1ff49d283d32c04a0d225a0408d0"
 }

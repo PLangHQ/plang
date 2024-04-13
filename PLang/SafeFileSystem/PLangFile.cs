@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32.SafeHandles;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Win32.SafeHandles;
 using PLang.Interfaces;
 using System.Diagnostics.CodeAnalysis;
 using System.IO.Abstractions;
@@ -134,11 +135,21 @@ namespace PLang.SafeFileSystem
 			path = fileSystem.ValidatePath(path);
 			base.Encrypt(path);
 		}
-
+		
 		public override bool Exists([NotNullWhen(true)] string? path)
 		{
 			path = fileSystem.ValidatePath(path);
 			return base.Exists(path);
+		}
+		public bool Exists([NotNullWhen(true)] string? path, bool ignoreCase = false)
+		{
+			path = fileSystem.ValidatePath(path);
+			var result = base.Exists(path);
+			if (!ignoreCase) return result;
+			
+			var filePath = fileSystem.Directory.GetFiles(path).FirstOrDefault(p => p.Equals(path, StringComparison.OrdinalIgnoreCase));
+			return (filePath != null);
+			
 		}
 
 		public override FileAttributes GetAttributes(string path)

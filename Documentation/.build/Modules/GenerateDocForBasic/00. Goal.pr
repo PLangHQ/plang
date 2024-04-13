@@ -345,9 +345,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\GenerateDocForBasic\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\GenerateDocForBasic",
-  "BuilderVersion": "0.1.0.4",
+  "BuilderVersion": "0.1.0.6",
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "cd6c6d804fe71c26af2688005f7a6b0135aaff722b2d8d234a100fdb90197554"
+  "Hash": "ab2c716f5db145dde866d1548c357c8769bceb32657c85e8b733874238230424"
 }

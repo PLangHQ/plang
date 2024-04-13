@@ -345,9 +345,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ModulesOverview\\CreateSimpleOverview\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ModulesOverview\\CreateSimpleOverview",
-  "BuilderVersion": "0.1.0.4",
+  "BuilderVersion": "0.1.0.6",
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "b21505a32ecdcc0ad1893ff03409cad774e6773cb7c346d69e60b1d4a08048e5"
+  "Hash": "4d445bcba6af83d7a33356f56c3d5e3afcb6b9493268c87977e438becb6d76b0"
 }
