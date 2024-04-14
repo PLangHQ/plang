@@ -322,19 +322,9 @@ namespace PLang.Modules.DbModule
 
 		public async Task CreateTable(string sql)
 		{
-			try
-			{
-				await Execute(sql);
-			}
-			catch (Exception ex)
-			{
-				if (GoalHelper.IsSetup(goalStep) && ex.ToString().Contains("relation") && ex.ToString().Contains("already exists"))
-				{
-					ShowWarning(ex);
-					return;
-				}
 
-			}
+			await Execute(sql);
+
 		}
 
 		public async Task<object?> SelectOneRow(string sql, List<object>? SqlParameters = null)
@@ -349,9 +339,9 @@ namespace PLang.Modules.DbModule
 				{
 					dict.Add(rv.VariableName, GetDefaultValue(rv.Type));
 				}
-				return dict;				
+				return dict;
 			}
-			
+
 			var rowsAsList = ((IList<object>)rows);
 			var columns = ((IDictionary<string, object>)rowsAsList[0]);
 

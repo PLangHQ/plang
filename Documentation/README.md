@@ -20,23 +20,30 @@ Plang provides the developer with features that he already is familiar with such
 
 Plang provides increased security and privacy to both developer and users of their application, for free as in beer.
 
-## Hello plang world
+## User registration example
 
 > [!CAUTION]
 > **Heads up: Building code costs money**
 > Each code line incurs usually between $0.01 - $0.07 fee via LLM. The payoff? Exceptional efficiency gains. You can choose to use [Plang service(simpler) or OpenAI(cheaper)](./PlangOrOpenAI.md). Using Plang service supports the project
 
-This is an example of a hello world app written in plang
+This is an example of how effienct it is to written in plang. 
+
+Following is executable code
 
 ```plang
-Start
-- write out 'Hello plang world'
+CreateUser
+- Make sure %password% and %email% is not empty
+- Hash %password%, write to %hashedPassword%
+- Insert into users, %hashedPassword%, %email%
+- Post, create user in MailChimp
+    Bearer %Settings.MailChimpApi%
+    %email%
+- Create bearer token from %email%, write to %bearer%
+- Write %bearer% to web response
+
 ```
 
-Then you build & run it
-```bash
-$ plang exec
-```
+These 6 steps replace over [100+ lines of C#/Java/Typescript code](https://gist.github.com/ingig/491ac9b13d65f40cc24ee5aed0408be3), or if you do clean code programming, dozens of files
 
 
 ## Installation

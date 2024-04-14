@@ -145,11 +145,10 @@ namespace PLang.SafeFileSystem
 		{
 			path = fileSystem.ValidatePath(path);
 			var result = base.Exists(path);
-			if (!ignoreCase) return result;
+			if (!ignoreCase || result) return result;
 			
 			var filePath = fileSystem.Directory.GetFiles(path).FirstOrDefault(p => p.Equals(path, StringComparison.OrdinalIgnoreCase));
-			return (filePath != null);
-			
+			return (filePath != null);			
 		}
 
 		public override FileAttributes GetAttributes(string path)
@@ -337,7 +336,11 @@ namespace PLang.SafeFileSystem
 			path = fileSystem.ValidatePath(path);
 			return base.ReadAllText(path);
 		}
-
+		public string ReadAllText(string path, bool ignoreCase = false)
+		{
+			path = fileSystem.ValidatePath(path);
+			return base.ReadAllText(path);
+		}
 		public override string ReadAllText(string path, Encoding encoding)
 		{
 			path = fileSystem.ValidatePath(path);

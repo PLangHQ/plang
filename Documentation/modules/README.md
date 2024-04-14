@@ -293,7 +293,8 @@ The Cryptographic in PLang provides essential tools for data security, including
 ```
 
 For a deeper dive into the Cryptographic's capabilities and more examples, refer to the [full documentation](./PLang.Modules.CryptographicModule.md).
-**CultureInfo**
+
+## CultureInfo
 
 The `CultureInfo` in Plang allows for the manipulation and utilization of cultural and regional settings, affecting how dates, times, numbers, and strings are formatted and displayed.
 
