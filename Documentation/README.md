@@ -20,7 +20,7 @@ Plang provides the developer with features that he already is familiar with such
 
 Plang provides increased security and privacy to both developer and users of their application, for free as in beer.
 
-## User registration example
+## Example of user registration
 
 > [!CAUTION]
 > **Heads up: Building code costs money**
@@ -40,11 +40,9 @@ CreateUser
     %email%
 - Create bearer token from %email%, write to %bearer%
 - Write %bearer% to web response
-
 ```
 
-These 6 steps replace over [100+ lines of C#/Java/Typescript code](https://gist.github.com/ingig/491ac9b13d65f40cc24ee5aed0408be3), or if you do clean code programming, dozens of files
-
+These 6 steps replace over [100+ lines of C#/Java/Typescript code](https://gist.github.com/ingig/491ac9b13d65f40cc24ee5aed0408be3), or if you do clean code programming, dozens of files.
 
 ## Installation
 
