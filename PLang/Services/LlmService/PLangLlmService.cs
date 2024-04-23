@@ -155,8 +155,10 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 				}
 				else
 				{
-					throw new AskUserConsole(@"You need to purchase credits to use Plang LLM service. Lets do this now.
-(If you have OpenAI API key, you can run 'plang build --llmservice=openai')
+					AppContext.TryGetSwitch("Builder", out bool isBuilder);
+					string strIsBuilder = (isBuilder) ? " build" : "";
+					throw new AskUserConsole(@$"You need to purchase credits to use Plang LLM service. Lets do this now.
+(If you have OpenAI API key, you can run 'plang {strIsBuilder} --llmservice=openai')
 
 What is name of payer?", GetCountry);
 				}

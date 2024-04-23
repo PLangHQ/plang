@@ -158,18 +158,25 @@ Connection string:",
 				dbName = dbName.TrimEnd(';');
 			}
 
-			var promptMessage = new List<LlmMessage>();
-			promptMessage.Add(new LlmMessage("system", @$"
+			SqlStatement? statement = null;
+			if (dbType.Name == "SqliteConnection")
+			{
+				statement = new SqlStatement("SELECT name FROM sqlite_master WHERE type IN ('table', 'view');", "SELECT name, type, [notnull] as isNotNull, pk as isPrimaryKey FROM pragma_table_info(@TableName);");
+			}
+			else
+			{
+				var promptMessage = new List<LlmMessage>();
+				promptMessage.Add(new LlmMessage("system", @$"
 Give me sql statement to list all the tables and views in my database {dbName} on {typeFullName}.
 Give me sql statement on how to get all column names and type in a table
 Table name should be @TableName, database name is @Database if needed as parameters
 
 If you need to do subquery, make sure to use IN statement incase the subquery returns multiple rows
-
 Be concise"));
 
-			var llmRequest = new LlmRequest("SetDatabaseConnectionString", promptMessage);
-			var statement = await llmServiceFactory.CreateHandler().Query<SqlStatement>(llmRequest);
+				var llmRequest = new LlmRequest("SetDatabaseConnectionString", promptMessage);
+				statement = await llmServiceFactory.CreateHandler().Query<SqlStatement>(llmRequest);
+			}
 			if (statement == null)
 			{
 				throw new BuilderException("Could not get select statement for tables, views and columns. Try again.");

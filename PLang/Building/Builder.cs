@@ -8,12 +8,15 @@ using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
+using PLang.Resources;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.IO.Compression;
 using System.Reflection;
 using System.Text;
 
@@ -60,7 +63,9 @@ namespace PLang.Building
 
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				AppContext.SetSwitch("Builder", true);
-				
+
+				SetupBuildValidation();
+
 				var goalFiles = GoalHelper.GetGoalFilesToBuild(fileSystem, fileSystem.GoalsPath);
 				
 				InitFolders();
@@ -135,6 +140,34 @@ namespace PLang.Building
 				{
 					fileSystem.Directory.Delete(dir, true);
 				}
+			}
+		}
+
+
+		public void SetupBuildValidation()
+		{
+			var eventsPath = Path.Join(fileSystem.GoalsPath, "events");
+			var checkGoalsPath = Path.Join(eventsPath, "CheckGoals.goal");
+
+			if (fileSystem.File.Exists(checkGoalsPath)) return;
+
+			if (!fileSystem.File.Exists(checkGoalsPath))
+			{
+				if (!fileSystem.Directory.Exists(eventsPath))
+				{
+					fileSystem.Directory.CreateDirectory(eventsPath);
+				}
+				else
+				{
+					logger.LogError("Installed build validator and may have overwritten your events/BuildEvents.goal file. Sorry about that :( Will fix in future.");
+				}
+
+				using (MemoryStream ms = new MemoryStream(InternalApps.CheckGoals))
+				using (ZipArchive archive = new ZipArchive(ms))
+				{
+					archive.ExtractToDirectory(fileSystem.GoalsPath, true);
+				}
+				return;
 			}
 		}
 	}
