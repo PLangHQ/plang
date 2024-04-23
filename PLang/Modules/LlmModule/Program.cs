@@ -77,37 +77,47 @@ namespace PLang.Modules.LlmModule
 			llmQuestion.presencePenalty = presencePenalty;
 			llmQuestion.llmResponseType = llmResponseType;
 			llmQuestion.scheme = scheme;
-
-			var response = await llmServiceFactory.CreateHandler().Query<object?>(llmQuestion);
-
-			LogLevel logLevel = LogLevel.Trace;
-			Enum.TryParse(loggerLevel, true, out logLevel);
-			logger.Log(logLevel, "Llm question - prompt:{0}", JsonConvert.SerializeObject(llmQuestion.promptMessage));
-			logger.Log(logLevel, "Llm question - response:{0}", llmQuestion.RawResponse);
-
-			if (response is JObject)
+			
+			
+			try
 			{
-				var objResult = (JObject)response;
-				foreach (var property in objResult.Properties())
+				var response = await llmServiceFactory.CreateHandler().Query<object?>(llmQuestion);
+
+
+				if (response is JObject)
 				{
-					if (property.Value is JValue)
+					var objResult = (JObject)response;
+					foreach (var property in objResult.Properties())
 					{
-						var value = ((JValue)property.Value).Value;
-						memoryStack.Put(property.Name, value);
+						if (property.Value is JValue)
+						{
+							var value = ((JValue)property.Value).Value;
+							memoryStack.Put(property.Name, value);
+						}
+						else
+						{
+							memoryStack.Put(property.Name, property.Value);
+						}
 					}
-					else
+				}
+
+				if (function != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
+				{
+					foreach (var returnValue in function.ReturnValue)
 					{
-						memoryStack.Put(property.Name, property.Value);
+						memoryStack.Put(returnValue.VariableName, response);
 					}
 				}
 			}
-
-			if (function != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
+			catch (Exception ex)
 			{
-				foreach (var returnValue in function.ReturnValue)
-				{
-					memoryStack.Put(returnValue.VariableName, response);
-				}
+				throw;
+			} finally {
+				LogLevel logLevel = LogLevel.Trace;
+				Enum.TryParse(loggerLevel, true, out logLevel);
+
+				logger.Log(logLevel, "Llm question - prompt:{0}", JsonConvert.SerializeObject(llmQuestion.promptMessage));
+				logger.Log(logLevel, "Llm question - response:{0}", llmQuestion.RawResponse);
 			}
 		}
 

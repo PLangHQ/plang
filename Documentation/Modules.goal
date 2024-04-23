@@ -7,9 +7,10 @@ GenerateModuleDocumentation
 - read %file%, into %content%
 - [llm] system: %system%
     user:%content%
-    model:'gpt-4-1106-preview'
+    model:'gpt-4-turbo'
     max length: 4000
     scheme: {moduleName:string, namespace:string, desc:string, [{functions:string[], parameters:[{type:string, name:string, (defaultValue:string|required:yes)}, ...], returns:type|void}]}
+    logger: warning
     write to %module%
 - get folder access to '../Tests'
 - [cond] if dir '../Tests/%module.moduleName%/' exists, then
@@ -38,7 +39,7 @@ GeneratePlangExamples
 - read 'template/modules/GeneratePlangExamples/user.txt', into %user%, load variables
 - [llm]: system:%system%
         user: %user%
-        model:'gpt-4-1106-preview'
+        model:'gpt-4-turbo'
         max length: 4k
         write to %plangExamplesDescription%
 
@@ -47,7 +48,7 @@ GenerateDocForBasic
 - read 'template/modules/GenerateDocForBasic/system.txt', into %system%, load variables
 - [llm]: system: %system%
         user: %user%
-        model:'gpt-4-1106-preview'
+        model:'gpt-4-turbo'
         max length: 4k
         write to %documentation%
 - [code] replace "[PlangCodeExamples]" in %documentation% with %plangExamplesDescription%, write to %documentationOut%(string)
@@ -62,7 +63,7 @@ GenerateDocForAdvanced
                    '# csharp methods #
                     %module%
                     # csharp methods #'
-        model:'gpt-4-1106-preview'
+        model:'gpt-4-turbo'
         max length: 4k 
         write to %advancedDoc%
 - write %advancedDoc% to /output/modules/%module.namespace%_advanced.md, overwrite

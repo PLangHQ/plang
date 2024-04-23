@@ -1,11 +1,15 @@
 ﻿using LightInject;
 using Microsoft.Extensions.Logging;
+using PLang.Building.Model;
 using PLang.Building.Parsers;
+using PLang.Container;
 using PLang.Events;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
+using PLang.Runtime;
+using PLang.Services.OutputStream;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using System;
@@ -48,8 +52,11 @@ namespace PLang.Building
 
 		public async Task Start(IServiceContainer container)
 		{
+
+			
+
 			try
-			{
+			{				
 
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				AppContext.SetSwitch("Builder", true);
@@ -60,8 +67,20 @@ namespace PLang.Building
 				logger.LogInformation("Build Start:" + DateTime.Now.ToLongTimeString());
 
 				var eventGoalFiles = await eventBuilder.BuildEventsPr();
-				await eventRuntime.Load(container, true);
+				
 
+				var runtimeContainer = new ServiceContainer();
+				runtimeContainer.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, container.GetInstance<IAskUserHandlerFactory>(),
+					container.GetInstance<IOutputStreamFactory>(), exceptionHandlerFactory);
+
+
+
+				var engine = runtimeContainer.GetInstance<IEngine>();
+				engine.Init(runtimeContainer);
+				var eventRuntime = runtimeContainer.GetInstance<IEventRuntime>();
+
+				await eventRuntime.Load(runtimeContainer, true);
+				await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.Before, EventScope.StartOfApp, false);
 				foreach (string file in goalFiles)
 				{
 					await goalBuilder.BuildGoal(container, file);
@@ -70,6 +89,8 @@ namespace PLang.Building
 				goalFiles.AddRange(eventGoalFiles);
 				CleanGoalFiles(goalFiles);
 
+				await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.After, EventScope.EndOfApp, false);
+				
 				logger.LogInformation("\n\nBuild done - Time:" + stopwatch.Elapsed.TotalSeconds.ToString("#,##.##") + " sec");
 			}
 			catch (StopBuilderException) { }

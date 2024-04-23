@@ -1,74 +1,62 @@
-# File Module Documentation
+﻿# File Module in plang
 
 ## Introduction
-The File module in plang is a comprehensive suite designed to facilitate file and directory operations within the plang programming environment. It provides a seamless interface for reading, writing, and manipulating files and directories, leveraging the power of C# methods behind the scenes. Advanced users with programming experience will appreciate the module's ability to handle a wide range of file types, including text, CSV, and Excel files, as well as its support for file monitoring and directory management.
+The File module in plang provides a comprehensive suite of functionalities for handling file operations such as reading, writing, and managing files and directories. This module is crucial for developers looking to perform file I/O operations within their plang scripts.
 
-The integration of plang with C# is achieved through a sophisticated mapping system that translates natural language steps defined in plang into corresponding C# method calls. This process involves the use of a Language Learning Model (LLM) to interpret the user's intent and select the appropriate method from the File module's C# implementation.
+### Detailed Overview
+The File module serves as an interface between plang scripts and the file system. It allows scripts to perform common file operations without needing to handle complexities like file stream management or error handling, which are abstracted away by the module. This simplifies the development process and enhances script reliability.
 
-## Plang code examples
-For a quick start and common usage examples, refer to the simple documentation and examples provided in the [PLang.Modules.FileModule.md](./PLang.Modules.FileModule.md) file. Additionally, a repository of examples is available at [PLangHQ/plang](https://github.com/PLangHQ/plang/tree/main/Tests/File).
+### How plang Integrates with C# Methods
+plang scripts are translated into C# method calls during the build process. This translation is handled by the Builder, which uses natural language processing to map plang steps to corresponding C# methods in the File module. During runtime, these mappings are utilized to execute the file operations as defined in the script.
 
-### Read Text File
-Reads the content of a text file and stores it in a variable.
+## Plang Code Examples
+For more comprehensive documentation and examples, refer to:
+- [File Module Documentation](./PLang.Modules.FileModule.md)
+- [Example Repository on GitHub](https://github.com/PLangHQ/plang/tree/main/Tests/File)
+
+### Example: Reading a Text File
+This is a common operation to read content from a text file into a plang variable.
 ```plang
-- read 'example.txt' into %fileContent%
-- write out %fileContent%
+- read 'example.txt' into %content%
+- write out %content%
 ```
-C# Method Signature: `Task<string> ReadTextFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false, bool loadVariables = false, bool emptyVariableIfNotFound = false)`
+**C# Method Signature:**
+```csharp
+string ReadTextFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false)
+```
 
-### Write to Text File
-Writes content to a text file, with the option to overwrite if the file already exists.
+### Example: Writing to a Text File
+This example demonstrates writing a simple string to a text file.
 ```plang
-- write to 'example.txt', 'This is a content', overwrite if exists
+- write to 'output.txt', 'Hello, plang!'
 ```
-C# Method Signature: `Task WriteToFile(string path, string content, bool overwrite = false, bool loadVariables = false, bool emptyVariableIfNotFound = false)`
-
-### Append to Text File
-Appends content to the end of a text file.
-```plang
-- append ', some more content' to 'example.txt'
+**C# Method Signature:**
+```csharp
+void WriteToFile(string path, string content)
 ```
-C# Method Signature: `Task AppendToFile(string path, string content, string seperator = null, bool loadVariables = false, bool emptyVariableIfNotFound = false)`
 
-For more detailed documentation and additional examples, please refer to the [PLang.Modules.FileModule.md](./PLang.Modules.FileModule.md) file and the [PLangHQ/plang](https://github.com/PLangHQ/plang/tree/main/Tests/File) repository. To understand the implementation details, you can also examine the source code of the [Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/FileModule/Program.cs) file.
+For additional methods and detailed examples:
+- [File Module Documentation](./PLang.Modules.FileModule.md)
+- [Example Repository on GitHub](https://github.com/PLangHQ/plang/tree/main/Tests/File)
+- For a deeper dive, check the [Program.cs source code](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.FileModule/Program.cs)
 
-## Source code
-The runtime code for the File module, `Program.cs`, is available at [PLangHQ/plang](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/FileModule/Program.cs).
+## Source Code
+The runtime code for the File module can be found at [Program.cs on GitHub](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.FileModule/Program.cs).
 
-## How plang is mapped to C#
-Modules in plang are utilized through a build and runtime process that translates plang steps into executable C# code.
-
+## How plang is Mapped to C#
 ### Builder
-During the build process initiated by `plang build`, the following occurs:
-1. The .goal file is read, and each step (line starting with `-`) is parsed.
-2. For each step, a query is sent to LLM along with a list of all available modules.
-3. LLM suggests a module to use, such as `PLang.Modules.FileModule`.
-4. The builder sends all methods in the File module to LLM along with the step.
-5. This is done using `Builder.cs` or `BaseBuilder.cs`, depending on availability.
-6. LLM returns a JSON mapping the step text to a C# method with required parameters.
-7. The builder creates a hash of the response and saves a JSON instruction file with the `.pr` extension in the `.build/{GoalName}/01. {StepName}.pr` directory.
+1. During the build process, the .goal file is parsed where each step (line starting with '-') is identified.
+2. Each step is sent to the LLM along with a list of available modules for module suggestion.
+3. Based on the step's content, the LLM suggests using the PLang.Modules.FileModule and provides a method mapping.
+4. The Builder (see [Builder.cs](https://github.com/PLangHQ/plang/blob/main/PLang/Building/Builder.cs) or [BaseBuilder.cs](https://github.com/PLangHQ/plang/blob/main/PLang/Modules/BaseBuilder.cs)) then generates a .pr instruction file containing the method mapping and parameters.
 
 ### Runtime
-During runtime, the .pr file is used to execute the step:
-1. The plang runtime loads the .pr file.
-2. Reflection is used to load the `PLang.Modules.FileModule`.
-3. The "Function" property in the .pr file specifies the C# method to call.
-4. Parameters are provided if required by the method.
+1. The .pr file is loaded by the plang runtime.
+2. The runtime uses reflection to invoke the specified method in the PLang.Modules.FileModule.
+3. Parameters and method details are extracted from the .pr file to execute the operation.
 
-### plang example to csharp
-Here's how a plang code example maps to a C# method and the resulting .pr file:
-
-#### plang code example
-```plang
-- read 'example.txt' into %fileContent%
-```
-
-#### C# method mapping
-```csharp
-Task<string> ReadTextFile(string path)
-```
-
-#### Example Instruction .pr file
+### Example Instruction .pr File
+For a step that reads a text file into a variable:
 ```json
 {
   "Action": {
@@ -82,11 +70,11 @@ Task<string> ReadTextFile(string path)
     ],
     "ReturnValue": {
       "Type": "string",
-      "VariableName": "fileContent"
+      "VariableName": "content"
     }
   }
 }
 ```
 
 ## Created
-This documentation was created on 2024-01-02T21:52:29.
+This documentation was created on 2024-04-17T13:40:24.

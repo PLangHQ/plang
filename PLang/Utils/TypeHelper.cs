@@ -17,7 +17,7 @@ namespace PLang.Utils
 		BaseProgram GetProgramInstance(string module);
 		List<Type> GetBuilderModules();
 		Type? GetBuilderType(string module);
-		Type? GetRuntimeType(string module);
+		Type? GetRuntimeType(string? module);
 	}
 
 	public class TypeHelper : ITypeHelper
@@ -451,8 +451,9 @@ namespace PLang.Utils
 			return builderModules.FirstOrDefault(p => p.FullName == module);
 		}
 
-		public Type? GetRuntimeType(string module)
+		public Type? GetRuntimeType(string? module)
 		{
+			if (module == null) return null;
 			if (!module.EndsWith(".Program")) module += ".Program";
 			return runtimeModules.FirstOrDefault(p => p.FullName == module);
 		}

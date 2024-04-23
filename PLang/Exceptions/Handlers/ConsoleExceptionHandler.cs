@@ -57,10 +57,10 @@ namespace PLang.Exceptions.Handlers
 					errorInfo += $"\nStep '{step.Text}'";
 					Console.WriteLine(errorInfo);
 				}
-
-				Console.WriteLine("\n\nError: " + message);
+				var ex = ExceptionHelper.GetLowestException(exception);
+				Console.WriteLine("\n\nError: " + ex.Message);
 				Console.WriteLine("\n=== Stack trace ===");
-				Console.WriteLine(exception.StackTrace);
+				Console.WriteLine(ex.StackTrace);
 			}
 			Console.ResetColor();
 			return false;

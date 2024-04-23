@@ -24,7 +24,7 @@ Plang provides increased security and privacy to both developer and users of the
 
 This is an example of how effienct it is to written in plang. 
 
-Following is executable code
+Following is executable plang code for user registration
 
 ```plang
 CreateUser
@@ -52,7 +52,7 @@ Programming in plang will give you
 
 > [!CAUTION]
 > **Heads up: Building code costs money**
-> Each code line incurs usually between $0.01 - $0.07 fee via LLM. The payoff? Exceptional efficiency gains. You can choose to use [Plang service(simpler) or OpenAI(cheaper)](./PlangOrOpenAI.md). Using Plang service supports the project
+> Each code line incurs usually between $0.01 - $0.03 fee via LLM. The payoff? Exceptional efficiency gains. You can choose to use [Plang service(simpler) or OpenAI(cheaper)](./PlangOrOpenAI.md). Using Plang service supports the project
 
 Set up Plang on your system. Download Plang from [the download page](https://github.com/PLangHQ/plang/releases) and follow our [Installation Guide](./Install.md).
 

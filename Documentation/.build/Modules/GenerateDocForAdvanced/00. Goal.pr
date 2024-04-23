@@ -21,7 +21,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 57,
+      "LineNumber": 58,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -88,7 +88,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 1,
-      "LineNumber": 58,
+      "LineNumber": 59,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -137,17 +137,17 @@
       }
     },
     {
-      "Text": "[llm]: system:%system%\n        user: %user%\n        assistant: '# plang code examples #\\n%plangExamplesDescription% \\n# plang code examples #'\n                   '# csharp methods #\n                    %module%\n                    # csharp methods #'\n        model:'gpt-4-1106-preview'\n        max length: 4k \n        write to %advancedDoc%",
+      "Text": "[llm]: system:%system%\n        user: %user%\n        assistant: '# plang code examples #\\n%plangExamplesDescription% \\n# plang code examples #'\n                   '# csharp methods #\n                    %module%\n                    # csharp methods #'\n        model:'gpt-4-turbo'\n        max length: 4k \n        write to %advancedDoc%",
       "Comment": null,
       "ModuleType": "PLang.Modules.LlmModule",
-      "Name": "GenerateAdvancedDoc",
-      "Description": "This step involves generating an advanced document using the provided system, user, plang code examples, csharp methods, and model. The generated document will be written to the specified file path.",
-      "PrFileName": "03. GenerateAdvancedDoc.pr",
-      "RelativePrPath": ".build\\Modules\\GenerateDocForAdvanced\\03. GenerateAdvancedDoc.pr",
+      "Name": "GenerateAdvancedDocumentation",
+      "Description": "Use the LLM module to generate advanced documentation. The input includes system details, user information, and assistant's response containing PLang code examples and CSharp methods. The output should be written to a specified file path.",
+      "PrFileName": "03. GenerateAdvancedDocumentation.pr",
+      "RelativePrPath": ".build\\Modules\\GenerateDocForAdvanced\\03. GenerateAdvancedDocumentation.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-27T13:49:38.280923+00:00",
+      "Generated": "2024-04-17T13:37:42.5543537+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -155,7 +155,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 2,
-      "LineNumber": 59,
+      "LineNumber": 60,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -171,7 +171,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors defined by user, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -193,14 +193,14 @@
             "content": [
               {
                 "type": "text",
-                "text": "[llm]: system:%system%\n        user: %user%\n        assistant: '# plang code examples #\\n%plangExamplesDescription% \\n# plang code examples #'\n                   '# csharp methods #\n                    %module%\n                    # csharp methods #'\n        model:'gpt-4-1106-preview'\n        max length: 4k \n        write to %advancedDoc%"
+                "text": "[llm]: system:%system%\n        user: %user%\n        assistant: '# plang code examples #\\n%plangExamplesDescription% \\n# plang code examples #'\n                   '# csharp methods #\n                    %module%\n                    # csharp methods #'\n        model:'gpt-4-turbo'\n        max length: 4k \n        write to %advancedDoc%"
               }
             ]
           }
         ],
-        "model": "gpt-4",
+        "model": "gpt-4-turbo",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"GenerateAdvancedDoc\",\n  \"StepDescription\": \"This step involves generating an advanced document using the provided system, user, plang code examples, csharp methods, and model. The generated document will be written to the specified file path.\",\n  \"Modules\": [\n    \"PLang.Modules.LlmModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": "{\n  \"StepName\": \"GenerateAdvancedDocumentation\",\n  \"StepDescription\": \"Use the LLM module to generate advanced documentation. The input includes system details, user information, and assistant's response containing PLang code examples and CSharp methods. The output should be written to a specified file path.\",\n  \"Modules\": [\n    \"PLang.Modules.LlmModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     },
     {
@@ -222,7 +222,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 3,
-      "LineNumber": 68,
+      "LineNumber": 69,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -282,5 +282,5 @@
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "f1bae4259fa0a6434c8d78ec3202c1a6fafcdd93f7a5574b485c09e632f184d3"
+  "Hash": "da8d615a05bd9c22a984d63fef1a321399e059d1df7a002ebf8cb018bb02c7fc"
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Events;
@@ -86,7 +87,8 @@ namespace PLang.Building
 				}
 
 				var module = stepAnswer.Modules.FirstOrDefault();
-				if (module == null || module == "N/A")
+				var moduleType = typeHelper.GetRuntimeType(module);
+				if (moduleType == null || module == null || module == "N/A")
 				{
 					logger.Value.LogError($"Could not find module for {step.Text}. Try defining the step in more detail.");
 					logger.Value.LogWarning($@"You have 3 options.

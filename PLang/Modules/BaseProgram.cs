@@ -20,7 +20,7 @@ using Instruction = PLang.Building.Model.Instruction;
 namespace PLang.Modules
 {
 
-    public abstract class BaseProgram
+	public abstract class BaseProgram
 	{
 		private HttpListenerContext? _listenerContext = null;
 
@@ -93,7 +93,7 @@ namespace PLang.Modules
 		public async Task RunFunction(GenericFunction function)
 		{
 			this.function = function; // this is to give sub classes access to current function running.
-			
+
 			MethodInfo method = await methodHelper.GetMethod(this, function);
 			logger.LogDebug("Method:{0}.{1}({2})", goalStep.ModuleType, method.Name, method.GetParameters());
 
@@ -347,14 +347,26 @@ namespace PLang.Modules
 
 		protected string GetPath(string path)
 		{
+			return PathHelper.GetPath(path, fileSystem, this.Goal);
+
+
 			if (path == null)
 			{
 				throw new ArgumentNullException("path cannot be empty");
 			}
 			path = path.Replace("/", Path.DirectorySeparatorChar.ToString()).Replace("\\", Path.DirectorySeparatorChar.ToString());
-			if (!Path.IsPathRooted(path) || path.StartsWith(Path.DirectorySeparatorChar))
+			if (path.StartsWith(Path.DirectorySeparatorChar.ToString() + Path.DirectorySeparatorChar.ToString())) {
+				
+				return path;
+			};
+
+			if (path.StartsWith(Path.DirectorySeparatorChar.ToString()))
 			{
-				path = path.TrimStart(Path.DirectorySeparatorChar);
+				path = Path.Combine(fileSystem.GoalsPath, path);
+				return Path.GetFullPath(path);
+			}
+			else
+			{
 				if (this.Goal != null)
 				{
 					path = Path.Combine(this.Goal.AbsoluteGoalFolderPath, path);
@@ -363,6 +375,7 @@ namespace PLang.Modules
 				{
 					path = Path.Combine(fileSystem.GoalsPath, path);
 				}
+				path = Path.GetFullPath(path);
 			}
 			return path;
 		}

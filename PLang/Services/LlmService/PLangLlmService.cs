@@ -6,6 +6,7 @@ using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Services.SigningService;
 using PLang.Utils;
@@ -23,6 +24,7 @@ namespace PLang.Services.LlmService
 		private readonly ILogger logger;
 		private readonly PLangAppContext context;
 		private readonly IPLangFileSystem fileSystem;
+		private readonly MemoryStack memoryStack;
 		private string url = "https://llm.plang.is/api/Llm";
 		private readonly string appId = "206bb559-8c41-4c4a-b0b7-283ef73dc8ce";
 		private readonly string BuyCreditInfo = @"You need to purchase credits to use Plang LLM service, click this link to purchase: {0}. Try to build again after payment.
@@ -31,7 +33,8 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 
 		public IContentExtractor Extractor { get; set; }
 
-		public PLangLlmService(LlmCaching llmCaching, IOutputStreamFactory outputStreamFactory, IPLangSigningService signingService, ILogger logger, PLangAppContext context, IPLangFileSystem fileSystem)
+		public PLangLlmService(LlmCaching llmCaching, IOutputStreamFactory outputStreamFactory, IPLangSigningService signingService,
+			ILogger logger, PLangAppContext context, IPLangFileSystem fileSystem, MemoryStack memoryStack)
 		{
 			this.llmCaching = llmCaching;
 			this.outputStreamFactory = outputStreamFactory;
@@ -39,6 +42,7 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 			this.logger = logger;
 			this.context = context;
 			this.fileSystem = fileSystem;
+			this.memoryStack = memoryStack;
 			this.Extractor = new JsonExtractor();
 
 			//Only for development of plang
@@ -72,9 +76,14 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 					{
 						context.AddOrReplace(ReservedKeywords.Llm, cachedLlmQuestion.RawResponse);
 					}
+					
 
 					var result = Extractor.Extract(cachedLlmQuestion.RawResponse, responseType);
-					if (result != null && !string.IsNullOrEmpty(result.ToString())) return result;
+					if (result != null && !string.IsNullOrEmpty(result.ToString()))
+					{
+						question.RawResponse = cachedLlmQuestion.RawResponse;
+						return result;
+					}
 				}
 				catch { }
 			}
@@ -113,6 +122,9 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 			{
 				throw new BuilderException("llm.plang.is appears to be down. Try again in few minutes. If it does not come back up soon, check out our Discord https://discord.gg/A8kYUymsDD for a chat");
 			}
+
+			question.RawResponse = responseBody;
+
 			if (isDebug)
 			{
 				context.AddOrReplace(ReservedKeywords.Llm, responseBody);
@@ -126,7 +138,7 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 
 				if (question.caching)
 				{
-					question.RawResponse = responseBody;
+					
 					llmCaching.SetCachedQuestion(appId, question);
 				}
 				return obj;
@@ -166,14 +178,18 @@ What is name of payer?", GetCountry);
 				if (strBalance != null && long.TryParse(strBalance, out long balance))
 				{
 					costWarning += "$" + (((double)balance) / 1000000).ToString("N2");
+					memoryStack.Put("__LLM_Balance__", balance);
 				}
+				
+				
 			}
 			if (response.Headers.Contains("X-User-Used"))
 			{
 				string strUsed = response.Headers.GetValues("X-User-Used").FirstOrDefault();
 				if (strUsed != null && long.TryParse(strUsed, out long used))
 				{
-					costWarning += " - used now $" + (((double)used) / 1000000).ToString("N2");
+					costWarning += " - used now $" + (((double)used) / 1000000).ToString("N3");
+					memoryStack.Put("__LLM_Used__", used);
 				}
 			}
 
@@ -183,6 +199,7 @@ What is name of payer?", GetCountry);
 				if (!string.IsNullOrEmpty(strUrl))
 				{
 					costWarning += $" - add to balance: {strUrl}";
+					memoryStack.Put("__LLM_PaymentUrl__", strUrl);
 				}
 			}			
 			

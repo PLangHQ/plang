@@ -14,7 +14,7 @@ namespace PLang.Modules.OutputModule
 		{
 			this.outputStream = outputStream;
 		}
-		[Description("Send response to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.")]
+		[Description("Send response to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.")]
 		public async Task<string> Ask(string text, string type = "text", int statusCode = 200, string? regexPattern = null, string? errorMessage = null)
 		{
 			var result = await outputStream.CreateHandler().Ask(text, type, statusCode);

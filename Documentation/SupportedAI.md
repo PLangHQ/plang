@@ -9,6 +9,7 @@ Plang integrates with a variety of OpenAI models, providing developers with the 
 | gpt-4-turbo                | $0.02       | $0.06        |
 | gpt-4                      | $0.06       | $0.12        |
 | gpt-4-32k                  | $0.12       | $0.24        |
+| gpt-3.5-turbo              | $0.0030     | $0.0040      |
 | gpt-3.5-turbo-1106         | $0.0020     | $0.0040      |
 | gpt-3.5-turbo-instruct     | $0.0030     | $0.0040      |
 | gpt-4-vision-preview       | $0.02       | $0.06        |

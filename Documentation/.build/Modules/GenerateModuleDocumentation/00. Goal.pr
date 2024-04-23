@@ -137,17 +137,17 @@
       }
     },
     {
-      "Text": "[llm] system: %system%\n    user:%content%\n    model:'gpt-4-1106-preview'\n    max length: 4000\n    scheme: {moduleName:string, namespace:string, desc:string, [{functions:string[], parameters:[{type:string, name:string, (defaultValue:string|required:yes)}, ...], returns:type|void}]}\n    write to %module%",
+      "Text": "[llm] system: %system%\n    user:%content%\n    model:'gpt-4-turbo'\n    max length: 4000\n    scheme: {moduleName:string, namespace:string, desc:string, [{functions:string[], parameters:[{type:string, name:string, (defaultValue:string|required:yes)}, ...], returns:type|void}]}\n    logger: warning\n    write to %module%",
       "Comment": null,
       "ModuleType": "PLang.Modules.LlmModule",
-      "Name": "GenerateModuleScheme",
-      "Description": "Use the LLM module to generate a scheme for a given system with specified user content, model, maximum length, and output file. The scheme will include module name, namespace, description, functions with their parameters and return types.",
-      "PrFileName": "03. GenerateModuleScheme.pr",
-      "RelativePrPath": ".build\\Modules\\GenerateModuleDocumentation\\03. GenerateModuleScheme.pr",
+      "Name": "WriteModuleInformation",
+      "Description": "Use the LLM module to generate a description of a module with specific parameters and write the output to a specified file path.",
+      "PrFileName": "03. WriteModuleInformation.pr",
+      "RelativePrPath": ".build\\Modules\\GenerateModuleDocumentation\\03. WriteModuleInformation.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-27T13:43:07.512206+00:00",
+      "Generated": "2024-04-17T12:23:32.1643897+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -171,7 +171,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors defined by user, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -193,14 +193,14 @@
             "content": [
               {
                 "type": "text",
-                "text": "[llm] system: %system%\n    user:%content%\n    model:'gpt-4-1106-preview'\n    max length: 4000\n    scheme: {moduleName:string, namespace:string, desc:string, [{functions:string[], parameters:[{type:string, name:string, (defaultValue:string|required:yes)}, ...], returns:type|void}]}\n    write to %module%"
+                "text": "[llm] system: %system%\n    user:%content%\n    model:'gpt-4-turbo'\n    max length: 4000\n    scheme: {moduleName:string, namespace:string, desc:string, [{functions:string[], parameters:[{type:string, name:string, (defaultValue:string|required:yes)}, ...], returns:type|void}]}\n    logger: warning\n    write to %module%"
               }
             ]
           }
         ],
-        "model": "gpt-4",
+        "model": "gpt-4-turbo",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"GenerateModuleScheme\",\n  \"StepDescription\": \"Use the LLM module to generate a scheme for a given system with specified user content, model, maximum length, and output file. The scheme will include module name, namespace, description, functions with their parameters and return types.\",\n  \"Modules\": [\n    \"PLang.Modules.LlmModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": "{\n  \"StepName\": \"WriteModuleInformation\",\n  \"StepDescription\": \"Use the LLM module to generate a description of a module with specific parameters and write the output to a specified file path.\",\n  \"Modules\": [\n    \"PLang.Modules.LlmModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     },
     {
@@ -222,7 +222,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 3,
-      "LineNumber": 14,
+      "LineNumber": 15,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -274,14 +274,14 @@
       "Text": "[cond] if dir '../Tests/%module.moduleName%/' exists, then",
       "Comment": null,
       "ModuleType": "PLang.Modules.ConditionalModule",
-      "Name": "CheckIfDirectoryExists",
-      "Description": "Check if the directory '../Tests/%module.moduleName%/' exists",
-      "PrFileName": "05. CheckIfDirectoryExists.pr",
-      "RelativePrPath": ".build\\Modules\\GenerateModuleDocumentation\\05. CheckIfDirectoryExists.pr",
+      "Name": "CheckDirectoryExistence",
+      "Description": "Check if the directory '../Tests/%module.moduleName%/' exists.",
+      "PrFileName": "05. CheckDirectoryExistence.pr",
+      "RelativePrPath": ".build\\Modules\\GenerateModuleDocumentation\\05. CheckDirectoryExistence.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-27T13:43:22.6584501+00:00",
+      "Generated": "2024-04-17T12:20:44.4297097+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -289,7 +289,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 4,
-      "LineNumber": 15,
+      "LineNumber": 16,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -305,7 +305,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors defined by user, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -332,9 +332,9 @@
             ]
           }
         ],
-        "model": "gpt-4",
+        "model": "gpt-4-turbo",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"CheckIfDirectoryExists\",\n  \"StepDescription\": \"Check if the directory '../Tests/%module.moduleName%/' exists\",\n  \"Modules\": [\n    \"PLang.Modules.ConditionalModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": "{\n  \"StepName\": \"CheckDirectoryExistence\",\n  \"StepDescription\": \"Check if the directory '../Tests/%module.moduleName%/' exists.\",\n  \"Modules\": [\n    \"PLang.Modules.ConditionalModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     },
     {
@@ -356,7 +356,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 5,
-      "LineNumber": 16,
+      "LineNumber": 17,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -423,7 +423,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 6,
-      "LineNumber": 17,
+      "LineNumber": 18,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -490,7 +490,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 7,
-      "LineNumber": 18,
+      "LineNumber": 19,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -557,7 +557,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 8,
-      "LineNumber": 19,
+      "LineNumber": 20,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -624,7 +624,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 9,
-      "LineNumber": 20,
+      "LineNumber": 21,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -691,7 +691,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 10,
-      "LineNumber": 21,
+      "LineNumber": 22,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -758,7 +758,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 11,
-      "LineNumber": 22,
+      "LineNumber": 23,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -818,5 +818,5 @@
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "8275212b2280cdd523c393767df377b92f9c6bf060bb5241323311348da0d598"
+  "Hash": "d4f87e8912aa8c542673bafc237be3d01dff2dee33b5cab79ac27b12f3cf516c"
 }

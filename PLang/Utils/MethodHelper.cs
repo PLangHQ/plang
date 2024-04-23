@@ -87,9 +87,9 @@ example of answer:
 			foreach (var function in functions)
 			{
 
-				if (function.FunctionName.ToUpper() == "N/A")
+				if (function.FunctionName == null || function.FunctionName.ToUpper() == "N/A")
 				{
-					invalidFunctions.Add(new InvalidFunction(function.FunctionName, "", true));
+					invalidFunctions.Add(new InvalidFunction(function.FunctionName ?? "N/A", "", true));
 				}
 				else
 				{
