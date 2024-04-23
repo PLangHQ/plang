@@ -25,7 +25,7 @@ namespace PLang.Modules.MessageModule
 
 			var communicators = CreateCommunicators(relayUrls);
 			ILogger<NostrWebsocketClient> nostrLogger = new Services.LoggerService.Logger<NostrWebsocketClient>();
-
+			
 			_client = new NostrMultiWebsocketClient(nostrLogger, communicators.ToArray());
 			communicators.ForEach(x => x.Start());
 
@@ -57,6 +57,7 @@ namespace PLang.Modules.MessageModule
 		private void SetCommunicatorParam(NostrWebsocketCommunicator comm, Uri uri)
 		{
 			comm.Name = uri.Host;
+			
 		}
 	}
 }

@@ -88,6 +88,21 @@ namespace PLang.Utils
 				return jobject.ToString();
 			}
 
+			if (obj is JArray array)
+			{
+				foreach (var variable in variables)
+				{
+					for (int i=0;i<array.Count; i++)
+					{
+						if (array[i].ToString().Equals(variable.Key, StringComparison.OrdinalIgnoreCase))
+						{
+							array[i] = variable.Value?.ToString();
+						}
+					}
+				}
+				return array;
+			}
+
 			foreach (var variable in variables)
 			{
 				string strValue = "";
@@ -304,8 +319,8 @@ namespace PLang.Utils
 
 		public record Variable(string OriginalKey, string Key, object? Value);
 
-
-		//%method%%urlPath%%salt%%timestamp%%Settings.RapydApiKey%%Settings.RapydSecretApiKey%%body.ToString().Replace("{}", "").ClearWhitespace()%
+		
+			//%method%%urlPath%%salt%%timestamp%%Settings.RapydApiKey%%Settings.RapydSecretApiKey%%body.ToString().Replace("{}", "").ClearWhitespace()%
 		internal List<Variable> GetVariables(string content, bool emptyIfNotFound = true)
 		{
 			List<Variable> variables = new List<Variable>();
@@ -360,6 +375,7 @@ namespace PLang.Utils
 		}
 		private void LoadSetting(List<Variable> variables, string variable, string content)
 		{
+			
 			var settingsObjects = GetSettingObjectsValue(content);
 			foreach (var settingObject in settingsObjects)
 			{
@@ -390,24 +406,40 @@ namespace PLang.Utils
 		}
 		public List<ObjectValue> GetSettingObjectsValue(string variableName)
 		{
-			var list = new List<ObjectValue>();
-			var settingsPattern = @"Settings\.Get\(\\?('|"")(?<key>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<default>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<explain>[^\('|"")]*)\\?('|"")\)";
-			var settingsRegex = new Regex(settingsPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-			var settingsMatch = settingsRegex.Match(variableName);
-			if (settingsMatch.Success)
+			string[] variableNames = [variableName];
+			if (JsonHelper.IsJson(variableName))
 			{
-				var setting = settings.Get<string>(typeof(Settings), settingsMatch.Groups["key"].Value, settingsMatch.Groups["default"].Value, settingsMatch.Groups["explain"].Value);
-				list.Add(new ObjectValue(settingsMatch.ToString(), setting, typeof(string)));
-
+				try
+				{
+					variableNames = JArray.Parse(variableName).ToObject<string[]>();
+				} catch (Exception ex)
+				{
+					throw;
+				}
 			}
 
-			settingsPattern = "%Settings.(?<key>[a-z0-9]*)%|%Setting.(?<key>[a-z0-9]*)%";
-			settingsRegex = new Regex(settingsPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-			var settingsMatches = settingsRegex.Matches(variableName);
-			foreach (Match match in settingsMatches)
+			var list = new List<ObjectValue>();
+			foreach (var varName in variableNames)
 			{
-				var setting = settings.Get<string>(typeof(Settings), match.Groups["key"].Value, "", match.Groups["key"].Value);
-				list.Add(new ObjectValue(match.Value, setting, typeof(string)));
+				
+				var settingsPattern = @"Settings\.Get\(\\?('|"")(?<key>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<default>[^\('|"")]*)\\?('|"")\s*,\s*\\?('|"")(?<explain>[^\('|"")]*)\\?('|"")\)";
+				var settingsRegex = new Regex(settingsPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+				var settingsMatch = settingsRegex.Match(varName);
+				if (settingsMatch.Success)
+				{
+					var setting = settings.Get<string>(typeof(Settings), settingsMatch.Groups["key"].Value, settingsMatch.Groups["default"].Value, settingsMatch.Groups["explain"].Value);
+					list.Add(new ObjectValue(settingsMatch.ToString(), setting, typeof(string)));
+
+				}
+
+				settingsPattern = "%Settings.(?<key>[a-z0-9]*)%|%Setting.(?<key>[a-z0-9]*)%";
+				settingsRegex = new Regex(settingsPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+				var settingsMatches = settingsRegex.Matches(varName);
+				foreach (Match match in settingsMatches)
+				{
+					var setting = settings.Get<string>(typeof(Settings), match.Groups["key"].Value, "", match.Groups["key"].Value);
+					list.Add(new ObjectValue(match.Value, setting, typeof(string)));
+				}
 			}
 			return list;
 		}

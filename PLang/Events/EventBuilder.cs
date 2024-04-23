@@ -78,8 +78,8 @@ namespace PLang.Events
                     promptMessage.Add(new LlmMessage("system", $@"
 User will provide event binding, you will be provided with c# model to map the code to. 
 
-EventType is required
-EventScope is required, Error defaults to Before EventType if not defined by user.
+EventType is required, Error defaults to 'Before' EventType if not defined by user.
+EventScope is required, Error defaults to 'StepError' EventScope if not defined by user.
 GoalToBindTo is required. This can a specific Goal or more generic, such as bind to all goals in specific folder. Convert to matching pattern(regex) for folder matching. e.g. input value could be /api, if bind to goal is api/*, it should match
 GoalToCall is required. This should be a specific goal, should start with !. Example: !AppName/GoalName.  
 StepNumber & StepText reference a specific step that the user wants to bind to
@@ -130,7 +130,7 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError,
 
             var prGoal = prParser.ParsePrFile(step.Goal.AbsolutePrFilePath);
 
-            if (prGoal == null || prGoal.GoalSteps == null) return false;
+            if (prGoal == null || prGoal.GoalSteps == null || prGoal.GoalSteps.Count <= stepIndex) return false;
             if (stepIndex == prGoal.GoalSteps.Count || prGoal.GoalSteps[stepIndex].Custom == null) return false;
 
             if (!prGoal.GoalSteps[stepIndex].Custom.ContainsKey("Event") || prGoal.GoalSteps[stepIndex].Custom["Event"] == null) return false;

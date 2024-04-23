@@ -98,7 +98,13 @@ namespace PLang.Modules.CodeModule
 						Type? outType = parameters[i].ParameterType.GetElementType();
 						if (outType == null) continue;
 
-						var value = memoryStack.Get(parameters[i].Name!, parameters[i].ParameterType);
+						var key = parameters[i].Name!;
+						if (key.ToLower().StartsWith("settings."))
+						{
+							key = "%" + key + "%";
+						}
+
+						var value = memoryStack.Get(key, parameters[i].ParameterType);
 						if (value == null && outType.IsValueType)
 						{
 							parametersObject.Add(Activator.CreateInstance(outType));

@@ -91,6 +91,16 @@ namespace PLang.Resources {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] CheckGoals {
+            get {
+                object obj = ResourceManager.GetObject("CheckGoals", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] Debugger {
             get {
                 object obj = ResourceManager.GetObject("Debugger", resourceCulture);

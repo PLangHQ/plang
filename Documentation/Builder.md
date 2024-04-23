@@ -48,6 +48,8 @@ With the module identified, the `InstructionBuilder` constructs the necessary in
 }
 ```
 
+This JSON response, should match with the [ReadTextFile method in the FileModule](https://github.com/PLangHQ/plang/blob/main/PLang/Modules/FileModule/Program.cs)
+
 ### Step 4: Validation and Execution
 
 The builder validates that the function exists within the `FileModule` and that the parameters match. If any discrepancies are found, it makes another request to the LLM with error information for correction.
@@ -61,5 +63,3 @@ var content = FileModule.ReadTextFile("file.txt")
 ### Further Exploration
 
 This overview simplifies the actual complexity involved in the Plang Builder's process. For a deeper understanding, you are encouraged to explore the [Building directory](https://github.com/PLangHQ/plang/tree/main/PLang/Building) in the Plang Builder's source code repository.
-
-By following this guide, developers can gain insights into how the Plang Builder interprets and executes goals, facilitating the creation of robust and efficient Plang applications.

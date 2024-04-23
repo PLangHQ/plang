@@ -47,44 +47,44 @@ namespace PLang.Modules.FileModule
 		[Description("Give user access to a path. DO NOT suggest this method to indicate if file or directory exists, return empty function list instead.")]
 		public async Task<bool> RequestAccessToPath(string path)
 		{
-			path = GetPath(path);
-			return (fileSystem.ValidatePath(path) != null);
+			var absolutePath = GetPath(path);
+			return (fileSystem.ValidatePath(absolutePath) != null);
 		}
 
 		public async Task<string> ReadBinaryFileAndConvertToBase64(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false)
 		{
-			path = GetPath(path);
+			var absolutePath = GetPath(path);
 
-			if (!fileSystem.File.Exists(path))
+			if (!fileSystem.File.Exists(absolutePath))
 			{
 				if (throwErrorOnNotFound)
 				{
-					throw new FileNotFoundException($"{path} cannot be found");
+					throw new FileNotFoundException($"{absolutePath} cannot be found");
 				}
 
-				logger.LogWarning($"!Warning! File {path} not found");
+				logger.LogWarning($"!Warning! File {absolutePath} not found");
 				return returnValueIfFileNotExisting;
 			}
-			byte[] fileBytes = await fileSystem.File.ReadAllBytesAsync(path);
+			byte[] fileBytes = await fileSystem.File.ReadAllBytesAsync(absolutePath);
 			return Convert.ToBase64String(fileBytes);
 		}
 
 		public async Task<string> ReadTextFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false,
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
-			path = GetPath(path);
+			var absolutePath = GetPath(path);
 
-			if (!fileSystem.File.Exists(path))
+			if (!fileSystem.File.Exists(absolutePath))
 			{
 				if (throwErrorOnNotFound)
 				{
-					throw new FileNotFoundException($"{path} cannot be found");
+					throw new FileNotFoundException($"{absolutePath} cannot be found");
 				}
-				logger.LogWarning($"!Warning! File {path} not found");
+				logger.LogWarning($"!Warning! File {absolutePath} not found");
 				return returnValueIfFileNotExisting;
 			}
 
-			using (var stream = fileSystem.FileStream.New(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+			using (var stream = fileSystem.FileStream.New(absolutePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 			{
 				using (var reader = new StreamReader(stream, encoding: Encoding.GetEncoding(encoding)))
 				{
@@ -100,33 +100,33 @@ namespace PLang.Modules.FileModule
 		}
 		public async Task<Stream> ReadFileAsStream(string path, bool throwErrorOnNotFound = false)
 		{
-			path = GetPath(path);
+			var absolutePath = GetPath(path);
 
-			if (!fileSystem.File.Exists(path))
+			if (!fileSystem.File.Exists(absolutePath))
 			{
 				if (throwErrorOnNotFound)
 				{
-					throw new FileNotFoundException($"{path} cannot be found");
+					throw new FileNotFoundException($"{absolutePath} cannot be found");
 				}
-				logger.LogWarning($"!Warning! File {path} not found");
+				logger.LogWarning($"!Warning! File {absolutePath} not found");
 				return null;
 			}
-			var fileStream = fileSystem.FileStream.New(path, FileMode.OpenOrCreate, FileAccess.Read);
-			context.Add("FileStream_" + path, fileStream);
+			var fileStream = fileSystem.FileStream.New(absolutePath, FileMode.OpenOrCreate, FileAccess.Read);
+			context.Add("FileStream_" + absolutePath, fileStream);
 			return fileStream;
 		}
 
 		[Description("sheetsToVariable is name of sheet that should load into variable. Sheet1=%products% will load Sheet1 into %product% variable, Sheet2-A1:H53=%categories%, will load data from A1:H53 into %categories%")]
 		public async Task ReadExcelFile(string path, bool useHeaderRow = true, [HandlesVariable] Dictionary<string, object>? sheetsToVariable = null)
 		{
-			path = GetPath(path);
-			if (!fileSystem.File.Exists(path))
+			var absolutePath = GetPath(path);
+			if (!fileSystem.File.Exists(absolutePath))
 			{
-				logger.LogWarning($"{path} does not exist");
+				logger.LogWarning($"{absolutePath} does not exist");
 				return;
 			}
 
-			List<string> sheetNames = MiniExcel.GetSheetNames(path);
+			List<string> sheetNames = MiniExcel.GetSheetNames(absolutePath);
 			if (sheetsToVariable == null || sheetsToVariable.Count == 0)
 			{
 				sheetsToVariable = new Dictionary<string, object>();
@@ -169,7 +169,7 @@ namespace PLang.Modules.FileModule
 					startCell = dataToExtract.Substring(0, dataToExtract.IndexOf(":"));
 				}
 
-				var sheetData = await (await MiniExcel.QueryAsync(path, useHeaderRow: useHeaderRow, startCell: startCell, sheetName: sheetName)).ToDynamicListAsync();
+				var sheetData = await (await MiniExcel.QueryAsync(absolutePath, useHeaderRow: useHeaderRow, startCell: startCell, sheetName: sheetName)).ToDynamicListAsync();
 
 				memoryStack.Put(sheetToVariable.Value.ToString(), sheetData);
 
@@ -180,27 +180,27 @@ namespace PLang.Modules.FileModule
 		public async Task WriteExcelFile(string path, object variableToWriteToExcel, string sheetName = "Sheet1",
 				bool printHeader = true, bool overwrite = false)
 		{
-			path = GetPath(path);
-			if (!fileSystem.Directory.Exists(Path.GetDirectoryName(path)))
+			var absolutePath = GetPath(path);
+			if (!fileSystem.Directory.Exists(Path.GetDirectoryName(absolutePath)))
 			{
-				logger.LogWarning($"{path} does not exist");
+				logger.LogWarning($"{absolutePath} does not exist");
 				return;
 			}
 
-			await MiniExcel.SaveAsAsync(path, sheetName: sheetName, printHeader: printHeader, overwriteFile: overwrite, value: variableToWriteToExcel);
+			await MiniExcel.SaveAsAsync(absolutePath, sheetName: sheetName, printHeader: printHeader, overwriteFile: overwrite, value: variableToWriteToExcel);
 		}
 		public async Task WriteCsvFile(string path, object variableToWriteToCsv, bool append = false, bool hasHeaderRecord = true,
 			string delimiter = ",",
 			string newLine = "\n", string encoding = "utf-8", bool ignoreBlankLines = true,
 				bool allowComments = false, char comment = '#', string? goalToCallOnBadData = null)
 		{
-			path = GetPath(path);
+			var absolutePath = GetPath(path);
 
 			if (variableToWriteToCsv is string str)
 			{
 				if (str.Contains(delimiter) && (str.Contains("\r") || str.Contains("\n")))
 				{
-					await WriteToFile(path, str.Trim(), encoding: encoding);
+					await WriteToFile(absolutePath, str.Trim(), encoding: encoding);
 					return;
 				}
 			}
@@ -226,7 +226,7 @@ namespace PLang.Modules.FileModule
 
 
 
-			using (var writer = new StreamWriter(path, append))
+			using (var writer = new StreamWriter(absolutePath, append))
 			using (var csv = new CsvWriter(writer, writeConfig))
 			{
 				if (variableToWriteToCsv is IEnumerable enumer)
@@ -244,7 +244,7 @@ namespace PLang.Modules.FileModule
 				string newLine = "\n", string encoding = "utf-8", bool ignoreBlankLines = true,
 				bool allowComments = false, char comment = '#', string? goalToCallOnBadData = null)
 		{
-			path = GetPath(path);
+			var absolutePath = GetPath(path);
 			var readConfig = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
 			{
 				Delimiter = delimiter,
@@ -266,7 +266,7 @@ namespace PLang.Modules.FileModule
 
 			// TODO: it should store reader in context and dispose when goal finishes the run
 			// then we dont need to return ToList, but return the enumerator for speed and low memory
-			using (var reader = new StreamReader(path))
+			using (var reader = new StreamReader(absolutePath))
 			using (var csv = new CsvReader(reader, readConfig))
 			{
 				return csv.GetRecords<dynamic>().ToList();
@@ -313,16 +313,16 @@ namespace PLang.Modules.FileModule
 		}
 		public async Task<List<FileInfo>> ReadMultipleTextFiles(string folderPath, string searchPattern = "*", string[]? excludePatterns = null, bool includeAllSubfolders = false)
 		{
-			folderPath = GetPath(folderPath);
+			var absoluteFolderPath = GetPath(folderPath);
 
 			var searchOption = (includeAllSubfolders) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-			if (!fileSystem.Directory.Exists(folderPath))
+			if (!fileSystem.Directory.Exists(absoluteFolderPath))
 			{
-				logger.LogWarning($"!Warning! Directory {folderPath} not found");
+				logger.LogWarning($"!Warning! Directory {absoluteFolderPath} not found");
 				return new();
 			}
 
-			var files = fileSystem.Directory.GetFiles(folderPath, searchPattern, searchOption);
+			var files = fileSystem.Directory.GetFiles(absoluteFolderPath, searchPattern, searchOption);
 
 			List<FileInfo> result = new List<FileInfo>();
 			foreach (var file in files)
@@ -345,13 +345,30 @@ namespace PLang.Modules.FileModule
 			return result;
 		}
 
-
-		public async Task<string[]> GetFilePathsInDirectory(string directoryPath = "./", string searchPattern = "*",
+		public async Task<string[]> GetDirectoryPathsInDirectory(string directoryPath = "./", string searchPattern = "*",
 			string[]? excludePatterns = null, bool includeSubfolders = false, bool useRelativePath = true)
 		{
 			var searchOption = (includeSubfolders) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+			var absoluteDirectoryPath = GetPath(directoryPath);
 
-			var files = fileSystem.Directory.GetFiles(directoryPath, searchPattern, searchOption);
+			var files = fileSystem.Directory.GetDirectories(absoluteDirectoryPath, searchPattern, searchOption);
+
+			var paths = files.Select(path => (useRelativePath) ? path.Replace(fileSystem.RootDirectory, "") : path);
+			if (excludePatterns != null)
+			{
+				paths = paths.Where(file => !excludePatterns.Any(pattern => Regex.IsMatch(file, pattern)));
+			}
+
+			return paths.ToArray();
+		}
+
+			public async Task<string[]> GetFilePathsInDirectory(string directoryPath = "./", string searchPattern = "*",
+			string[]? excludePatterns = null, bool includeSubfolders = false, bool useRelativePath = true)
+		{
+			var searchOption = (includeSubfolders) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+			var absoluteDirectoryPath = GetPath(directoryPath);
+
+			var files = fileSystem.Directory.GetFiles(absoluteDirectoryPath, searchPattern, searchOption);
 
 			var paths = files.Select(path => (useRelativePath) ? path.Replace(fileSystem.RootDirectory, "") : path);
 			if (excludePatterns != null)
@@ -364,8 +381,8 @@ namespace PLang.Modules.FileModule
 
 		public async Task WriteBytesToFile(string path, byte[] content, bool overwrite = false)
 		{
-			path = GetPath(path);
-			string dirPath = Path.GetDirectoryName(path);
+			var absolutePath = GetPath(path);
+			string dirPath = Path.GetDirectoryName(absolutePath);
 			if (!fileSystem.Directory.Exists(dirPath))
 			{
 				fileSystem.Directory.CreateDirectory(dirPath);
@@ -373,18 +390,18 @@ namespace PLang.Modules.FileModule
 
 			if (overwrite)
 			{
-				if (fileSystem.File.Exists(path))
+				if (fileSystem.File.Exists(absolutePath))
 				{
-					fileSystem.File.Delete(path);
+					fileSystem.File.Delete(absolutePath);
 				}
 			}
-			await fileSystem.File.WriteAllBytesAsync(path, content);
+			await fileSystem.File.WriteAllBytesAsync(absolutePath, content);
 		}
 		public async Task WriteToFile(string path, string content, bool overwrite = false,
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
-			path = GetPath(path);
-			string dirPath = Path.GetDirectoryName(path);
+			var absolutePath = GetPath(path);
+			string dirPath = Path.GetDirectoryName(absolutePath);
 			if (!fileSystem.Directory.Exists(dirPath))
 			{
 				fileSystem.Directory.CreateDirectory(dirPath);
@@ -392,23 +409,23 @@ namespace PLang.Modules.FileModule
 
 			if (overwrite)
 			{
-				if (fileSystem.File.Exists(path))
+				if (fileSystem.File.Exists(absolutePath))
 				{
-					fileSystem.File.Delete(path);
+					fileSystem.File.Delete(absolutePath);
 				}
 			}
 			if (loadVariables && !string.IsNullOrEmpty(content))
 			{
 				content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
 			}
-			await fileSystem.File.WriteAllTextAsync(path, content, encoding: Encoding.GetEncoding(encoding));
+			await fileSystem.File.WriteAllTextAsync(absolutePath, content, encoding: Encoding.GetEncoding(encoding));
 		}
 
 		public async Task AppendToFile(string path, string content, string? seperator = null,
 				bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
-			path = GetPath(path);
-			string dirPath = Path.GetDirectoryName(path);
+			var absolutePath = GetPath(path);
+			string dirPath = Path.GetDirectoryName(absolutePath);
 			if (!fileSystem.Directory.Exists(dirPath))
 			{
 				fileSystem.Directory.CreateDirectory(dirPath);
@@ -417,7 +434,7 @@ namespace PLang.Modules.FileModule
 			{
 				content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
 			}
-			await fileSystem.File.AppendAllTextAsync(path, content + seperator, encoding: Encoding.GetEncoding(encoding));
+			await fileSystem.File.AppendAllTextAsync(absolutePath, content + seperator, encoding: Encoding.GetEncoding(encoding));
 		}
 
 		public async Task CopyFiles(string directoryPath, string destinationPath, string searchPattern = "*", string[]? excludePatterns = null,
@@ -462,36 +479,36 @@ namespace PLang.Modules.FileModule
 		}
 		public async Task DeleteFile(string fileName, bool throwErrorOnNotFound = false)
 		{
-			fileName = GetPath(fileName);
-			if (fileSystem.File.Exists(fileName))
+			var absoluteFileName = GetPath(fileName);
+			if (fileSystem.File.Exists(absoluteFileName))
 			{
-				fileSystem.File.Delete(fileName);
+				fileSystem.File.Delete(absoluteFileName);
 			}
 			else if (throwErrorOnNotFound)
 			{
-				throw new FileNotFoundException($"{fileName} could not be found");
+				throw new FileNotFoundException($"{absoluteFileName} could not be found");
 			}
 		}
 		public async Task<IFileInfo> GetFileInfo(string fileName)
 		{
-			fileName = GetPath(fileName);
-			return fileSystem.FileInfo.New(fileName);
+			var absoluteFileName = GetPath(fileName);
+			return fileSystem.FileInfo.New(absoluteFileName);
 		}
 
 		public async Task CreateDirectory(string directoryPath)
 		{
-			directoryPath = GetPath(directoryPath);
-			if (!fileSystem.Directory.Exists(directoryPath))
+			var absoluteDirectoryPath = GetPath(directoryPath);
+			if (!fileSystem.Directory.Exists(absoluteDirectoryPath))
 			{
-				fileSystem.Directory.CreateDirectory(directoryPath);
+				fileSystem.Directory.CreateDirectory(absoluteDirectoryPath);
 			}
 		}
 		public async Task DeleteDirectory(string directoryPath, bool recursive = true, bool throwErrorOnNotFound = false)
 		{
-			directoryPath = GetPath(directoryPath);
-			if (fileSystem.Directory.Exists(directoryPath))
+			var absoluteDirectoryPath = GetPath(directoryPath);
+			if (fileSystem.Directory.Exists(absoluteDirectoryPath))
 			{
-				fileSystem.Directory.Delete(directoryPath, recursive);
+				fileSystem.Directory.Delete(absoluteDirectoryPath, recursive);
 			}
 			else if (throwErrorOnNotFound)
 			{

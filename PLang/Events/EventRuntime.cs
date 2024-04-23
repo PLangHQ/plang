@@ -26,7 +26,7 @@ namespace PLang.Events
         Task RunBuildGoalEvents(string eventType, Goal goal);
         Task RunBuildStepEvents(string eventType, Goal goal, GoalStep step, int stepIdx);
         Task RunGoalEvents(PLangAppContext context, string eventType, Goal goal);
-        Task RunStartEndEvents(PLangAppContext context, string eventType, string eventScope);
+        Task RunStartEndEvents(PLangAppContext context, string eventType, string eventScope, bool isBuilder = false);
         Task RunStepEvents(PLangAppContext context, string eventType, Goal goal, GoalStep step);
         Task<bool> RunOnErrorStepEvents(PLangAppContext context, Exception ex, Goal goal, GoalStep goalStep, ErrorHandler? errorHandler = null);
         Task RunGoalErrorEvents(PLangAppContext context, Goal goal, int goalStepIndex, Exception ex);
@@ -77,7 +77,7 @@ namespace PLang.Events
         {
             events = new List<EventBinding>();
 
-            string eventsFolder = builder ? "builderEvents" : "events";
+            string eventsFolder = builder ? Path.Combine("events", "BuildEvents") : "events";
             var eventsFiles = GetRuntimeEventsFiles(fileSystem.BuildPath, eventsFolder);
 
             foreach (var eventFile in eventsFiles)
@@ -140,9 +140,9 @@ namespace PLang.Events
 
         }
 
-        public async Task RunStartEndEvents(PLangAppContext context, string eventType, string eventScope)
+        public async Task RunStartEndEvents(PLangAppContext context, string eventType, string eventScope, bool isBuilder = false)
         {
-            events = await GetRuntimeEvents();
+            events = (isBuilder) ? await GetBuilderEvents() : await GetRuntimeEvents();
 
             if (events == null || context.ContainsKey(ReservedKeywords.IsEvent)) return;
 
@@ -440,6 +440,10 @@ namespace PLang.Events
             // GoalToBindTo = Hello
             if (!goalToBindTo.Contains(".") && !goalToBindTo.Contains("*") && !goalToBindTo.Contains("/") && !goalToBindTo.Contains(@"\") && !goalToBindTo.Contains(":"))
             {
+                if (goalToBindTo.StartsWith("^") || goalToBindTo.EndsWith("$"))
+                {
+                    return Regex.IsMatch(goal.GoalName, goalToBindTo, RegexOptions.IgnoreCase);
+                }
                 return goal.GoalName.ToLower() == goalToBindTo;
             }
 

@@ -58,6 +58,7 @@ namespace PLang
 			{
 				SetupDebug();
 			}
+			SetupBuildValidation();
 
 			var test = args.FirstOrDefault(p => p == "--test") != null;
 			var build = args.FirstOrDefault(p => p == "build") != null;
@@ -161,9 +162,37 @@ namespace PLang
 				}
 				return;
 			}
+		}
 
-			
+		public void SetupBuildValidation()
+		{ 
+			var eventsPath = Path.Join(fileSystem.GoalsPath, "events");
+			var checkGoalsPath = Path.Join(eventsPath, "CheckGoals.goal");
 
+			Console.WriteLine("-- Debug mode");
+			AppContext.SetSwitch(ReservedKeywords.Debug, true);
+
+			if (fileSystem.File.Exists(checkGoalsPath)) return;
+
+			if (!fileSystem.File.Exists(checkGoalsPath))
+			{
+				if (!fileSystem.Directory.Exists(eventsPath))
+				{
+					fileSystem.Directory.CreateDirectory(eventsPath);
+				}
+				else
+				{
+					var logger = container.GetInstance<ILogger>();
+					logger.LogError("Installed build validator and may have overwritten your events/BuildEvents.goal file. Sorry about that :( Will fix in future.");
+				}
+
+				using (MemoryStream ms = new MemoryStream(InternalApps.CheckGoals))
+				using (ZipArchive archive = new ZipArchive(ms))
+				{
+					archive.ExtractToDirectory(fileSystem.GoalsPath, true);
+				}
+				return;
+			}
 		}
 
 		private void WatchFolder(string path, string filter)

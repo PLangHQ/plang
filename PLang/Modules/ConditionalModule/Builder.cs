@@ -22,7 +22,7 @@ using Microsoft.Extensions.Logging;
 
 namespace PLang.Modules.ConditionalModule
 {
-    public class Builder : BaseBuilder
+	public class Builder : BaseBuilder
 	{
 		private readonly IPLangFileSystem fileSystem;
 		private readonly PrParser prParser;
@@ -49,28 +49,30 @@ namespace PLang.Modules.ConditionalModule
 				throw new BuilderException($"Could not create condition. Please try to refine the step text:{step.Text}");
 			}
 
-			
-			var compiler = new CSharpCompiler(fileSystem, prParser,logger);
+
+			var compiler = new CSharpCompiler(fileSystem, prParser, logger);
 			var dllName = compiler.GetPreviousBuildDllNamesToExclude(step);
 
-			SetSystem(@$"Act as a senior C# developer, that converts the user statement into a C#(Version. 9) code. 
+			SetSystem(@$"Act as a senior C# developer, that converts the user intent into a valid C#(Version. 11) code. 
 
 ## Rules ##
 - Generate static class. The code generated should have 1 method with the static method named ExecutePlangCode and return bool. 
 - A variable in user intent is defined by starting and ending %.
-- Variables defined in the user intent can be passed into the ExecutePlangCode function by value, but only if defined by user intent. 
+- Variables defined in the user intent can be passed into the ExecutePlangCode function by value, but only if defined by user. 
 - Variable names passed to ExecutePlangCode function MUST be unmodified from the user statement
 - The code will not be modified after you generate it.
 - ALWAYS use long or long? instead of int or int?
-- When validating if variable is long, also validate if it is int
+- When validating if variable is long, make sure to convert the variable to long
 - Do not reference any DTO classes. Use dynamic? if complex object is needed, else use object?.
 - Strings are defined with double quote ("")
 - Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. 
-- If PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into ExecutePlangCode method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.
+- ONLY IF PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into ExecutePlangCode method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.
 - When condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. ExecutePlangCode(dynamic? variable)
 - Replace the dot(.) in variables with the letter α e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α
 - Keep underscore in variables if defined by user, e.g.  if %user_id%(string) is null => ExecutePlangCode(string? user_id)
 - Consider top security measures when generating code and validate code
+- append @ sign for variable that match reserved keywords in C#
+- C# code MUST only contain the contition code and return bool, an external system will call goals(methods) that user defines in his intent.
 ## Rules ##
 
 ## Response information ##
@@ -107,16 +109,18 @@ namespace PLang.Modules.ConditionalModule
 			base.SetContentExtractor(new JsonExtractor());
 
 			var answer = (ImplementationResponse)codeInstruction.Action;
-
-			var buildStatus = await compiler.BuildCode(answer, step, memoryStack);
-			if (buildStatus.Error != null)
+			try
 			{
-				return await Build(step, buildStatus.Error, ++errorCount);
+				var buildStatus = await compiler.BuildCode(answer, step, memoryStack);
+				var newInstruction = new Instruction(buildStatus.Implementation!);
+				newInstruction.LlmRequest = codeInstruction.LlmRequest;
+				return newInstruction;
 			}
-
-			var newInstruction = new Instruction(buildStatus.Implementation!);
-			newInstruction.LlmRequest = codeInstruction.LlmRequest;
-			return newInstruction;
+			catch (BuildStatusException ex)
+			{
+				logger.LogWarning($"Need to ask LLM again. {ex.Message}");
+				return await Build(step, ex.Message, ++errorCount);
+			}
 
 		}
 

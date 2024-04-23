@@ -1,129 +1,156 @@
-# File
+﻿# File
 
 ## Introduction
-The File module in plang programming language is a powerful tool that allows you to interact with the file system. It provides a range of functionalities to read from and write to files, manage directories, and monitor file changes. This module is essential for tasks such as data storage, report generation, and dynamic content management within your plang applications.
+The File module in the PLang programming language provides a comprehensive suite of functionalities that allow you to manipulate files and directories. This includes operations such as reading, writing, appending, and deleting files, as well as managing directories and handling more complex file operations.
 
-## For beginners
-If you're new to programming, think of a File as a digital document on your computer where you can store information. Just like you can create, read, edit, and organize paper documents, the File module in plang lets you do the same with digital files. You can create new files to store data, read data from existing files, add more data to them, and even keep an eye on a file for any changes, all through simple plang commands.
+## For Beginners
+In programming, a "File" refers to a document that stores data or information accessible by a computer. In PLang, the File module enables you to interact with these files directly from your code. This can be useful for a variety of tasks such as storing user data, logging information, or even reading configuration settings. The operations provided by the File module are designed to be straightforward so that even those with little to no programming experience can use them effectively.
 
 ## Best Practices for File
-When working with files in plang, it's important to follow best practices to ensure your code is efficient, secure, and easy to maintain. Here's an example to illustrate a best practice:
+When working with files in PLang, it's important to follow certain best practices to ensure your code is efficient, safe, and easy to understand:
+
+1. **Use Relative Paths**: Always prefer relative paths over absolute paths to ensure portability of your code. This means your file paths should be relative to the current working directory.
+2. **Handle Variables in Files**: PLang allows dynamic loading of variables within files. This is particularly useful for customizing file content dynamically based on runtime data.
+3. **Automatic Stream Management**: Remember, you do not need to manually close file streams; PLang handles that automatically, making your code cleaner and less error-prone.
+4. **Check File Existence**: Files do not need to exist when attempting to read; the variable will simply remain empty if the file is not found. This can be used to your advantage to simplify your error handling code.
+
+### Path Info
+
+When specifying paths in the application, adhere to the following conventions to ensure correct file handling and compatibility across different environments:
+
+#### Relative vs Absolute Paths
+- **Relative Paths:** Use relative paths (e.g., `/this/is/a/path`) to reference files dynamically based on the application's current directory.
+- **Absolute Paths:** Avoid using system-specific absolute paths (e.g., `C:\this\is\path`) to ensure cross-platform compatibility.
+
+#### Working Directory
+- The current working directory is determined by the location of the `.goal` file. All path references should be considered relative to this directory.
+
+#### Path Prefixes
+- `- read file.txt into %content%`: The `file.txt` should be located in the same folder as the `.goal` file.
+- `- read /file.txt into %content%`: The `file.txt` should be located in the application folder (where `.build`, `.db`, and `Start.goal` are located).
+- `- read //file.txt into %content%`: The `file.txt` should be located at the root of the drive, e.g., `C:\file.txt` on Windows or `/file.txt` on Linux/Macos.
+- `- read ///shared/file.txt into %content%`: The `file.txt` should be located on the 'shared' network drive (note: this is applicable only on Windows systems).
+
+
+### Example
+Consider you have a text file named `settings.txt` that contains personalized settings or messages. You can dynamically load content from this file based on user-specific data:
 
 ```plang
-- read 'config.json' into %configData%
-- if %configData% is not empty then call !ProcessConfig
+Start
+- set variable 'username' to 'Alice'
+- read 'settings.txt' into %settings%, load variables
+- write out %settings%
 ```
 
-In this example, we first read the contents of 'config.json' into a variable called `%configData%`. Before proceeding, we check if `%configData%` is not empty, which is a good practice to avoid errors in case the file doesn't exist or is empty. If there is data, we then call a goal named `!ProcessConfig` to handle the configuration data.
+In this example, if `settings.txt` contains a reference to `%username%`, it will be replaced with "Alice" when the file is read.
 
-# File Module Examples Documentation
+## Examples
+For practical applications and to see the File module in action, refer to the source code of the module [here](https://github.com/PLangHQ/plang/blob/main/PLang/Modules/File/Program.cs).
 
-## Read and Write Text Files
-### Read Text File
+# File Module Examples
+
+## Reading and Writing Files
+### Read a Text File
 ```plang
 - read 'example.txt' into %content%
 - write out %content%
 ```
 
-### Write to Text File
+### Write to a Text File
 ```plang
-- write to 'example.txt', 'This is a content', overwrite if exists
+- write to 'example.txt', 'Hello, world!'
 ```
 
-### Append to Text File
+### Append to a Text File
 ```plang
-- append ', some more content' to 'example.txt'
+- append ' Have a great day!' to 'example.txt'
 ```
 
-## Read and Write Excel Files
-### Read Excel File
+## Handling Excel Files
+### Read an Excel File
 ```plang
 - read 'Employees.xlsx' into %excelData%
 - loop through %excelData%, call !PrintOutExcel
 ```
 
-### Write to Excel File
+### Write to an Excel File
 ```plang
-- write %excelData% to 'Employees.xlsx', has header, overwrite if exists
+- write %excelData% to 'UpdatedEmployees.xlsx', has header, overwrite
 ```
 
-## Read and Write CSV Files
-### Read CSV File
+## Handling CSV Files
+### Read a CSV File
 ```plang
-- read 'Test5x2.csv' into %csvData%
+- read 'data.csv' into %csvData%
 - loop through %csvData%, call !PrintOutCSV
 ```
 
-### Write to CSV File
+### Write to a CSV File
 ```plang
-- write to 'Test5x2.csv', data %csvData%, overwrite if exists
+- write to 'output.csv', data %csvData%, has header, delimiter ',', overwrite
 ```
 
-## File Operations
-### Copy File
+## File Management
+### Copy a File
 ```plang
-- copy 'file2.txt' to 'file3.txt', overwrite if exists
+- copy 'source.txt' to 'destination.txt'
 ```
 
-### Delete File
+### Move a File
 ```plang
-- delete file 'file2.txt'
-- delete file 'file3.txt'
+- move 'temp.txt' to 'final.txt'
+```
+
+### Delete a File
+```plang
+- delete 'old_file.txt'
 ```
 
 ### Get File Information
 ```plang
-- get file info on 'Employees.xlsx' into %fileInfo%
-- write out 'FileInfo: %fileInfo%, CreationTime: %fileInfo.CreationTime%, LastWriteTime: %fileInfo.LastWriteTime%'
+- get file info on 'report.xlsx' into %fileInfo%
+- write out 'File Size: %fileInfo.Size%, Created On: %fileInfo.CreationTime%'
 ```
 
-## Directory Operations
-### Create Directory
+## Directory Management
+### Create a Directory
 ```plang
 - create directory 'new_folder'
 ```
 
-### Delete Directory
+### Delete a Directory
 ```plang
-- delete directory 'old_folder', include all contents
+- delete directory 'unused_folder'
 ```
 
-## File Monitoring
+## Advanced File Operations
 ### Listen to File Changes
 ```plang
-- listen to 'files/*.json', call !ProcessJson
+- listen to 'logs/*.log', call !HandleLogUpdate
 ```
 
-## Auxiliary Goals
-### PrintOutExcel
+### Read Binary File and Convert to Base64
 ```plang
-PrintOutExcel
-- write out %item.Name% - %item.Email%
+- read 'image.png' into %base64%
+- write out %base64%
 ```
 
-### PrintOutCSV
-```plang
-PrintOutCSV
-- write out %item%
-```
+These examples cover common tasks such as reading and writing text files, handling Excel and CSV files, managing files and directories, and responding to file changes. They are designed to be easily adaptable for various file handling needs in the PLang environment.
 
-Note: The examples provided are based on the most common use cases for file operations, such as reading and writing text, Excel, and CSV files, as well as performing file and directory operations. The examples are sorted by popularity and frequency of use. If a method from the `FileModule` class does not have a corresponding example, a natural language example has been created to demonstrate its usage.
+For a full list of examples demonstrating various file operations, visit [PLang File Examples](https://github.com/PLangHQ/plang/tree/main/Tests/File).
 
-For a full list of examples, visit [PLang File Examples](https://github.com/PLangHQ/plang/tree/main/Tests/File).
+## Step Options
+Each step in a PLang script can be enhanced with various handlers to manage execution flow, errors, retries, and more. Here are some useful handlers you can apply:
 
-## Step options
-When writing your plang code, you can enhance the functionality of each step with these options:
+- [CacheHandler](/modules/handlers/CachingHandler.md)
+- [ErrorHandler](/modules/handlers/ErrorHandler.md)
+- [RetryHandler](/modules/handlers/RetryHandler.md)
+- [Run and Forget](/modules/RunAndForget.md)
 
-- [CacheHandler](/modules/handlers/CachingHandler.md): Manage caching of data to improve performance.
-- [ErrorHandler](/modules/handlers/ErrorHandler.md): Handle errors gracefully without stopping your program.
-- [RetryHandler](/modules/handlers/RetryHandler.md): Automatically retry a step if it fails initially.
-: Cancel a running step under certain conditions.
-: Execute a step without waiting for its completion.
-
-Click on the links for more details on how to use each option.
+Click on the links for more details on how to use each handler.
 
 ## Advanced
-For those who want to dive deeper into the File module and understand how it maps to underlying C# functionalities, you can explore the [advanced documentation](./PLang.Modules.FileModule_advanced.md).
+For those interested in the deeper technical details or how the File module interfaces with underlying C# functionalities, refer to the advanced documentation [here](./PLang.Modules.FileModule_advanced.md).
 
 ## Created
-This documentation was created on 2024-01-02T21:51:35.
+This documentation was created on 2024-04-17T13:39:51, providing you with the latest and most accurate information to help you effectively use the File module in PLang.

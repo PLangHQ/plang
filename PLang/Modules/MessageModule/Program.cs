@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using LightInject;
+using Microsoft.Extensions.Logging;
 using Nethereum.JsonRpc.Client;
 using Newtonsoft.Json;
 using Nostr.Client.Client;
@@ -10,7 +11,9 @@ using Nostr.Client.Responses;
 using Nostr.Client.Utils;
 using Org.BouncyCastle.Asn1.X9;
 using PLang.Attributes;
+using PLang.Container;
 using PLang.Exceptions;
+using PLang.Exceptions.AskUser;
 using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Runtime;
@@ -43,6 +46,8 @@ namespace PLang.Modules.MessageModule
 		private readonly IPLangSigningService signingService;
 		private readonly IOutputStreamFactory outputStreamFactory;
 		private readonly IExceptionHandlerFactory exceptionHandlerFactory;
+		private readonly IAskUserHandlerFactory askUserHandlerFactory;
+		private readonly IPLangFileSystem fileSystem;
 		private ModuleSettings moduleSettings;
 
 		public static readonly string CurrentAccountIdx = "PLang.Modules.MessageModule.CurrentAccountIdx";
@@ -50,7 +55,8 @@ namespace PLang.Modules.MessageModule
 
 		public Program(ISettings settings, ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine,
 			ILlmServiceFactory llmServiceFactory, INostrClient client, IPLangSigningService signingService,
-			IOutputStreamFactory outputStreamFactory, IExceptionHandlerFactory exceptionHandlerFactory
+			IOutputStreamFactory outputStreamFactory, IExceptionHandlerFactory exceptionHandlerFactory,
+			IAskUserHandlerFactory askUserHandlerFactory, IPLangFileSystem fileSystem
 			) : base()
 		{
 			this.settings = settings;
@@ -61,6 +67,8 @@ namespace PLang.Modules.MessageModule
 			this.signingService = signingService;
 			this.outputStreamFactory = outputStreamFactory;
 			this.exceptionHandlerFactory = exceptionHandlerFactory;
+			this.askUserHandlerFactory = askUserHandlerFactory;
+			this.fileSystem = fileSystem;
 			this.moduleSettings = new ModuleSettings(settings, llmServiceFactory);
 		}
 
@@ -87,9 +95,9 @@ namespace PLang.Modules.MessageModule
 		}
 
 		[Description("goalName should be prefixed by ! and be whole word with possible slash(/)")]
-		public async Task Listen(string goalName, [HandlesVariable] string contentVariableName = "content", 
-				[HandlesVariable] string senderVariableName = "sender", 
-				[HandlesVariable] string eventVariableName = "__NosrtEventKey__", DateTimeOffset? listenFromDateTime = null, 
+		public async Task Listen(string goalName, [HandlesVariable] string contentVariableName = "content",
+				[HandlesVariable] string senderVariableName = "sender",
+				[HandlesVariable] string eventVariableName = "__NosrtEventKey__", DateTimeOffset? listenFromDateTime = null,
 				string[]? onlyMessageFromSenders = null)
 		{
 			var client2 = (NostrMultiWebsocketClient)client;
@@ -99,6 +107,11 @@ namespace PLang.Modules.MessageModule
 				if (onlyMessageFromSenders[i].ToString().StartsWith("npub"))
 				{
 					onlyMessageFromSenders[i] = NostrConverter.ToHex(onlyMessageFromSenders[i].ToString(), out string? hrp);
+				}
+
+				if (!NostrConverter.IsHex(onlyMessageFromSenders[i]))
+				{
+					logger.LogError($"{onlyMessageFromSenders[i]} is not valid address to listen to");
 				}
 			}
 
@@ -115,6 +128,7 @@ namespace PLang.Modules.MessageModule
 
 					var eve = JsonConvert.DeserializeObject<NostrEventResponse>(message.Text);
 					if (eve == null || eve.Event == null) return;
+
 
 					if (onlyMessageFromSenders != null && onlyMessageFromSenders.Length > 0)
 					{
@@ -141,6 +155,7 @@ namespace PLang.Modules.MessageModule
 
 		}
 
+
 		private void Send(INostrClient client, DateTimeOffset? listenFromDateTime)
 		{
 			var key = GetCurrentKey();
@@ -165,11 +180,11 @@ namespace PLang.Modules.MessageModule
 					Kinds = [NostrKind.EncryptedDm],
 					Since = since.DateTime
 				}));
-
+			
 
 			if (listenFromDateTime == null)
 			{
-				settings.Set<DateTimeOffset>(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_" + publicKey, until);
+				//settings.Set<DateTimeOffset>(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_" + publicKey, until);
 			}
 
 		}
@@ -179,204 +194,221 @@ namespace PLang.Modules.MessageModule
 			var ev = response.Event as NostrEncryptedEvent;
 			if (ev == null || ev.Content == null) return;
 
-			var memoryCache = System.Runtime.Caching.MemoryCache.Default;
+			
+
+
+			var privateKey = GetPrivateKey(ev.RecipientPubkey);
+			if (privateKey == null) return;
+
+			var container = new ServiceContainer();
+			container.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, askUserHandlerFactory, outputStreamFactory, exceptionHandlerFactory);
+
+			var content = ev.DecryptContent(privateKey);
+			var hash = ev.CreatedAt.ToString().ComputeHash() + content.ComputeHash() + ev.Pubkey.ComputeHash();
+
+			var settings = container.GetInstance<ISettings>();
 			lock (_lock)
 			{
-				var privateKey = GetPrivateKey(ev.RecipientPubkey);
-				if (privateKey == null) return;
-
-				var content = ev.DecryptContent(privateKey);
-				var hash = ev.CreatedAt.ToString().ComputeHash() + content.ComputeHash() + ev.Pubkey.ComputeHash();
-
 				//For preventing multiple calls on same message. I don't think this is the correct way, but only way I saw.
+				var hashOfLastMessage = settings.GetOrDefault(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_hash_" + publicKey, "");
+				if (hashOfLastMessage == hash) return;
+			
+				var memoryCache = System.Runtime.Caching.MemoryCache.Default;
 				if (memoryCache.Contains("NostrId_" + hash)) return;
 				memoryCache.Add("NostrId_" + hash, true, DateTimeOffset.UtcNow.AddMinutes(5));
+			}
 
-				var parameters = new Dictionary<string, object?>();
-				if (JsonHelper.IsJson(content, out object? parsedObject))
+			var parameters = new Dictionary<string, object?>();
+			if (JsonHelper.IsJson(content, out object? parsedObject))
+			{
+				parameters.Add(contentVariableName.Replace("%", ""), parsedObject);
+			}
+			else
+			{
+				parameters.Add(contentVariableName.Replace("%", ""), content);
+			}
+			parameters.Add(eventVariableName, ev);
+			parameters.Add(senderVariableName, ev.Pubkey);
+
+			var tags = ev.Tags;
+
+			if (ev.CreatedAt != null)
+			{
+				var dt = settings.GetOrDefault(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_" + publicKey, DateTimeOffset.MinValue);
+				if (ev.CreatedAt.Value < dt)
 				{
-					parameters.Add(contentVariableName.Replace("%", ""), parsedObject);
+					return;
 				}
-				else
+
+				settings.Set<DateTimeOffset>(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_" + publicKey, new DateTimeOffset(ev.CreatedAt.Value));
+				settings.Set(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_hash_" + publicKey, hash);
+			}
+			Dictionary<string, object> validationKeyValues = new Dictionary<string, object>();
+			foreach (var tag in tags)
+			{
+				if (tag.AdditionalData.Length == 1)
 				{
-					parameters.Add(contentVariableName.Replace("%", ""), content);
+					validationKeyValues.Add(tag.TagIdentifier, tag.AdditionalData[0]);
 				}
-				parameters.Add(eventVariableName, ev);
-				parameters.Add(senderVariableName, ev.Pubkey);
+			}
 
-				var tags = ev.Tags;
+			var identites = signingService.VerifySignature(settings.GetSalt(), content, "EncryptedDm", ev.Pubkey, validationKeyValues).Result;
+			parameters.AddOrReplace(identites);
 
-				if (ev.CreatedAt != null)
+			engine = container.GetInstance<IEngine>();
+			engine.Init(container);
+
+			var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
+			var task = pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName, parameters, goal);
+			if (task != null)
+			{
+				try
 				{
-					var dt = settings.GetOrDefault(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_" + publicKey, DateTimeOffset.MinValue);
-					if (ev.CreatedAt.Value < dt)
+					task.Wait();
+				}
+				catch { }
+
+				if (task.Exception != null)
+				{
+					var exception = task.Exception.InnerException ?? task.Exception;
+
+					var handler = exceptionHandlerFactory.CreateHandler();
+					var exceptionHandlerTask = handler.Handle(exception, 500, "error", exception.Message);
+					var result = exceptionHandlerTask.Result;
+					if (!result)
 					{
-						return;
+						handler.ShowError(exception, 500, "error", "Exception occured", goalStep);
 					}
-
-					settings.Set<DateTimeOffset>(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_" + publicKey, new DateTimeOffset(ev.CreatedAt.Value));
 				}
-				Dictionary<string, object> validationKeyValues = new Dictionary<string, object>();
-				foreach (var tag in tags)
+
+				var os = outputStreamFactory.CreateHandler();
+				if (os is UIOutputStream)
 				{
-					if (tag.AdditionalData.Length == 1)
-					{
-						validationKeyValues.Add(tag.TagIdentifier, tag.AdditionalData[0]);
-					}
-				}
-
-				var identites = signingService.VerifySignature(settings.GetSalt(), content, "EncryptedDm", ev.Pubkey, validationKeyValues).Result;
-				parameters.AddOrReplace(identites);
-
-				var task = pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName, parameters, goal);
-				if (task != null)
-				{
-					try
-					{
-						task.Wait();
-					}
-					catch { }
-
-					if (task.Exception != null)
-					{
-						var exception = task.Exception.InnerException ?? task.Exception;
-
-						var handler = exceptionHandlerFactory.CreateHandler();
-						var exceptionHandlerTask = handler.Handle(exception, 500, "error", exception.Message);
-						var result = exceptionHandlerTask.Result;
-						if (!result)
-						{
-							handler.ShowError(exception, 500, "error", "Exception occured", goalStep);
-						}
-					}
-
-					var os = outputStreamFactory.CreateHandler();
-					if (os is UIOutputStream)
-					{
-						((UIOutputStream)os).Flush();
-					}
-				}
-
-
-			}
-		}
-
-		public async Task SendPrivateMessageToMyself(string content)
-		{
-			await SendPrivateMessage(content, GetCurrentKey().Bech32PublicKey);
-		}
-
-		public async Task SendPrivateMessage(string content, string receiverPublicKey)
-		{
-			if (string.IsNullOrEmpty(content.Trim()))
-			{
-				logger.LogWarning("Message content empty. Nothing sent");
-				return;
-			}
-
-			if (string.IsNullOrEmpty(receiverPublicKey))
-			{
-				logger.LogWarning("Address missing. Nothing sent");
-				return;
-			}
-
-			var currentKey = GetCurrentKey();
-			var sender = GetPrivateKey(currentKey.Bech32PublicKey);
-			NostrPublicKey receiver;
-			if (!receiverPublicKey.ToLower().StartsWith("npub"))
-			{
-				receiver = NostrPublicKey.FromHex(receiverPublicKey);
-			} else
-			{
-				receiver = NostrPublicKey.FromBech32(receiverPublicKey);
-
-			}
-			
-			content = variableHelper.LoadVariables(content).ToString();
-
-			var signedContent = signingService.SignWithTimeout(content, "EncryptedDm", currentKey.HexPublicKey, DateTimeOffset.UtcNow.AddYears(100));
-			List<NostrEventTag> tags = new List<NostrEventTag>();
-			foreach (var item in signedContent)
-			{
-				tags.Add(new NostrEventTag(item.Key, item.Value.ToString()));
-			}
-
-			// Todo: Just noticed that tags are not ecrypted. Signature is therefor visible and gives information that shouldn't be public. 
-			// Need to find a way to encrypt the tags. 
-			NostrEventTags eventTags = new NostrEventTags(tags);
-
-			var ev = new NostrEvent
-			{
-				Kind = NostrKind.EncryptedDm,
-				CreatedAt = SystemTime.UtcNow(),
-				Content = content,
-				Tags = eventTags
-			};
-
-
-			var encrypted = ev.EncryptDirect(sender, receiver);
-			var signed = encrypted.Sign(sender);
-
-			var eventRequest = new NostrEventRequest(signed);
-
-			client.Send(eventRequest);
-		}
-
-		public void Dispose()
-		{
-			context.Remove(CurrentAccountIdx);
-		}
-
-		private NostrKey GetCurrentKey()
-		{
-			var keys = settings.GetValues<NostrKey>(typeof(ModuleSettings));
-			if (keys.Count == 0)
-			{
-				moduleSettings.CreateNewAccount();
-				keys = settings.GetValues<NostrKey>(typeof(ModuleSettings));
-			}
-
-			NostrKey? key = null;
-			if (context.ContainsKey(CurrentAccountIdx))
-			{
-				int idx = (int)context[CurrentAccountIdx];
-				if (idx < keys.Count)
-				{
-					key = keys[idx];
+					((UIOutputStream)os).Flush();
 				}
 			}
 
-			if (key == null)
-			{
-				key = keys.FirstOrDefault(p => p.IsDefault);
-				if (key == null)
-				{
-					key = keys[0];
-				}
-			}
 
-			return key;
-		}
-
-		private NostrPrivateKey? GetPrivateKey(string? publicKey)
-		{
-			if (publicKey == null) return null;
-
-			var keys = settings.GetValues<NostrKey>(typeof(ModuleSettings));
-			if (keys.Count == 0)
-			{
-				throw new KeyNotFoundException($"No keys exist in system");
-			}
-
-			var key = keys.FirstOrDefault(p => p.Bech32PublicKey == publicKey || p.HexPublicKey == publicKey);
-			if (key == null)
-			{
-				logger.LogError($"Could not find {publicKey} key");
-				return null;
-			}
-			return NostrPrivateKey.FromBech32(key.PrivateKeyBech32);
-
-		}
+		
 	}
+
+	public async Task SendPrivateMessageToMyself(string content)
+	{
+		await SendPrivateMessage(content, GetCurrentKey().Bech32PublicKey);
+	}
+
+	public async Task SendPrivateMessage(string content, string receiverPublicKey)
+	{
+		if (string.IsNullOrEmpty(content.Trim()))
+		{
+			logger.LogWarning("Message content empty. Nothing sent");
+			return;
+		}
+
+		if (string.IsNullOrEmpty(receiverPublicKey))
+		{
+			logger.LogWarning("Address missing. Nothing sent");
+			return;
+		}
+
+		var currentKey = GetCurrentKey();
+		var sender = GetPrivateKey(currentKey.Bech32PublicKey);
+		NostrPublicKey receiver;
+		if (!receiverPublicKey.ToLower().StartsWith("npub"))
+		{
+			receiver = NostrPublicKey.FromHex(receiverPublicKey);
+		}
+		else
+		{
+			receiver = NostrPublicKey.FromBech32(receiverPublicKey);
+
+		}
+
+		content = variableHelper.LoadVariables(content).ToString();
+
+		var signedContent = signingService.SignWithTimeout(content, "EncryptedDm", currentKey.HexPublicKey, DateTimeOffset.UtcNow.AddYears(100));
+		List<NostrEventTag> tags = new List<NostrEventTag>();
+		foreach (var item in signedContent)
+		{
+			tags.Add(new NostrEventTag(item.Key, item.Value.ToString()));
+		}
+
+		// Todo: Just noticed that tags are not ecrypted. Signature is therefor visible and gives information that shouldn't be public. 
+		// Need to find a way to encrypt the tags. 
+		NostrEventTags eventTags = new NostrEventTags(tags);
+
+		var ev = new NostrEvent
+		{
+			Kind = NostrKind.EncryptedDm,
+			CreatedAt = SystemTime.UtcNow(),
+			Content = content,
+			Tags = eventTags
+		};
+
+
+		var encrypted = ev.EncryptDirect(sender, receiver);
+		var signed = encrypted.Sign(sender);
+
+		var eventRequest = new NostrEventRequest(signed);
+
+		client.Send(eventRequest);
+	}
+
+	public void Dispose()
+	{
+		context.Remove(CurrentAccountIdx);
+	}
+
+	private NostrKey GetCurrentKey()
+	{
+		var keys = settings.GetValues<NostrKey>(typeof(ModuleSettings));
+		if (keys.Count == 0)
+		{
+			moduleSettings.CreateNewAccount();
+			keys = settings.GetValues<NostrKey>(typeof(ModuleSettings));
+		}
+
+		NostrKey? key = null;
+		if (context.ContainsKey(CurrentAccountIdx))
+		{
+			int idx = (int)context[CurrentAccountIdx];
+			if (idx < keys.Count)
+			{
+				key = keys[idx];
+			}
+		}
+
+		if (key == null)
+		{
+			key = keys.FirstOrDefault(p => p.IsDefault);
+			if (key == null)
+			{
+				key = keys[0];
+			}
+		}
+
+		return key;
+	}
+
+	private NostrPrivateKey? GetPrivateKey(string? publicKey)
+	{
+		if (publicKey == null) return null;
+
+		var keys = settings.GetValues<NostrKey>(typeof(ModuleSettings));
+		if (keys.Count == 0)
+		{
+			throw new KeyNotFoundException($"No keys exist in system");
+		}
+
+		var key = keys.FirstOrDefault(p => p.Bech32PublicKey == publicKey || p.HexPublicKey == publicKey);
+		if (key == null)
+		{
+			logger.LogError($"Could not find {publicKey} key");
+			return null;
+		}
+		return NostrPrivateKey.FromBech32(key.PrivateKeyBech32);
+
+	}
+}
 }
 

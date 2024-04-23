@@ -10,9 +10,9 @@ using static PLang.Services.CompilerService.CSharpCompiler;
 
 namespace PLang.Modules.CodeModule
 {
-    internal class Builder : BaseBuilder
+	internal class Builder : BaseBuilder
 	{
-	
+
 		private readonly IPLangFileSystem fileSystem;
 		private readonly PrParser prParser;
 		private readonly MemoryStack memoryStack;
@@ -34,7 +34,7 @@ namespace PLang.Modules.CodeModule
 		}
 
 
-		public async Task<Instruction> Build(GoalStep step, string? error = null)
+		public async Task<Instruction> Build(GoalStep step, string? error = null, int errorCount = 0)
 		{
 			if (++errorCount > 3)
 			{
@@ -43,7 +43,7 @@ namespace PLang.Modules.CodeModule
 
 			var compiler = new CSharpCompiler(fileSystem, prParser, logger);
 			var dllName = compiler.GetPreviousBuildDllNamesToExclude(step);
-			
+
 			//TODO: Any file access should have IPLangFileSystem fileSystem injected and use it as fileSystem.File... or fileSystem.Directory....
 			SetSystem(@$"Act as a senior C# developer, that converts the user statement into a C#(Version. 9) code. 
 
@@ -66,6 +66,7 @@ namespace PLang.Modules.CodeModule
 - Consider top security measures when generating code and validate code
 - When checking type and converting variables to type, use Convert.ChangeType method
 - When user defines assembly or using, include them in your answer
+- append @ sign for reserved variable in C#
 ## Rules ##
 
 ## Response information ##
@@ -95,7 +96,7 @@ check if %dirPath% exists, write to %folderExists% => ExecutePlangCode(IPlangFil
 	folderExists = fileSystem.Directory.Exists(dirPath);
 }}
 ## examples ##");
-			
+
 			if (error != null)
 			{
 				AppendToAssistantCommand(error);
@@ -107,21 +108,23 @@ check if %dirPath% exists, write to %folderExists% => ExecutePlangCode(IPlangFil
 			//go back to default extractor
 			base.SetContentExtractor(new JsonExtractor());
 			var answer = (CodeImplementationResponse)instruction.Action;
-			
-			var buildStatus = await compiler.BuildCode(answer, step, memoryStack);
-			if (buildStatus.Error != null)
+			try
 			{
-				return await Build(step, buildStatus.Error);
-			}
-			
-			var newInstruction = new Instruction(buildStatus.Implementation!);
-			newInstruction.LlmRequest = instruction.LlmRequest;
-			return newInstruction;
+				var buildStatus = await compiler.BuildCode(answer, step, memoryStack);
 
+				var newInstruction = new Instruction(buildStatus.Implementation!);
+				newInstruction.LlmRequest = instruction.LlmRequest;
+				return newInstruction;
+			}
+			catch (BuildStatusException ex)
+			{
+				logger.LogWarning($"Need to ask LLM again. {ex.Message}");
+				return await Build(step, ex.Message, ++errorCount);
+			}
 
 		}
 
-		
+
 
 
 	}

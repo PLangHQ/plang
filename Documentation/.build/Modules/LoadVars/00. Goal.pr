@@ -21,7 +21,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 25,
+      "LineNumber": 26,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -92,7 +92,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 1,
-      "LineNumber": 26,
+      "LineNumber": 27,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -159,7 +159,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 2,
-      "LineNumber": 27,
+      "LineNumber": 28,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -211,22 +211,26 @@
       "Text": "if ../PLang/Modules/%module.moduleName%Module/Builder.cs exists, then",
       "Comment": null,
       "ModuleType": "PLang.Modules.ConditionalModule",
-      "Name": "CheckModuleBuilderExistence",
-      "Description": "Check if the file 'Builder.cs' exists in the directory '../PLang/Modules/%module.moduleName%Module/'.",
-      "PrFileName": "04. CheckModuleBuilderExistence.pr",
-      "RelativePrPath": ".build\\Modules\\LoadVars\\04. CheckModuleBuilderExistence.pr",
+      "Name": "CheckModuleBuilderFileExistence",
+      "Description": "Check if the Builder.cs file exists in the specified module directory.",
+      "PrFileName": "04. CheckModuleBuilderFileExistence.pr",
+      "RelativePrPath": ".build\\Modules\\LoadVars\\04. CheckModuleBuilderFileExistence.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-27T13:45:38.0634087+00:00",
+      "Generated": "2024-04-17T12:21:10.8600103+00:00",
       "WaitForExecution": true,
-      "ErrorHandler": null,
+      "ErrorHandler": {
+        "IgnoreErrors": false,
+        "OnExceptionContainingTextCallGoal": null,
+        "ContinueToNextStep": true
+      },
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
       "Number": 3,
-      "LineNumber": 28,
+      "LineNumber": 29,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -242,7 +246,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors defined by user, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -269,9 +273,9 @@
             ]
           }
         ],
-        "model": "gpt-4",
+        "model": "gpt-4-turbo",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"CheckModuleBuilderExistence\",\n  \"StepDescription\": \"Check if the file 'Builder.cs' exists in the directory '../PLang/Modules/%module.moduleName%Module/'.\",\n  \"Modules\": [\n    \"PLang.Modules.ConditionalModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": "{\n  \"StepName\": \"CheckModuleBuilderFileExistence\",\n  \"StepDescription\": \"Check if the Builder.cs file exists in the specified module directory.\",\n  \"Modules\": [\n    \"PLang.Modules.ConditionalModule\"\n  ],\n  \"WaitForExecution\": true,\n  \"ErrorHandler\": {\n    \"IgnoreErrors\": false,\n    \"ContinueToNextStep\": true\n  }\n}"
       }
     },
     {
@@ -293,7 +297,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 4,
-      "LineNumber": 29,
+      "LineNumber": 30,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -346,13 +350,13 @@
       "Comment": null,
       "ModuleType": "PLang.Modules.ConditionalModule",
       "Name": "CheckModuleSettingsExistence",
-      "Description": "Check if the file 'ModuleSettings.cs' exists in the directory '../PLang/Modules/%module.moduleName%Module/'",
+      "Description": "Check if the file ModuleSettings.cs exists in the specified module directory.",
       "PrFileName": "06. CheckModuleSettingsExistence.pr",
       "RelativePrPath": ".build\\Modules\\LoadVars\\06. CheckModuleSettingsExistence.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-27T13:46:12.4238748+00:00",
+      "Generated": "2024-04-17T12:21:33.3472518+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -360,7 +364,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 5,
-      "LineNumber": 30,
+      "LineNumber": 31,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -376,7 +380,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors defined by user, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -403,9 +407,9 @@
             ]
           }
         ],
-        "model": "gpt-4",
+        "model": "gpt-4-turbo",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"CheckModuleSettingsExistence\",\n  \"StepDescription\": \"Check if the file 'ModuleSettings.cs' exists in the directory '../PLang/Modules/%module.moduleName%Module/'\",\n  \"Modules\": [\n    \"PLang.Modules.ConditionalModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": "{\n  \"StepName\": \"CheckModuleSettingsExistence\",\n  \"StepDescription\": \"Check if the file ModuleSettings.cs exists in the specified module directory.\",\n  \"Modules\": [\n    \"PLang.Modules.ConditionalModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     },
     {
@@ -427,7 +431,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 6,
-      "LineNumber": 31,
+      "LineNumber": 32,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -487,5 +491,5 @@
   "GoalApiInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "d56725847533b1e5c5ce32261fcdb2d3b6bf1ff49d283d32c04a0d225a0408d0"
+  "Hash": "6167916b328ba285a12d2572d478883d63371905e2c0fb0b079454993f5ab3d6"
 }

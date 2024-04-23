@@ -75,7 +75,12 @@ namespace PLang.Modules.ConditionalModule
 						}
 						else
 						{
-							var value = memoryStack.Get(parameter.Key, parameterType);
+							var key = parameter.Key;
+							if (key.ToLower().StartsWith("settings."))
+							{
+								key = "%" + key + "%";
+							}
+							var value = memoryStack.Get(key, parameterType);
 							parametersObject.Add(value);
 						}
 					}

@@ -166,7 +166,7 @@ These are the supported databases (you dont need to be precise)
 			if (dataSource.KeepHistory)
 			{
 				appendToSystem = "SqlParameters @id MUST be type System.Int64";
-				appendToSelectOneRow = "or when selecting by %id%";
+				appendToSelectOneRow = "or when filtering by %id%";
 			}
 			SetSystem(@$"Map user command to either of these c# functions: 
 
@@ -177,13 +177,15 @@ object? SelectOneRow(String sql, List<object>()? SqlParameters = null)
 
 ## Rules ##
 SelectOneRow function is used when user defines to select only one row {appendToSelectOneRow}
+Select function return multiple rows so user MUST define 'write to %variable%' and return 1 value
 Variable is defined with starting and ending %, e.g. %filePath%.
 \% is escape from start of variable, would be used in LIKE statements, then VariableNameOrValue should keep the escaped character, e.g. the user input \%%title%\%, should map to VariableNameOrValue=\%%title%\%
 SqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName). {appendToSystem}
 TypeFullName is Full name of the type in c#, System.String, System.Double, etc.
 ReturnValue rules: 
-- If user defines variable to write into, e.g. 'write to %result%' then ReturnValue=%result%, 
-- If there does not define 'write to ..' statement then Columns being returned with type if defined by user. 
+- If user defines variable to write into, e.g. 'write to %result%' or 'into %result%' then ReturnValue=%result%, 
+- If user does not define 'write to ..' statement then Columns being returned with type if defined by user.
+- Select function always writes to one variable
 - integer/int should always be System.Int64. 
 
 If table name is a variable, keep the variable in the sql statement
@@ -288,7 +290,9 @@ Int32 Update(String sql, List<object>()? SqlParameters = null)
 ## csharp function ##
 
 variable is defined with starting and ending %, e.g. %filePath%. Do not remove %
-Sql is the SQL statement that should be executed. Sql MAY NOT contain a variable(except table name), it MUST be injected using SqlParameters to prevent SQL injection
+String sql is the SQL statement that should be executed. 
+String sql can be defined as variable, e.g. %sql%
+Sql MAY NOT contain a variable(except table name), it MUST be injected using SqlParameters to prevent SQL injection
 SqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
 TypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.
 All integers are type of System.Int64.
@@ -422,10 +426,12 @@ You MUST provide SqlParameters if SQL has @parameter.
 				string tableName = item;
 				if (VariableHelper.IsVariable(tableName))
 				{
-					var obj = memoryStack.Get(tableName);
-					if (obj != null)
+					var obj = memoryStack.GetObjectValue(tableName, false);
+					if (!obj.Initiated) continue;
+
+					if (obj.Value != null)
 					{
-						tableName = obj.ToString();
+						tableName = obj.Value.ToString();
 					}
 				}
 

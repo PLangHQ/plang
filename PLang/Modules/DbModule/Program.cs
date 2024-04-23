@@ -108,6 +108,25 @@ namespace PLang.Modules.DbModule
 			}
 		}
 
+		[Description("Returns tables and views in database with the columns description")]
+		public async Task<string> GetDatabaseStructure()
+		{
+			var dataSource = await moduleSettings.GetCurrentDataSource();
+			var tablesAndViews = await Select(dataSource.SelectTablesAndViews);
+
+			StringBuilder sb = new StringBuilder();
+			foreach (var item in tablesAndViews)
+			{
+				var tbl = (dynamic)item;
+				sb.Append("TableName: " + tbl.name);
+				var sql = await moduleSettings.FormatSelectColumnsStatement(tbl.name);
+
+				var columns = await Select(sql);
+				sb.Append($"\nColumns:{JsonConvert.SerializeObject(columns)}\n\n");
+			}
+			return sb.ToString();
+		}
+
 		public async void Dispose()
 		{
 			await EndTransaction();
@@ -150,6 +169,7 @@ namespace PLang.Modules.DbModule
 					{
 						param.Add("@" + parameterName, null);
 					}
+					/*
 					else if (p.VariableNameOrValue is JArray)
 					{
 						var jarray = (JArray)p.VariableNameOrValue;
@@ -165,7 +185,7 @@ namespace PLang.Modules.DbModule
 						}
 						sql = sql.Replace(p.ParameterName.ToString(), placeholders.ToString());
 
-					}
+					}*/
 					else if (p.VariableNameOrValue.ToString().StartsWith("\\%") || p.VariableNameOrValue.ToString().EndsWith("\\%"))
 					{
 						var variableName = p.VariableNameOrValue.ToString();

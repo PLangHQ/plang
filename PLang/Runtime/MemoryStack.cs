@@ -324,6 +324,11 @@ namespace PLang.Runtime
 			}
 
 			var plan = GetVariableExecutionPlan(key, staticVariable);
+			if (plan.VariableName.Equals("settings", StringComparison.OrdinalIgnoreCase) && plan.Calls.Count > 0)
+			{
+				var value = settings.GetOrDefault<string>(typeof(Settings), plan.Calls[0], "");
+				return new ObjectValue(key, value, typeof(string), null);
+			}
 			if (!plan.ObjectValue.Initiated)
 			{
 				return plan.ObjectValue;
@@ -358,7 +363,7 @@ namespace PLang.Runtime
 			if (objectValue.Value == null) return objectValue;
 
 			var objType = objectValue.Value.GetType();
-			if (objType != typeof(JObject) || objType != typeof(JArray))
+			if (objType != typeof(JObject) && objType != typeof(JArray))
 			{
 				var json = JsonConvert.SerializeObject(objectValue.Value);
 				var jsonObject = JsonConvert.DeserializeObject(json);
@@ -426,6 +431,7 @@ namespace PLang.Runtime
 		public void PutForBuilder(string key, object? value)
 		{
 			if (string.IsNullOrEmpty(key)) return;
+			key = Clean(key);
 			//Put(key, value, false, false);
 			var objectValue = new ObjectValue(key, value, null, null, false);
 			variables.AddOrReplace(key, objectValue);
@@ -622,7 +628,7 @@ namespace PLang.Runtime
 
 			if (isVariable && str.StartsWith("%")) str = str.Substring(1);
 			if (isVariable && str.EndsWith("%")) str = str.Remove(str.Length - 1);
-
+			if (str.StartsWith("@")) str = str.Substring(1);
 			if (str.StartsWith("$.")) str = str.Remove(0, 2);
 			return str.Replace("α", ".");
 		}
@@ -794,8 +800,27 @@ namespace PLang.Runtime
 				var property = type.GetProperties().Where(p => p.Name.ToLower() == propertyDescription.ToLower()).FirstOrDefault();
 				if (property == null)
 				{
+					if (obj is string && JsonHelper.IsJson(obj, out object parsedObject)) {
+						IEnumerable<JToken> tokens;
+						if (parsedObject is JArray)
+						{
+							tokens = ((JArray)parsedObject).SelectTokens(propertyDescription);
+						} else
+						{
+							tokens = ((JObject)parsedObject).SelectTokens(propertyDescription);
+						}
+						var array = tokens.ToArray();
+						if (array.Length != 1)
+						{
+							value = array;
+						} else
+						{
+							value = array[0].ToArray();
+						}
+						
+					}
 					// Not to throw exception on build if property is not found.
-					if (!isBuilder)
+					else if (!isBuilder)
 					{
 						throw new PropertyNotFoundException($"Property '{propertyDescription}' was not found on %{variableName}%. The %{variableName}% value is '{obj}'");
 					}

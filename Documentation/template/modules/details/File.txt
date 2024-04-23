@@ -1,7 +1,7 @@
 ## For the Application Developer ##
 Files dont need to exists, the variable will simply be empty
 No need to close streams, plang with handle that
-Use relative path (/this/is/a/path) instead of absolute(c:\this\is\path)
+
 When reading file, user can define to load variables. This is usefull for example when storing llm instruction in file, here is example
 
 Filename: system.txt
@@ -17,4 +17,17 @@ Start
 - [llm] system: %system%
     write to %result%
 - write out %result%
+
+### Path info
+Use relative path (/this/is/a/path) instead of absolute(c:\this\is\path)
+
+Current working directory is always where .goal file is located
+
+'- read file.txt into %content%' the file.txt should be located in same folder as the .goal file
+'- read /file.txt into %content%' the file.txt should be located in app folder(where .build, .db and Start.goal is located)
+'- read //file.txt into %content%' the file.txt should be located in root of the drive, e.g. c:\file.txt
+'- read ///shared/file.txt into %content%' the file.txt should be located on the 'shared' drive (windows only)
+
+
+
 ## For the Application Developer ##

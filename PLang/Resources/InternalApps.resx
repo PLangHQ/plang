@@ -124,6 +124,9 @@
   <data name="bootstrap_bundle_5_0_2_min_js" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Modules\UiModule\Files\bootstrap.bundle.5.0.2.min.js;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
+  <data name="CheckGoals" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>CheckGoals.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="Debugger" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Debugger.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>

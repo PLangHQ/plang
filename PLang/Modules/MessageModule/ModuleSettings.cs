@@ -43,7 +43,8 @@ namespace PLang.Modules.MessageModule
 					"wss://relay.damus.io",
 					"wss://nostr-pub.wellorder.net",
 					"wss://offchain.pub",
-					"wss://nos.lol"
+					"wss://nos.lol",
+					"wss://relay.nostr.band", "wss://nostr.wine","wss://purplepag.es"
 				};
 				settings.SetList(typeof(ModuleSettings), relays, "NostrRelays");
 			}
