@@ -5,6 +5,7 @@ using OpenQA.Selenium.Edge;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Interactions;
 using OpenQA.Selenium.Safari;
+using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Utils;
 using System.Collections.ObjectModel;
@@ -112,6 +113,10 @@ namespace PLang.Modules.WebCrawlerModule
 
 		public async Task NavigateToUrl(string url, string browserType = "Chrome", bool headless = false, bool useUserSession = false, string userSessionPath = "", bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null)
 		{
+			if (string.IsNullOrEmpty(url))
+			{
+				throw new RuntimeException("url cannot be empty");
+			}
 			var driver = await GetDriver(browserType, headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions);
 			if (!url.StartsWith("http")) {
 				url = "https://" + url;
@@ -204,6 +209,15 @@ namespace PLang.Modules.WebCrawlerModule
 			return strings;
 		}
 		*/
+
+		public async Task<ReadOnlyCollection<IWebElement>> GetElements(string? cssSelector = null)
+		{
+			cssSelector = GetCssSelector(cssSelector);
+			var driver = await GetDriver();
+			var elements = driver.FindElements(By.CssSelector(cssSelector));
+
+			return elements;
+		}
 		
 		public async Task<List<string>> ExtractContent(bool clearHtml = true, string? cssSelector = null)
 		{		
