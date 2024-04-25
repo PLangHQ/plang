@@ -76,10 +76,10 @@ DatabaseType: Define the database type. The .net library being used is ""Npgsql.
 
 				var result = await program.Select(dataSource.SelectTablesAndViews, new List<object>() { new ParameterInfo("Database", dataSource.DbName, "System.String") });
 
-				if (result != null)
+				if (result.rows != null)
 				{
 					AppendToAssistantCommand($@"## table & views in db start ##
-{JsonConvert.SerializeObject(result)}
+{JsonConvert.SerializeObject(result.rows)}
 ## table & view in db end ##");
 				}
 			}
@@ -436,7 +436,8 @@ You MUST provide SqlParameters if SQL has @parameter.
 				}
 
 				string selectColumns = await moduleSettings.FormatSelectColumnsStatement(tableName);
-				var columnInfo = await program.Select(selectColumns);
+				var result = await program.Select(selectColumns);
+				var columnInfo = result.rows;
 				if (columnInfo != null && ((dynamic) columnInfo).Count > 0)
 				{
 					AppendToAssistantCommand($"### {tableName} table info starts ###\n{JsonConvert.SerializeObject(columnInfo)}\n### table info ends ###");

@@ -47,7 +47,7 @@ namespace PLangTests.Modules.DbModule
 
 			settings.GetValues<DataSource>(typeof(ModuleSettings)).Returns(dataSources);
 
-			await p.SetDataSouceName("MainDb");
+			await p.SetDataSourceName("MainDb");
 
 			var dataSource = context[ReservedKeywords.CurrentDataSourceName] as DataSource;
 			Assert.AreEqual("MainDb", dataSource.Name);
@@ -86,7 +86,7 @@ namespace PLangTests.Modules.DbModule
 			dict.Add(new ParameterInfo("name", "Jim Harper", "System.String"));
 			dict.Add(new ParameterInfo("address", "1725 Slough Avenue in Scranton, PA", "System.String"));
 			dict.Add(new ParameterInfo("phone", "717 555 0178", "System.String"));
-			int rows = await p.Insert("INSERT INTO users (name, address, phone) VALUES (@name, @address, @phone);SELECT last_insert_rowid();", dict);
+			int rows = (await p.Insert("INSERT INTO users (name, address, phone) VALUES (@name, @address, @phone);SELECT last_insert_rowid();", dict)).rowsAffected;
 			Assert.AreEqual(1, rows);
 
 			result = await p.Select("SELECT * FROM users");
@@ -146,7 +146,7 @@ namespace PLangTests.Modules.DbModule
 			dict.Add(new ParameterInfo("name", "Jim Harper", "System.String"));
 			dict.Add(new ParameterInfo("address", "1725 Slough Avenue in Scranton, PA", "System.String"));
 			dict.Add(new ParameterInfo("phone", "717 555 0178", "System.String"));
-			int rows = await p.Insert("INSERT INTO users (name, address, phone) VALUES (@name, @address, @phone);SELECT last_insert_rowid();", dict);
+			int rows = (await p.Insert("INSERT INTO users (name, address, phone) VALUES (@name, @address, @phone);SELECT last_insert_rowid();", dict)).rowsAffected;
 			Assert.AreEqual(1, rows);
 
 			result = await p.Select("SELECT * FROM users");

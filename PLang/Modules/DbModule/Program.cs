@@ -16,6 +16,7 @@ using System.Data;
 using System.Globalization;
 using System.Text;
 using static Dapper.SqlMapper;
+using PLang.Errors;
 
 namespace PLang.Modules.DbModule
 {
@@ -54,14 +55,15 @@ namespace PLang.Modules.DbModule
 			await moduleSettings.CreateDataSource(name, dbType, setAsDefaultForApp, keepHistoryEventSourcing);
 		}
 
-		public async Task SetDataSouceName(string name)
+		public async Task<Error?> SetDataSourceName(string name)
 		{
 			var dataSource = await moduleSettings.GetDataSource(name);
 			if (dataSource == null)
 			{
-				throw new ArgumentException($"Datasource with the name '{name}' could not be found. You need to create a datasource first, e.g. \n\n- Create data source {name}\n- Create postgres data source {name}, set as default\n- Create sqlserver data source {name}, keep history");
+				return new Error("DataSourceNotFound", $"Datasource with the name '{name}' could not be found. You need to create a datasource first, e.g. \n\n- Create data source {name}\n- Create postgres data source {name}, set as default\n- Create sqlserver data source {name}, keep history");
 			}
 			context[ReservedKeywords.CurrentDataSourceName] = dataSource;
+			return null;
 		}
 
 
@@ -90,32 +92,50 @@ namespace PLang.Modules.DbModule
 			}
 		}
 
-		public async Task LoadExtension(string fileName, string? procName = null)
+		public async Task Rollback()
 		{
-			fileName = GetPath(fileName);
-			if (!fileSystem.File.Exists(fileName))
+			if (context.TryGetValue(DbTransactionContextKey, out object? transaction) && transaction != null)
 			{
-				throw new RuntimeException("File could not be found.");
+				((IDbTransaction)transaction).Rollback();
+				context.Remove(DbTransactionContextKey);
 			}
 
-			if (dbConnection is SqliteConnection)
+			if (context.TryGetValue(DbConnectionContextKey, out object? connection) && connection != null)
 			{
-				((SqliteConnection)dbConnection).LoadExtension(fileName, procName); return;
-			}
-			else
-			{
-				logger.LogWarning("Loading extension only works for Sqlite");
+				((IDbConnection)connection).Close();
+				context.Remove(DbConnectionContextKey);
 			}
 		}
 
+		public async Task<Error?> LoadExtension(string fileName, string? procName = null)
+		{
+			if (dbConnection is not SqliteConnection)
+			{
+				return new Error("NotSupported", "Loading extension only works for Sqlite");
+			}
+			
+			fileName = GetPath(fileName);
+			if (!fileSystem.File.Exists(fileName))
+			{
+				return new Error("FileNotFound", "File could not be found.");
+			}
+
+			((SqliteConnection)dbConnection).LoadExtension(fileName, procName); 
+			return null;
+			
+		}
+
 		[Description("Returns tables and views in database with the columns description")]
-		public async Task<string> GetDatabaseStructure()
+		public async Task<(string, List<Error>)> GetDatabaseStructure()
 		{
 			var dataSource = await moduleSettings.GetCurrentDataSource();
-			var tablesAndViews = await Select(dataSource.SelectTablesAndViews);
-
+			var result = await Select(dataSource.SelectTablesAndViews);
+			if (result.errors.Count > 0)
+			{
+				return (String.Empty, result.errors);
+			}
 			StringBuilder sb = new StringBuilder();
-			foreach (var item in tablesAndViews)
+			foreach (var item in result.rows)
 			{
 				var tbl = (dynamic)item;
 				sb.Append("TableName: " + tbl.name);
@@ -124,7 +144,7 @@ namespace PLang.Modules.DbModule
 				var columns = await Select(sql);
 				sb.Append($"\nColumns:{JsonConvert.SerializeObject(columns)}\n\n");
 			}
-			return sb.ToString();
+			return (sb.ToString(), new());
 		}
 
 		public async void Dispose()
@@ -134,10 +154,10 @@ namespace PLang.Modules.DbModule
 
 		public record ParameterInfo(string ParameterName, object VariableNameOrValue, string TypeFullName);
 
-		private (IDbConnection connection, DynamicParameters param, string sql) Prepare(string sql, List<object>? Parameters = null, bool isInsert = false)
+		private (IDbConnection connection, DynamicParameters param, string sql, List<Error> errors) Prepare(string sql, List<object>? Parameters = null, bool isInsert = false)
 		{
 			IDbConnection connection = context.ContainsKey(DbConnectionContextKey) ? context[DbConnectionContextKey] as IDbConnection : dbConnection;
-
+			List<Error> errors = new List<Error>();
 			var param = new DynamicParameters();
 			if (Parameters != null)
 			{
@@ -202,22 +222,25 @@ namespace PLang.Modules.DbModule
 							postfix = "%";
 						}
 						var variableValue = variableHelper.LoadVariables(variableName);
-						object value = ConvertObjectToType(variableValue, p.TypeFullName, parameterName);
+						(object value, Error error) = ConvertObjectToType(variableValue, p.TypeFullName, parameterName);
+						if (error != null) errors.Add(error);
+
 						param.Add("@" + parameterName, prefix + value + postfix);
 					}
 					else
 					{
-						object value = ConvertObjectToType(p.VariableNameOrValue, p.TypeFullName, parameterName);
+						(object value, Error error) = ConvertObjectToType(p.VariableNameOrValue, p.TypeFullName, parameterName);
+						if (error != null) errors.Add(error);
 						param.Add("@" + parameterName, value);
 					}
 				}
 			}
 			if (connection.State != ConnectionState.Open) connection.Open();
-			return (connection, param, sql);
+			return (connection, param, sql, errors);
 
 		}
 
-		private object ConvertObjectToType(object obj, string typeFullName, string parameterName)
+		private (object?, Error?) ConvertObjectToType(object obj, string typeFullName, string parameterName)
 		{
 
 			Type targetType = Type.GetType(typeFullName);
@@ -225,7 +248,7 @@ namespace PLang.Modules.DbModule
 			{
 				if (targetType == null)
 				{
-					throw new TypeLoadException($"Could not find {typeFullName}");
+					return (null, new Error("TypeNotFound", $"Could not find {typeFullName}"));
 				}
 
 				var parseMethod = targetType.GetMethod("Parse", new[] { typeof(string) });
@@ -234,26 +257,26 @@ namespace PLang.Modules.DbModule
 					try
 					{
 						string value = FormatType(obj.ToString(), targetType);
-						return parseMethod.Invoke(null, new object[] { value });
+						return (parseMethod.Invoke(null, [ value ]), null);
 					}
 					catch { }
 				}
 
 				if (targetType == typeof(string) && (obj is JObject || obj is JArray || obj is JProperty || obj is JValue))
 				{
-					return obj.ToString();
+					return (obj.ToString(), null);
 				}
 
-				return Convert.ChangeType(obj, targetType);
+				return (Convert.ChangeType(obj, targetType), null);
 			}
 			catch (Exception ex)
 			{
 				if (!AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool _) &&
 					!AppContext.TryGetSwitch(ReservedKeywords.CSharpDebug, out bool _))
 				{
-					throw;
+					return (null, new Error("ConvertFailed", $"Error converting {obj} to type {targetType} for parameter {parameterName}", exception: ex));
 				}
-				throw new RuntimeException($"Error converting {obj} to type {targetType} for parameter {parameterName}", goal, ex);
+				return (null, new Error("ConvertFailed", $"Error converting {obj} to type {targetType} for parameter {parameterName}", exception: ex));
 
 			}
 
@@ -301,12 +324,16 @@ namespace PLang.Modules.DbModule
 		}
 
 
-		public async Task<int> Execute(string sql)
+		public async Task<(int, List<Error>?)> Execute(string sql)
 		{
 			try
 			{
 				int rowsAffected = 0;
 				var prepare = Prepare(sql, null);
+				if (prepare.errors.Count > 0) {
+					return (0, prepare.errors);
+				}
+
 				var transaction = context[DbTransactionContextKey] as IDbTransaction;
 				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 				{
@@ -318,7 +345,7 @@ namespace PLang.Modules.DbModule
 				}
 
 				Done(prepare.connection);
-				return rowsAffected;
+				return (rowsAffected, null);
 			}
 			catch (Exception ex)
 			{
@@ -327,10 +354,10 @@ namespace PLang.Modules.DbModule
 					if (ex.ToString().Contains("already exists") || ex.ToString().Contains("duplicate column name"))
 					{
 						ShowWarning(ex);
-						return 1;
+						return (1, null);
 					}
 				}
-				throw;
+				return (0, [new Error("ExecuteSql", ex.Message, null, ex)]);
 
 			}
 		}
@@ -347,39 +374,48 @@ namespace PLang.Modules.DbModule
 
 		}
 
-		public async Task<object?> SelectOneRow(string sql, List<object>? SqlParameters = null)
+		public async Task<(object?, List<Error> errors)> SelectOneRow(string sql, List<object>? SqlParameters = null)
 		{
-			var rows = await Select(sql, SqlParameters);
-			if (rows.Count == 0)
+			var result = await Select(sql, SqlParameters);
+			if (result.errors.Count > 0)
 			{
-				if (this.function == null || this.function.ReturnValue == null || this.function.ReturnValue.Count == 1) return null;
+				return (null, result.errors);
+			}
+
+			if (result.rows.Count == 0)
+			{
+				if (this.function == null || this.function.ReturnValue == null || this.function.ReturnValue.Count == 1) return (null, []);
 
 				var dict = new ReturnDictionary<string, object?>();
 				foreach (var rv in this.function.ReturnValue)
 				{
 					dict.Add(rv.VariableName, GetDefaultValue(rv.Type));
 				}
-				return dict;
+				return (dict, null);
 			}
 
-			var rowsAsList = ((IList<object>)rows);
+			var rowsAsList = ((IList<object>)result.rows);
 			var columns = ((IDictionary<string, object>)rowsAsList[0]);
 
 			if (columns.Count == 1)
 			{
-				return columns.FirstOrDefault().Value;
+				return (columns.FirstOrDefault().Value, null);
 			}
-			return rows[0];
+			return (result.rows[0], null);
 
 		}
 
-		public async Task<List<object>> Select(string sql, List<object>? SqlParameters = null)
+		public async Task<(List<object> rows, List<Error> errors)> Select(string sql, List<object>? SqlParameters = null)
 		{
 			var prep = Prepare(sql, SqlParameters);
+			if (prep.errors.Count > 0)
+			{
+				return (new(),  prep.errors);
+			}
 			var rows = (await prep.connection.QueryAsync<dynamic>(prep.sql, prep.param)).ToList();
 			Done(prep.connection);
 
-			return (rows == null) ? new() : rows;
+			return (rows == null) ? (new(), null) : (rows, null);
 		}
 
 		private object? GetDefaultValue(string strType)
@@ -393,9 +429,13 @@ namespace PLang.Modules.DbModule
 			return type.IsValueType && !type.IsPrimitive ? Activator.CreateInstance(type) : null;
 		}
 
-		public async Task<int> Update(string sql, List<object>? SqlParameters = null)
+		public async Task<(int, List<Error>)> Update(string sql, List<object>? SqlParameters = null)
 		{
 			var prepare = Prepare(sql, SqlParameters);
+			if (prepare.errors.Count > 0)
+			{
+				return (0, prepare.errors);
+			}
 			int result;
 			if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 			{
@@ -406,13 +446,17 @@ namespace PLang.Modules.DbModule
 				result = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param);
 			}
 			Done(prepare.connection);
-			return result;
+			return (result, []);
 		}
 
-		public async Task<int> Delete(string sql, List<object>? SqlParameters = null)
+		public async Task<(int, List<Error>)> Delete(string sql, List<object>? SqlParameters = null)
 		{
 			int rowsAffected;
 			var prepare = Prepare(sql, SqlParameters);
+			if (prepare.errors.Count > 0)
+			{
+				return (0, prepare.errors);
+			}
 			if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 			{
 				rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
@@ -422,15 +466,19 @@ namespace PLang.Modules.DbModule
 				rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param);
 			}
 			Done(prepare.connection);
-			return rowsAffected;
+			return (rowsAffected, []);
 		}
 
 		[Description("Basic insert statement. Will return affected row count")]
-		public async Task<int> Insert(string sql, List<object>? SqlParameters = null)
+		public async Task<(int rowsAffected, List<Error> errors)> Insert(string sql, List<object>? SqlParameters = null)
 		{
 
 			int rowsAffected = 0;
 			var prepare = Prepare(sql, SqlParameters, true);
+			if (prepare.errors.Count > 0)
+			{
+				return (0, prepare.errors);
+			}
 			try
 			{
 
@@ -448,7 +496,7 @@ namespace PLang.Modules.DbModule
 				if (GoalHelper.IsSetup(goalStep) && ex.ToString().Contains("duplicate key"))
 				{
 					ShowWarning(ex);
-					return rowsAffected;
+					return (rowsAffected, []);
 				}
 				throw;
 			}
@@ -456,19 +504,23 @@ namespace PLang.Modules.DbModule
 			{
 				Done(prepare.connection);
 			}
-			return rowsAffected;
+			return (rowsAffected, []);
 
 		}
 		[Description("Insert statement that will return the id of the inserted row. Use only if user requests the id")]
-		public async Task<object> InsertAndSelectIdOfInsertedRow(string sql, List<object>? SqlParameters = null)
+		public async Task<(object, List<Error>)> InsertAndSelectIdOfInsertedRow(string sql, List<object>? SqlParameters = null)
 		{
 			var prepare = Prepare(sql, SqlParameters, true);
+			if (prepare.errors.Count > 0)
+			{
+				return (0, prepare.errors);
+			}
 
 			if (eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
 			{
 				var value = await prepare.connection.QuerySingleOrDefaultAsync(prepare.sql, prepare.param) as IDictionary<string, object>;
 				Done(prepare.connection);
-				return value.FirstOrDefault().Value;
+				return (value.FirstOrDefault().Value, []);
 			}
 			else
 			{
@@ -477,27 +529,32 @@ namespace PLang.Modules.DbModule
 
 				if (prepare.param.ParameterNames.Contains("id"))
 				{
-					return prepare.param.Get<long>("id");
+					return (prepare.param.Get<long>("id"), []);
 				}
 
-				return null;
+				return (null, []);
 			}
 
 		}
 
 		[Description("Insert a list(bulk) into database, return number of rows inserted")]
-		public async Task<int> InsertBulk(string tableName, List<object> items)
+		public async Task<(int, List<Error>)> InsertBulk(string tableName, List<object> items)
 		{
 			var dataSource = await moduleSettings.GetCurrentDataSource();
 			var sqlSelectColumns = await moduleSettings.FormatSelectColumnsStatement(tableName);
-			var columnsInTable = await Select(sqlSelectColumns) as List<dynamic>;
+			var result = await Select(sqlSelectColumns);
+			if (result.errors.Count > 0)
+			{
+				return (0, result.errors);
+			}
+			var columnsInTable = result.rows as List<dynamic>;
 			if (columnsInTable == null)
 			{
-				throw new RuntimeException($"Table {tableName} could not be found");
+				return (0, [new Error("TableNotFound", $"Table {tableName} could not be found")]);
 			}
 
 			string? sql = GetBulkSql(tableName, columnsInTable, items);
-			if (sql == null) return 0;
+			if (sql == null) return (0, []);
 
 			var param = new List<object>();
 
@@ -529,12 +586,18 @@ namespace PLang.Modules.DbModule
 					}
 
 				}
-				affectedRows += await Insert(sql, param);
+				var insertResult = await Insert(sql, param);
+				if (insertResult.errors.Count > 0)
+				{
+					await Rollback();
+					return (0, insertResult.errors);
+				}
+				affectedRows += (await Insert(sql, param)).Item1;
 			}
 
 			await EndTransaction();
 
-			return affectedRows;
+			return (affectedRows, []);
 
 		}
 
@@ -566,22 +629,25 @@ namespace PLang.Modules.DbModule
 			return "You will be provided with tables that already exists in the database";
 		}
 
-		public async override Task<string> GetAdditionalAssistantErrorInfo()
+		public async override Task<(string, List<Error>)> GetAdditionalAssistantErrorInfo()
 		{
 			var dataSource = await moduleSettings.GetCurrentDataSource();
 
 			List<object> parameters = new List<object>();
 			parameters.Add(new ParameterInfo("Database", dataSource.DbName, "System.String"));
 
-			(var connection, var par, _) = Prepare("", parameters);
-
+			(var connection, var par, _, var errors) = Prepare("", parameters);
+			if (errors.Count > 0)
+			{
+				return (string.Empty, errors);
+			}
 			var result = await connection.QueryAsync(dataSource.SelectTablesAndViews, par);
 
 
-			return @$"## tables in database ##
+			return (@$"## tables in database ##
 {JsonConvert.SerializeObject(result)}
 ## tables in database ##
-";
+", []);
 		}
 
 
