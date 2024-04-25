@@ -16,6 +16,7 @@ using System.Net;
 using System.Reflection;
 using static PLang.Modules.BaseBuilder;
 using Instruction = PLang.Building.Model.Instruction;
+using PLang.Errors;
 
 namespace PLang.Modules
 {
@@ -335,9 +336,10 @@ namespace PLang.Modules
 		{
 			this.container.RegisterForPLangUserInjections(type, pathToDll, globalForWholeApp, environmentVariable, environmentVariableValue);
 		}
-		public virtual async Task<string> GetAdditionalAssistantErrorInfo()
+
+		public virtual async Task<(string, List<Error>)> GetAdditionalAssistantErrorInfo()
 		{
-			return "";
+			return (string.Empty, []);
 		}
 		public virtual async Task<string> GetAdditionalSystemErrorInfo()
 		{
@@ -380,10 +382,10 @@ namespace PLang.Modules
 			return path;
 		}
 
-		protected async Task<string?> AssistWithError(string error, GoalStep step, GenericFunction function)
+		protected async Task<(string?, List<Error>)> AssistWithError(string error, GoalStep step, GenericFunction function)
 		{
 			AppContext.TryGetSwitch("llmerror", out bool isEnabled);
-			if (!isEnabled) return null;
+			if (!isEnabled) return (null, []);
 
 			string additionSystemErrorInfo = await GetAdditionalSystemErrorInfo();
 			string system = @$"You are c# expert developer debugging an error that c# throws.
@@ -398,7 +400,12 @@ You will get description of what the function should do.
 
 Be straight to the point, point out the most obvious reason and how to fix in plang source code. 
 Be Concise";
-			string additionalInfo = await GetAdditionalAssistantErrorInfo();
+			
+			(string additionalInfo, var errors) = await GetAdditionalAssistantErrorInfo();
+			if (errors.Count > 0)
+			{
+				return (null, errors);
+			}
 			string assistant = @$"
 ## plang source code ##
 {step.Text}
@@ -419,11 +426,11 @@ Be Concise";
 
 				var result = await llmServiceFactory.CreateHandler().Query<string>(llmRequest);
 
-				return result?.ToString();
+				return (result?.ToString(), []);
 			}
 			catch
 			{
-				return "Could not connect to LLM service";
+				return (null, [ new Error("ErrorToConnect", "Could not connect to LLM service")]);
 			}
 
 
