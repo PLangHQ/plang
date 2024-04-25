@@ -63,7 +63,7 @@ variable is defined with starting and ending %, e.g. %filePath%
 
 FunctionName: Select the correct function from list of available functions based on user command
 TableNames: Table names in sql statement, leave variables as is
-DatabaseType: Define the database type. The .net library being used is ""Npgsql.NpgsqlConnection"", determine the database type from the library");
+DatabaseType: Define the database type. The .net library being used is {dataSource.TypeFullName}, determine the database type from the library");
 
 
 			SetAssistant($@"## functions available defined in csharp ##
@@ -105,7 +105,7 @@ DatabaseType: Define the database type. The .net library being used is ""Npgsql.
 			}
 			else if (functionInfo.FunctionName == "CreateTable")
 			{
-				return await CreateCreateTable(goalStep, program, functionInfo, dataSource);
+				return await CreateTable(goalStep, program, functionInfo, dataSource);
 			} else if (functionInfo.FunctionName == "Select" || functionInfo.FunctionName == "SelectOneRow")
 			{
 				return await CreateSelect(goalStep, program, functionInfo, dataSource);
@@ -211,7 +211,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 			return await base.Build(goalStep);
 		}
 
-		private Task<Instruction> CreateCreateTable(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
+		private Task<Instruction> CreateTable(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
 		{
 			string databaseType = dataSource.TypeFullName.Substring(dataSource.TypeFullName.LastIndexOf(".") + 1);
 			string keepHistoryCommand = "";

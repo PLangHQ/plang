@@ -1,4 +1,5 @@
-﻿using PLang.Attributes;
+﻿using Newtonsoft.Json.Linq;
+using PLang.Attributes;
 using PLang.Interfaces;
 using System.ComponentModel;
 using System.Text;
@@ -129,7 +130,14 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		{
 			if (value == null) return value;
 
+
+
 			object? val = memoryStack.Get(key);
+			if (val != null && val is string && (value is JObject || value is JProperty || value is JValue))
+			{
+				value = value.ToString();
+			}
+
 			if ((val == null || val is string) && value is string)
 			{
 				if (val == null) val = "";
