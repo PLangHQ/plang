@@ -74,6 +74,26 @@ These examples show how you can use `%Identity%` in your plang goal files to man
 Anyone who creates an HTTP request to your service using the plang language automatically sends `%Identity%`, unless defined specifically not to send it.
 
 `%Identity%` is a long string that your service can use as proof that a specific user is making the request and the content has not been manipulated.
+#### Create user
+
+Let's say you have a users table where you want maintain your users. In this example, the users table contains a column called `Identity`. To create a user you simply do
+
+```plang
+CreateUser
+- insert into users, %Identity%, write to %userId%
+- write out 'New user id: %userId%
+```
+
+#### Load user
+
+To load a user from your database, you retrieve him by the `%Identity%`
+
+```plang
+LoadUser
+- select id from users where %Identity%
+- write out 'This is user id: %id%'
+```
+
 
 #### Managing User Data
 This is an example of a GET service that would be located at http://myservice.com/api/GetBalance
