@@ -40,13 +40,7 @@ CreateUser
 
 These 6 steps replace over [100+ lines of C#/Java/Typescript code](https://gist.github.com/ingig/491ac9b13d65f40cc24ee5aed0408be3), or if you do clean code programming, dozens of files.
 
-## Efficency gains
-
-Programming in plang will give you
-
-- Fewer lines to write (up to 90%) = fewer bugs, more secure, easier to maintain
-- Gives higher level overview of code which gives new perspectives
-- Will become most stable, secure and private app you have ever written without having to think about it
+> [!IMPORTANT] **You do not create user in this way in Plang, it is much [simpler](./Identity.md). This example is only provided for familiarity.**
 
 ## Installation
 
