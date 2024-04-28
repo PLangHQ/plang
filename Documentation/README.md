@@ -40,7 +40,7 @@ CreateUser
 
 These 6 steps replace over [100+ lines of C#/Java/Typescript code](https://gist.github.com/ingig/491ac9b13d65f40cc24ee5aed0408be3), or if you do clean code programming, dozens of files.
 
-> [!IMPORTANT] **You do not create user in this way in Plang, it is much [simpler](./Identity.md). This example is only provided for familiarity.**
+> [!TIP] **You do not create user in this way in Plang, it is much [simpler](./Identity.md). This example is only provided for familiarity.**
 
 ## Installation
 
