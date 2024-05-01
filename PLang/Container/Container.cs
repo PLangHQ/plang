@@ -9,10 +9,10 @@ using Nethereum.Web3.Accounts;
 using Nostr.Client.Client;
 using PLang.Building;
 using PLang.Building.Parsers;
+using PLang.Errors.Handlers;
 using PLang.Events;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
-using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Modules;
 using PLang.Modules.MessageModule;
@@ -49,14 +49,14 @@ namespace PLang.Container
 
 
 		public static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeAppStartupPath,
-			IAskUserHandlerFactory askUserHandlerFactory, IOutputStreamFactory outputStreamFactory, IExceptionHandlerFactory exceptionHandlerFactory)
+			IAskUserHandlerFactory askUserHandlerFactory, IOutputStreamFactory outputStreamFactory, IErrorHandlerFactory exceptionHandlerFactory)
 		{
 			container.RegisterBaseForPLang(absoluteAppStartupPath, relativeAppStartupPath);
 			RegisterModules(container);
 			container.RegisterForPLang(absoluteAppStartupPath, relativeAppStartupPath);
 
 			container.RegisterInstance<IOutputStreamFactory>(outputStreamFactory);
-			container.RegisterInstance<IExceptionHandlerFactory>(exceptionHandlerFactory);
+			container.RegisterInstance<IErrorHandlerFactory>(exceptionHandlerFactory);
 			container.RegisterInstance<IAskUserHandlerFactory>(askUserHandlerFactory);
 
 
@@ -83,7 +83,7 @@ namespace PLang.Container
 
 			container.RegisterOutputStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IRazorEngine>(), container.GetInstance<IPLangFileSystem>(), uiContext, onFlush));
 			container.RegisterAskUserHandlerFactory(typeof(AskUserWindowHandler), true, new AskUserWindowHandler(askUserDialog));
-			container.RegisterExceptionHandlerFactory(typeof(UiExceptionHandler), true, new UiExceptionHandler(errorDialog, container.GetInstance<IAskUserHandlerFactory>()));
+			container.RegisterExceptionHandlerFactory(typeof(UiErrorHandler), true, new UiErrorHandler(errorDialog, container.GetInstance<IAskUserHandlerFactory>()));
 
 			
 
@@ -97,7 +97,7 @@ namespace PLang.Container
 
 			container.RegisterOutputStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
 			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler());
-			container.RegisterExceptionHandlerFactory(typeof(ConsoleExceptionHandler), true, new ConsoleExceptionHandler(container.GetInstance<IAskUserHandlerFactory>()));
+			container.RegisterExceptionHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler(container.GetInstance<IAskUserHandlerFactory>()));
 
 
 		}

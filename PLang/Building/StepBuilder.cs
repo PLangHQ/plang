@@ -2,9 +2,9 @@
 using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
 using PLang.Building.Model;
+using PLang.Errors.Handlers;
 using PLang.Events;
 using PLang.Exceptions;
-using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
@@ -31,12 +31,12 @@ namespace PLang.Building
 		private readonly ITypeHelper typeHelper;
 		private readonly MemoryStack memoryStack;
 		private readonly VariableHelper variableHelper;
-		private readonly IExceptionHandlerFactory exceptionHandlerFactory;
+		private readonly IErrorHandlerFactory exceptionHandlerFactory;
 		private readonly PLangAppContext context;
 
 		public StepBuilder(Lazy<ILogger> logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 					IInstructionBuilder instructionBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
-					MemoryStack memoryStack, VariableHelper variableHelper, IExceptionHandlerFactory exceptionHandlerFactory, PLangAppContext context)
+					MemoryStack memoryStack, VariableHelper variableHelper, IErrorHandlerFactory exceptionHandlerFactory, PLangAppContext context)
 		{
 			this.fileSystem = fileSystem;
 			this.llmServiceFactory = llmServiceFactory;

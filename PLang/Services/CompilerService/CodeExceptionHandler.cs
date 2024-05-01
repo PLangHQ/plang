@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Razor.Language;
+using NBitcoin.Protocol;
 using PLang.Building.Model;
+using PLang.Errors;
 using PLang.Exceptions;
 using PLang.Utils;
 using System.Text;
@@ -10,22 +12,31 @@ namespace PLang.Services.CompilerService
 	public class CodeExceptionHandler
 	{
 
-		public static void Handle(Exception ex, Implementation? implementation, GoalStep step)
+		public static IError GetError(Exception ex, Implementation? implementation, GoalStep step)
 		{
 			if (implementation == null)
 			{
 				implementation = new Implementation("No namespace", "No name provided", "No code provided", null, new(), new(), null, null);
 			}
 
+			string message = FormatMessage(ex, implementation, step);
+			return new StepError(message, step, "CodeException", ex);
+
+		}
+
+		private static string FormatMessage(Exception ex, Implementation implementation, GoalStep step)
+		{
+			string message = "";
 			if (ex.InnerException == null)
 			{
-				throw new RuntimeStepException($@"{ex.Message} in step {step.Text}. 
+
+				message = $@"{ex.Message} in step {step.Text}. 
 You might have to define your step bit more, try including variable type, such as %name%(string), %age%(number), %tags%(array).
 
 The C# code is this:
 {implementation.Code}
 
-", step);
+";
 			}
 
 			var lowestException = ExceptionHelper.GetLowestException(ex);
@@ -33,14 +44,14 @@ The C# code is this:
 
 			var inner = ex.InnerException;
 			var match = Regex.Match(inner.StackTrace, "cs:line (?<LineNr>[0-9]+)");
-			if (!match.Success) return;
+			if (!match.Success) return message;
 
 			var strLineNr = match.Groups["LineNr"].Value;
-			if (!int.TryParse(strLineNr, out int lineNr)) return;
+			if (!int.TryParse(strLineNr, out int lineNr)) return message;
 
 			(string errorLine, lineNr) = GetErrorLine(lineNr, implementation, inner.Message);
 
-			throw new RuntimeStepException($@"{inner.Message} in line {lineNr} in C# code 👇. 
+			message += Environment.NewLine + $@"{inner.Message} in line {lineNr} in C# code 👇. 
 
 You might have to define your step bit more, try including variable type, such as %name%(string), %age%(number), %tags%(array).
 
@@ -51,8 +62,8 @@ The error occured in this line:
 The C# code is this:
 {InsertLineNumbers(implementation.Code)}
 
-", step, inner);
-
+";
+			return message;
 		}
 
 		private static string InsertLineNumbers(string code)

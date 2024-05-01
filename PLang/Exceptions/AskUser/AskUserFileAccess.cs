@@ -1,27 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static PLang.Runtime.Startup.ModuleLoader;
+﻿using PLang.Errors;
 
 namespace PLang.Exceptions.AskUser
 {
 
-	public class AskUserFileAccess : AskUserException
+	public record AskUserFileAccess(string App, string Path, string Message, Func<object[], Task<IError?>> Callback) : AskUserError(Message, CreateAdapter(Callback))
 	{
-		private readonly string app;
-		private readonly string path;
-
-		public AskUserFileAccess(string app, string path, string message, Func<string, string, string, Task>? callback = null) : base(message, CreateAdapter(callback))
-		{
-			this.app = app;
-			this.path = path;
-		}
-
+		//public new Func<string, string, string, Task<IError?>>? Callback { get; init; }
 		public override async Task InvokeCallback(object answer)
 		{
-			await Callback.Invoke([app, path, answer]);
+			await Callback.Invoke([App, Path, Message]);
 
 		}
 	}

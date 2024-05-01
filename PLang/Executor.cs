@@ -4,8 +4,8 @@ using PLang.Building;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
+using PLang.Errors.Handlers;
 using PLang.Exceptions;
-using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Resources;
 using PLang.Runtime;
@@ -14,6 +14,7 @@ using PLang.Utils;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Reflection;
+using PLang.Errors;
 
 namespace PLang
 {
@@ -22,7 +23,7 @@ namespace PLang
 		private readonly IServiceContainer container;
 		private readonly PrParser prParser;
 		private readonly IPLangFileSystem fileSystem;
-		private readonly IExceptionHandler exceptionHandler;
+		private readonly IErrorHandler errorHandler;
 		private IEngine engine;
 
 		private IBuilder builder;
@@ -224,8 +225,9 @@ namespace PLang
 			}
 			catch (Exception ex)
 			{
-				var factory = container.GetInstance<IExceptionHandlerFactory>();
-				await factory.CreateHandler().Handle(ex, 500, "error", ex.Message);
+				var error = new Error(ex.Message, Exception: ex);
+				var factory = container.GetInstance<IErrorHandlerFactory>();
+				await factory.CreateHandler().Handle(error, 500, "error", ex.Message);
 			}
 		}
 

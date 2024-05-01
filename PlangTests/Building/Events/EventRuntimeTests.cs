@@ -9,6 +9,7 @@ using PLangTests;
 using PLangTests.Helpers;
 using PLangTests.Mocks;
 using System.IO.Abstractions.TestingHelpers;
+using PLang.Errors;
 
 namespace PLang.Building.Events.Tests
 {
@@ -20,7 +21,7 @@ namespace PLang.Building.Events.Tests
 		public void Init()
 		{
 			base.Initialize();
-			eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, exceptionHandlerFactory, logger);
+			eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHandlerFactory, logger);
 		}
 
 		[TestMethod()]
@@ -450,7 +451,7 @@ namespace PLang.Building.Events.Tests
 			{
 				foreach (var step in goal.GoalSteps)
 				{
-					await eventRuntime.RunOnErrorStepEvents(new(), new Exception(), goal, step);
+					await eventRuntime.RunOnErrorStepEvents(new(), new Error("Test error"), goal, step);
 				}
 				await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<PLangAppContext>(),
 							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());

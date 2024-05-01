@@ -1,4 +1,5 @@
-﻿using PLang.Interfaces;
+﻿using PLang.Errors;
+using PLang.Interfaces;
 using PLang.Services.OutputStream;
 
 namespace PLang.Exceptions.AskUser
@@ -13,7 +14,7 @@ namespace PLang.Exceptions.AskUser
 		}
 
 
-		public async Task<bool> Handle(AskUserException ex)
+		public async Task<bool> Handle(AskUserError ex)
 		{
 			var result = outputStream.Ask(ex.Message, "ask", 200);
 

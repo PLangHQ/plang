@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using PLang.Errors;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
@@ -29,7 +30,7 @@ namespace PLang.Modules.CodeModule
 		}
 
 
-		public override async Task Run()
+		public override async Task<IError?> Run()
 		{
 			Implementation? answer = null;
 			try
@@ -37,7 +38,7 @@ namespace PLang.Modules.CodeModule
 				answer = JsonConvert.DeserializeObject<Implementation?>(instruction.Action.ToString()!);
 				if (answer == null)
 				{
-					throw new RuntimeStepException("Code implementation was empty", goalStep);
+					return new StepError("Code implementation was empty", goalStep);
 				}
 
 				string dllName = goalStep.PrFileName.Replace(".pr", ".dll");
@@ -45,7 +46,7 @@ namespace PLang.Modules.CodeModule
 				
 				if (assembly == null)
 				{
-					throw new RuntimeStepException($"Could not find {dllName}. Stopping execution for step {goalStep.Text}", goalStep);
+					return new StepError($"Could not find {dllName}. Stopping execution for step {goalStep.Text}", goalStep);
 				}
 
 				List<Assembly> serviceAssemblies = new();
@@ -75,13 +76,13 @@ namespace PLang.Modules.CodeModule
 				Type? type = assembly.GetType(answer.Namespace + "." + answer.Name);
 				if (type == null)
 				{
-					throw new RuntimeStepException($"Type could not be loaded for {answer.Name}. Stopping execution for step {goalStep.Text}", goalStep);
+					return new StepError($"Type could not be loaded for {answer.Name}. Stopping execution for step {goalStep.Text}", goalStep);
 				}
 
 				MethodInfo? method = type.GetMethod("ExecutePlangCode");
 				if (method == null)
 				{
-					throw new RuntimeStepException($"Method could not be loaded for {answer.Name}. Stopping execution for step {goalStep.Text}", goalStep);
+					return new StepError($"Method could not be loaded for {answer.Name}. Stopping execution for step {goalStep.Text}", goalStep);
 				}
 				var parameters = method.GetParameters();
 
@@ -133,14 +134,13 @@ namespace PLang.Modules.CodeModule
 						memoryStack.Put(parameterInfo.Name!, args[i]);
 					}
 				}
+				return null;
 			}
-			catch (RuntimeStepException) { throw; }
-			catch (RuntimeProgramException) { throw; }
 			catch (Exception ex)
 			{
-				CodeExceptionHandler.Handle(ex, answer, goalStep);
+				var error = CodeExceptionHandler.GetError(ex, answer, goalStep);
 
-				throw;
+				return error;
 			}
 
 		}

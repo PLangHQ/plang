@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using PLang.Errors;
 using PLang.Interfaces;
 using PLang.Utils;
 using System.Net;
@@ -22,7 +23,7 @@ namespace PLang.Exceptions.AskUser
 		}
 
 
-		public async Task<bool> Handle(AskUserException ex)
+		public async Task<bool> Handle(AskUserError error)
 		{
 			int statusCode = (ex is AskUserWebserver) ? ((AskUserWebserver)ex).StatusCode : 500;
 			var response = context.Response;

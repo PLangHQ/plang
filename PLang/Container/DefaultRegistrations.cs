@@ -1,6 +1,6 @@
 ﻿using LightInject;
+using PLang.Errors.Handlers;
 using PLang.Exceptions.AskUser;
-using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
@@ -9,16 +9,16 @@ using PLang.Utils;
 
 namespace PLang.Container
 {
-	public static class DefaultRegistrations
+    public static class DefaultRegistrations
 	{
 		
 
-		public static void RegisterExceptionHandlerFactory(this ServiceContainer container, Type type, bool isDefault = false, IExceptionHandler? instance = null)
+		public static void RegisterExceptionHandlerFactory(this ServiceContainer container, Type type, bool isDefault = false, IErrorHandler? instance = null)
 		{
-			container.Register<IExceptionHandlerFactory>(factory =>
+			container.Register<IErrorHandlerFactory>(factory =>
 			{
-				SetContext(container, type, ReservedKeywords.Inject_ExceptionHandler, isDefault);
-				return new ExceptionHandlerFactory(container);
+				SetContext(container, type, ReservedKeywords.Inject_ErrorHandler, isDefault);
+				return new ErrorHandlerFactory(container);
 			});
 
 			if (instance != null)

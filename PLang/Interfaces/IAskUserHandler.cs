@@ -1,4 +1,5 @@
-﻿using PLang.Exceptions.AskUser;
+﻿using PLang.Errors;
+using PLang.Exceptions.AskUser;
 
 namespace PLang.Interfaces
 {
@@ -6,6 +7,6 @@ namespace PLang.Interfaces
 	{
 		// return true if program should continue where it threw the error
 		// return false if the progam should end
-		Task<bool> Handle(AskUserException ex);
+		Task<bool> Handle(AskUserError ex);
 	}
 }

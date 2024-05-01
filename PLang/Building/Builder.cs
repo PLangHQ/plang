@@ -1,28 +1,23 @@
 ﻿using LightInject;
 using Microsoft.Extensions.Logging;
-using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
+using PLang.Errors.Handlers;
 using PLang.Events;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
-using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Resources;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
-using PLang.Services.SigningService;
 using PLang.Utils;
-using System;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO.Compression;
-using System.Reflection;
-using System.Text;
+using PLang.Errors;
 
 namespace PLang.Building
 {
-    public interface IBuilder
+	public interface IBuilder
 	{
 		Task Start(IServiceContainer container);
 	}
@@ -35,11 +30,11 @@ namespace PLang.Building
 		private readonly IEventBuilder eventBuilder;
 		private readonly IEventRuntime eventRuntime;
 		private readonly PrParser prParser;
-		private readonly IExceptionHandlerFactory exceptionHandlerFactory;
+		private readonly IErrorHandlerFactory exceptionHandlerFactory;
 
 		public Builder(ILogger logger, IPLangFileSystem fileSystem, ISettings settings, IGoalBuilder goalBuilder,
 			IEventBuilder eventBuilder, IEventRuntime eventRuntime,
-			PrParser prParser, IExceptionHandlerFactory exceptionHandlerFactory)
+			PrParser prParser, IErrorHandlerFactory exceptionHandlerFactory)
 		{
 
 			this.fileSystem = fileSystem;
@@ -101,10 +96,11 @@ namespace PLang.Building
 			catch (StopBuilderException) { }
 			catch (Exception ex)
 			{
+				var error = new Error(ex.Message, Exception: ex);
 				var handler = exceptionHandlerFactory.CreateHandler();
-				if (!await handler.Handle(ex, 500, "error", ex.Message))
+				if (!await handler.Handle(error, 500, "error", ex.Message))
 				{
-					await handler.ShowError(ex, 500, "error", ex.Message, null);
+					await handler.ShowError(error, 500, "error", ex.Message, null);
 				}
 				
 			}

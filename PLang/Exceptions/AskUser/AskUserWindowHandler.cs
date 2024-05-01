@@ -1,4 +1,5 @@
-﻿using PLang.Interfaces;
+﻿using PLang.Errors;
+using PLang.Interfaces;
 using PLang.Utils;
 
 namespace PLang.Exceptions.AskUser
@@ -13,7 +14,7 @@ namespace PLang.Exceptions.AskUser
 			this.dialog = dialog;
 		}
 
-		public async Task<bool> Handle(AskUserException ex)
+		public async Task<bool> Handle(AskUserError ex)
 		{
 			var result = dialog.ShowDialog(ex.Message, "Ask");
 			

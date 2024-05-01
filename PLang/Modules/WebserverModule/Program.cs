@@ -6,9 +6,9 @@ using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
+using PLang.Errors.Handlers;
 using PLang.Events;
 using PLang.Exceptions;
-using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
@@ -253,7 +253,7 @@ namespace PLang.Modules.WebserverModule
 						}
 						catch (RuntimeProgramException ex)
 						{
-							var exceptionHandlerFactory = container.GetInstance<IExceptionHandlerFactory>();
+							var exceptionHandlerFactory = container.GetInstance<IErrorHandlerFactory>();
 							await exceptionHandlerFactory.CreateHandler().Handle(ex, ex.StatusCode, ex.Type, ex.Message);
 						}
 						catch (Exception ex)
@@ -264,7 +264,7 @@ Error:
 {3}", requestedFile, goalPath, goal, ex.ToString());
 							try
 							{
-								var exceptionHandlerFactory = container.GetInstance<IExceptionHandlerFactory>();
+								var exceptionHandlerFactory = container.GetInstance<IErrorHandlerFactory>();
 								await exceptionHandlerFactory.CreateHandler().Handle(ex, 500, "error", ex.Message);
 							}
 							catch (Exception ex2)

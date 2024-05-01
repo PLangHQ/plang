@@ -82,43 +82,46 @@ namespace PLang.Modules
 			methodHelper = new MethodHelper(goalStep, variableHelper, memoryStack, typeHelper, llmServiceFactory);
 		}
 
-		public virtual async Task Run()
+		public virtual async Task<IError?> Run()
 		{
 			var functions = instruction.GetFunctions();
 			foreach (var function in functions)
 			{
-				await RunFunction(function);
+				var error = await RunFunction(function);
+				if (error != null) return error;
 			}
+			return null;
 		}
 
-		public async Task RunFunction(GenericFunction function)
+		public async Task<IError?> RunFunction(GenericFunction function)
 		{
+			Dictionary<string, object?> parameterValues = null;
 			this.function = function; // this is to give sub classes access to current function running.
-
-			MethodInfo method = await methodHelper.GetMethod(this, function);
-			logger.LogDebug("Method:{0}.{1}({2})", goalStep.ModuleType, method.Name, method.GetParameters());
-
-			//TODO: Should move this caching check up the call stack. code is doing to much work before returning cache
-			if (await LoadCached(method, function)) return;
-
-			if (method.ReturnType != typeof(Task) && method.ReturnType.BaseType != typeof(Task))
-			{
-				throw new RuntimeException($"The method {method.Name} does not return Task. Method that are called must return Task");
-			}
-
-			var parameterValues = methodHelper.GetParameterValues(method, function);
-			logger.LogTrace("Parameters:{0}", parameterValues);
-
 			try
 			{
+				MethodInfo method = await methodHelper.GetMethod(this, function);
+				logger.LogDebug("Method:{0}.{1}({2})", goalStep.ModuleType, method.Name, method.GetParameters());
+
+				//TODO: Should move this caching check up the call stack. code is doing to much work before returning cache
+				if (await LoadCached(method, function)) return null;
+
+				if (method.ReturnType != typeof(Task) && method.ReturnType.BaseType != typeof(Task))
+				{
+					return new Error($"The method {method.Name} does not return Task. Method that are called must return Task");
+				}
+
+				parameterValues = methodHelper.GetParameterValues(method, function);
+				logger.LogTrace("Parameters:{0}", parameterValues);
+
+
 				// This is for memoryStack event handler. Should find a better way
 				context.AddOrReplace(ReservedKeywords.Goal, goal);
 
 				var task = method.Invoke(this, parameterValues.Values.ToArray()) as Task;
 				if (task == null)
 				{
-					logger.LogWarning("Method called is not an async function. Make sure it is marked as 'public async Task' or 'public async Task<YourReturnType>'");
-					return;
+					logger.LogWarning("Method called is not an async function. Make sure it is defined as 'public async Task' or 'public async Task<YourReturnType>'");
+					return null;
 				}
 
 				if (goalStep.WaitForExecution)
@@ -132,32 +135,64 @@ namespace PLang.Modules
 
 				if (task.Status == TaskStatus.Faulted && task.Exception != null)
 				{
-					throw task.Exception.InnerException ?? task.Exception;
+					var ex = task.Exception.InnerException ?? task.Exception;
+					return new Error(ex.Message, Exception: ex);
 				}
 
 				if (!goalStep.WaitForExecution || method.ReturnType == typeof(Task))
 				{
-					return;
+					return null;
 				}
 
-				object? result = await (dynamic)task;
+				(object? result, var error) = GetValuesFromTask(task);
+				if (error != null)
+				{
+					return error;
+				}
 
 				SetReturnValue(function, result);
 
 				await SetCachedItem(result);
+				return null;
 
 			}
-			catch (FileAccessException) { throw; }
-			catch (AskUserException) { throw; }
-			catch (RuntimeUserStepException) { throw; }
-			catch (RuntimeStepException) { throw; }
-			catch (RuntimeProgramException) { throw; }
-			catch (RuntimeGoalEndException) { throw; }
-			catch (RunGoalException) { throw; }
 			catch (Exception ex)
 			{
-				throw new RuntimeProgramException(ex.Message, 500, "error", goalStep, function, parameterValues, ex);
+				return new ProgramError(ex.Message, goalStep, this.GetType().FullName, function.FunctionName, function.Parameters, function.ReturnValue, parameterValues, "RuntimeError", ex);
 			}
+		}
+
+		private (object? returnValue, IError? error) GetValuesFromTask(Task task)
+		{
+
+			Type taskType = task.GetType();
+
+			Type resultType = taskType.GetGenericArguments()[0];
+			if (resultType != typeof(IError))
+			{
+				var resultTask = task as Task<object?>;
+				return (resultTask, null);
+			}
+
+			else if (resultType == typeof(IError))
+			{
+				// It's a Task<Error?>
+				var resultTask = task as Task<IError?>;
+				return (null, resultTask?.Result);
+			}
+			else if (resultType.IsGenericType && resultType.GetGenericTypeDefinition() == typeof(Tuple<,>))
+			{
+				// Check specific Tuple types
+				Type[] tupleArgs = resultType.GetGenericArguments();
+
+				// It's Task<Tuple<object, Error?>>
+				var resultTask = task as Task<Tuple<object, IError?>>;
+				var result = resultTask?.Result;
+				if (result == null) return (null, null);
+
+				return (result.Item1, result.Item2);
+			}
+			return (null, new Error("Could not extract return value or error"));
 		}
 
 		private void SetReturnValue(GenericFunction function, object? result)
@@ -191,62 +226,10 @@ namespace PLang.Modules
 			{
 				foreach (var returnValue in function.ReturnValue)
 				{
-					/*
-					var returnType = returnValue.Type;
-					if (result.GetType().Name.StartsWith("List"))
-					{
-						var list = (System.Collections.IList)result;
-						if (list.Count == 0 && !returnType.StartsWith("List"))
-						{
-							memoryStack.Put(returnValue.VariableName, null);
-							continue;
-						}
-					}*/
 					memoryStack.Put(returnValue.VariableName, result);
 				}
 			}
 		}
-
-		private async Task HandleException(Task task, GenericFunction function, GoalStep step)
-		{
-			if (task.Exception == null) return;
-
-			bool throwException = true;
-			if (goalStep.ErrorHandler != null)
-			{
-				var except = goalStep.ErrorHandler.OnExceptionContainingTextCallGoal;
-				if (except != null)
-				{
-					if (goalStep.ErrorHandler.IgnoreErrors && except.Count == 0) return;
-
-					foreach (var error in except)
-					{
-						if (error.Key == "*" || task.Exception.ToString().ToLower().Contains(error.Key.ToLower()))
-						{
-							throw new RunGoalException(error.Value, task.Exception);
-						}
-					}
-				}
-			}
-
-			if (throwException)
-			{
-				// just realising after doing this that this should be done in plang
-				// an event that binds to on error on step, 
-				string error = (task.Exception.InnerException != null) ? task.Exception.InnerException.ToString() : task.Exception.ToString();
-
-				var outputStream = outputStreamFactory.CreateHandler();
-
-				await outputStream.Write(error, "error", 400);
-				await outputStream.Write("\n\n.... Asking LLM to explain, wait few seconds ....\n", "error", 400);
-				var result = await AssistWithError(error, step, function);
-				await outputStream.Write("\n\n#### Explanation ####\n" + result, "error", 400);
-
-				throw new RuntimeException(error, goal, task.Exception);
-
-			}
-		}
-
 
 		private async Task SetCachedItem(object? result)
 		{
@@ -337,9 +320,9 @@ namespace PLang.Modules
 			this.container.RegisterForPLangUserInjections(type, pathToDll, globalForWholeApp, environmentVariable, environmentVariableValue);
 		}
 
-		public virtual async Task<(string, List<Error>)> GetAdditionalAssistantErrorInfo()
+		public virtual async Task<(string info, IError? error)> GetAdditionalAssistantErrorInfo()
 		{
-			return (string.Empty, []);
+			return (string.Empty, null);
 		}
 		public virtual async Task<string> GetAdditionalSystemErrorInfo()
 		{
@@ -350,42 +333,12 @@ namespace PLang.Modules
 		protected string GetPath(string path)
 		{
 			return PathHelper.GetPath(path, fileSystem, this.Goal);
-
-
-			if (path == null)
-			{
-				throw new ArgumentNullException("path cannot be empty");
-			}
-			path = path.Replace("/", Path.DirectorySeparatorChar.ToString()).Replace("\\", Path.DirectorySeparatorChar.ToString());
-			if (path.StartsWith(Path.DirectorySeparatorChar.ToString() + Path.DirectorySeparatorChar.ToString())) {
-				
-				return path;
-			};
-
-			if (path.StartsWith(Path.DirectorySeparatorChar.ToString()))
-			{
-				path = Path.Combine(fileSystem.GoalsPath, path);
-				return Path.GetFullPath(path);
-			}
-			else
-			{
-				if (this.Goal != null)
-				{
-					path = Path.Combine(this.Goal.AbsoluteGoalFolderPath, path);
-				}
-				else
-				{
-					path = Path.Combine(fileSystem.GoalsPath, path);
-				}
-				path = Path.GetFullPath(path);
-			}
-			return path;
 		}
 
-		protected async Task<(string?, List<Error>)> AssistWithError(string error, GoalStep step, GenericFunction function)
+		protected async Task<(string?, IError?)> AssistWithError(string error, GoalStep step, GenericFunction function)
 		{
 			AppContext.TryGetSwitch("llmerror", out bool isEnabled);
-			if (!isEnabled) return (null, []);
+			if (!isEnabled) return (null, null);
 
 			string additionSystemErrorInfo = await GetAdditionalSystemErrorInfo();
 			string system = @$"You are c# expert developer debugging an error that c# throws.
@@ -400,11 +353,11 @@ You will get description of what the function should do.
 
 Be straight to the point, point out the most obvious reason and how to fix in plang source code. 
 Be Concise";
-			
-			(string additionalInfo, var errors) = await GetAdditionalAssistantErrorInfo();
-			if (errors.Count > 0)
+
+			var additionalAssistant = await GetAdditionalAssistantErrorInfo();
+			if (additionalAssistant.error != null)
 			{
-				return (null, errors);
+				return (null, additionalAssistant.error);
 			}
 			string assistant = @$"
 ## plang source code ##
@@ -413,7 +366,7 @@ Be Concise";
 ## function info ##
 {typeHelper.GetMethodsAsString(this.GetType(), function.FunctionName)}
 ## function info ##
-" + additionalInfo;
+" + additionalAssistant.info;
 
 			try
 			{
@@ -426,11 +379,11 @@ Be Concise";
 
 				var result = await llmServiceFactory.CreateHandler().Query<string>(llmRequest);
 
-				return (result?.ToString(), []);
+				return (result?.ToString(), null);
 			}
 			catch
 			{
-				return (null, [ new Error("ErrorToConnect", "Could not connect to LLM service")]);
+				return (null, new Error("ErrorToConnect", "Could not connect to LLM service"));
 			}
 
 
