@@ -6,7 +6,6 @@ namespace PLang.Utils
 {
 	public class StringHelper
 	{
-
 		public static string ConvertToString(object? body)
 		{
 			if (body == null) return "";

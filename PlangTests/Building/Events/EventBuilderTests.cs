@@ -40,8 +40,8 @@ namespace PLang.Building.Events.Tests
 			var eventBuilder = container.GetInstance<EventBuilder>();
 			var files = eventBuilder.GetEventGoalFiles();
 			Assert.IsNotNull(files);
-			Assert.AreEqual(2, files.Count);
-			Assert.AreEqual(files[0], Path.Join(fileSystem.GoalsPath, "events", "Events.goal"));
+			Assert.AreEqual(2, files.Item1.Count);
+			Assert.AreEqual(files.Item1[0], Path.Join(fileSystem.GoalsPath, "events", "Events.goal"));
 
 			//var result = eventBuilder.BuildEventsPr().Wait();
 		

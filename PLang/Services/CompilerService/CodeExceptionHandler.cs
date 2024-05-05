@@ -2,6 +2,7 @@
 using NBitcoin.Protocol;
 using PLang.Building.Model;
 using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Utils;
 using System.Text;
@@ -20,7 +21,7 @@ namespace PLang.Services.CompilerService
 			}
 
 			string message = FormatMessage(ex, implementation, step);
-			return new StepError(message, step, "CodeException", ex);
+			return new StepError(message, step, "CodeException", Exception: ex);
 
 		}
 

@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Building.Model;
+using PLang.Errors;
+using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Modules;
@@ -14,9 +16,9 @@ using static PLang.Utils.MethodHelper;
 
 namespace PLang.Building
 {
-    public interface IInstructionBuilder
+	public interface IInstructionBuilder
 	{
-		Task BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep goalStep, string module, int stepNr, List<string>? excludeModules = null, int errorCount = 0);
+		Task<IBuilderError?> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep goalStep, string module, int stepNr, List<string>? excludeModules = null, int errorCount = 0);
 	}
 
 	public class InstructionBuilder : IInstructionBuilder
@@ -29,10 +31,9 @@ namespace PLang.Building
 		private MemoryStack memoryStack;
 		private readonly PLangAppContext context;
 		private readonly VariableHelper variableHelper;
-		private readonly MethodHelper methodHelper;
 
 		public InstructionBuilder(ILogger logger, IPLangFileSystem fileSystem, ITypeHelper typeHelper,
-			ILlmServiceFactory llmServiceFactory, IBuilderFactory builderFactory, 
+			ILlmServiceFactory llmServiceFactory, IBuilderFactory builderFactory,
 			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper)
 		{
 			this.typeHelper = typeHelper;
@@ -43,80 +44,72 @@ namespace PLang.Building
 			this.memoryStack = memoryStack;
 			this.context = context;
 			this.variableHelper = variableHelper;
-			
+
 		}
 
-		public async Task BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep step, string module, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
+		public async Task<IBuilderError?> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep step, string module, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
 		{
 			var classInstance = builderFactory.Create(module);
 			classInstance.InitBaseBuilder(module, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 			logger.LogInformation($"- Build using {module}");
 
-			var instruction = await classInstance.Build(step);
-			instruction.Text = step.Text;
-
-			if (instruction.Action == null)
+			var build = await classInstance.Build(step);
+			if (build.BuilderError != null || build.Instruction == null || build.Instruction.Action == null)
 			{
-				throw new BuilderException($"Could not map {step.Text} to function. Refine your text");
+				return build.BuilderError ?? new InstructionBuilderError($"Could not map {step.Text} to function. Refine your text", step);
 			}
 
+			var instruction = build.Instruction;
+			instruction.Text = step.Text;
 			var functions = instruction.GetFunctions();
-			var invalidFunctions = ValidateFunctions(step, functions, module);
-			if (invalidFunctions.Count > 0)
+			var methodHelper = new MethodHelper(step, variableHelper, memoryStack, typeHelper, llmServiceFactory);
+			var invalidFunctionError = methodHelper.ValidateFunctions(functions, module, memoryStack);
+
+			if (invalidFunctionError != null)
 			{
-				foreach (var invalidFunction in invalidFunctions) {
-					logger.LogWarning(invalidFunction.explain);
-				}
-				await Retry(stepBuilder, invalidFunctions, module, goal, stepIndex, excludeModules, errorCount);
-				return;
+				return await Retry(stepBuilder, invalidFunctionError, module, goal, step, stepIndex, excludeModules, errorCount);
 			}
 			foreach (var function in functions)
 			{
 				StepBuilder.LoadVariablesIntoMemoryStack(function, memoryStack, context);
 			}
+
+
 			// since the no invalid function, we can save the instruction file
 			WriteInstructionFile(step, instruction);
-
+			return null;
 		}
-		private async Task Retry(StepBuilder stepBuilder, List<InvalidFunction> invalidFunctions, string module, Goal goal, int stepIndex, List<string>? excludeModules, int errorCount)
+		private async Task<IBuilderError?> Retry(StepBuilder stepBuilder, MultipleBuildError invalidFunctionError, string module, Goal goal, GoalStep step, int stepIndex, List<string>? excludeModules, int errorCount)
 		{
 			errorCount++; //always increase the errorCount to prevent endless requests
 
 			if (excludeModules == null) excludeModules = new List<string>();
 			if (excludeModules.Count < 3)
 			{
-				if (invalidFunctions.FirstOrDefault(p => p.excludeModule) == null && errorCount < 2)
+				if (invalidFunctionError.Errors.FirstOrDefault(p => ((InvalidFunctionsError)p).ExcludeModule) == null && errorCount < 2)
 				{
-					await BuildInstruction(stepBuilder, goal, goal.GoalSteps[stepIndex], module, stepIndex, excludeModules, errorCount);
+					return await BuildInstruction(stepBuilder, goal, goal.GoalSteps[stepIndex], module, stepIndex, excludeModules, errorCount);
 				}
 				else
 				{
 					excludeModules.Add(module);
-					await stepBuilder.BuildStep(goal, stepIndex, excludeModules, errorCount);
+					return await stepBuilder.BuildStep(goal, stepIndex, excludeModules, errorCount);
 				}
-				return;
 			}
 
-			logger.LogWarning($@"Could not find correct module for step:{goal.GoalSteps[stepIndex].Text}. I tried following modules:{string.Join(",", excludeModules)}.
-You have 3 options.
-- Rewrite your step to fit better with a modules that you have installed
-- Install an App from that can handle your request and call that
-- Build your own module. This requires a C# developer knowledge
-");
-			return;
+			return new InstructionBuilderError($@"Could not find module for {step.Text}. 
+Try defining the step in more detail.
+
+You have 3 options:
+	- Rewrite your step to fit better with a modules that you have installed. 
+		How to write the step? Get help here https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md
+	- Install an App from that can handle your request and call that
+	- Build your own module. This requires a C# developer knowledge
+
+Builder will continue on other steps but not this one ({step.Text}).
+", step);
 		}
-
-	
-		public List<InvalidFunction> ValidateFunctions(GoalStep step, GenericFunction[] functions, string module)
-		{
-			List<InvalidFunction> invalidFunctions = new List<InvalidFunction>();
-			if (functions == null || functions[0] == null) return invalidFunctions;
-
-			var methodHelper = new MethodHelper(step, variableHelper, memoryStack, typeHelper, llmServiceFactory);
-			return methodHelper.ValidateFunctions(functions, module, memoryStack);
-		}
-
 
 
 		private void WriteInstructionFile(GoalStep step, Model.Instruction? instructions)

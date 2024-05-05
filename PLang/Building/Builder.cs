@@ -14,12 +14,14 @@ using PLang.Utils;
 using System.Diagnostics;
 using System.IO.Compression;
 using PLang.Errors;
+using PLang.Errors.Runtime;
+using System.ComponentModel;
 
 namespace PLang.Building
 {
 	public interface IBuilder
 	{
-		Task Start(IServiceContainer container);
+		Task<IError?> Start(IServiceContainer container);
 	}
 	public class Builder : IBuilder
 	{
@@ -48,13 +50,10 @@ namespace PLang.Building
 		}
 
 
-		public async Task Start(IServiceContainer container)
+		public async Task<IError?> Start(IServiceContainer container)
 		{
-
-			
-
 			try
-			{				
+			{
 
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				AppContext.SetSwitch("Builder", true);
@@ -62,48 +61,67 @@ namespace PLang.Building
 				SetupBuildValidation();
 
 				var goalFiles = GoalHelper.GetGoalFilesToBuild(fileSystem, fileSystem.GoalsPath);
-				
+
 				InitFolders();
 				logger.LogInformation("Build Start:" + DateTime.Now.ToLongTimeString());
 
-				var eventGoalFiles = await eventBuilder.BuildEventsPr();
-				
-
-				var runtimeContainer = new ServiceContainer();
-				runtimeContainer.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, container.GetInstance<IAskUserHandlerFactory>(),
-					container.GetInstance<IOutputStreamFactory>(), exceptionHandlerFactory);
+				(var eventGoalFiles, var error) = await eventBuilder.BuildEventsPr();
+				if (error != null) return error;
 
 
+				//var engine = runtimeContainer.GetInstance<IEngine>();
+				//engine.Init(runtimeContainer);
 
-				var engine = runtimeContainer.GetInstance<IEngine>();
-				engine.Init(runtimeContainer);
-				var eventRuntime = runtimeContainer.GetInstance<IEventRuntime>();
+				error = await eventRuntime.Load(true);
+				if (error != null) return error;
 
-				await eventRuntime.Load(runtimeContainer, true);
-				await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.Before, EventScope.StartOfApp, false);
+				var eventError = await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.Before, EventScope.StartOfApp, true);
+				if (eventError != null && !eventError.IgnoreError)
+				{
+					return eventError;
+				}
+
 				foreach (string file in goalFiles)
 				{
-					await goalBuilder.BuildGoal(container, file);
+					var goalError = await goalBuilder.BuildGoal(container, file);
+					if (goalError != null && !goalError.ContinueBuild)
+					{
+						return goalError;
+					}
+					else if (goalError != null)
+					{
+						logger.LogWarning(goalError.ToFormat().ToString());
+					}
 				}
 
 				goalFiles.AddRange(eventGoalFiles);
 				CleanGoalFiles(goalFiles);
 
-				await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.After, EventScope.EndOfApp, false);
-				
+				eventError = await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.After, EventScope.EndOfApp, true);
+				if (eventError != null && !eventError.IgnoreError)
+				{
+					return eventError;
+				}
+				else if (eventError != null)
+				{
+					logger.LogWarning(eventError.ToFormat().ToString());
+				}
+
+
 				logger.LogInformation("\n\nBuild done - Time:" + stopwatch.Elapsed.TotalSeconds.ToString("#,##.##") + " sec");
+
 			}
-			catch (StopBuilderException) { }
 			catch (Exception ex)
 			{
-				var error = new Error(ex.Message, Exception: ex);
+				var error = new ExceptionError(ex);
 				var handler = exceptionHandlerFactory.CreateHandler();
-				if (!await handler.Handle(error, 500, "error", ex.Message))
+				if (!await handler.Handle(error))
 				{
-					await handler.ShowError(error, 500, "error", ex.Message, null);
+					await handler.ShowError(error, null);
 				}
-				
+
 			}
+			return null;
 		}
 
 

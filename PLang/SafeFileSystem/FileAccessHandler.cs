@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using PLang.Building.Model;
+using PLang.Errors;
 using PLang.Exceptions;
+using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Services.LlmService;
@@ -31,11 +33,13 @@ namespace PLang.SafeFileSystem
 		// when getting access, sign the request with root
 		// the signature is then validated by root before giving access next time
 
-		public async Task ValidatePathResponse(string appName, string path, string answer)
-		{
+		public async Task<IError?> ValidatePathResponse(string appName, string path, string? answer)
+		{			
+			if (string.IsNullOrWhiteSpace(answer)) return null;
+
 			answer = answer.ToLower();
-			if (answer == "n" || answer == "no") return;
-			if (settings == null) return;
+			if (answer == "n" || answer == "no") return null;
+			if (settings == null) return null;
 
 			if (answer == "y" || answer == "yes" || answer == "ok")
 			{
@@ -64,8 +68,8 @@ GiveAccess : yes|no|null"));
 	
 				var result = await llmServiceFactory.CreateHandler().Query<FileAccessResponse>(llmRequest);
 				
-				if (result == null || result.GiveAccess == null) throw new FileAccessException(appName, path, $"{appName} is trying to access {path}. Do you accept that?");
-				if (result.GiveAccess.ToLower() == "no") return;
+				if (result == null || result.GiveAccess == null) return new AskUserFileAccess(appName, path, $"{appName} is trying to access {path}. Do you accept that?", this.ValidatePathResponse);
+				if (result.GiveAccess.ToLower() == "no") return null;
 
 				if (result.GiveAccess.ToLower() == "yes")
 				{
@@ -80,6 +84,7 @@ GiveAccess : yes|no|null"));
 					logger.LogDebug($"{appName} has access to {path} until {expires}");
 				}
 			}
+			return null;
 		}
 
 		private void AddFileAccess(string appName, string path, DateTime expires)

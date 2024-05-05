@@ -2,6 +2,8 @@
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Building.Model;
+using PLang.Errors;
+using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
@@ -32,7 +34,7 @@ namespace PLang.Utils
 			this.llmServiceFactory = llmServiceFactory;
 		}
 
-		public async Task<MethodInfo> GetMethod(object callingInstance, GenericFunction function)
+		public async Task<MethodInfo?> GetMethod(object callingInstance, GenericFunction function)
 		{
 			string cacheKey = callingInstance.GetType().FullName + "_" + function.FunctionName;
 
@@ -76,20 +78,17 @@ example of answer:
 		public record MethodNotFoundResponse(string Text);
 
 
-
-		public record InvalidFunction(string functionName, string explain, bool excludeModule);
-
-		public List<InvalidFunction> ValidateFunctions(GenericFunction[] functions, string module, MemoryStack memoryStack)
+		public MultipleBuildError? ValidateFunctions(GenericFunction[] functions, string module, MemoryStack memoryStack)
 		{
-			List<InvalidFunction> invalidFunctions = new List<InvalidFunction>();
-			if (functions == null || functions[0] == null) return invalidFunctions;
+			var multipleError = new MultipleBuildError("InvalidFunction");
+			if (functions == null || functions[0] == null) return null;
 
 			foreach (var function in functions)
 			{
 
 				if (function.FunctionName == null || function.FunctionName.ToUpper() == "N/A")
 				{
-					invalidFunctions.Add(new InvalidFunction(function.FunctionName ?? "N/A", "", true));
+					multipleError.Add(new InvalidFunctionsError(function.FunctionName ?? "N/A", "", true));
 				}
 				else
 				{
@@ -102,7 +101,7 @@ example of answer:
 					var instanceFunctions = runtimeType.GetMethods().Where(p => p.Name == function.FunctionName);
 					if (instanceFunctions.Count() == 0)
 					{
-						invalidFunctions.Add(new InvalidFunction(function.FunctionName, $"Could not find {function.FunctionName} in module", true));
+						multipleError.Add(new InvalidFunctionsError(function.FunctionName, $"Could not find {function.FunctionName} in module", true));
 					}
 					else
 					{
@@ -122,7 +121,7 @@ example of answer:
 							}
 							else
 							{
-								invalidFunctions.Add(new InvalidFunction(function.FunctionName, $"Parameters dont match with {function.FunctionName} - {parameterError}", false));
+								multipleError.Add(new InvalidFunctionsError(function.FunctionName, $"Parameters don't match with {function.FunctionName} - {parameterError}", false));
 							}
 
 						}
@@ -130,7 +129,7 @@ example of answer:
 					}
 				}
 			}
-			return invalidFunctions;
+			return (multipleError.Count > 0) ? multipleError : null;
 		}
 
 

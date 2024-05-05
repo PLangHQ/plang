@@ -1,6 +1,7 @@
 {
   "GoalName": "AppendFile",
   "Comment": null,
+  "Text": "AppendFile",
   "GoalSteps": [
     {
       "Text": "append %item.Content% to var %content%, seperator two new lines",
@@ -77,9 +78,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\PlangExamples\\AppendFile\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\PlangExamples\\AppendFile",
-  "BuilderVersion": "0.1.0.6",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.9",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "0b895391e91fb48ba78aaf4ff465575a7a8467229e12bf6cf79fabbe8c4deb1f"
+  "Hash": "b86102e21c97c52a7a8cdefe45a77eb6f484ccfa9725c495b0459ddfad995170"
 }

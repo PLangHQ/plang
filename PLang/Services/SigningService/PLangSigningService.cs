@@ -97,7 +97,7 @@ namespace PLang.Services.SigningService
 		{
 			if (body == null) body = "";
 
-			string hashedBody = body.ComputeHash("keccak256");
+			string hashedBody = body.ComputeHash().Hash;
 
 			var dict = new Dictionary<string, object>
 					{

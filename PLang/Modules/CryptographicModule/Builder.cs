@@ -1,4 +1,6 @@
 ﻿using PLang.Building.Model;
+using PLang.Errors;
+using PLang.Errors.Builder;
 using PLang.Interfaces;
 
 namespace PLang.Modules.CryptographicModule
@@ -10,7 +12,7 @@ namespace PLang.Modules.CryptographicModule
 		{
 			moduleSettings = new ModuleSettings(settings);
 		}
-		public override async Task<Instruction> Build(GoalStep step)
+		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step)
 		{
 			string names = string.Join(", ", moduleSettings.GetBearerTokenSecrets().Select(p => p.Name));
 			AppendToAssistantCommand($"Bearer token names are: {names}");

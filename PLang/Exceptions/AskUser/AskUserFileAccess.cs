@@ -1,14 +1,14 @@
 ﻿using PLang.Errors;
+using PLang.SafeFileSystem;
 
 namespace PLang.Exceptions.AskUser
 {
 
-	public record AskUserFileAccess(string App, string Path, string Message, Func<object[], Task<IError?>> Callback) : AskUserError(Message, CreateAdapter(Callback))
+	public record AskUserFileAccess(string App, string Path, string Message, Func<string, string, string?, Task<IError?>> CallbackMethod) : AskUserError(Message, CreateAdapter(CallbackMethod))
 	{
-		//public new Func<string, string, string, Task<IError?>>? Callback { get; init; }
-		public override async Task InvokeCallback(object answer)
+		public override async Task<IError?> InvokeCallback(object answer)
 		{
-			await Callback.Invoke([App, Path, Message]);
+			return await Callback.Invoke([App, Path, answer.ToString()]);
 
 		}
 	}

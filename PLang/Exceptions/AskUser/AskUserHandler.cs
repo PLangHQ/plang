@@ -14,13 +14,13 @@ namespace PLang.Exceptions.AskUser
 		}
 
 
-		public async Task<bool> Handle(AskUserError ex)
+		public async Task<bool> Handle(AskUserError error)
 		{
-			var result = outputStream.Ask(ex.Message, "ask", 200);
+			var result = outputStream.Ask(error.Message, "ask", 200);
 
-			if (ex.InvokeCallback != null)
+			if (error.InvokeCallback != null)
 			{
-				await ex.InvokeCallback(result);
+				await error.InvokeCallback(result);
 			}
 			return true;
 		}

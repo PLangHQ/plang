@@ -1,6 +1,7 @@
 {
   "GoalName": "CreateDetail",
   "Comment": null,
+  "Text": "CreateDetail",
   "GoalSteps": [
     {
       "Text": "[code] get file name without extension from %file.Path%(string) , remove 'PLang.Modules.', 'Module' from the name, write to %moduleName%",
@@ -278,9 +279,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ModulesOverview\\CreateDetail\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ModulesOverview\\CreateDetail",
-  "BuilderVersion": "0.1.0.6",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.9",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "5fc9534ce21c293c03e0a5619c2e8debf3ebd8ec3a86b3b5c69ba54778f18138"
+  "Hash": "e297981c346ac8c70fc2718dd645b1099c2cd3b33c648338bd8384f086aa2be0"
 }

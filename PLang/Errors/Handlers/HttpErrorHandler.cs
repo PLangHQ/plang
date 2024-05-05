@@ -19,30 +19,22 @@ namespace PLang.Errors.Handlers
 			this.httpListenerContext = httpListenerContext;
 			this.logger = logger;
 		}
-		public async Task<bool> Handle(IError error, int statusCode, string statusText, string message)
+		public async Task<bool> Handle(IError error)
 		{
 			return await base.Handle(error);
 		}
-		public async Task ShowError(IError error, int statusCode, string statusText, string message, GoalStep? step)
+		public async Task ShowError(IError error, GoalStep? step)
 		{
 			try
 			{
 				var resp = httpListenerContext.Response;
 
-				resp.StatusCode = statusCode;
-				resp.StatusDescription = statusText;
+				resp.StatusCode = error.StatusCode;
+				resp.StatusDescription = error.Key;
 				
 				using (var writer = new StreamWriter(resp.OutputStream, resp.ContentEncoding ?? Encoding.UTF8))
 				{
-					if (JsonHelper.IsJson(error.Message))
-					{
-						await writer.WriteAsync(error.Message);
-					}
-					else
-					{
-						await writer.WriteAsync(JsonConvert.SerializeObject(error.ToString(), Formatting.Indented));
-
-					}
+					await writer.WriteAsync(error.ToFormat("json").ToString());
 					await writer.FlushAsync();
 				}
 			}

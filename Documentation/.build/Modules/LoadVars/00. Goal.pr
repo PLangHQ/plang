@@ -1,6 +1,7 @@
 {
   "GoalName": "LoadVars",
   "Comment": null,
+  "Text": "LoadVars",
   "GoalSteps": [
     {
       "Text": "read file '/template/modules/details/%module.moduleName%.txt', into %details%, empty if file not found",
@@ -487,9 +488,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\LoadVars\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\LoadVars",
-  "BuilderVersion": "0.1.0.6",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.9",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "6167916b328ba285a12d2572d478883d63371905e2c0fb0b079454993f5ab3d6"
+  "Hash": "1d7c6f00ffaeb9a2caeb826097559c40c7c4ba0d84e3dbfb61e49e66efa9f069"
 }

@@ -13,6 +13,7 @@ GenerateDoc
 - read file %item.Guide%, into %content%
 - read file %item.System%, load vars, write to %system%
 - read file %item.OutputFilename%, write to %assistant%
+- write out 'Asking LLM about %Name%'
 - [llm] system:%system%
     assistant: '## previously generated doc ## 
                 %assistant%
@@ -24,5 +25,6 @@ GenerateDoc
 - create folder output
 - write %result% to %item.OutputFilename%
 - update docs table, set LastUpdate=%Now%, where id=%item.id%
+- write out 'Done with %Name%'
 
 

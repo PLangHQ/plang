@@ -46,7 +46,7 @@ namespace PLang.Modules.MessageModule
 		private readonly INostrClient client;
 		private readonly IPLangSigningService signingService;
 		private readonly IOutputStreamFactory outputStreamFactory;
-		private readonly IErrorHandlerFactory exceptionHandlerFactory;
+		private readonly IErrorHandlerFactory errorHandlerFactory;
 		private readonly IAskUserHandlerFactory askUserHandlerFactory;
 		private readonly IPLangFileSystem fileSystem;
 		private ModuleSettings moduleSettings;
@@ -67,7 +67,7 @@ namespace PLang.Modules.MessageModule
 			this.client = client;
 			this.signingService = signingService;
 			this.outputStreamFactory = outputStreamFactory;
-			this.exceptionHandlerFactory = exceptionHandlerFactory;
+			this.errorHandlerFactory = exceptionHandlerFactory;
 			this.askUserHandlerFactory = askUserHandlerFactory;
 			this.fileSystem = fileSystem;
 			this.moduleSettings = new ModuleSettings(settings, llmServiceFactory);
@@ -200,10 +200,10 @@ namespace PLang.Modules.MessageModule
 			if (privateKey == null) return;
 
 			var container = new ServiceContainer();
-			container.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, askUserHandlerFactory, outputStreamFactory, exceptionHandlerFactory);
+			container.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, askUserHandlerFactory, outputStreamFactory, errorHandlerFactory);
 
 			var content = ev.DecryptContent(privateKey);
-			var hash = ev.CreatedAt.ToString().ComputeHash() + content.ComputeHash() + ev.Pubkey.ComputeHash();
+			var hash = ev.CreatedAt.ToString().ComputeHash().Hash + content.ComputeHash().Hash + ev.Pubkey.ComputeHash().Hash;
 
 			var settings = container.GetInstance<ISettings>();
 			lock (_lock)
@@ -270,12 +270,11 @@ namespace PLang.Modules.MessageModule
 				var error = TaskHasError(task);
 				if (error != null)
 				{
-					var handler = exceptionHandlerFactory.CreateHandler();
-					var exceptionHandlerTask = handler.Handle(error, 500, "error", error.Message);
-					var result = exceptionHandlerTask.Result;
-					if (!result)
+					var handler = errorHandlerFactory.CreateHandler();
+					var handled = await handler.Handle(error);
+					if (!handled)
 					{
-						await handler.ShowError(error, 500, "error", "Exception occured", goalStep);
+						await handler.ShowError(error, goalStep);
 					}
 				}
 

@@ -17,6 +17,7 @@ using System.Globalization;
 using System.Text;
 using static Dapper.SqlMapper;
 using PLang.Errors;
+using PLang.Errors.Builder;
 
 namespace PLang.Modules.DbModule
 {
@@ -381,7 +382,7 @@ namespace PLang.Modules.DbModule
 
 			if (result.rows.Count == 0)
 			{
-				if (this.function == null || this.function.ReturnValue == null || this.function.ReturnValue.Count == 1) return (null, []);
+				if (this.function == null || this.function.ReturnValue == null || this.function.ReturnValue.Count == 1) return (null, null);
 
 				var dict = new ReturnDictionary<string, object?>();
 				foreach (var rv in this.function.ReturnValue)

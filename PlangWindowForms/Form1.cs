@@ -15,6 +15,7 @@ using System.Diagnostics;
 using System.IO.Abstractions;
 using System.Reflection;
 using System.Text;
+using static PLang.Executor;
 
 namespace PlangWindowForms
 {
@@ -96,7 +97,7 @@ namespace PlangWindowForms
 
 			engine = container.GetInstance<IEngine>();
 
-			await pLang.Execute(args);
+			await pLang.Execute(args, ExecuteType.Runtime);
 
 
 

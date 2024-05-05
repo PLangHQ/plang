@@ -1,12 +1,14 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PLang.Errors;
 using PLang.Utils;
+using System;
 using System.Net;
 using System.Text;
 
 namespace PLang.Services.OutputStream
 {
-	public class JsonOutputStream : IOutputStream
+	public class JsonOutputStream : IOutputStream, IDisposable
 	{
 		private readonly HttpListenerContext httpContext;
 
@@ -44,75 +46,67 @@ namespace PLang.Services.OutputStream
 
 		public void Dispose()
 		{
+			httpContext.Response.OutputStream.Close();
 		}
 
 		public string Read()
 		{
 			return "";
 		}
+		private string? GetAsString(object? obj)
+		{
+			if (obj == null) return null;
 
+			if (obj is JValue || obj is JObject || obj is JArray)
+			{
+				return obj.ToString();
+			}
+			if (obj is IError)
+			{
+				return ((IError)obj).ToFormat("json").ToString();
+			}
+			else
+			{
+				string content = obj.ToString()!;
+				if (!JsonHelper.IsJson(content))
+				{
+					content = JsonConvert.SerializeObject(obj);
+				}
+
+				return content;
+			}
+
+
+		}
 		public async Task Write(object? obj, string type, int httpStatusCode = 200)
 		{
-
 			httpContext.Response.StatusCode = httpStatusCode;
-			using (var writer = new StreamWriter(httpContext.Response.OutputStream, httpContext.Response.ContentEncoding ?? Encoding.UTF8))
-			{
-				try
-				{
-					if (obj != null)
-					{
-						if (obj is JValue || obj is JObject || obj is JArray)
-						{
-							await writer.WriteAsync(obj.ToString());
-						}
-						else
-						{
-							
+			httpContext.Response.StatusDescription = type;
 
-							string content = obj.ToString()!;
-							if (!JsonHelper.IsJson(content))
-							{
-								content = JsonConvert.SerializeObject(obj);
-							}
+			string? content = GetAsString(obj);
+			if (content == null) return;
 
-							await writer.WriteAsync(content);
-						}
-					}
+			byte[] buffer = Encoding.UTF8.GetBytes(content);
 
-					await writer.FlushAsync();
-				}
-				catch (System.Net.HttpListenerException ex)
-				{
-					if (ex.Message.Contains("An operation was attempted on a nonexistent network connection")) return;
-					throw;
-				}
-			}
+			httpContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
+
+			
+			return;
+			
 		}
 
 		public async Task WriteToBuffer(object? obj, string type, int httpStatusCode = 200)
 		{
 			httpContext.Response.StatusCode = httpStatusCode;
-			using (var writer = new StreamWriter(httpContext.Response.OutputStream, httpContext.Response.ContentEncoding))
-			{
-				if (obj != null)
-				{
-					if (type != "text")
-					{
-						JObject jsonObj = new JObject();
-						jsonObj[type] = JToken.FromObject(obj);
-						writer.WriteAsync(jsonObj.ToString());
-						return;
-					}
+			httpContext.Response.StatusDescription = type;
+			httpContext.Response.SendChunked = true;
 
-					string content = obj.ToString();
-					if (!JsonHelper.IsJson(content))
-					{
-						content = JsonConvert.SerializeObject(content);
-					}
+			string? content = GetAsString(obj);
+			if (content == null) return;
 
-					await writer.WriteAsync(content);
-				}
-			}
+			byte[] buffer = Encoding.UTF8.GetBytes(content);
+			httpContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
+			
 
 		}
 	}

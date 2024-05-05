@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
+using PLang.Errors;
+using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
@@ -28,17 +30,17 @@ namespace PLang.Modules.CodeModule
 		}
 
 
-		public override async Task<Instruction> Build(GoalStep step)
+		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step)
 		{
 			return await Build(step, null);
 		}
 
 
-		public async Task<Instruction> Build(GoalStep step, string? error = null, int errorCount = 0)
+		public async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, CompilerError? error = null, int errorCount = 0)
 		{
 			if (++errorCount > 3)
 			{
-				throw new BuilderException($"Could not compile code. Code:\n\n{error}");
+				return (null, error ?? new StepBuilderError("Could not compile code for this step", step));
 			}
 
 			var compiler = new CSharpCompiler(fileSystem, prParser, logger);
@@ -99,28 +101,33 @@ check if %dirPath% exists, write to %folderExists% => ExecutePlangCode(IPlangFil
 
 			if (error != null)
 			{
-				AppendToAssistantCommand(error);
+				AppendToAssistantCommand(error.LlmInstruction);
 			}
 
 			base.SetContentExtractor(new CSharpExtractor());
-			var instruction = await Build<CodeImplementationResponse>(step);
+			(var instruction, var buildError) = await Build<CodeImplementationResponse>(step);
+			if (buildError != null) return (null, buildError);
+
+			if (instruction == null)
+			{
+				return (null, new StepBuilderError("Could not create instruction file", step));
+			}
 
 			//go back to default extractor
 			base.SetContentExtractor(new JsonExtractor());
 			var answer = (CodeImplementationResponse)instruction.Action;
-			try
-			{
-				var buildStatus = await compiler.BuildCode(answer, step, memoryStack);
 
-				var newInstruction = new Instruction(buildStatus.Implementation!);
-				newInstruction.LlmRequest = instruction.LlmRequest;
-				return newInstruction;
-			}
-			catch (BuildStatusException ex)
+			(var implementation, var compilerError) = await compiler.BuildCode(answer, step, memoryStack);
+			if (compilerError != null)
 			{
-				logger.LogWarning($"Need to ask LLM again. {ex.Message}");
-				return await Build(step, ex.Message, ++errorCount);
+				logger.LogWarning("- Error compiling code - will ask LLM again");
+				return await Build(step, compilerError, errorCount + 10);
 			}
+
+			var newInstruction = new Instruction(implementation!);
+			newInstruction.LlmRequest = instruction.LlmRequest;
+			return (newInstruction, null);
+
 
 		}
 

@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using PLang.Building.Model;
+using PLang.Errors;
+using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
@@ -60,21 +62,21 @@ namespace PLang.Modules
 		{
 			this.contentExtractor = contentExtractor;
 		}
-		public virtual async Task<Instruction> Build<T>(GoalStep step)
+		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build<T>(GoalStep step)
 		{
 			return await Build(step, typeof(T));
 		}
-		public virtual async Task<Instruction> Build(GoalStep step)
+		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step)
 		{
 			return await Build(step, typeof(GenericFunction));
 		}
 
-		public virtual async Task<Instruction> Build(GoalStep step, Type? responseType = null, string? errorMessage = null, int errorCount = 0)
+		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, Type? responseType = null, string? errorMessage = null, int errorCount = 0)
 		{
 			if (errorCount > 3)
 			{
 				logger.LogError(errorMessage);
-				throw new BuilderException("Could not get a valid function from LLM. You need to adjust your wording.");
+				return (null, new StepBuilderError("Could not get a valid function from LLM. You need to adjust your wording.", step));
 			}
 			if (responseType == null) responseType = typeof(GenericFunction);
 
@@ -84,7 +86,7 @@ namespace PLang.Modules
 			var result = await llmServiceFactory.CreateHandler().Query(question, responseType);
 			if (result == null)
 			{
-				throw new BuilderException($"Could not build for {responseType.Name}");
+				return (null, new StepBuilderError($"Could not build for {responseType.Name}", step));
 			}
 
 			var instruction = new Instruction(result);
@@ -92,12 +94,12 @@ namespace PLang.Modules
 
 			var methodHelper = new MethodHelper(step, variableHelper, memoryStack, typeHelper, llmServiceFactory);
 			var invalidFunctions = methodHelper.ValidateFunctions(instruction.GetFunctions(), step.ModuleType, memoryStack);
-
-			if (invalidFunctions.Count > 0)
+			
+			if (invalidFunctions != null)
 			{
-				if (invalidFunctions[0].functionName == "N/A")
+				if (invalidFunctions.Key == "N/A")
 				{
-					throw new FunctionNotFoundException(step.ModuleType);
+					return (null, invalidFunctions);
 				}
 
 				errorMessage = @$"## Error from previous LLM request ## 
@@ -106,9 +108,9 @@ Previous response from LLM caused error. This was your response.
 
 This is the error(s)
 ";
-				foreach (var invalidFunction in invalidFunctions)
+				foreach (var invalidFunction in invalidFunctions.Errors)
 				{
-					errorMessage += " - " + invalidFunction.explain;
+					errorMessage += " - " + invalidFunction.Message;
 				}
 				errorMessage += $@"Make sure to fix the error and return valid JSON response
 ## Error from previous LLM request ##
@@ -124,7 +126,7 @@ This is the error(s)
 			system = "";
 
 
-			return instruction;
+			return (instruction, null);
 		}
 
 		public record Parameter(string Type, string Name, object Value);

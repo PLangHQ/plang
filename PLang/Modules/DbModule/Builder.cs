@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Building.Model;
+using PLang.Errors;
+using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
@@ -45,15 +47,17 @@ namespace PLang.Modules.DbModule
 
 		public record FunctionInfo(string DatabaseType, string FunctionName, string[]? TableNames = null);
 		public record DbGenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValue = null, string? Warning = null) : GenericFunction(FunctionName, Parameters, ReturnValue);
-		public override async Task<Instruction> Build(GoalStep goalStep)
+		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep goalStep)
 		{
 			moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, db, logger);
-			var buildInstruction = await base.Build(goalStep);
+			(var buildInstruction, var buildError) = await base.Build(goalStep);
+			if (buildError != null) return (null, buildError);
+
 			var gf = buildInstruction.Action as GenericFunction;
 			if (gf != null && gf.FunctionName == "CreateDataSource")
 			{
 				await CreateDataSource(gf);
-				return buildInstruction;
+				return (buildInstruction, null);
 			}
 			
 			var dataSource = await moduleSettings.GetCurrentDataSource();
@@ -84,7 +88,11 @@ DatabaseType: Define the database type. The .net library being used is {dataSour
 				}
 			}
 
-			var instruction = await base.Build<FunctionInfo>(goalStep);
+			(var instruction, buildError) = await base.Build<FunctionInfo>(goalStep);
+			if (buildError != null || instruction == null)
+			{
+				return (null, buildError ?? new StepBuilderError("Could not build Sql statement", goalStep));
+			}
 			var functionInfo = instruction.Action as FunctionInfo;
 
 			if (functionInfo.FunctionName == "Insert")
@@ -158,7 +166,7 @@ These are the supported databases (you dont need to be precise)
 		}
 	
 
-		private async Task<Instruction> CreateSelect(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
+		private async Task<(Instruction?, IBuilderError?)> CreateSelect(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
 		{
 			string databaseType = dataSource.TypeFullName.Substring(dataSource.TypeFullName.LastIndexOf(".") + 1);
 			string appendToSystem = "";
@@ -211,7 +219,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 			return await base.Build(goalStep);
 		}
 
-		private Task<Instruction> CreateTable(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
+		private Task<(Instruction?, IBuilderError?)> CreateTable(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
 		{
 			string databaseType = dataSource.TypeFullName.Substring(dataSource.TypeFullName.LastIndexOf(".") + 1);
 			string keepHistoryCommand = "";
@@ -241,7 +249,7 @@ You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
 			return base.Build(goalStep);
 		}
 
-		private async Task<Instruction> CreateDelete(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
+		private async Task<(Instruction?, IBuilderError?)> CreateDelete(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
 		{
 			string databaseType = dataSource.TypeFullName.Substring(dataSource.TypeFullName.LastIndexOf(".") + 1);
 			string appendToSystem = "";
@@ -273,7 +281,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 			
 			return await BuildCustomStatementsWithWarning(goalStep, dataSource, program, functionInfo);
 		}
-		private async Task<Instruction> CreateUpdate(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
+		private async Task<(Instruction?, IBuilderError?)> CreateUpdate(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
 		{
 			string appendToSystem = "";
 			if (dataSource.KeepHistory)
@@ -316,20 +324,23 @@ You MUST provide SqlParameters if SQL has @parameter.
 
 		}
 
-		private async Task<Instruction> BuildCustomStatementsWithWarning(GoalStep goalStep, DataSource dataSource, Program program, FunctionInfo functionInfo, string? errorMessage = null, int errorCount = 0)
+		private async Task<(Instruction?, IBuilderError?)> BuildCustomStatementsWithWarning(GoalStep goalStep, DataSource dataSource, Program program, FunctionInfo functionInfo, string? errorMessage = null, int errorCount = 0)
 		{
 			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
-			var instruction = await base.Build<DbGenericFunction>(goalStep);
-
+			(var instruction, var buildError) = await base.Build<DbGenericFunction>(goalStep);
+			if (buildError != null || instruction == null)
+			{
+				return (null, buildError ?? new StepBuilderError($"Tried to build SQL statement for {functionInfo.FunctionName}", goalStep));
+			}
 			var gf = instruction.Action as DbGenericFunction;
 			if (!string.IsNullOrWhiteSpace(gf.Warning))
 			{
 				logger.LogWarning(gf.Warning);
 			}
-			return instruction;
+			return (instruction, null);
 		}
 
-		private async Task<Instruction> CreateInsert(GoalStep goalStep, Program program, FunctionInfo functionInfo, ModuleSettings.DataSource dataSource)
+		private async Task<(Instruction?, IBuilderError?)> CreateInsert(GoalStep goalStep, Program program, FunctionInfo functionInfo, ModuleSettings.DataSource dataSource)
 		{
 			string eventSourcing = (dataSource.KeepHistory) ? "You MUST modify the user command by adding id to the sql statement and parameter %id%." : "";
 			string appendToSystem = "";
@@ -374,7 +385,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 
 		}
 
-		private async Task<Instruction> CreateInsertAndSelectIdOfInsertedRow(GoalStep goalStep, Program program, FunctionInfo functionInfo, ModuleSettings.DataSource dataSource)
+		private async Task<(Instruction?, IBuilderError?)> CreateInsertAndSelectIdOfInsertedRow(GoalStep goalStep, Program program, FunctionInfo functionInfo, ModuleSettings.DataSource dataSource)
 		{
 			string eventSourcing = (dataSource.KeepHistory) ? "You MUST modify the user command by adding id to the sql statement and parameter %id%." : "";
 			string appendToSystem = "";

@@ -12,11 +12,11 @@ namespace PLang.Errors.Handlers
         {
             this.dialog = dialog;
         }
-        public async Task<bool> Handle(IError error, int statusCode, string statusText, string message)
+        public async Task<bool> Handle(IError error)
         {
             return await base.Handle(error);
         }
-        public async Task ShowError(IError error, int statusCode, string statusText, string message, GoalStep? step)
+        public async Task ShowError(IError error, GoalStep? step)
         {
             dialog.ShowDialog(error, "Error");
         }

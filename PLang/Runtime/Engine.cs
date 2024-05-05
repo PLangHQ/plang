@@ -1,12 +1,14 @@
 ﻿using LightInject;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
+using NBitcoin;
 using NBitcoin.Secp256k1;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Errors;
 using PLang.Errors.Handlers;
+using PLang.Errors.Runtime;
 using PLang.Events;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
@@ -18,8 +20,10 @@ using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Utils;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Reflection.Metadata.Ecma335;
+using System.Text;
 
 namespace PLang.Runtime
 {
@@ -51,6 +55,7 @@ namespace PLang.Runtime
 		private IAskUserHandlerFactory askUserHandlerFactory;
 		public IOutputStreamFactory OutputStreamFactory { get; private set; }
 		private IPLangAppsRepository appsRepository;
+		private IAppCache appCache;
 		private PrParser prParser;
 		private MemoryStack memoryStack;
 		private PLangAppContext context;
@@ -70,6 +75,7 @@ namespace PLang.Runtime
 			this.logger = container.GetInstance<ILogger>();
 			this.settings = container.GetInstance<ISettings>();
 			this.eventRuntime = container.GetInstance<IEventRuntime>();
+			this.eventRuntime.SetContainer(container);
 			this.typeHelper = container.GetInstance<ITypeHelper>();
 			this.askUserHandlerFactory = container.GetInstance<IAskUserHandlerFactory>();
 
@@ -77,6 +83,7 @@ namespace PLang.Runtime
 			this.prParser = container.GetInstance<PrParser>();
 			this.memoryStack = container.GetInstance<MemoryStack>();
 			this.appsRepository = container.GetInstance<IPLangAppsRepository>();
+			this.appCache = container.GetInstance<IAppCache>();
 			context.AddOrReplace(ReservedKeywords.MyIdentity, identityService.GetCurrentIdentity());
 
 		}
@@ -101,11 +108,17 @@ namespace PLang.Runtime
 			{
 				logger.LogInformation("App Start:" + DateTime.Now.ToLongTimeString());
 
-				await eventRuntime.Load(container, false);
-				var error = await eventRuntime.RunStartEndEvents(context, EventType.Before, EventScope.StartOfApp);
+				var error = await eventRuntime.Load(false);
 				if (error != null)
 				{
 					await HandleError(error);
+					return;
+				}
+
+				var eventError = await eventRuntime.RunStartEndEvents(context, EventType.Before, EventScope.StartOfApp);
+				if (eventError != null)
+				{
+					await HandleError(eventError);
 					return;
 				}
 
@@ -177,16 +190,16 @@ namespace PLang.Runtime
 				me.Add(error);
 				me.Add(appErrorEvent);
 
-				await container.GetInstance<IErrorHandlerFactory>().CreateHandler().ShowError(me, 500, "error", me.Message);
+				await container.GetInstance<IErrorHandlerFactory>().CreateHandler().ShowError(me);
 			}
 		}
 
 		private async Task<bool> HandleFileAccessException(FileAccessRequestError fare)
 		{
 			var fileAccessHandler = container.GetInstance<FileAccessHandler>();
-			var askUserFileException = new AskUserFileAccess([ex.AppName, ex.Path, ex.Message, fileAccessHandler.ValidatePathResponse]);
+			var askUserFileAccess = new AskUserFileAccess(fare.Message, fare.AppName, fare.Path, fileAccessHandler.ValidatePathResponse);
 
-			return await askUserHandlerFactory.CreateHandler().Handle(askUserFileException);
+			return await askUserHandlerFactory.CreateHandler().Handle(askUserFileAccess);
 		}
 
 		private void StartScheduler()
@@ -283,7 +296,8 @@ namespace PLang.Runtime
 
 		private void SetLogLevel(string? goalComment)
 		{
-			if (goalComment != null) return;
+			if (goalComment == null) return;
+
 			string[] logLevels = ["trace", "debug", "information", "warning", "error"];
 			foreach (var logLevel in logLevels)
 			{
@@ -311,21 +325,25 @@ namespace PLang.Runtime
 				}
 
 				logger.LogDebug("Goal: " + goal.GoalName);
-				var error = await eventRuntime.RunGoalEvents(context, EventType.Before, goal);
-				if (error != null) return error;
+
+				var eventError = await eventRuntime.RunGoalEvents(context, EventType.Before, goal);
+				if (eventError != null) return eventError;
+
+				if (await CachedGoal(goal)) return null;
 
 				for (goalStepIndex = 0; goalStepIndex < goal.GoalSteps.Count; goalStepIndex++)
 				{
-					error = await RunStep(goal, goalStepIndex);
-					if (error != null)
+					var runStep = await RunStep(goal, goalStepIndex);
+					if (runStep != null)
 					{
-						error = await HandleGoalError(error, goal, goalStepIndex);
-						return error;
+						runStep = await HandleGoalError(runStep, goal, goalStepIndex);
+						if (runStep != null) return runStep;
 					}
 				}
+				await CacheGoal(goal);
 
-				error = await eventRuntime.RunGoalEvents(context, EventType.After, goal);
-				return error;
+				eventError = await eventRuntime.RunGoalEvents(context, EventType.After, goal);
+				return eventError;
 
 			}
 			catch (Exception ex)
@@ -349,9 +367,61 @@ namespace PLang.Runtime
 
 		}
 
+		private async Task<bool> CachedGoal(Goal goal)
+		{
+			if (goal.GoalInfo?.CachingHandler?.CacheKey == null) return false;
+
+			var bytes = await appCache.Get(goal.GoalInfo.CachingHandler.CacheKey) as byte[];
+			if (bytes == null || bytes.Length == 0)
+			{
+				// set the output stream as MemoryOutputStream because we want to cache the output result
+				OutputStreamFactory.SetContext(typeof(MemoryOutputStream).FullName);
+				return false;
+			}
+
+			var content = Encoding.UTF8.GetString(bytes);
+
+			var handler = OutputStreamFactory.CreateHandler();
+			await handler.WriteToBuffer(content);
+
+			return true;
+		}
+
+		private async Task CacheGoal(Goal goal)
+		{
+			if (goal.GoalInfo?.CachingHandler?.CacheKey == null) return;
+
+			var handler = OutputStreamFactory.CreateHandler(typeof(MemoryOutputStream).FullName);
+			if (handler.Stream is not MemoryStream) return;
+
+			handler.Stream.Seek(0, SeekOrigin.Begin);
+			var bytes = await ((MemoryStream)handler.Stream).ReadBytesAsync((int)handler.Stream.Length);
+
+			if (goal.GoalInfo.CachingHandler.CachingType == 1)
+			{
+				TimeSpan slidingExpiration = TimeSpan.FromMilliseconds(goal.GoalInfo.CachingHandler.TimeInMilliseconds);
+				await appCache.Set(goal.GoalInfo.CachingHandler.CacheKey, bytes, slidingExpiration);
+			}
+			else
+			{
+				DateTimeOffset absoluteExpiration = DateTimeOffset.UtcNow.AddMilliseconds(goal.GoalInfo.CachingHandler.TimeInMilliseconds);
+				await appCache.Set(goal.GoalInfo.CachingHandler.CacheKey, bytes, absoluteExpiration);
+			}
+
+			//reset the output stream
+			OutputStreamFactory.SetContext(null);
+
+
+			var content = Encoding.UTF8.GetString(bytes);
+			handler = OutputStreamFactory.CreateHandler();
+			await handler.WriteToBuffer(content);
+			return;
+
+		}
+
 		private async Task<IError?> HandleGoalError(IError error, Goal goal, int goalStepIndex)
 		{
-			if (error is EndGoal || error is ErrorHandled) return error;
+			if (error is IErrorHandled) return error;
 
 			var eventError = await eventRuntime.RunGoalErrorEvents(context, goal, goalStepIndex, error);
 			return eventError;
@@ -369,10 +439,10 @@ namespace PLang.Runtime
 
 				logger.LogDebug($"- {step.Text.Replace("\n", "").Replace("\r", "").MaxLength(80)}");
 
-				error = await ProcessPrFile(goal, step, goalStepIndex);
-				if (error != null)
+				var prError = await ProcessPrFile(goal, step, goalStepIndex);
+				if (prError != null)
 				{
-					var result = await HandleStepError(goal, step, goalStepIndex, error, retryCount);
+					var result = await HandleStepError(goal, step, goalStepIndex, prError, retryCount);
 					if (result != null) return result;
 				}
 
@@ -388,7 +458,7 @@ namespace PLang.Runtime
 				}
 				else
 				{
-					var error = new StepError(stepException.Message, step, Exception: stepException);
+					var error = new ExceptionError(stepException);
 					var result = await HandleStepError(goal, step, goalStepIndex, error, retryCount);
 
 					return result;
@@ -401,7 +471,7 @@ namespace PLang.Runtime
 
 		private async Task<IError?> HandleStepError(Goal goal, GoalStep step, int goalStepIndex, IError error, int retryCount)
 		{
-			if (error is EndGoal || error is ErrorHandled) return error;
+			if (error is IErrorHandled) return error;
 
 			if (error is AskUserError aue)
 			{

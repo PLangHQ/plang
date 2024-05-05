@@ -1,5 +1,5 @@
 ﻿using PLang.Building.Model;
-
+using PLang.Errors.Builder;
 using PLang.Utils;
 using PLang.Utils.Extractors;
 
@@ -10,7 +10,7 @@ namespace PLang.Modules.UiModule
 	{
 		public Builder() : base() { }
 
-		public override async Task<Instruction> Build(GoalStep step)
+		public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step)
 		{
 			bool children = false;
 			string childrenStr = "";
@@ -104,9 +104,13 @@ else
 }}
 ### Razor ###");
 
-			var result = await base.Build<UiResponse>(step);
+			(var build, var buildError) = await base.Build<UiResponse>(step);
+			if (buildError != null || build == null)
+			{
+				return (null, buildError ?? new StepBuilderError("Could not build step", step));
+			}
 
-			var uiResponse = result.Action as UiResponse;
+			var uiResponse = build.Action as UiResponse;
 			List<Parameter> parameters = new List<Parameter>();
 			parameters.Add(new Parameter("string", "html", uiResponse.html));
 			parameters.Add(new Parameter("string", "css", uiResponse.css));
@@ -117,8 +121,8 @@ else
 
 			var instruction = new Instruction(gf);
 			step.Execute = true;
-			instruction.LlmRequest = result.LlmRequest;
-			return instruction;
+			instruction.LlmRequest = build.LlmRequest;
+			return (instruction, null);
 		}
 
 

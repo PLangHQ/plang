@@ -39,4 +39,10 @@ namespace PLang.Events
         [property: DefaultValue("true")] bool WaitForExecution = true,
         [property: DefaultValue("false")] bool RunOnlyInDebugMode = false,
         bool OnErrorContinueNextStep = false);
+
+    //TODO: Need to create EventBuildBinding, the reason is that it should declare if step should continue to build code or not
+    // if step or build event fails, the default behaviour is to build the next step. 
+    // this cannot be controlled without EventBuildBinding, which would add ContinueBuild property
+    // allow user to define it like this.
+    // - before step is build, call AnalyzeStep, do not continue if it fails
 }

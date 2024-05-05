@@ -447,7 +447,7 @@ namespace PLang.Runtime
 			if (key == null) return;
 			key = Clean(key);
 
-			if (key.ToLower() == "__memorystack__")
+			if (key.ToLower() == "!memorystack")
 			{
 				throw new Exception($"{key} is reserved. You must choose another variable name");
 			}
@@ -731,7 +731,7 @@ namespace PLang.Runtime
 			if (key.Contains("="))
 			{
 				string[] strings = key.Split("=");
-				key = strings[0];
+				key = strings[0].Trim();
 				if (DateTime.TryParse(strings[1].Trim(), out DateTime result))
 				{
 					return new ObjectValue(key, result, typeof(DateTime), null);

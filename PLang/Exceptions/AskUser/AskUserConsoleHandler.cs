@@ -7,14 +7,14 @@ namespace PLang.Exceptions.AskUser
 	public class AskUserConsoleHandler : IAskUserHandler
 	{
 
-		public async Task<bool> Handle(AskUserFileAccess ex)
+		public async Task<bool> Handle(AskUserError askUserError)
 		{
-			Console.WriteLine("\n\n----- Ask User -----\n" + ex.Message);
+			Console.WriteLine("\n\n----- Ask User -----\n" + askUserError.Message);
 			var result = Console.ReadLine();
 
-			if (ex.InvokeCallback != null)
+			if (askUserError.InvokeCallback != null)
 			{
-				await ex.InvokeCallback(result ?? "");
+				await askUserError.InvokeCallback(result ?? "");
 			}
 			return true;
 

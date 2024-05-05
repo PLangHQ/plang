@@ -135,7 +135,7 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			await eventRuntime.Load(container);
+			await eventRuntime.Load();
 				
 			await eventRuntime.RunStartEndEvents(new(), EventType.Before, EventScope.StartOfApp);
 				
@@ -164,7 +164,7 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			await eventRuntime.Load(container);
+			await eventRuntime.Load();
 
 			await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.After, EventScope.StartOfApp);
 
@@ -192,7 +192,7 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			await eventRuntime.Load(container);
+			await eventRuntime.Load();
 
 			await eventRuntime.RunStartEndEvents(new(), EventType.Before, EventScope.AppError);
 
@@ -220,7 +220,7 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			await eventRuntime.Load(container);
+			await eventRuntime.Load();
 
 			await eventRuntime.RunStartEndEvents(new(), EventType.Before, EventScope.EndOfApp);
 			// test that both Before and After type works. When app ends there is no difference between Before and After
@@ -250,7 +250,7 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			await eventRuntime.Load(container);
+			await eventRuntime.Load();
 
 			await eventRuntime.RunStartEndEvents(new(), EventType.After, EventScope.AppError);
 
@@ -279,7 +279,7 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			await eventRuntime.Load(container);
+			await eventRuntime.Load();
 
 			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
 			foreach (var goal in goals)
@@ -312,7 +312,7 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			await eventRuntime.Load(container);
+			await eventRuntime.Load();
 
 			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
 			foreach (var goal in goals)
@@ -344,7 +344,7 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			await eventRuntime.Load(container);
+			await eventRuntime.Load();
 
 			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
 			foreach (var goal in goals)
@@ -378,7 +378,7 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			await eventRuntime.Load(container);
+			await eventRuntime.Load();
 
 			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
 			foreach (var goal in goals)
@@ -413,12 +413,12 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			await eventRuntime.Load(container);
+			await eventRuntime.Load();
 
 			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
 			foreach (var goal in goals)
 			{
-				await eventRuntime.RunGoalErrorEvents(new(), goal, 0, new Exception());
+				await eventRuntime.RunGoalErrorEvents(new(), goal, 0, new Error("Test"));
 				await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
 							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
 			}
@@ -444,7 +444,7 @@ namespace PLang.Building.Events.Tests
 			prParser.ForceLoadAllGoals();
 
 			// load event runtime
-			await eventRuntime.Load(container);
+			await eventRuntime.Load();
 
 			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
 			foreach (var goal in goals)
@@ -468,10 +468,10 @@ namespace PLang.Building.Events.Tests
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "Process", ISettings.GoalFileName), new MockFileData(""));
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "HelloWorld", ISettings.GoalFileName), new MockFileData(""));
 
-			var eventFiles = eventRuntime.GetRuntimeEventsFiles(fileSystem.BuildPath, "events");
+			var eventFiles = eventRuntime.GetEventsFiles(fileSystem.BuildPath, "events");
 
-			Assert.AreEqual(3, eventFiles.Count);
-			Assert.AreEqual(Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName), eventFiles[0]);
+			Assert.AreEqual(3, eventFiles.EventFiles.Count);
+			Assert.AreEqual(Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName), eventFiles.EventFiles[0]);
 
 		}
 
@@ -485,7 +485,7 @@ namespace PLang.Building.Events.Tests
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "Process", ISettings.GoalFileName), new MockFileData(""));
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "HelloWorld", ISettings.GoalFileName), new MockFileData(""));
 
-			var eventFiles = eventRuntime.GetRuntimeEventsFiles(fileSystem.BuildPath, "BuilderEvents");
+			(var eventFiles, var error) = eventRuntime.GetEventsFiles(fileSystem.BuildPath, "BuilderEvents");
 
 			Assert.AreEqual(2, eventFiles.Count);
 			Assert.AreEqual(Path.Join(fileSystem.BuildPath, "BuilderEvents", ISettings.GoalFileName), eventFiles[0]);
@@ -500,7 +500,7 @@ namespace PLang.Building.Events.Tests
 			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName), new MockFileData(content));
 			prParser.ForceLoadAllGoals();
 
-			await eventRuntime.Load(container);
+			await eventRuntime.Load();
 			var events = await eventRuntime.GetRuntimeEvents();
 
 			Assert.AreEqual(3, events.Count);

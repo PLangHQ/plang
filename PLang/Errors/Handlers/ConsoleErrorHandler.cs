@@ -11,26 +11,26 @@ namespace PLang.Errors.Handlers
 		{
 		}
 
-		public async Task<bool> Handle(IError error, int statusCode, string statusText, string message)
+		public async Task<bool> Handle(IError error)
 		{
 			return await base.Handle(error);
 		}
 
-		public async Task ShowError(IError error, int statusCode, string statusText, string message, GoalStep? step)
+		public async Task ShowError(IError error, GoalStep? step)
 		{
-			if (statusCode < 200)
+			if (error.StatusCode < 200)
 			{
 				Console.ForegroundColor = ConsoleColor.Green;
 			}
-			else if (statusCode >= 300 && statusCode < 500)
+			else if (error.StatusCode >= 300 && error.StatusCode < 500)
 			{
 				Console.ForegroundColor = ConsoleColor.Yellow;
 			}
-			else if (statusCode >= 500)
+			else if (error.StatusCode >= 500)
 			{
 				Console.ForegroundColor = ConsoleColor.Red;
 			}
-			Console.WriteLine(error);
+			Console.WriteLine(error.ToFormat().ToString());
 			Console.ResetColor();
 		}
 	}

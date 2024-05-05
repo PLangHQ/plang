@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using NSubstitute;
 using PLang.Interfaces;
 using PLang.Services.IdentityService;
+using PLang.Services.SettingsService;
 using PLang.Utils;
 using PLangTests;
 
@@ -67,7 +68,7 @@ namespace PLang.Services.SigningService.Tests
 			{
 				return nonce;
 			};
-			context.AddOrReplace(ReservedKeywords.Salt, "123");
+			context.AddOrReplace(Settings.SaltKey, "123");
 
 
 			var signature = signingService.Sign(body, method, url, contract);
@@ -148,7 +149,7 @@ namespace PLang.Services.SigningService.Tests
 			string method = "POST";
 			string url = "http://plang.is";
 			string contract = "C0";
-			context.AddOrReplace(ReservedKeywords.Salt, "123");
+			context.AddOrReplace(Settings.SaltKey, "123");
 			var signature = signingService.Sign(body, method, url, contract);
 
 			var result = await signingService.VerifySignature("123", body, method, url, signature);

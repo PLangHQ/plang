@@ -4,6 +4,8 @@ using Newtonsoft.Json.Linq;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.SettingsService;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using static PLang.Services.LlmService.PLangLlmService;
@@ -106,7 +108,7 @@ namespace PLang.Utils
 			foreach (var variable in variables)
 			{
 				string strValue = "";
-				if (variable.Value != null && variable.Value?.GetType() != typeof(string) && !variable.Value!.GetType().IsPrimitive)
+				if (variable.Value != null && ShouldSerializeToText(variable.Value))
 				{
 					strValue = JsonSerialize(variable.Value).ToString();
 				}
@@ -118,6 +120,31 @@ namespace PLang.Utils
 			}
 			return content;
 
+		}
+
+		private bool ShouldSerializeToText(object value)
+		{
+			if (value is string) return false;
+			if (value.GetType().IsPrimitive) return false;
+
+			string strValue = value.ToString() ?? "";
+			string fullName = value.GetType().FullName ?? "";
+
+			if (!strValue.StartsWith(fullName)) return false;
+			
+			return true;
+		}
+
+		public static bool IsRecordType(Type type)
+		{
+			// Check if the type has the CompilerGeneratedAttribute and a method named "<Clone>$"
+			var isCompilerGenerated = type.GetCustomAttribute<CompilerGeneratedAttribute>() != null;
+			var hasCloneMethod = type.GetMethod("<Clone>$") != null;
+
+			// Optionally, you might also want to check for the existence of EqualityContract
+			var hasEqualityContract = type.GetProperty("EqualityContract", BindingFlags.Instance | BindingFlags.NonPublic) != null;
+
+			return isCompilerGenerated && hasCloneMethod && hasEqualityContract;
 		}
 
 		public JToken JsonSerialize(object? obj)
@@ -387,7 +414,7 @@ namespace PLang.Utils
 		public static bool IsVariable(object variable)
 		{
 			if (variable == null || string.IsNullOrEmpty(variable.ToString())) return false;
-			return Regex.IsMatch(variable.ToString()!, @"^%[a-zA-Z0-9\[\]_\.\+\(\)\*\<\>]*%$");
+			return Regex.IsMatch(variable.ToString()!, @"^%[a-zA-Z0-9\[\]_\.\+\(\)\*\<\>\!]*%$");
 		}
 
 		public static bool IsSetting(string variableName)

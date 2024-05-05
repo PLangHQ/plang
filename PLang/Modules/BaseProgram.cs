@@ -17,6 +17,8 @@ using System.Reflection;
 using static PLang.Modules.BaseBuilder;
 using Instruction = PLang.Building.Model.Instruction;
 using PLang.Errors;
+using PLang.Errors.Runtime;
+using System;
 
 namespace PLang.Modules
 {
@@ -136,7 +138,7 @@ namespace PLang.Modules
 				if (task.Status == TaskStatus.Faulted && task.Exception != null)
 				{
 					var ex = task.Exception.InnerException ?? task.Exception;
-					return new Error(ex.Message, Exception: ex);
+					return new ProgramError(ex.Message, goalStep, function, parameterValues, Exception: ex);
 				}
 
 				if (!goalStep.WaitForExecution || method.ReturnType == typeof(Task))
@@ -158,7 +160,7 @@ namespace PLang.Modules
 			}
 			catch (Exception ex)
 			{
-				return new ProgramError(ex.Message, goalStep, this.GetType().FullName, function.FunctionName, function.Parameters, function.ReturnValue, parameterValues, "RuntimeError", ex);
+				return new ProgramError(ex.Message, goalStep, function, parameterValues, "RuntimeError", 500, Exception: ex);
 			}
 		}
 
@@ -166,32 +168,45 @@ namespace PLang.Modules
 		{
 
 			Type taskType = task.GetType();
+			var returnArguments = taskType.GetGenericArguments().FirstOrDefault();
+			if (returnArguments == null) return (null, null);
 
-			Type resultType = taskType.GetGenericArguments()[0];
-			if (resultType != typeof(IError))
+			if (returnArguments == typeof(IError)) {
+				var resultTask = task as Task<IError?>;
+				return (null, resultTask?.Result);				
+			}
+
+			if (!returnArguments.FullName!.StartsWith("System.ValueTuple"))
+			{
+				var resultProperty = taskType.GetProperty("Result");
+				return (resultProperty.GetValue(task), null);
+
+			}
+
+			var fields = returnArguments.GetFields();
+			if (fields[0] == typeof(IError))
+			{
+				// It's a Task<Error?>
+				var resultTask = task as Task<IError?>;
+				return (null, resultTask?.Result);				
+			}
+
+			else if (fields.Count() > 1)
+			{
+				var resultProperty = taskType.GetProperty("Result");
+				var result = (dynamic) resultProperty.GetValue(task);
+
+				//var item1 = result.GetType().GetProperties()[0].GetValue(result);
+				//var item2 = result.GetType().GetProperties()[1].GetValue(result);
+				
+				return (result.Item1, result.Item2 as IError);				
+			}
+			else 
 			{
 				var resultTask = task as Task<object?>;
 				return (resultTask, null);
 			}
 
-			else if (resultType == typeof(IError))
-			{
-				// It's a Task<Error?>
-				var resultTask = task as Task<IError?>;
-				return (null, resultTask?.Result);
-			}
-			else if (resultType.IsGenericType && resultType.GetGenericTypeDefinition() == typeof(Tuple<,>))
-			{
-				// Check specific Tuple types
-				Type[] tupleArgs = resultType.GetGenericArguments();
-
-				// It's Task<Tuple<object, Error?>>
-				var resultTask = task as Task<Tuple<object, IError?>>;
-				var result = resultTask?.Result;
-				if (result == null) return (null, null);
-
-				return (result.Item1, result.Item2);
-			}
 			return (null, new Error("Could not extract return value or error"));
 		}
 

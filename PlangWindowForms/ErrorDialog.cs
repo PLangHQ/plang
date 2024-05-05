@@ -28,7 +28,7 @@ namespace PLangWindowForms
 				Dock = DockStyle.Fill,
 				Width = prompt.Width - 24,
 				Anchor = AnchorStyles.Left | AnchorStyles.Top,
-				Text = error.ToString()
+				Text = error.ToFormat().ToString()
 			};
 
 			var confirmationButton = new Button

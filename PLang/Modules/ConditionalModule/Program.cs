@@ -9,6 +9,7 @@ using static PLang.Modules.ConditionalModule.Builder;
 using PLang.Services.CompilerService;
 using static PLang.Runtime.Startup.ModuleLoader;
 using PLang.Errors;
+using PLang.Errors.Runtime;
 
 namespace PLang.Modules.ConditionalModule
 {

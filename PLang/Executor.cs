@@ -15,10 +15,11 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Reflection;
 using PLang.Errors;
+using PLang.Errors.Builder;
 
 namespace PLang
 {
-    public class Executor
+	public class Executor
 	{
 		private readonly IServiceContainer container;
 		private readonly PrParser prParser;
@@ -33,15 +34,19 @@ namespace PLang
 		public Executor(IServiceContainer container)
 		{
 			this.container = container;
-			
+
 			this.prParser = container.GetInstance<PrParser>();
 			this.fileSystem = container.GetInstance<IPLangFileSystem>();
 
 		}
 
+		public enum ExecuteType
+		{
+			Runtime = 0,
+			Builder = 1
+		}
 
-
-		public async Task Execute(string[] args)
+		public async Task Execute(string[] args, ExecuteType executeType)
 		{
 			var version = args.FirstOrDefault(p => p == "--version") != null;
 			if (version)
@@ -51,8 +56,6 @@ namespace PLang
 				Console.WriteLine("PLang version: " + assembly.GetName().Version.ToString());
 				return;
 			}
-			if (args.Length == 0) args = new string[1] { "run" };
-			if (args.FirstOrDefault(p => p == "run") == null && args.FirstOrDefault(p => p == "build") == null) args = args.Append("run").ToArray();
 
 			var debug = args.FirstOrDefault(p => p == "--debug") != null;
 			if (debug)
@@ -61,45 +64,36 @@ namespace PLang
 			}
 
 			var test = args.FirstOrDefault(p => p == "--test") != null;
-			var build = args.FirstOrDefault(p => p == "build") != null;
 			var watch = args.FirstOrDefault(p => p == "watch") != null;
-			var run = args.FirstOrDefault(p => p == "run") != null;
 
 			LoadParametersToAppContext(args);
-			
-
 			if (args.FirstOrDefault(p => p == "exec") != null)
 			{
 				var list = args.ToList();
 				list.Remove("exec");
 				args = list.ToArray();
-
-				build = true;
-				run = true;
 			}
 
-			AppContext.SetSwitch("Builder", build);
-			AppContext.SetSwitch("Runtime", run);
+			AppContext.SetSwitch("Builder", (executeType == ExecuteType.Builder));
+			AppContext.SetSwitch("Runtime", (executeType == ExecuteType.Runtime));
 
-			if (build)
+			if (executeType == ExecuteType.Builder)
 			{
 				await Build();
-				if (watch && !run)
+				if (watch)
 				{
 					WatchFolder(fileSystem.GoalsPath, "*.goal");
 					Console.Read();
 				}
-
+				return;
 			}
 
-			if (run)
+			if (watch)
 			{
-				if (watch)
-				{
-					WatchFolder(fileSystem.GoalsPath, "*.goal");
-				}
-				await Run(debug, test, args);
+				WatchFolder(fileSystem.GoalsPath, "*.goal");
 			}
+			await Run(debug, test, args);
+
 
 		}
 
@@ -128,10 +122,10 @@ namespace PLang
 			{
 				AppContext.SetSwitch("localllm", true);
 			}
-			
+
 
 			AppContext.SetSwitch("skipCode", args.FirstOrDefault(p => p.ToLower() == "--skipcode") != null);
-			
+
 		}
 
 		public void SetupDebug()
@@ -141,7 +135,7 @@ namespace PLang
 
 			Console.WriteLine("-- Debug mode");
 			AppContext.SetSwitch(ReservedKeywords.Debug, true);
-			
+
 			if (fileSystem.File.Exists(sendDebugPath)) return;
 
 			if (!fileSystem.File.Exists(sendDebugPath))
@@ -149,7 +143,8 @@ namespace PLang
 				if (!fileSystem.Directory.Exists(eventsPath))
 				{
 					fileSystem.Directory.CreateDirectory(eventsPath);
-				} else
+				}
+				else
 				{
 					var logger = container.GetInstance<ILogger>();
 					logger.LogError("Installed debugger and may have overwritten your events/Events.goal file. Sorry about that :( Will fix in future.");
@@ -171,7 +166,7 @@ namespace PLang
 			{
 				watcher = new FileSystemWatcher();
 			}
-			
+
 			if (!fileSystem.Directory.Exists(path))
 			{
 				fileSystem.Directory.CreateDirectory(path);
@@ -215,19 +210,30 @@ namespace PLang
 
 		public async Task Build()
 		{
-
+			var factory = container.GetInstance<IErrorHandlerFactory>();
+			var handler = factory.CreateHandler();
 			try
 			{
 
 				this.builder = container.GetInstance<IBuilder>();
-				await builder.Start(container);
-				prParser.LoadAllGoals();
+				var error = await builder.Start(container);
+				if (error != null)
+				{
+					if (!await handler.Handle(error))
+					{
+						await handler.ShowError(error);
+					}
+				}
+				else
+				{
+					prParser.LoadAllGoals();
+				}
 			}
 			catch (Exception ex)
 			{
-				var error = new Error(ex.Message, Exception: ex);
-				var factory = container.GetInstance<IErrorHandlerFactory>();
-				await factory.CreateHandler().Handle(error, 500, "error", ex.Message);
+				var error = new ExceptionError(ex);
+
+				await handler.ShowError(error);
 			}
 		}
 
@@ -235,7 +241,7 @@ namespace PLang
 		public async Task<IEngine> Run(bool debug = false, bool test = false, string[]? args = null)
 		{
 			if (test) AppContext.SetSwitch(ReservedKeywords.Test, true);
-			
+
 			this.engine = container.GetInstance<IEngine>();
 
 			// should create new instance of the container, but for now just clear memoryStack

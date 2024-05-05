@@ -221,17 +221,17 @@ namespace PLang.Services.SettingsService
         {
             return settingsRepositoryFactory.CreateHandler().GetSettings();
         }
-
+        public static readonly string SaltKey = "__Salt__";
         public string GetSalt()
         {
-            var salt = GetOrDefault<string>(GetType(), ReservedKeywords.Salt, null); 
+            var salt = GetOrDefault<string>(GetType(), SaltKey, null); 
             if (salt != null)
             {
                 return salt;
             }
 
             salt = GenerateSalt(32);
-            var setting = new Setting("1", GetType().FullName, salt.GetType().ToString(), ReservedKeywords.Salt, JsonConvert.SerializeObject(salt));
+            var setting = new Setting("1", GetType().FullName, salt.GetType().ToString(), SaltKey, JsonConvert.SerializeObject(salt));
             settingsRepositoryFactory.CreateHandler().Set(setting);
 
             return setting.Value;

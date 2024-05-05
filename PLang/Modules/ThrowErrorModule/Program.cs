@@ -18,7 +18,7 @@ namespace PLang.Modules.ThrowErrorModule
 		public async Task<Error?> Throw(string message, string type = "error", int statusCode = 400)
 		{
 			await outputStreamFactory.CreateHandler().Write(message, type, statusCode);
-			if (statusCode >= 400)
+			if (statusCode >= 300)
 			{
 				return new EndGoal(goalStep, message ?? "");
 			}

@@ -2,6 +2,8 @@
 using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
 using PLang.Building.Model;
+using PLang.Errors;
+using PLang.Errors.Builder;
 using PLang.Errors.Handlers;
 using PLang.Events;
 using PLang.Exceptions;
@@ -16,9 +18,9 @@ using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Building
 {
-    public interface IStepBuilder
+	public interface IStepBuilder
 	{
-		Task BuildStep(Goal goal, int stepNr, List<string>? excludeModules = null, int errorCount = 0);
+		Task<IBuilderError?> BuildStep(Goal goal, int stepNr, List<string>? excludeModules = null, int errorCount = 0);
 	}
 
 	public class StepBuilder : IStepBuilder
@@ -50,21 +52,24 @@ namespace PLang.Building
 			this.context = context;
 		}
 
-		public async Task BuildStep(Goal goal, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
+		public async Task<IBuilderError?> BuildStep(Goal goal, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
 		{
-			if (errorCount > 2)
+			var step = (stepIndex < goal.GoalSteps.Count) ? goal.GoalSteps[stepIndex] : null;
+			if (step == null)
 			{
-				logger.Value.LogError($"Could not get answer from LLM. Will NOT try again. Tried {errorCount} times. Will continue to build next step.");
-				return;
+				return new GoalBuilderError($"Step nr. {stepIndex + 1} could not be loaded from goal {goal.GoalName}. This is unusual behaviour and should not happen. Try deleting the .pr file from {goal.AbsolutePrFolderPath}.", goal);
+			}
+			if (++errorCount > 3)
+			{
+				return new StepBuilderError($"Could not get answer from LLM. Will NOT try again. Tried {errorCount} times. Will continue to build next step.", step);
 			}
 
 			if (excludeModules == null) { excludeModules = new List<string>(); }
 
-			var step = goal.GoalSteps[stepIndex];
 			try
 			{
 				var strStepNr = (stepIndex + 1).ToString().PadLeft(2, '0');
-				if (StepHasBeenBuild(step, stepIndex, excludeModules)) return;
+				if (StepHasBeenBuild(step, stepIndex, excludeModules)) return null;
 
 				await eventRuntime.RunBuildStepEvents(EventType.Before, goal, step, stepIndex);
 
@@ -74,36 +79,34 @@ namespace PLang.Building
 				llmQuestion.Reload = false;
 				var stepAnswer = await llmServiceFactory.CreateHandler().Query<StepAnswer>(llmQuestion);
 				if (stepAnswer == null)
-				{
-					if (errorCount > 2)
-					{
-						logger.Value.LogError($"Could not get answer from LLM. Will NOT try again. Tried {errorCount} times. Will continue to build next step.");
-						return;
-					}
-
+				{					
 					logger.Value.LogWarning($"Could not get answer from LLM. Will try again. This is attempt nr {++errorCount}");
-					await BuildStep(goal, stepIndex, excludeModules, errorCount);
-					return;
+					return await BuildStep(goal, stepIndex, excludeModules, errorCount);
 				}
 
 				var module = stepAnswer.Modules.FirstOrDefault();
 				var moduleType = typeHelper.GetRuntimeType(module);
 				if (moduleType == null || module == null || module == "N/A")
 				{
-					logger.Value.LogError($"Could not find module for {step.Text}. Try defining the step in more detail.");
-					logger.Value.LogWarning($@"You have 3 options.
-- Rewrite your step to fit better with a modules that you have installed
-- Install an App from that can handle your request and call that
-- Build your own module. This requires a C# developer knowledge");
-					logger.Value.LogError($"Builder will continue on other steps but not this one ({step.Text}).");
+					return new StepBuilderError($@"Could not find module for {step.Text}. 
+Try defining the step in more detail.
 
-					return;
+You have 3 options:
+	- Rewrite your step to fit better with a modules that you have installed. 
+		How to write the step? Get help here https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md
+	- Install an App from that can handle your request and call that
+	- Build your own module. This requires a C# developer knowledge
+
+Builder will continue on other steps but not this one: ({step.Text}).
+", step);
+
 				}
 
 				step.ModuleType = module;
 				step.ErrorHandler = stepAnswer.ErrorHandler;
 				step.WaitForExecution = stepAnswer.WaitForExecution;
 				step.RetryHandler = stepAnswer.RetryHandler;
+				// cannot put caching on caching
 				step.CacheHandler = (module == "PLang.Modules.CachingModule") ? null : stepAnswer.CachingHandler;
 				step.Name = stepAnswer.StepName;
 				step.Description = stepAnswer.StepDescription;
@@ -118,34 +121,46 @@ namespace PLang.Building
 				}
 
 				step.RunOnce = (goal.RelativePrFolderPath.ToLower().Contains(".build" + Path.DirectorySeparatorChar + "setup"));
-				try
+
+				var error = await instructionBuilder.BuildInstruction(this, goal, step, module, stepIndex, excludeModules, errorCount);
+				if (error != null)
 				{
-					await instructionBuilder.BuildInstruction(this, goal, step, module, stepIndex, excludeModules, errorCount);
+					if (error is not InvalidFunctionsError)
+					{
+						return error;
+					}
 
-					//Set reload after Build Instruction
-					step.Reload = false;
-					step.Generated = DateTime.Now;
+					if (error is InvalidFunctionsError invalidFunctions)
+					{
+						if (invalidFunctions.ExcludeModule && !excludeModules.Contains(module))
+						{
+							excludeModules.Add(module);
+						}
 
-					await eventRuntime.RunBuildStepEvents(EventType.After, goal, step, stepIndex);
+					}
+					logger.Value.LogWarning(error.Message);
+					var buildStepError = await BuildStep(goal, stepIndex, excludeModules, ++errorCount);
+					if (buildStepError != null)
+					{
+						return buildStepError;
+					}
 				}
-				catch (FunctionNotFoundException ffe)
-				{
-					excludeModules.Add(ffe.Message);
-					await BuildStep(goal, stepIndex, excludeModules, ++errorCount);
-				}
-				catch (SkipStepException) { }
+				//Set reload after Build Instruction
+				step.Reload = false;
+				step.Generated = DateTime.Now;
 
+				return await eventRuntime.RunBuildStepEvents(EventType.After, goal, step, stepIndex);
 			}
-			catch (StopBuilderException) { throw; }
 			catch (Exception ex)
 			{
-				if (await exceptionHandlerFactory.CreateHandler().Handle(ex, 500, "error", ex.Message))
+				var error = new ExceptionError(ex);
+				if (await exceptionHandlerFactory.CreateHandler().Handle(error))
 				{
-					await BuildStep(goal, stepIndex, excludeModules, errorCount);
+					return await BuildStep(goal, stepIndex, excludeModules, errorCount);
 				}
 				else
 				{
-					throw new BuilderStepException(ex.Message, step, ex);
+					return error;
 				}
 			}
 
@@ -291,7 +306,7 @@ Be Concise
 				system += "\n\nUser is programming in the UI folder, this put priority on PLang.Modules.UiModule. The user is trying to create UI";
 			}
 
-				var question = step.Text;
+			var question = step.Text;
 			var assistant = $@"This is a list of modules you can choose from
 ## modules available starts ##
 {modulesAvailable}
