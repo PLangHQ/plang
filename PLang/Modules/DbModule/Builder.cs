@@ -144,7 +144,7 @@ You MUST provide Parameters if SQL has @parameter.
 			}
 
 			var supportedDbTypesAsString = moduleSettings.GetSupportedDbTypesAsString();
-			var dbTypeParam = gf.Parameters.FirstOrDefault(p => p.Name == "dbType");
+			var dbTypeParam = gf.Parameters.FirstOrDefault(p => p.Name == "databaseType");
 			if (dbTypeParam == null || dbTypeParam.Value == null || string.IsNullOrEmpty(dbTypeParam.Value.ToString()))
 			{
 				var supportedDbTypes = moduleSettings.GetSupportedDbTypes();
@@ -162,7 +162,7 @@ These are the supported databases (you dont need to be precise)
 			bool isDefault = (setAsDefaultForApp != null && setAsDefaultForApp.Value != null) ? (bool)setAsDefaultForApp.Value : false;
 			bool keepHistory = (keepHistoryEventSourcing != null && keepHistoryEventSourcing.Value != null) ? (bool)keepHistoryEventSourcing.Value : false;
 
-			await moduleSettings.CreateDataSource((string) dataSourceName.Value, (string) dbTypeParam.Value, isDefault, keepHistory);
+			await moduleSettings.CreateDataSource((string) dataSourceName.Value, null, (string) dbTypeParam.Value, isDefault, keepHistory);
 		}
 	
 

@@ -289,7 +289,7 @@ namespace PLang.Utils.Tests
   }");
 			memoryStack.Put("password", "123");
 			goalStep.Text = "hash %password%, write to %hashedPassword%";
-			llmService.Query<MethodNotFoundResponse>(Arg.Any<LlmRequest>()).Returns(new MethodNotFoundResponse("hash %password%, write into %hashedPassword%"));
+			llmService.Query<MethodNotFoundResponse>(Arg.Any<LlmRequest>()).Returns((new MethodNotFoundResponse("hash %password%, write into %hashedPassword%"), null));
 			var method = await methodHelper.GetMethod(this, gf);
 
 

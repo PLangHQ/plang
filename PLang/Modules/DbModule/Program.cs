@@ -51,17 +51,21 @@ namespace PLang.Modules.DbModule
 			this.moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, dbConnection, logger);
 		}
 
-		public async Task CreateDataSource(string name, string dbType = "", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
+		[Description("localPath is location of the database on the drive for sqlite. localPath can be string with variables, default is null")]
+		public async Task CreateDataSource(string name = "data", string? localPath = null, string databaseType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
 		{
-			await moduleSettings.CreateDataSource(name, dbType, setAsDefaultForApp, keepHistoryEventSourcing);
+			await moduleSettings.CreateDataSource(name, localPath, databaseType, setAsDefaultForApp, keepHistoryEventSourcing);
 		}
 
-		public async Task<Error?> SetDataSourceName(string name)
+		public async Task<Error?> SetDataSourceName(string name, string localPath = "./db/data.sqlite")
 		{
 			var dataSource = await moduleSettings.GetDataSource(name);
 			if (dataSource == null)
 			{
-				return new Error($"Datasource with the name '{name}' could not be found. You need to create a datasource first, e.g. \n\n- Create data source {name}\n- Create postgres data source {name}, set as default\n- Create sqlserver data source {name}, keep history", "DataSourceNotFound");
+				return new Error($"Data source with the name '{name}' could not be found. You need to create a datasource first",
+					Key: "DataSourceNotFound",
+					FixSuggestion: $"Rewrite your step in such ways as: \n\n- Create data source {name}\n- Create postgres data source {name}, set as default\n- Create sqlserver data source {name}",
+					HelpfulLinks: "https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.DbModule.md");
 			}
 			context[ReservedKeywords.CurrentDataSourceName] = dataSource;
 			return null;

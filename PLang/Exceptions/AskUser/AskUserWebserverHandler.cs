@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using PLang.Errors;
+using PLang.Errors.AskUser;
 using PLang.Errors.Handlers;
 using PLang.Interfaces;
 using PLang.Services.OutputStream;
@@ -9,6 +10,7 @@ using System.Text;
 
 namespace PLang.Exceptions.AskUser
 {
+	/*
     public class AskUserWebserverHandler : IAskUserHandler
 	{
 		private readonly HttpListenerContext context;
@@ -26,7 +28,7 @@ namespace PLang.Exceptions.AskUser
 		}
 
 
-		public async Task<bool> Handle(AskUserError error)
+		public async Task<(bool, IError?)> Handle(AskUserError error)
 		{
 			int statusCode = (error is AskUserWebserver) ? ((AskUserWebserver)error).StatusCode : 500;
 			var response = context.Response;
@@ -34,8 +36,8 @@ namespace PLang.Exceptions.AskUser
 
 			await outputStreamFactory.CreateHandler().Write(error, error.Message, statusCode);
 			
-			return false;
+			return (true, null);
 		}
 
-	}
+	}*/
 }

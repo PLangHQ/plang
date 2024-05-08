@@ -42,7 +42,7 @@ using static PLang.Modules.DbModule.ModuleSettings;
 
 namespace PLang.Container
 {
-	public static class Instance
+    public static class Instance
 	{
 		public record InjectedType(string InjectorName, Type ServiceType, Type ImplementationType);
 		private static readonly Dictionary<Type, InjectedType> injectedTypes = [];
@@ -68,7 +68,7 @@ namespace PLang.Container
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
 			container.RegisterOutputStreamFactory(typeof(JsonOutputStream), true, new JsonOutputStream(httpContext));
-			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler());
+			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler(container.GetInstance<IOutputStreamFactory>()));
 			container.RegisterErrorHandlerFactory(typeof(HttpErrorHandler), true, new HttpErrorHandler(httpContext, container.GetInstance<IAskUserHandlerFactory>(), container.GetInstance<ILogger>()));
 
 			RegisterEventRuntime(container);
@@ -96,7 +96,7 @@ namespace PLang.Container
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
 			container.RegisterOutputStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
-			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler());
+			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler(container.GetInstance<IOutputStreamFactory>()));
 			container.RegisterErrorHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler(container.GetInstance<IAskUserHandlerFactory>()));
 			RegisterEventRuntime(container);
 		}
@@ -108,7 +108,7 @@ namespace PLang.Container
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
 			container.RegisterOutputStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
-			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler());
+			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler(container.GetInstance<IOutputStreamFactory>()));
 			container.RegisterErrorHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler(container.GetInstance<IAskUserHandlerFactory>()));
 
 			RegisterEventRuntime(container, true);
@@ -299,7 +299,7 @@ namespace PLang.Container
 				var supportedTypes = moduleSettings.GetSupportedDbTypes();
 				if (supportedTypes.Count == 1)
 				{
-					moduleSettings.CreateDataSource("data", "sqlite", true, true).Wait();
+					moduleSettings.CreateDataSource("data", "./db/data.sqlite", "sqlite", true, true).Wait();
 					dbConnection = GetDbConnection(factory, context);
 					if (dbConnection != null) return dbConnection;
 				}

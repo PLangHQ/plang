@@ -1,10 +1,12 @@
-﻿namespace PLang.Errors.Handlers
+﻿using PLang.Errors.AskUser;
+
+namespace PLang.Errors.Handlers
 {
-	public record AskUserWebserver(string Question, int StatusCode = 500, Func<object?, Task>? CallbackMethod = null) : AskUserError(Question, CreateAdapter(CallbackMethod))
+    public record AskUserWebserver(string Question, int StatusCode = 500, Func<object?, Task>? CallbackMethod = null) : AskUser.AskUserError(Question, CreateAdapter(CallbackMethod))
     {
-        public override async Task InvokeCallback(object value)
+        public override async Task<(bool, IError?)> InvokeCallback(object[]? value)
         {
-            return;
+            return (true, null);
         }
     }
 }

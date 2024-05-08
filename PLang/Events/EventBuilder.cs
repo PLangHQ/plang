@@ -97,10 +97,11 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError,
                     promptMessage.Add(new LlmMessage("user", step.Text));
 
                     var llmRequest = new LlmRequest("Events", promptMessage);
-                    var eventModel = await llmServiceFactory.CreateHandler().Query<EventBinding>(llmRequest);
+                    (var eventModel, var queryError) = await llmServiceFactory.CreateHandler().Query<EventBinding>(llmRequest);
+                    if (queryError != null) return ([], queryError);
                     if (eventModel == null)
                     {
-                        throw new BuilderStepException($"Could not build an events from step {step.Text} in {filePath}. LLM didn't give any response. Try to rewriting the event.", step);
+                       return ([], new BuilderEventError($"Could not build an events from step {step.Text} in {filePath}. LLM didn't give any response. Try to rewriting the event.", Step: step));
                     }
 
 

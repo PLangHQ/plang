@@ -219,7 +219,7 @@ namespace PLang.Modules.WebCrawlerModule
 			return elements;
 		}
 		
-		public async Task<List<string>> ExtractContent(bool clearHtml = true, string? cssSelector = null)
+		public async Task<List<string>> ExtractContent(bool clearHtml = false, string? cssSelector = null)
 		{		
 			cssSelector = GetCssSelector(cssSelector);
 			List<string> results = new List<string>();

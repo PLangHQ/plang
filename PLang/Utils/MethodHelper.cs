@@ -4,8 +4,8 @@ using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Builder;
+using PLang.Errors.Handlers;
 using PLang.Exceptions;
-using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
@@ -17,7 +17,7 @@ using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Utils
 {
-	public class MethodHelper
+    public class MethodHelper
 	{
 		private GoalStep goalStep;
 		private readonly VariableHelper variableHelper;
@@ -72,7 +72,7 @@ example of answer:
 
 			var llmRequeset = new LlmRequest("HandleMethodNotFound", promptMessage);
 
-			var response = await llmServiceFactory.CreateHandler().Query<MethodNotFoundResponse>(llmRequeset);
+			(var response, var queryError) = await llmServiceFactory.CreateHandler().Query<MethodNotFoundResponse>(llmRequeset);
 			throw new MissingMethodException($"Method {function.FunctionName} could not be found that matches with your statement. Example of command could be: {response.Text}");
 		}
 		public record MethodNotFoundResponse(string Text);
@@ -241,7 +241,7 @@ example of answer:
 				catch (PropertyNotFoundException) { throw; }
 				catch (Exception ex)
 				{
-					if (ex is AskUserException) throw;
+					if (ex is AskUserError) throw;
 
 					throw new ParameterException($"Cannot convert {inputParameter?.Value} on parameter {parameter.Name} - value:{variableValue}", goalStep, ex);
 				}

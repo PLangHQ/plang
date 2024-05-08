@@ -115,7 +115,8 @@ namespace PLang.Building
 			{
 				var error = new ExceptionError(ex);
 				var handler = exceptionHandlerFactory.CreateHandler();
-				if (!await handler.Handle(error))
+				(var isHandled, var handleError) = await handler.Handle(error);
+				if (!isHandled)
 				{
 					await handler.ShowError(error, null);
 				}

@@ -32,5 +32,7 @@ namespace PLang.Errors
 
 
 		public int Count { get { return errors.Count; } }
+
+		public Exception? Exception  {get;}
 	}
 }

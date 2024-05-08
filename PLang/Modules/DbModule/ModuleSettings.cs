@@ -1,20 +1,16 @@
 ﻿using LightInject;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
+using PLang.Errors;
 using PLang.Exceptions;
-using PLang.Exceptions.AskUser;
 using PLang.Exceptions.AskUser.Database;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Services.LlmService;
 using PLang.Utils;
-using System.ComponentModel;
 using System.Data;
-using System.Data.Common;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using static PLang.Modules.DbModule.ModuleSettings;
-using static PLang.Runtime.Startup.ModuleLoader;
 
 namespace PLang.Modules.DbModule
 {
@@ -43,32 +39,21 @@ namespace PLang.Modules.DbModule
 		public record DataSource(string Name, string TypeFullName, string ConnectionString, string DbName, string SelectTablesAndViews, string SelectColumns, bool KeepHistory = true, bool IsDefault = false);
 
 
-		public async Task CreateDataSource(string dataSourceName = "data", string dbType = "", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
+		public async Task<IError?> CreateDataSource(string dataSourceName = "data", string? localPath = null, string dbType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
 		{
+			var listOfDbSupported = GetSupportedDbTypes();
+			if (dbType == "sqlite")
+			{
+				if (localPath == null) localPath = "./.db/" + dataSourceName + ".sqlite";
+				return await CreateSqliteDataSource(dataSourceName, localPath, setAsDefaultForApp, keepHistoryEventSourcing);
+			}
+
 			var dataSources = await GetAllDataSources();
 			var dataSource = dataSources.FirstOrDefault(p => p.Name.ToLower() == dataSourceName.ToLower());
 			if (dataSource != null) {
-				logger.LogWarning($"Data source with the name '{dataSourceName}' already exists.");
-				return;
+				return new Error($"Data source with the name '{dataSourceName}' already exists.");
 			}
-			var listOfDbSupported = GetSupportedDbTypes();
-			if (listOfDbSupported.Count == 1 && dataSources.Count == 0)
-			{
-				string dbPath = Path.Join(".db", "data.sqlite");
-				AppContext.TryGetSwitch(ReservedKeywords.Test, out bool inMemory);
-				if (inMemory)
-				{
-					dbPath = "Data Source=InMemoryDataDb;Mode=Memory;Cache=Shared;";
-				}
-				await SetDatabaseConnectionString("data", typeof(SqliteConnection).FullName, "data.sqlite", $"Data Source={dbPath};", true, true);
-				return;
-			}
-			
-			if (listOfDbSupported.Count == 1)
-			{
-				throw new AskUserSqliteName(fileSystem.RootDirectory, $"What is the name you want to give to your database?", SetDatabaseConnectionString);
-			}
-
+	
 			var supportedDbTypes = GetSupportedDbTypesAsString();		
 			var system = @$"Map user request
 
@@ -89,30 +74,62 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 			var llmRequest = new LlmRequest("AskUserDatabaseType", promptMessage);
 			llmRequest.scheme = TypeHelper.GetJsonSchema(typeof(DatabaseTypeResponse));
 
-			var result = await llmServiceFactory.CreateHandler().Query<DatabaseTypeResponse>(llmRequest);
+			(var result, var queryError) = await llmServiceFactory.CreateHandler().Query<DatabaseTypeResponse>(llmRequest);
 			if (result == null)
 			{
 				throw new BuilderException("Could not get information from LLM service. Try again.");
 			}
 			if (dataSources.Count == 0) setAsDefaultForApp = true;
 
-			await AddDataSource(result.typeFullName, dataSourceName, result.nugetCommand, 
+			return await AddDataSource(result.typeFullName, dataSourceName, result.nugetCommand, 
 									result.dataSourceConnectionStringExample, result.regexToExtractDatabaseNameFromConnectionString, 
 									keepHistoryEventSourcing, setAsDefaultForApp);
+		}
+
+		private async Task<IError?> CreateSqliteDataSource(string dataSourceName, string localPath, bool setAsDefaultForApp, bool keepHistoryEventSourcing)
+		{
+			string fileName = Path.GetFileName(localPath);
+			if (string.IsNullOrEmpty(fileName))
+			{
+				return new Error($"You need to define the path with a file name", 
+					FixSuggestion: $"When you create the datasource include the path, e.g. '- create datasource name: {dataSourceName}, path: '/%Identity%/.db/data.sqlite'");
+			}
+			if (fileSystem.File.Exists(localPath)) return null;
+
+			string dataSourcePath = $"Data Source={localPath};";
+			AppContext.TryGetSwitch(ReservedKeywords.Test, out bool inMemory);
+			if (inMemory)
+			{
+				dataSourcePath = "Data Source=InMemoryDataDb;Mode=Memory;Cache=Shared;";
+			}
+			string dirPath = Path.GetDirectoryName(localPath);
+			if (!fileSystem.Directory.Exists(dirPath))
+			{
+				fileSystem.Directory.CreateDirectory(dirPath);
+			}
+			File.Create(localPath).Close();
+
+			if (localPath == "./.db/data.sqlite")
+			{
+				var statement = new SqlStatement("SELECT name FROM sqlite_master WHERE type IN ('table', 'view');", "SELECT name, type, [notnull] as isNotNull, pk as isPrimaryKey FROM pragma_table_info(@TableName);");
+
+				var dataSource = new DataSource(dataSourceName, typeof(SqliteConnection).FullName, dataSourcePath, "data", statement.SelectTablesAndViewsInMyDatabaseSqlStatement, statement.SelectColumnsFromTablesSqlStatement, keepHistoryEventSourcing, setAsDefaultForApp);
+				await AddDataSourceToSettings(dataSource);
+			}
+			return null;
 		}
 
 		private record DatabaseTypeResponse(string typeFullName, string nugetCommand, string regexToExtractDatabaseNameFromConnectionString, string dataSourceConnectionStringExample);
 
 
-		public async Task AddDataSource(string typeFullName, string dataSourceName, string nugetCommand,
+		public async Task<IError?> AddDataSource(string typeFullName, string dataSourceName, string nugetCommand,
 			string dataSourceConnectionStringExample, string regexToExtractDatabaseNameFromConnectionString, bool keepHistory, bool isDefault = false)
 		{
 			var datasources = await GetAllDataSources();
 			if (datasources.FirstOrDefault(p => p.Name.ToLower() == dataSourceName.ToLower()) != null)
 			{
-				throw new AskUserDataSourceNameExists(llmServiceFactory, typeFullName, dataSourceName, nugetCommand,
-						dataSourceConnectionStringExample, regexToExtractDatabaseNameFromConnectionString, keepHistory, isDefault,
-						$"'{dataSourceName}' already exists. Give me different name if you like to add it.", AddDataSource);
+				return new Error($"Data source with the name '{dataSourceName}' already exists.", 
+						FixSuggestion:$"You must write a different name for your {dataSourceName} data source in your step.\nYou can defined such:\n-create datasource name:MyCustomName");
 			}
 
 			if (!IsModuleInstalled(typeFullName))
@@ -128,7 +145,7 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 This is an example of a connection string:
 	{dataSourceConnectionStringExample}
 
-Your connection string needs to be 100% correct to work (LLM will not read this).
+Your connection string needs to be 100% correct to work (LLM will not read th is).
 
 Connection string:",
 				SetDatabaseConnectionString);
@@ -175,46 +192,50 @@ If you need to do subquery, make sure to use IN statement incase the subquery re
 Be concise"));
 
 				var llmRequest = new LlmRequest("SetDatabaseConnectionString", promptMessage);
-				statement = await llmServiceFactory.CreateHandler().Query<SqlStatement>(llmRequest);
+				(statement, var queryError) = await llmServiceFactory.CreateHandler().Query<SqlStatement>(llmRequest);
 			}
 			if (statement == null)
 			{
 				throw new BuilderException("Could not get select statement for tables, views and columns. Try again.");
 			}
-			DataSource dataSource;
-
-			var dataSources = await GetAllDataSources();
-			if (dataSources.Count == 0)
-			{
-				isDefault = true;
-			}
-			var dataSourceIdx = dataSources.FindIndex(p => p.Name == dataSourceName);
-			if (dataSourceIdx != -1)
-			{
-				dataSources[dataSourceIdx] = new DataSource(dataSourceName, typeFullName, databaseConnectionString.Replace(fileSystem.RootDirectory, ""), dbName,
+			DataSource dataSource = new DataSource(dataSourceName, typeFullName, databaseConnectionString.Replace(fileSystem.RootDirectory, ""), dbName,
 										statement.SelectTablesAndViewsInMyDatabaseSqlStatement, statement.SelectColumnsFromTablesSqlStatement,
 										keepHistory, isDefault);
-				dataSource = dataSources[dataSourceIdx];
-			}
-			else
+
+			List<DataSource> dataSources = await AddDataSourceToSettings(dataSource);
+
+			if (isDefault || dataSources.Count == 1)
 			{
-
-				dataSource = new DataSource(dataSourceName, typeFullName, databaseConnectionString.Replace(fileSystem.RootDirectory, ""), dbName,
-										statement.SelectTablesAndViewsInMyDatabaseSqlStatement, statement.SelectColumnsFromTablesSqlStatement,
-										keepHistory, isDefault);
-				dataSources.Add(dataSource);
-			}
-
-			
-			settings.SetList(this.GetType(), dataSources);
-
-			if (isDefault || dataSources.Count == 1) {
 				AppContext.SetData(ReservedKeywords.Inject_IDbConnection, typeFullName);
 				context.AddOrReplace(ReservedKeywords.Inject_IDbConnection, typeFullName);
 
 				AppContext.SetData(ReservedKeywords.CurrentDataSourceName, dataSource);
 				context.AddOrReplace(ReservedKeywords.CurrentDataSourceName, dataSource);
 			}
+		}
+
+		private async Task<List<DataSource>> AddDataSourceToSettings(DataSource dataSource)
+		{
+			var dataSources = await GetAllDataSources();
+			if (dataSources.Count == 0)
+			{
+				dataSource = new DataSource(dataSource.Name, dataSource.TypeFullName, dataSource.ConnectionString, 
+									dataSource.DbName, dataSource.SelectTablesAndViews, 
+									dataSource.SelectColumns, dataSource.KeepHistory, true);
+			}
+			var dataSourceIdx = dataSources.FindIndex(p => p.Name == dataSource.Name);
+			if (dataSourceIdx != -1)
+			{
+				dataSources[dataSourceIdx] = dataSource;
+			}
+			else
+			{
+				dataSources.Add(dataSource);
+			}
+
+
+			settings.SetList(this.GetType(), dataSources);
+			return dataSources;
 		}
 
 		public async Task RemoveDataSource(string dataSourceName)
@@ -393,7 +414,7 @@ Be concise"));
 			var dbtypes = GetSupportedDbTypes();
 			if (dbtypes.Count == 1)
 			{
-				await CreateDataSource("data", "sqlite", true, true);
+				await CreateDataSource("data", "./.db/data.sqlite", "sqlite", true, true);
 				return await GetDefaultDbConnection(factory);
 			}
 			else

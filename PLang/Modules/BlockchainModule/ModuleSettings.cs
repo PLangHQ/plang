@@ -282,24 +282,24 @@ namespace PLang.Modules.BlockchainModule
 			var lockingExpires = settingsService.GetOrDefault<DateTimeOffset>(typeof(ModuleSettings), "PrivateKeysLocked", DateTimeOffset.UtcNow.AddDays(-2));
 			if (lockingExpires > DateTimeOffset.UtcNow)
 			{
-				throw new AskUserPrivateKeyException($"System has been locked from exporting private keys. You will be able to export after {lockingExpires}");
+				throw new AskUserPrivateKeyError($"System has been locked from exporting private keys. You will be able to export after {lockingExpires}");
 			}
 			answers.Clear();
 
-			throw new AskUserPrivateKeyException(@"Before we export your private keys I would like to ask you 3 question. Remember never share your private keys with people you don't know or trust.
+			throw new AskUserPrivateKeyError(@"Before we export your private keys I would like to ask you 3 question. Remember never share your private keys with people you don't know or trust.
 Question 1: Why are you sharing your private key?" , GetSecondQuestion);
 		}
 
 		private async Task GetSecondQuestion(string answer)
 		{
 			answers.Add("1. " + answer);
-			throw new AskUserPrivateKeyException(@"2. Who specifically requested your private key, and how did they contact you?", GetThirdQuestion);
+			throw new AskUserPrivateKeyError(@"2. Who specifically requested your private key, and how did they contact you?", GetThirdQuestion);
 		}
 
 		private async Task GetThirdQuestion(string answer)
 		{
 			answers.Add("2. " + answer);
-			throw new AskUserPrivateKeyException(@"2. Who specifically requested your private key, and how did they contact you?", MakeDecision);
+			throw new AskUserPrivateKeyError(@"2. Who specifically requested your private key, and how did they contact you?", MakeDecision);
 		}
 
 		private record DecisionResponse(string Level, string Explain);
@@ -323,7 +323,7 @@ These are the 3 questions
 			promptMessage.Add(new LlmMessage("user", string.Join("\n", answers)));
 
 			var llmRequest = new LlmRequest("ExportPrivateKeys", promptMessage);
-			var response = await llmServiceFactory.CreateHandler().Query<DecisionResponse>(llmRequest);
+			(var response, var queryError) = await llmServiceFactory.CreateHandler().Query<DecisionResponse>(llmRequest);
 
 			if (response.Level.ToLower() == "low" || response.Level.ToLower() == "medium")
 			{

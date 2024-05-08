@@ -62,6 +62,7 @@ namespace PLangTests
 		protected IAskUserHandler askUserHandler;
 		protected IErrorHandler errorHandler;
 		protected IErrorHandlerFactory errorHandlerFactory;
+		protected ISettingsRepositoryFactory settingsRepositoryFactory;
 		protected void Initialize()
 		{
 
@@ -89,6 +90,11 @@ namespace PLangTests
 			container.RegisterInstance<IServiceContainer>(container);
 			this.settingsRepository = new SqliteSettingsRepository(fileSystem, context, logger);
 			container.RegisterInstance<ISettingsRepository>(settingsRepository);
+
+
+			settingsRepositoryFactory = Substitute.For<ISettingsRepositoryFactory>();
+			settingsRepositoryFactory.CreateHandler().Returns(settingsRepository);
+			container.RegisterInstance<ISettingsRepositoryFactory>(settingsRepositoryFactory);
 
 			containerFactory = Substitute.For<IServiceContainerFactory>();
 			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), Arg.Any<IAskUserHandlerFactory>()).Returns(p =>

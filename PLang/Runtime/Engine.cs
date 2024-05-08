@@ -7,6 +7,7 @@ using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Errors;
+using PLang.Errors.AskUser;
 using PLang.Errors.Handlers;
 using PLang.Errors.Runtime;
 using PLang.Events;
@@ -27,7 +28,7 @@ using System.Text;
 
 namespace PLang.Runtime
 {
-	public interface IEngine
+    public interface IEngine
 	{
 		IOutputStreamFactory OutputStreamFactory { get; }
 		void AddContext(string key, object value);
@@ -194,11 +195,11 @@ namespace PLang.Runtime
 			}
 		}
 
-		private async Task<bool> HandleFileAccessException(FileAccessRequestError fare)
+		private async Task<(bool, IError?)> HandleFileAccessError(FileAccessRequestError fare)
 		{
 			var fileAccessHandler = container.GetInstance<FileAccessHandler>();
-			var askUserFileAccess = new AskUserFileAccess(fare.Message, fare.AppName, fare.Path, fileAccessHandler.ValidatePathResponse);
-
+			var askUserFileAccess = new AskUserFileAccess(fare.AppName, fare.Path, fare.Message, fileAccessHandler.ValidatePathResponse);
+			
 			return await askUserHandlerFactory.CreateHandler().Handle(askUserFileAccess);
 		}
 
@@ -473,21 +474,28 @@ namespace PLang.Runtime
 		{
 			if (error is IErrorHandled) return error;
 
-			if (error is AskUserError aue)
+			if (error is Errors.AskUser.AskUserError aue)
 			{
-				var result = await askUserHandlerFactory.CreateHandler().Handle(aue);
-				if (result)
+				(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(aue);
+				if (handlerError != null)
 				{
-					return await RunStep(goal, goalStepIndex);
+					return ErrorHelper.GetMultipleError(error, handlerError);
 				}
+
+				return await RunStep(goal, goalStepIndex);
+
 			}
 
 			if (error is FileAccessRequestError fare)
 			{
-				if (await HandleFileAccessException(fare))
+				(var isHandled, var handlerError) = await HandleFileAccessError(fare);
+				if (handlerError != null)
 				{
-					return await RunStep(goal, goalStepIndex);
+					return ErrorHelper.GetMultipleError(error, handlerError);
 				}
+
+				return await RunStep(goal, goalStepIndex);
+
 			}
 
 			//let retry the step if user defined so
@@ -508,7 +516,7 @@ namespace PLang.Runtime
 			if (!step.Execute) return true;
 			if (!step.RunOnce) return false;
 			if (step.Executed == DateTime.MinValue) return false;
-			if (step.Executed != null && step.Executed != DateTime.MinValue) return true;
+			if (settings.IsDefaultSystemDbPath && step.Executed != null && step.Executed != DateTime.MinValue) return true;
 
 			var setupOnceDictionary = settings.GetOrDefault<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", new());
 
@@ -521,6 +529,7 @@ namespace PLang.Runtime
 			step.Executed = setupOnceDictionary[step.RelativePrPath];
 			return true;
 		}
+
 
 		public async Task<IError?> ProcessPrFile(Goal goal, GoalStep goalStep, int stepIndex)
 		{

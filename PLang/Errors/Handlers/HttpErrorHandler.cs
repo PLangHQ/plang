@@ -19,7 +19,7 @@ namespace PLang.Errors.Handlers
 			this.httpListenerContext = httpListenerContext;
 			this.logger = logger;
 		}
-		public async Task<bool> Handle(IError error)
+		public async Task<(bool, IError?)> Handle(IError error)
 		{
 			return await base.Handle(error);
 		}

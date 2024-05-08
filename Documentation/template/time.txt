@@ -1,6 +1,7 @@
 Time can be access by `\%Now\%`
 \%Now\% is reserved keyword in plang
-\%Now\% is the C# object DateTime.UtcNow
+\%Now\% is the C# object DateTime.Now
+\%NowUtc\% is the C# object DateTime.NowUtc
 developer can use simple syntax, 
     Set time
         \%Now=2000-12-31\%

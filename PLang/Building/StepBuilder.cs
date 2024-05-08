@@ -13,6 +13,7 @@ using PLang.Runtime;
 using PLang.Services.CompilerService;
 using PLang.Services.LlmService;
 using PLang.Utils;
+using RazorEngineCore;
 using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
 
@@ -77,9 +78,11 @@ namespace PLang.Building
 
 				logger.Value.LogInformation($"- Find module for {step.Text}");
 				llmQuestion.Reload = false;
-				var stepAnswer = await llmServiceFactory.CreateHandler().Query<StepAnswer>(llmQuestion);
+				(var stepAnswer, var llmError) = await llmServiceFactory.CreateHandler().Query<StepAnswer>(llmQuestion);
+				if (llmError != null) return llmError as IBuilderError;
+
 				if (stepAnswer == null)
-				{					
+				{
 					logger.Value.LogWarning($"Could not get answer from LLM. Will try again. This is attempt nr {++errorCount}");
 					return await BuildStep(goal, stepIndex, excludeModules, errorCount);
 				}
@@ -153,14 +156,17 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			}
 			catch (Exception ex)
 			{
-				var error = new ExceptionError(ex);
-				if (await exceptionHandlerFactory.CreateHandler().Handle(error))
+				var error = new ExceptionError(ex, Step: step, Goal: goal);
+				(var isHandled, var handlerError) = await exceptionHandlerFactory.CreateHandler().Handle(error);
+				if (isHandled)
 				{
 					return await BuildStep(goal, stepIndex, excludeModules, errorCount);
 				}
 				else
 				{
-					return error;
+					if (handlerError == null) return error;
+
+					return ErrorHelper.GetMultipleBuildError(error, handlerError);
 				}
 			}
 

@@ -1,0 +1,62 @@
+{
+  "Action": {
+    "FunctionName": "CreateTable",
+    "Parameters": [
+      {
+        "Type": "String",
+        "Name": "sql",
+        "Value": "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT);"
+      }
+    ],
+    "ReturnValue": null
+  },
+  "Text": "create table users, columns: name, email",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+    "type": "PLang.Modules.DbModule.Builder",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nvoid CreateTable(String sql)  \r\n## csharp function ##\r\n\r\nIf table name is a variable, keep the variable in the sql statement\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nYou MUST generate a valid sql statement for SQLite.\r\nYou MUST add id to create statement.\r\nIf id is not defined then add id to the create statement. \r\nThe id MUST NOT be auto incremental, but is primary key.\r\nThe id should be datatype long/bigint/.. which fits SQLite.\r\n"
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nvoid CreateDataSource(String? name = \"data\", String? localPath, String? databaseType = \"sqlite\", Boolean? setAsDefaultForApp = False, Boolean? keepHistoryEventSourcing = False)  // localPath is location of the database on the drive for sqlite. localPath can be string with variables, default is null. \nError SetDataSourceName(String name, String? localPath = \"./db/data.sqlite\") \nvoid BeginTransaction() \nvoid EndTransaction() \nvoid Rollback() \nError LoadExtension(String fileName, String? procName) \nValueTuple`2 GetDatabaseStructure()  // Returns tables and views in database with the columns description. \nValueTuple`2 Execute(String sql) \nvoid CreateTable(String sql) \nValueTuple`2 SelectOneRow(String sql, List`1<Object>? SqlParameters) \nValueTuple`2 Select(String sql, List`1<Object>? SqlParameters) \nValueTuple`2 Update(String sql, List`1<Object>? SqlParameters) \nValueTuple`2 Delete(String sql, List`1<Object>? SqlParameters) \nValueTuple`2 Insert(String sql, List`1<Object>? SqlParameters)  // Basic insert statement. Will return affected row count. \nValueTuple`2 InsertAndSelectIdOfInsertedRow(String sql, List`1<Object>? SqlParameters)  // Insert statement that will return the id of the inserted row. Use only if user requests the id. \nValueTuple`2 InsertBulk(String tableName, List`1<Object> items)  // Insert a list(bulk) into database, return number of rows inserted. \nString GetAdditionalSystemErrorInfo() \nValueTuple`2 GetAdditionalAssistantErrorInfo()\r\n## functions available ends ##"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "create table users, columns: name, email"
+          }
+        ]
+      }
+    ],
+    "model": "gpt-4-turbo",
+    "caching": true,
+    "RawResponse": "```json\n{\n  \"FunctionName\": \"CreateTable\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"sql\",\n      \"Value\": \"CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT);\"\n    }\n  ]\n}\n```"
+  },
+  "RunOnBuild": false
+}

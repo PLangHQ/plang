@@ -1,4 +1,5 @@
-﻿namespace PLang.Errors.Events
+﻿
+namespace PLang.Errors.Events
 {
 	public interface IEventError : IError
 	{
@@ -6,7 +7,7 @@
 		IError? InitialError { get; }
 	}
 
-	public record HandledEventError(IError InitialError, int StatusCode, string Key, string Message, string? FixSuggestion = null, string? HelpfulLinks = null) : IEventError, IErrorHandled
+	public record HandledEventError(IError InitialError, int StatusCode, string Key, string Message, Exception? Exception = null, string? FixSuggestion = null, string? HelpfulLinks = null) : IEventError, IErrorHandled
 	{
 		public bool IgnoreError => false;
 

@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using NSubstitute;
+using PLang.Errors;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Modules.LlmModule;
@@ -30,7 +31,7 @@ namespace PLangTests.Modules.LlmModule
 		{
 			llmService.Query<object>(Arg.Any<LlmRequest>()).Returns(p =>
 			{
-				return response;
+				return (response, default(IError));
 			});
 			llmServiceFactory.CreateHandler().Returns(llmService);
 			p = new Program(llmServiceFactory, identityService, settings, logger);

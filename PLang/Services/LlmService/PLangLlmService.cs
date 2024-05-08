@@ -2,6 +2,9 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
+using PLang.Errors;
+using PLang.Errors.AskUser;
+using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
@@ -54,16 +57,17 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 		}
 
 
-		public virtual async Task<T?> Query<T>(LlmRequest question)
+		public virtual async Task<(T?, IError?)> Query<T>(LlmRequest question)
 		{
-			return (T?)await Query(question, typeof(T));
+			var result = await Query(question, typeof(T));
+			return ((T?)result.Item1, result.Item2);
 		}
 
-		public virtual async Task<object?> Query(LlmRequest question, Type responseType)
+		public virtual async Task<(object?, IError?)> Query(LlmRequest question, Type responseType)
 		{
 			return await Query(question, responseType, 0);
 		}
-		public virtual async Task<object?> Query(LlmRequest question, Type responseType, int errorCount = 0)
+		public virtual async Task<(object?, IError?)> Query(LlmRequest question, Type responseType, int errorCount = 0)
 		{
 			Extractor = ExtractorFactory.GetExtractor(question, responseType);
 			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebug);
@@ -82,7 +86,7 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 					if (result != null && !string.IsNullOrEmpty(result.ToString()))
 					{
 						question.RawResponse = cachedLlmQuestion.RawResponse;
-						return result;
+						return (result, null);
 					}
 				}
 				catch { }
@@ -120,7 +124,7 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 			string responseBody = await response.Content.ReadAsStringAsync();
 			if (string.IsNullOrWhiteSpace(responseBody))
 			{
-				throw new BuilderException("llm.plang.is appears to be down. Try again in few minutes. If it does not come back up soon, check out our Discord https://discord.gg/A8kYUymsDD for a chat");
+				return (null, new ServiceError("llm.plang.is appears to be down. Try again in few minutes. If it does not come back up soon, check out our Discord https://discord.gg/A8kYUymsDD for a chat", this.GetType()));
 			}
 
 			question.RawResponse = responseBody;
@@ -141,7 +145,7 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 					
 					llmCaching.SetCachedQuestion(appId, question);
 				}
-				return obj;
+				return (obj, null);
 			}
 
 			if (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired)
@@ -157,10 +161,10 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 				{
 					AppContext.TryGetSwitch("Builder", out bool isBuilder);
 					string strIsBuilder = (isBuilder) ? " build" : "";
-					throw new AskUserConsole(@$"You need to purchase credits to use Plang LLM service. Lets do this now.
+					return (null, new AskUserError(@$"You need to purchase credits to use Plang LLM service. Lets do this now.
 (If you have OpenAI API key, you can run 'plang {strIsBuilder} --llmservice=openai')
 
-What is name of payer?", GetCountry);
+What is name of payer?", GetCountry));
 				}
 			}
 
@@ -212,43 +216,34 @@ What is name of payer?", GetCountry);
 		}
 
 		private string nameOfPayer = "";
-		private Task GetCountry(object value)
+		private async Task<(bool, IError?)> GetCountry(object? value)
 		{
+			if (value == null)
+			{
+				var error = new AskUserError("Name cannot be empty.\n\nWhat is name of payer?", GetCountry);
+				return (false, error);
+			}
+
 			object[] nameArray = (object[])value;
 			if (nameOfPayer == "" && (nameArray == null || string.IsNullOrEmpty(nameArray[0].ToString())))
 			{
-				throw new AskUserConsole("Name cannot be empty.\n\nWhat is name of payer?", GetCountry);
+				var error = new AskUserError("Name cannot be empty.\n\nWhat is name of payer?", GetCountry);
+				return (false, error);
 			}
 
 			if (nameOfPayer == "") { 
 				nameOfPayer = nameArray[0].ToString();
 			}
 
-			throw new AskUserConsole("What is your two letter country? (e.g. US, UK, FR, ...)", async (object? value) =>
+			return (false, new AskUserError("What is your two letter country? (e.g. US, UK, FR, ...)", async (object[]? countryArray) =>
 			{
-				object[] countryArray = (object[])value;
-				if (value == null || string.IsNullOrEmpty(countryArray[0].ToString()))
+				if (countryArray == null || countryArray.Length == 0 || string.IsNullOrEmpty(countryArray[0].ToString()))
 				{
-					throw new AskUserConsole("Country must be legal 2 country code.\n\nWhat is your two letter country? (e.g. US, UK, FR, ...)?", GetCountry);
+					return (false, new AskUserError("Country must be legal 2 country code.\n\nWhat is your two letter country? (e.g. US, UK, FR, ...)?", GetCountry));
 				}
-				var country = countryArray[0].ToString();
-				var requestUrl = url.Replace("api/Llm", "").TrimEnd('/');
-				var httpClient = new HttpClient();
-				var httpMethod = new HttpMethod("POST");
-				var request = new HttpRequestMessage(httpMethod, requestUrl + "/api/GetOrCreatePaymentLink");
-				request.Headers.UserAgent.ParseAdd("plang llm v0.1");
-				Dictionary<string, object?> parameters = new();
-				parameters.Add("name", nameOfPayer);
-				parameters.Add("country", country);
-				string body = StringHelper.ConvertToString(parameters);
 
-				request.Content = new StringContent(body, Encoding.GetEncoding("utf-8"), "application/json");
-				httpClient.Timeout = new TimeSpan(0, 0, 30);
-				await SignRequest(request);
-
-				var response = await httpClient.SendAsync(request);
-
-				string responseBody = await response.Content.ReadAsStringAsync();
+				var responseBody = await DoPlangRequest(countryArray);
+				
 				var obj = JObject.Parse(responseBody);
 				if (obj["url"] != null)
 				{
@@ -259,13 +254,34 @@ What is name of payer?", GetCountry);
 				{
 					if (obj["status"] != null && obj["status"]["error_code"] != null && obj["status"]["error_code"].ToString().Contains("COUNTRY"))
 					{
-						throw new AskUserConsole("Country must be legal 2 country code.\n\nWhat is your two letter country? (e.g. US, UK, FR, ...)?", GetCountry);
+						return (false, new AskUserError("Country must be legal 2 country code.\n\nWhat is your two letter country? (e.g. US, UK, FR, ...)?", GetCountry));
 					}
-					throw new AskUserConsole("Could not create url. Lets try again. What is your name?", GetCountry);
+					return (false, new AskUserError("Could not create url. Lets try again. What is your name?", GetCountry));
 				}
-			});
+			}));
 		}
 
+		private async Task<string> DoPlangRequest(object[] countryArray)
+		{
+			var country = countryArray[0].ToString();
+			var requestUrl = url.Replace("api/Llm", "").TrimEnd('/');
+			var httpClient = new HttpClient();
+			var httpMethod = new HttpMethod("POST");
+			var request = new HttpRequestMessage(httpMethod, requestUrl + "/api/GetOrCreatePaymentLink");
+			request.Headers.UserAgent.ParseAdd("plang llm v0.1");
+			Dictionary<string, object?> parameters = new();
+			parameters.Add("name", nameOfPayer);
+			parameters.Add("country", country);
+			string body = StringHelper.ConvertToString(parameters);
+
+			request.Content = new StringContent(body, Encoding.GetEncoding("utf-8"), "application/json");
+			httpClient.Timeout = new TimeSpan(0, 0, 30);
+			await SignRequest(request);
+
+			var response = await httpClient.SendAsync(request);
+
+			return await response.Content.ReadAsStringAsync();
+		}
 
 		public async Task SignRequest(HttpRequestMessage request)
 		{

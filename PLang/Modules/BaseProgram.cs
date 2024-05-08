@@ -19,6 +19,9 @@ using Instruction = PLang.Building.Model.Instruction;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using System;
+using PLang.SafeFileSystem;
+using OpenQA.Selenium.DevTools.V120.Emulation;
+using PLang.Errors.AskUser;
 
 namespace PLang.Modules
 {
@@ -42,6 +45,9 @@ namespace PLang.Modules
 		private IOutputStreamFactory outputStreamFactory;
 		private IPLangFileSystem fileSystem;
 		private MethodHelper methodHelper;
+		private FileAccessHandler fileAccessHandler;
+		private IAskUserHandlerFactory askUserHandlerFactory;
+		private ISettings settings;
 		public HttpListenerContext HttpListenerContext
 		{
 			get
@@ -72,6 +78,8 @@ namespace PLang.Modules
 			this.appCache = appCache;
 			this.outputStreamFactory = container.GetInstance<IOutputStreamFactory>();
 			this.fileSystem = container.GetInstance<IPLangFileSystem>();
+			this.askUserHandlerFactory = container.GetInstance<IAskUserHandlerFactory>();
+			this.settings = container.GetInstance<ISettings>();
 			_listenerContext = httpListenerContext;
 
 			this.goal = goal;
@@ -82,6 +90,7 @@ namespace PLang.Modules
 			this.typeHelper = typeHelper;
 			this.llmServiceFactory = llmServiceFactory;
 			methodHelper = new MethodHelper(goalStep, variableHelper, memoryStack, typeHelper, llmServiceFactory);
+			fileAccessHandler = container.GetInstance<FileAccessHandler>();
 		}
 
 		public virtual async Task<IError?> Run()
@@ -138,6 +147,11 @@ namespace PLang.Modules
 				if (task.Status == TaskStatus.Faulted && task.Exception != null)
 				{
 					var ex = task.Exception.InnerException ?? task.Exception;
+					if (ex is FileAccessException fa)
+					{
+						return await HandleFileAccess(fa);
+					}
+
 					return new ProgramError(ex.Message, goalStep, function, parameterValues, Exception: ex);
 				}
 
@@ -149,6 +163,13 @@ namespace PLang.Modules
 				(object? result, var error) = GetValuesFromTask(task);
 				if (error != null)
 				{
+					if (error is AskUserError aue)
+					{
+						(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(aue);
+						if (isHandled) return await RunFunction(function);
+
+						return ErrorHelper.GetMultipleError(error, handlerError);
+					}
 					return error;
 				}
 
@@ -160,8 +181,30 @@ namespace PLang.Modules
 			}
 			catch (Exception ex)
 			{
-				return new ProgramError(ex.Message, goalStep, function, parameterValues, "RuntimeError", 500, Exception: ex);
+				if (ex is MissingSettingsException mse)
+				{
+					var settingsError = new AskUserError(mse.Message, async (object[]? result) =>
+					{
+						await mse.InvokeCallback(result[0]);
+						return (true, null);
+					});
+
+					(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(settingsError);
+					if (isHandled) return await RunFunction(function);
+				}
+				return new ProgramError(ex.Message, goalStep, function, parameterValues, "ProgramError", 500, Exception: ex);
 			}
+		}
+
+		private async Task<IError?> HandleFileAccess(FileAccessException fa)
+		{
+			var fileAccessHandler = container.GetInstance<FileAccessHandler>();
+			var askUserFileAccess = new AskUserFileAccess(fa.AppName, fa.Path, fa.Message, fileAccessHandler.ValidatePathResponse);
+
+			(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(askUserFileAccess);
+			if (isHandled) return await RunFunction(function);
+
+			return ErrorHelper.GetMultipleError(askUserFileAccess, handlerError);
 		}
 
 		private (object? returnValue, IError? error) GetValuesFromTask(Task task)
@@ -171,9 +214,10 @@ namespace PLang.Modules
 			var returnArguments = taskType.GetGenericArguments().FirstOrDefault();
 			if (returnArguments == null) return (null, null);
 
-			if (returnArguments == typeof(IError)) {
+			if (returnArguments == typeof(IError))
+			{
 				var resultTask = task as Task<IError?>;
-				return (null, resultTask?.Result);				
+				return (null, resultTask?.Result);
 			}
 
 			if (!returnArguments.FullName!.StartsWith("System.ValueTuple"))
@@ -188,20 +232,20 @@ namespace PLang.Modules
 			{
 				// It's a Task<Error?>
 				var resultTask = task as Task<IError?>;
-				return (null, resultTask?.Result);				
+				return (null, resultTask?.Result);
 			}
 
 			else if (fields.Count() > 1)
 			{
 				var resultProperty = taskType.GetProperty("Result");
-				var result = (dynamic) resultProperty.GetValue(task);
+				var result = (dynamic)resultProperty.GetValue(task);
 
 				//var item1 = result.GetType().GetProperties()[0].GetValue(result);
 				//var item2 = result.GetType().GetProperties()[1].GetValue(result);
-				
-				return (result.Item1, result.Item2 as IError);				
+
+				return (result.Item1, result.Item2 as IError);
 			}
-			else 
+			else
 			{
 				var resultTask = task as Task<object?>;
 				return (resultTask, null);
@@ -392,9 +436,7 @@ Be Concise";
 
 				var llmRequest = new LlmRequest("AssistWithError", promptMesage);
 
-				var result = await llmServiceFactory.CreateHandler().Query<string>(llmRequest);
-
-				return (result?.ToString(), null);
+				return await llmServiceFactory.CreateHandler().Query<string>(llmRequest);
 			}
 			catch
 			{
@@ -402,6 +444,19 @@ Be Concise";
 			}
 
 
+		}
+
+
+		public IError? TaskHasError(Task<(IEngine, IError? error)> task)
+		{
+
+			if (task.Exception != null)
+			{
+				var exception = task.Exception.InnerException ?? task.Exception;
+				return new Error(exception.Message, Exception: exception);
+			}
+
+			return task.Result.error;
 		}
 	}
 }

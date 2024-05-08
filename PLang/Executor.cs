@@ -219,7 +219,8 @@ namespace PLang
 				var error = await builder.Start(container);
 				if (error != null)
 				{
-					if (!await handler.Handle(error))
+					(var isHandled, var errorHandler) = await handler.Handle(error);
+					if (errorHandler != null)
 					{
 						await handler.ShowError(error);
 					}

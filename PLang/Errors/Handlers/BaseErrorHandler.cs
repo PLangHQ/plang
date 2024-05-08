@@ -1,9 +1,10 @@
-﻿using PLang.Exceptions.AskUser;
+﻿using PLang.Errors.AskUser;
+using PLang.Exceptions.AskUser;
 
 namespace PLang.Errors.Handlers
 {
 
-	public abstract class BaseErrorHandler
+    public abstract class BaseErrorHandler
 	{
 		private readonly IAskUserHandlerFactory askUserHandlerFactory;
 
@@ -11,9 +12,9 @@ namespace PLang.Errors.Handlers
 		{
 			this.askUserHandlerFactory = askUserHandlerFactory;
 		}
-		public async Task<bool> Handle(IError error)
+		public async Task<(bool, IError?)> Handle(IError error)
 		{
-			if (error is not AskUserError aue) return false;
+			if (error is not AskUser.AskUserError aue) return (false, error);
 
 			return await askUserHandlerFactory.CreateHandler().Handle(aue);
 

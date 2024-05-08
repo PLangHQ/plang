@@ -2,12 +2,32 @@
 using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Errors;
+using PLang.Errors.Builder;
 using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Utils
 {
 	public class ErrorHelper
 	{
+		public static IBuilderError GetMultipleBuildError(IBuilderError initialError, IError? secondError)
+		{
+			if (secondError == null) return initialError;
+
+			var multipleError = new MultipleBuildError();
+			multipleError.Add(initialError);
+			multipleError.Add(secondError);
+			return multipleError;
+		}
+		public static IError GetMultipleError(IError initialError, IError? secondError)
+		{
+			if (secondError == null) return initialError;
+
+			var multipleError = new MultipleError();
+			multipleError.Add(initialError);
+			multipleError.Add(secondError);
+			return multipleError;
+		}
+
 		public static string FormatLine(string txt)
 		{			
 			var lines = txt.Trim().Split(Environment.NewLine);
@@ -181,5 +201,7 @@ namespace PLang.Utils
 
 			return message;
 		}
+
+		
 	}
 }

@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using NSubstitute;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
+using PLang.Errors;
 using PLang.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
@@ -136,15 +137,20 @@ namespace PLang.Building.Events.Tests
 
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "events", "Events.goal"), new MockFileData(content));
 
+			var result0 = Task.FromResult((JsonConvert.DeserializeObject<EventBinding>(aiResponses[0]), default(IError)));
+			var result1 = Task.FromResult((JsonConvert.DeserializeObject<EventBinding>(aiResponses[1]), default(IError)));
+			var result2 = Task.FromResult((JsonConvert.DeserializeObject<EventBinding>(aiResponses[2]), default(IError)));
+			var result3 = Task.FromResult((JsonConvert.DeserializeObject<EventBinding>(aiResponses[3]), default(IError)));
+
 			var aiService = container.GetInstance<ILlmService>();
 			aiService.Query<EventBinding>(Arg.Is<LlmRequest>(p => ContainsStep(p, "before each goa")))
-				.Returns(Task.FromResult(JsonConvert.DeserializeObject<EventBinding>(aiResponses[0])));
+				.Returns(result0);
 			aiService.Query<EventBinding>(Arg.Is<LlmRequest>(p => ContainsStep(p, "before each step")))
-				.Returns(Task.FromResult(JsonConvert.DeserializeObject<EventBinding>(aiResponses[1])));
+				.Returns(result1);
 			aiService.Query<EventBinding>(Arg.Is<LlmRequest>(p => ContainsStep(p, "after Run.goal")))
-				.Returns(Task.FromResult(JsonConvert.DeserializeObject<EventBinding>(aiResponses[2])));
+				.Returns(result2);
 			aiService.Query<EventBinding>(Arg.Is<LlmRequest>(p => ContainsStep(p, "after step nr 1")))
-				.Returns(Task.FromResult(JsonConvert.DeserializeObject<EventBinding>(aiResponses[3])));
+				.Returns(result3);
 
 			var eventBuilder = container.GetInstance<EventBuilder>();
 			await eventBuilder.BuildEventsPr();

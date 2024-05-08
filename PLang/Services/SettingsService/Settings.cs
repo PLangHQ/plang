@@ -65,7 +65,13 @@ namespace PLang.Services.SettingsService
             }
         }
 
-        private void InitFolders()
+        public bool IsDefaultSystemDbPath
+		{
+            get { return settingsRepositoryFactory.CreateHandler().IsDefaultSystemDbPath;  }
+        }
+
+
+		private void InitFolders()
 		{
 			var buildPath = Path.Join(fileSystem.RootDirectory, ".build");
 			if (!fileSystem.Directory.Exists(buildPath))

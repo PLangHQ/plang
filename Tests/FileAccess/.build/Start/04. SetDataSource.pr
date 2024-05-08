@@ -1,0 +1,82 @@
+{
+  "Action": {
+    "FunctionName": "CreateDataSource",
+    "Parameters": [
+      {
+        "Type": "String",
+        "Name": "name",
+        "Value": "data"
+      },
+      {
+        "Type": "String",
+        "Name": "localPath",
+        "Value": "123/.db/data.sqlite"
+      },
+      {
+        "Type": "String",
+        "Name": "databaseType",
+        "Value": "sqlite"
+      },
+      {
+        "Type": "Boolean",
+        "Name": "setAsDefaultForApp",
+        "Value": false
+      },
+      {
+        "Type": "Boolean",
+        "Name": "keepHistoryEventSourcing",
+        "Value": false
+      }
+    ],
+    "ReturnValue": null
+  },
+  "Text": "create or set datasource, name: data, path: 123/.db/data.sqlite",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+    "type": "PLang.Modules.DbModule.Builder",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\nVariables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nvoid CreateDataSource(String? name = \"data\", String? localPath, String? databaseType = \"sqlite\", Boolean? setAsDefaultForApp = False, Boolean? keepHistoryEventSourcing = False)  // localPath is location of the database on the drive for sqlite. localPath can be string with variables, default is null. \nError SetDataSourceName(String name, String? localPath = \"./db/data.sqlite\") \nvoid BeginTransaction() \nvoid EndTransaction() \nvoid Rollback() \nError LoadExtension(String fileName, String? procName) \nValueTuple`2 GetDatabaseStructure()  // Returns tables and views in database with the columns description. \nValueTuple`2 Execute(String sql) \nvoid CreateTable(String sql) \nValueTuple`2 SelectOneRow(String sql, List`1<Object>? SqlParameters) \nValueTuple`2 Select(String sql, List`1<Object>? SqlParameters) \nValueTuple`2 Update(String sql, List`1<Object>? SqlParameters) \nValueTuple`2 Delete(String sql, List`1<Object>? SqlParameters) \nValueTuple`2 Insert(String sql, List`1<Object>? SqlParameters)  // Basic insert statement. Will return affected row count. \nValueTuple`2 InsertAndSelectIdOfInsertedRow(String sql, List`1<Object>? SqlParameters)  // Insert statement that will return the id of the inserted row. Use only if user requests the id. \nValueTuple`2 InsertBulk(String tableName, List`1<Object> items)  // Insert a list(bulk) into database, return number of rows inserted. \nString GetAdditionalSystemErrorInfo() \nValueTuple`2 GetAdditionalAssistantErrorInfo()\r\n## functions available ends ##"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "create or set datasource, name: data, path: 123/.db/data.sqlite"
+          }
+        ]
+      }
+    ],
+    "model": "gpt-4-turbo",
+    "caching": true,
+    "RawResponse": "{\n  \"FunctionName\": \"CreateDataSource\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"name\",\n      \"Value\": \"data\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"localPath\",\n      \"Value\": \"123/.db/data.sqlite\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"databaseType\",\n      \"Value\": \"sqlite\"\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"setAsDefaultForApp\",\n      \"Value\": false\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"keepHistoryEventSourcing\",\n      \"Value\": false\n    }\n  ],\n  \"ReturnValue\": null\n}"
+  },
+  "RunOnBuild": false
+}

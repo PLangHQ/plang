@@ -11,7 +11,7 @@ namespace PLang.Errors.Handlers
 		{
 		}
 
-		public async Task<bool> Handle(IError error)
+		public async Task<(bool, IError?)> Handle(IError error)
 		{
 			return await base.Handle(error);
 		}
@@ -33,5 +33,6 @@ namespace PLang.Errors.Handlers
 			Console.WriteLine(error.ToFormat().ToString());
 			Console.ResetColor();
 		}
+
 	}
 }

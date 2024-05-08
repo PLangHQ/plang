@@ -81,7 +81,7 @@ namespace PLang.Modules.LlmModule
 			
 			try
 			{
-				var response = await llmServiceFactory.CreateHandler().Query<object?>(llmQuestion);
+				(var response, var queryError) = await llmServiceFactory.CreateHandler().Query<object?>(llmQuestion);
 
 
 				if (response is JObject)

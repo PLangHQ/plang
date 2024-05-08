@@ -1,4 +1,5 @@
 ﻿using PLang.Building;
+using PLang.Building.Model;
 using PLang.Errors.Builder;
 using PLang.Utils;
 using System;
@@ -14,7 +15,7 @@ namespace PLang.Errors
 	{
 
 		public static readonly string UnhandledError = "UnhandledError";
-		public ExceptionError(Exception ex, string? Message = null, int StatusCode = 500, string Key = "UnhandledError", string? FixSuggestion = null, string? HelpfulLinks = null) { 
+		public ExceptionError(Exception ex, string? Message = null, Goal? Goal = null, GoalStep? Step = null, int StatusCode = 500, string Key = "UnhandledError", string? FixSuggestion = null, string? HelpfulLinks = null) { 
 		
 			var lowestException = ExceptionHelper.GetLowestException(ex);
 			this.StatusCode = StatusCode;
@@ -23,6 +24,8 @@ namespace PLang.Errors
 			this.Exception = lowestException;
 			this.FixSuggestion = FixSuggestion;
 			this.HelpfulLinks = HelpfulLinks;
+			this.Goal = Goal;
+			this.Step = Step;
 		}
 
 		public int StatusCode { get; init; }
@@ -36,7 +39,8 @@ namespace PLang.Errors
 		public string? HelpfulLinks { get; init; }
 
 		public bool ContinueBuild => false;
-
+		public Goal? Goal { get; init; }
+		public GoalStep? Step { get; init; }
 		public object ToFormat(string contentType = "text")
 		{
 			return ErrorHelper.ToFormat(contentType, this);

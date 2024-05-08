@@ -12,7 +12,7 @@ namespace PLang.Errors.Handlers
         {
             this.dialog = dialog;
         }
-        public async Task<bool> Handle(IError error)
+        public async Task<(bool, IError?)> Handle(IError error)
         {
             return await base.Handle(error);
         }

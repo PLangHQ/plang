@@ -63,8 +63,10 @@ namespace PLang.Building
 			{
 				var goal = goals[b];
 				logger.LogInformation($"\nStart to build {goal.GoalName}");
+
 				// if this api, check for http method. Also give description.					
-				goal = await LoadMethodAndDescription(goal);
+				(goal, var error) = await LoadMethodAndDescription(goal);
+				if (error != null) return error;
 
 				var buildEventError = await eventRuntime.RunBuildGoalEvents(EventType.Before, goal);
 				if (buildEventError != null && !buildEventError.ContinueBuild)
@@ -179,7 +181,7 @@ namespace PLang.Building
 			fileSystem.File.WriteAllText(goal.AbsolutePrFilePath, JsonConvert.SerializeObject(goal, Formatting.Indented));
 		}
 
-		private async Task<Goal> LoadMethodAndDescription(Goal goal)
+		private async Task<(Goal, IBuilderError?)> LoadMethodAndDescription(Goal goal)
 		{
 			Goal? oldGoal = null;
 			if (fileSystem.File.Exists(goal.AbsolutePrFilePath))
@@ -192,7 +194,7 @@ namespace PLang.Building
 			}
 			var isWebApiMethod = GoalNameContainsMethod(goal) || goal.RelativeGoalFolderPath.Contains(Path.DirectorySeparatorChar + "api");
 
-			if (!goal.Text.Contains(" ")) return goal;
+			if (!goal.Text.Contains(" ")) return (goal, null);
 			if (goal.GoalInfo == null || goal.GoalInfo.GoalApiInfo == null || goal.Text == null || goal.Text != oldGoal?.Text)
 			{
 				var promptMessage = new List<LlmMessage>();
@@ -210,15 +212,16 @@ GoalApiIfo:
 				promptMessage.Add(new LlmMessage("user", goal.GetGoalAsString()));
 				var llmRequest = new LlmRequest("GoalApiInfo", promptMessage);
 
+				(var result, var queryError) = await llmServiceFactory.CreateHandler().Query<GoalInfo>(llmRequest);
+				if (queryError != null) return (goal, queryError as IBuilderError);
 
-				var result = await llmServiceFactory.CreateHandler().Query<GoalInfo>(llmRequest);
 				if (result != null)
 				{
 					goal.GoalInfo = result;
 				}
 
 			}
-			return goal;
+			return (goal, null);
 		}
 
 

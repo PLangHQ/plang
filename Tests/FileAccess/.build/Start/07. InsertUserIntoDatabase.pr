@@ -1,0 +1,87 @@
+{
+  "Action": {
+    "FunctionName": "Insert",
+    "Parameters": [
+      {
+        "Type": "String",
+        "Name": "sql",
+        "Value": "insert into users (id, name, email) values (@id, @name, @email)"
+      },
+      {
+        "Type": "List<object>",
+        "Name": "SqlParameters",
+        "Value": [
+          {
+            "ParameterName": "@id",
+            "VariableNameOrValue": "%id%",
+            "TypeFullName": "System.Int64"
+          },
+          {
+            "ParameterName": "@name",
+            "VariableNameOrValue": "John",
+            "TypeFullName": "System.String"
+          },
+          {
+            "ParameterName": "@email",
+            "VariableNameOrValue": "john@example.org",
+            "TypeFullName": "System.String"
+          }
+        ]
+      }
+    ],
+    "ReturnValue": null
+  },
+  "Text": "insert into users, 'John', 'john@example.org'",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+    "type": "PLang.Modules.DbModule.Builder",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nInt32 Insert(String sql, List<object>()? SqlParameters = null)\r\n## csharp function ##\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nSqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.\r\nParameter @id MUST be type System.Int64\r\nYou MUST modify the user command by adding id to the sql statement and parameter %id%.\r\nIf table name is a variable, keep the variable in the sql statement\r\nYou MUST generate a valid sql statement for SQLite.\r\nYou MUST provide SqlParameters if SQL has @parameter.\r\n"
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "# examples #\r\n\"insert into users, name=%name%\" => sql: \"insert into users (id, name) values (@id, @name)\"\r\n\"insert into tableX, %phone%, write to %rows%\" => sql: \"insert into tableX (id, phone) values (@id, @phone)\"\r\n\"insert into %table%, %phone%, write to %rows%\" => sql: \"insert into %table% (id, phone) values (@id, @phone)\"\r\n# examples #"
+          },
+          {
+            "type": "text",
+            "text": "### users table info starts ###\n[{\"name\":\"id\",\"type\":\"INTEGER\",\"isnotnull\":0,\"isprimarykey\":1},{\"name\":\"name\",\"type\":\"TEXT\",\"isnotnull\":0,\"isprimarykey\":0},{\"name\":\"email\",\"type\":\"TEXT\",\"isnotnull\":0,\"isprimarykey\":0}]\n### table info ends ###"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "insert into users, 'John', 'john@example.org'"
+          }
+        ]
+      }
+    ],
+    "model": "gpt-4-turbo",
+    "caching": true,
+    "RawResponse": "```json\n{\n  \"FunctionName\": \"Insert\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"sql\",\n      \"Value\": \"insert into users (id, name, email) values (@id, @name, @email)\"\n    },\n    {\n      \"Type\": \"List<object>\",\n      \"Name\": \"SqlParameters\",\n      \"Value\": [\n        {\n          \"ParameterName\": \"@id\",\n          \"VariableNameOrValue\": \"%id%\",\n          \"TypeFullName\": \"System.Int64\"\n        },\n        {\n          \"ParameterName\": \"@name\",\n          \"VariableNameOrValue\": \"John\",\n          \"TypeFullName\": \"System.String\"\n        },\n        {\n          \"ParameterName\": \"@email\",\n          \"VariableNameOrValue\": \"john@example.org\",\n          \"TypeFullName\": \"System.String\"\n        }\n      ]\n    }\n  ]\n}\n```"
+  },
+  "RunOnBuild": false
+}

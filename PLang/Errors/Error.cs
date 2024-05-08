@@ -11,6 +11,7 @@ namespace PLang.Errors
 		public string Message { get; }
 		public string? FixSuggestion { get; }
 		public string? HelpfulLinks { get; }
+		public Exception? Exception { get; }
 		public object ToFormat(string contentType = "text");
 	}
 	public record Error(string Message, string Key = "GeneralError", int StatusCode = 400, Exception? Exception = null, string? FixSuggestion = null, string? HelpfulLinks = null) : IError

@@ -190,14 +190,14 @@ namespace PLang.Modules.MessageModule
 
 		}
 
-		private async Task ProcessEvent(IEngine engine, NostrEventResponse response, string contentVariableName, string eventVariableName, string senderVariableName, string publicKey, string goalName)
+		private async Task<IError?> ProcessEvent(IEngine engine, NostrEventResponse response, string contentVariableName, string eventVariableName, string senderVariableName, string publicKey, string goalName)
 		{
 			var ev = response.Event as NostrEncryptedEvent;
-			if (ev == null || ev.Content == null) return;
+			if (ev == null || ev.Content == null) return null;
 
 
 			var privateKey = GetPrivateKey(ev.RecipientPubkey);
-			if (privateKey == null) return;
+			if (privateKey == null) return null;
 
 			var container = new ServiceContainer();
 			container.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, askUserHandlerFactory, outputStreamFactory, errorHandlerFactory);
@@ -210,10 +210,10 @@ namespace PLang.Modules.MessageModule
 			{
 				//For preventing multiple calls on same message. I don't think this is the correct way, but only way I saw.
 				var hashOfLastMessage = settings.GetOrDefault(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_hash_" + publicKey, "");
-				if (hashOfLastMessage == hash) return;
+				if (hashOfLastMessage == hash) return null;
 
 				var memoryCache = System.Runtime.Caching.MemoryCache.Default;
-				if (memoryCache.Contains("NostrId_" + hash)) return;
+				if (memoryCache.Contains("NostrId_" + hash)) return null;
 				memoryCache.Add("NostrId_" + hash, true, DateTimeOffset.UtcNow.AddMinutes(5));
 			}
 
@@ -236,7 +236,7 @@ namespace PLang.Modules.MessageModule
 				var dt = settings.GetOrDefault(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_" + publicKey, DateTimeOffset.MinValue);
 				if (ev.CreatedAt.Value < dt)
 				{
-					return;
+					return null;
 				}
 
 				settings.Set<DateTimeOffset>(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_" + publicKey, new DateTimeOffset(ev.CreatedAt.Value));
@@ -259,47 +259,41 @@ namespace PLang.Modules.MessageModule
 
 			var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
 			var task = pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName, parameters, goal);
-			if (task != null)
+			if (task == null) return null;
+
+
+			try
 			{
-				try
-				{
-					await task;
-				}
-				catch { }
-
-				var error = TaskHasError(task);
-				if (error != null)
-				{
-					var handler = errorHandlerFactory.CreateHandler();
-					var handled = await handler.Handle(error);
-					if (!handled)
-					{
-						await handler.ShowError(error, goalStep);
-					}
-				}
-
-				var os = outputStreamFactory.CreateHandler();
-				if (os is UIOutputStream)
-				{
-					((UIOutputStream)os).Flush();
-				}
+				await task;
 			}
+			catch { }
+
+			var error = TaskHasError(task);
+
+			if (error != null)
+			{
+				var handler = errorHandlerFactory.CreateHandler();
+				(var isHandled, var handlerError) = await handler.Handle(error);
+				if (!isHandled)
+				{
+					await handler.ShowError(error, goalStep);
+				}
+				error = ErrorHelper.GetMultipleError(error, handlerError);
+			}
+
+			var os = outputStreamFactory.CreateHandler();
+			if (os is UIOutputStream)
+			{
+				((UIOutputStream)os).Flush();
+			}
+			return error;
+
 
 
 
 		}
 
-		public IError? TaskHasError(Task<(IEngine, IError? error)> task)
-		{
 
-			if (task.Exception != null)
-			{
-				var exception = task.Exception.InnerException ?? task.Exception;
-				return new Error(exception.Message, Exception: exception);
-			}
-
-			return task.Result.error;
-		}
 
 		public async Task SendPrivateMessageToMyself(string content)
 		{
