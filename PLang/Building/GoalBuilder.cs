@@ -194,15 +194,11 @@ namespace PLang.Building
 			}
 			var isWebApiMethod = GoalNameContainsMethod(goal) || goal.RelativeGoalFolderPath.Contains(Path.DirectorySeparatorChar + "api");
 
-			if (!goal.Text.Contains(" ")) return (goal, null);
+			if (!isWebApiMethod && !goal.Text.Contains(" ")) return (goal, null);
 			if (goal.GoalInfo == null || goal.GoalInfo.GoalApiInfo == null || goal.Text == null || goal.Text != oldGoal?.Text)
 			{
 				var promptMessage = new List<LlmMessage>();
 				promptMessage.Add(new LlmMessage("system", $@"
-ErrorHandler: How to handle errors defined by user, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key
-RetryHandler: How to retry the step if there is error, default is null
-CachingHandler: How caching is handled, default is null
-
 GoalApiIfo:
 	Determine the Method and write description of this api, using the content of the file.
 	Method can be: GET, POST, DELETE, PUT, PATCH, OPTIONS, HEAD. The content will describe a function in multiple steps.

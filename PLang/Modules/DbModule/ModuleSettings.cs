@@ -254,12 +254,31 @@ Be concise"));
 			return settings.GetValues<DataSource>(this.GetType()).ToList();
 		}
 
-		public async Task<DataSource?> GetDataSource(string dataSourceName)
+		public async Task<(DataSource?, IError?)> GetDataSource(string dataSourceName, string? localDbPath = null)
 		{
+			if (localDbPath != null && localDbPath != "./.db/data.sqlite")
+			{
+				if (!fileSystem.File.Exists(localDbPath))
+				{
+					return (null, new Error("Datasource does not exists", Key: "DataSourceNotFound",
+						FixSuggestion: $@"create a step that create a new Data source, e.g.
+- create datasource 'my/custom/path/data.sqlite'
+
+or you can catch this error and create it on this error
+
+- set datasource 'my/custom/path/data.sqlite', 
+	on error key=DataSourceNotFound, call CreateDataSource, continue to next step
+
+where the CreateDataSource would create the database and table
+"));
+				}
+				//var dataSource = new DataSource("data", typeof(SqliteConnection).FullName, "Data Source=" + localDbPath, "sqlite", )
+			}
+
 			var dataSources = await GetAllDataSources();
 			var dataSource = dataSources.FirstOrDefault(p => p.Name == dataSourceName);
 			context.AddOrReplace(ReservedKeywords.CurrentDataSourceName, dataSource);
-			return dataSource;
+			return (dataSource, null);
 		}
 
 		public async Task<DataSource> GetCurrentDataSource()

@@ -1,6 +1,6 @@
-# Security - Users data
+# Security - Isolated User Storage Pattern
 
-When you are using sqlite database for you web service, you can seperate each user data into seperate database, this will provide extra security in a way that there is no chance of one user getting other users data, as the data it self live in seperate databases.
+When you are using sqlite database for you web service, you can seperate each user data into seperate database, this will provide extra security in a way that there is no chance of one user getting other users data, as the data it self live in seperate databases. I call this *Isolated User Storage Pattern*
 
 In a typical way when we are retrieveing users data, it looks something like this
 
@@ -40,3 +40,17 @@ DeleteUser
 This only applies when you are using sqlite database. 
 
 If you have other databases, you can [inject the supported type](../Services.md). Plang does not support this behaviour with other databases.
+
+## Collecting user behaviour
+
+This might change how you do analytics for you product. Since you cannot simply sum a table with all the user, you will need to save that data seperatly. This forces you to define what you want to analyze and why.
+
+Lets say you want to know how many bookmarks are in the system, one option is to travers through all databases to collect this data. The 'correct' way, would be to store it in a central database on each change
+
+```plang
+SaveBookmark
+- set datasource as '%Identity%/.db/data.sqlite'
+- insert into bookmarks %pageId%
+- set datasource as 'main'
+- update table stats set bookmark_count=bookmark_count+1
+```

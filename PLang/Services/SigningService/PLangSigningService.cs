@@ -191,7 +191,7 @@ namespace PLang.Services.SigningService
 				return identities;
 			}
 			
-			identities.AddOrReplace(ReservedKeywords.Identity, address.ComputeHash(mode: "keccak256", salt: salt));
+			identities.AddOrReplace(ReservedKeywords.Identity, address.ComputeHash(mode: "keccak256", salt: salt).Hash);
 			identities.AddOrReplace(ReservedKeywords.IdentityNotHashed, address);
 
 			return identities;

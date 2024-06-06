@@ -1,5 +1,6 @@
 Start
 / should ask for permission to access the file
+- [code] write code %var%, count to 4, write to %var%
 - read ../test.txt, write to %content%
 - write out %content%
 - create datasource, name:postgres

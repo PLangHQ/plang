@@ -77,6 +77,8 @@ namespace PLang.Runtime
 			this.settings = container.GetInstance<ISettings>();
 			this.eventRuntime = container.GetInstance<IEventRuntime>();
 			this.eventRuntime.SetContainer(container);
+			this.eventRuntime.Load();
+
 			this.typeHelper = container.GetInstance<ITypeHelper>();
 			this.askUserHandlerFactory = container.GetInstance<IAskUserHandlerFactory>();
 
@@ -330,7 +332,7 @@ namespace PLang.Runtime
 				var eventError = await eventRuntime.RunGoalEvents(context, EventType.Before, goal);
 				if (eventError != null) return eventError;
 
-				if (await CachedGoal(goal)) return null;
+				//if (await CachedGoal(goal)) return null;
 
 				for (goalStepIndex = 0; goalStepIndex < goal.GoalSteps.Count; goalStepIndex++)
 				{
@@ -341,7 +343,7 @@ namespace PLang.Runtime
 						if (runStep != null) return runStep;
 					}
 				}
-				await CacheGoal(goal);
+				//await CacheGoal(goal);
 
 				eventError = await eventRuntime.RunGoalEvents(context, EventType.After, goal);
 				return eventError;
@@ -367,7 +369,7 @@ namespace PLang.Runtime
 			}
 
 		}
-
+		/*
 		private async Task<bool> CachedGoal(Goal goal)
 		{
 			if (goal.GoalInfo?.CachingHandler?.CacheKey == null) return false;
@@ -418,7 +420,7 @@ namespace PLang.Runtime
 			await handler.WriteToBuffer(content);
 			return;
 
-		}
+		}*/
 
 		private async Task<IError?> HandleGoalError(IError error, Goal goal, int goalStepIndex)
 		{

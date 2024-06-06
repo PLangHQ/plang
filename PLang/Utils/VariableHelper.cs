@@ -127,10 +127,10 @@ namespace PLang.Utils
 			if (value is string) return false;
 			if (value.GetType().IsPrimitive) return false;
 
-			string strValue = value.ToString() ?? "";
+			string strValue = value.ToString().TrimEnd(']') ?? "";
 			string fullName = value.GetType().FullName ?? "";
 
-			if (!strValue.StartsWith(fullName)) return false;
+			if (!fullName.StartsWith("System.")) return false;
 			
 			return true;
 		}
@@ -414,7 +414,7 @@ namespace PLang.Utils
 		public static bool IsVariable(object variable)
 		{
 			if (variable == null || string.IsNullOrEmpty(variable.ToString())) return false;
-			return Regex.IsMatch(variable.ToString()!, @"^%[a-zA-Z0-9\[\]_\.\+\(\)\*\<\>\!]*%$");
+			return Regex.IsMatch(variable.ToString()!, @"^%[a-zA-Z0-9#+-\[\]_\.\+\(\)\*\<\>\!]*%$");
 		}
 
 		public static bool IsSetting(string variableName)

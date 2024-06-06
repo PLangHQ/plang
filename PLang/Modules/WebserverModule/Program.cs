@@ -125,7 +125,7 @@ namespace PLang.Modules.WebserverModule
 			listeners.Add(webserverInfo);
 
 			logger.LogDebug($"Listening on {host}:{port}...");
-			Console.WriteLine($"Listening on {host}:{port}...");
+			Console.WriteLine($" - Listening on {host}:{port}...");
 
 			await eventRuntime.RunStartEndEvents(context, EventType.After, EventScope.StartOfApp);
 			KeepAlive(listener, "Webserver");

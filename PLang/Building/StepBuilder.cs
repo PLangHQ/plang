@@ -3,6 +3,7 @@ using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Errors;
+using PLang.Errors.AskUser;
 using PLang.Errors.Builder;
 using PLang.Errors.Handlers;
 using PLang.Events;
@@ -156,7 +157,19 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			}
 			catch (Exception ex)
 			{
-				var error = new ExceptionError(ex, Step: step, Goal: goal);
+				IBuilderError error;
+				if (ex is MissingSettingsException mse)
+				{
+					Console.WriteLine(mse.Message);
+					var line = Console.ReadLine();
+
+					await mse.InvokeCallback(line);
+					return await BuildStep(goal, stepIndex, excludeModules, errorCount);
+				}
+				else
+				{
+					error = new ExceptionError(ex, Step: step, Goal: goal);
+				}
 				(var isHandled, var handlerError) = await exceptionHandlerFactory.CreateHandler().Handle(error);
 				if (isHandled)
 				{
@@ -298,7 +311,7 @@ variable is defined with starting and ending %, e.g. %filePath%
 Modules: Name of module. Suggest 1-3 modules that could be used to solve the step.
 StepName: Short name for step
 StepDescription: Rewrite the step as you understand it, make it detailed
-WaitForExecution: Indicates if code should wait for execution to finish, default is true
+WaitForExecution: Default is true. Indicates if code should wait for execution to finish.
 ErrorHandler: How to handle errors defined by user, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key
 RetryHandler: How to retry the step if there is error, default is null
 CachingHandler: How caching is handled, default is null

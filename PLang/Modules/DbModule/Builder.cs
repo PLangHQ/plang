@@ -176,24 +176,32 @@ These are the supported databases (you dont need to be precise)
 				appendToSystem = "SqlParameters @id MUST be type System.Int64";
 				appendToSelectOneRow = "or when filtering by %id%";
 			}
+
+			string returnValueDesc = @"- If user defines variable to write into, e.g. 'write to %result%' or 'into %result%' then ReturnValue=%result%, 
+- Select function always writes to one variable";
+			string functionDesc = "List<object> Select(String sql, List<object>()? SqlParameters = null) // always writes to one object";
+			string functionHelp = $"Select function return multiple rows so user MUST define 'write to %variable%' and returns 1 value, a List<object>";
+			if (functionInfo.FunctionName == "SelectOneRow")
+			{
+				functionDesc = "object? SelectOneRow(String sql, List<object>()? SqlParameters = null)";
+				returnValueDesc = "- If user does not define 'write to ..' statement then Columns being returned with type if defined by user.";
+				functionHelp = $"SelectOneRow function is used when user defines to select only one row {appendToSelectOneRow}";
+			}
+
 			SetSystem(@$"Map user command to either of these c# functions: 
 
 ## csharp function ##
-List<object> Select(String sql, List<object>()? SqlParameters = null)
-object? SelectOneRow(String sql, List<object>()? SqlParameters = null)
+{functionDesc}
 ## csharp function ##
 
 ## Rules ##
-SelectOneRow function is used when user defines to select only one row {appendToSelectOneRow}
-Select function return multiple rows so user MUST define 'write to %variable%' and return 1 value
+{functionHelp}
 Variable is defined with starting and ending %, e.g. %filePath%.
 \% is escape from start of variable, would be used in LIKE statements, then VariableNameOrValue should keep the escaped character, e.g. the user input \%%title%\%, should map to VariableNameOrValue=\%%title%\%
 SqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName). {appendToSystem}
 TypeFullName is Full name of the type in c#, System.String, System.Double, etc.
 ReturnValue rules: 
-- If user defines variable to write into, e.g. 'write to %result%' or 'into %result%' then ReturnValue=%result%, 
-- If user does not define 'write to ..' statement then Columns being returned with type if defined by user.
-- Select function always writes to one variable
+{returnValueDesc}
 - integer/int should always be System.Int64. 
 
 If table name is a variable, keep the variable in the sql statement
@@ -346,12 +354,12 @@ You MUST provide SqlParameters if SQL has @parameter.
 			string appendToSystem = "";
 			if (dataSource.KeepHistory)
 			{
-				appendToSystem = "Parameter @id MUST be type System.Int64";
+				appendToSystem = "SqlParameters @id MUST be type System.Int64";
 			}
 			SetSystem(@$"Map user command to this c# function: 
 
 ## csharp function ##
-Int32 Insert(String sql, List<object>()? SqlParameters = null)
+Int32 Insert(String sql, List<object>()? SqlParameters = null)  //returns number of rows affected
 ## csharp function ##
 
 variable is defined with starting and ending %, e.g. %filePath%.
@@ -369,6 +377,9 @@ You MUST provide SqlParameters if SQL has @parameter.
 ""insert into users, name=%name%"" => sql: ""insert into users (id, name) values (@id, @name)""
 ""insert into tableX, %phone%, write to %rows%"" => sql: ""insert into tableX (id, phone) values (@id, @phone)""
 ""insert into %table%, %phone%, write to %rows%"" => sql: ""insert into %table% (id, phone) values (@id, @phone)""
+
+ParameterInfo has the scheme: {""ParameterName"": string, ""VariableNameOrValue"": string, ""TypeFullName"": string}
+        },
 # examples #");
 			}
 			else

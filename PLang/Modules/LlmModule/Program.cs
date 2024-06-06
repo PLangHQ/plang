@@ -83,20 +83,22 @@ namespace PLang.Modules.LlmModule
 			{
 				(var response, var queryError) = await llmServiceFactory.CreateHandler().Query<object?>(llmQuestion);
 
-
-				if (response is JObject)
+				if (function == null || function.ReturnValue == null || function.ReturnValue.Count == 0)
 				{
-					var objResult = (JObject)response;
-					foreach (var property in objResult.Properties())
+					if (response is JObject)
 					{
-						if (property.Value is JValue)
+						var objResult = (JObject)response;
+						foreach (var property in objResult.Properties())
 						{
-							var value = ((JValue)property.Value).Value;
-							memoryStack.Put(property.Name, value);
-						}
-						else
-						{
-							memoryStack.Put(property.Name, property.Value);
+							if (property.Value is JValue)
+							{
+								var value = ((JValue)property.Value).Value;
+								memoryStack.Put(property.Name, value);
+							}
+							else
+							{
+								memoryStack.Put(property.Name, property.Value);
+							}
 						}
 					}
 				}

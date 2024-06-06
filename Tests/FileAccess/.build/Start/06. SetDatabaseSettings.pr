@@ -40,7 +40,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nvoid SetSettingsDbPath(String path) \nString GetAppName() \nvoid EndApp() \nString GetEnvironmentVariable(String key) \nString GetMachineName() \nString GetUserName() \nInt32 GetProcessId() \nString GetAllSettings() \nBoolean IsInDebugMode() \nBoolean IsInCSharpDebugMode() \nvoid SetCultureLanguageCode(String? code = \"en-US\")  // Make sure to convert user code to valid BCP 47 code, language-country. \nvoid SetCultureUILanguageCode(String? code = \"en-US\")  // Make sure to convert user code to valid BCP 47 code, language-country.\r\n## functions available ends ##"
+            "text": "## functions available starts ##\r\nIError SetSettingsDbPath(String path) \nString GetAppName() \nvoid EndApp() \nString GetEnvironmentVariable(String key) \nString GetMachineName() \nString GetUserName() \nInt32 GetProcessId() \nString GetAllSettings() \nBoolean IsInDebugMode() \nBoolean IsInCSharpDebugMode() \nvoid SetCultureLanguageCode(String? code = \"en-US\")  // Make sure to convert user code to valid BCP 47 code, language-country. \nvoid SetCultureUILanguageCode(String? code = \"en-US\")  // Make sure to convert user code to valid BCP 47 code, language-country.\r\n## functions available ends ##"
           }
         ]
       },
@@ -56,7 +56,7 @@
     ],
     "model": "gpt-4-turbo",
     "caching": true,
-    "RawResponse": "{\n  \"FunctionName\": \"SetSettingsDbPath\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"path\",\n      \"Value\": \"123/.db/system.sqlite\"\n    }\n  ]\n}"
+    "RawResponse": "{\n  \"FunctionName\": \"SetSettingsDbPath\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"path\",\n      \"Value\": \"123/.db/system.sqlite\"\n    }\n  ],\n  \"ReturnValue\": null\n}"
   },
   "RunOnBuild": false
 }

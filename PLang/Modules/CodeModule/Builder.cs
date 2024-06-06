@@ -121,7 +121,7 @@ check if %dirPath% exists, write to %folderExists% => ExecutePlangCode(IPlangFil
 			if (compilerError != null)
 			{
 				logger.LogWarning("- Error compiling code - will ask LLM again");
-				return await Build(step, compilerError, errorCount + 10);
+				return await Build(step, compilerError, errorCount + 1);
 			}
 
 			var newInstruction = new Instruction(implementation!);

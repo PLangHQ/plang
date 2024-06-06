@@ -59,6 +59,7 @@ namespace PLang.Container
 			container.RegisterSingleton<IAskUserHandlerFactory>(factory => { return askUserHandlerFactory; });
 
 			container.RegisterForPLang(absoluteAppStartupPath, relativeAppStartupPath);
+			RegisterEventRuntime(container);
 		}
 
 		public static void RegisterForPLangWebserver(this ServiceContainer container, string appStartupPath, string relativeAppPath, HttpListenerContext httpContext)

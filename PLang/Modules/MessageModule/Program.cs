@@ -148,7 +148,8 @@ namespace PLang.Modules.MessageModule
 			}
 
 			logger.LogInformation("Starting message listener");
-
+			var key = GetCurrentKey();
+			Console.WriteLine($" - Message listener:{key.Bech32PublicKey}");
 			Send(client2, listenFromDateTime);
 
 			KeepAlive(this, "ListenToMessages");

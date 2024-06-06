@@ -5,12 +5,12 @@
       {
         "Type": "String",
         "Name": "name",
-        "Value": "data"
+        "Value": "postgres"
       },
       {
         "Type": "String",
         "Name": "localPath",
-        "Value": "123/.db/data.sqlite"
+        "Value": null
       },
       {
         "Type": "String",
@@ -30,7 +30,7 @@
     ],
     "ReturnValue": null
   },
-  "Text": "create or set datasource, name: data, path: 123/.db/data.sqlite",
+  "Text": "create datasource, name:postgres",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -60,7 +60,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nvoid CreateDataSource(String? name = \"data\", String? localPath, String? databaseType = \"sqlite\", Boolean? setAsDefaultForApp = False, Boolean? keepHistoryEventSourcing = False)  // localPath is location of the database on the drive for sqlite. localPath can be string with variables, default is null. \nError SetDataSourceName(String name, String? localPath = \"./db/data.sqlite\") \nvoid BeginTransaction() \nvoid EndTransaction() \nvoid Rollback() \nError LoadExtension(String fileName, String? procName) \nValueTuple`2 GetDatabaseStructure()  // Returns tables and views in database with the columns description. \nValueTuple`2 Execute(String sql) \nvoid CreateTable(String sql) \nValueTuple`2 SelectOneRow(String sql, List`1<Object>? SqlParameters) \nValueTuple`2 Select(String sql, List`1<Object>? SqlParameters) \nValueTuple`2 Update(String sql, List`1<Object>? SqlParameters) \nValueTuple`2 Delete(String sql, List`1<Object>? SqlParameters) \nValueTuple`2 Insert(String sql, List`1<Object>? SqlParameters)  // Basic insert statement. Will return affected row count. \nValueTuple`2 InsertAndSelectIdOfInsertedRow(String sql, List`1<Object>? SqlParameters)  // Insert statement that will return the id of the inserted row. Use only if user requests the id. \nValueTuple`2 InsertBulk(String tableName, List`1<Object> items)  // Insert a list(bulk) into database, return number of rows inserted. \nString GetAdditionalSystemErrorInfo() \nValueTuple`2 GetAdditionalAssistantErrorInfo()\r\n## functions available ends ##"
+            "text": "## functions available starts ##\r\nvoid CreateDataSource(String? name = \"data\", String? localPath, String? databaseType = \"sqlite\", Boolean? setAsDefaultForApp = False, Boolean? keepHistoryEventSourcing = False)  // localPath is location of the database on the drive for sqlite. localPath can be string with variables, default is null. \nIError SetDataSourceName(String name, String? localPath = \"./db/data.sqlite\") \nvoid BeginTransaction() \nvoid EndTransaction() \nvoid Rollback() \nError LoadExtension(String fileName, String? procName) \nValueTuple`2 GetDatabaseStructure()  // Returns tables and views in database with the columns description. \nValueTuple`2 Execute(String sql) \nvoid CreateTable(String sql) \nValueTuple`2 SelectOneRow(String sql, List`1<Object>? SqlParameters) \nValueTuple`2 Select(String sql, List`1<Object>? SqlParameters) \nValueTuple`2 Update(String sql, List`1<Object>? SqlParameters) \nValueTuple`2 Delete(String sql, List`1<Object>? SqlParameters) \nValueTuple`2 Insert(String sql, List`1<Object>? SqlParameters)  // Basic insert statement. Will return affected row count. \nValueTuple`2 InsertAndSelectIdOfInsertedRow(String sql, List`1<Object>? SqlParameters)  // Insert statement that will return the id of the inserted row. Use only if user requests the id. \nValueTuple`2 InsertBulk(String tableName, List`1<Object> items)  // Insert a list(bulk) into database, return number of rows inserted. \nString GetAdditionalSystemErrorInfo() \nValueTuple`2 GetAdditionalAssistantErrorInfo()\r\n## functions available ends ##"
           }
         ]
       },
@@ -69,14 +69,14 @@
         "content": [
           {
             "type": "text",
-            "text": "create or set datasource, name: data, path: 123/.db/data.sqlite"
+            "text": "create datasource, name:postgres"
           }
         ]
       }
     ],
     "model": "gpt-4-turbo",
     "caching": true,
-    "RawResponse": "{\n  \"FunctionName\": \"CreateDataSource\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"name\",\n      \"Value\": \"data\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"localPath\",\n      \"Value\": \"123/.db/data.sqlite\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"databaseType\",\n      \"Value\": \"sqlite\"\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"setAsDefaultForApp\",\n      \"Value\": false\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"keepHistoryEventSourcing\",\n      \"Value\": false\n    }\n  ],\n  \"ReturnValue\": null\n}"
+    "RawResponse": "{\n  \"FunctionName\": \"CreateDataSource\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"name\",\n      \"Value\": \"postgres\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"localPath\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"databaseType\",\n      \"Value\": \"sqlite\"\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"setAsDefaultForApp\",\n      \"Value\": false\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"keepHistoryEventSourcing\",\n      \"Value\": false\n    }\n  ],\n  \"ReturnValue\": null\n}"
   },
   "RunOnBuild": false
 }

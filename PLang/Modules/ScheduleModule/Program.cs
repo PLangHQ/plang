@@ -42,7 +42,7 @@ namespace PLang.Modules.ScheduleModule
 			public bool IsArchived = false;
 		};
 
-		[Description("Use numerical representation for cronCommand, e.g. 0 11 * * 1. goalName should be prefixed by ! and be whole word with possible slash(/)")]
+		[Description("Use numerical representation for cronCommand, e.g. 0 11 * * 1. goalName is the goal that should be called, it should be prefixed by ! and be whole word with possible slash(/)")]
 		public async Task Schedule(string cronCommand, string goalName, DateTime? nextRun = null)
 		{
 			var cronJobs = moduleSettings.GetCronJobs();
@@ -136,7 +136,11 @@ namespace PLang.Modules.ScheduleModule
 					{
 						int maxExecutionTime = (item.MaxExecutionTimeInMilliseconds == 0) ? 30000 : item.MaxExecutionTimeInMilliseconds;
 						cts.CancelAfter(maxExecutionTime);
-						await pseudoRuntime.RunGoal(engine, engine.GetContext(), fileSystem.RelativeAppPath, item.GoalName, new());
+						var result = await pseudoRuntime.RunGoal(engine, engine.GetContext(), fileSystem.RelativeAppPath, item.GoalName, new());
+						if (result.error != null)
+						{
+							logger.LogError(result.error.ToString());
+						}
 					}
 
 					nextOccurrence = schedule.GetNextOccurrence(SystemTime.OffsetUtcNow().DateTime);

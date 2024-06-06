@@ -513,6 +513,7 @@ namespace PLang.Events
 
 		private string ChangeDirectorySeperators(string path)
 		{
+			path = path.TrimStart('^');
 			path = path.Replace(@"\", @"/");
 			if (!path.StartsWith(@"/")) path = @"/" + path;
 			if (path == "/*")

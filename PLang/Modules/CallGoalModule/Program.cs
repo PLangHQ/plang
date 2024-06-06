@@ -1,6 +1,7 @@
 ﻿using Org.BouncyCastle.Asn1;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
+using PLang.Errors;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
@@ -17,7 +18,7 @@ namespace PLang.Modules.CallGoalModule
 	{
 
 		[Description("If backward slash(\\) is used by user, change to forward slash(/)")]
-		public async Task RunGoal(string goalName, Dictionary<string, object?>? parameters = null, bool waitForExecution = true, int delayWhenNotWaitingInMilliseconds = 50)
+		public async Task<IError?> RunGoal(string goalName, Dictionary<string, object?>? parameters = null, bool waitForExecution = true, int delayWhenNotWaitingInMilliseconds = 50)
 		{
 			if (string.IsNullOrEmpty(goalName))
 			{
@@ -26,9 +27,10 @@ namespace PLang.Modules.CallGoalModule
 
 			ValidateAppInstall(goalName);
 
-			await pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName,
+			var result = await pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName,
 					variableHelper.LoadVariables(parameters), Goal, 
 					waitForExecution, delayWhenNotWaitingInMilliseconds);
+			return result.error;
 			
 		}
 

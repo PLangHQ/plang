@@ -2,6 +2,7 @@
 
 using Microsoft.Extensions.Logging;
 using PLang.Attributes;
+using PLang.Errors;
 using PLang.Runtime;
 using System.Collections;
 using System.ComponentModel;
@@ -23,7 +24,7 @@ namespace PLang.Modules.LoopModule
 		}
 
 		[Description("Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called")]
-		public async Task RunLoop([HandlesVariableAttribute] string variableToLoopThrough, string goalNameToCall, [HandlesVariableAttribute] Dictionary<string, object>? parameters = null)
+		public async Task<IError?> RunLoop([HandlesVariableAttribute] string variableToLoopThrough, string goalNameToCall, [HandlesVariableAttribute] Dictionary<string, object>? parameters = null)
 		{
 			if (parameters == null) parameters = new();
 
@@ -38,12 +39,12 @@ namespace PLang.Modules.LoopModule
 				if (list == null || list.Count == 0)
 				{
 					logger.LogDebug($"{variableToLoopThrough} is an empty list. Nothing to loop through");
-					return;
+					return null;
 				}
 
 				for (int i = 0; i < list.Count; i++)
 				{
-					var goalParameters = new Dictionary<string, object>();
+					var goalParameters = new Dictionary<string, object?>();
 					goalParameters.Add(listName.ToString()!, list);
 					goalParameters.Add(listCountName, list.Count);
 					goalParameters.Add(itemName.ToString()!, list[i]);
@@ -55,14 +56,15 @@ namespace PLang.Modules.LoopModule
 						goalParameters.Add(entry.Key, entry.Value);
 					}
 
-					await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalNameToCall, goalParameters, Goal);
+					var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalNameToCall, goalParameters, Goal);
+					if (result.error != null) return result.error;
 				}
 			} else if (obj is IEnumerable enumerables)
 			{
 				int idx = 1;
 				foreach (var item in enumerables)
 				{
-					var goalParameters = new Dictionary<string, object>();
+					var goalParameters = new Dictionary<string, object?>();
 					goalParameters.Add(listName.ToString()!, enumerables);
 					goalParameters.Add(itemName.ToString()!, item);
 					goalParameters.Add(positionName.ToString()!, idx++);
@@ -73,11 +75,12 @@ namespace PLang.Modules.LoopModule
 						goalParameters.Add(entry.Key, entry.Value);
 					}
 
-					await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalNameToCall, goalParameters, Goal);
+					var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalNameToCall, goalParameters, Goal);
+					if (result.error != null) return result.error;
 				}
 			}
-			
 
+			return null;
 
 		}
 

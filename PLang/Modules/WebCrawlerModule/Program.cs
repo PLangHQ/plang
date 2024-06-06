@@ -131,10 +131,27 @@ namespace PLang.Modules.WebCrawlerModule
 			new Actions(driver).MoveToElement(element).Perform();
 		}
 
-		public async Task Click(string cssSelector)
+		public async Task Click(string cssSelector, int elementAtToClick = 0, bool clickAllMatchingElements = true)
 		{
-			var element = await GetElement(cssSelector);
-			element.Click();
+			if (!clickAllMatchingElements)
+			{
+				var element = await GetElement(cssSelector);
+				element.Click();
+			} else
+			{
+				var elements = await GetElements(cssSelector);
+				if (elementAtToClick != 0)
+				{
+					if (elements.Count >= elementAtToClick)
+					{
+						elements[elements.Count - 1].Click();
+					}
+				}
+				foreach (var element in elements)
+				{
+					element.Click();
+				}
+			}
 			SetCssSelector(cssSelector);
 		}
 
@@ -219,7 +236,7 @@ namespace PLang.Modules.WebCrawlerModule
 			return elements;
 		}
 		
-		public async Task<List<string>> ExtractContent(bool clearHtml = false, string? cssSelector = null)
+		public async Task<List<string>> ExtractContent(bool clearHtml = true, string? cssSelector = null)
 		{		
 			cssSelector = GetCssSelector(cssSelector);
 			List<string> results = new List<string>();
@@ -227,11 +244,7 @@ namespace PLang.Modules.WebCrawlerModule
 			var elements = driver.FindElements(By.CssSelector(cssSelector));
 			foreach (var e in elements)
 			{
-				string text = e.Text;
-				if (clearHtml)
-				{
-					text = text.ClearHtml();
-				}
+				string text = (clearHtml) ? e.GetAttribute("innerText") : e.GetAttribute("outerHTML");
 				results.Add(text);
 			}
 			SetCssSelector(cssSelector);
