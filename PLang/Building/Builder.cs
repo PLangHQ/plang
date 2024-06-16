@@ -147,6 +147,28 @@ namespace PLang.Building
 		{
 			var dirs = fileSystem.Directory.GetDirectories(".build", "", SearchOption.AllDirectories);
 
+			foreach (var goalFile in goalFiles)
+			{
+				var buildFolderRelativePath = Path.Join(".build", goalFile.Replace(fileSystem.RootDirectory, "")).Replace(".goal", "");
+				var buildFolderAbsolutePath = Path.Join(fileSystem.RootDirectory, buildFolderRelativePath);
+
+				dirs = dirs.Where(p => !p.StartsWith(buildFolderAbsolutePath)).ToArray();
+			}
+
+			foreach (var dir in dirs)
+			{
+				var folderPath = Path.Join(fileSystem.RootDirectory, dir.Replace(fileSystem.BuildPath, ""));
+				if (!fileSystem.Directory.Exists(folderPath))
+				{
+					fileSystem.Directory.Delete(folderPath);
+				}
+			}
+
+			var prGoalFiles = prParser.ForceLoadAllGoals();
+			int i = 0;
+
+			/*
+
 			var prGoalFiles = prParser.ForceLoadAllGoals();
 			foreach (var dir in dirs)
 			{
@@ -155,7 +177,18 @@ namespace PLang.Building
 				{
 					fileSystem.Directory.Delete(dir, true);
 				}
-			}
+
+				string goalFolder = dir.Replace(fileSystem.BuildPath, "");
+				string goalFolderPath = Path.Join(fileSystem.RootDirectory, goalFolder);
+				string goalFileName = dir.Replace(fileSystem.BuildPath, "") + ".goal";
+				string goalFilePath = Path.Join(fileSystem.RootDirectory, goalFileName);
+
+				if (!fileSystem.File.Exists(goalFilePath) && !fileSystem.Directory.Exists(goalFolderPath))
+				{
+					fileSystem.Directory.Delete(dir, true);
+				}
+
+			}*/
 		}
 
 

@@ -185,7 +185,10 @@ namespace PLang.Modules
 				{
 					var settingsError = new AskUserError(mse.Message, async (object[]? result) =>
 					{
-						await mse.InvokeCallback(result[0]);
+						var value = result?[0] ?? null;
+						if (value is Array) value = ((object[])value)[0];
+
+						await mse.InvokeCallback(value);
 						return (true, null);
 					});
 

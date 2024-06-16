@@ -164,6 +164,7 @@ namespace PLang.Runtime
 							index = (indexObjectValue.Value as int? ?? 0);
 						}
 					}
+					index--;
 				}
 			}
 

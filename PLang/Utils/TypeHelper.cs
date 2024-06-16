@@ -37,6 +37,20 @@ namespace PLang.Utils
 			this.settings = settings;
 		}
 
+
+		private static Version GetAssemblyVersion(string filePath)
+		{
+			try
+			{
+				var assemblyName = AssemblyName.GetAssemblyName(filePath);
+				return assemblyName.Version;
+			}
+			catch
+			{
+				return new Version(0, 0, 0, 0); // Return a default version if the assembly version cannot be determined
+			}
+		}
+
 		public List<Type> GetTypesByType(Type type)
 		{
 			List<Type> types;
@@ -80,10 +94,27 @@ namespace PLang.Utils
 			string servicesDirectory = Path.Combine(fileSystem.GoalsPath, ".services");
 			if (fileSystem.Directory.Exists(servicesDirectory))
 			{
+				AppDomain.CurrentDomain.AssemblyResolve += (sender, resolveArgs) =>
+				{
+					var files = fileSystem.Directory.GetFiles(Path.Join(fileSystem.RootDirectory, ".services"),
+						new AssemblyName(resolveArgs.Name).Name + ".dll", SearchOption.AllDirectories);
+
+					var latestFile = files
+						   .Select(f => new { FilePath = f, Version = GetAssemblyVersion(f) })
+						   .OrderByDescending(x => x.Version)
+						   .FirstOrDefault();
+
+
+					if (latestFile != null)
+					{
+						return Assembly.LoadFile(latestFile.FilePath);
+					}
+					return null;
+				};
 
 				foreach (var dll in fileSystem.Directory.GetFiles(servicesDirectory, "*.dll", SearchOption.AllDirectories))
 				{
-					
+
 					// Load the assembly
 					Assembly loadedAssembly = Assembly.LoadFile(dll);
 					List<Type> typesFromAssembly;

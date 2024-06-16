@@ -49,7 +49,7 @@ namespace PLangTests.Modules.DbModule
 
 			await p.SetDataSourceName("MainDb");
 
-			var dataSource = context[ReservedKeywords.CurrentDataSourceName] as DataSource;
+			var dataSource = context[ReservedKeywords.CurrentDataSource] as DataSource;
 			Assert.AreEqual("MainDb", dataSource.Name);
 		}
 

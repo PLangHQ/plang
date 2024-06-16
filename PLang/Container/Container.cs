@@ -32,6 +32,7 @@ using PLang.Services.SigningService;
 using PLang.Utils;
 using RazorEngineCore;
 using System.Data;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
@@ -397,12 +398,24 @@ namespace PLang.Container
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			if (fileSystem.Directory.Exists(".modules"))
 			{
+
+				AppDomain.CurrentDomain.AssemblyResolve += (sender, resolveArgs) =>
+				{
+					string assemblyPath = Path.Combine(fileSystem.RootDirectory, ".modules", new AssemblyName(resolveArgs.Name).Name + ".dll");
+					if (fileSystem.File.Exists(assemblyPath))
+					{
+						return Assembly.LoadFile(assemblyPath);
+					}
+					return null;
+				};
+
+
 				var assemblyFiles = fileSystem.Directory.GetFiles(".modules", "*.dll");
 				foreach (var file in assemblyFiles)
 				{
 
 					var assembly = Assembly.LoadFile(file);
-					var builderTypes = assembly.GetTypes()
+					 var builderTypes = assembly.GetTypes()
 											   .Where(t => !t.IsAbstract && !t.IsInterface &&
 											   (typeof(BaseBuilder).IsAssignableFrom(t) || typeof(BaseProgram).IsAssignableFrom(t)))
 											   .ToList();
@@ -516,8 +529,18 @@ namespace PLang.Container
 				return null;
 			}
 
+			AppDomain.CurrentDomain.AssemblyResolve += (sender, resolveArgs) =>
+			{
+				string assemblyPath = Path.Combine(fileSystem.RootDirectory, ".services", new AssemblyName(resolveArgs.Name).Name + ".dll");
+				if (fileSystem.File.Exists(assemblyPath))
+				{
+					return Assembly.LoadFile(assemblyPath);
+				}
+				return null;
+			};
+
 			string dllFilePath = Path.GetDirectoryName(Path.Combine(fileSystem.GoalsPath, ".services", injectorType));
-			string[] dllFiles = new string[] { dllFilePath };
+			string[] dllFiles = [ dllFilePath ];
 			if (!fileSystem.File.Exists(dllFilePath))
 			{
 				//var dirName = Path.GetDirectoryName(injectorType);
@@ -544,17 +567,6 @@ namespace PLang.Container
 				}
 
 			}
-
-			AppDomain.CurrentDomain.AssemblyResolve += (sender, eventArgs) =>
-			{
-				string assemblyName = new AssemblyName(eventArgs.Name).Name + ".dll";
-				string assemblyPath = Path.Combine(Path.GetDirectoryName(eventArgs.RequestingAssembly.Location), assemblyName);
-				if (File.Exists(assemblyPath))
-				{
-					return Assembly.LoadFile(assemblyPath);
-				}
-				return null;
-			};
 
 			if (type != null)
 			{
@@ -597,11 +609,11 @@ namespace PLang.Container
 		private static IDbConnection? GetDbConnection(IServiceFactory factory, PLangAppContext context)
 		{
 			DataSource? dataSource = null;
-			if (context.TryGetValue(ReservedKeywords.CurrentDataSourceName, out object? obj) && obj != null)
+			if (context.TryGetValue(ReservedKeywords.CurrentDataSource, out object? obj) && obj != null)
 			{
 				dataSource = (DataSource)obj;
 			}
-			else if ((obj = AppContext.GetData(ReservedKeywords.CurrentDataSourceName)) != null)
+			else if ((obj = AppContext.GetData(ReservedKeywords.CurrentDataSource)) != null)
 			{
 				dataSource = (DataSource)obj;
 			}

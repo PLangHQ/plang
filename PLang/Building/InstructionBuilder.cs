@@ -31,10 +31,11 @@ namespace PLang.Building
 		private MemoryStack memoryStack;
 		private readonly PLangAppContext context;
 		private readonly VariableHelper variableHelper;
+		private readonly ISettings settings;
 
 		public InstructionBuilder(ILogger logger, IPLangFileSystem fileSystem, ITypeHelper typeHelper,
 			ILlmServiceFactory llmServiceFactory, IBuilderFactory builderFactory,
-			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper)
+			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ISettings settings)
 		{
 			this.typeHelper = typeHelper;
 			this.llmServiceFactory = llmServiceFactory;
@@ -44,7 +45,7 @@ namespace PLang.Building
 			this.memoryStack = memoryStack;
 			this.context = context;
 			this.variableHelper = variableHelper;
-
+			this.settings = settings;
 		}
 
 		public async Task<IBuilderError?> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep step, string module, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
@@ -72,7 +73,7 @@ namespace PLang.Building
 			}
 			foreach (var function in functions)
 			{
-				StepBuilder.LoadVariablesIntoMemoryStack(function, memoryStack, context);
+				StepBuilder.LoadVariablesIntoMemoryStack(function, memoryStack, context, settings);
 			}
 
 

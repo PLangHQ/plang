@@ -11,6 +11,7 @@ using PLang.Utils;
 using System.Data;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 namespace PLang.Modules.DbModule
 {
@@ -22,7 +23,7 @@ namespace PLang.Modules.DbModule
 		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly IDbConnection db;
 		private readonly ILogger logger;
-
+		private string defaultLocalDbPath = "./.db/data.sqlite";
 		public record SqlStatement(string SelectTablesAndViewsInMyDatabaseSqlStatement, string SelectColumnsFromTablesSqlStatement);
 
 		public ModuleSettings(IPLangFileSystem fileSystem, ISettings settings, PLangAppContext context, ILlmServiceFactory llmServiceFactory, IDbConnection db, ILogger logger)
@@ -145,7 +146,7 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 This is an example of a connection string:
 	{dataSourceConnectionStringExample}
 
-Your connection string needs to be 100% correct to work (LLM will not read th is).
+Your connection string needs to be 100% correct to work (LLM will not read this).
 
 Connection string:",
 				SetDatabaseConnectionString);
@@ -209,8 +210,8 @@ Be concise"));
 				AppContext.SetData(ReservedKeywords.Inject_IDbConnection, typeFullName);
 				context.AddOrReplace(ReservedKeywords.Inject_IDbConnection, typeFullName);
 
-				AppContext.SetData(ReservedKeywords.CurrentDataSourceName, dataSource);
-				context.AddOrReplace(ReservedKeywords.CurrentDataSourceName, dataSource);
+				AppContext.SetData(ReservedKeywords.CurrentDataSource, dataSource);
+				context.AddOrReplace(ReservedKeywords.CurrentDataSource, dataSource);
 			}
 		}
 
@@ -256,11 +257,33 @@ Be concise"));
 
 		public async Task<(DataSource?, IError?)> GetDataSource(string dataSourceName, string? localDbPath = null)
 		{
-			if (localDbPath != null && localDbPath != "./.db/data.sqlite")
+			if (localDbPath != null && localDbPath != defaultLocalDbPath)
 			{
 				if (!fileSystem.File.Exists(localDbPath))
 				{
-					return (null, new Error("Datasource does not exists", Key: "DataSourceNotFound",
+					return (null, GetDataSourceNotFoundError(dataSourceName));
+				}
+				//var dataSource = new DataSource("data", typeof(SqliteConnection).FullName, "Data Source=" + localDbPath, "sqlite", )
+			}
+
+			var dataSources = await GetAllDataSources();
+			var dataSource = dataSources.FirstOrDefault(p => p.Name == dataSourceName);
+			if (dataSourceName == "data" && localDbPath == defaultLocalDbPath)
+			{
+				await CreateDataSource();
+				dataSources = await GetAllDataSources();
+				dataSource = dataSources.FirstOrDefault(p => p.Name == dataSourceName);
+			}
+
+			if (dataSource == null) return (null, GetDataSourceNotFoundError(dataSourceName));
+
+			context.AddOrReplace(ReservedKeywords.CurrentDataSource, dataSource);
+			return (dataSource, null);
+		}
+
+		public Error GetDataSourceNotFoundError(string dataSourceName)
+		{
+			return new Error($"Datasource {dataSourceName} does not exists", Key: "DataSourceNotFound",
 						FixSuggestion: $@"create a step that create a new Data source, e.g.
 - create datasource 'my/custom/path/data.sqlite'
 
@@ -270,29 +293,29 @@ or you can catch this error and create it on this error
 	on error key=DataSourceNotFound, call CreateDataSource, continue to next step
 
 where the CreateDataSource would create the database and table
-"));
-				}
-				//var dataSource = new DataSource("data", typeof(SqliteConnection).FullName, "Data Source=" + localDbPath, "sqlite", )
-			}
-
-			var dataSources = await GetAllDataSources();
-			var dataSource = dataSources.FirstOrDefault(p => p.Name == dataSourceName);
-			context.AddOrReplace(ReservedKeywords.CurrentDataSourceName, dataSource);
-			return (dataSource, null);
+", HelpfulLinks: "https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.DbModule.md");
 		}
 
 		public async Task<DataSource> GetCurrentDataSource()
 		{
-			if (context.ContainsKey(ReservedKeywords.CurrentDataSourceName))
+			if (context.ContainsKey(ReservedKeywords.CurrentDataSource + "_string"))
 			{
-				return context[ReservedKeywords.CurrentDataSourceName] as DataSource;
+				string name = context[ReservedKeywords.CurrentDataSource + "_string"].ToString();
+				(var ds, _) = await GetDataSource(name);
+
+				if (ds != null) return ds;
 			}
 
+			if (context.ContainsKey(ReservedKeywords.CurrentDataSource))
+			{
+				var ds = context[ReservedKeywords.CurrentDataSource] as DataSource;
+				if (ds != null) return ds;
+			}
 
 			var dataSources = await GetAllDataSources();
 			if (dataSources.Count == 0)
 			{
-				string name = context.ContainsKey(ReservedKeywords.CurrentDataSourceName + "_string") ? context[ReservedKeywords.CurrentDataSourceName + "_string"].ToString() : "data";
+				string name = context.ContainsKey(ReservedKeywords.CurrentDataSource + "_string") ? context[ReservedKeywords.CurrentDataSource + "_string"].ToString() : "data";
 				await CreateDataSource(name);
 				dataSources = await GetAllDataSources();
 			}
@@ -300,7 +323,7 @@ where the CreateDataSource would create the database and table
 			var dataSource = dataSources.FirstOrDefault(p => p.IsDefault);
 			if (dataSource != null)
 			{
-				context.AddOrReplace(ReservedKeywords.CurrentDataSourceName, dataSource);
+				context.AddOrReplace(ReservedKeywords.CurrentDataSource, dataSource);
 				return dataSource;
 			}
 			dataSources = await GetAllDataSources();
@@ -308,7 +331,7 @@ where the CreateDataSource would create the database and table
 			{
 				throw new RuntimeException("Could not find any data source.");
 			}
-			context.AddOrReplace(ReservedKeywords.CurrentDataSourceName, dataSources[0]);
+			context.AddOrReplace(ReservedKeywords.CurrentDataSource, dataSources[0]);
 			return dataSources[0];
 		}
 		private Type GetDbType(string typeFullName)
@@ -424,8 +447,8 @@ where the CreateDataSource would create the database and table
 				AppContext.SetData(ReservedKeywords.Inject_IDbConnection, dataSource.TypeFullName);
 				context.AddOrReplace(ReservedKeywords.Inject_IDbConnection, dataSource.TypeFullName);
 				
-				AppContext.SetData(ReservedKeywords.CurrentDataSourceName, dataSource);
-				context.AddOrReplace(ReservedKeywords.CurrentDataSourceName, dataSource);
+				AppContext.SetData(ReservedKeywords.CurrentDataSource, dataSource);
+				context.AddOrReplace(ReservedKeywords.CurrentDataSource, dataSource);
 								
 				return dbConnection;
 			}

@@ -15,8 +15,10 @@ using PLang.Services.CompilerService;
 using PLang.Services.LlmService;
 using PLang.Utils;
 using RazorEngineCore;
+using System.ComponentModel;
 using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
+using static PLang.Modules.DbModule.ModuleSettings;
 
 namespace PLang.Building
 {
@@ -37,10 +39,12 @@ namespace PLang.Building
 		private readonly VariableHelper variableHelper;
 		private readonly IErrorHandlerFactory exceptionHandlerFactory;
 		private readonly PLangAppContext context;
+		private readonly ISettings settings;
 
 		public StepBuilder(Lazy<ILogger> logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 					IInstructionBuilder instructionBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
-					MemoryStack memoryStack, VariableHelper variableHelper, IErrorHandlerFactory exceptionHandlerFactory, PLangAppContext context)
+					MemoryStack memoryStack, VariableHelper variableHelper, IErrorHandlerFactory exceptionHandlerFactory, 
+					PLangAppContext context, ISettings settings)
 		{
 			this.fileSystem = fileSystem;
 			this.llmServiceFactory = llmServiceFactory;
@@ -52,6 +56,7 @@ namespace PLang.Building
 			this.variableHelper = variableHelper;
 			this.exceptionHandlerFactory = exceptionHandlerFactory;
 			this.context = context;
+			this.settings = settings;
 		}
 
 		public async Task<IBuilderError?> BuildStep(Goal goal, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
@@ -158,7 +163,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			catch (Exception ex)
 			{
 				IBuilderError error;
-				if (ex is MissingSettingsException mse)
+				if (ex is PLang.Errors.Handlers.AskUserError mse)
 				{
 					Console.WriteLine(mse.Message);
 					var line = Console.ReadLine();
@@ -208,7 +213,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			if (action.Contains("ReturnValue"))
 			{
 				var gf = JsonConvert.DeserializeObject<GenericFunction>(action);
-				LoadVariablesIntoMemoryStack(gf, memoryStack, context);
+				LoadVariablesIntoMemoryStack(gf, memoryStack, context, settings);
 			}
 			else if (action.Contains("OutParameterDefinition"))
 			{
@@ -226,7 +231,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			return true;
 		}
 
-		public static void LoadVariablesIntoMemoryStack(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context)
+		public static void LoadVariablesIntoMemoryStack(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
 		{
 			if (gf == null) return;
 
@@ -238,10 +243,10 @@ Builder will continue on other steps but not this one: ({step.Text}).
 				}
 			}
 
-			LoadParameters(gf, memoryStack, context);
+			LoadParameters(gf, memoryStack, context, settings);
 		}
 
-		private static void LoadParameters(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context)
+		private static void LoadParameters(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
 		{
 			// todo: hack for now, should be able to load dynamically variables that are being set at build time
 			// might have to structure the build
@@ -270,11 +275,28 @@ Builder will continue on other steps but not this one: ({step.Text}).
 					memoryStack.PutForBuilder(parameter.Key, parameter.Value);
 				}
 			}
+			
 
-			if (gf.FunctionName == "CreateDataSource")
+			// todo: also bad implementation, builder for module should handle this part
+			if (gf.FunctionName == "CreateDataSource" || gf.FunctionName == "SetDataSourceName")
 			{
 				var parameter = gf.Parameters.FirstOrDefault(p => p.Name == "name");
-				context.AddOrReplace(ReservedKeywords.CurrentDataSourceName + "_string", parameter.Value);
+				if (parameter == null) return;
+
+				var dataSourceName = parameter.Value.ToString();
+
+				context.AddOrReplace(ReservedKeywords.CurrentDataSource + "_string", dataSourceName);
+
+				var isDefaultForApp = ((bool?) gf.Parameters.FirstOrDefault(p => p.Name == "setAsDefaultForApp")?.Value) ?? false;
+
+				if ((gf.FunctionName == "CreateDataSource" && isDefaultForApp) || gf.FunctionName == "SetDataSourceName")
+				{
+					var datasources = settings.GetValues<DataSource>(typeof(PLang.Modules.DbModule.ModuleSettings)).ToList();
+					var datasource = datasources.FirstOrDefault(p => p.Name == dataSourceName);
+					if (datasource == null) return;
+
+					context.AddOrReplace(ReservedKeywords.CurrentDataSource, datasource);
+				}
 			}
 
 

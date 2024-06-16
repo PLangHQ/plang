@@ -1,16 +1,19 @@
-﻿using OpenQA.Selenium;
+﻿using NBitcoin.Logging;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Chromium;
 using OpenQA.Selenium.Edge;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Interactions;
 using OpenQA.Selenium.Safari;
+using OpenQA.Selenium.Support.UI;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Utils;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using SeleniumExtras.WaitHelpers;
 
 namespace PLang.Modules.WebCrawlerModule
 {
@@ -48,16 +51,17 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 
 		[Description("browserType=Chrome|Edge|Firefox|IE|Safari")]
-		public async Task StartBrowser(string browserType = "Chrome", bool headless = false, bool useUserSession = false, string userSessionPath = "", 
+		public async Task StartBrowser(string browserType = "Chrome", bool headless = false, bool useUserSession = false, string userSessionPath = "",
 			bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null)
 		{
 			driver = GetBrowserType(browserType, headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions);
-			
+
 			driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
 			context.TryAdd("SeleniumBrowser", driver);
 		}
 
-		private WebDriver GetBrowserType(string browserType, bool headless, bool useUserSession, string userSessionPath, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions)
+		private WebDriver GetBrowserType(string browserType, bool headless, bool useUserSession,
+			string userSessionPath, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions)
 		{
 			switch (browserType)
 			{
@@ -71,7 +75,7 @@ namespace PLang.Modules.WebCrawlerModule
 					return GetChromeDriver(headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions);
 			}
 
-			
+
 		}
 
 
@@ -100,44 +104,63 @@ namespace PLang.Modules.WebCrawlerModule
 
 		public async Task CloseBrowser()
 		{
-			if (context.ContainsKey("SeleniumBrowser"))
-			{
-				var driver = context["SeleniumBrowser"] as ChromeDriver;
-				if (driver != null)
-				{
-					driver.Quit();
-					context.Remove("SeleniumBrowser");
-				}
-			}
+			if (!context.ContainsKey("SeleniumBrowser")) return;
+
+			var driver = context["SeleniumBrowser"] as ChromeDriver;
+			if (driver == null) return;
+
+			driver.Quit();
+			context.Remove("SeleniumBrowser");
+
+
 		}
 
-		public async Task NavigateToUrl(string url, string browserType = "Chrome", bool headless = false, bool useUserSession = false, string userSessionPath = "", bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null)
+		public async Task NavigateToUrl(string url, string browserType = "Chrome", bool headless = false, bool useUserSession = false, 
+				string userSessionPath = "", bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null,
+				string? browserConsoleOutputVariableName = null)
 		{
 			if (string.IsNullOrEmpty(url))
 			{
 				throw new RuntimeException("url cannot be empty");
 			}
+			
 			var driver = await GetDriver(browserType, headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions);
-			if (!url.StartsWith("http")) {
+			if (!url.StartsWith("http"))
+			{
 				url = "https://" + url;
-			}
+			}			
+
 			driver.Navigate().GoToUrl(url);
+
+			var logs = driver.Manage().Logs.GetLog(LogType.Browser);
+			if (browserConsoleOutputVariableName != null)
+			{
+				memoryStack.Put(browserConsoleOutputVariableName, logs);
+			}
+		}
+
+		public async Task WaitForElementToAppear(string cssSelector, int timoutInSeconds = 30)
+		{
+			var driver = await GetDriver();
+			WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(timoutInSeconds));
+			wait.Until(ExpectedConditions.ElementIsVisible(By.CssSelector(cssSelector)));
 		}
 
 		public async Task SetFocus(string? cssSelector = null)
 		{
-			var driver = await GetDriver(cssSelector);
+			var driver = await GetDriver();
 			var element = await GetElement(cssSelector);
 			new Actions(driver).MoveToElement(element).Perform();
 		}
 
-		public async Task Click(string cssSelector, int elementAtToClick = 0, bool clickAllMatchingElements = true)
+		public async Task Click(string cssSelector, int elementAtToClick = 0, bool clickAllMatchingElements = false)
 		{
 			if (!clickAllMatchingElements)
 			{
 				var element = await GetElement(cssSelector);
 				element.Click();
-			} else
+			}
+			else
 			{
 				var elements = await GetElements(cssSelector);
 				if (elementAtToClick != 0)
@@ -155,13 +178,20 @@ namespace PLang.Modules.WebCrawlerModule
 			SetCssSelector(cssSelector);
 		}
 
+		public async Task AcceptPrompt()
+		{
+			var driver = await GetDriver();
+			IAlert alert = driver.SwitchTo().Alert();
+			alert.Accept();
+		}
+
 		private string GetCssSelector(string? cssSelector = null)
 		{
 			if (string.IsNullOrEmpty(cssSelector) && context.ContainsKey("prevCssSelector"))
 			{
 				cssSelector = context["prevCssSelector"].ToString();
 			}
-		
+
 			if (cssSelector == null)
 			{
 				var focusedElement = (IWebElement)((IJavaScriptExecutor)driver).ExecuteScript("return document.activeElement;");
@@ -190,6 +220,26 @@ namespace PLang.Modules.WebCrawlerModule
 			cssSelector = GetCssSelector(cssSelector);
 			var element = await GetElement(cssSelector);
 			element.SendKeys(value);
+			SetCssSelector(cssSelector);
+		}
+
+		[Description("select an option by its value in select input by cssSelector")]
+		public async Task SelectByValue(string value, string? cssSelector = null)
+		{
+			cssSelector = GetCssSelector(cssSelector);
+			var element = await GetElement(cssSelector);
+			var selectElement = new SelectElement(element);
+			selectElement.SelectByValue(value);
+			SetCssSelector(cssSelector);
+		}
+
+		[Description("select an option by its text in select input by cssSelector")]
+		public async Task SelectByText(string text, string? cssSelector = null)
+		{
+			cssSelector = GetCssSelector(cssSelector);
+			var element = await GetElement(cssSelector);
+			var selectElement = new SelectElement(element);
+			selectElement.SelectByText(text);
 			SetCssSelector(cssSelector);
 		}
 
@@ -235,9 +285,9 @@ namespace PLang.Modules.WebCrawlerModule
 
 			return elements;
 		}
-		
+
 		public async Task<List<string>> ExtractContent(bool clearHtml = true, string? cssSelector = null)
-		{		
+		{
 			cssSelector = GetCssSelector(cssSelector);
 			List<string> results = new List<string>();
 			var driver = await GetDriver();
@@ -249,7 +299,7 @@ namespace PLang.Modules.WebCrawlerModule
 			}
 			SetCssSelector(cssSelector);
 			return results;
-		}			
+		}
 		public async Task SwitchTab(int tabIndex)
 		{
 			var driver = await GetDriver();
@@ -414,8 +464,13 @@ namespace PLang.Modules.WebCrawlerModule
 					options.AddArgument(args.Key + "=" + args.Value);
 				}
 			}
+			options.SetLoggingPreference(LogType.Browser, LogLevel.All);
 
-			return new ChromeDriver(options);
+			var service = ChromeDriverService.CreateDefaultService();
+			service.SuppressInitialDiagnosticInformation = true;
+			service.HideCommandPromptWindow = true;
+
+			return new ChromeDriver(service, options);
 		}
 
 	}

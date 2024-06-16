@@ -229,6 +229,7 @@ namespace PLang.Events
 		{
 			if (eventsToRun.Count == 0) return error;
 
+			bool hasHandled = false;
 			for (var i = 0; i < eventsToRun.Count; i++)
 			{
 				var eve = eventsToRun[i];
@@ -236,8 +237,9 @@ namespace PLang.Events
 
 				var errorRun = await Run(context, eve, goal, step, error);
 				if (errorRun != null) return errorRun;
+				hasHandled = true;
 			}
-			return new ErrorHandled(error);
+			return (hasHandled) ? new ErrorHandled(error) : error;
 		}
 
 		public async Task<IBuilderError?> RunBuildGoalEvents(string eventType, Goal goal)

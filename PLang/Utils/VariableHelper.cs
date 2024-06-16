@@ -419,7 +419,7 @@ namespace PLang.Utils
 
 		public static bool IsSetting(string variableName)
 		{
-			return variableName.StartsWith("Setting.") || variableName.StartsWith("%Setting.");
+			return variableName.StartsWith("Settings.") || variableName.StartsWith("%Settings.");
 		}
 
 		internal ObjectValue GetObjectValue(string? variableName, bool staticVariable)

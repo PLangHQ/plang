@@ -1,7 +1,9 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using CsvHelper;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Building.Model;
+using PLang.Container;
 using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Exceptions;
@@ -31,7 +33,7 @@ namespace PLang.Modules.DbModule
 		private readonly VariableHelper variableHelper;
 		private ModuleSettings moduleSettings;
 
-		public Builder(IPLangFileSystem fileSystem, IDbConnection db, ISettings settings, PLangAppContext context, 
+		public Builder(IPLangFileSystem fileSystem, IDbConnection db, ISettings settings, PLangAppContext context,
 			ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper, ILogger logger, MemoryStack memoryStack, VariableHelper variableHelper) : base()
 		{
 			this.fileSystem = fileSystem;
@@ -59,8 +61,14 @@ namespace PLang.Modules.DbModule
 				await CreateDataSource(gf);
 				return (buildInstruction, null);
 			}
-			
+			if (gf != null && gf.FunctionName == "SetDataSourceName")
+			{
+				await SetDataSourceName(gf);
+				return (buildInstruction, null);
+			}
 			var dataSource = await moduleSettings.GetCurrentDataSource();
+
+
 			SetSystem(@$"Parse user command.
 
 variable is defined with starting and ending %, e.g. %filePath%
@@ -114,7 +122,8 @@ DatabaseType: Define the database type. The .net library being used is {dataSour
 			else if (functionInfo.FunctionName == "CreateTable")
 			{
 				return await CreateTable(goalStep, program, functionInfo, dataSource);
-			} else if (functionInfo.FunctionName == "Select" || functionInfo.FunctionName == "SelectOneRow")
+			}
+			else if (functionInfo.FunctionName == "Select" || functionInfo.FunctionName == "SelectOneRow")
 			{
 				return await CreateSelect(goalStep, program, functionInfo, dataSource);
 			}
@@ -132,7 +141,21 @@ You MUST provide Parameters if SQL has @parameter.
 			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
 
 			return await base.Build(goalStep);
-		
+
+		}
+
+		private async Task SetDataSourceName(GenericFunction gf)
+		{
+			var parameter = gf.Parameters.FirstOrDefault(p => p.Name == "name");
+			if (parameter == null) return;
+
+			var dataSourceName = parameter.Value.ToString();
+			var datasources = settings.GetValues<DataSource>(typeof(PLang.Modules.DbModule.ModuleSettings)).ToList();
+			var datasource = datasources.FirstOrDefault(p => p.Name == dataSourceName);
+			if (datasource == null) return;
+
+			context.AddOrReplace(ReservedKeywords.CurrentDataSource, datasource);
+
 		}
 
 		private async Task CreateDataSource(GenericFunction gf)
@@ -148,7 +171,7 @@ You MUST provide Parameters if SQL has @parameter.
 			if (dbTypeParam == null || dbTypeParam.Value == null || string.IsNullOrEmpty(dbTypeParam.Value.ToString()))
 			{
 				var supportedDbTypes = moduleSettings.GetSupportedDbTypes();
-				if (supportedDbTypes.Count > 2)
+				if (supportedDbTypes.Count > 1)
 				{
 					throw new BuilderStepException(@$"Database type is missing. Add the database type into your step, Example: ""- Create postgres data source 'myDatabase'"". 
 These are the supported databases (you dont need to be precise)
@@ -162,9 +185,9 @@ These are the supported databases (you dont need to be precise)
 			bool isDefault = (setAsDefaultForApp != null && setAsDefaultForApp.Value != null) ? (bool)setAsDefaultForApp.Value : false;
 			bool keepHistory = (keepHistoryEventSourcing != null && keepHistoryEventSourcing.Value != null) ? (bool)keepHistoryEventSourcing.Value : false;
 
-			await moduleSettings.CreateDataSource((string) dataSourceName.Value, null, (string) dbTypeParam.Value, isDefault, keepHistory);
+			await moduleSettings.CreateDataSource((string)dataSourceName.Value, null, (string)dbTypeParam.Value, isDefault, keepHistory);
 		}
-	
+
 
 		private async Task<(Instruction?, IBuilderError?)> CreateSelect(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
 		{
@@ -237,7 +260,8 @@ You MUST provide SqlParameters if SQL has @parameter.
 If id is not defined then add id to the create statement. 
 The id MUST NOT be auto incremental, but is primary key.
 The id should be datatype long/bigint/.. which fits {functionInfo.DatabaseType}.";
-			} else
+			}
+			else
 			{
 				keepHistoryCommand = @"If user does not define a primary key, add it to the create statement as id as auto increment";
 			}
@@ -286,7 +310,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 ""delete tableB where id=%id%"" => sql: ""DELETE FROM tableB WHERE id=@id"", warning: null
 ""delete * from %table% WHERE %name% => sql: ""DELETE FROM %table% WHERE name=@name""
 # examples #");
-			
+
 			return await BuildCustomStatementsWithWarning(goalStep, dataSource, program, functionInfo);
 		}
 		private async Task<(Instruction?, IBuilderError?)> CreateUpdate(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
@@ -324,9 +348,9 @@ You MUST provide SqlParameters if SQL has @parameter.
 ""update %table% WHERE %name%, set zip=@zip => sql: ""UPDATE %table% SET zip=@zip WHERE name=@name"", parameters:[{name:%name%, zip:%zip%, id=%id%}] 
 # examples #");
 
-			
+
 			var instruction = await BuildCustomStatementsWithWarning(goalStep, dataSource, program, functionInfo);
-			
+
 			return instruction;
 
 
@@ -460,10 +484,11 @@ You MUST provide SqlParameters if SQL has @parameter.
 				string selectColumns = await moduleSettings.FormatSelectColumnsStatement(tableName);
 				var result = await program.Select(selectColumns);
 				var columnInfo = result.rows;
-				if (columnInfo != null && ((dynamic) columnInfo).Count > 0)
+				if (columnInfo != null && ((dynamic)columnInfo).Count > 0)
 				{
 					AppendToAssistantCommand($"### {tableName} table info starts ###\n{JsonConvert.SerializeObject(columnInfo)}\n### table info ends ###");
-				} else
+				}
+				else
 				{
 					logger.LogWarning($@"Could not find information about table {tableName}. 
 I will not build this step. You need to run the setup file to create tables in database. This is the command: plang run Setup");

@@ -77,7 +77,7 @@ namespace PLang.Runtime
 				string strGoalsAvailable = "";
 				if (!string.IsNullOrWhiteSpace(goals))
 				{
-					strGoalsAvailable = " These goals are available: \n{goals}";
+					strGoalsAvailable = $" These goals are available: \n{goals}";
 
 				}
 				return (engine, new Error($"WARNING! - Goal '{goalName}' at {fileSystem.RootDirectory} was not found.{strGoalsAvailable}"));

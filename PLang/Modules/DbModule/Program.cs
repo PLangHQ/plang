@@ -57,17 +57,12 @@ namespace PLang.Modules.DbModule
 			await moduleSettings.CreateDataSource(name, localPath, databaseType, setAsDefaultForApp, keepHistoryEventSourcing);
 		}
 
-		public async Task<IError?> SetDataSourceName(string name, string localPath = "./db/data.sqlite")
+		public async Task<IError?> SetDataSourceName(string name, string localPath = "./.db/data.sqlite")
 		{
 			(var dataSource, var error) = await moduleSettings.GetDataSource(name, localPath);
-			if (dataSource == null)
-			{
-				return new Error($"Data source with the name '{name}' could not be found. You need to create a datasource first",
-					Key: "DataSourceNotFound",
-					FixSuggestion: $"Rewrite your step in such ways as: \n\n- Create data source {name}\n- Create postgres data source {name}, set as default\n- Create sqlserver data source {name}",
-					HelpfulLinks: "https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.DbModule.md");
-			}
-			context[ReservedKeywords.CurrentDataSourceName] = dataSource;
+			if (error != null) return error;
+
+			context[ReservedKeywords.CurrentDataSource] = dataSource;
 			return null;
 		}
 
@@ -326,10 +321,15 @@ namespace PLang.Modules.DbModule
 		}
 
 
-		public async Task<(int, IError?)> Execute(string sql)
+		public async Task<(int, IError?)> Execute(string sql, string? dataSourceName = null)
 		{
 			try
 			{
+				if (!string.IsNullOrEmpty(dataSourceName))
+				{
+					await SetDataSourceName(dataSourceName);
+				}
+
 				int rowsAffected = 0;
 				var prepare = Prepare(sql, null);
 				if (prepare.error != null) {
@@ -369,15 +369,20 @@ namespace PLang.Modules.DbModule
 			logger.LogWarning($"Had error running Setup ({goalStep.Text}) but will continue. Error message:{ex.Message}");
 		}
 
-		public async Task CreateTable(string sql)
+		public async Task<(int, IError?)> CreateTable(string sql, string? dataSourceName = null)
 		{
 
-			await Execute(sql);
+			return await Execute(sql, dataSourceName);
 
 		}
 
-		public async Task<(object?, IError? errors)> SelectOneRow(string sql, List<object>? SqlParameters = null)
+		public async Task<(object?, IError? errors)> SelectOneRow(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
 		{
+			if (!string.IsNullOrEmpty(dataSourceName))
+			{
+				await SetDataSourceName(dataSourceName);
+			}
+
 			var result = await Select(sql, SqlParameters);
 			if (result.error != null)
 			{
@@ -407,8 +412,13 @@ namespace PLang.Modules.DbModule
 
 		}
 
-		public async Task<(List<object> rows, IError? error)> Select(string sql, List<object>? SqlParameters = null)
+		public async Task<(List<object> rows, IError? error)> Select(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
 		{
+			if (!string.IsNullOrEmpty(dataSourceName))
+			{
+				await SetDataSourceName(dataSourceName);
+			}
+
 			var prep = Prepare(sql, SqlParameters);
 			if (prep.error != null)
 			{
@@ -431,8 +441,12 @@ namespace PLang.Modules.DbModule
 			return type.IsValueType && !type.IsPrimitive ? Activator.CreateInstance(type) : null;
 		}
 
-		public async Task<(int, IError?)> Update(string sql, List<object>? SqlParameters = null)
+		public async Task<(int, IError?)> Update(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
 		{
+			if (!string.IsNullOrEmpty(dataSourceName))
+			{
+				await SetDataSourceName(dataSourceName);
+			}
 			var prepare = Prepare(sql, SqlParameters);
 			if (prepare.error != null)
 			{
@@ -451,8 +465,12 @@ namespace PLang.Modules.DbModule
 			return (result, null);
 		}
 
-		public async Task<(int, IError?)> Delete(string sql, List<object>? SqlParameters = null)
+		public async Task<(int, IError?)> Delete(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
 		{
+			if (!string.IsNullOrEmpty(dataSourceName))
+			{
+				await SetDataSourceName(dataSourceName);
+			}
 			int rowsAffected;
 			var prepare = Prepare(sql, SqlParameters);
 			if (prepare.error != null)
@@ -472,9 +490,12 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("Basic insert statement. Will return affected row count")]
-		public async Task<(int rowsAffected, IError? error)> Insert(string sql, List<object>? SqlParameters = null)
+		public async Task<(int rowsAffected, IError? error)> Insert(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
 		{
-
+			if (!string.IsNullOrEmpty(dataSourceName))
+			{
+				await SetDataSourceName(dataSourceName);
+			}
 			int rowsAffected = 0;
 			var prepare = Prepare(sql, SqlParameters, true);
 			if (prepare.error != null)
@@ -510,8 +531,12 @@ namespace PLang.Modules.DbModule
 
 		}
 		[Description("Insert statement that will return the id of the inserted row. Use only if user requests the id")]
-		public async Task<(object?, IError?)> InsertAndSelectIdOfInsertedRow(string sql, List<object>? SqlParameters = null)
+		public async Task<(object?, IError?)> InsertAndSelectIdOfInsertedRow(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
 		{
+			if (!string.IsNullOrEmpty(dataSourceName))
+			{
+				await SetDataSourceName(dataSourceName);
+			}
 			var prepare = Prepare(sql, SqlParameters, true);
 			if (prepare.error != null)
 			{
@@ -540,8 +565,12 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("Insert a list(bulk) into database, return number of rows inserted")]
-		public async Task<(int, IError?)> InsertBulk(string tableName, List<object> items)
+		public async Task<(int, IError?)> InsertBulk(string tableName, List<object> items, string? dataSourceName = null)
 		{
+			if (!string.IsNullOrEmpty(dataSourceName))
+			{
+				await SetDataSourceName(dataSourceName);
+			}
 			var dataSource = await moduleSettings.GetCurrentDataSource();
 			var sqlSelectColumns = await moduleSettings.FormatSelectColumnsStatement(tableName);
 			var result = await Select(sqlSelectColumns);
