@@ -46,7 +46,7 @@ namespace PLang.Utils
 				var serviceName = llmservice.ToLower();
 				if (llmservice.IndexOf("=") != -1)
 				{
-					serviceName = llmservice.Substring(llmservice.IndexOf("=") + 1);
+					serviceName = llmservice.Substring(llmservice.IndexOf("=") + 1).ToLower();
 				}
 
 				if (serviceName != "plang" && serviceName != "openai")

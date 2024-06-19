@@ -22,7 +22,7 @@ namespace PLang.Services.LlmService
 	public class PLangLlmService : ILlmService
 	{
 		private readonly LlmCaching llmCaching;
-		private readonly IOutputStreamFactory outputStreamFactory;
+		private readonly IOutputSystemStreamFactory outputSystemStreamFactory;
 		private readonly IPLangSigningService signingService;
 		private readonly ILogger logger;
 		private readonly PLangAppContext context;
@@ -30,17 +30,17 @@ namespace PLang.Services.LlmService
 		private readonly MemoryStack memoryStack;
 		private string url = "https://llm.plang.is/api/Llm";
 		private readonly string appId = "206bb559-8c41-4c4a-b0b7-283ef73dc8ce";
-		private readonly string BuyCreditInfo = @"You need to purchase credits to use Plang LLM service, click this link to purchase: {0}. Try to build again after payment.
+		private readonly string BuyCreditInfo = @"You need to purchase credits to use Plang LLM service, click this link to purchase: {0}. Run again after payment.
 
 Make sure to backup the folder {1} as it contains your private key. If you loose your private key your account at Plang will be lost";
 
 		public IContentExtractor Extractor { get; set; }
 
-		public PLangLlmService(LlmCaching llmCaching, IOutputStreamFactory outputStreamFactory, IPLangSigningService signingService,
+		public PLangLlmService(LlmCaching llmCaching, IOutputSystemStreamFactory outputSystemStreamFactory, IPLangSigningService signingService,
 			ILogger logger, PLangAppContext context, IPLangFileSystem fileSystem, MemoryStack memoryStack)
 		{
 			this.llmCaching = llmCaching;
-			this.outputStreamFactory = outputStreamFactory;
+			this.outputSystemStreamFactory = outputSystemStreamFactory;
 			this.signingService = signingService;
 			this.logger = logger;
 			this.context = context;
@@ -151,11 +151,11 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 			if (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired)
 			{
 				var obj = JObject.Parse(responseBody);
-				if (obj != null && obj["url"].ToString() != "")
+				if (obj != null && obj["url"]?.ToString() != "")
 				{
 					string dbLocation = Path.Join(fileSystem.SharedPath, appId);
-					await outputStreamFactory.CreateHandler().Write(string.Format(BuyCreditInfo, obj["url"], dbLocation), "error", 402);
-					throw new StopBuilderException();
+					await outputSystemStreamFactory.CreateHandler().Write(string.Format(BuyCreditInfo, obj["url"], dbLocation), "error", 402);
+					return (null, new ErrorHandled(new Error("Handled")));
 				}
 				else
 				{
@@ -168,8 +168,7 @@ What is name of payer?", GetCountry));
 				}
 			}
 
-
-			throw new HttpRequestException(responseBody, null, response.StatusCode);
+			return (null, new ServiceError(responseBody, GetType()));
 
 
 		}
@@ -243,13 +242,16 @@ What is name of payer?", GetCountry));
 				}
 
 				var responseBody = await DoPlangRequest(countryArray);
-				
+				if (string.IsNullOrEmpty(responseBody))
+				{
+					return (false, new ServiceError("Got empty response from llm service. Service might be down, try again later", GetType()));
+				}
 				var obj = JObject.Parse(responseBody);
 				if (obj["url"] != null)
 				{
 					string dbLocation = Path.Join(fileSystem.SharedPath, appId);
-					await outputStreamFactory.CreateHandler().Write(string.Format(BuyCreditInfo, obj["url"], dbLocation), "error", 402);
-					throw new StopBuilderException();
+					await outputSystemStreamFactory.CreateHandler().Write(string.Format(BuyCreditInfo, obj["url"], dbLocation), "error", 402);
+					return (false, new ErrorHandled(new Error("ErrorHandled")));
 				} else
 				{
 					if (obj["status"] != null && obj["status"]["error_code"] != null && obj["status"]["error_code"].ToString().Contains("COUNTRY"))

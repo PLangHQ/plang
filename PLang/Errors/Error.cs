@@ -29,7 +29,6 @@ namespace PLang.Errors
 
 	public interface IErrorHandled { }
 
-	public record ErrorHandled(IError Error) : Error(Error.Message), IErrorHandled;
 
 	public record EndGoal(GoalStep Step, string Message) : StepError(Message, Step), IErrorHandled;
 }

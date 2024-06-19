@@ -8,7 +8,7 @@ namespace PLang.Errors.Handlers
 
     public class AskUserConsoleHandler : AskUserHandler
     {
-		public AskUserConsoleHandler(IOutputStreamFactory outputStreamFactory) : base(outputStreamFactory)
+		public AskUserConsoleHandler(IOutputSystemStreamFactory outputStreamFactory) : base(outputStreamFactory)
 		{
 		}
 

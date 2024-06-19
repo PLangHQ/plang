@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Building.Model;
+using PLang.Errors;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
@@ -35,7 +36,7 @@ namespace PLang.Modules.LlmModule
 
 		public record AskLlmResponse(string Result);
 
-		public async Task AskLlm(
+		public async Task<(IReturnDictionary?, IError?)> AskLlm(
 			[HandlesVariable] List<LlmMessage> promptMessages,
 			string? scheme = null,
 			string model = "gpt-4-turbo",
@@ -83,6 +84,8 @@ namespace PLang.Modules.LlmModule
 			{
 				(var response, var queryError) = await llmServiceFactory.CreateHandler().Query<object?>(llmQuestion);
 
+				if (queryError != null) return (null, queryError);
+
 				if (function == null || function.ReturnValue == null || function.ReturnValue.Count == 0)
 				{
 					if (response is JObject)
@@ -105,11 +108,14 @@ namespace PLang.Modules.LlmModule
 
 				if (function != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
 				{
+					var returnDict = new ReturnDictionary<string, object?>();
 					foreach (var returnValue in function.ReturnValue)
 					{
-						memoryStack.Put(returnValue.VariableName, response);
+						returnDict.AddOrReplace(returnValue.VariableName, response);
 					}
+					return (returnDict, null);
 				}
+				
 			}
 			catch (Exception ex)
 			{
@@ -120,7 +126,10 @@ namespace PLang.Modules.LlmModule
 
 				logger.Log(logLevel, "Llm question - prompt:{0}", JsonConvert.SerializeObject(llmQuestion.promptMessage));
 				logger.Log(logLevel, "Llm question - response:{0}", llmQuestion.RawResponse);
+
+				
 			}
+			return (null, null);
 		}
 
 		public async Task UseSharedIdentity(bool useSharedIdentity = true)

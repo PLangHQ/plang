@@ -7,9 +7,9 @@ namespace PLang.Errors.Handlers
 {
     public class AskUserHandler : IAskUserHandler
     {
-        private readonly IOutputStreamFactory outputStreamFactory;
+        private readonly IOutputSystemStreamFactory outputStreamFactory;
 
-        public AskUserHandler(IOutputStreamFactory outputStream)
+        public AskUserHandler(IOutputSystemStreamFactory outputStream)
         {
             this.outputStreamFactory = outputStream;
         }

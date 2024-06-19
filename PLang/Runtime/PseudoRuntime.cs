@@ -24,15 +24,17 @@ namespace PLang.Runtime
 		private readonly IServiceContainerFactory serviceContainerFactory;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly IOutputStreamFactory outputStreamFactory;
+		private readonly IOutputSystemStreamFactory outputSystemStreamFactory;
 		private readonly IErrorHandlerFactory exceptionHandlerFactory;
 		private readonly IAskUserHandlerFactory askUserHandlerFactory;
 		
 		public PseudoRuntime(IServiceContainerFactory serviceContainerFactory, IPLangFileSystem fileSystem,
-			IOutputStreamFactory outputStreamFactory, IErrorHandlerFactory exceptionHandlerFactory, IAskUserHandlerFactory askUserHandlerFactory)
+			IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory, IErrorHandlerFactory exceptionHandlerFactory, IAskUserHandlerFactory askUserHandlerFactory)
 		{
 			this.serviceContainerFactory = serviceContainerFactory;
 			this.fileSystem = fileSystem;
 			this.outputStreamFactory = outputStreamFactory;
+			this.outputSystemStreamFactory = outputSystemStreamFactory;
 			this.exceptionHandlerFactory = exceptionHandlerFactory;
 			this.askUserHandlerFactory = askUserHandlerFactory;
 		}
@@ -53,7 +55,7 @@ namespace PLang.Runtime
 				string relativeAppStartupPath = Path.DirectorySeparatorChar.ToString();
 				goalToRun = pathAndGoal.goalName;
 
-				container = serviceContainerFactory.CreateContainer(context, absoluteAppStartupPath, relativeAppStartupPath, outputStreamFactory, exceptionHandlerFactory, askUserHandlerFactory);
+				container = serviceContainerFactory.CreateContainer(context, absoluteAppStartupPath, relativeAppStartupPath, outputStreamFactory, outputSystemStreamFactory, exceptionHandlerFactory, askUserHandlerFactory);
 
 				engine = container.GetInstance<IEngine>();
 				engine.Init(container);

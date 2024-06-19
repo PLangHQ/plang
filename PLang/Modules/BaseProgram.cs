@@ -165,7 +165,8 @@ namespace PLang.Modules
 				{
 					if (error is AskUserError aue)
 					{
-						(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(aue);
+						(var isHandled, var handlerError) = await HandleAskUser(aue);
+						
 						if (isHandled) return await RunFunction(function);
 
 						return ErrorHelper.GetMultipleError(error, handlerError);
@@ -197,6 +198,16 @@ namespace PLang.Modules
 				}
 				return new ProgramError(ex.Message, goalStep, function, parameterValues, "ProgramError", 500, Exception: ex);
 			}
+		}
+
+		private async Task<(bool, IError?)> HandleAskUser(AskUserError aue)
+		{
+			(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(aue);
+			if (handlerError is AskUserError aueSecond)
+			{
+				return await HandleAskUser(aueSecond);
+			}
+			return (isHandled, handlerError);
 		}
 
 		private async Task<IError?> HandleFileAccess(FileAccessException fa)

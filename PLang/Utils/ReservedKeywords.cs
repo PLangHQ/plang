@@ -38,6 +38,7 @@ namespace PLang.Utils
 		public static readonly string Inject_IEventSourceRepository = "!Inject_IEventSourceRepository";
 		public static readonly string Inject_Archiving = "!Inject_Archiving";
 		public static readonly string Inject_OutputStream = "!Inject_OutputStream";
+		public static readonly string Inject_OutputSystemStream = "!Inject_OutputSystemStream";
 
 		
 

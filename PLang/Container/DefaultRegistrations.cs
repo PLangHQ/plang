@@ -64,7 +64,23 @@ namespace PLang.Container
 				}, instance.GetType().FullName);
 			}
 		}
+		public static void RegisterOutputSystemStreamFactory(this ServiceContainer container, Type type, bool isDefault = false, IOutputStream? instance = null, bool setToContext = false)
+		{
+			SetContext(container, type, ReservedKeywords.Inject_OutputSystemStream, isDefault, setToContext);
+			container.RegisterSingleton<IOutputSystemStreamFactory>(factory =>
+			{
+				var defaultType = GetDefault(container, ReservedKeywords.Inject_OutputSystemStream);
+				return new OutputSystemStreamFactory(container, defaultType);
+			});
 
+			if (instance != null)
+			{
+				container.RegisterSingleton(factor =>
+				{
+					return instance;
+				}, instance.GetType().FullName);
+			}
+		}
 		public static void RegisterEncryptionFactory(this ServiceContainer container, Type type, bool isDefault = false, IEncryption? instance = null)
 		{
 			container.Register<IEncryptionFactory>(factory =>
