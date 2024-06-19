@@ -62,7 +62,7 @@ namespace PLang.Services.SettingsService
 			}
 		}
 
-		public IError SetSystemDbPath(string path)
+		public IError? SetSystemDbPath(string path)
 		{
 			if (string.IsNullOrEmpty(path))
 			{

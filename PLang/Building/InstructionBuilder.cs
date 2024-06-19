@@ -71,9 +71,10 @@ namespace PLang.Building
 			{
 				return await Retry(stepBuilder, invalidFunctionError, module, goal, step, stepIndex, excludeModules, errorCount);
 			}
+
 			foreach (var function in functions)
 			{
-				StepBuilder.LoadVariablesIntoMemoryStack(function, memoryStack, context, settings);
+				stepBuilder.LoadVariablesIntoMemoryStack(function, memoryStack, context, settings);
 			}
 
 

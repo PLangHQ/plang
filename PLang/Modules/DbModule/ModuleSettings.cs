@@ -21,18 +21,16 @@ namespace PLang.Modules.DbModule
 		private readonly ISettings settings;
 		private readonly PLangAppContext context;
 		private readonly ILlmServiceFactory llmServiceFactory;
-		private readonly IDbConnection db;
 		private readonly ILogger logger;
 		private string defaultLocalDbPath = "./.db/data.sqlite";
 		public record SqlStatement(string SelectTablesAndViewsInMyDatabaseSqlStatement, string SelectColumnsFromTablesSqlStatement);
 
-		public ModuleSettings(IPLangFileSystem fileSystem, ISettings settings, PLangAppContext context, ILlmServiceFactory llmServiceFactory, IDbConnection db, ILogger logger)
+		public ModuleSettings(IPLangFileSystem fileSystem, ISettings settings, PLangAppContext context, ILlmServiceFactory llmServiceFactory, ILogger logger)
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
 			this.context = context;
 			this.llmServiceFactory = llmServiceFactory;
-			this.db = db;
 			this.logger = logger;
 		}
 

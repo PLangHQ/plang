@@ -48,7 +48,7 @@ namespace PLang.Modules.DbModule
 			this.logger = logger;
 			this.context = context;
 
-			this.moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, dbConnection, logger);
+			this.moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger);
 		}
 
 		[Description("localPath is location of the database on the drive for sqlite. localPath can be string with variables, default is null")]

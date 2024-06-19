@@ -2,6 +2,7 @@
 using NBitcoin.Protocol;
 using PLang.Building.Model;
 using PLang.Errors;
+using PLang.Errors.AskUser;
 using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Utils;
@@ -18,6 +19,21 @@ namespace PLang.Services.CompilerService
 			if (implementation == null)
 			{
 				implementation = new Implementation("No namespace", "No name provided", "No code provided", null, new(), new(), null, null);
+			}
+			if (ex is MissingSettingsException mse)
+			{
+				return new AskUserError(mse.Message, async (object[]? objArray) =>
+				{
+					var value = "";
+					if (objArray != null)
+					{
+						var obj = objArray[0];
+						if (obj is Array) obj = ((object[])obj)[0];
+						value = obj.ToString();
+					}
+					await mse.InvokeCallback(value);
+					return (true, null);
+				});
 			}
 
 			string message = FormatMessage(ex, implementation, step);

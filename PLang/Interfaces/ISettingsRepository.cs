@@ -15,7 +15,7 @@ namespace PLang.Interfaces
 		void SetSharedDataSource(string? appId = null);
 		Setting? Get(string? fullName, string? type, string? key);
 		string SerializeSettings();
-		IError SetSystemDbPath(string path);
+		IError? SetSystemDbPath(string path);
 		void ResetSystemDbPath();
 	}
 }

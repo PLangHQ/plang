@@ -503,6 +503,7 @@ namespace PLang.Runtime
 			//let retry the step if user defined so
 			if (step.RetryHandler != null && step.RetryHandler.RetryCount > retryCount)
 			{
+				logger.LogWarning($"Error occurred, will retry in {step.RetryHandler.RetryDelayInMilliseconds}ms. Attempt nr. {retryCount} of {step.RetryHandler.RetryCount}\nError:{error}");
 				await Task.Delay(step.RetryHandler.RetryDelayInMilliseconds);
 				return await RunStep(goal, goalStepIndex, ++retryCount);
 			}

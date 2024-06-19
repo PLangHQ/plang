@@ -158,9 +158,9 @@ namespace PLang.Building
 			foreach (var dir in dirs)
 			{
 				var folderPath = Path.Join(fileSystem.RootDirectory, dir.Replace(fileSystem.BuildPath, ""));
-				if (!fileSystem.Directory.Exists(folderPath))
+				if (!fileSystem.Directory.Exists(folderPath) && fileSystem.Directory.Exists(dir))
 				{
-					fileSystem.Directory.Delete(folderPath);
+					fileSystem.Directory.Delete(dir, true);
 				}
 			}
 

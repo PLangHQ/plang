@@ -157,19 +157,7 @@ namespace PLang.Utils
 				if (method.Module.Name != type.Module.Name) continue;
 				if (method.Name == "Run" || method.Name == "Dispose" || method.IsSpecialName) continue;
 
-				if (method.ReturnType == typeof(Task))
-				{
-					strMethod += "void ";
-				}
-				else if (method.ReturnType.GenericTypeArguments.Length > 0)
-				{
-					strMethod += method.ReturnType.GenericTypeArguments[0].Name + " ";
-				}
-				else
-				{
-
-					Console.WriteLine($"WARNING return type of {method.Name} is not Task");
-				}
+				
 
 				strMethod += method.Name + "(";
 				var parameters = method.GetParameters();
@@ -208,6 +196,18 @@ namespace PLang.Utils
 				}
 				strMethod += ") ";
 
+				if (method.ReturnType == typeof(Task))
+				{
+					strMethod += " : void ";
+				}
+				else if (method.ReturnType.GenericTypeArguments.Length > 0)
+				{
+					strMethod += " : " + method.ReturnType.GenericTypeArguments[0].Name + " ";
+				}
+				else
+				{
+					Console.WriteLine($"WARNING return type of {method.Name} is not Task");
+				}
 
 				var descriptions = method.CustomAttributes.Where(p => p.AttributeType.Name == "DescriptionAttribute");
 				foreach (var desc in descriptions)

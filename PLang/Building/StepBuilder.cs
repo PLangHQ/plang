@@ -10,6 +10,7 @@ using PLang.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Modules.DbModule;
 using PLang.Runtime;
 using PLang.Services.CompilerService;
 using PLang.Services.LlmService;
@@ -163,6 +164,11 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			catch (Exception ex)
 			{
 				IBuilderError error;
+				if (ex.InnerException is PLang.Errors.Handlers.AskUserError)
+				{
+					ex = ex.InnerException;
+				}
+
 				if (ex is PLang.Errors.Handlers.AskUserError mse)
 				{
 					Console.WriteLine(mse.Message);
@@ -231,7 +237,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			return true;
 		}
 
-		public static void LoadVariablesIntoMemoryStack(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
+		public void LoadVariablesIntoMemoryStack(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
 		{
 			if (gf == null) return;
 
@@ -246,7 +252,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			LoadParameters(gf, memoryStack, context, settings);
 		}
 
-		private static void LoadParameters(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
+		private void LoadParameters(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
 		{
 			// todo: hack for now, should be able to load dynamically variables that are being set at build time
 			// might have to structure the build
@@ -283,18 +289,32 @@ Builder will continue on other steps but not this one: ({step.Text}).
 				var parameter = gf.Parameters.FirstOrDefault(p => p.Name == "name");
 				if (parameter == null) return;
 
-				var dataSourceName = parameter.Value.ToString();
+				var dataSourceName = parameter.Value.ToString() ?? "data";
+				var datasources = settings.GetValues<DataSource>(typeof(PLang.Modules.DbModule.ModuleSettings)).ToList();
+				var datasource = datasources.FirstOrDefault(p => p.Name == dataSourceName);
+				var isDefaultForApp = ((bool?)gf.Parameters.FirstOrDefault(p => p.Name == "setAsDefaultForApp")?.Value) ?? false;
 
-				context.AddOrReplace(ReservedKeywords.CurrentDataSource + "_string", dataSourceName);
+				if (datasource == null)
+				{					
+					var keepHistoryEventSourcing = ((bool?)gf.Parameters.FirstOrDefault(p => p.Name == "keepHistoryEventSourcing")?.Value) ?? false;
+					var databaseType = gf.Parameters.FirstOrDefault(p => p.Name == "databaseType")?.Value?.ToString() ?? "sqlite";
+					var localPath = "";
+					if (databaseType == "sqlite")
+					{
+						localPath = gf.Parameters.FirstOrDefault(p => p.Name == "localPath")?.Value?.ToString();
+						if (string.IsNullOrEmpty(localPath)) localPath = "./.db/data.sqlite";
+					}
 
-				var isDefaultForApp = ((bool?) gf.Parameters.FirstOrDefault(p => p.Name == "setAsDefaultForApp")?.Value) ?? false;
+					var moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger.Value);
+					moduleSettings.CreateDataSource(dataSourceName, localPath, databaseType, isDefaultForApp, keepHistoryEventSourcing).Wait();
 
+					datasources = settings.GetValues<DataSource>(typeof(PLang.Modules.DbModule.ModuleSettings)).ToList();
+					datasource = datasources.FirstOrDefault(p => p.Name == dataSourceName);
+				}
+
+				
 				if ((gf.FunctionName == "CreateDataSource" && isDefaultForApp) || gf.FunctionName == "SetDataSourceName")
 				{
-					var datasources = settings.GetValues<DataSource>(typeof(PLang.Modules.DbModule.ModuleSettings)).ToList();
-					var datasource = datasources.FirstOrDefault(p => p.Name == dataSourceName);
-					if (datasource == null) return;
-
 					context.AddOrReplace(ReservedKeywords.CurrentDataSource, datasource);
 				}
 			}

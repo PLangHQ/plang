@@ -20,6 +20,11 @@ namespace PLang.Errors
 		{
 			return ErrorHelper.ToFormat(contentType, this);
 		}
+
+		public override string ToString()
+		{
+			return ErrorHelper.ToFormat("text", this).ToString();
+		}
 	}
 
 	public interface IErrorHandled { }

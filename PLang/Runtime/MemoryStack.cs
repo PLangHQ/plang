@@ -327,7 +327,7 @@ namespace PLang.Runtime
 			var plan = GetVariableExecutionPlan(key, staticVariable);
 			if (plan.VariableName.Equals("settings", StringComparison.OrdinalIgnoreCase) && plan.Calls.Count > 0)
 			{
-				var value = settings.GetOrDefault<string>(typeof(Settings), plan.Calls[0], "");
+				var value = settings.Get<string>(typeof(Settings), plan.Calls[0], "", $"What is settings for {plan.Calls[0]}:");
 				return new ObjectValue(key, value, typeof(string), null);
 			}
 			if (!plan.ObjectValue.Initiated)

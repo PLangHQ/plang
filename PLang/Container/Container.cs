@@ -293,7 +293,7 @@ namespace PLang.Container
 				if (dbConnection != null) return dbConnection;
 
 				dbConnection = factory.GetInstance<IDbConnection>(typeof(DbConnectionUndefined).FullName);
-				var moduleSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmServiceFactory, dbConnection, logger);
+				var moduleSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger);
 
 				dbConnection = moduleSettings.GetDefaultDbConnection(factory).Result;
 				if (dbConnection != null) return dbConnection;
@@ -328,7 +328,7 @@ namespace PLang.Container
 				var logger = container.GetInstance<ILogger>();
 				var llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
 
-				var moduleSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmServiceFactory, dbConnection, logger);
+				var moduleSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger);
 				var dataSources = moduleSettings.GetAllDataSources().Result;
 				if (dataSources.Count == 0)
 				{

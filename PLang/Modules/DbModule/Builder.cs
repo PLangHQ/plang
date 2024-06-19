@@ -51,7 +51,7 @@ namespace PLang.Modules.DbModule
 		public record DbGenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValue = null, string? Warning = null) : GenericFunction(FunctionName, Parameters, ReturnValue);
 		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep goalStep)
 		{
-			moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, db, logger);
+			moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger);
 			(var buildInstruction, var buildError) = await base.Build(goalStep);
 			if (buildError != null) return (null, buildError);
 
@@ -392,6 +392,8 @@ TypeFullName is Full name of the type in c#, System.String, System.Double, Syste
 {appendToSystem}
 {eventSourcing}
 If table name is a variable, keep the variable in the sql statement
+Make sure sql statement matches columns provided for the table.
+
 You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
 You MUST provide SqlParameters if SQL has @parameter.
 ");
@@ -486,7 +488,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 				var columnInfo = result.rows;
 				if (columnInfo != null && ((dynamic)columnInfo).Count > 0)
 				{
-					AppendToAssistantCommand($"### {tableName} table info starts ###\n{JsonConvert.SerializeObject(columnInfo)}\n### table info ends ###");
+					AppendToAssistantCommand($"### {tableName} columns ###\n{JsonConvert.SerializeObject(columnInfo)}\n### {tableName} columns ###");
 				}
 				else
 				{
