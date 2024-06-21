@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using NCrontab;
 using Newtonsoft.Json;
+using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Interfaces;
@@ -11,10 +12,11 @@ using PLang.Services.SettingsService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.IO;
+using static PLang.Modules.ScheduleModule.Program;
 
 namespace PLang.Modules.ScheduleModule
 {
-    [Description("Wait, Sleep and time delay. Cron scheduler")]
+	[Description("Wait, Sleep and time delay. Cron scheduler")]
 	public class Program : BaseProgram
 	{
 		private readonly ISettings settings;
@@ -37,24 +39,29 @@ namespace PLang.Modules.ScheduleModule
 			await Task.Delay(sleepTimeInMilliseconds);
 		}
 
-		public record CronJob(string CronCommand, string GoalName, DateTime? NextRun = null, int MaxExecutionTimeInMilliseconds = 30000)
+		public record CronJob(string AbsolutePrFilePath, string CronCommand, string GoalName, Dictionary<string, object?>? Parameters = null, DateTime? NextRun = null, int MaxExecutionTimeInMilliseconds = 30000)
 		{
 			public bool IsArchived = false;
 		};
 
-		[Description("Use numerical representation for cronCommand, e.g. 0 11 * * 1. goalName is the goal that should be called, it should be prefixed by ! and be whole word with possible slash(/)")]
-		public async Task Schedule(string cronCommand, string goalName, DateTime? nextRun = null)
+		[Description("Use numerical representation for cronCommand, e.g. 0 11 * * 1. goalName is the goal that should be called, it should be prefixed by ! and be whole word with possible slash(/).")]
+		public async Task Schedule(string cronCommand, string goalName, Dictionary<string, object?>? parameters = null, DateTime? nextRun = null)
+		{
+			await Schedule(goalStep.AbsolutePrFilePath, cronCommand, goalName, parameters, nextRun);
+		}
+
+		private async Task Schedule(string absolutePrFilePath, string cronCommand, string goalName, Dictionary<string, object?>? parameters = null, DateTime? nextRun = null)
 		{
 			var cronJobs = moduleSettings.GetCronJobs();
-			var idx = cronJobs.FindIndex(p => p.CronCommand == cronCommand && p.GoalName == goalName);
+			var idx = cronJobs.FindIndex(p => p.AbsolutePrFilePath == absolutePrFilePath);
 			if (idx == -1)
 			{
-				var cronJob = new CronJob(cronCommand, goalName, nextRun);
+				var cronJob = new CronJob(absolutePrFilePath, cronCommand, goalName, parameters, nextRun);
 				cronJobs.Add(cronJob);
 			}
 			else
 			{
-				cronJobs[idx] = new CronJob(cronCommand, goalName, nextRun);
+				cronJobs[idx] = new CronJob(absolutePrFilePath, cronCommand, goalName, parameters, nextRun);
 			}
 
 			settings.SetList(typeof(ModuleSettings), cronJobs);
@@ -78,7 +85,7 @@ namespace PLang.Modules.ScheduleModule
 				RunContainer(container.GetInstance<ISettings>(), appEngine
 					, container.GetInstance<PrParser>(), container.GetInstance<ILogger>()
 					, container.GetInstance<IPseudoRuntime>(), container.GetInstance<IPLangFileSystem>());
-				
+
 			}
 
 
@@ -88,6 +95,9 @@ namespace PLang.Modules.ScheduleModule
 		{
 			var moduleSettings = new ModuleSettings(settings);
 			var list = moduleSettings.GetCronJobs();
+			list = CleanDeletedCronJobs(settings, fileSystem, list);
+
+
 			if (list.Count == 0) return;
 
 			Task.Run((Func<Task?>)(async () =>
@@ -103,6 +113,22 @@ namespace PLang.Modules.ScheduleModule
 				}
 			}));
 
+		}
+
+		private static List<CronJob> CleanDeletedCronJobs(ISettings settings, IPLangFileSystem fileSystem, List<CronJob> cronJobs)
+		{
+			for (int i = 0; i < cronJobs.Count; i++)
+			{
+				CronJob cronJob = cronJobs[i];
+				if (cronJob.AbsolutePrFilePath == null || !fileSystem.File.Exists(cronJob.AbsolutePrFilePath))
+				{
+					cronJobs.RemoveAt(i);
+					i--;
+				}
+			}
+
+			settings.SetList(typeof(ModuleSettings), cronJobs);
+			return cronJobs;
 		}
 
 		public static async Task RunScheduledTasks(ISettings settings, IEngine engine, PrParser prParser, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem)
@@ -122,7 +148,7 @@ namespace PLang.Modules.ScheduleModule
 					var nextOccurrence = schedule.GetNextOccurrence(SystemTime.OffsetUtcNow().DateTime);
 					if (item.NextRun == null)
 					{
-						await p.Schedule(item.CronCommand, item.GoalName, nextOccurrence);
+						await p.Schedule(item.AbsolutePrFilePath, item.CronCommand, item.GoalName, item.Parameters, nextOccurrence);
 						continue;
 					}
 					if (item.NextRun > SystemTime.OffsetUtcNow().DateTime)
@@ -136,7 +162,7 @@ namespace PLang.Modules.ScheduleModule
 					{
 						int maxExecutionTime = (item.MaxExecutionTimeInMilliseconds == 0) ? 30000 : item.MaxExecutionTimeInMilliseconds;
 						cts.CancelAfter(maxExecutionTime);
-						var result = await pseudoRuntime.RunGoal(engine, engine.GetContext(), fileSystem.RelativeAppPath, item.GoalName, new());
+						var result = await pseudoRuntime.RunGoal(engine, engine.GetContext(), fileSystem.RelativeAppPath, item.GoalName, item.Parameters);
 						if (result.error != null)
 						{
 							logger.LogError(result.error.ToString());
@@ -144,7 +170,7 @@ namespace PLang.Modules.ScheduleModule
 					}
 
 					nextOccurrence = schedule.GetNextOccurrence(SystemTime.OffsetUtcNow().DateTime);
-					await p.Schedule(item.CronCommand, item.GoalName, nextOccurrence);
+					await p.Schedule(item.AbsolutePrFilePath, item.CronCommand, item.GoalName, item.Parameters, nextOccurrence);
 
 				}
 			}

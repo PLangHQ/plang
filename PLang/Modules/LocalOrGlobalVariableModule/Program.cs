@@ -63,7 +63,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 
 			return variableHelper.LoadVariables(content);
 		}
-		[Description(@"Set string variable. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
+		[Description(@"Set string variable. Developer might use single/double quote to indicate the string value, the wrapped quote should not be included in the value. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
 		public async Task SetStringVariable([HandlesVariable] string key, string? value = null)
 		{
 			memoryStack.Put(key, variableHelper.LoadVariables(value));
@@ -89,7 +89,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			memoryStack.Put(key, variableHelper.LoadVariables(value));
 		}
 
-		[Description(@"Set variable. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
+		[Description(@"Set variable. Developer might use single/double quote to indicate the string value. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
 		public async Task SetVariable([HandlesVariable] string key, object? value = null)
 		{
 			memoryStack.Put(key, variableHelper.LoadVariables(value));

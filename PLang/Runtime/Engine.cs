@@ -142,12 +142,14 @@ namespace PLang.Runtime
 					return;
 				}
 
+
 				error = await eventRuntime.RunStartEndEvents(context, EventType.After, EventScope.StartOfApp);
 				if (error != null)
 				{
 					await HandleError(error);
 					return;
 				}
+
 
 			}
 			catch (Exception ex)
@@ -161,10 +163,10 @@ namespace PLang.Runtime
 				var alives = AppContext.GetData("KeepAlive") as List<Alive>;
 				if (alives != null && alives.Count > 0)
 				{
-					logger.LogInformation("Keeping app alive, reasons:");
+					logger.LogWarning("Keeping app alive, reasons:");
 					foreach (var alive in alives)
 					{
-						logger.LogInformation(" - " + alive.Key);
+						logger.LogWarning(" - " + alive.Key);
 					}
 
 					while (alives != null && alives.Count > 0)
@@ -339,6 +341,11 @@ namespace PLang.Runtime
 					var runStep = await RunStep(goal, goalStepIndex);
 					if (runStep != null)
 					{
+						if (runStep is EndGoal)
+						{
+							goalStepIndex = goal.GoalSteps.Count;
+							continue;
+						} 
 						runStep = await HandleGoalError(runStep, goal, goalStepIndex);
 						if (runStep != null) return runStep;
 					}
@@ -474,7 +481,7 @@ namespace PLang.Runtime
 
 		private async Task<IError?> HandleStepError(Goal goal, GoalStep step, int goalStepIndex, IError error, int retryCount)
 		{
-			if (error is IErrorHandled) return error;
+			if (error is IErrorHandled || error is EndGoal) return error;
 
 			if (error is Errors.AskUser.AskUserError aue)
 			{

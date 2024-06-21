@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
+using PLang.Building.Model;
 using PLang.Interfaces;
 using PLang.Modules.ScheduleModule;
 using PLang.Utils;
@@ -61,8 +62,8 @@ namespace PLangTests.Modules.ScheduleModule
 			string goalName = "Process";
 			string goalName2 = "Process2";
 			var cronJobs = new List<CronJob>();
-			cronJobs.Add(new CronJob(cronCommand, goalName, now.AddMinutes(-2).DateTime));
-			cronJobs.Add(new CronJob(cronCommand, goalName2));
+			cronJobs.Add(new CronJob(@"c:\file.pr", cronCommand, goalName, null, now.AddMinutes(-2).DateTime));
+			cronJobs.Add(new CronJob(@"c:\file2.pr", cronCommand, goalName2, null));
 
 
 			settings.GetValues<CronJob>(typeof(ModuleSettings)).Returns(p =>
@@ -119,8 +120,8 @@ namespace PLangTests.Modules.ScheduleModule
 			string goalName = "Process";
 			string goalName2 = "Process2";
 			var cronJobs = new List<CronJob>();
-			cronJobs.Add(new CronJob(cronCommand, goalName, now.AddMinutes(-2).DateTime));
-			cronJobs.Add(new CronJob(cronCommand, goalName2));
+			cronJobs.Add(new CronJob(@"c:\file.pr", cronCommand, goalName, null, now.AddMinutes(-2).DateTime));
+			cronJobs.Add(new CronJob(@"c:\file2.pr", cronCommand, goalName2));
 
 
 			settings.GetValues<CronJob>(typeof(ModuleSettings)).Returns(p =>

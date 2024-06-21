@@ -57,7 +57,7 @@ namespace PLang.Modules.DbModule
 			await moduleSettings.CreateDataSource(name, localPath, databaseType, setAsDefaultForApp, keepHistoryEventSourcing);
 		}
 
-		public async Task<IError?> SetDataSourceName(string name, string localPath = "./.db/data.sqlite")
+		public async Task<IError?> SetDataSourceName(string name, string? localPath = null)
 		{
 			(var dataSource, var error) = await moduleSettings.GetDataSource(name, localPath);
 			if (error != null) return error;

@@ -30,5 +30,5 @@ namespace PLang.Errors
 	public interface IErrorHandled { }
 
 
-	public record EndGoal(GoalStep Step, string Message) : StepError(Message, Step), IErrorHandled;
+	public record EndGoal(GoalStep Step, string Message, int StatusCode  = 200) : StepError(Message, Step, "EndGoal", StatusCode), IErrorHandled;
 }
