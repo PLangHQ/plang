@@ -348,6 +348,9 @@ namespace PLang.Container
 				{
 					context.AddOrReplace(ReservedKeywords.Inject_IEventSourceRepository, typeof(DisableEventSourceRepository).FullName);
 					return factory.GetInstance<IEventSourceRepository>(typeof(DisableEventSourceRepository).FullName);
+				} else if (dataSource.KeepHistory && dataSource.TypeFullName == typeof(SqliteConnection).FullName)
+				{
+					context.AddOrReplace(ReservedKeywords.Inject_IEventSourceRepository, typeof(SqliteEventSourceRepository).FullName);
 				}
 
 				string type = GetImplementation(context, ReservedKeywords.Inject_IEventSourceRepository, typeof(SqliteEventSourceRepository));

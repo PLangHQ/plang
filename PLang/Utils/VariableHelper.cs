@@ -438,7 +438,10 @@ namespace PLang.Utils
 			{
 				try
 				{
-					variableNames = JArray.Parse(variableName).ToObject<string[]>();
+					if (variableName.TrimStart().StartsWith("[") && variableName.TrimEnd().EndsWith("]"))
+					{
+						variableNames = JArray.Parse(variableName).ToObject<string[]>();
+					}
 				} catch (Exception ex)
 				{
 					throw;

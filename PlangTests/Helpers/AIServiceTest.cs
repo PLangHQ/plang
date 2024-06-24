@@ -9,6 +9,11 @@ namespace PLangTests.Helpers
 	{
 		public IContentExtractor Extractor { get { return new JsonExtractor(); } set { } }
 
+		public async Task<(object?, IError?)> GetBalance()
+		{
+			return (null, null);
+		}
+
 		public Task<(T?, IError?)> Query<T>(LlmRequest question)
 		{
 			return Task.FromResult<(T?, IError)>(default);

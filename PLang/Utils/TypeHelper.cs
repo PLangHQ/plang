@@ -5,6 +5,7 @@ using PLang.Interfaces;
 using PLang.Modules;
 using System.Data;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace PLang.Utils
 {
@@ -315,6 +316,7 @@ namespace PLang.Utils
 			return json += "}";
 		}
 
+
 		public static string GetJsonSchema(Type type)
 		{
 			var json = (type.IsArray || type == typeof(List<>)) ? "[" : "{";
@@ -400,6 +402,7 @@ namespace PLang.Utils
 				{
 					//json += " = null";
 				}
+
 
 
 			}

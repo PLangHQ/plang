@@ -461,9 +461,9 @@ namespace PLang.Runtime
 			}
 			catch (Exception stepException)
 			{
-				if (step.RetryHandler != null && step.RetryHandler.RetryCount > retryCount)
+				if (step.RetryHandler != null && step.RetryHandler.RetryCount > retryCount && step.RetryHandler.RetryDelayInMilliseconds != null)
 				{
-					await Task.Delay(step.RetryHandler.RetryDelayInMilliseconds);
+					await Task.Delay((int) step.RetryHandler.RetryDelayInMilliseconds);
 					return await RunStep(goal, goalStepIndex, ++retryCount);
 				}
 				else
@@ -508,10 +508,10 @@ namespace PLang.Runtime
 			}
 
 			//let retry the step if user defined so
-			if (step.RetryHandler != null && step.RetryHandler.RetryCount > retryCount)
+			if (step.RetryHandler != null && step.RetryHandler.RetryCount > retryCount && step.RetryHandler.RetryDelayInMilliseconds != null)
 			{
 				logger.LogWarning($"Error occurred, will retry in {step.RetryHandler.RetryDelayInMilliseconds}ms. Attempt nr. {retryCount} of {step.RetryHandler.RetryCount}\nError:{error}");
-				await Task.Delay(step.RetryHandler.RetryDelayInMilliseconds);
+				await Task.Delay((int) step.RetryHandler.RetryDelayInMilliseconds);
 				return await RunStep(goal, goalStepIndex, ++retryCount);
 			}
 
@@ -589,7 +589,7 @@ namespace PLang.Runtime
 
 			using (var cts = new CancellationTokenSource())
 			{
-				long executionTimeout = (goalStep.CancellationHandler == null) ? 30 * 1000 : goalStep.CancellationHandler.CancelExecutionAfterXMilliseconds;
+				long executionTimeout = (goalStep.CancellationHandler == null) ? 30 * 1000 : goalStep.CancellationHandler.CancelExecutionAfterXMilliseconds ?? 30 * 1000;
 				cts.CancelAfter(TimeSpan.FromMilliseconds(executionTimeout));
 
 				try

@@ -381,7 +381,13 @@ namespace PLang.Events
 			if (stepErrorHandler != null)
 			{
 				var goalToCall = GetErrorHandlerStep(step, error);
-				if (goalToCall != null)
+				if (goalToCall == "*") goalToCall = null;
+				if (stepErrorHandler.EndGoal)
+				{
+					return (false, new EndGoal(step, $"Ignoring error: {error.Message}"));
+				}
+
+				if (!string.IsNullOrEmpty(goalToCall))
 				{
 					shouldContinueNextStep = stepErrorHandler.ContinueToNextStep;
 					var eventBinding = new EventBinding(EventType.Before, EventScope.StepError, goal.RelativeGoalPath, goalToCall, true, step.Number, step.Text, true, false, false);
@@ -421,7 +427,7 @@ namespace PLang.Events
 
 			if (except == null) return null;
 			if (step.ErrorHandler.IgnoreErrors && except.Count == 0) return null;
-
+			
 			foreach (var errorHandler in except)
 			{
 				if (errorHandler.Key == "*" || error.ToFormat().ToString().ToLower().Contains(error.Key.ToLower()))

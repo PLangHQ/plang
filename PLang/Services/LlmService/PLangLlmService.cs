@@ -303,5 +303,21 @@ What is name of payer?", GetCountry));
 			}
 		}
 
+		public async Task<(object?, IError?)> GetBalance()
+		{
+			var requestUrl = url.Replace("api/Llm", "").TrimEnd('/');
+			var httpClient = new HttpClient();
+			var httpMethod = new HttpMethod("GET");
+			var request = new HttpRequestMessage(httpMethod, requestUrl + "/api/Balance.goal");
+			request.Headers.UserAgent.ParseAdd("plang llm v0.1");
+
+			httpClient.Timeout = new TimeSpan(0, 0, 30);
+			await SignRequest(request);
+
+			var response = await httpClient.SendAsync(request);
+
+			var content = await response.Content.ReadAsStringAsync();
+			return (JsonConvert.SerializeObject(content), null);
+		}
 	}
 }
