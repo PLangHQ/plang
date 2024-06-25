@@ -622,11 +622,11 @@ namespace PLang.Runtime
 						await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalStep.CancellationHandler.GoalNameToCallAfterCancellation, parameters, goal);
 						return null;
 					}
-					return new Error("Step was cancelled because it ran for to long. To extend the timeout, include timeout in your step.");
+					return new StepError("Step was cancelled because it ran for to long. To extend the timeout, include timeout in your step.", goalStep);
 				}
 				catch (Exception ex)
 				{
-					return new Error(ex.Message, Exception: ex);
+					return new StepError(ex.Message, goalStep, "StepException", 500, Exception: ex);
 				}
 				finally
 				{

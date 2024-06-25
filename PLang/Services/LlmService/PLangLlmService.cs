@@ -71,7 +71,7 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 		{
 			Extractor = ExtractorFactory.GetExtractor(question, responseType);
 			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebug);
-			var cachedLlmQuestion = llmCaching.GetCachedQuestion(appId, question);			
+			var cachedLlmQuestion = llmCaching.GetCachedQuestion(appId, question);
 			if (!question.Reload && question.caching && cachedLlmQuestion != null)
 			{
 				try
@@ -80,7 +80,7 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 					{
 						context.AddOrReplace(ReservedKeywords.Llm, cachedLlmQuestion.RawResponse);
 					}
-					
+
 
 					var result = Extractor.Extract(cachedLlmQuestion.RawResponse, responseType);
 					if (result != null && !string.IsNullOrEmpty(result.ToString()))
@@ -137,12 +137,12 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 			if (response.IsSuccessStatusCode)
 			{
 				ShowCosts(response);
-				
+
 				var obj = Extractor.Extract(responseBody, responseType);
 
 				if (question.caching)
 				{
-					
+
 					llmCaching.SetCachedQuestion(appId, question);
 				}
 				return (obj, null);
@@ -185,8 +185,8 @@ What is name of payer?", GetCountry));
 					costWarning += "$" + (((double)balance) / 1000000).ToString("N2");
 					memoryStack.Put("__LLM_Balance__", balance);
 				}
-				
-				
+
+
 			}
 			if (response.Headers.Contains("X-User-Used"))
 			{
@@ -206,8 +206,8 @@ What is name of payer?", GetCountry));
 					costWarning += $" - add to balance: {strUrl}";
 					memoryStack.Put("__LLM_PaymentUrl__", strUrl);
 				}
-			}			
-			
+			}
+
 			if (!string.IsNullOrEmpty(costWarning))
 			{
 				logger.LogWarning($"Current balance with LLM service: {costWarning}");
@@ -230,7 +230,8 @@ What is name of payer?", GetCountry));
 				return (false, error);
 			}
 
-			if (nameOfPayer == "") { 
+			if (nameOfPayer == "")
+			{
 				nameOfPayer = nameArray[0].ToString();
 			}
 
@@ -252,7 +253,8 @@ What is name of payer?", GetCountry));
 					string dbLocation = Path.Join(fileSystem.SharedPath, appId);
 					await outputSystemStreamFactory.CreateHandler().Write(string.Format(BuyCreditInfo, obj["url"], dbLocation), "error", 402);
 					return (false, new ErrorHandled(new Error("ErrorHandled")));
-				} else
+				}
+				else
 				{
 					if (obj["status"] != null && obj["status"]["error_code"] != null && obj["status"]["error_code"].ToString().Contains("COUNTRY"))
 					{
@@ -290,18 +292,23 @@ What is name of payer?", GetCountry));
 			string method = request.Method.Method;
 			string url = request.RequestUri?.PathAndQuery ?? "/";
 			string contract = "C0";
-			using (var reader = new StreamReader(request.Content!.ReadAsStream(), leaveOpen: true))
+			string? body = null;
+			if (request.Content != null)
 			{
-				string body = await reader.ReadToEndAsync();
-				
-				var signature = signingService.Sign(body, method, url, contract, appId);
-				
-				foreach (var item in signature)
+				using (var reader = new StreamReader(request.Content!.ReadAsStream(), leaveOpen: true))
 				{
-					request.Headers.TryAddWithoutValidation(item.Key, item.Value.ToString());
+					body = await reader.ReadToEndAsync();
 				}
 			}
+
+			var signature = signingService.Sign(body, method, url, contract, appId);
+
+			foreach (var item in signature)
+			{
+				request.Headers.TryAddWithoutValidation(item.Key, item.Value.ToString());
+			}
 		}
+
 
 		public async Task<(object?, IError?)> GetBalance()
 		{
@@ -317,7 +324,7 @@ What is name of payer?", GetCountry));
 			var response = await httpClient.SendAsync(request);
 
 			var content = await response.Content.ReadAsStringAsync();
-			return (JsonConvert.SerializeObject(content), null);
+			return (content, null);
 		}
 	}
 }

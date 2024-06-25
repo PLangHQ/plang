@@ -85,7 +85,6 @@ namespace PLang.Container
 			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
-			container.RegisterSingleton<IRazorEngine, RazorEngine>();
 
 			container.RegisterOutputStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IRazorEngine>(), container.GetInstance<IPLangFileSystem>(), uiContext, onFlush));
 			container.RegisterOutputSystemStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IRazorEngine>(), container.GetInstance<IPLangFileSystem>(), uiContext, onFlush));
@@ -175,6 +174,8 @@ namespace PLang.Container
 
 			container.RegisterSingleton<MemoryStack>();
 			container.RegisterSingleton<FileAccessHandler>();
+
+			container.RegisterSingleton<IRazorEngine, RazorEngine>();
 			container.RegisterSingleton<IEngine, Engine>();
 			container.RegisterSingleton<ISettings, Settings>();
 			container.RegisterSingleton<IBuilder, Building.Builder>();

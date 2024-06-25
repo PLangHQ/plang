@@ -502,6 +502,10 @@ example of answer:
 			}
 			catch (Exception ex)
 			{
+				if (targetType.Name == "String")
+				{
+					return JsonConvert.SerializeObject(value, Formatting.Indented);
+				}
 				return parameterInfo.DefaultValue;
 			}
 		}

@@ -279,12 +279,12 @@ namespace PLang.Runtime
 			return objectValue;
 		}
 
-		public object? Get(string key, bool staticVariable = false)
+		public object? Get(string? key, bool staticVariable = false)
 		{
 			return GetObjectValue2(key, staticVariable).Value;
 		}
 
-		public ObjectValue GetObjectValue2(string key, bool staticVariable = false)
+		public ObjectValue GetObjectValue2(string? key, bool staticVariable = false)
 		{
 			if (key == null) return new ObjectValue("", null, typeof(Nullable), null, false);
 			key = Clean(key);
@@ -688,6 +688,11 @@ namespace PLang.Runtime
 			{
 				if (value.GetType() == typeof(JArray))
 				{
+					if (targetType == typeof(string))
+					{
+						return value.ToString();
+					}
+
 					list = (IList)((JArray)value).ToObject(targetType);
 				}
 				return list;

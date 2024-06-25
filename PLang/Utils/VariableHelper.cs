@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Web;
 using static PLang.Services.LlmService.PLangLlmService;
 using static PLang.Utils.VariableHelper;
 
@@ -411,7 +412,7 @@ namespace PLang.Utils
 			
 		}
 
-		public static bool IsVariable(object variable)
+		public static bool IsVariable(object? variable)
 		{
 			if (variable == null || string.IsNullOrEmpty(variable.ToString())) return false;
 			return Regex.IsMatch(variable.ToString()!, @"^%[a-zA-Z0-9#+-\[\]_\.\+\(\)\*\<\>\!]*%$");

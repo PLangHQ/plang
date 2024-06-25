@@ -11,6 +11,7 @@ using PLang.Services.OutputStream;
 using PLang.Utils;
 using PLang.Errors;
 using PLang.Errors.Handlers;
+using System.Web;
 
 namespace PLang.Runtime
 {
@@ -104,7 +105,13 @@ namespace PLang.Runtime
 			{
 				foreach (var param in parameters)
 				{
-					memoryStack.Put(param.Key.Replace("%", ""), param.Value);
+					object? value = param.Value;
+					if (VariableHelper.IsVariable(param.Value))
+					{
+						value = memoryStack.Get(param.Value?.ToString());
+					}
+
+					memoryStack.Put(param.Key.Replace("%", ""), value);
 				}
 			}
 

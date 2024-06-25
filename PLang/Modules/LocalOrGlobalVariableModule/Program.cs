@@ -3,6 +3,7 @@ using PLang.Attributes;
 using PLang.Interfaces;
 using System.ComponentModel;
 using System.Text;
+using System.Web;
 
 namespace PLang.Modules.LocalOrGlobalVariableModule
 {
@@ -64,8 +65,11 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			return variableHelper.LoadVariables(content);
 		}
 		[Description(@"Set string variable. Developer might use single/double quote to indicate the string value, the wrapped quote should not be included in the value. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
-		public async Task SetStringVariable([HandlesVariable] string key, string? value = null)
+		public async Task SetStringVariable([HandlesVariable] string key, string? value = null, bool urlDecode = false, bool htmlDecode = false)
 		{
+			if (urlDecode) value = HttpUtility.UrlDecode(value);
+			if (htmlDecode) value = HttpUtility.HtmlDecode(value);
+
 			memoryStack.Put(key, variableHelper.LoadVariables(value));
 		}
 		[Description(@"Set int/long variable.")]
