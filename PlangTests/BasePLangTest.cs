@@ -2,18 +2,16 @@
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using NSubstitute;
-using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
+using PLang.Errors.Handlers;
 using PLang.Events;
 using PLang.Exceptions.AskUser;
-using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.AppsRepository;
 using PLang.Services.CachingService;
-using PLang.Services.LlmService;
 using PLang.Services.LlmService;
 using PLang.Services.OpenAi;
 using PLang.Services.OutputStream;
@@ -21,14 +19,13 @@ using PLang.Services.SettingsService;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using PLangTests.Mocks;
-using System.Configuration;
 using System.Data;
 using System.Runtime.CompilerServices;
 using static PLang.Modules.BaseBuilder;
 
 namespace PLangTests
 {
-    public class BasePLangTest
+	public class BasePLangTest
 	{
 		protected IServiceContainer container;
 
@@ -55,7 +52,9 @@ namespace PLangTests
 		protected IEncryption encryption;
 		protected IEncryptionFactory encryptionFactory;
 		protected IOutputStream outputStream;
+		protected IOutputStream outputSystemStream;
 		protected IOutputStreamFactory outputStreamFactory;
+		protected IOutputSystemStreamFactory outputSystemStreamFactory;
 		protected IAppCache appCache;
 		protected IPLangIdentityService identityService;
 		protected IPLangSigningService signingService;
@@ -63,8 +62,9 @@ namespace PLangTests
 		protected IHttpClientFactory httpClientFactory;
 		protected IAskUserHandlerFactory askUserHandlerFactory;
 		protected IAskUserHandler askUserHandler;
-		protected IExceptionHandler exceptionHandler;
-		protected IExceptionHandlerFactory exceptionHandlerFactory;
+		protected IErrorHandler errorHandler;
+		protected IErrorHandlerFactory errorHandlerFactory;
+		protected ISettingsRepositoryFactory settingsRepositoryFactory;
 		protected void Initialize()
 		{
 
@@ -93,8 +93,13 @@ namespace PLangTests
 			this.settingsRepository = new SqliteSettingsRepository(fileSystem, context, logger);
 			container.RegisterInstance<ISettingsRepository>(settingsRepository);
 
+
+			settingsRepositoryFactory = Substitute.For<ISettingsRepositoryFactory>();
+			settingsRepositoryFactory.CreateHandler().Returns(settingsRepository);
+			container.RegisterInstance<ISettingsRepositoryFactory>(settingsRepositoryFactory);
+
 			containerFactory = Substitute.For<IServiceContainerFactory>();
-			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), Arg.Any<IExceptionHandlerFactory>(), Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
+			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
 			{
 				var container = CreateServiceContainer();
 
@@ -142,6 +147,13 @@ namespace PLangTests
 			outputStreamFactory.CreateHandler().Returns(outputStream);
 			container.RegisterInstance(outputStreamFactory);
 
+			outputSystemStream = Substitute.For<IOutputStream>();
+			container.RegisterInstance(outputSystemStream);
+			outputSystemStreamFactory = Substitute.For<IOutputSystemStreamFactory>();
+			outputSystemStreamFactory.CreateHandler().Returns(outputStream);
+			container.RegisterInstance(outputStreamFactory);
+
+
 			httpClientFactory = Substitute.For<IHttpClientFactory>();
 			container.RegisterInstance(httpClientFactory);
 
@@ -167,10 +179,10 @@ namespace PLangTests
 			eventRuntime = Substitute.For<IEventRuntime>();
 			container.RegisterInstance(eventRuntime);
 
-			exceptionHandler = Substitute.For<IExceptionHandler>();
-			container.RegisterInstance(exceptionHandler);
-			exceptionHandlerFactory = Substitute.For<IExceptionHandlerFactory>();
-			container.RegisterInstance(exceptionHandlerFactory);
+			errorHandler = Substitute.For<IErrorHandler>();
+			container.RegisterInstance(errorHandler);
+			errorHandlerFactory = Substitute.For<IErrorHandlerFactory>();
+			container.RegisterInstance(errorHandlerFactory);
 
 			db = Substitute.For<IDbConnection>();
 			//container.RegisterInstance(db);

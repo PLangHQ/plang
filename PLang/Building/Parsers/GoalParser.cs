@@ -121,11 +121,15 @@ namespace PLang.Building.Parsers
 					{
 						step.Text += '\n' + line;
 						continue;
+					} else
+					{
+						currentGoal.Text += ('\n' + line).TrimEnd();
 					}
 				}
 
 				currentGoal = goalParser.Parse(line);
 				currentGoal.Comment = uncertainComment ?? goalComment;
+				currentGoal.Text = line;
 				goalComment = null;
 				uncertainComment = null;
 

@@ -2,6 +2,8 @@
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
+using PLang.Errors;
+using PLang.Errors.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
@@ -18,8 +20,8 @@ namespace PLang.Events
 
     public interface IEventBuilder
     {
-        Task<List<string>> BuildEventsPr();
-        List<string> GetEventGoalFiles();
+        Task<(List<string>, IError?)> BuildEventsPr();
+		(List<string>, IError?) GetEventGoalFiles();
     }
     public class EventBuilder : IEventBuilder
     {
@@ -43,9 +45,11 @@ namespace PLang.Events
             this.prParser = prParser;
         }
 
-        public virtual async Task<List<string>> BuildEventsPr()
+        public virtual async Task<(List<string>, IError?)> BuildEventsPr()
         {
-            var goalFiles = GetEventGoalFiles();
+            (var goalFiles, var error) = GetEventGoalFiles();
+            if (error != null) return (goalFiles, error);
+
             logger.LogDebug($"Building {goalFiles.Count} event file(s)");
             var validGoalFiles = new List<string>();
             foreach (var filePath in goalFiles)
@@ -93,10 +97,11 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError,
                     promptMessage.Add(new LlmMessage("user", step.Text));
 
                     var llmRequest = new LlmRequest("Events", promptMessage);
-                    var eventModel = await llmServiceFactory.CreateHandler().Query<EventBinding>(llmRequest);
+                    (var eventModel, var queryError) = await llmServiceFactory.CreateHandler().Query<EventBinding>(llmRequest);
+                    if (queryError != null) return ([], queryError);
                     if (eventModel == null)
                     {
-                        throw new BuilderStepException($"Could not build an events from step {step.Text} in {filePath}. LLM didn't give any response. Try to rewriting the event.", step);
+                       return ([], new BuilderEventError($"Could not build an events from step {step.Text} in {filePath}. LLM didn't give any response. Try to rewriting the event.", Step: step));
                     }
 
 
@@ -120,7 +125,7 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError,
                 validGoalFiles.Add(goal.AbsoluteGoalPath);
                 fileSystem.File.WriteAllText(goal.AbsolutePrFilePath, JsonConvert.SerializeObject(goal, Formatting.Indented));
             }
-            return validGoalFiles;
+            return (validGoalFiles, null);
         }
 
 
@@ -144,23 +149,23 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError,
         }
 
 
-        public List<string> GetEventGoalFiles()
+        public (List<string>, IError?) GetEventGoalFiles()
         {
             var eventsPath = Path.Join(fileSystem.GoalsPath, "events");
             if (fileSystem.File.Exists(eventsPath + ".goal"))
             {
-                throw new BuilderException("Events.goal file must be located in the events folder.");
+                return ([], new Error("Events.goal file must be located in the events folder."));
             }
             if (fileSystem.File.Exists(eventsPath + "build.goal"))
             {
-                throw new BuilderException("EventsBuild.goal file must be located in the events folder.");
+				return ([], new Error("EventsBuild.goal file must be located in the events folder."));
             }
 
             if (!fileSystem.Directory.Exists(eventsPath)) return new();
 
-            return fileSystem.Directory.GetFiles(eventsPath, "*.goal", SearchOption.AllDirectories)
+            return (fileSystem.Directory.GetFiles(eventsPath, "*.goal", SearchOption.AllDirectories)
                 .Where(f => Regex.IsMatch(Path.GetFileName(f).ToLower(), @"(events|eventsbuild)\.goal$"))
-                     .ToList();
+                     .ToList(), null);
         }
     }
 

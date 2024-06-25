@@ -1,19 +1,20 @@
 {
   "GoalName": "LoadDoc",
   "Comment": null,
+  "Text": "LoadDoc",
   "GoalSteps": [
     {
       "Text": "select * from docs where Name=%doc%, write to %docs%",
       "Comment": null,
       "ModuleType": "PLang.Modules.DbModule",
-      "Name": "SelectFromDatabase",
-      "Description": "Select all records from the 'docs' table where the 'Name' column matches the value of the 'doc' variable. The result is then written to the 'docs' variable.",
-      "PrFileName": "01. SelectFromDatabase.pr",
-      "RelativePrPath": ".build\\Start\\LoadDoc\\01. SelectFromDatabase.pr",
+      "Name": "QueryAndWriteDocs",
+      "Description": "Execute a SQL query to select records from the 'docs' table where the 'Name' column matches the value in the variable %doc%, and write the results to the variable %docs%.",
+      "PrFileName": "01. QueryAndWriteDocs.pr",
+      "RelativePrPath": ".build\\Start\\LoadDoc\\01. QueryAndWriteDocs.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-04T10:51:56.0335323+00:00",
+      "Generated": "2024-05-05T10:43:07.0754602+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -37,7 +38,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors defined by user, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -64,9 +65,9 @@
             ]
           }
         ],
-        "model": "gpt-4",
+        "model": "gpt-4-turbo",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"SelectFromDatabase\",\n  \"StepDescription\": \"Select all records from the 'docs' table where the 'Name' column matches the value of the 'doc' variable. The result is then written to the 'docs' variable.\",\n  \"Modules\": [\n    \"PLang.Modules.DbModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": "{\n  \"StepName\": \"QueryAndWriteDocs\",\n  \"StepDescription\": \"Execute a SQL query to select records from the 'docs' table where the 'Name' column matches the value in the variable %doc%, and write the results to the variable %docs%.\",\n  \"Modules\": [\n    \"PLang.Modules.DbModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     }
   ],
@@ -77,9 +78,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Start\\LoadDoc\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Start\\LoadDoc",
-  "BuilderVersion": "0.1.0.6",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.9",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "3d865aa372b3a9839fbd0c19dc5a2207bfe8d1e67ba96da76400d8d997bd488d"
+  "Hash": "314a333089e47276b3f3f7033cb4c93979de6211aac8fa7e48cabc87c49c4e67"
 }

@@ -6,21 +6,24 @@ using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
+using PLang.Errors;
+using PLang.Errors.Handlers;
 using PLang.Events;
 using PLang.Exceptions;
-using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Net;
 using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using System.Xml.Linq;
 
 namespace PLang.Modules.WebserverModule
 {
@@ -122,7 +125,7 @@ namespace PLang.Modules.WebserverModule
 			listeners.Add(webserverInfo);
 
 			logger.LogDebug($"Listening on {host}:{port}...");
-			Console.WriteLine($"Listening on {host}:{port}...");
+			Console.WriteLine($" - Listening on {host}:{port}...");
 
 			await eventRuntime.RunStartEndEvents(context, EventType.After, EventScope.StartOfApp);
 			KeepAlive(listener, "Webserver");
@@ -134,8 +137,9 @@ namespace PLang.Modules.WebserverModule
 				{
 					while (true)
 					{
+						
 						var httpContext = listener.GetContext();
-
+					
 						var request = httpContext.Request;
 						var resp = httpContext.Response;
 
@@ -180,7 +184,7 @@ namespace PLang.Modules.WebserverModule
 								continue;
 							}
 
-							long maxContentLength = (goal.GoalApiInfo != null && goal.GoalApiInfo.MaxContentLengthInBytes != 0) ? goal.GoalApiInfo.MaxContentLengthInBytes : maxContentLengthInBytes;
+							long maxContentLength = (goal.GoalInfo?.GoalApiInfo != null && goal.GoalInfo?.GoalApiInfo?.MaxContentLengthInBytes != 0) ? goal.GoalInfo?.GoalApiInfo.MaxContentLengthInBytes ?? maxContentLengthInBytes : maxContentLengthInBytes;
 							if (httpContext.Request.ContentLength64 > maxContentLength)
 							{
 								httpContext.Response.StatusCode = 413;
@@ -199,7 +203,7 @@ namespace PLang.Modules.WebserverModule
 								continue;
 							}
 
-							if (goal.GoalApiInfo == null || string.IsNullOrEmpty(goal.GoalApiInfo.Method))
+							if (goal.GoalInfo?.GoalApiInfo == null || string.IsNullOrEmpty(goal.GoalInfo.GoalApiInfo?.Method))
 							{
 								await WriteError(resp, $"METHOD is not defined on goal");
 								continue;
@@ -209,35 +213,34 @@ namespace PLang.Modules.WebserverModule
 							httpContext.Response.SendChunked = true;
 							httpContext.Response.AddHeader("X-Goal-Hash", goal.Hash);
 							httpContext.Response.AddHeader("X-Goal-Signature", goal.Signature);
-							if (goal.GoalApiInfo != null)
+							if (goal.GoalInfo.GoalApiInfo != null)
 							{
-								if (goal.GoalApiInfo.ContentEncoding != null)
+								if (goal.GoalInfo.GoalApiInfo.ContentEncoding != null)
 								{
 									httpContext.Response.ContentEncoding = Encoding.GetEncoding(defaultResponseContentEncoding);
 								}
-								if (goal.GoalApiInfo.ContentType != null)
+								if (goal.GoalInfo.GoalApiInfo.ContentType != null)
 								{
-									httpContext.Response.ContentType = goal.GoalApiInfo.ContentType;
+									httpContext.Response.ContentType = goal.GoalInfo.GoalApiInfo.ContentType;
 								}
 
-								if (goal.GoalApiInfo.NoCacheOrNoStore != null)
+								if (goal.GoalInfo.GoalApiInfo.NoCacheOrNoStore != null)
 								{
-									httpContext.Response.Headers["Cache-Control"] = goal.GoalApiInfo.NoCacheOrNoStore;
+									httpContext.Response.Headers["Cache-Control"] = goal.GoalInfo.GoalApiInfo.NoCacheOrNoStore;
 								}
-								else if (goal.GoalApiInfo.CacheControlPrivateOrPublic != null || goal.GoalApiInfo.CacheControlMaxAge != null)
+								else if (goal.GoalInfo.GoalApiInfo.CacheControlPrivateOrPublic != null || goal.GoalInfo.GoalApiInfo.CacheControlMaxAge != null)
 								{
-									string? publicOrPrivate = goal.GoalApiInfo.CacheControlPrivateOrPublic;
+									string? publicOrPrivate = goal.GoalInfo.GoalApiInfo.CacheControlPrivateOrPublic;
 									if (publicOrPrivate == null) { publicOrPrivate = "public"; }
 
 
-									httpContext.Response.Headers["Cache-Control"] = $"{publicOrPrivate}, {goal.GoalApiInfo.CacheControlMaxAge}";
+									httpContext.Response.Headers["Cache-Control"] = $"{publicOrPrivate}, {goal.GoalInfo.GoalApiInfo.CacheControlMaxAge}";
 								}
 							}
 
 							logger.LogDebug($"Register container for webserver - AbsoluteAppStartupFolderPath:{goal.AbsoluteAppStartupFolderPath}");
 
 							container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, Path.DirectorySeparatorChar.ToString(), httpContext);
-
 							var context = container.GetInstance<PLangAppContext>();
 							context.Add(ReservedKeywords.IsHttpRequest, true);
 
@@ -247,14 +250,25 @@ namespace PLang.Modules.WebserverModule
 
 							var requestMemoryStack = engine.GetMemoryStack();
 							var identityService = container.GetInstance<IPLangIdentityService>();
-							await ParseRequest(httpContext, identityService, goal.GoalApiInfo!.Method, requestMemoryStack);
-							await engine.RunGoal(goal);
+							var error = await ParseRequest(httpContext, identityService, goal.GoalInfo.GoalApiInfo!.Method, requestMemoryStack);
 
-						}
-						catch (RuntimeProgramException ex)
-						{
-							var exceptionHandlerFactory = container.GetInstance<IExceptionHandlerFactory>();
-							await exceptionHandlerFactory.CreateHandler().Handle(ex, ex.StatusCode, ex.Type, ex.Message);
+							if (error != null)
+							{
+								var errorHandlerFactory = container.GetInstance<IErrorHandlerFactory>();
+								var handler = errorHandlerFactory.CreateHandler();
+								await handler.ShowError(error);
+								continue;
+							}
+
+							error = await engine.RunGoal(goal);
+							if (error != null && error is not IErrorHandled)
+							{
+								var errorHandlerFactory = container.GetInstance<IErrorHandlerFactory>();
+								var handler = errorHandlerFactory.CreateHandler();
+								await handler.ShowError(error);
+								continue;
+							}
+
 						}
 						catch (Exception ex)
 						{
@@ -262,10 +276,13 @@ namespace PLang.Modules.WebserverModule
 
 Error:
 {3}", requestedFile, goalPath, goal, ex.ToString());
+							var error = new Error(ex.Message, Key: "WebserverCore", 500, ex);
 							try
 							{
-								var exceptionHandlerFactory = container.GetInstance<IExceptionHandlerFactory>();
-								await exceptionHandlerFactory.CreateHandler().Handle(ex, 500, "error", ex.Message);
+								var errorHandlerFactory = container.GetInstance<IErrorHandlerFactory>();
+								var handler = errorHandlerFactory.CreateHandler();
+								await handler.ShowError(error);
+								continue;
 							}
 							catch (Exception ex2)
 							{
@@ -474,9 +491,9 @@ Error:
 
 
 
-		private async Task ParseRequest(HttpListenerContext? context, IPLangIdentityService identityService, string? method, MemoryStack memoryStack)
+		private async Task<IError?> ParseRequest(HttpListenerContext? context, IPLangIdentityService identityService, string? method, MemoryStack memoryStack)
 		{
-			if (context == null) return;
+			if (context == null) return new Error("context is empty");
 
 			var request = context.Request;
 			string contentType = request.ContentType ?? "application/json";
@@ -484,11 +501,11 @@ Error:
 			{
 				throw new HttpRequestException("ContentType is missing");
 			}
-			if (method == null) return;
+			if (method == null) return new Error("Could not map request to api");
 
 			if (request.HttpMethod != method)
 			{
-				throw new HttpRequestException($"Only {method} is supported. You sent {request.HttpMethod}");
+				return new Error($"Only {method} is supported. You sent {request.HttpMethod}");
 			}
 			string body = "";
 			using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
@@ -515,7 +532,7 @@ Error:
 				memoryStack.Put("request", obj);
 
 
-				return;
+				return null;
 			}
 
 			if (contentType.StartsWith("application/x-www-form-urlencoded") && !string.IsNullOrEmpty(body))
@@ -537,11 +554,12 @@ Error:
 					}
 				}
 				memoryStack.Put("request", formData);
-				return;
+				return null;
 			}
 
 
 			memoryStack.Put("request", nvc);
+			return null;
 
 			/*
 			 * @ingig - Not really sure what is happening here, so decide to remove it for now. 

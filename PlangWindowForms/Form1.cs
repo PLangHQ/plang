@@ -15,6 +15,7 @@ using System.Diagnostics;
 using System.IO.Abstractions;
 using System.Reflection;
 using System.Text;
+using static PLang.Executor;
 
 namespace PlangWindowForms
 {
@@ -96,7 +97,7 @@ namespace PlangWindowForms
 
 			engine = container.GetInstance<IEngine>();
 
-			await pLang.Execute(args);
+			await pLang.Execute(args, ExecuteType.Runtime);
 
 
 
@@ -177,7 +178,8 @@ These variables are available:
 
 					await webView.CoreWebView2.ExecuteScriptAsync($"console.info('Analyzing error... will be back with more info in few seconds....');");
 					var llmService = container.GetInstance<ILlmService>();
-					var result = await llmService.Query<string>(llmRequest);
+					(var result, var queryError) = await llmService.Query<string>(llmRequest);
+
 					await webView.CoreWebView2.ExecuteScriptAsync($"console.info('Help:\\n\\n{EscapeChars(result)}');");
 				}
 			};

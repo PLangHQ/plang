@@ -7,7 +7,7 @@ namespace PLang.Utils
 	public class RegisterStartupParameters
 	{
 
-		public static void Register(string[] args)
+		public static (bool builder, bool runtime) Register(string[] args)
 		{
 			if (args.FirstOrDefault(p => p == "--debug") != null)
 			{
@@ -19,14 +19,25 @@ namespace PLang.Utils
 				Debugger.Launch();
 				AppContext.SetSwitch(ReservedKeywords.CSharpDebug, true);
 			}
+			bool builder = false;
+			bool runtime = false;
+
 			var build = args.FirstOrDefault(p => p == "build") != null;
 			if (build)
 			{
-				AppContext.SetSwitch("Builder", true);
+				builder = true;
+				runtime = false;
 			}
 			else
 			{
-				AppContext.SetSwitch("Runtime", true);
+				builder = false;
+				runtime = true;
+			}
+			var exec = args.FirstOrDefault(p => p == "exec") != null;
+			if (exec)
+			{
+				builder = true;
+				runtime = true;
 			}
 
 			var llmservice = args.FirstOrDefault(p => p.ToLower().StartsWith("--llmservice")) ?? Environment.GetEnvironmentVariable("PLangLllmService");
@@ -35,7 +46,7 @@ namespace PLang.Utils
 				var serviceName = llmservice.ToLower();
 				if (llmservice.IndexOf("=") != -1)
 				{
-					serviceName = llmservice.Substring(llmservice.IndexOf("=") + 1);
+					serviceName = llmservice.Substring(llmservice.IndexOf("=") + 1).ToLower();
 				}
 
 				if (serviceName != "plang" && serviceName != "openai")
@@ -44,6 +55,8 @@ namespace PLang.Utils
 				}
 				AppContext.SetData("llmservice", serviceName);
 			}
+
+			return (builder, runtime);
 		}
 	}
 }

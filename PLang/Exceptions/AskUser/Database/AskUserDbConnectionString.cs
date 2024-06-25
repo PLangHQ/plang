@@ -1,6 +1,8 @@
-﻿namespace PLang.Exceptions.AskUser.Database
+﻿using PLang.Errors.Handlers;
+
+namespace PLang.Exceptions.AskUser.Database
 {
-	public class AskUserDbConnectionString : AskUserException
+    public class AskUserDbConnectionString : AskUserError
 	{
 		private readonly string typeFullName;
 		private readonly bool setAsDefaultForApp;

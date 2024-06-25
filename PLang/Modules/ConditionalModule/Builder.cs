@@ -19,6 +19,8 @@ using PLang.Utils.Extractors;
 using PLang.Runtime;
 using PLang.Services.CompilerService;
 using Microsoft.Extensions.Logging;
+using PLang.Errors;
+using PLang.Errors.Builder;
 
 namespace PLang.Modules.ConditionalModule
 {
@@ -37,16 +39,16 @@ namespace PLang.Modules.ConditionalModule
 			this.logger = logger;
 		}
 
-		public override async Task<Instruction> Build(GoalStep step)
+		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step)
 		{
 			return await Build(step, null);
 		}
 
-		private async Task<Instruction> Build(GoalStep step, string? error = null, int errorCount = 0)
+		private async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, CompilerError? error = null, int errorCount = 0)
 		{
-			if (errorCount > 2)
+			if (++errorCount > 3)
 			{
-				throw new BuilderException($"Could not create condition. Please try to refine the step text:{step.Text}");
+				return (null, error ?? new StepBuilderError("Could not compile code for this step", step));
 			}
 
 
@@ -100,27 +102,27 @@ namespace PLang.Modules.ConditionalModule
 ");
 			if (error != null)
 			{
-				AppendToAssistantCommand(error);
+				AppendToAssistantCommand(error.LlmInstruction);
 			}
 
 			base.SetContentExtractor(new CSharpExtractor());
-			var codeInstruction = await Build<ConditionImplementationResponse>(step);
+			(var codeInstruction, var buildError) = await Build<ConditionImplementationResponse>(step);
+			if (buildError != null) return (null, buildError);
+
 			//go back to default extractor
 			base.SetContentExtractor(new JsonExtractor());
 
 			var answer = (ImplementationResponse)codeInstruction.Action;
-			try
+			(var implementation, var compilerError) = await compiler.BuildCode(answer, step, memoryStack);
+			if (compilerError != null)
 			{
-				var buildStatus = await compiler.BuildCode(answer, step, memoryStack);
-				var newInstruction = new Instruction(buildStatus.Implementation!);
-				newInstruction.LlmRequest = codeInstruction.LlmRequest;
-				return newInstruction;
+				return await Build(step, compilerError, errorCount);
 			}
-			catch (BuildStatusException ex)
-			{
-				logger.LogWarning($"Need to ask LLM again. {ex.Message}");
-				return await Build(step, ex.Message, ++errorCount);
-			}
+
+			var newInstruction = new Instruction(implementation!);
+			newInstruction.LlmRequest = codeInstruction.LlmRequest;
+			return (newInstruction, null);
+
 
 		}
 

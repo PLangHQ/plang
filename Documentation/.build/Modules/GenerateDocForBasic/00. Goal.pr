@@ -1,6 +1,7 @@
 {
   "GoalName": "GenerateDocForBasic",
   "Comment": null,
+  "Text": "GenerateDocForBasic",
   "GoalSteps": [
     {
       "Text": "read file 'template/modules/GenerateDocForBasic/user.txt', into %user%, load variables",
@@ -345,9 +346,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\GenerateDocForBasic\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\GenerateDocForBasic",
-  "BuilderVersion": "0.1.0.6",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.9",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "f3223ce1e7caaac047ff67dd17203f5bf00d053ffd17ef9e0ca814d67b268805"
+  "Hash": "189811e50ee49c7b39c5a052a1cb1ee9e137fa045bc9259435d76bd1398a8563"
 }

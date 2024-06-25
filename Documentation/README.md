@@ -82,6 +82,7 @@ Explore plang's features and capabilities:
     - **[Performance](./Performance.md)**: What is the perfomance of plang? 
     - **[Modules](./modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
     - **[Services](./Services.md)**: Learn how flexible the plang language is, e.g. using the db engine of your choice, your own caching service and more.
+    - **[3rd party libraries](./3rdPartyLibrary.md.md)**: Learn how use existing .Net library in Plang.
     - **[Use OpenAI API key or Local LLM](./PlangOrOpenAI.md)**: Shows how to use OpenAI API directly instead of PLang LLM service. Discusses status of local LLM
     - **[Supported LLM](./SupportedAI.md)**: List of supported LLM models
     - **[Reserved keywords](https://github.com/PLangHQ/plang/blob/main/PLang/Utils/ReservedKeywords.cs)**: See list of reserved keywords in the language

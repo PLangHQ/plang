@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using PLang.Building.Model;
+using PLang.Errors.Builder;
 using PLang.Interfaces;
 using PLang.Services.LlmService;
 
@@ -17,7 +18,7 @@ namespace PLang.Modules.MessageModule
 		}
 
 
-		public override Task<Instruction> Build(GoalStep step)
+		public override Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step)
 		{
 			var moduleSettings = new ModuleSettings(settings, llmServiceFactory);
 			var replays = moduleSettings.GetRelays();

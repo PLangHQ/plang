@@ -39,7 +39,7 @@ namespace PLang.Services.EncryptionService
 		public string GetKeyHash()
 		{
 			var key = GetKey();
-			return key.PrivateKey.ComputeHash();
+			return key.PrivateKey.ComputeHash().Hash;
 		}
 
 		private EncryptionKey GetKey()

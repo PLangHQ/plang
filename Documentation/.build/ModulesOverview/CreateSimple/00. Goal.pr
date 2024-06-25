@@ -1,6 +1,7 @@
 {
   "GoalName": "CreateSimple",
   "Comment": null,
+  "Text": "CreateSimple",
   "GoalSteps": [
     {
       "Text": "[code] get file name without extension from %file.Path%(string), write to %moduleName%",
@@ -278,9 +279,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ModulesOverview\\CreateSimple\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ModulesOverview\\CreateSimple",
-  "BuilderVersion": "0.1.0.6",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.9",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "2bdf9d63efe6aac56447921eaa9adc76919416b01304b3cd027c35354e4b0c5e"
+  "Hash": "12c3eb9d42fcdb4a1c6875e972c48def27bb01973554b1a36de7c49391ae99e3"
 }

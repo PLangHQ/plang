@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using PLang.Errors;
 using PLang.Utils;
 
 namespace PLangWindowForms
@@ -6,7 +7,7 @@ namespace PLangWindowForms
 
 	public class ErrorDialog : IErrorDialog
 	{
-		public string ShowDialog(Exception ex, string text, string caption, int formWidth = 500, int formHeight = 400)
+		public string ShowDialog(IError error, string caption, int formWidth = 500, int formHeight = 400)
 		{
 			var prompt = new Form
 			{
@@ -18,11 +19,6 @@ namespace PLangWindowForms
 				MaximizeBox = true, 
 				ShowIcon = false
 			};
-			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebug);
-			if (isDebug)
-			{
-				text += "\n\n" + JsonConvert.SerializeObject(ex);
-			}
 
 			var textBox = new TextBox
 			{
@@ -32,7 +28,7 @@ namespace PLangWindowForms
 				Dock = DockStyle.Fill,
 				Width = prompt.Width - 24,
 				Anchor = AnchorStyles.Left | AnchorStyles.Top,
-				Text = text
+				Text = error.ToFormat().ToString()
 			};
 
 			var confirmationButton = new Button

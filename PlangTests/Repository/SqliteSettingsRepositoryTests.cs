@@ -16,7 +16,7 @@ namespace PLang.Repository.Tests
 		public void Init()
 		{
 			base.Initialize();
-			context.AddOrReplace(ReservedKeywords.Salt, "123");
+			context.AddOrReplace(Settings.SaltKey, "123");
 		}
 
 
@@ -68,7 +68,7 @@ namespace PLang.Repository.Tests
 			SqliteSettingsRepository settingsRepository = new SqliteSettingsRepository(fileSystem, context, logger);
 			settingsRepository.Init();
 
-			Assert.IsNotNull(context[ReservedKeywords.Salt]);
+			Assert.IsNotNull(context[Settings.SaltKey]);
 
 			var settings = settingsRepository.GetSettings().Where(p => p.ClassOwnerFullName == classType);
 			foreach (var setting in settings)

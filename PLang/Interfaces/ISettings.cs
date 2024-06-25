@@ -7,6 +7,7 @@ namespace PLang.Interfaces
 		public static readonly string GoalFileName = "00. Goal.pr";
 
 		string AppId { get; }
+		bool IsDefaultSystemDbPath { get; }
 
 		bool Contains<T>(Type callingType, string? key = null);
 		T Get<T>(Type callingType, string key, T defaultValue, string explain);

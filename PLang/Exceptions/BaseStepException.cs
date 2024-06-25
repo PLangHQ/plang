@@ -20,7 +20,7 @@ namespace PLang.Exceptions
 
 		public GoalStep Step { get; }
 
-		public override string ToString()
+		public object ToFormat()
 		{
 			string innerEx = "";
 			var ex = this.InnerException;

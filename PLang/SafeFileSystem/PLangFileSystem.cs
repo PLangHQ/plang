@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Newtonsoft.Json;
+using PLang.Errors;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Utils;
@@ -95,14 +97,14 @@ namespace PLang.SafeFileSystem
 
 		public string ValidatePath(string? path)
 		{
-			if (path == null)
+			if (string.IsNullOrWhiteSpace(path))
 			{
-				throw new ArgumentNullException("path cannot be null");
+				throw new Exception("path cannot be empty");
 			}
 
 			if (fileAccesses == null)
 			{
-				throw new ArgumentNullException("File access has not been initated. Call IPLangFileSystem.Init");
+				throw new Exception("File access has not been initated. Call IPLangFileSystem.Init");
 			}
 			if (!Path.IsPathRooted(path))
 			{

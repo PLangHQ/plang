@@ -18,7 +18,10 @@ namespace PLang.Utils
 
 			if (!context.TryGetValue(key, out object? serviceName) || serviceName == null)
 			{
-				serviceName = AppContext.GetData(key)!.ToString();
+				if (!context.TryGetValue(key + "_Default", out serviceName) || serviceName == null)
+				{
+					throw new Exception("Could not find output stream to load");
+				}				
 			}
 			return serviceName!.ToString()!;
 		}

@@ -1,6 +1,7 @@
 {
   "GoalName": "Start",
   "Comment": null,
+  "Text": "Start",
   "GoalSteps": [
     {
       "Text": "if %doc% is not empty then, LoadDoc, LoadDocs",
@@ -144,9 +145,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Start\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Start",
-  "BuilderVersion": "0.1.0.6",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.9",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "bd456c4e76c45dff10f323027194d857eb267fabee3c1d3990a653befd615c37"
+  "Hash": "d3043ca24484f12586555f3cd1f94a0376ede4d9f2f770809afc565aa6ca0e2d"
 }

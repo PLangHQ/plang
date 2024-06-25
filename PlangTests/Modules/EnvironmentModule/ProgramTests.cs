@@ -16,7 +16,7 @@ namespace PLangTests.Modules.EnvironmentModule
 		[TestMethod]
 		public async Task Test_SetCultureLanguageCode()
 		{
-			var p = new Program(settings, fileSystem);
+			var p = new Program(settings, fileSystem, settingsRepositoryFactory);
 			await p.SetCultureLanguageCode("is-IS");
 
 			Assert.AreEqual("is-IS", Thread.CurrentThread.CurrentCulture.Name);

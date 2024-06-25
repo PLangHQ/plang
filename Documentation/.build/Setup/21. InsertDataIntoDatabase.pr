@@ -41,7 +41,7 @@
     ],
     "ReturnValue": null
   },
-  "Text": "insert into docs Name='Builder'\n    Guide='template/builder.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Builder.md'",
+  "Text": "insert into docs Name='Builder'\n    Guide='template/builder.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Builder.md' ",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -58,7 +58,7 @@
         "content": [
           {
             "type": "text",
-            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nInt32 Insert(String sql, List<object>()? SqlParameters = null)\r\n## csharp function ##\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nSqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.\r\nParameter @id MUST be type System.Int64\r\nYou MUST modify the user command by adding id to the sql statement and parameter %id%.\r\nIf table name is a variable, keep the variable in the sql statement\r\nYou MUST generate a valid sql statement for PostgreSQL.\r\nYou MUST provide SqlParameters if SQL has @parameter.\r\n"
+            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nInt32 Insert(String sql, List<object>()? SqlParameters = null)\r\n## csharp function ##\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nSqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.\r\nParameter @id MUST be type System.Int64\r\nYou MUST modify the user command by adding id to the sql statement and parameter %id%.\r\nIf table name is a variable, keep the variable in the sql statement\r\nYou MUST generate a valid sql statement for SQLite.\r\nYou MUST provide SqlParameters if SQL has @parameter.\r\n"
           },
           {
             "type": "text",
@@ -84,7 +84,7 @@
         "content": [
           {
             "type": "text",
-            "text": "insert into docs Name='Builder'\n    Guide='template/builder.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Builder.md'"
+            "text": "insert into docs Name='Builder'\n    Guide='template/builder.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Builder.md' "
           }
         ]
       }

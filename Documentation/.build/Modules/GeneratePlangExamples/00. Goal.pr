@@ -1,6 +1,7 @@
 {
   "GoalName": "GeneratePlangExamples",
   "Comment": null,
+  "Text": "GeneratePlangExamples",
   "GoalSteps": [
     {
       "Text": "get all *.goal files from ../Tests/%module.moduleName%/, write to %testFiles%",
@@ -412,9 +413,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\GeneratePlangExamples\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\GeneratePlangExamples",
-  "BuilderVersion": "0.1.0.6",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.9",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "46b706518230f65779b377ecb5c26aea9bbac337397a89202423e1659a942bd7"
+  "Hash": "cc72b34ef11a7038d5629770aea6ef6b2ef2147c05f42cbadc919cb8ec0684be"
 }

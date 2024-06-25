@@ -57,7 +57,7 @@ namespace PLang.Modules.LlmModule.Tests
 
 			var step = GetStep(text);
 
-			var instruction = await builder.Build(step);
+			(var instruction, var error) = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
 			Store(text, instruction.LlmRequest.RawResponse);
@@ -78,7 +78,7 @@ namespace PLang.Modules.LlmModule.Tests
 
 			var step = GetStep(text);
 
-			var instruction = await builder.Build(step);
+			(var instruction, var error) = await builder.Build(step);
 			var gf = instruction.Action as GenericFunction;
 
 			Store(text, instruction.LlmRequest.RawResponse);

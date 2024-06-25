@@ -53,7 +53,7 @@ namespace PLang.Services.LlmService
 
 		public LlmRequest? GetCachedQuestion(string appId, LlmRequest question)
 		{
-			var hash = GetStringToHash(question).ComputeHash();
+			var hash = GetStringToHash(question).ComputeHash().Hash;
 
 			return GetLlmRequestCache(appId, hash);
 
@@ -69,7 +69,7 @@ namespace PLang.Services.LlmService
 		}
 		public void SetCachedQuestion(string appId, LlmRequest question)
 		{
-			var hash = GetStringToHash(question).ComputeHash();
+			var hash = GetStringToHash(question).ComputeHash().Hash;
 			SetLlmRequestCache(appId, hash, question);
 		}
 

@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using PLang.Exceptions.AskUser;
+using PLang.Errors.Handlers;
 
 namespace PLang.Exceptions
 {
-    public class MissingSettingsException : AskUserException
+    public class MissingSettingsException : AskUserError
 	{
 		private readonly Type callingType;
 		private readonly string type;

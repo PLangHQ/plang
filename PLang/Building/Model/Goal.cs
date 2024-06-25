@@ -50,6 +50,7 @@ namespace PLang.Building.Model
 
 		public string GoalName { get; set; }
 		public string? Comment { get; set; }
+		public string Text { get; set; }
 		public List<GoalStep> GoalSteps { get; set; }
 		public string? Description { get; internal set; }
 		public Visibility Visibility { get; set; }
@@ -98,7 +99,7 @@ namespace PLang.Building.Model
 		[System.Text.Json.Serialization.JsonIgnore]
 		public string RelativeAppStartupFolderPath { get; set; }
 		public string BuilderVersion { get; set; }
-		public GoalApiInfo? GoalApiInfo { get; set; }
+		public GoalInfo GoalInfo { get; set; }
 
 		public List<Injections> Injections { get; set; }
 

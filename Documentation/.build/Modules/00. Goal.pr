@@ -1,6 +1,7 @@
 {
   "GoalName": "Modules",
   "Comment": null,
+  "Text": "Modules",
   "GoalSteps": [
     {
       "Text": "get all Program.cs files in ../Plang/Modules/%ModuleName%, include sub dirs, write to %files%",
@@ -144,9 +145,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules",
-  "BuilderVersion": "0.1.0.6",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.9",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "5cd6290669a2f7ede809a1d232244b472e9fb4d6e4905efeab1778ddaeb660cc"
+  "Hash": "6c1ffb59791a8491c35917947c7abebff857cffac29b087aef882e0f67ed0b51"
 }

@@ -1,7 +1,9 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using PLang.Modules.CryptographicModule;
+using PLang.Services.SettingsService;
 using PLang.Utils;
+using System.Security.Policy;
 using static PLang.Modules.CryptographicModule.ModuleSettings;
 
 namespace PLangTests.Modules.CryptographicModule
@@ -15,7 +17,7 @@ namespace PLangTests.Modules.CryptographicModule
 		public void Init() {
 			base.Initialize();
 
-			context.AddOrReplace(ReservedKeywords.Salt, "123");
+			context.AddOrReplace(Settings.SaltKey, "123");
 			p = new Program(settings, encryptionFactory);
 			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, null);
 		}
@@ -25,7 +27,7 @@ namespace PLangTests.Modules.CryptographicModule
 		{
 			string password = "jfkla;sjfikwopefakl;asdf";
 			
-			var hash = await p.HashInput(password);
+			var hash = (await p.HashInput(password)).Hash;
 
 			var result = await p.VerifyHashedValues(password, hash);
 			Assert.IsTrue(result);
@@ -35,7 +37,7 @@ namespace PLangTests.Modules.CryptographicModule
 		{
 			string password = "jfkla;sjfikwopefakl;asdf";
 
-			var hash = await p.HashInput(password, false);
+			var hash = (await p.HashInput(password, false)).Hash;
 
 			var result = await p.VerifyHashedValues(password, hash, useSalt: false);
 			Assert.IsTrue(result);
@@ -47,7 +49,7 @@ namespace PLangTests.Modules.CryptographicModule
 		{
 			string password = "jfkla;sjfikwopefakl;asdf";
 			var salt = BCrypt.Net.BCrypt.GenerateSalt();
-			var hash = await p.HashInput(password, true, salt, "bcrypt");
+			var hash = (await p.HashInput(password, true, salt, "bcrypt")).Hash;
 
 			var result = await p.VerifyHashedValues(password, hash, "bcrypt");
 			Assert.IsTrue(result);

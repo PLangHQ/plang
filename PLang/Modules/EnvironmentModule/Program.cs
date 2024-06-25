@@ -1,4 +1,6 @@
-﻿using PLang.Interfaces;
+﻿using PLang.Errors;
+using PLang.Interfaces;
+using PLang.Services.SettingsService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Globalization;
@@ -10,11 +12,18 @@ namespace PLang.Modules.EnvironmentModule
 	{
 		private readonly ISettings settings;
 		private readonly IPLangFileSystem fileSystem;
+		private readonly ISettingsRepositoryFactory settingsRepositoryFactory;
 
-		public Program(ISettings settings, IPLangFileSystem fileSystem)
+		public Program(ISettings settings, IPLangFileSystem fileSystem, ISettingsRepositoryFactory settingsRepositoryFactory)
 		{
 			this.settings = settings;
 			this.fileSystem = fileSystem;
+			this.settingsRepositoryFactory = settingsRepositoryFactory;
+		}
+
+		public async Task<IError> SetSettingsDbPath(string path)
+		{
+			return settingsRepositoryFactory.CreateHandler().SetSystemDbPath(path);
 		}
 
 		public async Task<string> GetAppName()

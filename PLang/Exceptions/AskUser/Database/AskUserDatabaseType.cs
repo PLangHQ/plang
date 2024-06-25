@@ -1,4 +1,5 @@
-﻿using PLang.Interfaces;
+﻿using PLang.Errors.Handlers;
+using PLang.Interfaces;
 using PLang.Models;
 using PLang.Services.LlmService;
 using PLang.Utils;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace PLang.Exceptions.AskUser.Database
 {
-	public class AskUserDatabaseType : AskUserException
+    public class AskUserDatabaseType : AskUserError
 	{
 		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly bool setAsDefaultForApp;
@@ -53,7 +54,7 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 			var llmRequest = new LlmRequest("AskUserDatabaseType", promptMessage);
 			llmRequest.scheme = TypeHelper.GetJsonSchema(typeof(DatabaseTypeResponse));
 
-			var result = await llmServiceFactory.CreateHandler().Query<DatabaseTypeResponse>(llmRequest);
+			(var result, var queryError) = await llmServiceFactory.CreateHandler().Query<DatabaseTypeResponse>(llmRequest);
 
 			if (result == null) throw new Exception("Could not use LLM to format your answer");
 			if (Callback == null) return;

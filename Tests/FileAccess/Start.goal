@@ -1,0 +1,10 @@
+Start
+/ should ask for permission to access the file
+- [code] write code %var%, count to 4, write to %var%
+- read ../test.txt, write to %content%
+- write out %content%
+- create datasource, name:postgres
+- create or set datasource, name: data, path: 123/.db/data.sqlite
+- set settings db to 123/.db/system.sqlite
+- call Setup
+- insert into users, 'John', 'john@example.org'

@@ -11,7 +11,7 @@ namespace PLang.Modules.CachingModule
 			this.appCache = appCache;
 		}
 
-		public async Task<object> Get(string key)
+		public async Task<object?> Get(string key)
 		{
 			return await appCache.Get(key);
 		}

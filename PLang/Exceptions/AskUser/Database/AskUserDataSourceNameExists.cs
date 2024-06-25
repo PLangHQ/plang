@@ -1,10 +1,11 @@
-﻿using PLang.Interfaces;
+﻿using PLang.Errors.Handlers;
+using PLang.Interfaces;
 using PLang.Models;
 using PLang.Services.LlmService;
 
 namespace PLang.Exceptions.AskUser.Database
 {
-	public class AskUserDataSourceNameExists : AskUserException
+    public class AskUserDataSourceNameExists : AskUserError
 	{
 		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly string typeFullName;
@@ -53,7 +54,7 @@ keepHistoryEventSourcing: {keepHistoryEventSourcing}
 
 
 			var llmRequest = new LlmRequest("AskUserDatabaseType", promptMessage);
-			var result = await llmServiceFactory.CreateHandler().Query<MethodResponse>(llmRequest);
+			(var result, var queryError) = await llmServiceFactory.CreateHandler().Query<MethodResponse>(llmRequest);
 			if (result == null) return;
 
 			await Callback.Invoke(new object[] {

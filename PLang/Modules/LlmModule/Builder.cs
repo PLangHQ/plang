@@ -1,4 +1,5 @@
 ﻿using PLang.Building.Model;
+using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Models;
 using PLang.Utils;
@@ -10,12 +11,12 @@ namespace PLang.Modules.LlmModule
 	{
 		public Builder() : base() { }
 
-		public override async Task<Instruction> Build(GoalStep step)
+		public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step)
 		{
 			return await Build(step, null, 0);
 		}
 
-		public async Task<Instruction> Build(GoalStep step, string? error = null, int errorCount = 0)
+		public async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, string? error = null, int errorCount = 0)
 		{
 			AppendToSystemCommand(@"The following user request is for constructing a message to LLM engine
 
@@ -24,7 +25,8 @@ llmResponseType can be null, text, json, markdown or html. default is null. If s
 promptMessages contains the system, assistant and user messages. assistant or user message is required.
 Determine what part is system, assistant and user properties. If you cannot map it, the whole user request should be on user role
 if user does not define model, set model to ""gpt-4-vision-preview"" if content type is image_url
-
+the json scheme from promptMessages without image is : {role:string, content:[{type:string, text:string}]} 
+the json scheme from promptMessages with image is : {role:string, content:[{type:string, image_url:{url:string}]} 
 
 ## examples ##
 system: %system%, assistant: %assistant%, user: %user%
@@ -126,8 +128,13 @@ or url
 				AppendToAssistantCommand(error);
 			}
 			
-			var result = await base.Build(step);
-			var genericFunction = result.Action as GenericFunction;
+			(var instruction, var buildError) = await base.Build(step);
+            if (buildError != null || instruction == null)
+            {
+                return (null, buildError ?? new StepBuilderError("Could not build step", step));
+            }
+
+			var genericFunction = instruction.Action as GenericFunction;
 			if (genericFunction != null)
 			{
 				var scheme = genericFunction.Parameters.FirstOrDefault(p => p.Name == "scheme");
@@ -143,7 +150,7 @@ or url
 					throw new BuilderStepException($"Could not determine scheme for the step. Make sure to include a json scheme, e.g. {{Result:string}}. Step: {step.Text}", step);
 				}
 			}
-			return result;
+			return (instruction, null);
 		}
 		
 

@@ -1,6 +1,7 @@
 {
   "GoalName": "MergeFilesIntoOneVar",
   "Comment": null,
+  "Text": "MergeFilesIntoOneVar",
   "GoalSteps": [
     {
       "Text": "read file %path%, into %testFileContent%",
@@ -144,9 +145,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\MergeFilesIntoOneVar\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\MergeFilesIntoOneVar",
-  "BuilderVersion": "0.1.0.6",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.9",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "40e929acf0235571f4a19586c07f05e733b45307692d8d8eceac80c48f4bda7c"
+  "Hash": "4a09e0048cd24833f9eafa938f294c3ab5fff6455cbbab86732d3ded47006142"
 }

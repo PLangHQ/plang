@@ -2,6 +2,9 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
+using PLang.Errors;
+using PLang.Errors.AskUser;
+using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
@@ -19,7 +22,7 @@ namespace PLang.Services.LlmService
 	public class PLangLlmService : ILlmService
 	{
 		private readonly LlmCaching llmCaching;
-		private readonly IOutputStreamFactory outputStreamFactory;
+		private readonly IOutputSystemStreamFactory outputSystemStreamFactory;
 		private readonly IPLangSigningService signingService;
 		private readonly ILogger logger;
 		private readonly PLangAppContext context;
@@ -27,17 +30,17 @@ namespace PLang.Services.LlmService
 		private readonly MemoryStack memoryStack;
 		private string url = "https://llm.plang.is/api/Llm";
 		private readonly string appId = "206bb559-8c41-4c4a-b0b7-283ef73dc8ce";
-		private readonly string BuyCreditInfo = @"You need to purchase credits to use Plang LLM service, click this link to purchase: {0}. Try to build again after payment.
+		private readonly string BuyCreditInfo = @"You need to purchase credits to use Plang LLM service, click this link to purchase: {0}. Run again after payment.
 
 Make sure to backup the folder {1} as it contains your private key. If you loose your private key your account at Plang will be lost";
 
 		public IContentExtractor Extractor { get; set; }
 
-		public PLangLlmService(LlmCaching llmCaching, IOutputStreamFactory outputStreamFactory, IPLangSigningService signingService,
+		public PLangLlmService(LlmCaching llmCaching, IOutputSystemStreamFactory outputSystemStreamFactory, IPLangSigningService signingService,
 			ILogger logger, PLangAppContext context, IPLangFileSystem fileSystem, MemoryStack memoryStack)
 		{
 			this.llmCaching = llmCaching;
-			this.outputStreamFactory = outputStreamFactory;
+			this.outputSystemStreamFactory = outputSystemStreamFactory;
 			this.signingService = signingService;
 			this.logger = logger;
 			this.context = context;
@@ -54,20 +57,21 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 		}
 
 
-		public virtual async Task<T?> Query<T>(LlmRequest question)
+		public virtual async Task<(T?, IError?)> Query<T>(LlmRequest question)
 		{
-			return (T?)await Query(question, typeof(T));
+			var result = await Query(question, typeof(T));
+			return ((T?)result.Item1, result.Item2);
 		}
 
-		public virtual async Task<object?> Query(LlmRequest question, Type responseType)
+		public virtual async Task<(object?, IError?)> Query(LlmRequest question, Type responseType)
 		{
 			return await Query(question, responseType, 0);
 		}
-		public virtual async Task<object?> Query(LlmRequest question, Type responseType, int errorCount = 0)
+		public virtual async Task<(object?, IError?)> Query(LlmRequest question, Type responseType, int errorCount = 0)
 		{
 			Extractor = ExtractorFactory.GetExtractor(question, responseType);
 			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebug);
-			var cachedLlmQuestion = llmCaching.GetCachedQuestion(appId, question);			
+			var cachedLlmQuestion = llmCaching.GetCachedQuestion(appId, question);
 			if (!question.Reload && question.caching && cachedLlmQuestion != null)
 			{
 				try
@@ -76,13 +80,13 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 					{
 						context.AddOrReplace(ReservedKeywords.Llm, cachedLlmQuestion.RawResponse);
 					}
-					
+
 
 					var result = Extractor.Extract(cachedLlmQuestion.RawResponse, responseType);
 					if (result != null && !string.IsNullOrEmpty(result.ToString()))
 					{
 						question.RawResponse = cachedLlmQuestion.RawResponse;
-						return result;
+						return (result, null);
 					}
 				}
 				catch { }
@@ -120,7 +124,7 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 			string responseBody = await response.Content.ReadAsStringAsync();
 			if (string.IsNullOrWhiteSpace(responseBody))
 			{
-				throw new BuilderException("llm.plang.is appears to be down. Try again in few minutes. If it does not come back up soon, check out our Discord https://discord.gg/A8kYUymsDD for a chat");
+				return (null, new ServiceError("llm.plang.is appears to be down. Try again in few minutes. If it does not come back up soon, check out our Discord https://discord.gg/A8kYUymsDD for a chat", this.GetType()));
 			}
 
 			question.RawResponse = responseBody;
@@ -133,39 +137,38 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 			if (response.IsSuccessStatusCode)
 			{
 				ShowCosts(response);
-				
+
 				var obj = Extractor.Extract(responseBody, responseType);
 
 				if (question.caching)
 				{
-					
+
 					llmCaching.SetCachedQuestion(appId, question);
 				}
-				return obj;
+				return (obj, null);
 			}
 
 			if (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired)
 			{
 				var obj = JObject.Parse(responseBody);
-				if (obj != null && obj["url"].ToString() != "")
+				if (obj != null && obj["url"]?.ToString() != "")
 				{
 					string dbLocation = Path.Join(fileSystem.SharedPath, appId);
-					await outputStreamFactory.CreateHandler().Write(string.Format(BuyCreditInfo, obj["url"], dbLocation), "error", 402);
-					throw new StopBuilderException();
+					await outputSystemStreamFactory.CreateHandler().Write(string.Format(BuyCreditInfo, obj["url"], dbLocation), "error", 402);
+					return (null, new ErrorHandled(new Error("Handled")));
 				}
 				else
 				{
 					AppContext.TryGetSwitch("Builder", out bool isBuilder);
 					string strIsBuilder = (isBuilder) ? " build" : "";
-					throw new AskUserConsole(@$"You need to purchase credits to use Plang LLM service. Lets do this now.
+					return (null, new AskUserError(@$"You need to purchase credits to use Plang LLM service. Lets do this now.
 (If you have OpenAI API key, you can run 'plang {strIsBuilder} --llmservice=openai')
 
-What is name of payer?", GetCountry);
+What is name of payer?", GetCountry));
 				}
 			}
 
-
-			throw new HttpRequestException(responseBody, null, response.StatusCode);
+			return (null, new ServiceError(responseBody, GetType()));
 
 
 		}
@@ -182,8 +185,8 @@ What is name of payer?", GetCountry);
 					costWarning += "$" + (((double)balance) / 1000000).ToString("N2");
 					memoryStack.Put("__LLM_Balance__", balance);
 				}
-				
-				
+
+
 			}
 			if (response.Headers.Contains("X-User-Used"))
 			{
@@ -203,8 +206,8 @@ What is name of payer?", GetCountry);
 					costWarning += $" - add to balance: {strUrl}";
 					memoryStack.Put("__LLM_PaymentUrl__", strUrl);
 				}
-			}			
-			
+			}
+
 			if (!string.IsNullOrEmpty(costWarning))
 			{
 				logger.LogWarning($"Current balance with LLM service: {costWarning}");
@@ -212,78 +215,116 @@ What is name of payer?", GetCountry);
 		}
 
 		private string nameOfPayer = "";
-		private Task GetCountry(object value)
+		private async Task<(bool, IError?)> GetCountry(object? value)
 		{
+			if (value == null)
+			{
+				var error = new AskUserError("Name cannot be empty.\n\nWhat is name of payer?", GetCountry);
+				return (false, error);
+			}
+
 			object[] nameArray = (object[])value;
 			if (nameOfPayer == "" && (nameArray == null || string.IsNullOrEmpty(nameArray[0].ToString())))
 			{
-				throw new AskUserConsole("Name cannot be empty.\n\nWhat is name of payer?", GetCountry);
+				var error = new AskUserError("Name cannot be empty.\n\nWhat is name of payer?", GetCountry);
+				return (false, error);
 			}
 
-			if (nameOfPayer == "") { 
+			if (nameOfPayer == "")
+			{
 				nameOfPayer = nameArray[0].ToString();
 			}
 
-			throw new AskUserConsole("What is your two letter country? (e.g. US, UK, FR, ...)", async (object? value) =>
+			return (false, new AskUserError("What is your two letter country? (e.g. US, UK, FR, ...)", async (object[]? countryArray) =>
 			{
-				object[] countryArray = (object[])value;
-				if (value == null || string.IsNullOrEmpty(countryArray[0].ToString()))
+				if (countryArray == null || countryArray.Length == 0 || string.IsNullOrEmpty(countryArray[0].ToString()))
 				{
-					throw new AskUserConsole("Country must be legal 2 country code.\n\nWhat is your two letter country? (e.g. US, UK, FR, ...)?", GetCountry);
+					return (false, new AskUserError("Country must be legal 2 country code.\n\nWhat is your two letter country? (e.g. US, UK, FR, ...)?", GetCountry));
 				}
-				var country = countryArray[0].ToString();
-				var requestUrl = url.Replace("api/Llm", "").TrimEnd('/');
-				var httpClient = new HttpClient();
-				var httpMethod = new HttpMethod("POST");
-				var request = new HttpRequestMessage(httpMethod, requestUrl + "/api/GetOrCreatePaymentLink");
-				request.Headers.UserAgent.ParseAdd("plang llm v0.1");
-				Dictionary<string, object?> parameters = new();
-				parameters.Add("name", nameOfPayer);
-				parameters.Add("country", country);
-				string body = StringHelper.ConvertToString(parameters);
 
-				request.Content = new StringContent(body, Encoding.GetEncoding("utf-8"), "application/json");
-				httpClient.Timeout = new TimeSpan(0, 0, 30);
-				await SignRequest(request);
-
-				var response = await httpClient.SendAsync(request);
-
-				string responseBody = await response.Content.ReadAsStringAsync();
+				var responseBody = await DoPlangRequest(countryArray);
+				if (string.IsNullOrEmpty(responseBody))
+				{
+					return (false, new ServiceError("Got empty response from llm service. Service might be down, try again later", GetType()));
+				}
 				var obj = JObject.Parse(responseBody);
 				if (obj["url"] != null)
 				{
 					string dbLocation = Path.Join(fileSystem.SharedPath, appId);
-					await outputStreamFactory.CreateHandler().Write(string.Format(BuyCreditInfo, obj["url"], dbLocation), "error", 402);
-					throw new StopBuilderException();
-				} else
+					await outputSystemStreamFactory.CreateHandler().Write(string.Format(BuyCreditInfo, obj["url"], dbLocation), "error", 402);
+					return (false, new ErrorHandled(new Error("ErrorHandled")));
+				}
+				else
 				{
 					if (obj["status"] != null && obj["status"]["error_code"] != null && obj["status"]["error_code"].ToString().Contains("COUNTRY"))
 					{
-						throw new AskUserConsole("Country must be legal 2 country code.\n\nWhat is your two letter country? (e.g. US, UK, FR, ...)?", GetCountry);
+						return (false, new AskUserError("Country must be legal 2 country code.\n\nWhat is your two letter country? (e.g. US, UK, FR, ...)?", GetCountry));
 					}
-					throw new AskUserConsole("Could not create url. Lets try again. What is your name?", GetCountry);
+					return (false, new AskUserError("Could not create url. Lets try again. What is your name?", GetCountry));
 				}
-			});
+			}));
 		}
 
+		private async Task<string> DoPlangRequest(object[] countryArray)
+		{
+			var country = countryArray[0].ToString();
+			var requestUrl = url.Replace("api/Llm", "").TrimEnd('/');
+			var httpClient = new HttpClient();
+			var httpMethod = new HttpMethod("POST");
+			var request = new HttpRequestMessage(httpMethod, requestUrl + "/api/GetOrCreatePaymentLink");
+			request.Headers.UserAgent.ParseAdd("plang llm v0.1");
+			Dictionary<string, object?> parameters = new();
+			parameters.Add("name", nameOfPayer);
+			parameters.Add("country", country);
+			string body = StringHelper.ConvertToString(parameters);
+
+			request.Content = new StringContent(body, Encoding.GetEncoding("utf-8"), "application/json");
+			httpClient.Timeout = new TimeSpan(0, 0, 30);
+			await SignRequest(request);
+
+			var response = await httpClient.SendAsync(request);
+
+			return await response.Content.ReadAsStringAsync();
+		}
 
 		public async Task SignRequest(HttpRequestMessage request)
 		{
 			string method = request.Method.Method;
 			string url = request.RequestUri?.PathAndQuery ?? "/";
 			string contract = "C0";
-			using (var reader = new StreamReader(request.Content!.ReadAsStream(), leaveOpen: true))
+			string? body = null;
+			if (request.Content != null)
 			{
-				string body = await reader.ReadToEndAsync();
-				
-				var signature = signingService.Sign(body, method, url, contract, appId);
-				
-				foreach (var item in signature)
+				using (var reader = new StreamReader(request.Content!.ReadAsStream(), leaveOpen: true))
 				{
-					request.Headers.TryAddWithoutValidation(item.Key, item.Value.ToString());
+					body = await reader.ReadToEndAsync();
 				}
+			}
+
+			var signature = signingService.Sign(body, method, url, contract, appId);
+
+			foreach (var item in signature)
+			{
+				request.Headers.TryAddWithoutValidation(item.Key, item.Value.ToString());
 			}
 		}
 
+
+		public async Task<(object?, IError?)> GetBalance()
+		{
+			var requestUrl = url.Replace("api/Llm", "").TrimEnd('/');
+			var httpClient = new HttpClient();
+			var httpMethod = new HttpMethod("GET");
+			var request = new HttpRequestMessage(httpMethod, requestUrl + "/api/Balance.goal");
+			request.Headers.UserAgent.ParseAdd("plang llm v0.1");
+
+			httpClient.Timeout = new TimeSpan(0, 0, 30);
+			await SignRequest(request);
+
+			var response = await httpClient.SendAsync(request);
+
+			var content = await response.Content.ReadAsStringAsync();
+			return (content, null);
+		}
 	}
 }

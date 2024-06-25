@@ -26,7 +26,7 @@ namespace PLang.Services.SigningService
 	public interface IPLangSigningService
 	{
 		Dictionary<string, object> Sign(byte[] seed, string content, string method, string url, string contract = "C0");
-		Dictionary<string, object> Sign(string content, string method, string url, string contract = "C0", string? appId = null);
+		Dictionary<string, object> Sign(string? content, string method, string url, string contract = "C0", string? appId = null);
 		Dictionary<string, object> SignWithTimeout(byte[] seed, string content, string method, string url, DateTimeOffset expires, string contract = "C0");
 		Dictionary<string, object> SignWithTimeout(string content, string method, string url, DateTimeOffset expires, string contract = "C0", string? appId = null);
 		Task<Dictionary<string, object?>> VerifySignature(string salt, string body, string method, string url, Dictionary<string, object> validationKeyValues);
@@ -97,7 +97,7 @@ namespace PLang.Services.SigningService
 		{
 			if (body == null) body = "";
 
-			string hashedBody = body.ComputeHash("keccak256");
+			string hashedBody = body.ComputeHash().Hash;
 
 			var dict = new Dictionary<string, object>
 					{
@@ -191,7 +191,7 @@ namespace PLang.Services.SigningService
 				return identities;
 			}
 			
-			identities.AddOrReplace(ReservedKeywords.Identity, address.ComputeHash(mode: "keccak256", salt: salt));
+			identities.AddOrReplace(ReservedKeywords.Identity, address.ComputeHash(mode: "keccak256", salt: salt).Hash);
 			identities.AddOrReplace(ReservedKeywords.IdentityNotHashed, address);
 
 			return identities;

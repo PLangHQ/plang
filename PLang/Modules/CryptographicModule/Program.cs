@@ -1,5 +1,6 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using Nethereum.ABI;
+using PLang.Errors;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Services.LlmService;
@@ -70,7 +71,7 @@ namespace PLang.Modules.CryptographicModule
 		}
 
 		[Description("Used for hashing. hashAlgorithm: keccak256 | sha256 | bcrypt")]
-		public async Task<string> HashInput(string input, bool useSalt = true, string? salt = null, string hashAlgorithm = "keccak256")
+		public async Task<(string Hash, IError? Error)> HashInput(string input, bool useSalt = true, string? salt = null, string hashAlgorithm = "keccak256")
 		{
 			if (hashAlgorithm == "bcrypt")
 			{
@@ -78,7 +79,7 @@ namespace PLang.Modules.CryptographicModule
 				{
 					salt = BCrypt.Net.BCrypt.GenerateSalt();
 				}
-				return BCrypt.Net.BCrypt.HashPassword(input, salt);
+				return (BCrypt.Net.BCrypt.HashPassword(input, salt), null);
 			} else
 			{
 				if (useSalt && salt == null)
@@ -91,7 +92,7 @@ namespace PLang.Modules.CryptographicModule
 		}
 
 		[Description("Hashes Identity string to standard hash")]
-		public async Task<string> HashIdentityString(string identity)
+		public async Task<(string, IError?)> HashIdentityString(string identity)
 		{
 			if (identity == null)
 			{
@@ -117,7 +118,7 @@ namespace PLang.Modules.CryptographicModule
 				{
 					salt = settings.GetSalt();
 				}
-				return (text.ComputeHash(hashAlgorithm, salt) == hash);
+				return text.ComputeHash(hashAlgorithm, salt).Hash.Equals(hash);
 			}
 		}
 

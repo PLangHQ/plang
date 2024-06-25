@@ -1,6 +1,7 @@
 ﻿using LightInject;
+using NBitcoin.Secp256k1;
+using PLang.Errors.Handlers;
 using PLang.Exceptions.AskUser;
-using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
@@ -11,14 +12,14 @@ namespace PLang.Container
 {
 	public static class DefaultRegistrations
 	{
-		
 
-		public static void RegisterExceptionHandlerFactory(this ServiceContainer container, Type type, bool isDefault = false, IExceptionHandler? instance = null)
+
+		public static void RegisterErrorHandlerFactory(this ServiceContainer container, Type type, bool isDefault = false, IErrorHandler? instance = null)
 		{
-			container.Register<IExceptionHandlerFactory>(factory =>
+			container.Register<IErrorHandlerFactory>(factory =>
 			{
-				SetContext(container, type, ReservedKeywords.Inject_ExceptionHandler, isDefault);
-				return new ExceptionHandlerFactory(container);
+				SetContext(container, type, ReservedKeywords.Inject_ErrorHandler, isDefault);
+				return new ErrorHandlerFactory(container);
 			});
 
 			if (instance != null)
@@ -46,12 +47,13 @@ namespace PLang.Container
 			}
 		}
 
-		public static void RegisterOutputStreamFactory(this ServiceContainer container, Type type, bool isDefault = false, IOutputStream? instance = null)
+		public static void RegisterOutputStreamFactory(this ServiceContainer container, Type type, bool isDefault = false, IOutputStream? instance = null, bool setToContext = false)
 		{
+			SetContext(container, type, ReservedKeywords.Inject_OutputStream, isDefault, setToContext);
 			container.RegisterSingleton<IOutputStreamFactory>(factory =>
 			{
-				SetContext(container, type, ReservedKeywords.Inject_OutputStream, isDefault);
-				return new OutputStreamFactory(container);
+				var defaultType = GetDefault(container, ReservedKeywords.Inject_OutputStream);
+				return new OutputStreamFactory(container, defaultType);
 			});
 
 			if (instance != null)
@@ -62,7 +64,23 @@ namespace PLang.Container
 				}, instance.GetType().FullName);
 			}
 		}
-		
+		public static void RegisterOutputSystemStreamFactory(this ServiceContainer container, Type type, bool isDefault = false, IOutputStream? instance = null, bool setToContext = false)
+		{
+			SetContext(container, type, ReservedKeywords.Inject_OutputSystemStream, isDefault, setToContext);
+			container.RegisterSingleton<IOutputSystemStreamFactory>(factory =>
+			{
+				var defaultType = GetDefault(container, ReservedKeywords.Inject_OutputSystemStream);
+				return new OutputSystemStreamFactory(container, defaultType);
+			});
+
+			if (instance != null)
+			{
+				container.RegisterSingleton(factor =>
+				{
+					return instance;
+				}, instance.GetType().FullName);
+			}
+		}
 		public static void RegisterEncryptionFactory(this ServiceContainer container, Type type, bool isDefault = false, IEncryption? instance = null)
 		{
 			container.Register<IEncryptionFactory>(factory =>
@@ -79,7 +97,7 @@ namespace PLang.Container
 				}, instance.GetType().FullName);
 			}
 		}
-		
+
 		public static void RegisterLlmFactory(this ServiceContainer container, Type type, bool isDefault = false, ILlmService? instance = null)
 		{
 			container.Register<ILlmServiceFactory>(factory =>
@@ -115,18 +133,27 @@ namespace PLang.Container
 		}
 
 
-		private static void SetContext(ServiceContainer container, Type type, string serviceReservedKeyword, bool isDefault = false)
+		private static void SetContext(IServiceContainer container, Type type, string serviceReservedKeyword, bool isDefault = false, bool setToContext = false)
 		{
 			var context = container.GetInstance<PLangAppContext>();
-			if (!context.ContainsKey(serviceReservedKeyword))
+			if (setToContext)
 			{
 				context.AddOrReplace(serviceReservedKeyword, type.FullName);
 			}
 
-			if (isDefault && AppContext.GetData(serviceReservedKeyword) == null)
+			if (isDefault)
 			{
-				AppContext.SetData(serviceReservedKeyword, type.FullName);
+				context.AddOrReplace(serviceReservedKeyword + "_Default", type.FullName);
 			}
+		}
+
+		private static string GetDefault(IServiceContainer container, string serviceReservedKeyword)
+		{
+			var context = container.GetInstance<PLangAppContext>();
+			context.TryGetValue(serviceReservedKeyword + "_Default", out object? value);
+			if (value == null) throw new Exception("Default registration not available");
+
+			return value.ToString()!;
 		}
 	}
 }

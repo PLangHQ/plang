@@ -1,10 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PLang.Attributes;
 
 namespace PLang.Building.Model
 {
-	public record RetryHandler(int RetryCount = 3, int RetryDelayInMilliseconds = 50);
+	public class RetryHandler
+	{
+		[DefaultValueAttribute(null)]
+		public int? RetryCount { get; set; }
+		[DefaultValueAttribute(null)]
+		public int? RetryDelayInMilliseconds { get; set; }
+
+	}
 }

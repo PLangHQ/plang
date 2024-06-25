@@ -1,6 +1,7 @@
 {
   "GoalName": "CreateDetailOverview",
   "Comment": null,
+  "Text": "CreateDetailOverview",
   "GoalSteps": [
     {
       "Text": "get all '.md'  files in modules/\n    exclude '_advanced.md', write to %moduleFiles%",
@@ -144,9 +145,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ModulesOverview\\CreateDetailOverview\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ModulesOverview\\CreateDetailOverview",
-  "BuilderVersion": "0.1.0.6",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.9",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "2bc1dc7358fbf0b867f1b6cd38178cf2988d83835c1602e5460e892f3d945275"
+  "Hash": "ce7aed9372811646d7a5c75d6b069096c0f11f1027eeea2a799cbb91ab593270"
 }
