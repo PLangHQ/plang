@@ -20,7 +20,6 @@ using PLang.Errors;
 using PLang.Errors.Runtime;
 using System;
 using PLang.SafeFileSystem;
-using OpenQA.Selenium.DevTools.V120.Emulation;
 using PLang.Errors.AskUser;
 
 namespace PLang.Modules
