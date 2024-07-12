@@ -16,7 +16,12 @@ namespace PLang.Errors.Handlers
 		{
 			if (error is not AskUser.AskUserError aue) return (false, error);
 
-			return await askUserHandlerFactory.CreateHandler().Handle(aue);
+			var result = await askUserHandlerFactory.CreateHandler().Handle(aue);
+			if (result.Item2 is PLang.Errors.AskUser.AskUserError aue2)
+			{
+				return await Handle(result.Item2);
+			}
+			return result;
 
 		}
 

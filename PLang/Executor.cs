@@ -220,7 +220,7 @@ namespace PLang
 				if (error != null)
 				{
 					(var isHandled, var errorHandler) = await handler.Handle(error);
-					if (errorHandler != null)
+					if (errorHandler != null && errorHandler is not ErrorHandled)
 					{
 						await handler.ShowError(error);
 					}
