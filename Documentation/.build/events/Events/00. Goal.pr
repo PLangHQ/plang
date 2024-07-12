@@ -1,6 +1,7 @@
 {
   "GoalName": "Events",
   "Comment": null,
+  "Text": "Events",
   "GoalSteps": [
     {
       "Text": "before each step, include private goals,call !SendDebug, only in debug mode",
@@ -13,7 +14,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-27T13:25:26.8777121+00:00",
+      "Generated": "2024-05-05T11:53:21.3398346+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -21,8 +22,8 @@
       "CancellationHandler": null,
       "Custom": {
         "Event": {
-          "EventType": 0,
-          "EventScope": 30,
+          "EventType": "Before",
+          "EventScope": "Step",
           "GoalToBindTo": ".*",
           "GoalToCall": "!SendDebug",
           "IncludePrivate": true,
@@ -48,7 +49,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-27T13:25:41.3019862+00:00",
+      "Generated": "2024-05-05T11:53:26.8526833+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -56,8 +57,8 @@
       "CancellationHandler": null,
       "Custom": {
         "Event": {
-          "EventType": 1,
-          "EventScope": 20,
+          "EventType": "Before",
+          "EventScope": "Goal",
           "GoalToBindTo": ".*",
           "GoalToCall": "!SendDebug",
           "IncludePrivate": true,
@@ -81,7 +82,7 @@
   "RelativePrPath": ".build\\events\\Events\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\Events",
   "BuilderVersion": null,
-  "GoalApiInfo": null,
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
   "Hash": null

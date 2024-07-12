@@ -1,6 +1,7 @@
 {
   "GoalName": "GenerateModuleDocumentation",
   "Comment": null,
+  "Text": "GenerateModuleDocumentation",
   "GoalSteps": [
     {
       "Text": "read file 'template/modules/GenerateModuleDocumentation/system.txt', into %system%, load variables",
@@ -814,9 +815,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\GenerateModuleDocumentation\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\GenerateModuleDocumentation",
-  "BuilderVersion": "0.1.0.6",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.9",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "d4f87e8912aa8c542673bafc237be3d01dff2dee33b5cab79ac27b12f3cf516c"
+  "Hash": "e5282558537c7b462dc9082d80bde8c7bf7ad3e0f04aba710cacbe655e5ddbef"
 }

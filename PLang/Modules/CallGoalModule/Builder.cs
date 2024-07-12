@@ -1,10 +1,12 @@
 ﻿using PLang.Building.Model;
+using PLang.Errors;
+using PLang.Errors.Builder;
 
 namespace PLang.Modules.CallGoalModule
 {
 	public class Builder : BaseBuilder
     {
-		public override async Task<Instruction> Build(GoalStep step)
+		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step)
 		{
 
 			AppendToAssistantCommand($@"

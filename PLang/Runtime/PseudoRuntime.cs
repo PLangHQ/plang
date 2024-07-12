@@ -5,17 +5,19 @@ using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
-using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Services.AppsRepository;
 using PLang.Services.OutputStream;
 using PLang.Utils;
+using PLang.Errors;
+using PLang.Errors.Handlers;
+using System.Web;
 
 namespace PLang.Runtime
 {
     public interface IPseudoRuntime
 	{
-		Task<IEngine> RunGoal(IEngine engine, PLangAppContext context, string appPath, string goalName, Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50);
+		Task<(IEngine engine, IError? error)> RunGoal(IEngine engine, PLangAppContext context, string appPath, string goalName, Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50);
 	}
 
 	public class PseudoRuntime : IPseudoRuntime
@@ -23,20 +25,22 @@ namespace PLang.Runtime
 		private readonly IServiceContainerFactory serviceContainerFactory;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly IOutputStreamFactory outputStreamFactory;
-		private readonly IExceptionHandlerFactory exceptionHandlerFactory;
+		private readonly IOutputSystemStreamFactory outputSystemStreamFactory;
+		private readonly IErrorHandlerFactory exceptionHandlerFactory;
 		private readonly IAskUserHandlerFactory askUserHandlerFactory;
 		
 		public PseudoRuntime(IServiceContainerFactory serviceContainerFactory, IPLangFileSystem fileSystem,
-			IOutputStreamFactory outputStreamFactory, IExceptionHandlerFactory exceptionHandlerFactory, IAskUserHandlerFactory askUserHandlerFactory)
+			IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory, IErrorHandlerFactory exceptionHandlerFactory, IAskUserHandlerFactory askUserHandlerFactory)
 		{
 			this.serviceContainerFactory = serviceContainerFactory;
 			this.fileSystem = fileSystem;
 			this.outputStreamFactory = outputStreamFactory;
+			this.outputSystemStreamFactory = outputSystemStreamFactory;
 			this.exceptionHandlerFactory = exceptionHandlerFactory;
 			this.askUserHandlerFactory = askUserHandlerFactory;
 		}
 
-		public async Task<IEngine> RunGoal(IEngine engine, PLangAppContext context, string appPath, string goalName, Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50)
+		public async Task<(IEngine engine, IError? error)> RunGoal(IEngine engine, PLangAppContext context, string appPath, string goalName, Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50)
 		{
 
 			Goal? goal = null;
@@ -52,7 +56,7 @@ namespace PLang.Runtime
 				string relativeAppStartupPath = Path.DirectorySeparatorChar.ToString();
 				goalToRun = pathAndGoal.goalName;
 
-				container = serviceContainerFactory.CreateContainer(context, absoluteAppStartupPath, relativeAppStartupPath, outputStreamFactory, exceptionHandlerFactory, askUserHandlerFactory);
+				container = serviceContainerFactory.CreateContainer(context, absoluteAppStartupPath, relativeAppStartupPath, outputStreamFactory, outputSystemStreamFactory, exceptionHandlerFactory, askUserHandlerFactory);
 
 				engine = container.GetInstance<IEngine>();
 				engine.Init(container);
@@ -76,11 +80,10 @@ namespace PLang.Runtime
 				string strGoalsAvailable = "";
 				if (!string.IsNullOrWhiteSpace(goals))
 				{
-					strGoalsAvailable = " These goals are available: \n{goals}";
+					strGoalsAvailable = $" These goals are available: \n{goals}";
 
 				}
-				//throw new Exception($"Goal {goalName} couldn't be found. Did you type in correct name?");
-				throw new GoalNotFoundException($"WARNING! - Goal '{goalName}' at {fileSystem.RootDirectory} was not found.{strGoalsAvailable}", absolutePathToGoal, goalName);
+				return (engine, new Error($"WARNING! - Goal '{goalName}' at {fileSystem.RootDirectory} was not found.{strGoalsAvailable}"));
 			}
 			if (waitForExecution) 
 			{
@@ -102,7 +105,13 @@ namespace PLang.Runtime
 			{
 				foreach (var param in parameters)
 				{
-					memoryStack.Put(param.Key.Replace("%", ""), param.Value);
+					object? value = param.Value;
+					if (VariableHelper.IsVariable(param.Value))
+					{
+						value = memoryStack.Get(param.Value?.ToString());
+					}
+
+					memoryStack.Put(param.Key.Replace("%", ""), value);
 				}
 			}
 
@@ -128,16 +137,10 @@ namespace PLang.Runtime
 
 			if (task.IsFaulted && task.Exception != null)
 			{
-				if (await exceptionHandlerFactory.CreateHandler().Handle(task.Exception, 500, "error", task.Exception.Message))
-				{
-					await RunGoal(engine, context, appPath, goalName, parameters, callingGoal, waitForExecution, delayWhenNotWaitingInMilliseconds);
-				} else
-				{
-					throw task.Exception.InnerException ?? task.Exception;
-				}
-
+				var error = new Error(task.Exception.Message, Exception: task.Exception);
+				return (engine, error);
 			}
-			return engine;
+			return (engine, task.Result);
 
 		}
 

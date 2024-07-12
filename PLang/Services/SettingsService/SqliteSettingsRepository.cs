@@ -10,6 +10,7 @@ using System.Data;
 using System.Linq.Dynamic.Core;
 using System.Reflection;
 using System.Text;
+using PLang.Errors;
 
 namespace PLang.Services.SettingsService
 {
@@ -21,15 +22,17 @@ namespace PLang.Services.SettingsService
 		private bool inMemory = false;
 		private readonly string contextKey = "__SqliteSettingsRepository_DataSource__";
 		public static Dictionary<string, IDbConnection> InMemoryDbCache = new();
+		private string defaultSystemDbPath = Path.Join(".", ".db", "system.sqlite");
+		private string systemDbPath;
 		public SqliteSettingsRepository(IPLangFileSystem fileSystem, PLangAppContext context, ILogger logger)
 		{			
 			this.fileSystem = fileSystem;
 			this.context = context;
 			this.logger = logger;
 			AppContext.TryGetSwitch(ReservedKeywords.Test, out inMemory);
-
+			systemDbPath = defaultSystemDbPath;
 			context.AddOrReplace(contextKey, LocalDataSourcePath);
-
+			
 			Init();
 		}
 		
@@ -59,6 +62,27 @@ namespace PLang.Services.SettingsService
 			}
 		}
 
+		public IError? SetSystemDbPath(string path)
+		{
+			if (string.IsNullOrEmpty(path))
+			{
+				return new Error("Path to system database cannot be empty",
+					FixSuggestion: $@"Create your step with the path clearly defined. e.g. 
+- create data source main, path: /path/to/system.sqlite");
+			}
+			systemDbPath = path;
+			Init();
+			return null;
+		}
+
+		public void ResetSystemDbPath()
+		{
+			systemDbPath = defaultSystemDbPath;
+		}
+
+		public bool IsDefaultSystemDbPath {
+			get { return systemDbPath == defaultSystemDbPath; }
+		}
 		public string LocalDataSourcePath
 		{
 			get
@@ -76,13 +100,13 @@ namespace PLang.Services.SettingsService
 					return $"Data Source={dbName};Mode=Memory;Cache=Shared;";
 
 				}
-
-				string systemDbPath = Path.Join(".", ".db", "system.sqlite");
+								
 				string datasource = $"Data Source={systemDbPath};";				
 				
 				return datasource;
 			}
 		}
+
 
 		public string GetSharedDataSourcePath(string appId) 
 		{

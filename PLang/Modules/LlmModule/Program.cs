@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Building.Model;
+using PLang.Errors;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
@@ -35,7 +36,7 @@ namespace PLang.Modules.LlmModule
 
 		public record AskLlmResponse(string Result);
 
-		public async Task AskLlm(
+		public async Task<(IReturnDictionary?, IError?)> AskLlm(
 			[HandlesVariable] List<LlmMessage> promptMessages,
 			string? scheme = null,
 			string model = "gpt-4-turbo",
@@ -81,33 +82,40 @@ namespace PLang.Modules.LlmModule
 			
 			try
 			{
-				var response = await llmServiceFactory.CreateHandler().Query<object?>(llmQuestion);
+				(var response, var queryError) = await llmServiceFactory.CreateHandler().Query<object?>(llmQuestion);
 
+				if (queryError != null) return (null, queryError);
 
-				if (response is JObject)
+				if (function == null || function.ReturnValue == null || function.ReturnValue.Count == 0)
 				{
-					var objResult = (JObject)response;
-					foreach (var property in objResult.Properties())
+					if (response is JObject)
 					{
-						if (property.Value is JValue)
+						var objResult = (JObject)response;
+						foreach (var property in objResult.Properties())
 						{
-							var value = ((JValue)property.Value).Value;
-							memoryStack.Put(property.Name, value);
-						}
-						else
-						{
-							memoryStack.Put(property.Name, property.Value);
+							if (property.Value is JValue)
+							{
+								var value = ((JValue)property.Value).Value;
+								memoryStack.Put(property.Name, value);
+							}
+							else
+							{
+								memoryStack.Put(property.Name, property.Value);
+							}
 						}
 					}
 				}
 
 				if (function != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
 				{
+					var returnDict = new ReturnDictionary<string, object?>();
 					foreach (var returnValue in function.ReturnValue)
 					{
-						memoryStack.Put(returnValue.VariableName, response);
+						returnDict.AddOrReplace(returnValue.VariableName, response);
 					}
+					return (returnDict, null);
 				}
+				
 			}
 			catch (Exception ex)
 			{
@@ -118,7 +126,10 @@ namespace PLang.Modules.LlmModule
 
 				logger.Log(logLevel, "Llm question - prompt:{0}", JsonConvert.SerializeObject(llmQuestion.promptMessage));
 				logger.Log(logLevel, "Llm question - response:{0}", llmQuestion.RawResponse);
+
+				
 			}
+			return (null, null);
 		}
 
 		public async Task UseSharedIdentity(bool useSharedIdentity = true)
@@ -132,6 +143,12 @@ namespace PLang.Modules.LlmModule
 			return identityService.GetCurrentIdentity().Identifier;
 		}
 
+		[Description("Get the current balance at the LLM service")]
+		public async Task<object?> GetBalance()
+		{
+			(var response, var queryError) = await llmServiceFactory.CreateHandler().GetBalance();
+			return response;
+		}
 
 		private string? GetObjectRepresentation(object obj)
 		{

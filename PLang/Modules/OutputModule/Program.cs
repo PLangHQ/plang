@@ -1,12 +1,15 @@
-﻿using PLang.Exceptions;
+﻿using PLang.Errors;
+using PLang.Errors.Runtime;
+using PLang.Exceptions;
 using PLang.Services.OutputStream;
 using System.ComponentModel;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 
 namespace PLang.Modules.OutputModule
 {
 	[Description("Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response")]
-	public class Program : BaseProgram
+	public class Program : BaseProgram, IDisposable
 	{
 		private readonly IOutputStreamFactory outputStream;
 
@@ -29,13 +32,23 @@ namespace PLang.Modules.OutputModule
 			return result;
 		}
 
+		public void Dispose()
+		{
+			var stream = outputStream.CreateHandler();
+			if (stream is IDisposable disposable)
+			{
+				disposable.Dispose();
+			}
+			
+		}
+
 		[Description("Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text")]
-		public async Task Write(object? content = null, bool writeToBuffer = false, string type = "text", int statusCode = 200)
+		public async Task<IError?> Write(object? content = null, bool writeToBuffer = false, string type = "text", int statusCode = 200)
 		{
 			if (statusCode >= 400)
 			{
 				await outputStream.CreateHandler().Write(content, type, statusCode);
-				throw new RuntimeUserStepException(content?.ToString(), type, statusCode, goalStep);
+				return new ErrorHandled(new StepError(content?.ToString() ?? "OutputModule.Write", goalStep, type, statusCode));
 			}
 			if (writeToBuffer)
 			{
@@ -45,6 +58,7 @@ namespace PLang.Modules.OutputModule
 			{
 				await outputStream.CreateHandler().Write(content, type, statusCode);
 			}
+			return null;
 		}
 
 	}

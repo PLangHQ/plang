@@ -1,0 +1,34 @@
+CodeModule might generate code that depends on 3rd party plugin(libary).
+
+You will then get an error that the plang compiler cant find a file that you never have heard off.
+You then need to find this file on a website called nuget.org, type the filename into the search bar and click search. 
+
+!Important 
+Be carefull of what you choose and what you download. This file will have access to your entire computer. Look for high number of usage, to determine if you think it safe to download. This is no guarantee for being safe.
+
+## Using NuGet Packages in PLang
+
+1. **Download the Package**: Visit the NuGet library page and click "Download Package" to receive a `.nuget` file.
+2. **Convert to Zip**: Rename the downloaded `.nuget` file to `.zip`.
+3. **Unzip and Place in Services Folder**: Unzip the file and place its contents into the PLang `.services` folder (create .services folder if it is not there).
+
+This process allows you to leverage the vast array of existing libraries in NuGet for enhancing your PLang applications.
+
+## Example Markdig
+
+In the following example, the builder will try to use Markdig library (most likely), but this library does not come with Plang, so you must download it install it.
+
+```plang
+Run
+- [code] generate list of 100 users,
+    create comment text, convert to .md format, using 3rd party library(Markdig)
+     with columns: name, email, comment, write to %users%
+```
+when you run `plang build`, you get the following error
+
+![Markdig error](./ErrorMarkdig.jpg)
+
+It will lead you to this page, and provide a link to nuget.org to search for the file.
+
+The search leads me to this Markdig, https://www.nuget.org/packages/Markdig, I confirm that the project is active and being used. This lowers the risk of downloading something risky. 
+I click the "Download package" link. After you have unzip the .nuget package (see instruction above). I place the markdig.dll from the .net 8 folder, into my .services folder (you can create it if it's not there).

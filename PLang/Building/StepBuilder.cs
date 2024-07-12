@@ -2,23 +2,30 @@
 using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
 using PLang.Building.Model;
+using PLang.Errors;
+using PLang.Errors.AskUser;
+using PLang.Errors.Builder;
+using PLang.Errors.Handlers;
 using PLang.Events;
 using PLang.Exceptions;
-using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Modules.DbModule;
 using PLang.Runtime;
 using PLang.Services.CompilerService;
 using PLang.Services.LlmService;
 using PLang.Utils;
+using RazorEngineCore;
+using System.ComponentModel;
 using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
+using static PLang.Modules.DbModule.ModuleSettings;
 
 namespace PLang.Building
 {
-    public interface IStepBuilder
+	public interface IStepBuilder
 	{
-		Task BuildStep(Goal goal, int stepNr, List<string>? excludeModules = null, int errorCount = 0);
+		Task<IBuilderError?> BuildStep(Goal goal, int stepNr, List<string>? excludeModules = null, int errorCount = 0);
 	}
 
 	public class StepBuilder : IStepBuilder
@@ -31,12 +38,14 @@ namespace PLang.Building
 		private readonly ITypeHelper typeHelper;
 		private readonly MemoryStack memoryStack;
 		private readonly VariableHelper variableHelper;
-		private readonly IExceptionHandlerFactory exceptionHandlerFactory;
+		private readonly IErrorHandlerFactory exceptionHandlerFactory;
 		private readonly PLangAppContext context;
+		private readonly ISettings settings;
 
 		public StepBuilder(Lazy<ILogger> logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 					IInstructionBuilder instructionBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
-					MemoryStack memoryStack, VariableHelper variableHelper, IExceptionHandlerFactory exceptionHandlerFactory, PLangAppContext context)
+					MemoryStack memoryStack, VariableHelper variableHelper, IErrorHandlerFactory exceptionHandlerFactory, 
+					PLangAppContext context, ISettings settings)
 		{
 			this.fileSystem = fileSystem;
 			this.llmServiceFactory = llmServiceFactory;
@@ -48,23 +57,27 @@ namespace PLang.Building
 			this.variableHelper = variableHelper;
 			this.exceptionHandlerFactory = exceptionHandlerFactory;
 			this.context = context;
+			this.settings = settings;
 		}
 
-		public async Task BuildStep(Goal goal, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
+		public async Task<IBuilderError?> BuildStep(Goal goal, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
 		{
-			if (errorCount > 2)
+			var step = (stepIndex < goal.GoalSteps.Count) ? goal.GoalSteps[stepIndex] : null;
+			if (step == null)
 			{
-				logger.Value.LogError($"Could not get answer from LLM. Will NOT try again. Tried {errorCount} times. Will continue to build next step.");
-				return;
+				return new GoalBuilderError($"Step nr. {stepIndex + 1} could not be loaded from goal {goal.GoalName}. This is unusual behaviour and should not happen. Try deleting the .pr file from {goal.AbsolutePrFolderPath}.", goal);
+			}
+			if (++errorCount > 3)
+			{
+				return new StepBuilderError($"Could not get answer from LLM. Will NOT try again. Tried {errorCount} times. Will continue to build next step.", step);
 			}
 
 			if (excludeModules == null) { excludeModules = new List<string>(); }
 
-			var step = goal.GoalSteps[stepIndex];
 			try
 			{
 				var strStepNr = (stepIndex + 1).ToString().PadLeft(2, '0');
-				if (StepHasBeenBuild(step, stepIndex, excludeModules)) return;
+				if (StepHasBeenBuild(step, stepIndex, excludeModules)) return null;
 
 				await eventRuntime.RunBuildStepEvents(EventType.Before, goal, step, stepIndex);
 
@@ -72,38 +85,38 @@ namespace PLang.Building
 
 				logger.Value.LogInformation($"- Find module for {step.Text}");
 				llmQuestion.Reload = false;
-				var stepAnswer = await llmServiceFactory.CreateHandler().Query<StepAnswer>(llmQuestion);
+				(var stepAnswer, var llmError) = await llmServiceFactory.CreateHandler().Query<StepAnswer>(llmQuestion);
+				if (llmError != null) return llmError as IBuilderError;
+
 				if (stepAnswer == null)
 				{
-					if (errorCount > 2)
-					{
-						logger.Value.LogError($"Could not get answer from LLM. Will NOT try again. Tried {errorCount} times. Will continue to build next step.");
-						return;
-					}
-
 					logger.Value.LogWarning($"Could not get answer from LLM. Will try again. This is attempt nr {++errorCount}");
-					await BuildStep(goal, stepIndex, excludeModules, errorCount);
-					return;
+					return await BuildStep(goal, stepIndex, excludeModules, errorCount);
 				}
 
 				var module = stepAnswer.Modules.FirstOrDefault();
 				var moduleType = typeHelper.GetRuntimeType(module);
 				if (moduleType == null || module == null || module == "N/A")
 				{
-					logger.Value.LogError($"Could not find module for {step.Text}. Try defining the step in more detail.");
-					logger.Value.LogWarning($@"You have 3 options.
-- Rewrite your step to fit better with a modules that you have installed
-- Install an App from that can handle your request and call that
-- Build your own module. This requires a C# developer knowledge");
-					logger.Value.LogError($"Builder will continue on other steps but not this one ({step.Text}).");
+					return new StepBuilderError($@"Could not find module for {step.Text}. 
+Try defining the step in more detail.
 
-					return;
+You have 3 options:
+	- Rewrite your step to fit better with a modules that you have installed. 
+		How to write the step? Get help here https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md
+	- Install an App from that can handle your request and call that
+	- Build your own module. This requires a C# developer knowledge
+
+Builder will continue on other steps but not this one: ({step.Text}).
+", step);
+
 				}
 
 				step.ModuleType = module;
 				step.ErrorHandler = stepAnswer.ErrorHandler;
 				step.WaitForExecution = stepAnswer.WaitForExecution;
 				step.RetryHandler = stepAnswer.RetryHandler;
+				// cannot put caching on caching
 				step.CacheHandler = (module == "PLang.Modules.CachingModule") ? null : stepAnswer.CachingHandler;
 				step.Name = stepAnswer.StepName;
 				step.Description = stepAnswer.StepDescription;
@@ -118,34 +131,66 @@ namespace PLang.Building
 				}
 
 				step.RunOnce = (goal.RelativePrFolderPath.ToLower().Contains(".build" + Path.DirectorySeparatorChar + "setup"));
-				try
+
+				var error = await instructionBuilder.BuildInstruction(this, goal, step, module, stepIndex, excludeModules, errorCount);
+				if (error != null)
 				{
-					await instructionBuilder.BuildInstruction(this, goal, step, module, stepIndex, excludeModules, errorCount);
+					if (error is not InvalidFunctionsError)
+					{
+						return error;
+					}
 
-					//Set reload after Build Instruction
-					step.Reload = false;
-					step.Generated = DateTime.Now;
+					if (error is InvalidFunctionsError invalidFunctions)
+					{
+						if (invalidFunctions.ExcludeModule && !excludeModules.Contains(module))
+						{
+							excludeModules.Add(module);
+						}
 
-					await eventRuntime.RunBuildStepEvents(EventType.After, goal, step, stepIndex);
+					}
+					logger.Value.LogWarning(error.Message);
+					var buildStepError = await BuildStep(goal, stepIndex, excludeModules, ++errorCount);
+					if (buildStepError != null)
+					{
+						return buildStepError;
+					}
 				}
-				catch (FunctionNotFoundException ffe)
-				{
-					excludeModules.Add(ffe.Message);
-					await BuildStep(goal, stepIndex, excludeModules, ++errorCount);
-				}
-				catch (SkipStepException) { }
+				//Set reload after Build Instruction
+				step.Reload = false;
+				step.Generated = DateTime.Now;
 
+				return await eventRuntime.RunBuildStepEvents(EventType.After, goal, step, stepIndex);
 			}
-			catch (StopBuilderException) { throw; }
 			catch (Exception ex)
 			{
-				if (await exceptionHandlerFactory.CreateHandler().Handle(ex, 500, "error", ex.Message))
+				IBuilderError error;
+				if (ex.InnerException is PLang.Errors.Handlers.AskUserError)
 				{
-					await BuildStep(goal, stepIndex, excludeModules, errorCount);
+					ex = ex.InnerException;
+				}
+
+				if (ex is PLang.Errors.Handlers.AskUserError mse)
+				{
+					Console.WriteLine(mse.Message);
+					var line = Console.ReadLine();
+
+					await mse.InvokeCallback(line);
+					return await BuildStep(goal, stepIndex, excludeModules, errorCount);
 				}
 				else
 				{
-					throw new BuilderStepException(ex.Message, step, ex);
+					error = new ExceptionError(ex, Step: step, Goal: goal);
+				}
+				(var isHandled, var handlerError) = await exceptionHandlerFactory.CreateHandler().Handle(error);
+				if (isHandled)
+				{
+					return await BuildStep(goal, stepIndex, excludeModules, errorCount);
+				}
+				else
+				{
+					if (handlerError == null) return error;
+
+					return ErrorHelper.GetMultipleBuildError(error, handlerError);
 				}
 			}
 
@@ -174,7 +219,7 @@ namespace PLang.Building
 			if (action.Contains("ReturnValue"))
 			{
 				var gf = JsonConvert.DeserializeObject<GenericFunction>(action);
-				LoadVariablesIntoMemoryStack(gf, memoryStack, context);
+				LoadVariablesIntoMemoryStack(gf, memoryStack, context, settings);
 			}
 			else if (action.Contains("OutParameterDefinition"))
 			{
@@ -192,7 +237,7 @@ namespace PLang.Building
 			return true;
 		}
 
-		public static void LoadVariablesIntoMemoryStack(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context)
+		public void LoadVariablesIntoMemoryStack(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
 		{
 			if (gf == null) return;
 
@@ -204,10 +249,10 @@ namespace PLang.Building
 				}
 			}
 
-			LoadParameters(gf, memoryStack, context);
+			LoadParameters(gf, memoryStack, context, settings);
 		}
 
-		private static void LoadParameters(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context)
+		private void LoadParameters(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
 		{
 			// todo: hack for now, should be able to load dynamically variables that are being set at build time
 			// might have to structure the build
@@ -236,11 +281,42 @@ namespace PLang.Building
 					memoryStack.PutForBuilder(parameter.Key, parameter.Value);
 				}
 			}
+			
 
-			if (gf.FunctionName == "CreateDataSource")
+			// todo: also bad implementation, builder for module should handle this part
+			if (gf.FunctionName == "CreateDataSource" || gf.FunctionName == "SetDataSourceName")
 			{
 				var parameter = gf.Parameters.FirstOrDefault(p => p.Name == "name");
-				context.AddOrReplace(ReservedKeywords.CurrentDataSourceName + "_string", parameter.Value);
+				if (parameter == null) return;
+
+				var dataSourceName = parameter.Value.ToString() ?? "data";
+				var datasources = settings.GetValues<DataSource>(typeof(PLang.Modules.DbModule.ModuleSettings)).ToList();
+				var datasource = datasources.FirstOrDefault(p => p.Name == dataSourceName);
+				var isDefaultForApp = ((bool?)gf.Parameters.FirstOrDefault(p => p.Name == "setAsDefaultForApp")?.Value) ?? false;
+
+				if (datasource == null)
+				{					
+					var keepHistoryEventSourcing = ((bool?)gf.Parameters.FirstOrDefault(p => p.Name == "keepHistoryEventSourcing")?.Value) ?? false;
+					var databaseType = gf.Parameters.FirstOrDefault(p => p.Name == "databaseType")?.Value?.ToString() ?? "sqlite";
+					var localPath = "";
+					if (databaseType == "sqlite")
+					{
+						localPath = gf.Parameters.FirstOrDefault(p => p.Name == "localPath")?.Value?.ToString();
+						if (string.IsNullOrEmpty(localPath)) localPath = "./.db/data.sqlite";
+					}
+
+					var moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger.Value);
+					moduleSettings.CreateDataSource(dataSourceName, localPath, databaseType, isDefaultForApp, keepHistoryEventSourcing).Wait();
+
+					datasources = settings.GetValues<DataSource>(typeof(PLang.Modules.DbModule.ModuleSettings)).ToList();
+					datasource = datasources.FirstOrDefault(p => p.Name == dataSourceName);
+				}
+
+				
+				if ((gf.FunctionName == "CreateDataSource" && isDefaultForApp) || gf.FunctionName == "SetDataSourceName")
+				{
+					context.AddOrReplace(ReservedKeywords.CurrentDataSource, datasource);
+				}
 			}
 
 
@@ -277,7 +353,7 @@ variable is defined with starting and ending %, e.g. %filePath%
 Modules: Name of module. Suggest 1-3 modules that could be used to solve the step.
 StepName: Short name for step
 StepDescription: Rewrite the step as you understand it, make it detailed
-WaitForExecution: Indicates if code should wait for execution to finish, default is true
+WaitForExecution: Default is true. Indicates if code should wait for execution to finish.
 ErrorHandler: How to handle errors defined by user, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key
 RetryHandler: How to retry the step if there is error, default is null
 CachingHandler: How caching is handled, default is null
@@ -291,7 +367,7 @@ Be Concise
 				system += "\n\nUser is programming in the UI folder, this put priority on PLang.Modules.UiModule. The user is trying to create UI";
 			}
 
-				var question = step.Text;
+			var question = step.Text;
 			var assistant = $@"This is a list of modules you can choose from
 ## modules available starts ##
 {modulesAvailable}

@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
+using PLang.Errors;
+using PLang.Errors.Builder;
 using PLang.Interfaces;
 using PLang.Services.LlmService;
 using PLang.Services.SettingsService;
@@ -22,7 +24,7 @@ namespace PLang.Modules.BlockchainModule
 			this.llmServiceFactory = llmServiceFactory;
 		}
 
-		public override async Task<Instruction> Build(GoalStep step)
+		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step)
 		{
 			
 			var moduleSettings = new ModuleSettings(settings, llmServiceFactory);
@@ -36,7 +38,9 @@ namespace PLang.Modules.BlockchainModule
 # wallet addresses #
 {JsonConvert.SerializeObject(wallets)}
 # wallet addresses #");
-			var instruction = await base.Build(step);
+			(var instruction, var buildError) = await base.Build(step);
+			if (buildError != null) return (null, buildError);
+
 			var gf = instruction.Action as GenericFunction;
 			var abi = gf.Parameters.FirstOrDefault(p => p.Name.ToLower() == "abi");
 			if (abi != null && abi.Value.ToString().Contains("\"inputs\"")) {
@@ -77,7 +81,7 @@ namespace PLang.Modules.BlockchainModule
 					}
 				}
 			}
-			return instruction;
+			return (instruction, null);
 		}
 	}
 }

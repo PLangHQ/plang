@@ -1,19 +1,20 @@
 {
   "GoalName": "GoToLine",
   "Comment": null,
+  "Text": "GoToLine",
   "GoalSteps": [
     {
       "Text": "set %__StepIndex__% as %line%",
       "Comment": null,
       "ModuleType": "PLang.Modules.LocalOrGlobalVariableModule",
       "Name": "SetStepIndex",
-      "Description": "This step involves setting the value of the variable '__StepIndex__' to the value of the variable 'line'.",
+      "Description": "Set the variable %__StepIndex__% with the value from %line%.",
       "PrFileName": "01. SetStepIndex.pr",
       "RelativePrPath": ".build\\events\\SendDebug\\GoToLine\\01. SetStepIndex.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-27T13:26:28.9121959+00:00",
+      "Generated": "2024-05-05T11:53:53.3384615+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -37,7 +38,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors defined by user, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
@@ -64,9 +65,9 @@
             ]
           }
         ],
-        "model": "gpt-4",
+        "model": "gpt-4-turbo",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"SetStepIndex\",\n  \"StepDescription\": \"This step involves setting the value of the variable '__StepIndex__' to the value of the variable 'line'.\",\n  \"Modules\": [\n    \"PLang.Modules.LocalOrGlobalVariableModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": "{\n  \"StepName\": \"SetStepIndex\",\n  \"StepDescription\": \"Set the variable %__StepIndex__% with the value from %line%.\",\n  \"Modules\": [\n    \"PLang.Modules.LocalOrGlobalVariableModule\"\n  ],\n  \"WaitForExecution\": true\n}"
       }
     }
   ],
@@ -77,9 +78,9 @@
   "RelativeGoalFolderPath": "\\events",
   "RelativePrPath": ".build\\events\\SendDebug\\GoToLine\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\SendDebug\\GoToLine",
-  "BuilderVersion": "0.1.0.6",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.9",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "8ef1e2c465d06f21836e43d4cf668445dceb467b6ba6e709d50feb593c3ea71a"
+  "Hash": "f2fceca006d445cdc6841b182b7bf2347645b377cccbab552c170e4423de7d57"
 }

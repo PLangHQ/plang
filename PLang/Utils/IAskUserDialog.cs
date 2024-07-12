@@ -1,4 +1,6 @@
-﻿namespace PLang.Utils
+﻿using PLang.Errors;
+
+namespace PLang.Utils
 {
 	public interface IAskUserDialog
 	{
@@ -7,6 +9,6 @@
 
 	public interface IErrorDialog
 	{
-		string ShowDialog(Exception ex, string text, string caption, int formWidth = 500, int formHeight = 400);
+		string ShowDialog(IError error, string caption, int formWidth = 500, int formHeight = 400);
 	}
 }

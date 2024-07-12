@@ -1,4 +1,5 @@
 ﻿using PLang.Building.Model;
+using PLang.Errors.Builder;
 
 namespace PLang.Modules.TerminalModule
 {
@@ -6,7 +7,7 @@ namespace PLang.Modules.TerminalModule
 	{
 		public Builder() : base() { }
 
-		public override async Task<Instruction> Build(GoalStep goalStep)
+		public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep goalStep)
 		{
 			AppendToAssistantCommand(@"Remove % around dataOutputVariable and errorDebugInfoOutputVariable");
 			return await base.Build(goalStep);

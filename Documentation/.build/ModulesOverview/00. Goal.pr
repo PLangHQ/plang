@@ -1,6 +1,7 @@
 {
   "GoalName": "ModulesOverview",
   "Comment": null,
+  "Text": "ModulesOverview",
   "GoalSteps": [
     {
       "Text": "call !CreateSimpleOverview",
@@ -77,9 +78,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ModulesOverview\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ModulesOverview",
-  "BuilderVersion": "0.1.0.6",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.9",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "56837a31d13a771fd115bc826be8742818dca40970d10d72a6ca5d9f007c7c17"
+  "Hash": "db4713b53c1e6a7b5291a0cd251c2be5eed0cd217b0f1cf023a89e8946c90465"
 }

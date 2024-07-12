@@ -1,6 +1,7 @@
 {
   "GoalName": "GenerateDocForAdvanced",
   "Comment": null,
+  "Text": "GenerateDocForAdvanced",
   "GoalSteps": [
     {
       "Text": "read file 'template/modules/GenerateDocForAdvanced/system.txt', into %system%, load variables",
@@ -278,9 +279,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\GenerateDocForAdvanced\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\GenerateDocForAdvanced",
-  "BuilderVersion": "0.1.0.6",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.9",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "da8d615a05bd9c22a984d63fef1a321399e059d1df7a002ebf8cb018bb02c7fc"
+  "Hash": "c71fdbed94d1a7648201ae77c8e3e88663d884c9708579691bc192fef4112133"
 }

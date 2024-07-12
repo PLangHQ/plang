@@ -1,6 +1,7 @@
 {
   "GoalName": "GenerateOverview",
   "Comment": null,
+  "Text": "GenerateOverview",
   "GoalSteps": [
     {
       "Text": "append to %content%, %file.Content%",
@@ -77,9 +78,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ModulesOverview\\GenerateOverview\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ModulesOverview\\GenerateOverview",
-  "BuilderVersion": "0.1.0.6",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.9",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "f9b8d8b14b602710be600c55335e8dfed1c2c6326e760a370ed833e3c27fa8b3"
+  "Hash": "b5386f22a0c6ba7ab1ba8717c755c5637465396bfe55beb16b99335072d294be"
 }

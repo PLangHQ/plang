@@ -5,6 +5,7 @@ using PLang.Interfaces;
 using PLang.Modules;
 using System.Data;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace PLang.Utils
 {
@@ -35,6 +36,20 @@ namespace PLang.Utils
 			LoadModules(fileSystem, fileSystem.GoalsPath);
 			this.fileSystem = fileSystem;
 			this.settings = settings;
+		}
+
+
+		private static Version GetAssemblyVersion(string filePath)
+		{
+			try
+			{
+				var assemblyName = AssemblyName.GetAssemblyName(filePath);
+				return assemblyName.Version;
+			}
+			catch
+			{
+				return new Version(0, 0, 0, 0); // Return a default version if the assembly version cannot be determined
+			}
 		}
 
 		public List<Type> GetTypesByType(Type type)
@@ -80,10 +95,27 @@ namespace PLang.Utils
 			string servicesDirectory = Path.Combine(fileSystem.GoalsPath, ".services");
 			if (fileSystem.Directory.Exists(servicesDirectory))
 			{
+				AppDomain.CurrentDomain.AssemblyResolve += (sender, resolveArgs) =>
+				{
+					var files = fileSystem.Directory.GetFiles(Path.Join(fileSystem.RootDirectory, ".services"),
+						new AssemblyName(resolveArgs.Name).Name + ".dll", SearchOption.AllDirectories);
+
+					var latestFile = files
+						   .Select(f => new { FilePath = f, Version = GetAssemblyVersion(f) })
+						   .OrderByDescending(x => x.Version)
+						   .FirstOrDefault();
+
+
+					if (latestFile != null)
+					{
+						return Assembly.LoadFile(latestFile.FilePath);
+					}
+					return null;
+				};
 
 				foreach (var dll in fileSystem.Directory.GetFiles(servicesDirectory, "*.dll", SearchOption.AllDirectories))
 				{
-					
+
 					// Load the assembly
 					Assembly loadedAssembly = Assembly.LoadFile(dll);
 					List<Type> typesFromAssembly;
@@ -126,19 +158,7 @@ namespace PLang.Utils
 				if (method.Module.Name != type.Module.Name) continue;
 				if (method.Name == "Run" || method.Name == "Dispose" || method.IsSpecialName) continue;
 
-				if (method.ReturnType == typeof(Task))
-				{
-					strMethod += "void ";
-				}
-				else if (method.ReturnType.GenericTypeArguments.Length > 0)
-				{
-					strMethod += method.ReturnType.GenericTypeArguments[0].Name + " ";
-				}
-				else
-				{
-
-					Console.WriteLine($"WARNING return type of {method.Name} is not Task");
-				}
+				
 
 				strMethod += method.Name + "(";
 				var parameters = method.GetParameters();
@@ -177,6 +197,18 @@ namespace PLang.Utils
 				}
 				strMethod += ") ";
 
+				if (method.ReturnType == typeof(Task))
+				{
+					strMethod += " : void ";
+				}
+				else if (method.ReturnType.GenericTypeArguments.Length > 0)
+				{
+					strMethod += " : " + method.ReturnType.GenericTypeArguments[0].Name + " ";
+				}
+				else
+				{
+					Console.WriteLine($"WARNING return type of {method.Name} is not Task");
+				}
 
 				var descriptions = method.CustomAttributes.Where(p => p.AttributeType.Name == "DescriptionAttribute");
 				foreach (var desc in descriptions)
@@ -284,6 +316,7 @@ namespace PLang.Utils
 			return json += "}";
 		}
 
+
 		public static string GetJsonSchema(Type type)
 		{
 			var json = (type.IsArray || type == typeof(List<>)) ? "[" : "{";
@@ -369,6 +402,7 @@ namespace PLang.Utils
 				{
 					//json += " = null";
 				}
+
 
 
 			}

@@ -352,7 +352,7 @@ namespace PLang.Modules.HttpModule
 				}
 
 				var mediaType = response.Content.Headers.ContentType.MediaType;
-				if (!mediaType.StartsWith("text") && !mediaType.StartsWith("application/json") && !mediaType.StartsWith("application/xml"))
+				if (!IsTextResponse(mediaType))
 				{
 					var bytes = await response.Content.ReadAsByteArrayAsync();
 					return bytes;
@@ -385,6 +385,23 @@ namespace PLang.Modules.HttpModule
 				return responseBody;
 
 			}
+		}
+
+		private bool IsTextResponse(string? mediaType)
+		{
+			if (mediaType == null) return false;
+
+			if (mediaType.Contains("text/")) return true;
+
+			if (mediaType.Contains("application/"))
+			{
+				string[] possibleTextTypes = { "json", "xml", "html", "javascript", "x-yaml", "rtf", "toml", "x-latex", "sgml", "ecmascript", "x-sh", "x-perl", "x-python", "x-ruby" };
+                foreach (var item in possibleTextTypes)
+                {
+					if (mediaType.Contains(item)) return true;
+                }
+            }
+			return false;
 		}
 
 		private async Task SignRequest(HttpRequestMessage request)

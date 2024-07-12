@@ -3,9 +3,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using PLang.Building.Model;
 using PLang.Container;
+using PLang.Errors.Handlers;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
-using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Services.OutputStream;
 using PLang.Utils;
@@ -16,7 +16,7 @@ using System.IO.Abstractions.TestingHelpers;
 
 namespace PLang.Runtime.Tests
 {
-    [TestClass()]
+	[TestClass()]
 	public class PseudoRuntimeTests : BasePLangTest
 	{
 		PseudoRuntime pseudoRuntime;
@@ -43,7 +43,7 @@ namespace PLang.Runtime.Tests
 			prParser.ForceLoadAllGoals();
 
 
-			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, exceptionHandlerFactory, askUserHandlerFactory);
+			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, outputSystemStreamFactory, errorHandlerFactory, askUserHandlerFactory);
 
 		}
 
@@ -65,7 +65,7 @@ namespace PLang.Runtime.Tests
 		public async Task RunGoalTest_AppInAppsFolder_ShouldNotGetContext()
 		{
 			containerFactory = Substitute.For<IServiceContainerFactory>();
-			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), Arg.Any<IExceptionHandlerFactory>(), Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
+			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
 			{
 				var container = CreateServiceContainer();
 
@@ -87,7 +87,7 @@ namespace PLang.Runtime.Tests
 			var parameters = new PLangAppContext();
 			parameters.Add("Name", "Jim");
 
-			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, exceptionHandlerFactory, askUserHandlerFactory);
+			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, outputSystemStreamFactory, errorHandlerFactory, askUserHandlerFactory);
 
 			await pseudoRuntime.RunGoal(engine, context, @"\", "apps/GoalWith2Steps/GoalWith2Steps", parameters);
 
@@ -147,7 +147,7 @@ namespace PLang.Runtime.Tests
 		public async Task RunGoalTest_ParametersSetInMemoryStack()
 		{
 			containerFactory = Substitute.For<IServiceContainerFactory>();
-			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), Arg.Any<IExceptionHandlerFactory>(), Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
+			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
 			{
 				var container = CreateServiceContainer();
 
@@ -173,7 +173,7 @@ namespace PLang.Runtime.Tests
 		{"Age", 30}
 	};
 
-			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, exceptionHandlerFactory, askUserHandlerFactory);
+			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, outputSystemStreamFactory, errorHandlerFactory, askUserHandlerFactory);
 
 			await pseudoRuntime.RunGoal(engine, context, @"\", "apps/GoalWith2Steps/GoalWith2Steps", parameters);
 

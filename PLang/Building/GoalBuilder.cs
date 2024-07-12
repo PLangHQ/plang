@@ -4,6 +4,9 @@ using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
+using PLang.Errors;
+using PLang.Errors.Builder;
+using PLang.Errors.Events;
 using PLang.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
@@ -20,7 +23,7 @@ namespace PLang.Building
 
     public interface IGoalBuilder
 	{
-		Task BuildGoal(IServiceContainer container, string goalFileAbsolutePath, int errorCount = 0);
+		Task<IBuilderError?> BuildGoal(IServiceContainer container, string goalFileAbsolutePath, int errorCount = 0);
 	}
 
 
@@ -48,38 +51,65 @@ namespace PLang.Building
 			this.typeHelper = typeHelper;
 			this.prParser = prParser;
 		}
-		public async Task BuildGoal(IServiceContainer container, string goalFileAbsolutePath, int errorCount = 0)
+		public async Task<IBuilderError?> BuildGoal(IServiceContainer container, string goalFileAbsolutePath, int errorCount = 0)
 		{
 			var goals = goalParser.ParseGoalFile(goalFileAbsolutePath);
 			if (goals == null || goals.Count == 0)
 			{
-				logger.LogWarning($"Could not determine goal on {Path.GetFileName(goalFileAbsolutePath)}.");
-				return;
+				return new BuilderError($"Could not determine goal on {Path.GetFileName(goalFileAbsolutePath)}.");
 			}
 
 			for (int b = 0; b < goals.Count; b++)
 			{
 				var goal = goals[b];
 				logger.LogInformation($"\nStart to build {goal.GoalName}");
-				// if this api, check for http method. Also give description.					
-				goal = await LoadMethodAndDescription(goal);
 
-				await eventRuntime.RunBuildGoalEvents(EventType.Before, goal);
+				// if this api, check for http method. Also give description.					
+				(goal, var error) = await LoadMethodAndDescription(goal);
+				if (error != null) return error;
+
+				var buildEventError = await eventRuntime.RunBuildGoalEvents(EventType.Before, goal);
+				if (buildEventError != null && !buildEventError.ContinueBuild)
+				{
+					return buildEventError;
+				} else if (buildEventError != null)
+				{
+					logger.LogWarning(buildEventError.ToFormat().ToString());
+				}
 
 				for (int i = 0; i < goal.GoalSteps.Count; i++)
 				{
-					await stepBuilder.BuildStep(goal, i);
-
-					WriteToGoalPrFile(goal);
+					var buildStepError = await stepBuilder.BuildStep(goal, i);
+					if (buildStepError != null && !buildStepError.ContinueBuild)
+					{
+						return buildStepError;
+					}
+					else if (buildStepError != null)
+					{
+						logger.LogWarning(buildStepError.ToFormat().ToString());
+					}
+					else
+					{
+						WriteToGoalPrFile(goal);
+					}
 				}
 				RemoveUnusedPrFiles(goal);
 				RegisterForPLangUserInjections(container, goal);
 
-				await eventRuntime.RunBuildGoalEvents(EventType.After, goal);
+				buildEventError = await eventRuntime.RunBuildGoalEvents(EventType.After, goal);
+				if (buildEventError != null && !buildEventError.ContinueBuild)
+				{
+					return buildEventError;
+				}
+				else if (buildEventError != null)
+				{
+					logger.LogWarning(buildEventError.ToFormat().ToString());
+				}
 
 				WriteToGoalPrFile(goal);
 				logger.LogInformation($"Done building goal {goal.GoalName}");
 			}
+			return null;
 		}
 
 		private void RegisterForPLangUserInjections(IServiceContainer container, Goal goal)
@@ -146,45 +176,48 @@ namespace PLang.Building
 			var assembly = Assembly.GetAssembly(this.GetType());
 			goal.BuilderVersion = assembly.GetName().Version.ToString();
 			goal.Hash = "";
-			goal.Hash = JsonConvert.SerializeObject(goal).ComputeHash();
+			goal.Hash = JsonConvert.SerializeObject(goal).ComputeHash().Hash;
 			
 			fileSystem.File.WriteAllText(goal.AbsolutePrFilePath, JsonConvert.SerializeObject(goal, Formatting.Indented));
 		}
 
-		private async Task<Goal> LoadMethodAndDescription(Goal goal)
+		private async Task<(Goal, IBuilderError?)> LoadMethodAndDescription(Goal goal)
 		{
 			Goal? oldGoal = null;
 			if (fileSystem.File.Exists(goal.AbsolutePrFilePath))
 			{
 				oldGoal = JsonHelper.ParseFilePath<Goal>(fileSystem, goal.AbsolutePrFilePath);
-				if (oldGoal != null && oldGoal.GoalApiInfo != null)
+				if (oldGoal != null)
 				{
-					goal.GoalApiInfo = oldGoal.GoalApiInfo;
+					goal.GoalInfo = oldGoal.GoalInfo;
 				}
 			}
-
 			var isWebApiMethod = GoalNameContainsMethod(goal) || goal.RelativeGoalFolderPath.Contains(Path.DirectorySeparatorChar + "api");
 
-			if (isWebApiMethod && (goal.GoalApiInfo == null || goal.GoalName != oldGoal?.GoalName))
+			if (!isWebApiMethod && !goal.Text.Contains(" ")) return (goal, null);
+			if (goal.GoalInfo == null || goal.GoalInfo.GoalApiInfo == null || goal.Text == null || goal.Text != oldGoal?.Text)
 			{
 				var promptMessage = new List<LlmMessage>();
-				promptMessage.Add(new LlmMessage("system", $@"Determine the Method and write description of this api, using the content of the file.
-Method can be: GET, POST, DELETE, PUT, PATCH, OPTIONS, HEAD. The content will describe a function in multiple steps.
-From the first line, you should extrapolate the CacheControl if the user defines it.
-CacheControlPrivateOrPublic: public or private
-NoCacheOrNoStore: no-cache or no-store"));
+				promptMessage.Add(new LlmMessage("system", $@"
+GoalApiIfo:
+	Determine the Method and write description of this api, using the content of the file.
+	Method can be: GET, POST, DELETE, PUT, PATCH, OPTIONS, HEAD. The content will describe a function in multiple steps.
+	From the first line, you should extrapolate the CacheControl if the user defines it.
+	CacheControlPrivateOrPublic: public or private
+	NoCacheOrNoStore: no-cache or no-store"));
 				promptMessage.Add(new LlmMessage("user", goal.GetGoalAsString()));
 				var llmRequest = new LlmRequest("GoalApiInfo", promptMessage);
 
+				(var result, var queryError) = await llmServiceFactory.CreateHandler().Query<GoalInfo>(llmRequest);
+				if (queryError != null) return (goal, queryError as IBuilderError);
 
-				var result = await llmServiceFactory.CreateHandler().Query<GoalApiInfo>(llmRequest);
 				if (result != null)
 				{
-					goal.GoalApiInfo = result;
+					goal.GoalInfo = result;
 				}
 
 			}
-			return goal;
+			return (goal, null);
 		}
 
 

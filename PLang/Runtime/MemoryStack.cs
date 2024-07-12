@@ -164,6 +164,7 @@ namespace PLang.Runtime
 							index = (indexObjectValue.Value as int? ?? 0);
 						}
 					}
+					index--;
 				}
 			}
 
@@ -278,12 +279,12 @@ namespace PLang.Runtime
 			return objectValue;
 		}
 
-		public object? Get(string key, bool staticVariable = false)
+		public object? Get(string? key, bool staticVariable = false)
 		{
 			return GetObjectValue2(key, staticVariable).Value;
 		}
 
-		public ObjectValue GetObjectValue2(string key, bool staticVariable = false)
+		public ObjectValue GetObjectValue2(string? key, bool staticVariable = false)
 		{
 			if (key == null) return new ObjectValue("", null, typeof(Nullable), null, false);
 			key = Clean(key);
@@ -326,7 +327,7 @@ namespace PLang.Runtime
 			var plan = GetVariableExecutionPlan(key, staticVariable);
 			if (plan.VariableName.Equals("settings", StringComparison.OrdinalIgnoreCase) && plan.Calls.Count > 0)
 			{
-				var value = settings.GetOrDefault<string>(typeof(Settings), plan.Calls[0], "");
+				var value = settings.Get<string>(typeof(Settings), plan.Calls[0], "", $"What is settings for {plan.Calls[0]}:");
 				return new ObjectValue(key, value, typeof(string), null);
 			}
 			if (!plan.ObjectValue.Initiated)
@@ -447,7 +448,7 @@ namespace PLang.Runtime
 			if (key == null) return;
 			key = Clean(key);
 
-			if (key.ToLower() == "__memorystack__")
+			if (key.ToLower() == "!memorystack")
 			{
 				throw new Exception($"{key} is reserved. You must choose another variable name");
 			}
@@ -687,6 +688,11 @@ namespace PLang.Runtime
 			{
 				if (value.GetType() == typeof(JArray))
 				{
+					if (targetType == typeof(string))
+					{
+						return value.ToString();
+					}
+
 					list = (IList)((JArray)value).ToObject(targetType);
 				}
 				return list;
@@ -731,7 +737,7 @@ namespace PLang.Runtime
 			if (key.Contains("="))
 			{
 				string[] strings = key.Split("=");
-				key = strings[0];
+				key = strings[0].Trim();
 				if (DateTime.TryParse(strings[1].Trim(), out DateTime result))
 				{
 					return new ObjectValue(key, result, typeof(DateTime), null);

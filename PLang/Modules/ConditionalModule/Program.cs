@@ -8,6 +8,8 @@ using static PLang.Services.CompilerService.CSharpCompiler;
 using static PLang.Modules.ConditionalModule.Builder;
 using PLang.Services.CompilerService;
 using static PLang.Runtime.Startup.ModuleLoader;
+using PLang.Errors;
+using PLang.Errors.Runtime;
 
 namespace PLang.Modules.ConditionalModule
 {
@@ -42,27 +44,31 @@ namespace PLang.Modules.ConditionalModule
 			return fileSystem.ValidatePath(dirOrFilePathOrVariableName) != null;
 		}*/
 
-		public override async Task Run()
+		public override async Task<IError?> Run()
 		{
 
 			var answer = JsonConvert.DeserializeObject<Implementation>(instruction.Action.ToString());
 			try
 			{
 				string dllName = goalStep.PrFileName.Replace(".pr", ".dll");
-				Assembly assembly = Assembly.LoadFile(Path.Combine(Goal.AbsolutePrFolderPath, dllName));
+				Assembly? assembly = Assembly.LoadFile(Path.Combine(Goal.AbsolutePrFolderPath, dllName));
 				if (assembly == null)
 				{
-					throw new RuntimeStepException($"Could not find {dllName}. Stopping execution for step {goalStep.Text}", goalStep);
+					return new StepError($"Could not find {dllName}. Stopping execution for step {goalStep.Text}", goalStep);
 				}
-				Type type = assembly.GetType(answer.Namespace + "." + answer.Name);
+				Type? type = assembly.GetType(answer.Namespace + "." + answer.Name);
 				if (type == null)
 				{
-					throw new RuntimeStepException($"Could not find type {answer.Name}. Stopping execution for step {goalStep.Text}", goalStep);
+					return new StepError($"Could not find type {answer.Name}. Stopping execution for step {goalStep.Text}", goalStep);
 				}
-				MethodInfo method = type.GetMethod("ExecutePlangCode");
+				MethodInfo? method = type.GetMethod("ExecutePlangCode");
+				if (method == null)
+				{
+					return new StepError($"Method 'ExecutePlangCode' could not be found in {answer.Name}. Stopping execution for step {goalStep.Text}", goalStep);
+				}
 				var parameters = method.GetParameters();
 
-				List<object> parametersObject = new List<object>();
+				var parametersObject = new List<object?>();
 				int idx = 0;
 				if (answer.InputParameters != null)
 				{
@@ -89,7 +95,7 @@ namespace PLang.Modules.ConditionalModule
 				// The first parameter is the instance you want to call the method on. For static methods, you should pass null.
 				// The second parameter is an object array containing the arguments of the method.
 				bool result = (bool)method.Invoke(null, parametersObject.ToArray());
-				Task? task = null;
+				Task<(IEngine, IError? error)>? task = null;
 				if (result && answer.GoalToCallOnTrue != null)
 				{
 					Dictionary<string, object?>? param = answer.GoalToCallOnTrueParameters;
@@ -105,7 +111,9 @@ namespace PLang.Modules.ConditionalModule
 				{
 					try
 					{
-						await task;
+						var taskExecuted = await task;
+						if (taskExecuted.error != null) return taskExecuted.error;
+
 					}
 					catch { }
 
@@ -118,7 +126,7 @@ namespace PLang.Modules.ConditionalModule
 				if (result)
 				{
 					var nextStep = goalStep.NextStep;
-					if (nextStep == null) return;
+					if (nextStep == null) return null;
 
 					bool isIndent = (goalStep.Indent + 4 == nextStep.Indent);
 
@@ -131,14 +139,12 @@ namespace PLang.Modules.ConditionalModule
 						isIndent = (goalStep.Indent + 4 == nextStep.Indent);
 					}
 				}
-
+				return null;
 			}
-			catch (RuntimeStepException) { throw; }
-			catch (RuntimeProgramException) { throw; }
 			catch (Exception ex)
 			{
-				CodeExceptionHandler.Handle(ex, answer, goalStep);
-				throw;
+				var error = CodeExceptionHandler.GetError(ex, answer, goalStep);
+				return error;
 			}
 
 		}

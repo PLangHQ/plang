@@ -1,6 +1,7 @@
 {
   "GoalName": "CreateSimpleOverview",
   "Comment": null,
+  "Text": "CreateSimpleOverview",
   "GoalSteps": [
     {
       "Text": "get all '.md' files in output/modules_overview/, write to %moduleFiles%",
@@ -345,9 +346,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ModulesOverview\\CreateSimpleOverview\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ModulesOverview\\CreateSimpleOverview",
-  "BuilderVersion": "0.1.0.6",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.9",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "4d445bcba6af83d7a33356f56c3d5e3afcb6b9493268c87977e438becb6d76b0"
+  "Hash": "fd61d99db2883fb4e65f50945a2733718804037df3e6e88ddcfc65549a3212fe"
 }

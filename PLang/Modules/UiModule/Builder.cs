@@ -1,5 +1,5 @@
 ﻿using PLang.Building.Model;
-
+using PLang.Errors.Builder;
 using PLang.Utils;
 using PLang.Utils.Extractors;
 
@@ -10,7 +10,7 @@ namespace PLang.Modules.UiModule
 	{
 		public Builder() : base() { }
 
-		public override async Task<Instruction> Build(GoalStep step)
+		public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step)
 		{
 			bool children = false;
 			string childrenStr = "";
@@ -38,27 +38,23 @@ namespace PLang.Modules.UiModule
 
 			SetSystem(@$"Create the html, javascript and css needed from the user command using Bootstrap 5.0.2 & Fontawesome 5.15.3. 
 ## Rules ##
-Goal has series of steps. Steps start with dash(-), steps can have sub steps, substeps are indented and are referenced in previous step by {{step#}} where # is a number, e.g. {{step1}}.
-Variables are defined with starting and ending %. They are case sensitive so keep them as defined
-Goals are prefixed with !, they are for calling a method, e.g. Call !NewUser or reference a goal, such as Edit.goal. To call it use javascript function callGoal(name:string, parameters:object)
-DO NOT generate the function callGoal, it will be provided
-All object.Id or object.id are long and needs to be wrapped with single quote('). This does not apply to other id properties e.g. object.object_id
-All properties on variables are case sensitive, keep formatting defined by user.
-
-{contentToBeAdded}  
-
-HTML comments and <!-- --> are NOT allowed
-
-Javascript should be vanilla Javascript. popper.min.js and bootstrap.min.js are available. 
-
-Use @Razor templating engine for variables and to go through lists, displaying object or property, see example later
-DO NOT use any HtmlHelper library, this elimnates you from using @Html, such as @Html.Raw, @Html.Label, etc.
-
-Css should be using up to date css standards. colors should be in rgb.
-
-If a feedback is needed from the user using the html, provide the solution also for that, if it needs javascript, provide javascript, if it needs custom css, provide css
-
-Goalfile is only provide for context. 
+	Goal has series of steps. 
+	Steps start with dash(-), steps can have sub steps, substeps are indented and are referenced in previous step by {{step#}} where # is a number, e.g. {{step1}}.
+	Variables are defined with starting and ending %. They are case sensitive so keep them as defined
+	Goals are prefixed with !, they are for calling a method, e.g. Call !NewUser or reference a goal, such as Edit.goal. To call it use javascript function callGoal(name:string, parameters:object)
+	DO NOT generate the function callGoal, it will be provided
+	All object.Id or object.id are long and needs to be wrapped with single quote('). This does not apply to other id properties e.g. object.object_id
+	All properties on variables are case sensitive, keep formatting defined by user.
+	Only generate html, css, javascript for this sepecific user command.
+	Start of html document(e.g. Doctype, <html>, <body>) will be provided by different system 
+	{contentToBeAdded} 
+	HTML comments and <!-- --> are NOT allowed
+	Javascript should be vanilla Javascript. popper.min.js and bootstrap.min.js are available. 
+	Use @Razor templating engine for variables and to go through lists, displaying object or property, see example later
+	DO NOT use any HtmlHelper library, this elimnates you from using @Html, such as @Html.Raw, @Html.Label, etc.
+	Css should be using up to date css standards. colors should be in rgb.
+	If a feedback is needed from the user using the html, provide the solution also for that, if it needs javascript, provide javascript, if it needs custom css, provide css
+	Goalfile is only provided for context and you should not generate html from Goalfile, only user command. 
 ## Rules ##
 
 Your job is to build ```html, ```javascript, ```css from the user command and nothing else.
@@ -69,10 +65,12 @@ Your job is to build ```html, ```javascript, ```css from the user command and no
 ### variables available ###
 {variables}
 ### variables available ###
-### Goalfile ###
+### Goalfile ONLY for context ###
 {str}
-### Goalfile ###
+### Goalfile ONLY for context ###
 ### Razor ###
+FROM user command, generate using Razor
+
 Variables in plural are lists, singular is object. 
 To access variable, prefix it with Model.
 use the variable name as the name for the list and when looping through the list. 
@@ -104,9 +102,13 @@ else
 }}
 ### Razor ###");
 
-			var result = await base.Build<UiResponse>(step);
+			(var build, var buildError) = await base.Build<UiResponse>(step);
+			if (buildError != null || build == null)
+			{
+				return (null, buildError ?? new StepBuilderError("Could not build step", step));
+			}
 
-			var uiResponse = result.Action as UiResponse;
+			var uiResponse = build.Action as UiResponse;
 			List<Parameter> parameters = new List<Parameter>();
 			parameters.Add(new Parameter("string", "html", uiResponse.html));
 			parameters.Add(new Parameter("string", "css", uiResponse.css));
@@ -117,8 +119,8 @@ else
 
 			var instruction = new Instruction(gf);
 			step.Execute = true;
-			instruction.LlmRequest = result.LlmRequest;
-			return instruction;
+			instruction.LlmRequest = build.LlmRequest;
+			return (instruction, null);
 		}
 
 

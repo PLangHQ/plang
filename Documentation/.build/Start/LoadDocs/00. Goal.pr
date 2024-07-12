@@ -1,6 +1,7 @@
 {
   "GoalName": "LoadDocs",
   "Comment": null,
+  "Text": "LoadDocs",
   "GoalSteps": [
     {
       "Text": "select * from docs, write to %docs%",
@@ -77,9 +78,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Start\\LoadDocs\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Start\\LoadDocs",
-  "BuilderVersion": "0.1.0.6",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.9",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "a1aba2d906fd030f517dec8450af52653387233f8f7e1b90b44b4c7dcf1bef03"
+  "Hash": "2abbb4a47aa1f9e923abdc2fa8f6cf962db502e88db32a2849042edc2e4df95c"
 }

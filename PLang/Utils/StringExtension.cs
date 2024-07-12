@@ -4,7 +4,7 @@ using Sprache;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-
+using PLang.Errors;
 namespace PLang.Utils
 {
 	public static class StringExtension
@@ -54,16 +54,18 @@ namespace PLang.Utils
 			return txt.Substring(0, maxLength) + trailing;
 		}
 
-		public static string? ComputeHash(this string? input, string mode = "keccak256", string? salt = null)
+		public static (string Hash, IError? Error) ComputeHash(this string? input, string mode = "keccak256", string? salt = null)
 		{
-			if (input == null) return null;
+			if (input == null) {
+				return (string.Empty, new Error("input to compute hash cannog be empty"));
+			}
 
 			if (!string.IsNullOrWhiteSpace(salt))
 			{
 				input = salt + ";" + input;
 			}
-			if (mode.ToLower() == "sha256") return ComputeSha256(input);
-			return ComputeKeccack(input);
+			if (mode.ToLower() == "sha256") return (ComputeSha256(input), null);
+			return (ComputeKeccack(input), null);
 		}
 
 

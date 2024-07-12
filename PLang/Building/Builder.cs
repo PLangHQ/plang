@@ -1,30 +1,27 @@
 ﻿using LightInject;
 using Microsoft.Extensions.Logging;
-using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
+using PLang.Errors.Handlers;
 using PLang.Events;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
-using PLang.Exceptions.Handlers;
 using PLang.Interfaces;
 using PLang.Resources;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
-using PLang.Services.SigningService;
 using PLang.Utils;
-using System;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO.Compression;
-using System.Reflection;
-using System.Text;
+using PLang.Errors;
+using PLang.Errors.Runtime;
+using System.ComponentModel;
 
 namespace PLang.Building
 {
-    public interface IBuilder
+	public interface IBuilder
 	{
-		Task Start(IServiceContainer container);
+		Task<IError?> Start(IServiceContainer container);
 	}
 	public class Builder : IBuilder
 	{
@@ -35,11 +32,11 @@ namespace PLang.Building
 		private readonly IEventBuilder eventBuilder;
 		private readonly IEventRuntime eventRuntime;
 		private readonly PrParser prParser;
-		private readonly IExceptionHandlerFactory exceptionHandlerFactory;
+		private readonly IErrorHandlerFactory exceptionHandlerFactory;
 
 		public Builder(ILogger logger, IPLangFileSystem fileSystem, ISettings settings, IGoalBuilder goalBuilder,
 			IEventBuilder eventBuilder, IEventRuntime eventRuntime,
-			PrParser prParser, IExceptionHandlerFactory exceptionHandlerFactory)
+			PrParser prParser, IErrorHandlerFactory exceptionHandlerFactory)
 		{
 
 			this.fileSystem = fileSystem;
@@ -53,13 +50,10 @@ namespace PLang.Building
 		}
 
 
-		public async Task Start(IServiceContainer container)
+		public async Task<IError?> Start(IServiceContainer container)
 		{
-
-			
-
 			try
-			{				
+			{
 
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				AppContext.SetSwitch("Builder", true);
@@ -67,47 +61,68 @@ namespace PLang.Building
 				SetupBuildValidation();
 
 				var goalFiles = GoalHelper.GetGoalFilesToBuild(fileSystem, fileSystem.GoalsPath);
-				
+
 				InitFolders();
 				logger.LogInformation("Build Start:" + DateTime.Now.ToLongTimeString());
 
-				var eventGoalFiles = await eventBuilder.BuildEventsPr();
-				
-
-				var runtimeContainer = new ServiceContainer();
-				runtimeContainer.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, container.GetInstance<IAskUserHandlerFactory>(),
-					container.GetInstance<IOutputStreamFactory>(), exceptionHandlerFactory);
+				(var eventGoalFiles, var error) = await eventBuilder.BuildEventsPr();
+				if (error != null) return error;
 
 
+				//var engine = runtimeContainer.GetInstance<IEngine>();
+				//engine.Init(runtimeContainer);
 
-				var engine = runtimeContainer.GetInstance<IEngine>();
-				engine.Init(runtimeContainer);
-				var eventRuntime = runtimeContainer.GetInstance<IEventRuntime>();
+				error = await eventRuntime.Load(true);
+				if (error != null) return error;
 
-				await eventRuntime.Load(runtimeContainer, true);
-				await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.Before, EventScope.StartOfApp, false);
+				var eventError = await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.Before, EventScope.StartOfApp, true);
+				if (eventError != null && !eventError.IgnoreError)
+				{
+					return eventError;
+				}
+
 				foreach (string file in goalFiles)
 				{
-					await goalBuilder.BuildGoal(container, file);
+					var goalError = await goalBuilder.BuildGoal(container, file);
+					if (goalError != null && !goalError.ContinueBuild)
+					{
+						return goalError;
+					}
+					else if (goalError != null)
+					{
+						logger.LogWarning(goalError.ToFormat().ToString());
+					}
 				}
 
 				goalFiles.AddRange(eventGoalFiles);
 				CleanGoalFiles(goalFiles);
 
-				await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.After, EventScope.EndOfApp, false);
-				
+				eventError = await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.After, EventScope.EndOfApp, true);
+				if (eventError != null && !eventError.IgnoreError)
+				{
+					return eventError;
+				}
+				else if (eventError != null)
+				{
+					logger.LogWarning(eventError.ToFormat().ToString());
+				}
+
+
 				logger.LogInformation("\n\nBuild done - Time:" + stopwatch.Elapsed.TotalSeconds.ToString("#,##.##") + " sec");
+
 			}
-			catch (StopBuilderException) { }
 			catch (Exception ex)
 			{
+				var error = new ExceptionError(ex);
 				var handler = exceptionHandlerFactory.CreateHandler();
-				if (!await handler.Handle(ex, 500, "error", ex.Message))
+				(var isHandled, var handleError) = await handler.Handle(error);
+				if (!isHandled)
 				{
-					await handler.ShowError(ex, 500, "error", ex.Message, null);
+					await handler.ShowError(error, null);
 				}
-				
+
 			}
+			return null;
 		}
 
 
@@ -132,6 +147,28 @@ namespace PLang.Building
 		{
 			var dirs = fileSystem.Directory.GetDirectories(".build", "", SearchOption.AllDirectories);
 
+			foreach (var goalFile in goalFiles)
+			{
+				var buildFolderRelativePath = Path.Join(".build", goalFile.Replace(fileSystem.RootDirectory, "")).Replace(".goal", "");
+				var buildFolderAbsolutePath = Path.Join(fileSystem.RootDirectory, buildFolderRelativePath);
+
+				dirs = dirs.Where(p => !p.StartsWith(buildFolderAbsolutePath)).ToArray();
+			}
+
+			foreach (var dir in dirs)
+			{
+				var folderPath = Path.Join(fileSystem.RootDirectory, dir.Replace(fileSystem.BuildPath, ""));
+				if (!fileSystem.Directory.Exists(folderPath) && fileSystem.Directory.Exists(dir))
+				{
+					fileSystem.Directory.Delete(dir, true);
+				}
+			}
+
+			var prGoalFiles = prParser.ForceLoadAllGoals();
+			int i = 0;
+
+			/*
+
 			var prGoalFiles = prParser.ForceLoadAllGoals();
 			foreach (var dir in dirs)
 			{
@@ -140,7 +177,18 @@ namespace PLang.Building
 				{
 					fileSystem.Directory.Delete(dir, true);
 				}
-			}
+
+				string goalFolder = dir.Replace(fileSystem.BuildPath, "");
+				string goalFolderPath = Path.Join(fileSystem.RootDirectory, goalFolder);
+				string goalFileName = dir.Replace(fileSystem.BuildPath, "") + ".goal";
+				string goalFilePath = Path.Join(fileSystem.RootDirectory, goalFileName);
+
+				if (!fileSystem.File.Exists(goalFilePath) && !fileSystem.Directory.Exists(goalFolderPath))
+				{
+					fileSystem.Directory.Delete(dir, true);
+				}
+
+			}*/
 		}
 
 
