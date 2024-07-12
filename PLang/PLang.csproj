@@ -69,7 +69,7 @@
     <PackageReference Include="Sprache" Version="2.3.1" />
     <PackageReference Include="System.CodeDom" Version="8.0.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.3" />
-    <PackageReference Include="System.IO.Abstractions" Version="20.0.28" />
+    <PackageReference Include="System.IO.Abstractions" Version="21.0.22" />
     <PackageReference Include="System.Linq.Dynamic.Core" Version="1.4.3" />
     <PackageReference Include="System.Management" Version="8.0.0" />
     <PackageReference Include="System.Net.Security" Version="4.3.2" />
