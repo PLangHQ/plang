@@ -4,7 +4,7 @@ This guide will walk you through the process of creating a Todo web service usin
 
 > [!CAUTION]
 > **Heads up: Building code costs money**
-> Each code line incurs usually between $0.03 - $0.15 fee via LLM. The payoff? Exceptional efficiency gains. You can choose to use [Plang service(simpler) or OpenAI(cheaper)](./PlangOrOpenAI.md). Using Plang service supports the project
+> Each code line incurs usually between $0.02 - $0.07 fee via LLM. The payoff? Exceptional efficiency gains. You can choose to use [Plang service(simpler) or OpenAI(cheaper)](./PlangOrOpenAI.md). Using Plang service supports the project
 
 ## Prerequisites
 
@@ -55,7 +55,7 @@ Note: Plang will automatically create and manage an `id` column for the table. B
 
 ### 3. Build and Run `Setup.goal`
 
-> Cost estimate: $0.02
+> Cost estimate: $0.01
 
 Execute the `Setup.goal` file to create the `Todos` table in the database.
 
@@ -104,7 +104,7 @@ Note: if you are familiar with SQL, you could also write `select * from Todos`, 
 
 ### 8. Build and Run the Code 
 
-> Cost estimate: $0.33
+> Cost estimate: $0.15
 
 If you are using VS Code, then press F5 on your keyboard to build and run the code.
 
@@ -118,7 +118,7 @@ This will start a web server with the logic you've defined.
 
 ### 9. Test the API Endpoints
 
-> Cost estimate: $0.14
+> Cost estimate: $0.07
 
 Lets create some data in your Todo list.
 
@@ -162,7 +162,7 @@ To retrieve the list of tasks, send a GET request to [http://localhost:8080/api/
 
 Alternatively, you can create a new `TestList.goal` file in the `test` directory with the following code:
 
-> Cost estimate: $0.05
+> Cost estimate: $0.025
 
 ```plang
 TestList 

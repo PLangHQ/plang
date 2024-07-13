@@ -16,7 +16,7 @@ In this tutorial we will cover the basics for working with plang. This includes.
 
 ### 1. Create StartWindow.goal
 
-> Cost estimated: $0.04
+> Cost estimated: $0.02
 
 Create the `StartWindow.goal` file as follows:
 
@@ -32,7 +32,7 @@ Create a new folder named `ui`.
 
 ### 3. Create Todos.goal
 
-> Cost estimated: $0.16
+> Cost estimated: $0.08
 
 In the `ui` folder, create a new file named `Todos.goal` with the following content:
 
@@ -47,7 +47,7 @@ Todos
 
 ### 4. Create AddTask.goal
 
-> Cost estimated: $0.12
+> Cost estimated: $0.06
 
 In the `ui` folder, create another file named `AddTask.goal` with the following content:
 
