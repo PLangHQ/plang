@@ -18,7 +18,7 @@ namespace PLangTests.Modules.CryptographicModule
 			base.Initialize();
 
 			context.AddOrReplace(Settings.SaltKey, "123");
-			p = new Program(settings, encryptionFactory);
+			p = new Program(settings, encryptionFactory, llmServiceFactory);
 			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, null);
 		}
 

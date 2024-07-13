@@ -116,5 +116,11 @@ namespace PLang.Services.EncryptionService
 
 
 		}
+
+		public string GetPrivateKey()
+		{
+			var key = GetKey();
+			return key.PrivateKey;
+		}
 	}
 }

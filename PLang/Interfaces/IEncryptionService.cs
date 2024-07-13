@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace PLang.Interfaces
+﻿namespace PLang.Interfaces
 {
 	public interface IEncryption
 	{
@@ -12,5 +6,6 @@ namespace PLang.Interfaces
 		string Encrypt(object data);
 		void GenerateKey();
 		string GetKeyHash();
+		string GetPrivateKey();
 	}
 }

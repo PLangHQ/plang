@@ -1,6 +1,8 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using Nethereum.ABI;
 using PLang.Errors;
+using PLang.Errors.AskUser;
+using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Services.LlmService;
@@ -10,6 +12,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using static Dapper.SqlMapper;
+using static PLang.Errors.AskUser.AskUserPrivateKeyExport;
 
 namespace PLang.Modules.CryptographicModule
 {
@@ -20,13 +23,47 @@ namespace PLang.Modules.CryptographicModule
 		private readonly IEncryption encryption;
 		private readonly ModuleSettings moduleSettings;
 		private readonly ISettings settings;
+		private readonly ILlmServiceFactory llmServiceFactory;
 
-		public Program(ISettings settings, IEncryptionFactory encryptionFactory) : base()
+		public Program(ISettings settings, IEncryptionFactory encryptionFactory, ILlmServiceFactory llmServiceFactory) : base()
 		{
 			this.encryption = encryptionFactory.CreateHandler();
 			this.moduleSettings = new ModuleSettings(settings);
 			this.settings = settings;
+			this.llmServiceFactory = llmServiceFactory;
 		}
+
+
+		public async Task<(string?, IError?)> GetPrivateKey()
+		{
+			// This should be handled by the AskUserPrivateKeyExport, this Program.cs should not know about it.
+			var lockTimeout = settings.GetOrDefault(typeof(AskUserPrivateKeyExport), LockedKey, DateTime.MinValue);
+			if (lockTimeout != DateTime.MinValue && lockTimeout > SystemTime.UtcNow().AddDays(-1))
+			{
+				return (null, new StepError($"System has been locked from exporting private keys. You will be able to export after {lockTimeout}", goalStep));
+			}
+
+			var response = settings.GetOrDefault<DecisionResponse>(typeof(AskUserPrivateKeyExport), "CryptographicModule", new DecisionResponse("none", "", DateTime.MinValue));
+			if (response == null || response.Level == "none" || response.Expires < SystemTime.UtcNow())
+			{
+				var error = new AskUserPrivateKeyExport(llmServiceFactory, settings, "CryptographicModule");
+				return (null, error);
+			}
+
+			if (response.Level.ToLower() == "low" || response.Level.ToLower() == "medium")
+			{
+				return (encryption.GetPrivateKey(), null);
+			}
+
+			return (null, new StepError(response.Explain, goalStep, "PrivateKeyLocked"));
+
+		}
+		public async Task<string> GetPrivateKeyHash()
+		{
+			return encryption.GetKeyHash();
+		}
+
+
 
 		public async Task<string> Encrypt(object content)
 		{
