@@ -103,7 +103,7 @@ namespace PLang.Modules.IdentityModule
 
 			if (response.Level.ToLower() == "low" || response.Level.ToLower() == "medium")
 			{
-				var identity = await GetMyIdentity();
+				var identity = identityService.GetCurrentIdentityWithPrivateKey();
 				return (identity.Value.ToString(), null);
 			}
 

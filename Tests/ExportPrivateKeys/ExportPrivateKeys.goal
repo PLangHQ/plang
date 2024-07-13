@@ -1,0 +1,9 @@
+ExportPrivateKeys
+- [crypt] export private key for encryption, write to %privateKey%
+- write out 'Encryption private key: %privateKey%'
+- [identity] export identity private key, write to %privateKey%
+- write out 'Identity private key: %privateKey%'
+- [message] export message private key, write to %privateKey%
+- write out 'Message private key: %privateKey%'
+- [blockchain] export blockchain private key, write to %privateKey%
+- write out 'Blockchain private key: %privateKey%'

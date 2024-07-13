@@ -43,10 +43,10 @@ namespace PLang.Modules.CryptographicModule
 				return (null, new StepError($"System has been locked from exporting private keys. You will be able to export after {lockTimeout}", goalStep));
 			}
 
-			var response = settings.GetOrDefault<DecisionResponse>(typeof(AskUserPrivateKeyExport), "CryptographicModule", new DecisionResponse("none", "", DateTime.MinValue));
+			var response = settings.GetOrDefault<DecisionResponse>(typeof(AskUserPrivateKeyExport), GetType().Name, new DecisionResponse("none", "", DateTime.MinValue));
 			if (response == null || response.Level == "none" || response.Expires < SystemTime.UtcNow())
 			{
-				var error = new AskUserPrivateKeyExport(llmServiceFactory, settings, "CryptographicModule");
+				var error = new AskUserPrivateKeyExport(llmServiceFactory, settings, GetType().Name);
 				return (null, error);
 			}
 

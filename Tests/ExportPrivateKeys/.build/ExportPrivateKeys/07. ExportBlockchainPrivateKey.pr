@@ -1,0 +1,65 @@
+{
+  "Action": {
+    "FunctionName": "GetPrivateKey",
+    "Parameters": [],
+    "ReturnValue": [
+      {
+        "Type": "ValueTuple`2",
+        "VariableName": "%privateKey%"
+      }
+    ]
+  },
+  "Text": "[blockchain] export blockchain private key, write to %privateKey%",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+    "type": "PLang.Modules.BlockchainModule.Builder",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\nVariables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nListenToApprovalEventOnSmartContract(String contractAddressOrSymbol, String goalToCall, String? subscriptIdVariableName = \"subscriptionId\")  : void \nListenToApprovalForAllEventOnSmartContract(String contractAddressOrSymbol, String goalToCall, String? subscriptIdVariableName = \"subscriptionId\")  : void \nListenToTransferBatchEventOnSmartContract(String contractAddressOrSymbol, String goalToCall, String? subscriptIdVariableName = \"subscriptionId\")  : void \nListenToUriEventOnSmartContract(String contractAddressOrSymbol, String goalToCall, String? subscriptIdVariableName = \"subscriptionId\")  : void \nListenToTransferSingleEventOnSmartContract(String contractAddressOrSymbol, String goalToCall, String? subscriptIdVariableName = \"subscriptionId\")  : void \nListenToTransferEventOnSmartContract(String contractAddressOrSymbol, String goalToCall, String? subscriptIdVariableName = \"subscriptionId\")  : void \nListenToEventOnSmartContract(String contractAddressOrSymbol, String abi, String goalToCall, String? subscriptIdVariableName = \"subscriptionId\")  : void \nStopListening(String subscriptionId)  : void \nSignTransfer(String recipient, String smartContractSymbolOrAddress, Int64 value)  : String \nListenToBlock(String callGoal, String? subcriptionId = \"subscriptionId\", String? callGoalOnUnsubscribe)  : void \nNameOfSmartContract(String contractAddressOrSymbol)  : Object \nTotalSupplyOnSmartContract(String contractAddressOrSymbol)  : Object \nGetMyBalanceOnSmartContract(String contractAddressOrSymbol)  : Object \nBalanceOfOnSmartContract(String contractAddressOrSymbol, String addressToCheckBalanceOf)  : Object \nBalanceOfBatchOnSmartContract(String contractAddressOrSymbol, String[] addresses, BigInteger[] ids)  : Object \nIsApprovedForAllOnSmartContract(String contractAddressOrSymbol, String accountAddress, String operatorAddress)  : Object \nCecimalsOnSmartContract(String contractAddressOrSymbol)  : Object \nAllowanceFromSmartContract(String contractAddressOrSymbol, String from, String to, BigInteger value)  : Object \nSymbolOnSmartContract(String contractAddressOrSymbol)  : Object \nSupportsInterfaceOnSmartContract(String contractAddressOrSymbol, String interfaceId)  : Object \nGetUriOnSmartContract(String contractAddressOrSymbol, BigInteger id)  : Object \nGetApprovedOnSmartContract(String contractAddressOrSymbol)  : Object \nApproveSmartContract(String contractAddressOrSymbol, String spender, BigInteger value, Boolean? waitForReceipt = False)  : Object \nMintSmartContract(String contractAddressOrSymbol, String to, BigInteger amount, Boolean? waitForReceipt = False)  : Object \nBurnSmartContract(String contractAddressOrSymbol, String account, BigInteger amount, Boolean? waitForReceipt = False)  : Object \nTransferSmartContract(String contractAddressOrSymbol, String to, BigInteger value, Boolean? waitForReceipt = False)  : Object \nTransferFromSmartContract(String contractAddressOrSymbol, String from, String to, BigInteger value, Boolean? waitForReceipt = False)  : Object \nSafeTransferFromErc721SmartContract(String contractAddressOrSymbol, String from, String to, BigInteger id, Boolean? waitForReceipt = False)  : Object \nSafeTransferFromErc1155SmartContract(String contractAddressOrSymbol, String from, String to, BigInteger[] ids, BigInteger[] amounts, Boolean? waitForReceipt = False)  : Object \nSafeBatchTransferFromSmartContract(String contractAddressOrSymbol, String from, String to, BigInteger value, Boolean? waitForReceipt = False)  : Object \nSetApprovalForAllOnSmartContract(String contractAddressOrSymbol, String operatorAddress, Boolean approved, Boolean? waitForReceipt = False)  : Object \nCallFunction(String contractAddressOrSymbol, String abi, Object[]? functionInputs)  : Object \nCallAndSignFunction(String contractAddressOrSymbol, String abi, Object[]? functionInputs, Boolean? waitForReceipt = False)  : Object  // Generate abi from functionName and functionInputs if not provided by user.. \nGetRpcServers()  : List`1 \nSetCurrentRpcServer(String nameOrUrl)  : void \nGetCurrentRpcServer()  : RpcServer \nGetWallets()  : List`1 \nSetCurrentWallet(String walletName)  : void \nGetOrCreateWallet()  : Wallet \nSetCurrentAddress(String address)  : void \nGetCurrentAddress()  : String \nGetNativeBalanceOfAddressInWei(String address)  : BigInteger \nGetNativeBalanceOfAddressToDecimalPoint(String address, Int32? decimalPlacesToUnit = 18)  : Decimal  // Get the balance in ETH, converts from Wei to Eth. \nGetDecimal(String contractAddress)  : UInt32 \nTransfer(String to, Decimal etherAmount, Nullable`1<Decimal>? gasPriceWei, Nullable`1<BigInteger>? gas, Nullable`1<BigInteger>? nonce)  : String \nTransferWaitForReceipt(String to, Decimal etherAmount, Nullable`1<Decimal>? gasPriceWei, Nullable`1<BigInteger>? gas, Nullable`1<BigInteger>? nonce)  : TransactionReceipt \nSendTransaction(String contractAddress, String abi, Object[] args)  : String  // Send a transaction and returns transaction hash. \nSendTransactionAndWaitForReceipt(String contractAddress, String abi, Object[] args)  : TransactionReceipt  // Send a transaction and waits for the transaction to finish. \nGetPrivateKey()  : ValueTuple`2\r\n## functions available ends ##\r\n## defined variables ##\r\nprivateKey (type:ValueTuple`2), \r\n## defined variables ##"
+          },
+          {
+            "type": "text",
+            "text": "# RPC servers available #\r\n[{\"IsDefault\":true,\"Name\":\"Mumbai - Polygon testnet\",\"Url\":\"wss://polygon-mumbai-bor.publicnode.com\",\"ChainId\":80001,\"IsTestNet\":true,\"HexChainId\":\"13881\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Matic (Polygon) mainnet\",\"Url\":\"wss://polygon-bor.publicnode.com\",\"ChainId\":137,\"IsTestNet\":false,\"HexChainId\":\"89\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Ethereum mainnet\",\"Url\":\"wss://ethereum.publicnode.com\",\"ChainId\":1,\"IsTestNet\":false,\"HexChainId\":\"1\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Ethereum testnet (Goerli)\",\"Url\":\"wss://ethereum-goerli.publicnode.com\",\"ChainId\":5,\"IsTestNet\":true,\"HexChainId\":\"5\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Binance mainnet\",\"Url\":\"wss://bsc.publicnode.com\",\"ChainId\":56,\"IsTestNet\":false,\"HexChainId\":\"38\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Binance testnet\",\"Url\":\"wss://bsc-testnet.publicnode.com\",\"ChainId\":97,\"IsTestNet\":true,\"HexChainId\":\"61\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Arbitrum One mainnet\",\"Url\":\"wss://arbitrum-one.publicnode.com\",\"ChainId\":42161,\"IsTestNet\":false,\"HexChainId\":\"A4B1\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Arbitrum Goerli testnet\",\"Url\":\"wss://arbitrum-goerli.publicnode.com\",\"ChainId\":421613,\"IsTestNet\":true,\"HexChainId\":\"66EED\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Optimism (OP) mainnet\",\"Url\":\"wss://optimism.publicnode.com\",\"ChainId\":10,\"IsTestNet\":false,\"HexChainId\":\"A\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Optimism (OP) Goerli testnet\",\"Url\":\"wss://optimism-goerli.publicnode.com\",\"ChainId\":420,\"IsTestNet\":true,\"HexChainId\":\"1A4\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Avalanche C-Chain mainnet\",\"Url\":\"wss://avalanche-c-chain.publicnode.com\",\"ChainId\":43114,\"IsTestNet\":false,\"HexChainId\":\"A86A\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Avalanche Fuji testnet\",\"Url\":\"wss://avalanche-fuji-c-chain.publicnode.com\",\"ChainId\":43113,\"IsTestNet\":true,\"HexChainId\":\"A869\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Gnosis mainnet\",\"Url\":\"wss://rpc.gnosischain.com/wss\",\"ChainId\":100,\"IsTestNet\":false,\"HexChainId\":\"64\",\"Setting\":null},{\"IsDefault\":false,\"Name\":\"Gnosis Chiado Testnet\",\"Url\":\"wss://rpc.chiadochain.net/wss\",\"ChainId\":10200,\"IsTestNet\":true,\"HexChainId\":\"27D8\",\"Setting\":null}]\r\n# RPC servers available #\r\n# wallet addresses #\r\n[{\"IsDefault\":false,\"IsArchived\":false,\"Addresses\":[\"0x9D9016f61873f686949E88302b3384Bf02173D3C\",\"0x5eA2e02925d8d8189de2c94AB641f66399d47691\",\"0x590eF9CAdbCD35F0E89dF93466F3cc21Fc901c39\",\"0x6d4e9d8E3b4238d2D77f07A9931c519C5bbD586A\",\"0x6877A9B8300041dFE8d35eEbc326d2553495D031\",\"0xe3fE9e6b97ed3AcAcf79fc753c51dF6Fdd3602aa\",\"0x7be953AF85E195d24E2E381Cd02a3e706E87294B\",\"0xe678d1abfe046fa703ae61c2a7E4A72dB5d1a42f\",\"0xd57D82Afec66D46ab35a4Dc5c6E7CE6f0Ca8713c\",\"0x7889E7cE515f5f295d531bC13D36a56ef78e562b\",\"0x1e4Ae20f560826Ae496a35fA0eBFA2D3E0eb16ed\",\"0x2520B26952d52a560817C79F830266f4Da1171A4\",\"0x4007197E7fc1325a93cb5018536f48a96dDdd750\",\"0x0053Be3348A219b62Dc64A26793B17d77D9A7682\",\"0x4193239513C615E5B8acE8FD6A53D22EDdA007EC\",\"0xFb87a38b32f868868D841ac6a042eAdB562ccA42\",\"0x67A03dDe792aF3Ebb446312D99e04B75be3D4F02\",\"0x5b2251a9C3b6A443088dc0E6Aa3Fff575e3A2b9e\",\"0x0e840d3Aec9438CEe46EdBe1a16136A570A49494\",\"0x8bAAbb508046Dc1B6cD7671b5b5b251EAE184164\"],\"Name\":\"First\",\"Seed\":\"\",\"PrivateKey\":\"\"}]\r\n# wallet addresses #"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "[blockchain] export blockchain private key, write to %privateKey%"
+          }
+        ]
+      }
+    ],
+    "model": "gpt-4o",
+    "caching": true,
+    "RawResponse": "```json\n{\n  \"FunctionName\": \"GetPrivateKey\",\n  \"Parameters\": [],\n  \"ReturnValue\": [\n    {\n      \"Type\": \"ValueTuple`2\",\n      \"VariableName\": \"%privateKey%\"\n    }\n  ]\n}\n```"
+  },
+  "RunOnBuild": false
+}
