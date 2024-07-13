@@ -19,6 +19,11 @@ namespace PLang.Services.EventSourceService
 			return 0;
 		}
 
+		public async Task<int> AddEventSourceData(string data, string privateKey, IDbTransaction? transaction)
+		{
+			return 0;
+		}
+
 		public async Task<List<SqliteEventSourceRepository.EventData>> GetUnprocessedData()
 		{
 			return new();
@@ -113,6 +118,11 @@ namespace PLang.Services.EventSourceService
 
 		}
 
+		public async Task<int> AddEventSourceData(string data, string privateKey, IDbTransaction? transaction)
+		{
+			int i = 0;
 
+			return i;
+		}
 	}
 }

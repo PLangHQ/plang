@@ -1,13 +1,7 @@
 ﻿using Dapper;
 using PLang.Services.EventSourceService;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static PLang.Modules.DbModule.ModuleSettings;
-using static PLang.Modules.DbModule.Program;
 
 namespace PLang.Interfaces
 {
@@ -15,6 +9,7 @@ namespace PLang.Interfaces
 	{
 		DataSource DataSource { get; set; } 
 		Task<int> Add(IDbConnection dbConnection, string sql, DynamicParameters parameters, IDbTransaction? transaction = null);
+		Task<int> AddEventSourceData(string data, string privateKey, IDbTransaction? transaction);
 		Task<List<SqliteEventSourceRepository.EventData>> GetUnprocessedData();
 	}
 }

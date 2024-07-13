@@ -1,9 +1,8 @@
 ﻿using PLang.Errors.Builder;
-using System.CodeDom;
 
 namespace PLang.Errors.AskUser
 {
-    public record AskUserError(string Message, Func<object[]?, Task<(bool, IError?)>> Callback) : CallbackError(Message, Callback, AskUserError.Key), IError, IBuilderError
+	public record AskUserError(string Message, Func<object[]?, Task<(bool, IError?)>> Callback) : CallbackError(Message, Callback, AskUserError.Key), IError, IBuilderError
     {
         public static readonly new string Key = "AskUser";
 

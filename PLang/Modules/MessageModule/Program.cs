@@ -13,7 +13,9 @@ using Org.BouncyCastle.Asn1.X9;
 using PLang.Attributes;
 using PLang.Container;
 using PLang.Errors;
+using PLang.Errors.AskUser;
 using PLang.Errors.Handlers;
+using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
@@ -27,6 +29,7 @@ using System.Configuration;
 using System.Reactive.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Websocket.Client;
+using static PLang.Errors.AskUser.AskUserPrivateKeyExport;
 
 
 namespace PLang.Modules.MessageModule
@@ -43,6 +46,7 @@ namespace PLang.Modules.MessageModule
 		private readonly ILogger logger;
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
+		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly INostrClient client;
 		private readonly IPLangSigningService signingService;
 		private readonly IOutputStreamFactory outputStreamFactory;
@@ -65,6 +69,7 @@ namespace PLang.Modules.MessageModule
 			this.logger = logger;
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
+			this.llmServiceFactory = llmServiceFactory;
 			this.client = client;
 			this.signingService = signingService;
 			this.outputStreamFactory = outputStreamFactory;
@@ -413,6 +418,34 @@ namespace PLang.Modules.MessageModule
 				return null;
 			}
 			return NostrPrivateKey.FromBech32(key.PrivateKeyBech32);
+
+		}
+
+
+
+		public async Task<(string?, IError?)> GetPrivateKey()
+		{
+			// This should be handled by the AskUserPrivateKeyExport, this Program.cs should not know about it.
+			var lockTimeout = settings.GetOrDefault(typeof(AskUserPrivateKeyExport), LockedKey, DateTime.MinValue);
+			if (lockTimeout != DateTime.MinValue && lockTimeout > SystemTime.UtcNow().AddDays(-1))
+			{
+				return (null, new StepError($"System has been locked from exporting private keys. You will be able to export after {lockTimeout}", goalStep));
+			}
+
+			var response = settings.GetOrDefault<DecisionResponse>(typeof(AskUserPrivateKeyExport), this.GetType().Name, new DecisionResponse("none", "", DateTime.MinValue));
+			if (response == null || response.Level == "none" || response.Expires < SystemTime.UtcNow())
+			{
+				var error = new AskUserPrivateKeyExport(llmServiceFactory, settings, this.GetType().Name);
+				return (null, error);
+			}
+
+			if (response.Level.ToLower() == "low" || response.Level.ToLower() == "medium")
+			{
+				var wallet = GetCurrentKey();
+				return (wallet.PrivateKeyBech32, null);
+			}
+
+			return (null, new StepError(response.Explain, goalStep, "PrivateKeyLocked"));
 
 		}
 	}

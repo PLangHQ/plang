@@ -109,7 +109,12 @@ namespace PLang.Modules
 			this.function = function; // this is to give sub classes access to current function running.
 			try
 			{
-				MethodInfo method = await methodHelper.GetMethod(this, function);
+				MethodInfo? method = await methodHelper.GetMethod(this, function);
+				if (method == null)
+				{
+					return new StepError($"Could not load method {function.FunctionName} to run", goalStep, "MethodNotFound", 500);
+				}
+
 				logger.LogDebug("Method:{0}.{1}({2})", goalStep.ModuleType, method.Name, method.GetParameters());
 
 				//TODO: Should move this caching check up the call stack. code is doing to much work before returning cache

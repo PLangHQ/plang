@@ -14,14 +14,19 @@ using Nethereum.Web3.Accounts;
 using Newtonsoft.Json;
 using PLang.Attributes;
 using PLang.Building.Model;
+using PLang.Errors.AskUser;
+using PLang.Errors.Runtime;
+using PLang.Errors;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
+using PLang.Services.EncryptionService;
 using PLang.Services.LlmService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Numerics;
 using System.Text;
+using static PLang.Errors.AskUser.AskUserPrivateKeyExport;
 using static PLang.Modules.BlockchainModule.ModuleSettings;
 
 namespace PLang.Modules.BlockchainModule
@@ -36,6 +41,7 @@ namespace PLang.Modules.BlockchainModule
 	{
 		private readonly IWeb3 web3;
 		private readonly ISettings settings;
+		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
 		private readonly ILogger logger;
@@ -51,6 +57,7 @@ namespace PLang.Modules.BlockchainModule
 			IPseudoRuntime pseudoRuntime, IEngine engine, ILogger logger,PLangAppContext context) : base()
 		{
 			this.settings = settings;
+			this.llmServiceFactory = llmServiceFactory;
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
 			this.logger = logger;
@@ -697,6 +704,33 @@ namespace PLang.Modules.BlockchainModule
 
 			moduleSettings.CreateWallet("Default", true);
 			return GetWallets().Result[0];
+		}
+
+
+		public async Task<(string?, IError?)> GetPrivateKey()
+		{
+			// This should be handled by the AskUserPrivateKeyExport, this Program.cs should not know about it.
+			var lockTimeout = settings.GetOrDefault(typeof(AskUserPrivateKeyExport), LockedKey, DateTime.MinValue);
+			if (lockTimeout != DateTime.MinValue && lockTimeout > SystemTime.UtcNow().AddDays(-1))
+			{
+				return (null, new StepError($"System has been locked from exporting private keys. You will be able to export after {lockTimeout}", goalStep));
+			}
+
+			var response = settings.GetOrDefault<DecisionResponse>(typeof(AskUserPrivateKeyExport), this.GetType().Name, new DecisionResponse("none", "", DateTime.MinValue));
+			if (response == null || response.Level == "none" || response.Expires < SystemTime.UtcNow())
+			{
+				var error = new AskUserPrivateKeyExport(llmServiceFactory, settings, this.GetType().Name);
+				return (null, error);
+			}
+
+			if (response.Level.ToLower() == "low" || response.Level.ToLower() == "medium")
+			{
+				var wallet = GetCurrentWallet();
+				return (wallet.Seed, null);
+			}
+
+			return (null, new StepError(response.Explain, goalStep, "PrivateKeyLocked"));
+
 		}
 
 	}

@@ -1,9 +1,15 @@
-﻿using PLang.Interfaces;
+﻿using PLang.Errors.AskUser;
+using PLang.Errors.Runtime;
+using PLang.Errors;
+using PLang.Interfaces;
 using PLang.Model;
 using PLang.Modules;
+using PLang.Services.EncryptionService;
+using PLang.Services.LlmService;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using System.ComponentModel;
+using static PLang.Errors.AskUser.AskUserPrivateKeyExport;
 
 namespace PLang.Modules.IdentityModule
 {
@@ -13,12 +19,14 @@ namespace PLang.Modules.IdentityModule
 		private readonly IPLangIdentityService identityService;
 		private readonly IPLangSigningService signingService;
 		private readonly ISettings settings;
+		private readonly ILlmServiceFactory llmServiceFactory;
 
-		public Program(IPLangIdentityService identityService, IPLangSigningService signingService, ISettings settings)
+		public Program(IPLangIdentityService identityService, IPLangSigningService signingService, ISettings settings, ILlmServiceFactory llmServiceFactory)
 		{
 			this.identityService = identityService;
 			this.signingService = signingService;
 			this.settings = settings;
+			this.llmServiceFactory = llmServiceFactory;
 		}
 
 		[Description("Get the current identity, also called %MyIdentity%")]
@@ -77,6 +85,31 @@ namespace PLang.Modules.IdentityModule
 			return await signingService.VerifySignature(settings.GetSalt(), content, method, url, validationKeyValues);
 		}
 
-		
+		public async Task<(string?, IError?)> GetPrivateKey()
+		{
+			// This should be handled by the AskUserPrivateKeyExport, this Program.cs should not know about it.
+			var lockTimeout = settings.GetOrDefault(typeof(AskUserPrivateKeyExport), LockedKey, DateTime.MinValue);
+			if (lockTimeout != DateTime.MinValue && lockTimeout > SystemTime.UtcNow().AddDays(-1))
+			{
+				return (null, new StepError($"System has been locked from exporting private keys. You will be able to export after {lockTimeout}", goalStep));
+			}
+
+			var response = settings.GetOrDefault<DecisionResponse>(typeof(AskUserPrivateKeyExport), GetType().Name, new DecisionResponse("none", "", DateTime.MinValue));
+			if (response == null || response.Level == "none" || response.Expires < SystemTime.UtcNow())
+			{
+				var error = new AskUserPrivateKeyExport(llmServiceFactory, settings, GetType().Name);
+				return (null, error);
+			}
+
+			if (response.Level.ToLower() == "low" || response.Level.ToLower() == "medium")
+			{
+				var identity = identityService.GetCurrentIdentityWithPrivateKey();
+				return (identity.Value.ToString(), null);
+			}
+
+			return (null, new StepError(response.Explain, goalStep, "PrivateKeyLocked"));
+
+		}
+
 	}
 }
