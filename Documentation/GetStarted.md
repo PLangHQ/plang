@@ -2,7 +2,7 @@
 
 > [!CAUTION]
 > **Heads up: Building code costs money**
-> Each code line incurs usually between $0.01 - $0.07 fee via LLM. The payoff? Exceptional efficiency gains. You can choose to use [Plang service(simpler) or OpenAI(cheaper)](./PlangOrOpenAI.md). Using Plang service supports the project
+> Each code line incurs usually between $0.005 - $0.015 fee via LLM. The payoff? Exceptional efficiency gains. You can choose to use [Plang service(simpler) or OpenAI(cheaper)](./PlangOrOpenAI.md). Using Plang service supports the project
 
 This guide is specifically designed to cater to new Plang users. Whether you're on Windows, Linux, or macOS, this guide will help you navigate through the initial stages of Plang programming with ease. 
 
@@ -20,7 +20,7 @@ Visual Studio Code as your code editor with the Plang extension installed. For m
 
 ## 3. First plang app, "Hello plang world"
 
-> You will see ***Cost estimate: $0.XXX*** in the text. This is the estimate cost of building the code. It is an estimate since each request to LLM can be different and have different costs. You will be asked to fill up you account with plang.is or if you use OpenAI api key, you can divide the cost by 2.
+> You will see ***Cost estimate: $0.0XX*** in the text. This is the estimate cost of building the code. It is an estimate since each request to LLM can be different and have different costs. You will be asked to fill up you account with plang.is or if you use OpenAI api key, you can divide the cost by 2.
 
 
 Watch this helpful video tutorial: [Hello World in Plang](https://www.youtube.com/watch?v=iGW4btk34yQ)
