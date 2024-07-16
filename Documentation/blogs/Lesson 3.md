@@ -1,13 +1,13 @@
-# Lets create and app
+# Lesson 3: Let's Create an App
 
-Lets create an app that downloads user information from a url and writes into database.
+Let's create an app that downloads user information from a URL and writes it into a database.
 
-We will be using 
+We will be using:
 ```curl
 https://jsonplaceholder.typicode.com/users/1
 ```
 
-it gives us this json
+It gives us this JSON:
 ```json
 {
   "id": 1,
@@ -34,18 +34,20 @@ it gives us this json
 }
 ```
 
-We want to store the name, email, address. So to store something, we need a database. Luckely plang has built in database. So lets define that table
+We want to store the name, email, and address.
 
-We create `Setup.goal` file, and give the Goal name `Setup`
+To store something, we need a database. Luckily, Plang has a built-in database. So let's define that table.
+
+We create `Setup.goal` file and give the goal name `Setup`:
 
 ```plang
 Setup
 - create table users, columns: name, email, address(json), created(datetime, now)
 ```
 
-I also added the created date, always nice to have.
+I also added the created date; always nice to have.
 
-Next we want to create the `Start.goal` file, and give it the goal name `Start`
+Next, we want to create the `Start.goal` file and give it the goal name `Start`:
 
 ```plang
 Start
@@ -55,32 +57,32 @@ Start
 - write out %users%
 ```
 
-lets now build this code. if you are on VS Code, press F5, you can even set break points
-
-You should see the output in your Debug panel 
-
-For those using console/terminal, open it in the working dir and run
+Open the console/terminal, go to the working directory, and run:
 ```bash
 plang build
 ```
-it will fail, it fails because the tables haven't been created in the database, and we need them to validate the `insert` and `select` queries.
 
-So now you have to run 
-```plang
+It will build the `Setup.goal` file, and then it will fail.
+
+It fails because the tables haven't been created in the database, and we need them to validate the `insert` and `select` queries.
+
+So now you have to run:
+```bash
 plang run setup
 ```
-and after that you can run 
 
-```plang
+The `Setup` file will run and create the table in the database.
+
+Now you can run:
+```bash
 plang build
 ```
- again.
-after you have built it, run
+
+After you have built it, run:
 ```bash
 plang
 ```
 
-You should now see one user, refresh and they will become 2
+You should now see one user; refresh, and they will become two.
 
-
-Next is [Lesson 4 - How does it really work?](./Lesson%204.md)
+Next is [Lesson 4 - How Does It Really Work?](./Lesson%204.md).

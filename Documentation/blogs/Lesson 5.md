@@ -1,8 +1,8 @@
-# Errors, Retry, Caching and Events
+# Lesson 5: Errors, Retry, Caching and Events
 
 ## Errors
 
-if you want to handle error for you code, it very simple
+If you want to handle errors in your code, it's very simple:
 
 ```plang
 - read file.txt into %content%
@@ -13,24 +13,54 @@ HandleError
 - write out %!error%
 ```
 
-There you learn how to call another goal, and there we handle error that happen.
+Here you learn how to call another goal and handle errors that occur.
 
-You have options, such as 
+You have options, such as:
 
- ```plang
+```plang
 - read file.txt into %content%
     on error that contains 'not found', call !HandleNotFound
-    on other errors !HandleError
+    on other errors call !HandleError
 - write out %content%
 ```
 
-so you are flexible on what error you catch
+So you are flexible on which errors you catch.
+
+## Retry
+
+If a step fails, you can make the program retry that step again.
+
+```plang
+GetHttp
+- https://jsonplaceholder.typicode.com/users/1
+    retry 5 times over a 5 minute period
+    write to %response%
+- write out %response%
+```
+
+Here your program will retry 5 times over a 5-minute period.
+
+## Caching
+
+It's easy to cache:
+
+```plang
+GetHttp
+- run expensiveCalculations.py, %number1%, %number2%
+    cache for 10 minutes
+    write to %results%
+- write out %results%
+```
+
+The program here calls an external Python script that is expensive to run and caches the result for 10 minutes.
+
+This is also beneficial for the external script as it doesn't need to handle caching.
 
 ## Events
 
-You can bind events to application start & end, goal start & end and step start & end.
+You can bind events to application start & end, goal start & end, and step start & end.
 
-To create events, start by creating a folder `Events` (case senstive, one of few things in plang). Now create `Events.goal`, this file contains the events that will be bound.
+To create events, start by creating a folder named `Events` (case sensitive, one of the few things in Plang). Now create `Events.goal`. This file contains the events that will be bound.
 
 ```plang
 Events
@@ -39,12 +69,12 @@ Events
 - before step, call !BenchmarkTimer
 ```
 
-You can even bind an event to a varible, even if it doesn't exist
+You can even bind an event to a variable, even if it doesn't exist:
 
-```
+```plang
 - when var %content% is created, call !ContentCreated
 - on %content% update, call !ContentUpdate
 - on %content% remove, call !ContentRemoved
 ```
 
-Lesson 6 - Next steps
+## Go to [Next Steps >>](./Lesson%206.md)

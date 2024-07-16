@@ -48,3 +48,9 @@ LoadUser
 Now I have access to the variable `%userId%` in my goals. This is practical because you might want to keep behaviour data about your users, such as when the account was created.
 
 > Note: The sql query automatically loads the columns as `%variables%` from the sql query when you return 1 row
+
+## More documentation
+
+That is it for now, help me build, come and checkout the [issue for the documentation](https://github.com/PLangHQ/plang/issues/42)
+
+See also possible your [next steps](./Lesson%206.md)
