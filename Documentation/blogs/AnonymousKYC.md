@@ -240,14 +240,22 @@ Create `RegisterUser.goal` in the `api` folder:
 
 ```plang
 RegisterUser
-- select name, address, phone from users u
-    join users_companies uc on uc.user_id=u.id
-    where uc.serviceIdentity=%Identity% and uc.identity=%userIdentity%
-    write to %userInfo%
-- if %userInfo% is empty
-    - insert into users_companies %Identity%, %serviceIdentity%
+- select id from users where %Identity%
+- if %id% is empty then
+    - write out {type:"register", url:"https://kyc.com/register?identity=%Identity%"}
+- if %id% is not empty then
+    - select name, address, phone from users u
+        join users_companies uc on uc.user_id=u.id
+        where uc.serviceIdentity=%Identity% and uc.identity=%userIdentity%
+        write to %userInfo%
+    - if %userInfo% is empty
+        - insert into users_companies %Identity%, %serviceIdentity%
 - write out 'ok'
 ```
+
+If the user has registered with kyc.com he will get the url, open it in browser and fill out the registration web form. KYC services already have this web forms setup. The point is, we don't need to reinvent things that already exist. 
+
+After the user has registered, we link the user with the company
 
 This goal is called by the KYC app on the user's computer, `RegisterIdentity`.
 
@@ -286,6 +294,8 @@ GetUserInfo
     userIdentity=%userIdentity%, ip=%ip%
 - write out %userInfo%
 ```
+
+In this case we are just writing down the request into user_request table, but of course the kyc service can implement their own version of this.
 
 ## Is This Anonymous KYC?
 
