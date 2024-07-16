@@ -5,7 +5,7 @@ We will start by learning how to structure your code. This is a natural language
 First are the files & folders. There are a few important ones:
 
 - `Start.goal` - This is the default entry point into a Plang app.
-- `Setup.goal` - This is where you set up the system, create tables, and insert config data. This only runs once in the lifetime of your application.
+- `Setup.goal` - This is where you set up the system, create tables, and insert config data. Each `step` only runs once in the lifetime of your application.
 - `Events` folder - You can bind events to goals and steps.
 - `.build` folder - Where your code is compiled to.
 - `.db` folder - Contains the database.
