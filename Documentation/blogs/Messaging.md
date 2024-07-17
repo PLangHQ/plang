@@ -41,7 +41,7 @@ Start
 - get the public address for message, write to %publicAddress%
 - write out 'Your address is: %publicAddress%'
 - listen to message from 'npub...', 
-    on new message call ProcessMessage %message%=content
+    on new message call ProcessMessage, content goes into %message%
 
 ProcessMessage
 - write out 'Message from phone: %message%'
