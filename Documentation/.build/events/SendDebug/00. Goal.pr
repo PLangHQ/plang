@@ -19,7 +19,8 @@
       "ErrorHandler": {
         "IgnoreErrors": false,
         "OnExceptionContainingTextCallGoal": null,
-        "ContinueToNextStep": false
+        "ContinueToNextStep": false,
+        "EndGoal": false
       },
       "RetryHandler": {
         "RetryCount": 3,
@@ -85,9 +86,9 @@
   "RelativeGoalFolderPath": "\\events",
   "RelativePrPath": ".build\\events\\SendDebug\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\SendDebug",
-  "BuilderVersion": "0.1.0.9",
+  "BuilderVersion": "0.1.0.11",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "ad6a52925b2ba6b983ac3be5bf6deb92541844247eba4eca40dc7f114b3af3e5"
+  "Hash": "fd30cdac88dc47df323d30ab492441b5cd9e80529e97be39a95de574ba3c9fcf"
 }

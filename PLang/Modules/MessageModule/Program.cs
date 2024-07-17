@@ -179,6 +179,9 @@ namespace PLang.Modules.MessageModule
 			else
 			{
 				since = settings.GetOrDefault(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_" + publicKey, SystemTime.OffsetUtcNow());
+				// Since Nostr uses unix timestamp, second is the most granual timestamp. Get only message created 1 second after our last message recieved
+				// not sure this is good or correct.
+				since = since.AddSeconds(1);
 			}
 
 			client.Send(
@@ -218,7 +221,10 @@ namespace PLang.Modules.MessageModule
 			{
 				//For preventing multiple calls on same message. I don't think this is the correct way, but only way I saw.
 				var hashOfLastMessage = settings.GetOrDefault(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_hash_" + publicKey, "");
-				if (hashOfLastMessage == hash) return null;
+				if (hashOfLastMessage == hash)
+				{
+					return null;
+				}
 
 				var memoryCache = System.Runtime.Caching.MemoryCache.Default;
 				if (memoryCache.Contains("NostrId_" + hash)) return null;

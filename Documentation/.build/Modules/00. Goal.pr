@@ -145,9 +145,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules",
-  "BuilderVersion": "0.1.0.9",
+  "BuilderVersion": "0.1.0.11",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "6c1ffb59791a8491c35917947c7abebff857cffac29b087aef882e0f67ed0b51"
+  "Hash": "2fe3cb82070c27364c7a0ee1c0be7e8b61f73c30a25d471da8242242d91c0fdc"
 }

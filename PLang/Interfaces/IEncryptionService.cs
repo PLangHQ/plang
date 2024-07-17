@@ -2,10 +2,11 @@
 {
 	public interface IEncryption
 	{
-		T Decrypt<T>(string data);
-		string Encrypt(object data);
+		void AddPrivateKey(string privateKey);
+		T Decrypt<T>(string data, string? keyHash = null);
+		string Encrypt(object data, string? keyHash = null);
 		void GenerateKey();
 		string GetKeyHash();
-		string GetPrivateKey();
+		string GetPrivateKey(string? keyHash = null);
 	}
 }
