@@ -212,9 +212,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\PlangExamples\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\PlangExamples",
-  "BuilderVersion": "0.1.0.9",
+  "BuilderVersion": "0.1.0.11",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "dcdb65196de959cc90a521bccebd005a8b5949a2650da826ed791ed354edab6e"
+  "Hash": "42fd4990232c6d55e59962b11de3093f2b7f1589c26561580a8e473f60822d8c"
 }

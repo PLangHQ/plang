@@ -1,12 +1,14 @@
 ﻿using Dapper;
 using IdGen;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
+using PLang.Errors;
 using PLang.Interfaces;
 using PLang.Utils;
-using System.ComponentModel.DataAnnotations;
 using System.Data;
+using System.Data.Common;
+using System.Reflection;
 using static PLang.Modules.DbModule.ModuleSettings;
-using static PLang.Modules.DbModule.Program;
 
 namespace PLang.Services.EventSourceService
 {
@@ -19,9 +21,9 @@ namespace PLang.Services.EventSourceService
 			return 0;
 		}
 
-		public async Task<int> AddEventSourceData(string data, string privateKey, IDbTransaction? transaction)
+		public async Task<(int, IError?)> AddEventSourceData(IDbConnection dbConnection, long id, string data, string keyHash, IDbTransaction? transaction)
 		{
-			return 0;
+			return (0, null);
 		}
 
 		public async Task<List<SqliteEventSourceRepository.EventData>> GetUnprocessedData()
@@ -44,12 +46,22 @@ namespace PLang.Services.EventSourceService
 
 
 		public record EventRow(long Id, string Data, string Pkey, bool Proccessed);
-		public record EventData(string ConnectionString, string Sql, object? Parameters);
+		public record EventData(string ConnectionString, string Sql, Dictionary<string, object>? Parameters);
 
 
 		public async Task<int> Add(IDbConnection dbConnection, string sql, DynamicParameters? parameters, IDbTransaction? transaction = null)
 		{
-			var eventData = new EventData(dbConnection.ConnectionString, sql, parameters);
+			var parameterValues = new Dictionary<string, object>();
+			if (parameters != null)
+			{
+				foreach (var paramName in parameters.ParameterNames)
+				{
+					object obj = parameters.Get<object>(paramName);
+					parameterValues.Add(paramName, obj);
+				}
+			}
+
+			var eventData = new EventData(dbConnection.ConnectionString, sql, parameterValues);
 			var encryptedData = encryption.Encrypt(eventData);
 
 			var pkey = encryption.GetKeyHash();
@@ -65,7 +77,7 @@ namespace PLang.Services.EventSourceService
 
 				await dbConnection.ExecuteAsync("INSERT INTO __Events__ (id, data, key_hash, processed) VALUES (@id, @data, @key_hash, 1)",
 				new { id = eventId, data = encryptedData, key_hash = pkey }, transaction);
-			
+				
 				var result = await dbConnection.ExecuteAsync(sql, parameters, transaction);
 
 				return result;
@@ -118,11 +130,37 @@ namespace PLang.Services.EventSourceService
 
 		}
 
-		public async Task<int> AddEventSourceData(string data, string privateKey, IDbTransaction? transaction)
+		public async Task<(int, IError?)> AddEventSourceData(IDbConnection dbConnection, long id, string data, string keyHash, IDbTransaction? transaction)
 		{
-			int i = 0;
+			var decryptedData = encryption.Decrypt<EventData>(data, keyHash);
 
-			return i;
+			var param = new DynamicParameters();
+			if (decryptedData.Parameters != null)
+			{
+				foreach (var item in decryptedData.Parameters)
+				{
+					param.Add(item.Key, item.Value);
+				}
+			}
+
+			await dbConnection.ExecuteAsync("INSERT OR IGNORE INTO __Events__ (id, data, key_hash, processed) VALUES (@id, @data, @key_hash, 1) ",
+				new { id, data, key_hash = keyHash }, transaction);
+
+			int result = 0;
+			try
+			{
+				result = await dbConnection.ExecuteAsync(decryptedData.Sql, param, transaction);
+			} catch (Exception ex)
+			{
+				string message = ex.ToString().ToLower();
+				if (message.Contains("unique constraint failed") || message.Contains("already exists") || message.Contains("duplicate column name"))
+				{
+					return (result, null);
+				}
+				return (0, new Error(ex.Message, "SqlError", Exception: ex));
+			}
+
+			return (result, null);
 		}
 	}
 }

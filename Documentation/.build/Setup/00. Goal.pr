@@ -1485,9 +1485,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Setup\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Setup",
-  "BuilderVersion": "0.1.0.9",
+  "BuilderVersion": "0.1.0.11",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "2a4ec306e5b7744f50fc4f06080cc352711d4742221cb10d7862b948aa81f8cd"
+  "Hash": "fb4b1b937f4f158d33b88e6cfae2ac51a4360895219800b6fcfc09a5f618bd76"
 }

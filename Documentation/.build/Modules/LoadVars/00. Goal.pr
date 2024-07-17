@@ -86,7 +86,8 @@
       "ErrorHandler": {
         "IgnoreErrors": true,
         "OnExceptionContainingTextCallGoal": null,
-        "ContinueToNextStep": true
+        "ContinueToNextStep": true,
+        "EndGoal": false
       },
       "RetryHandler": null,
       "CacheHandler": null,
@@ -224,7 +225,8 @@
       "ErrorHandler": {
         "IgnoreErrors": false,
         "OnExceptionContainingTextCallGoal": null,
-        "ContinueToNextStep": true
+        "ContinueToNextStep": true,
+        "EndGoal": false
       },
       "RetryHandler": null,
       "CacheHandler": null,
@@ -488,9 +490,9 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\LoadVars\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\LoadVars",
-  "BuilderVersion": "0.1.0.9",
+  "BuilderVersion": "0.1.0.11",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "1d7c6f00ffaeb9a2caeb826097559c40c7c4ba0d84e3dbfb61e49e66efa9f069"
+  "Hash": "aa806fd25949e3bcfbe7ef0460edf51e0dc17bc77fbf30725c6ce4968997feb4"
 }

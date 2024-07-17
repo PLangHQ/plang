@@ -63,6 +63,11 @@ namespace PLang.Modules.CryptographicModule
 			return encryption.GetKeyHash();
 		}
 
+		public async Task AddPrivateKey(string privateKey)
+		{
+			encryption.AddPrivateKey(privateKey);
+		}
+
 
 
 		public async Task<string> Encrypt(object content)

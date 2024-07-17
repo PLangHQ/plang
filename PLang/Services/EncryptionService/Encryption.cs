@@ -36,33 +36,50 @@ namespace PLang.Services.EncryptionService
 
 		}
 
+		public void AddPrivateKey(string privateKey)
+		{
+			var keys = settings.GetValues<EncryptionKey>(this.GetType());
+            if (keys.FirstOrDefault(p => p.PrivateKey == privateKey) == null)
+            {
+				keys.Add(new EncryptionKey(privateKey, keys.Count == 0));
+				settings.SetList(this.GetType(), keys);
+			}
+		}
+
 		public string GetKeyHash()
 		{
 			var key = GetKey();
 			return key.PrivateKey.ComputeHash().Hash;
 		}
 
-		private EncryptionKey GetKey()
+		private EncryptionKey GetKey(string? keyHash = null)
 		{
-			
-
 			var keys = settings.GetValues<EncryptionKey>(this.GetType());
 			if (keys.Count == 0)
 			{
 				GenerateKey();
 				keys = settings.GetValues<EncryptionKey>(this.GetType());
 			}
-			var key = keys.FirstOrDefault(p => p.IsDefault);
+
+			EncryptionKey? key;
+			if (keyHash != null)
+			{
+				key = keys.FirstOrDefault(p => p.PrivateKey.ComputeHash().Hash == keyHash);
+			}
+			else
+			{
+				key = keys.FirstOrDefault(p => p.IsDefault);
+			}
 			if (key != null) return key;
 
-			return keys[0];
+			throw new Exception("Key to decrypt could not be found");
 		}
 
-		public string Encrypt(object data)
+		public string Encrypt(object data, string? keyHash = null)
 		{
 			var json = JsonConvert.SerializeObject(data);
 			byte[] dataBytes = Encoding.UTF8.GetBytes(json);
-			var key = GetKey();
+			var key = GetKey(keyHash);
 			using (var aes = Aes.Create())
 			{
 				aes.Key = Convert.FromBase64String(key.PrivateKey);
@@ -85,7 +102,7 @@ namespace PLang.Services.EncryptionService
 		}
 
 
-		public T Decrypt<T>(string data)
+		public T Decrypt<T>(string data, string? keyHash = null)
 		{
 			byte[] allBytes = Convert.FromBase64String(data);
 
@@ -94,7 +111,7 @@ namespace PLang.Services.EncryptionService
 			Buffer.BlockCopy(allBytes, 0, iv, 0, iv.Length);
 			byte[] encryptedData = new byte[allBytes.Length - iv.Length];
 			Buffer.BlockCopy(allBytes, iv.Length, encryptedData, 0, encryptedData.Length);
-			var key = GetKey();
+			var key = GetKey(keyHash);
 			using (var aes = Aes.Create())
 			{
 				aes.Key = Convert.FromBase64String(key.PrivateKey);
@@ -117,9 +134,9 @@ namespace PLang.Services.EncryptionService
 
 		}
 
-		public string GetPrivateKey()
+		public string GetPrivateKey(string? keyHash = null)
 		{
-			var key = GetKey();
+			var key = GetKey(keyHash);
 			return key.PrivateKey;
 		}
 	}

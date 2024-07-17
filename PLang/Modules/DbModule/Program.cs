@@ -320,11 +320,12 @@ namespace PLang.Modules.DbModule
 			}
 		}
 
-		public async Task<(int, IError?)> InsertEventSourceData(string data, string privateKey)
+		public async Task<(int, IError?)> InsertEventSourceData(long id, string data, string keyHash)
 		{
 			var transaction = context[DbTransactionContextKey] as IDbTransaction;
-			int rowsAffected = await eventSourceRepository.AddEventSourceData(data, privateKey, transaction);
-			return (rowsAffected, null);
+			IDbConnection connection = context.ContainsKey(DbConnectionContextKey) ? context[DbConnectionContextKey] as IDbConnection : dbConnection;
+
+			return await eventSourceRepository.AddEventSourceData(connection, id, data, keyHash, transaction);
 		}
 
 
