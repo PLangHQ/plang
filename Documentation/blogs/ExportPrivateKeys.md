@@ -70,4 +70,17 @@ Anybody can write their [own implementation](https://github.com/PLangHQ/plang/bl
 
 Check out the [AskUserPrivateKeyExport.cs](https://github.com/PLangHQ/plang/blob/main/PLang/Errors/AskUser/AskUserPrivateKeyExport.cs)
 
+## Other private keys in plang
+
+There are 3 other private keys in plang, Identity, Message and Blockchain. Same can be done for them. 
+
+The idea here is that you have 2 or more devices, and you can safely share the private key between them. 
+
+Good example is the Identity private key, if you use a web service that you have created account with, you most likely want to have the same account with that web service on you laptop and on your phone.
+
+## Tests
+
+You can check out the [Test for extracting the private keys](https://github.com/PLangHQ/plang/blob/main/Tests/ExportPrivateKeys/ExportPrivateKeys.goal) in the Test folder in the repo
+
+---
 **One weak point**: of course that can be zero days and plang has not had security audit so there are probably other weak points, but in theory, there should only be one weak point in a system that runs on public/private key. Plang will get there.

@@ -60,7 +60,7 @@ Message
 Set the current account by providing a public key or a name.
 ```plang
 Message
-- set current account with public key or name 'Alice'
+- set current account with name 'Alice'
 ```
 
 ### Additional Examples
@@ -71,13 +71,6 @@ Listen for new messages starting from a specific date and time.
 ```plang
 Message
 - listen for new message from '1st January 2024', call !NewMessage, write content to %messageContent%
-```
-
-#### Send a Message with Expiration
-Send a message that expires in 2 weeks.
-```plang
-Message
-- send message to %pubKey%, 'This message will expire in 2 weeks', expires in 2 weeks
 ```
 
 ## Notes
