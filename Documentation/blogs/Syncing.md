@@ -40,6 +40,8 @@ Sharing the private key between two devices is easy as Plang has a built-in mess
 
 I want to show an example of how this is done in Plang code. You should have [Plang already set up](https://github.com/PLangHQ/plang/blob/main/Documentation/Install.md) if you want to run this.
 
+You can find the [repository here](https://github.com/PLangHQ/apps/tree/main/SimpleSyncDemo). You dont need to build it. When exporting private key you will need to have access to LLM. If you are not using OpenAI key, you will be asked to register.
+
 First, we set up the database:
 
 ```plang
@@ -67,13 +69,23 @@ I have two devices running the same task list app. This is the code for it:
 
 ```plang
 Start
-- List for new message from %Settings.OtherDevicePublicKey%, 
-    on new message call ProcessMessage, load message into %content% 
-- ask user, "What would you like to do?\n1. List out tasks\n2.Add task\3. Send Private key", write to %choice%
+- if %Settings.OtherDevicePublicKey% is not empty then, 
+    call ListenForMessage, else PrintOutMyPubAddress    
+- ask user, "What would you like to do?\n1. List out tasks\n2.Add task\3. Set address to other device", 
+    must be a number between 1-3
+    write to %choice%
 - if %choice% == 1 then call ShowList
 - if %choice% == 2 then call AskForTask
-- if %choice% == 3 then call SendPrivateKey
+- if %choice% == 3 then call SetOtherDevicePublicKey
 - call goal Start
+
+ListenForMessage
+- List for new message from %Settings.OtherDevicePublicKey%, 
+        on new message call ProcessMessage, load message into %content% 
+
+PrintOutMyPubAddress
+- get public address for message, %pubAddress%
+- write out 'My message address is: %pubAddress%'
 
 ShowList
 - select * from tasks, write out %tasks%
@@ -84,29 +96,40 @@ AskForTask
 - call goal AddTask
 
 Sync
-- select id, data, keyHash from __Events__ where id > %Settings.LastSyncId% order by id, write to %events%
-- for each %events%, call SendSync
+- if %Settings.OtherDevicePublicKey% is not empty then
+    - select id, data, keyHash from __Events__ 
+        where id > %Settings.LastSyncId% order by id, write to %events%
+    - for each %events%, call SendSync
 
 ProcessMessage
 - write out 'Received message: %content.type%'
 - if %content.type% == "private_key", call StorePrivateKey, else WriteToEventsTable eventData=%content%
 
 StorePrivateKey
-- set value %Settings.PrivateKey% = %content.value%
+- add %content.value% as private key to encryption, 
 
 SendSync
 - send a message to %Settings.OtherDevicePublicKey%
-	content={"type":"event", id:"%item.id%", data:"%item.data%", key_hash:"%item.key_hash%"}
+    content={"type":"event", id:"%item.id%", data:"%item.data%", key_hash:"%item.key_hash%"}
 - set value %Settings.LastSyncId% = %item.id%    
 
 WriteToEventsTable
-- insert event source data into db, %eventData.id%, %eventData.data%, %eventData.key_hash%%, %Settings.PrivateKey%
+- insert event source data into db, %eventData.id%, %eventData.data%, %eventData.key_hash%
 - write out 'Data added'
 - call goal Start
 
 AddTask
 - insert into tasks, text=%text%, due_date=%Now+1day%
 - call goal Sync
+
+SetOtherDevicePublicKey
+- ask user 'What is the message address', 
+    cannot be empty, must start with 'npub'
+    write to %npubAddress%
+- set %Settings.OtherDevicePublicKey% = %npubAddress%
+- [crypt] get private key for encryption,  write to %pk%
+- send message to %Settings.OtherDevicePublicKey%, 
+        content={"type":"private_key", value:"%pk%"}
 ```
 
 There you have syncing between two devices, in about 40 lines of code. Completely secure and private* 🤯
