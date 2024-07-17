@@ -18,7 +18,7 @@ Just to name a few:
 
 * Your data is yours. Data is not yours when you use a service; Google (or any other service) can [close your account at any time](https://www.jefftk.com/p/how-likely-is-losing-a-google-account) without ever giving you an explanation.
 * Speed. Apps should become faster as they don’t need to retrieve data from the internet.
-* Privacy and Security by default. Data lives on your computer, and you will not sell it (at least it’s your choice); no service can look at your data. It is also expensive to hack indiviual computers rather then services with millions of users.
+* Privacy and Security by default. Data lives on your computer, and you will not sell it (at least it’s your choice); no service can look at your data. It is also expensive to hack individual computers rather then services with millions of users.
 * No “End of Service.” Services often close their doors. When your app & data live on your computer, you will never have an end of service.
 * [Backend development is a fraction](https://youtu.be/VLgmjzERT08?si=CxgzZQtis3wDv1hC&t=1194) of what is needed with the "regular" way, which means lower overhead and costs.
 
@@ -132,7 +132,7 @@ SetOtherDevicePublicKey
         content={"type":"private_key", value:"%pk%"}
 ```
 
-There you have syncing between two devices, in about 40 lines of code. Completely secure and private* 🤯
+There you have syncing between two devices, in about 60 lines of code. Completely secure and private* 🤯
 
 I call it a "bad" syncing service because messages aren’t really ideal for sending this type of data en masse, but it should be fine for small apps, something that we as individuals usually have. Just think about your task list; how much do you change that each day? Not that much.
 
@@ -156,15 +156,15 @@ There are many good solutions out there, and I hope they will be integrated into
 
 ## Running the Code
 
-You can see a video of me running this code. You need to do it in a specific order because you need to set the public keys at the right time.
+You need to run in a specific order because you need to set the public keys at the right time.
 
 The UX is not so nice, but hey, this is just a simple demo. It’s also a console, and [GUI is still in its proof of concept phase](https://github.com/PLangHQ/plang/blob/main/Documentation/Todo_UI.md).
 
 ## Messaging
 
-The messaging is using the Nostr protocol to send messages. It is built into the Plang language. Having messaging built into the language is really powerful, as you can see. It also means that I am not creating a custom protocol or implementing some custom encryption.
+The messaging uses the [Nostr protocol](https://nostr.com/) to send messages. It is built into the Plang language. Having messaging built into the language is really powerful, as you can see. It also means that I am not creating a custom protocol or implementing custom encryption.
 
-The data is actually encrypted twice. The data that is sent using Nostr is encrypted on the computer before creating the Nostr message, then the Nostr library sends an encrypted message using the public key of the receiver.
+The data is actually encrypted twice. The data sent using Nostr is encrypted on the computer before creating the Nostr message, then the Nostr library sends an encrypted message using the public key of the receiver.
 
 ## Exporting Private Keys
 
