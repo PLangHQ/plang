@@ -14,6 +14,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using SeleniumExtras.WaitHelpers;
+using System.Collections.Generic;
 
 namespace PLang.Modules.WebCrawlerModule
 {
@@ -286,12 +287,39 @@ namespace PLang.Modules.WebCrawlerModule
 			return elements;
 		}
 
-		public async Task<List<string>> ExtractContent(bool clearHtml = true, string? cssSelector = null)
+		public async Task<string> FindElementAndExtractAttribute(string attribute, string? cssSelector = null, IWebElement? element = null)
 		{
 			cssSelector = GetCssSelector(cssSelector);
 			List<string> results = new List<string>();
-			var driver = await GetDriver();
-			var elements = driver.FindElements(By.CssSelector(cssSelector));
+
+			ReadOnlyCollection<IWebElement> elements;
+			if (element != null)
+			{
+				elements = element.FindElements(By.CssSelector(cssSelector));
+			}
+			else
+			{
+				var driver = await GetDriver();
+				elements = driver.FindElements(By.CssSelector(cssSelector));
+			}
+			return "";
+		}
+
+		public async Task<List<string>> ExtractContent(bool clearHtml = true, string? cssSelector = null, IWebElement? element = null)
+		{
+			cssSelector = GetCssSelector(cssSelector);
+			List<string> results = new List<string>();
+
+			ReadOnlyCollection<IWebElement> elements;
+			if (element != null)
+			{
+				elements = element.FindElements(By.CssSelector(cssSelector));
+			}
+			else
+			{
+				var driver = await GetDriver();
+				elements = driver.FindElements(By.CssSelector(cssSelector));
+			}
 			foreach (var e in elements)
 			{
 				string text = (clearHtml) ? e.GetAttribute("innerText") : e.GetAttribute("outerHTML");

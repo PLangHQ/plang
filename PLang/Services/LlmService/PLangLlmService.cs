@@ -193,7 +193,7 @@ What is name of payer?", GetCountry));
 				string strUsed = response.Headers.GetValues("X-User-Used").FirstOrDefault();
 				if (strUsed != null && long.TryParse(strUsed, out long used))
 				{
-					costWarning += " - used now $" + (((double)used) / 1000000).ToString("N3");
+					costWarning += " - used now $" + (((double)used) / 1000000).ToString("N5");
 					memoryStack.Put("__LLM_Used__", used);
 				}
 			}

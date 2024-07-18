@@ -96,7 +96,3 @@ If Plang is interesting to you, you should dig a bit deeper:
 * [Documentation](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.MessageModule.md) on the message module
 * Check out the [GitHub repo](https://github.com/PLangHQ/)
 * [Meet up on Discord](https://discord.gg/A8kYUymsDD) to discuss or get help
-
----
-
-I've corrected a few typos and added some punctuation for clarity. The content remains the same, but it's now free of errors.

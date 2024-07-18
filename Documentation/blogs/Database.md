@@ -17,7 +17,7 @@ Setup
 
 Here we are defining the table `tasks`, with two columns: `text` and `due_date`.
 
-If you are not familiar with Plang, there is not really any syntax; you just need to follow [simple rules that structure the goal file](./Lesson%202.md).
+If you are not familiar with Plang, there is not really any syntax; you just need to follow [simple rules that structure the goal file](https://github.com/PLangHQ/plang/blob/main/Documentation/blogs/Lesson%202.md).
 
 So you can write the `create table` in multiple ways. You can write it the way you would like, as long as your intent is clear.
 
@@ -78,3 +78,12 @@ Start
 ## Other Databases
 
 Plang supports other databases as well. You can read more about it in the [Services documentation](https://github.com/PLangHQ/plang/blob/main/Documentation/Services.md#location-of-injection-code).
+
+## More Information
+
+If Plang is interesting to you, you should dig a bit deeper:
+
+* [Basic concepts and lessons](https://github.com/PLangHQ/plang/blob/main/Documentation/blogs/Lesson%202.md)
+* [Simple Todo example](https://github.com/PLangHQ/plang/blob/main/Documentation/Todo_webservice.md) is a good start
+* Check out the [GitHub repo](https://github.com/PLangHQ/)
+* [Meet up on Discord](https://discord.gg/A8kYUymsDD) to discuss or get help

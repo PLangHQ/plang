@@ -138,19 +138,24 @@
       }
     },
     {
-      "Text": "[llm] system: %system%\n    user:%content%\n    model:'gpt-4-turbo'\n    max length: 4000\n    scheme: {moduleName:string, namespace:string, desc:string, [{functions:string[], parameters:[{type:string, name:string, (defaultValue:string|required:yes)}, ...], returns:type|void}]}\n    logger: warning\n    write to %module%",
+      "Text": "[llm] system: %system%\n    user:%content%\n    scheme: {moduleName:string, namespace:string, desc:string, [{functions:string[], parameters:[{type:string, name:string, (defaultValue:string|required:yes)}, ...], returns:type|void}]}\n    logger: warning\n    write to %module%",
       "Comment": null,
       "ModuleType": "PLang.Modules.LlmModule",
-      "Name": "WriteModuleInformation",
-      "Description": "Use the LLM module to generate a description of a module with specific parameters and write the output to a specified file path.",
-      "PrFileName": "03. WriteModuleInformation.pr",
-      "RelativePrPath": ".build\\Modules\\GenerateModuleDocumentation\\03. WriteModuleInformation.pr",
+      "Name": "GenerateModuleScheme",
+      "Description": "Generate a module scheme based on the provided system and user content, and log any warnings. Write the output to the specified module.",
+      "PrFileName": "03. GenerateModuleScheme.pr",
+      "RelativePrPath": ".build\\Modules\\GenerateModuleDocumentation\\03. GenerateModuleScheme.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-04-17T12:23:32.1643897+00:00",
+      "Generated": "2024-07-18T10:18:36.6401537+00:00",
       "WaitForExecution": true,
-      "ErrorHandler": null,
+      "ErrorHandler": {
+        "IgnoreErrors": false,
+        "OnExceptionContainingTextCallGoal": null,
+        "ContinueToNextStep": false,
+        "EndGoal": false
+      },
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
@@ -164,7 +169,7 @@
         "presencePenalty": 0.0,
         "maxLength": 4000,
         "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
+        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64 = 50,\n\"CacheKey\": string = ,\n\"CachingType\": int32 = 0} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean = False,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... } = ,\n\"ContinueToNextStep\": boolean = False,\n\"EndGoal\": boolean = False} = null,\n\"RetryHandler\"?: {\"RetryCount\"?: Int32 = ,\n\"RetryDelayInMilliseconds\"?: Int32 = } = null}",
         "type": "StepBuilder",
         "promptMessage": [
           {
@@ -172,11 +177,11 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors defined by user, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Default is true. Indicates if code should wait for execution to finish.\r\nErrorHandler: How to handle errors defined by user, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
+                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64 = 50,\n\"CacheKey\": string = ,\n\"CachingType\": int32 = 0} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean = False,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... } = ,\n\"ContinueToNextStep\": boolean = False,\n\"EndGoal\": boolean = False} = null,\n\"RetryHandler\"?: {\"RetryCount\"?: Int32 = ,\n\"RetryDelayInMilliseconds\"?: Int32 = } = null}"
               }
             ]
           },
@@ -194,14 +199,14 @@
             "content": [
               {
                 "type": "text",
-                "text": "[llm] system: %system%\n    user:%content%\n    model:'gpt-4-turbo'\n    max length: 4000\n    scheme: {moduleName:string, namespace:string, desc:string, [{functions:string[], parameters:[{type:string, name:string, (defaultValue:string|required:yes)}, ...], returns:type|void}]}\n    logger: warning\n    write to %module%"
+                "text": "[llm] system: %system%\n    user:%content%\n    scheme: {moduleName:string, namespace:string, desc:string, [{functions:string[], parameters:[{type:string, name:string, (defaultValue:string|required:yes)}, ...], returns:type|void}]}\n    logger: warning\n    write to %module%"
               }
             ]
           }
         ],
-        "model": "gpt-4-turbo",
+        "model": "gpt-4o",
         "caching": true,
-        "RawResponse": "{\n  \"StepName\": \"WriteModuleInformation\",\n  \"StepDescription\": \"Use the LLM module to generate a description of a module with specific parameters and write the output to a specified file path.\",\n  \"Modules\": [\n    \"PLang.Modules.LlmModule\"\n  ],\n  \"WaitForExecution\": true\n}"
+        "RawResponse": "```json\n{\n  \"StepName\": \"GenerateModuleScheme\",\n  \"StepDescription\": \"Generate a module scheme based on the provided system and user content, and log any warnings. Write the output to the specified module.\",\n  \"Modules\": [\"PLang.Modules.LlmModule\"],\n  \"WaitForExecution\": true,\n  \"ErrorHandler\": {\n    \"IgnoreErrors\": false,\n    \"ContinueToNextStep\": false,\n    \"EndGoal\": false\n  }\n}\n```"
       }
     },
     {
@@ -223,7 +228,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 3,
-      "LineNumber": 15,
+      "LineNumber": 13,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -290,7 +295,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 4,
-      "LineNumber": 16,
+      "LineNumber": 14,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -357,7 +362,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 5,
-      "LineNumber": 17,
+      "LineNumber": 15,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -424,7 +429,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 6,
-      "LineNumber": 18,
+      "LineNumber": 16,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -491,7 +496,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 7,
-      "LineNumber": 19,
+      "LineNumber": 17,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -558,7 +563,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 8,
-      "LineNumber": 20,
+      "LineNumber": 18,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -625,7 +630,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 9,
-      "LineNumber": 21,
+      "LineNumber": 19,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -692,7 +697,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 10,
-      "LineNumber": 22,
+      "LineNumber": 20,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -759,7 +764,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 11,
-      "LineNumber": 23,
+      "LineNumber": 21,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -819,5 +824,5 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "27fbd2510bb50836b0488d4b6a1f8f784f32ed0d44bfbe575dec0120fe071fc6"
+  "Hash": "040204eb3773ca075f3181ca026ad4d28e70a68bc5007d511aaf8ebe4357b2ea"
 }
