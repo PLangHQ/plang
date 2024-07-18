@@ -85,7 +85,7 @@ So why not just say that to the computer?
 
 [Plang](https://plang.is) is an intent-based programming language designed to abstract away the complexity of traditional coding. Instead of focusing on the minutiae of syntax and setup, Plang allows you to express your intentions directly.
 
-Let’s create a file called `Start.goal` in a folder, any folder you choose.
+Let’s create a file called `Start.goal` in a folder, any folder you choose. [Install Plang](https://github.com/PLangHQ/plang/blob/main/Documentation/Install.md) if you want to do this
 
 In that `Start.goal`, write this text:
 
@@ -393,7 +393,9 @@ Setup
 - create table users, columns: name(not null), email(not null, unique)
 ```
 
-And then the code for SELECT, INSERT, and UPDATE. Create `DbWork.goal` file:
+And then the code for SELECT, INSERT, and UPDATE. 
+
+Create `DbWork.goal` file:
 
 ```plang
 DbWork
