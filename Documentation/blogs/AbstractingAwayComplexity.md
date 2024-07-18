@@ -4,9 +4,7 @@ Building software today is too complex. It takes us months to learn to code the 
 
 Depending on the language you use, just getting started on a project is a challenge.
 
-I remember setting up my first TypeScript project. After a day or two of figuring out how to set it up, I just copy the `package.json` and `tsconfig.json` files when I created a new TypeScript project. I never really fully understood everything that was happening. 
-
-Like this article if you do the same 🤷‍♂️
+I remember setting up my first TypeScript project. It took me a day or two to figure out how to set it up. Now, I just copy the `package.json` and `tsconfig.json` files when I created a new TypeScript project. I never really fully understood everything that was happening. 
 
 When we have our projects set up, we start a fight with our code. It is incredibly verbose (a lot of text we need to write) and it needs to be 100% correct, otherwise everything fails. Miss a comma, and you can spend hours looking for the reason why the code is failing.
 
