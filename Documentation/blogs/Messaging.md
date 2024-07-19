@@ -16,7 +16,7 @@ To understand it, make sure to go through some of the [lessons we have](https://
 
 There are some Nostr clients out there. I recommend [Damus (iOS)](https://apps.apple.com/us/app/damus/id1628663131) and [Amethyst (Android)](https://play.google.com/store/apps/details?id=com.vitorpamplona.amethyst&hl=en).
 
-Download either of these clients to your phone. This allows us to communicate with our Plang app.
+Download either of these clients to your phone. This allows us to communicate with the Plang app we are building in this tutorial.
 
 After you have set it up, create a new account and find the public address by clicking your profile picture and going into your profile.
 
