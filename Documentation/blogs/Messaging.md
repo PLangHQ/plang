@@ -1,7 +1,3 @@
-Sure, I'll review your text and make any necessary corrections.
-
----
-
 # Messaging
 
 Plang has built-in messaging. It uses the [Nostr protocol](https://nostr.com/) by default to do this.
@@ -41,7 +37,7 @@ Start
 - get the public address for message, write to %publicAddress%
 - write out 'Your address is: %publicAddress%'
 - listen to message from 'npub...', 
-    on new message call ProcessMessage, content goes into %message%
+    on new message call ProcessMessage, content of goes into %message%
 
 ProcessMessage
 - write out 'Message from phone: %message%'
@@ -66,7 +62,7 @@ Try sending a message from your phone to the `npub` address that was printed out
 Now we want to send a message to our phone.
 
 Create a new file `SendMessage.goal`:
-
+> Make sure to put in you npub address from your phone instead of 'npub....'
 ```plang
 SendMessage
 - send a message to 'npub....',
