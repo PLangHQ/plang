@@ -52,7 +52,7 @@ namespace PLang.Building.Model
 		public string? Comment { get; set; }
 		public string Text { get; set; }
 		public List<GoalStep> GoalSteps { get; set; }
-		public string? Description { get; internal set; }
+		public string? Description { get; set; }
 		public Visibility Visibility { get; set; }
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
@@ -116,14 +116,18 @@ namespace PLang.Building.Model
 
 		public string GetGoalAsString()
 		{
-			string goal = this.GoalName;
+			string goal = "";
+			if (!string.IsNullOrWhiteSpace(Comment)) goal = $"/ {this.Comment}\n";
+			goal += this.GoalName;
 			foreach (var step in GoalSteps)
 			{
+				if (!string.IsNullOrWhiteSpace(step.Comment)) goal += $"/ {step.Comment}\n";
 				goal += "- ".PadLeft(step.Indent, ' ') + step.Text + "\n";
 			}
 			return goal;
 		}
 
+		public string[] IncomingVariablesRequired { get; set; }
 
 
 	}

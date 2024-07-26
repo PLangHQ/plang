@@ -48,6 +48,7 @@ namespace PLang.Services.CompilerService
 			Assemblies.Add("System.Diagnostics.Process.dll");
 			Assemblies.Add("System.Memory.dll");
 			Assemblies.Add("TestableIO.System.IO.Abstractions.Wrappers.dll");
+			Assemblies.Add("PlangLibrary.dll");
 		}
 
 		public string GetPreviousBuildDllNamesToExclude(GoalStep step)
@@ -311,6 +312,11 @@ Search for {fileName} - https://www.nuget.org/packages?q={fileName}"));
 
 					foreach (var diagnostic in errors)
 					{
+						string str = diagnostic.ToString();
+						if (str.Contains("PLangFileSystem.PLangFileSystem("))
+						{
+							error += "PLangFileSystem.PLangFileSystem cannot be contructed it is an abstract class. It must me injected into ExecutePlangCode(IPlangFileSystem fileSystem...)\n";
+						}
 						error += diagnostic.ToString() + "\n";
 					}
 					error += "\nFix the error and generate the C# code again. Make sure to reference all assemblies needed.";

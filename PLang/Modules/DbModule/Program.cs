@@ -18,6 +18,7 @@ using System.Text;
 using static Dapper.SqlMapper;
 using PLang.Errors;
 using PLang.Errors.Builder;
+using PLang.Errors.Runtime;
 
 namespace PLang.Modules.DbModule
 {
@@ -182,8 +183,13 @@ namespace PLang.Modules.DbModule
 					}
 					if (isInsert && parameterName == "id" && eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 					{
-						var generator = new IdGenerator(1);
-						param.Add("@" + parameterName, generator.ElementAt(0), DbType.Int64);
+						var id = p.VariableNameOrValue;
+						if (string.IsNullOrEmpty(p.VariableNameOrValue.ToString()))
+						{
+							var generator = new IdGenerator(1);
+							id = generator.ElementAt(0);
+						}
+						param.Add("@" + parameterName, id, DbType.Int64);
 					}
 					else if (p.VariableNameOrValue == null)
 					{
@@ -529,7 +535,7 @@ namespace PLang.Modules.DbModule
 					ShowWarning(ex);
 					return (rowsAffected, null);
 				}
-				throw;
+				return (0, new ProgramError(ex.Message, goalStep, function, Exception: ex));
 			}
 			finally
 			{
@@ -592,17 +598,19 @@ namespace PLang.Modules.DbModule
 				return (0, new Error($"Table {tableName} could not be found", "TableNotFound"));
 			}
 
-			string? sql = GetBulkSql(tableName, columnsInTable, items);
+			string? sql = GetBulkSql(tableName, columnsInTable, items, dataSource);
 			if (sql == null) return (0, null);
 
-			var param = new List<object>();
+			
 
 			int affectedRows = 0;
 			var generator = new IdGenerator(items.Count);
 			await BeginTransaction();
 
+			// TODO: This is actually not the most optimized bulk insert, it's inserting each row at a time
 			for (int i = 0; i < items.Count; i++)
 			{
+				var param = new List<object>();
 				var row = (JObject)items[i];
 
 				foreach (var column in columnsInTable)
@@ -620,18 +628,20 @@ namespace PLang.Modules.DbModule
 						}
 						else
 						{
-							param.Add(new ParameterInfo(column.name, obj, obj.GetType().FullName));
+							param.Add(new ParameterInfo(column.name, obj, ConvertFromColumnTypeToCSharpType(column.type)));
 						}
 					}
 
 				}
 				var insertResult = await Insert(sql, param);
+				//bad thing, but just because Id generator, getting same id
+				Thread.Sleep(1);
 				if (insertResult.error != null)
 				{
 					await Rollback();
 					return (0, insertResult.error);
 				}
-				affectedRows += (await Insert(sql, param)).Item1;
+				affectedRows += insertResult.Item1;
 			}
 
 			await EndTransaction();
@@ -640,7 +650,20 @@ namespace PLang.Modules.DbModule
 
 		}
 
-		private string? GetBulkSql(string tableName, List<dynamic> columnsInTable, List<object> items)
+		private string ConvertFromColumnTypeToCSharpType(string type)
+		{
+			if (type == "TEXT") return typeof(String).FullName;
+			if (type == "INTEGER") return typeof(long).FullName;
+			if (type == "REAL") return typeof(double).FullName;
+			if (type == "BLOB") return typeof(byte[]).FullName;
+			if (type == "NUMERIC") return typeof(double).FullName;
+			if (type == "BOOLEAN") return typeof(bool).FullName;
+			if (type == "NULL") return typeof(DBNull).FullName;
+
+			throw new Exception($"Could not map type: {type} to C# object");
+		}
+
+		private string? GetBulkSql(string tableName, List<dynamic> columnsInTable, List<object> items, ModuleSettings.DataSource dataSource)
 		{
 			if (items.Count == 0) return null;
 
@@ -648,6 +671,11 @@ namespace PLang.Modules.DbModule
 			var row = (JObject)items[0];
 			string? columns = null;
 			string? values = null;
+			if (dataSource.KeepHistory)
+			{
+				columns = "id";
+				values = "@id";
+			}
 			foreach (var column in columnsInTable)
 			{
 				if (row.ContainsKey(column.name))

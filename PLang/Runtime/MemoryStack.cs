@@ -821,7 +821,7 @@ namespace PLang.Runtime
 							value = array;
 						} else
 						{
-							value = array[0].ToArray();
+							value = array[0];
 						}
 						
 					}

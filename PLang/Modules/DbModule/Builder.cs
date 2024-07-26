@@ -299,13 +299,13 @@ Variable is defined with starting and ending %, e.g. %filePath%.
 SqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
 TypeFullName is Full name of the type in c#, System.String, System.Double, etc.
 {appendToSystem}
+String sql IS required
 
 If table name is a variable, keep the variable in the sql statement
 You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
 You MUST provide SqlParameters if SQL has @parameter.
-");
 
-			SetAssistant(@"# examples #
+# examples #
 ""delete from tableX"" => sql: ""DELETE FROM tableX"", warning: Missing WHERE statement can affect rows that should not
 ""delete tableB where id=%id%"" => sql: ""DELETE FROM tableB WHERE id=@id"", warning: null
 ""delete * from %table% WHERE %name% => sql: ""DELETE FROM %table% WHERE name=@name""

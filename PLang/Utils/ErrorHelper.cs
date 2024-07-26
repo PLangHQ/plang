@@ -39,7 +39,7 @@ namespace PLang.Utils
 			}
 			return text;
 		}
-		public static object ToFormat(string contentType, IError error, string[]? propertyOrder = null)
+		public static object ToFormat(string contentType, IError error, string[]? propertyOrder = null, string? extraInfo = null)
 		{
 			var errorType = error.GetType();
 			var properties = error.GetType().GetProperties();
@@ -170,6 +170,8 @@ namespace PLang.Utils
 🚫 Reason: {reasonAndFix}
 
 {errorSource}
+
+{extraInfo}
 ".TrimEnd();
 
 			if (contentType == "json")

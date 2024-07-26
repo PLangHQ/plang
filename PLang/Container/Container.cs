@@ -413,7 +413,7 @@ namespace PLang.Container
 
 				AppDomain.CurrentDomain.AssemblyResolve += (sender, resolveArgs) =>
 				{
-					string assemblyPath = Path.Combine(fileSystem.RootDirectory, ".modules", new AssemblyName(resolveArgs.Name).Name + ".dll");
+					string assemblyPath = fileSystem.Path.Combine(fileSystem.RootDirectory, ".modules", new AssemblyName(resolveArgs.Name).Name + ".dll");
 					if (fileSystem.File.Exists(assemblyPath))
 					{
 						return Assembly.LoadFile(assemblyPath);
@@ -543,7 +543,7 @@ namespace PLang.Container
 
 			AppDomain.CurrentDomain.AssemblyResolve += (sender, resolveArgs) =>
 			{
-				string assemblyPath = Path.Combine(fileSystem.RootDirectory, ".services", new AssemblyName(resolveArgs.Name).Name + ".dll");
+				string assemblyPath = fileSystem.Path.Combine(fileSystem.RootDirectory, ".services", new AssemblyName(resolveArgs.Name).Name + ".dll");
 				if (fileSystem.File.Exists(assemblyPath))
 				{
 					return Assembly.LoadFile(assemblyPath);
@@ -551,12 +551,12 @@ namespace PLang.Container
 				return null;
 			};
 
-			string dllFilePath = Path.GetDirectoryName(Path.Combine(fileSystem.GoalsPath, ".services", injectorType));
+			string dllFilePath = fileSystem.Path.GetDirectoryName(fileSystem.Path.Combine(fileSystem.GoalsPath, ".services", injectorType));
 			string[] dllFiles = [ dllFilePath ];
 			if (!fileSystem.File.Exists(dllFilePath))
 			{
 				//var dirName = Path.GetDirectoryName(injectorType);
-				var moduleFolderPath = Path.Combine(fileSystem.GoalsPath, ".services", dllFilePath);
+				var moduleFolderPath = fileSystem.Path.Combine(fileSystem.GoalsPath, ".services", dllFilePath);
 				if (!fileSystem.Directory.Exists(moduleFolderPath))
 				{
 					var logger = container.GetInstance<ILogger>();

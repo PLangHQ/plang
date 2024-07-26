@@ -151,6 +151,11 @@ example of answer:
 				{
 					error += $"{methodParameter.Name} ({methodType}) is missing from parameters. {methodParameter.Name} is a required parameter\n";
 				}
+				
+				if (parameter != null && parameter.Value != null && methodType == "string" && parameter.Value.ToString().StartsWith("\"") && parameter.Value.ToString().EndsWith("\""))
+				{
+					error += $"{methodParameter.Name} is string, the property Value cannot start and end with quote(\").";
+				}
 
 				if (methodType == "nullable" && methodParameter.ParameterType.GenericTypeArguments.Length > 0)
 				{

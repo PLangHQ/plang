@@ -213,14 +213,22 @@ Your job is:
 3. Return a valid JSON
 
 Variable is defined with starting and ending %, e.g. %filePath%. 
-Variables MUST be wrapped in quotes("") in json response, e.g. {{ ""name"":""%name%"" }}
+%Variable% MUST be wrapped in quotes("") in json response, e.g. {{ ""name"":""%name%"" }}
 Variables should not be changed, they can include dot(.) and parentheses()
 Keep \n, \r, \t that are submitted to you for string variables
+Parameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==
+
+== QuoteExample ==
+get url ""http://example.org"" => Value: ""http://example.org""
+write out 'Hello world' => Value: ""Hello world""
+== QuoteExample ==
 
 If there is some api key, settings, config replace it with %Settings.Get(""settingName"", ""defaultValue"", ""Explain"")% 
 - settingName would be the api key, config key, 
 - defaultValue for settings is the usual value given, make it """" if no value can be default
 - Explain is an explanation about the setting that novice user can understand.
+
+
 
 JSON scheme information
 FunctionName: Name of the function to use from list of functions, if no function matches set as ""N/A""

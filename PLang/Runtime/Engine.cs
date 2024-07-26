@@ -218,7 +218,7 @@ namespace PLang.Runtime
 			{
 				logger.LogDebug("Initiate new engine for scheduler");
 				containerForScheduler = new ServiceContainer();
-				((ServiceContainer)containerForScheduler).RegisterForPLangConsole(fileSystem.GoalsPath, Path.DirectorySeparatorChar.ToString());
+				((ServiceContainer)containerForScheduler).RegisterForPLangConsole(fileSystem.GoalsPath, fileSystem.Path.DirectorySeparatorChar.ToString());
 			}
 
 			var schedulerEngine = containerForScheduler.GetInstance<IEngine>();
@@ -232,7 +232,7 @@ namespace PLang.Runtime
 		private async Task<IError?> RunSetup()
 		{
 
-			string setupFolder = Path.Combine(fileSystem.BuildPath, "Setup");
+			string setupFolder = fileSystem.Path.Combine(fileSystem.BuildPath, "Setup");
 			if (!fileSystem.Directory.Exists(setupFolder)) return null;
 
 			var files = fileSystem.Directory.GetFiles(setupFolder, ISettings.GoalFileName).ToList();
@@ -262,9 +262,9 @@ namespace PLang.Runtime
 				}
 			}
 			logger.LogDebug("Start");
-			foreach (var folder in goalsToRun)
+			foreach (var prFileAbsolutePath in goalsToRun)
 			{
-				var error = await RunGoal(folder);
+				var error = await RunGoal(prFileAbsolutePath);
 				if (error != null) return error;
 			}
 			return null;
@@ -338,16 +338,16 @@ namespace PLang.Runtime
 
 				for (goalStepIndex = 0; goalStepIndex < goal.GoalSteps.Count; goalStepIndex++)
 				{
-					var runStep = await RunStep(goal, goalStepIndex);
-					if (runStep != null)
+					var runStepError = await RunStep(goal, goalStepIndex);
+					if (runStepError != null)
 					{
-						if (runStep is EndGoal)
+						if (runStepError is EndGoal)
 						{
 							goalStepIndex = goal.GoalSteps.Count;
 							continue;
 						} 
-						runStep = await HandleGoalError(runStep, goal, goalStepIndex);
-						if (runStep != null) return runStep;
+						runStepError = await HandleGoalError(runStepError, goal, goalStepIndex);
+						if (runStepError != null) return runStepError;
 					}
 				}
 				//await CacheGoal(goal);
@@ -655,7 +655,7 @@ namespace PLang.Runtime
 					string name = goalName.AdjustPathToOs().Replace(".goal", "").ToLower();
 					if (name.StartsWith(".")) name = name.Substring(1);
 
-					var folderPath = goalFiles.FirstOrDefault(p => p.ToLower() == Path.Join(fileSystem.RootDirectory, ".build", name, ISettings.GoalFileName).ToLower());
+					var folderPath = goalFiles.FirstOrDefault(p => p.ToLower() == fileSystem.Path.Join(fileSystem.RootDirectory, ".build", name, ISettings.GoalFileName).ToLower());
 					if (folderPath != null)
 					{
 						goalsToRun.Add(folderPath);
@@ -670,12 +670,12 @@ namespace PLang.Runtime
 				return goalsToRun;
 			}
 
-			if (!fileSystem.Directory.Exists(Path.Join(fileSystem.BuildPath, "Start")))
+			if (!fileSystem.Directory.Exists(fileSystem.Path.Join(fileSystem.BuildPath, "Start")))
 			{
 				return new();
 			}
 
-			var startFile = fileSystem.Directory.GetFiles(Path.Join(fileSystem.BuildPath, "Start"), ISettings.GoalFileName, SearchOption.AllDirectories).FirstOrDefault();
+			var startFile = fileSystem.Directory.GetFiles(fileSystem.Path.Join(fileSystem.BuildPath, "Start"), ISettings.GoalFileName, SearchOption.AllDirectories).FirstOrDefault();
 			if (startFile != null)
 			{
 				goalsToRun.Add(startFile);
@@ -706,7 +706,7 @@ namespace PLang.Runtime
 		{
 			goalName = goalName.AdjustPathToOs();
 			var goal = prParser.GetGoalByAppAndGoalName(fileSystem.RootDirectory, goalName, callingGoal);
-			if (goal == null && goalName.TrimStart(Path.DirectorySeparatorChar).StartsWith("apps"))
+			if (goal == null && goalName.TrimStart(fileSystem.Path.DirectorySeparatorChar).StartsWith("apps"))
 			{
 				appsRepository.InstallApp(goalName);
 				goal = prParser.GetGoalByAppAndGoalName(fileSystem.RootDirectory, goalName);

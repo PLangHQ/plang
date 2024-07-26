@@ -130,8 +130,8 @@ namespace PLang
 
 		public void SetupDebug()
 		{
-			var eventsPath = Path.Join(fileSystem.GoalsPath, "events");
-			var sendDebugPath = Path.Join(eventsPath, "SendDebug.goal");
+			var eventsPath = fileSystem.Path.Join(fileSystem.GoalsPath, "events");
+			var sendDebugPath = fileSystem.Path.Join(eventsPath, "SendDebug.goal");
 
 			Console.WriteLine("-- Debug mode");
 			AppContext.SetSwitch(ReservedKeywords.Debug, true);

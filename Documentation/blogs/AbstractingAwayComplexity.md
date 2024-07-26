@@ -286,7 +286,7 @@ Here is Plang code for [GET](https://github.com/PLangHQ/plang/blob/main/Document
 
 ```plang
 GetAndPost
-- GET https://jsonplaceholder.typicode.com/posts/
+- GET https://jsonplaceholder.typicode.com/posts/1
     write to %getResponse%
 - POST https://jsonplaceholder.typicode.com/posts/
     data: 

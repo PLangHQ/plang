@@ -134,8 +134,6 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		{
 			if (value == null) return value;
 
-
-
 			object? val = memoryStack.Get(key);
 			if (val != null && val is string && (value is JObject || value is JProperty || value is JValue))
 			{
@@ -162,6 +160,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			memoryStack.Put(key, val);
 			return val;
 		}
+
 		public async Task<object> GetVariable([HandlesVariableAttribute] string key)
 		{
 			return memoryStack.Get(key);

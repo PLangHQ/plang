@@ -382,7 +382,7 @@ namespace PLang.Events
 			{
 				var goalToCall = GetErrorHandlerStep(step, error);
 				if (goalToCall == "*") goalToCall = null;
-				if (stepErrorHandler.EndGoal)
+				if (stepErrorHandler.IgnoreErrors)
 				{
 					return (false, new EndGoal(step, $"Ignoring error: {error.Message}"));
 				}

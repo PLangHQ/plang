@@ -181,6 +181,8 @@ namespace PLang.Building.Parsers
 				var prevBuildGoal = JsonHelper.ParseFilePath<Goal>(fileSystem, prFileAbsolutePath);
 				if (prevBuildGoal == null) continue;
 
+				goal.Description = prevBuildGoal.Description;
+				goal.IncomingVariablesRequired = prevBuildGoal.IncomingVariablesRequired;
 				foreach (var injection in prevBuildGoal.Injections)
 				{
 					if (goal.Injections.FirstOrDefault(p => p.Type == injection.Type && p.Path == injection.Path) == null)

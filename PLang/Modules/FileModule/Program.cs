@@ -117,7 +117,7 @@ namespace PLang.Modules.FileModule
 		}
 
 		[Description("sheetsToVariable is name of sheet that should load into variable. Sheet1=%products% will load Sheet1 into %product% variable, Sheet2-A1:H53=%categories%, will load data from A1:H53 into %categories%")]
-		public async Task ReadExcelFile(string path, bool useHeaderRow = true, [HandlesVariable] Dictionary<string, object>? sheetsToVariable = null)
+		public async Task ReadExcelFile(string path, bool useHeaderRow = true, [HandlesVariable] Dictionary<string, object>? sheetsToVariable = null, int headerStartsInRow = 1)
 		{
 			var absolutePath = GetPath(path);
 			if (!fileSystem.File.Exists(absolutePath))
@@ -142,7 +142,8 @@ namespace PLang.Modules.FileModule
 				int index = 0;
 				foreach (var sheetToVariable in sheetsToVariable)
 				{
-					if (sheetNames.FirstOrDefault(p => p == sheetToVariable.Key) == null)
+					var sheetName = ExtractSheetName(sheetToVariable.Key);
+					if (sheetNames.FirstOrDefault(p => p == sheetName) == null)
 					{
 						dict.Add(sheetNames[index], sheetToVariable.Value);
 					}
@@ -158,14 +159,13 @@ namespace PLang.Modules.FileModule
 			int idx = 0;
 			foreach (var sheetToVariable in sheetsToVariable)
 			{
-				string sheetName = sheetToVariable.Key;
+				string sheetName = ExtractSheetName(sheetToVariable.Key);
 
 				var dataToExtract = sheetToVariable.Key;
 				string startCell = "A1";
 				if (sheetToVariable.Key.Contains("-") && sheetToVariable.Key.Contains(":"))
 				{
 					dataToExtract = ExtractRowsToRead(sheetToVariable.Key);
-					sheetName = sheetName.Replace(dataToExtract, "").TrimEnd('-');
 					startCell = dataToExtract.Substring(0, dataToExtract.IndexOf(":"));
 				}
 
@@ -181,7 +181,7 @@ namespace PLang.Modules.FileModule
 				bool printHeader = true, bool overwrite = false)
 		{
 			var absolutePath = GetPath(path);
-			if (!fileSystem.Directory.Exists(Path.GetDirectoryName(absolutePath)))
+			if (!fileSystem.Directory.Exists(fileSystem.Path.GetDirectoryName(absolutePath)))
 			{
 				logger.LogWarning($"{absolutePath} does not exist");
 				return;
@@ -192,10 +192,17 @@ namespace PLang.Modules.FileModule
 		public async Task WriteCsvFile(string path, object variableToWriteToCsv, bool append = false, bool hasHeaderRecord = true,
 			string delimiter = ",",
 			string newLine = "\n", string encoding = "utf-8", bool ignoreBlankLines = true,
-				bool allowComments = false, char comment = '#', string? goalToCallOnBadData = null)
+				bool allowComments = false, char comment = '#', string? goalToCallOnBadData = null, bool createDirectoryAutomatically = true)
 		{
 			var absolutePath = GetPath(path);
-
+			if (createDirectoryAutomatically)
+			{
+				var dirPath = fileSystem.Path.GetDirectoryName(absolutePath);
+				if (dirPath != null && !Directory.Exists(dirPath))
+				{
+					Directory.CreateDirectory(dirPath);
+				}
+			}
 			if (variableToWriteToCsv is string str)
 			{
 				if (str.Contains(delimiter) && (str.Contains("\r") || str.Contains("\n")))
@@ -284,6 +291,14 @@ namespace PLang.Modules.FileModule
 				name = "V" + name;
 			}
 			return name;
+		}
+		private string ExtractSheetName(string key)
+		{
+			if (key.Contains("-"))
+			{
+				key = key.Substring(0, key.IndexOf("-"));
+			}
+			return key;
 		}
 
 		private string ExtractRowsToRead(string key)
@@ -382,7 +397,7 @@ namespace PLang.Modules.FileModule
 		public async Task WriteBytesToFile(string path, byte[] content, bool overwrite = false)
 		{
 			var absolutePath = GetPath(path);
-			string dirPath = Path.GetDirectoryName(absolutePath);
+			string dirPath = fileSystem.Path.GetDirectoryName(absolutePath);
 			if (!fileSystem.Directory.Exists(dirPath))
 			{
 				fileSystem.Directory.CreateDirectory(dirPath);
@@ -401,7 +416,7 @@ namespace PLang.Modules.FileModule
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			var absolutePath = GetPath(path);
-			string dirPath = Path.GetDirectoryName(absolutePath);
+			string dirPath = fileSystem.Path.GetDirectoryName(absolutePath);
 			if (!fileSystem.Directory.Exists(dirPath))
 			{
 				fileSystem.Directory.CreateDirectory(dirPath);
@@ -425,7 +440,7 @@ namespace PLang.Modules.FileModule
 				bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			var absolutePath = GetPath(path);
-			string dirPath = Path.GetDirectoryName(absolutePath);
+			string dirPath = fileSystem.Path.GetDirectoryName(absolutePath);
 			if (!fileSystem.Directory.Exists(dirPath))
 			{
 				fileSystem.Directory.CreateDirectory(dirPath);
@@ -450,7 +465,7 @@ namespace PLang.Modules.FileModule
 			var files = await GetFilePathsInDirectory(directoryPath, searchPattern, excludePatterns, includeSubfoldersAndFiles);
 			foreach (var file in files)
 			{
-				var copyDestinationFilePath = (isAppFolder) ? Path.Join(destinationPath, file) : file.Replace(directoryPath, destinationPath);
+				var copyDestinationFilePath = (isAppFolder) ? fileSystem.Path.Join(destinationPath, file) : file.Replace(directoryPath, destinationPath);
 				await CopyFile(file, copyDestinationFilePath, true, overwriteFiles);
 			}
 
@@ -460,9 +475,9 @@ namespace PLang.Modules.FileModule
 		{
 			sourceFileName = GetPath(sourceFileName);
 			destFileName = GetPath(destFileName);
-			if (createDirectoryIfNotExisting && !fileSystem.Directory.Exists(Path.GetDirectoryName(destFileName)))
+			if (createDirectoryIfNotExisting && !fileSystem.Directory.Exists(fileSystem.Path.GetDirectoryName(destFileName)))
 			{
-				fileSystem.Directory.CreateDirectory(Path.GetDirectoryName(destFileName));
+				fileSystem.Directory.CreateDirectory(fileSystem.Path.GetDirectoryName(destFileName));
 			}
 			fileSystem.File.Move(sourceFileName, destFileName, overwriteFile);
 		}
@@ -471,9 +486,9 @@ namespace PLang.Modules.FileModule
 		{
 			sourceFileName = GetPath(sourceFileName);
 			destFileName = GetPath(destFileName);
-			if (createDirectoryIfNotExisting && !fileSystem.Directory.Exists(Path.GetDirectoryName(destFileName)))
+			if (createDirectoryIfNotExisting && !fileSystem.Directory.Exists(fileSystem.Path.GetDirectoryName(destFileName)))
 			{
-				fileSystem.Directory.CreateDirectory(Path.GetDirectoryName(destFileName));
+				fileSystem.Directory.CreateDirectory(fileSystem.Path.GetDirectoryName(destFileName));
 			}
 			fileSystem.File.Copy(sourceFileName, destFileName, overwriteFile);
 		}
@@ -538,20 +553,20 @@ namespace PLang.Modules.FileModule
 			PLangFileSystemWatcherFactory watcherFactory = new PLangFileSystemWatcherFactory(fileSystem);
 			foreach (var fileSearchPattern in fileSearchPatterns)
 			{
-				if (Path.IsPathFullyQualified(fileSearchPattern) && !fileSearchPattern.StartsWith(fileSystem.GoalsPath))
+				if (fileSystem.Path.IsPathFullyQualified(fileSearchPattern) && !fileSearchPattern.StartsWith(fileSystem.GoalsPath))
 				{
 					throw new RuntimeStepException("fileSearchPattern is out of app folder. You can only listen for files inside same app folder", goalStep);
 				}
-				var dirPath = Path.GetDirectoryName(fileSearchPattern) ?? "";
-				var path = Path.Join(fileSystem.GoalsPath, dirPath);
+				var dirPath = fileSystem.Path.GetDirectoryName(fileSearchPattern) ?? "";
+				var path = fileSystem.Path.Join(fileSystem.GoalsPath, dirPath);
 				var pattern = fileSearchPattern.AdjustPathToOs();
 				if (!string.IsNullOrEmpty(dirPath))
 				{
 					pattern = pattern.Replace(dirPath, "");
 				}
-				if (pattern.StartsWith(Path.DirectorySeparatorChar))
+				if (pattern.StartsWith(fileSystem.Path.DirectorySeparatorChar))
 				{
-					pattern = pattern.TrimStart(Path.DirectorySeparatorChar);
+					pattern = pattern.TrimStart(fileSystem.Path.DirectorySeparatorChar);
 				}
 
 				var watcher = watcherFactory.New();
@@ -610,7 +625,7 @@ namespace PLang.Modules.FileModule
 								parameters.Add(changeTypeVariableName, e.ChangeType);
 								parameters.Add(senderVariableName, sender);
 
-								var task = pseudoRuntime.RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), goalToCall, parameters);
+								var task = pseudoRuntime.RunGoal(engine, context, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall, parameters);
 								task.Wait();
 							}, e.FullPath, debounceTime, Timeout.Infinite);
 							timers.TryAdd(e.FullPath, timer);
@@ -670,7 +685,7 @@ namespace PLang.Modules.FileModule
 
 				try
 				{
-					var task = pseudoRuntime.RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), goalToCall, parameters);
+					var task = pseudoRuntime.RunGoal(engine, context, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall, parameters);
 					task.Wait();
 				}
 				catch (Exception ex)

@@ -88,7 +88,7 @@ namespace PLang.Utils
 					}
 
 				}
-				return jobject.ToString();
+				return jobject;
 			}
 
 			if (obj is JArray array)
@@ -415,7 +415,7 @@ namespace PLang.Utils
 		public static bool IsVariable(object? variable)
 		{
 			if (variable == null || string.IsNullOrEmpty(variable.ToString())) return false;
-			return Regex.IsMatch(variable.ToString()!, @"^%[a-zA-Z0-9#+-\[\]_\.\+\(\)\*\<\>\!]*%$");
+			return Regex.IsMatch(variable.ToString()!, @"^%[\p{L}\p{N}#+-\[\]_\.\+\(\)\*\<\>\!\s]*%$");
 		}
 
 		public static bool IsSetting(string variableName)

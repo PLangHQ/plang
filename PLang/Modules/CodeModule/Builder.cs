@@ -62,6 +62,7 @@ namespace PLang.Modules.CodeModule
 - Strings are defined with double quote ("")
 - Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. 
 - If PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into ExecutePlangCode method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.
+- System.IO.Path needs to be mapped to PLang.SafeFileSystem.Path which DOES not contain static methods, e.g. Path.GetFileName => fileSystem.Path.GetFileName. fileSystem IS provided as parameter as part of ExecutePlangCode method 
 - When condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. ExecutePlangCode(dynamic? variable)
 - Variables that are injected into ExecutePlangCode method and contain dot(.), then replace dot(.) with the letter α in the parameter list. e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α
 - Keep underscore in variables if defined by user, e.g.  if %data.user_id%(string) is null => ExecutePlangCode(string? dataαuser_id)
@@ -97,6 +98,11 @@ check if %dirPath% exists, write to %folderExists% => ExecutePlangCode(IPlangFil
 	//validate input parameter 
 	folderExists = fileSystem.Directory.Exists(dirPath);
 }}
+
+get filename of %filePath%, write to %fileName% => ExecutePlangCode(IPlangFileSystem fileSystem, string filePath, out string fileName) {{
+	//validate input parameter 
+	fileName = fileSystem.Path.GetFileName(filePath);
+}}
 ## examples ##");
 
 			if (error != null)
@@ -121,7 +127,7 @@ check if %dirPath% exists, write to %folderExists% => ExecutePlangCode(IPlangFil
 			if (compilerError != null)
 			{
 				logger.LogWarning("- Error compiling code - will ask LLM again");
-				return await Build(step, compilerError, errorCount + 1);
+				return await Build(step, compilerError, errorCount);
 			}
 
 			var newInstruction = new Instruction(implementation!);

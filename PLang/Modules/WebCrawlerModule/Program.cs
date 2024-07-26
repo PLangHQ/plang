@@ -140,6 +140,20 @@ namespace PLang.Modules.WebCrawlerModule
 			}
 		}
 
+		public async Task ScrollToBottom()
+		{
+			var driver = await GetDriver();
+			IJavaScriptExecutor js = (IJavaScriptExecutor)driver;
+			js.ExecuteScript("window.scrollTo(0, document.body.scrollHeight);");
+		}
+		
+		public async Task ScrollToElement(IWebElement element)
+		{
+			var driver = await GetDriver();
+			IJavaScriptExecutor js = (IJavaScriptExecutor)driver;
+			js.ExecuteScript("arguments[0].scrollIntoView(true);", element);
+		}
+
 		public async Task WaitForElementToAppear(string cssSelector, int timoutInSeconds = 30)
 		{
 			var driver = await GetDriver();

@@ -194,7 +194,9 @@ namespace PLang.Building
 			}
 			var isWebApiMethod = GoalNameContainsMethod(goal) || goal.RelativeGoalFolderPath.Contains(Path.DirectorySeparatorChar + "api");
 
-			if (!isWebApiMethod && !goal.Text.Contains(" ")) return (goal, null);
+			if (!isWebApiMethod && !goal.Text.Contains(" ")) {
+				return await CreateDescriptionForGoal(goal, oldGoal);
+			}
 			if (goal.GoalInfo == null || goal.GoalInfo.GoalApiInfo == null || goal.Text == null || goal.Text != oldGoal?.Text)
 			{
 				var promptMessage = new List<LlmMessage>();
@@ -216,10 +218,41 @@ GoalApiIfo:
 					goal.GoalInfo = result;
 				}
 
-			}
+			} 
 			return (goal, null);
 		}
 
+		public record GoalDescription(string Description, string[]? IncomingVariablesRequired = null);
+
+		private async Task<(Goal, IBuilderError?)> CreateDescriptionForGoal(Goal goal, Goal? oldGoal)
+		{
+			if (!string.IsNullOrEmpty(goal.Description) && goal.GetGoalAsString() == oldGoal?.GetGoalAsString()) return (goal, null);
+
+			var promptMessage = new List<LlmMessage>();
+			promptMessage.Add(new LlmMessage("system", $@"Write a decription for this Goal, use the comments and steps to build the description, max length 300 characters.
+Goal works like a function for programming language Plang. Goal defines 1 or more steps. 
+Comments start with /
+Steps start with dash(-). 
+%Variable% is defined with starting and ending %.
+When writing %variable% in description, escape the variable with \, e.g. \%variable\%
+Analyze the goal and list out variables that are required to be sent to this goal to make it work
+Step that write into a variable are creating that variable
+llm step with scheme, will create variables from that scheme autotmatically, e.g. scheme: {{name:string}} will create %name% variable
+
+"));
+			promptMessage.Add(new LlmMessage("user", goal.GetGoalAsString()));
+			var llmRequest = new LlmRequest("GoalDescription", promptMessage);
+
+			(var result, var queryError) = await llmServiceFactory.CreateHandler().Query<GoalDescription>(llmRequest);
+			if (queryError != null) return (goal, queryError as IBuilderError);
+
+			if (result != null)
+			{
+				goal.Description = result.Description;
+				goal.IncomingVariablesRequired = result.IncomingVariablesRequired;
+			}
+			return (goal, null);
+		}
 
 		private void RemoveUnusedPrFiles(Goal goal)
 		{

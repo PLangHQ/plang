@@ -66,8 +66,8 @@ namespace PLang.Services.EventSourceService
 
 			var pkey = encryption.GetKeyHash();
 
-			var generator = new IdGenerator(2);
-			var eventId = generator.ElementAt(0);
+			var generator = new IdGenerator(4);
+			var eventId = generator.CreateId();
 			var dataId = generator.ElementAt(1);
 
 			CreateEventsDb(dbConnection);
