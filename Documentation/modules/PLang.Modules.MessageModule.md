@@ -1,101 +1,108 @@
-
-# Message Module Documentation
+﻿# Message
 
 ## Introduction
-The Message Module in plang is a powerful feature that allows users to send and receive messages within the context of the plang scripting language. It leverages the Nostr protocol to facilitate private and secure communication between users.
+The Message module in the PLang programming language provides a robust framework for handling messaging operations within applications. It allows developers to send and receive messages, manage user accounts, and interact with message relays, making it an essential tool for applications requiring communication capabilities.
 
 ## For Beginners
-If you're new to programming or unfamiliar with technical jargon, don't worry! The Message Module is essentially a set of instructions that you can use to create, send, and manage messages. Think of it as writing a letter, but instead of using pen and paper, you're using simple commands that tell the computer what to do. These commands can help you send a note to a friend, check if you've received any messages, or even listen for new messages as they arrive.
+For those new to programming or unfamiliar with technical jargon, the Message module in PLang can be thought of as a post office for your application. It helps your application to send out messages (like sending a letter), receive messages (like getting mail), and manage information about where messages should go (like an address book). It simplifies the process of communication in your software, allowing you to focus on what messages to send and receive without worrying about the underlying complexities of network communication.
 
 ## Best Practices for Message
-When writing plang code for the Message Module, it's important to follow some best practices to ensure your code is clear, maintainable, and efficient. Here's an example to illustrate:
+When using the Message module in your PLang code, it's important to follow certain best practices to ensure efficient and error-free operations:
 
+1. **Always Handle Errors**: Ensure that your message operations are wrapped with error handling to manage any issues that might occur during message transmission or reception.
+2. **Use Variables Wisely**: Store frequently used data like public keys in variables to make your code cleaner and more efficient.
+3. **Keep Security in Mind**: Be cautious with sensitive information such as private keys. Ensure they are securely handled and not exposed in logs or to unauthorized users.
+
+### Example
+Here's a simple example to illustrate these best practices:
 ```plang
-Message
-- set current account with public key or name 'Alice'
-- listen for new message, call !NewMessage, write content to %messageContent%
-- if %messageContent% contains 'urgent' then call !HandleUrgentMessage
-```
-
-In this example, we first set the current account to 'Alice'. Then, we start listening for new messages. If a message contains the word 'urgent', we call a special goal to handle it. This shows how to organize your steps logically and use conditional statements to make decisions.
-
-## Examples
-
-# Message Module Documentation
-
-The Message Module allows you to send and receive private messages using the Nostr protocol. Below are examples of how to use the Message Module in plang.
-
-## Examples
-
-### Get Public Key
-Retrieve your public key for messaging.
-```plang
-Message
 - get public key for messages, write to %pubKey%
-- write out %pubKey%
+- try
+    - send message to %pubKey%, 'Hello, secure world!'
+  catch
+    - write out 'Failed to send message.'
+```
+In this example, we first retrieve and store the public key in a variable `%pubKey%`. We then attempt to send a message using this public key, and if an error occurs, we handle it gracefully by logging an error message.
+
+## Examples
+For practical applications and more detailed examples of how to use the Message module, please refer to the following code snippets and resources:
+
+# Message Module Examples
+
+The Message module in PLang allows for sending and receiving private messages, managing accounts, and interacting with message relays. Below are some practical examples of how to use the Message module in PLang, sorted by their expected frequency of use in real-world applications.
+
+## Sending and Receiving Messages
+
+### Send a Private Message to Myself
+This example demonstrates how to send a private message to oneself. It can be useful for testing or reminders.
+```plang
+- send my self message, 'Hi, how are you on %Now%?'
 ```
 
-### Send a Message to Yourself
-Send a private message to yourself.
+### Send a Private Message to Another User
+To send a message to another user, you need their public key. This example assumes the public key is stored in `%pubKey%`.
 ```plang
-Message
-- send my self message, 'Hi how are you, 2.1.2024 22:05:54'
-```
-
-### Send a Message to Another User
-Send a private message to another user using their public key.
-```plang
-Message
-- send message to %pubKey%, 'Another message that I will receive, %now%'
+- send message to %pubKey%, 'Hello, this is a message sent on %Now%!'
 ```
 
 ### Listen for New Messages
-Listen for new messages and handle them with a specified goal.
+This example sets up a listener for new messages. When a new message is received, it triggers a goal called `!NewMessage`.
 ```plang
-Message
-- listen for new message, call !NewMessage, write content to %messageContent%
+- listen for new message, call !NewMessage, write content to %content%, %sender% for sender address
+```
+
+### Handle Received Message
+This goal is triggered by the listener when a new message is received. It outputs the content of the message and the sender's address.
+```plang
+NewMessage
+- write out "Received message: %content% from %sender%"
+```
+
+## Managing Accounts
+
+### Get Public Key
+Retrieving the public key of the current account can be essential for sharing with other users to receive messages.
+```plang
+- get public key for messages, write to %pubKey%
+- write out "My public key is: %pubKey%"
 ```
 
 ### Set Current Account
-Set the current account by providing a public key or a name.
+This example demonstrates how to switch the current account by specifying a public key or account name.
 ```plang
-Message
-- set current account with name 'Alice'
+- set current account for messaging, 'examplePublicKeyOrName'
 ```
 
-### Additional Examples
-If a method does not have an example, here are some created using natural language.
+## Advanced Usage
 
-#### Listen for Messages from a Specific Date
-Listen for new messages starting from a specific date and time.
+### Get Private Key
+In scenarios where secure operations are needed, retrieving the private key might be necessary.
 ```plang
-Message
-- listen for new message from '1st January 2024', call !NewMessage, write content to %messageContent%
+- get private key, write to %privateKey%
+- write out "My private key is: %privateKey%" /Note: Be cautious with private key usage
 ```
 
-## Notes
-- The `%variableName%` syntax is used to store and reference values within the plang script.
-- The `!GoalName` syntax is used to reference a goal that should be called when a certain event occurs.
-- The `write to %variableName%` step is used to store the result of a method call into a variable for later use.
-- The `write out %variableName%` step is used to output the value of a variable.
-- The `listen for new message` step starts a listener that will trigger a goal when a new message is received.
-- The `send my self message` and `send message to %pubKey%` steps are used to send messages either to yourself or to another user.
-- The `set current account with public key or name` step is used to switch the active account in the Message Module.
+### Get Relays
+Retrieving a list of relays can be useful for understanding the network topology or debugging connection issues.
+```plang
+- get relays, write to %relayList%
+- write out "Available relays: %relayList%"
+```
 
+These examples provide a basic understanding of how to interact with the Message module in PLang, covering common tasks like message handling and account management.
 
-For a full list of examples, visit [Message Module Examples on GitHub](https://github.com/PLangHQ/plang/tree/main/Tests/Message).
+For a comprehensive list of examples, visit the [Message module examples](https://github.com/PLangHQ/plang/tree/main/Tests/Message).
 
 ## Step Options
-Each step in your plang script can be enhanced with additional options for better control and error handling. Click on the links below for more details on how to use each option:
-
-- [CacheHandler](/modules/cacheHandler.md)
-- [ErrorHandler](/modules/ErrorHandler.md)
-- [RetryHandler](/modules/RetryHandler.md)
-- [CancellationHandler](/modules/CancelationHandler.md)
-- [Run and Forget](/modules/RunAndForget.md)
+Each step in your PLang code can be enhanced with various options to handle different scenarios effectively:
+- [CacheHandler](/modules/handlers/CachingHandler.md): Helps in storing and retrieving data efficiently.
+- [ErrorHandler](/modules/handlers/ErrorHandler.md): Manages errors gracefully during the execution of steps.
+- [RetryHandler](/modules/handlers/RetryHandler.md): Attempts to execute a step multiple times in case of failure.
+- [CancellationHandler](/modules/CancelationHandler.md): Allows steps to be cancelled if they take too long or conditions change.
+- [Run and Forget](/modules/RunAndForget.md): Executes a step without waiting for its completion, useful for background tasks.
 
 ## Advanced
-For those who are interested in diving deeper into the Message Module and understanding how it maps to underlying C# functionality, please refer to the [advanced documentation](./PLang.Modules.MessageModule_advanced.md).
+For developers looking for more in-depth information on how the Message module interfaces with underlying C# implementations, please refer to the [advanced documentation](./PLang.Modules.MessageModule_advanced.md).
 
 ## Created
-This documentation was created on 2024-01-02T22:07:23.
+This documentation was created on 2024-07-18T10:50:31.

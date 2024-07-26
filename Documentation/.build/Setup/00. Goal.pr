@@ -1478,16 +1478,17 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "Setup a table named 'docs' with columns Name, Guide, System, OutputFilename, Created, and LastUpdate. Insert multiple records into the 'docs' table with specified values for each column.",
   "Visibility": 1,
   "GoalFileName": "Setup.goal",
   "RelativeGoalPath": "\\Setup.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Setup\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Setup",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "fb4b1b937f4f158d33b88e6cfae2ac51a4360895219800b6fcfc09a5f618bd76"
+  "Hash": "990264c3c1c2be3baf7e7777064d139b007c498f87f6c3872a4c0eb337fdd1ce",
+  "IncomingVariablesRequired": null
 }

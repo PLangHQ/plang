@@ -473,16 +473,22 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "CheckCallingGoal reads a file from /\\%step.RelativePrPath\\% into \\%stepPr\\%, sets a string variable \\%goalToCall\\% by processing \\%stepPr.Action.Parameters[1].Value.ToString().Replace(\"!\", \"\")\\%, and if \\%goalToCall\\% is not 'String', it searches in /.build/ for directories named '\\%goalToCall\\%', writes to \\%dirs\\%, creates a list \\%missingGoals\\%, and appends a message to \\%missingGoals\\% if no directories are found.",
   "Visibility": 0,
   "GoalFileName": "CheckGoals.goal",
   "RelativeGoalPath": "\\events\\CheckGoals.goal",
   "RelativeGoalFolderPath": "\\events",
   "RelativePrPath": ".build\\events\\CheckGoals\\CheckCallingGoal\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\CheckGoals\\CheckCallingGoal",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "39cd46e8f8ce49fc724e8a764ce5292e2ec37c08b013708128525a02d3ef7086"
+  "Hash": "9ecaa33232036cfdaa96a9df2293ab3c987bd461e6b7f85bee3be62c1a89ff60",
+  "IncomingVariablesRequired": [
+    "step.RelativePrPath",
+    "stepPr.Action.Parameters[1].Value",
+    "goal.GoalName",
+    "step.Text"
+  ]
 }

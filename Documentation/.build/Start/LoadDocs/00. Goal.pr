@@ -71,16 +71,17 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "The goal 'LoadDocs' selects all records from the 'docs' table and writes the results to the \\%docs\\% variable.",
   "Visibility": 0,
   "GoalFileName": "Start.goal",
   "RelativeGoalPath": "\\Start.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Start\\LoadDocs\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Start\\LoadDocs",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "a3452d97673040ab22bf3e7ec45b423e5d5e9534a32e61ec2c753c01c9d6a6fa"
+  "Hash": "d87bc82de83bdf7e39982e40fb5353ecf4f5814f9c505445a167f08d99d307f7",
+  "IncomingVariablesRequired": null
 }

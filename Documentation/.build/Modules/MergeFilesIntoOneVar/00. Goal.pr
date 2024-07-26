@@ -22,7 +22,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 64,
+      "LineNumber": 67,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -89,7 +89,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 1,
-      "LineNumber": 65,
+      "LineNumber": 68,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -138,16 +138,20 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "MergeFilesIntoOneVar reads the file at \\%path\\% into \\%testFileContent\\% and appends \\%testFileContent\\% to \\%plangExamples\\%, adding a new line for each append.",
   "Visibility": 0,
   "GoalFileName": "Modules.goal",
   "RelativeGoalPath": "\\Modules.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\MergeFilesIntoOneVar\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\MergeFilesIntoOneVar",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "920b872be0db24a7a07f2e1160d8d0c3a697a4a54703d9f9ae0217d2b43978dd"
+  "Hash": "da1d32fe6325a54a817f535f9b3a4cf7a80f7abb070eea2970280345673275e7",
+  "IncomingVariablesRequired": [
+    "path",
+    "plangExamples"
+  ]
 }

@@ -138,16 +138,20 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "Start - if \\%doc\\% is not empty then, LoadDoc, LoadDocs. For each \\%docs\\%, call GenerateDoc.",
   "Visibility": 1,
   "GoalFileName": "Start.goal",
   "RelativeGoalPath": "\\Start.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Start\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Start",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "4dfcaa91f8caf43b42504d1023b13c0cf72732c0d286b57dc402e6801bd6a1fe"
+  "Hash": "9cd833a705f355be30f64b85ba9080a7e3b14821c66235b6213e01289464d72f",
+  "IncomingVariablesRequired": [
+    "doc",
+    "docs"
+  ]
 }

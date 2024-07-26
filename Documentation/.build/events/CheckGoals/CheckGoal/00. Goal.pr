@@ -71,16 +71,20 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "CheckGoal processes each step in \\%goal.Content.GoalSteps\\% and calls CheckStep for each \\%step\\%.",
   "Visibility": 0,
   "GoalFileName": "CheckGoals.goal",
   "RelativeGoalPath": "\\events\\CheckGoals.goal",
   "RelativeGoalFolderPath": "\\events",
   "RelativePrPath": ".build\\events\\CheckGoals\\CheckGoal\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\CheckGoals\\CheckGoal",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "658fc6cfd51cbf83e4217bd84be40ed3f427f15038910b0ed71a97a50e3cb8cd"
+  "Hash": "b378c52da50ad173b41712e5161b90c69726a5546f73f954a075b7076a6918e1",
+  "IncomingVariablesRequired": [
+    "goal.Content.GoalSteps",
+    "step"
+  ]
 }

@@ -71,16 +71,17 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "The 'ModulesOverview' goal calls two functions: !CreateDetailOverview and !CreateSimpleOverview.",
   "Visibility": 1,
   "GoalFileName": "ModulesOverview.goal",
   "RelativeGoalPath": "\\ModulesOverview.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ModulesOverview\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ModulesOverview",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "329ad9368b3d0855fd154163641c453161a070eb40db2b316929a2486ef4c9a8"
+  "Hash": "c2e01fc8895a3fd4b00d743fc6d21ad6745da3c3f23bc83f1f0686bdcf134304",
+  "IncomingVariablesRequired": null
 }

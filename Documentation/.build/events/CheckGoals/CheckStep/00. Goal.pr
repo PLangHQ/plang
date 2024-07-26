@@ -71,16 +71,19 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "Check if \\%step.ModuleType\\% (converted to string) equals 'PLang.Modules.CallGoalModule', then call CheckCallingGoal.",
   "Visibility": 0,
   "GoalFileName": "CheckGoals.goal",
   "RelativeGoalPath": "\\events\\CheckGoals.goal",
   "RelativeGoalFolderPath": "\\events",
   "RelativePrPath": ".build\\events\\CheckGoals\\CheckStep\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\CheckGoals\\CheckStep",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "a5b108820177123881478e971fa19da5aaa82bf37221ebaf97406f75513774e7"
+  "Hash": "5426c0ccffc13cab9e8061fb14a6b95d2d38507efd5fab55434b66ca2bccf782",
+  "IncomingVariablesRequired": [
+    "step.ModuleType"
+  ]
 }

@@ -272,16 +272,20 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "CheckGoals - write out \"Validating goals called\", get content of all '00. Goal.pr' files in ../ including subfolders, write into \\%goalFiles\\%, go through \\%goalFiles\\%, call !CheckGoal item=\\%goal\\%, if \\%missingGoals\\% is not empty then call ShowMissingGoals, else ShowAllValid",
   "Visibility": 1,
   "GoalFileName": "CheckGoals.goal",
   "RelativeGoalPath": "\\events\\CheckGoals.goal",
   "RelativeGoalFolderPath": "\\events",
   "RelativePrPath": ".build\\events\\CheckGoals\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\CheckGoals",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "061ade81b999049dc1ba4cbaad29e869e9bcf3d4b23d1df9b683dc5f8edeb085"
+  "Hash": "953e3abbf3289aa511945205355dfb84aba372f0ddefbf7dfed2f91e6d59ed86",
+  "IncomingVariablesRequired": [
+    "goalFiles",
+    "missingGoals"
+  ]
 }

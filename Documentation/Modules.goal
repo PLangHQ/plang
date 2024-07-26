@@ -5,6 +5,7 @@ Modules
 GenerateModuleDocumentation
 - read file 'template/modules/GenerateModuleDocumentation/system.txt', into %system%, load variables
 - read %file%, into %content%
+- write out 'Asking for: %ModuleName%'
 - [llm] system: %system%
     user:%content%
     scheme: {moduleName:string, namespace:string, desc:string, [{functions:string[], parameters:[{type:string, name:string, (defaultValue:string|required:yes)}, ...], returns:type|void}]}
@@ -29,6 +30,7 @@ LoadVars
     - append to variable %SourceCode%, new line seperator, 'ModuleSettings.cs is settings for the module, can be found at https://github.com/PLangHQ/plang/tree/main/PLang/Modules/%module.namespace%/ModuleSettings.cs'
 
 GeneratePlangExamples
+- write out 'GeneratePlangExamples for: %ModuleName%'
 - get all *.goal files from ../Tests/%module.moduleName%/, write to %testFiles%
 - [var] set %plangExamples% to null
 - foreach %testFiles%, call !MergeFilesIntoOneVar path=%item%
@@ -39,6 +41,7 @@ GeneratePlangExamples
         write to %plangExamplesDescription%
 
 GenerateDocForBasic
+- write out 'GenerateDocForBasic for: %ModuleName%'
 - read file 'template/modules/GenerateDocForBasic/user.txt', into %user%, load variables
 - read 'template/modules/GenerateDocForBasic/system.txt', into %system%, load variables
 - [llm]: system: %system%
@@ -48,6 +51,7 @@ GenerateDocForBasic
 - write %documentationOut% to /output/modules/%module.namespace%.md, overwrite
 
 GenerateDocForAdvanced
+- write out 'GenerateDocForAdvanced for: %ModuleName%'
 - read file 'template/modules/GenerateDocForAdvanced/system.txt', into %system%, load variables
 - read file 'template/modules/GenerateDocForAdvanced/user.txt', into %user%, load variables
 - [llm]: system:%system%

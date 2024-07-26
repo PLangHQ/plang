@@ -71,16 +71,17 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "ShowAllValid - write out 'All goals being called exist'",
   "Visibility": 0,
   "GoalFileName": "CheckGoals.goal",
   "RelativeGoalPath": "\\events\\CheckGoals.goal",
   "RelativeGoalFolderPath": "\\events",
   "RelativePrPath": ".build\\events\\CheckGoals\\ShowAllValid\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\CheckGoals\\ShowAllValid",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "b71ee9d2d0d49eabd08e89f2aa569e1bb4910e5dc1b5e9e48b5681c41d6e8899"
+  "Hash": "ea7bebb83d8d3d1b4637f38bea59a649e1fb3bfcabcb0ff97540e14f51eda7b1",
+  "IncomingVariablesRequired": null
 }

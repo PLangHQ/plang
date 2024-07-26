@@ -138,16 +138,19 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "This goal retrieves all Program.cs files in the ../Plang/Modules/\\%ModuleName\\% directory, including subdirectories, and writes them to \\%files\\%. It then iterates over \\%files\\% and calls the GenerateModuleDocumentation function for each file.",
   "Visibility": 1,
   "GoalFileName": "Modules.goal",
   "RelativeGoalPath": "\\Modules.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "2fe3cb82070c27364c7a0ee1c0be7e8b61f73c30a25d471da8242242d91c0fdc"
+  "Hash": "1b4780e231e6dbb830f2b01be6de983c8acd553bf0a56f9c45cbe743e3a42eb5",
+  "IncomingVariablesRequired": [
+    "ModuleName"
+  ]
 }

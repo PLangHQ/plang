@@ -71,16 +71,20 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "GenerateOverview appends to \\%content\\% and \\%file.Content\\%.",
   "Visibility": 0,
   "GoalFileName": "ModulesOverview.goal",
   "RelativeGoalPath": "\\ModulesOverview.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ModulesOverview\\GenerateOverview\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ModulesOverview\\GenerateOverview",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "61926ad705d64fc3dc3036ef577e8fa74ff2755671827755bcc69908d92ff5c8"
+  "Hash": "d1aa3ad6e292e6eaf7d8a01ddb7950bd4eeef9387c80b66385c9f7b794314785",
+  "IncomingVariablesRequired": [
+    "content",
+    "file.Content"
+  ]
 }

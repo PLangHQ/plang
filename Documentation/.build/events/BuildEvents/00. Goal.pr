@@ -84,16 +84,17 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "This goal, BuildEvents, ensures that before the builder ends, the goal !CheckGoals is called.",
   "Visibility": 1,
   "GoalFileName": "BuildEvents.goal",
   "RelativeGoalPath": "\\events\\BuildEvents.goal",
   "RelativeGoalFolderPath": "\\events",
   "RelativePrPath": ".build\\events\\BuildEvents\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\BuildEvents",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "a7f25eb7856abb058b5f1a02e500957bfc8f5b70896be6098cd3cdc1e20157c5"
+  "Hash": "63daf76a71ce18e32df00d040ff993c5ddc77e0c32005f10172406d87aa48efb",
+  "IncomingVariablesRequired": null
 }

@@ -79,16 +79,27 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "Send a debug post request to http://localhost:60877/ with various parameters and store the response in \\%debugReponse\\%.",
   "Visibility": 1,
   "GoalFileName": "SendDebug.goal",
   "RelativeGoalPath": "\\events\\SendDebug.goal",
   "RelativeGoalFolderPath": "\\events",
   "RelativePrPath": ".build\\events\\SendDebug\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\SendDebug",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "0d36903d38e1686dd0e63e78c6cec6ff19ba9986104261594ec6dc272d2c37d0"
+  "Hash": "225943c86a0d18abb3dbffe6172344c21c74705ed41c15f63c55a18168be81c2",
+  "IncomingVariablesRequired": [
+    "!Goal",
+    "!Step",
+    "!Event",
+    "!IsHttpRequest",
+    "!StepIndex",
+    "!Instruction",
+    "!memorystack",
+    "!Goal.AbsoluteGoalPath",
+    "!error"
+  ]
 }

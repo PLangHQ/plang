@@ -339,16 +339,19 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "CreateSimpleOverview retrieves all '.md' files in 'output/modules_overview/' and writes them to \\%moduleFiles\\%. It then processes each file with !CreateSimple. Next, it retrieves all '.md' files in 'output/modules_simple/' and writes them to \\%moduleFiles\\%. Each file is then processed with !GenerateOverview. Finally, it writes \\%content\\% to 'output/modules_simple/README.md'.",
   "Visibility": 0,
   "GoalFileName": "ModulesOverview.goal",
   "RelativeGoalPath": "\\ModulesOverview.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ModulesOverview\\CreateSimpleOverview\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ModulesOverview\\CreateSimpleOverview",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "bf9fd68a02d9b92cc2b3e2f0f6cc18c0e3d69f1e65e2a5ccac4f9369a51122e3"
+  "Hash": "1dc7091e99e33133d0bb6c3f89f36f881055f9ff3a2ed3624a6a8eb76d172bbe",
+  "IncomingVariablesRequired": [
+    "content"
+  ]
 }

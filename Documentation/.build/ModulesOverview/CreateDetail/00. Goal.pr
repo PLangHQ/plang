@@ -272,16 +272,20 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "This goal extracts the file name without extension from \\%file.Path\\%, removes 'PLang.Modules.' and 'Module' from the name, and writes it to \\%moduleName\\%. It then reads a template file into \\%system_detail\\%, loads variables, and uses an LLM to generate a markdown document from \\%file.Content\\%. The result is written to output/modules_overview/\\%moduleName\\%.md.",
   "Visibility": 0,
   "GoalFileName": "ModulesOverview.goal",
   "RelativeGoalPath": "\\ModulesOverview.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ModulesOverview\\CreateDetail\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ModulesOverview\\CreateDetail",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "6c359c0928372a71df2028865c718e1747c949a80cf736d818f94d3395e6d4bc"
+  "Hash": "aa61a04a1786603d14558def95388508ad33408772a7d693bd878d244bbdf322",
+  "IncomingVariablesRequired": [
+    "file.Path",
+    "file.Content"
+  ]
 }

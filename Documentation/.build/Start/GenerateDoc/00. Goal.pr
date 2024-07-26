@@ -674,16 +674,24 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "This goal generates a document by reading various files, interacting with an LLM, and updating a database. It requires the following variables: \\%item.Name\\%, \\%item.Guide\\%, \\%item.System\\%, \\%item.OutputFilename\\%, \\%item.id\\%, and \\%Now\\%.",
   "Visibility": 0,
   "GoalFileName": "Start.goal",
   "RelativeGoalPath": "\\Start.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Start\\GenerateDoc\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Start\\GenerateDoc",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "f024a4d4ff3a7877839b67af930e60c5d249e7be4c4665a623b1543fb886b55a"
+  "Hash": "f42f90f07edf9c497aa278efefa3196d41ca1b55c1ef5406524abe0fd8c97777",
+  "IncomingVariablesRequired": [
+    "%item.Name%",
+    "%item.Guide%",
+    "%item.System%",
+    "%item.OutputFilename%",
+    "%item.id%",
+    "%Now%"
+  ]
 }

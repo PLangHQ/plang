@@ -71,16 +71,19 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "This goal identifies and writes out the error message '%missingGoals%' when certain goals are missing.",
   "Visibility": 0,
   "GoalFileName": "CheckGoals.goal",
   "RelativeGoalPath": "\\events\\CheckGoals.goal",
   "RelativeGoalFolderPath": "\\events",
   "RelativePrPath": ".build\\events\\CheckGoals\\ShowMissingGoals\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\CheckGoals\\ShowMissingGoals",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "6c54783dbb2da4623895b668c955cef5d47c862b43013e9620f10a1c37f99105"
+  "Hash": "af444f74403393f02c9dbb73c1b8dade1d8174167a908f21e63a5a34e8305d2e",
+  "IncomingVariablesRequired": [
+    "missingGoals"
+  ]
 }

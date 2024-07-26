@@ -71,16 +71,20 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "Append \\%item.Content\\% to var \\%content\\%, separated by two new lines.",
   "Visibility": 0,
   "GoalFileName": "PlangExamples.goal",
   "RelativeGoalPath": "\\PlangExamples.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\PlangExamples\\AppendFile\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\PlangExamples\\AppendFile",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "525fcbaadc76b2acf9fe33f0e4653e90e66750fc36330beef01b538bab6fbf47"
+  "Hash": "1daf9ed107b3eb194c5b15228f0f51b3066a437b65bf8ff7a370ca1df653e3fd",
+  "IncomingVariablesRequired": [
+    "item.Content",
+    "content"
+  ]
 }

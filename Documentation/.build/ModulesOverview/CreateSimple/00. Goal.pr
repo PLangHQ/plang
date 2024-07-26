@@ -272,16 +272,20 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "This goal extracts the file name without extension from \\%file.Path\\% and writes it to \\%moduleName\\%. It reads a template file into \\%system_simple\\%, processes it with an LLM using \\%file.Content\\%, and writes the resulting markdown to output/modules_simple/\\%moduleName\\%.md.",
   "Visibility": 0,
   "GoalFileName": "ModulesOverview.goal",
   "RelativeGoalPath": "\\ModulesOverview.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ModulesOverview\\CreateSimple\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ModulesOverview\\CreateSimple",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "c96d4023a7b13dcf805f50152ca66c75cb8c081d64de05876d2750707ed81eee"
+  "Hash": "f5583949387dad0038bfd82c968faebf2af667d1112010afd048d884e889f372",
+  "IncomingVariablesRequired": [
+    "file.Path",
+    "file.Content"
+  ]
 }

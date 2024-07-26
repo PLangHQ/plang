@@ -205,16 +205,17 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "This goal retrieves the content of all *.goal files from the '../Tests/' directory, including subfolders, and writes the content to \\%testFiles\\%. It then iterates over \\%testFiles\\% to call the !AppendFile function and writes the final content to the \\%content\\% file at 'output/plangexample.txt'.",
   "Visibility": 1,
   "GoalFileName": "PlangExamples.goal",
   "RelativeGoalPath": "\\PlangExamples.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\PlangExamples\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\PlangExamples",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "42fd4990232c6d55e59962b11de3093f2b7f1589c26561580a8e473f60822d8c"
+  "Hash": "3006d1bd7be67051e34bf9c251984006b18b89f0d1bddd8c681bf6294bbe84c0",
+  "IncomingVariablesRequired": null
 }

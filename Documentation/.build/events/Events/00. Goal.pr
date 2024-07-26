@@ -85,5 +85,6 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": null
+  "Hash": null,
+  "IncomingVariablesRequired": null
 }

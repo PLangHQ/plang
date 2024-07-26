@@ -687,7 +687,7 @@ IfCondition
 
 These examples provide a glimpse into automating web interactions using the Selenium in Plang. For more detailed information and advanced usage, refer to the full documentation.
 
-[Link to docs](./PLang.Modules.SeleniumModule.md)
+[Link to docs](./PLang.Modules.WebCrawlerModule.md)
 ### Terminal
 
 The Terminal facilitates direct interaction with the command line, enabling execution of external commands and scripts within Plang.

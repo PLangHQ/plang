@@ -71,16 +71,19 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "LoadDoc - Executes a query to select all records from the 'docs' table where the Name matches \\%doc\\%, and writes the result to \\%docs\\%.",
   "Visibility": 0,
   "GoalFileName": "Start.goal",
   "RelativeGoalPath": "\\Start.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Start\\LoadDoc\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Start\\LoadDoc",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "b488c4cd70a4a02008fa181b12d845e7f9360acabf0b4cf87e371afcffec64a0"
+  "Hash": "cfe6fcbba6b83c30ff57533559b5a713bf49be2fe9f560d56e260669c5944c39",
+  "IncomingVariablesRequired": [
+    "doc"
+  ]
 }

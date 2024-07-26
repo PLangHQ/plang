@@ -483,16 +483,20 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "LoadVars reads the file '/template/modules/details/\\%module.moduleName\\%.txt' into \\%details\\% (empty if not found), reads '/template/modules/plangRules.txt' into \\%plangRules\\% (empty if not found), and sets \\%SourceCode\\% with runtime code and optional builder and settings file links based on existence.",
   "Visibility": 0,
   "GoalFileName": "Modules.goal",
   "RelativeGoalPath": "\\Modules.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\LoadVars\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\LoadVars",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "156406df0cc92bec1c97a2ad62f42959f8fd94606dd40738a804b921b0548500"
+  "Hash": "25ece533bcf4ca9cc95f3fb5e8eca14b62ceed8e5e3ec8d7b3b131d6c00e1904",
+  "IncomingVariablesRequired": [
+    "module.moduleName",
+    "module.namespace"
+  ]
 }

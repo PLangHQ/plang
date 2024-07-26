@@ -138,16 +138,17 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "CreateDetailOverview retrieves all '.md' files in the 'modules/' directory, excluding '_advanced.md', and writes them to \\%moduleFiles\\%. It then iterates over \\%moduleFiles\\% and calls the !CreateDetail function for each file.",
   "Visibility": 0,
   "GoalFileName": "ModulesOverview.goal",
   "RelativeGoalPath": "\\ModulesOverview.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ModulesOverview\\CreateDetailOverview\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ModulesOverview\\CreateDetailOverview",
-  "BuilderVersion": "0.1.0.11",
+  "BuilderVersion": "0.1.0.12",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "755295ed167b8818a397c5d6acb730ac09ec953bc9b7f644aa405b1338892c87"
+  "Hash": "a4f47db39951fafd048e2529e965d6a7deea06cd516dde7776a2759914f8f60a",
+  "IncomingVariablesRequired": []
 }
