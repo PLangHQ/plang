@@ -1,7 +1,3 @@
-Sure, I'll review your text and make any necessary corrections.
-
----
-
 # Automating the Boring Work with Plang
 
 I have a client who is managing a product catalog. Part of it is automatic, and part is manual work.
