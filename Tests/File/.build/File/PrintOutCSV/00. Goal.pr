@@ -1,6 +1,7 @@
 {
   "GoalName": "PrintOutCSV",
   "Comment": null,
+  "Text": "PrintOutCSV",
   "GoalSteps": [
     {
       "Text": "write out %item%",
@@ -21,7 +22,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 34,
+      "LineNumber": 39,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -70,16 +71,19 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "The PrintOutCSV goal writes out the value of the \\%item\\% variable.",
   "Visibility": 0,
   "GoalFileName": "File.goal",
   "RelativeGoalPath": "\\File.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\File\\PrintOutCSV\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\File\\PrintOutCSV",
-  "BuilderVersion": "0.1.0.0",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.13",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "3a6a5561ba17fe6ded67192c6ba25ba2952e8871c2fbf5f7363dee47e8a8b827"
+  "Hash": "579fe49e4b660dfdfb13fdd1585426fcd1fc67a0aa63ac7c1936a74dfd60930d",
+  "IncomingVariablesRequired": [
+    "item"
+  ]
 }

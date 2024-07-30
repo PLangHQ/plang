@@ -42,6 +42,29 @@ namespace PLang.Modules.ConditionalModule
 		public async Task<bool> HasAccessToPath(string dirOrFilePathOrVariableName)
 		{
 			return fileSystem.ValidatePath(dirOrFilePathOrVariableName) != null;
+		}
+
+		public async Task<bool> IsEqual(object item1, object item2, string? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null, string? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null, bool ignoreCase = false)
+		{
+			if (item1 is string i1 && item2 is string i2)
+			{
+				StringComparison co = (ignoreCase) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+				return i1.Equals(i2, co);
+			}
+
+			if (item1 is int int1 && item2 is int int2)
+			{
+				return int1 == int2;
+			}
+
+			if (item1 is bool bool1 && item2 is bool bool2)
+			{
+				return bool1 == bool2;
+			}
+
+			return false;
+
+
 		}*/
 
 		public override async Task<IError?> Run()

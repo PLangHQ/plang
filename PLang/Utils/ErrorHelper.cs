@@ -148,11 +148,14 @@ namespace PLang.Utils
 		{FormatLine(returnStr)}";
 				}
 
-				errorSource = $@"
+				if (step != null)
+				{
+					errorSource = $@"
 📦 Error Source:
 	- The error occurred in the module: `{step.ModuleType}.{genericFunction.FunctionName}`
 	{paramInfo}
 ".TrimEnd();
+				}
 			}
 
 			string reasonAndFix = @$"

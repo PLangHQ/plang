@@ -12,6 +12,12 @@ namespace PLang.Modules.UiModule
 
 		public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step)
 		{
+			var build = await base.Build(step);
+			if (build.BuilderError != null) return (null, build.BuilderError);
+
+			if (build.Instruction?.GetFunctions().FirstOrDefault()?.FunctionName != "RenderHtml") return build;
+
+
 			bool children = false;
 			string childrenStr = "";
 			string str = $"(Goal) {step.Goal.GoalName}\n";
@@ -57,7 +63,7 @@ namespace PLang.Modules.UiModule
 	Goalfile is only provided for context and you should not generate html from Goalfile, only user command. 
 ## Rules ##
 
-Your job is to build ```html, ```javascript, ```css from the user command and nothing else.
+Your job is to build ```html, ```javascript, ```css, ```javascriptFunctionToCall from the user command and nothing else.
 ");
 
 			var variables = GetVariablesInStep(step);
@@ -102,24 +108,25 @@ else
 }}
 ### Razor ###");
 
-			(var build, var buildError) = await base.Build<UiResponse>(step);
-			if (buildError != null || build == null)
+			build = await base.Build<UiResponse>(step);
+			if (build.BuilderError != null || build.Instruction == null)
 			{
-				return (null, buildError ?? new StepBuilderError("Could not build step", step));
+				return (null, build.BuilderError ?? new StepBuilderError("Could not build step", step));
 			}
 
-			var uiResponse = build.Action as UiResponse;
+			var uiResponse = build.Instruction.Action as UiResponse;
 			List<Parameter> parameters = new List<Parameter>();
-			parameters.Add(new Parameter("string", "html", uiResponse.html));
-			parameters.Add(new Parameter("string", "css", uiResponse.css));
-			parameters.Add(new Parameter("string", "javascript", uiResponse.javascript));
+			if (uiResponse.html != null) parameters.Add(new Parameter("string", "html", uiResponse.html));
+			if (uiResponse.css != null) parameters.Add(new Parameter("string", "css", uiResponse.css));
+			if (uiResponse.javascript != null) parameters.Add(new Parameter("string", "javascript", uiResponse.javascript));
+			if (uiResponse.javascriptFunctionToCall != null) parameters.Add(new Parameter("string", "javascriptFunctionToCall", uiResponse.javascriptFunctionToCall));
 
 			var gf = new GenericFunction("RenderHtml", parameters, null);
 
 
 			var instruction = new Instruction(gf);
 			step.Execute = true;
-			instruction.LlmRequest = build.LlmRequest;
+			instruction.LlmRequest = build.Instruction.LlmRequest;
 			return (instruction, null);
 		}
 
@@ -128,6 +135,6 @@ else
 
 	}
 
-	public record UiResponse(string html, string javascript, string css);
+	public record UiResponse(string? html = null, string? javascript = null, string? css = null, string? javascriptFunctionToCall = null);
 }
 

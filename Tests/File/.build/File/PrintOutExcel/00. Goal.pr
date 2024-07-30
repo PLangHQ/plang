@@ -1,6 +1,7 @@
 {
   "GoalName": "PrintOutExcel",
   "Comment": null,
+  "Text": "PrintOutExcel",
   "GoalSteps": [
     {
       "Text": "write out %item.Name% - %item.Email%",
@@ -21,7 +22,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 31,
+      "LineNumber": 36,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -70,16 +71,20 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "The PrintOutExcel goal writes out the Name and Email of an item. It uses the variables \\%item.Name\\% and \\%item.Email\\% to print the respective values.",
   "Visibility": 0,
   "GoalFileName": "File.goal",
   "RelativeGoalPath": "\\File.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\File\\PrintOutExcel\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\File\\PrintOutExcel",
-  "BuilderVersion": "0.1.0.0",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.13",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "4ec7061d35fd3d1f3d54308581f771697f65f6d630f8d440fc23ad1391c317c2"
+  "Hash": "052fff9c02ccceb18b6029be4cd71aecdb53960a4ce06b5024d67c562bcfbb67",
+  "IncomingVariablesRequired": [
+    "item.Name",
+    "item.Email"
+  ]
 }

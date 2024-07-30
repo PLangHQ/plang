@@ -185,8 +185,15 @@ namespace PLang.Utils
 					if (JsonHelper.IsJson(message)) return message;
 					return JsonConvert.SerializeObject(message);
 				}
-
-				var json = System.Text.Json.JsonSerializer.Serialize(obj, options);
+				string json;
+				if (obj.GetType().Name.StartsWith("List"))
+				{
+					json = JsonConvert.SerializeObject(obj);
+				}
+				else
+				{
+					json = System.Text.Json.JsonSerializer.Serialize(obj, options);
+				}
 				return JToken.Parse(json);
 			}
 			catch (InfiniteRecursionException)
@@ -196,10 +203,10 @@ namespace PLang.Utils
 			}
 			catch (Exception)
 			{
-				return "[Exception retrieving value]";
+				return "Exception retrieving value";
 			}
 		}
-
+	
 		public class ObjectValueConverter : System.Text.Json.Serialization.JsonConverter<ObjectValue>
 		{
 			public override ObjectValue Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -207,7 +214,7 @@ namespace PLang.Utils
 				// Implement deserialization if necessary
 				throw new NotImplementedException();
 			}
-
+		
 			public override void Write(Utf8JsonWriter writer, ObjectValue value, JsonSerializerOptions options)
 			{
 				writer.WriteStartObject();

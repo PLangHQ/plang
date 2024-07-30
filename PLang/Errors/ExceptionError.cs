@@ -39,8 +39,8 @@ namespace PLang.Errors
 		public string? HelpfulLinks { get; init; }
 
 		public bool ContinueBuild => false;
-		public Goal? Goal { get; init; }
-		public GoalStep? Step { get; init; }
+		public Goal? Goal { get; set; }
+		public GoalStep? Step { get; set; }
 		public object ToFormat(string contentType = "text")
 		{
 			return ErrorHelper.ToFormat(contentType, this);

@@ -17,12 +17,12 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			this.settings = settings;
 		}
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
-		public async Task OnCreateVariableListener([HandlesVariable] string key, string goalName, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
+		public async Task OnCreateVariableListener([HandlesVariable] string key, string goalName, [HandlesVariable] Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
 		{
 			memoryStack.AddOnCreateEvent(key, goalName, false, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
 		}
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
-		public async Task OnChangeVariableListener([HandlesVariable] string key, string goalName, bool notifyWhenCreated = true, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
+		public async Task OnChangeVariableListener([HandlesVariable] string key, string goalName, bool notifyWhenCreated = true, [HandlesVariable] Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
 		{
 			memoryStack.AddOnChangeEvent(key, goalName, false, notifyWhenCreated, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
 			if (notifyWhenCreated)
@@ -32,7 +32,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			}
 		}
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
-		public async Task OnRemoveVariableListener([HandlesVariable] string key, string goalName, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
+		public async Task OnRemoveVariableListener([HandlesVariable] string key, string goalName, [HandlesVariable] Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
 		{
 			memoryStack.AddOnRemoveEvent(key, goalName, false, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
 		}
@@ -130,7 +130,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		}
 
 		[Description("Append to variable. valueLocation=postfix|prefix seperatorLocation=end|start")]
-		public async Task<object?> AppendToVariable([HandlesVariableAttribute] string key, object? value = null, char seperator = '\n', string valueLocation = "postfix", string seperatorLocation = "end")
+		public async Task<object?> AppendToVariable([HandlesVariableAttribute] string key, object? value = null, char seperator = '\n', string valueLocation = "postfix", string seperatorLocation = "end", bool shouldBeUnique = false)
 		{
 			if (value == null) return value;
 
@@ -149,7 +149,10 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			}
 			else if (val is System.Collections.IList list)
 			{
-				list.Add(value);
+                if (!shouldBeUnique || (shouldBeUnique && !list.Contains(val)))
+                {
+					list.Add(value);
+				}                
 			}
 			else
 			{

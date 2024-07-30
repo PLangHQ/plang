@@ -1,4 +1,5 @@
-﻿using PLang.Utils;
+﻿using PLang.Building.Model;
+using PLang.Utils;
 
 namespace PLang.Errors
 {
@@ -17,7 +18,8 @@ namespace PLang.Errors
 				return message;
 			}
 		}
-
+		public GoalStep? Step { get; set; }
+		public Goal? Goal { get; set; }
 		public void Add(IError error)
 		{
 			errors.Add(error);

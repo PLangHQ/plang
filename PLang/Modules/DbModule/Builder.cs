@@ -223,6 +223,7 @@ Variable is defined with starting and ending %, e.g. %filePath%.
 \% is escape from start of variable, would be used in LIKE statements, then VariableNameOrValue should keep the escaped character, e.g. the user input \%%title%\%, should map to VariableNameOrValue=\%%title%\%
 SqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName). {appendToSystem}
 TypeFullName is Full name of the type in c#, System.String, System.Double, etc.
+%Now% variable is type of DateTime. %Now% variable should be left as is.
 ReturnValue rules: 
 {returnValueDesc}
 - integer/int should always be System.Int64. 
@@ -298,6 +299,7 @@ Int32 Delete(String sql, List<object>()? SqlParameters = null)
 Variable is defined with starting and ending %, e.g. %filePath%.
 SqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
 TypeFullName is Full name of the type in c#, System.String, System.Double, etc.
+%Now% variable is type of DateTime. %Now% variable should be left as is.
 {appendToSystem}
 String sql IS required
 
@@ -336,6 +338,8 @@ Sql MAY NOT contain a variable(except table name), it MUST be injected using Sql
 SqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
 TypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.
 All integers are type of System.Int64.
+%Now% variable is type of DateTime. %Now% variable should be left as is.
+
 {appendToSystem}
 If table name is a variable, keep the variable in the sql statement
 You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
@@ -389,6 +393,7 @@ Int32 Insert(String sql, List<object>()? SqlParameters = null)  //returns number
 variable is defined with starting and ending %, e.g. %filePath%.
 SqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
 TypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.
+%Now% variable is type of DateTime. %Now% variable should be left as is.
 {appendToSystem}
 {eventSourcing}
 If table name is a variable, keep the variable in the sql statement
@@ -439,6 +444,8 @@ Object InsertAndSelectIdOfInsertedRow(String sql, List<object>()? SqlParameters 
 variable is defined with starting and ending %, e.g. %filePath%.
 SqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
 TypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.
+InsertAndSelectIdOfInsertedRow returns a value that should be written into %variable% defined by user.
+%Now% variable is type of DateTime. %Now% variable should be left as is.
 {appendToSystem}
 {eventSourcing}
 If table name is a variable, keep the variable in the sql statement
@@ -488,6 +495,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 				var columnInfo = result.rows;
 				if (columnInfo != null && ((dynamic)columnInfo).Count > 0)
 				{
+					AppendToSystemCommand($"Table name is: {tableName}. Fix sql if it includes type.");
 					AppendToAssistantCommand($"### {tableName} columns ###\n{JsonConvert.SerializeObject(columnInfo)}\n### {tableName} columns ###");
 				}
 				else

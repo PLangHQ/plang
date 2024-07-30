@@ -79,15 +79,15 @@ namespace PLang.Container
 			RegisterEventRuntime(container);
 		}
 		public static void RegisterForPLangWindowApp(this ServiceContainer container, string appStartupPath, string relativeAppPath,
-			IAskUserDialog askUserDialog, IErrorDialog errorDialog, SynchronizationContext uiContext, Action<string> onFlush)
+			IAskUserDialog askUserDialog, IErrorDialog errorDialog, IForm iForm)
 		{
 			container.RegisterBaseForPLang(appStartupPath, relativeAppPath);
 			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
 
-			container.RegisterOutputStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IRazorEngine>(), container.GetInstance<IPLangFileSystem>(), uiContext, onFlush));
-			container.RegisterOutputSystemStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IRazorEngine>(), container.GetInstance<IPLangFileSystem>(), uiContext, onFlush));
+			container.RegisterOutputStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IRazorEngine>(), container.GetInstance<IPLangFileSystem>(), iForm));
+			container.RegisterOutputSystemStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IRazorEngine>(), container.GetInstance<IPLangFileSystem>(), iForm));
 			
 			container.RegisterAskUserHandlerFactory(typeof(AskUserWindowHandler), true, new AskUserWindowHandler(askUserDialog));
 			container.RegisterErrorHandlerFactory(typeof(UiErrorHandler), true, new UiErrorHandler(errorDialog, container.GetInstance<IAskUserHandlerFactory>()));
@@ -126,11 +126,12 @@ namespace PLang.Container
 		{
 
 			container.Register<IServiceContainerFactory, ServiceContainerFactory>();
+			container.RegisterSingleton<PLangAppContext>();
 			container.RegisterSingleton<IPLangFileSystem>(factory =>
 			{
-				return new PLangFileSystem(absoluteAppStartupPath, relativeStartupAppPath);
+				return new PLangFileSystem(absoluteAppStartupPath, relativeStartupAppPath, container.GetInstance<PLangAppContext>());
 			});
-			container.RegisterSingleton<PLangAppContext>();
+			
 
 			container.RegisterSingleton<ILogger, Services.LoggerService.Logger<Executor>>(typeof(Logger).FullName);
 			container.RegisterSingleton(factory =>

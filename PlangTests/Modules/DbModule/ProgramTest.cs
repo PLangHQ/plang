@@ -28,7 +28,7 @@ namespace PLangTests.Modules.DbModule
 			datasources.Add(new DataSource("MainDb", "", "", "", "", ""));
 			settings.GetValues<DataSource>(typeof(ModuleSettings)).Returns(datasources);
 
-			var fileSystem = new PLangFileSystem(Environment.CurrentDirectory, "./");
+			var fileSystem = new PLangFileSystem(Environment.CurrentDirectory, "./", context);
 			typeHelper = new TypeHelper(fileSystem, settings);
 
 			

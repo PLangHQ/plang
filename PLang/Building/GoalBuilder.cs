@@ -1,5 +1,8 @@
-﻿using LightInject;
+﻿using CsvHelper;
+using Jil;
+using LightInject;
 using Microsoft.Extensions.Logging;
+using Nethereum.Contracts.QueryHandlers.MultiCall;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
@@ -14,9 +17,13 @@ using PLang.Models;
 using PLang.Services.LlmService;
 using PLang.Services.SettingsService;
 using PLang.Utils;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reflection;
+using System.Runtime.Intrinsics.X86;
 using System.Text.RegularExpressions;
+using static PLang.Utils.VariableHelper;
+using System.Xml.Linq;
 
 namespace PLang.Building
 {
@@ -229,16 +236,22 @@ GoalApiIfo:
 			if (!string.IsNullOrEmpty(goal.Description) && goal.GetGoalAsString() == oldGoal?.GetGoalAsString()) return (goal, null);
 
 			var promptMessage = new List<LlmMessage>();
-			promptMessage.Add(new LlmMessage("system", $@"Write a decription for this Goal, use the comments and steps to build the description, max length 300 characters.
-Goal works like a function for programming language Plang. Goal defines 1 or more steps. 
+			promptMessage.Add(new LlmMessage("system", $@"
+YYou will receive a code written in Plang programming language
+Your job is to rite a description for this Goal called {goal.GoalName} and find out what variables are needed for the execution of the code.
+
+Use the comments and steps to build the description,
+Goal works like a function for programming language Plang. 
+Goal defines 1 or more steps. 
 Comments start with /
 Steps start with dash(-). 
 %Variable% is defined with starting and ending %.
 When writing %variable% in description, escape the variable with \, e.g. \%variable\%
 Analyze the goal and list out variables that are required to be sent to this goal to make it work
-Step that write into a variable are creating that variable
-llm step with scheme, will create variables from that scheme autotmatically, e.g. scheme: {{name:string}} will create %name% variable
-
+Step that writes into a variable are creating that variable
+Describe conditions that are affected by variables, describe what value of variable should be to call goal or perform some steps
+[llm] or step starting with system: and contains scheme:, will create variables from that scheme automatically, e.g. scheme: {{ name:string }} will create %name% variable
+Be concise
 "));
 			promptMessage.Add(new LlmMessage("user", goal.GetGoalAsString()));
 			var llmRequest = new LlmRequest("GoalDescription", promptMessage);

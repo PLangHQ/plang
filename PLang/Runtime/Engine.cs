@@ -36,7 +36,7 @@ namespace PLang.Runtime
 		MemoryStack GetMemoryStack();
 		void Init(IServiceContainer container);
 		Task Run(List<string> goalsToRun);
-		Task<IError> RunGoal(Goal goal);
+		Task<IError> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0);
 		Goal? GetGoal(string goalName, Goal? callingGoal = null);
 		List<Goal> GetGoalsAvailable(string appPath, string goalName);
 
@@ -315,8 +315,10 @@ namespace PLang.Runtime
 			return;
 		}
 
-		public async Task<IError?> RunGoal(Goal goal)
+		public async Task<IError?> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0)
 		{
+			if (waitForXMillisecondsBeforeRunningGoal > 0) await Task.Delay((int)waitForXMillisecondsBeforeRunningGoal);
+
 			AppContext.SetSwitch("Runtime", true);
 			SetLogLevel(goal.Comment);
 

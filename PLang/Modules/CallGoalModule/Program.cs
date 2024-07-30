@@ -18,7 +18,8 @@ namespace PLang.Modules.CallGoalModule
 	{
 
 		[Description("If backward slash(\\) is used by user, change to forward slash(/)")]
-		public async Task<IError?> RunGoal(string goalName, Dictionary<string, object?>? parameters = null, bool waitForExecution = true, int delayWhenNotWaitingInMilliseconds = 50)
+		public async Task<IError?> RunGoal(string goalName, Dictionary<string, object?>? parameters = null, bool waitForExecution = true, 
+			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0)
 		{
 			if (string.IsNullOrEmpty(goalName))
 			{
@@ -26,10 +27,11 @@ namespace PLang.Modules.CallGoalModule
 			}
 
 			ValidateAppInstall(goalName);
+			
 
 			var result = await pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName,
 					variableHelper.LoadVariables(parameters), Goal, 
-					waitForExecution, delayWhenNotWaitingInMilliseconds);
+					waitForExecution, delayWhenNotWaitingInMilliseconds, waitForXMillisecondsBeforeRunningGoal);
 			return result.error;
 			
 		}

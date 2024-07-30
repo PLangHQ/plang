@@ -38,7 +38,7 @@ namespace PLang.Modules.CodeModule
 
 		public async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, CompilerError? error = null, int errorCount = 0)
 		{
-			if (++errorCount > 3)
+			if (errorCount++ > 3)
 			{
 				return (null, error ?? new StepBuilderError("Could not compile code for this step", step));
 			}

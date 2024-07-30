@@ -118,7 +118,7 @@ namespace PLang.Building.Model
 		{
 			string goal = "";
 			if (!string.IsNullOrWhiteSpace(Comment)) goal = $"/ {this.Comment}\n";
-			goal += this.GoalName;
+			goal += this.GoalName + "\n";
 			foreach (var step in GoalSteps)
 			{
 				if (!string.IsNullOrWhiteSpace(step.Comment)) goal += $"/ {step.Comment}\n";

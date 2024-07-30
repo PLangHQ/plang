@@ -17,7 +17,7 @@ namespace PLang.Runtime
 {
     public interface IPseudoRuntime
 	{
-		Task<(IEngine engine, IError? error)> RunGoal(IEngine engine, PLangAppContext context, string appPath, string goalName, Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50);
+		Task<(IEngine engine, IError? error)> RunGoal(IEngine engine, PLangAppContext context, string appPath, string goalName, Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0);
 	}
 
 	public class PseudoRuntime : IPseudoRuntime
@@ -40,7 +40,9 @@ namespace PLang.Runtime
 			this.askUserHandlerFactory = askUserHandlerFactory;
 		}
 
-		public async Task<(IEngine engine, IError? error)> RunGoal(IEngine engine, PLangAppContext context, string appPath, string goalName, Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50)
+		public async Task<(IEngine engine, IError? error)> RunGoal(IEngine engine, PLangAppContext context, string appPath, string goalName, 
+			Dictionary<string, object?>? parameters, Goal? callingGoal = null, 
+			bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0)
 		{
 
 			Goal? goal = null;
@@ -115,7 +117,8 @@ namespace PLang.Runtime
 				}
 			}
 
-			var task = engine.RunGoal(goal);
+		
+			var task = engine.RunGoal(goal, waitForXMillisecondsBeforeRunningGoal);
 			
 
 			if (waitForExecution)
