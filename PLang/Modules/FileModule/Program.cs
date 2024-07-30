@@ -2,15 +2,19 @@
 using CsvHelper.Configuration;
 using Microsoft.Extensions.Logging;
 using MiniExcelLibs;
+using NBitcoin;
+using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
+using PLang.SafeFileSystem;
 using PLang.Utils;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Dynamic;
 using System.Globalization;
 using System.IO.Abstractions;
 using System.Linq.Dynamic.Core;
@@ -37,6 +41,30 @@ namespace PLang.Modules.FileModule
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
 		}
+
+		/*
+		 * Enable setting the root directory, this will allow for flexiblity in each identity has access to it's own path
+		[Description("Returns previous root path")]
+		public async Task<string> SetRootPath(string path)
+		{
+			var aboslutePath = GetPath(path);
+			var oldRootDir = fileSystem.RootDirectory;
+			context.AddOrReplace("!RootDirectory", aboslutePath);
+			return oldRootDir;
+		}
+
+		[Description("Returns path being removed")]
+		public async Task<string> ResetRootPath()
+		{
+			if (context.ContainsKey("!RootDirectory"))
+			{
+				string? path = context["!RootDirectory"] as string;
+				context.Remove("!RootDirectory");
+				return path ?? fileSystem.RootDirectory;
+			}
+			return fileSystem.RootDirectory;
+		}
+		*/
 
 		[Description("Return the absolute path the app is running in")]
 		public async Task<string> GetCurrentFolderPath(string path)
@@ -181,13 +209,44 @@ namespace PLang.Modules.FileModule
 				bool printHeader = true, bool overwrite = false)
 		{
 			var absolutePath = GetPath(path);
-			if (!fileSystem.Directory.Exists(fileSystem.Path.GetDirectoryName(absolutePath)))
+
+			object objectToWrite = variableToWriteToExcel;
+			if (variableToWriteToExcel is JArray jArray)
 			{
-				logger.LogWarning($"{absolutePath} does not exist");
-				return;
+				objectToWrite = await SaveJArrayToExcel(jArray);
+			}
+			await MiniExcel.SaveAsAsync(absolutePath, sheetName: sheetName, printHeader: printHeader, overwriteFile: overwrite, value: objectToWrite);
+		}
+
+		private async Task<List<ExpandoObject>> SaveJArrayToExcel(JArray jArray)
+		{
+			var list = new List<ExpandoObject>();
+			List<string> headers = new();
+			foreach (var jToken in jArray)
+			{
+				if (jToken is JObject jObject)
+				{
+					// Convert JObject to ExpandoObject
+					var expando = new ExpandoObject() as IDictionary<string, Object?>;
+					foreach (var property in jObject.Properties())
+					{
+						if (!headers.Contains(property.Name)) headers.Add(property.Name);
+						expando.Add(property.Name, property.Value);
+					}
+					foreach (var header in headers)
+					{
+						if (!expando.ContainsKey(header))
+						{
+							expando.Add(header, null);
+						}
+					}
+
+
+					list.Add((ExpandoObject)expando);
+				}
 			}
 
-			await MiniExcel.SaveAsAsync(absolutePath, sheetName: sheetName, printHeader: printHeader, overwriteFile: overwrite, value: variableToWriteToExcel);
+			return list;
 		}
 		public async Task WriteCsvFile(string path, object variableToWriteToCsv, bool append = false, bool hasHeaderRecord = true,
 			string delimiter = ",",
@@ -531,6 +590,23 @@ namespace PLang.Modules.FileModule
 			}
 		}
 
+		public async Task StopListeningToFileChange(string[] fileSearchPatterns, string? goalToCall = null)
+		{
+			string key = $"FileWatcher_{fileSearchPatterns}_";
+			if (goalToCall != null) key += goalToCall;
+
+			var items = context.Where(p => p.Key.StartsWith(key));
+			foreach (var item in items)
+			{
+				var watcher = context[item.Key] as IFileSystemWatcher;
+				if (watcher == null) continue;
+
+				watcher.EnableRaisingEvents = false;
+				context.Remove(item.Key);
+			}
+
+			
+		}
 
 		private ConcurrentDictionary<string, Timer> timers = new ConcurrentDictionary<string, Timer>();
 

@@ -15,6 +15,7 @@ using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Websocket.Client.Logging;
 using static PLang.Utils.VariableHelper;
 
 namespace PLang.Runtime
@@ -559,12 +560,43 @@ namespace PLang.Runtime
 					}
 
 				}
+
+				if (keyPlan.JsonPath != null && objectValue.Value is JObject jobj && !string.IsNullOrEmpty(value?.ToString()))
+				{
+					SetJsonValue(jobj, keyPlan.JsonPath, value.ToString());
+				}
+
 				AddOrReplace(variables, keyPlan.VariableName, objectValue);
 			}
 
 
 		}
 
+		public static void SetJsonValue(JObject jObject, string jsonPath, JToken value)
+		{
+			// Remove the root ($) and split the path
+			var tokens = jsonPath.TrimStart('$', '.').Split('.');
+
+			JToken current = jObject;
+			for (int i = 0; i < tokens.Length; i++)
+			{
+				var token = tokens[i];
+				if (i == tokens.Length - 1)
+				{
+					// If it's the last token, set the value
+					current[token] = value;
+				}
+				else
+				{
+					// Navigate to or create the next node
+					if (current[token] == null)
+					{
+						current[token] = new JObject();
+					}
+					current = current[token];
+				}
+			}
+		}
 
 		private void AddOrReplace(Dictionary<string, ObjectValue> variables, string key, ObjectValue objectValue)
 		{
@@ -591,6 +623,9 @@ namespace PLang.Runtime
 
 		private void CallEvent(string eventType, ObjectValue objectValue)
 		{
+			var context = engine.GetContext();
+			if (context != null && context.ContainsKey(ReservedKeywords.IsEvent)) return;
+
 			var events = objectValue.Events.Where(p => p.EventType == eventType);
 			foreach (var eve in events)
 			{
@@ -602,7 +637,13 @@ namespace PLang.Runtime
 						var goal = context[ReservedKeywords.Goal] as Goal;
 						if (goal != null)
 						{
-							await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, eve.goalName, eve.Parameters);
+							context.AddOrReplace(ReservedKeywords.IsEvent, true);
+							var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, eve.goalName, eve.Parameters);
+							if (result.error != null)
+							{
+								Console.WriteLine(ErrorHelper.ToFormat("text", result.error));
+							}
+							context.Remove(ReservedKeywords.IsEvent);
 						}
 					}
 				});

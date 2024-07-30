@@ -7,21 +7,28 @@ using PLang.Building.Model;
 using PLang.Container;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Modules.UiModule;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Utils;
 using PLangWindowForms;
+using RazorEngineCore;
+using Sprache;
 using System.Diagnostics;
+using System.Dynamic;
 using System.IO.Abstractions;
 using System.Reflection;
+using System.Resources;
 using System.Text;
+using Websocket.Client.Logging;
 using static PLang.Executor;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace PlangWindowForms
 {
 
 
-    public partial class Form1 : Form, IForm
+	public partial class Form1 : Form, IForm
 	{
 		bool debug = false;
 		ServiceContainer container;
@@ -29,6 +36,7 @@ namespace PlangWindowForms
 		IPLangFileSystem fileSystem;
 		Executor pLang;
 		private string[] args;
+		public SynchronizationContext SynchronizationContext { get; set; }
 		public Form1(string[] args)
 		{
 
@@ -38,12 +46,12 @@ namespace PlangWindowForms
 				AppContext.TryGetSwitch(ReservedKeywords.CSharpDebug, out debug);
 			}
 			AppContext.TryGetSwitch(ReservedKeywords.Debug, out debug);
-
+			SynchronizationContext = SynchronizationContext.Current;
 			this.args = args;
 			container = new ServiceContainer();
-
-			container.RegisterForPLangWindowApp(Environment.CurrentDirectory, Path.DirectorySeparatorChar.ToString(), 
-				new AskUserDialog(), new ErrorDialog(), SynchronizationContext.Current, RenderContent);
+			this.webView = new Microsoft.Web.WebView2.WinForms.WebView2();
+			container.RegisterForPLangWindowApp(Environment.CurrentDirectory, Path.DirectorySeparatorChar.ToString(),
+				new AskUserDialog(), new ErrorDialog(), this);
 
 			fileSystem = container.GetInstance<IPLangFileSystem>();
 			pLang = new Executor(container);
@@ -64,6 +72,10 @@ namespace PlangWindowForms
 			this.AllowDrop = true;
 			this.DragEnter += new DragEventHandler(Form_DragEnter);
 			SetInitialHtmlContent();
+
+			
+
+			
 		}
 		private void Form_DragEnter(object sender, DragEventArgs e)
 		{
@@ -83,6 +95,15 @@ namespace PlangWindowForms
 			{
 				Console.WriteLine(task.Exception);
 			}
+			webView.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
+			webView.CoreWebView2.WebResourceResponseReceived += CoreWebView2_WebResourceResponseReceived;
+			webView.CoreWebView2.ContentLoading += CoreWebView2_ContentLoading;
+			webView.CoreWebView2.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
+			webView.CoreWebView2.NavigationCompleted += CoreWebView2_NavigationCompleted;
+			webView.CoreWebView2.WebResourceRequested += (sender, args) =>
+			{
+				HandleResourcesRequests(args);
+			};
 
 			this.webView.CoreWebView2.WebMessageReceived += async (object sender, Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs e) =>
 			{
@@ -98,8 +119,121 @@ namespace PlangWindowForms
 			engine = container.GetInstance<IEngine>();
 
 			await pLang.Execute(args, ExecuteType.Runtime);
+		}
 
+		StringBuilder sb = new StringBuilder();
+		public async Task BufferContent(object? obj)
+		{
+			if (obj == null) return;
 
+			var content = await CompileAndRun(obj);
+
+			sb.Append(content);
+		}
+
+		public async Task<string> CompileAndRun(object? obj)
+		{
+			var memoryStack = container.GetInstance<MemoryStack>();
+			var expandoObject = new ExpandoObject() as IDictionary<string, object>;
+			foreach (var kvp in memoryStack.GetMemoryStack())
+			{
+				expandoObject.Add(kvp.Key, kvp.Value.Value);
+			}
+			IRazorEngineCompiledTemplate compiled = null;
+
+			var razorEngine = container.GetInstance<IRazorEngine>();
+			compiled = await razorEngine.CompileAsync("@using PLang.Modules.UiModule\n\n" + obj.ToString(), (compileOptions) =>
+			{
+				compileOptions.Options.IncludeDebuggingInfo = true;
+				compileOptions.AddAssemblyReference(typeof(Html).Assembly);
+			});
+			var content = compiled.Run(expandoObject as dynamic);
+			return content;
+		}
+
+		public async Task Flush()
+		{
+			var html = await GetFrame();
+			if (html == null) return;
+
+			webView.CoreWebView2.NavigateToString(html);
+		}
+		
+
+		public async Task<string> GetFrame()
+		{
+			if (sb.Length == 0) return null;
+
+			string html = $@"
+<!DOCTYPE html>
+<html lang=""en"">
+
+<head>
+    <meta charset=""UTF-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title></title>
+	<link href=""local:ui/bootstrap.min.css"" rel=""stylesheet"">
+	<link href=""local:ui/fontawesome.min.css"" rel=""stylesheet"">
+	<script src=""local:ui/bootstrap.bundle.min.js""></script>
+	<script src=""local:ui/fontawesome.min.js""></script>
+	<script>
+		function callGoal(goalName, args) {{
+			console.log(args);
+			window.chrome.webview.postMessage({{GoalName:goalName, args:args}});
+		}}
+
+		function showNotification(message) {{
+			var notification = document.getElementById('notification');
+			notification.textContent = message;
+			notification.style.display = 'block';
+        
+			// Hide after 5 seconds
+			setTimeout(function() {{
+				notification.style.display = 'none';
+			}}, 5000);
+		}}
+	</script>
+	<style>body{{margin:2rem;}}
+		.notification {{position: fixed;
+            top: 20px;
+            right: 20px;
+            display: none; /* Hide by default */
+            z-index: 1050; /* Ensure it appears above other elements */
+        }}</style>
+</head>
+
+<body>
+";
+			html += sb.ToString();
+			sb.Clear();
+			html += "<div id=\"notification\" class=\"notification alert alert-success\" role=\"alert\"></div></body></html>";
+			return html;
+		}
+
+		public async Task AppendContent(string cssSelector, string? content)
+		{
+			string escapedHtmlContent = JsonConvert.ToString(content);
+			string script = $@"
+        var targetElement = document.querySelector('{cssSelector}');
+        if (targetElement) {{
+            targetElement.innerHTML += {escapedHtmlContent};
+        }}
+    ";
+			SynchronizationContext.Post(async _ =>
+			{
+				//var task = webView.EnsureCoreWebView2Async();
+				//task.Wait();
+				await webView.CoreWebView2.ExecuteScriptAsync(script);
+			}, null);
+
+		}
+
+		public async Task ExecuteCode(string content)
+		{
+			SynchronizationContext.Post(async _ =>
+			{
+				await webView.CoreWebView2.ExecuteScriptAsync(content);
+			}, null);
 
 		}
 
@@ -116,7 +250,22 @@ namespace PlangWindowForms
 				if (initialLoad) return;
 				initialLoad = true;
 			}
-			var strVariables = "";
+
+			(string strVariables, string errorConsole) = ExtractErrorMessages(errorStream);
+
+			webView.CoreWebView2.NavigationCompleted += async (object? sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e) =>
+			{
+				await HandleErrors(strVariables, errorConsole);
+			};
+			webView.CoreWebView2.OpenDevToolsWindow();
+			webView.CoreWebView2.ExecuteScriptAsync($"console.error('{EscapeChars(html)}');");
+
+			outputStream.Stream.Position = 0;
+		}
+
+		private (string strVariables, string errorConsole) ExtractErrorMessages(Stream errorStream)
+		{
+			string strVariables = "";
 			string errorConsole = "";
 			if (errorStream != null)
 			{
@@ -139,21 +288,52 @@ namespace PlangWindowForms
 				}
 
 			}
+			return (strVariables, errorConsole);
+		}
 
-			webView.CoreWebView2.NavigationCompleted += async (object? sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e) =>
+		private void HandleResourcesRequests(CoreWebView2WebResourceRequestedEventArgs args)
+		{
+			var resourceType = args.ResourceContext;
+			if (args.Request.Uri.StartsWith("local:ui/"))
 			{
-				if (string.IsNullOrEmpty(errorConsole)) return;
-				if (debug)
+				string fileName = args.Request.Uri.Replace("local:", "");
+				if (fileSystem.File.Exists(fileName))
 				{
-					webView.CoreWebView2.OpenDevToolsWindow();
-				}
+					var fs = fileSystem.File.Open(fileName, FileMode.Open, FileAccess.Read);
 
-				await webView.CoreWebView2.ExecuteScriptAsync($"console.error('{EscapeChars(errorConsole)}');");
-				await webView.CoreWebView2.ExecuteScriptAsync($"console.info('Available Variables:\\n\\n{EscapeChars(strVariables)}');");
-				AppContext.TryGetSwitch("llmerror", out bool llmError);
-				if (llmError)
-				{
-					string system = @"You are c# expert developer debugging an error. You job is to identify why an error occured that user provides. 
+					fs.Position = 0;
+					string mimeType = (Path.GetExtension(fileName) == ".css") ? "text/css" : "application/javascript";
+					args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(fs, 200, "Ok", $"Content-Type: {mimeType}");
+
+					fileStreams.Add(fs);
+					return;
+
+				}
+			}
+
+
+				// Allow only image, video, and audio requests
+				if (resourceType != CoreWebView2WebResourceContext.Image &&
+				resourceType != CoreWebView2WebResourceContext.Media)
+			{
+				args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(null, 404, "Blocked", "");
+			}
+		}
+
+		private async Task HandleErrors(string strVariables, string errorConsole)
+		{
+			if (string.IsNullOrEmpty(errorConsole)) return;
+			if (debug)
+			{
+				webView.CoreWebView2.OpenDevToolsWindow();
+			}
+
+			await webView.CoreWebView2.ExecuteScriptAsync($"console.error('{EscapeChars(errorConsole)}');");
+			await webView.CoreWebView2.ExecuteScriptAsync($"console.info('Available Variables:\\n\\n{EscapeChars(strVariables)}');");
+			AppContext.TryGetSwitch("llmerror", out bool llmError);
+			if (llmError)
+			{
+				string system = @"You are c# expert developer debugging an error. You job is to identify why an error occured that user provides. 
 
 Model variable is an ExpandoObject. 
 Objects in Model are Json serialized for you, it maps to an object, e.g. 
@@ -164,58 +344,24 @@ The ""Model."" object is not visible in plang, dont mention it in your output. I
 
 Be straight to the point, point out the most obvious reason and how to fix in plang source code. 
 Be Concise";
-					string question = $@"I am getting this error:{errorConsole}
+				string question = $@"I am getting this error:{errorConsole}
 
 These variables are available:
 {strVariables}
 ";
-					var promptMessage = new List<LlmMessage>();
-					promptMessage.Add(new LlmMessage("system", system));
-					promptMessage.Add(new LlmMessage("user", question));
+				var promptMessage = new List<LlmMessage>();
+				promptMessage.Add(new LlmMessage("system", system));
+				promptMessage.Add(new LlmMessage("user", question));
 
-					var llmRequest = new LlmRequest("UIError", promptMessage);
-					llmRequest.llmResponseType = "text";
+				var llmRequest = new LlmRequest("UIError", promptMessage);
+				llmRequest.llmResponseType = "text";
 
-					await webView.CoreWebView2.ExecuteScriptAsync($"console.info('Analyzing error... will be back with more info in few seconds....');");
-					var llmService = container.GetInstance<ILlmService>();
-					(var result, var queryError) = await llmService.Query<string>(llmRequest);
+				await webView.CoreWebView2.ExecuteScriptAsync($"console.info('Analyzing error... will be back with more info in few seconds....');");
+				var llmService = container.GetInstance<ILlmService>();
+				(var result, var queryError) = await llmService.Query<string>(llmRequest);
 
-					await webView.CoreWebView2.ExecuteScriptAsync($"console.info('Help:\\n\\n{EscapeChars(result)}');");
-				}
-			};
-			webView.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
-			webView.CoreWebView2.WebResourceResponseReceived += CoreWebView2_WebResourceResponseReceived;
-			webView.CoreWebView2.ContentLoading += CoreWebView2_ContentLoading;
-			webView.CoreWebView2.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
-			webView.CoreWebView2.NavigateToString(html);
-			webView.CoreWebView2.NavigationCompleted += CoreWebView2_NavigationCompleted;
-			webView.CoreWebView2.WebResourceRequested += (sender, args) =>
-			{
-				var resourceType = args.ResourceContext;
-				if (args.Request.Uri.StartsWith("local:ui/"))
-				{
-					string fileName = args.Request.Uri.Replace("local:", "");
-					if (fileSystem.File.Exists(fileName))
-					{
-						var fs = fileSystem.File.Open(fileName, FileMode.Open, FileAccess.Read);
-
-						fs.Position = 0;
-						string mimeType = (Path.GetExtension(fileName) == ".css") ? "text/css" : "application/javascript";
-						args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(fs, 200, "Ok", $"Content-Type: {mimeType}");
-
-						fileStreams.Add(fs);
-						return;
-
-					}
-				}
-				// Allow only image, video, and audio requests
-				if (resourceType != CoreWebView2WebResourceContext.Image &&
-					resourceType != CoreWebView2WebResourceContext.Media)
-				{
-					args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(null, 404, "Blocked", "");
-				}
-			};
-			outputStream.Stream.Position = 0;
+				await webView.CoreWebView2.ExecuteScriptAsync($"console.info('Help:\\n\\n{EscapeChars(result)}');");
+			}
 		}
 
 		List<FileSystemStream> fileStreams = new List<FileSystemStream>();
@@ -311,6 +457,7 @@ These variables are available:
 			this.Text = title;
 
 		}
+
 
 	}
 }

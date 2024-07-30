@@ -156,7 +156,12 @@ namespace PLang.Modules
 						return await HandleFileAccess(fa);
 					}
 
-					return new ProgramError(ex.Message, goalStep, function, parameterValues, Exception: ex);
+					var pe = new ProgramError(ex.Message, goalStep, function, parameterValues, Exception: ex);
+					pe.Step = goalStep;
+					pe.Goal = goal;
+
+					if (this is IDisposable disposable) disposable.Dispose(); 
+					return pe;
 				}
 
 				if (!goalStep.WaitForExecution || method.ReturnType == typeof(Task))
@@ -174,6 +179,15 @@ namespace PLang.Modules
 						if (isHandled) return await RunFunction(function);
 
 						return ErrorHelper.GetMultipleError(error, handlerError);
+					}
+					if (error.Step == null)
+					{
+						error.Step = goalStep;
+					}
+
+					if (error.Goal == null)
+					{
+						error.Goal = goal;
 					}
 					return error;
 				}

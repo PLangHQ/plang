@@ -1,6 +1,9 @@
 ﻿using PLang.Building.Parsers;
+using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Runtime;
+using PLang.Services.OutputStream;
 using System.ComponentModel;
 
 namespace PLang.Modules.WindowAppModule
@@ -10,30 +13,30 @@ namespace PLang.Modules.WindowAppModule
 	{
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
-
-		public Program(IPseudoRuntime pseudoRuntime, IEngine engine) : base()
+		private readonly IOutputStreamFactory outputStreamFactory;
+		public Program(IPseudoRuntime pseudoRuntime, IEngine engine, IOutputStreamFactory outputStreamFactory) : base()
 		{
+			this.outputStreamFactory = outputStreamFactory;
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
 		}
 
 		[Description("goalName is required. It is one word. Example: call !NameOfGoal, run !Google.Search. Do not use the names in your response unless defined by user")]
-		public async Task<string> RunWindowApp(string goalName, Dictionary<string, object?>? parameters = null, 
+		public async Task<IError?> RunWindowApp(string goalName, Dictionary<string, object?>? parameters = null, 
 			int width = 800, int height = 450, string? iconPath = null, string windowTitle = "plang")
 		{
-			if (context.ContainsKey("__WindowApp__"))
+			var outputStream = outputStreamFactory.CreateHandler();
+			if (outputStream is not UIOutputStream os)
 			{
-				var iform = context["__WindowApp__"] as IForm;
-				if (iform != null)
-				{
-					iform.SetSize(width, height);
-					if (iconPath != null) iform.SetIcon(iconPath);
-					iform.SetTitle(windowTitle);
-				}
+				return new StepError("This is not UI Output, did you run plang instead of plangw?", goalStep);
 			}
-            await pseudoRuntime.RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), goalName, parameters, Goal);
 
-			return "";
+			os.IForm.SetTitle(windowTitle);
+			os.IForm.SetSize(width, height);
+			if (iconPath != null) os.IForm.SetIcon(iconPath);
+			
+			var result = await pseudoRuntime.RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), goalName, parameters, Goal);
+			return result.error;
 		}
 
 

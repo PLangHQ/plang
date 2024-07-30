@@ -25,6 +25,7 @@ llmResponseType can be null, text, json, markdown or html. default is null. If s
 promptMessages contains the system, assistant and user messages. assistant or user message is required.
 Determine what part is system, assistant and user properties. If you cannot map it, the whole user request should be on user role
 if user does not define model, set model to ""gpt-4-vision-preview"" if content type is image_url
+model is default gpt-4o-mini
 the json scheme from promptMessages without image is : {role:string, content:[{type:string, text:string}]} 
 the json scheme from promptMessages with image is : {role:string, content:[{type:string, image_url:{url:string}]} 
 

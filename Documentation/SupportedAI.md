@@ -6,6 +6,7 @@ Plang integrates with a variety of OpenAI models, providing developers with the 
 
 | Model                      | Input Price | Output Price |
 |----------------------------|-------------|--------------|
+| gpt-4o-mini                | $0.0003     | $0.0012      |
 | gpt-4o                     | $0.01       | $0.03        |
 | gpt-4-turbo                | $0.02       | $0.06        |
 | gpt-4                      | $0.06       | $0.12        |

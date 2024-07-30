@@ -46,7 +46,7 @@ namespace PLang.Modules.ConditionalModule
 
 		private async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, CompilerError? error = null, int errorCount = 0)
 		{
-			if (++errorCount > 3)
+			if (errorCount++ > 3)
 			{
 				return (null, error ?? new StepBuilderError("Could not compile code for this step", step));
 			}
@@ -75,6 +75,7 @@ namespace PLang.Modules.ConditionalModule
 - Consider top security measures when generating code and validate code
 - append @ sign for variable that match reserved keywords in C#
 - C# code MUST only contain the contition code and return bool, an external system will call goals(methods) that user defines in his intent.
+- initialize variables before using them in TryParse
 ## Rules ##
 
 ## Response information ##

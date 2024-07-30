@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
 using PLang.Errors;
 using PLang.Exceptions;
@@ -16,11 +17,25 @@ namespace PLang.SafeFileSystem
 	//[Serializable]
 	public sealed class PLangFileSystem : FileSystem, IPLangFileSystem
 	{
+		private string rootPath;
 		List<FileAccessControl>? fileAccesses = null;
-		public bool IsRootApp { get; private set; }
-		public string RelativeAppPath { get; private set; }
+		private readonly PLangAppContext context;
 
-		public string RootDirectory { get; private set; }
+		public bool IsRootApp { get; private set; }
+		public string RelativeAppPath { get; set; }
+
+		public string RootDirectory
+		{
+			get
+			{
+				if (context.ContainsKey("!RootDirectory"))
+				{
+					this.RootDirectory = context["!RootDirectory"] as string ?? rootPath;
+				}
+				return rootPath;
+			}
+			set { rootPath = value; }
+		}
 		public string SharedPath { get; private set; }
 		public string GoalsPath { get; private set; }
 		public string BuildPath { get; private set; }
@@ -34,10 +49,10 @@ namespace PLang.SafeFileSystem
 		// appName is weak validation, need to find new way
 
 		/// <inheritdoc />
-		public PLangFileSystem(string appStartupPath, string relativeAppPath)
+		public PLangFileSystem(string appStartupPath, string relativeAppPath, PLangAppContext context)
 		{
-			
-			this.RootDirectory = appStartupPath.AdjustPathToOs();			
+			this.context = context;
+			this.RootDirectory = appStartupPath.AdjustPathToOs();
 			this.RelativeAppPath = relativeAppPath.AdjustPathToOs();
 			this.fileAccesses = new List<FileAccessControl>();
 
@@ -74,6 +89,7 @@ namespace PLang.SafeFileSystem
 			this.GoalsPath = this.RootDirectory;
 			this.BuildPath = Path.Join(this.GoalsPath, ".build");
 			this.DbPath = Path.Join(this.GoalsPath, ".db");
+			
 		}
 
 		// This is a security issue, here anybody can set what ever file access.
@@ -93,7 +109,7 @@ namespace PLang.SafeFileSystem
 			this.fileAccesses = fileAccesses;
 		}
 
-		
+
 
 		public string ValidatePath(string? path)
 		{
@@ -148,35 +164,35 @@ Your answer:
 
 
 		[Newtonsoft.Json.JsonIgnore]
-[System.Text.Json.Serialization.JsonIgnore]
+		[System.Text.Json.Serialization.JsonIgnore]
 		/// <inheritdoc />
 		public override IDirectory Directory { get; }
 		[Newtonsoft.Json.JsonIgnore]
-[System.Text.Json.Serialization.JsonIgnore]
+		[System.Text.Json.Serialization.JsonIgnore]
 		/// <inheritdoc />
 		public override IFile File { get; }
 		[Newtonsoft.Json.JsonIgnore]
-[System.Text.Json.Serialization.JsonIgnore]
+		[System.Text.Json.Serialization.JsonIgnore]
 		/// <inheritdoc />
 		public override IFileInfoFactory FileInfo { get; }
 		[Newtonsoft.Json.JsonIgnore]
-[System.Text.Json.Serialization.JsonIgnore]
+		[System.Text.Json.Serialization.JsonIgnore]
 		/// <inheritdoc />
 		public override IFileStreamFactory FileStream { get; }
 		[Newtonsoft.Json.JsonIgnore]
-[System.Text.Json.Serialization.JsonIgnore]
+		[System.Text.Json.Serialization.JsonIgnore]
 		/// <inheritdoc />
 		public override IPath Path { get; }
 		[Newtonsoft.Json.JsonIgnore]
-[System.Text.Json.Serialization.JsonIgnore]
+		[System.Text.Json.Serialization.JsonIgnore]
 		/// <inheritdoc />
 		public override IDirectoryInfoFactory DirectoryInfo { get; }
 		[Newtonsoft.Json.JsonIgnore]
-[System.Text.Json.Serialization.JsonIgnore]
+		[System.Text.Json.Serialization.JsonIgnore]
 		/// <inheritdoc />
 		public override IDriveInfoFactory DriveInfo { get; }
 		[Newtonsoft.Json.JsonIgnore]
-[System.Text.Json.Serialization.JsonIgnore]
+		[System.Text.Json.Serialization.JsonIgnore]
 		/// <inheritdoc />
 		public override IFileSystemWatcherFactory FileSystemWatcher { get; }
 

@@ -167,7 +167,15 @@ namespace PLang.Modules.DbModule
 					var p = parameter as ParameterInfo;
 					if (parameter is JObject)
 					{
-						p = ((JObject)parameter).ToObject<ParameterInfo>();
+						if (((JObject)parameter).GetValue("Type") != null)
+						{
+							var obj = (JObject)parameter;
+							p = new ParameterInfo(obj.GetValue("Name").ToString(), obj.GetValue("Value"), obj.GetValue("Type").ToString());
+						}
+						else
+						{
+							p = ((JObject)parameter).ToObject<ParameterInfo>();
+						}
 					}
 					else if (parameter is string && JsonHelper.IsJson(parameter))
 					{
@@ -605,7 +613,12 @@ namespace PLang.Modules.DbModule
 
 			int affectedRows = 0;
 			var generator = new IdGenerator(items.Count);
-			await BeginTransaction();
+
+			IDbTransaction? transaction = context.ContainsKey(DbTransactionContextKey) ? context[DbTransactionContextKey] as IDbTransaction : null;
+			if (transaction == null)
+			{
+				await BeginTransaction();
+			}
 
 			// TODO: This is actually not the most optimized bulk insert, it's inserting each row at a time
 			for (int i = 0; i < items.Count; i++)
@@ -643,8 +656,10 @@ namespace PLang.Modules.DbModule
 				}
 				affectedRows += insertResult.Item1;
 			}
-
-			await EndTransaction();
+			if (transaction == null)
+			{
+				await EndTransaction();
+			}
 
 			return (affectedRows, null);
 
@@ -659,6 +674,7 @@ namespace PLang.Modules.DbModule
 			if (type == "NUMERIC") return typeof(double).FullName;
 			if (type == "BOOLEAN") return typeof(bool).FullName;
 			if (type == "NULL") return typeof(DBNull).FullName;
+			if (type == "BIGINT") return typeof(Int64).FullName;
 
 			throw new Exception($"Could not map type: {type} to C# object");
 		}

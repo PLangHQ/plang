@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
@@ -34,12 +35,79 @@ namespace PLang.Modules.LlmModule
 			this.logger = logger;
 		}
 
+		private readonly string AppendToSystemKey = "__LLM_AppendToSystem__";
+		private readonly string AppendToUserKey = "__LLM_AppendToUser__";
+		private readonly string AppendToAssistantKey = "__LLM_AppendToAssistant__";
+		public async Task AppendToSystem(string system)
+		{
+			List<string> systems = new List<string>();
+			if (context.ContainsKey(AppendToSystemKey))
+			{
+				systems = context[AppendToSystemKey] as List<string> ?? new();
+			}
+			systems.Add(system);
+			context.AddOrReplace(AppendToSystemKey, systems);
+		}
+		public async Task AppendToAssistant(string assistant)
+		{
+			List<string> assistants = new List<string>();
+			if (context.ContainsKey(AppendToAssistantKey))
+			{
+				assistants = context[AppendToAssistantKey] as List<string> ?? new();
+			}
+			assistants.Add(assistant);
+			context.AddOrReplace(AppendToAssistantKey, assistants);
+		}
+		public async Task AppendToUser(string user)
+		{
+			List<string> users = new List<string>();
+			if (context.ContainsKey(AppendToUserKey))
+			{
+				users = context[AppendToUserKey] as List<string> ?? new();
+			}
+			users.Add(user);
+			context.AddOrReplace(AppendToUserKey, users);
+		}
+
+		private void AppendToMessage(LlmMessage message)
+		{
+			string? text = null;
+			if (message.Role == "system")
+			{
+				text = GetAppendText(AppendToSystemKey);
+			}
+			if (message.Role == "assistant")
+			{
+				text = GetAppendText(AppendToAssistantKey);
+			}
+			if (message.Role == "user")
+			{
+				text = GetAppendText(AppendToUserKey);
+			}
+			if (text == null) return;
+			message.Content.Add(new LlmContent(text));
+		}
+
+		private string? GetAppendText(string appendToSystemKey)
+		{
+			
+			if (!context.ContainsKey(appendToSystemKey)) return null;
+
+			string? text = null;
+			var	messages = context[appendToSystemKey] as List<string> ?? new();
+			foreach (var message in messages)
+			{
+				text += message + Environment.NewLine;
+			}
+			return text;
+		}
+
 		public record AskLlmResponse(string Result);
 
 		public async Task<(IReturnDictionary?, IError?)> AskLlm(
 			[HandlesVariable] List<LlmMessage> promptMessages,
 			string? scheme = null,
-			string model = "gpt-4-turbo",
+			string model = "gpt-4o-mini",
 			double temperature = 0,
 			double topP = 0,
 			double frequencyPenalty = 0.0,
@@ -49,9 +117,17 @@ namespace PLang.Modules.LlmModule
 			string? llmResponseType = null, 
 			string loggerLevel = "trace")
 		{
-
-			foreach (var message in promptMessages)
+			if (promptMessages == null || promptMessages.Count == 0)
 			{
+				return (null, new StepError("The message to the llm service is empty. You must ask it something.", goalStep, "LlmError",
+					FixSuggestion: "If you are loading data from file or variable, make sure that the data loads fully",
+					HelpfulLinks: "https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.LlmModule.md"));
+			}
+
+
+			for (int i =0;i<promptMessages.Count;i++)
+			{
+				var message = promptMessages[i];
 				foreach (var c in message.Content)
 				{
 					if (c.Text != null)
@@ -65,8 +141,9 @@ namespace PLang.Modules.LlmModule
 					{
 						c.ImageUrl.Url = variableHelper.LoadVariables(c.ImageUrl.Url).ToString();
 					}
+					
 				}
-
+				AppendToMessage(message);
 			}
 			
 
@@ -131,6 +208,8 @@ namespace PLang.Modules.LlmModule
 			}
 			return (null, null);
 		}
+
+		
 
 		public async Task UseSharedIdentity(bool useSharedIdentity = true)
 		{

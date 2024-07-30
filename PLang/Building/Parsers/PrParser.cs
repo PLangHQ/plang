@@ -259,6 +259,9 @@ namespace PLang.Building.Parsers
 			goal = GetAllGoals().FirstOrDefault(p => p.RelativePrFolderPath.Equals(Path.Join(".build", goalNameOrPath), StringComparison.OrdinalIgnoreCase));
 			if (goal != null) return goal;
 
+			goal = GetAllGoals().FirstOrDefault(p => goalNameOrPath.TrimStart(Path.DirectorySeparatorChar).Equals(Path.Join(p.RelativeGoalFolderPath, p.GoalName).TrimStart(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase));
+			if (goal != null) return goal;
+
 			// first check for goal inside same goal file as the calling goal
 			if (callingGoal != null)
 			{

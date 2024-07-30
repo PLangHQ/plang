@@ -26,10 +26,17 @@ File
 - write to  demo2.xlsx, data: %excelData%, %csvData%, overwrite file
 - delete demo.xlsx
 - delete demo2.xlsx
-- listen to 'files/*.json', call !ProcessJson
+- call goal ListenToFolder, run and forget
+- wait 2 sec
+- stop listening to 'files/*.json'
+
+
 
 PrintOutExcel
 - write out %item.Name% - %item.Email%
 
 PrintOutCSV
 - write out %item%
+
+ListenToFolder
+- listen to 'files/*.json', call !ProcessJson

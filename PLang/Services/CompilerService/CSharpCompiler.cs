@@ -375,7 +375,7 @@ Search for {fileName} - https://www.nuget.org/packages?q={fileName}"));
 
 			//dont insert Debugger.Break to SendDebug code, it's just annoying
 			var debugPath = Path.Join(".build", Path.DirectorySeparatorChar.ToString(), "events", Path.DirectorySeparatorChar.ToString(), "senddebug");
-			if (!step.Goal.AbsolutePrFilePath.ToLower().Contains(debugPath))
+			if (!step.Goal.AbsolutePrFilePath.ToLower().Contains(debugPath) && !implementation.Contains($@"(!AppContext.TryGetSwitch(""skipCode"""))
 			{
 				int idx = implementation.IndexOf("ExecutePlangCode");
 				int curlyIdx = implementation.IndexOf("{", idx);

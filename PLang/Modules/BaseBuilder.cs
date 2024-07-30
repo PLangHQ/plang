@@ -105,7 +105,7 @@ namespace PLang.Modules
 
 				errorMessage = @$"## Error from previous LLM request ## 
 Previous response from LLM caused error. This was your response.
-{instruction.Action.ToString()}
+{Newtonsoft.Json.JsonConvert.SerializeObject(instruction.Action)}
 
 This is the error(s)
 ";
