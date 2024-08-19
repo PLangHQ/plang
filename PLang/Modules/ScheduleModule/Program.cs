@@ -1,4 +1,5 @@
 ﻿using LightInject;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using NCrontab;
@@ -6,8 +7,11 @@ using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
+using PLang.Errors;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Runtime;
+using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
 using PLang.Utils;
 using System.ComponentModel;
@@ -20,13 +24,23 @@ namespace PLang.Modules.ScheduleModule
 	public class Program : BaseProgram
 	{
 		private readonly ISettings settings;
+		private readonly IEngine engine;
+		private readonly IPseudoRuntime pseudoRuntime;
+		private readonly ILogger logger;
+		private readonly IPLangFileSystem fileSystem;
+		private readonly IOutputStreamFactory outputStreamFactory;
 		private readonly ModuleSettings moduleSettings;
 		public PrParser PrParser { get; }
 
-		public Program(ISettings settings, PrParser prParser) : base()
+		public Program(ISettings settings, PrParser prParser, IEngine engine, IPseudoRuntime pseudoRuntime, ILogger logger, IPLangFileSystem fileSystem, IOutputStreamFactory outputStreamFactory) : base()
 		{
 			this.settings = settings;
 			PrParser = prParser;
+			this.engine = engine;
+			this.pseudoRuntime = pseudoRuntime;
+			this.logger = logger;
+			this.fileSystem = fileSystem;
+			this.outputStreamFactory = outputStreamFactory;
 			this.moduleSettings = new ModuleSettings(settings);
 
 		}
@@ -39,7 +53,7 @@ namespace PLang.Modules.ScheduleModule
 			await Task.Delay(sleepTimeInMilliseconds);
 		}
 
-		public record CronJob(string AbsolutePrFilePath, string CronCommand, string GoalName, Dictionary<string, object?>? Parameters = null, DateTime? NextRun = null, int MaxExecutionTimeInMilliseconds = 30000)
+		public record CronJob(string AbsolutePrFilePath, string CronCommand, GoalToCall GoalName, Dictionary<string, object?>? Parameters = null, DateTime? NextRun = null, int MaxExecutionTimeInMilliseconds = 30000)
 		{
 			public bool IsArchived = false;
 		};
@@ -50,7 +64,7 @@ namespace PLang.Modules.ScheduleModule
 			await Schedule(goalStep.AbsolutePrFilePath, cronCommand, goalName, parameters, nextRun);
 		}
 
-		private async Task Schedule(string absolutePrFilePath, string cronCommand, string goalName, Dictionary<string, object?>? parameters = null, DateTime? nextRun = null)
+		private async Task Schedule(string absolutePrFilePath, string cronCommand, GoalToCall goalName, Dictionary<string, object?>? parameters = null, DateTime? nextRun = null)
 		{
 			var cronJobs = moduleSettings.GetCronJobs();
 			var idx = cronJobs.FindIndex(p => p.AbsolutePrFilePath == absolutePrFilePath);
@@ -69,7 +83,38 @@ namespace PLang.Modules.ScheduleModule
 			KeepAlive(this, "Scheduler");
 		}
 
-		public static void Start(ISettings settings, IEngine engine, PrParser prParser, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem)
+		public async Task StartScheduler()
+		{
+
+			IEngine engine = this.engine;
+			ISettings settings = this.settings;
+			PrParser prParser = this.PrParser;
+			ILogger logger = this.logger;
+			IPseudoRuntime pseudoRuntime = this.pseudoRuntime;
+			IPLangFileSystem fileSystem = this.fileSystem;
+
+			if (outputStreamFactory.CreateHandler() is not UIOutputStream)
+			{
+				logger.LogDebug("Initiate new engine for scheduler");
+				var containerForScheduler = new ServiceContainer();
+				((ServiceContainer)containerForScheduler).RegisterForPLangConsole(fileSystem.GoalsPath, fileSystem.Path.DirectorySeparatorChar.ToString());
+
+				engine = containerForScheduler.GetInstance<IEngine>();
+				engine.Init(containerForScheduler);
+				settings = containerForScheduler.GetInstance<ISettings>();
+				prParser = containerForScheduler.GetInstance<PrParser>();
+				logger = containerForScheduler.GetInstance<ILogger>();
+				pseudoRuntime = containerForScheduler.GetInstance<IPseudoRuntime>();
+				fileSystem = containerForScheduler.GetInstance<IPLangFileSystem>();
+			}
+
+			
+			Start(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
+			
+		}
+
+
+		private void Start(ISettings settings, IEngine engine, PrParser prParser, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem)
 		{
 			RunContainer(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
 
@@ -91,7 +136,7 @@ namespace PLang.Modules.ScheduleModule
 
 		}
 
-		private static void RunContainer(ISettings settings, IEngine engine, PrParser prParser, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem)
+		private void RunContainer(ISettings settings, IEngine engine, PrParser prParser, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem)
 		{
 			var moduleSettings = new ModuleSettings(settings);
 			var list = moduleSettings.GetCronJobs();
@@ -106,7 +151,7 @@ namespace PLang.Modules.ScheduleModule
 
 				while (true)
 				{
-					await RunScheduledTasks(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
+					await RunScheduledTasks(settings, engine, prParser, logger, pseudoRuntime, fileSystem, outputStreamFactory);
 
 					//run every 1 min
 					await Task.Delay(60 * 1000);
@@ -115,7 +160,7 @@ namespace PLang.Modules.ScheduleModule
 
 		}
 
-		private static List<CronJob> CleanDeletedCronJobs(ISettings settings, IPLangFileSystem fileSystem, List<CronJob> cronJobs)
+		private List<CronJob> CleanDeletedCronJobs(ISettings settings, IPLangFileSystem fileSystem, List<CronJob> cronJobs)
 		{
 			for (int i = 0; i < cronJobs.Count; i++)
 			{
@@ -131,7 +176,7 @@ namespace PLang.Modules.ScheduleModule
 			return cronJobs;
 		}
 
-		public static async Task RunScheduledTasks(ISettings settings, IEngine engine, PrParser prParser, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem)
+		private async Task RunScheduledTasks(ISettings settings, IEngine engine, PrParser prParser, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem, IOutputStreamFactory outputStreamFactory)
 		{
 			CronJob item = null;
 			try
@@ -142,7 +187,7 @@ namespace PLang.Modules.ScheduleModule
 				{
 					item = list[i];
 
-					var p = new Program(settings, prParser);
+					var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory);
 					var schedule = CrontabSchedule.Parse(item.CronCommand);
 
 					var nextOccurrence = schedule.GetNextOccurrence(SystemTime.OffsetUtcNow().DateTime);

@@ -1,5 +1,8 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PLang.Attributes;
+using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Runtime;
 using PLang.Utils;
 using System.ComponentModel;
@@ -100,12 +103,20 @@ namespace PLang.Modules.ListDictionaryModule
 
 		}
 		[Description("Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToDictionary")]
-		public async Task<Dictionary<string, object>> AddToDictionary(string key, object value, Dictionary<string, object>? dictionaryInstance = null, bool updateIfExists = true)
+		public async Task<(Dictionary<string, object>?, IError?)> AddToDictionary(string key, object value, Dictionary<string, object>? dictionaryInstance = null, bool updateIfExists = true)
 		{
 			if (value == null) return new();
 			if (function != null && function.ReturnValue != null)
 			{
-				dictionaryInstance = memoryStack.Get(function.ReturnValue[0].VariableName) as Dictionary<string, object>;
+				var obj = memoryStack.Get(function.ReturnValue[0].VariableName);
+				if (obj is JObject jObject)
+				{
+					dictionaryInstance = jObject.ToDictionary();
+				}
+				else
+				{
+					dictionaryInstance = obj as Dictionary<string, object>;
+				}
 			}
 			if (dictionaryInstance == null) dictionaryInstance = new Dictionary<string, object>();
 
@@ -120,7 +131,7 @@ namespace PLang.Modules.ListDictionaryModule
 					dictionaryInstance.Add(key, value);
 				}
 			}
-			return dictionaryInstance;
+			return (dictionaryInstance, null);
 		}
 		[Description("Gets an object from dictionary. ReturnValue should always be used with GetFromDictionary")]
 		public async Task<object?> GetFromDictionary(string key, Dictionary<string, object>? dictionaryInstance = null)

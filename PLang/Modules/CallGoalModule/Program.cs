@@ -4,6 +4,7 @@ using PLang.Building.Parsers;
 using PLang.Errors;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.AppsRepository;
 using PLang.Utils;
@@ -18,7 +19,7 @@ namespace PLang.Modules.CallGoalModule
 	{
 
 		[Description("If backward slash(\\) is used by user, change to forward slash(/)")]
-		public async Task<IError?> RunGoal(string goalName, Dictionary<string, object?>? parameters = null, bool waitForExecution = true, 
+		public async Task<IError?> RunGoal(GoalToCall goalName, Dictionary<string, object?>? parameters = null, bool waitForExecution = true, 
 			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0)
 		{
 			if (string.IsNullOrEmpty(goalName))

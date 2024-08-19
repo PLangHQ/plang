@@ -51,7 +51,6 @@ namespace PLang.Modules.ConditionalModule
 				return (null, error ?? new StepBuilderError("Could not compile code for this step", step));
 			}
 
-
 			var compiler = new CSharpCompiler(fileSystem, prParser, logger);
 			var dllName = compiler.GetPreviousBuildDllNamesToExclude(step);
 

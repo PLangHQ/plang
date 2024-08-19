@@ -11,6 +11,7 @@ using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.LlmService;
 using System.Collections;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.Caching;
 using static PLang.Modules.BaseBuilder;
@@ -139,27 +140,27 @@ example of answer:
 			string? error = null;
 			foreach (var methodParameter in p.GetParameters())
 			{
-				var methodType = methodParameter.ParameterType.Name.ToLower();
-				if (methodType.Contains("`")) methodType = methodType.Substring(0, methodType.IndexOf("`"));
+				var parameterType = methodParameter.ParameterType.Name.ToLower();
+				if (parameterType.Contains("`")) parameterType = parameterType.Substring(0, parameterType.IndexOf("`"));
 
 				var parameter = parameters.FirstOrDefault(x => x.Name == methodParameter.Name);
-				if (parameter == null && methodType != "nullable" && !methodParameter.HasDefaultValue && !methodParameter.IsOptional)
+				if (parameter == null && parameterType != "nullable" && !methodParameter.HasDefaultValue && !methodParameter.IsOptional)
 				{
-					error += $"{methodParameter.Name} ({methodType}) is missing from parameters. {methodParameter.Name} is a required parameter\n";
+					error += $"{methodParameter.Name} ({parameterType}) is missing from parameters. {methodParameter.Name} is a required parameter\n";
 				}
-				else if (parameter != null && methodType == "string" && methodParameter.CustomAttributes.Count() > 0 && methodParameter.CustomAttributes.First().AttributeType.Name == "NullableAttribute" && parameter.Value == null)
+				else if (parameter != null && parameterType == "string" && methodParameter.CustomAttributes.Count() > 0 && methodParameter.CustomAttributes.First().AttributeType.Name == "NullableAttribute" && parameter.Value == null)
 				{
-					error += $"{methodParameter.Name} ({methodType}) is missing from parameters. {methodParameter.Name} is a required parameter\n";
+					error += $"{methodParameter.Name} ({parameterType}) is missing from parameters. {methodParameter.Name} is a required parameter\n";
 				}
 				
-				if (parameter != null && parameter.Value != null && methodType == "string" && parameter.Value.ToString().StartsWith("\"") && parameter.Value.ToString().EndsWith("\""))
+				if (parameter != null && parameter.Value != null && parameterType == "string" && parameter.Value.ToString().StartsWith("\"") && parameter.Value.ToString().EndsWith("\""))
 				{
 					error += $"{methodParameter.Name} is string, the property Value cannot start and end with quote(\").";
 				}
 
-				if (methodType == "nullable" && methodParameter.ParameterType.GenericTypeArguments.Length > 0)
+				if (parameterType == "nullable" && methodParameter.ParameterType.GenericTypeArguments.Length > 0)
 				{
-					methodType = methodParameter.ParameterType.GenericTypeArguments[0].Name.ToLower();
+					parameterType = methodParameter.ParameterType.GenericTypeArguments[0].Name.ToLower();
 				}
 				string? parameterTypeName = methodParameter.ParameterType.FullName;
 				if (parameterTypeName == null)
@@ -167,9 +168,17 @@ example of answer:
 					throw new ArgumentNullException($"Parameter does not have type: {methodParameter.ParameterType}");
 				}
 
-				if (parameters.FirstOrDefault(p => p.Type.ToLower().StartsWith(methodType)) == null && parameters.FirstOrDefault(p => p.Type.ToLower() == parameterTypeName!.ToLower()) == null)
+				if (parameters.FirstOrDefault(p => p.Type.ToLower().StartsWith(parameterType)) == null && parameters.FirstOrDefault(p => p.Type.ToLower() == parameterTypeName!.ToLower()) == null)
 				{
-					if (!methodParameter.ParameterType.Name.ToLower().StartsWith("nullable") && !methodParameter.IsOptional && !methodParameter.HasDefaultValue)
+					// temp thing, should be removed
+					if (parameterTypeName == "PLang.Models.GoalToCall")
+					{
+						parameterTypeName = "String";
+						if (parameters.FirstOrDefault(p => p.Type.ToLower().StartsWith(parameterTypeName)) == null && parameters.FirstOrDefault(p => p.Type.ToLower() == parameterTypeName!.ToLower()) == null)
+						{
+							error += $"{methodParameter.Name} ({methodParameter.ParameterType.Name}) is missing\n";
+						}
+					} else if (!methodParameter.ParameterType.Name.ToLower().StartsWith("nullable") && !methodParameter.IsOptional && !methodParameter.HasDefaultValue)
 					{
 						error += $"{methodParameter.Name} ({methodParameter.ParameterType.Name}) is missing\n";
 					}
@@ -403,7 +412,20 @@ example of answer:
 			Dictionary<string, object?>? dict = null;
 			if (VariableHelper.IsVariable(variableValue))
 			{
-				dict = variableHelper.LoadVariables(variableValue) as Dictionary<string, object?>;
+				var obj = variableHelper.LoadVariables(variableValue);
+				if (obj is JArray jArray)
+				{
+					foreach (JObject jobject in jArray)
+					{
+						dict = jobject.ToDictionary();
+					}
+				} else if (obj is JObject jObject)
+				{
+					dict = jObject.ToDictionary();
+				} else
+				{
+					dict = obj as Dictionary<string, object?>;
+				}
 			}
 			else
 			{
@@ -468,7 +490,7 @@ example of answer:
 		private object? ConvertToType(object? value, ParameterInfo parameterInfo)
 		{
 			if (value == null) return null;
-
+			if (parameterInfo.ParameterType == typeof(GoalToCall)) return (value == null || value.ToString() == null) ? null : new GoalToCall(value.ToString()!);
 			var targetType = parameterInfo.ParameterType;
 			if (targetType.Name == "String" && (value is JObject || value is JArray || value is JToken || value is JProperty))
 			{

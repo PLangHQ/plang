@@ -3,10 +3,12 @@ using CsvHelper.Configuration;
 using Microsoft.Extensions.Logging;
 using MiniExcelLibs;
 using NBitcoin;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.SafeFileSystem;
@@ -17,9 +19,12 @@ using System.ComponentModel;
 using System.Dynamic;
 using System.Globalization;
 using System.IO.Abstractions;
+using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Text;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+
 
 namespace PLang.Modules.FileModule
 {
@@ -251,7 +256,7 @@ namespace PLang.Modules.FileModule
 		public async Task WriteCsvFile(string path, object variableToWriteToCsv, bool append = false, bool hasHeaderRecord = true,
 			string delimiter = ",",
 			string newLine = "\n", string encoding = "utf-8", bool ignoreBlankLines = true,
-				bool allowComments = false, char comment = '#', string? goalToCallOnBadData = null, bool createDirectoryAutomatically = true)
+				bool allowComments = false, char comment = '#', GoalToCall? goalToCallOnBadData = null, bool createDirectoryAutomatically = true)
 		{
 			var absolutePath = GetPath(path);
 			if (createDirectoryAutomatically)
@@ -287,9 +292,17 @@ namespace PLang.Modules.FileModule
 				AllowComments = allowComments,
 				Comment = comment,
 				IgnoreBlankLines = ignoreBlankLines,
-				HasHeaderRecord = hasHeaderRecord,
+				HasHeaderRecord = hasHeaderRecord, DetectColumnCountChanges = true, IgnoreReferences = false
 			};
 
+			if (variableToWriteToCsv is JArray jArray)
+			{
+				variableToWriteToCsv = jArray.ToList();
+			}
+			if (variableToWriteToCsv is JObject jObject)
+			{
+				variableToWriteToCsv = jObject.ToDictionary();
+			}
 
 
 			using (var writer = new StreamWriter(absolutePath, append))
@@ -297,7 +310,35 @@ namespace PLang.Modules.FileModule
 			{
 				if (variableToWriteToCsv is IEnumerable enumer)
 				{
-					await csv.WriteRecordsAsync(enumer);
+					var ble = variableToWriteToCsv as List<Dictionary<string, object?>>;
+					if (ble != null)
+					{
+						foreach (var record in ble)
+						{
+							foreach (var key in record.Keys)
+							{
+								csv.WriteField(key);
+							}
+							csv.NextRecord();
+							break;
+						}
+
+						foreach (var record in ble)
+						{
+							foreach (var value in record.Values)
+							{
+								csv.WriteField(value);
+							}
+							csv.NextRecord();
+						}
+					} else
+					{
+						await csv.WriteRecordsAsync(enumer);
+						
+						
+					}
+
+
 				}
 				else
 				{
@@ -590,7 +631,7 @@ namespace PLang.Modules.FileModule
 			}
 		}
 
-		public async Task StopListeningToFileChange(string[] fileSearchPatterns, string? goalToCall = null)
+		public async Task StopListeningToFileChange(string[] fileSearchPatterns, GoalToCall? goalToCall = null)
 		{
 			string key = $"FileWatcher_{fileSearchPatterns}_";
 			if (goalToCall != null) key += goalToCall;
@@ -611,7 +652,7 @@ namespace PLang.Modules.FileModule
 		private ConcurrentDictionary<string, Timer> timers = new ConcurrentDictionary<string, Timer>();
 
 		[Description("debounceTime is the time in ms that is waited until action is executed to prevent multiple execution for same file. At least one listenFor variable needs to be true")]
-		public async Task ListenToFileChange(string[] fileSearchPatterns, string goalToCall,
+		public async Task ListenToFileChange(string[] fileSearchPatterns, GoalToCall goalToCall,
 			string[]? excludeFiles = null,
 			bool includeSubdirectories = false, long debounceTime = 150,
 			bool listenForFileChange = false,
@@ -745,7 +786,7 @@ namespace PLang.Modules.FileModule
 		}
 
 		private static readonly object _lock = new object();
-		private void WatcherCallGoal(object sender, FileSystemEventArgs e, string goalToCall, string[]? excludeFiles,
+		private void WatcherCallGoal(object sender, FileSystemEventArgs e, GoalToCall goalToCall, string[]? excludeFiles,
 			string absoluteFilePathVariableName, string fileNameVariableName,
 			string changeTypeVariableName, string senderVariableName)
 		{

@@ -32,5 +32,11 @@ namespace PLang.Modules.ThrowErrorModule
 			return new EndGoal(goalStep, message ?? "");
 		}
 
+		[Description("Shutdown the application")]
+		public async Task EndApp()
+		{
+			Environment.Exit(0);
+		}
+
 	}
 }

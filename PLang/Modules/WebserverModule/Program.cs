@@ -11,6 +11,7 @@ using PLang.Errors.Handlers;
 using PLang.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Services.SigningService;
@@ -663,15 +664,15 @@ Error:
 
 
 		private List<WebSocketInfo> websocketInfos = new List<WebSocketInfo>();
-		public record WebSocketInfo(ClientWebSocket ClientWebSocket, string Url, string GoalToCAll, string WebSocketName, string ContentRecievedVariableName);
-		public record WebSocketData(string GoalToCall, string Url, string Method, string Contract)
+		public record WebSocketInfo(ClientWebSocket ClientWebSocket, string Url, GoalToCall GoalToCall, string WebSocketName, string ContentRecievedVariableName);
+		public record WebSocketData(GoalToCall GoalToCall, string Url, string Method, string Contract)
 		{
 			public Dictionary<string, object?> Parameters = new();
 			public Dictionary<string, object>? SignatureData = null;
 		};
 
 
-		public async Task SendToWebSocket(string goalToCall, Dictionary<string, object?>? parameters = null, string webSocketName = "default")
+		public async Task SendToWebSocket(GoalToCall goalToCall, Dictionary<string, object?>? parameters = null, string webSocketName = "default")
 		{
 			var webSocketInfo = websocketInfos.FirstOrDefault(p => p.WebSocketName == webSocketName);
 			if (webSocketInfo == null)
@@ -694,7 +695,7 @@ Error:
 			await webSocketInfo.ClientWebSocket.SendAsync(new ArraySegment<byte>(message), WebSocketMessageType.Text, true, CancellationToken.None);
 
 		}
-		public async Task<WebSocketInfo> StartWebSocketConnection(string url, string goalToCall, string webSocketName = "default", string contentRecievedVariableName = "%content%")
+		public async Task<WebSocketInfo> StartWebSocketConnection(string url, GoalToCall goalToCall, string webSocketName = "default", string contentRecievedVariableName = "%content%")
 		{
 			if (string.IsNullOrEmpty(url))
 			{

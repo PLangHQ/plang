@@ -6,13 +6,16 @@ using PLang.Building.Model;
 using PLang.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Services.SettingsService;
 using PLang.Utils;
+using Sprache;
 using System.Collections;
 using System.Data;
 using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
+using System.Reactive.Joins;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Websocket.Client.Logging;
@@ -29,7 +32,7 @@ namespace PLang.Runtime
 		public MemoryStackPathNotFoundException(string message) : base(message) { }
 	}
 
-	public record VariableEvent(string EventType, string goalName, Dictionary<string, object?>? Parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50);
+	public record VariableEvent(string EventType, GoalToCall goalName, Dictionary<string, object?>? Parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50);
 
 	public class ObjectValue
 	{
@@ -184,28 +187,32 @@ namespace PLang.Runtime
 				objectValue = GetItemFromListOrDictionary(objectValue, index, dictKey, variableName);
 			}
 
-			if ((index == 0 && dictKey == "" && key.Contains("[") && key.Contains("]")) || (objectValue.Value.GetType() == typeof(JObject) || objectValue.Value.GetType() == typeof(JArray)))
+			if ((index == 0 && dictKey == "" && key.Contains("[") && key.Contains("]")) || (objectValue.Value is JObject || objectValue.Value is JArray))
 			{
-				jsonPath = "$" + ((valueType == typeof(JObject)) ? "" : "..");
+				jsonPath = null;
+				if (keySplit.Length == 1 && keySplit[0].Contains("[") && keySplit[0].Contains("]"))
+				{
+					jsonPath = ExtractArrayJsonPath(keySplit, jsonPath, 0);
+				}
 				for (int i = 1; i < keySplit.Length; i++)
 				{
-					if (!keySplit[i].Contains("("))
+					if (!keySplit[i].Contains("(") && !HasProperty(objectValue.Value, keySplit[i]))
 					{
-						if (!jsonPath.EndsWith(".")) jsonPath += ".";
+						if (jsonPath == null)
+						{
+							jsonPath = "$" + ((valueType == typeof(JObject)) ? "" : "..");
+						}
+
+						if (jsonPath != null && !jsonPath.EndsWith(".")) jsonPath += ".";
 						if (keySplit[i].Contains("[") && keySplit[i].Contains("]"))
 						{
-							var match = Regex.Match(keySplit[i], @"\[(?<number>[0-9]+)\]");
-							if (match != null)
-							{
-								if (int.TryParse(match.Groups["number"].Value, out var number))
-								{
-									number--;
-									keySplit[i] = keySplit[i].Replace(match.Value, $"[{number}]");
-								}
-							}
+							jsonPath = ExtractArrayJsonPath(keySplit, jsonPath, i);
 						}
-						
-						jsonPath += keySplit[i];
+						else
+						{
+
+							jsonPath += keySplit[i];
+						}
 						
 					}
 				}
@@ -215,7 +222,44 @@ namespace PLang.Runtime
 			return new VariableExecutionPlan(variableName, objectValue, calls, index, jsonPath);
 		}
 
-		private List<string> GetCalls(string[] keySplit, string jsonPath)
+		public bool HasProperty(object? obj, string? propertyName)
+		{
+			if (obj == null) return false;
+			if (propertyName == null) return false;
+
+			return obj.GetType().GetProperties().FirstOrDefault(p => p.Name.ToLower() == propertyName.ToLower()) != null;
+		}
+		public bool HasMethod(object? obj, string methodName)
+		{
+			if (obj == null) return false;
+			if (methodName == null) return false;
+
+			return obj.GetType().GetMethods().FirstOrDefault(p => p.Name.ToLower() == methodName.ToLower()) != null;
+		}
+
+		private static string? ExtractArrayJsonPath(string[] keySplit, string? jsonPath, int i)
+		{
+			var match = Regex.Match(keySplit[i], @"\[(?<number>[0-9]+)\]");
+			if (match != null)
+			{
+				if (int.TryParse(match.Groups["number"].Value, out var number))
+				{
+					number--;
+					if (i == 0) {
+						return $"$[{number}]";
+					}
+
+					if (i > 0)
+					{
+						return jsonPath + keySplit[i].Replace(match.Value, $"[{number}]");
+					}
+				}
+			}
+
+			return jsonPath;
+		}
+
+		private List<string> GetCalls(string[] keySplit, string? jsonPath)
 		{
 			var calls = new List<string>();
 			for (int i = 1; i < keySplit.Length; i++)
@@ -672,6 +716,8 @@ namespace PLang.Runtime
 			if (isVariable && str.EndsWith("%")) str = str.Remove(str.Length - 1);
 			if (str.StartsWith("@")) str = str.Substring(1);
 			if (str.StartsWith("$.")) str = str.Remove(0, 2);
+			str = Regex.Replace(str, "α([0-9]+)α", match => $"[{match.Groups[1].Value}]");
+
 			return str.Replace("α", ".");
 		}
 		public T? Get<T>(string key, bool staticVariable = false)
@@ -994,7 +1040,27 @@ namespace PLang.Runtime
 						}
 						else
 						{
-							convertedParams[i] = Convert.ChangeType(paramValues[i], paramType);
+							string strValue = paramValues[i].ToString() ?? "";
+							if (strValue.StartsWith("\"") && strValue.EndsWith("\""))
+							{
+								if (paramType.Name == "Char" && strValue.Length == 3)
+								{
+									strValue = strValue.Replace("\"", "");
+								}
+								convertedParams[i] = Convert.ChangeType(strValue, paramType);
+							}
+							else
+							{
+								var value = Get(paramValues[i].ToString());
+								if (value != null)
+								{
+									convertedParams[i] = Convert.ChangeType(value, paramType);
+								}
+								else
+								{
+									convertedParams[i] = Convert.ChangeType(paramValues[i], paramType);
+								}
+							}
 						}
 					}
 
@@ -1007,7 +1073,7 @@ namespace PLang.Runtime
 					var objectValue = new ObjectValue(objValue.Name, obj, obj.GetType(), null);
 					return objectValue;
 				}
-				catch
+				catch (Exception ex)
 				{
 					//if method signature doesnt match, we ignore it. We will write out to log if method cant be found
 					continue;
@@ -1043,7 +1109,7 @@ namespace PLang.Runtime
 				var query = from method in type.GetMethods(BindingFlags.Static | BindingFlags.Public)
 							where method.IsDefined(typeof(System.Runtime.CompilerServices.ExtensionAttribute), false)
 							where method.GetParameters()[0].ParameterType == extendedType
-							where method.Name == methodName
+							where method.Name.ToLower() == methodName.ToLower()
 							select method;
 				return query;
 			}

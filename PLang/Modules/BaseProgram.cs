@@ -156,6 +156,21 @@ namespace PLang.Modules
 						return await HandleFileAccess(fa);
 					}
 
+					if (ex is MissingSettingsException mse)
+					{
+						var settingsError = new AskUserError(mse.Message, async (object[]? result) =>
+						{
+							var value = result?[0] ?? null;
+							if (value is Array) value = ((object[])value)[0];
+
+							await mse.InvokeCallback(value);
+							return (true, null);
+						});
+
+						(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(settingsError);
+						if (isHandled) return await RunFunction(function);
+					}
+
 					var pe = new ProgramError(ex.Message, goalStep, function, parameterValues, Exception: ex);
 					pe.Step = goalStep;
 					pe.Goal = goal;
@@ -214,7 +229,11 @@ namespace PLang.Modules
 					(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(settingsError);
 					if (isHandled) return await RunFunction(function);
 				}
-				return new ProgramError(ex.Message, goalStep, function, parameterValues, "ProgramError", 500, Exception: ex);
+				var pe = new ProgramError(ex.Message, goalStep, function, parameterValues, "ProgramError", 500, Exception: ex);
+				pe.Step = goalStep;
+				pe.Goal = goal;
+				
+				return pe;
 			}
 		}
 

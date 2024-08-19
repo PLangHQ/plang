@@ -2,11 +2,13 @@ LLM
 - set %comment% as 'This is awesome'
 - [llm] system: give me sentiment from the user comment
         user:  %comment%
+        dont cache
         scheme: {sentiment:negative|neutral|positive}
         write to %result%
 - write out 'The comment is: %result.sentiment%'
 - set %text% as 'AI is taking over the world'
 - [llm] system: give me 2 categories from the user text
-        user: %text% 
+        user: %text%
+        dont cache
         write to %categories%
 - write out 'The categories are: %categories%'

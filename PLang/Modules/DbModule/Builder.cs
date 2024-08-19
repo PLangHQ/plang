@@ -236,8 +236,8 @@ You MUST provide SqlParameters if SQL has @parameter.
 
 			SetAssistant(@$"# examples #
 - select everything from tableX, write to %table% => sql: SELECT * FROM tableX, ReturnValue: %table%
-- select from tableB where id=%id%, into %table% => sql: SELECT * FROM tableB WHERE id=@id, ReturnValue: %table%
-- select * from %table% WHERE %name%, write to %result% => sql: SELECT * FROM %table% WHERE name=@name, ReturnValue: %result%
+- select from tableB where id=%id%, into %table% => sql: SELECT * FROM tableB WHERE id=@id, ReturnValue: %table%, SqlParameters:[{{ParameterName:id, VariableNameOrValue:%id%, TypeFullName:int64}}],
+- select * from %table% WHERE %name% and value_id=%valueId%, write to %result% => sql: SELECT * FROM %table% WHERE name=@name and value_id=@valueId, ReturnValue: %result%, SqlParameters:[{{ParameterName:name, VariableNameOrValue:%name%, TypeFullName:string}}, {{ParameterName:valueId, VariableNameOrValue:%valueId%, TypeFullName:int}}] 
 - select id, name from users, write to %user% => then ReturnValue is %user% object
 - select id, name from users => then ReturnValue is %id%, %name% objects
 # examples #
@@ -347,9 +347,9 @@ You MUST provide SqlParameters if SQL has @parameter.
 ");
 
 			SetAssistant(@"# examples #
-""update table myTable, street=%full_street%, %zip%"" => sql: ""UPDATE myTable SET street = @full_street, zip = @zip"", parameters:[{full_street:%full_street%, zip:%zip%}], Warning: Missing WHERE statement can affect rows that should not
-""update tableB, %name%, %phone% where id=%id%"" => sql: ""UPDATE tableB SET name=@name, phone=@phone WHERE id=@id"", parameters:[{name:%name%, phone:%phone%, id=%id%}] 
-""update %table% WHERE %name%, set zip=@zip => sql: ""UPDATE %table% SET zip=@zip WHERE name=@name"", parameters:[{name:%name%, zip:%zip%, id=%id%}] 
+""update table myTable, street=%full_street%, %zip%"" => sql: ""UPDATE myTable SET street = @full_street, zip = @zip"", SqlParameters:[{ParameterName:full_street, VariableNameOrValue:%full_street%, TypeFullName:string}, {ParameterName:zip, VariableNameOrValue:%zip%, TypeFullName:int}], Warning: Missing WHERE statement can affect rows that should not
+""update tableB, %name%, %phone% where id=%id%"" => sql: ""UPDATE tableB SET name=@name, phone=@phone WHERE id=@id"", SqlParameters:[{ParameterName:name, VariableNameOrValue:%name%, TypeFullName:string}, {ParameterName:phone, VariableNameOrValue:%phone%, TypeFullName:string}, {ParameterName:id, VariableNameOrValue:%id%, TypeFullName:int}] 
+""update %table% WHERE %name%, set zip=@zip => sql: ""UPDATE %table% SET zip=@zip WHERE name=@name"", SqlParameters:[{ParameterName:name, VariableNameOrValue:%name%, TypeFullName:string}, {ParameterName:zip, VariableNameOrValue%zip%, TypeFullName:int}, {VariableNameOrValue:id, VariableNameOrValue%id%, TypeFullName:int}] 
 # examples #");
 
 
@@ -405,7 +405,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 			if (dataSource.KeepHistory)
 			{
 				SetAssistant(@"# examples #
-""insert into users, name=%name%"" => sql: ""insert into users (id, name) values (@id, @name)""
+""insert into users, name=%name%"" => sql: ""insert into users (id, name) values (@id, @name)"",  SqlParameters:[{ParameterName:id, VariableNameOrValue:id, TypeFullName:int64}, {ParameterName:name, VariableNameOrValue:%name%, TypeFullName:string}]
 ""insert into tableX, %phone%, write to %rows%"" => sql: ""insert into tableX (id, phone) values (@id, @phone)""
 ""insert into %table%, %phone%, write to %rows%"" => sql: ""insert into %table% (id, phone) values (@id, @phone)""
 
@@ -417,7 +417,7 @@ ParameterInfo has the scheme: {""ParameterName"": string, ""VariableNameOrValue"
 			{
 				SetAssistant(@"# examples #
 ""insert into users, name=%name%"" => sql: ""insert into users (name) values (@name)""
-""insert into tableX, %phone%, write to %rows%"" => sql: ""insert into tableX (phone) values (@phone)""
+""insert into tableX, %phone%, status='off', write to %rows%"" => sql: ""insert into tableX (phone, status) values (@phone, 'off')""
 ""insert into %table%, %phone%, write to %rows%"" => sql: ""insert into %table% (phone) values (@phone)""
 # examples #");
 			}
@@ -489,6 +489,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 						tableName = obj.Value.ToString();
 					}
 				}
+				if (tableName == null || tableName.StartsWith("pragma_table_info")) continue;
 
 				string selectColumns = await moduleSettings.FormatSelectColumnsStatement(tableName);
 				var result = await program.Select(selectColumns);

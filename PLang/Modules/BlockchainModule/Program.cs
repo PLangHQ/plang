@@ -28,6 +28,7 @@ using System.Numerics;
 using System.Text;
 using static PLang.Errors.AskUser.AskUserPrivateKeyExport;
 using static PLang.Modules.BlockchainModule.ModuleSettings;
+using PLang.Models;
 
 namespace PLang.Modules.BlockchainModule
 {   
@@ -81,43 +82,43 @@ namespace PLang.Modules.BlockchainModule
 			return new Account(hdWallet.GetPrivateKey(GetCurrentAddressIndex()), chainId);
 		}
 
-		public async Task ListenToApprovalEventOnSmartContract(string contractAddressOrSymbol, string goalToCall, string subscriptIdVariableName = "subscriptionId")
+		public async Task ListenToApprovalEventOnSmartContract(string contractAddressOrSymbol, GoalToCall goalToCall, string subscriptIdVariableName = "subscriptionId")
 		{
 			string abi = @"{""anonymous"":false,""inputs"":[{""indexed"":true,""name"":""owner"",""type"":""address""},{""indexed"":true,""name"":""spender"",""type"":""address""},{""indexed"":false,""name"":""value"",""type"":""uint256""}],""name"":""Approval"",""type"":""event""}";
 			await ListenToEventOnSmartContract(contractAddressOrSymbol, abi, goalToCall, subscriptIdVariableName);
 		}
 
-		public async Task ListenToApprovalForAllEventOnSmartContract(string contractAddressOrSymbol, string goalToCall, string subscriptIdVariableName = "subscriptionId")
+		public async Task ListenToApprovalForAllEventOnSmartContract(string contractAddressOrSymbol, GoalToCall goalToCall, string subscriptIdVariableName = "subscriptionId")
 		{
 			string abi = @"{""anonymous"":false,""inputs"":[{""indexed"":true,""internalType"":""address"",""name"":""account"",""type"":""address""},{""indexed"":true,""internalType"":""address"",""name"":""operator"",""type"":""address""},{""indexed"":false,""internalType"":""bool"",""name"":""approved"",""type"":""bool""}],""name"":""ApprovalForAll"",""type"":""event""}";
 			await ListenToEventOnSmartContract(contractAddressOrSymbol, abi, goalToCall, subscriptIdVariableName);
 		}
 
-		public async Task ListenToTransferBatchEventOnSmartContract(string contractAddressOrSymbol, string goalToCall, string subscriptIdVariableName = "subscriptionId")
+		public async Task ListenToTransferBatchEventOnSmartContract(string contractAddressOrSymbol, GoalToCall goalToCall, string subscriptIdVariableName = "subscriptionId")
 		{
 			string abi = @"{""anonymous"":false,""inputs"":[{""indexed"":true,""internalType"":""address"",""name"":""operator"",""type"":""address""},{""indexed"":true,""internalType"":""address"",""name"":""from"",""type"":""address""},{""indexed"":true,""internalType"":""address"",""name"":""to"",""type"":""address""},{""indexed"":false,""internalType"":""uint256[]"",""name"":""ids"",""type"":""uint256[]""},{""indexed"":false,""internalType"":""uint256[]"",""name"":""values"",""type"":""uint256[]""}],""name"":""TransferBatch"",""type"":""event""}";
 			await ListenToEventOnSmartContract(contractAddressOrSymbol, abi, goalToCall, subscriptIdVariableName);
 		}
 
-		public async Task ListenToUriEventOnSmartContract(string contractAddressOrSymbol, string goalToCall, string subscriptIdVariableName = "subscriptionId")
+		public async Task ListenToUriEventOnSmartContract(string contractAddressOrSymbol, GoalToCall goalToCall, string subscriptIdVariableName = "subscriptionId")
 		{
 			string abi = @"{""anonymous"":false,""inputs"":[{""indexed"":false,""internalType"":""string"",""name"":""value"",""type"":""string""},{""indexed"":true,""internalType"":""uint256"",""name"":""id"",""type"":""uint256""}],""name"":""URI"",""type"":""event""}";
 			await ListenToEventOnSmartContract(contractAddressOrSymbol, abi, goalToCall, subscriptIdVariableName);
 		}
 
-		public async Task ListenToTransferSingleEventOnSmartContract(string contractAddressOrSymbol, string goalToCall, string subscriptIdVariableName = "subscriptionId")
+		public async Task ListenToTransferSingleEventOnSmartContract(string contractAddressOrSymbol, GoalToCall goalToCall, string subscriptIdVariableName = "subscriptionId")
 		{
 			string abi = @"{""anonymous"":false,""inputs"":[{""indexed"":true,""internalType"":""address"",""name"":""operator"",""type"":""address""},{""indexed"":true,""internalType"":""address"",""name"":""from"",""type"":""address""},{""indexed"":true,""internalType"":""address"",""name"":""to"",""type"":""address""},{""indexed"":false,""internalType"":""uint256"",""name"":""id"",""type"":""uint256""},{""indexed"":false,""internalType"":""uint256"",""name"":""value"",""type"":""uint256""}],""name"":""TransferSingle"",""type"":""event""}";
 			await ListenToEventOnSmartContract(contractAddressOrSymbol, abi, goalToCall, subscriptIdVariableName);
 		}
-		public async Task ListenToTransferEventOnSmartContract(string contractAddressOrSymbol, string goalToCall, string subscriptIdVariableName = "subscriptionId")
+		public async Task ListenToTransferEventOnSmartContract(string contractAddressOrSymbol, GoalToCall goalToCall, string subscriptIdVariableName = "subscriptionId")
 		{
 			string abi = @"{""anonymous"":false,""inputs"":[{""indexed"":true,""name"":""from"",""type"":""address""},{""indexed"":true,""name"":""to"",""type"":""address""},{""indexed"":false,""name"":""value"",""type"":""uint256""}],""name"":""Transfer"",""type"":""event""}";
 			await ListenToEventOnSmartContract(contractAddressOrSymbol, abi, goalToCall, subscriptIdVariableName);
 		}
 
 		private static readonly object _lock = new();
-		public async Task ListenToEventOnSmartContract(string contractAddressOrSymbol, string abi, string goalToCall, string subscriptIdVariableName = "subscriptionId")
+		public async Task ListenToEventOnSmartContract(string contractAddressOrSymbol, string abi, GoalToCall goalToCall, string subscriptIdVariableName = "subscriptionId")
 		{
 			var rpcServer = await GetCurrentRpcServer();
 			if (contractAddressOrSymbol.Length != 42)

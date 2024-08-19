@@ -12,12 +12,13 @@ using PLang.Utils;
 using PLang.Errors;
 using PLang.Errors.Handlers;
 using System.Web;
+using PLang.Models;
 
 namespace PLang.Runtime
 {
     public interface IPseudoRuntime
 	{
-		Task<(IEngine engine, IError? error)> RunGoal(IEngine engine, PLangAppContext context, string appPath, string goalName, Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0);
+		Task<(IEngine engine, IError? error)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCall goalName, Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0);
 	}
 
 	public class PseudoRuntime : IPseudoRuntime
@@ -30,7 +31,8 @@ namespace PLang.Runtime
 		private readonly IAskUserHandlerFactory askUserHandlerFactory;
 		
 		public PseudoRuntime(IServiceContainerFactory serviceContainerFactory, IPLangFileSystem fileSystem,
-			IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory, IErrorHandlerFactory exceptionHandlerFactory, IAskUserHandlerFactory askUserHandlerFactory)
+			IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory, 
+			IErrorHandlerFactory exceptionHandlerFactory, IAskUserHandlerFactory askUserHandlerFactory)
 		{
 			this.serviceContainerFactory = serviceContainerFactory;
 			this.fileSystem = fileSystem;
@@ -40,14 +42,16 @@ namespace PLang.Runtime
 			this.askUserHandlerFactory = askUserHandlerFactory;
 		}
 
-		public async Task<(IEngine engine, IError? error)> RunGoal(IEngine engine, PLangAppContext context, string appPath, string goalName, 
+		public async Task<(IEngine engine, IError? error)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCall goalName, 
 			Dictionary<string, object?>? parameters, Goal? callingGoal = null, 
 			bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0)
 		{
+			
+			
+
 
 			Goal? goal = null;
 			ServiceContainer? container = null;
-			goalName = goalName.Replace("!", "");
 
 			string absolutePathToGoal = Path.Join(fileSystem.RootDirectory, appPath, goalName).AdjustPathToOs();
 			string goalToRun = goalName;

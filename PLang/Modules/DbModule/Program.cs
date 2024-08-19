@@ -243,13 +243,21 @@ namespace PLang.Modules.DbModule
 					}
 					else
 					{
-						(object value, Error error) = ConvertObjectToType(p.VariableNameOrValue, p.TypeFullName, parameterName);
-						if (error != null) multipleErrors.Add(error);
+						(object? value, Error? error) = ConvertObjectToType(p.VariableNameOrValue, p.TypeFullName, parameterName);
+						if (error != null)
+						{
+							if (parameterName == "id" && eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
+							{
+								var dataSource = moduleSettings.GetCurrentDataSource().Result;
+								multipleErrors.Add(new ProgramError($"Parameter @id is empty. Are you on the right data source? Current data source is {dataSource.Name}", goalStep, function));
+							}
+							multipleErrors.Add(error);
+						}
 						param.Add("@" + parameterName, value);
 					}
 				}
 			}
-			if (connection.State != ConnectionState.Open) connection.Open();
+			if (connection != null && connection.State != ConnectionState.Open) connection.Open();
 
 			var errorToReturn = (multipleErrors.Errors.Count == 0) ? null : multipleErrors;
 			return (connection, param, sql, errorToReturn);

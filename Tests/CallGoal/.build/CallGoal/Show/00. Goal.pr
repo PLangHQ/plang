@@ -1,6 +1,7 @@
 {
   "GoalName": "Show",
   "Comment": null,
+  "Text": "Show",
   "GoalSteps": [
     {
       "Text": "write out '%greetings% PLang world at %time%'",
@@ -13,7 +14,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-09T22:02:28.6782043+01:00",
+      "Generated": "2024-02-09T21:02:28.6782043+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -21,7 +22,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 7,
+      "LineNumber": 8,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -70,16 +71,20 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "This Goal outputs a greeting message that includes the current time. The message format is: '%greetings% PLang world at %time%'.",
   "Visibility": 0,
   "GoalFileName": "CallGoal.goal",
   "RelativeGoalPath": "\\CallGoal.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\CallGoal\\Show\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\CallGoal\\Show",
-  "BuilderVersion": "0.1.0.0",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.14",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "ba5b55a5fb5805dc9330280cdf66a4973a0f8fbc08829d437b352fd8dd744e0c"
+  "Hash": "b8123073deed7d3e8c424919cee16e5dbb73c8a31a6a3f4e9092d3bed2bd59fe",
+  "IncomingVariablesRequired": [
+    "greetings",
+    "time"
+  ]
 }

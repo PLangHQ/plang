@@ -1,0 +1,15 @@
+Email
+- set %userId% = 1
+- set smtp as localhost, 25
+- send email, subject: "Hello", body: "Plang world", to: "ingig@plang.is"
+/- get email messages, write %messages%
+/- go through %messages%, call ProcessEmail %email%=item
+/- set smtp server to 'smpt.example.org', port 23
+/- set pop3 server to 'pop3.example.org', port 44
+
+/ProcessEmail
+/- write out %email.From%, %email.Date%, %email.Subject%, %email.TextBody%, %email.HtmlBody%
+/- go through each %email.Attachment%, call !SaveFile
+
+/SaveFile
+/- save %item.Content% to file /email/%userId%/%item.FilePath%

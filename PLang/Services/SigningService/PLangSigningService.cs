@@ -25,6 +25,7 @@ namespace PLang.Services.SigningService
 
 	public interface IPLangSigningService
 	{
+		Task<string> GetPublicKey();
 		Dictionary<string, object> Sign(byte[] seed, string content, string method, string url, string contract = "C0");
 		Dictionary<string, object> Sign(string? content, string method, string url, string contract = "C0", string? appId = null);
 		Dictionary<string, object> SignWithTimeout(byte[] seed, string content, string method, string url, DateTimeOffset expires, string contract = "C0");
@@ -60,6 +61,12 @@ namespace PLang.Services.SigningService
 		public Dictionary<string, object> Sign(byte[] seed, string content, string method, string url, string contract = "C0")
 		{
 			return SignInternal(seed, content, method, url, contract, null);
+		}
+
+		public async Task<string> GetPublicKey()
+		{
+			var identity = identityService.GetCurrentIdentity();
+			return identity.Value.ToString();
 		}
 
 		private Dictionary<string, object> SignInternal(string? content, string method, string url, string contract = "C0", DateTimeOffset? expires = null, string? appId = null)

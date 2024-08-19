@@ -34,7 +34,7 @@ namespace PLangTests.Modules.LlmModule
 				return (response, default(IError));
 			});
 			llmServiceFactory.CreateHandler().Returns(llmService);
-			p = new Program(llmServiceFactory, identityService, settings, logger);
+			p = new Program(llmServiceFactory, identityService, settings, logger, context);
 			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, null);
 		}
 

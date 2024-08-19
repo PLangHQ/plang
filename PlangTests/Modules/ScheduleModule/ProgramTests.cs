@@ -23,7 +23,7 @@ namespace PLangTests.Modules.ScheduleModule
 		{
 			Stopwatch stopwatch = new Stopwatch();
 			stopwatch.Start();
-			var p = new Program(settings, prParser);
+			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory);
 			p.Init(container, null, new PLang.Building.Model.GoalStep(), null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, null);
 			await p.Sleep(100);
 			stopwatch.Stop();
@@ -45,7 +45,7 @@ namespace PLangTests.Modules.ScheduleModule
 				});
 
 
-			var p = new Program(settings, prParser);
+			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory);
 			await p.Schedule(cronCommand, goalName);
 
 			settings.Received(1).SetList(typeof(ModuleSettings), Arg.Is<List<CronJob>>(list => 
@@ -84,7 +84,8 @@ namespace PLangTests.Modules.ScheduleModule
 				return now;
 			};
 
-			await Program.RunScheduledTasks(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
+			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory);
+			await p.Run();
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(), Arg.Any<string>(), "Process", Arg.Any<Dictionary<string, object>>());
 
 
@@ -93,7 +94,7 @@ namespace PLangTests.Modules.ScheduleModule
 				return now.AddMinutes(1).AddSeconds(1);
 			};
 
-			await Program.RunScheduledTasks(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
+			await p.Run();
 			await pseudoRuntime.Received(3).RunGoal(engine, Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Dictionary<string, object>>());
 
 			SystemTime.OffsetUtcNow = () =>
@@ -101,7 +102,7 @@ namespace PLangTests.Modules.ScheduleModule
 				return now.AddSeconds(10);
 			};
 
-			await Program.RunScheduledTasks(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
+			await p.Run();
 			await pseudoRuntime.Received(3).RunGoal(engine, Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Dictionary<string, object>>());
 
 			SystemTime.OffsetUtcNow = () =>
@@ -146,8 +147,8 @@ namespace PLangTests.Modules.ScheduleModule
 			{
 				return now;
 			};
-
-			await Program.RunScheduledTasks(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
+			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory);
+			await p.Run();
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(), Arg.Any<string>(), "Process", Arg.Any<Dictionary<string, object>>());
 
 

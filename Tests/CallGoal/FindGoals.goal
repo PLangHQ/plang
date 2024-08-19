@@ -1,0 +1,4 @@
+FindGoals
+- read content of all '*.pr' files in /.build, include subfolder, write to %prFiles%
+- filter %prFiles% where Type equals 'GoalToCall', write to %stuff%
+- write out %stuff% 

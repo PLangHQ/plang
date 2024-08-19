@@ -273,7 +273,7 @@ namespace PLang.Events
 
 		public async Task<IError?> RunGoalErrorEvents(PLangAppContext context, Goal goal, int goalStepIndex, IError error)
 		{
-			if (runtimeEvents == null || context.ContainsKey(ReservedKeywords.IsEvent)) return null;
+			if (runtimeEvents == null || context.ContainsKey(ReservedKeywords.IsEvent)) return error;
 
 			var step = (goalStepIndex != -1 && goalStepIndex < goal.GoalSteps.Count) ? goal.GoalSteps[goalStepIndex] : null;
 			var eventsToRun = runtimeEvents.Where(p => p.EventScope == EventScope.GoalError).ToList();
@@ -381,7 +381,7 @@ namespace PLang.Events
 			if (stepErrorHandler != null)
 			{
 				var goalToCall = GetErrorHandlerStep(step, error);
-				if (goalToCall == "*") goalToCall = null;
+				if (goalToCall == "*" || goalToCall == ".*") goalToCall = null;
 				if (stepErrorHandler.IgnoreErrors)
 				{
 					return (false, new EndGoal(step, $"Ignoring error: {error.Message}"));
@@ -474,7 +474,7 @@ namespace PLang.Events
 		{
 			if (goal.Visibility == Visibility.Private && !eventBinding.IncludePrivate || eventBinding.GoalToBindTo == null) return false;
 
-			string goalToBindTo = eventBinding.GoalToBindTo.ToLower().Replace("!", "");
+			string goalToBindTo = eventBinding.GoalToBindTo.ToString().ToLower().Replace("!", "");
 
 			// GoalToBindTo = Hello
 			if (!goalToBindTo.Contains(".") && !goalToBindTo.Contains("*") && !goalToBindTo.Contains("/") && !goalToBindTo.Contains(@"\") && !goalToBindTo.Contains(":"))

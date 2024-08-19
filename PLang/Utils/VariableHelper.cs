@@ -203,10 +203,24 @@ namespace PLang.Utils
 			}
 			catch (Exception)
 			{
+				var settings = new JsonSerializerSettings
+				{
+					Error = HandleSerializationError
+				};
+				
+				return JsonConvert.SerializeObject(obj, settings);
+
+
 				return "Exception retrieving value";
 			}
 		}
-	
+
+		private void HandleSerializationError(object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs e)
+		{
+			e.ErrorContext.Handled = true;
+		}
+
+
 		public class ObjectValueConverter : System.Text.Json.Serialization.JsonConverter<ObjectValue>
 		{
 			public override ObjectValue Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

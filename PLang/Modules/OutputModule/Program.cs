@@ -21,6 +21,10 @@ namespace PLang.Modules.OutputModule
 		public async Task<string> Ask(string text, string type = "text", int statusCode = 200, string? regexPattern = null, string? errorMessage = null)
 		{
 			var result = await outputStream.CreateHandler().Ask(text, type, statusCode);
+			
+			// escape any variable that user inputs
+			result = result.Replace("%", @"\%");
+
 			if (regexPattern != null && !Regex.IsMatch(result, regexPattern))
 			{
 				if (errorMessage != null && !text.Contains(errorMessage))

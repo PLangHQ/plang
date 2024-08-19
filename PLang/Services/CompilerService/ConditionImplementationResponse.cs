@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using PLang.Models;
 
 namespace PLang.Services.CompilerService
 {
@@ -6,7 +7,7 @@ namespace PLang.Services.CompilerService
 	{
 		public ConditionImplementationResponse() { }
 		public ConditionImplementationResponse(string @namespace, string name, string? implementation = null, string[]? @using = null, 
-			string[]? assemblies = null, string? goalToCallOnTrue = null, string? goalToCallOnFalse = null, 
+			string[]? assemblies = null, GoalToCall? goalToCallOnTrue = null, GoalToCall? goalToCallOnFalse = null, 
 			Dictionary<string, object>? goalToCallOnTrueParameters = null, 
 			Dictionary<string, object>? goalToCallOnFalseParameters = null)
 		{
@@ -21,9 +22,9 @@ namespace PLang.Services.CompilerService
 			GoalToCallOnFalseParameters = goalToCallOnFalseParameters;
 		}
 
-		public string? GoalToCallOnTrue { get; set; } = null;
+		public GoalToCall? GoalToCallOnTrue { get; set; } = null;
 		public Dictionary<string, object>? GoalToCallOnTrueParameters { get; set; } = null;
-		public string? GoalToCallOnFalse { get; set; } = null;
+		public GoalToCall? GoalToCallOnFalse { get; set; } = null;
 		public Dictionary<string, object>? GoalToCallOnFalseParameters { get; set; } = null;
 	}
 }

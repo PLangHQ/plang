@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using NBitcoin;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
@@ -26,15 +27,19 @@ namespace PLang.Modules.LlmModule
 		private readonly IPLangIdentityService identityService;
 		private readonly ISettings settings;
 		private readonly ILogger logger;
+		private readonly PLangAppContext context;
 
-		public Program(ILlmServiceFactory llmServiceFactory, IPLangIdentityService identityService, ISettings settings, ILogger logger) : base()
+		public Program(ILlmServiceFactory llmServiceFactory, IPLangIdentityService identityService, ISettings settings, ILogger logger, PLangAppContext context) : base()
 		{
 			this.llmServiceFactory = llmServiceFactory;
 			this.identityService = identityService;
 			this.settings = settings;
 			this.logger = logger;
+			this.context = context;
 		}
 
+		private readonly string PreviousConversationKey = "__LLM_PreviousConversation__";
+		private readonly string PreviousConversationSchemeKey = "__LLM_PreviousConversationScheme__";
 		private readonly string AppendToSystemKey = "__LLM_AppendToSystem__";
 		private readonly string AppendToUserKey = "__LLM_AppendToUser__";
 		private readonly string AppendToAssistantKey = "__LLM_AppendToAssistant__";
@@ -115,7 +120,9 @@ namespace PLang.Modules.LlmModule
 			int maxLength = 4000,
 			bool cacheResponse = true,
 			string? llmResponseType = null, 
-			string loggerLevel = "trace")
+			string loggerLevel = "trace", 
+			bool continuePrevConversation = false
+			)
 		{
 			if (promptMessages == null || promptMessages.Count == 0)
 			{
@@ -124,6 +131,21 @@ namespace PLang.Modules.LlmModule
 					HelpfulLinks: "https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.LlmModule.md"));
 			}
 
+			if (continuePrevConversation)
+			{
+				var prevMessages = context.GetOrDefault<List<LlmMessage>>(PreviousConversationKey, new());
+				if (prevMessages != null)
+				{
+					promptMessages.InsertRange(0, prevMessages);
+				}
+				if (scheme == null)
+				{
+					scheme = context.GetOrDefault<string>(PreviousConversationSchemeKey, null);
+				}
+			} else
+			{
+				context.Remove(PreviousConversationKey);
+			}
 
 			for (int i =0;i<promptMessages.Count;i++)
 			{
@@ -155,13 +177,17 @@ namespace PLang.Modules.LlmModule
 			llmQuestion.presencePenalty = presencePenalty;
 			llmQuestion.llmResponseType = llmResponseType;
 			llmQuestion.scheme = scheme;
-			
-			
+
+			IError? error = null;
 			try
 			{
 				(var response, var queryError) = await llmServiceFactory.CreateHandler().Query<object?>(llmQuestion);
 
 				if (queryError != null) return (null, queryError);
+
+				promptMessages.Add(new LlmMessage("assistant", llmQuestion.RawResponse));
+				context.AddOrReplace(PreviousConversationKey, promptMessages);
+				context.AddOrReplace(PreviousConversationSchemeKey, scheme);
 
 				if (function == null || function.ReturnValue == null || function.ReturnValue.Count == 0)
 				{
@@ -196,7 +222,7 @@ namespace PLang.Modules.LlmModule
 			}
 			catch (Exception ex)
 			{
-				throw;
+				error = new ProgramError(ex.Message, goalStep, function);
 			} finally {
 				LogLevel logLevel = LogLevel.Trace;
 				Enum.TryParse(loggerLevel, true, out logLevel);
@@ -206,7 +232,7 @@ namespace PLang.Modules.LlmModule
 
 				
 			}
-			return (null, null);
+			return (null, error);
 		}
 
 		

@@ -214,5 +214,11 @@ namespace PLang.Utils
 			text = Regex.Replace(text, @"\s{2,}", " ").Trim();
 			return text;
 		}
+
+		public static string ToBase64(this string text)
+		{
+			byte[] plainTextBytes = Encoding.UTF8.GetBytes(text);
+			return Convert.ToBase64String(plainTextBytes);
+		}
 	}
 }

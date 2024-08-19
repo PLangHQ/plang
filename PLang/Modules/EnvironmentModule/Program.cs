@@ -34,6 +34,7 @@ namespace PLang.Modules.EnvironmentModule
 
 		public async Task EndApp()
 		{
+			Environment.Exit(0);
 			throw new Exceptions.RuntimeGoalEndException("End app", null);
 		}
 

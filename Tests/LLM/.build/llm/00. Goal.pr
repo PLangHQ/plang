@@ -1,6 +1,7 @@
 {
   "GoalName": "LLM",
   "Comment": null,
+  "Text": "LLM",
   "GoalSteps": [
     {
       "Text": "set %comment% as 'This is awesome'",
@@ -13,7 +14,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-10T15:43:23.3791137+01:00",
+      "Generated": "2024-02-10T14:43:23.3791137+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -70,19 +71,24 @@
       }
     },
     {
-      "Text": "[llm] system: give me sentiment from the user comment\n        user:  %comment%\n        scheme: {sentiment:negative|neutral|positive}\n        write to %result%",
+      "Text": "[llm] system: give me sentiment from the user comment\n        user:  %comment%\n        dont cache\n        scheme: {sentiment:negative|neutral|positive}\n        write to %result%",
       "Comment": null,
       "ModuleType": "PLang.Modules.LlmModule",
-      "Name": "GetSentimentFromUserComment",
-      "Description": "The system will analyze the sentiment of the user's comment and categorize it as either negative, neutral, or positive. The result will be stored in the variable %result%.",
-      "PrFileName": "02. GetSentimentFromUserComment.pr",
-      "RelativePrPath": ".build\\llm\\02. GetSentimentFromUserComment.pr",
+      "Name": "AnalyzeSentiment",
+      "Description": "Analyze the sentiment of the user comment and write the result to the specified variable.",
+      "PrFileName": "02. AnalyzeSentiment.pr",
+      "RelativePrPath": ".build\\llm\\02. AnalyzeSentiment.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-10T15:43:38.7424281+01:00",
+      "Generated": "2024-08-05T14:31:09.8337424+00:00",
       "WaitForExecution": true,
-      "ErrorHandler": null,
+      "ErrorHandler": {
+        "IgnoreErrors": false,
+        "OnExceptionContainingTextCallGoal": null,
+        "ContinueToNextStep": false,
+        "EndGoal": false
+      },
       "RetryHandler": null,
       "CacheHandler": null,
       "CancellationHandler": null,
@@ -96,7 +102,7 @@
         "presencePenalty": 0.0,
         "maxLength": 4000,
         "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
+        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64 = 50,\n\"CacheKey\": string = ,\n\"CachingType\": int32 = 0} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean = False,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... } = ,\n\"ContinueToNextStep\": boolean = False,\n\"EndGoal\": boolean = False} = null,\n\"RetryHandler\"?: {\"RetryCount\"?: Int32 = ,\n\"RetryDelayInMilliseconds\"?: Int32 = } = null}",
         "type": "StepBuilder",
         "promptMessage": [
           {
@@ -104,11 +110,11 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Default is true. Indicates if code should wait for execution to finish.\r\nErrorHandler: How to handle errors defined by user, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
+                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64 = 50,\n\"CacheKey\": string = ,\n\"CachingType\": int32 = 0} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean = False,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... } = ,\n\"ContinueToNextStep\": boolean = False,\n\"EndGoal\": boolean = False} = null,\n\"RetryHandler\"?: {\"RetryCount\"?: Int32 = ,\n\"RetryDelayInMilliseconds\"?: Int32 = } = null}"
               }
             ]
           },
@@ -126,14 +132,14 @@
             "content": [
               {
                 "type": "text",
-                "text": "[llm] system: give me sentiment from the user comment\n        user:  %comment%\n        scheme: {sentiment:negative|neutral|positive}\n        write to %result%"
+                "text": "[llm] system: give me sentiment from the user comment\n        user:  %comment%\n        dont cache\n        scheme: {sentiment:negative|neutral|positive}\n        write to %result%"
               }
             ]
           }
         ],
-        "model": "gpt-4",
+        "model": "gpt-4o",
         "caching": true,
-        "RawResponse": "{\r\n  \"StepName\": \"GetSentimentFromUserComment\",\r\n  \"StepDescription\": \"The system will analyze the sentiment of the user's comment and categorize it as either negative, neutral, or positive. The result will be stored in the variable %result%.\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.LlmModule\"\r\n  ],\r\n  \"WaitForExecution\": true\r\n}"
+        "RawResponse": "```json\n{\n  \"StepName\": \"AnalyzeSentiment\",\n  \"StepDescription\": \"Analyze the sentiment of the user comment and write the result to the specified variable.\",\n  \"Modules\": [\"PLang.Modules.LlmModule\"],\n  \"WaitForExecution\": true,\n  \"CachingHandler\": null,\n  \"ErrorHandler\": {\n    \"IgnoreErrors\": false,\n    \"ContinueToNextStep\": false,\n    \"EndGoal\": false\n  }\n}\n```"
       }
     },
     {
@@ -147,7 +153,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-10T15:43:45.4295597+01:00",
+      "Generated": "2024-02-10T14:43:45.4295597+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -155,7 +161,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 2,
-      "LineNumber": 7,
+      "LineNumber": 8,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -214,7 +220,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-10T15:43:51.8407923+01:00",
+      "Generated": "2024-02-10T14:43:51.8407923+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -222,7 +228,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 3,
-      "LineNumber": 8,
+      "LineNumber": 9,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -271,17 +277,17 @@
       }
     },
     {
-      "Text": "[llm] system: give me 2 categories from the user text\n        user: %text% \n        write to %categories%",
+      "Text": "[llm] system: give me 2 categories from the user text\n        user: %text%\n        dont cache\n        write to %categories%",
       "Comment": null,
       "ModuleType": "PLang.Modules.LlmModule",
       "Name": "ExtractCategories",
-      "Description": "Extract two categories from the user-provided text and write them to the 'categories' variable",
+      "Description": "Extract two categories from the provided user text and write the result to the %categories% variable.",
       "PrFileName": "05. ExtractCategories.pr",
       "RelativePrPath": ".build\\llm\\05. ExtractCategories.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-10T16:00:30.9176367+01:00",
+      "Generated": "2024-08-05T16:41:48.4820428+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -289,7 +295,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 4,
-      "LineNumber": 9,
+      "LineNumber": 10,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -297,7 +303,7 @@
         "presencePenalty": 0.0,
         "maxLength": 4000,
         "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
+        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64 = 50,\n\"CacheKey\": string = ,\n\"CachingType\": int32 = 0} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean = False,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... } = ,\n\"ContinueToNextStep\": boolean = False,\n\"EndGoal\": boolean = False} = null,\n\"RetryHandler\"?: {\"RetryCount\"?: Int32 = ,\n\"RetryDelayInMilliseconds\"?: Int32 = } = null}",
         "type": "StepBuilder",
         "promptMessage": [
           {
@@ -305,11 +311,11 @@
             "content": [
               {
                 "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Indicates if code should wait for execution to finish, default is true\r\nErrorHandler: How to handle errors, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use\r\n\r\nBe Concise\r\n"
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nWaitForExecution: Default is true. Indicates if code should wait for execution to finish.\r\nErrorHandler: How to handle errors defined by user, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key\r\nRetryHandler: How to retry the step if there is error, default is null\r\nCachingHandler: How caching is handled, default is null\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
               },
               {
                 "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}"
+                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64 = 50,\n\"CacheKey\": string = ,\n\"CachingType\": int32 = 0} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean = False,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... } = ,\n\"ContinueToNextStep\": boolean = False,\n\"EndGoal\": boolean = False} = null,\n\"RetryHandler\"?: {\"RetryCount\"?: Int32 = ,\n\"RetryDelayInMilliseconds\"?: Int32 = } = null}"
               }
             ]
           },
@@ -327,14 +333,14 @@
             "content": [
               {
                 "type": "text",
-                "text": "[llm] system: give me 2 categories from the user text\n        user: %text% \n        write to %categories%"
+                "text": "[llm] system: give me 2 categories from the user text\n        user: %text%\n        dont cache\n        write to %categories%"
               }
             ]
           }
         ],
-        "model": "gpt-4",
+        "model": "gpt-4o",
         "caching": true,
-        "RawResponse": null
+        "RawResponse": "```json\n{\n  \"StepName\": \"ExtractCategories\",\n  \"StepDescription\": \"Extract two categories from the provided user text and write the result to the %categories% variable.\",\n  \"Modules\": [\"PLang.Modules.LlmModule\"],\n  \"WaitForExecution\": true,\n  \"CachingHandler\": null\n}\n```"
       }
     },
     {
@@ -348,7 +354,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-10T16:00:41.2855179+01:00",
+      "Generated": "2024-02-10T15:00:41.2855179+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -356,7 +362,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 5,
-      "LineNumber": 12,
+      "LineNumber": 14,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -405,16 +411,17 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "This goal analyzes a user comment and text to determine sentiment and categories respectively. It first sets a predefined comment and uses an LLM to analyze its sentiment. Then, it sets a predefined text and uses an LLM to categorize it.",
   "Visibility": 1,
   "GoalFileName": "llm.goal",
   "RelativeGoalPath": "\\llm.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\llm\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\llm",
-  "BuilderVersion": "0.1.0.0",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.14",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "2691a7775518450c6b7df1ce2673807a30428c27b5f9d0f62a01998d49899b19"
+  "Hash": "a78c6823658b2a4934cc2cc5ad63ae1e318145d78fe96b649577869dde801b77",
+  "IncomingVariablesRequired": []
 }

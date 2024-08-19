@@ -133,7 +133,6 @@ namespace PLang.Runtime
 				}
 				if (goalsToRun.Count == 1 && goalsToRun[0].ToLower().RemoveExtension() == "setup") return;
 
-				StartScheduler();
 
 				error = await RunStart(goalsToRun);
 				if (error != null)
@@ -207,27 +206,6 @@ namespace PLang.Runtime
 			return await askUserHandlerFactory.CreateHandler().Handle(askUserFileAccess);
 		}
 
-		private void StartScheduler()
-		{
-			IServiceContainer containerForScheduler;
-			if (this.OutputStreamFactory.CreateHandler() is UIOutputStream)
-			{
-				containerForScheduler = container;
-			}
-			else
-			{
-				logger.LogDebug("Initiate new engine for scheduler");
-				containerForScheduler = new ServiceContainer();
-				((ServiceContainer)containerForScheduler).RegisterForPLangConsole(fileSystem.GoalsPath, fileSystem.Path.DirectorySeparatorChar.ToString());
-			}
-
-			var schedulerEngine = containerForScheduler.GetInstance<IEngine>();
-			schedulerEngine.Init(containerForScheduler);
-			Modules.ScheduleModule.Program.Start(containerForScheduler.GetInstance<ISettings>(),
-				schedulerEngine, containerForScheduler.GetInstance<PrParser>(),
-				containerForScheduler.GetInstance<ILogger>(), containerForScheduler.GetInstance<IPseudoRuntime>(),
-				containerForScheduler.GetInstance<IPLangFileSystem>());
-		}
 
 		private async Task<IError?> RunSetup()
 		{

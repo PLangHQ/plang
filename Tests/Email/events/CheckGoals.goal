@@ -1,0 +1,26 @@
+CheckGoals
+- write out "Validating goals called"
+- get content of all '00. Goal.pr' files, in ../, include subfolder, write into %goalFiles%
+- go throug %goalFiles%, call !CheckGoal item=%goal%
+- if %missingGoals% is not empty then, call ShowMissingGoals, else ShowAllValid
+
+CheckGoal
+- go through %goal.Content.GoalSteps%, call CheckStep item=%step%
+
+CheckStep
+- if %step.ModuleType%(to string) == "PLang.Modules.CallGoalModule" then call CheckCallingGoal
+
+CheckCallingGoal
+- read file /%step.RelativePrPath%, into %stepPr%
+- set string var %goalToCall% = %stepPr.Action.Parameters[1].Value.ToString().Replace("!", "")%
+- if %goalToCall% != "String" then
+    - search in /.build/ for all dirs with name '%goalToCall%' , write to %dirs%
+    - create list %missingGoals% = []
+    - if %dirs.Length% == 0 then
+        - append to %missingGoals% = '%goal.GoalName% - %step.Text% - Missing goal: %goalToCall%'
+
+ShowMissingGoals
+- write out error '%missingGoals%'
+
+ShowAllValid
+- write out 'All goals being called exist'

@@ -1,4 +1,5 @@
 ﻿using PLang.Attributes;
+using PLang.Models;
 
 namespace PLang.Events
 {
@@ -33,7 +34,7 @@ namespace PLang.Events
     // before each goal in api/* call !DoStuff
     // before each step call !Debugger.SendInfo
     // after Run.goal, call !AfterRun
-    public record EventBinding(string EventType, string EventScope, string GoalToBindTo, string GoalToCall,
+    public record EventBinding(string EventType, string EventScope, GoalToCall GoalToBindTo, GoalToCall GoalToCall,
         [property: DefaultValue("false")] bool IncludePrivate = false,
         int? StepNumber = null, string? StepText = null,
         [property: DefaultValue("true")] bool WaitForExecution = true,

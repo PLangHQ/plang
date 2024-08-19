@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Errors;
+using PLang.Models;
 using PLang.Runtime;
 using System.Collections;
 using System.ComponentModel;
@@ -26,7 +27,7 @@ namespace PLang.Modules.LoopModule
 		}
 
 		[Description("Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called")]
-		public async Task<IError?> RunLoop([HandlesVariableAttribute] string variableToLoopThrough, string goalNameToCall, [HandlesVariableAttribute] Dictionary<string, object>? parameters = null)
+		public async Task<IError?> RunLoop([HandlesVariableAttribute] string variableToLoopThrough, GoalToCall goalNameToCall, [HandlesVariableAttribute] Dictionary<string, object>? parameters = null)
 		{
 			if (parameters == null) parameters = new();
 

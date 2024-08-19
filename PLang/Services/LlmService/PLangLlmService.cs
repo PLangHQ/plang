@@ -60,7 +60,15 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 		public virtual async Task<(T?, IError?)> Query<T>(LlmRequest question)
 		{
 			var result = await Query(question, typeof(T));
-			return ((T?)result.Item1, result.Item2);
+			if (result.Item1 is T?)
+			{
+				return ((T?)result.Item1, result.Item2);
+			}
+
+			return (default(T), new ServiceError($@"Answer from LLM was not valid. 
+LlmRequest:{question}
+
+The answer was:{result.Item1}", GetType(), "LlmService"));
 		}
 
 		public virtual async Task<(object?, IError?)> Query(LlmRequest question, Type responseType)

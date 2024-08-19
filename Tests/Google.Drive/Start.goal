@@ -1,0 +1,7 @@
+Start
+- get list of all my files in "1mfVtAff2TFJyu44jU2nZgpJkbY5mSwW3" on google drive, %files%
+- go through %files%, call ProcessFile
+
+ProcessFile
+- write out %item%
+- dowload file from google drive, fileId=%item.id%, save it to file/%item.name%

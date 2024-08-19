@@ -37,7 +37,7 @@ namespace PLang.Modules.TerminalModule
 
 		public async Task<ReturnDictionary<string, object>> RunTerminal(string appExecutableName, List<string>? parameters = null,
 			string? pathToWorkingDirInTerminal = null,
-			[HandlesVariable] string? dataOutputVariable = null, [HandlesVariable] string? errorDebugInfoOutputVariable = null,
+			[HandlesVariable] string? dataOutputVariable = "data", [HandlesVariable] string? errorDebugInfoOutputVariable = "error",
 			[HandlesVariable] string? dataStreamDelta = null, [HandlesVariable] string? debugErrorStreamDelta = null
 			)
 		{
@@ -79,8 +79,8 @@ namespace PLang.Modules.TerminalModule
 			// Start the process
 			using (Process process = new Process { StartInfo = startInfo })
 			{
-				string dataOutput = null;
-				string errorOutput = null;
+				string? dataOutput = null;
+				string? errorOutput = null;
 				bool canWriteDataOutputNext = false;
 				string command = appExecutableName;
 				if (parameters != null)
@@ -104,6 +104,7 @@ namespace PLang.Modules.TerminalModule
 					//logger.LogInformation(e.Data);
 					if (string.IsNullOrWhiteSpace(e.Data)) return;
 
+					canWriteDataOutputNext = !RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 					if (!canWriteDataOutputNext && e.Data.ToLower().Contains(appExecutableName))
 					{
 						canWriteDataOutputNext = true;
@@ -165,24 +166,24 @@ namespace PLang.Modules.TerminalModule
 
 				if (!string.IsNullOrEmpty(dataOutputVariable))
 				{
-					memoryStack.Put(dataOutputVariable, RemoveLastLine(dataOutput?.Trim()));
-					dict.Add(dataOutputVariable, RemoveLastLine(dataOutput?.Trim()));
+					dict.Add(dataOutputVariable, RemoveLastLine(dataOutput));
 				}
 
 				if (!string.IsNullOrEmpty(errorDebugInfoOutputVariable))
 				{
-					memoryStack.Put(errorDebugInfoOutputVariable, errorOutput);
 					dict.Add(errorDebugInfoOutputVariable, errorOutput);
 				}
+
+				logger.LogTrace("Done with TerminalModule");
 			}
 
 			return dict;
 		}
 
-		string RemoveLastLine(string input)
+		string? RemoveLastLine(string? input)
 		{
 			if (input == null) return null;
-
+			input = input.Trim();
 			// Split the string using Environment.NewLine
 			string[] lines = input.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
 

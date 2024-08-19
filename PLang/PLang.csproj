@@ -38,6 +38,7 @@
     <PackageReference Include="IdGen" Version="3.0.7" />
     <PackageReference Include="Jil" Version="2.17.0" />
     <PackageReference Include="LightInject" Version="6.6.4" />
+    <PackageReference Include="MailKit" Version="4.7.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.7" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.10.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.7" />
@@ -48,6 +49,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.6.3" />
     <PackageReference Include="Microsoft.Net.Http.Headers" Version="8.0.7" />
+    <PackageReference Include="MimeKit" Version="4.7.1" />
     <PackageReference Include="MiniExcel" Version="1.33.0" />
     <PackageReference Include="NCrontab.Signed" Version="3.3.3" />
     <PackageReference Include="Nethereum.Accounts" Version="4.21.2" />

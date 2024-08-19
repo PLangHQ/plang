@@ -506,13 +506,13 @@ namespace PLang.Building.Events.Tests
 			Assert.AreEqual(3, events.Count);
 			Assert.AreEqual(EventType.Before, events[0].EventType);
 			Assert.AreEqual(EventScope.StartOfApp, events[0].EventScope);
-			Assert.AreEqual("!Process", events[0].GoalToCall);
+			Assert.AreEqual("Process", events[0].GoalToCall.ToString());
 			Assert.AreEqual(null, events[0].GoalToBindTo);
 
 			Assert.AreEqual(EventType.After, events[1].EventType);
 			Assert.AreEqual(EventScope.Step, events[1].EventScope);
-			Assert.AreEqual("!Process", events[1].GoalToCall);
-			Assert.AreEqual("*", events[1].GoalToBindTo);
+			Assert.AreEqual("Process", events[1].GoalToCall.ToString());
+			Assert.AreEqual("*", events[1].GoalToBindTo.ToString());
 		}
 
 

@@ -1,0 +1,82 @@
+{
+  "Action": {
+    "FunctionName": "SendEmail",
+    "Parameters": [
+      {
+        "Type": "String",
+        "Name": "toEmail",
+        "Value": "ingig@plang.is"
+      },
+      {
+        "Type": "String",
+        "Name": "subject",
+        "Value": "Hello"
+      },
+      {
+        "Type": "String",
+        "Name": "body",
+        "Value": "Plang world"
+      },
+      {
+        "Type": "String",
+        "Name": "fromEmail",
+        "Value": null
+      },
+      {
+        "Type": "Boolean?",
+        "Name": "isHtmlBody",
+        "Value": false
+      }
+    ],
+    "ReturnValue": null
+  },
+  "Text": "send email, subject: \"Hello\", body: \"Plang world\", to: \"ingig@plang.is\"",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+    "type": "PLang.Modules.GenericFunctionBuilder",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nSetSmptpHostAndPort(String host, Int32? port = 587)  : void \nSetPop3HostAndPort(String host, Int32? port = 995)  : void \nSendEmail(String toEmail, String subject, String body, String? fromEmail, Boolean? isHtmlBody = False)  : IError  // fromEmail is null if not defined by user.. \nAddIdentityToSendEmail(String identity, String? fromEmail)  : void \nGetMessages(String? email, Int32? limit = 100)  : ValueTuple`2\r\n## functions available ends ##"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "send email, subject: \"Hello\", body: \"Plang world\", to: \"ingig@plang.is\""
+          }
+        ]
+      }
+    ],
+    "model": "gpt-4o",
+    "caching": true,
+    "RawResponse": "```json\n{\n  \"FunctionName\": \"SendEmail\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"toEmail\",\n      \"Value\": \"ingig@plang.is\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"subject\",\n      \"Value\": \"Hello\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"body\",\n      \"Value\": \"Plang world\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"fromEmail\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"Boolean?\",\n      \"Name\": \"isHtmlBody\",\n      \"Value\": false\n    }\n  ],\n  \"ReturnValue\": null\n}\n```"
+  },
+  "RunOnBuild": false
+}

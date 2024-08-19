@@ -1,12 +1,14 @@
 ﻿
+using PLang.Models;
+
 namespace PLang.Services.CompilerService
 {
 	public class Implementation
 	{
 		public Implementation(string @namespace, string name, string code, string[]? @using, Dictionary<string, string> inputParameters, 
-			Dictionary<string, ParameterType>? outParameterDefinition, string? goalToCallOnTrue, string? goalToCallOnFalse,
-			Dictionary<string, object>? goalToCallOnTrueParameters = null,
-			Dictionary<string, object>? goalToCallOnFalseParameters = null, List<string>? servicesAssembly = null)
+			Dictionary<string, ParameterType>? outParameterDefinition, GoalToCall? goalToCallOnTrue, GoalToCall? goalToCallOnFalse,
+			Dictionary<string, object?>? goalToCallOnTrueParameters = null,
+			Dictionary<string, object?>? goalToCallOnFalseParameters = null, List<string>? servicesAssembly = null)
 		{
 			Namespace = @namespace;
 			Name = name;
@@ -27,8 +29,8 @@ namespace PLang.Services.CompilerService
 		public string[]? Using { get; private set; }
 		public Dictionary<string, string> InputParameters { get; private set; }
 		public Dictionary<string, ParameterType>? OutParameterDefinition { get; private set; }
-		public string? GoalToCallOnTrue { get; private set; }
-		public string? GoalToCallOnFalse { get; private set; }
+		public GoalToCall? GoalToCallOnTrue { get; private set; }
+		public GoalToCall? GoalToCallOnFalse { get; private set; }
 		public Dictionary<string, object?>? GoalToCallOnTrueParameters { get; set; } = null;
 		public Dictionary<string, object?>? GoalToCallOnFalseParameters { get; set; } = null;
 		public List<string>? ServicesAssembly { get; }
