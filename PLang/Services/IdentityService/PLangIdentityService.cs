@@ -16,10 +16,11 @@ namespace PLang.Services.IdentityService
 
 	public class PLangIdentityService : IPLangIdentityService
 	{
-		public static readonly string SettingKey = "Identities";
+		public static readonly string SettingKey = "PLangIdentityService";
 		private readonly ISettingsRepository settingsRepository;
 		private readonly IPublicPrivateKeyCreator publicPrivateKeyCreator;
 		private readonly PLangAppContext context;
+		string appId;
 
 		public PLangIdentityService(ISettingsRepository settingsRepository, IPublicPrivateKeyCreator publicPrivateKeyCreator, PLangAppContext context)
 		{
@@ -31,35 +32,32 @@ namespace PLang.Services.IdentityService
 		public void UseSharedIdentity(string? appId = null)
 		{
 			settingsRepository.SetSharedDataSource(appId);
+			this.appId = appId;
 		}
 
-		public Identity CreateIdentity(string name = "MyIdentity", bool setAsDefault = false)
+		public Identity CreateIdentity(string name, bool setAsDefault = false)
 		{
-			var identities = GetIdentities();
-			if (identities.Count() == 0) return CreatePrivatePublicKeyIdentity(new(), name, true);
-
-
-			var identites = GetIdentitiesWithPrivateKey().ToList();
-			var identity = identites.FirstOrDefault(p => p.Name == name && !p.IsArchived);
+			var identities = GetIdentities().ToList();
+			var identity = identities.FirstOrDefault(p => p.Name == name && !p.IsArchived);
 			if (identity != null)
 			{
 				throw new IdentityException($"Identity named '{name}' already exists");
 			}
 
-			if (identites.Count == 0)
+			if (identities.Count == 0)
 			{
 				setAsDefault = true;
 			}
 			else if (setAsDefault)
 			{
-				identites = identites.Select((id) =>
+				identities = identities.Select((id) =>
 				{
 					if (id.IsDefault) id.IsDefault = false;
 					return id;
 				}).ToList();
 			}
 
-			return CreatePrivatePublicKeyIdentity(identites, name, setAsDefault);
+			return CreatePrivatePublicKeyIdentity(identities, name, setAsDefault);
 		}
 
 		private Identity CreatePrivatePublicKeyIdentity(List<Identity> identites, string name, bool setAsDefault)
@@ -96,7 +94,7 @@ namespace PLang.Services.IdentityService
 			var identity = GetIdentities().FirstOrDefault(p => p.Name == nameOrIdentitfier || p.Identifier == nameOrIdentitfier);
 			if (identity == null) throw new IdentityException("Identity not found");
 
-			context.AddOrReplace(ReservedKeywords.MyIdentity, identity);
+			context.AddOrReplace(ReservedKeywords.MyIdentity + $"_{appId}", identity);
 
 			return identity;
 		}
@@ -111,6 +109,9 @@ namespace PLang.Services.IdentityService
 		{
 			Identity? identity;
 			var identities = GetIdentities();
+			
+			identity = context[ReservedKeywords.MyIdentity + $"_{appId}"] as Identity;
+			if (identity != null) return identity;
 
 			identity = identities.FirstOrDefault(p => p.IsDefault);
 			if (identity != null) return GetIdentityInstance(identity);

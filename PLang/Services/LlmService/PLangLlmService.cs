@@ -60,6 +60,8 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 		public virtual async Task<(T?, IError?)> Query<T>(LlmRequest question)
 		{
 			var result = await Query(question, typeof(T));
+			if (result.Item2 != null) return (default(T), result.Item2);
+
 			if (result.Item1 is T?)
 			{
 				return ((T?)result.Item1, result.Item2);
@@ -134,8 +136,8 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 			{
 				return (null, new ServiceError("llm.plang.is appears to be down. Try again in few minutes. If it does not come back up soon, check out our Discord https://discord.gg/A8kYUymsDD for a chat", this.GetType()));
 			}
-
-			question.RawResponse = responseBody;
+			responseBody = JsonConvert.DeserializeObject(responseBody).ToString();
+			
 
 			if (isDebug)
 			{
@@ -201,7 +203,7 @@ What is name of payer?", GetCountry));
 				string strUsed = response.Headers.GetValues("X-User-Used").FirstOrDefault();
 				if (strUsed != null && long.TryParse(strUsed, out long used))
 				{
-					costWarning += " - used now $" + (((double)used) / 1000000).ToString("N5");
+					costWarning += " - used now $" + (((double)used) / 1000000).ToString("N6");
 					memoryStack.Put("__LLM_Used__", used);
 				}
 			}

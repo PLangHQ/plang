@@ -6,5 +6,10 @@ namespace PLang.Errors.Runtime
 		Exception? Exception = null, string? FixSuggestion = null, string? HelpfulLinks = null) 
 		: Error(Message, Key, StatusCode, Exception, FixSuggestion, HelpfulLinks)
 	{
+		public override Goal? Goal { get; set; } = Goal;
+		public override string ToString()
+		{
+			return base.ToString(); 
+		}
 	}
 }

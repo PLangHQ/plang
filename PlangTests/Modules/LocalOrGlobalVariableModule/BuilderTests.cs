@@ -113,7 +113,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
 			Assert.AreEqual("GetVariable", gf.FunctionName);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("name", gf.Parameters[0].Value);
-			Assert.AreEqual("name", gf.ReturnValue[0].VariableName);
+			Assert.AreEqual("name", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -134,7 +134,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
 			Assert.AreEqual("GetStaticVariable", gf.FunctionName);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("name", gf.Parameters[0].Value);
-			Assert.AreEqual("name", gf.ReturnValue[0].VariableName);
+			Assert.AreEqual("name", gf.ReturnValues[0].VariableName);
 
 		}
 

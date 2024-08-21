@@ -66,7 +66,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 			Assert.AreEqual("Encrypt", gf.FunctionName);
 			Assert.AreEqual("content", gf.Parameters[0].Name);
 			Assert.AreEqual("%text%", gf.Parameters[0].Value);
-			AssertVar.AreEqual("%encryptedText%", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("%encryptedText%", gf.ReturnValues[0].VariableName);
 		}
 
 		[DataTestMethod]
@@ -85,7 +85,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 			Assert.AreEqual("Decrypt", gf.FunctionName);
 			Assert.AreEqual("content", gf.Parameters[0].Name);
 			Assert.AreEqual("%encryptedText%", gf.Parameters[0].Value);
-			AssertVar.AreEqual("%text%", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("%text%", gf.ReturnValues[0].VariableName);
 		}
 
 		[DataTestMethod]
@@ -106,7 +106,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 			Assert.AreEqual("%password%", gf.Parameters[0].Value);
 			Assert.AreEqual("useSalt", gf.Parameters[1].Name);
 			Assert.AreEqual(true, gf.Parameters[1].Value);
-			AssertVar.AreEqual("%password%", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("%password%", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -130,7 +130,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 			Assert.AreEqual(false, gf.Parameters[1].Value);
 			Assert.AreEqual("hashAlgorithm", gf.Parameters[2].Name);
 			Assert.AreEqual("sha256", gf.Parameters[2].Value);
-			AssertVar.AreEqual("%textHashed%", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("%textHashed%", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -152,7 +152,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 			Assert.AreEqual("%password%", gf.Parameters[0].Value);
 			Assert.AreEqual("hash", gf.Parameters[1].Name);
 			Assert.AreEqual("%HashedPassword%", gf.Parameters[1].Value);
-			AssertVar.AreEqual("isPasswordMatch", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("isPasswordMatch", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -173,7 +173,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 			Assert.AreEqual("ValidateBearerToken", gf.FunctionName);
 			Assert.AreEqual("token", gf.Parameters[0].Name);
 			Assert.AreEqual("%token%", gf.Parameters[0].Value);
-			AssertVar.AreEqual("isValidToken", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("isValidToken", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -200,7 +200,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 			Assert.AreEqual("user", gf.Parameters[2].Value);
 			Assert.AreEqual("expireTimeInSeconds", gf.Parameters[3].Name);
 			Assert.AreEqual((long)900, gf.Parameters[3].Value);
-			AssertVar.AreEqual("%token%", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("%token%", gf.ReturnValues[0].VariableName);
 
 		}
 	}

@@ -12,12 +12,20 @@ namespace PLang.Utils
 			if (args.FirstOrDefault(p => p == "--debug") != null)
 			{
 				AppContext.SetSwitch(ReservedKeywords.Debug, true);
+				AppContext.SetSwitch(ReservedKeywords.DetailedError, true);
 			}
 			var csdebug = args.FirstOrDefault(p => p == "--csdebug") != null;
 			if (csdebug && !Debugger.IsAttached)
 			{
 				Debugger.Launch();
 				AppContext.SetSwitch(ReservedKeywords.CSharpDebug, true);
+				AppContext.SetSwitch(ReservedKeywords.DetailedError, true);
+			}
+
+			var detailerror = args.FirstOrDefault(p => p == "--detailerror") != null;
+			if (detailerror)
+			{
+				AppContext.SetSwitch(ReservedKeywords.DetailedError, true);
 			}
 			bool builder = false;
 			bool runtime = false;

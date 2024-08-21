@@ -172,8 +172,6 @@ namespace PLang.Modules
 					}
 
 					var pe = new ProgramError(ex.Message, goalStep, function, parameterValues, Exception: ex);
-					pe.Step = goalStep;
-					pe.Goal = goal;
 
 					if (this is IDisposable disposable) disposable.Dispose(); 
 					return pe;
@@ -230,8 +228,6 @@ namespace PLang.Modules
 					if (isHandled) return await RunFunction(function);
 				}
 				var pe = new ProgramError(ex.Message, goalStep, function, parameterValues, "ProgramError", 500, Exception: ex);
-				pe.Step = goalStep;
-				pe.Goal = goal;
 				
 				return pe;
 			}
@@ -307,12 +303,12 @@ namespace PLang.Modules
 
 		private void SetReturnValue(GenericFunction function, object? result)
 		{
-			if (function.ReturnValue == null || function.ReturnValue.Count == 0) return;
+			if (function.ReturnValues == null || function.ReturnValues.Count == 0) return;
 
 
 			if (result == null)
 			{
-				foreach (var returnValue in function.ReturnValue)
+				foreach (var returnValue in function.ReturnValues)
 				{
 					memoryStack.Put(returnValue.VariableName, null);
 				}
@@ -320,7 +316,7 @@ namespace PLang.Modules
 			else if (result is IReturnDictionary || result.GetType().Name == "DapperRow")
 			{
 				var dict = (IDictionary<string, object>)result;
-				foreach (var returnValue in function.ReturnValue)
+				foreach (var returnValue in function.ReturnValues)
 				{
 					var key = dict.Keys.FirstOrDefault(p => p.Replace("%", "").ToLower() == returnValue.VariableName.Replace("%", "").ToLower());
 					if (key == null)
@@ -334,7 +330,7 @@ namespace PLang.Modules
 			}
 			else
 			{
-				foreach (var returnValue in function.ReturnValue)
+				foreach (var returnValue in function.ReturnValues)
 				{
 					memoryStack.Put(returnValue.VariableName, result);
 				}
@@ -380,9 +376,9 @@ namespace PLang.Modules
 				if (cacheKey == null) return false;
 
 				var obj = await appCache.Get(cacheKey);
-				if (obj != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
+				if (obj != null && function.ReturnValues != null && function.ReturnValues.Count > 0)
 				{
-					foreach (var returnValue in function.ReturnValue)
+					foreach (var returnValue in function.ReturnValues)
 					{
 						logger.LogDebug($"Cache was hit for {goalStep.CacheHandler.CacheKey}");
 						memoryStack.Put(returnValue.VariableName, obj);

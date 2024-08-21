@@ -64,7 +64,7 @@ Error happend at
 		Parameter values:
 {JsonConvert.SerializeObject(ParameterValues)}
 
-		Return value {JsonConvert.SerializeObject(GenericFunction.ReturnValue)}
+		Return value {JsonConvert.SerializeObject(GenericFunction.ReturnValues)}
 	
 	------
 	Exception: {this.Message}

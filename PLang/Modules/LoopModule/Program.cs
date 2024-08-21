@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Models;
 using PLang.Runtime;
 using System.Collections;
@@ -43,6 +44,10 @@ namespace PLang.Modules.LoopModule
 
 
 			var obj = memoryStack.Get(variableToLoopThrough);
+			if (obj == null)
+			{
+				return new ProgramError($"{variableToLoopThrough} does not exist. Have you created it? Check for spelling error", goalStep, function);
+			}
 			if (obj is IList list)
 			{
 				if (list == null || list.Count == 0)

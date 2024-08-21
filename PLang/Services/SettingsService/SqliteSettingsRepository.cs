@@ -273,9 +273,9 @@ CREATE TABLE IF NOT EXISTS Settings (
 					new { setting.ClassOwnerFullName, setting.Key });
 				if (result == null)
 				{
-					connection.Execute(@"INSERT INTO Settings (ClassOwnerFullName, ValueType, [Key], [Value], SignatureData, Created) 
-						VALUES (@ClassOwnerFullName, @ValueType, @Key, @Value, @SignatureData, @Created)",
-						new { setting.ClassOwnerFullName, setting.ValueType, setting.Key, setting.Value, setting.SignatureData, setting.Created });
+					connection.Execute(@"INSERT INTO Settings (AppId, ClassOwnerFullName, ValueType, [Key], [Value], SignatureData, Created) 
+						VALUES (@AppId, @ClassOwnerFullName, @ValueType, @Key, @Value, @SignatureData, @Created)",
+						new { setting.AppId, setting.ClassOwnerFullName, setting.ValueType, setting.Key, setting.Value, setting.SignatureData, setting.Created });
 				} else
 				{
 					connection.Execute(@"UPDATE Settings SET Value=@Value, SignatureData=@SignatureData WHERE [ClassOwnerFullName]=@ClassOwnerFullName AND [Key]=@Key",

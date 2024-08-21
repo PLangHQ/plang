@@ -19,6 +19,8 @@ using static Dapper.SqlMapper;
 using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Errors.Runtime;
+using System.Collections;
+using Org.BouncyCastle.Crypto;
 
 namespace PLang.Modules.DbModule
 {
@@ -220,7 +222,7 @@ namespace PLang.Modules.DbModule
 						sql = sql.Replace(p.ParameterName.ToString(), placeholders.ToString());
 
 					}*/
-					else if (p.VariableNameOrValue.ToString().StartsWith("\\%") || p.VariableNameOrValue.ToString().EndsWith("\\%"))
+					else if (VariableHelper.ContainsVariable(p.VariableNameOrValue))
 					{
 						var variableName = p.VariableNameOrValue.ToString();
 						string prefix = "";
@@ -236,7 +238,7 @@ namespace PLang.Modules.DbModule
 							postfix = "%";
 						}
 						var variableValue = variableHelper.LoadVariables(variableName);
-						(object value, Error error) = ConvertObjectToType(variableValue, p.TypeFullName, parameterName);
+						(object? value, Error? error) = ConvertObjectToType(variableValue, p.TypeFullName, parameterName);
 						if (error != null) multipleErrors.Add(error);
 
 						param.Add("@" + parameterName, prefix + value + postfix);
@@ -290,6 +292,18 @@ namespace PLang.Modules.DbModule
 				{
 					return (obj.ToString(), null);
 				}
+				if (obj is JArray jarray && (targetType.Name.StartsWith("IEnumerable") || targetType.Name.StartsWith("List")))
+				{
+					var array = Array.CreateInstance(targetType.GenericTypeArguments[0], jarray.Count);
+					int idx = 0;
+					foreach ( JToken item in jarray)
+					{
+						var tmp = item.ToObject(targetType.GenericTypeArguments[0]);
+						array.SetValue(tmp, idx++);
+					}
+					return (array, null);
+				}
+				
 
 				return (Convert.ChangeType(obj, targetType), null);
 			}
@@ -300,6 +314,17 @@ namespace PLang.Modules.DbModule
 			}
 
 
+		}
+
+		private IEnumerable ConvertJArray(JArray jArray, Type targetType)
+		{
+			var listType = typeof(List<>).MakeGenericType(targetType);
+			var toObjectMethod = typeof(JArray).GetMethod("ToObject", new Type[] { });
+			var genericToObjectMethod = toObjectMethod.MakeGenericMethod(listType);
+
+			var list = genericToObjectMethod.Invoke(jArray, null);
+
+			return (IEnumerable)list;
 		}
 
 		private string FormatType(string value, Type targetType)
@@ -421,10 +446,10 @@ namespace PLang.Modules.DbModule
 
 			if (result.rows.Count == 0)
 			{
-				if (this.function == null || this.function.ReturnValue == null || this.function.ReturnValue.Count == 1) return (null, null);
+				if (this.function == null || this.function.ReturnValues == null || this.function.ReturnValues.Count == 1) return (null, null);
 
 				var dict = new ReturnDictionary<string, object?>();
-				foreach (var rv in this.function.ReturnValue)
+				foreach (var rv in this.function.ReturnValues)
 				{
 					dict.Add(rv.VariableName, GetDefaultValue(rv.Type));
 				}

@@ -31,6 +31,15 @@
 			}
 			return str;
 		}
+		public override string ToString()
+		{
+			string str = String.Empty;
+			foreach (var error in errors)
+			{
+				str += error.ToFormat() + Environment.NewLine;
+			}
+			return str;
+		}
 
 		public new int Count { get { return errors.Count; } }
 	}

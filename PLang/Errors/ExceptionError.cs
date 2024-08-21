@@ -45,5 +45,9 @@ namespace PLang.Errors
 		{
 			return ErrorHelper.ToFormat(contentType, this);
 		}
+		public override string ToString()
+		{
+			return ToFormat().ToString();
+		}
 	}
 }

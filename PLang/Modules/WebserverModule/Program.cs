@@ -18,6 +18,7 @@ using PLang.Services.SigningService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Net.WebSockets;
 using System.Reflection;
@@ -268,6 +269,13 @@ namespace PLang.Modules.WebserverModule
 								var handler = errorHandlerFactory.CreateHandler();
 								await handler.ShowError(error);
 								continue;
+							} else
+							{
+								var streamFactory = container.GetInstance<IOutputStreamFactory>();
+								var stream = streamFactory.CreateHandler().Stream;
+
+								stream.Seek(0, SeekOrigin.Begin);
+								stream.CopyTo(resp.OutputStream);
 							}
 
 						}
@@ -587,7 +595,7 @@ Error:
 			if (request.Headers.Get("X-Signature") == null ||
 				request.Headers.Get("X-Signature-Created") == null ||
 				request.Headers.Get("X-Signature-Nonce") == null ||
-				request.Headers.Get("X-Signature-Address") == null ||
+				request.Headers.Get("X-Signature-Public-Key") == null ||
 				request.Headers.Get("X-Signature-Contract") == null
 				) return;
 
@@ -595,12 +603,12 @@ Error:
 			validationHeaders.Add("X-Signature", request.Headers.Get("X-Signature")!);
 			validationHeaders.Add("X-Signature-Created", request.Headers.Get("X-Signature-Created")!);
 			validationHeaders.Add("X-Signature-Nonce", request.Headers.Get("X-Signature-Nonce")!);
-			validationHeaders.Add("X-Signature-Address", request.Headers.Get("X-Signature-Address")!);
+			validationHeaders.Add("X-Signature-Public-Key", request.Headers.Get("X-Signature-Public-Key")!);
 			validationHeaders.Add("X-Signature-Contract", request.Headers.Get("X-Signature-Contract") ?? "C0");
 
 			var url = request.Url?.PathAndQuery ?? "";
 
-			var identies = await signingService.VerifySignature(settings.GetSalt(), body, request.HttpMethod, url, validationHeaders);
+			var identies = await signingService.VerifySignature(body, request.HttpMethod, url, validationHeaders);
 			if (identies == null) return;
 			foreach (var identity in identies)
 			{
@@ -761,7 +769,7 @@ Error:
 						}
 
 						var signatureData = websocketData.SignatureData;
-						var identity = await signingService.VerifySignature(settings.GetSalt(), JsonConvert.SerializeObject(websocketData), websocketData.Method, websocketData.Url, signatureData);
+						var identity = await signingService.VerifySignature(JsonConvert.SerializeObject(websocketData), websocketData.Method, websocketData.Url, signatureData);
 
 						websocketData.SignatureData = null;
 						websocketData.Parameters.AddOrReplace(identity);

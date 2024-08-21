@@ -142,7 +142,7 @@ namespace PLang.Runtime
 				}
 
 
-				error = await eventRuntime.RunStartEndEvents(context, EventType.After, EventScope.StartOfApp);
+				error = await eventRuntime.RunStartEndEvents(context, EventType.After, EventScope.EndOfApp);
 				if (error != null)
 				{
 					await HandleError(error);
@@ -411,7 +411,7 @@ namespace PLang.Runtime
 
 		private async Task<IError?> HandleGoalError(IError error, Goal goal, int goalStepIndex)
 		{
-			if (error is IErrorHandled) return error;
+			if (error is IErrorHandled || error is UserDefinedError) return error;
 
 			var eventError = await eventRuntime.RunGoalErrorEvents(context, goal, goalStepIndex, error);
 			return eventError;
@@ -461,7 +461,7 @@ namespace PLang.Runtime
 
 		private async Task<IError?> HandleStepError(Goal goal, GoalStep step, int goalStepIndex, IError error, int retryCount)
 		{
-			if (error is IErrorHandled || error is EndGoal) return error;
+			if (error is IErrorHandled || error is EndGoal || error is UserDefinedError) return error;
 
 			if (error is Errors.AskUser.AskUserError aue)
 			{

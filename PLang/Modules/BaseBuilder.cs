@@ -132,7 +132,7 @@ This is the error(s)
 
 		public record Parameter(string Type, string Name, object Value);
 		public record ReturnValue(string Type, string VariableName);
-		public record GenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValue = null);
+		public record GenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValues = null);
 
 		public void AppendToSystemCommand(string appendedSystemCommand)
 		{

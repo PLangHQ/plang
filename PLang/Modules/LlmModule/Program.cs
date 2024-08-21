@@ -189,7 +189,7 @@ namespace PLang.Modules.LlmModule
 				context.AddOrReplace(PreviousConversationKey, promptMessages);
 				context.AddOrReplace(PreviousConversationSchemeKey, scheme);
 
-				if (function == null || function.ReturnValue == null || function.ReturnValue.Count == 0)
+				if (function == null || function.ReturnValues == null || function.ReturnValues.Count == 0)
 				{
 					if (response is JObject)
 					{
@@ -209,10 +209,10 @@ namespace PLang.Modules.LlmModule
 					}
 				}
 
-				if (function != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
+				if (function != null && function.ReturnValues != null && function.ReturnValues.Count > 0)
 				{
 					var returnDict = new ReturnDictionary<string, object?>();
-					foreach (var returnValue in function.ReturnValue)
+					foreach (var returnValue in function.ReturnValues)
 					{
 						returnDict.AddOrReplace(returnValue.VariableName, response);
 					}

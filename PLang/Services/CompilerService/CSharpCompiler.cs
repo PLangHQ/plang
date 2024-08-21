@@ -49,6 +49,7 @@ namespace PLang.Services.CompilerService
 			Assemblies.Add("System.Memory.dll");
 			Assemblies.Add("TestableIO.System.IO.Abstractions.Wrappers.dll");
 			Assemblies.Add("PlangLibrary.dll");
+			Assemblies.Add("Newtonsoft.Json.dll");
 		}
 
 		public string GetPreviousBuildDllNamesToExclude(GoalStep step)

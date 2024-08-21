@@ -65,7 +65,7 @@ namespace PLang.Modules.FileModule.Tests
 			Assert.AreEqual("ReadBinaryFileAndConvertToBase64", gf.FunctionName);
 			Assert.AreEqual("path", gf.Parameters[0].Name);
 			Assert.AreEqual("%mp4File%", gf.Parameters[0].Value);
-			Assert.AreEqual("mp4ContentBase64", gf.ReturnValue[0].VariableName);
+			Assert.AreEqual("mp4ContentBase64", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -86,7 +86,7 @@ namespace PLang.Modules.FileModule.Tests
 			Assert.AreEqual("ReadTextFile", gf.FunctionName);
 			Assert.AreEqual("path", gf.Parameters[0].Name);
 			Assert.AreEqual("file.txt", gf.Parameters[0].Value);
-			Assert.AreEqual("content", gf.ReturnValue[0].VariableName);
+			Assert.AreEqual("content", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -106,7 +106,7 @@ namespace PLang.Modules.FileModule.Tests
 			Assert.AreEqual("ReadFileAsStream", gf.FunctionName);
 			Assert.AreEqual("path", gf.Parameters[0].Name);
 			Assert.AreEqual("file.mp4", gf.Parameters[0].Value);
-			Assert.AreEqual("stream", gf.ReturnValue[0].VariableName);
+			Assert.AreEqual("stream", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -139,7 +139,7 @@ namespace PLang.Modules.FileModule.Tests
 				Assert.AreEqual("includeAllSubfolders", gf.Parameters[2].Name);
 				Assert.AreEqual(includeSubFolders, gf.Parameters[2].Value);
 			}
-			AssertVar.AreEqual("%contents%", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("%contents%", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -252,7 +252,7 @@ namespace PLang.Modules.FileModule.Tests
 			Assert.AreEqual("GetFileInfo", gf.FunctionName);
 			Assert.AreEqual("fileName", gf.Parameters[0].Name);
 			Assert.AreEqual("%file%", gf.Parameters[0].Value);
-			AssertVar.AreEqual("fileInfo", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("fileInfo", gf.ReturnValues[0].VariableName);
 
 		}
 

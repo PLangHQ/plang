@@ -10,6 +10,10 @@ namespace PLang.Errors.Builder
 		{
 			return ErrorHelper.ToFormat(contentType, this, extraInfo: LlmInstruction);
 		}
+		public override string ToString()
+		{
+			return base.ToString();
+		}
 	}
 
 	

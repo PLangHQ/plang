@@ -4,10 +4,12 @@ using NBitcoin.Secp256k1;
 using Nethereum.Signer;
 using Nethereum.Util;
 using Newtonsoft.Json;
+using NSec.Cryptography;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Services.IdentityService;
 using PLang.Utils;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using static Dapper.SqlMapper;
 using Identity = PLang.Interfaces.Identity;
@@ -30,7 +32,7 @@ namespace PLang.Services.SigningService
 		Dictionary<string, object> Sign(string? content, string method, string url, string contract = "C0", string? appId = null);
 		Dictionary<string, object> SignWithTimeout(byte[] seed, string content, string method, string url, DateTimeOffset expires, string contract = "C0");
 		Dictionary<string, object> SignWithTimeout(string content, string method, string url, DateTimeOffset expires, string contract = "C0", string? appId = null);
-		Task<Dictionary<string, object?>> VerifySignature(string salt, string body, string method, string url, Dictionary<string, object> validationKeyValues);
+		Task<Dictionary<string, object?>> VerifySignature(string body, string method, string url, Dictionary<string, object> validationKeyValues);
 	}
 
 	public class PLangSigningService : IPLangSigningService
@@ -66,17 +68,23 @@ namespace PLang.Services.SigningService
 		public async Task<string> GetPublicKey()
 		{
 			var identity = identityService.GetCurrentIdentity();
-			return identity.Value.ToString();
+			return identity.Value!.ToString()!;
 		}
 
 		private Dictionary<string, object> SignInternal(string? content, string method, string url, string contract = "C0", DateTimeOffset? expires = null, string? appId = null)
 		{
 			identityService.UseSharedIdentity(appId);
 			var identity = identityService.GetCurrentIdentityWithPrivateKey();
-			var seed = Encoding.UTF8.GetBytes(identity.Value!.ToString()!);
+
+			var seed = Convert.FromBase64String(identity.Value!.ToString()!);
 			var result = SignInternal(seed, content, method, url, contract, expires);
 			identityService.UseSharedIdentity(null);
 			return result;
+		}
+		private Key LoadKeyFromBase64(byte[] privateKeyBytes)
+		{
+			var algorithm = SignatureAlgorithm.Ed25519;
+			return Key.Import(algorithm, privateKeyBytes, KeyBlobFormat.RawPrivateKey);
 		}
 
 		private Dictionary<string, object> SignInternal(byte[] seed, string? content, string method, string url, string contract = "C0", DateTimeOffset? expires = null)
@@ -89,12 +97,14 @@ namespace PLang.Services.SigningService
 
 			var dataToSign = CreateSignatureData(content, method, url, created, nonce, contract, expires);
 
-			var hdWallet = new Nethereum.HdWallet.Wallet(seed);
-			dataToSign.Add("X-Signature-Address", hdWallet.GetEthereumKey(0).GetPublicAddress());
+			var key = LoadKeyFromBase64(seed);
 
-			var signer = new EthereumMessageSigner();
-			var signature = signer.HashAndSign(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(dataToSign)), hdWallet.GetEthereumKey(0));
-			dataToSign.Add("X-Signature", signature);
+			string publicKeyBase64 = Convert.ToBase64String(key.Export(KeyBlobFormat.RawPublicKey));
+			dataToSign.Add("X-Signature-Public-Key", publicKeyBase64);
+
+			var algorithm = SignatureAlgorithm.Ed25519;
+			var signature = algorithm.Sign(key, Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(dataToSign)));
+			dataToSign.Add("X-Signature", Convert.ToBase64String(signature));
 			return dataToSign;
 
 
@@ -125,22 +135,25 @@ namespace PLang.Services.SigningService
 		}
 
 
-		public async Task<Dictionary<string, object?>> VerifySignature(string salt, string body, string method, string url, Dictionary<string, object> validationKeyValues)
+		public async Task<Dictionary<string, object?>> VerifySignature(string body, string method, string url, Dictionary<string, object> validationKeyValues)
 		{
-			return await VerifySignature(appCache, salt, body, method, url, validationKeyValues);
+			return await VerifySignature(appCache, body, method, url, validationKeyValues);
 		}
 
 		/*
 		 * Return Identity(string) if signature is valid, else null  
 		 */
-		public static async Task<Dictionary<string, object?>> VerifySignature(IAppCache appCache, string salt, string body, string method, string url, Dictionary<string, object> validationKeyValues)
+		public static async Task<Dictionary<string, object?>> VerifySignature(IAppCache appCache, string body, string method, string url, Dictionary<string, object> validationKeyValues)
 		{
 			var identities = new Dictionary<string, object?>();
-
+			if (validationKeyValues.ContainsKey("X-Signature-Address"))
+			{
+				throw new SignatureException("You must update you plang runtime. Visit https://github.com/PLangHQ/plang/releases to get latest version.");
+			}
+			
 			if (!validationKeyValues.ContainsKey("X-Signature"))
 			{
 				identities.AddOrReplace(ReservedKeywords.Identity, null);
-				identities.AddOrReplace(ReservedKeywords.IdentityNotHashed, null);
 				return identities;
 			}
 			var signature = validationKeyValues["X-Signature"];
@@ -150,7 +163,7 @@ namespace PLang.Services.SigningService
 				throw new SignatureException("X-Signature-Created is invalid. Should be unix time in ms from 1970.");
 			}
 			var nonce = validationKeyValues["X-Signature-Nonce"];
-			var expectedAddress = validationKeyValues["X-Signature-Address"];
+			var expectedPublicKey = validationKeyValues["X-Signature-Public-Key"] as string;
 			var contract = validationKeyValues["X-Signature-Contract"] ?? "C0";
 
 			DateTimeOffset? expires = null;
@@ -180,30 +193,37 @@ namespace PLang.Services.SigningService
 			}
 
 			var message = CreateSignatureData(body, method, url, signatureCreated, nonce.ToString(), contract.ToString(), expires);
-			message.Add("X-Signature-Address", expectedAddress);
+			message.Add("X-Signature-Public-Key", expectedPublicKey);
 
-			var signer = new EthereumMessageSigner();
-			string recoveredAddress = signer.HashAndEcRecover(JsonConvert.SerializeObject(message), signature.ToString());
+			var algorithm = SignatureAlgorithm.Ed25519;
+			byte[] publicKeyBytes = Convert.FromBase64String(expectedPublicKey);
+			var publicKey = NSec.Cryptography.PublicKey.Import(algorithm, publicKeyBytes, KeyBlobFormat.RawPublicKey);
 
-			var normalizer = new AddressUtil();
-			string recoveredAddress2 = normalizer.ConvertToChecksumAddress(recoveredAddress);
-			string expectedAddress2 = normalizer.ConvertToChecksumAddress(expectedAddress.ToString());
 
-			string address = (recoveredAddress2 == expectedAddress2) ? recoveredAddress2 : null;
+			var isVerified = algorithm.Verify(publicKey, ConvertDictionaryToSpan(message), ConvertSignatureToSpan(signature.ToString()));
 
-			if (address == null)
+			if (isVerified)
 			{
-				identities.AddOrReplace(ReservedKeywords.Identity, null);
-				identities.AddOrReplace(ReservedKeywords.IdentityNotHashed, null);
+				identities.AddOrReplace(ReservedKeywords.Identity, expectedPublicKey);
 				return identities;
 			}
-			
-			identities.AddOrReplace(ReservedKeywords.Identity, address.ComputeHash(mode: "keccak256", salt: salt).Hash);
-			identities.AddOrReplace(ReservedKeywords.IdentityNotHashed, address);
+
+			identities.AddOrReplace(ReservedKeywords.Identity, null);
 
 			return identities;
 		}
+		static ReadOnlySpan<byte> ConvertDictionaryToSpan(Dictionary<string, object?> data)
+		{
+			// Serialize dictionary to JSON using Newtonsoft.Json
+			string jsonString = JsonConvert.SerializeObject(data);
+			byte[] jsonData = Encoding.UTF8.GetBytes(jsonString);
+			return new ReadOnlySpan<byte>(jsonData);
+		}
 
-
+		static ReadOnlySpan<byte> ConvertSignatureToSpan(string signatureBase64)
+		{
+			byte[] signatureBytes = Convert.FromBase64String(signatureBase64);
+			return new ReadOnlySpan<byte>(signatureBytes);
+		}
 	}
 }

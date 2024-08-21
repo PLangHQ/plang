@@ -46,10 +46,6 @@ namespace PLang.Runtime
 			Dictionary<string, object?>? parameters, Goal? callingGoal = null, 
 			bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0)
 		{
-			
-			
-
-
 			Goal? goal = null;
 			ServiceContainer? container = null;
 
@@ -82,6 +78,8 @@ namespace PLang.Runtime
 			if (goal == null)
 			{
 				var goalsAvailable = engine.GetGoalsAvailable(appPath, goalToRun);
+				if (goalsAvailable == null || goalsAvailable.Count == 0) return (engine, new Error("No goals available"));
+
 				var goals = string.Join('\n', goalsAvailable.Select(p => $" - {p.GoalName}"));
 				string strGoalsAvailable = "";
 				if (!string.IsNullOrWhiteSpace(goals))

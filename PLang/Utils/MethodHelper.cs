@@ -112,9 +112,9 @@ example of answer:
 							var parameterError = IsParameterMatch(instanceFunction, function.Parameters);
 							if (parameterError == null)
 							{
-								if (instanceFunction.ReturnType != typeof(Task) && function.ReturnValue != null && function.ReturnValue.Count > 0)
+								if (instanceFunction.ReturnType != typeof(Task) && function.ReturnValues != null && function.ReturnValues.Count > 0)
 								{
-									foreach (var returnValue in function.ReturnValue)
+									foreach (var returnValue in function.ReturnValues)
 									{
 										memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
 									}

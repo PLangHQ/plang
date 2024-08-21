@@ -1,6 +1,7 @@
 ﻿using Jil;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OpenQA.Selenium.DevTools.V124.DOM;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.SettingsService;
@@ -57,7 +58,11 @@ namespace PLang.Utils
 				else
 				{
 					var value = memoryStack.Get(content);
-					if (value != null) return value;
+					if (value != null)
+					{
+						if (value is JValue jValue) return jValue.Value;
+						return value;
+					}
                 }
 			}
 
@@ -72,7 +77,10 @@ namespace PLang.Utils
 				foreach (var variable in variables)
 				{
 					var jsonProperty = FindPropertyNameByValue(jobject, variable.OriginalKey);
-					if (jsonProperty == null) continue;
+					if (jsonProperty == null) {
+						LoadVariableInTextValue(jobject, variable);
+						continue;
+					};
 
 					if (jsonProperty.Contains("."))
 					{
@@ -82,9 +90,33 @@ namespace PLang.Utils
 							SetNestedPropertyValue(jobject, jsonProperty, value);
 						}
 					}
-					else
+					else if (jsonProperty.Contains("[") && jsonProperty.Contains("]"))
 					{
-						jobject[jsonProperty] = (variable.Value == null) ? "" : JsonSerialize(variable.Value);
+						JArray messages = (JArray)jobject[jsonProperty.Substring(0, jsonProperty.IndexOf("["))];
+						for (int i = 0; i < messages.Count; i++)
+						{
+							if (messages[i].Type == JTokenType.String && messages[i].ToString() == variable.OriginalKey)
+							{
+								if (variable.Value is JToken token) { 
+									messages[i] = token;
+								} else
+								{
+									messages[i] = JsonSerialize(variable.Value);
+								}
+								break;
+							}
+						}
+
+					}
+					else if (jobject[jsonProperty] != null)
+					{
+						if (jobject[jsonProperty] != null && IsVariable(jobject[jsonProperty].ToString()))
+						{
+							jobject[jsonProperty] = (variable.Value == null) ? "" : JsonSerialize(variable.Value);
+						} else
+						{
+							jobject[jsonProperty] = jobject[jsonProperty].ToString().Replace(variable.OriginalKey, variable.Value.ToString());
+						}
 					}
 
 				}
@@ -121,6 +153,23 @@ namespace PLang.Utils
 			}
 			return content;
 
+		}
+
+		private void LoadVariableInTextValue(JToken jobject, Variable variable)
+		{
+			var children = jobject.Children();
+			foreach (var child in children)
+			{
+				if (child is JValue jValue)
+				{
+					jValue.Value = LoadVariables(jValue.Value);
+				}
+				else
+				{
+					LoadVariableInTextValue(child, variable);
+				}
+				int i = 0;
+			}
 		}
 
 		private bool ShouldSerializeToText(object value)
@@ -315,7 +364,7 @@ namespace PLang.Utils
 			}
 		}
 
-		public static string? FindPropertyNameByValue(JToken token, string value, string parentPath = "")
+		public string? FindPropertyNameByValue(JToken token, string value, string parentPath = "")
 		{
 			switch (token.Type)
 			{
@@ -347,6 +396,9 @@ namespace PLang.Utils
 					if ((string?)token == value)
 					{
 						return parentPath;
+					} else if (token.ToString().Contains(value))
+					{
+						//return parentPath;
 					}
 					break;
 			}
@@ -368,8 +420,8 @@ namespace PLang.Utils
 
 		public record Variable(string OriginalKey, string Key, object? Value);
 
-		
-			//%method%%urlPath%%salt%%timestamp%%Settings.RapydApiKey%%Settings.RapydSecretApiKey%%body.ToString().Replace("{}", "").ClearWhitespace()%
+
+		//%method%%urlPath%%salt%%timestamp%%Settings.RapydApiKey%%Settings.RapydSecretApiKey%%body.ToString().Replace("{}", "").ClearWhitespace()%
 		internal List<Variable> GetVariables(string content, bool emptyIfNotFound = true)
 		{
 			List<Variable> variables = new List<Variable>();
@@ -432,7 +484,11 @@ namespace PLang.Utils
 			}
 			
 		}
-
+		public static bool ContainsVariable(object? variable)
+		{
+			if (variable == null || string.IsNullOrEmpty(variable.ToString())) return false;
+			return Regex.IsMatch(variable.ToString()!, @"%[\p{L}\p{N}#+-\[\]_\.\+\(\)\*\<\>\!\s]*%");
+		}
 		public static bool IsVariable(object? variable)
 		{
 			if (variable == null || string.IsNullOrEmpty(variable.ToString())) return false;

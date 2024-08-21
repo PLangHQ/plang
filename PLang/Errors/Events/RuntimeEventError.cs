@@ -8,8 +8,11 @@ namespace PLang.Errors.Events
 	public record RuntimeEventError(string Message, EventBinding EventBinding, Goal? Goal = null, GoalStep? Step = null, string Key = "RuntimeEvent", Exception? Exception = null, IError? InitialError = null) : Error(Message, Key, Exception: Exception), IEventError, IError
     {
         public bool IgnoreError => false;
-
-        public new object ToFormat(string contentType = "text")
+		public override string ToString()
+		{
+			return ToFormat().ToString();
+		}
+		public new object ToFormat(string contentType = "text")
 		{
             string str = string.Empty;
             if (Key != null)

@@ -241,9 +241,9 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		{
 			if (gf == null) return;
 
-			if (gf.ReturnValue != null && gf.ReturnValue.Count > 0)
+			if (gf.ReturnValues != null && gf.ReturnValues.Count > 0)
 			{
-				foreach (var returnValue in gf.ReturnValue)
+				foreach (var returnValue in gf.ReturnValues)
 				{
 					memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
 				}

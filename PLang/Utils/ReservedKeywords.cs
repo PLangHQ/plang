@@ -21,9 +21,9 @@ namespace PLang.Utils
 		public static readonly string HttpContext = "!HttpContext";
 		public static readonly string IsHttpRequest = "!IsHttpRequest";
 		
-		public static readonly string IdentityNotHashed = "!IdentityNotHashed";
 		public static readonly string CurrentDataSource = "!CurrentDataSource";
 		public static readonly string Error = "!Error";
+		public static readonly string DetailedError = "!DetailedError";
 		public static readonly string LlmDocumentation = "!DOC";
 		public static readonly string Llm = "!LLM";
 

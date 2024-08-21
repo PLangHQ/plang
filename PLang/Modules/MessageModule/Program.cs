@@ -266,7 +266,7 @@ namespace PLang.Modules.MessageModule
 				}
 			}
 
-			var identites = signingService.VerifySignature(settings.GetSalt(), content, "EncryptedDm", ev.Pubkey, validationKeyValues).Result;
+			var identites = signingService.VerifySignature(content, "EncryptedDm", ev.Pubkey, validationKeyValues).Result;
 			parameters.AddOrReplace(identites);
 
 			engine = container.GetInstance<IEngine>();

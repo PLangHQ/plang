@@ -89,7 +89,6 @@ namespace PLang.Building.Events.Tests
 		}
 
 		[TestMethod()]
-		[ExpectedException(typeof(BuilderStepException))]
 		public async Task BuildEventsPr_Goals_Test_ShouldThrowBuilderStepException()
 		{
 			var settings = container.GetInstance<ISettings>();
@@ -105,7 +104,10 @@ namespace PLang.Building.Events.Tests
 			prParser.ParsePrFile(Arg.Any<string>()).Returns(new Goal());
 
 			var eventBuilder = container.GetInstance<EventBuilder>();
-			await eventBuilder.BuildEventsPr();
+			(var result, var error) = await eventBuilder.BuildEventsPr();
+
+			Assert.IsNotNull(error);
+			Assert.AreEqual(0, result.Count);
 			//Assert.ThrowsAsync<BuilderStepException>(() => eventBuilder.BuildEventsPr());
 		}
 
@@ -176,26 +178,26 @@ namespace PLang.Building.Events.Tests
 
 		string[] aiResponses = { @"
 			  {
-				""EventType"": 0,
-				""EventScope"": 20,
+				""EventType"": ""Before"",
+				""EventScope"": ""Goal"",
 				""GoalToBindTo"": ""api/*"",
 				""GoalToCall"": ""!DoStuff""
 			  }", @"
 			  {
-				""EventType"": 0,
-				""EventScope"": 30,
+				""EventType"": ""Before"",
+				""EventScope"": ""Step"",
 				""GoalToBindTo"": ""*"",
 				""GoalToCall"": ""!Debugger.SendInfo""
 			  }", @"
 			  {
-				""EventType"": 1,
-				""EventScope"": 20,
+				""EventType"": ""After"",
+				""EventScope"": ""Goal"",
 				""GoalToBindTo"": ""Run.goal"",
 				""GoalToCall"": ""!AfterRun""
 			  }", @"
 			  {
-				""EventType"": 1,
-				""EventScope"": 30,
+				""EventType"": ""After"",
+				""EventScope"": ""Step"",
 				""GoalToBindTo"": ""Startup.goal"",
 				""GoalToCall"": ""ProcessImage"",
 				""StepNumber"": 1

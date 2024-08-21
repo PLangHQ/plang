@@ -8,5 +8,9 @@ namespace PLang.Errors.Builder
 		{
 			return ErrorHelper.ToFormat(contentType, this);
 		}
+		public override string ToString()
+		{
+			return base.ToString();
+		}
 	}
 }

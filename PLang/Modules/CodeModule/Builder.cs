@@ -111,6 +111,7 @@ get filename of %filePath%, write to %fileName% => ExecutePlangCode(IPlangFileSy
 			}
 
 			base.SetContentExtractor(new CSharpExtractor());
+			
 			(var instruction, var buildError) = await Build<CodeImplementationResponse>(step);
 			if (buildError != null) return (null, buildError);
 

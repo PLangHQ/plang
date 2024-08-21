@@ -347,8 +347,8 @@ namespace PLang.Modules.HttpModule
 				var response = await httpClient.SendAsync(request);
 				if (!response.IsSuccessStatusCode)
 				{
-					string erorBody = await response.Content.ReadAsStringAsync();
-					throw new RuntimeException(erorBody, goal);
+					string errorBody = await response.Content.ReadAsStringAsync();
+					throw new RuntimeException(errorBody, goal);
 				}
 
 				var mediaType = response.Content.Headers.ContentType.MediaType;

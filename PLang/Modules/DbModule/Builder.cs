@@ -309,8 +309,8 @@ You MUST provide SqlParameters if SQL has @parameter.
 
 # examples #
 ""delete from tableX"" => sql: ""DELETE FROM tableX"", warning: Missing WHERE statement can affect rows that should not
-""delete tableB where id=%id%"" => sql: ""DELETE FROM tableB WHERE id=@id"", warning: null
-""delete * from %table% WHERE %name% => sql: ""DELETE FROM %table% WHERE name=@name""
+""delete tableB where id=%id%"" => sql: ""DELETE FROM tableB WHERE id=@id"", warning: null, SqlParameters:[{{ParameterName:id, VariableNameOrValue:%id%, TypeFullName:int}}]
+""delete * from %table% WHERE %name% => sql: ""DELETE FROM %table% WHERE name=@name"", SqlParameters:[{{ParameterName:name, VariableNameOrValue:%name%, TypeFullName:string}}]
 # examples #");
 
 			return await BuildCustomStatementsWithWarning(goalStep, dataSource, program, functionInfo);

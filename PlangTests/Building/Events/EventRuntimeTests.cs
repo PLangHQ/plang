@@ -30,7 +30,7 @@ namespace PLang.Building.Events.Tests
 			var goal = new Model.Goal();
 			goal.GoalName = "TestGoal";
 
-			var eventBinding = new EventBinding(EventType.Before, EventScope.Goal, "Start", "");
+			var eventBinding = new EventBinding(EventType.Before, EventScope.Goal, "Start", "Start");
 
 			
 			var result = eventRuntime.GoalHasBinding(goal, eventBinding);
@@ -43,7 +43,7 @@ namespace PLang.Building.Events.Tests
 			var goal = new Model.Goal();
 			goal.GoalName = "Start";
 			goal.Visibility = Visibility.Public;
-			var eventBinding = new EventBinding(EventType.Before, EventScope.Goal, "Start", "");
+			var eventBinding = new EventBinding(EventType.Before, EventScope.Goal, "Start", "Start2");
 
 			var result = eventRuntime.GoalHasBinding(goal, eventBinding);
 			Assert.IsTrue(result);
@@ -140,7 +140,7 @@ namespace PLang.Building.Events.Tests
 			await eventRuntime.RunStartEndEvents(new(), EventType.Before, EventScope.StartOfApp);
 				
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
-						@"\", "!Process", Arg.Any<Dictionary<string, object?>>());
+						@"\", new Models.GoalToCall("Process"), Arg.Any<Dictionary<string, object?>>());
 			
 		}
 

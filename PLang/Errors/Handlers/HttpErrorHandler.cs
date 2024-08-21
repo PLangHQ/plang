@@ -28,13 +28,13 @@ namespace PLang.Errors.Handlers
 			try
 			{
 				var resp = httpListenerContext.Response;
-
 				resp.StatusCode = error.StatusCode;
 				resp.StatusDescription = error.Key;
 				
 				using (var writer = new StreamWriter(resp.OutputStream, resp.ContentEncoding ?? Encoding.UTF8))
 				{
-					await writer.WriteAsync(error.ToFormat("json").ToString());
+					var str = error.ToFormat("json").ToString();
+					await writer.WriteAsync(str);
 					await writer.FlushAsync();
 				}
 			}

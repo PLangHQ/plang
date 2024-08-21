@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Builder;
+using PLang.Errors.Runtime;
 using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Utils
@@ -29,11 +30,11 @@ namespace PLang.Utils
 		}
 
 		public static string FormatLine(string txt)
-		{			
+		{
 			var lines = txt.Trim().Split(Environment.NewLine);
 			if (lines.Length == 0) return txt;
 			var text = lines[0];
-			for (int i =1;i<lines.Length;i++)
+			for (int i = 1; i < lines.Length; i++)
 			{
 				text += Environment.NewLine + "\t  " + lines[i].Trim();
 			}
@@ -41,6 +42,21 @@ namespace PLang.Utils
 		}
 		public static object ToFormat(string contentType, IError error, string[]? propertyOrder = null, string? extraInfo = null)
 		{
+			AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool detailedError);
+			if (error is UserDefinedError && contentType == "json")
+			{
+				if (JsonHelper.IsJson(error.Message))
+				{
+					return error.Message;
+				}
+				else
+				{
+					var obj = new JObject();
+					obj.Add("error", true);
+					obj.Add("message", error.Message);
+					return obj;
+				}
+			}
 			var errorType = error.GetType();
 			var properties = error.GetType().GetProperties();
 			var propertyOrderValue = new Dictionary<string, object?>();
@@ -61,24 +77,22 @@ namespace PLang.Utils
 					}
 				}
 			}
+			
 
 			var property = properties.FirstOrDefault(p => p.Name.Equals("Goal"));
-			if (property != null) goal = (Goal?)property.GetValue(error);
-
-			property = properties.FirstOrDefault(p => p.Name.Equals("Goal"));
 			if (property != null) goal = (Goal?)property.GetValue(error);
 
 			property = properties.FirstOrDefault(p => p.Name.Equals("Step"));
 			if (property != null) step = (GoalStep?)property.GetValue(error);
 
 			property = properties.FirstOrDefault(p => p.Name.Equals("GenericFunction"));
-			if (property != null) genericFunction = (GenericFunction?)property.GetValue(error);
+			if (detailedError && property != null) genericFunction = (GenericFunction?)property.GetValue(error);
 
 			property = properties.FirstOrDefault(p => p.Name.Equals("ParameterValues"));
-			if (property != null) parameterValues = (Dictionary<string, object?>?)property.GetValue(error);
+			if (detailedError && property != null) parameterValues = (Dictionary<string, object?>?)property.GetValue(error);
 
 			property = properties.FirstOrDefault(p => p.Name.Equals("Exception"));
-			if (property != null) exception = (Exception?)property.GetValue(error);
+			if (detailedError && property != null) exception = (Exception?)property.GetValue(error);
 			string? errorSource = null;
 			string? fixSuggestions = null;
 			if (error.FixSuggestion != null)
@@ -94,7 +108,8 @@ namespace PLang.Utils
 			}
 
 			string firstLine = $"";
-			if (step != null) {
+			if (step != null)
+			{
 				firstLine = $@"📄 File: {step.Goal.RelativeGoalPath}:{step.LineNumber}
 🔢 Line: {step.LineNumber}
 
@@ -103,13 +118,14 @@ namespace PLang.Utils
 ";
 				errorSource = $@"📦 Error Source:
 	- The error occurred in the module: `{step.ModuleType}`";
-				
-			} else if (goal != null)
+
+			}
+			else if (goal != null)
 			{
 				firstLine = $@"📄 File: {goal.RelativeGoalPath}";
 			}
 
-			
+
 			if (genericFunction != null)
 			{
 				string paramsStr = $"";
@@ -132,10 +148,10 @@ namespace PLang.Utils
 					}
 				}
 				string returnStr = "";
-				if (genericFunction.ReturnValue != null && genericFunction.ReturnValue.Count > 0)
+				if (genericFunction.ReturnValues != null && genericFunction.ReturnValues.Count > 0)
 				{
 					returnStr = "\nThe results will be written into ";
-					foreach (var returnValue in genericFunction.ReturnValue)
+					foreach (var returnValue in genericFunction.ReturnValues)
 					{
 						returnStr += $"\t- %{returnValue.VariableName}%\n";
 					}
@@ -185,14 +201,17 @@ namespace PLang.Utils
 				{
 					obj.Add("Parameters", JsonConvert.SerializeObject(genericFunction.Parameters));
 					obj.Add("ParameterValues", JsonConvert.SerializeObject(parameterValues));
-					obj.Add("ReturnValue", JsonConvert.SerializeObject(genericFunction.ReturnValue));
+					obj.Add("ReturnValue", JsonConvert.SerializeObject(genericFunction.ReturnValues));
 				}
-				
+
 				if (exception != null)
 				{
 					obj.Add("Exception", exception.ToString());
 				}
-				obj.Add("Error", JObject.FromObject(error));
+				if (detailedError)
+				{
+					obj.Add("Error", JObject.FromObject(error));
+				}
 				return obj;
 			}
 
@@ -207,6 +226,6 @@ namespace PLang.Utils
 			return message;
 		}
 
-		
+
 	}
 }

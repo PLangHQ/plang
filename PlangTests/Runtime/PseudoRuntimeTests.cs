@@ -98,12 +98,11 @@ namespace PLang.Runtime.Tests
 		}
 
 		[TestMethod()]
-		[ExpectedException(typeof(GoalNotFoundException))]
 		public async Task RunGoalTest_GoalNotFound()
-		{
-		
+		{	
 
-			await pseudoRuntime.RunGoal(engine, new(), @"\", "UnknownGoal.goal", new Dictionary<string, object>());
+			(var e, var err) = await pseudoRuntime.RunGoal(engine, new(), @"\", "UnknownGoal.goal", new Dictionary<string, object>());
+			Assert.AreEqual("No goals available", err.Message);
 		}
 
 		[TestMethod]

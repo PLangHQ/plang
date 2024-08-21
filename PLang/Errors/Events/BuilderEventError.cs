@@ -1,6 +1,7 @@
 ﻿using PLang.Building.Model;
 using PLang.Errors.Builder;
 using PLang.Events;
+using PLang.Models;
 using PLang.Utils;
 
 namespace PLang.Errors.Events
@@ -9,8 +10,11 @@ namespace PLang.Errors.Events
     public record BuilderEventError(string Message, EventBinding? EventBinding = null, Goal? Goal = null, GoalStep? Step = null, string Key = "BuilderEvent", bool ContinueBuild = true, Exception? Exception = null, IError? InitialError = null) : Error(Message, Key, Exception: Exception), IEventError, IBuilderError
     {
         public bool IgnoreError => true;
-
-        public new object ToFormat(string contentType = "text")
+		public override string ToString()
+		{
+            return ToFormat().ToString();
+		}
+		public new object ToFormat(string contentType = "text")
 		{
             string str = string.Empty;
             if (Key != null)

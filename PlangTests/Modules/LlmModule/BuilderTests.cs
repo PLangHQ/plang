@@ -86,8 +86,8 @@ namespace PLang.Modules.LlmModule.Tests
 			Assert.AreEqual("AskLlm", gf.FunctionName);
 			Assert.AreEqual("promptMessages", gf.Parameters[0].Name);
 			Assert.AreEqual("scheme", gf.Parameters[1].Name);
-			Assert.AreEqual("firstName", gf.ReturnValue[0].VariableName);
-			Assert.AreEqual("lastName", gf.ReturnValue[1].VariableName);
+			Assert.AreEqual("firstName", gf.ReturnValues[0].VariableName);
+			Assert.AreEqual("lastName", gf.ReturnValues[1].VariableName);
 			
 
 		}
