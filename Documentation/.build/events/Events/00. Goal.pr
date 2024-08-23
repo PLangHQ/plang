@@ -9,12 +9,12 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": null,
-      "RelativePrPath": null,
+      "PrFileName": "Events.pr",
+      "RelativePrPath": ".build\\events\\Events\\Events.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-05-05T11:53:21.3398346+00:00",
+      "Generated": "2024-08-23T09:30:53.2940618+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -24,8 +24,12 @@
         "Event": {
           "EventType": "Before",
           "EventScope": "Step",
-          "GoalToBindTo": ".*",
-          "GoalToCall": "!SendDebug",
+          "GoalToBindTo": {
+            "Value": ".*"
+          },
+          "GoalToCall": {
+            "Value": "SendDebug"
+          },
           "IncludePrivate": true,
           "StepNumber": null,
           "StepText": null,
@@ -34,7 +38,7 @@
           "OnErrorContinueNextStep": false
         }
       },
-      "Number": 1,
+      "Number": 0,
       "LineNumber": 2,
       "LlmRequest": null
     },
@@ -44,12 +48,12 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": null,
-      "RelativePrPath": null,
+      "PrFileName": "Events.pr",
+      "RelativePrPath": ".build\\events\\Events\\Events.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-05-05T11:53:26.8526833+00:00",
+      "Generated": "2024-08-23T09:30:54.7927069+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -58,9 +62,13 @@
       "Custom": {
         "Event": {
           "EventType": "Before",
-          "EventScope": "Goal",
-          "GoalToBindTo": ".*",
-          "GoalToCall": "!SendDebug",
+          "EventScope": "EndOfApp",
+          "GoalToBindTo": {
+            "Value": ".*"
+          },
+          "GoalToCall": {
+            "Value": "SendDebug"
+          },
           "IncludePrivate": true,
           "StepNumber": null,
           "StepText": null,
@@ -69,7 +77,7 @@
           "OnErrorContinueNextStep": false
         }
       },
-      "Number": 2,
+      "Number": 1,
       "LineNumber": 3,
       "LlmRequest": null
     }

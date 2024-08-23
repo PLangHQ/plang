@@ -188,7 +188,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 				}
 				else
 				{
-					if (handlerError == null) return error;
+					if (handlerError == null || handlerError == error) return error;
 
 					return ErrorHelper.GetMultipleBuildError(error, handlerError);
 				}
@@ -216,7 +216,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			if (action == null) return false;
 
 			// lets load the return value into memoryStack
-			if (action.Contains("ReturnValue"))
+			if (action.Contains("ReturnValues"))
 			{
 				var gf = JsonConvert.DeserializeObject<GenericFunction>(action);
 				LoadVariablesIntoMemoryStack(gf, memoryStack, context, settings);

@@ -1,22 +1,24 @@
 {
   "Action": {
     "Namespace": "PLangGeneratedCode",
-    "Name": "CheckModuleType",
-    "Code": "\nnamespace PLangGeneratedCode\n{\n    public static class CheckModuleType\n    {\n        public static bool ExecutePlangCode(object? stepαModuleType)\n        {\n            return stepαModuleType?.ToString() == \"PLang.Modules.CallGoalModule\";\n        }\n    }\n}\n",
+    "Name": "CheckMissingGoals",
+    "Code": "\nnamespace PLangGeneratedCode\n{\n    public static class CheckMissingGoals\n    {\n        public static bool ExecutePlangCode(dynamic? missingGoals)\n        {\n            return missingGoals != null && !(missingGoals is string str && string.IsNullOrEmpty(str));\n        }\n    }\n}\n",
     "Using": null,
     "InputParameters": {
-      "step.ModuleType": "object?"
+      "missingGoals": "dynamic?"
     },
     "OutParameterDefinition": null,
     "GoalToCallOnTrue": {
-      "Value": "CheckCallingGoal"
+      "Value": "ShowMissingGoals"
     },
-    "GoalToCallOnFalse": null,
+    "GoalToCallOnFalse": {
+      "Value": "ShowAllValid"
+    },
     "GoalToCallOnTrueParameters": null,
     "GoalToCallOnFalseParameters": null,
     "ServicesAssembly": []
   },
-  "Text": "if %step.ModuleType%(to string) == \"PLang.Modules.CallGoalModule\" then call CheckCallingGoal",
+  "Text": "if %missingGoals% is not empty then, call ShowMissingGoals, else ShowAllValid",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -46,7 +48,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## defined variables ##\r\nstep.ModuleType (type:object), \r\n## defined variables ##"
+            "text": "## defined variables ##\r\nmissingGoals (type:object), \r\n## defined variables ##"
           },
           {
             "type": "text",
@@ -59,7 +61,7 @@
         "content": [
           {
             "type": "text",
-            "text": "if %step.ModuleType%(to string) == \"PLang.Modules.CallGoalModule\" then call CheckCallingGoal"
+            "text": "if %missingGoals% is not empty then, call ShowMissingGoals, else ShowAllValid"
           }
         ]
       }

@@ -55,14 +55,14 @@ namespace PLang.Utils.Extractors
 					}
 					return JsonConvert.DeserializeObject(content, responseType) ?? "";
 				}
-				catch
+				catch (Exception ex)
 				{
 
 					var newContent = FixMalformedJson(content);
 					var obj = JsonConvert.DeserializeObject(newContent, responseType);
+					if (obj != null) return obj;
 
-					//var newJson = JsonConvert.SerializeObject(obj).Replace("[newline]", "\\n").Replace("[carreturn]", "\\r");
-					return obj ?? "";
+					throw new ParsingException($"Error parsing content to json. Content:\n\n{content}", ex);
 				}
 			}
 			catch
@@ -106,11 +106,11 @@ namespace PLang.Utils.Extractors
 						}
 					}
 
-					return "";
+					throw new ParsingException($"Error parsing content to json. Content:\n\n{content}", new Exception("Error parsing content to json"));
 				}
-				catch
+				catch (Exception ex2)
 				{
-					throw;
+					throw new ParsingException($"Error parsing content to json. Content:\n\n{content}", ex2);
 				}
 			}
 		}

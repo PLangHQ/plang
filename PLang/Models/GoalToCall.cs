@@ -12,11 +12,11 @@ namespace PLang.Models
 
 		public GoalToCall(string value)
 		{
-			if (string.IsNullOrWhiteSpace(value))
+			if (!string.IsNullOrWhiteSpace(value))
 			{
-				throw new ArgumentException("GoalToCall cannot be null or whitespace.", nameof(value));
+				Value = value.Replace("!", "");
 			}
-			Value = value.Replace("!", "");
+			
 		}
 
 		public override string ToString() => Value;

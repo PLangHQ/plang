@@ -360,6 +360,19 @@ example of answer:
 				variableValue = variableHelper.LoadVariables(variableValue);
 			}
 
+			if (variableValue is string str && JsonHelper.IsJson(str))
+			{
+				if (str.TrimStart().StartsWith("{"))
+				{
+					var jobj = JObject.Parse(str);
+					variableValue = JArray.FromObject(jobj);
+				}
+				else if (str.TrimStart().StartsWith("["))
+				{
+					variableValue = JArray.Parse(str);
+				}
+			}
+
 			if (variableValue is JArray)
 			{
 				list = ((JArray)variableValue).ToObject(parameter.ParameterType) as System.Collections.IList;

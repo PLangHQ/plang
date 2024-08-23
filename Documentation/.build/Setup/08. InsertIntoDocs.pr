@@ -18,12 +18,12 @@
           },
           {
             "ParameterName": "Name",
-            "VariableNameOrValue": "IDE",
+            "VariableNameOrValue": "Settings",
             "TypeFullName": "System.String"
           },
           {
             "ParameterName": "Guide",
-            "VariableNameOrValue": "template/ide.txt",
+            "VariableNameOrValue": "template/settings.txt",
             "TypeFullName": "System.String"
           },
           {
@@ -33,7 +33,7 @@
           },
           {
             "ParameterName": "OutputFilename",
-            "VariableNameOrValue": "./IDE.md",
+            "VariableNameOrValue": "./Settings.md",
             "TypeFullName": "System.String"
           }
         ]
@@ -41,7 +41,7 @@
     ],
     "ReturnValues": null
   },
-  "Text": "insert into docs Name='IDE'\n            Guide='template/ide.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./IDE.md'                                    ",
+  "Text": "insert into docs Name='Settings'\n            Guide='template/settings.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./Settings.md'           ",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -88,7 +88,7 @@
         "content": [
           {
             "type": "text",
-            "text": "insert into docs Name='IDE'\n            Guide='template/ide.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./IDE.md'                                    "
+            "text": "insert into docs Name='Settings'\n            Guide='template/settings.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./Settings.md'           "
           }
         ]
       }

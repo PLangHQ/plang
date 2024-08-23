@@ -48,6 +48,13 @@ namespace PLang.Modules.LoopModule
 			{
 				return new ProgramError($"{variableToLoopThrough} does not exist. Have you created it? Check for spelling error", goalStep, function);
 			}
+			if (obj is string || obj.GetType().IsPrimitive)
+			{
+				var l = new List<object>();
+				l.Add(obj);
+				obj = l;
+			}
+
 			if (obj is IList list)
 			{
 				if (list == null || list.Count == 0)
@@ -62,7 +69,7 @@ namespace PLang.Modules.LoopModule
 					goalParameters.Add(listName.ToString()!, list);
 					goalParameters.Add(listCountName, list.Count);
 					goalParameters.Add(itemName.ToString()!, list[i]);
-					goalParameters.Add(positionName.ToString()!, i + 1);
+					goalParameters.Add(positionName.ToString()!, i);
 
 					var missingEntries = parameters.Where(p => !goalParameters.ContainsKey(p.Key));
 					foreach (var entry in missingEntries)

@@ -3,7 +3,7 @@ When loop call a goal, it creates default variables
 - list = the list that is being looped through
 - listCount = the count of the list
 - item = the item being sent into the calling goal
-- position = the position where the call is in the list. position starts at 1 (not at 0 like we are used to with other languages)
+- position = the position where the call is in the list. position starts at 0, same a index on an array
 
 you can overwrite each default variable name, e.g.
 

@@ -40,6 +40,8 @@ namespace PLang.Modules.FileModule
 			this.logger = logger;
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
+
+			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 		}
 
 		/*
@@ -114,7 +116,7 @@ namespace PLang.Modules.FileModule
 
 			using (var stream = fileSystem.FileStream.New(absolutePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 			{
-				using (var reader = new StreamReader(stream, encoding: Encoding.GetEncoding(encoding)))
+				using (var reader = new StreamReader(stream, encoding: GetEncoding(encoding)))
 				{
 					var content = await reader.ReadToEndAsync();
 					if (loadVariables && !string.IsNullOrEmpty(content))
@@ -283,7 +285,7 @@ namespace PLang.Modules.FileModule
 					pseudoRuntime.RunGoal(engine, context, fileSystem.RelativeAppPath, goalToCallOnBadData, parameters, Goal);
 				},
 				NewLine = newLine,
-				Encoding = Encoding.GetEncoding(encoding),
+				Encoding = GetEncoding(encoding),
 				AllowComments = allowComments,
 				Comment = comment,
 				IgnoreBlankLines = ignoreBlankLines,
@@ -359,7 +361,7 @@ namespace PLang.Modules.FileModule
 					pseudoRuntime.RunGoal(engine, context, fileSystem.RelativeAppPath, goalToCallOnBadData, parameters, Goal);
 				},
 				NewLine = newLine,
-				Encoding = System.Text.Encoding.GetEncoding(encoding),
+				Encoding = GetEncoding(encoding),
 				AllowComments = allowComments,
 				Comment = comment,
 				IgnoreBlankLines = ignoreBlankLines,
@@ -418,7 +420,7 @@ namespace PLang.Modules.FileModule
 				{
 					content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
 				}
-				fileSystem.File.WriteAllText(file.Path, content, encoding: Encoding.GetEncoding(encoding));
+				fileSystem.File.WriteAllText(file.Path, content, encoding: GetEncoding(encoding));
 			}
 		}
 		public async Task<List<FileInfo>> ReadMultipleTextFiles(string folderPath, string searchPattern = "*", string[]? excludePatterns = null, bool includeAllSubfolders = false)
@@ -528,7 +530,28 @@ namespace PLang.Modules.FileModule
 			{
 				content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
 			}
-			await fileSystem.File.WriteAllTextAsync(absolutePath, content, encoding: Encoding.GetEncoding(encoding));
+			
+			await fileSystem.File.WriteAllTextAsync(absolutePath, content, encoding: GetEncoding(encoding));
+		}
+
+		private Encoding GetEncoding(string encoding)
+		{
+			switch (encoding)
+			{
+				case "utf-8":
+				case "utf-16":
+				case "utf-16BE":
+				case "utf-32LE":
+				case "us-ascii":
+					return Encoding.GetEncoding(encoding);
+			}
+
+			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+			if (int.TryParse(encoding, out int code))
+			{
+				return Encoding.GetEncoding(code);
+			}
+			return Encoding.GetEncoding(encoding);
 		}
 
 		public async Task AppendToFile(string path, string content, string? seperator = null,
@@ -544,7 +567,7 @@ namespace PLang.Modules.FileModule
 			{
 				content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
 			}
-			await fileSystem.File.AppendAllTextAsync(absolutePath, content + seperator, encoding: Encoding.GetEncoding(encoding));
+			await fileSystem.File.AppendAllTextAsync(absolutePath, content + seperator, encoding: GetEncoding(encoding));
 		}
 
 		public async Task CopyFiles(string directoryPath, string destinationPath, string searchPattern = "*", string[]? excludePatterns = null,

@@ -1,22 +1,20 @@
 {
   "Action": {
     "Namespace": "PLangGeneratedCode",
-    "Name": "CheckModuleType",
-    "Code": "\nnamespace PLangGeneratedCode\n{\n    public static class CheckModuleType\n    {\n        public static bool ExecutePlangCode(object? stepαModuleType)\n        {\n            return stepαModuleType?.ToString() == \"PLang.Modules.CallGoalModule\";\n        }\n    }\n}\n",
+    "Name": "CheckGoalToCall",
+    "Code": "\nnamespace PLangGeneratedCode\n{\n    public static class CheckGoalToCall\n    {\n        public static bool ExecutePlangCode(string? goalToCall)\n        {\n            return goalToCall != \"String\";\n        }\n    }\n}\n",
     "Using": null,
     "InputParameters": {
-      "step.ModuleType": "object?"
+      "goalToCall": "string?"
     },
     "OutParameterDefinition": null,
-    "GoalToCallOnTrue": {
-      "Value": "CheckCallingGoal"
-    },
+    "GoalToCallOnTrue": null,
     "GoalToCallOnFalse": null,
     "GoalToCallOnTrueParameters": null,
     "GoalToCallOnFalseParameters": null,
     "ServicesAssembly": []
   },
-  "Text": "if %step.ModuleType%(to string) == \"PLang.Modules.CallGoalModule\" then call CheckCallingGoal",
+  "Text": "if %goalToCall% != \"String\" then",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -46,7 +44,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## defined variables ##\r\nstep.ModuleType (type:object), \r\n## defined variables ##"
+            "text": "## defined variables ##\r\ngoalToCall (type:object), \r\n## defined variables ##"
           },
           {
             "type": "text",
@@ -59,7 +57,7 @@
         "content": [
           {
             "type": "text",
-            "text": "if %step.ModuleType%(to string) == \"PLang.Modules.CallGoalModule\" then call CheckCallingGoal"
+            "text": "if %goalToCall% != \"String\" then"
           }
         ]
       }

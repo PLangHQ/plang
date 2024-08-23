@@ -1,26 +1,31 @@
 {
   "Action": {
-    "FunctionName": "AddItemsToList",
+    "FunctionName": "Write",
     "Parameters": [
       {
-        "Type": "List`1<Object>",
-        "Name": "value",
-        "Value": "[]"
+        "Type": "Object?",
+        "Name": "content",
+        "Value": "All goals being called exist"
       },
       {
-        "Type": "List`1<Object>?",
-        "Name": "listInstance",
-        "Value": null
+        "Type": "Boolean?",
+        "Name": "writeToBuffer",
+        "Value": false
+      },
+      {
+        "Type": "String?",
+        "Name": "type",
+        "Value": "text"
+      },
+      {
+        "Type": "Int32?",
+        "Name": "statusCode",
+        "Value": 200
       }
     ],
-    "ReturnValues": [
-      {
-        "Type": "List`1",
-        "VariableName": "missingGoals"
-      }
-    ]
+    "ReturnValues": null
   },
-  "Text": "create list %missingGoals% = []",
+  "Text": "write out 'All goals being called exist'",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -50,7 +55,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nClearList(List`1<Object> listInstance)  : void \nClearDictionary(Dictionary`2<String, Object> dictionary)  : void \nDeleteFromList(Object item, List`1<Object> listInstance)  : Boolean \nDeleteKeyFromDictionary(String key, Dictionary`2<String, Object> dictionary)  : Boolean \nAddItemsToList(List`1<Object> value, List`1<Object>? listInstance)  : List`1  // Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddItemsToList. \nAddToList(Object value, List`1<Object>? listInstance)  : List`1  // Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToList. \nGetFromList(Int32 position, List`1<Object>? listInstance)  : Object  // Gets an item from a list by position. \nAddItemsToDictionary(String key, Dictionary`2<String, Object> value, Dictionary`2<String, Object>? dictionaryInstance, Boolean? updateIfExists = True)  : Dictionary`2  // Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddItemsToDictionary. \nAddToDictionary(String key, Object value, Dictionary`2<String, Object>? dictionaryInstance, Boolean? updateIfExists = True)  : ValueTuple`2  // Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToDictionary. \nGetFromDictionary(String key, Dictionary`2<String, Object>? dictionaryInstance)  : Object  // Gets an object from dictionary. ReturnValue should always be used with GetFromDictionary.\r\n## functions available ends ##\r\n## defined variables ##\r\nmissingGoals (type:object), \r\n## defined variables ##"
+            "text": "## functions available starts ##\r\nAsk(String text, String? type = \"text\", Int32? statusCode = 200, String? regexPattern, String? errorMessage)  : String  // Send response to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.. \nWrite(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  : IError  // Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text.\r\n## functions available ends ##"
           }
         ]
       },
@@ -59,7 +64,7 @@
         "content": [
           {
             "type": "text",
-            "text": "create list %missingGoals% = []"
+            "text": "write out 'All goals being called exist'"
           }
         ]
       }

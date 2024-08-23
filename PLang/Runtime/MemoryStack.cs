@@ -144,10 +144,6 @@ namespace PLang.Runtime
 				objectValue = GetObjectValue(variableName, staticVariable);
 
 				numberData = numberData.Substring(0, numberData.IndexOf("]")).Trim();
-				if (numberData == "0")
-				{
-					throw new ArgumentException("Index starts from 1, not 0.");
-				}
 				if (objectValue.Initiated && objectValue.Value.GetType().Name.StartsWith("Dictionary"))
 				{
 					if (numberData.StartsWith("%") && numberData.EndsWith("%"))
@@ -168,7 +164,6 @@ namespace PLang.Runtime
 							index = (indexObjectValue.Value as int? ?? 0);
 						}
 					}
-					index--;
 				}
 			}
 
@@ -244,7 +239,6 @@ namespace PLang.Runtime
 			{
 				if (int.TryParse(match.Groups["number"].Value, out var number))
 				{
-					number--;
 					if (i == 0) {
 						return $"$[{number}]";
 					}
@@ -265,7 +259,8 @@ namespace PLang.Runtime
 			for (int i = 1; i < keySplit.Length; i++)
 			{
 				var section = keySplit[i];
-				if (!section.Contains("(") && jsonPath == null) //property
+				if (jsonPath != null && jsonPath.Contains("." + section)) continue;
+				if (!section.Contains("(")) //property
 				{
 					calls.Add(section);
 				}

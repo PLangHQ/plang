@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OpenQA.Selenium.DevTools.V124.Page;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Builder;
@@ -12,7 +13,7 @@ namespace PLang.Utils
 	{
 		public static IBuilderError GetMultipleBuildError(IBuilderError initialError, IError? secondError)
 		{
-			if (secondError == null) return initialError;
+			if (secondError == null || initialError == secondError) return initialError;
 
 			var multipleError = new MultipleBuildError();
 			multipleError.Add(initialError);
@@ -201,7 +202,7 @@ namespace PLang.Utils
 				{
 					obj.Add("Parameters", JsonConvert.SerializeObject(genericFunction.Parameters));
 					obj.Add("ParameterValues", JsonConvert.SerializeObject(parameterValues));
-					obj.Add("ReturnValue", JsonConvert.SerializeObject(genericFunction.ReturnValues));
+					obj.Add("ReturnValues", JsonConvert.SerializeObject(genericFunction.ReturnValues));
 				}
 
 				if (exception != null)

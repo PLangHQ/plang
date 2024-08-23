@@ -1,26 +1,28 @@
 {
   "Action": {
-    "FunctionName": "AddItemsToList",
+    "FunctionName": "RunLoop",
     "Parameters": [
       {
-        "Type": "List`1<Object>",
-        "Name": "value",
-        "Value": "[]"
+        "Type": "String",
+        "Name": "variableToLoopThrough",
+        "Value": "%goal.Content.GoalSteps%"
       },
       {
-        "Type": "List`1<Object>?",
-        "Name": "listInstance",
-        "Value": null
+        "Type": "GoalToCall",
+        "Name": "goalNameToCall",
+        "Value": "!CheckStep"
+      },
+      {
+        "Type": "Dictionary`2<String, Object>?",
+        "Name": "parameters",
+        "Value": {
+          "item": "%step%"
+        }
       }
     ],
-    "ReturnValues": [
-      {
-        "Type": "List`1",
-        "VariableName": "missingGoals"
-      }
-    ]
+    "ReturnValues": null
   },
-  "Text": "create list %missingGoals% = []",
+  "Text": "go through %goal.Content.GoalSteps%, call CheckStep item=%step%",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -50,7 +52,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nClearList(List`1<Object> listInstance)  : void \nClearDictionary(Dictionary`2<String, Object> dictionary)  : void \nDeleteFromList(Object item, List`1<Object> listInstance)  : Boolean \nDeleteKeyFromDictionary(String key, Dictionary`2<String, Object> dictionary)  : Boolean \nAddItemsToList(List`1<Object> value, List`1<Object>? listInstance)  : List`1  // Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddItemsToList. \nAddToList(Object value, List`1<Object>? listInstance)  : List`1  // Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToList. \nGetFromList(Int32 position, List`1<Object>? listInstance)  : Object  // Gets an item from a list by position. \nAddItemsToDictionary(String key, Dictionary`2<String, Object> value, Dictionary`2<String, Object>? dictionaryInstance, Boolean? updateIfExists = True)  : Dictionary`2  // Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddItemsToDictionary. \nAddToDictionary(String key, Object value, Dictionary`2<String, Object>? dictionaryInstance, Boolean? updateIfExists = True)  : ValueTuple`2  // Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToDictionary. \nGetFromDictionary(String key, Dictionary`2<String, Object>? dictionaryInstance)  : Object  // Gets an object from dictionary. ReturnValue should always be used with GetFromDictionary.\r\n## functions available ends ##\r\n## defined variables ##\r\nmissingGoals (type:object), \r\n## defined variables ##"
+            "text": "## functions available starts ##\r\nRunLoop(String variableToLoopThrough, GoalToCall goalNameToCall, Dictionary`2<String, Object>? parameters)  : IError  // Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called.\r\n## functions available ends ##\r\n## defined variables ##\r\ngoal.Content.GoalSteps (type:object), step (type:object), \r\n## defined variables ##"
           }
         ]
       },
@@ -59,7 +61,7 @@
         "content": [
           {
             "type": "text",
-            "text": "create list %missingGoals% = []"
+            "text": "go through %goal.Content.GoalSteps%, call CheckStep item=%step%"
           }
         ]
       }

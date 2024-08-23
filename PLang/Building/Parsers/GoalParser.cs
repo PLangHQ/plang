@@ -132,7 +132,7 @@ namespace PLang.Building.Parsers
 				currentGoal.Text = line;
 				goalComment = null;
 				uncertainComment = null;
-
+				stepNr = 0;
 				currentGoal.GoalSteps = new List<GoalStep>();
 				goals.Add(currentGoal);
 			}
@@ -193,7 +193,12 @@ namespace PLang.Building.Parsers
 
 				for (int b = 0; prevBuildGoal != null && b < goals[i].GoalSteps.Count; b++)
 				{
-					var prevStep = prevBuildGoal.GoalSteps.FirstOrDefault(p => p.Text == goals[i].GoalSteps[b].Text);
+					var prevStep = prevBuildGoal.GoalSteps.FirstOrDefault(p => p.Text == goals[i].GoalSteps[b].Text && p.LineNumber == goals[i].GoalSteps[b].LineNumber);
+					if (prevStep == null)
+					{
+						prevStep = prevBuildGoal.GoalSteps.FirstOrDefault(p => p.Text == goals[i].GoalSteps[b].Text);
+					}
+
 					if (prevStep != null)
 					{
 						goals[i].GoalSteps[b].Custom = prevStep.Custom;

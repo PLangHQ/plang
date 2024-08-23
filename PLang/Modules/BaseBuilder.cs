@@ -85,7 +85,7 @@ namespace PLang.Modules
 
 			(var result, var queryError) = await llmServiceFactory.CreateHandler().Query(question, responseType);
 			if (queryError != null) return (null, queryError as IBuilderError);
-			if (result == null)
+			if (result == null || (result is string str && string.IsNullOrEmpty(str)))
 			{
 				return (null, new StepBuilderError($"Could not build for {responseType.Name}", step));
 			}
