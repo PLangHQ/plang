@@ -161,7 +161,7 @@ The properties are as follows in order:
 - **X-Signature-Nonce**: A random GUID string, unique for each request.
 - **X-Signature-Body**: Hash of the content being submited using keccak256
 - **X-Signature-Contract**: Default is C0. This is to define contracts between the user and the service such as Terms of Service, etc.
-- **X-Signature-Expires**: (Optional) When the signature expires.
+- **X-Signature-Expires**: (Optional) When the signature expires. Time in milliseconds since 1. jan 1970.
 - **X-Signature-Public-Key**: The public key of the signing key.
 - **X-Signature**: Is the signature of the content sent. Only the user owning the private key can create this signature. It is created by merging the other properties with the content being sent.
 
