@@ -82,7 +82,7 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 			Extractor = ExtractorFactory.GetExtractor(question, responseType);
 			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebug);
 			var cachedLlmQuestion = llmCaching.GetCachedQuestion(appId, question);
-			if (!question.Reload && question.caching && cachedLlmQuestion != null)
+			if (!question.Reload && question.caching && cachedLlmQuestion != null && cachedLlmQuestion.RawResponse != null)
 			{
 				try
 				{
@@ -91,13 +91,13 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 						context.AddOrReplace(ReservedKeywords.Llm, cachedLlmQuestion.RawResponse);
 					}
 
-
 					var result = Extractor.Extract(cachedLlmQuestion.RawResponse, responseType);
 					if (result != null && !string.IsNullOrEmpty(result.ToString()))
 					{
 						question.RawResponse = cachedLlmQuestion.RawResponse;
 						return (result, null);
 					}
+
 				}
 				catch { }
 			}
@@ -135,8 +135,10 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 			if (string.IsNullOrWhiteSpace(responseBody))
 			{
 				return (null, new ServiceError("llm.plang.is appears to be down. Try again in few minutes. If it does not come back up soon, check out our Discord https://discord.gg/A8kYUymsDD for a chat", this.GetType()));
-			}
-			responseBody = JsonConvert.DeserializeObject(responseBody).ToString();
+			}			
+
+			responseBody = JsonConvert.DeserializeObject(responseBody)?.ToString() ?? "";
+
 			
 
 			if (isDebug)
@@ -149,7 +151,10 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 				ShowCosts(response);
 
 				var obj = Extractor.Extract(responseBody, responseType);
-
+				if (obj == null)
+				{					
+					return (null, new ServiceError(responseBody, this.GetType()));
+				}
 				if (question.caching)
 				{
 

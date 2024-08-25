@@ -124,16 +124,16 @@
   <data name="bootstrap_bundle_5_0_2_min_js" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Modules\UiModule\Files\bootstrap.bundle.5.0.2.min.js;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
-  <data name="CheckGoals" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>CheckGoals.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="Debugger" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Debugger.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="Builder" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Builder.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="fontawesome_5_15_3_min_css" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Modules\UiModule\Files\fontawesome.5.15.3.min.css;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
   <data name="fontawesome_5_15_3_min_js" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Modules\UiModule\Files\fontawesome.5.15.3.min.js;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="Runtime" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Runtime.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>

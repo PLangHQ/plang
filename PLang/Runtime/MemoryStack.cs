@@ -140,28 +140,31 @@ namespace PLang.Runtime
 			if (variableName.Contains("[") && variableName.Contains("]"))
 			{
 				var numberData = variableName.Remove(0, variableName.IndexOf("[") + 1);
-				variableName = variableName.Substring(0, variableName.IndexOf("["));
-				objectValue = GetObjectValue(variableName, staticVariable);
-
-				numberData = numberData.Substring(0, numberData.IndexOf("]")).Trim();
-				if (objectValue.Initiated && objectValue.Value.GetType().Name.StartsWith("Dictionary"))
+				if (numberData.IndexOf("]") != -1)
 				{
-					if (numberData.StartsWith("%") && numberData.EndsWith("%"))
+					variableName = variableName.Substring(0, variableName.IndexOf("["));
+					objectValue = GetObjectValue(variableName, staticVariable);
+
+					numberData = numberData.Substring(0, numberData.IndexOf("]")).Trim();
+					if (objectValue.Initiated && objectValue.Value.GetType().Name.StartsWith("Dictionary"))
 					{
-						dictKey = Get(numberData)?.ToString() ?? "";
+						if (numberData.StartsWith("%") && numberData.EndsWith("%"))
+						{
+							dictKey = Get(numberData)?.ToString() ?? "";
+						}
+						else
+						{
+							dictKey = numberData.Replace("\"", "");
+						}
 					}
 					else
 					{
-						dictKey = numberData.Replace("\"", "");
-					}
-				}
-				else
-				{
-					if (!int.TryParse(numberData, out index))
-					{
-						if (variables.TryGetValue(numberData, out var indexObjectValue))
+						if (!int.TryParse(numberData, out index))
 						{
-							index = (indexObjectValue.Value as int? ?? 0);
+							if (variables.TryGetValue(numberData, out var indexObjectValue))
+							{
+								index = (indexObjectValue.Value as int? ?? 0);
+							}
 						}
 					}
 				}

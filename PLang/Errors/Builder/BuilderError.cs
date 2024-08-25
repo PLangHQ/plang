@@ -1,4 +1,5 @@
-﻿using PLang.Utils;
+﻿using PLang.Building.Model;
+using PLang.Utils;
 
 namespace PLang.Errors.Builder
 {

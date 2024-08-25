@@ -9,6 +9,7 @@ namespace PLang.Utils
 
 		public static (bool builder, bool runtime) Register(string[] args)
 		{
+			AppContext.SetData(ReservedKeywords.ParametersAtAppStart, args.Where(p => p.StartsWith("--")).ToArray());
 			if (args.FirstOrDefault(p => p == "--debug") != null)
 			{
 				AppContext.SetSwitch(ReservedKeywords.Debug, true);
@@ -21,7 +22,11 @@ namespace PLang.Utils
 				AppContext.SetSwitch(ReservedKeywords.CSharpDebug, true);
 				AppContext.SetSwitch(ReservedKeywords.DetailedError, true);
 			}
-
+			var strictbuild = args.FirstOrDefault(p => p == "--strictbuild") != null;
+			if (strictbuild)
+			{
+				AppContext.SetSwitch(ReservedKeywords.StrictBuild, true);
+			}
 			var detailerror = args.FirstOrDefault(p => p == "--detailerror") != null;
 			if (detailerror)
 			{

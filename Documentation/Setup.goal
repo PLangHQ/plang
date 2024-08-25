@@ -86,3 +86,7 @@ Setup
     Guide='template/3rdPartyLibrary.txt'
     System='template/guidance/teacher.txt'
     OutputFilename='./3rdPartyLibrary.md'    
+- insert into docs Name='StartupParameters'
+    Guide='template/startup_parameters.txt'
+    System='template/guidance/teacher.txt'
+    OutputFilename='./StartupParameters.md'     

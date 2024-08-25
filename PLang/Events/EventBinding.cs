@@ -38,7 +38,7 @@ namespace PLang.Events
         [property: DefaultValue("false")] bool IncludePrivate = false,
         int? StepNumber = null, string? StepText = null,
         [property: DefaultValue("true")] bool WaitForExecution = true,
-        [property: DefaultValue("false")] bool RunOnlyInDebugMode = false,
+        [property: DefaultValue(null)] string[]? RunOnlyOnStartParameter = null,
         bool OnErrorContinueNextStep = false);
 
     //TODO: Need to create EventBuildBinding, the reason is that it should declare if step should continue to build code or not

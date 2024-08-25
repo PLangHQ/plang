@@ -235,6 +235,12 @@ namespace PLang.Utils
 					return JsonConvert.SerializeObject(message);
 				}
 				string json;
+				var settings = new JsonSerializerSettings
+				{
+					Error = HandleSerializationError
+				};
+
+				
 				if (obj.GetType().Name.StartsWith("List"))
 				{
 					json = JsonConvert.SerializeObject(obj);
@@ -309,7 +315,23 @@ namespace PLang.Utils
 					}
 					else
 					{
-						System.Text.Json.JsonSerializer.Serialize(writer, value.Value, options);
+						try
+						{
+							System.Text.Json.JsonSerializer.Serialize(writer, value.Value, options);
+						} catch (Exception ex2)
+						{
+							var settings = new JsonSerializerSettings
+							{
+								Error = HandleSerializationError
+							};
+
+							void HandleSerializationError(object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs e)
+							{
+								e.ErrorContext.Handled = true;
+							}
+
+							value.Value = JsonConvert.SerializeObject(ex2, settings);
+						}
 					}
 				}
 				writer.WriteEndObject();

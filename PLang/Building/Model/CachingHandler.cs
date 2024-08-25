@@ -10,6 +10,7 @@ namespace PLang.Building.Model
 		[DefaultValueAttribute(null)]
 		public string? CacheKey { get; set; } = null;
 		[DefaultValueAttribute(0)]
+		[System.ComponentModel.Description("Sliding = 0, Absolute = 1")]
 		public int CachingType { get; set; } = 0;
 	}
 }

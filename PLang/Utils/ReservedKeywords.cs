@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using OpenQA.Selenium.DevTools.V124.Target;
+using System.Reflection;
 
 namespace PLang.Utils
 {
@@ -7,13 +8,14 @@ namespace PLang.Utils
 		public static readonly string Identity = "Identity";
 		public static readonly string MyIdentity = "MyIdentity";
 
+		public static readonly string ParametersAtAppStart = "!ArgsAtAppStart";
 		public static readonly string Debug = "!Debug";
 		public static readonly string CSharpDebug = "!CSharpDebug";
 		public static readonly string Test = "!Test";
 		public static readonly string Goal = "!Goal";
 		public static readonly string Step = "!Step";
 		public static readonly string StepIndex = "!StepIndex";
-
+		public static readonly string StrictBuild = "!StrictBuild";
 		public static readonly string Instruction = "!Instruction";
 		public static readonly string Event = "!Event";
 		public static readonly string IsEvent = "!IsEvent";
@@ -39,8 +41,8 @@ namespace PLang.Utils
 		public static readonly string Inject_Archiving = "!Inject_Archiving";
 		public static readonly string Inject_OutputStream = "!Inject_OutputStream";
 		public static readonly string Inject_OutputSystemStream = "!Inject_OutputSystemStream";
-
 		
+
 
 		private static List<string> keywords = new List<string>();
 		public static List<string> Keywords
@@ -48,20 +50,12 @@ namespace PLang.Utils
 			get
 			{
 				if (keywords.Count > 0) return keywords;
-				FieldInfo[] fields = typeof(ReservedKeywords).GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-
-				foreach (var field in fields)
-				{
-					if (field.FieldType == typeof(string))
-					{
-						keywords.Add(field.GetValue(null)!.ToString()!);
-					}
-				}
-
+				keywords = TypeHelper.GetStaticFields(typeof(ReservedKeywords));
 				return keywords;
 			}
 		}
 
+		
 
 		public static bool IsReserved(string key)
 		{

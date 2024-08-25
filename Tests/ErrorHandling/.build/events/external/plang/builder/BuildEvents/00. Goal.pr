@@ -1,0 +1,59 @@
+{
+  "GoalName": "BuildEvents",
+  "Comment": null,
+  "Text": "BuildEvents",
+  "GoalSteps": [
+    {
+      "Text": "before builder ends, call goal !CheckGoals",
+      "Comment": null,
+      "ModuleType": null,
+      "Name": null,
+      "Description": null,
+      "PrFileName": null,
+      "RelativePrPath": null,
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-08-23T15:56:13.907698+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 0,
+      "LineNumber": 2,
+      "LlmRequest": null,
+      "EventBinding": {
+        "EventType": "Before",
+        "EventScope": "EndOfApp",
+        "GoalToBindTo": {
+          "Value": "*"
+        },
+        "GoalToCall": {
+          "Value": "CheckGoals"
+        },
+        "IncludePrivate": false,
+        "StepNumber": null,
+        "StepText": null,
+        "WaitForExecution": true,
+        "RunOnlyOnStartParameter": null,
+        "OnErrorContinueNextStep": false
+      },
+      "IsEvent": true
+    }
+  ],
+  "Description": null,
+  "Visibility": 1,
+  "GoalFileName": "BuildEvents.goal",
+  "RelativeGoalPath": "\\events\\external\\plang\\builder\\BuildEvents.goal",
+  "RelativeGoalFolderPath": "\\events\\external\\plang\\builder",
+  "RelativePrPath": ".build\\events\\external\\plang\\builder\\BuildEvents\\00. Goal.pr",
+  "RelativePrFolderPath": ".build\\events\\external\\plang\\builder\\BuildEvents",
+  "BuilderVersion": null,
+  "GoalInfo": null,
+  "Injections": [],
+  "Signature": null,
+  "Hash": null,
+  "IncomingVariablesRequired": null
+}

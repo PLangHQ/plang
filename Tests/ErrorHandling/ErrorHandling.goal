@@ -1,0 +1,14 @@
+ErrorHandling
+- read file.txt into %content%, throw error if not found
+    on error call HandleError, retry 2 times over 1 seconds
+- read file2.txt into %content%, throw error if not found
+    on error call HandleError2
+- write out 'This should not be written out as HandleError2 should stop execution of goal'
+
+HandleError
+- write out "We are not HandleError goal"
+
+HandleError2
+/ this will end the execution of the goal
+- write out "We are not HandleError2 goal"
+- throw error "Error happened"

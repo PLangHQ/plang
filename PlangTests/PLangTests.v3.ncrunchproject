@@ -126,9 +126,9 @@
       <FixtureTestSelector>
         <FixtureName>PLangTests.Modules.MessageModule.ProgramTests</FixtureName>
       </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Building.Events.Tests.EventRuntimeTests</FixtureName>
-      </FixtureTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventOnStepError</TestName>
+      </NamedTestSelector>
       <FixtureTestSelector>
         <FixtureName>PLang.Modules.BlockchainModule.Tests.ModuleSettingsTests</FixtureName>
       </FixtureTestSelector>
@@ -207,6 +207,48 @@
       <FixtureTestSelector>
         <FixtureName>PLangTests.Modules.WebCrawlerModule.BuilderTests</FixtureName>
       </FixtureTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventOnGoalError</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventOnErrorOnApp</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventOnErrorAppStart</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventBeforeStepHasRun</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventBeforeGoalHasRun</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventBeforeAppStart</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventAppEnd</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventAfterStepHasRun</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventAfterGoalHasRun</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventAfterAppStart</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.LoadEvents</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.IsGoalMatchTest_Should_Not_Match_GoalName_NotSame</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.IsGoalMatchTest_Should_Match_GoalName_Same</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.IsGoalMatchTest_Should_Match_GoalName_Matches_Pattern2</TestName>
+      </NamedTestSelector>
     </IgnoredTests>
   </Settings>
 </ProjectConfiguration>

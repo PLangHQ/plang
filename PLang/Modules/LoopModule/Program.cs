@@ -46,7 +46,8 @@ namespace PLang.Modules.LoopModule
 			var obj = memoryStack.Get(variableToLoopThrough);
 			if (obj == null)
 			{
-				return new ProgramError($"{variableToLoopThrough} does not exist. Have you created it? Check for spelling error", goalStep, function);
+				logger.LogDebug($"{variableToLoopThrough} does not exist. Have you created it? Check for spelling error", goalStep, function);
+				return null;
 			}
 			if (obj is string || obj.GetType().IsPrimitive)
 			{

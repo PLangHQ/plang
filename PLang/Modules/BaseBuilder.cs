@@ -89,6 +89,10 @@ namespace PLang.Modules
 			{
 				return (null, new StepBuilderError($"Could not build for {responseType.Name}", step));
 			}
+			if (result is GenericFunction gf && gf.FunctionName == "N/A" && errorCount >= 3)
+			{
+				return (null, new StepBuilderError($"Could find function to match step in module {step.ModuleType}", step));
+			}
 
 			var instruction = new Instruction(result);
 			instruction.LlmRequest = question;

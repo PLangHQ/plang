@@ -30,16 +30,24 @@ namespace PLang.Utils
 			return multipleError;
 		}
 
-		public static string FormatLine(string txt)
+		public static string FormatLine(string? txt, string? lineStarter = null)
 		{
-			var lines = txt.Trim().Split(Environment.NewLine);
+			if (txt == null) return null;
+			var lines = txt.Trim().Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
 			if (lines.Length == 0) return txt;
-			var text = lines[0];
-			for (int i = 1; i < lines.Length; i++)
+			var text = String.Empty;
+			for (int i = 0; i < lines.Length; i++)
 			{
-				text += Environment.NewLine + "\t  " + lines[i].Trim();
+				if (lineStarter != null)
+				{
+					text += $"\t{lineStarter} {lines[i].TrimStart(lineStarter[0]).Trim()}{Environment.NewLine}";
+				}
+				else
+				{
+					text += $"{lines[i].Trim()}{Environment.NewLine}";
+				}
 			}
-			return text;
+			return text.TrimEnd();
 		}
 		public static object ToFormat(string contentType, IError error, string[]? propertyOrder = null, string? extraInfo = null)
 		{
@@ -99,13 +107,13 @@ namespace PLang.Utils
 			if (error.FixSuggestion != null)
 			{
 				fixSuggestions = $@"🛠️ Fix Suggestions:
-	- {FormatLine(error.FixSuggestion)}";
+{FormatLine(error.FixSuggestion, "-")}";
 			}
 			string? helpfulLinks = null;
 			if (error.HelpfulLinks != null)
 			{
 				helpfulLinks += $@"🔗 Helpful Links:
-	- {FormatLine(error.HelpfulLinks)}";
+{FormatLine(error.HelpfulLinks, "-")}";
 			}
 
 			string firstLine = $"";
@@ -115,10 +123,13 @@ namespace PLang.Utils
 🔢 Line: {step.LineNumber}
 
 🔎 Error Details - Code snippet that the error occured:
-	`- {FormatLine(step.Text.MaxLength(160))}`
+{FormatLine(step.Text.MaxLength(160), "-")}
 ";
-				errorSource = $@"📦 Error Source:
+				if (!string.IsNullOrWhiteSpace(step.ModuleType))
+				{
+					errorSource = $@"📦 Error Source:
 	- The error occurred in the module: `{step.ModuleType}`";
+				}
 
 			}
 			else if (goal != null)
@@ -161,11 +172,11 @@ namespace PLang.Utils
 				if (!string.IsNullOrEmpty(paramsStr) || !string.IsNullOrEmpty(returnStr))
 				{
 					paramInfo = $@"- Parameters:
-		{FormatLine(paramsStr)}
-		{FormatLine(returnStr)}";
+		{FormatLine(paramsStr, "-")}
+		{FormatLine(returnStr, "-")}";
 				}
 
-				if (step != null)
+				if (step != null && !string.IsNullOrEmpty(step.ModuleType))
 				{
 					errorSource = $@"
 📦 Error Source:
@@ -190,8 +201,7 @@ namespace PLang.Utils
 🚫 Reason: {reasonAndFix}
 
 {errorSource}
-
-{extraInfo}
+{FormatLine(extraInfo)}
 ".TrimEnd();
 
 			if (contentType == "json")
@@ -220,7 +230,7 @@ namespace PLang.Utils
 			{
 				message += $@"
 
-👨‍💻 For Developers:
+👨‍💻 For C# Developers:
 	- {FormatLine(exception.ToString())}";
 			}
 

@@ -40,7 +40,7 @@ namespace PLang.Utils.Extractors
 			return newJson;
 		}
 
-		public new object? Extract(string content, Type responseType)
+		public new object? Extract(string? content, Type responseType)
 		{
 			if (content == null) return null;
 			if (responseType == typeof(string)) return content;

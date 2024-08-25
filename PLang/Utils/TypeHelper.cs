@@ -6,6 +6,7 @@ using PLang.Modules;
 using System.Data;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 
 namespace PLang.Utils
 {
@@ -158,7 +159,7 @@ namespace PLang.Utils
 				if (method.Module.Name != type.Module.Name) continue;
 				if (method.Name == "Run" || method.Name == "Dispose" || method.IsSpecialName) continue;
 
-				
+
 
 				strMethod += method.Name + "(";
 				var parameters = method.GetParameters();
@@ -388,7 +389,7 @@ namespace PLang.Utils
 				if (attribute != null)
 				{
 					//schema[prop.Name] = " = " + ((DefaultValueAttribute) attribute).Value;
-					json += " = " + attribute.Value;
+					json += " = " + ((attribute.Value == null) ? "null" : attribute.Value);
 				}
 				else if (constructorParameters != null && constructorParameters.ContainsKey(prop.Name))
 				{
@@ -499,6 +500,25 @@ namespace PLang.Utils
 		public List<Type> GetRuntimeModules()
 		{
 			return runtimeModules;
+		}
+
+
+		public static List<string> GetStaticFields(Type type, BindingFlags bindingFlags = BindingFlags.Static | BindingFlags.Public)
+		{
+			List<string> keywords = new List<string>();
+
+			FieldInfo[] fields = type.GetFields(bindingFlags);
+
+			foreach (var field in fields)
+			{
+				if (field.FieldType == typeof(string))
+				{
+					keywords.Add(field.GetValue(null)!.ToString()!);
+				}
+			}
+
+			return keywords;
+
 		}
 	}
 }

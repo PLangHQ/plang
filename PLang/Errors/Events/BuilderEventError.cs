@@ -7,41 +7,47 @@ using PLang.Utils;
 namespace PLang.Errors.Events
 {
 
-    public record BuilderEventError(string Message, EventBinding? EventBinding = null, Goal? Goal = null, GoalStep? Step = null, string Key = "BuilderEvent", bool ContinueBuild = true, Exception? Exception = null, IError? InitialError = null) : Error(Message, Key, Exception: Exception), IEventError, IBuilderError
-    {
-        public bool IgnoreError => true;
+	public record BuilderEventError(string Message, EventBinding? EventBinding = null, Goal? Goal = null, GoalStep? Step = null,
+		string Key = "BuilderEvent", bool ContinueBuild = true,
+		Exception? Exception = null, IError? InitialError = null,
+		string? FixSuggestion = null, string? HelpfulLinks = null) : Error(Message, Key, Exception: Exception, FixSuggestion: FixSuggestion, HelpfulLinks: HelpfulLinks), IEventError, IBuilderError
+	{
+		public bool IgnoreError => true;
 		public override string ToString()
 		{
-            return ToFormat().ToString();
+			return (InitialError ?? this).ToFormat().ToString();
 		}
+		public override GoalStep? Step { get; set; } = Step;
+		public override Goal? Goal { get; set; } = Goal;
+
 		public new object ToFormat(string contentType = "text")
 		{
-            string str = string.Empty;
-            if (Key != null)
-            {
-                str += "[" + Key + "] ";
-            }
-            str += Message;
-            if (EventBinding != null)
-            {
-                str += Environment.NewLine + $" when calling event on {EventBinding.GoalToBindTo}.{EventBinding.EventType}.{EventBinding.EventScope}";
-                str += Environment.NewLine + $" tried calling goal {EventBinding.GoalToCall}";
-            }
-            if (Step != null)
-            {
-                str += Environment.NewLine + $" in ({Step.LineNumber}) {Step.Text.MaxLength(80)} at {Goal.RelativeGoalPath}";
-                str += Environment.NewLine + $" in {Goal.GoalName} at {Goal.RelativeGoalPath}";
-			}
-			else if (Goal != null)
+
+
+			string str = string.Empty;
+			if (EventBinding != null)
 			{
-				str += Environment.NewLine + $" in {Goal.GoalName} at {Goal.RelativeGoalPath}";
+				if (string.IsNullOrWhiteSpace(EventBinding.GoalToBindTo) && EventBinding.EventScope == EventScope.Goal)
+				{
+					str += Environment.NewLine + " Could not determine what goal to bind to";
+				}
+				if (string.IsNullOrWhiteSpace(EventBinding.EventType))
+				{
+					str += Environment.NewLine + " Could not determine event type, is it before or after execution";
+				}
+				if (string.IsNullOrWhiteSpace(EventBinding.EventScope))
+				{
+					var eventScopes = TypeHelper.GetStaticFields(typeof(EventScope));
+					str += Environment.NewLine + $" Could not determine event scope. These scopes are available {string.Join(", ", eventScopes)}";
+				}
+				if (string.IsNullOrWhiteSpace(EventBinding.GoalToCall))
+				{
+					str += Environment.NewLine + " Could not determine goal to call on the event";
+				}
 			}
 
-			if (Exception != null)
-            {
-                str += Environment.NewLine + Exception.ToString();
-            }
-            return str;
-        }
-    }
+			return ErrorHelper.ToFormat(contentType, InitialError ?? this, extraInfo: str);
+
+		}
+	}
 }

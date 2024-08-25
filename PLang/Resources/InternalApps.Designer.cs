@@ -91,19 +91,9 @@ namespace PLang.Resources {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] CheckGoals {
+        internal static byte[] Builder {
             get {
-                object obj = ResourceManager.GetObject("CheckGoals", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] Debugger {
-            get {
-                object obj = ResourceManager.GetObject("Debugger", resourceCulture);
+                object obj = ResourceManager.GetObject("Builder", resourceCulture);
                 return ((byte[])(obj));
             }
         }
@@ -131,6 +121,16 @@ namespace PLang.Resources {
         internal static string fontawesome_5_15_3_min_js {
             get {
                 return ResourceManager.GetString("fontawesome_5_15_3_min_js", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] Runtime {
+            get {
+                object obj = ResourceManager.GetObject("Runtime", resourceCulture);
+                return ((byte[])(obj));
             }
         }
     }

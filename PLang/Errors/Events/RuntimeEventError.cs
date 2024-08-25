@@ -12,31 +12,36 @@ namespace PLang.Errors.Events
 		{
 			return ToFormat().ToString();
 		}
+
+		public override GoalStep? Step { get; set; } = Step;
+		public override Goal? Goal { get; set; } = Goal;
+
 		public new object ToFormat(string contentType = "text")
 		{
-            string str = string.Empty;
-            if (Key != null)
-            {
-                str += "[" + Key + "] ";
-            }
-            str += Message;
-            str += Environment.NewLine + $" when calling '{EventBinding.EventType}.{EventBinding.EventScope}' event on '{EventBinding.GoalToBindTo}'";
-            str += Environment.NewLine + $" tried calling goal {EventBinding.GoalToCall}";
-            if (Step != null)
-            {
-                str += Environment.NewLine + $" in ({Step.LineNumber}) {Step.Text.MaxLength(80)} at {Step.Goal.RelativeGoalPath}";
-                str += Environment.NewLine + $" in {Step.Goal.GoalName} at {Step.Goal.RelativeGoalPath}";
-            } else if (Goal != null)
-            {
-				str += Environment.NewLine + $" in {Goal.GoalName} at {Goal.RelativeGoalPath}";
+			string str = string.Empty;
+			if (EventBinding != null)
+			{
+				if (string.IsNullOrWhiteSpace(EventBinding.GoalToBindTo) && EventBinding.EventScope == EventScope.Goal)
+				{
+					str += Environment.NewLine + " Could not determine what goal to bind to";
+				}
+				if (string.IsNullOrWhiteSpace(EventBinding.EventType))
+				{
+					str += Environment.NewLine + " Could not determine event type, is it before or after execution";
+				}
+				if (string.IsNullOrWhiteSpace(EventBinding.EventScope))
+				{
+					var eventScopes = TypeHelper.GetStaticFields(typeof(EventScope));
+					str += Environment.NewLine + $" Could not determine event scope. These scopes are available {string.Join(", ", eventScopes)}";
+				}
+				if (string.IsNullOrWhiteSpace(EventBinding.GoalToCall))
+				{
+					str += Environment.NewLine + " Could not determine goal to call on the event";
+				}
 			}
 
-            if (Exception != null)
-            {
-                var lowestException = ExceptionHelper.GetLowestException(Exception);
-                str += Environment.NewLine + lowestException.ToString();
-            }
-            return str;
+			return ErrorHelper.ToFormat(contentType, InitialError ?? this, extraInfo: str);
+
         }
     }
 }

@@ -169,7 +169,7 @@ namespace PLang.Building.Events.Tests
 			
 			Assert.AreEqual(4, goal.GoalSteps.Count);
 
-			var eve = JsonConvert.DeserializeObject<EventBinding>(goal.GoalSteps[0].Custom["Event"].ToString());
+			var eve = goal.GoalSteps[0].EventBinding;
 			Assert.AreEqual(EventType.Before, eve.EventType);
 			Assert.AreEqual(EventScope.Goal, eve.EventScope);
 

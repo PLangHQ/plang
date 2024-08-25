@@ -31,6 +31,7 @@ namespace PLang.Building
     public interface IGoalBuilder
 	{
 		Task<IBuilderError?> BuildGoal(IServiceContainer container, string goalFileAbsolutePath, int errorCount = 0);
+		public List<IBuilderError> BuildErrors { get; init; }
 	}
 
 
@@ -44,7 +45,7 @@ namespace PLang.Building
 		private readonly ITypeHelper typeHelper;
 		private readonly PrParser prParser;
 		private readonly IStepBuilder stepBuilder;
-
+		public List<IBuilderError> BuildErrors { get; init; }
 		public GoalBuilder(ILogger logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 				IGoalParser goalParser, IStepBuilder stepBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper, PrParser prParser)
 		{
@@ -57,6 +58,7 @@ namespace PLang.Building
 			this.eventRuntime = eventRuntime;
 			this.typeHelper = typeHelper;
 			this.prParser = prParser;
+			BuildErrors = new();
 		}
 		public async Task<IBuilderError?> BuildGoal(IServiceContainer container, string goalFileAbsolutePath, int errorCount = 0)
 		{
@@ -69,7 +71,7 @@ namespace PLang.Building
 			for (int b = 0; b < goals.Count; b++)
 			{
 				var goal = goals[b];
-				logger.LogInformation($"\nStart to build {goal.GoalName}");
+				logger.LogInformation($"\nStart to build {goal.GoalName} - {goal.RelativeGoalPath}");
 
 				// if this api, check for http method. Also give description.					
 				(goal, var error) = await LoadMethodAndDescription(goal);
@@ -93,6 +95,9 @@ namespace PLang.Building
 					}
 					else if (buildStepError != null)
 					{
+						if (buildStepError.Step == null) buildStepError.Step = goal.GoalSteps[i];
+						if (buildStepError.Goal == null) buildStepError.Goal = goal;
+						BuildErrors.Add(buildStepError);
 						logger.LogWarning(buildStepError.ToFormat().ToString());
 					}
 					else

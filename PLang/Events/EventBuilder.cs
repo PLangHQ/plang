@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Errors;
+using PLang.Errors.Builder;
 using PLang.Errors.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
@@ -68,6 +69,13 @@ namespace PLang.Events
                     continue;
                 }
 
+                string buildLlmSystemInfo = "";
+                if (filePath.EndsWith("BuildEvents.goal"))
+                {
+                    buildLlmSystemInfo = @$"This event are for the builder. ";
+
+				}
+
                 for (int i = 0; i < goal.GoalSteps.Count; i++)
                 {
                     var step = goal.GoalSteps[i];
@@ -76,36 +84,43 @@ namespace PLang.Events
                         logger.LogInformation($"- Event step {goal.GoalSteps[i].Text} already built");
                         continue;
                     }
-
                     logger.LogInformation($"- Building event step {goal.GoalSteps[i].Text}");
                     var promptMessage = new List<LlmMessage>();
+                    var eventTypeScheme = TypeHelper.GetJsonSchema(typeof(EventType));
+                    var eventScope = TypeHelper.GetJsonSchema(typeof(EventScope));
+
                     promptMessage.Add(new LlmMessage("system", $@"
 User will provide event binding, you will be provided with c# model to map the code to. 
+{buildLlmSystemInfo}
 
 EventType is required, Error defaults to 'Before' EventType if not defined by user.
-EventScope is required, Error defaults to 'StepError' EventScope if not defined by user.
-GoalToBindTo is required. This can a specific Goal or more generic, such as bind to all goals in specific folder. Convert to matching pattern(regex) for folder matching. e.g. input value could be /api, if bind to goal is api/*, it should match
+EventScope defines at what stage the event should run, it can be on goal, step, start of app, end of app, etc. See EventScope definition below.
+GoalToBindTo is required. This can a specific Goal or more generic, such as bind to all goals in specific folder. When undefined set as *. Convert to matching pattern(regex) for folder matching. e.g. input value could be /api, if bind to goal is api/*, it should match
 GoalToCall is required. This should be a specific goal, should start with !. Example: !AppName/GoalName.  
 StepNumber & StepText reference a specific step that the user wants to bind to
 IncludePrivate defines if user wants to include private goals, he needs to specify this specifically to be true
-"));
-                    promptMessage.Add(new LlmMessage("assistant", $@"	
+WaitForExecution: indicates if goal should by run and forget
+RunOnlyOnStartParameter: parameters at the startup of the application, it should start with --, for example --debug
+
 Map correct number to EventType and EventScope
 
 EventType {{ Before , After }}
-EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError, StepError }}"));
+EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError, StepError }}
+
+"));
+                 
                     promptMessage.Add(new LlmMessage("user", step.Text));
 
                     var llmRequest = new LlmRequest("Events", promptMessage);
-                    (var eventModel, var queryError) = await llmServiceFactory.CreateHandler().Query<EventBinding>(llmRequest);
+                    (var eventBinding, var queryError) = await llmServiceFactory.CreateHandler().Query<EventBinding>(llmRequest);
                     if (queryError != null) return ([], queryError);
-                    if (eventModel == null)
+                    if (eventBinding == null)
                     {
-                       return ([], new BuilderEventError($"Could not build an events from step {step.Text} in {filePath}. LLM didn't give any response. Try to rewriting the event.", Step: step));
+                       return ([], new BuilderEventError($"Could not build an events from step {step.Text} in {filePath}. LLM didn't give any response. Try to rewriting the event.", eventBinding, Step: step, Goal: step.Goal));
                     }
 
 
-                    if (eventModel.GoalToCall == eventModel.GoalToBindTo)
+                    if (eventBinding.GoalToCall == eventBinding.GoalToBindTo)
                     {
                         logger.LogError($"{step.Text} binds an event to same goal it is calling. This is not allowed as it will cause an infiniate loop. Event is ignored.");
                         continue;
@@ -115,7 +130,15 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError,
                     step.AbsolutePrFilePath = Path.Join(goal.AbsolutePrFolderPath, step.PrFileName);
                     step.RelativePrPath = Path.Join(goal.RelativePrFolderPath, step.PrFileName);
                     step.Generated = DateTime.Now;
-                    step.Custom.AddOrReplace("Event", eventModel);
+
+                    if (eventBinding != null)
+                    {
+                        error = validateEventModel(eventBinding, step);
+                        if (error != null) return (new(), error);
+
+                        step.EventBinding = eventBinding;
+                        step.IsEvent = true;
+					}
                 }
 
                 if (!fileSystem.Directory.Exists(goal.AbsolutePrFolderPath))
@@ -128,21 +151,35 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError,
             return (validGoalFiles, null);
         }
 
+		private IError? validateEventModel(EventBinding eventBinding, GoalStep step)
+		{
+            if (string.IsNullOrEmpty(eventBinding.EventScope))
+            {
+                return new BuilderEventError($@"You must define the where the event should run. Is it step, goal, start of app, end of app, etc.?", eventBinding, Key: "EventBuilder",
+					Step: step, Goal: step.Goal,
+					FixSuggestion: "- before each step, call goal !DoStuff\n- before any goal, call !BeforeGoal",
+                    HelpfulLinks: "https://github.com/PLangHQ/plang/blob/main/Documentation/Events.md"
+					);
+            }
+			if (eventBinding.EventScope == "StartOfApp" || eventBinding.EventScope == "EndOfApp"
+				 || eventBinding.EventScope == "AppError" || eventBinding.EventScope == "RunningApp")
+            {
+                eventBinding = new EventBinding(eventBinding.EventType, eventBinding.EventScope, null, eventBinding.GoalToCall, eventBinding.IncludePrivate, eventBinding.StepNumber, eventBinding.StepText, eventBinding.WaitForExecution, eventBinding.RunOnlyOnStartParameter, eventBinding.OnErrorContinueNextStep);
 
-        private bool StepHasBeenBuild(GoalStep step, int stepIndex, List<string>? excludeModules)
+            }
+            return null;
+		}
+
+		private bool StepHasBeenBuild(GoalStep step, int stepIndex, List<string>? excludeModules)
         {
             if (step.Goal.AbsolutePrFilePath == null) return false;
 
             var prGoal = prParser.ParsePrFile(step.Goal.AbsolutePrFilePath);
 
             if (prGoal == null || prGoal.GoalSteps == null || prGoal.GoalSteps.Count <= stepIndex) return false;
-            if (stepIndex == prGoal.GoalSteps.Count || prGoal.GoalSteps[stepIndex].Custom == null) return false;
-
-            if (!prGoal.GoalSteps[stepIndex].Custom.ContainsKey("Event") || prGoal.GoalSteps[stepIndex].Custom["Event"] == null) return false;
-
+            if (stepIndex == prGoal.GoalSteps.Count || prGoal.GoalSteps[stepIndex].EventBinding == null) return false;
 
             var isFound = prGoal.GoalSteps.FirstOrDefault(p => p.Text == step.Text && p.Number == stepIndex) != null;
-
 
             return isFound;
 
@@ -164,8 +201,11 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError,
             if (!fileSystem.Directory.Exists(eventsPath)) return new();
 
             return (fileSystem.Directory.GetFiles(eventsPath, "*.goal", SearchOption.AllDirectories)
-                .Where(f => Regex.IsMatch(Path.GetFileName(f).ToLower(), @"(events|eventsbuild)\.goal$"))
-                     .ToList(), null);
+                .Where(file =>
+				{
+                    var isMatch = Regex.IsMatch(Path.GetFileName(file).ToLower(), @"(events|eventsbuild)\.goal$");
+                    return isMatch;
+				}).ToList(), null);
         }
     }
 

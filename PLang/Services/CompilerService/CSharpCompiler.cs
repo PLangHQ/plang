@@ -359,7 +359,7 @@ Search for {fileName} - https://www.nuget.org/packages?q={fileName}"));
 
 			string stepText = step.Text.ToLower();
 			if (stepText.Contains("%" + parameterName.ToLower())) return true;
-			if (stepText.Replace(".", "α").Contains("%" + parameterName.ToLower())) return true;
+			if (stepText.Replace("!", "").Contains("%" + parameterName.ToLower())) return true;
 
 			return false;
 		}
@@ -398,7 +398,7 @@ Search for {fileName} - https://www.nuget.org/packages?q={fileName}"));
 			{
 				throw new BuildStatusException($"variable {text} cannot end with 'α'");
 			}
-			var str = text.Replace("α", ".");
+			var str = text.Replace("α", ".").Replace("!", "");
 			str = Regex.Replace(str, @"\.([0-9]+)\.?", evaluator);
 			return str;
 		}

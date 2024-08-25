@@ -47,8 +47,8 @@ namespace PLang.Building.Model
 
 		[DefaultValue("true")]
 		public bool WaitForExecution { get; set; } = true;
-		public ErrorHandler? ErrorHandler { get; set; }
-		public RetryHandler? RetryHandler { get; set; }
+		public string? LoggerLevel { get; set; }
+		public List<ErrorHandler>? ErrorHandlers { get; set; }
 		public CachingHandler? CacheHandler { get; set; }
 		public CancellationHandler? CancellationHandler { get; set; }
 		[Newtonsoft.Json.JsonIgnore]
@@ -76,5 +76,7 @@ namespace PLang.Building.Model
 		public int Number { get; set; }
 		public int LineNumber { get; set; }
 		public LlmRequest LlmRequest { get; set; }
+		public EventBinding? EventBinding { get; set; } = null;
+		public bool IsEvent { get; set; } = false;
 	}
 }

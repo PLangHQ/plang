@@ -79,6 +79,7 @@ namespace PLang
 
 			if (executeType == ExecuteType.Builder)
 			{
+				AppContext.SetSwitch(ReservedKeywords.DetailedError, true);
 				await Build();
 				if (watch)
 				{
@@ -130,33 +131,22 @@ namespace PLang
 
 		public void SetupDebug()
 		{
-			var eventsPath = fileSystem.Path.Join(fileSystem.GoalsPath, "events");
-			var sendDebugPath = fileSystem.Path.Join(eventsPath, "SendDebug.goal");
-
 			Console.WriteLine("-- Debug mode");
 			AppContext.SetSwitch(ReservedKeywords.Debug, true);
 
-			if (fileSystem.File.Exists(sendDebugPath)) return;
+			var eventsPath = fileSystem.Path.Join(fileSystem.GoalsPath, "events", "external", "plang", "runtime");
 
-			if (!fileSystem.File.Exists(sendDebugPath))
+			if (fileSystem.Directory.Exists(eventsPath)) return;
+
+			fileSystem.Directory.CreateDirectory(eventsPath);
+
+			using (MemoryStream ms = new MemoryStream(InternalApps.Runtime))
+			using (ZipArchive archive = new ZipArchive(ms))
 			{
-				if (!fileSystem.Directory.Exists(eventsPath))
-				{
-					fileSystem.Directory.CreateDirectory(eventsPath);
-				}
-				else
-				{
-					var logger = container.GetInstance<ILogger>();
-					logger.LogError("Installed debugger and may have overwritten your events/Events.goal file. Sorry about that :( Will fix in future.");
-				}
-
-				using (MemoryStream ms = new MemoryStream(InternalApps.Debugger))
-				using (ZipArchive archive = new ZipArchive(ms))
-				{
-					archive.ExtractToDirectory(fileSystem.GoalsPath, true);
-				}
-				return;
+				archive.ExtractToDirectory(fileSystem.GoalsPath, true);
 			}
+			return;
+
 		}
 
 

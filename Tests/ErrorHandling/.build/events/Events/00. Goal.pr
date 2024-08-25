@@ -1,0 +1,137 @@
+{
+  "GoalName": "Events",
+  "Comment": null,
+  "Text": "Events",
+  "GoalSteps": [
+    {
+      "Text": "on any step, call goal DoStuff",
+      "Comment": null,
+      "ModuleType": null,
+      "Name": null,
+      "Description": null,
+      "PrFileName": null,
+      "RelativePrPath": null,
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-08-23T15:45:23.7623226+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 0,
+      "LineNumber": 2,
+      "LlmRequest": null,
+      "EventBinding": {
+        "EventType": "Before",
+        "EventScope": "Step",
+        "GoalToBindTo": {
+          "Value": "*"
+        },
+        "GoalToCall": {
+          "Value": "DoStuff"
+        },
+        "IncludePrivate": false,
+        "StepNumber": null,
+        "StepText": null,
+        "WaitForExecution": true,
+        "RunOnlyOnStartParameter": [],
+        "OnErrorContinueNextStep": false
+      },
+      "IsEvent": true
+    },
+    {
+      "Text": "before error handler on step, call BeforeStepErrorHandler",
+      "Comment": null,
+      "ModuleType": null,
+      "Name": null,
+      "Description": null,
+      "PrFileName": null,
+      "RelativePrPath": null,
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-08-23T17:07:10.1303091+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 1,
+      "LineNumber": 3,
+      "LlmRequest": null,
+      "EventBinding": {
+        "EventType": "Before",
+        "EventScope": "StepError",
+        "GoalToBindTo": {
+          "Value": "*"
+        },
+        "GoalToCall": {
+          "Value": "BeforeStepErrorHandler"
+        },
+        "IncludePrivate": false,
+        "StepNumber": null,
+        "StepText": null,
+        "WaitForExecution": true,
+        "RunOnlyOnStartParameter": null,
+        "OnErrorContinueNextStep": false
+      },
+      "IsEvent": true
+    },
+    {
+      "Text": "after error handler on step, call AfterStepErrorHandler",
+      "Comment": null,
+      "ModuleType": null,
+      "Name": null,
+      "Description": null,
+      "PrFileName": null,
+      "RelativePrPath": null,
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-08-23T17:07:12.1117399+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 2,
+      "LineNumber": 4,
+      "LlmRequest": null,
+      "EventBinding": {
+        "EventType": "After",
+        "EventScope": "StepError",
+        "GoalToBindTo": {
+          "Value": "*"
+        },
+        "GoalToCall": {
+          "Value": "AfterStepErrorHandler"
+        },
+        "IncludePrivate": false,
+        "StepNumber": null,
+        "StepText": null,
+        "WaitForExecution": true,
+        "RunOnlyOnStartParameter": null,
+        "OnErrorContinueNextStep": false
+      },
+      "IsEvent": true
+    }
+  ],
+  "Description": null,
+  "Visibility": 1,
+  "GoalFileName": "Events.goal",
+  "RelativeGoalPath": "\\events\\Events.goal",
+  "RelativeGoalFolderPath": "\\events",
+  "RelativePrPath": ".build\\events\\Events\\00. Goal.pr",
+  "RelativePrFolderPath": ".build\\events\\Events",
+  "BuilderVersion": null,
+  "GoalInfo": null,
+  "Injections": [],
+  "Signature": null,
+  "Hash": null,
+  "IncomingVariablesRequired": null
+}

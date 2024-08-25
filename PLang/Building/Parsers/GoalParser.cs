@@ -4,6 +4,7 @@ using NBitcoin;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Container;
+using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.SettingsService;
@@ -16,7 +17,7 @@ namespace PLang.Building.Parsers
 {
     public interface IGoalParser
 	{
-		List<Goal> ParseGoalFile(string fileName);
+		List<Goal> ParseGoalFile(string goalFileAbsolutePath);
 	}
 
 	public class GoalParser : IGoalParser
@@ -137,7 +138,14 @@ namespace PLang.Building.Parsers
 				goals.Add(currentGoal);
 			}
 			var setupOnceDictionary = settings.GetOrDefault<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", new());
-			
+			var goalsWithSameName = goals.GroupBy(p => p.GoalName).Where(p => p.Count() > 1).FirstOrDefault();
+			if (goalsWithSameName != null)
+			{
+				var goalWithSameName = goalsWithSameName.FirstOrDefault();
+				throw new BuilderException($"Goal '{goalWithSameName.GoalName}' is defined two times in {goalFileAbsolutePath}. Each goal must have unique name");
+			}
+
+
 			for (int i = 0; i < goals.Count; i++)
 			{
 				string prFileAbsolutePath;
@@ -202,6 +210,8 @@ namespace PLang.Building.Parsers
 					if (prevStep != null)
 					{
 						goals[i].GoalSteps[b].Custom = prevStep.Custom;
+						goals[i].GoalSteps[b].EventBinding = prevStep.EventBinding;
+						goals[i].GoalSteps[b].IsEvent = prevStep.IsEvent;
 						goals[i].GoalSteps[b].Generated = prevStep.Generated;
 
 						var absolutePrFilePath = Path.Join(goal.AbsolutePrFolderPath, prevStep.PrFileName);
@@ -215,14 +225,13 @@ namespace PLang.Building.Parsers
 
 						goals[i].GoalSteps[b].Description = prevStep.Description;
 						goals[i].GoalSteps[b].WaitForExecution = prevStep.WaitForExecution;
-						goals[i].GoalSteps[b].ErrorHandler = prevStep.ErrorHandler;
+						goals[i].GoalSteps[b].ErrorHandlers = prevStep.ErrorHandlers;
 						goals[i].GoalSteps[b].CancellationHandler = prevStep.CancellationHandler;
 						goals[i].GoalSteps[b].CacheHandler = prevStep.CacheHandler;
 
 						goals[i].GoalSteps[b].PrFileName = prevStep.PrFileName;
 						goals[i].GoalSteps[b].ModuleType = prevStep.ModuleType;
 						goals[i].GoalSteps[b].Name = prevStep.Name;
-						goals[i].GoalSteps[b].RetryHandler = prevStep.RetryHandler;
 						goals[i].GoalSteps[b].RunOnce = prevStep.RunOnce;
 
 
