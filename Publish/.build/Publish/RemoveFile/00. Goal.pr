@@ -22,7 +22,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 41,
+      "LineNumber": 43,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -85,7 +85,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "f15e46447457bd462f8442d1e7dbcae0a15294ab5c963f1ae8cf28cdd584a7a0",
+  "Hash": "73187d324965b2a1984197e1efb20e32bf6508c331ce031d98f16b080810a0bc",
   "IncomingVariablesRequired": [
     "item"
   ]

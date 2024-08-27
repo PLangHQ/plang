@@ -1,4 +1,5 @@
 Publish
+- write out "Starting at %Now%"
 - get file paths of .zip in ./, write to %zipFiles%
 - foreach %zipFiles% call !RemoveFile
 - write out 'Build'
@@ -36,6 +37,7 @@ Publish
 - compress folder 'plang' to 'plang-osx-arm64.zip', 
     dont include base dir, overwrite
 - delete folder 'plang'
+- write out "Done at %Now%"
 
 RemoveFile
 - delete file %item%
