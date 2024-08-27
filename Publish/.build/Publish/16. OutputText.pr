@@ -1,38 +1,31 @@
 {
   "Action": {
-    "FunctionName": "RunTerminal",
+    "FunctionName": "WriteToSystemOutput",
     "Parameters": [
       {
-        "Type": "String",
-        "Name": "appExecutableName",
-        "Value": "dotnet"
+        "Type": "Object?",
+        "Name": "content",
+        "Value": "Publish Linux-ARM64 Console"
       },
       {
-        "Type": "List`1<String>",
-        "Name": "parameters",
-        "Value": [
-          "publish",
-          "PlangConsole/PLangConsole.csproj",
-          "-c",
-          "Release",
-          "-r",
-          "osx-x64",
-          "--self-contained",
-          "true",
-          "-p:PublishSingleFile=true",
-          "-o",
-          "./publish/plang"
-        ]
+        "Type": "Boolean?",
+        "Name": "writeToBuffer",
+        "Value": false
       },
       {
-        "Type": "String",
-        "Name": "pathToWorkingDirInTerminal",
-        "Value": "../"
+        "Type": "String?",
+        "Name": "type",
+        "Value": "text"
+      },
+      {
+        "Type": "Int32?",
+        "Name": "statusCode",
+        "Value": 200
       }
     ],
     "ReturnValues": null
   },
-  "Text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/plang\n    working dir ../",
+  "Text": "write out 'Publish Linux-ARM64 Console'",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -42,7 +35,7 @@
     "maxLength": 4000,
     "llmResponseType": "json",
     "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValues\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
-    "type": "PLang.Modules.TerminalModule.Builder",
+    "type": "PLang.Modules.GenericFunctionBuilder",
     "promptMessage": [
       {
         "role": "system",
@@ -62,11 +55,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nRead(String variableName)  : void\nRunTerminal(String appExecutableName, List`1<String>? parameters, String? pathToWorkingDirInTerminal, String? dataOutputVariable = \"data\", String? errorDebugInfoOutputVariable = \"error\", String? dataStreamDelta, String? debugErrorStreamDelta)  : ReturnDictionary`2\r\n## functions available ends ##"
-          },
-          {
-            "type": "text",
-            "text": "Remove % around dataOutputVariable and errorDebugInfoOutputVariable"
+            "text": "## functions available starts ##\r\nAsk(String text, String? type = \"text\", Int32? statusCode = 200, String? regexPattern, String? errorMessage)  : String  // Send response to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.. \nWriteToSystemOutput(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  : void  // Write to the system output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. \nWriteJson(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  : void  // Write to the json output. Make sure content is valid JSON format. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. \nWrite(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  : void  // Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text.\r\n## functions available ends ##"
           }
         ]
       },
@@ -75,14 +64,14 @@
         "content": [
           {
             "type": "text",
-            "text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/plang\n    working dir ../"
+            "text": "write out 'Publish Linux-ARM64 Console'"
           }
         ]
       }
     ],
     "model": "gpt-4o-2024-08-06",
     "caching": true,
-    "RawResponse": "```json\n{\n  \"FunctionName\": \"RunTerminal\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"appExecutableName\",\n      \"Value\": \"dotnet\"\n    },\n    {\n      \"Type\": \"List`1<String>\",\n      \"Name\": \"parameters\",\n      \"Value\": [\n        \"publish\",\n        \"PlangConsole/PLangConsole.csproj\",\n        \"-c\",\n        \"Release\",\n        \"-r\",\n        \"osx-x64\",\n        \"--self-contained\",\n        \"true\",\n        \"-p:PublishSingleFile=true\",\n        \"-o\",\n        \"./publish/plang\"\n      ]\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"pathToWorkingDirInTerminal\",\n      \"Value\": \"../\"\n    }\n  ],\n  \"ReturnValues\": null\n}\n```"
+    "RawResponse": "```json\n{\n  \"FunctionName\": \"WriteToSystemOutput\",\n  \"Parameters\": [\n    {\n      \"Type\": \"Object?\",\n      \"Name\": \"content\",\n      \"Value\": \"Publish Linux-ARM64 Console\"\n    },\n    {\n      \"Type\": \"Boolean?\",\n      \"Name\": \"writeToBuffer\",\n      \"Value\": false\n    },\n    {\n      \"Type\": \"String?\",\n      \"Name\": \"type\",\n      \"Value\": \"text\"\n    },\n    {\n      \"Type\": \"Int32?\",\n      \"Name\": \"statusCode\",\n      \"Value\": 200\n    }\n  ]\n}\n```"
   },
   "RunOnBuild": false
 }

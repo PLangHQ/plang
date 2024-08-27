@@ -13,27 +13,27 @@
         "Value": "plang-linux-arm64.zip"
       },
       {
-        "Type": "Int32",
+        "Type": "Int32?",
         "Name": "compressionLevel",
         "Value": 0
       },
       {
-        "Type": "Boolean",
+        "Type": "Boolean?",
         "Name": "includeBaseDirectory",
         "Value": false
       },
       {
-        "Type": "Boolean",
+        "Type": "Boolean?",
         "Name": "createDestinationDirectory",
         "Value": true
       },
       {
-        "Type": "Boolean",
+        "Type": "Boolean?",
         "Name": "overwriteDestinationFile",
         "Value": true
       }
     ],
-    "ReturnValue": null
+    "ReturnValues": null
   },
   "Text": "compress folder 'plang' to 'plang-linux-arm64.zip',\n    dont include base dir, overwrite",
   "Reload": false,
@@ -44,7 +44,7 @@
     "presencePenalty": 0.0,
     "maxLength": 4000,
     "llmResponseType": "json",
-    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValues\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
     "type": "PLang.Modules.GenericFunctionBuilder",
     "promptMessage": [
       {
@@ -52,11 +52,11 @@
         "content": [
           {
             "type": "text",
-            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\nVariables MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
           },
           {
             "type": "text",
-            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValues\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
           }
         ]
       },
@@ -65,7 +65,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nvoid CompressFile(String filePath, String saveToPath, Int32? compressionLevel = 0)  // compressionLevel: 0=Optimal, 1=Fastest, 2=No compression, 3=Smallest size(highest compression). \nvoid CompressFiles(String[] filePaths, String saveToPath, Int32? compressionLevel = 0) \nvoid DecompressFile(String sourceArchiveFileName, String destinationDirectoryName, Boolean? overwrite = False) \nvoid CompressDirectory(String sourceDirectoryName, String destinationArchiveFileName, Int32? compressionLevel = 0, Boolean? includeBaseDirectory = True, Boolean? createDestinationDirectory = True, Boolean? overwriteDestinationFile = False)\r\n## functions available ends ##"
+            "text": "## functions available starts ##\r\nCompressFile(String filePath, String saveToPath, Int32? compressionLevel = 0, Boolean? overwrite = False)  : void // compressionLevel: 0=Optimal, 1=Fastest, 2=No compression, 3=Smallest size(highest compression). \nCompressFiles(String[] filePaths, String saveToPath, Int32? compressionLevel = 0, Boolean? overwrite = False)  : void\nDecompressFile(String sourceArchiveFileName, String destinationDirectoryName, Boolean? overwrite = False)  : void\nCompressDirectory(String sourceDirectoryName, String destinationArchiveFileName, Int32? compressionLevel = 0, Boolean? includeBaseDirectory = True, Boolean? createDestinationDirectory = True, Boolean? overwriteDestinationFile = False)  : void\r\n## functions available ends ##"
           }
         ]
       },
@@ -79,9 +79,9 @@
         ]
       }
     ],
-    "model": "gpt-4",
+    "model": "gpt-4o-2024-08-06",
     "caching": true,
-    "RawResponse": "{\n  \"FunctionName\": \"CompressDirectory\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"sourceDirectoryName\",\n      \"Value\": \"plang\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"destinationArchiveFileName\",\n      \"Value\": \"plang-linux-arm64.zip\"\n    },\n    {\n      \"Type\": \"Int32\",\n      \"Name\": \"compressionLevel\",\n      \"Value\": 0\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"includeBaseDirectory\",\n      \"Value\": false\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"createDestinationDirectory\",\n      \"Value\": true\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"overwriteDestinationFile\",\n      \"Value\": true\n    }\n  ],\n  \"ReturnValue\": null\n}"
+    "RawResponse": "```json\n{\n  \"FunctionName\": \"CompressDirectory\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"sourceDirectoryName\",\n      \"Value\": \"plang\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"destinationArchiveFileName\",\n      \"Value\": \"plang-linux-arm64.zip\"\n    },\n    {\n      \"Type\": \"Int32?\",\n      \"Name\": \"compressionLevel\",\n      \"Value\": 0\n    },\n    {\n      \"Type\": \"Boolean?\",\n      \"Name\": \"includeBaseDirectory\",\n      \"Value\": false\n    },\n    {\n      \"Type\": \"Boolean?\",\n      \"Name\": \"createDestinationDirectory\",\n      \"Value\": true\n    },\n    {\n      \"Type\": \"Boolean?\",\n      \"Name\": \"overwriteDestinationFile\",\n      \"Value\": true\n    }\n  ]\n}\n```"
   },
   "RunOnBuild": false
 }

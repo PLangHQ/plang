@@ -16,10 +16,9 @@
           "-c",
           "Release",
           "-r",
-          "osx-x64",
+          "linux-x64",
           "--self-contained",
           "true",
-          "-p:PublishSingleFile=true",
           "-o",
           "./publish/plang"
         ]
@@ -28,11 +27,31 @@
         "Type": "String",
         "Name": "pathToWorkingDirInTerminal",
         "Value": "../"
+      },
+      {
+        "Type": "String",
+        "Name": "dataOutputVariable",
+        "Value": "data"
+      },
+      {
+        "Type": "String",
+        "Name": "errorDebugInfoOutputVariable",
+        "Value": "error"
+      },
+      {
+        "Type": "String",
+        "Name": "dataStreamDelta",
+        "Value": null
+      },
+      {
+        "Type": "String",
+        "Name": "debugErrorStreamDelta",
+        "Value": null
       }
     ],
     "ReturnValues": null
   },
-  "Text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/plang\n    working dir ../",
+  "Text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r linux-x64  --self-contained true -o ./publish/plang\n    working dir ../",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -75,14 +94,14 @@
         "content": [
           {
             "type": "text",
-            "text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/plang\n    working dir ../"
+            "text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r linux-x64  --self-contained true -o ./publish/plang\n    working dir ../"
           }
         ]
       }
     ],
     "model": "gpt-4o-2024-08-06",
     "caching": true,
-    "RawResponse": "```json\n{\n  \"FunctionName\": \"RunTerminal\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"appExecutableName\",\n      \"Value\": \"dotnet\"\n    },\n    {\n      \"Type\": \"List`1<String>\",\n      \"Name\": \"parameters\",\n      \"Value\": [\n        \"publish\",\n        \"PlangConsole/PLangConsole.csproj\",\n        \"-c\",\n        \"Release\",\n        \"-r\",\n        \"osx-x64\",\n        \"--self-contained\",\n        \"true\",\n        \"-p:PublishSingleFile=true\",\n        \"-o\",\n        \"./publish/plang\"\n      ]\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"pathToWorkingDirInTerminal\",\n      \"Value\": \"../\"\n    }\n  ],\n  \"ReturnValues\": null\n}\n```"
+    "RawResponse": "```json\n{\n  \"FunctionName\": \"RunTerminal\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"appExecutableName\",\n      \"Value\": \"dotnet\"\n    },\n    {\n      \"Type\": \"List`1<String>\",\n      \"Name\": \"parameters\",\n      \"Value\": [\n        \"publish\",\n        \"PlangConsole/PLangConsole.csproj\",\n        \"-c\",\n        \"Release\",\n        \"-r\",\n        \"linux-x64\",\n        \"--self-contained\",\n        \"true\",\n        \"-o\",\n        \"./publish/plang\"\n      ]\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"pathToWorkingDirInTerminal\",\n      \"Value\": \"../\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"dataOutputVariable\",\n      \"Value\": \"data\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"errorDebugInfoOutputVariable\",\n      \"Value\": \"error\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"dataStreamDelta\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"debugErrorStreamDelta\",\n      \"Value\": null\n    }\n  ],\n  \"ReturnValues\": null\n}\n```"
   },
   "RunOnBuild": false
 }

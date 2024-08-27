@@ -1,38 +1,26 @@
 {
   "Action": {
-    "FunctionName": "RunTerminal",
+    "FunctionName": "RunLoop",
     "Parameters": [
       {
         "Type": "String",
-        "Name": "appExecutableName",
-        "Value": "dotnet"
+        "Name": "variableToLoopThrough",
+        "Value": "%zipFiles%"
       },
       {
-        "Type": "List`1<String>",
+        "Type": "GoalToCall",
+        "Name": "goalNameToCall",
+        "Value": "!RemoveFile"
+      },
+      {
+        "Type": "Dictionary`2<String, Object>?",
         "Name": "parameters",
-        "Value": [
-          "publish",
-          "PlangConsole/PLangConsole.csproj",
-          "-c",
-          "Release",
-          "-r",
-          "osx-x64",
-          "--self-contained",
-          "true",
-          "-p:PublishSingleFile=true",
-          "-o",
-          "./publish/plang"
-        ]
-      },
-      {
-        "Type": "String",
-        "Name": "pathToWorkingDirInTerminal",
-        "Value": "../"
+        "Value": null
       }
     ],
     "ReturnValues": null
   },
-  "Text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/plang\n    working dir ../",
+  "Text": "foreach %zipFiles% call !RemoveFile",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -42,7 +30,7 @@
     "maxLength": 4000,
     "llmResponseType": "json",
     "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValues\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
-    "type": "PLang.Modules.TerminalModule.Builder",
+    "type": "PLang.Modules.GenericFunctionBuilder",
     "promptMessage": [
       {
         "role": "system",
@@ -62,11 +50,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nRead(String variableName)  : void\nRunTerminal(String appExecutableName, List`1<String>? parameters, String? pathToWorkingDirInTerminal, String? dataOutputVariable = \"data\", String? errorDebugInfoOutputVariable = \"error\", String? dataStreamDelta, String? debugErrorStreamDelta)  : ReturnDictionary`2\r\n## functions available ends ##"
-          },
-          {
-            "type": "text",
-            "text": "Remove % around dataOutputVariable and errorDebugInfoOutputVariable"
+            "text": "## functions available starts ##\r\nRunLoop(String variableToLoopThrough, GoalToCall goalNameToCall, Dictionary`2<String, Object>? parameters)  : void  // Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called.\r\n## functions available ends ##\r\n## defined variables ##\r\nzipFiles (type:String[]), \r\n## defined variables ##"
           }
         ]
       },
@@ -75,14 +59,14 @@
         "content": [
           {
             "type": "text",
-            "text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/plang\n    working dir ../"
+            "text": "foreach %zipFiles% call !RemoveFile"
           }
         ]
       }
     ],
     "model": "gpt-4o-2024-08-06",
     "caching": true,
-    "RawResponse": "```json\n{\n  \"FunctionName\": \"RunTerminal\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"appExecutableName\",\n      \"Value\": \"dotnet\"\n    },\n    {\n      \"Type\": \"List`1<String>\",\n      \"Name\": \"parameters\",\n      \"Value\": [\n        \"publish\",\n        \"PlangConsole/PLangConsole.csproj\",\n        \"-c\",\n        \"Release\",\n        \"-r\",\n        \"osx-x64\",\n        \"--self-contained\",\n        \"true\",\n        \"-p:PublishSingleFile=true\",\n        \"-o\",\n        \"./publish/plang\"\n      ]\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"pathToWorkingDirInTerminal\",\n      \"Value\": \"../\"\n    }\n  ],\n  \"ReturnValues\": null\n}\n```"
+    "RawResponse": "```json\n{\n  \"FunctionName\": \"RunLoop\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"variableToLoopThrough\",\n      \"Value\": \"%zipFiles%\"\n    },\n    {\n      \"Type\": \"GoalToCall\",\n      \"Name\": \"goalNameToCall\",\n      \"Value\": \"!RemoveFile\"\n    },\n    {\n      \"Type\": \"Dictionary`2<String, Object>?\",\n      \"Name\": \"parameters\",\n      \"Value\": null\n    }\n  ]\n}\n```"
   },
   "RunOnBuild": false
 }
