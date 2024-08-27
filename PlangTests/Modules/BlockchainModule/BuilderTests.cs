@@ -92,7 +92,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 
 			Store(text, instruction.LlmRequest.RawResponse);
 			Assert.AreEqual("GetRpcServers", gf.FunctionName);
-			AssertVar.AreEqual("%servers%", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("%servers%", gf.ReturnValues[0].VariableName);
 		}
 
 		[DataTestMethod]
@@ -158,7 +158,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("GetCurrentRpcServer", gf.FunctionName);
-			AssertVar.AreEqual("rpcServer", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("rpcServer", gf.ReturnValues[0].VariableName);
 		}
 
 
@@ -175,7 +175,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("GetWallets", gf.FunctionName);
-			AssertVar.AreEqual("wallets", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("wallets", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -223,7 +223,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("GetOrCreateWallet", gf.FunctionName);
-			AssertVar.AreEqual("wallet", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("wallet", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -272,7 +272,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			Assert.AreEqual("GetNativeBalanceOfAddressInWei", gf.FunctionName);
 			Assert.AreEqual("address", gf.Parameters[0].Name);
 			Assert.AreEqual("0x1234", gf.Parameters[0].Value);
-			Assert.AreEqual("balance", gf.ReturnValue[0].VariableName);
+			Assert.AreEqual("balance", gf.ReturnValues[0].VariableName);
 		}
 
 
@@ -298,7 +298,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 				Assert.AreEqual("decimalPlacesToUnit", gf.Parameters[1].Name);
 				Assert.AreEqual((long)8, gf.Parameters[1].Value);
 			}
-			AssertVar.AreEqual("balance", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("balance", gf.ReturnValues[0].VariableName);
 		}
 
 
@@ -319,7 +319,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			Assert.AreEqual("GetDecimal", gf.FunctionName);
 			Assert.AreEqual("contractAddress", gf.Parameters[0].Name);
 			Assert.AreEqual("0x1234", gf.Parameters[0].Value);
-			Assert.AreEqual("decimal", gf.ReturnValue[0].VariableName);
+			Assert.AreEqual("decimal", gf.ReturnValues[0].VariableName);
 		}
 
 
@@ -342,7 +342,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			Assert.AreEqual("0x123", gf.Parameters[0].Value);
 			Assert.AreEqual("etherAmount", gf.Parameters[1].Name);
 			Assert.AreEqual("%amount%", gf.Parameters[1].Value);
-			Assert.AreEqual("%txHash%", gf.ReturnValue[0].VariableName);
+			Assert.AreEqual("%txHash%", gf.ReturnValues[0].VariableName);
 		}
 
 
@@ -368,7 +368,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			Assert.AreEqual("0x123", gf.Parameters[2].Value);
 			Assert.AreEqual("value", gf.Parameters[3].Name);
 			Assert.AreEqual("%amount%", gf.Parameters[3].Value);
-			AssertVar.AreEqual("%txHash%", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("%txHash%", gf.ReturnValues[0].VariableName);
 		}
 
 
@@ -393,7 +393,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			Assert.AreEqual(@$"[{{""name"":""value""}}]", gf.Parameters[1].Value);
 			Assert.AreEqual("args", gf.Parameters[2].Name);
 			Assert.AreEqual("[\"%amount%\",\"%date%\",\"%voted%\"]", gf.Parameters[2].Value.ToString().Replace("\n", "").Replace("\r", "").Replace(" ", ""));
-			AssertVar.AreEqual("%txHash%", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("%txHash%", gf.ReturnValues[0].VariableName);
 		}
 
 	}

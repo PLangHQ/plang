@@ -33,8 +33,8 @@ namespace PLang.Attributes
 	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter)]
 	public class DefaultValueAttribute : Attribute
 	{
-		public object Value { get; set; }
-		public DefaultValueAttribute(object value)
+		public object? Value { get; set; }
+		public DefaultValueAttribute(object? value)
 		{
 			Value = value;
 		}

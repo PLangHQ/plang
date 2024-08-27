@@ -1,6 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Schema;
+using OpenQA.Selenium.DevTools.V124.CSS;
+using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.AskUser;
@@ -17,6 +20,7 @@ using PLang.Services.LlmService;
 using PLang.Utils;
 using RazorEngineCore;
 using System.ComponentModel;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
 using static PLang.Modules.DbModule.ModuleSettings;
@@ -75,87 +79,31 @@ namespace PLang.Building
 			if (excludeModules == null) { excludeModules = new List<string>(); }
 
 			try
-			{
-				var strStepNr = (stepIndex + 1).ToString().PadLeft(2, '0');
+			{				
 				if (StepHasBeenBuild(step, stepIndex, excludeModules)) return null;
 
-				await eventRuntime.RunBuildStepEvents(EventType.Before, goal, step, stepIndex);
+				var error = await eventRuntime.RunBuildStepEvents(EventType.Before, goal, step, stepIndex);
+				if (error != null) return error;
 
-				LlmRequest llmQuestion = GetBuildStepQuestion(goal, step, excludeModules);
+				// build info about step, name, description and module type
+				(step, error) = await BuildStepInformation(goal, step, stepIndex, excludeModules, errorCount);
+				if (error != null) return error;
+				
 
-				logger.Value.LogInformation($"- Find module for {step.Text}");
-				llmQuestion.Reload = false;
-				(var stepAnswer, var llmError) = await llmServiceFactory.CreateHandler().Query<StepAnswer>(llmQuestion);
-				if (llmError != null) return llmError as IBuilderError;
-
-				if (stepAnswer == null)
-				{
-					logger.Value.LogWarning($"Could not get answer from LLM. Will try again. This is attempt nr {++errorCount}");
-					return await BuildStep(goal, stepIndex, excludeModules, errorCount);
-				}
-
-				var module = stepAnswer.Modules.FirstOrDefault();
-				var moduleType = typeHelper.GetRuntimeType(module);
-				if (moduleType == null || module == null || module == "N/A")
-				{
-					return new StepBuilderError($@"Could not find module for {step.Text}. 
-Try defining the step in more detail.
-
-You have 3 options:
-	- Rewrite your step to fit better with a modules that you have installed. 
-		How to write the step? Get help here https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md
-	- Install an App from that can handle your request and call that
-	- Build your own module. This requires a C# developer knowledge
-
-Builder will continue on other steps but not this one: ({step.Text}).
-", step);
-
-				}
-
-				step.ModuleType = module;
-				step.ErrorHandler = stepAnswer.ErrorHandler;
-				step.WaitForExecution = stepAnswer.WaitForExecution;
-				step.RetryHandler = stepAnswer.RetryHandler;
-				// cannot put caching on caching
-				step.CacheHandler = (module == "PLang.Modules.CachingModule") ? null : stepAnswer.CachingHandler;
-				step.Name = stepAnswer.StepName;
-				step.Description = stepAnswer.StepDescription;
-				step.PrFileName = strStepNr + ". " + step.Name + ".pr";
-				step.AbsolutePrFilePath = Path.Join(goal.AbsolutePrFolderPath, step.PrFileName);
-				step.RelativePrPath = Path.Join(goal.RelativePrFolderPath, step.PrFileName);
-				step.LlmRequest = llmQuestion;
-				step.Number = stepIndex;
-				if (goal.GoalSteps.Count > stepIndex + 1)
-				{
-					step.NextStep = goal.GoalSteps[stepIndex + 1];
-				}
-
-				step.RunOnce = (goal.RelativePrFolderPath.ToLower().Contains(".build" + Path.DirectorySeparatorChar + "setup"));
-
-				var error = await instructionBuilder.BuildInstruction(this, goal, step, module, stepIndex, excludeModules, errorCount);
+				// builds the instruction set to execute
+				(var instruction, error) = await instructionBuilder.BuildInstruction(this, goal, step, step.ModuleType, stepIndex, excludeModules, errorCount);
 				if (error != null)
 				{
-					if (error is not InvalidFunctionsError)
-					{
-						return error;
-					}
-
-					if (error is InvalidFunctionsError invalidFunctions)
-					{
-						if (invalidFunctions.ExcludeModule && !excludeModules.Contains(module))
-						{
-							excludeModules.Add(module);
-						}
-
-					}
-					logger.Value.LogWarning(error.Message);
-					var buildStepError = await BuildStep(goal, stepIndex, excludeModules, ++errorCount);
-					if (buildStepError != null)
-					{
-						return buildStepError;
-					}
+					error = await HandleBuildInstructionError(goal, step, stepIndex, excludeModules, errorCount, error);
+					if (error != null) return error;
 				}
-				//Set reload after Build Instruction
+				if (instruction == null) return null;
+
+				// builds properties on the step, caching, errorhandling, logger
+				(step, error) = await BuildStepProperties(goal, step, instruction, stepIndex, excludeModules, errorCount);
+				if (error != null) return error;				
+
+				//Set reload to false after Build Instruction
 				step.Reload = false;
 				step.Generated = DateTime.Now;
 
@@ -188,7 +136,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 				}
 				else
 				{
-					if (handlerError == null) return error;
+					if (handlerError == null || handlerError == error) return error;
 
 					return ErrorHelper.GetMultipleBuildError(error, handlerError);
 				}
@@ -196,10 +144,10 @@ Builder will continue on other steps but not this one: ({step.Text}).
 
 		}
 
-
 		private bool StepHasBeenBuild(GoalStep step, int stepIndex, List<string> excludeModules)
 		{
-			if (step.Number != stepIndex) return false;
+			AppContext.TryGetSwitch(ReservedKeywords.StrictBuild, out bool isStrict);
+			if (isStrict && step.Number != stepIndex) return false;
 			if (step.PrFileName == null || excludeModules.Count > 0) return false;
 
 			if (!fileSystem.File.Exists(step.AbsolutePrFilePath))
@@ -216,19 +164,23 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			if (action == null) return false;
 
 			// lets load the return value into memoryStack
-			if (action.Contains("ReturnValue"))
+			if (action.Contains("ReturnValues"))
 			{
 				var gf = JsonConvert.DeserializeObject<GenericFunction>(action);
 				LoadVariablesIntoMemoryStack(gf, memoryStack, context, settings);
 			}
 			else if (action.Contains("OutParameterDefinition"))
 			{
+				return false;
+			}
+			else if (action.Contains("OutParameters"))
+			{
 				var implementation = JsonConvert.DeserializeObject<Implementation>(action);
-				if (implementation != null && implementation.OutParameterDefinition != null)
+				if (implementation != null && implementation.OutParameters != null)
 				{
-					foreach (var vars in implementation.OutParameterDefinition)
+					foreach (var vars in implementation.OutParameters)
 					{
-						memoryStack.PutForBuilder(vars.Key, JsonConvert.SerializeObject(vars.Value));
+						memoryStack.PutForBuilder(vars.VariableName, vars.ParameterType);
 					}
 				}
 			}
@@ -237,13 +189,299 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			return true;
 		}
 
+		private async Task<(GoalStep, IBuilderError?)> BuildStepInformation(Goal goal, GoalStep step, int stepIndex, List<string>? excludeModules, int errorCount)
+		{
+			string noBuildErrorMessage = $@"Could not find module for {step.Text}.";
+			string fixSuggestions = $@"
+Try defining the step in more detail.
+
+You have 3 options:
+	- Rewrite your step to fit better with a modules that you have installed. 
+		How to write the step? Get help here https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md
+	- Install an App from that can handle your request and call that
+	- Build your own module. This requires a C# developer knowledge
+
+Builder will continue on other steps but not this one: ({step.Text}).
+";
+			if (errorCount >= 3)
+			{
+				return (step, new StepBuilderError(noBuildErrorMessage, step, HelpfulLinks: "https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md", FixSuggestion: fixSuggestions));
+			}
+
+			LlmRequest llmQuestion = GetBuildStepInformationQuestion(goal, step, excludeModules);
+
+			logger.Value.LogInformation($"- Find module for {step.Text}");
+			llmQuestion.Reload = false;
+			(var stepInformation, var llmError) = await llmServiceFactory.CreateHandler().Query<StepInformation>(llmQuestion);
+			if (llmError != null) return (step, llmError as IBuilderError);
+
+			if (stepInformation == null)
+			{
+				logger.Value.LogWarning($"Could not get answer from LLM. Will try again. This is attempt nr {++errorCount}");
+				return await BuildStepInformation(goal, step, stepIndex, excludeModules, ++errorCount);
+			}
+
+			var module = stepInformation.Modules.FirstOrDefault();
+			var moduleType = typeHelper.GetRuntimeType(module);
+			if (moduleType == null || module == null || module == "N/A")
+			{
+				return (step, new StepBuilderError(noBuildErrorMessage, step, HelpfulLinks: "https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md", FixSuggestion: fixSuggestions));
+
+			}			
+
+			step.ModuleType = module;
+			step.Name = stepInformation.StepName;
+			step.Description = stepInformation.StepDescription;
+			step.PrFileName = GetPrFileName(stepIndex, step.Name);
+			step.AbsolutePrFilePath = Path.Join(goal.AbsolutePrFolderPath, step.PrFileName);
+			step.RelativePrPath = Path.Join(goal.RelativePrFolderPath, step.PrFileName);
+			step.LlmRequest = llmQuestion;
+			step.Number = stepIndex;
+			if (goal.GoalSteps.Count > stepIndex + 1)
+			{
+				step.NextStep = goal.GoalSteps[stepIndex + 1];
+			}
+
+			step.RunOnce = (goal.RelativePrFolderPath.ToLower().Contains(".build" + Path.DirectorySeparatorChar + "setup"));
+			return (step, null);
+		}
+
+		private string GetPrFileName(int stepIndex, string stepName)
+		{
+			var strStepNr = (stepIndex + 1).ToString().PadLeft(2, '0');
+			return strStepNr + ". " + stepName + ".pr";
+		}
+
+		
+		private async Task<IBuilderError?> HandleBuildInstructionError(Goal goal, GoalStep step, int stepIndex, List<string> excludeModules, int errorCount, IBuilderError? error)
+		{
+			if (error is not InvalidFunctionsError)
+			{
+				return error;
+			}
+
+			if (error is InvalidFunctionsError invalidFunctions)
+			{
+				if (invalidFunctions.ExcludeModule && !excludeModules.Contains(step.ModuleType))
+				{
+					excludeModules.Add(step.ModuleType);
+				}
+
+			}
+			logger.Value.LogWarning(error.Message);
+			var buildStepError = await BuildStep(goal, stepIndex, excludeModules, ++errorCount);
+			if (buildStepError != null)
+			{
+				return buildStepError;
+			}
+			return null;
+		}
+
+		private async Task<(GoalStep step, IBuilderError? error)> BuildStepProperties(Goal goal, GoalStep step, Instruction instruction, int stepIndex, List<string> excludeModules, int errorCount)
+		{
+			
+		
+
+			LlmRequest llmQuestion = GetBuildStepPropertiesQuestion(goal, step, instruction);
+
+			logger.Value.LogInformation($"- Building properties for {step.Text}");
+			llmQuestion.Reload = false;
+			(var stepProperties, var llmError) = await llmServiceFactory.CreateHandler().Query<StepProperties>(llmQuestion);
+			if (llmError != null) return (step, llmError as IBuilderError);
+
+			if (stepProperties == null)
+			{
+				logger.Value.LogWarning($"Could not get answer from LLM. Will try again. This is attempt nr {++errorCount}");
+				return await BuildStepProperties(goal, step, instruction, stepIndex, excludeModules, ++errorCount);
+			}
+
+			step.ErrorHandlers = stepProperties.ErrorHandlers;
+			step.WaitForExecution = stepProperties.WaitForExecution;
+			step.LoggerLevel = GetLoggerLevel(stepProperties.LoggerLevel);
+			// cannot put caching on caching module
+			step.CacheHandler = (step.ModuleType == "PLang.Modules.CachingModule") ? null : stepProperties.CachingHandler;
+
+			return (step, null);
+		}
+
+		private string? GetLoggerLevel(string? loggerLevel)
+		{
+			if (loggerLevel == null) return null;
+
+			loggerLevel = loggerLevel.ToLower();
+			if (loggerLevel == "error" || loggerLevel == "warning" || loggerLevel == "information" || loggerLevel == "debug" || loggerLevel == "trace") return loggerLevel;
+			return null;
+		}
+
+		private LlmRequest GetBuildStepPropertiesQuestion(Goal goal, GoalStep step, Instruction instruction)
+		{
+
+			(bool canBeCached, bool canHaveErrorHandling, bool canBeAsync) = GetMethodSettings(step, instruction);
+
+			var stepPropertiesScheme = TypeHelper.GetJsonSchema(typeof(StepProperties));
+
+			var cachingHandlerScheme = "";
+			var cachingSystemText = "CachingHandler: is always null";
+			if (canBeCached)
+			{
+				cachingHandlerScheme = "CachingHandler:\n" + TypeHelper.GetJsonSchema(typeof(CachingHandler));
+				cachingSystemText = "CachingHandler: How caching is handled, default is null";
+			}
+			var errorHandlerScheme = "";
+			var errorHandlerSystemText = "ErrorHandler: is always null";
+			if (canHaveErrorHandling)
+			{
+				errorHandlerScheme = "CachingHandler:\n" + TypeHelper.GetJsonSchema(typeof(ErrorHandler));
+				errorHandlerSystemText = @"ErrorHandlers: 
+	- How to handle errors defined by user, default is null. 
+	- StatusCode, Message and Key is null, unless clearly defined by user in on error clause.  
+	- User can send parameter(s) to a goal being called, the parameter(s) come after the goal name";
+			}
+
+			var asyncSystemText = @"WaitForExecution: Default is true. Indicates if code should wait for execution to finish."; 
+			if (!canBeAsync)
+			{
+				asyncSystemText = "WaitForExecution: is always false";
+			}
+
+			var system = $@"You job is to understand the user intent and map his intent to properties matching StepProperties.
+The user statement is a step of executable code.
+{errorHandlerSystemText}
+{asyncSystemText}
+{cachingSystemText}
+LoggerLevel: default null
+
+
+=== Scheme information ===
+ErrorHandler: 
+{errorHandlerScheme}
+
+{cachingHandlerScheme}
+=== Scheme information ===
+
+Take into account that another service will execute the user intent before error handling and cache handler, following is the instruction for that service. 
+You might not need to map the error handling or cache handler if this service is handling the user intent
+=== service instruction ==
+{JsonConvert.SerializeObject(instruction.Action)}
+=== service instruction ==
+";
+
+			List<LlmMessage> promptMessage = new();
+			promptMessage.Add(new LlmMessage("system", system));
+			promptMessage.Add(new LlmMessage("user", step.Text));
+
+			var llmRequest = new LlmRequest("StepPropertiesBuilder", promptMessage);
+			llmRequest.scheme = stepPropertiesScheme;
+
+			if (step.PrFileName == null) llmRequest.Reload = true;
+			return llmRequest;
+
+
+		}
+
+		private (bool, bool, bool) GetMethodSettings(GoalStep step, Instruction instruction)
+		{
+			bool canBeCached = true;
+			bool canHaveErrorHandling = true;
+			bool canBeAsync = true;
+
+			var moduleType = typeHelper.GetRuntimeType(step.ModuleType);
+			var gf = instruction.Action as GenericFunction;
+			if (moduleType != null && gf != null)
+			{
+				var method = moduleType.GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(p => p.Name == gf.FunctionName);
+				if (method != null)
+				{
+					var attribute = method.GetCustomAttribute<MethodSettingsAttribute>();
+
+					if (attribute != null)
+					{
+						canBeCached = attribute.CanBeCached;
+						canHaveErrorHandling = attribute.CanHaveErrorHandling;
+						canBeAsync = attribute.CanBeAsync;
+					}
+				}
+			}
+			return (canBeCached, canHaveErrorHandling, canBeAsync);
+		}
+
+
+
+		private LlmRequest GetBuildStepInformationQuestion(Goal goal, GoalStep step, List<string>? excludeModules = null)
+		{
+			// user might define in his step specific module.
+
+			var modulesAvailable = typeHelper.GetModulesAsString(excludeModules);
+			var userRequestedModule = GetUserRequestedModule(step);
+			if (excludeModules != null && excludeModules.Count == 1 && userRequestedModule.Count == 1
+				&& userRequestedModule.FirstOrDefault(p => p.Equals(excludeModules[0])) != null)
+			{
+				throw new BuilderStepException($"Could not map {step.Text} to {userRequestedModule[0]}");
+			}
+
+			if (userRequestedModule.Count > 0)
+			{
+				modulesAvailable = string.Join(", ", userRequestedModule);
+			}
+			var jsonScheme = TypeHelper.GetJsonSchema(typeof(StepInformation));
+			var system =
+$@"You are provided with a statement from the user. 
+This statement is a step in a Function. 
+
+You MUST determine which module can be used to solve the statement.
+You MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A
+
+variable is defined with starting and ending %, e.g. %filePath%
+! defines a call to a function
+
+Modules: Name of module. Suggest 1-3 modules that could be used to solve the step.
+StepName: Short name for step
+StepDescription: Rewrite the step as you understand it, make it detailed
+Read the description of each module, then determine which module to use.
+Make sure to return valid JSON, escape double quote if needed
+
+Be Concise
+";
+			if (step.Goal.RelativeGoalFolderPath.ToLower() == Path.DirectorySeparatorChar + "ui")
+			{
+				system += "\n\nUser is programming in the UI folder, this put priority on PLang.Modules.UiModule. The user is trying to create UI";
+			}
+
+			var question = step.Text;
+			var assistant = $@"This is a list of modules you can choose from
+## modules available starts ##
+{modulesAvailable}
+## modules available ends ##
+";
+			string variablesInStep = GetVariablesInStep(step);
+			if (!string.IsNullOrEmpty(variablesInStep))
+			{
+				assistant += $@"
+## variables available ##
+{variablesInStep}
+## variables available ##
+";
+			}
+
+			List<LlmMessage> promptMessage = new();
+			promptMessage.Add(new LlmMessage("system", system));
+			promptMessage.Add(new LlmMessage("assistant", assistant));
+			promptMessage.Add(new LlmMessage("user", question));
+
+			var llmRequest = new LlmRequest("StepInformationBuilder", promptMessage);
+			llmRequest.scheme = jsonScheme;
+
+			if (step.PrFileName == null || (excludeModules != null && excludeModules.Count > 0)) llmRequest.Reload = true;
+			return llmRequest;
+		}
+
 		public void LoadVariablesIntoMemoryStack(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
 		{
 			if (gf == null) return;
 
-			if (gf.ReturnValue != null && gf.ReturnValue.Count > 0)
+			if (gf.ReturnValues != null && gf.ReturnValues.Count > 0)
 			{
-				foreach (var returnValue in gf.ReturnValue)
+				foreach (var returnValue in gf.ReturnValues)
 				{
 					memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
 				}
@@ -251,7 +489,6 @@ Builder will continue on other steps but not this one: ({step.Text}).
 
 			LoadParameters(gf, memoryStack, context, settings);
 		}
-
 		private void LoadParameters(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
 		{
 			// todo: hack for now, should be able to load dynamically variables that are being set at build time
@@ -281,7 +518,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 					memoryStack.PutForBuilder(parameter.Key, parameter.Value);
 				}
 			}
-			
+
 
 			// todo: also bad implementation, builder for module should handle this part
 			if (gf.FunctionName == "CreateDataSource" || gf.FunctionName == "SetDataSourceName")
@@ -295,7 +532,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 				var isDefaultForApp = ((bool?)gf.Parameters.FirstOrDefault(p => p.Name == "setAsDefaultForApp")?.Value) ?? false;
 
 				if (datasource == null)
-				{					
+				{
 					var keepHistoryEventSourcing = ((bool?)gf.Parameters.FirstOrDefault(p => p.Name == "keepHistoryEventSourcing")?.Value) ?? false;
 					var databaseType = gf.Parameters.FirstOrDefault(p => p.Name == "databaseType")?.Value?.ToString() ?? "sqlite";
 					var localPath = "";
@@ -312,7 +549,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 					datasource = datasources.FirstOrDefault(p => p.Name == dataSourceName);
 				}
 
-				
+
 				if ((gf.FunctionName == "CreateDataSource" && isDefaultForApp) || gf.FunctionName == "SetDataSourceName")
 				{
 					context.AddOrReplace(ReservedKeywords.CurrentDataSource, datasource);
@@ -321,81 +558,6 @@ Builder will continue on other steps but not this one: ({step.Text}).
 
 
 
-		}
-
-		private LlmRequest GetBuildStepQuestion(Goal goal, GoalStep step, List<string>? excludeModules = null)
-		{
-			// user might define in his step specific module.
-
-			var modulesAvailable = typeHelper.GetModulesAsString(excludeModules);
-			var userRequestedModule = GetUserRequestedModule(step);
-			if (excludeModules != null && excludeModules.Count == 1 && userRequestedModule.Count == 1
-				&& userRequestedModule.FirstOrDefault(p => p.Equals(excludeModules[0])) != null)
-			{
-				throw new BuilderStepException($"Could not map {step.Text} to {userRequestedModule[0]}");
-			}
-
-			if (userRequestedModule.Count > 0)
-			{
-				modulesAvailable = string.Join(", ", userRequestedModule);
-			}
-			var jsonScheme = TypeHelper.GetJsonSchema(typeof(StepAnswer));
-			var system =
-$@"You are provided with a statement from the user. 
-This statement is a step in a Function. 
-
-You MUST determine which module can be used to solve the statement.
-You MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A
-
-variable is defined with starting and ending %, e.g. %filePath%
-! defines a call to a function
-
-Modules: Name of module. Suggest 1-3 modules that could be used to solve the step.
-StepName: Short name for step
-StepDescription: Rewrite the step as you understand it, make it detailed
-WaitForExecution: Default is true. Indicates if code should wait for execution to finish.
-ErrorHandler: How to handle errors defined by user, default is null. if error should be handled but text (OnExceptionContainingTextCallGoal) is not defined, then use * for key
-RetryHandler: How to retry the step if there is error, default is null
-CachingHandler: How caching is handled, default is null
-Read the description of each module, then determine which module to use.
-Make sure to return valid JSON, escape double quote if needed
-
-Be Concise
-";
-			if (step.Goal.RelativeGoalFolderPath.ToLower() == Path.DirectorySeparatorChar + "ui")
-			{
-				system += "\n\nUser is programming in the UI folder, this put priority on PLang.Modules.UiModule. The user is trying to create UI";
-			}
-
-			var question = step.Text;
-			var assistant = $@"This is a list of modules you can choose from
-## modules available starts ##
-{modulesAvailable}
-## modules available ends ##
-## CachingType int ##
-Sliding = 0, Absolute = 1
-## CachingType int ##
-";
-			string variablesInStep = GetVariablesInStep(step);
-			if (!string.IsNullOrEmpty(variablesInStep))
-			{
-				assistant += $@"
-## variables available ##
-{variablesInStep}
-## variables available ##
-";
-			}
-
-			List<LlmMessage> promptMessage = new();
-			promptMessage.Add(new LlmMessage("system", system));
-			promptMessage.Add(new LlmMessage("assistant", assistant));
-			promptMessage.Add(new LlmMessage("user", question));
-
-			var llmRequest = new LlmRequest("StepBuilder", promptMessage);
-			llmRequest.scheme = jsonScheme;
-
-			if (step.PrFileName == null || (excludeModules != null && excludeModules.Count > 0)) llmRequest.Reload = true;
-			return llmRequest;
 		}
 
 		protected string GetVariablesInStep(GoalStep step)

@@ -47,13 +47,13 @@ These 6 steps replace over [100+ lines of C#/Java/Typescript code](https://gist.
 
 > [!CAUTION]
 > **Heads up: Building code costs money**
-> Each code line incurs usually between $0.005 - $0.015 fee via LLM. The payoff? Exceptional efficiency gains. You can choose to use [Plang service(simpler) or OpenAI(cheaper)](./PlangOrOpenAI.md). Using Plang service supports the project
+> Each code line incurs usually between $0.002 - $0.008 fee via LLM. The payoff? Exceptional efficiency gains. You can choose to use [Plang service(simpler) or OpenAI(cheaper)](./PlangOrOpenAI.md). Using Plang service supports the Plang project
 
 Set up Plang on your system. Download Plang from [the download page](https://github.com/PLangHQ/plang/releases) and follow our [Installation Guide](./Install.md).
 
 ## Getting Started
 
-Explore plang's capabilities and start building today. For initial steps and guidance, see [Getting Started with plang](./GetStarted.md).
+For initial steps and guidance, see **[Getting Started with plang](./GetStarted.md)** or jump straight to the **[Tutorial](./Todo_webservice.md)**.
 
 ## Usage
 
@@ -67,6 +67,13 @@ Explore plang's features and capabilities:
     - **[Conditions](./Conditions.md)**: Understanding `if` statements and conditional logic in plang.
     - **[Loops](./Loop.md)**: Explore how to go through a list of data
     - **[Date & Time](./Time.md)**: How you work with `%Now%`, the date and time of the system
+- **Tutorials**
+    Create a simple Todo app to get familiar with rules and ability of plang
+    - **[1. Todo Webservice](./Todo_webservice.md)**: Simple webservice. Learn how to setup webserver, api and database
+    - **[2. Todo LLM](./Todo_Llm.md)**: How to use LLM in plang
+    - **[3. Todo Identity](./Todo_Identity.md)**: Learn about how you handle 
+    - **[3. Todo New approach](./todo_new_approch.md)**: Learn how you can rething User experince with Plang
+    - **[3. Todo Identity](./Todo_UI.md)**: Learn about how you create GUI (early alpha)
 - **For everybody**
     - **[Debugging](./Debug.md)**: Learn how to debug when programming in the plang language
     - **[Examples](https://github.com/PLangHQ/plang/tree/main/Tests)**: See list of plang code examples, it can help you get started    
@@ -78,13 +85,16 @@ Explore plang's features and capabilities:
     - **[Building your code](./Builder.md)**: How does the builder take your intent and convert it to executable code.
     - **[Builder Lifecycle & Events](./BuilderLifcycle.md)**: Sequence of operations when building plang and build events
     - **[Runtime Lifecycle](./RuntimeLifcycle.md)**: Sequence of operations when running plang
-    - **[Runtime Events](./Events.md)**: Learn about event-driven programming in plang.    
+    - **[Runtime & builder Events](./Events.md)**: Learn about event-driven programming in plang.    
     - **[Performance](./Performance.md)**: What is the perfomance of plang? 
     - **[Modules](./modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
     - **[Services](./Services.md)**: Learn how flexible the plang language is, e.g. using the db engine of your choice, your own caching service and more.
     - **[3rd party libraries](./3rdPartyLibrary.md.md)**: Learn how use existing .Net library in Plang.
     - **[Use OpenAI API key or Local LLM](./PlangOrOpenAI.md)**: Shows how to use OpenAI API directly instead of PLang LLM service. Discusses status of local LLM
     - **[Supported LLM](./SupportedAI.md)**: List of supported LLM models
+    - **[Error Handling](./ErrorHandler.md)**: How to handle errors in Plang
+    - **[Cache Handling](./CachingHandler.md)**: How to cache in Plang
+    - **[Startup parameters](./StartupParameters.md)**: Lists out what parameters can be injected at startup
     - **[Reserved keywords](https://github.com/PLangHQ/plang/blob/main/PLang/Utils/ReservedKeywords.cs)**: See list of reserved keywords in the language
 - **Developing the plang language**
     - **[Help us create PLang](./PLangDevelopment.md)**: Information on how to help with development of plang programming language.

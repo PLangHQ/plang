@@ -83,7 +83,7 @@ namespace PLang.Modules.PythonModule.Tests
 
 			Assert.AreEqual("useNamedArguments", gf.Parameters[3].Name);
 			Assert.AreEqual(true, gf.Parameters[3].Value);
-			Assert.AreEqual("result", gf.ReturnValue[0].VariableName);
+			Assert.AreEqual("result", gf.ReturnValues[0].VariableName);
 
 		}
 

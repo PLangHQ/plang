@@ -43,7 +43,7 @@ namespace PLang.Runtime.Tests
 			prParser.ForceLoadAllGoals();
 
 
-			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, outputSystemStreamFactory, errorHandlerFactory, askUserHandlerFactory);
+			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, outputSystemStreamFactory, errorHandlerFactory, errorSystemHandlerFactory, askUserHandlerFactory);
 
 		}
 
@@ -65,7 +65,8 @@ namespace PLang.Runtime.Tests
 		public async Task RunGoalTest_AppInAppsFolder_ShouldNotGetContext()
 		{
 			containerFactory = Substitute.For<IServiceContainerFactory>();
-			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
+			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(),
+				Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), errorSystemHandlerFactory, Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
 			{
 				var container = CreateServiceContainer();
 
@@ -87,7 +88,7 @@ namespace PLang.Runtime.Tests
 			var parameters = new PLangAppContext();
 			parameters.Add("Name", "Jim");
 
-			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, outputSystemStreamFactory, errorHandlerFactory, askUserHandlerFactory);
+			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, outputSystemStreamFactory, errorHandlerFactory, errorSystemHandlerFactory, askUserHandlerFactory);
 
 			await pseudoRuntime.RunGoal(engine, context, @"\", "apps/GoalWith2Steps/GoalWith2Steps", parameters);
 
@@ -98,12 +99,11 @@ namespace PLang.Runtime.Tests
 		}
 
 		[TestMethod()]
-		[ExpectedException(typeof(GoalNotFoundException))]
 		public async Task RunGoalTest_GoalNotFound()
-		{
-		
+		{	
 
-			await pseudoRuntime.RunGoal(engine, new(), @"\", "UnknownGoal.goal", new Dictionary<string, object>());
+			(var e, var err) = await pseudoRuntime.RunGoal(engine, new(), @"\", "UnknownGoal.goal", new Dictionary<string, object>());
+			Assert.AreEqual("No goals available", err.Message);
 		}
 
 		[TestMethod]
@@ -147,7 +147,8 @@ namespace PLang.Runtime.Tests
 		public async Task RunGoalTest_ParametersSetInMemoryStack()
 		{
 			containerFactory = Substitute.For<IServiceContainerFactory>();
-			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
+			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), 
+				Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), errorSystemHandlerFactory, Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
 			{
 				var container = CreateServiceContainer();
 
@@ -173,7 +174,7 @@ namespace PLang.Runtime.Tests
 		{"Age", 30}
 	};
 
-			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, outputSystemStreamFactory, errorHandlerFactory, askUserHandlerFactory);
+			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, outputSystemStreamFactory, errorHandlerFactory, errorSystemHandlerFactory, askUserHandlerFactory);
 
 			await pseudoRuntime.RunGoal(engine, context, @"\", "apps/GoalWith2Steps/GoalWith2Steps", parameters);
 

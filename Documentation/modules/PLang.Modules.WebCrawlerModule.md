@@ -127,9 +127,9 @@ For a full list of examples, visit [WebCrawler Examples](https://github.com/PLan
 ## Step Options
 Each step in a WebCrawler script can be enhanced with specific handlers to manage caching, errors, retries, or cancellations. Here are some resources to help you implement these options:
 
-- [CacheHandler](/modules/handlers/CachingHandler.md)
-- [ErrorHandler](/modules/handlers/ErrorHandler.md)
-- [RetryHandler](/modules/handlers/RetryHandler.md)
+- [CacheHandler](/CachingHandler.md)
+- [ErrorHandler](/ErrorHandler.md)
+
 - [CancellationHandler](/modules/CancelationHandler.md)
 - [Run and Forget](/modules/RunAndForget.md)
 

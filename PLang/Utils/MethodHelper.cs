@@ -40,16 +40,27 @@ namespace PLang.Utils
 			string cacheKey = callingInstance.GetType().FullName + "_" + function.FunctionName;
 
 			var methods = callingInstance.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
-			var method = methods.FirstOrDefault(p => p.Name == function.FunctionName && IsParameterMatch(p, function.Parameters) == null);
+			string? error = null;
+			var method = methods.FirstOrDefault(p => {
+				if (p.Name == function.FunctionName) {
+					error = IsParameterMatch(p, function.Parameters);
+					if (error == null) return true;
+				}
+
+				return false;
+			});
 			if (method != null) return method;
 
-			await HandleMethodNotFound(callingInstance, function);
+			throw new MissingMethodException($"Method {function.FunctionName} could not be found that matches with your statement. " + error);
+			//await HandleMethodNotFound(callingInstance, function);
 			return null;
 		}
 
 
 		private async Task HandleMethodNotFound(object callingInstance, GenericFunction function)
 		{
+			throw new MissingMethodException($"Method {function.FunctionName} could not be found that matches with your statement.");
+
 			var methods = typeHelper.GetMethodsAsString(callingInstance.GetType(), function.FunctionName);
 			string system = @"Try to map user statement to methods that are available in my class, 
 variables are defined with starting and ending %
@@ -79,9 +90,9 @@ example of answer:
 		public record MethodNotFoundResponse(string Text);
 
 
-		public MultipleBuildError? ValidateFunctions(GenericFunction[] functions, string module, MemoryStack memoryStack)
+		public GroupedBuildErrors? ValidateFunctions(GenericFunction[] functions, string module, MemoryStack memoryStack)
 		{
-			var multipleError = new MultipleBuildError("InvalidFunction");
+			var multipleError = new GroupedBuildErrors("InvalidFunction");
 			if (functions == null || functions[0] == null) return null;
 
 			foreach (var function in functions)
@@ -112,9 +123,9 @@ example of answer:
 							var parameterError = IsParameterMatch(instanceFunction, function.Parameters);
 							if (parameterError == null)
 							{
-								if (instanceFunction.ReturnType != typeof(Task) && function.ReturnValue != null && function.ReturnValue.Count > 0)
+								if (instanceFunction.ReturnType != typeof(Task) && function.ReturnValues != null && function.ReturnValues.Count > 0)
 								{
-									foreach (var returnValue in function.ReturnValue)
+									foreach (var returnValue in function.ReturnValues)
 									{
 										memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
 									}
@@ -358,6 +369,19 @@ example of answer:
 			if (VariableHelper.IsVariable(variableValue))
 			{
 				variableValue = variableHelper.LoadVariables(variableValue);
+			}
+
+			if (variableValue is string str && JsonHelper.IsJson(str))
+			{
+				if (str.TrimStart().StartsWith("{"))
+				{
+					var jobj = JObject.Parse(str);
+					variableValue = JArray.FromObject(jobj);
+				}
+				else if (str.TrimStart().StartsWith("["))
+				{
+					variableValue = JArray.Parse(str);
+				}
 			}
 
 			if (variableValue is JArray)

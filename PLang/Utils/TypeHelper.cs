@@ -1,4 +1,5 @@
 ﻿using PLang.Attributes;
+using PLang.Errors;
 using PLang.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
@@ -6,6 +7,7 @@ using PLang.Modules;
 using System.Data;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 
 namespace PLang.Utils
 {
@@ -158,7 +160,7 @@ namespace PLang.Utils
 				if (method.Module.Name != type.Module.Name) continue;
 				if (method.Name == "Run" || method.Name == "Dispose" || method.IsSpecialName) continue;
 
-				
+
 
 				strMethod += method.Name + "(";
 				var parameters = method.GetParameters();
@@ -199,11 +201,43 @@ namespace PLang.Utils
 
 				if (method.ReturnType == typeof(Task))
 				{
-					strMethod += " : void ";
+					strMethod += " : void";
 				}
 				else if (method.ReturnType.GenericTypeArguments.Length > 0)
 				{
-					strMethod += " : " + method.ReturnType.GenericTypeArguments[0].Name + " ";
+					string returns = "void";
+
+					foreach (var returnType in method.ReturnType.GenericTypeArguments)
+					{
+
+						if (returnType.Name.StartsWith("ValueTuple"))
+						{
+							foreach (var tupleType in returnType.GenericTypeArguments)
+							{
+								if (tupleType.Name == "Object" || !tupleType.IsAssignableFrom(typeof(IError)))
+								{
+									if (tupleType.Name.StartsWith("List"))
+									{
+										returns = $"List<{tupleType.GenericTypeArguments[0].Name}>";
+									}
+									else if (tupleType.Name.StartsWith("Dictionary"))
+									{
+										returns = $"Dicionary<{tupleType.GenericTypeArguments[0].Name}, {tupleType.GenericTypeArguments[1].Name}>";
+
+									}
+									else
+									{
+										returns = tupleType.Name;
+									}
+								}
+							}
+						}
+						else if (!returnType.IsAssignableFrom(typeof(IError)))
+						{
+							returns = returnType.Name;
+						}
+					}
+					strMethod += $" : {returns} ";
 				}
 				else
 				{
@@ -388,7 +422,7 @@ namespace PLang.Utils
 				if (attribute != null)
 				{
 					//schema[prop.Name] = " = " + ((DefaultValueAttribute) attribute).Value;
-					json += " = " + attribute.Value;
+					json += " = " + ((attribute.Value == null) ? "null" : attribute.Value);
 				}
 				else if (constructorParameters != null && constructorParameters.ContainsKey(prop.Name))
 				{
@@ -499,6 +533,25 @@ namespace PLang.Utils
 		public List<Type> GetRuntimeModules()
 		{
 			return runtimeModules;
+		}
+
+
+		public static List<string> GetStaticFields(Type type, BindingFlags bindingFlags = BindingFlags.Static | BindingFlags.Public)
+		{
+			List<string> keywords = new List<string>();
+
+			FieldInfo[] fields = type.GetFields(bindingFlags);
+
+			foreach (var field in fields)
+			{
+				if (field.FieldType == typeof(string))
+				{
+					keywords.Add(field.GetValue(null)!.ToString()!);
+				}
+			}
+
+			return keywords;
+
 		}
 	}
 }

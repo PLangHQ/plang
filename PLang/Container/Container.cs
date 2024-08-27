@@ -50,7 +50,8 @@ namespace PLang.Container
 
 
 		public static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeAppStartupPath,
-			IAskUserHandlerFactory askUserHandlerFactory, IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory, IErrorHandlerFactory errorHandlerFactory)
+			IAskUserHandlerFactory askUserHandlerFactory, IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory, 
+			IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory)
 		{
 			container.RegisterBaseForPLang(absoluteAppStartupPath, relativeAppStartupPath);
 			RegisterModules(container);
@@ -58,6 +59,7 @@ namespace PLang.Container
 			container.RegisterSingleton<IOutputStreamFactory>(factory => { return outputStreamFactory; });
 			container.RegisterSingleton<IOutputSystemStreamFactory>(factory => { return outputSystemStreamFactory; });
 			container.RegisterSingleton<IErrorHandlerFactory>(factory => { return errorHandlerFactory; });
+			container.RegisterSingleton<IErrorSystemHandlerFactory>(factory => { return errorSystemHandlerFactory; });
 			container.RegisterSingleton<IAskUserHandlerFactory>(factory => { return askUserHandlerFactory; });
 
 			container.RegisterForPLang(absoluteAppStartupPath, relativeAppStartupPath);
@@ -75,6 +77,7 @@ namespace PLang.Container
 
 			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler(container.GetInstance<IOutputSystemStreamFactory>()));
 			container.RegisterErrorHandlerFactory(typeof(HttpErrorHandler), true, new HttpErrorHandler(httpContext, container.GetInstance<IAskUserHandlerFactory>(), container.GetInstance<ILogger>()));
+			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler(container.GetInstance<IAskUserHandlerFactory>()));
 
 			RegisterEventRuntime(container);
 		}
@@ -91,6 +94,7 @@ namespace PLang.Container
 			
 			container.RegisterAskUserHandlerFactory(typeof(AskUserWindowHandler), true, new AskUserWindowHandler(askUserDialog));
 			container.RegisterErrorHandlerFactory(typeof(UiErrorHandler), true, new UiErrorHandler(errorDialog, container.GetInstance<IAskUserHandlerFactory>()));
+			container.RegisterErrorSystemHandlerFactory(typeof(UiErrorHandler), true, new UiErrorHandler(errorDialog, container.GetInstance<IAskUserHandlerFactory>()));
 
 			RegisterEventRuntime(container);
 		}
@@ -105,6 +109,7 @@ namespace PLang.Container
 			container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
 			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler(container.GetInstance<IOutputSystemStreamFactory>()));
 			container.RegisterErrorHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler(container.GetInstance<IAskUserHandlerFactory>()));
+			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler(container.GetInstance<IAskUserHandlerFactory>()));
 			RegisterEventRuntime(container);
 		}
 
@@ -118,6 +123,7 @@ namespace PLang.Container
 			container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
 			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler(container.GetInstance<IOutputSystemStreamFactory>()));
 			container.RegisterErrorHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler(container.GetInstance<IAskUserHandlerFactory>()));
+			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler(container.GetInstance<IAskUserHandlerFactory>()));
 
 			RegisterEventRuntime(container, true);
 		}
@@ -157,8 +163,8 @@ namespace PLang.Container
 			var runtimeContainer = new ServiceContainer();
 			var fileSystem2 = container.GetInstance<IPLangFileSystem>();
 			runtimeContainer.RegisterForPLang(fileSystem2.RootDirectory, fileSystem2.RelativeAppPath, container.GetInstance<IAskUserHandlerFactory>(),
-				container.GetInstance<IOutputStreamFactory>(), container.GetInstance<IOutputSystemStreamFactory>(), 
-				container.GetInstance<IErrorHandlerFactory>());
+				container.GetInstance<IOutputStreamFactory>(), container.GetInstance<IOutputSystemStreamFactory>(),
+				container.GetInstance<IErrorHandlerFactory>(), container.GetInstance<IErrorSystemHandlerFactory>());
 			runtimeContainer.RegisterSingleton<IEventRuntime, EventRuntime>();
 			var eventRuntime = runtimeContainer.GetInstance<IEventRuntime>();
 

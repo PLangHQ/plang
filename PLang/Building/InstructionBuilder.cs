@@ -1,24 +1,20 @@
-﻿using LightInject;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Builder;
-using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Modules;
 using PLang.Runtime;
 using PLang.Services.LlmService;
 using PLang.Utils;
-using static PLang.Modules.BaseBuilder;
-using static PLang.Utils.MethodHelper;
 
 
 namespace PLang.Building
 {
 	public interface IInstructionBuilder
 	{
-		Task<IBuilderError?> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep goalStep, string module, int stepNr, List<string>? excludeModules = null, int errorCount = 0);
+		Task<(Model.Instruction?, IBuilderError?)> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep goalStep, string module, int stepNr, List<string>? excludeModules = null, int errorCount = 0);
 	}
 
 	public class InstructionBuilder : IInstructionBuilder
@@ -48,7 +44,7 @@ namespace PLang.Building
 			this.settings = settings;
 		}
 
-		public async Task<IBuilderError?> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep step, string module, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
+		public async Task<(Model.Instruction?, IBuilderError?)> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep step, string module, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
 		{
 			var classInstance = builderFactory.Create(module);
 			classInstance.InitBaseBuilder(module, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
@@ -58,7 +54,7 @@ namespace PLang.Building
 			var build = await classInstance.Build(step);
 			if (build.BuilderError != null || build.Instruction == null || build.Instruction.Action == null)
 			{
-				return build.BuilderError ?? new InstructionBuilderError($"Could not map {step.Text} to function. Refine your text", step);
+				return (null, (build.BuilderError ?? new InstructionBuilderError($"Could not map {step.Text} to function. Refine your text", step)));
 			}
 
 			var instruction = build.Instruction;
@@ -80,9 +76,9 @@ namespace PLang.Building
 
 			// since the no invalid function, we can save the instruction file
 			WriteInstructionFile(step, instruction);
-			return null;
+			return (instruction, null);
 		}
-		private async Task<IBuilderError?> Retry(StepBuilder stepBuilder, MultipleBuildError invalidFunctionError, string module, Goal goal, GoalStep step, int stepIndex, List<string>? excludeModules, int errorCount)
+		private async Task<(Model.Instruction?, IBuilderError?)> Retry(StepBuilder stepBuilder, GroupedBuildErrors invalidFunctionError, string module, Goal goal, GoalStep step, int stepIndex, List<string>? excludeModules, int errorCount)
 		{
 			errorCount++; //always increase the errorCount to prevent endless requests
 
@@ -96,11 +92,11 @@ namespace PLang.Building
 				else
 				{
 					excludeModules.Add(module);
-					return await stepBuilder.BuildStep(goal, stepIndex, excludeModules, errorCount);
+					return (null, await stepBuilder.BuildStep(goal, stepIndex, excludeModules, errorCount));
 				}
 			}
 
-			return new InstructionBuilderError($@"Could not find module for {step.Text}. 
+			return (null, new InstructionBuilderError($@"Could not find module for {step.Text}. 
 Try defining the step in more detail.
 
 You have 3 options:
@@ -110,7 +106,7 @@ You have 3 options:
 	- Build your own module. This requires a C# developer knowledge
 
 Builder will continue on other steps but not this one ({step.Text}).
-", step);
+", step));
 		}
 
 

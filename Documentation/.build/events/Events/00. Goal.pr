@@ -14,29 +14,35 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-05-05T11:53:21.3398346+00:00",
+      "Generated": "2024-08-27T09:45:12.3548529+00:00",
       "WaitForExecution": true,
-      "ErrorHandler": null,
-      "RetryHandler": null,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
       "CacheHandler": null,
       "CancellationHandler": null,
-      "Custom": {
-        "Event": {
-          "EventType": "Before",
-          "EventScope": "Step",
-          "GoalToBindTo": ".*",
-          "GoalToCall": "!SendDebug",
-          "IncludePrivate": true,
-          "StepNumber": null,
-          "StepText": null,
-          "WaitForExecution": true,
-          "RunOnlyInDebugMode": true,
-          "OnErrorContinueNextStep": false
-        }
-      },
-      "Number": 1,
+      "Custom": {},
+      "Number": 0,
       "LineNumber": 2,
-      "LlmRequest": null
+      "LlmRequest": null,
+      "EventBinding": {
+        "EventType": "Before",
+        "EventScope": "Step",
+        "GoalToBindTo": {
+          "Value": "*"
+        },
+        "GoalToCall": {
+          "Value": "SendDebug"
+        },
+        "IncludePrivate": true,
+        "StepNumber": null,
+        "StepText": null,
+        "WaitForExecution": true,
+        "RunOnlyOnStartParameter": [
+          "--debug"
+        ],
+        "OnErrorContinueNextStep": false
+      },
+      "IsEvent": true
     },
     {
       "Text": "before goal ends, include private goals, call !SendDebug, only in debug mode",
@@ -49,31 +55,38 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-05-05T11:53:26.8526833+00:00",
+      "Generated": "2024-08-27T09:45:14.447288+00:00",
       "WaitForExecution": true,
-      "ErrorHandler": null,
-      "RetryHandler": null,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
       "CacheHandler": null,
       "CancellationHandler": null,
-      "Custom": {
-        "Event": {
-          "EventType": "Before",
-          "EventScope": "Goal",
-          "GoalToBindTo": ".*",
-          "GoalToCall": "!SendDebug",
-          "IncludePrivate": true,
-          "StepNumber": null,
-          "StepText": null,
-          "WaitForExecution": true,
-          "RunOnlyInDebugMode": true,
-          "OnErrorContinueNextStep": false
-        }
-      },
-      "Number": 2,
+      "Custom": {},
+      "Number": 1,
       "LineNumber": 3,
-      "LlmRequest": null
+      "LlmRequest": null,
+      "EventBinding": {
+        "EventType": "Before",
+        "EventScope": "EndOfApp",
+        "GoalToBindTo": {
+          "Value": "*"
+        },
+        "GoalToCall": {
+          "Value": "SendDebug"
+        },
+        "IncludePrivate": true,
+        "StepNumber": null,
+        "StepText": null,
+        "WaitForExecution": true,
+        "RunOnlyOnStartParameter": [
+          "--debug"
+        ],
+        "OnErrorContinueNextStep": false
+      },
+      "IsEvent": true
     }
   ],
+  "SubGoals": [],
   "Description": null,
   "Visibility": 1,
   "GoalFileName": "Events.goal",

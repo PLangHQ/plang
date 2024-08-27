@@ -124,6 +124,7 @@ namespace PLang.Modules.LlmModule
 			bool continuePrevConversation = false
 			)
 		{
+
 			if (promptMessages == null || promptMessages.Count == 0)
 			{
 				return (null, new StepError("The message to the llm service is empty. You must ask it something.", goalStep, "LlmError",
@@ -189,7 +190,7 @@ namespace PLang.Modules.LlmModule
 				context.AddOrReplace(PreviousConversationKey, promptMessages);
 				context.AddOrReplace(PreviousConversationSchemeKey, scheme);
 
-				if (function == null || function.ReturnValue == null || function.ReturnValue.Count == 0)
+				if (function == null || function.ReturnValues == null || function.ReturnValues.Count == 0)
 				{
 					if (response is JObject)
 					{
@@ -209,10 +210,10 @@ namespace PLang.Modules.LlmModule
 					}
 				}
 
-				if (function != null && function.ReturnValue != null && function.ReturnValue.Count > 0)
+				if (function != null && function.ReturnValues != null && function.ReturnValues.Count > 0)
 				{
 					var returnDict = new ReturnDictionary<string, object?>();
-					foreach (var returnValue in function.ReturnValue)
+					foreach (var returnValue in function.ReturnValues)
 					{
 						returnDict.AddOrReplace(returnValue.VariableName, response);
 					}

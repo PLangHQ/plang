@@ -1,0 +1,20 @@
+StepProperties
+
+You can define properties for all steps
+
+- Wait for execution of the step, default is true. When set to false, the step is run is executed in different thread and next step is executed without waiting for the result of this step.
+- LoggerLevel, there are 5 levels, 'error', 'warning', 'info', 'debug', 'trace'. Default is null. The logging level is set by system, default is 'warning' for runtime and 'information' for builder. this can be modified by creating a step ```- set logger level "trace"```
+- ErrorHandlers, how to handle error that accure in the step, see (ErrorHandler.md) for more information
+- CachingHandler, cache the result from the step, it can be absolute or a sliding period. Default is sliding.
+
+```plang
+Start
+- read file.txt, into %content%
+    cache for 5 minutes
+    set the logger to 'trace'
+    on error call HandleError, retry 3 times
+    dont wait for execution
+
+HandleError
+- write out %!error%
+```

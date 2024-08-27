@@ -1,0 +1,40 @@
+# Plang runtime and builder parameters
+
+There are some parameters you can start the plang runtime with
+
+This is how you start plang without parameters
+
+### runtime
+
+This default to running the `Start.goal` file
+```bash
+plang 
+```
+
+or to run specific goal file
+```bash
+plang /path/to/file
+```
+
+### builder
+
+to build your project
+```bash
+plang build
+```
+
+## Optional parameters
+ 
+    --debug: Starts a debug session in plang, an event folder will be added to your events folder, /events/external/plang/runtime. This will bind event before each step and send debug data to localhost:60877 which is a web server that VS Code runs as you IDE(IDE.md), see Debug for more info(Debug.md)
+
+    --csdebug: Start a debug session with CLR engine, this will allow you to debug the plang source code. You need to have the project setup and Visual studio. See Debug for more info(Debug.md)
+
+    --detailerror: by default the runtime shows only limited error information, add this parameter to get more detail when running from console
+
+    --llmservice: plang or openai. default is plang. if you have openai key you can use this parameter. See Plang or OpenAI doc(PlangOrOpenAI.md)
+
+    --version: displays the version of plang your are running. No plang code is executed.
+
+    --logger: error, warning, info, debug, trace. default is warning at runtime, information at builder runtime.
+
+    --strictbuild: matches every line number in goal files, if they dont match then rebuild the step

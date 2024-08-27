@@ -5,6 +5,7 @@ using PLang.Interfaces;
 using PLang.Models;
 using PLang.Utils;
 using PLangTests;
+using System.Xml.Linq;
 
 namespace PLang.Services.IdentityService.Tests
 {
@@ -13,6 +14,7 @@ namespace PLang.Services.IdentityService.Tests
 	{
 		IPublicPrivateKeyCreator publicPrivateKeyCreator;
 		PLangIdentityService pis;
+
 		[TestInitialize]
 		public void Init()
 		{
@@ -22,13 +24,17 @@ namespace PLang.Services.IdentityService.Tests
 
 			var settings = new List<Setting>();
 			var identites = new List<Identity>() {
-					new Identity("default", "aaa", "a26c463040c1ea9ed3a11da2a1619ab81a3937b7ab4a535a33456ebff682ed36583a5f11ed359a230cc20790284bbf7198e06091d315d02ee50cc4f351cb4f40") { IsDefault = true },
-					new Identity("default2", "aaaff", "a26c463040c1ea9ed3a11da2a1619ab81a3937b7ab4a535a33456ebff682ed36583a5f11ed359a230cc20790284bbf7198e06091d315d02ee50cc4f351cb4f40") { IsDefault = false }
+					new Identity("default", "Jgr2bN4rUi51cc44T0XOYIdsBx62kSSehj8IxBqhlgA=", "wDsnw/J1HfCj35ov/ysJbCh5Krj7rvNp3svxc0hoSjU=") { IsDefault = true },
+					new Identity("default2", "KuxObK4AAbOcKujrmv2MtULSHW7uRYumkXTWs8gHAHA=", "QsdEA952ti9f1km3x3bk7tnqZsLzOGno5QI1ae/cxig=") { IsDefault = false }
 				};
-			settings.Add(new Setting("1", "PLang.Services.IdentityService.PLangIdentityService", typeof(string).ToString(), PLangIdentityService.SettingKey, JsonConvert.SerializeObject(identites)));
+			var setting = new Setting("1", typeof(PLangIdentityService).FullName, typeof(List<Identity>).ToString(), PLangIdentityService.SettingKey, JsonConvert.SerializeObject(identites));
+			settings.Add(setting);
 
 			settingsRepository = Substitute.For<ISettingsRepository>();
+	
 			settingsRepository.GetSettings().Returns(settings);
+			settingsRepository.Get(typeof(PLangIdentityService).FullName, typeof(List<Interfaces.Identity>).ToString(), PLangIdentityService.SettingKey)
+				.Returns(setting);
 
 			publicPrivateKeyCreator.Create().Returns(new PublicPrivateKey("1234", "abcd"));
 
@@ -42,21 +48,29 @@ namespace PLang.Services.IdentityService.Tests
 		{
 			var settings = new List<Setting>();
 			Setting? setting = null;
+
 			settingsRepository.GetSettings().Returns(settings);
-			settingsRepository.Get(typeof(PLangIdentityService).FullName, typeof(List<Identity>).ToString(), PLangIdentityService.SettingKey)
+			settingsRepository.Get(typeof(PLangIdentityService).FullName, typeof(List<Interfaces.Identity>).ToString(), PLangIdentityService.SettingKey)
 				.Returns(setting);
 
-			
-			settingsRepository.Set(setting);
+
+			settingsRepository
+				.When(x => x.Set(Arg.Any<Setting>()))
+				.Do(callInfo =>
+				{
+					settingsRepository.Get(typeof(PLangIdentityService).FullName, typeof(List<Interfaces.Identity>).ToString(), PLangIdentityService.SettingKey)
+							.Returns(callInfo.Arg<Setting>());
+
+				});
 
 			publicPrivateKeyCreator.Create().Returns(new PublicPrivateKey("123", "abc"));
 
-			var identity = pis.CreateIdentity();
+			var identity = pis.CreateIdentity("main");
 
 			Assert.IsNotNull(identity);
 			Assert.AreEqual("123", identity.Identifier);
-			Assert.AreEqual("MyIdentity", identity.Name);
-			Assert.AreEqual(true, identity.IsDefault);
+			Assert.AreEqual("main", identity.Name);
+			Assert.AreEqual(false, identity.IsDefault);
 			Assert.AreEqual(false, identity.IsArchived);
 			Assert.AreEqual(null, identity.Value);
 		}
@@ -64,7 +78,7 @@ namespace PLang.Services.IdentityService.Tests
 		[TestMethod()]
 		public void CreateIdentityTest_IdentityExistsNotDefault()
 		{
-			settings.GetValues<Identity>(typeof(PLangIdentityService)).Returns(new List<Identity>() { new Identity("default", "aaa", null) });
+			//settings.GetValues<Identity>(typeof(PLangIdentityService)).Returns(new List<Identity>() { new Identity("default", "aaa", null) });
 
 
 			var identity = pis.CreateIdentity("myIdentity");
@@ -100,18 +114,16 @@ namespace PLang.Services.IdentityService.Tests
 		[ExpectedException(typeof(IdentityException))]
 		public void CreateIdentityTest_IdentityAlreadyExists()
 		{
-			settings.GetValues<Identity>(typeof(PLangIdentityService)).Returns(new List<Identity>() { new Identity("default", "aaa", null) });
-
-
 			var identity = pis.CreateIdentity("default");
 		}
+
 		[TestMethod()]
 		public void GetIdentityTest()
 		{
 			var identity = pis.GetIdentity("default");
 
 			Assert.IsNotNull(identity);
-			Assert.AreEqual("aaa", identity.Identifier);
+			Assert.AreEqual("Jgr2bN4rUi51cc44T0XOYIdsBx62kSSehj8IxBqhlgA=", identity.Identifier);
 			Assert.AreEqual("default", identity.Name);
 			Assert.AreEqual(true, identity.IsDefault);
 			Assert.AreEqual(false, identity.IsArchived);
@@ -119,7 +131,7 @@ namespace PLang.Services.IdentityService.Tests
 
 			var identity2 = pis.GetIdentity("default2");
 			Assert.IsNotNull(identity2);
-			Assert.AreEqual(identity2.Identifier, "aaaff");
+			Assert.AreEqual(identity2.Identifier, "KuxObK4AAbOcKujrmv2MtULSHW7uRYumkXTWs8gHAHA=");
 			Assert.AreEqual(identity2.Name, "default2");
 			Assert.AreEqual(identity2.IsDefault, false);
 			Assert.AreEqual(identity2.IsArchived, false);
@@ -136,17 +148,12 @@ namespace PLang.Services.IdentityService.Tests
 		[TestMethod()]
 		public void SetIdentityTest()
 		{
-			settings.GetValues<Identity>(typeof(PLangIdentityService)).Returns(
-				new List<Identity>() {
-					new Identity("default", "aaa", null) { IsDefault = true },
-					new Identity("default2", "aaaff", null) { IsDefault = false }
-				});
 
 			pis.SetIdentity("default2");
 
 			var identity = pis.GetCurrentIdentity();
 			Assert.IsNotNull(identity);
-			Assert.AreEqual("aaaff", identity.Identifier);
+			Assert.AreEqual("KuxObK4AAbOcKujrmv2MtULSHW7uRYumkXTWs8gHAHA=", identity.Identifier);
 			Assert.AreEqual("default2", identity.Name);
 			Assert.AreEqual(false, identity.IsDefault);
 			Assert.AreEqual(false, identity.IsArchived);
@@ -164,8 +171,8 @@ namespace PLang.Services.IdentityService.Tests
 
 			var identity = pis.GetCurrentIdentity();
 			Assert.IsNotNull(identity);
-			Assert.AreEqual("aaa", identity.Identifier);
 			Assert.AreEqual("default", identity.Name);
+			Assert.AreEqual("Jgr2bN4rUi51cc44T0XOYIdsBx62kSSehj8IxBqhlgA=", identity.Identifier);
 			Assert.AreEqual(true, identity.IsDefault);
 			Assert.AreEqual(false, identity.IsArchived);
 			Assert.AreEqual(null, identity.Value);
@@ -173,11 +180,11 @@ namespace PLang.Services.IdentityService.Tests
 		[TestMethod()]
 		public void GetCurrentIdentityTest_NoDefaultExistsSelectFirst()
 		{
-			
+
 			var identity = pis.GetCurrentIdentity();
 			Assert.IsNotNull(identity);
-			Assert.AreEqual("aaa", identity.Identifier);
 			Assert.AreEqual("default", identity.Name);
+			Assert.AreEqual("Jgr2bN4rUi51cc44T0XOYIdsBx62kSSehj8IxBqhlgA=", identity.Identifier);			
 			Assert.AreEqual(true, identity.IsDefault);
 			Assert.AreEqual(false, identity.IsArchived);
 			Assert.AreEqual(null, identity.Value);
@@ -188,6 +195,15 @@ namespace PLang.Services.IdentityService.Tests
 			var settings = new List<Setting>();
 			settingsRepository = Substitute.For<ISettingsRepository>();
 			settingsRepository.GetSettings().Returns(settings);
+			settingsRepository
+			.When(x => x.Set(Arg.Any<Setting>()))
+			.Do(callInfo =>
+			{
+				settingsRepository.Get(typeof(PLangIdentityService).FullName, typeof(List<Interfaces.Identity>).ToString(), PLangIdentityService.SettingKey)
+						.Returns(callInfo.Arg<Setting>());
+
+			});
+
 
 			PLangIdentityService pis = new PLangIdentityService(settingsRepository, publicPrivateKeyCreator, context);
 			var identity = pis.GetCurrentIdentity();
@@ -203,7 +219,7 @@ namespace PLang.Services.IdentityService.Tests
 
 		[TestMethod()]
 		public void ArchiveIdentityTest()
-		{		
+		{
 
 			var identity = pis.ArchiveIdentity("default2");
 

@@ -1,0 +1,4 @@
+Events
+- on any step, call goal DoStuff
+- before error handler on step, call BeforeStepErrorHandler
+- after error handler on step, call AfterStepErrorHandler

@@ -1,8 +1,10 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OpenQA.Selenium.DevTools.V124.Page;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Builder;
+using PLang.Errors.Runtime;
 using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Utils
@@ -11,10 +13,9 @@ namespace PLang.Utils
 	{
 		public static IBuilderError GetMultipleBuildError(IBuilderError initialError, IError? secondError)
 		{
-			if (secondError == null) return initialError;
+			if (secondError == null || initialError == secondError) return initialError;
 
-			var multipleError = new MultipleBuildError();
-			multipleError.Add(initialError);
+			var multipleError = new MultipleBuildError(initialError);
 			multipleError.Add(secondError);
 			return multipleError;
 		}
@@ -22,25 +23,48 @@ namespace PLang.Utils
 		{
 			if (secondError == null) return initialError;
 
-			var multipleError = new MultipleError();
-			multipleError.Add(initialError);
+			var multipleError = new MultipleError(initialError);
 			multipleError.Add(secondError);
 			return multipleError;
 		}
 
-		public static string FormatLine(string txt)
-		{			
-			var lines = txt.Trim().Split(Environment.NewLine);
+		public static string FormatLine(string? txt, string? lineStarter = null, bool indent = false)
+		{
+			if (txt == null) return null;
+			var lines = txt.Trim().Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
 			if (lines.Length == 0) return txt;
-			var text = lines[0];
-			for (int i =1;i<lines.Length;i++)
+			var text = String.Empty;
+			string tab = (indent) ? "\t" : "";
+			for (int i = 0; i < lines.Length; i++)
 			{
-				text += Environment.NewLine + "\t  " + lines[i].Trim();
+				if (lineStarter != null)
+				{
+					text += $"{tab}{lineStarter} {lines[i].TrimStart(lineStarter[0]).Trim()}{Environment.NewLine}";
+				}
+				else
+				{
+					text += $"{tab}{lines[i].Trim()}{Environment.NewLine}";
+				}
 			}
-			return text;
+			return text.TrimEnd();
 		}
 		public static object ToFormat(string contentType, IError error, string[]? propertyOrder = null, string? extraInfo = null)
 		{
+			AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool detailedError);
+			if (error is UserDefinedError && contentType == "json")
+			{
+				if (JsonHelper.IsJson(error.Message))
+				{
+					return error.Message;
+				}
+				else
+				{
+					var obj = new JObject();
+					obj.Add("error", true);
+					obj.Add("message", error.Message);
+					return obj;
+				}
+			}
 			var errorType = error.GetType();
 			var properties = error.GetType().GetProperties();
 			var propertyOrderValue = new Dictionary<string, object?>();
@@ -61,55 +85,58 @@ namespace PLang.Utils
 					}
 				}
 			}
+			
 
 			var property = properties.FirstOrDefault(p => p.Name.Equals("Goal"));
-			if (property != null) goal = (Goal?)property.GetValue(error);
-
-			property = properties.FirstOrDefault(p => p.Name.Equals("Goal"));
 			if (property != null) goal = (Goal?)property.GetValue(error);
 
 			property = properties.FirstOrDefault(p => p.Name.Equals("Step"));
 			if (property != null) step = (GoalStep?)property.GetValue(error);
 
 			property = properties.FirstOrDefault(p => p.Name.Equals("GenericFunction"));
-			if (property != null) genericFunction = (GenericFunction?)property.GetValue(error);
+			if (detailedError && property != null) genericFunction = (GenericFunction?)property.GetValue(error);
 
 			property = properties.FirstOrDefault(p => p.Name.Equals("ParameterValues"));
-			if (property != null) parameterValues = (Dictionary<string, object?>?)property.GetValue(error);
+			if (detailedError && property != null) parameterValues = (Dictionary<string, object?>?)property.GetValue(error);
 
 			property = properties.FirstOrDefault(p => p.Name.Equals("Exception"));
-			if (property != null) exception = (Exception?)property.GetValue(error);
+			if (detailedError && property != null) exception = (Exception?)property.GetValue(error);
 			string? errorSource = null;
 			string? fixSuggestions = null;
 			if (error.FixSuggestion != null)
 			{
 				fixSuggestions = $@"🛠️ Fix Suggestions:
-	- {FormatLine(error.FixSuggestion)}";
+{FormatLine(error.FixSuggestion, "-", true)}";
 			}
 			string? helpfulLinks = null;
 			if (error.HelpfulLinks != null)
 			{
 				helpfulLinks += $@"🔗 Helpful Links:
-	- {FormatLine(error.HelpfulLinks)}";
+{FormatLine(error.HelpfulLinks, "-", true)}";
 			}
 
 			string firstLine = $"";
-			if (step != null) {
+			if (step != null)
+			{
 				firstLine = $@"📄 File: {step.Goal.RelativeGoalPath}:{step.LineNumber}
 🔢 Line: {step.LineNumber}
 
 🔎 Error Details - Code snippet that the error occured:
-	`- {FormatLine(step.Text.MaxLength(160))}`
+{FormatLine(step.Text.MaxLength(160), indent: true)}
 ";
-				errorSource = $@"📦 Error Source:
+				if (!string.IsNullOrWhiteSpace(step.ModuleType))
+				{
+					errorSource = $@"📦 Error Source:
 	- The error occurred in the module: `{step.ModuleType}`";
-				
-			} else if (goal != null)
+				}
+
+			}
+			else if (goal != null)
 			{
 				firstLine = $@"📄 File: {goal.RelativeGoalPath}";
 			}
 
-			
+
 			if (genericFunction != null)
 			{
 				string paramsStr = $"";
@@ -132,10 +159,10 @@ namespace PLang.Utils
 					}
 				}
 				string returnStr = "";
-				if (genericFunction.ReturnValue != null && genericFunction.ReturnValue.Count > 0)
+				if (genericFunction.ReturnValues != null && genericFunction.ReturnValues.Count > 0)
 				{
 					returnStr = "\nThe results will be written into ";
-					foreach (var returnValue in genericFunction.ReturnValue)
+					foreach (var returnValue in genericFunction.ReturnValues)
 					{
 						returnStr += $"\t- %{returnValue.VariableName}%\n";
 					}
@@ -144,11 +171,11 @@ namespace PLang.Utils
 				if (!string.IsNullOrEmpty(paramsStr) || !string.IsNullOrEmpty(returnStr))
 				{
 					paramInfo = $@"- Parameters:
-		{FormatLine(paramsStr)}
-		{FormatLine(returnStr)}";
+		{FormatLine(paramsStr, "-", true)}
+		{FormatLine(returnStr, "-", true)}";
 				}
 
-				if (step != null)
+				if (step != null && !string.IsNullOrEmpty(step.ModuleType))
 				{
 					errorSource = $@"
 📦 Error Source:
@@ -173,8 +200,7 @@ namespace PLang.Utils
 🚫 Reason: {reasonAndFix}
 
 {errorSource}
-
-{extraInfo}
+{FormatLine(extraInfo)}
 ".TrimEnd();
 
 			if (contentType == "json")
@@ -185,14 +211,17 @@ namespace PLang.Utils
 				{
 					obj.Add("Parameters", JsonConvert.SerializeObject(genericFunction.Parameters));
 					obj.Add("ParameterValues", JsonConvert.SerializeObject(parameterValues));
-					obj.Add("ReturnValue", JsonConvert.SerializeObject(genericFunction.ReturnValue));
+					obj.Add("ReturnValues", JsonConvert.SerializeObject(genericFunction.ReturnValues));
 				}
-				
+
 				if (exception != null)
 				{
 					obj.Add("Exception", exception.ToString());
 				}
-				obj.Add("Error", JObject.FromObject(error));
+				if (detailedError)
+				{
+					obj.Add("Error", JObject.FromObject(error));
+				}
 				return obj;
 			}
 
@@ -200,13 +229,13 @@ namespace PLang.Utils
 			{
 				message += $@"
 
-👨‍💻 For Developers:
+👨‍💻 For C# Developers:
 	- {FormatLine(exception.ToString())}";
 			}
 
 			return message;
 		}
 
-		
+
 	}
 }

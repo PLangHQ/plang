@@ -85,9 +85,13 @@ namespace PLang.Modules
 
 			(var result, var queryError) = await llmServiceFactory.CreateHandler().Query(question, responseType);
 			if (queryError != null) return (null, queryError as IBuilderError);
-			if (result == null)
+			if (result == null || (result is string str && string.IsNullOrEmpty(str)))
 			{
 				return (null, new StepBuilderError($"Could not build for {responseType.Name}", step));
+			}
+			if (result is GenericFunction gf && gf.FunctionName == "N/A" && errorCount >= 3)
+			{
+				return (null, new StepBuilderError($"Could find function to match step in module {step.ModuleType}", step));
 			}
 
 			var instruction = new Instruction(result);
@@ -132,7 +136,7 @@ This is the error(s)
 
 		public record Parameter(string Type, string Name, object Value);
 		public record ReturnValue(string Type, string VariableName);
-		public record GenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValue = null);
+		public record GenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValues = null);
 
 		public void AppendToSystemCommand(string appendedSystemCommand)
 		{

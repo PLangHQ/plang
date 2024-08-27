@@ -1,6 +1,7 @@
 {
   "GoalName": "StopRunning",
   "Comment": null,
+  "Text": "StopRunning",
   "GoalSteps": [
     {
       "Text": "set default value of %test% to false",
@@ -13,7 +14,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-11T16:05:04.0587376+01:00",
+      "Generated": "2024-02-11T15:05:04.0587376+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -80,7 +81,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-03-13T15:18:41.7273805+01:00",
+      "Generated": "2024-03-13T14:18:41.7273805+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -147,7 +148,7 @@
       "Indent": 4,
       "Execute": false,
       "RunOnce": false,
-      "Generated": "2024-02-11T16:05:26.4613704+01:00",
+      "Generated": "2024-02-11T15:05:26.4613704+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -214,7 +215,7 @@
       "Indent": 4,
       "Execute": false,
       "RunOnce": false,
-      "Generated": "2024-02-11T16:05:31.3067606+01:00",
+      "Generated": "2024-02-11T15:05:31.3067606+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -281,7 +282,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-11T16:05:42.3164697+01:00",
+      "Generated": "2024-02-11T15:05:42.3164697+00:00",
       "WaitForExecution": true,
       "ErrorHandler": null,
       "RetryHandler": null,
@@ -338,16 +339,19 @@
       }
     }
   ],
-  "Description": null,
+  "Description": "This goal sets a default value for the variable %test% and checks if %test% is false. If %test% is false, it writes 'will end goal now' and ends the goal. If %test% is true, it writes 'This should not print out'.",
   "Visibility": 1,
   "GoalFileName": "StopRunning.goal",
   "RelativeGoalPath": "\\StopRunning.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\StopRunning\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\StopRunning",
-  "BuilderVersion": "0.1.0.0",
-  "GoalApiInfo": null,
+  "BuilderVersion": "0.1.0.14",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "5f9be20e5ab243bb9a420fcf463d474e249bb8f5337fecb16f52d774f6286bdc"
+  "Hash": "39e5d0d7d49d750ee163ea41fcbe443c11062af92d9ab6b6044fb8201f18b83f",
+  "IncomingVariablesRequired": [
+    "%test%"
+  ]
 }

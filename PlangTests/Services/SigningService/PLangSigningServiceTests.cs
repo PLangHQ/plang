@@ -1,11 +1,13 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
+using NSec.Cryptography;
 using NSubstitute;
 using PLang.Interfaces;
 using PLang.Services.IdentityService;
 using PLang.Services.SettingsService;
 using PLang.Utils;
 using PLangTests;
+using System.Text;
 
 namespace PLang.Services.SigningService.Tests
 {
@@ -19,7 +21,7 @@ namespace PLang.Services.SigningService.Tests
 			Initialize();
 
 
-			identityService.GetCurrentIdentityWithPrivateKey().Returns(new Identity("MyIdentity", "0x123", "a26c463040c1ea9ed3a11da2a1619ab81a3937b7ab4a535a33456ebff682ed36583a5f11ed359a230cc20790284bbf7198e06091d315d02ee50cc4f351cb4f40") { IsDefault = true });
+			identityService.GetCurrentIdentityWithPrivateKey().Returns(new Identity("MyIdentity", "Jgr2bN4rUi51cc44T0XOYIdsBx62kSSehj8IxBqhlgA=", "wDsnw/J1HfCj35ov/ysJbCh5Krj7rvNp3svxc0hoSjU=") { IsDefault = true });
 
 			SystemTime.OffsetUtcNow = () =>
 			{
@@ -33,6 +35,7 @@ namespace PLang.Services.SigningService.Tests
 			signingService = new PLangSigningService(appCache, identityService, context);
 
 		}
+		
 
 		[TestMethod()]
 		public async Task SignTest()
@@ -43,7 +46,7 @@ namespace PLang.Services.SigningService.Tests
 			string contract = "C0";			
 
 			var signatureInfo = signingService.Sign(body, method, url, contract);
-			Assert.AreEqual("0x877335ab08164c667f26aad41b03a6be542cf5f445dfba988acc636345881099673f7affcdbacaf2d741674ad60ed4690720e533403e377b2e6267170a4d2b111b", signatureInfo["X-Signature"]);
+			Assert.AreEqual("rJ3u5g2vaWiUYGuDClMoGMaI0yyhDmTxUqmL+4c3Vy0lX95qy55pNzgZNXo3RqKzZfGsrFuQfq9dyUYoJsKkAw==", signatureInfo["X-Signature"]);
 
 		}
 
@@ -78,10 +81,10 @@ namespace PLang.Services.SigningService.Tests
 			validationKeyValues.Add("X-Signature", signature["X-Signature"]);
 			validationKeyValues.Add("X-Signature-Created", SystemTime.OffsetUtcNow().ToUnixTimeMilliseconds());
 			validationKeyValues.Add("X-Signature-Nonce", SystemNonce.New());
-			validationKeyValues.Add("X-Signature-Address", "0x39AdD0ff2cb924fe6f268305324f3cBD9873A323");
+			validationKeyValues.Add("X-Signature-Public-Key", "Jgr2bN4rUi51cc44T0XOYIdsBx62kSSehj8IxBqhlgA=");
 			validationKeyValues.Add("X-Signature-Contract", contract);
 
-			var result = await signingService.VerifySignature("123", body, method, url, validationKeyValues);
+			var result = await signingService.VerifySignature(body, method, url, validationKeyValues);
 			Assert.IsNotNull(result);
 		}
 
@@ -108,7 +111,7 @@ namespace PLang.Services.SigningService.Tests
 				return DateTimeOffset.UtcNow;
 			};
 
-			var result = await signingService.VerifySignature("123", body, method, url, signature);
+			var result = await signingService.VerifySignature(body, method, url, signature);
 		}
 
 		[TestMethod()]
@@ -137,7 +140,7 @@ namespace PLang.Services.SigningService.Tests
 				return DateTimeOffset.UtcNow.AddMinutes(1);
 			};
 
-			var result = await signingService.VerifySignature("123", body, method, url, signature);
+			var result = await signingService.VerifySignature(body, method, url, signature);
 		}
 
 		[TestMethod()]
@@ -149,11 +152,11 @@ namespace PLang.Services.SigningService.Tests
 			string method = "POST";
 			string url = "http://plang.is";
 			string contract = "C0";
-			context.AddOrReplace(Settings.SaltKey, "123");
+
 			var signature = signingService.Sign(body, method, url, contract);
 
-			var result = await signingService.VerifySignature("123", body, method, url, signature);
-			var result2 = await signingService.VerifySignature("123", body, method, url, signature);
+			var result = await signingService.VerifySignature(body, method, url, signature);
+			var result2 = await signingService.VerifySignature(body, method, url, signature);
 		}
 
 	}

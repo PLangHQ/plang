@@ -95,9 +95,9 @@ For a comprehensive list of examples, visit the [Message module examples](https:
 
 ## Step Options
 Each step in your PLang code can be enhanced with various options to handle different scenarios effectively:
-- [CacheHandler](/modules/handlers/CachingHandler.md): Helps in storing and retrieving data efficiently.
-- [ErrorHandler](/modules/handlers/ErrorHandler.md): Manages errors gracefully during the execution of steps.
-- [RetryHandler](/modules/handlers/RetryHandler.md): Attempts to execute a step multiple times in case of failure.
+- [CacheHandler](/CachingHandler.md): Helps in storing and retrieving data efficiently.
+- [ErrorHandler](/ErrorHandler.md): Manages errors gracefully during the execution of steps.
+: Attempts to execute a step multiple times in case of failure.
 - [CancellationHandler](/modules/CancelationHandler.md): Allows steps to be cancelled if they take too long or conditions change.
 - [Run and Forget](/modules/RunAndForget.md): Executes a step without waiting for its completion, useful for background tasks.
 

@@ -11,16 +11,16 @@ namespace PLang.Services.OutputStream
 	public class JsonOutputStream : IOutputStream, IDisposable
 	{
 		private readonly HttpListenerContext httpContext;
-
+		private readonly MemoryStream memoryStream;
 		public JsonOutputStream(HttpListenerContext httpContext)
 		{
 			this.httpContext = httpContext;
-
+			this.memoryStream = new MemoryStream();
 			httpContext.Response.ContentType = "application/json";
 		}
 
-		public Stream Stream => httpContext.Response.OutputStream;
-		public Stream ErrorStream => httpContext.Response.OutputStream;
+		public Stream Stream { get { return this.memoryStream; } }
+		public Stream ErrorStream { get { return this.memoryStream; } }
 
 		public async Task<string> Ask(string text, string type, int statusCode = 400)
 		{
@@ -47,6 +47,7 @@ namespace PLang.Services.OutputStream
 		public void Dispose()
 		{
 			httpContext.Response.OutputStream.Close();
+			memoryStream.Dispose();
 		}
 
 		public string Read()
@@ -87,8 +88,8 @@ namespace PLang.Services.OutputStream
 			if (content == null) return;
 
 			byte[] buffer = Encoding.UTF8.GetBytes(content);
-
-			httpContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
+			memoryStream.Write(buffer, 0, buffer.Length);
+			//httpContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
 
 			
 			return;

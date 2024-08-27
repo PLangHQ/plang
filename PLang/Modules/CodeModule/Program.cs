@@ -87,26 +87,27 @@ namespace PLang.Modules.CodeModule
 				}
 				var parameters = method.GetParameters();
 
+
+
 				List<object?> parametersObject = new();
 				for (var i = 0; i < parameters.Length; i++)
 				{
-					var parameterType = parameters[i].ParameterType;
-					if (parameterType.FullName == "PLang.SafeFileSystem.PLangFileSystem")
-					{
-						parametersObject.Add(fileSystem);
-					}
-					else if (parameters[i].IsOut || parameters[i].ParameterType.IsByRef)
+					if (parameters[i].IsOut || parameters[i].ParameterType.IsByRef)
 					{
 						Type? outType = parameters[i].ParameterType.GetElementType();
 						if (outType == null) continue;
-
-						var key = parameters[i].Name!;
-						if (key.ToLower().StartsWith("settings."))
+						if (answer.OutParameters == null)
 						{
-							key = "%" + key + "%";
+							return new ProgramError($"{parameters[i].Name} is not defined in code. Please rebuild step", goalStep, function, StatusCode: 500);
 						}
 
-						var value = memoryStack.Get(key, parameters[i].ParameterType);
+						var outParameter = answer.OutParameters.FirstOrDefault(p => p.ParameterName == parameters[i].Name);
+						if (outParameter == null)
+						{
+							return new ProgramError($"{parameters[i].Name} could not be found in build code. Please rebuild step", goalStep, function, StatusCode: 500);
+						}
+
+						var value = memoryStack.Get(outParameter.VariableName, parameters[i].ParameterType);
 						if (value == null && outType.IsValueType)
 						{
 							parametersObject.Add(Activator.CreateInstance(outType));
@@ -115,12 +116,25 @@ namespace PLang.Modules.CodeModule
 						{
 							parametersObject.Add(value);
 						}
-
 					}
 					else
 					{
-						var value = memoryStack.Get(parameters[i].Name!, parameters[i].ParameterType);
-						parametersObject.Add(value);
+
+						var parameterType = parameters[i].ParameterType;
+						if (parameterType.FullName == "PLang.SafeFileSystem.PLangFileSystem")
+						{
+							parametersObject.Add(fileSystem);
+						}
+						else
+						{
+							var inParameter = answer.InputParameters.FirstOrDefault(p => p.ParameterName == parameters[i].Name);
+							if (inParameter == null)
+							{
+								return new ProgramError($"{parameters[i].Name} could not be found in build code. Please rebuild step", goalStep, function, StatusCode: 500);
+							}
+							var value = memoryStack.Get(inParameter.VariableName, parameters[i].ParameterType);
+							parametersObject.Add(value);
+						}
 					}
 				}
 				var args = parametersObject.ToArray();

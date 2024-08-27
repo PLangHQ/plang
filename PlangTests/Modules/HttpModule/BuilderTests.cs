@@ -67,7 +67,7 @@ namespace PLang.Modules.HttpModule.Tests
 			Assert.AreEqual("Get", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
 			Assert.AreEqual("http://example.org", gf.Parameters[0].Value);
-			AssertVar.AreEqual("json", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("json", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -89,7 +89,7 @@ namespace PLang.Modules.HttpModule.Tests
 			Assert.AreEqual("Post", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
 			Assert.AreEqual("http://example.org", gf.Parameters[0].Value);
-			AssertVar.AreEqual("json", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("json", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -110,7 +110,7 @@ namespace PLang.Modules.HttpModule.Tests
 			Assert.AreEqual("Patch", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
 			Assert.AreEqual("http://example.org", gf.Parameters[0].Value);
-			AssertVar.AreEqual("json", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("json", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -130,7 +130,7 @@ namespace PLang.Modules.HttpModule.Tests
 			Assert.AreEqual("Delete", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
 			Assert.AreEqual("http://example.org", gf.Parameters[0].Value);
-			AssertVar.AreEqual("json", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("json", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -150,7 +150,7 @@ namespace PLang.Modules.HttpModule.Tests
 			Assert.AreEqual("Put", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
 			Assert.AreEqual("http://example.org", gf.Parameters[0].Value);
-			AssertVar.AreEqual("json", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("json", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -170,7 +170,7 @@ namespace PLang.Modules.HttpModule.Tests
 			Assert.AreEqual("Head", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
 			Assert.AreEqual("http://example.org", gf.Parameters[0].Value);
-			AssertVar.AreEqual("json", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("json", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -190,7 +190,7 @@ namespace PLang.Modules.HttpModule.Tests
 			Assert.AreEqual("Option", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
 			Assert.AreEqual("http://example.org", gf.Parameters[0].Value);
-			AssertVar.AreEqual("json", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("json", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -211,7 +211,7 @@ namespace PLang.Modules.HttpModule.Tests
 			Assert.AreEqual("PostMultipartFormData", gf.FunctionName);
 			Assert.AreEqual("url", gf.Parameters[0].Name);
 			Assert.AreEqual("http://example.org", gf.Parameters[0].Value);
-			AssertVar.AreEqual("%json%", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("%json%", gf.ReturnValues[0].VariableName);
 
 		}
 

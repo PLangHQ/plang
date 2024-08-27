@@ -140,35 +140,33 @@ namespace PLang.Runtime
 			if (variableName.Contains("[") && variableName.Contains("]"))
 			{
 				var numberData = variableName.Remove(0, variableName.IndexOf("[") + 1);
-				variableName = variableName.Substring(0, variableName.IndexOf("["));
-				objectValue = GetObjectValue(variableName, staticVariable);
+				if (numberData.IndexOf("]") != -1)
+				{
+					variableName = variableName.Substring(0, variableName.IndexOf("["));
+					objectValue = GetObjectValue(variableName, staticVariable);
 
-				numberData = numberData.Substring(0, numberData.IndexOf("]")).Trim();
-				if (numberData == "0")
-				{
-					throw new ArgumentException("Index starts from 1, not 0.");
-				}
-				if (objectValue.Initiated && objectValue.Value.GetType().Name.StartsWith("Dictionary"))
-				{
-					if (numberData.StartsWith("%") && numberData.EndsWith("%"))
+					numberData = numberData.Substring(0, numberData.IndexOf("]")).Trim();
+					if (objectValue.Initiated && objectValue.Value.GetType().Name.StartsWith("Dictionary"))
 					{
-						dictKey = Get(numberData)?.ToString() ?? "";
+						if (numberData.StartsWith("%") && numberData.EndsWith("%"))
+						{
+							dictKey = Get(numberData)?.ToString() ?? "";
+						}
+						else
+						{
+							dictKey = numberData.Replace("\"", "");
+						}
 					}
 					else
 					{
-						dictKey = numberData.Replace("\"", "");
-					}
-				}
-				else
-				{
-					if (!int.TryParse(numberData, out index))
-					{
-						if (variables.TryGetValue(numberData, out var indexObjectValue))
+						if (!int.TryParse(numberData, out index))
 						{
-							index = (indexObjectValue.Value as int? ?? 0);
+							if (variables.TryGetValue(numberData, out var indexObjectValue))
+							{
+								index = (indexObjectValue.Value as int? ?? 0);
+							}
 						}
 					}
-					index--;
 				}
 			}
 
@@ -187,7 +185,15 @@ namespace PLang.Runtime
 				objectValue = GetItemFromListOrDictionary(objectValue, index, dictKey, variableName);
 			}
 
-			if ((index == 0 && dictKey == "" && key.Contains("[") && key.Contains("]")) || (objectValue.Value is JObject || objectValue.Value is JArray))
+			if (objectValue.Value is JToken jToken && keySplit.Length > 0) {
+				string tempJsonPath = "$." + string.Join(".", keySplit.Skip(1));
+				if (jToken.SelectTokens(tempJsonPath).ToArray().Length >0)
+				{
+					jsonPath = tempJsonPath;
+				}
+			}
+
+			if (jsonPath == null && ((index == 0 && dictKey == "" && key.Contains("[") && key.Contains("]")) || (objectValue.Value is JObject || objectValue.Value is JArray)))
 			{
 				jsonPath = null;
 				if (keySplit.Length == 1 && keySplit[0].Contains("[") && keySplit[0].Contains("]"))
@@ -226,7 +232,7 @@ namespace PLang.Runtime
 		{
 			if (obj == null) return false;
 			if (propertyName == null) return false;
-
+			
 			return obj.GetType().GetProperties().FirstOrDefault(p => p.Name.ToLower() == propertyName.ToLower()) != null;
 		}
 		public bool HasMethod(object? obj, string methodName)
@@ -244,7 +250,6 @@ namespace PLang.Runtime
 			{
 				if (int.TryParse(match.Groups["number"].Value, out var number))
 				{
-					number--;
 					if (i == 0) {
 						return $"$[{number}]";
 					}
@@ -265,7 +270,8 @@ namespace PLang.Runtime
 			for (int i = 1; i < keySplit.Length; i++)
 			{
 				var section = keySplit[i];
-				if (!section.Contains("(") && jsonPath == null) //property
+				if (jsonPath != null && jsonPath.Contains("." + section)) continue;
+				if (!section.Contains("(")) //property
 				{
 					calls.Add(section);
 				}
@@ -893,14 +899,20 @@ namespace PLang.Runtime
 				var property = type.GetProperties().Where(p => p.Name.ToLower() == propertyDescription.ToLower()).FirstOrDefault();
 				if (property == null)
 				{
-					if (obj is string && JsonHelper.IsJson(obj, out object parsedObject)) {
+					object? parsedObject = null;
+					if (obj is JToken || (obj is string && JsonHelper.IsJson(obj, out parsedObject))) {
 						IEnumerable<JToken> tokens;
+						if (parsedObject == null) parsedObject = obj;
+
 						if (parsedObject is JArray)
 						{
 							tokens = ((JArray)parsedObject).SelectTokens(propertyDescription);
-						} else
+						} else if (parsedObject is JObject)
 						{
 							tokens = ((JObject)parsedObject).SelectTokens(propertyDescription);
+						} else
+						{
+							tokens = ((JToken)parsedObject).SelectTokens(propertyDescription);
 						}
 						var array = tokens.ToArray();
 						if (array.Length != 1)
@@ -915,7 +927,27 @@ namespace PLang.Runtime
 					// Not to throw exception on build if property is not found.
 					else if (!isBuilder)
 					{
-						throw new PropertyNotFoundException($"Property '{propertyDescription}' was not found on %{variableName}%. The %{variableName}% value is '{obj}'");
+						var strProps = "";
+						var propertyNames = obj.GetType().GetProperties().Select(p => p.Name).ToList();
+
+						var properties = propertyNames
+							.Select(name => new { Name = name, Distance = name.FuzzyMatchScore(propertyDescription) })
+							.OrderBy(x => x.Distance)
+							.ThenBy(x => x.Name).ToList();
+						string didYouMean = "";
+						if (properties.Count > 0)
+						{
+							if (properties[0].Distance < 5)
+							{
+								didYouMean = $"Did you mean to use {properties[0].Name}?\n";
+							}
+							foreach (var cp in properties)
+							{
+								strProps += $"\t- {cp.Name}{Environment.NewLine}";
+							}
+						}
+
+						throw new PropertyNotFoundException($"Property '{propertyDescription}' was not found on %{variableName}%. {didYouMean}\nAvailable properties in %{variableName}% are:\n{strProps}\nYou must rewrite your step with a property that exists.");
 					}
 				}
 				else

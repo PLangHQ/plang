@@ -68,7 +68,7 @@ namespace PLang.Modules.MessageModule.Tests
 			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("GetPublicKey", gf.FunctionName);
-			Assert.AreEqual("publicKey", gf.ReturnValue[0].VariableName);
+			Assert.AreEqual("publicKey", gf.ReturnValues[0].VariableName);
 
 
 		}

@@ -152,7 +152,7 @@ namespace PLang.Utils.Tests
 			var method = await methodHelper.GetMethod(this, gf);
 			var parameters = methodHelper.GetParameterValues(method, gf);
 			Assert.AreEqual("WriteExcelFile", method.Name);
-			Assert.AreEqual(1, ((string[])parameters["variablesToWriteToExcel"]).Length);
+			Assert.AreEqual("1,2,3", parameters["variablesToWriteToExcel"]);
 
 		}
 

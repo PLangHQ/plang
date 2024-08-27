@@ -142,7 +142,7 @@ namespace PLang.Runtime
 				}
 
 
-				error = await eventRuntime.RunStartEndEvents(context, EventType.After, EventScope.StartOfApp);
+				error = await eventRuntime.RunStartEndEvents(context, EventType.After, EventScope.EndOfApp);
 				if (error != null)
 				{
 					await HandleError(error);
@@ -190,8 +190,7 @@ namespace PLang.Runtime
 			var appErrorEvent = await eventRuntime.AppErrorEvents(context, error);
 			if (appErrorEvent != null)
 			{
-				var me = new MultipleError("Critical");
-				me.Add(error);
+				var me = new MultipleError(error, "Critical");
 				me.Add(appErrorEvent);
 
 				await container.GetInstance<IErrorHandlerFactory>().CreateHandler().ShowError(me);
@@ -411,7 +410,7 @@ namespace PLang.Runtime
 
 		private async Task<IError?> HandleGoalError(IError error, Goal goal, int goalStepIndex)
 		{
-			if (error is IErrorHandled) return error;
+			if (error is IErrorHandled || error is UserDefinedError) return error;
 
 			var eventError = await eventRuntime.RunGoalErrorEvents(context, goal, goalStepIndex, error);
 			return eventError;
@@ -424,36 +423,40 @@ namespace PLang.Runtime
 			{
 				if (HasExecuted(step)) return null;
 
-				var error = await eventRuntime.RunStepEvents(context, EventType.Before, goal, step);
-				if (error != null) return error;
+				IError? error = null;
+				
+				if (retryCount == 0)
+				{
+					// Only run event one time, even if step is tried multiple times
+					error = await eventRuntime.RunStepEvents(context, EventType.Before, goal, step);
+					if (error != null) return error;
+				}
 
 				logger.LogDebug($"- {step.Text.Replace("\n", "").Replace("\r", "").MaxLength(80)}");
 
 				var prError = await ProcessPrFile(goal, step, goalStepIndex);
 				if (prError != null)
 				{
-					var result = await HandleStepError(goal, step, goalStepIndex, prError, retryCount);
-					if (result != null) return result;
+					var handleErrorResult = await HandleStepError(goal, step, goalStepIndex, prError, retryCount);
+					if (handleErrorResult != null && handleErrorResult is not ErrorHandled) return handleErrorResult;
 				}
-
-				error = await eventRuntime.RunStepEvents(context, EventType.After, goal, step);
+				
+				if (retryCount == 0)
+				{
+					// Only run event one time, even if step is tried multiple times
+					error = await eventRuntime.RunStepEvents(context, EventType.After, goal, step);
+				}
 				return error;
 			}
 			catch (Exception stepException)
 			{
-				if (step.RetryHandler != null && step.RetryHandler.RetryCount > retryCount && step.RetryHandler.RetryDelayInMilliseconds != null)
-				{
-					await Task.Delay((int) step.RetryHandler.RetryDelayInMilliseconds);
-					return await RunStep(goal, goalStepIndex, ++retryCount);
-				}
-				else
-				{
-					var error = new ExceptionError(stepException);
-					var result = await HandleStepError(goal, step, goalStepIndex, error, retryCount);
+				
+				var error = new ExceptionError(stepException);
+				var result = await HandleStepError(goal, step, goalStepIndex, error, retryCount);
 
-					return result;
+				return result;
 
-				}
+				
 			}
 
 		}
@@ -461,7 +464,7 @@ namespace PLang.Runtime
 
 		private async Task<IError?> HandleStepError(Goal goal, GoalStep step, int goalStepIndex, IError error, int retryCount)
 		{
-			if (error is IErrorHandled || error is EndGoal) return error;
+			if (error is IErrorHandled || error is EndGoal || error is UserDefinedError) return error;
 
 			if (error is Errors.AskUser.AskUserError aue)
 			{
@@ -487,18 +490,18 @@ namespace PLang.Runtime
 
 			}
 
-			//let retry the step if user defined so
-			if (step.RetryHandler != null && step.RetryHandler.RetryCount > retryCount && step.RetryHandler.RetryDelayInMilliseconds != null)
+			var eventRuntime = container.GetInstance<IEventRuntime>();
+			(var errorHandler, var eventError) = await eventRuntime.RunOnErrorStepEvents(context, error, goal, step);
+			if (eventError != null) return eventError;
+
+			if (errorHandler != null && errorHandler.RetryHandler != null && errorHandler.RetryHandler.RetryCount > retryCount && errorHandler.RetryHandler.RetryDelayInMilliseconds != null)
 			{
-				logger.LogWarning($"Error occurred, will retry in {step.RetryHandler.RetryDelayInMilliseconds}ms. Attempt nr. {retryCount} of {step.RetryHandler.RetryCount}\nError:{error}");
-				await Task.Delay((int) step.RetryHandler.RetryDelayInMilliseconds);
+				//logger.LogWarning($"Error occurred, will retry in {errorHandler.RetryHandler.RetryDelayInMilliseconds}ms. Attempt nr. {retryCount} of {errorHandler.RetryHandler.RetryCount}\nError:{error}");
+				await Task.Delay((int)errorHandler.RetryHandler.RetryDelayInMilliseconds);
 				return await RunStep(goal, goalStepIndex, ++retryCount);
 			}
 
-			var eventRuntime = container.GetInstance<IEventRuntime>();
-			(var continueNextStep, var eventError) = await eventRuntime.RunOnErrorStepEvents(context, error, goal, goal.GoalSteps[goalStepIndex], step.ErrorHandler);
-
-			return (continueNextStep) ? null : eventError;
+			return error;
 		}
 
 		private bool HasExecuted(GoalStep step)

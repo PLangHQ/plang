@@ -171,7 +171,7 @@ ReadAndUpdateFile
 - save %data% to file.json
 ```
 
-Hold up, we are not [handling errors](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/handlers/ErrorHandler.md) like the JavaScript code.
+Hold up, we are not [handling errors](https://github.com/PLangHQ/plang/blob/main/Documentation/ErrorHandler.md) like the JavaScript code.
 
 Let's do that:
 

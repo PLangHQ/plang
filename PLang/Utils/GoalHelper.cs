@@ -1,4 +1,5 @@
-﻿using PLang.Building.Model;
+﻿using MiniExcelLibs.Utils;
+using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Interfaces;
 
@@ -11,7 +12,7 @@ namespace PLang.Utils
 			return IsSetup(step.Goal.AbsoluteAppStartupFolderPath, step.RelativePrPath);
 		}
 		public static bool IsSetup(string rootDirectory, string fileName)
-		{	
+		{
 
 			if (fileName.ToLower() == Path.Join(rootDirectory, "setup.goal").ToLower()) return true;
 			if (fileName.ToLower().StartsWith(Path.Join(rootDirectory, "setup"))) return true;
@@ -26,7 +27,6 @@ namespace PLang.Utils
 			{
 				throw new BuilderException($"No goal files found in directory. Are you in the correct directory? I am running from {goalPath}");
 			}
-
 			var goalFiles = fileSystem.Directory.GetFiles(goalPath, "*.goal", SearchOption.AllDirectories).ToList();
 			return Remove_SystemFolder(goalPath, goalFiles);
 		}
@@ -37,7 +37,7 @@ namespace PLang.Utils
 
 
 			string[] dirsToExclude = new string[] { "apps", ".modules", ".services", ".build", ".deploy", ".db" };
-			string[] filesToExclude = new string[] { "events.goal", "eventsbuilder.goal" };
+			string[] filesToExclude = new string[] { "Events.goal", "BuildEvents.goal" };
 
 
 			// Filter out excluded directories and files first to simplify subsequent operations
@@ -47,7 +47,7 @@ namespace PLang.Utils
 				var baseFolderName = Path.GetDirectoryName(relativePath).Split(Path.DirectorySeparatorChar).FirstOrDefault();
 				var fileName = Path.GetFileName(goalFile).ToLower();
 
-				return !dirsToExclude.Contains(baseFolderName) && !filesToExclude.Contains(fileName);
+				return !baseFolderName.StartsWith(".") && !dirsToExclude.Contains(baseFolderName, StringComparer.OrdinalIgnoreCase) && !filesToExclude.Contains(fileName, StringComparer.OrdinalIgnoreCase);
 			}).ToList();
 
 			// Order the files

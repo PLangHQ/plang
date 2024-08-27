@@ -172,7 +172,7 @@ namespace PLang.Modules.ConditionalModule
 				int idx = 0;
 				if (answer.InputParameters != null)
 				{
-					foreach (var parameter in answer.InputParameters)
+					foreach (var parameter in parameters)
 					{
 						var parameterType = parameters[idx++].ParameterType;
 						if (parameterType.FullName == "PLang.SafeFileSystem.PLangFileSystem")
@@ -181,13 +181,12 @@ namespace PLang.Modules.ConditionalModule
 						}
 						else
 						{
-							var key = parameter.Key;
-							if (key.ToLower().StartsWith("settings."))
+							var inputParam = answer.InputParameters.FirstOrDefault(p => p.ParameterName == parameter.Name);
+							if (inputParam != null)
 							{
-								key = "%" + key + "%";
+								var value = memoryStack.Get(inputParam.VariableName, parameterType);
+								parametersObject.Add(value);
 							}
-							var value = memoryStack.Get(key, parameterType);
-							parametersObject.Add(value);
 						}
 					}
 				}
@@ -210,7 +209,7 @@ namespace PLang.Modules.ConditionalModule
 		private async Task<IError?> ExecuteResult(bool result, GoalToCall? goalToCallOnTrue, Dictionary<string, object?>? goalToCallOnTrueParameters, GoalToCall? goalToCallOnFalse, Dictionary<string, object?>? goalToCallOnFalseParameters)
 		{
 			Task<(IEngine, IError? error)>? task = null;
-			if (result && goalToCallOnTrue != null)
+			if (result && goalToCallOnTrue != null && goalToCallOnTrue.Value != null)
 			{
 				if (VariableHelper.IsVariable(goalToCallOnTrue))
 				{
@@ -230,7 +229,7 @@ namespace PLang.Modules.ConditionalModule
 				}
 				task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCallOnTrue, goalToCallOnTrueParameters, goal);
 			}
-			else if (!result && goalToCallOnFalse != null)
+			else if (!result && goalToCallOnFalse != null && goalToCallOnFalse.Value != null)
 			{
 				if (VariableHelper.IsVariable(goalToCallOnFalse))
 				{
@@ -275,11 +274,11 @@ namespace PLang.Modules.ConditionalModule
 
 				while (isIndent)
 				{
-					nextStep.Execute = result;
+					nextStep.Execute = result && (goalStep.Indent + 4 == nextStep.Indent);
 
 					nextStep = nextStep.NextStep;
 					if (nextStep == null) break;
-					isIndent = (goalStep.Indent + 4 == nextStep.Indent);
+					isIndent = (goalStep.Indent < nextStep.Indent);
 				}
 			
 			return null;

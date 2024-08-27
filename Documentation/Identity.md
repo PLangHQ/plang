@@ -134,21 +134,41 @@ Preferences
 - select preferences from userSettings where Identity=%Identity%
 - call !CustomizeContent %preferences%
 ```
+### What is `%MyIdentity%`
+While %Identity% is used for the incoming message, the `%MyIdentity%` is your own identity on you device.
+
+```plang
+Start
+- write out 'My identity is %MyIdentity%'
+```
+
+This identity will be sent with every Http request you do, any file access outside of the app scope and any message sent.
 
 ### C# - Advanced Programming
 
-For developers interested in the technical workings of plang's Identity, especially in C#, the following C# code snippets provide insight into how user requests are signed and verified. 
+For developers interested in the technical workings of plang's Identity, especially in C#, the following will provide insight into how user requests are signed and verified.
+
+Plang uses Ed25519 for signing.
  
 #### Signing Requests & Verifying Signatures
 
-The properties are as follows:
-- **X-Signature**: Is the signature of the content sent. Only the user owning the private key can create this signature. It is created by merging the other properties with the content being sent.
-- **X-Signature-Created**: The time the signature is created. This is valid for a maximum of 5 minutes.
-- **X-Signature-Nonce**: A random GUID string, unique for each request.
-- **X-Signature-Address**: The public address of the blockchain key.
-- **X-Signature-Contract**: Default is C0. This is to define contracts between the user and the service such as Terms of Service, etc.
+When message is sent using http, message(Nostr), file system, etc. I series of headers are set so that the recieving party can validate the signature and trust that the `%Identity%` is valid.
 
-Check out the source code at 
+The properties are as follows in order:
+- **X-Signature-Method**: The method being used, "GET", "POST", etc.
+- **X-Signature-Url**: The URL being requested.
+- **X-Signature-Created**: The time the signature is created. This is valid for a maximum of 5 minutes if expires is not defined.
+- **X-Signature-Nonce**: A random GUID string, unique for each request.
+- **X-Signature-Body**: Hash of the content being submited using keccak256
+- **X-Signature-Contract**: Default is C0. This is to define contracts between the user and the service such as Terms of Service, etc.
+- **X-Signature-Expires**: (Optional) When the signature expires. Time in milliseconds since 1. jan 1970.
+- **X-Signature-Public-Key**: The public key of the signing key.
+- **X-Signature**: Is the signature of the content sent. Only the user owning the private key can create this signature. It is created by merging the other properties with the content being sent.
+
+**Source code:**
+1. Signing service:
+https://github.com/PLangHQ/plang/blob/main/PLang/Services/SigningService/PLangSigningService.cs
+2. Identity service: 
 https://github.com/PLangHQ/plang/blob/main/PLang/Services/IdentityService/PLangIdentityService.cs
 
 

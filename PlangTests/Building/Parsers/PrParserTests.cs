@@ -98,10 +98,10 @@ namespace PLang.Building.Parsers.Tests
 			var goals = prParser.GetAllGoals();
 
 			var goal2 = prParser.GetGoalByAppAndGoalName(Path.DirectorySeparatorChar.ToString(), "apps/SomeApp/SomeApp", goal);
-			Assert.IsNull(goal2);
+			Assert.IsNotNull(goal2);
 
 			var goal3 = prParser.GetGoalByAppAndGoalName("/apps/SomeApp".AdjustPathToOs(), "apps/SomeApp/SomeApp", goal);
-			Assert.IsNull(goal3);
+			Assert.IsNotNull(goal3);
 
 		}
 

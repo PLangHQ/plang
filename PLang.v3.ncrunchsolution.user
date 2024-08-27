@@ -4,11 +4,35 @@
     <CurrentEngineMode>Run all tests automatically [Global]</CurrentEngineMode>
     <TestsWindowMenuOptions>
       <VerticalSplitMenuOption>false</VerticalSplitMenuOption>
-      <ShowPassingTestsMenuOption>false</ShowPassingTestsMenuOption>
+      <ShowPassingTestsMenuOption>true</ShowPassingTestsMenuOption>
       <ShowFailingTestsMenuOption>true</ShowFailingTestsMenuOption>
       <ShowUnexecutedTestsMenuOption>true</ShowUnexecutedTestsMenuOption>
-      <ShowIgnoredTestsMenuOption>true</ShowIgnoredTestsMenuOption>
+      <ShowIgnoredTestsMenuOption>false</ShowIgnoredTestsMenuOption>
     </TestsWindowMenuOptions>
-    <TestsWindowSplitterDistance>49.2537307739258%</TestsWindowSplitterDistance>
+    <TestsWindowSplitterDistance>75.7213973999023%</TestsWindowSplitterDistance>
+    <TestsWindowTreeLayout>
+      <Column>
+        <Name>Name</Name>
+        <Width>600</Width>
+      </Column>
+      <Column>
+        <Name>Status</Name>
+        <Width>150</Width>
+      </Column>
+      <Column>
+        <Name>LastExecutionTime</Name>
+        <Width>180</Width>
+      </Column>
+      <Column>
+        <Name>GridNode</Name>
+        <Width>160</Width>
+      </Column>
+    </TestsWindowTreeLayout>
+    <TestsWindowTreeSortOrder>
+      <Sort>
+        <Name>Name</Name>
+        <Order>Descending</Order>
+      </Sort>
+    </TestsWindowTreeSortOrder>
   </Settings>
 </SolutionConfiguration>

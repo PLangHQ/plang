@@ -63,7 +63,7 @@ namespace PLang.Modules.ConditionalModule
 - Variable names passed to ExecutePlangCode function MUST be unmodified from the user statement
 - The code will not be modified after you generate it.
 - ALWAYS use long or long? instead of int or int?
-- When validating if variable is long, make sure to convert the variable to long
+- Use long.TryParse when validating if variable is long
 - Do not reference any DTO classes. Use dynamic? if complex object is needed, else use object?.
 - Strings are defined with double quote ("")
 - Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. 
@@ -75,6 +75,7 @@ namespace PLang.Modules.ConditionalModule
 - append @ sign for variable that match reserved keywords in C#
 - C# code MUST only contain the contition code and return bool, an external system will call goals(methods) that user defines in his intent.
 - initialize variables before using them in TryParse
+- Always convert object to correct type in code, e.g. if code requires the object to be string use Convert.ToString(obj), when object should be bool Convert.ToBoolean(obj), etc.
 ## Rules ##
 
 ## Response information ##
@@ -85,6 +86,7 @@ namespace PLang.Modules.ConditionalModule
 - GoalToCallOnTrue or GoalToCallOnFalse is optional, if not defined by user, set as null
 - Goals can be called with parameters using GoalToCallOnTrueParameters and GoalToCallOnFalseParameters, e.g. Call !UpdateProduct id=%id%, call !FalseCall status='false'. Then id is parameter for True, and status for False
 - Using: must include namespaces that are needed to compile code.
+- InputParameters: InputParameters MUST match parameter count sent to ExecutePlangCode. Keep format as is defined by user, e.g. if %!error% then => Parameters would be [""%!error%""], if %items.count% > 0 and %isValid% then => Parameters would be [""%list[0]%"", ""%isValid%""]
 - Assemblies: dll to reference to compile using Roslyn
 ## Response information ##
 ");
@@ -98,6 +100,8 @@ namespace PLang.Modules.ConditionalModule
 'if %data.user_id% is empty, call !CreateUser' => public static bool ExecutePlangCode(dynamic? dataαuser_id) { return (dataαuser_id == null || (dataαuser_id is string str && string.IsNullOrEmpty(str))); } //if we dont know the type of %data.user_id%, , GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null
 'if !%isValid% then => public static bool ExecutePlangCode(bool? isValid) { return !isValid; }, GoalToCallOnTrue=null, GoalToCallOnFalse=null
 'if %first_name% is null, call !UpdateFirstName' => public static bool ExecutePlangCode(string? first_name) { return (first_name == null || string.IsNullOrEmpty(str)); }
+'if directory %path% exists, call DoStuff => public static bool ExecutePlangCode(string? path, IPlangFileSystem fileSystem) { return fileSystem.Directory.Exists(path); }
+'if file %path% exists, call DoStuff => public static bool ExecutePlangCode(string? path, IPlangFileSystem fileSystem) { return fileSystem.File.Exists(path); }
 ## examples ##
 ");
 			if (error != null)
@@ -116,6 +120,7 @@ namespace PLang.Modules.ConditionalModule
 			(var implementation, var compilerError) = await compiler.BuildCode(answer, step, memoryStack);
 			if (compilerError != null)
 			{
+				logger.LogWarning($"- Error compiling code - will ask LLM again ({errorCount} of 3 attempts) - Error:{compilerError}");
 				return await Build(step, compilerError, errorCount);
 			}
 

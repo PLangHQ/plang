@@ -10,5 +10,9 @@ namespace PLang.Errors.Runtime
 			string Key = "ProgramError", int StatusCode = 400,  Exception? Exception = null, string? FixSuggestion = null, string? HelpfulLinks = null)
 			: StepError(Message, Step, Key, StatusCode, Exception, FixSuggestion, HelpfulLinks)
 	{
+		public override string ToString()
+		{
+			return base.ToString(); 
+		}
 	}
 }

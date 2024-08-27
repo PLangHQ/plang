@@ -8,7 +8,24 @@ namespace PLang.Modules.FilterModule
 	[Description("Allow user to filter, select, query from a variable and get specific item from that variable.")]
 	public class Program : BaseProgram
 	{
-		[Description("operatorToFilter can be following: < > = startswith endswith contains")]
+		public async Task<List<JToken>?> FilterOutProperties(string propertyToExtract, object variableToExtractFrom)
+		{
+			var obj = JsonConvert.DeserializeObject(JsonConvert.SerializeObject(variableToExtractFrom));
+			if (obj is JObject jObject)
+			{
+				var tokens = jObject.SelectTokens(propertyToExtract);
+				return tokens.ToList();
+			}
+
+			if (obj is JArray jArray)
+			{
+				var tokens = jArray.SelectTokens(propertyToExtract);
+				return tokens.ToList();
+			}
+			return null;
+		}
+
+			[Description("operatorToFilter can be following: < > = startswith endswith contains")]
 		public async Task<object?> Filter(string propertyToExtract, object variableToExtractFrom, string propertyToFilterOn, string valueToFilterBy, string operatorToFilter, bool throwErrorWhenNothingFound = false)
 		{
 			if (variableToExtractFrom == null || string.IsNullOrEmpty(variableToExtractFrom.ToString())) return null;

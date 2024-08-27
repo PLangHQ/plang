@@ -79,10 +79,10 @@ namespace PLang.Modules.IdentityModule
 			return signingService.Sign(method, url, contract);
 		}
 
-		[Description("validationKeyValues should have these keys: X-Signature, X-Signature-Created(type is long, unix time), X-Signature-Nonce, X-Signature-Address, X-Signature-Contract=\"CO\". Return dictionary with Identity and IdentityNotHashed")]
+		[Description("validationKeyValues should have these keys: X-Signature, X-Signature-Created(type is long, unix time), X-Signature-Nonce, X-Signature-Public-Key, X-Signature-Contract=\"CO\". Return dictionary with Identity and IdentityNotHashed")]
 		public async Task<Dictionary<string, object?>?> VerifySignature(string content, string method, string url, Dictionary<string, object> validationKeyValues)
 		{
-			return await signingService.VerifySignature(settings.GetSalt(), content, method, url, validationKeyValues);
+			return await signingService.VerifySignature(content, method, url, validationKeyValues);
 		}
 
 		public async Task<(string?, IError?)> GetPrivateKey()

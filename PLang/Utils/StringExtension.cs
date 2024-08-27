@@ -220,5 +220,129 @@ namespace PLang.Utils
 			byte[] plainTextBytes = Encoding.UTF8.GetBytes(text);
 			return Convert.ToBase64String(plainTextBytes);
 		}
+
+		public static int FuzzyMatchScore(this string s1, string s2)
+		{
+			int score = 0;
+
+			if (s1.Length > s2.Length)
+			{
+				(s1, s2) = (s2, s1); // Ensure s1 is the shorter string
+			}
+
+			for (int i = 0; i <= s2.Length - s1.Length; i++)
+			{
+				int tempScore = 0;
+
+				for (int j = 0; j < s1.Length; j++)
+				{
+					if (s1[j] == s2[i + j])
+					{
+						tempScore += 1;
+					}
+				}
+
+				score = Math.Max(score, tempScore);
+			}
+
+			// Adjust score for matching substrings, common prefixes, etc.
+			return score + (s1.StartsWith(s2.Substring(0, Math.Min(3, s2.Length))) ? 2 : 0);
+		}
+
+		public static double JaroWinklerDistance(this string s1, string s2)
+		{
+			double jaroDistance = JaroDistance(s1, s2);
+			int prefixLength = 0;
+
+			for (int i = 0; i < Math.Min(4, Math.Min(s1.Length, s2.Length)); i++)
+			{
+				if (s1[i] == s2[i])
+				{
+					prefixLength++;
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			return jaroDistance + (prefixLength * 0.1 * (1 - jaroDistance));
+		}
+
+		private static double JaroDistance(this string s1, string s2)
+		{
+			if (s1 == s2)
+			{
+				return 1.0;
+			}
+
+			int s1Length = s1.Length;
+			int s2Length = s2.Length;
+
+			int matchDistance = Math.Max(s1Length, s2Length) / 2 - 1;
+
+			bool[] s1Matches = new bool[s1Length];
+			bool[] s2Matches = new bool[s2Length];
+
+			int matches = 0;
+			double transpositions = 0.0;
+
+			for (int i = 0; i < s1Length; i++)
+			{
+				int start = Math.Max(0, i - matchDistance);
+				int end = Math.Min(i + matchDistance + 1, s2Length);
+
+				for (int j = start; j < end; j++)
+				{
+					if (s2Matches[j]) continue;
+					if (s1[i] != s2[j]) continue;
+					s1Matches[i] = true;
+					s2Matches[j] = true;
+					matches++;
+					break;
+				}
+			}
+
+			if (matches == 0) return 0.0;
+
+			int k = 0;
+			for (int i = 0; i < s1Length; i++)
+			{
+				if (!s1Matches[i]) continue;
+				while (!s2Matches[k]) k++;
+				if (s1[i] != s2[k]) transpositions++;
+				k++;
+			}
+
+			transpositions /= 2.0;
+
+			return ((matches / (double)s1Length) + (matches / (double)s2Length) + ((matches - transpositions) / matches)) / 3.0;
+		}
+		public static int LevenshteinDistance(this string source, string target)
+		{
+			if (string.IsNullOrEmpty(source)) return target.Length;
+			if (string.IsNullOrEmpty(target)) return source.Length;
+
+			var sourceLength = source.Length;
+			var targetLength = target.Length;
+
+			var distance = new int[sourceLength + 1, targetLength + 1];
+
+			for (var i = 0; i <= sourceLength; distance[i, 0] = i++) { }
+			for (var j = 0; j <= targetLength; distance[0, j] = j++) { }
+
+			for (var i = 1; i <= sourceLength; i++)
+			{
+				for (var j = 1; j <= targetLength; j++)
+				{
+					var cost = (target[j - 1].ToString().Equals(source[i - 1].ToString(), StringComparison.OrdinalIgnoreCase)) ? 0 : 1;
+					distance[i, j] = Math.Min(
+						Math.Min(distance[i - 1, j] + 1, distance[i, j - 1] + 1),
+						distance[i - 1, j - 1] + cost);
+				}
+			}
+
+			return distance[sourceLength, targetLength];
+		}
 	}
 }

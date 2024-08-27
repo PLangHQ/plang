@@ -97,7 +97,7 @@ namespace PLang.Modules.WebserverModule.Tests
 			Assert.AreEqual("headerKey", gf.Parameters[0].Name);
 			Assert.AreEqual(null, gf.Parameters[0].Value);
 
-			Assert.AreEqual("ip", gf.ReturnValue[0].VariableName);
+			Assert.AreEqual("ip", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -145,7 +145,7 @@ namespace PLang.Modules.WebserverModule.Tests
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("cache-control", gf.Parameters[0].Value);
 
-			Assert.AreEqual("cacheControl", gf.ReturnValue[0].VariableName);
+			Assert.AreEqual("cacheControl", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -168,7 +168,7 @@ namespace PLang.Modules.WebserverModule.Tests
 			Assert.AreEqual("name", gf.Parameters[0].Name);
 			Assert.AreEqual("TOS", gf.Parameters[0].Value);
 
-			AssertVar.AreEqual("%cookieValue%", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("%cookieValue%", gf.ReturnValues[0].VariableName);
 
 		}
 

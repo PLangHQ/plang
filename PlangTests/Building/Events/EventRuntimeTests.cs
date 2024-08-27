@@ -21,7 +21,7 @@ namespace PLang.Building.Events.Tests
 		public void Init()
 		{
 			base.Initialize();
-			eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHandlerFactory, logger);
+			eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHandlerFactory, errorSystemHandlerFactory, logger);
 		}
 
 		[TestMethod()]
@@ -30,7 +30,7 @@ namespace PLang.Building.Events.Tests
 			var goal = new Model.Goal();
 			goal.GoalName = "TestGoal";
 
-			var eventBinding = new EventBinding(EventType.Before, EventScope.Goal, "Start", "");
+			var eventBinding = new EventBinding(EventType.Before, EventScope.Goal, "Start", "Start");
 
 			
 			var result = eventRuntime.GoalHasBinding(goal, eventBinding);
@@ -43,7 +43,7 @@ namespace PLang.Building.Events.Tests
 			var goal = new Model.Goal();
 			goal.GoalName = "Start";
 			goal.Visibility = Visibility.Public;
-			var eventBinding = new EventBinding(EventType.Before, EventScope.Goal, "Start", "");
+			var eventBinding = new EventBinding(EventType.Before, EventScope.Goal, "Start", "Start2");
 
 			var result = eventRuntime.GoalHasBinding(goal, eventBinding);
 			Assert.IsTrue(result);
@@ -140,7 +140,7 @@ namespace PLang.Building.Events.Tests
 			await eventRuntime.RunStartEndEvents(new(), EventType.Before, EventScope.StartOfApp);
 				
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
-						@"\", "!Process", Arg.Any<Dictionary<string, object?>>());
+						@"\", new Models.GoalToCall("Process"), Arg.Any<Dictionary<string, object?>>());
 			
 		}
 
@@ -461,34 +461,41 @@ namespace PLang.Building.Events.Tests
 		[TestMethod()]
 		public void GetRuntimeEventsFilesTest_MakeSureRootEventsIsLast()
 		{
-
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName), new MockFileData(""));
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "events", "Event1", ISettings.GoalFileName), new MockFileData(""));
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "events", "Event2", ISettings.GoalFileName), new MockFileData(""));
+			// 2 event files added
+			string mainEventFile = Path.Join(fileSystem.BuildPath, "events", "Events", ISettings.GoalFileName);
+			fileSystem.AddFile(mainEventFile, new MockFileData(""));
+			var externalEventFile = Path.Join(fileSystem.BuildPath, "events", "external", "plang", "runtime", "Events", ISettings.GoalFileName);
+			fileSystem.AddFile(externalEventFile, new MockFileData(""));
+			//some other files
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "Process", ISettings.GoalFileName), new MockFileData(""));
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "HelloWorld", ISettings.GoalFileName), new MockFileData(""));
 
-			var eventFiles = eventRuntime.GetEventsFiles(fileSystem.BuildPath, "events");
+			var eventFiles = eventRuntime.GetEventsFiles(fileSystem.BuildPath, false);
 
-			Assert.AreEqual(3, eventFiles.EventFiles.Count);
-			Assert.AreEqual(Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName), eventFiles.EventFiles[0]);
+			Assert.AreEqual(2, eventFiles.EventFiles.Count);
+			Assert.AreEqual(externalEventFile, eventFiles.EventFiles[0]);
+			Assert.AreEqual(mainEventFile, eventFiles.EventFiles[1]);
 
 		}
 
 		[TestMethod()]
 		public void GetRuntimeEventsFilesTest_MakeSureRootBuilderEventsIsLast()
 		{
-
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "BuilderEvents", ISettings.GoalFileName), new MockFileData(""));
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "BuilderEvents", "Event1", ISettings.GoalFileName), new MockFileData(""));
+			// 2 event files added
+			string mainEventFile = Path.Join(fileSystem.BuildPath, "events", "BuilderEvents", ISettings.GoalFileName);
+			fileSystem.AddFile(mainEventFile, new MockFileData(""));
+			var externalEventFile = Path.Join(fileSystem.BuildPath, "events", "external", "plang", "runtime", "BuilderEvents", ISettings.GoalFileName);
+			fileSystem.AddFile(externalEventFile, new MockFileData(""));
+			//other files
 			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "apps", "HelloWorld", ".build", "events", ISettings.GoalFileName), new MockFileData(""));
 			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "Process", ISettings.GoalFileName), new MockFileData(""));
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "HelloWorld", ISettings.GoalFileName), new MockFileData(""));
+			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "helloWorld", ISettings.GoalFileName), new MockFileData(""));
 
-			(var eventFiles, var error) = eventRuntime.GetEventsFiles(fileSystem.BuildPath, "BuilderEvents");
+			(var eventFiles, var error) = eventRuntime.GetEventsFiles(fileSystem.BuildPath, true);
 
 			Assert.AreEqual(2, eventFiles.Count);
-			Assert.AreEqual(Path.Join(fileSystem.BuildPath, "BuilderEvents", ISettings.GoalFileName), eventFiles[0]);
+			Assert.AreEqual(externalEventFile, eventFiles[0]);
+			Assert.AreEqual(mainEventFile, eventFiles[1]);
 
 		}
 

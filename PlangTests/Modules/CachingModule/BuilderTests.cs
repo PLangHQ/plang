@@ -69,7 +69,7 @@ namespace PLang.Modules.CachingModule.Tests
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual(key, gf.Parameters[0].Value);
 			
-			AssertVar.AreEqual("%obj%", gf.ReturnValue[0].VariableName);
+			AssertVar.AreEqual("%obj%", gf.ReturnValues[0].VariableName);
 		}
 
 		[DataTestMethod]

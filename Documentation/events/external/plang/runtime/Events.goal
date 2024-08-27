@@ -1,0 +1,3 @@
+Events
+- before each step, include private goals,call !SendDebug, args='--debug'
+- before goal ends, include private goals, call !SendDebug, args='--debug'

@@ -1,4 +1,5 @@
-﻿using PLang.Utils;
+﻿using PLang.Building.Model;
+using PLang.Utils;
 
 namespace PLang.Errors.Builder
 {
@@ -7,6 +8,10 @@ namespace PLang.Errors.Builder
 		public override object ToFormat(string contentType = "text")
 		{
 			return ErrorHelper.ToFormat(contentType, this);
+		}
+		public override string ToString()
+		{
+			return base.ToString();
 		}
 	}
 }

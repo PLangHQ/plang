@@ -1,0 +1,8 @@
+DoStuff
+- write out 'do stuff'
+
+BeforeStepErrorHandler
+- write out 'Before error handler on step is executed'
+
+AfterStepErrorHandler
+- write out 'After error handler on step is executed'

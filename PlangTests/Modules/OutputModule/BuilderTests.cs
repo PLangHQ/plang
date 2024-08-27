@@ -67,7 +67,7 @@ namespace PLang.Modules.OutputModule.Tests
 			Assert.AreEqual("Ask", gf.FunctionName);
 			Assert.AreEqual("text", gf.Parameters[0].Name);
 			Assert.AreEqual("what should the settings be?", gf.Parameters[0].Value);
-			Assert.AreEqual("settings", gf.ReturnValue[0].VariableName);
+			Assert.AreEqual("settings", gf.ReturnValues[0].VariableName);
 
 		}
 

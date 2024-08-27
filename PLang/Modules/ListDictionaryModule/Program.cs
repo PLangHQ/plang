@@ -90,9 +90,9 @@ namespace PLang.Modules.ListDictionaryModule
 		public async Task<Dictionary<string, object>> AddItemsToDictionary(string key, Dictionary<string, object> value, Dictionary<string, object>? dictionaryInstance = null, bool updateIfExists = true)
 		{
 			if (value == null) return new();
-			if (function != null && function.ReturnValue != null)
+			if (function != null && function.ReturnValues != null)
 			{
-				dictionaryInstance = memoryStack.Get(function.ReturnValue[0].VariableName) as Dictionary<string, object>;
+				dictionaryInstance = memoryStack.Get(function.ReturnValues[0].VariableName) as Dictionary<string, object>;
 			}
 			if (dictionaryInstance == null) dictionaryInstance = new Dictionary<string, object>();
 			foreach (var item in value)
@@ -106,9 +106,9 @@ namespace PLang.Modules.ListDictionaryModule
 		public async Task<(Dictionary<string, object>?, IError?)> AddToDictionary(string key, object value, Dictionary<string, object>? dictionaryInstance = null, bool updateIfExists = true)
 		{
 			if (value == null) return new();
-			if (function != null && function.ReturnValue != null)
+			if (function != null && function.ReturnValues != null)
 			{
-				var obj = memoryStack.Get(function.ReturnValue[0].VariableName);
+				var obj = memoryStack.Get(function.ReturnValues[0].VariableName);
 				if (obj is JObject jObject)
 				{
 					dictionaryInstance = jObject.ToDictionary();

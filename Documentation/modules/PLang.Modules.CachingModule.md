@@ -130,9 +130,9 @@ For a full list of caching examples in plang, please visit [PLang Caching Exampl
 ## Step Options
 When writing your plang code, you can enhance your steps with the following options. Click on the links for detailed usage instructions:
 
-- [CacheHandler](/modules/handlers/CachingHandler.md)
-- [ErrorHandler](/modules/handlers/ErrorHandler.md)
-- [RetryHandler](/modules/handlers/RetryHandler.md)
+- [CacheHandler](/CachingHandler.md)
+- [ErrorHandler](/ErrorHandler.md)
+
 
 
 

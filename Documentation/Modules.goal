@@ -11,14 +11,19 @@ GenerateModuleDocumentation
     scheme: {moduleName:string, namespace:string, desc:string, [{functions:string[], parameters:[{type:string, name:string, (defaultValue:string|required:yes)}, ...], returns:type|void}]}
     write to %module%
 - get folder access to '../Tests'
-- [cond] if dir '../Tests/%module.moduleName%/' exists, then
-    - write out 'Doing %module.moduleName%'
-    - call !LoadVars   
-    - call !GeneratePlangExamples
-    - write out '- doing basic'
-    - call !GenerateDocForBasic
-    - write out '- doing adv'
-    - call !GenerateDocForAdvanced    
+- [cond] if dir '../Tests/%module.moduleName%/' exists, call CreateDocs, else PathNotFound
+
+PathNotFound
+- write out 'Could not find path "../Tests/%module.moduleName%/"'
+
+CreateDocs
+- write out 'Doing %module.moduleName%'
+- call !LoadVars   
+- call !GeneratePlangExamples
+- write out '- doing basic'
+- call !GenerateDocForBasic
+- write out '- doing adv'
+- call !GenerateDocForAdvanced    
 
 LoadVars
 - read file '/template/modules/details/%module.moduleName%.txt', into %details%, empty if file not found

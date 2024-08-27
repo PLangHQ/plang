@@ -1,0 +1,101 @@
+{
+  "Action": {
+    "FunctionName": "Insert",
+    "Parameters": [
+      {
+        "Type": "string",
+        "Name": "sql",
+        "Value": "insert into docs (id, Name, Guide, System, OutputFilename) values (@id, @Name, @Guide, @System, @OutputFilename)"
+      },
+      {
+        "Type": "List<object>",
+        "Name": "SqlParameters",
+        "Value": [
+          {
+            "ParameterName": "id",
+            "VariableNameOrValue": "id",
+            "TypeFullName": "System.Int64"
+          },
+          {
+            "ParameterName": "Name",
+            "VariableNameOrValue": "Builder",
+            "TypeFullName": "System.String"
+          },
+          {
+            "ParameterName": "Guide",
+            "VariableNameOrValue": "template/builder.txt",
+            "TypeFullName": "System.String"
+          },
+          {
+            "ParameterName": "System",
+            "VariableNameOrValue": "template/guidance/teacher.txt",
+            "TypeFullName": "System.String"
+          },
+          {
+            "ParameterName": "OutputFilename",
+            "VariableNameOrValue": "./Builder.md",
+            "TypeFullName": "System.String"
+          }
+        ]
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Text": "insert into docs Name='Builder'\n    Guide='template/builder.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Builder.md' ",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValues\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+    "type": "PLang.Modules.DbModule.Builder",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nInt32 Insert(String sql, List<object>()? SqlParameters = null)  //returns number of rows affected\r\n## csharp function ##\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nSqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.\r\n%Now% variable is type of DateTime. %Now% variable should be injected as SqlParameter \r\nSqlParameters @id MUST be type System.Int64\r\nYou MUST modify the user command by adding id to the sql statement and parameter %id%.\r\nIf table name is a variable, keep the variable in the sql statement\r\nMake sure sql statement matches columns provided for the table.\r\n\r\nYou MUST generate a valid sql statement for SQLite.\r\nYou MUST provide SqlParameters if SQL has @parameter.\r\n"
+          },
+          {
+            "type": "text",
+            "text": "Table name is: docs. Fix sql if it includes type."
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValues\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "# examples #\r\n\"insert into users, name=%name%\" => sql: \"insert into users (id, name) values (@id, @name)\",  SqlParameters:[{ParameterName:id, VariableNameOrValue:id, TypeFullName:int64}, {ParameterName:name, VariableNameOrValue:%name%, TypeFullName:string}]\r\n\"insert into tableX, %phone%, write to %rows%\" => sql: \"insert into tableX (id, phone) values (@id, @phone)\"\r\n\"insert into %table%, %phone%, write to %rows%\" => sql: \"insert into %table% (id, phone) values (@id, @phone)\"\r\n\r\nParameterInfo has the scheme: {\"ParameterName\": string, \"VariableNameOrValue\": string, \"TypeFullName\": string}\r\n        },\r\n# examples #"
+          },
+          {
+            "type": "text",
+            "text": "### docs columns ###\n[{\"cid\":0,\"name\":\"id\",\"type\":\"BIGINT\",\"notnull\":0,\"dflt_value\":null,\"pk\":1},{\"cid\":1,\"name\":\"Name\",\"type\":\"TEXT\",\"notnull\":1,\"dflt_value\":null,\"pk\":0},{\"cid\":2,\"name\":\"Guide\",\"type\":\"TEXT\",\"notnull\":1,\"dflt_value\":null,\"pk\":0},{\"cid\":3,\"name\":\"System\",\"type\":\"TEXT\",\"notnull\":1,\"dflt_value\":null,\"pk\":0},{\"cid\":4,\"name\":\"OutputFilename\",\"type\":\"TEXT\",\"notnull\":1,\"dflt_value\":null,\"pk\":0},{\"cid\":5,\"name\":\"Created\",\"type\":\"TIMESTAMP\",\"notnull\":0,\"dflt_value\":\"CURRENT_TIMESTAMP\",\"pk\":0},{\"cid\":6,\"name\":\"LastUpdate\",\"type\":\"TIMESTAMP\",\"notnull\":0,\"dflt_value\":\"CURRENT_TIMESTAMP\",\"pk\":0}]\n### docs columns ###"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "insert into docs Name='Builder'\n    Guide='template/builder.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Builder.md' "
+          }
+        ]
+      }
+    ],
+    "model": "gpt-4o-2024-08-06",
+    "caching": true,
+    "RawResponse": null
+  },
+  "RunOnBuild": false
+}

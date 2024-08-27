@@ -105,9 +105,9 @@ For a full list of examples, visit [PLang Cryptographic Examples](https://github
 ## Step Options
 When writing your PLang code, you can enhance your steps with these options for better control and error handling:
 
-- [CacheHandler](/modules/handlers/CachingHandler.md): Manage caching to improve performance.
-- [ErrorHandler](/modules/handlers/ErrorHandler.md): Handle errors gracefully.
-- [RetryHandler](/modules/handlers/RetryHandler.md): Automatically retry steps on failure.
+- [CacheHandler](/CachingHandler.md): Manage caching to improve performance.
+- [ErrorHandler](/ErrorHandler.md): Handle errors gracefully.
+: Automatically retry steps on failure.
 : Manage the cancellation of long-running steps.
 : Execute steps without waiting for completion.
 

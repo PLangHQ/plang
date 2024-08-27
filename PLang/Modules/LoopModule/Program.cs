@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Models;
 using PLang.Runtime;
 using System.Collections;
@@ -43,6 +44,18 @@ namespace PLang.Modules.LoopModule
 
 
 			var obj = memoryStack.Get(variableToLoopThrough);
+			if (obj == null)
+			{
+				logger.LogDebug($"{variableToLoopThrough} does not exist. Have you created it? Check for spelling error", goalStep, function);
+				return null;
+			}
+			if (obj is string || obj.GetType().IsPrimitive)
+			{
+				var l = new List<object>();
+				l.Add(obj);
+				obj = l;
+			}
+
 			if (obj is IList list)
 			{
 				if (list == null || list.Count == 0)
@@ -57,7 +70,7 @@ namespace PLang.Modules.LoopModule
 					goalParameters.Add(listName.ToString()!, list);
 					goalParameters.Add(listCountName, list.Count);
 					goalParameters.Add(itemName.ToString()!, list[i]);
-					goalParameters.Add(positionName.ToString()!, i + 1);
+					goalParameters.Add(positionName.ToString()!, i);
 
 					var missingEntries = parameters.Where(p => !goalParameters.ContainsKey(p.Key));
 					foreach (var entry in missingEntries)

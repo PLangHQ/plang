@@ -155,7 +155,7 @@ namespace PLang.Modules.DbModule.Tests
 			var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(gf.Parameters[1].Value.ToString());
 			Assert.AreEqual("%id%", dict["@id"]);
 
-			Assert.AreEqual("result", gf.ReturnValue[0].VariableName);
+			Assert.AreEqual("result", gf.ReturnValues[0].VariableName);
 
 		}
 
@@ -238,7 +238,7 @@ namespace PLang.Modules.DbModule.Tests
 			Assert.AreEqual("%name%", dict["@name"]);
 			Assert.AreEqual("%id%", dict["@id"]);
 
-			Assert.AreEqual("id", gf.ReturnValue[0].VariableName);
+			Assert.AreEqual("id", gf.ReturnValues[0].VariableName);
 
 		}
 

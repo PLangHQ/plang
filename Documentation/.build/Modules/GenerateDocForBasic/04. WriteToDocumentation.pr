@@ -5,26 +5,7 @@
       {
         "Type": "List<LlmMessage>",
         "Name": "promptMessages",
-        "Value": [
-          {
-            "role": "system",
-            "content": [
-              {
-                "type": "text",
-                "text": "%system%"
-              }
-            ]
-          },
-          {
-            "role": "user",
-            "content": [
-              {
-                "type": "text",
-                "text": "%user%"
-              }
-            ]
-          }
-        ]
+        "Value": "[{\"role\": \"system\", \"content\": [{\"type\": \"text\", \"text\": \"%system%\"}]}, {\"role\": \"user\", \"content\": [{\"type\": \"text\", \"text\": \"%user%\"}]}]"
       },
       {
         "Type": "String?",
@@ -34,7 +15,7 @@
       {
         "Type": "String?",
         "Name": "model",
-        "Value": "gpt-4-turbo"
+        "Value": "gpt-4o-mini"
       },
       {
         "Type": "Double?",
@@ -75,12 +56,17 @@
         "Type": "String?",
         "Name": "loggerLevel",
         "Value": "trace"
+      },
+      {
+        "Type": "Boolean?",
+        "Name": "continuePrevConversation",
+        "Value": false
       }
     ],
-    "ReturnValue": [
+    "ReturnValues": [
       {
         "Type": "object",
-        "VariableName": "%documentation%"
+        "VariableName": "documentation"
       }
     ]
   },
@@ -93,7 +79,7 @@
     "presencePenalty": 0.0,
     "maxLength": 4000,
     "llmResponseType": "json",
-    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValues\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
     "type": "PLang.Modules.LlmModule.Builder",
     "promptMessage": [
       {
@@ -105,11 +91,11 @@
           },
           {
             "type": "text",
-            "text": "The following user request is for constructing a message to LLM engine\r\n\r\nllmResponseType can be null, text, json, markdown or html. default is null. If scheme is defined then use json, unless user defines otherwise\r\n\r\npromptMessages contains the system, assistant and user messages. assistant or user message is required.\r\nDetermine what part is system, assistant and user properties. If you cannot map it, the whole user request should be on user role\r\nif user does not define model, set model to \"gpt-4-vision-preview\" if content type is image_url\r\nthe json scheme from promptMessages without image is : {role:string, content:[{type:string, text:string}]} \r\nthe json scheme from promptMessages with image is : {role:string, content:[{type:string, image_url:{url:string}]} \r\n\r\n## examples ##\r\nsystem: %system%, assistant: %assistant%, user: %user%\r\n\r\npromptMessages: \r\n[\r\n\t{\r\n        \"role\": \"system\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%system%\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"assistant\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%assistant%\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"user\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%user%\"\r\n            }\r\n        ]\r\n    }\r\n]\r\n\r\n\r\nsystem: do stuff, user: this is data from user, write to %data%, %output% and %dest% => scheme: null, llResponseType=null\r\nsystem: setup up system, asssistant: some assistant stuff, user: this is data from user, scheme: {data:string, year:number, name:string} => scheme:  {data:string, year:number, name:string}\r\n\r\npromptMessages: \r\n[\r\n\t{\r\n        \"role\": \"system\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"setup up system\\nYou MUST respond in JSON, scheme:{data:string, year:number, name:string}\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"assistant\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"some assistant stuff\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"user\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"this is data from user\"\r\n            }\r\n        ]\r\n    }\r\n]\r\n\r\ncontent can also have the type of image_url, the content of image_url json property can be a URL or a base64 of image.\r\nwhen using base64 append data:XXXX/YYYY;base64, where XXXX/YYYY is the data type, such as image/jpg, image/png, image/gif\r\n\"content\": [\r\n    {\r\n        \"type\": \"image_url\",\r\n        \"image_url\": {\r\n            \"url\": \"data:image/jpeg;base64,%base64OfImage%\"\r\n        }\r\n    }\r\n]\r\n\r\nor url \r\n\r\n\"content\": [\r\n   {\r\n        \"type\": \"image_url\",\r\n        \"image_url\": {\r\n            \"url\": \"http://example.org/image.jpg\"\r\n        }\r\n    }\r\n]\r\n\r\n\r\n\r\n## examples ##\r\n"
+            "text": "The following user request is for constructing a message to LLM engine\r\n\r\nllmResponseType can be null, text, json, markdown or html. default is null. If scheme is defined then use json, unless user defines otherwise\r\n\r\npromptMessages contains the system, assistant and user messages. assistant or user message is required.\r\nDetermine what part is system, assistant and user properties. If you cannot map it, the whole user request should be on user role\r\nif user does not define model, set model to \"gpt-4-vision-preview\" if content type is image_url\r\nmodel is default gpt-4o-mini\r\nthe json scheme from promptMessages without image is : {role:string, content:[{type:string, text:string}]} \r\nthe json scheme from promptMessages with image is : {role:string, content:[{type:string, image_url:{url:string}]} \r\n\r\n## examples ##\r\nsystem: %system%, assistant: %assistant%, user: %user%\r\n\r\npromptMessages: \r\n[\r\n\t{\r\n        \"role\": \"system\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%system%\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"assistant\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%assistant%\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"user\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%user%\"\r\n            }\r\n        ]\r\n    }\r\n]\r\n\r\n\r\nsystem: do stuff, user: this is data from user, write to %data%, %output% and %dest% => scheme: null, llResponseType=null\r\nsystem: setup up system, asssistant: some assistant stuff, user: this is data from user, scheme: {data:string, year:number, name:string} => scheme:  {data:string, year:number, name:string}\r\n\r\npromptMessages: \r\n[\r\n\t{\r\n        \"role\": \"system\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"setup up system\\nYou MUST respond in JSON, scheme:{data:string, year:number, name:string}\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"assistant\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"some assistant stuff\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"user\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"this is data from user\"\r\n            }\r\n        ]\r\n    }\r\n]\r\n\r\ncontent can also have the type of image_url, the content of image_url json property can be a URL or a base64 of image.\r\nwhen using base64 append data:XXXX/YYYY;base64, where XXXX/YYYY is the data type, such as image/jpg, image/png, image/gif\r\n\"content\": [\r\n    {\r\n        \"type\": \"image_url\",\r\n        \"image_url\": {\r\n            \"url\": \"data:image/jpeg;base64,%base64OfImage%\"\r\n        }\r\n    }\r\n]\r\n\r\nor url \r\n\r\n\"content\": [\r\n   {\r\n        \"type\": \"image_url\",\r\n        \"image_url\": {\r\n            \"url\": \"http://example.org/image.jpg\"\r\n        }\r\n    }\r\n]\r\n\r\n\r\n\r\n## examples ##\r\n"
           },
           {
             "type": "text",
-            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValue\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValues\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
           }
         ]
       },
@@ -118,7 +104,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nAskLlm(List`1<LlmMessage> promptMessages, String? scheme, String? model = \"gpt-4-turbo\", Double? temperature = 0, Double? topP = 0, Double? frequencyPenalty = 0, Double? presencePenalty = 0, Int32? maxLength = 4000, Boolean? cacheResponse = True, String? llmResponseType, String? loggerLevel = \"trace\")  : ValueTuple`2 \nUseSharedIdentity(Boolean? useSharedIdentity = True)  : void \nGetLlmIdentity()  : String \nGetBalance()  : Object  // Get the current balance at the LLM service.\r\n## functions available ends ##\r\n## defined variables ##\r\nsystem (type:String), user (type:String), documentation (type:object), \r\n## defined variables ##"
+            "text": "## functions available starts ##\r\nAppendToSystem(String system)  : void \nAppendToAssistant(String assistant)  : void \nAppendToUser(String user)  : void \nAskLlm(List`1<LlmMessage> promptMessages, String? scheme, String? model = \"gpt-4o-mini\", Double? temperature = 0, Double? topP = 0, Double? frequencyPenalty = 0, Double? presencePenalty = 0, Int32? maxLength = 4000, Boolean? cacheResponse = True, String? llmResponseType, String? loggerLevel = \"trace\", Boolean? continuePrevConversation = False)  : ValueTuple`2 \nUseSharedIdentity(Boolean? useSharedIdentity = True)  : void \nGetLlmIdentity()  : String \nGetBalance()  : Object  // Get the current balance at the LLM service.\r\n## functions available ends ##\r\n## defined variables ##\r\nsystem (type:String), user (type:String), documentation (type:object), \r\n## defined variables ##"
           }
         ]
       },
@@ -132,9 +118,9 @@
         ]
       }
     ],
-    "model": "gpt-4o",
+    "model": "gpt-4o-2024-08-06",
     "caching": true,
-    "RawResponse": "```json\n{\n    \"FunctionName\": \"AskLlm\",\n    \"Parameters\": [\n        {\n            \"Type\": \"List<LlmMessage>\",\n            \"Name\": \"promptMessages\",\n            \"Value\": [\n                {\n                    \"role\": \"system\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"%system%\"\n                        }\n                    ]\n                },\n                {\n                    \"role\": \"user\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"%user%\"\n                        }\n                    ]\n                }\n            ]\n        },\n        {\n            \"Type\": \"String?\",\n            \"Name\": \"scheme\",\n            \"Value\": null\n        },\n        {\n            \"Type\": \"String?\",\n            \"Name\": \"model\",\n            \"Value\": \"gpt-4-turbo\"\n        },\n        {\n            \"Type\": \"Double?\",\n            \"Name\": \"temperature\",\n            \"Value\": 0\n        },\n        {\n            \"Type\": \"Double?\",\n            \"Name\": \"topP\",\n            \"Value\": 0\n        },\n        {\n            \"Type\": \"Double?\",\n            \"Name\": \"frequencyPenalty\",\n            \"Value\": 0\n        },\n        {\n            \"Type\": \"Double?\",\n            \"Name\": \"presencePenalty\",\n            \"Value\": 0\n        },\n        {\n            \"Type\": \"Int32?\",\n            \"Name\": \"maxLength\",\n            \"Value\": 4000\n        },\n        {\n            \"Type\": \"Boolean?\",\n            \"Name\": \"cacheResponse\",\n            \"Value\": true\n        },\n        {\n            \"Type\": \"String?\",\n            \"Name\": \"llmResponseType\",\n            \"Value\": null\n        },\n        {\n            \"Type\": \"String?\",\n            \"Name\": \"loggerLevel\",\n            \"Value\": \"trace\"\n        }\n    ],\n    \"ReturnValue\": [\n        {\n            \"Type\": \"object\",\n            \"VariableName\": \"%documentation%\"\n        }\n    ]\n}\n```"
+    "RawResponse": null
   },
   "RunOnBuild": false
 }

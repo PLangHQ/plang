@@ -1,4 +1,5 @@
-﻿using PLang.Errors;
+﻿using PLang.Attributes;
+using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Services.OutputStream;
@@ -12,15 +13,17 @@ namespace PLang.Modules.OutputModule
 	public class Program : BaseProgram, IDisposable
 	{
 		private readonly IOutputStreamFactory outputStream;
+		private readonly IOutputSystemStreamFactory outputSystemStream;
 
-		public Program(IOutputStreamFactory outputStream) : base()
+		public Program(IOutputStreamFactory outputStream, IOutputSystemStreamFactory outputSystemStream) : base()
 		{
 			this.outputStream = outputStream;
+			this.outputSystemStream = outputSystemStream;
 		}
 		[Description("Send response to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.")]
 		public async Task<string> Ask(string text, string type = "text", int statusCode = 200, string? regexPattern = null, string? errorMessage = null)
 		{
-			var result = await outputStream.CreateHandler().Ask(text, type, statusCode);
+			var result = await outputSystemStream.CreateHandler().Ask(text, type, statusCode);
 			
 			// escape any variable that user inputs
 			result = result.Replace("%", @"\%");
@@ -45,14 +48,39 @@ namespace PLang.Modules.OutputModule
 			}
 			
 		}
+		[Description("Write to the system output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text")]
+		public async Task<IError?> WriteToSystemOutput(object? content = null, bool writeToBuffer = false, string type = "text", int statusCode = 200)
+		{
+			if (statusCode >= 400)
+			{
+				await outputSystemStream.CreateHandler().Write(content, type, statusCode);
+			}
+			if (writeToBuffer)
+			{
+				await outputSystemStream.CreateHandler().WriteToBuffer(content, type, statusCode);
+			}
+			else
+			{
+				await outputSystemStream.CreateHandler().Write(content, type, statusCode);
+			}
+			return null;
+		}
 
-		[Description("Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text")]
+		[Description("Write to the json output. Make sure content is valid JSON format. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text")]
+		public async Task<IError?> WriteJson([HandlesVariable] object? content = null, bool writeToBuffer = false, string type = "text", int statusCode = 200)
+		{
+			object? ble = variableHelper.LoadVariables(content);
+			int i = 0;
+			return null;
+		}
+
+			[Description("Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text")]
 		public async Task<IError?> Write(object? content = null, bool writeToBuffer = false, string type = "text", int statusCode = 200)
 		{
 			if (statusCode >= 400)
 			{
-				await outputStream.CreateHandler().Write(content, type, statusCode);
-				return new ErrorHandled(new StepError(content?.ToString() ?? "OutputModule.Write", goalStep, type, statusCode));
+				//await outputStream.CreateHandler().Write(content, type, statusCode);
+				return new UserDefinedError(content.ToString(), goalStep, StatusCode: statusCode);
 			}
 			if (writeToBuffer)
 			{

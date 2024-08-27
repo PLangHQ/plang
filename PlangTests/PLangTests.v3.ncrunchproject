@@ -91,9 +91,6 @@
         <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.VerifySignature_Test (12529105401430407800)</TestName>
       </NamedTestSelector>
       <NamedTestSelector>
-        <TestName>PLang.Building.Tests.BuilderTests.StartTest</TestName>
-      </NamedTestSelector>
-      <NamedTestSelector>
         <TestName>PLang.Modules.BlockchainModule.Tests.BuilderTests.GetBalanceInWei_Test (12529105401430407800)</TestName>
       </NamedTestSelector>
       <FixtureTestSelector>
@@ -118,13 +115,7 @@
         <FixtureName>PLangTests.Modules.PythonModule.ProgramTests</FixtureName>
       </FixtureTestSelector>
       <FixtureTestSelector>
-        <FixtureName>PLang.Services.IdentityService.Tests.PLangIdentityServiceTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
         <FixtureName>PLang.Repository.Tests.SqliteSettingsRepositoryTests</FixtureName>
-      </FixtureTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>PLang.Building.Events.Tests.EventBuilderTests</FixtureName>
       </FixtureTestSelector>
       <FixtureTestSelector>
         <FixtureName>PLang.Modules.MessageModule.Tests.BuilderTests</FixtureName>
@@ -135,6 +126,129 @@
       <FixtureTestSelector>
         <FixtureName>PLangTests.Modules.MessageModule.ProgramTests</FixtureName>
       </FixtureTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventOnStepError</TestName>
+      </NamedTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.BlockchainModule.Tests.ModuleSettingsTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.BlockchainModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.CachingModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.CallGoalModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.CompressionModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.CryptographicModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.EnvironmentModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.FileModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.HttpModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.ListDictionaryModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.LlmModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.LocalOrGlobalVariableModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.LoopModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.OutputModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.PythonModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.ScheduleModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLang.Modules.WebserverModule.Tests.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLangTests.Integration.ListAndLoopTest</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLangTests.Modules.CallGoalModule.ProgramTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLangTests.Modules.CryptographicModule.ProgramTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLangTests.Modules.FileModule.ProgramTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLangTests.Modules.HttpModule.ProgramTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLangTests.Modules.LlmModule.ProgramTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLangTests.Modules.LoopModule.ProgramTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLangTests.Modules.ScheduleModule.ProgramTests</FixtureName>
+      </FixtureTestSelector>
+      <FixtureTestSelector>
+        <FixtureName>PLangTests.Modules.WebCrawlerModule.BuilderTests</FixtureName>
+      </FixtureTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventOnGoalError</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventOnErrorOnApp</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventOnErrorAppStart</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventBeforeStepHasRun</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventBeforeGoalHasRun</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventBeforeAppStart</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventAppEnd</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventAfterStepHasRun</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventAfterGoalHasRun</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.RunStepEventsTest_CallEventAfterAppStart</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.LoadEvents</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.IsGoalMatchTest_Should_Not_Match_GoalName_NotSame</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.IsGoalMatchTest_Should_Match_GoalName_Same</TestName>
+      </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>PLang.Building.Events.Tests.EventRuntimeTests.IsGoalMatchTest_Should_Match_GoalName_Matches_Pattern2</TestName>
+      </NamedTestSelector>
     </IgnoredTests>
   </Settings>
 </ProjectConfiguration>

@@ -16,6 +16,8 @@ using System.IO.Compression;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using System.ComponentModel;
+using PLang.Errors.Builder;
+using System.Reactive.Concurrency;
 
 namespace PLang.Building
 {
@@ -68,10 +70,6 @@ namespace PLang.Building
 				(var eventGoalFiles, var error) = await eventBuilder.BuildEventsPr();
 				if (error != null) return error;
 
-
-				//var engine = runtimeContainer.GetInstance<IEngine>();
-				//engine.Init(runtimeContainer);
-
 				error = await eventRuntime.Load(true);
 				if (error != null) return error;
 
@@ -107,8 +105,10 @@ namespace PLang.Building
 					logger.LogWarning(eventError.ToFormat().ToString());
 				}
 
+				ShowBuilderErrors(goalFiles, stopwatch);
 
-				logger.LogInformation("\n\nBuild done - Time:" + stopwatch.Elapsed.TotalSeconds.ToString("#,##.##") + " sec");
+				
+				
 
 			}
 			catch (Exception ex)
@@ -118,13 +118,47 @@ namespace PLang.Building
 				(var isHandled, var handleError) = await handler.Handle(error);
 				if (!isHandled)
 				{
-					await handler.ShowError(error, null);
+					if (handleError != null)
+					{
+						var me = new MultipleError(error);
+						me.Add(handleError);
+						await handler.ShowError(error, null);
+					}
+					else
+					{
+						await handler.ShowError(error, null);
+					}
 				}
 
 			}
 			return null;
 		}
 
+		private void ShowBuilderErrors(List<string> goalFiles, Stopwatch stopwatch)
+		{
+			if (goalBuilder.BuildErrors.Count > 0)
+			{
+				foreach (var buildError in goalBuilder.BuildErrors)
+				{
+					logger.LogWarning(buildError.ToFormat().ToString());
+				}
+
+				logger.LogError($"\n\n❌ Failed to build {goalBuilder.BuildErrors.Count} steps");
+
+			} else
+			{				
+				logger.LogWarning($"\n\n🎉 Build was succesfull!");
+			}
+
+			if (goalFiles.Count == 0)
+			{
+				logger.LogInformation($"No goal files changed since last build - Time:{stopwatch.Elapsed.TotalSeconds.ToString("#,##.##")} sec - at {DateTime.Now}");
+			}
+			else
+			{
+				logger.LogInformation($"Build done - Time:{stopwatch.Elapsed.TotalSeconds.ToString("#,##.##")} sec - started at {DateTime.Now}");
+			}
+		}
 
 		private void InitFolders()
 		{
@@ -194,29 +228,19 @@ namespace PLang.Building
 
 		public void SetupBuildValidation()
 		{
-			var eventsPath = Path.Join(fileSystem.GoalsPath, "events");
-			var checkGoalsPath = Path.Join(eventsPath, "CheckGoals.goal");
+			var eventsPath = Path.Join(fileSystem.GoalsPath, "events", "external", "plang", "builder");
 
-			if (fileSystem.File.Exists(checkGoalsPath)) return;
+			if (fileSystem.Directory.Exists(eventsPath)) return;
 
-			if (!fileSystem.File.Exists(checkGoalsPath))
+			fileSystem.Directory.CreateDirectory(eventsPath);
+
+			using (MemoryStream ms = new MemoryStream(InternalApps.Builder))
+			using (ZipArchive archive = new ZipArchive(ms))
 			{
-				if (!fileSystem.Directory.Exists(eventsPath))
-				{
-					fileSystem.Directory.CreateDirectory(eventsPath);
-				}
-				else
-				{
-					logger.LogError("Installed build validator and may have overwritten your events/BuildEvents.goal file. Sorry about that :( Will fix in future.");
-				}
-
-				using (MemoryStream ms = new MemoryStream(InternalApps.CheckGoals))
-				using (ZipArchive archive = new ZipArchive(ms))
-				{
-					archive.ExtractToDirectory(fileSystem.GoalsPath, true);
-				}
-				return;
+				archive.ExtractToDirectory(fileSystem.GoalsPath, true);
 			}
+			return;
+
 		}
 	}
 

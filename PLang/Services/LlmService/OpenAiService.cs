@@ -48,12 +48,13 @@ namespace PLang.Services.OpenAi
 			Extractor = ExtractorFactory.GetExtractor(question, responseType);
 
 			var q = llmCaching.GetCachedQuestion(appId, question);
-			if (!question.Reload && question.caching && q != null)
+			if (!question.Reload && question.caching && q != null && q.RawResponse != null)
 			{
 				try
 				{
-					JsonConvert.DeserializeObject(q.RawResponse);
+
 					return (Extractor.Extract(q.RawResponse, responseType), null);
+
 				}
 				catch { }
 			}

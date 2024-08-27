@@ -128,9 +128,9 @@ For a full list of examples, visit [PLang Db Module Examples](https://github.com
 ## Step Options
 When writing steps in PLang, you have several options to enhance the functionality of each step. Click the links below for more details on how to use each option:
 
-- [CacheHandler](/modules/handlers/CachingHandler.md): Caches the results of database queries.
-- [ErrorHandler](/modules/handlers/ErrorHandler.md): Manages errors that occur during database operations.
-- [RetryHandler](/modules/handlers/RetryHandler.md): Retries a step if it fails due to transient issues.
+- [CacheHandler](/CachingHandler.md): Caches the results of database queries.
+- [ErrorHandler](/ErrorHandler.md): Manages errors that occur during database operations.
+: Retries a step if it fails due to transient issues.
 : Cancels a step if certain conditions are met.
 : Executes a step without waiting for its completion.
 

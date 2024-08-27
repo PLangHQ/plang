@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NBitcoin.Secp256k1;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
 using Org.BouncyCastle.Asn1.Cmp;
@@ -18,7 +19,8 @@ namespace PLang.Runtime.Tests
 	public class MemoryStackTests : BasePLangTest
 	{
 		[TestInitialize]
-		public void Init() {
+		public void Init()
+		{
 			base.Initialize();
 		}
 
@@ -52,7 +54,7 @@ namespace PLang.Runtime.Tests
 			//rows[0].Name
 			//rows[idx].Email
 
-			stack.Put("dataTest", new DataTestClass() {  Number = 1, Title = "Hello", Date = DateTime.Now});
+			stack.Put("dataTest", new DataTestClass() { Number = 1, Title = "Hello", Date = DateTime.Now });
 			plan = stack.GetVariableExecutionPlan("dataTest", false);
 
 			var testClass = plan.ObjectValue.Value as DataTestClass;
@@ -99,12 +101,12 @@ namespace PLang.Runtime.Tests
 			Assert.AreEqual(plan.Calls.Count, 2);
 			Assert.AreEqual(plan.Calls[0], "Date");
 			Assert.AreEqual(plan.Calls[1], "ToString(\"d\")");
-			Assert.AreEqual(plan.Index, 2);
+			Assert.AreEqual(plan.Index, 1);
 
 			stack.Put("dataTestList", list);
 
 			var list2 = stack.Get("dataTestList") as List<DataTestClass>;
-			
+
 			Assert.AreEqual(list2[1].Title, "Hello2");
 
 			stack.Put("idx", 2);
@@ -114,7 +116,7 @@ namespace PLang.Runtime.Tests
 			Assert.AreEqual(plan.Calls.Count, 2);
 			Assert.AreEqual(plan.Calls[0], "Date");
 			Assert.AreEqual(plan.Calls[1], "ToString(\"d\")");
-			Assert.AreEqual(plan.Index, 2);
+			Assert.AreEqual(plan.Index, 1);
 
 			var list3 = stack.Get("dataTestList") as List<DataTestClass>;
 			Assert.AreEqual(list3[1].Title, "Hello2");
@@ -378,7 +380,7 @@ namespace PLang.Runtime.Tests
 			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
-			
+
 			stack.AddOnCreateEvent("item", "Test", true, new());
 
 			//first add the item, no event called
@@ -433,7 +435,7 @@ namespace PLang.Runtime.Tests
 			Assert.AreEqual(typeof(double), weightObj.GetType());
 
 
-			var dataObj = (dynamic) stack.Get("data");
+			var dataObj = (dynamic)stack.Get("data");
 			Assert.AreEqual(1, dataObj.foo);
 			Assert.AreEqual(2, dataObj.bar);
 
@@ -497,7 +499,9 @@ namespace PLang.Runtime.Tests
 			var airlines = stack.Get("jsonArray.airlines") as IEnumerable;
 			Assert.AreEqual(2, airlines.Cast<object>().Count());
 		}
-		
+
 		public record Item(int Id, string Name);
+
+
 	}
 }

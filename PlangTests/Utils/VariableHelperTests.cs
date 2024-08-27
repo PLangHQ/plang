@@ -1,6 +1,7 @@
 ﻿using LightInject;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json.Linq;
 using NSubstitute;
 using PLang.Building;
 
@@ -25,6 +26,7 @@ namespace PLang.Utils.Tests
 		{
 			base.Initialize();
 		}
+
 
 
 		[TestMethod()]
@@ -123,13 +125,13 @@ namespace PLang.Utils.Tests
 			dict.Add("stuff", "Hello %text%");
 			dict.Add("stuff2", "Hello %text2%");
 			dict.Add("stuff3", @"This is it %Settings.Get(""key"", """", """")%");
-			dict.Add("goal", "This is %__Goal__%");
+			dict.Add("goal", "This is %!Goal%");
 			dict = variableHelper.LoadVariables(dict);
 
 			Assert.AreEqual("Hello world", dict["stuff"]);
 			Assert.AreEqual("Hello plang", dict["stuff2"]);
 			Assert.AreEqual("This is it mega", dict["stuff3"]);
-			Assert.AreEqual("This is {  \"GoalObject\": true}", dict["goal"].ToString().Replace("\n", "").Replace("\r", ""));
+			Assert.AreEqual("This is { GoalObject = True }", dict["goal"].ToString().Replace("\n", "").Replace("\r", ""));
 		}
 
 
@@ -153,6 +155,34 @@ namespace PLang.Utils.Tests
 			result = variableHelper.LoadVariables(content, false);
 
 			Assert.AreEqual("Hello " + now.ToString("s"), result);
+		}
+
+
+		[TestMethod]
+		public void LoadVariableInJObject()
+		{
+			var jObject = new JObject();
+			jObject.Add("to", "user@example.org");
+			jObject.Add("subject", "hello world");
+
+			memoryStack.Put("domain", "plang");
+			memoryStack.Put("request", jObject);
+
+			var jobj = JObject.Parse(@$"{{
+				""From"": ""example@example.org"",
+				""ReplyTo"": ""%domain%@example.org"",
+				""To"": ""%request.to%"",
+				""Subject"": ""%request.subject%"",
+				""MessageStream"": ""outbound"",
+				}}");
+
+			var result = variableHelper.LoadVariables(jobj);
+
+			Assert.IsTrue(result.ToString().Contains("plang@example.org"));
+			Assert.IsTrue(result.ToString().Contains("user@example.org"));
+			Assert.IsTrue(result.ToString().Contains("hello world"));
+
+
 		}
 	}
 }

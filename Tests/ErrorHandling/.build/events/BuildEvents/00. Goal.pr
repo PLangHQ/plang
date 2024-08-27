@@ -1,0 +1,59 @@
+{
+  "GoalName": "BuildEvents",
+  "Comment": null,
+  "Text": "BuildEvents",
+  "GoalSteps": [
+    {
+      "Text": "on each goal, call DoStuff",
+      "Comment": null,
+      "ModuleType": null,
+      "Name": null,
+      "Description": null,
+      "PrFileName": null,
+      "RelativePrPath": null,
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-08-23T15:50:19.8913527+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 0,
+      "LineNumber": 2,
+      "LlmRequest": null,
+      "EventBinding": {
+        "EventType": "Before",
+        "EventScope": "Goal",
+        "GoalToBindTo": {
+          "Value": "*"
+        },
+        "GoalToCall": {
+          "Value": "DoStuff"
+        },
+        "IncludePrivate": false,
+        "StepNumber": null,
+        "StepText": null,
+        "WaitForExecution": true,
+        "RunOnlyOnStartParameter": null,
+        "OnErrorContinueNextStep": false
+      },
+      "IsEvent": true
+    }
+  ],
+  "Description": "The BuildEvents goal iterates over each goal and calls the DoStuff function for each one.",
+  "Visibility": 1,
+  "GoalFileName": "BuildEvents.goal",
+  "RelativeGoalPath": "\\events\\BuildEvents.goal",
+  "RelativeGoalFolderPath": "\\events",
+  "RelativePrPath": ".build\\events\\BuildEvents\\00. Goal.pr",
+  "RelativePrFolderPath": ".build\\events\\BuildEvents",
+  "BuilderVersion": null,
+  "GoalInfo": null,
+  "Injections": [],
+  "Signature": null,
+  "Hash": null,
+  "IncomingVariablesRequired": null
+}

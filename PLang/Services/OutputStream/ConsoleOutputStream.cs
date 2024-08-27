@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 
 namespace PLang.Services.OutputStream
 {
+	
+
 	public class ConsoleOutputStream : IOutputStream
 	{
 		public ConsoleOutputStream() {
@@ -17,9 +19,10 @@ namespace PLang.Services.OutputStream
 
 		public async Task<string> Ask(string text, string type = "text", int statusCode = 104)
 		{
-		
 			Console.WriteLine(text);
-			return Console.ReadLine() ?? "";
+
+			string line = Console.ReadLine();
+			return line;
 		}
 
 		public void Dispose()
