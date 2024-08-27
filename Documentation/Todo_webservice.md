@@ -4,7 +4,7 @@ This guide will walk you through the process of creating a Todo web service usin
 
 > [!CAUTION]
 > **Heads up: Building code costs money**
-> Each code line incurs usually between $0.005 - $0.035 fee via LLM. The payoff? Exceptional efficiency gains. You can choose to use [Plang service(simpler) or OpenAI(cheaper)](./PlangOrOpenAI.md). Using Plang service supports the project
+> Each code line incurs usually between $0.0006 - $0.0009 fee via LLM. The payoff? Exceptional efficiency gains. You can choose to use [Plang service(simpler) or OpenAI(cheaper)](./PlangOrOpenAI.md). Using Plang service supports the project
 
 ## Prerequisites
 
@@ -55,7 +55,7 @@ Note: Plang will automatically create and manage an `id` column for the table. B
 
 ### 3. Build and Run `Setup.goal`
 
-> Cost estimate: $0.01
+> Cost estimate: $0.003
 
 Execute the `Setup.goal` file to create the `Todos` table in the database.
 
