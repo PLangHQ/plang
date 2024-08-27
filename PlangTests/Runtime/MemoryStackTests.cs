@@ -97,11 +97,11 @@ namespace PLang.Runtime.Tests
 
 			plan = stack.GetVariableExecutionPlan("dataTestList[2].Date.ToString(\"d\")", false);
 
-			Assert.AreEqual(plan.VariableName, "dataTestList");
-			Assert.AreEqual(plan.Calls.Count, 2);
-			Assert.AreEqual(plan.Calls[0], "Date");
-			Assert.AreEqual(plan.Calls[1], "ToString(\"d\")");
-			Assert.AreEqual(plan.Index, 1);
+			Assert.AreEqual("dataTestList", plan.VariableName);
+			Assert.AreEqual(2, plan.Calls.Count);
+			Assert.AreEqual("Date", plan.Calls[0]);
+			Assert.AreEqual("ToString(\"d\")", plan.Calls[1]);
+			Assert.AreEqual(2, plan.Index);
 
 			stack.Put("dataTestList", list);
 
@@ -116,7 +116,7 @@ namespace PLang.Runtime.Tests
 			Assert.AreEqual(plan.Calls.Count, 2);
 			Assert.AreEqual(plan.Calls[0], "Date");
 			Assert.AreEqual(plan.Calls[1], "ToString(\"d\")");
-			Assert.AreEqual(plan.Index, 1);
+			Assert.AreEqual(plan.Index, 2);
 
 			var list3 = stack.Get("dataTestList") as List<DataTestClass>;
 			Assert.AreEqual(list3[1].Title, "Hello2");

@@ -23,7 +23,7 @@ using static PLang.Utils.VariableHelper;
 
 namespace PLang.Runtime
 {
-    public class MemoryStackPrimativeException : Exception
+	public class MemoryStackPrimativeException : Exception
 	{
 		public MemoryStackPrimativeException(string message) : base(message) { }
 	}
@@ -185,11 +185,16 @@ namespace PLang.Runtime
 				objectValue = GetItemFromListOrDictionary(objectValue, index, dictKey, variableName);
 			}
 
-			if (objectValue.Value is JToken jToken && keySplit.Length > 0) {
-				string tempJsonPath = "$." + string.Join(".", keySplit.Skip(1));
-				if (jToken.SelectTokens(tempJsonPath).ToArray().Length >0)
+			if (objectValue.Value is JToken jToken && keySplit.Length > 0)
+			{
+				string path = string.Join(".", keySplit.Skip(1));
+				if (!path.Contains("(") && !path.Contains(")"))
 				{
-					jsonPath = tempJsonPath;
+					string tempJsonPath = "$." + path;
+					if (jToken.SelectTokens(tempJsonPath).ToArray().Length > 0)
+					{
+						jsonPath = tempJsonPath;
+					}
 				}
 			}
 
@@ -219,7 +224,7 @@ namespace PLang.Runtime
 
 							jsonPath += keySplit[i];
 						}
-						
+
 					}
 				}
 			}
@@ -232,7 +237,7 @@ namespace PLang.Runtime
 		{
 			if (obj == null) return false;
 			if (propertyName == null) return false;
-			
+
 			return obj.GetType().GetProperties().FirstOrDefault(p => p.Name.ToLower() == propertyName.ToLower()) != null;
 		}
 		public bool HasMethod(object? obj, string methodName)
@@ -250,7 +255,8 @@ namespace PLang.Runtime
 			{
 				if (int.TryParse(match.Groups["number"].Value, out var number))
 				{
-					if (i == 0) {
+					if (i == 0)
+					{
 						return $"$[{number}]";
 					}
 
@@ -900,17 +906,20 @@ namespace PLang.Runtime
 				if (property == null)
 				{
 					object? parsedObject = null;
-					if (obj is JToken || (obj is string && JsonHelper.IsJson(obj, out parsedObject))) {
+					if (obj is JToken || (obj is string && JsonHelper.IsJson(obj, out parsedObject)))
+					{
 						IEnumerable<JToken> tokens;
 						if (parsedObject == null) parsedObject = obj;
 
 						if (parsedObject is JArray)
 						{
 							tokens = ((JArray)parsedObject).SelectTokens(propertyDescription);
-						} else if (parsedObject is JObject)
+						}
+						else if (parsedObject is JObject)
 						{
 							tokens = ((JObject)parsedObject).SelectTokens(propertyDescription);
-						} else
+						}
+						else
 						{
 							tokens = ((JToken)parsedObject).SelectTokens(propertyDescription);
 						}
@@ -918,11 +927,12 @@ namespace PLang.Runtime
 						if (array.Length != 1)
 						{
 							value = array;
-						} else
+						}
+						else
 						{
 							value = array[0];
 						}
-						
+
 					}
 					// Not to throw exception on build if property is not found.
 					else if (!isBuilder)

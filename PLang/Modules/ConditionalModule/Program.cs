@@ -222,10 +222,6 @@ namespace PLang.Modules.ConditionalModule
 					{
 						goalToCallOnTrueParameters = jObject.ToDictionary();
 					}
-					else
-					{
-						goalToCallOnTrueParameters = obj as Dictionary<string, object?>;
-					}
 				}
 				task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCallOnTrue, goalToCallOnTrueParameters, goal);
 			}
@@ -235,16 +231,13 @@ namespace PLang.Modules.ConditionalModule
 				{
 					goalToCallOnFalse = variableHelper.LoadVariables(goalToCallOnFalse).ToString();
 				}
+				
 				if (goalToCallOnFalseParameters?.Count == 1 && VariableHelper.IsVariable(goalToCallOnFalseParameters.FirstOrDefault().Value))
 				{
 					var obj = variableHelper.LoadVariables(goalToCallOnFalseParameters.FirstOrDefault().Value);
 					if (obj is JObject jObject)
 					{
 						goalToCallOnFalseParameters = jObject.ToDictionary();
-					}
-					else
-					{
-						goalToCallOnFalseParameters = obj as Dictionary<string, object?>;
 					}
 				}
 				task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCallOnFalse, goalToCallOnFalseParameters, goal);

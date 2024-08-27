@@ -1,6 +1,6 @@
 ﻿<SolutionConfiguration>
   <Settings>
-    <AutoEnable>False</AutoEnable>
+    <AutoEnable>True</AutoEnable>
     <CurrentEngineMode>Run all tests automatically [Global]</CurrentEngineMode>
     <TestsWindowMenuOptions>
       <VerticalSplitMenuOption>false</VerticalSplitMenuOption>
