@@ -120,8 +120,7 @@ namespace PLang.Building
 				{
 					if (handleError != null)
 					{
-						var me = new MultipleError();
-						me.Add(error);
+						var me = new MultipleError(error);
 						me.Add(handleError);
 						await handler.ShowError(error, null);
 					}

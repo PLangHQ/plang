@@ -1,4 +1,5 @@
 ﻿using PLang.Attributes;
+using PLang.Errors;
 using PLang.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
@@ -200,11 +201,43 @@ namespace PLang.Utils
 
 				if (method.ReturnType == typeof(Task))
 				{
-					strMethod += " : void ";
+					strMethod += " : void";
 				}
 				else if (method.ReturnType.GenericTypeArguments.Length > 0)
 				{
-					strMethod += " : " + method.ReturnType.GenericTypeArguments[0].Name + " ";
+					string returns = "void";
+
+					foreach (var returnType in method.ReturnType.GenericTypeArguments)
+					{
+
+						if (returnType.Name.StartsWith("ValueTuple"))
+						{
+							foreach (var tupleType in returnType.GenericTypeArguments)
+							{
+								if (tupleType.Name == "Object" || !tupleType.IsAssignableFrom(typeof(IError)))
+								{
+									if (tupleType.Name.StartsWith("List"))
+									{
+										returns = $"List<{tupleType.GenericTypeArguments[0].Name}>";
+									}
+									else if (tupleType.Name.StartsWith("Dictionary"))
+									{
+										returns = $"Dicionary<{tupleType.GenericTypeArguments[0].Name}, {tupleType.GenericTypeArguments[1].Name}>";
+
+									}
+									else
+									{
+										returns = tupleType.Name;
+									}
+								}
+							}
+						}
+						else if (!returnType.IsAssignableFrom(typeof(IError)))
+						{
+							returns = returnType.Name;
+						}
+					}
+					strMethod += $" : {returns} ";
 				}
 				else
 				{

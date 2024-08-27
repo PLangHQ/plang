@@ -53,6 +53,7 @@ namespace PLang.Modules.MessageModule
 		private readonly IOutputStreamFactory outputStreamFactory;
 		private readonly IOutputSystemStreamFactory outputSystemStreamFactory;
 		private readonly IErrorHandlerFactory errorHandlerFactory;
+		private readonly IErrorSystemHandlerFactory errorSystemHandlerFactory;
 		private readonly IAskUserHandlerFactory askUserHandlerFactory;
 		private readonly IPLangFileSystem fileSystem;
 		private ModuleSettings moduleSettings;
@@ -62,7 +63,8 @@ namespace PLang.Modules.MessageModule
 
 		public Program(ISettings settings, ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine,
 			ILlmServiceFactory llmServiceFactory, INostrClient client, IPLangSigningService signingService,
-			IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory, IErrorHandlerFactory exceptionHandlerFactory,
+			IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory,
+			IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory,
 			IAskUserHandlerFactory askUserHandlerFactory, IPLangFileSystem fileSystem
 			) : base()
 		{
@@ -75,7 +77,8 @@ namespace PLang.Modules.MessageModule
 			this.signingService = signingService;
 			this.outputStreamFactory = outputStreamFactory;
 			this.outputSystemStreamFactory = outputSystemStreamFactory;
-			this.errorHandlerFactory = exceptionHandlerFactory;
+			this.errorHandlerFactory = errorHandlerFactory;
+			this.errorSystemHandlerFactory = errorSystemHandlerFactory;
 			this.askUserHandlerFactory = askUserHandlerFactory;
 			this.fileSystem = fileSystem;
 			this.moduleSettings = new ModuleSettings(settings, llmServiceFactory);
@@ -212,7 +215,7 @@ namespace PLang.Modules.MessageModule
 			if (privateKey == null) return null;
 
 			var container = new ServiceContainer();
-			container.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, askUserHandlerFactory, outputStreamFactory, outputSystemStreamFactory, errorHandlerFactory);
+			container.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, askUserHandlerFactory, outputStreamFactory, outputSystemStreamFactory, errorHandlerFactory, errorSystemHandlerFactory);
 
 			var content = ev.DecryptContent(privateKey);
 			var hash = ev.CreatedAt.ToString().ComputeHash().Hash + content.ComputeHash().Hash + ev.Pubkey.ComputeHash().Hash;

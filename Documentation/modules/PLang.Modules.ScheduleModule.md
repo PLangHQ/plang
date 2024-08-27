@@ -132,9 +132,9 @@ For a full list of examples on how to use the Schedule module in PLang, please v
 ## Step Options
 Each step in your PLang code can be enhanced with additional options to handle various scenarios. Click on the links below for more detailed information on how to use each option:
 
-- [CacheHandler](/modules/handlers/CachingHandler.md)
-- [ErrorHandler](/modules/handlers/ErrorHandler.md)
-- [RetryHandler](/modules/handlers/RetryHandler.md)
+- [CacheHandler](/CachingHandler.md)
+- [ErrorHandler](/ErrorHandler.md)
+
 
 
 

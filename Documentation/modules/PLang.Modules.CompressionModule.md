@@ -92,9 +92,9 @@ For a full list of examples, visit [PLang Compression Examples](https://github.c
 
 ## Step Options
 When writing your plang code, you can enhance your steps with these options. Click on each for more details on how to use them:
-- [CacheHandler](/modules/handlers/CachingHandler.md)
-- [ErrorHandler](/modules/handlers/ErrorHandler.md)
-- [RetryHandler](/modules/handlers/RetryHandler.md)
+- [CacheHandler](/CachingHandler.md)
+- [ErrorHandler](/ErrorHandler.md)
+
 - [CancellationHandler](/moduels/CancelationHandler.md)
 
 

@@ -160,6 +160,7 @@ namespace PLang.Building.Parsers
 				{
 					prFileAbsolutePath = Path.Combine(GetBuildPathOfGoalFile(goalFileAbsolutePath), goals[i].GoalName, ISettings.GoalFileName);
 					goal.Visibility = Visibility.Private;
+					
 				}
 				goal.GoalFileName = Path.GetFileName(goalFileAbsolutePath);
 				goal.PrFileName = Path.GetFileName(prFileAbsolutePath);
@@ -168,6 +169,10 @@ namespace PLang.Building.Parsers
 				goal.AbsoluteGoalFolderPath = Path.GetDirectoryName(goalFileAbsolutePath);
 				goal.RelativeGoalPath = goalFileAbsolutePath.Replace(fileSystem.GoalsPath, "");
 				goal.RelativeGoalFolderPath = Path.GetDirectoryName(goal.RelativeGoalPath);
+				if (i > 0)
+				{
+					goals[0].SubGoals.Add(goal.GoalName);
+				}
 
 				goal.AbsolutePrFilePath = prFileAbsolutePath;
 				goal.AbsolutePrFolderPath = Path.GetDirectoryName(prFileAbsolutePath);

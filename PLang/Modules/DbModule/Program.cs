@@ -110,7 +110,7 @@ namespace PLang.Modules.DbModule
 			}
 		}
 
-		public async Task<Error?> LoadExtension(string fileName, string? procName = null)
+		public async Task<IError?> LoadExtension(string fileName, string? procName = null)
 		{
 			if (dbConnection is not SqliteConnection)
 			{
@@ -160,7 +160,7 @@ namespace PLang.Modules.DbModule
 		private (IDbConnection connection, DynamicParameters param, string sql, IError? error) Prepare(string sql, List<object>? Parameters = null, bool isInsert = false)
 		{
 			IDbConnection connection = context.ContainsKey(DbConnectionContextKey) ? context[DbConnectionContextKey] as IDbConnection : dbConnection;
-			var multipleErrors = new MultipleError("SqlParameters");
+			var multipleErrors = new GroupedErrors("SqlParameters");
 			var param = new DynamicParameters();
 			if (Parameters != null)
 			{
@@ -237,7 +237,7 @@ namespace PLang.Modules.DbModule
 							variableName = variableName.TrimEnd('%').TrimEnd('\\');
 							postfix = "%";
 						}
-						var variableValue = variableHelper.LoadVariables(variableName);
+						var variableValue = variableName; // variableHelper.LoadVariables(variableName);
 						(object? value, Error? error) = ConvertObjectToType(variableValue, p.TypeFullName, parameterName);
 						if (error != null) multipleErrors.Add(error);
 

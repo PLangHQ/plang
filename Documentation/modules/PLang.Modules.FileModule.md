@@ -142,9 +142,9 @@ For a full list of examples demonstrating various file operations, visit [PLang 
 ## Step Options
 Each step in a PLang script can be enhanced with various handlers to manage execution flow, errors, retries, and more. Here are some useful handlers you can apply:
 
-- [CacheHandler](/modules/handlers/CachingHandler.md)
-- [ErrorHandler](/modules/handlers/ErrorHandler.md)
-- [RetryHandler](/modules/handlers/RetryHandler.md)
+- [CacheHandler](/CachingHandler.md)
+- [ErrorHandler](/ErrorHandler.md)
+
 - [Run and Forget](/modules/RunAndForget.md)
 
 Click on the links for more details on how to use each handler.

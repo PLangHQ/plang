@@ -174,13 +174,13 @@ namespace PLang.Utils.Extractors
 			if (responseType == typeof(CodeImplementationResponse))
 			{
 				var cir = jsonObject as CodeImplementationResponse;
-				var ci = new CodeImplementationResponse(cir.Namespace, cir.Name, implementation, cir.OutParameterDefinition, cir.Using, cir.Assemblies);
+				var ci = new CodeImplementationResponse(cir.Namespace, cir.Name, implementation, cir.InputParameters, cir.OutParameters, cir.Using, cir.Assemblies);
 
 				return ci;
 			} else
 			{
 				var cir = jsonObject as ConditionImplementationResponse;
-				var ci = new ConditionImplementationResponse(cir.Namespace, cir.Name, implementation, cir.Using, cir.Assemblies, cir.GoalToCallOnTrue, cir.GoalToCallOnFalse, cir.GoalToCallOnTrueParameters, cir.GoalToCallOnFalseParameters);
+				var ci = new ConditionImplementationResponse(cir.Namespace, cir.Name, implementation, cir.InputParameters, cir.Using, cir.Assemblies, cir.GoalToCallOnTrue, cir.GoalToCallOnFalse, cir.GoalToCallOnTrueParameters, cir.GoalToCallOnFalseParameters);
 
 				return ci;
 			}

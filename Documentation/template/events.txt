@@ -20,26 +20,26 @@ Error Handling Events
 
 ```plang
 Events
-- on error in step, call !Logger.StepError
-- on error on goal, call !Logger.GoalError
+- on error in step, call !LoggerStepError
+- on error on goal, call !LoggerGoalError
 ```
 
-Conditional Events
-```plang
-- before each step, include private goals, call !SendDebug, only in debug mode
-- before goal ends, include private goals, call !SendDebug, only in debug mode
-```
+Take a look into how handle errors on step(./modules/handlers/ErrorHandler.md)
+
 
 ## Builder events 
 Binding to plang builder, create a file called `BuilderEvents.goal`
 ```plang
-- before each step in builder, call !AnalyzeCode
-- after each step in builder, call !AnalyzeCode
+BuilderEvents
+- before each step, call !AnalyzeCode
+- after each step, call !AnalyzeCode
 ```
+
 
 ## Run event only when parameter is provided
 it is possible to define an event to run only if a parameter is provided at the startup of the app
 ```plang
+Events
 - before each step, call !SendDebug, only when start parameter is '--debug'
 ```
 This will only bind this event if you start the app like this
@@ -47,6 +47,11 @@ This will only bind this event if you start the app like this
 plang --debug
 ```
 You can define your own parameter
+
+## Available variables
+
+You can access the goal, step and event information using these variables in the event
+ - %!goal%, %!step%, %!event%
 
 ## external events
 Any external events install from an outside source should be installed into the `events/external/{appName}/` folder, e.g. `events/external/plang/` is create when you build or run a debugger.
@@ -67,3 +72,9 @@ Error Events: Trigger actions when an error occurs in a step or goal.
 Conditional Events: Execute actions under specific conditions, like in debug mode.
 Build Events: Read more about build events
 Bind events to variable, on creation, update, delete
+
+## Source code
+Can be found https://github.com/PLangHQ/plang/tree/main/PLang/Events
+- EventBuilder.cs contains the code for building events files
+- EventRuntime.cs is the code for the runtime
+- EventBinding is the objects that are used in the builder and runtime.

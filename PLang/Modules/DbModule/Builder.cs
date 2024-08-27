@@ -266,7 +266,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 			if (dataSource.KeepHistory)
 			{
 				keepHistoryCommand = @$"You MUST add id to create statement.
-If id is not defined then add id to the create statement. 
+If id is not defined then add id to the create statement 
 The id MUST NOT be auto incremental, but is primary key.
 The id should be datatype long/bigint/.. which fits {functionInfo.DatabaseType}.";
 			}
@@ -390,7 +390,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 			string appendToSystem = "";
 			if (dataSource.KeepHistory)
 			{
-				appendToSystem = "SqlParameters @id MUST be type System.Int64";
+				appendToSystem = "SqlParameters @id MUST be type System.Int64. VariableNameOrValue=%id%";
 			}
 			SetSystem(@$"Map user command to this c# function: 
 

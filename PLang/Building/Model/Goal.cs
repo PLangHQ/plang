@@ -38,6 +38,7 @@ namespace PLang.Building.Model
 		{
 			GoalSteps = new List<GoalStep>();
 			Injections = new();
+			SubGoals = new();
 		}
 
 		public Goal(string goalName, List<GoalStep> steps)
@@ -46,12 +47,14 @@ namespace PLang.Building.Model
 			this.GoalSteps = steps;
 			GoalSteps = new List<GoalStep>();
 			Injections = new();
+			SubGoals = new();
 		}
 
 		public string GoalName { get; set; }
 		public string? Comment { get; set; }
 		public string Text { get; set; }
 		public List<GoalStep> GoalSteps { get; set; }
+		public List<string> SubGoals { get; set; }
 		public string? Description { get; set; }
 		public Visibility Visibility { get; set; }
 		[Newtonsoft.Json.JsonIgnore]

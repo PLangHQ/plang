@@ -3,6 +3,7 @@ using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Schema;
 using OpenQA.Selenium.DevTools.V124.CSS;
+using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.AskUser;
@@ -19,6 +20,7 @@ using PLang.Services.LlmService;
 using PLang.Utils;
 using RazorEngineCore;
 using System.ComponentModel;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
 using static PLang.Modules.DbModule.ModuleSettings;
@@ -80,22 +82,25 @@ namespace PLang.Building
 			{				
 				if (StepHasBeenBuild(step, stepIndex, excludeModules)) return null;
 
-				await eventRuntime.RunBuildStepEvents(EventType.Before, goal, step, stepIndex);
-				
-				// build info about step, name, description and module type
-				(step, var error) = await BuildStepInformation(goal, step, stepIndex, excludeModules, errorCount);
+				var error = await eventRuntime.RunBuildStepEvents(EventType.Before, goal, step, stepIndex);
 				if (error != null) return error;
 
+				// build info about step, name, description and module type
+				(step, error) = await BuildStepInformation(goal, step, stepIndex, excludeModules, errorCount);
+				if (error != null) return error;
+				
+
 				// builds the instruction set to execute
-				error = await instructionBuilder.BuildInstruction(this, goal, step, step.ModuleType, stepIndex, excludeModules, errorCount);
+				(var instruction, error) = await instructionBuilder.BuildInstruction(this, goal, step, step.ModuleType, stepIndex, excludeModules, errorCount);
 				if (error != null)
 				{
 					error = await HandleBuildInstructionError(goal, step, stepIndex, excludeModules, errorCount, error);
 					if (error != null) return error;
 				}
+				if (instruction == null) return null;
 
 				// builds properties on the step, caching, errorhandling, logger
-				(step, error) = await BuildStepProperties(goal, step, stepIndex, excludeModules, errorCount);
+				(step, error) = await BuildStepProperties(goal, step, instruction, stepIndex, excludeModules, errorCount);
 				if (error != null) return error;				
 
 				//Set reload to false after Build Instruction
@@ -166,12 +171,16 @@ namespace PLang.Building
 			}
 			else if (action.Contains("OutParameterDefinition"))
 			{
+				return false;
+			}
+			else if (action.Contains("OutParameters"))
+			{
 				var implementation = JsonConvert.DeserializeObject<Implementation>(action);
-				if (implementation != null && implementation.OutParameterDefinition != null)
+				if (implementation != null && implementation.OutParameters != null)
 				{
-					foreach (var vars in implementation.OutParameterDefinition)
+					foreach (var vars in implementation.OutParameters)
 					{
-						memoryStack.PutForBuilder(vars.Key, JsonConvert.SerializeObject(vars.Value));
+						memoryStack.PutForBuilder(vars.VariableName, vars.ParameterType);
 					}
 				}
 			}
@@ -268,9 +277,12 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			return null;
 		}
 
-		private async Task<(GoalStep step, IBuilderError? error)> BuildStepProperties(Goal goal, GoalStep step, int stepIndex, List<string> excludeModules, int errorCount)
+		private async Task<(GoalStep step, IBuilderError? error)> BuildStepProperties(Goal goal, GoalStep step, Instruction instruction, int stepIndex, List<string> excludeModules, int errorCount)
 		{
-			LlmRequest llmQuestion = GetBuildStepPropertiesQuestion(goal, step);
+			
+		
+
+			LlmRequest llmQuestion = GetBuildStepPropertiesQuestion(goal, step, instruction);
 
 			logger.Value.LogInformation($"- Building properties for {step.Text}");
 			llmQuestion.Reload = false;
@@ -280,7 +292,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			if (stepProperties == null)
 			{
 				logger.Value.LogWarning($"Could not get answer from LLM. Will try again. This is attempt nr {++errorCount}");
-				return await BuildStepProperties(goal, step, stepIndex, excludeModules, ++errorCount);
+				return await BuildStepProperties(goal, step, instruction, stepIndex, excludeModules, ++errorCount);
 			}
 
 			step.ErrorHandlers = stepProperties.ErrorHandlers;
@@ -301,29 +313,44 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			return null;
 		}
 
-		private LlmRequest GetBuildStepPropertiesQuestion(Goal goal, GoalStep step)
+		private LlmRequest GetBuildStepPropertiesQuestion(Goal goal, GoalStep step, Instruction instruction)
 		{
 
+			(bool canBeCached, bool canHaveErrorHandling, bool canBeAsync) = GetMethodSettings(step, instruction);
+
 			var stepPropertiesScheme = TypeHelper.GetJsonSchema(typeof(StepProperties));
-			var errorHandlerScheme = TypeHelper.GetJsonSchema(typeof(ErrorHandler));
+
 			var cachingHandlerScheme = "";
 			var cachingSystemText = "CachingHandler: is always null";
-			if (step.ModuleType != "PLang.Modules.CachingModule")
+			if (canBeCached)
 			{
 				cachingHandlerScheme = "CachingHandler:\n" + TypeHelper.GetJsonSchema(typeof(CachingHandler));
-				cachingSystemText = "CachingHandler: How caching is handled, default is null"; 
+				cachingSystemText = "CachingHandler: How caching is handled, default is null";
+			}
+			var errorHandlerScheme = "";
+			var errorHandlerSystemText = "ErrorHandler: is always null";
+			if (canHaveErrorHandling)
+			{
+				errorHandlerScheme = "CachingHandler:\n" + TypeHelper.GetJsonSchema(typeof(ErrorHandler));
+				errorHandlerSystemText = @"ErrorHandlers: 
+	- How to handle errors defined by user, default is null. 
+	- StatusCode, Message and Key is null, unless clearly defined by user in on error clause.  
+	- User can send parameter(s) to a goal being called, the parameter(s) come after the goal name";
+			}
+
+			var asyncSystemText = @"WaitForExecution: Default is true. Indicates if code should wait for execution to finish."; 
+			if (!canBeAsync)
+			{
+				asyncSystemText = "WaitForExecution: is always false";
 			}
 
 			var system = $@"You job is to understand the user intent and map his intent to properties matching StepProperties.
 The user statement is a step of executable code.
-
-WaitForExecution: Default is true. Indicates if code should wait for execution to finish.
+{errorHandlerSystemText}
+{asyncSystemText}
 {cachingSystemText}
 LoggerLevel: default null
-ErrorHandlers: 
-	- How to handle errors defined by user, default is null. 
-	- StatusCode, Message and Key is null, unless clearly defined by user in on error clause.  
-	- User can send parameter(s) to a goal being called, the parameter(s) come after the goal name
+
 
 === Scheme information ===
 ErrorHandler: 
@@ -331,6 +358,12 @@ ErrorHandler:
 
 {cachingHandlerScheme}
 === Scheme information ===
+
+Take into account that another service will execute the user intent before error handling and cache handler, following is the instruction for that service. 
+You might not need to map the error handling or cache handler if this service is handling the user intent
+=== service instruction ==
+{JsonConvert.SerializeObject(instruction.Action)}
+=== service instruction ==
 ";
 
 			List<LlmMessage> promptMessage = new();
@@ -346,7 +379,32 @@ ErrorHandler:
 
 		}
 
-		
+		private (bool, bool, bool) GetMethodSettings(GoalStep step, Instruction instruction)
+		{
+			bool canBeCached = true;
+			bool canHaveErrorHandling = true;
+			bool canBeAsync = true;
+
+			var moduleType = typeHelper.GetRuntimeType(step.ModuleType);
+			var gf = instruction.Action as GenericFunction;
+			if (moduleType != null && gf != null)
+			{
+				var method = moduleType.GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(p => p.Name == gf.FunctionName);
+				if (method != null)
+				{
+					var attribute = method.GetCustomAttribute<MethodSettingsAttribute>();
+
+					if (attribute != null)
+					{
+						canBeCached = attribute.CanBeCached;
+						canHaveErrorHandling = attribute.CanHaveErrorHandling;
+						canBeAsync = attribute.CanBeAsync;
+					}
+				}
+			}
+			return (canBeCached, canHaveErrorHandling, canBeAsync);
+		}
+
 
 
 		private LlmRequest GetBuildStepInformationQuestion(Goal goal, GoalStep step, List<string>? excludeModules = null)

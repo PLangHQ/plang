@@ -91,6 +91,8 @@ namespace PLang.Building
 					var buildStepError = await stepBuilder.BuildStep(goal, i);
 					if (buildStepError != null && !buildStepError.ContinueBuild)
 					{
+						if (buildStepError.Step == null) buildStepError.Step = goal.GoalSteps[i];
+						if (buildStepError.Goal == null) buildStepError.Goal = goal;
 						return buildStepError;
 					}
 					else if (buildStepError != null)
@@ -286,6 +288,22 @@ Be concise
 					fileSystem.File.Delete(file);
 				}
 			}
+
+			var dirs = fileSystem.Directory.GetDirectories(goal.AbsolutePrFolderPath);
+			foreach (var dir in dirs)
+			{
+				foreach (var subGoal in goal.SubGoals) {
+
+					dirs = dirs.Where(p => !p.StartsWith(Path.Join(goal.AbsolutePrFolderPath, subGoal))).ToArray();
+				}
+			}
+
+			foreach (var dir in dirs)
+			{
+				fileSystem.Directory.Delete(dir, true);
+			}
+			int i = 0;
+
 		}
 		private bool GoalNameContainsMethod(Goal goal)
 		{

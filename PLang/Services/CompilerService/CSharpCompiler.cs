@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using OpenQA.Selenium.DevTools.V124.WebAudio;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Errors.Builder;
@@ -86,6 +87,8 @@ namespace PLang.Services.CompilerService
 			}
 		}
 
+		public record Parameter(string VariableName, string ParameterName, string ParameterType);
+
 		public async Task<(Implementation?, CompilerError?)> BuildCode(ImplementationResponse answer, GoalStep step, MemoryStack memoryStack)
 		{
 			if (answer.Assemblies != null)
@@ -153,14 +156,35 @@ namespace PLang.Services.CompilerService
 				root = tree.GetRoot();
 				method = root.DescendantNodes().OfType<MethodDeclarationSyntax>().FirstOrDefault();
 			}
-			var parameters = method.ParameterList.Parameters;
+			var parameters = method.ParameterList.Parameters.Where(p => p.Identifier.Text != "fileSystem").ToList();
+			var answerParameters = GetParameters(answer);
 
-			Dictionary<string, string> inputParameters = new Dictionary<string, string>();
-			foreach (var parameter in parameters)
+			if (parameters.Count != answerParameters.Count)
 			{
+				string error = @$"
+### Previous LLM generated code ###
+Json response:
+{JsonConvert.SerializeObject(answer)}
+
+C# code:
+{sourceCode}
+### Previous LLM generated code ###
+ Parameters in json does not match parameter count in method. Please fix.
+					";
+
+				return (null, new CompilerError($"Parameter count not matching. Need to request new code from LLM.", error, step));
+			}
+			List<Parameter> inputParameters = new();
+			List<Parameter> outputParameters = new();
+			for (int i = 0; i < parameters.Count; i++)
+			{
+				var parameter = parameters[i];
+				var parameterName = parameter.Identifier.Text;
+				var variableName = answerParameters[i];
+
 				var stepText = step.Text.ToLower();
-				var parameterName = GetStepParameterName(parameter.Identifier.Text);
-				if (inputParameters.ContainsKey(parameterName))
+
+				if (inputParameters.FirstOrDefault(p => p.ParameterName == parameterName) != null)
 				{
 					logger.LogWarning($"{parameterName} was defined twice in code. Need to request new code from LLM.");
 					//retry with gpt with error that parameter is not in step text.
@@ -175,11 +199,11 @@ namespace PLang.Services.CompilerService
 				}
 				else if (parameter.Type?.ToString().Trim() == "PLang.SafeFileSystem.PLangFileSystem" || parameter.Type?.ToString().Trim() == "PLangFileSystem")
 				{
-					inputParameters.Add(parameterName, parameter.Type.ToString());
+					inputParameters.Add(new Parameter(variableName, parameterName, parameter.Type.ToString()));
 				}
-				else if (!StepTextContainsParameter(step, parameterName))
+				else if (!StepTextContainsVariable(step, variableName))
 				{
-					logger.LogWarning(parameter.Type + " " + parameterName + " is not in step.Text. Will retry with LLM");
+					logger.LogWarning($"{variableName} is not in step.Text. Will retry with LLM");
 					//retry with gpt with error that parameter is not in step text.
 					string error = @$"
 ### Previous LLM generated code ###
@@ -188,7 +212,7 @@ namespace PLang.Services.CompilerService
 
 This generated code has error:
 
-{parameterName} is not defined in user command: {stepText}
+{variableName} is not defined in user command: {stepText}
 
 Fix the error and generate the C# code again.
 
@@ -197,11 +221,25 @@ These are the rules with variables:
 - Make sure to keep underscore in variables if the user defined it like that
 					";
 
-					return (null, new CompilerError($"{parameter.Type} {parameterName} is not in step.Text. Will retry with LLM", error, step));
+					return (null, new CompilerError($"{variableName} is not in step.Text. Will retry with LLM", error, step));
 				}
 				else
 				{
-					inputParameters.Add(parameterName, parameter.Type.ToString());
+					if (answer is CodeImplementationResponse cir2)
+					{
+						if (IsOutOrRef(parameter))
+						{
+							outputParameters.Add(new Parameter(variableName, parameterName, parameter.Type.ToString()));
+						}
+						else
+						{
+							inputParameters.Add(new Parameter(variableName, parameterName, parameter.Type.ToString()));
+						}
+					}
+					else
+					{
+						inputParameters.Add(new Parameter(variableName, parameterName, parameter.Type.ToString()));
+					}
 				}
 
 			}
@@ -265,13 +303,13 @@ These are the rules with variables:
 						{
 							string fileName = fex.FileName ?? "";
 							if (fileName.Contains(",")) fileName = fileName.Substring(0, fileName.IndexOf(","));
-							return (null, new CompilerError($@"File {fileName} not found. You might need to put {fileName}.dll file into the .services folder.", "", step, ContinueBuild: false, 
-								Exception: fex, 
+							return (null, new CompilerError($@"File {fileName} not found. You might need to put {fileName}.dll file into the .services folder.", "", step, ContinueBuild: false,
+								Exception: fex,
 								FixSuggestion: $@"You need to download the library for {fileName}. 
 Check out Plang help documentation to assist you:
 	https://github.com/PLangHQ/plang/blob/main/Documentation/3rdPartyLibrary.md
 
-Read the documentation link provided above to get understanding.", 
+Read the documentation link provided above to get understanding.",
 								HelpfulLinks: $@"
 You can find those 3rd party plugins at https://nuget.org
 Search for {fileName} - https://www.nuget.org/packages?q={fileName}"));
@@ -328,16 +366,14 @@ Search for {fileName} - https://www.nuget.org/packages?q={fileName}"));
 			}
 			if (answer is CodeImplementationResponse cir)
 			{
-				var outParameters = cir.OutParameterDefinition;
-				if (outParameters != null)
+
+				foreach (var vars in outputParameters)
 				{
-					foreach (var vars in outParameters)
-					{
-						memoryStack.PutForBuilder(vars.Key, JsonConvert.SerializeObject(vars.Value));
-					}
+					memoryStack.PutForBuilder(vars.VariableName, vars.ParameterType.ToString());
 				}
+
 				var implementation = new Implementation(answer.Namespace, answer.Name, answer.Implementation, answer.Using,
-					inputParameters, cir.OutParameterDefinition, null, null, null, null, servicesAssembly);
+					inputParameters, outputParameters, null, null, null, null, servicesAssembly);
 				return (implementation, null);
 			}
 			else if (answer is ConditionImplementationResponse conIr)
@@ -352,16 +388,30 @@ Search for {fileName} - https://www.nuget.org/packages?q={fileName}"));
 
 
 		}
-
-		private bool StepTextContainsParameter(GoalStep step, string parameterName)
+		public bool IsOutOrRef(ParameterSyntax parameterSyntax)
 		{
-			if (parameterName.StartsWith("@")) parameterName = parameterName.Substring(1);
+			return parameterSyntax.Modifiers.Any(m => m.IsKind(SyntaxKind.RefKeyword)) ||
+				parameterSyntax.Modifiers.Any(m => m.IsKind(SyntaxKind.OutKeyword));
+		}
 
-			string stepText = step.Text.ToLower();
-			if (stepText.Contains("%" + parameterName.ToLower())) return true;
-			if (stepText.Replace("!", "").Contains("%" + parameterName.ToLower())) return true;
+		private List<string> GetParameters(ImplementationResponse answer)
+		{
+			List<string> parameters = new();
+			if (answer is CodeImplementationResponse cir)
+			{
+				if (cir.InputParameters != null) parameters.AddRange(cir.InputParameters);
+				if (cir.OutParameters != null) parameters.AddRange(cir.OutParameters);
+			}
+			else
+			{
+				if (answer.InputParameters != null) parameters.AddRange(answer.InputParameters);
+			}
+			return parameters;
+		}
 
-			return false;
+		private bool StepTextContainsVariable(GoalStep step, string variableName)
+		{
+			return step.Text.Contains(variableName, StringComparison.OrdinalIgnoreCase);
 		}
 
 		private string Transform(string implementation, GoalStep step)

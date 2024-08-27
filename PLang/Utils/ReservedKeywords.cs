@@ -35,7 +35,8 @@ namespace PLang.Utils
 		public static readonly string Inject_Caching = "!Inject_Caching";
 		public static readonly string Inject_LLMService = "!Inject_LLMService";
 		public static readonly string Inject_AskUserHandler = "!Inject_AskUserHandler";
-		public static readonly string Inject_ErrorHandler = "!Inject_ExceptionHandler";
+		public static readonly string Inject_ErrorHandler = "!Inject_ErrorHandler";
+		public static readonly string Inject_ErrorSystemHandler = "!Inject_ErrorSystemHandler";
 		public static readonly string Inject_EncryptionService = "!Inject_EncryptionService";
 		public static readonly string Inject_IEventSourceRepository = "!Inject_IEventSourceRepository";
 		public static readonly string Inject_Archiving = "!Inject_Archiving";

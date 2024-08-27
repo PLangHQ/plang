@@ -7,6 +7,10 @@ namespace PLang.Errors.Handlers
     {
 		IErrorHandler CreateHandler();
     }
+    public interface IErrorSystemHandlerFactory
+	{
+		IErrorHandler CreateHandler();
+    }
 
     public class ErrorHandlerFactory : BaseFactory, IErrorHandlerFactory
     {
@@ -21,4 +25,18 @@ namespace PLang.Errors.Handlers
             return container.GetInstance<IErrorHandler>(serviceName);
         }
     }
+
+	public class ErrorSystemHandlerFactory : BaseFactory, IErrorSystemHandlerFactory
+	{
+
+		public ErrorSystemHandlerFactory(ServiceContainer container) : base(container)
+		{
+		}
+
+		public IErrorHandler CreateHandler()
+		{
+			var serviceName = GetServiceName(ReservedKeywords.Inject_ErrorSystemHandler);
+			return container.GetInstance<IErrorHandler>(serviceName);
+		}
+	}
 }

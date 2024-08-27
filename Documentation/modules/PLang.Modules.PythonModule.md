@@ -112,9 +112,9 @@ For a full list of examples, visit [PLang Python Examples](https://github.com/PL
 ## Step Options
 When writing your PLang code, you can enhance your steps with these options. Click on the links for more details on how to use each one:
 
-- [CacheHandler](/modules/handlers/CachingHandler.md)
-- [ErrorHandler](/modules/handlers/ErrorHandler.md)
-- [RetryHandler](/modules/handlers/RetryHandler.md)
+- [CacheHandler](/CachingHandler.md)
+- [ErrorHandler](/ErrorHandler.md)
+
 
 
 

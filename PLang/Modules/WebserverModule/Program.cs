@@ -8,6 +8,7 @@ using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Errors;
 using PLang.Errors.Handlers;
+using PLang.Errors.Runtime;
 using PLang.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
@@ -256,18 +257,15 @@ namespace PLang.Modules.WebserverModule
 
 							if (error != null)
 							{
-								var errorHandlerFactory = container.GetInstance<IErrorHandlerFactory>();
-								var handler = errorHandlerFactory.CreateHandler();
-								await handler.ShowError(error);
+								await ShowError(container, error);
+								
 								continue;
 							}
 
 							error = await engine.RunGoal(goal);
 							if (error != null && error is not IErrorHandled)
 							{
-								var errorHandlerFactory = container.GetInstance<IErrorHandlerFactory>();
-								var handler = errorHandlerFactory.CreateHandler();
-								await handler.ShowError(error);
+								await ShowError(container, error);
 								continue;
 							} else
 							{
@@ -317,7 +315,21 @@ Error:
 			return webserverInfo;
 		}
 
-
+		private async Task ShowError(ServiceContainer container, IError error)
+		{
+			if (error is UserDefinedError)
+			{
+				var errorHandlerFactory = container.GetInstance<IErrorHandlerFactory>();
+				var handler = errorHandlerFactory.CreateHandler();
+				await handler.ShowError(error);
+			}
+			else
+			{
+				var errorHandlerFactory = container.GetInstance<IErrorSystemHandlerFactory>();
+				var handler = errorHandlerFactory.CreateHandler();
+				await handler.ShowError(error);
+			}
+		}
 
 		private void ProcessGeneralRequest(HttpListenerContext httpContext)
 		{

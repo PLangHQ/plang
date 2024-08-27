@@ -13,6 +13,7 @@ using PLang.Errors;
 using PLang.Errors.Handlers;
 using System.Web;
 using PLang.Models;
+using PLang.Errors.Runtime;
 
 namespace PLang.Runtime
 {
@@ -27,18 +28,21 @@ namespace PLang.Runtime
 		private readonly IPLangFileSystem fileSystem;
 		private readonly IOutputStreamFactory outputStreamFactory;
 		private readonly IOutputSystemStreamFactory outputSystemStreamFactory;
-		private readonly IErrorHandlerFactory exceptionHandlerFactory;
+		private readonly IErrorHandlerFactory errorHandlerFactory;
+		private readonly IErrorSystemHandlerFactory errorSystemHandlerFactory;
 		private readonly IAskUserHandlerFactory askUserHandlerFactory;
 		
 		public PseudoRuntime(IServiceContainerFactory serviceContainerFactory, IPLangFileSystem fileSystem,
 			IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory, 
-			IErrorHandlerFactory exceptionHandlerFactory, IAskUserHandlerFactory askUserHandlerFactory)
+			IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory,
+			IAskUserHandlerFactory askUserHandlerFactory)
 		{
 			this.serviceContainerFactory = serviceContainerFactory;
 			this.fileSystem = fileSystem;
 			this.outputStreamFactory = outputStreamFactory;
 			this.outputSystemStreamFactory = outputSystemStreamFactory;
-			this.exceptionHandlerFactory = exceptionHandlerFactory;
+			this.errorHandlerFactory = errorHandlerFactory;
+			this.errorSystemHandlerFactory = errorSystemHandlerFactory;
 			this.askUserHandlerFactory = askUserHandlerFactory;
 		}
 
@@ -46,6 +50,7 @@ namespace PLang.Runtime
 			Dictionary<string, object?>? parameters, Goal? callingGoal = null, 
 			bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0)
 		{
+			if (goalName == null || goalName.Value == null) return (engine, new Error($"Goal to call is empty. Calling goal is {callingGoal}"));
 			Goal? goal = null;
 			ServiceContainer? container = null;
 
@@ -58,7 +63,8 @@ namespace PLang.Runtime
 				string relativeAppStartupPath = Path.DirectorySeparatorChar.ToString();
 				goalToRun = pathAndGoal.goalName;
 
-				container = serviceContainerFactory.CreateContainer(context, absoluteAppStartupPath, relativeAppStartupPath, outputStreamFactory, outputSystemStreamFactory, exceptionHandlerFactory, askUserHandlerFactory);
+				container = serviceContainerFactory.CreateContainer(context, absoluteAppStartupPath, relativeAppStartupPath, outputStreamFactory, outputSystemStreamFactory, 
+					errorHandlerFactory, errorSystemHandlerFactory, askUserHandlerFactory);
 
 				engine = container.GetInstance<IEngine>();
 				engine.Init(container);

@@ -58,6 +58,7 @@ namespace PLang.Modules.CodeModule
 - If condition fails, throw Exception, unless defined otherwise by user command
 - Exception message should be for non-technical user
 - ALWAYS use long or long? instead of int or int?
+- Use long.TryParse When validating if variable is long
 - Do not reference any DTO classes. Use dynamic? if complex object is needed, else use object?.
 - Strings are defined with double quote ("")
 - Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. 
@@ -78,8 +79,8 @@ namespace PLang.Modules.CodeModule
 {dllName}
 - Using: must include namespaces that are needed to compile code.
 - Assemblies: dll to reference to compile using Roslyn
-- ParameterType: {{ Name:string, FullTypeName:string }}
-- OutParameterDefinition: If there is out parameter that is ExpandoObject return the names and types that are in the ExpandoObject in OutParameterDefinition, the string in the Dictionary is the name of the out object
+- InputParameters: InputParameters MUST match parameter count sent to ExecutePlangCode. Keep format as is defined by user, e.g. user: 'convert %name% to upper, write to %nameUpper%' => InputParameters would be [""%name%""]. user: 'check %items.count% > 0 and %isValid% and %!error.status%, write ""yes"" to %answer%' => InputParameters would be [""%list[0]%"", ""%isValid%"", ""%!error.status%""]
+- OutParameters: keep as is defined by user, e.g. user: 'is leap year, write ""yes"" to %answer% => OutParameters would be [""%answer%""]
 ## Response information ##
 ");
 
@@ -89,20 +90,29 @@ namespace PLang.Modules.CodeModule
     //validate input parameter 
     result = listαCount*50;
 }}
-%response.data.total%*%response.data.total_amount%, write to %allTotal%, => ExecutePlangCode(dynamic? response, out long allTotal) {{ 
+InputParameters: [""%list.Count%""]
+OutParameters: [""%result%""]
+
+%response.data.total%*%response.data.total_amount%, write to %allTotal%, => ExecutePlangCode(dynamic? response.data.total, dynamic? response.data.total_amount, out long allTotal) {{ 
       //validate input parameter 
       long allTotal = response.data.total*response.data.total_amount;
 }}
+InputParameters: [""%response.data.total%"", ""%response.data.total_amount%""]
+OutParameters: [""%allTotal%""]
 
 check if %dirPath% exists, write to %folderExists% => ExecutePlangCode(IPlangFileSystem fileSystem, string dirPath, out bool folderExists) {{
 	//validate input parameter 
 	folderExists = fileSystem.Directory.Exists(dirPath);
 }}
+InputParameters: [""%dirPath%""]
+OutParameters: [""%folderExists%""]
 
 get filename of %filePath%, write to %fileName% => ExecutePlangCode(IPlangFileSystem fileSystem, string filePath, out string fileName) {{
 	//validate input parameter 
 	fileName = fileSystem.Path.GetFileName(filePath);
 }}
+InputParameters: [""fileSystem"", ""%filePath%""]
+OutParameters: [""%fileName%""]
 ## examples ##");
 
 			if (error != null)
@@ -127,7 +137,7 @@ get filename of %filePath%, write to %fileName% => ExecutePlangCode(IPlangFileSy
 			(var implementation, var compilerError) = await compiler.BuildCode(answer, step, memoryStack);
 			if (compilerError != null)
 			{
-				logger.LogWarning("- Error compiling code - will ask LLM again");
+				logger.LogWarning($"- Error compiling code - will ask LLM again - Error:{compilerError} - Code:{compilerError.LlmInstruction}");
 				return await Build(step, compilerError, errorCount);
 			}
 

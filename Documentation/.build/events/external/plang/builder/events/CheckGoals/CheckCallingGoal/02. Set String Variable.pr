@@ -1,0 +1,67 @@
+{
+  "Action": {
+    "FunctionName": "SetStringVariable",
+    "Parameters": [
+      {
+        "Type": "String",
+        "Name": "key",
+        "Value": "%goalToCall%"
+      },
+      {
+        "Type": "String",
+        "Name": "value",
+        "Value": "%stepPr.Action.Parameters[1].Value.ToString().Replace(\"!\", \"\")%"
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Text": "set string var %goalToCall% = %stepPr.Action.Parameters[1].Value.ToString().Replace(\"!\", \"\")%",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValues\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+    "type": "PLang.Modules.GenericFunctionBuilder",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValues\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nOnCreateVariableListener(String key, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void  // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnChangeVariableListener(String key, String goalName, Boolean? notifyWhenCreated = True, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void  // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnRemoveVariableListener(String key, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void  // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnCreateStaticVariableListener(String key, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void  // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnChangeStaticVariableListener(String key, String goalName, Boolean? notifyWhenCreated = True, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void  // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnRemoveStaticVariableListener(String key, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void  // goalName should be prefix with !, it can whole word only but can contain dot(.). \nGetEnvironmentVariable(String key)  : String \nLoadVariables(String key)  : Object \nSetStringVariable(String key, String? value, Boolean? urlDecode = False, Boolean? htmlDecode = False, Boolean? doNotLoadVariablesInValue = False)  : void  // Set string variable. Developer might use single/double quote to indicate the string value, the wrapped quote should not be included in the value. If value is json, make sure to format it as valid json, use double quote(\") by escaping it. \nSetJsonObjectVariable(String key, Object? value, Boolean? doNotLoadVariablesInValue = False)  : void  // Set json variable.. \nSetNumberVariable(String key, Nullable`1<Int64>? value)  : void  // Set int/long variable.. \nSetDoubleVariable(String key, Nullable`1<Double>? value)  : void  // Set double variable.. \nSetFloatVariable(String key, Nullable`1<Single>? value)  : void  // Set float variable.. \nSetBoolVariable(String key, Nullable`1<Boolean>? value)  : void  // Set bool variable.. \nSetVariable(String key, Object? value, Boolean? doNotLoadVariablesInValue = False)  : void  // Set variable. Developer might use single/double quote to indicate the string value. If value is json, make sure to format it as valid json, use double quote(\") by escaping it. \nSetVariables(Dictionary`2<String, Object> keyValues, Boolean? doNotLoadVariablesInValue = False)  : void  // Set multiple variables. If value is json, make sure to format it as valid json, use double quote(\") by escaping it. \nSetValuesOnVariables(Dictionary`2<String, Object> keyValues, Boolean? doNotLoadVariablesInValue = False)  : void  // Set value on variables. If value is json, make sure to format it as valid json, use double quote(\") by escaping it. \nSetDefaultValueOnVariables(Dictionary`2<String, Object> keyValues, Boolean? doNotLoadVariablesInValue = False)  : void  // Set default value on variables if not set. If value is json, make sure to format it as valid json, use double quote(\") by escaping it. \nAppendToVariable(String key, Object? value, Char? seperator = \n, String? valueLocation = \"postfix\", String? seperatorLocation = \"end\", Boolean? shouldBeUnique = False, Boolean? doNotLoadVariablesInValue = False)  : Object  // Append to variable. valueLocation=postfix|prefix seperatorLocation=end|start. \nGetVariable(String key)  : Object \nRemoveVariable(String key)  : void \nSetStaticVariable(String key, Object value)  : void \nGetStaticVariable(String key)  : Object \nRemoveStaticVariable(String key)  : void \nSetSettingValue(String key, Object value)  : void  // Sets a value to %Settings.XXXX% variable. \nSetDefaultSettingValue(String key, Object value)  : void  // Sets a value to %Settings.XXXX% variable but only if it is not set before. \nConvertToBase64(String key)  : String\r\n## functions available ends ##\r\n## defined variables ##\r\ngoalToCall (type:object), stepPr.Action.Parameters[1].Value.ToString().Replace(\"!\", \"\") (type:object), \r\n## defined variables ##"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "set string var %goalToCall% = %stepPr.Action.Parameters[1].Value.ToString().Replace(\"!\", \"\")%"
+          }
+        ]
+      }
+    ],
+    "model": "gpt-4o-2024-08-06",
+    "caching": true,
+    "RawResponse": null
+  },
+  "RunOnBuild": false
+}

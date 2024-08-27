@@ -94,7 +94,6 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 					var result = Extractor.Extract(cachedLlmQuestion.RawResponse, responseType);
 					if (result != null && !string.IsNullOrEmpty(result.ToString()))
 					{
-						question.RawResponse = cachedLlmQuestion.RawResponse;
 						return (result, null);
 					}
 
@@ -131,29 +130,27 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 
 			var response = await httpClient.SendAsync(request);
 
-			string responseBody = await response.Content.ReadAsStringAsync();
-			if (string.IsNullOrWhiteSpace(responseBody))
+			string responseContent = await response.Content.ReadAsStringAsync();
+			if (string.IsNullOrWhiteSpace(responseContent))
 			{
 				return (null, new ServiceError("llm.plang.is appears to be down. Try again in few minutes. If it does not come back up soon, check out our Discord https://discord.gg/A8kYUymsDD for a chat", this.GetType()));
 			}			
 
-			responseBody = JsonConvert.DeserializeObject(responseBody)?.ToString() ?? "";
-
-			
-
+			var rawResponse = JsonConvert.DeserializeObject(responseContent)?.ToString() ?? "";
+			question.RawResponse = rawResponse;
 			if (isDebug)
 			{
-				context.AddOrReplace(ReservedKeywords.Llm, responseBody);
+				context.AddOrReplace(ReservedKeywords.Llm, rawResponse);
 			}
 
 			if (response.IsSuccessStatusCode)
 			{
 				ShowCosts(response);
 
-				var obj = Extractor.Extract(responseBody, responseType);
+				var obj = Extractor.Extract(rawResponse, responseType);
 				if (obj == null)
 				{					
-					return (null, new ServiceError(responseBody, this.GetType()));
+					return (null, new ServiceError(rawResponse, this.GetType()));
 				}
 				if (question.caching)
 				{
@@ -165,12 +162,12 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 
 			if (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired)
 			{
-				var obj = JObject.Parse(responseBody);
+				var obj = JObject.Parse(rawResponse);
 				if (obj != null && obj["url"]?.ToString() != "")
 				{
 					string dbLocation = Path.Join(fileSystem.SharedPath, appId);
-					await outputSystemStreamFactory.CreateHandler().Write(string.Format(BuyCreditInfo, obj["url"], dbLocation), "error", 402);
-					return (null, new ErrorHandled(new Error("Handled")));
+
+					return (null, new ServiceError(string.Format(BuyCreditInfo, obj["url"], dbLocation), GetType(), ContinueBuild: false));
 				}
 				else
 				{
@@ -183,7 +180,7 @@ What is name of payer?", GetCountry));
 				}
 			}
 
-			return (null, new ServiceError(responseBody, GetType()));
+			return (null, new ServiceError(rawResponse, GetType()));
 
 
 		}

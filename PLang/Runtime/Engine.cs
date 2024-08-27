@@ -190,8 +190,7 @@ namespace PLang.Runtime
 			var appErrorEvent = await eventRuntime.AppErrorEvents(context, error);
 			if (appErrorEvent != null)
 			{
-				var me = new MultipleError("Critical");
-				me.Add(error);
+				var me = new MultipleError(error, "Critical");
 				me.Add(appErrorEvent);
 
 				await container.GetInstance<IErrorHandlerFactory>().CreateHandler().ShowError(me);
@@ -493,6 +492,8 @@ namespace PLang.Runtime
 
 			var eventRuntime = container.GetInstance<IEventRuntime>();
 			(var errorHandler, var eventError) = await eventRuntime.RunOnErrorStepEvents(context, error, goal, step);
+			if (eventError != null) return eventError;
+
 			if (errorHandler != null && errorHandler.RetryHandler != null && errorHandler.RetryHandler.RetryCount > retryCount && errorHandler.RetryHandler.RetryDelayInMilliseconds != null)
 			{
 				//logger.LogWarning($"Error occurred, will retry in {errorHandler.RetryHandler.RetryDelayInMilliseconds}ms. Attempt nr. {retryCount} of {errorHandler.RetryHandler.RetryCount}\nError:{error}");
@@ -500,7 +501,7 @@ namespace PLang.Runtime
 				return await RunStep(goal, goalStepIndex, ++retryCount);
 			}
 
-			return eventError;
+			return error;
 		}
 
 		private bool HasExecuted(GoalStep step)

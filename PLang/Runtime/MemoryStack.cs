@@ -185,7 +185,15 @@ namespace PLang.Runtime
 				objectValue = GetItemFromListOrDictionary(objectValue, index, dictKey, variableName);
 			}
 
-			if ((index == 0 && dictKey == "" && key.Contains("[") && key.Contains("]")) || (objectValue.Value is JObject || objectValue.Value is JArray))
+			if (objectValue.Value is JToken jToken && keySplit.Length > 0) {
+				string tempJsonPath = "$." + string.Join(".", keySplit.Skip(1));
+				if (jToken.SelectTokens(tempJsonPath).ToArray().Length >0)
+				{
+					jsonPath = tempJsonPath;
+				}
+			}
+
+			if (jsonPath == null && ((index == 0 && dictKey == "" && key.Contains("[") && key.Contains("]")) || (objectValue.Value is JObject || objectValue.Value is JArray)))
 			{
 				jsonPath = null;
 				if (keySplit.Length == 1 && keySplit[0].Contains("[") && keySplit[0].Contains("]"))
@@ -224,7 +232,7 @@ namespace PLang.Runtime
 		{
 			if (obj == null) return false;
 			if (propertyName == null) return false;
-
+			
 			return obj.GetType().GetProperties().FirstOrDefault(p => p.Name.ToLower() == propertyName.ToLower()) != null;
 		}
 		public bool HasMethod(object? obj, string methodName)
@@ -891,14 +899,20 @@ namespace PLang.Runtime
 				var property = type.GetProperties().Where(p => p.Name.ToLower() == propertyDescription.ToLower()).FirstOrDefault();
 				if (property == null)
 				{
-					if (obj is string && JsonHelper.IsJson(obj, out object parsedObject)) {
+					object? parsedObject = null;
+					if (obj is JToken || (obj is string && JsonHelper.IsJson(obj, out parsedObject))) {
 						IEnumerable<JToken> tokens;
+						if (parsedObject == null) parsedObject = obj;
+
 						if (parsedObject is JArray)
 						{
 							tokens = ((JArray)parsedObject).SelectTokens(propertyDescription);
-						} else
+						} else if (parsedObject is JObject)
 						{
 							tokens = ((JObject)parsedObject).SelectTokens(propertyDescription);
+						} else
+						{
+							tokens = ((JToken)parsedObject).SelectTokens(propertyDescription);
 						}
 						var array = tokens.ToArray();
 						if (array.Length != 1)
@@ -913,7 +927,27 @@ namespace PLang.Runtime
 					// Not to throw exception on build if property is not found.
 					else if (!isBuilder)
 					{
-						throw new PropertyNotFoundException($"Property '{propertyDescription}' was not found on %{variableName}%. The %{variableName}% value is '{obj}'");
+						var strProps = "";
+						var propertyNames = obj.GetType().GetProperties().Select(p => p.Name).ToList();
+
+						var properties = propertyNames
+							.Select(name => new { Name = name, Distance = name.FuzzyMatchScore(propertyDescription) })
+							.OrderBy(x => x.Distance)
+							.ThenBy(x => x.Name).ToList();
+						string didYouMean = "";
+						if (properties.Count > 0)
+						{
+							if (properties[0].Distance < 5)
+							{
+								didYouMean = $"Did you mean to use {properties[0].Name}?\n";
+							}
+							foreach (var cp in properties)
+							{
+								strProps += $"\t- {cp.Name}{Environment.NewLine}";
+							}
+						}
+
+						throw new PropertyNotFoundException($"Property '{propertyDescription}' was not found on %{variableName}%. {didYouMean}\nAvailable properties in %{variableName}% are:\n{strProps}\nYou must rewrite your step with a property that exists.");
 					}
 				}
 				else

@@ -124,6 +124,7 @@ namespace PLang.Modules.LlmModule
 			bool continuePrevConversation = false
 			)
 		{
+
 			if (promptMessages == null || promptMessages.Count == 0)
 			{
 				return (null, new StepError("The message to the llm service is empty. You must ask it something.", goalStep, "LlmError",

@@ -153,9 +153,9 @@ For a full list of examples, visit [PLang Blockchain Examples](https://github.co
 ## Step options
 Each step in plang can be enhanced with various options for better control and error handling. Click on the links below for more details on how to use each option:
 
-- [CacheHandler](/modules/handlers/CachingHandler.md)
-- [ErrorHandler](/modules/handlers/ErrorHandler.md)
-- [RetryHandler](/modules/handlers/RetryHandler.md)
+- [CacheHandler](/CachingHandler.md)
+- [ErrorHandler](/ErrorHandler.md)
+
 
 
 

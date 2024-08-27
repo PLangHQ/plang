@@ -1,24 +1,15 @@
-# Introduction to Events in PLang
+﻿# Events in Plang
 
-Events in PLang are a powerful feature that allows you to define actions that should occur in response to certain triggers within your program, such as before a goal starts or after it ends.
+This guide provides detailed instructions on how to implement and manage events within your Plang applications. Events in Plang allow you to execute specific actions at various points in your application lifecycle, during the build process, or based on certain conditions.
 
-## ELI5 Explanation of Events
+## Setting Up Events
 
-Think of events like a doorbell. When someone presses the doorbell (the trigger), it causes the bell to ring (the action). In PLang, events work similarly: when something specific happens in your program (like starting a goal), it can trigger an action (like calling another goal).
-
-## Understanding Events in PLang
-
-In PLang, events are used to trigger goals or steps under specific circumstances, like before or after a goal runs, or when an error occurs.
-
-### Syntax for Events
-```plang
-- before app starts, call !AppStarting
-- on error in step, call !Logger.StepError
-```
-
-## Practical Examples of Events
+To set up events in your application, create a folder named `events` and within it, create a file called `Events.goal`.
 
 ### Application Lifecycle Events
+
+These events are triggered at the start and end of your application's lifecycle.
+
 ```plang
 Events
 - before app starts, call !AppStarting
@@ -26,39 +17,93 @@ Events
 ```
 
 ### Events with Goals and Steps
+
+You can specify events to trigger before or after goals within a specific directory or after each goal globally.
+
 ```plang
+Events
 - before each goal in 'api/*', call !AuthenticateUser
 - after each goal, call !Analyze.LogInfoAboutGoal
 ```
 
 ### Error Handling Events
+
+Define events that trigger when an error occurs at the step or goal level.
+
 ```plang
-- on error in step, call !Logger.StepError
-- on error on goal, call !Logger.GoalError
+Events
+- on error in step, call !LoggerStepError
+- on error on goal, call !LoggerGoalError
 ```
 
-### Conditional Events
+For more details on handling errors, refer to the [ErrorHandler documentation](./ErrorHandler.md).
+
+## Builder Events
+
+To bind events related to the Plang builder, create a file named `BuilderEvents.goal`.
+
 ```plang
-- before each step, include private goals, call !SendDebug, only in debug mode
-- before goal ends, include private goals, call !SendDebug, only in debug mode
+BuilderEvents
+- before each step, call !AnalyzeCode
+- after each step, call !AnalyzeCode
 ```
 
-## Types of Events in PLang
+## Conditional Events
 
-- **Before and After Events**: Trigger actions before or after a specific goal or step.
-- **Error Events**: Trigger actions when an error occurs in a step or goal.
-- **Conditional Events**: Execute actions under specific conditions, like in debug mode.
-- **Build Events**: Read more about [build events](./BuilderLifcycle.md)
+Events can also be configured to run only if a specific startup parameter is provided.
 
-## Using Events with Goals
+```plang
+Events
+- before each step, call !SendDebug, only when start parameter is '--debug'
+```
 
-Events in PLang can be associated with specific goals, steps, or broader application states, allowing for flexible and dynamic program behavior.
+To trigger this event, start the application with the `--debug` parameter:
 
-## Best Practices
+```bash
+plang --debug
+```
 
-- Use events to keep your code organized and modular.
-- Clearly define event triggers and actions for maintainability.
+You can define your own parameters to control event triggering.
 
-## Summary and Key Takeaways
+## Available Variables
 
-Events in PLang are essential for creating responsive and dynamic applications that react to certain triggers during their execution.
+Within your events, you can access information about the current goal, step, or event using the following variables:
+
+- %!goal%
+- %!step%
+- %!event%
+
+## External Events
+
+Install external events from outside sources into the directory `events/external/{appName}/`. For example, `events/external/plang/` is created when you build or run a debugger.
+
+## Binding Events to Variables
+
+In any goal file, you can bind events to variables to trigger actions when variables are created, changed, or deleted.
+
+```plang
+- when %name% is created, call VariableNameIsCreated
+- when %email% is changed, call VariableEmailIsChanged
+- when %zip% is changed or created, call VariableZipIsChanged
+- when %name% is deleted, call VariableNameIsDeleted
+```
+
+## Types of Events in Plang
+
+- **Before and After Events:** Trigger actions before or after a specific goal or step.
+- **Error Events:** Trigger actions when an error occurs in a step or goal.
+- **Conditional Events:** Execute actions under specific conditions, such as in debug mode.
+- **Build Events:** Manage events related to the build process.
+- **Variable Events:** Bind events to variable lifecycle changes (creation, update, deletion).
+
+## Source Code
+
+The source code for event handling in Plang can be found at:
+
+[PLang Events Source Code](https://github.com/PLangHQ/plang/tree/main/PLang/Events)
+
+- `EventBuilder.cs` contains the code for building event files.
+- `EventRuntime.cs` is the code for the runtime handling of events.
+- `EventBinding.cs` includes the objects used in the builder and runtime for event management.
+
+This documentation should help you effectively manage and utilize events in your Plang applications, enhancing the interactivity and responsiveness of your software.

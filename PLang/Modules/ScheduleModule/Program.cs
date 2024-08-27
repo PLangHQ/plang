@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using NCrontab;
 using Newtonsoft.Json;
+using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
@@ -46,6 +47,7 @@ namespace PLang.Modules.ScheduleModule
 		}
 
 		[Description("WaitForExecution is always true when calling Sleep")]
+		[MethodSettings(CanBeAsync = false)]
 		public async Task Sleep(int sleepTimeInMilliseconds)
 		{
 			//make sure we always wait for execution
@@ -59,7 +61,7 @@ namespace PLang.Modules.ScheduleModule
 		};
 
 		[Description("Use numerical representation for cronCommand, e.g. 0 11 * * 1. goalName is the goal that should be called, it should be prefixed by ! and be whole word with possible slash(/).")]
-		public async Task Schedule(string cronCommand, string goalName, Dictionary<string, object?>? parameters = null, DateTime? nextRun = null)
+		public async Task Schedule(string cronCommand, GoalToCall goalName, Dictionary<string, object?>? parameters = null, DateTime? nextRun = null)
 		{
 			await Schedule(goalStep.AbsolutePrFilePath, cronCommand, goalName, parameters, nextRun);
 		}

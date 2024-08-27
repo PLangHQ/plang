@@ -1,0 +1,103 @@
+{
+  "GoalName": "Events",
+  "Comment": null,
+  "Text": "Events",
+  "GoalSteps": [
+    {
+      "Text": "before each step, include private goals,call !SendDebug, args='--debug'",
+      "Comment": null,
+      "ModuleType": null,
+      "Name": null,
+      "Description": null,
+      "PrFileName": null,
+      "RelativePrPath": null,
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-08-23T15:56:20.2741617+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 0,
+      "LineNumber": 2,
+      "LlmRequest": null,
+      "EventBinding": {
+        "EventType": "Before",
+        "EventScope": "Step",
+        "GoalToBindTo": {
+          "Value": "*"
+        },
+        "GoalToCall": {
+          "Value": "SendDebug"
+        },
+        "IncludePrivate": true,
+        "StepNumber": null,
+        "StepText": null,
+        "WaitForExecution": true,
+        "RunOnlyOnStartParameter": [
+          "--debug"
+        ],
+        "OnErrorContinueNextStep": false
+      },
+      "IsEvent": true
+    },
+    {
+      "Text": "before goal ends, include private goals, call !SendDebug, args='--debug'",
+      "Comment": null,
+      "ModuleType": null,
+      "Name": null,
+      "Description": null,
+      "PrFileName": null,
+      "RelativePrPath": null,
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-08-23T15:56:22.2510377+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 1,
+      "LineNumber": 3,
+      "LlmRequest": null,
+      "EventBinding": {
+        "EventType": "Before",
+        "EventScope": "EndOfApp",
+        "GoalToBindTo": {
+          "Value": "*"
+        },
+        "GoalToCall": {
+          "Value": "SendDebug"
+        },
+        "IncludePrivate": true,
+        "StepNumber": null,
+        "StepText": null,
+        "WaitForExecution": true,
+        "RunOnlyOnStartParameter": [
+          "--debug"
+        ],
+        "OnErrorContinueNextStep": false
+      },
+      "IsEvent": true
+    }
+  ],
+  "SubGoals": [],
+  "Description": null,
+  "Visibility": 1,
+  "GoalFileName": "Events.goal",
+  "RelativeGoalPath": "\\events\\external\\plang\\runtime\\Events.goal",
+  "RelativeGoalFolderPath": "\\events\\external\\plang\\runtime",
+  "RelativePrPath": ".build\\events\\external\\plang\\runtime\\Events\\00. Goal.pr",
+  "RelativePrFolderPath": ".build\\events\\external\\plang\\runtime\\Events",
+  "BuilderVersion": null,
+  "GoalInfo": null,
+  "Injections": [],
+  "Signature": null,
+  "Hash": null,
+  "IncomingVariablesRequired": null
+}

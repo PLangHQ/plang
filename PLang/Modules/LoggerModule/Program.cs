@@ -13,10 +13,16 @@ namespace PLang.Modules.LoggerModule
 		}
 
 		[Description("loggerLevel can be trace, debug, information, warning, error. args can be null if not defined")]
-		public async Task Log(string message, string loggerLevel = "information", params object[]? args)
+		public async Task Log(string message, string loggerLevel = "information", object[]? args = null)
 		{
 			Enum.TryParse(loggerLevel, true, out LogLevel logLevelStartup);
-			logger.Log(logLevelStartup, message, args);
+			if (args != null)
+			{
+				logger.Log(logLevelStartup, message, args);
+			} else
+			{
+				logger.Log(logLevelStartup, message);
+			}
 		}
 	}
 }

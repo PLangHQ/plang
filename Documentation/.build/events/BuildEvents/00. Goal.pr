@@ -9,12 +9,12 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\BuildEvents\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-08-23T17:37:19.7527383+00:00",
+      "Generated": "2024-08-27T09:45:10.5867947+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -43,6 +43,7 @@
       "IsEvent": true
     }
   ],
+  "SubGoals": [],
   "Description": null,
   "Visibility": 1,
   "GoalFileName": "BuildEvents.goal",

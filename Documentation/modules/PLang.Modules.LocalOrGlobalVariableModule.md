@@ -136,9 +136,9 @@ For a full list of examples, visit [PLang LocalOrGlobalVariable Examples](https:
 ## Step Options
 When writing your PLang code, you can enhance your steps with additional functionalities. Click on the links below for more details on how to use each option:
 
-- [CacheHandler](/modules/handlers/CachingHandler.md)
-- [ErrorHandler](/modules/handlers/ErrorHandler.md)
-- [RetryHandler](/modules/handlers/RetryHandler.md)
+- [CacheHandler](/CachingHandler.md)
+- [ErrorHandler](/ErrorHandler.md)
+
 
 
 

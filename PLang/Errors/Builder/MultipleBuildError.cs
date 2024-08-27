@@ -1,35 +1,26 @@
-﻿namespace PLang.Errors.Builder
-{
-	public record MultipleBuildError(string Key = "MultipleBuildError", bool ContinueBuild = true, int StatusCode = 400, string? FixSuggestion = null, string? HelpfulLinks = null) : MultipleError(Key, StatusCode, FixSuggestion, HelpfulLinks), IBuilderError
-	{
-		private List<IError> errors = new List<IError>();
-		public string Message
-		{
-			get
-			{
-				string message = String.Empty;
-				foreach (var error in errors)
-				{
-					message += error.Message + Environment.NewLine;
-				}
-				return message;
-			}
-		}
+﻿using PLang.Building.Model;
+using PLang.Utils;
 
-		public void Add(IError error)
-		{
-			errors.Add(error);
-		}
-		public List<IError> Errors { get { return errors; } }
+namespace PLang.Errors.Builder
+{
+	public record GroupedBuildErrors(string Key = "GroupedBuildErrors", bool ContinueBuild = true, int StatusCode = 400, string? FixSuggestion = null, string? HelpfulLinks = null) : GroupedErrors(Key, StatusCode, FixSuggestion, HelpfulLinks), IBuilderError
+	{
 
 		public new object ToFormat(string contentType = "text")
 		{
-			string str = String.Empty;
-			foreach (var error in errors)
+			if (contentType == "text")
 			{
-				str += error.ToFormat() + Environment.NewLine;
+				string str = String.Empty;
+				foreach (var error in errors)
+				{
+					str += error.ToFormat() + Environment.NewLine;
+				}
+				return str;
 			}
-			return str;
+			else
+			{
+				return ErrorHelper.ToFormat(contentType, this);
+			}
 		}
 		public override string ToString()
 		{
@@ -41,6 +32,35 @@
 			return str;
 		}
 
-		public new int Count { get { return errors.Count; } }
+	}
+
+	public record MultipleBuildError(IBuilderError InitialError, string Key = "MultipleBuildError", bool ContinueBuild = true, int StatusCode = 400, string? FixSuggestion = null, string? HelpfulLinks = null) : MultipleError(InitialError, Key, StatusCode, FixSuggestion, HelpfulLinks), IBuilderError
+	{
+		public new IBuilderError InitialError {  get { return InitialError; } }
+
+		public new object ToFormat(string contentType = "text")
+		{
+			if (contentType == "text")
+			{
+				string str = String.Empty;
+				foreach (var error in errors)
+				{
+					str += error.ToFormat() + Environment.NewLine;
+				}
+				return str;
+			} else
+			{
+				return ErrorHelper.ToFormat(contentType, this);
+			}
+		}
+		public override string ToString()
+		{
+			string str = String.Empty;
+			foreach (var error in errors)
+			{
+				str += error.ToFormat() + Environment.NewLine;
+			}
+			return str;
+		}
 	}
 }

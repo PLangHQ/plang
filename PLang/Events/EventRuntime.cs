@@ -14,6 +14,7 @@ using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Utils;
+using RazorEngineCore;
 using System.Text.RegularExpressions;
 
 namespace PLang.Events
@@ -45,20 +46,22 @@ namespace PLang.Events
 		private readonly PrParser prParser;
 		private readonly IEngine engine;
 		private readonly IErrorHandlerFactory errorHandlerFactory;
+		private readonly IErrorSystemHandlerFactory errorSystemHandlerFactory;
 		private readonly ILogger logger;
 		private List<EventBinding>? runtimeEvents = null;
 		private List<EventBinding>? bulderEvents = null;
 		private IServiceContainer? container;
 
 		public EventRuntime(IPLangFileSystem fileSystem, ISettings settings, IPseudoRuntime pseudoRuntime,
-			PrParser prParser, IEngine engine, IErrorHandlerFactory exceptionHandlerFactory, ILogger logger)
+			PrParser prParser, IEngine engine, IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory, ILogger logger)
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
 			this.pseudoRuntime = pseudoRuntime;
 			this.prParser = prParser;
 			this.engine = engine;
-			this.errorHandlerFactory = exceptionHandlerFactory;
+			this.errorHandlerFactory = errorHandlerFactory;
+			this.errorSystemHandlerFactory = errorSystemHandlerFactory;
 			this.logger = logger;
 		}
 
@@ -238,7 +241,8 @@ namespace PLang.Events
 			}
 			else
 			{
-				await ShowDefaultError(error, null);
+				return error;
+				//await ShowDefaultError(error, null);
 			}
 			return null;
 
@@ -303,7 +307,14 @@ namespace PLang.Events
 
 		private async Task ShowDefaultError(IError error, GoalStep? step)
 		{
-			await errorHandlerFactory.CreateHandler().ShowError(error);
+
+			if (error is UserDefinedError)
+			{
+				await errorHandlerFactory.CreateHandler().ShowError(error);
+			} else
+			{
+				await errorSystemHandlerFactory.CreateHandler().ShowError(error);
+			}
 		}
 
 		private async Task<IEventError?> Run(PLangAppContext context, EventBinding eve, Goal? goal, GoalStep? step = null, IError? error = null, bool isBuilder = false)
@@ -423,8 +434,8 @@ namespace PLang.Events
 			if (eventsToRun.Count == 0)
 			{
 				if (goal.ParentGoal != null) return (errorHandler, error);
-				
-				await ShowDefaultError(error, step);
+				return (errorHandler, error);
+				//await ShowDefaultError(error, step);
 			}
 			else
 			{
@@ -433,7 +444,12 @@ namespace PLang.Events
 					if (GoalHasBinding(goal, eve) && IsStepMatch(step, eve))
 					{
 						var eventError = await Run(context, eve, goal, step, error);
-						if (eventError != null) return (errorHandler, eventError);
+						if (eventError != null)
+						{
+							var multiError = new MultipleError(error);
+							multiError.Add(eventError);
+							return (errorHandler, multiError);
+						}
 					}
 
 					//comment: this might be a bad idea, what happens when you have multiple events, on should continue other not

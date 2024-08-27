@@ -15,8 +15,7 @@ namespace PLang.Utils
 		{
 			if (secondError == null || initialError == secondError) return initialError;
 
-			var multipleError = new MultipleBuildError();
-			multipleError.Add(initialError);
+			var multipleError = new MultipleBuildError(initialError);
 			multipleError.Add(secondError);
 			return multipleError;
 		}
@@ -24,27 +23,27 @@ namespace PLang.Utils
 		{
 			if (secondError == null) return initialError;
 
-			var multipleError = new MultipleError();
-			multipleError.Add(initialError);
+			var multipleError = new MultipleError(initialError);
 			multipleError.Add(secondError);
 			return multipleError;
 		}
 
-		public static string FormatLine(string? txt, string? lineStarter = null)
+		public static string FormatLine(string? txt, string? lineStarter = null, bool indent = false)
 		{
 			if (txt == null) return null;
 			var lines = txt.Trim().Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
 			if (lines.Length == 0) return txt;
 			var text = String.Empty;
+			string tab = (indent) ? "\t" : "";
 			for (int i = 0; i < lines.Length; i++)
 			{
 				if (lineStarter != null)
 				{
-					text += $"\t{lineStarter} {lines[i].TrimStart(lineStarter[0]).Trim()}{Environment.NewLine}";
+					text += $"{tab}{lineStarter} {lines[i].TrimStart(lineStarter[0]).Trim()}{Environment.NewLine}";
 				}
 				else
 				{
-					text += $"{lines[i].Trim()}{Environment.NewLine}";
+					text += $"{tab}{lines[i].Trim()}{Environment.NewLine}";
 				}
 			}
 			return text.TrimEnd();
@@ -107,13 +106,13 @@ namespace PLang.Utils
 			if (error.FixSuggestion != null)
 			{
 				fixSuggestions = $@"🛠️ Fix Suggestions:
-{FormatLine(error.FixSuggestion, "-")}";
+{FormatLine(error.FixSuggestion, "-", true)}";
 			}
 			string? helpfulLinks = null;
 			if (error.HelpfulLinks != null)
 			{
 				helpfulLinks += $@"🔗 Helpful Links:
-{FormatLine(error.HelpfulLinks, "-")}";
+{FormatLine(error.HelpfulLinks, "-", true)}";
 			}
 
 			string firstLine = $"";
@@ -123,7 +122,7 @@ namespace PLang.Utils
 🔢 Line: {step.LineNumber}
 
 🔎 Error Details - Code snippet that the error occured:
-{FormatLine(step.Text.MaxLength(160), "-")}
+{FormatLine(step.Text.MaxLength(160), indent: true)}
 ";
 				if (!string.IsNullOrWhiteSpace(step.ModuleType))
 				{
@@ -172,8 +171,8 @@ namespace PLang.Utils
 				if (!string.IsNullOrEmpty(paramsStr) || !string.IsNullOrEmpty(returnStr))
 				{
 					paramInfo = $@"- Parameters:
-		{FormatLine(paramsStr, "-")}
-		{FormatLine(returnStr, "-")}";
+		{FormatLine(paramsStr, "-", true)}
+		{FormatLine(returnStr, "-", true)}";
 				}
 
 				if (step != null && !string.IsNullOrEmpty(step.ModuleType))

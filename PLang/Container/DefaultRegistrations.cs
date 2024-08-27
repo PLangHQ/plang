@@ -30,6 +30,23 @@ namespace PLang.Container
 				}, instance.GetType().FullName);
 			}
 		}
+		public static void RegisterErrorSystemHandlerFactory(this ServiceContainer container, Type type, bool isDefault = false, IErrorHandler? instance = null)
+		{
+			container.Register<IErrorSystemHandlerFactory>(factory =>
+			{
+				SetContext(container, type, ReservedKeywords.Inject_ErrorSystemHandler, isDefault);
+				return new ErrorSystemHandlerFactory(container);
+			});
+
+			if (instance != null)
+			{
+				container.Register(factor =>
+				{
+					return instance;
+				}, instance.GetType().FullName);
+			}
+		}
+
 		public static void RegisterAskUserHandlerFactory(this ServiceContainer container, Type type, bool isDefault = false, IAskUserHandler? instance = null)
 		{
 			container.Register<IAskUserHandlerFactory>(factory =>

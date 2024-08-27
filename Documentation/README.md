@@ -85,13 +85,15 @@ Explore plang's features and capabilities:
     - **[Building your code](./Builder.md)**: How does the builder take your intent and convert it to executable code.
     - **[Builder Lifecycle & Events](./BuilderLifcycle.md)**: Sequence of operations when building plang and build events
     - **[Runtime Lifecycle](./RuntimeLifcycle.md)**: Sequence of operations when running plang
-    - **[Runtime Events](./Events.md)**: Learn about event-driven programming in plang.    
+    - **[Runtime & builder Events](./Events.md)**: Learn about event-driven programming in plang.    
     - **[Performance](./Performance.md)**: What is the perfomance of plang? 
     - **[Modules](./modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
     - **[Services](./Services.md)**: Learn how flexible the plang language is, e.g. using the db engine of your choice, your own caching service and more.
     - **[3rd party libraries](./3rdPartyLibrary.md.md)**: Learn how use existing .Net library in Plang.
     - **[Use OpenAI API key or Local LLM](./PlangOrOpenAI.md)**: Shows how to use OpenAI API directly instead of PLang LLM service. Discusses status of local LLM
     - **[Supported LLM](./SupportedAI.md)**: List of supported LLM models
+    - **[Error Handling](./ErrorHandler.md)**: How to handle errors in Plang
+    - **[Cache Handling](./CachingHandler.md)**: How to cache in Plang
     - **[Startup parameters](./StartupParameters.md)**: Lists out what parameters can be injected at startup
     - **[Reserved keywords](https://github.com/PLangHQ/plang/blob/main/PLang/Utils/ReservedKeywords.cs)**: See list of reserved keywords in the language
 - **Developing the plang language**

@@ -64,6 +64,7 @@ namespace PLangTests
 		protected IAskUserHandler askUserHandler;
 		protected IErrorHandler errorHandler;
 		protected IErrorHandlerFactory errorHandlerFactory;
+		protected IErrorSystemHandlerFactory errorSystemHandlerFactory;
 		protected ISettingsRepositoryFactory settingsRepositoryFactory;
 		protected void Initialize()
 		{
@@ -99,7 +100,8 @@ namespace PLangTests
 			container.RegisterInstance<ISettingsRepositoryFactory>(settingsRepositoryFactory);
 
 			containerFactory = Substitute.For<IServiceContainerFactory>();
-			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
+			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), 
+				Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), Arg.Any<IErrorSystemHandlerFactory>(), Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
 			{
 				var container = CreateServiceContainer();
 
@@ -184,6 +186,8 @@ namespace PLangTests
 			errorHandlerFactory = Substitute.For<IErrorHandlerFactory>();
 			container.RegisterInstance(errorHandlerFactory);
 
+			errorSystemHandlerFactory = Substitute.For<IErrorSystemHandlerFactory>();
+			container.RegisterInstance(errorSystemHandlerFactory);
 			db = Substitute.For<IDbConnection>();
 			//container.RegisterInstance(db);
 
