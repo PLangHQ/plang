@@ -12,7 +12,7 @@ namespace PLang.Modules.UiModule
 	{
 		void Flush();
 	}
-    [Description("Takes any user command and tries to convert it to html")]
+	[Description("Takes any user command and tries to convert it to html")]
 	public class Program : BaseProgram, IFlush
 	{
 		private readonly IOutputStreamFactory outputStreamFactory;
@@ -30,11 +30,11 @@ namespace PLang.Modules.UiModule
 			await ExecuteJavascript($"document.querySelector('{cssSelector}').value = {escapedHtmlContent}");
 		}
 
-			[Description("Executes javascript code. The javascript code should be structure in following way: (function() { function nameOfFunction() { // System;your job is to create the code here } nameOfFunction(); }")]
+		[Description("Executes javascript code. The javascript code should be structure in following way: (function() { function nameOfFunction() { // System;your job is to create the code here } nameOfFunction(); }")]
 		public async Task ExecuteJavascript(string javascript)
 		{
 			var outputStream = outputStreamFactory.CreateHandler();
-			if (outputStream is ConsoleOutputStream)
+			if (outputStream is not UIOutputStream)
 			{
 				throw new RuntimeException("Incorrect output stream. You probably ran the command: plang run, but you should run: plangw run");
 			}
@@ -51,7 +51,9 @@ namespace PLang.Modules.UiModule
 
 
 		}
-			public async Task AppendToElement(string cssSelector, string? html = null, string? css = null, string? javascript = null)
+
+
+		public async Task AppendToElement(string cssSelector, string? html = null, string? css = null, string? javascript = null)
 		{
 			var outputStream = outputStreamFactory.CreateHandler();
 			if (outputStream is ConsoleOutputStream)
@@ -91,7 +93,7 @@ namespace PLang.Modules.UiModule
 			content = variableHelper.LoadVariables(content).ToString();
 
 			if (string.IsNullOrEmpty(content)) return;
-			
+
 			os.MemoryStack = memoryStack;
 			os.Goal = goal;
 			os.GoalStep = goalStep;

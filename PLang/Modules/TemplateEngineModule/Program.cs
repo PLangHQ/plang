@@ -1,29 +1,19 @@
-﻿using OpenAI_API.Models;
-using PLang.Errors;
+﻿using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
-using PLang.Runtime;
 using RazorEngineCore;
 using Scriban;
 using Scriban.Syntax;
-using System;
-using System.Collections.Generic;
 using System.Dynamic;
-using System.IO.Abstractions;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PLang.Modules.TemplateEngineModule
 {
 	public class Program : BaseProgram
 	{
-		private readonly IRazorEngine razorEngine;
 		private readonly IPLangFileSystem fileSystem;
 
-		public Program(IRazorEngine razorEngine, IPLangFileSystem fileSystem)
+		public Program(IPLangFileSystem fileSystem)
 		{
-			this.razorEngine = razorEngine;
 			this.fileSystem = fileSystem;
 		}
 
