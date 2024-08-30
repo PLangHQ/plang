@@ -407,7 +407,7 @@ namespace PLang.Modules.FileModule
 			return key;
 		}
 
-		public record FileInfo(string Path, string Content);
+		public record FileInfo(string Path, string Content, string FileName, DateTime Created, DateTime LastWriteTime, string FolderPath);
 
 
 		public async Task SaveMultipleFiles(List<FileInfo> files, bool loadVariables = false,
@@ -449,10 +449,10 @@ namespace PLang.Modules.FileModule
 					logger.LogWarning($"!Warning! File {file} not found");
 				}
 
-
-
+				var fileInfo = new System.IO.FileInfo(file);
+				string fileName = fileSystem.Path.GetFileName(file);
 				var content = await fileSystem.File.ReadAllTextAsync(file);
-				result.Add(new FileInfo(file, content));
+				result.Add(new FileInfo(file, content, fileName, fileInfo.CreationTime, fileInfo.LastWriteTime, fileInfo.DirectoryName));
 			}
 			return result;
 		}

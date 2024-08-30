@@ -42,8 +42,8 @@ namespace PLang.Utils
 		public static readonly string Inject_Archiving = "!Inject_Archiving";
 		public static readonly string Inject_OutputStream = "!Inject_OutputStream";
 		public static readonly string Inject_OutputSystemStream = "!Inject_OutputSystemStream";
-		
-
+		public static readonly string ParentGoalIndent = "!ParentGoalIndent";
+		public static readonly string GoalTree = "!GoalTree";
 
 		private static List<string> keywords = new List<string>();
 		public static List<string> Keywords

@@ -9,7 +9,7 @@
       <ShowUnexecutedTestsMenuOption>true</ShowUnexecutedTestsMenuOption>
       <ShowIgnoredTestsMenuOption>false</ShowIgnoredTestsMenuOption>
     </TestsWindowMenuOptions>
-    <TestsWindowSplitterDistance>75.7213973999023%</TestsWindowSplitterDistance>
+    <TestsWindowSplitterDistance>30.7462692260742%</TestsWindowSplitterDistance>
     <TestsWindowTreeLayout>
       <Column>
         <Name>Name</Name>
@@ -31,7 +31,7 @@
     <TestsWindowTreeSortOrder>
       <Sort>
         <Name>Name</Name>
-        <Order>Descending</Order>
+        <Order>Ascending</Order>
       </Sort>
     </TestsWindowTreeSortOrder>
   </Settings>

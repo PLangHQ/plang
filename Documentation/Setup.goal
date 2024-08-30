@@ -106,3 +106,4 @@ Setup
     Guide='template/stepProperties.txt'
     System='template/guidance/teacher.txt'
     OutputFilename='./StepProperties.md'   
+- create table blogs, fileName(string), summary(string), created(datetime, now), updated(datetime, now), isLesson(bool, false)

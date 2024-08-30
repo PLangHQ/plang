@@ -5,8 +5,7 @@
 		void SetSize(int width, int height);
 		void SetIcon(string? icon);
 		void SetTitle(string? title);
-		Task BufferContent(object? obj);
-		Task AppendContent(string cssSelector, string? content);
+		Task ModifyContent(string cssSelector, string? content, string swapping = "innerHTML");
 		Task ExecuteCode(string content);
 		Task Flush();
 

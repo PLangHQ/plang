@@ -19,7 +19,9 @@ namespace PLang.Runtime
 {
     public interface IPseudoRuntime
 	{
-		Task<(IEngine engine, IError? error)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCall goalName, Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0);
+		Task<(IEngine engine, IError? error)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCall goalName, 
+			Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true, 
+			long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0);
 	}
 
 	public class PseudoRuntime : IPseudoRuntime
@@ -48,7 +50,7 @@ namespace PLang.Runtime
 
 		public async Task<(IEngine engine, IError? error)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCall goalName, 
 			Dictionary<string, object?>? parameters, Goal? callingGoal = null, 
-			bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0)
+			bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0)
 		{
 			if (goalName == null || goalName.Value == null) return (engine, new Error($"Goal to call is empty. Calling goal is {callingGoal}"));
 			Goal? goal = null;
@@ -124,7 +126,8 @@ namespace PLang.Runtime
 					memoryStack.Put(param.Key.Replace("%", ""), value);
 				}
 			}
-
+			var prevIndent = context.GetOrDefault(ReservedKeywords.ParentGoalIndent, 0);
+			context.AddOrReplace(ReservedKeywords.ParentGoalIndent, (prevIndent + indent));
 		
 			var task = engine.RunGoal(goal, waitForXMillisecondsBeforeRunningGoal);
 			
@@ -145,6 +148,7 @@ namespace PLang.Runtime
 			{
 				container.Dispose();
 			}
+			context.AddOrReplace(ReservedKeywords.ParentGoalIndent, prevIndent);
 
 			if (task.IsFaulted && task.Exception != null)
 			{

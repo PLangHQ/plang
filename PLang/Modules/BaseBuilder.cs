@@ -134,7 +134,7 @@ This is the error(s)
 			return (instruction, null);
 		}
 
-		public record Parameter(string Type, string Name, object Value);
+		public record Parameter(string Type, string Name, object? Value);
 		public record ReturnValue(string Type, string VariableName);
 		public record GenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValues = null);
 

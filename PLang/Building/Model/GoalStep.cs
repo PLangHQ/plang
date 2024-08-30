@@ -78,5 +78,6 @@ namespace PLang.Building.Model
 		public LlmRequest LlmRequest { get; set; }
 		public EventBinding? EventBinding { get; set; } = null;
 		public bool IsEvent { get; set; } = false;
+		public string Hash { get; set; }
 	}
 }

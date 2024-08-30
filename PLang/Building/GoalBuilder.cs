@@ -104,6 +104,7 @@ namespace PLang.Building
 					}
 					else
 					{
+						goal.GoalSteps[i].Hash = JsonConvert.SerializeObject(goal.GoalSteps[i]).ComputeHash().Hash;
 						WriteToGoalPrFile(goal);
 					}
 				}

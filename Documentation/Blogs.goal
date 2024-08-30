@@ -1,0 +1,7 @@
+Blogs
+- get all files in 'blogs', write to %files%
+- foreach %files%, call ProcessFile %file%=item
+
+ProcessFile
+- [code] when %file.FileName% contains "Lesson", set %isLesson%=true, write to %isLesson%
+- select * from blogs where %file.FileName%, %isLesson%

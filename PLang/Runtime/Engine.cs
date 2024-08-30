@@ -149,7 +149,7 @@ namespace PLang.Runtime
 					return;
 				}
 
-
+				WatchForRebuild();
 			}
 			catch (Exception ex)
 			{
@@ -182,6 +182,40 @@ namespace PLang.Runtime
 				}
 			}
 		}
+
+		private static CancellationTokenSource debounceTokenSource;
+		private static readonly object debounceLock = new object();
+
+		private void WatchForRebuild()
+		{
+			string path = fileSystem.Path.Join(fileSystem.RootDirectory, ".build");
+			var fileWatcher = fileSystem.FileSystemWatcher.New(path, "*.pr");
+			fileWatcher.Changed += (object sender, FileSystemEventArgs e) =>
+			{
+				lock (debounceLock)
+				{
+					// Cancel any previous delay task if still running
+					debounceTokenSource?.Cancel();
+
+					// Create a new cancellation token source for this event
+					debounceTokenSource = new CancellationTokenSource();
+
+					// Call the debounced method with a delay
+					Task.Delay(200, debounceTokenSource.Token)
+						.ContinueWith(t =>
+						{
+							if (!t.IsCanceled)
+							{
+								prParser.ForceLoadAllGoals();
+							}
+						}, TaskScheduler.Default);
+				}
+
+
+
+			};
+		}
+
 
 		private async Task HandleError(IError error)
 		{

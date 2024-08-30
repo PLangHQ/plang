@@ -1,28 +1,22 @@
 using LightInject;
 using Microsoft.Web.WebView2.Core;
+using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang;
-using PLang.Building.Model;
 using PLang.Container;
 using PLang.Interfaces;
 using PLang.Models;
-using PLang.Modules.UiModule;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Utils;
 using PLangWindowForms;
-using RazorEngineCore;
-using Sprache;
-using System.Diagnostics;
+using Scriban;
+using Scriban.Syntax;
 using System.Dynamic;
 using System.IO.Abstractions;
-using System.Reflection;
-using System.Resources;
 using System.Text;
-using Websocket.Client.Logging;
 using static PLang.Executor;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace PlangWindowForms
 {
@@ -72,12 +66,8 @@ namespace PlangWindowForms
 			this.AllowDrop = true;
 			this.DragEnter += new DragEventHandler(Form_DragEnter);
 			SetInitialHtmlContent();
-
-			
-
-			
 		}
-		private void Form_DragEnter(object sender, DragEventArgs e)
+		private void Form_DragEnter(object? sender, DragEventArgs e)
 		{
 			if (e.Data.GetDataPresent(DataFormats.FileDrop))
 				e.Effect = DragDropEffects.Move;
@@ -88,6 +78,10 @@ namespace PlangWindowForms
 		IPseudoRuntime pseudoRuntime;
 		private async Task SetInitialHtmlContent()
 		{
+			var core = await CoreWebView2Environment.CreateAsync();
+
+			var core2 = core.CreateCoreWebView2ControllerOptions();
+
 			var task = webView.EnsureCoreWebView2Async();
 			await task;
 
@@ -105,7 +99,32 @@ namespace PlangWindowForms
 				HandleResourcesRequests(args);
 			};
 
-			this.webView.CoreWebView2.WebMessageReceived += async (object sender, Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs e) =>
+			string callGoalJs = $@"
+
+			document.addEventListener('submit', function(event) {{
+				if (event.target && event.target.tagName === 'FORM') {{
+					event.preventDefault();
+console.log(event.target);
+					let formData = new FormData(event.target);
+console.log(formData);		
+					let jsonData = {{}};
+					formData.forEach((value, key) => {{ jsonData[key] = value }});
+console.log('json:',jsonData);
+var goalName = event.target.getAttribute('action');
+if (goalName == null) goalName = event.target.getAttribute('hx-post');
+
+					window.chrome.webview.postMessage({{GoalName:goalName, args:jsonData}});
+				}}
+            }}, true);
+
+		 window.callGoal = function(goalName, args) {{
+			console.log('goalName', goalName, 'args', args);
+			window.chrome.webview.postMessage({{GoalName:goalName, args:args}});
+		}}";
+			await webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(callGoalJs);
+
+
+			this.webView.CoreWebView2.WebMessageReceived += async (object? sender, CoreWebView2WebMessageReceivedEventArgs e) =>
 			{
 				await CoreWebView2_WebMessageReceived(sender, e);
 			};
@@ -113,110 +132,136 @@ namespace PlangWindowForms
 			{
 				pLang.SetupDebug();
 			}
-			var context = container.GetInstance<PLangAppContext>();
-			context.AddOrReplace("__WindowApp__", this);
 
 			engine = container.GetInstance<IEngine>();
 
 			await pLang.Execute(args, ExecuteType.Runtime);
 		}
 
-		StringBuilder sb = new StringBuilder();
-		public async Task BufferContent(object? obj)
-		{
-			if (obj == null) return;
-
-			var content = await CompileAndRun(obj);
-
-			sb.Append(content);
-		}
-
-		public async Task<string> CompileAndRun(object? obj)
-		{
-			var memoryStack = container.GetInstance<MemoryStack>();
-			var expandoObject = new ExpandoObject() as IDictionary<string, object>;
-			foreach (var kvp in memoryStack.GetMemoryStack())
-			{
-				expandoObject.Add(kvp.Key, kvp.Value.Value);
-			}
-			IRazorEngineCompiledTemplate compiled = null;
-
-			var razorEngine = container.GetInstance<IRazorEngine>();
-			compiled = await razorEngine.CompileAsync("@using PLang.Modules.UiModule\n\n" + obj.ToString(), (compileOptions) =>
-			{
-				compileOptions.Options.IncludeDebuggingInfo = true;
-				compileOptions.AddAssemblyReference(typeof(Html).Assembly);
-			});
-			var content = compiled.Run(expandoObject as dynamic);
-			return content;
-		}
 
 		public async Task Flush()
 		{
-			var html = await GetFrame();
+			// TODO: not happy with this, it should use template engine from container
+			// it should not be getting the tree from context
+			var context = container.GetInstance<PLangAppContext>();
+			var tree = context.GetOrDefault(ReservedKeywords.GoalTree, default(GoalTree<string>));
+			if (tree == null) return;
+
+
+			var stringContent = tree.PrintTree();
+			var html = await CompileAndRun(stringContent);
+
+			context.Remove(ReservedKeywords.GoalTree);
 			if (html == null) return;
 
-			webView.CoreWebView2.NavigateToString(html);
+			var target = engine.GetMemoryStack().Get<string>("!WebViewTarget");
+			if (target != null)
+			{
+				await ModifyContent(target, html);
+			}
+			else
+			{
+				webView.CoreWebView2.NavigateToString(html);
+			}
 		}
-		
 
-		public async Task<string> GetFrame()
+
+
+		private async Task<string> CompileAndRun(object? obj)
 		{
-			if (sb.Length == 0) return null;
+			var expandoObject = new ExpandoObject() as IDictionary<string, object?>;
+			var templateContext = new TemplateContext();
+			foreach (var kvp in engine.GetMemoryStack().GetMemoryStack())
+			{
+				expandoObject.Add(kvp.Key, kvp.Value.Value);
 
-			string html = $@"
-<!DOCTYPE html>
-<html lang=""en"">
+				var sv = ScriptVariable.Create(kvp.Key, ScriptVariableScope.Global);
+				templateContext.SetValue(sv, kvp.Value.Value);
+			}
 
-<head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title></title>
-	<link href=""local:ui/bootstrap.min.css"" rel=""stylesheet"">
-	<link href=""local:ui/fontawesome.min.css"" rel=""stylesheet"">
-	<script src=""local:ui/bootstrap.bundle.min.js""></script>
-	<script src=""local:ui/fontawesome.min.js""></script>
-	<script>
-		function callGoal(goalName, args) {{
-			console.log(args);
-			window.chrome.webview.postMessage({{GoalName:goalName, args:args}});
-		}}
+			var parsed = Template.Parse(obj.ToString());
+			var result = await parsed.RenderAsync(templateContext);
 
-		function showNotification(message) {{
-			var notification = document.getElementById('notification');
-			notification.textContent = message;
-			notification.style.display = 'block';
-        
-			// Hide after 5 seconds
-			setTimeout(function() {{
-				notification.style.display = 'none';
-			}}, 5000);
-		}}
-	</script>
-	<style>body{{margin:2rem;}}
-		.notification {{position: fixed;
-            top: 20px;
-            right: 20px;
-            display: none; /* Hide by default */
-            z-index: 1050; /* Ensure it appears above other elements */
-        }}</style>
-</head>
-
-<body>
-";
-			html += sb.ToString();
-			sb.Clear();
-			html += "<div id=\"notification\" class=\"notification alert alert-success\" role=\"alert\"></div></body></html>";
-			return html;
+			return result;
 		}
 
-		public async Task AppendContent(string cssSelector, string? content)
+
+		private async Task CoreWebView2_WebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
+		{
+			var receivedMessage = e.WebMessageAsJson;
+			if (receivedMessage == "\"{}\"") return;
+
+			var dynamic = JsonConvert.DeserializeObject<dynamic>(receivedMessage);
+
+			var parameters = new Dictionary<string, object>();
+			if (dynamic is string)
+			{
+				int i = 0;
+				return;
+			}
+			if (dynamic is JObject jObj)
+			{
+				if (jObj.ContainsKey("args"))
+				{
+					parameters = jObj["args"].ToObject<Dictionary<string, object>>();
+				}
+				else
+				{
+					parameters = jObj.ToObject<Dictionary<string, object>>();
+				}
+				if (parameters == null) parameters = new();
+			}
+			else if (dynamic is JArray jArray)
+			{
+
+				parameters = jArray.ToObject<Dictionary<string, object>>();
+
+				if (parameters == null) parameters = new();
+			}
+			try
+			{
+
+				parameters.Add("!WebViewTarget", ".uk-container");
+				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
+				await pseudoRuntime.RunGoal(engine, engine.GetContext(), "", dynamic.GoalName.ToString(), parameters);
+
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(ex.Message + "\n\n" + ex.ToString());
+			}
+		}
+
+		// innerHTML - outerHTML - beforebegin - afterbegin - beforeend - afterend
+		public async Task ModifyContent(string cssSelector, string? content, string swapping = "innerHTML")
 		{
 			string escapedHtmlContent = JsonConvert.ToString(content);
+			string action = $"targetElement.innerHTML = {escapedHtmlContent};";
+			if (swapping == "outerHTML")
+			{
+				action = $"targetElement.outerHTML = {escapedHtmlContent};";
+			}
+			if (swapping == "beforebegin")
+			{
+				action = $"targetElement.outerHTML = {escapedHtmlContent} + targetElement.outerHTML;";
+			}
+			if (swapping == "afterbegin")
+			{
+				action = $"targetElement.innerHTML = {escapedHtmlContent} + targetElement.innerHTML;";
+			}
+			if (swapping == "beforeend")
+			{
+				action = $"targetElement.innerHTML += {escapedHtmlContent};";
+			}
+			if (swapping == "afterend")
+			{
+				action = $"targetElement.outerHTML = targetElement.outerHTML + {escapedHtmlContent};";
+			}
+
 			string script = $@"
         var targetElement = document.querySelector('{cssSelector}');
         if (targetElement) {{
-            targetElement.innerHTML += {escapedHtmlContent};
+            {action}
         }}
     ";
 			SynchronizationContext.Post(async _ =>
@@ -294,9 +339,9 @@ namespace PlangWindowForms
 		private void HandleResourcesRequests(CoreWebView2WebResourceRequestedEventArgs args)
 		{
 			var resourceType = args.ResourceContext;
-			if (args.Request.Uri.StartsWith("local:ui/"))
+			if (args.Request.Uri.StartsWith("local://ui/"))
 			{
-				string fileName = args.Request.Uri.Replace("local:", "");
+				string fileName = args.Request.Uri.Replace("local://", "");
 				if (fileSystem.File.Exists(fileName))
 				{
 					var fs = fileSystem.File.Open(fileName, FileMode.Open, FileAccess.Read);
@@ -312,9 +357,9 @@ namespace PlangWindowForms
 			}
 
 
-				// Allow only image, video, and audio requests
-				if (resourceType != CoreWebView2WebResourceContext.Image &&
-				resourceType != CoreWebView2WebResourceContext.Media)
+			// Allow only image, video, and audio requests
+			if (resourceType != CoreWebView2WebResourceContext.Image &&
+			resourceType != CoreWebView2WebResourceContext.Media)
 			{
 				args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(null, 404, "Blocked", "");
 			}
@@ -401,32 +446,7 @@ These variables are available:
 		}
 
 
-		private async Task CoreWebView2_WebMessageReceived(object sender, Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs e)
-		{
-			var receivedMessage = e.WebMessageAsJson;
-			var dynamic = JsonConvert.DeserializeObject<dynamic>(receivedMessage);
-
-			var parameters = new Dictionary<string, object>();
-			if (dynamic.args is JObject)
-			{
-				parameters = ((JObject)dynamic.args).ToObject<Dictionary<string, object>>();
-			}
-			else if (dynamic.args is JArray)
-			{
-
-			}
-			try
-			{
-				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
-				await pseudoRuntime.RunGoal(engine, engine.GetContext(), "", dynamic.GoalName.ToString(), parameters);
-
-			}
-			catch (Exception ex)
-			{
-				MessageBox.Show(ex.Message + "\n\n" + ex.ToString());
-			}
-		}
-		private void WebView_NavigationStarting(object sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationStartingEventArgs e)
+		private void WebView_NavigationStarting(object? sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationStartingEventArgs e)
 		{
 			if (e.Uri.StartsWith("app://"))
 			{

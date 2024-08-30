@@ -51,9 +51,11 @@ namespace PLang.Services.OutputStream
 
 		public void Flush()
 		{
-			
+			int i = 0;
 			IForm.SynchronizationContext.Post(_ =>
 			{
+				int be = 0;
+
 				IForm.Flush();
 			}, null);
 
