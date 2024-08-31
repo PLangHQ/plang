@@ -15,6 +15,7 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using SeleniumExtras.WaitHelpers;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace PLang.Modules.WebCrawlerModule
 {
@@ -23,11 +24,13 @@ namespace PLang.Modules.WebCrawlerModule
 	{
 		WebDriver? driver = null;
 		private readonly IPLangFileSystem fileSystem;
+		private readonly ILogger logger;
 
-		public Program(PLangAppContext context, IPLangFileSystem fileSystem) : base()
+		public Program(PLangAppContext context, IPLangFileSystem fileSystem, ILogger logger) : base()
 		{
 			this.context = context;
 			this.fileSystem = fileSystem;
+			this.logger = logger;
 		}
 
 		private string GetChromeUserDataDir()
@@ -53,11 +56,14 @@ namespace PLang.Modules.WebCrawlerModule
 
 		[Description("browserType=Chrome|Edge|Firefox|IE|Safari")]
 		public async Task StartBrowser(string browserType = "Chrome", bool headless = false, bool useUserSession = false, string userSessionPath = "",
-			bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null)
+			bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null, int timoutInSeconds = 30)
 		{
 			driver = GetBrowserType(browserType, headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions);
 
-			driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
+			driver.Manage().Timeouts().AsynchronousJavaScript = TimeSpan.FromSeconds(timoutInSeconds);
+			driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(timoutInSeconds);
+			driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(timoutInSeconds);
+
 			context.TryAdd("SeleniumBrowser", driver);
 		}
 
@@ -80,11 +86,13 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 
 
-		private async Task<ChromeDriver> GetDriver(string browserType = "Chrome", bool headless = false, bool useUserSession = false, string userSessionPath = "", bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null)
+		private async Task<ChromeDriver> GetDriver(string browserType = "Chrome", bool headless = false, bool useUserSession = false, string userSessionPath = "",
+			bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null, int timeoutInSeconds = 60)
 		{
 			if (!context.ContainsKey("SeleniumBrowser"))
 			{
-				await StartBrowser(browserType, headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions);
+				logger.LogDebug("Key SeleniumBrowser not existing. Starting browser");
+				await StartBrowser(browserType, headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, timeoutInSeconds);
 			}
 			return context["SeleniumBrowser"] as ChromeDriver;
 		}
@@ -95,6 +103,8 @@ namespace PLang.Modules.WebCrawlerModule
 			if (cssSelector == null) cssSelector = GetCssSelector();
 
 			var element = driver.FindElement(By.CssSelector(cssSelector));
+
+
 			if (element == null)
 			{
 				throw new Exception($"Element {cssSelector} does not exist.");
@@ -116,20 +126,20 @@ namespace PLang.Modules.WebCrawlerModule
 
 		}
 
-		public async Task NavigateToUrl(string url, string browserType = "Chrome", bool headless = false, bool useUserSession = false, 
+		public async Task NavigateToUrl(string url, string browserType = "Chrome", bool headless = false, bool useUserSession = false,
 				string userSessionPath = "", bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null,
-				string? browserConsoleOutputVariableName = null)
+				string? browserConsoleOutputVariableName = null, int timeoutInSecods = 30)
 		{
 			if (string.IsNullOrEmpty(url))
 			{
 				throw new RuntimeException("url cannot be empty");
 			}
-			
-			var driver = await GetDriver(browserType, headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions);
+
+			var driver = await GetDriver(browserType, headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, timeoutInSecods);
 			if (!url.StartsWith("http"))
 			{
 				url = "https://" + url;
-			}			
+			}
 
 			driver.Navigate().GoToUrl(url);
 
@@ -146,7 +156,7 @@ namespace PLang.Modules.WebCrawlerModule
 			IJavaScriptExecutor js = (IJavaScriptExecutor)driver;
 			js.ExecuteScript("window.scrollTo(0, document.body.scrollHeight);");
 		}
-		
+
 		public async Task ScrollToElement(IWebElement element)
 		{
 			var driver = await GetDriver();
@@ -157,40 +167,89 @@ namespace PLang.Modules.WebCrawlerModule
 		public async Task WaitForElementToAppear(string cssSelector, int timoutInSeconds = 30)
 		{
 			var driver = await GetDriver();
+
+			await SetTimeout(timoutInSeconds);
+
 			WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(timoutInSeconds));
 			wait.Until(ExpectedConditions.ElementIsVisible(By.CssSelector(cssSelector)));
+
+			await ResetTimeout();
+
 		}
 
-		public async Task SetFocus(string? cssSelector = null)
+		TimeSpan? originalAsyncJsTimeout = null;
+		TimeSpan? originalPageLoad = null;
+		TimeSpan? originalImplicitWait = null;
+		private async Task ResetTimeout()
+		{
+			if (originalAsyncJsTimeout == null) return;
+
+			var driver = await GetDriver();
+			driver.Manage().Timeouts().AsynchronousJavaScript = originalAsyncJsTimeout ?? TimeSpan.FromSeconds(30);
+			driver.Manage().Timeouts().PageLoad = originalPageLoad ?? TimeSpan.FromSeconds(30);
+			driver.Manage().Timeouts().ImplicitWait = originalImplicitWait ?? TimeSpan.FromSeconds(30);
+		}
+
+		public async Task SetTimeout(int? timoutInSeconds = null)
+		{
+			if (timoutInSeconds == null) return;
+
+			var driver = await GetDriver();
+			originalAsyncJsTimeout = driver.Manage().Timeouts().AsynchronousJavaScript;
+			originalPageLoad = driver.Manage().Timeouts().PageLoad;
+			originalImplicitWait = driver.Manage().Timeouts().ImplicitWait;
+
+			driver.Manage().Timeouts().AsynchronousJavaScript = TimeSpan.FromSeconds((int) timoutInSeconds);
+			driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds((int)timoutInSeconds);
+			driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds((int)timoutInSeconds);
+		}
+
+		public async Task SetFocus(string? cssSelector = null, int? timoutInSeconds = null)
 		{
 			var driver = await GetDriver();
-			var element = await GetElement(cssSelector);
-			new Actions(driver).MoveToElement(element).Perform();
+			try
+			{
+				await SetTimeout(timoutInSeconds);
+				var element = await GetElement(cssSelector);
+				new Actions(driver).MoveToElement(element).Perform();
+			}
+			finally
+			{
+				await ResetTimeout();
+			}
 		}
 
-		public async Task Click(string cssSelector, int elementAtToClick = 0, bool clickAllMatchingElements = false)
+		public async Task Click(string cssSelector, int elementAtToClick = 0, bool clickAllMatchingElements = false, int? timeoutInSeconds = null)
 		{
-			if (!clickAllMatchingElements)
+			try
 			{
-				var element = await GetElement(cssSelector);
-				element.Click();
-			}
-			else
-			{
-				var elements = await GetElements(cssSelector);
-				if (elementAtToClick != 0)
+				await SetTimeout(timeoutInSeconds);
+				if (!clickAllMatchingElements)
 				{
-					if (elements.Count >= elementAtToClick)
-					{
-						elements[elements.Count - 1].Click();
-					}
-				}
-				foreach (var element in elements)
-				{
+					var element = await GetElement(cssSelector);
 					element.Click();
 				}
+				else
+				{
+					var elements = await GetElements(cssSelector);
+					if (elementAtToClick != 0)
+					{
+						if (elements.Count >= elementAtToClick)
+						{
+							elements[elements.Count - 1].Click();
+						}
+					}
+					foreach (var element in elements)
+					{
+						element.Click();
+					}
+				}
+				SetCssSelector(cssSelector);
 			}
-			SetCssSelector(cssSelector);
+			finally
+			{
+				await ResetTimeout();
+			}
 		}
 
 		public async Task AcceptPrompt()
@@ -220,49 +279,92 @@ namespace PLang.Modules.WebCrawlerModule
 			context.AddOrReplace("prevCssSelector", cssSelector);
 		}
 
-		public async Task SendKey(string value, string? cssSelector = null)
+		public async Task SendKey(string value, string? cssSelector = null, int? timeoutInSeconds = null)
 		{
-			cssSelector = GetCssSelector(cssSelector);
-			var element = await GetElement(cssSelector);
-			var input = ConvertKeyCommand(value);
-			element.SendKeys(input);
-			SetCssSelector(cssSelector);
+			try
+			{
+				await SetTimeout(timeoutInSeconds);
+				cssSelector = GetCssSelector(cssSelector);
+				var element = await GetElement(cssSelector);
+				var input = ConvertKeyCommand(value);
+				element.SendKeys(input);
+				SetCssSelector(cssSelector);
+			}
+			finally
+			{
+				await ResetTimeout();
+			}
 		}
 
 		[Description("set the value of an input by cssSelector")]
-		public async Task Input(string value, string? cssSelector = null)
+		public async Task Input(string value, string? cssSelector = null, int? timeoutInSeconds = null)
 		{
-			cssSelector = GetCssSelector(cssSelector);
-			var element = await GetElement(cssSelector);
-			element.SendKeys(value);
-			SetCssSelector(cssSelector);
+			try
+			{
+				await SetTimeout(timeoutInSeconds);
+				cssSelector = GetCssSelector(cssSelector);
+				var element = await GetElement(cssSelector);
+				element.SendKeys(value);
+				SetCssSelector(cssSelector);
+			}
+			finally
+			{
+				await ResetTimeout();
+			}
 		}
 
 		[Description("select an option by its value in select input by cssSelector")]
-		public async Task SelectByValue(string value, string? cssSelector = null)
+		public async Task SelectByValue(string value, string? cssSelector = null, int? timeoutInSeconds = null)
 		{
-			cssSelector = GetCssSelector(cssSelector);
-			var element = await GetElement(cssSelector);
-			var selectElement = new SelectElement(element);
-			selectElement.SelectByValue(value);
+			try
+			{
+				await SetTimeout(timeoutInSeconds);
+				cssSelector = GetCssSelector(cssSelector);
+				var element = await GetElement(cssSelector);
+
+
+				var selectElement = new SelectElement(element);
+				selectElement.SelectByValue(value);
+			}
+			finally
+			{
+				await ResetTimeout();
+			}
+
 			SetCssSelector(cssSelector);
 		}
 
 		[Description("select an option by its text in select input by cssSelector")]
-		public async Task SelectByText(string text, string? cssSelector = null)
+		public async Task SelectByText(string text, string? cssSelector = null, int? timeoutInSeconds = null)
 		{
-			cssSelector = GetCssSelector(cssSelector);
-			var element = await GetElement(cssSelector);
-			var selectElement = new SelectElement(element);
-			selectElement.SelectByText(text);
+			try
+			{
+				await SetTimeout(timeoutInSeconds);
+				cssSelector = GetCssSelector(cssSelector);
+				var element = await GetElement(cssSelector);
+				var selectElement = new SelectElement(element);
+				selectElement.SelectByText(text);
+			}
+			finally
+			{
+				await ResetTimeout();
+			}
 			SetCssSelector(cssSelector);
 		}
 
-		public async Task Submit(string? cssSelector = null)
+		public async Task Submit(string? cssSelector = null, int? timeoutInSeconds = null)
 		{
-			cssSelector = GetCssSelector(cssSelector);
-			var element = await GetElement(cssSelector);
-			element.Submit();
+			try
+			{
+				await SetTimeout(timeoutInSeconds);
+				cssSelector = GetCssSelector(cssSelector);
+				var element = await GetElement(cssSelector);
+				element.Submit();
+			}
+			finally
+			{
+				await ResetTimeout();
+			}
 			SetCssSelector(cssSelector);
 		}
 		/*
@@ -506,7 +608,7 @@ namespace PLang.Modules.WebCrawlerModule
 					options.AddArgument(args.Key + "=" + args.Value);
 				}
 			}
-			options.SetLoggingPreference(LogType.Browser, LogLevel.All);
+			options.SetLoggingPreference(LogType.Browser, OpenQA.Selenium.LogLevel.All);
 
 			var service = ChromeDriverService.CreateDefaultService();
 			service.SuppressInitialDiagnosticInformation = true;

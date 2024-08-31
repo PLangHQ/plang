@@ -27,11 +27,11 @@ namespace PLang.Modules.ThrowErrorModule
 			
 		}
 
-		[Description("When user intends the execution of the goal to stop without giving a error response. This is equal to doing return in a function")]
+		[Description("When user intends the execution of the goal to stop without giving a error response. This is equal to doing return in a function. Depth is how far up the stack it should end, previous goal is 1")]
 		[MethodSettings(CanBeAsync = false, CanHaveErrorHandling = false, CanBeCached = false)]
-		public async Task<IError?> EndGoalExecution(string? message = null)
+		public async Task<IError?> EndGoalExecution(string? message = null, int levels = 0)
 		{
-			return new EndGoal(goalStep, message ?? "");
+			return new EndGoal(goalStep, message ?? "", Levels: levels);
 		}
 
 		[Description("Shutdown the application")]

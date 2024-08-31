@@ -33,7 +33,7 @@ namespace PLang.Events
 		Task<IEventError?> RunGoalEvents(PLangAppContext context, string eventType, Goal goal, bool isBuilder = false);
 		Task<IEventError?> RunStartEndEvents(PLangAppContext context, string eventType, string eventScope, bool isBuilder = false);
 		Task<IEventError?> RunStepEvents(PLangAppContext context, string eventType, Goal goal, GoalStep step, bool isBuilder = false);
-		Task<(ErrorHandler, IError?)> RunOnErrorStepEvents(PLangAppContext context, IError error, Goal goal, GoalStep step);
+		Task<IError?> RunOnErrorStepEvents(PLangAppContext context, IError error, Goal goal, GoalStep step);
 		Task<IError?> RunGoalErrorEvents(PLangAppContext context, Goal goal, int goalStepIndex, IError error);
 		Task<IError?> AppErrorEvents(PLangAppContext context, IError error);
 		void SetContainer(IServiceContainer container);
@@ -348,7 +348,7 @@ namespace PLang.Events
 					return new RuntimeEventError(exception.Message, eve, goal, step, Exception: exception);
 				}
 				if (task.Result.error == null) return null;
-				if (task.Result.error is IErrorHandled) return new HandledEventError(task.Result.error, task.Result.error.StatusCode, task.Result.error.Key, task.Result.error.Message);
+				if (task.Result.error is IErrorHandled eh) return eh; // new HandledEventError(task.Result.error, task.Result.error.StatusCode, task.Result.error.Key, task.Result.error.Message);
 				if (task.Result.error is UserDefinedError ude) return ude;
 
 				if (isBuilder)
@@ -401,31 +401,29 @@ namespace PLang.Events
 			}
 			return null;
 		}
-		public async Task<(ErrorHandler?, IError?)> RunOnErrorStepEvents(PLangAppContext context, IError error, Goal goal, GoalStep step)
+		public async Task<IError?> RunOnErrorStepEvents(PLangAppContext context, IError error, Goal goal, GoalStep step)
 		{
-			if (runtimeEvents == null || context.ContainsKey(ReservedKeywords.IsEvent)) return (null, error);
+			if (runtimeEvents == null || context.ContainsKey(ReservedKeywords.IsEvent)) return error;
 			if (error is EndGoal)
 			{
-				return (null, error);
+				return error;
 			}
 
 			List<EventBinding> eventsToRun = new();
 			eventsToRun.AddRange(runtimeEvents.Where(p => p.EventType == EventType.Before && p.EventScope == EventScope.StepError).ToList());
 
-			bool shouldContinueNextStep = false;
+			
 			
 			var errorHandler = StepHelper.GetErrorHandlerForStep(step.ErrorHandlers, error);
 			if (errorHandler != null)
 			{
-				if (errorHandler.IgnoreError)
-				{
-					return (errorHandler, new ErrorHandled(new Error($"Ignoring error: {error.Message}")));
-				}
-
 				if (errorHandler.GoalToCall != null && !string.IsNullOrEmpty(errorHandler.GoalToCall))
 				{
-					var eventBinding = new EventBinding(EventType.Before, EventScope.StepError, goal.RelativeGoalPath, errorHandler.GoalToCall, true, step.Number, step.Text, true, null, false);
+					var eventBinding = new EventBinding(EventType.Before, EventScope.StepError, goal.RelativeGoalPath, errorHandler.GoalToCall, true, step.Number, step.Text, true, null, errorHandler.IgnoreError);
 					eventsToRun.Add(eventBinding);
+				} else if (errorHandler.IgnoreError)
+				{
+					return null;
 				}
 			}
 
@@ -433,30 +431,37 @@ namespace PLang.Events
 
 			if (eventsToRun.Count == 0)
 			{
-				if (goal.ParentGoal != null) return (errorHandler, error);
-				return (errorHandler, error);
-				//await ShowDefaultError(error, step);
+				if (goal.ParentGoal != null) return error;
+				return error;
 			}
 			else
 			{
+				bool shouldContinueNextStep = false;
+				var multiError = new MultipleError(error);
 				foreach (var eve in eventsToRun)
 				{
 					if (GoalHasBinding(goal, eve) && IsStepMatch(step, eve))
 					{
 						var eventError = await Run(context, eve, goal, step, error);
 						if (eventError != null)
-						{
-							var multiError = new MultipleError(error);
+						{							
 							multiError.Add(eventError);
-							return (errorHandler, multiError);
 						}
 					}
 
 					//comment: this might be a bad idea, what happens when you have multiple events, on should continue other not
 					if (!shouldContinueNextStep) shouldContinueNextStep = eve.OnErrorContinueNextStep;
+					
 				}
+				if (shouldContinueNextStep) return null;
+				if (multiError.Errors.Count == 0) return multiError.InitialError;
+
+				var endGoal = multiError.Errors.FirstOrDefault(p => p is EndGoal);
+				if (endGoal != null) { return endGoal; }
+				
 			}
-			return (errorHandler, new ErrorHandled(error));
+			
+			return error;
 		}
 
 		

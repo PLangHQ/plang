@@ -221,35 +221,10 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-08-23T15:57:06.9879469+00:00",
+      "Generated": "2024-08-30T09:23:24.1643375+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
-      "ErrorHandlers": [
-        {
-          "IgnoreError": false,
-          "Message": "",
-          "StatusCode": null,
-          "Key": "",
-          "GoalToCall": {
-            "Value": "ShowMissingGoals"
-          },
-          "GoalToCallParameters": {
-            "missingGoals": "%missingGoals%"
-          },
-          "RetryHandler": null
-        },
-        {
-          "IgnoreError": false,
-          "Message": "",
-          "StatusCode": null,
-          "Key": "",
-          "GoalToCall": {
-            "Value": "ShowAllValid"
-          },
-          "GoalToCallParameters": null,
-          "RetryHandler": null
-        }
-      ],
+      "ErrorHandlers": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
@@ -299,11 +274,18 @@
         ],
         "model": "gpt-4o-2024-08-06",
         "caching": true,
-        "RawResponse": "```json\n{\n  \"StepName\": \"ConditionalCall\",\n  \"StepDescription\": \"Check if the variable %missingGoals% is not empty. If it is not empty, call the function ShowMissingGoals. Otherwise, call the function ShowAllValid.\",\n  \"Modules\": [\n    \"PLang.Modules.ConditionalModule\",\n    \"PLang.Modules.CallGoalModule\"\n  ]\n}\n```"
+        "RawResponse": null
       },
       "EventBinding": null,
       "IsEvent": false
     }
+  ],
+  "SubGoals": [
+    "CheckGoal",
+    "CheckStep",
+    "CheckCallingGoal",
+    "ShowMissingGoals",
+    "ShowAllValid"
   ],
   "Description": "The CheckGoals goal validates the goals defined in '00. Goal.pr' files located in the parent directory and its subfolders. It logs the start of validation, retrieves the content of all relevant files, and iterates through each goal file to check them using the CheckGoal goal. If there are any missing goals, it calls ShowMissingGoals; otherwise, it calls ShowAllValid.",
   "Visibility": 1,
@@ -312,10 +294,10 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\builder",
   "RelativePrPath": ".build\\events\\external\\plang\\builder\\CheckGoals\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\builder\\CheckGoals",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "95a41a7712003336e38ccf4a54ea69f48babe42e6e70be7ca52b4a1cb593eaf8",
+  "Hash": "281b797f8e4924d036755a115500e4565942744ba3923be1826132327f3b641f",
   "IncomingVariablesRequired": null
 }

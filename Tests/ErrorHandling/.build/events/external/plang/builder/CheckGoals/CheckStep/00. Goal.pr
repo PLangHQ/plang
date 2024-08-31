@@ -14,7 +14,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-08-23T15:57:24.1790209+00:00",
+      "Generated": "2024-08-30T09:23:25.5814806+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -67,12 +67,13 @@
         ],
         "model": "gpt-4o-2024-08-06",
         "caching": true,
-        "RawResponse": "```json\n{\n  \"StepName\": \"Conditional Call to CheckCallingGoal\",\n  \"StepDescription\": \"Check if the module type of the current step, converted to a string, is equal to 'PLang.Modules.CallGoalModule'. If true, call the function 'CheckCallingGoal'.\",\n  \"Modules\": [\"PLang.Modules.ConditionalModule\", \"PLang.Modules.CallGoalModule\"]\n}\n```"
+        "RawResponse": null
       },
       "EventBinding": null,
       "IsEvent": false
     }
   ],
+  "SubGoals": [],
   "Description": "The CheckStep goal evaluates the type of a module in a step. If the module type, converted to a string, is 'PLang.Modules.CallGoalModule', it triggers the CheckCallingGoal goal.",
   "Visibility": 0,
   "GoalFileName": "CheckGoals.goal",
@@ -80,11 +81,11 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\builder",
   "RelativePrPath": ".build\\events\\external\\plang\\builder\\CheckGoals\\CheckStep\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\builder\\CheckGoals\\CheckStep",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "51f17b662b8c9588ca8ba116e883062617e2459af5fa2b2996ed996ea2c13881",
+  "Hash": "031c9f8b3397775a33be5aed925127d41d320311ad59d5ea36600d10b10e4527",
   "IncomingVariablesRequired": [
     "%step.ModuleType%"
   ]

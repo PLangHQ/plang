@@ -73,6 +73,7 @@
       "IsEvent": false
     }
   ],
+  "SubGoals": [],
   "Description": "The CheckGoal iterates through each step in the \\%goal.Content.GoalSteps\\% and calls the CheckStep for each \\%step\\%.",
   "Visibility": 0,
   "GoalFileName": "CheckGoals.goal",
@@ -80,11 +81,11 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\builder",
   "RelativePrPath": ".build\\events\\external\\plang\\builder\\CheckGoals\\CheckGoal\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\builder\\CheckGoals\\CheckGoal",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "e6d01dc80d52c290d6b32cd0517244f1f8f52a1d5ec1b83c2b8b299cebfcec74",
+  "Hash": "f70c7ef9995231302ca8e0e8051765b3bc83b659e4e2f5da7e2a19e9c9aeed38",
   "IncomingVariablesRequired": [
     "goal.Content.GoalSteps"
   ]
