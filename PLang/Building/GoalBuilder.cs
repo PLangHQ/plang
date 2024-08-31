@@ -223,7 +223,7 @@ GoalApiIfo:
 	CacheControlPrivateOrPublic: public or private
 	NoCacheOrNoStore: no-cache or no-store"));
 				promptMessage.Add(new LlmMessage("user", goal.GetGoalAsString()));
-				var llmRequest = new LlmRequest("GoalApiInfo", promptMessage);
+				var llmRequest = new LlmRequest("GoalApiInfo", promptMessage, "gpt-4o-mini");
 
 				(var result, var queryError) = await llmServiceFactory.CreateHandler().Query<GoalInfo>(llmRequest);
 				if (queryError != null) return (goal, queryError as IBuilderError);
@@ -245,8 +245,8 @@ GoalApiIfo:
 
 			var promptMessage = new List<LlmMessage>();
 			promptMessage.Add(new LlmMessage("system", $@"
-YYou will receive a code written in Plang programming language
-Your job is to rite a description for this Goal called {goal.GoalName} and find out what variables are needed for the execution of the code.
+You will receive a code written in Plang programming language
+Your job is to write a description for this Goal called {goal.GoalName} and find out what variables are needed for the execution of the code.
 
 Use the comments and steps to build the description,
 Goal works like a function for programming language Plang. 
@@ -262,7 +262,7 @@ Describe conditions that are affected by variables, describe what value of varia
 Be concise
 "));
 			promptMessage.Add(new LlmMessage("user", goal.GetGoalAsString()));
-			var llmRequest = new LlmRequest("GoalDescription", promptMessage);
+			var llmRequest = new LlmRequest("GoalDescription", promptMessage, "gpt-4o-mini");
 
 			(var result, var queryError) = await llmServiceFactory.CreateHandler().Query<GoalDescription>(llmRequest);
 			if (queryError != null) return (goal, queryError as IBuilderError);

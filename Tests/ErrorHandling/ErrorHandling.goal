@@ -1,14 +1,62 @@
 ErrorHandling
 - read file.txt into %content%, throw error if not found
-    on error call HandleError, retry 2 times over 1 seconds
+    on error call HandleError, retry 2 times over 1 seconds, continue to next step
+- call goal TestLevelsOfEndOfGoal2
+- call goal TestHttpWithRetryBefore, on error continue to next step
+- call goal TestHttpWithRetryAfter, on error continue to next step
+- call goal TestConditionWithEndOfGoal 
 - read file2.txt into %content%, throw error if not found
-    on error call HandleError2
+    on error  call HandleError2
 - write out 'This should not be written out as HandleError2 should stop execution of goal'
 
 HandleError
-- write out "We are not HandleError goal"
+- write out "File.txt not found - this should print 3 times (1st call + 2 retries)"
 
 HandleError2
 / this will end the execution of the goal
-- write out "We are not HandleError2 goal"
-- throw error "Error happened"
+- write out "File.txt not found - this should print 1 time and should show full error in console"
+
+TestLevelsOfEndOfGoal2
+- write out 'Levels: 2'
+- call goal TestLevelsOfEndOfGoal1
+- write out 'Levels: 2 - I should be called'
+
+TestLevelsOfEndOfGoal1
+- write out 'Levels: 1'
+- call goal TestLevelsOfEndOfGoal0
+- write out 'Levels: 1 - I should NOT be called'
+
+TestLevelsOfEndOfGoal0
+- write out 'Levels: 0'
+- end goal and previous
+- write out 'Levels: 0 - I should NOT be called'
+
+TestHttpWithRetryBefore
+- write out 'Doing http request, will try 3 times then call the error handler'
+- get http://dontexits/get
+    on error retry 3 times over 2 seconds, when that fails call HandleHttpErrorRetryBefore
+
+TestHttpWithRetryAfter
+- write out 'Doing http request, will call the error handler then retry'
+- get http://dontexits/get
+    on error call HandleHttpErrorRetryAfter, retry 3 times over 2 seconds
+
+HandleHttpErrorRetryBefore
+- write 'I tried 3 times'
+
+HandleHttpErrorRetryAfter
+- write 'This message should printed 3 times'
+
+TestConditionWithEndOfGoal
+- set %isTrue% = true
+- if %isTrue%, call ReadFileThatNotThere
+- write out 'I should be printed after condition'
+
+ReadFileThatNotThere
+- read file.txt, throw error on not found,
+    on error call HandleConditionError
+- write out 'I will not be printed - ReadFileThatNotThere'
+
+HandleConditionError
+- write out 'Will end goal and previous ending up in TestConditionWithEndOfGoal'
+- end goal and previous

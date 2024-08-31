@@ -43,6 +43,7 @@
       "IsEvent": true
     }
   ],
+  "SubGoals": [],
   "Description": null,
   "Visibility": 1,
   "GoalFileName": "BuildEvents.goal",

@@ -2,9 +2,11 @@
 
 If you don't know what Plang is, in short, it's a programming language that allows you to write code in natural language. It simplifies programming new applications immensely.
 
-The best way to understand and learn it is to build in it.
+The best way to understand and learn Plang is to build in it. 
 
-Since you are ready to set up your environment, let's do that.
+You can also check out the [Introduction video on Youtube](https://www.youtube.com/watch?v=m4QC19btS_I&list=PLbm1UMZKMaqfT4tqPtr-vhxMs4JGGFVEB), creating a simple Todo app
+
+You should set up your environment, let's do that.
 
 - Go to [Install](../Install.md) and follow the instructions to install Plang.
 

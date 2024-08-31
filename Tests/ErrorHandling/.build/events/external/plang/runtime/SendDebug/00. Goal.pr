@@ -73,6 +73,7 @@
       "IsEvent": false
     }
   ],
+  "SubGoals": [],
   "Description": "The SendDebug goal sends a POST request to the local server at http://localhost:60877/ with a JSON payload containing various debug-related variables. The payload includes information about the goal, step, event, HTTP request status, step index, instruction, memory stack, absolute path, and error. The response from the server is written to the %debugReponse% variable.",
   "Visibility": 1,
   "GoalFileName": "SendDebug.goal",
@@ -80,11 +81,11 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\runtime",
   "RelativePrPath": ".build\\events\\external\\plang\\runtime\\SendDebug\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\runtime\\SendDebug",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "513ef138bcaf9b095cda52cf3d7f88f0cbea61da4b41daf2abb3ba0bab576c1f",
+  "Hash": "b77f768f93199b199a3a21814598787b6d565b7c158adcbb1a9a8ca08b8ac060",
   "IncomingVariablesRequired": [
     "%!Goal%",
     "%!Step%",

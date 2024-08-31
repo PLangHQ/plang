@@ -4,25 +4,39 @@
   "Text": "HandleError",
   "GoalSteps": [
     {
-      "Text": "write out \"We are not HandleError goal\"",
+      "Text": "write out \"File.txt not found - this should print 3 times (1st call + 2 retries)\"",
       "Comment": null,
       "ModuleType": "PLang.Modules.OutputModule",
-      "Name": "WriteOutput",
-      "Description": "Output the text 'We are not HandleError goal' to the user interface or console.",
-      "PrFileName": "01. WriteOutput.pr",
-      "RelativePrPath": ".build\\ErrorHandling\\HandleError\\01. WriteOutput.pr",
+      "Name": "OutputMessage",
+      "Description": "Output the message 'File.txt not found - this should print 3 times (1st call + 2 retries)' to the user interface or console.",
+      "PrFileName": "01. OutputMessage.pr",
+      "RelativePrPath": ".build\\ErrorHandling\\HandleError\\01. OutputMessage.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-08-23T16:46:59.7109043+00:00",
+      "Generated": "2024-08-30T11:04:21.1340406+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
-      "ErrorHandlers": null,
+      "ErrorHandlers": [
+        {
+          "IgnoreError": false,
+          "Message": null,
+          "StatusCode": null,
+          "Key": null,
+          "GoalToCall": null,
+          "GoalToCallParameters": null,
+          "RetryHandler": {
+            "RetryCount": 2,
+            "RetryDelayInMilliseconds": null
+          },
+          "RunRetryBeforeCallingGoalToCall": false
+        }
+      ],
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 9,
+      "LineNumber": 13,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -30,7 +44,7 @@
         "presencePenalty": 0.0,
         "maxLength": 4000,
         "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
         "type": "StepInformationBuilder",
         "promptMessage": [
           {
@@ -42,7 +56,7 @@
               },
               {
                 "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}"
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
               }
             ]
           },
@@ -60,30 +74,31 @@
             "content": [
               {
                 "type": "text",
-                "text": "write out \"We are not HandleError goal\""
+                "text": "write out \"File.txt not found - this should print 3 times (1st call + 2 retries)\""
               }
             ]
           }
         ],
         "model": "gpt-4o-2024-08-06",
         "caching": true,
-        "RawResponse": null
+        "RawResponse": "```json\n{\n\t\"StepName\": \"OutputMessage\",\n\t\"StepDescription\": \"Output the message 'File.txt not found - this should print 3 times (1st call + 2 retries)' to the user interface or console.\",\n\t\"Modules\": [\"PLang.Modules.OutputModule\"]\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false
     }
   ],
-  "Description": "The HandleError goal outputs a message indicating that it is not the intended goal for handling errors. It simply writes out the message 'We are not HandleError goal' without performing any error handling operations.",
+  "SubGoals": [],
+  "Description": "The HandleError goal outputs a specific error message indicating that 'File.txt' was not found. This message is printed three times, accounting for the initial call and two subsequent retries.",
   "Visibility": 0,
   "GoalFileName": "ErrorHandling.goal",
   "RelativeGoalPath": "\\ErrorHandling.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ErrorHandling\\HandleError\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ErrorHandling\\HandleError",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "98b45c580f3b237714adf48724c2a5cc84dcf471aa01333c2e70cc04b86df2b7",
+  "Hash": "96f27fd172f0981316cfecf7f8254b4f868350d6ff3f40813c88b5bc623aecbc",
   "IncomingVariablesRequired": null
 }

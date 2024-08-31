@@ -173,7 +173,11 @@ namespace PLang.Modules
 
 					var pe = new ProgramError(ex.Message, goalStep, function, parameterValues, Exception: ex);
 
-					if (this is IDisposable disposable) disposable.Dispose(); 
+					if (this is IDisposable disposable)
+					{
+						//logger.LogDebug($"Calling Dispose for {this}");
+						//disposable.Dispose();
+					}
 					return pe;
 				}
 

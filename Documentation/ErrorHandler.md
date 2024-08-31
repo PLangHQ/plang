@@ -2,11 +2,11 @@
 
 ## Overview
 
-ErrorHandler in plang allows you to manage and respond to errors that occur during the execution of your code. This document provides a comprehensive guide on how to implement ErrorHandler in your plang scripts effectively.
+ErrorHandler in plang is a powerful feature that allows developers to manage and handle errors effectively within their plang scripts. This document provides a comprehensive guide on how to utilize ErrorHandler to improve the robustness and reliability of your plang applications.
 
-### Basic Usage
+## Basic Usage
 
-To handle errors in plang, you can define specific actions based on the type of error encountered. Here's a simple example:
+ErrorHandler enables you to define specific actions based on the type of error encountered. Below is a simple example to illustrate its usage:
 
 ```plang
 Start
@@ -18,15 +18,13 @@ ManageError
 - throw 'Error happened'
 ```
 
-In this example, if an error occurs during the `get` operation, the `ManageError` goal is called, which outputs the error details.
-
-Note: When you use error handler by calling e.g. `on error call ManageError`, you must throw the error if you want to stop the execution of next step.
+In this example, if an error occurs during the `get` operation, the `ManageError` goal is invoked. This goal logs the error and throws an exception to halt further execution.
 
 ## ErrorHandler Properties
 
-ErrorHandler supports several properties that help define the error handling behavior:
+ErrorHandler supports various properties to customize the error handling behavior:
 
-- **IgnoreError**: Set to `false` by default. If true, the error is caught but the execution continues to the next step.
+- **IgnoreError**: By default, this is set to `false`. If set to `true`, the error is caught but the execution continues to the next step.
   - Example: `on error 'element not found', ignore`
 - **Message**: Checks if the specified text is present in the error message (case insensitive).
   - Example: `on error 'timeout', call HandleTimeout`
@@ -39,19 +37,16 @@ ErrorHandler supports several properties that help define the error handling beh
 - **RetryHandler**: Defines how many times to retry the failed step over a specified period.
   - Example: `retry 5 times over 3 minutes`
 
-### Error Object
+## Error Object
 
-The error object (`%!error%`) contains details about the error and is automatically populated by the runtime. It includes:
+The error object (`%!error%`) is automatically populated by the runtime and contains details about the error, including:
 
 - **Message**: The error message.
 - **Key**: The type of error.
 - **StatusCode**: The error status code.
 - **Additional Properties**: Depending on the error type, additional properties may be available.
 
-### Error handled
-When 
-
-### Examples
+## Practical Examples
 
 Here are some practical examples of using ErrorHandler in plang:
 
@@ -85,12 +80,12 @@ HandleTimeout
 ```plang
 Start
 - get http://example.org
-    on error 'timeout' call ManageTimeoutError, retry 2 times over 30 seconds
+    on error 'timeout', retry 2 times over 30 seconds then call ManageTimeoutError
     on error 'host not found' call InternetDownError, retry 5 times over 5 minutes
     on error 402, call ExecutePayment
 ```
 
-### Order of Error Handling
+## Order of Error Handling
 
 The order in which error handlers are defined is crucial. Handlers earlier in the order can preempt later ones:
 
@@ -103,7 +98,7 @@ Start
 
 In the above example, the `on error ignore` handler will catch and ignore all errors, preventing the `on error 'timeout'` handler from ever being triggered.
 
-### Ignoring All Errors
+## Ignoring All Errors
 
 To ignore all errors in a goal:
 
@@ -113,7 +108,7 @@ Start
     ignore all errors
 ```
 
-### Using Events for Error Handling
+## Using Events for Error Handling
 
 You can also use events to handle errors:
 
@@ -129,4 +124,4 @@ HandleErrorOnGoal
 - write out error, 'Error on goal: %!error%'
 ```
 
-This documentation should help you effectively implement and manage error handling in your plang scripts, ensuring more robust and reliable applications.
+This guide should provide you with the necessary knowledge to implement and manage error handling in your plang scripts effectively, ensuring more robust and reliable applications.

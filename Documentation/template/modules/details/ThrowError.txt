@@ -1,0 +1,63 @@
+
+## Create an error in plang
+
+to trow an error in plang you can say 
+
+```plang
+- throw 'This is an error'
+```
+
+you can also set statusCode and status type if you want
+
+```plang
+- throw 'You need to pay', 402, type 'text'
+```
+
+## End goal
+
+to end a running goal you can say
+
+```plang
+- end goal
+```
+
+this will the execution of that goal you are in, in this exammple ' plang - will not show' will not be executed
+
+```plang
+Start
+- write out 'Hello'
+- end goal
+- write out ' plang - will not show'
+```
+
+you can also define the depth of how far up the goals should end, this is helpfull when you handling an error or when you want to go to some start position couple of goals up
+
+```plang
+Start
+- select subscriberId from users, write to %users%
+- for each %users%, call ChargeUser %user%=item
+
+ChargeUser
+- get http://localhost:100/ChargeUser?userId=%user.id%, 
+    on error call HandleError
+- write out 'if error happens, this will not be written out'
+```
+
+for the HandleError goal
+```plang
+HandleError
+- write out %!error%
+- end goal and previous // you can also say 'end goal and 1 level more'
+```
+
+This will take the execution back to the Start goal, and it will process the next user in the for loop.
+
+## end the app
+
+you can shutdown you app, by saying
+
+```plang
+- end the app
+```
+
+it will shutdown you application

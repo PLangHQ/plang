@@ -27,7 +27,8 @@
             "Value": null
           },
           "GoalToCallParameters": null,
-          "RetryHandler": null
+          "RetryHandler": null,
+          "RunRetryBeforeCallingGoalToCall": false
         }
       ],
       "CacheHandler": null,
@@ -85,6 +86,7 @@
       "IsEvent": false
     }
   ],
+  "SubGoals": [],
   "Description": "The ShowMissingGoals goal logs a warning message containing the value of the \\%missingGoals\\% variable.",
   "Visibility": 0,
   "GoalFileName": "CheckGoals.goal",
@@ -92,11 +94,11 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\builder",
   "RelativePrPath": ".build\\events\\external\\plang\\builder\\CheckGoals\\ShowMissingGoals\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\builder\\CheckGoals\\ShowMissingGoals",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "45e67b3db52c1ab3bf5b8a29fbf9c288170e16862c55b913f1f7c1a146c38bdc",
+  "Hash": "3726eceaecc8a92282a7d6e5c94a7ab3b21cbcba4402701079d18cbd3303434f",
   "IncomingVariablesRequired": [
     "missingGoals"
   ]

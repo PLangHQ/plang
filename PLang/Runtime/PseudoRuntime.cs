@@ -88,7 +88,7 @@ namespace PLang.Runtime
 				var goalsAvailable = engine.GetGoalsAvailable(appPath, goalToRun);
 				if (goalsAvailable == null || goalsAvailable.Count == 0) return (engine, new Error("No goals available"));
 
-				var goals = string.Join('\n', goalsAvailable.Select(p => $" - {p.GoalName}"));
+				var goals = string.Join('\n', goalsAvailable.OrderBy(p => p.GoalName).Select(p => $" - {p.GoalName} -> Path:{p.RelativeGoalPath}"));
 				string strGoalsAvailable = "";
 				if (!string.IsNullOrWhiteSpace(goals))
 				{

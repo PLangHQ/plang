@@ -178,6 +178,10 @@ example of answer:
 				{
 					throw new ArgumentNullException($"Parameter does not have type: {methodParameter.ParameterType}");
 				}
+				if (parameterTypeName == "System.Object")
+				{
+					continue;
+				}
 
 				if (parameters.FirstOrDefault(p => p.Type.ToLower().StartsWith(parameterType)) == null && parameters.FirstOrDefault(p => p.Type.ToLower() == parameterTypeName!.ToLower()) == null)
 				{

@@ -6,6 +6,7 @@ namespace PLang.Building.Model
 	public class ErrorHandler
 	{
 		[DefaultValueAttribute(false)]
+		[System.ComponentModel.Description("This will cause the code execution to continue to the next step")]
 		public bool IgnoreError { get; set; } = false;
 
 		[DefaultValueAttribute(null)]
@@ -24,6 +25,9 @@ namespace PLang.Building.Model
 
 		[DefaultValueAttribute(null)]
 		public RetryHandler? RetryHandler { get; set; }
-		
+		[DefaultValueAttribute(false)]
+		[System.ComponentModel.Description("When user wants to run retry on the step before executing GoalToCall")]
+		public bool RunRetryBeforeCallingGoalToCall { get; set; }
+
 	}
 }

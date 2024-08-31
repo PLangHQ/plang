@@ -1,4 +1,5 @@
 ﻿using PLang.Building.Model;
+using PLang.Errors.Events;
 using PLang.Errors.Runtime;
 using PLang.Utils;
 
@@ -33,8 +34,17 @@ namespace PLang.Errors
 		}
 	}
 
-	public interface IErrorHandled { }
+	public interface IErrorHandled : IEventError, IError { }
 
 
-	public record EndGoal(GoalStep Step, string Message, int StatusCode  = 200) : StepError(Message, Step, "EndGoal", StatusCode), IErrorHandled;
+	public record EndGoal(GoalStep Step, string Message, int StatusCode  = 200, int Levels = 0) : StepError(Message, Step, "EndGoal", StatusCode), IErrorHandled
+	{
+		public override GoalStep? Step { get; set; } = Step;
+		public override Goal? Goal { get; set; } = Step.Goal;
+		public int Levels { get; set; } = Levels;
+
+		public bool IgnoreError => false;
+
+		public IError? InitialError { get; } = null;
+	}
 }

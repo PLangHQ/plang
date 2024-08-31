@@ -353,7 +353,7 @@ namespace PLang.Utils
 
 		public static string GetJsonSchema(Type type)
 		{
-			var json = (type.IsArray || type == typeof(List<>)) ? "[" : "{";
+			var json = (type.IsArray || type == typeof(List<>)) ? "[\n" : "{\n";
 
 			var primaryConstructor = type.GetConstructors().OrderByDescending(c => c.GetParameters().Length).FirstOrDefault();
 			var constructorParameters = primaryConstructor?.GetParameters().ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
@@ -362,12 +362,12 @@ namespace PLang.Utils
 			{
 				if (prop.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "JsonIgnoreAttribute") != null) continue;
 
-				var propName = "\"" + prop.Name + "\"";
+				var propName = "\t\"" + prop.Name + "\"";
 				if (prop.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "NullableAttribute") != null)
 				{
 					propName += "?";
 				}
-				if (json.Length > 1) json += ",\n";
+				if (json.Length > 2) json += ",\n";
 				if (prop.PropertyType == typeof(List<string>))
 				{
 					json += $@"{propName}: string[]";
@@ -437,10 +437,16 @@ namespace PLang.Utils
 					//json += " = null";
 				}
 
+				var description = prop.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
+				if (description != null)
+				{
+					json += " // " + description.ConstructorArguments[0].Value;
+				}
+
 
 
 			}
-			json += (type.IsArray || type == typeof(List<>)) ? "]" : "}";
+			json += (type.IsArray || type == typeof(List<>)) ? "\n]" : "\n}";
 
 			return json;
 		}

@@ -16,8 +16,6 @@ ManageError
 - throw 'Error happened'
 ```
 
-When you use error handler by calling e.g. `on error call ManageError`, you must throw the error if you want to stop the execution of next step.
-
 ErrorHandler has the following properties
 - IgnoreError, default is false, allows you to catch error but ignore it and continue to next step. example: ```on error 'element not found', ignore```
 - Message, message of the error, check if the text defined is in the Message(case insenitive). example on error 'timeout', call HandleTimeout. 
@@ -59,7 +57,7 @@ It's possible to have multiple on error handlers
 ```plang
 Start
 - get http://example.org
-    on error 'timeout' call ManageTimeoutError, retry 2 times over 30 seconds
+    on error 'timeout', retry 2 times over 30 seconds then call ManageTimeoutError
     on error 'host not found' call InternetDownError, retry 5 times over 5 minutes
     on error 402, call ExecutePayment
 
@@ -75,11 +73,15 @@ ExecutePayment
 - transfer 50 usdc to 0x123..
 ```
 
-Retry handler for each error is executed if Goal being called does not give error, 
-in the example goal ManageTimeoutError, it throws error if the %isProduction% variable is true, so even though error handler defines retry attempts, it will not be retried
+Here is important to note how the retry is handled:
+- on error 'timeout' it starts by doing the retry if it fails those 2 retries it will call the ManageTimeoutError
+- on error 'host not found', it first call InternetDownError then retry it
+
+So you have the option of retrying before or after you call you error handler.
 
 
-You can ignore all errors
+
+You can ignore all errors and continue to execute next step
 ```plang
 Start
 - get http://example.org
@@ -95,8 +97,45 @@ Start
     on error ignore
     on error 'timeout', call HandleTimeout
 ```
-then on error 'timeout' will never be called because on on error ignore catches all errors and ignores them
+then on error 'timeout' will never be called because on on error ignore catches all errors and ignores them and continues to execute next step
 
+## handling error in call stack
+
+When you want to handle and error but not really stop execution of a step, you can use the `end goal` command
+let take an example of subscriptions of many user, you are trying to charge and get error while charging one user, 
+you want to log down that error then move on to the next user, here is example code
+
+```plang
+Start
+- select subscriberId from users, write to %users%
+- for each %users%, call ChargeUser %user%=item
+
+ChargeUser
+- get http://localhost:100/ChargeUser?userId=%user.id%, 
+    on error call HandleError
+- write out 'if error happens, this will not be written out'
+
+HandleError
+- write out %!error%
+- end goal and previous // you can also say 'end goal and 1 level more'
+```
+
+This will take the execution back to the `Start` goal, and it will process the next user in the for loop.
+See ThrowErrorModule(./modules/PLang.Modules.ThrowErrorModule.md) for more information.
+
+## Continue to next step
+
+The code can have an error, you can catch and decide to continue to the next step after it
+
+```plang
+Start
+- get https://doesNotExists,
+    on error call HandleError, continue to next step
+- write out 'This will run even tho prev step got error'
+```
+
+
+## global error handling
 
 You can also use events to handle errors (../../Events.md)
 

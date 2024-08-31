@@ -295,11 +295,12 @@ Builder will continue on other steps but not this one: ({step.Text}).
 				return await BuildStepProperties(goal, step, instruction, stepIndex, excludeModules, ++errorCount);
 			}
 
-			step.ErrorHandlers = stepProperties.ErrorHandlers;
-			step.WaitForExecution = stepProperties.WaitForExecution;
+			(bool canBeCached, bool canHaveErrorHandling, bool canBeAsync) = GetMethodSettings(step, instruction);
+			step.ErrorHandlers = (canHaveErrorHandling) ? stepProperties.ErrorHandlers : null;
+			step.WaitForExecution = (canBeAsync) ? stepProperties.WaitForExecution : true;
 			step.LoggerLevel = GetLoggerLevel(stepProperties.LoggerLevel);
 			// cannot put caching on caching module
-			step.CacheHandler = (step.ModuleType == "PLang.Modules.CachingModule") ? null : stepProperties.CachingHandler;
+			step.CacheHandler = (canBeCached) ? stepProperties.CachingHandler : null;
 
 			return (step, null);
 		}
@@ -324,40 +325,48 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			var cachingSystemText = "CachingHandler: is always null";
 			if (canBeCached)
 			{
-				cachingHandlerScheme = "CachingHandler:\n" + TypeHelper.GetJsonSchema(typeof(CachingHandler));
 				cachingSystemText = "CachingHandler: How caching is handled, default is null";
 			}
 			var errorHandlerScheme = "";
 			var errorHandlerSystemText = "ErrorHandler: is always null";
 			if (canHaveErrorHandling)
 			{
-				errorHandlerScheme = "CachingHandler:\n" + TypeHelper.GetJsonSchema(typeof(ErrorHandler));
 				errorHandlerSystemText = @"ErrorHandlers: 
 	- How to handle errors defined by user, default is null. 
 	- StatusCode, Message and Key is null, unless clearly defined by user in on error clause.  
-	- User can send parameter(s) to a goal being called, the parameter(s) come after the goal name";
+	- User can send parameter(s) to a goal being called, the parameter(s) come after the goal name
+	- Retry can happend before or after GoalToCall is executed depending on user intent
+
+	Examples: 
+		on error continue to next step => { IgnoreError = true, GoalToCall = null, RetryHandler = null } 
+		on error call HandleError => { IgnoreError = false, GoalToCall = ""HandleError"", RetryHandler = null }
+		on error retry 3 times over 3 seconds, call HandleError => { IgnoreError = false, GoalToCall = ""HandleError"", RunRetryBeforeCallingGoalToCall = true, RetryHandler = { RetryCount = 3, RetryDelayInMilliseconds = 1000 } }
+		on error call HandleError, retry 3 times over 3 seconds => { IgnoreError = false, GoalToCall = ""HandleError"", RunRetryBeforeCallingGoalToCall = false, RetryHandler = { RetryCount = 3, RetryDelayInMilliseconds = 1000 } }
+";
 			}
 
 			var asyncSystemText = @"WaitForExecution: Default is true. Indicates if code should wait for execution to finish."; 
 			if (!canBeAsync)
 			{
-				asyncSystemText = "WaitForExecution: is always false";
+				asyncSystemText = "WaitForExecution: is always true";
 			}
 
 			var system = $@"You job is to understand the user intent and map his intent to properties matching StepProperties.
 The user statement is a step of executable code.
+
+## ErrorHandler rules ##
 {errorHandlerSystemText}
+## ErrorHandler rules ##
+
+## WaitForExecution rules ##
 {asyncSystemText}
+## WaitForExecution rules ##
+
+## CacheHandler rules ##
 {cachingSystemText}
+## CacheHandler rules ##
+
 LoggerLevel: default null
-
-
-=== Scheme information ===
-ErrorHandler: 
-{errorHandlerScheme}
-
-{cachingHandlerScheme}
-=== Scheme information ===
 
 Take into account that another service will execute the user intent before error handling and cache handler, following is the instruction for that service. 
 You might not need to map the error handling or cache handler if this service is handling the user intent

@@ -8,6 +8,7 @@ using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Errors;
 using PLang.Errors.AskUser;
+using PLang.Errors.Events;
 using PLang.Errors.Handlers;
 using PLang.Errors.Runtime;
 using PLang.Events;
@@ -20,6 +21,7 @@ using PLang.Services.AppsRepository;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Utils;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -354,9 +356,20 @@ namespace PLang.Runtime
 					var runStepError = await RunStep(goal, goalStepIndex);
 					if (runStepError != null)
 					{
-						if (runStepError is EndGoal)
+						if (runStepError is MultipleError me)
 						{
+
+							var hasEndGoal = FindEndGoalError(me);
+							if (hasEndGoal != null) runStepError = hasEndGoal;
+						}
+						if (runStepError is EndGoal endGoal)
+						{
+							logger.LogDebug($"Exiting goal because of end goal: {endGoal}");
 							goalStepIndex = goal.GoalSteps.Count;
+							if (endGoal.Levels-- > 0)
+							{								
+								return endGoal;
+							}
 							continue;
 						} 
 						runStepError = await HandleGoalError(runStepError, goal, goalStepIndex);
@@ -389,58 +402,71 @@ namespace PLang.Runtime
 			}
 
 		}
-		/*
-		private async Task<bool> CachedGoal(Goal goal)
+
+		private IError? FindEndGoalError(MultipleError me)
 		{
-			if (goal.GoalInfo?.CachingHandler?.CacheKey == null) return false;
-
-			var bytes = await appCache.Get(goal.GoalInfo.CachingHandler.CacheKey) as byte[];
-			if (bytes == null || bytes.Length == 0)
+			var hasEndGoal = me.Errors.FirstOrDefault(p => p is EndGoal);
+			if (hasEndGoal != null) return hasEndGoal;
+			var handledEventError = me.Errors.FirstOrDefault(p => p is HandledEventError) as HandledEventError;
+			if (handledEventError != null)
 			{
-				// set the output stream as MemoryOutputStream because we want to cache the output result
-				OutputStreamFactory.SetContext(typeof(MemoryOutputStream).FullName);
-				return false;
+				if (handledEventError.InitialError is EndGoal) return handledEventError.InitialError;
 			}
-
-			var content = Encoding.UTF8.GetString(bytes);
-
-			var handler = OutputStreamFactory.CreateHandler();
-			await handler.WriteToBuffer(content);
-
-			return true;
+			return null;
 		}
 
-		private async Task CacheGoal(Goal goal)
-		{
-			if (goal.GoalInfo?.CachingHandler?.CacheKey == null) return;
+		/*
+private async Task<bool> CachedGoal(Goal goal)
+{
+	if (goal.GoalInfo?.CachingHandler?.CacheKey == null) return false;
 
-			var handler = OutputStreamFactory.CreateHandler(typeof(MemoryOutputStream).FullName);
-			if (handler.Stream is not MemoryStream) return;
+	var bytes = await appCache.Get(goal.GoalInfo.CachingHandler.CacheKey) as byte[];
+	if (bytes == null || bytes.Length == 0)
+	{
+		// set the output stream as MemoryOutputStream because we want to cache the output result
+		OutputStreamFactory.SetContext(typeof(MemoryOutputStream).FullName);
+		return false;
+	}
 
-			handler.Stream.Seek(0, SeekOrigin.Begin);
-			var bytes = await ((MemoryStream)handler.Stream).ReadBytesAsync((int)handler.Stream.Length);
+	var content = Encoding.UTF8.GetString(bytes);
 
-			if (goal.GoalInfo.CachingHandler.CachingType == 1)
-			{
-				TimeSpan slidingExpiration = TimeSpan.FromMilliseconds(goal.GoalInfo.CachingHandler.TimeInMilliseconds);
-				await appCache.Set(goal.GoalInfo.CachingHandler.CacheKey, bytes, slidingExpiration);
-			}
-			else
-			{
-				DateTimeOffset absoluteExpiration = DateTimeOffset.UtcNow.AddMilliseconds(goal.GoalInfo.CachingHandler.TimeInMilliseconds);
-				await appCache.Set(goal.GoalInfo.CachingHandler.CacheKey, bytes, absoluteExpiration);
-			}
+	var handler = OutputStreamFactory.CreateHandler();
+	await handler.WriteToBuffer(content);
 
-			//reset the output stream
-			OutputStreamFactory.SetContext(null);
+	return true;
+}
+
+private async Task CacheGoal(Goal goal)
+{
+	if (goal.GoalInfo?.CachingHandler?.CacheKey == null) return;
+
+	var handler = OutputStreamFactory.CreateHandler(typeof(MemoryOutputStream).FullName);
+	if (handler.Stream is not MemoryStream) return;
+
+	handler.Stream.Seek(0, SeekOrigin.Begin);
+	var bytes = await ((MemoryStream)handler.Stream).ReadBytesAsync((int)handler.Stream.Length);
+
+	if (goal.GoalInfo.CachingHandler.CachingType == 1)
+	{
+		TimeSpan slidingExpiration = TimeSpan.FromMilliseconds(goal.GoalInfo.CachingHandler.TimeInMilliseconds);
+		await appCache.Set(goal.GoalInfo.CachingHandler.CacheKey, bytes, slidingExpiration);
+	}
+	else
+	{
+		DateTimeOffset absoluteExpiration = DateTimeOffset.UtcNow.AddMilliseconds(goal.GoalInfo.CachingHandler.TimeInMilliseconds);
+		await appCache.Set(goal.GoalInfo.CachingHandler.CacheKey, bytes, absoluteExpiration);
+	}
+
+	//reset the output stream
+	OutputStreamFactory.SetContext(null);
 
 
-			var content = Encoding.UTF8.GetString(bytes);
-			handler = OutputStreamFactory.CreateHandler();
-			await handler.WriteToBuffer(content);
-			return;
+	var content = Encoding.UTF8.GetString(bytes);
+	handler = OutputStreamFactory.CreateHandler();
+	await handler.WriteToBuffer(content);
+	return;
 
-		}*/
+}*/
 
 		private async Task<IError?> HandleGoalError(IError error, Goal goal, int goalStepIndex)
 		{
@@ -524,18 +550,41 @@ namespace PLang.Runtime
 
 			}
 
-			var eventRuntime = container.GetInstance<IEventRuntime>();
-			(var errorHandler, var eventError) = await eventRuntime.RunOnErrorStepEvents(context, error, goal, step);
-			if (eventError != null) return eventError;
-
-			if (errorHandler != null && errorHandler.RetryHandler != null && errorHandler.RetryHandler.RetryCount > retryCount && errorHandler.RetryHandler.RetryDelayInMilliseconds != null)
+			var errorHandler = StepHelper.GetErrorHandlerForStep(step.ErrorHandlers, error);
+			if (ShouldRunRetry(errorHandler, true, retryCount))
 			{
-				//logger.LogWarning($"Error occurred, will retry in {errorHandler.RetryHandler.RetryDelayInMilliseconds}ms. Attempt nr. {retryCount} of {errorHandler.RetryHandler.RetryCount}\nError:{error}");
+				logger.LogDebug($"Error occurred - Before goal to call - Will retry in {errorHandler.RetryHandler.RetryDelayInMilliseconds}ms. Attempt nr. {retryCount} of {errorHandler.RetryHandler.RetryCount}\nError:{error}");
+				await Task.Delay((int)errorHandler.RetryHandler.RetryDelayInMilliseconds);
+				return await RunStep(goal, goalStepIndex, ++retryCount);
+			}
+
+			var eventRuntime = container.GetInstance<IEventRuntime>();
+			error = await eventRuntime.RunOnErrorStepEvents(context, error, goal, step);
+			if (error != null)
+			{
+				if (errorHandler == null || errorHandler.RetryHandler == null ||
+					errorHandler.RetryHandler.RetryCount <= retryCount)
+				{
+					return error;
+				}
+			}
+			
+
+			if (ShouldRunRetry(errorHandler, false, retryCount))
+			{
+				logger.LogDebug($"Error occurred - After goal to call - Will retry in {errorHandler.RetryHandler.RetryDelayInMilliseconds}ms. Attempt nr. {retryCount} of {errorHandler.RetryHandler.RetryCount}\nError:{error}");
 				await Task.Delay((int)errorHandler.RetryHandler.RetryDelayInMilliseconds);
 				return await RunStep(goal, goalStepIndex, ++retryCount);
 			}
 
 			return error;
+		}
+
+		private bool ShouldRunRetry(ErrorHandler? errorHandler, bool isBefore, int retryCount)
+		{
+			return (errorHandler != null && errorHandler.RunRetryBeforeCallingGoalToCall == isBefore &&
+					errorHandler.RetryHandler != null && errorHandler.RetryHandler.RetryCount > retryCount &&
+					errorHandler.RetryHandler.RetryDelayInMilliseconds != null);
 		}
 
 		private bool HasExecuted(GoalStep step)

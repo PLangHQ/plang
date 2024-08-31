@@ -73,6 +73,7 @@
       "IsEvent": false
     }
   ],
+  "SubGoals": [],
   "Description": "The ShowAllValid goal logs an informational message indicating that all goals being called exist. It does not require any incoming variables for its execution.",
   "Visibility": 0,
   "GoalFileName": "CheckGoals.goal",
@@ -80,10 +81,10 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\builder",
   "RelativePrPath": ".build\\events\\external\\plang\\builder\\CheckGoals\\ShowAllValid\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\builder\\CheckGoals\\ShowAllValid",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "bd22e0967cb6863bf74a2f5cf115b615c5d698330107212f777d622a59ff697f",
+  "Hash": "b97e86606c17d6df19049ce3cd54c6f07ad5dcd90b447336ff7385c768bb00c1",
   "IncomingVariablesRequired": null
 }
