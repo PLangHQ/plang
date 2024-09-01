@@ -1,26 +1,16 @@
 {
   "Action": {
-    "FunctionName": "DeleteDirectory",
+    "FunctionName": "CreateDirectory",
     "Parameters": [
       {
         "Type": "String",
         "Name": "directoryPath",
-        "Value": "plang"
-      },
-      {
-        "Type": "Boolean",
-        "Name": "recursive",
-        "Value": true
-      },
-      {
-        "Type": "Boolean",
-        "Name": "throwErrorOnNotFound",
-        "Value": false
+        "Value": "runtimes"
       }
     ],
     "ReturnValues": null
   },
-  "Text": "delete folder 'plang'",
+  "Text": "create folder 'runtimes'",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -29,8 +19,8 @@
     "presencePenalty": 0.0,
     "maxLength": 4000,
     "llmResponseType": "json",
-    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValues\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
-    "type": "PLang.Modules.GenericFunctionBuilder",
+    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\": object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+    "model": "gpt-4o-2024-08-06",
     "promptMessage": [
       {
         "role": "system",
@@ -41,7 +31,7 @@
           },
           {
             "type": "text",
-            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValues\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
+            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\": object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
           }
         ]
       },
@@ -59,14 +49,14 @@
         "content": [
           {
             "type": "text",
-            "text": "delete folder 'plang'"
+            "text": "create folder 'runtimes'"
           }
         ]
       }
     ],
-    "model": "gpt-4o-2024-08-06",
+    "type": "PLang.Modules.GenericFunctionBuilder",
     "caching": true,
-    "RawResponse": "```json\n{\n  \"FunctionName\": \"DeleteDirectory\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"directoryPath\",\n      \"Value\": \"plang\"\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"recursive\",\n      \"Value\": true\n    },\n    {\n      \"Type\": \"Boolean\",\n      \"Name\": \"throwErrorOnNotFound\",\n      \"Value\": false\n    }\n  ]\n}\n```"
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"CreateDirectory\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"String\",\n\t\t\"Name\": \"directoryPath\",\n\t\t\"Value\": \"runtimes\"\n\t}]\n}\n```"
   },
   "RunOnBuild": false
 }

@@ -18,19 +18,15 @@ using PLang.Services.OutputStream;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.IO;
 using System.Net;
 using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 using System.Web;
-using System.Xml.Linq;
 
 namespace PLang.Modules.WebserverModule
 {
-    [Description("Start webserver, write to Body, Header, Cookie")]
+	[Description("Start webserver, write to Body, Header, Cookie, send file to client")]
 	internal class Program : BaseProgram
 	{
 		private readonly ILogger logger;
@@ -462,7 +458,7 @@ Error:
 		{
 			if (HttpListenerContext == null) return;
 
-			var cookie = new Cookie(name, value);
+			var cookie = new System.Net.Cookie(name, value);
 			cookie.Expires = DateTime.Now.AddSeconds(expiresInSeconds);
 
 			HttpListenerContext.Response.Cookies.Add(cookie);
@@ -477,6 +473,37 @@ Error:
 			cookie.Expires = DateTime.Now.AddSeconds(-1);
 
 			HttpListenerContext.Response.Cookies.Add(cookie);
+		}
+
+		public async Task SendFileToClient(string path, string? fileName = null)
+		{
+			var response = HttpListenerContext.Response;
+			if (!fileSystem.File.Exists(path))
+			{
+				response.StatusCode = (int)HttpStatusCode.NotFound;
+				using (StreamWriter writer = new StreamWriter(response.OutputStream))
+				{
+					writer.Write("File not found.");
+				}
+				response.Close();
+				return;
+			}
+			
+			response.ContentType = GetMimeType(path);
+
+			var fileInfo = fileSystem.FileInfo.New(path);
+			response.ContentLength64 = fileInfo.Length;
+			if (string.IsNullOrEmpty(fileName)) fileName = fileInfo.Name;
+
+			response.AddHeader("Content-Disposition", $"attachment; filename=\"{fileName}\"");
+
+			using (var fs = fileSystem.File.OpenRead(path))
+			{
+				fs.CopyTo(response.OutputStream);
+			}
+
+			response.StatusCode = (int)HttpStatusCode.OK;
+			response.Close();
 		}
 
 
@@ -810,6 +837,9 @@ Error:
 			}
 			return boundary;
 		}
+
+
+
 	}
 }
 

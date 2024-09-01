@@ -27,15 +27,29 @@ namespace PLang.Modules.LoopModule
 			this.engine = engine;
 		}
 
+		private string GetParameterName(Dictionary<string, object?>? parameters, string name)
+		{
+			if (parameters == null) return name;
+
+			if (parameters.ContainsKey(name))
+			{
+				return parameters[name].ToString().Replace("%", "");
+			}
+
+			var valueAsKey = parameters.FirstOrDefault(p => p.Value.ToString().Equals(name, StringComparison.OrdinalIgnoreCase));
+			if (valueAsKey.Key != null) return valueAsKey.Key.Replace("%", "");
+			return name;
+		}
+
 		[Description("Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called")]
-		public async Task<IError?> RunLoop([HandlesVariableAttribute] string variableToLoopThrough, GoalToCall goalNameToCall, [HandlesVariableAttribute] Dictionary<string, object>? parameters = null)
+		public async Task<IError?> RunLoop([HandlesVariableAttribute] string variableToLoopThrough, GoalToCall goalNameToCall, [HandlesVariableAttribute] Dictionary<string, object?>? parameters = null)
 		{
 			if (parameters == null) parameters = new();
 
-			string listName = parameters.ContainsKey("list") ? parameters["list"].ToString().Replace("%", "") : "list";
-			string listCountName = parameters.ContainsKey("listCount") ? parameters["listCount"].ToString().Replace("%", "") : "listCount";
-			string itemName = parameters.ContainsKey("item") ? parameters["item"].ToString().Replace("%", "") : "item";
-			string positionName = parameters.ContainsKey("position") ? parameters["position"].ToString().Replace("%", "") : "position";
+			string listName = GetParameterName(parameters, "list");
+			string listCountName = GetParameterName(parameters, "listCount");
+			string itemName = GetParameterName(parameters, "item");
+			string positionName = GetParameterName(parameters, "position");
 
 			var prevItem = memoryStack.Get("item");
 			var prevList = memoryStack.Get("list");
@@ -72,7 +86,7 @@ namespace PLang.Modules.LoopModule
 					goalParameters.Add(itemName.ToString()!, list[i]);
 					goalParameters.Add(positionName.ToString()!, i);
 
-					var missingEntries = parameters.Where(p => !goalParameters.ContainsKey(p.Key));
+					var missingEntries = parameters.Where(p => !goalParameters.ContainsKey(p.Key.Replace("%", "")));
 					foreach (var entry in missingEntries)
 					{
 						goalParameters.Add(entry.Key, entry.Value);
@@ -121,7 +135,7 @@ namespace PLang.Modules.LoopModule
 					var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalNameToCall, goalParameters, Goal);
 					if (result.error != null) return result.error;
 				}
-			} 
+			}
 
 
 			memoryStack.Put("item", prevItem);

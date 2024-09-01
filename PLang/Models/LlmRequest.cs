@@ -1,4 +1,5 @@
-﻿using System.Runtime.Serialization;
+﻿using PLang.Runtime.Startup;
+using System.Runtime.Serialization;
 
 namespace PLang.Models
 {
@@ -11,8 +12,10 @@ namespace PLang.Models
         public int maxLength = 4000;
         public string llmResponseType = "json";
         public string? scheme = null;
+        public string model = model;
+        public List<LlmMessage> promptMessage = promptMessage;
 
-        [Newtonsoft.Json.JsonIgnore]
+		[Newtonsoft.Json.JsonIgnore]
         [IgnoreDataMember]
 
         [System.Text.Json.Serialization.JsonIgnore]

@@ -14,7 +14,7 @@ namespace PLangTests.Helpers
 			return (null, null);
 		}
 
-		public Task<(T?, IError?)> Query<T>(LlmRequest question)
+		public Task<(T?, IError?)> Query<T>(LlmRequest question) where T : class
 		{
 			return Task.FromResult<(T?, IError)>(default);
 		}

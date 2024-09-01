@@ -57,12 +57,12 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 		}
 
 
-		public virtual async Task<(T?, IError?)> Query<T>(LlmRequest question)
+		public virtual async Task<(T?, IError?)> Query<T>(LlmRequest question) where T : class
 		{
 			var result = await Query(question, typeof(T));
 			if (result.Item2 != null) return (default(T), result.Item2);
 
-			if (result.Item1 is T?)
+			if (result.Item1 is T && result.Item1 != null)
 			{
 				return ((T?)result.Item1, result.Item2);
 			}

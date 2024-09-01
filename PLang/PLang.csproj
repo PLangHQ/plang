@@ -13,7 +13,19 @@
     <SignAssembly>False</SignAssembly>
     <FileVersion>0.1.15.1</FileVersion>
 		<AssemblyVersion>0.1.15.1</AssemblyVersion>
-  </PropertyGroup>
+
+		<Authors>Ingi Gauti Ragnarsson</Authors>
+		<Company>Plang</Company>
+		<PackageId>YourPackageId</PackageId>
+		<Title>PlangLibrary</Title>
+		<Description>Plang language core</Description>
+		<PackageTags>plang</PackageTags>
+		<RepositoryUrl>https://github.com/PLangHQ/plang/</RepositoryUrl>
+		<PackageLicenseExpression>LGPL</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	</PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>

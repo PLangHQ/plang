@@ -1,41 +1,27 @@
 Publish
 - write out "Starting at %Now%"
+- write out 'Building project'
+- dotnet build Plang.sln -c Release,  working dir ../
+- delete folder 'runtimes' and subfiles
+- create folder 'runtimes'
 - get file paths of .zip in ./, write to %zipFiles%
 - foreach %zipFiles% call !RemoveFile
-- write out 'Build'
-- dotnet build Plang.sln -c Release,  working dir ../
-- write out 'Publish Windows Console'
+- [code] create string list for 'win-x64', 'linux-x64', 'linux-arm64', 'osx-x64', 'osx-arm64', write to %platforms%
+- foreach %platforms%, call BuildPlatform %platform%=item
+- copy folder 'runtimes', to '../../services\Template\MyService\lib', overwrite if exists, include all files
+- copy folder 'runtimes', to '../../modules\Template\MyModule\lib', overwrite if exists, include all files
+
+BuildPlatform
+- write out 'Publish %platform%'
 - dotnet publish PlangConsole/PLangConsole.csproj -c Release -r win-x64  --self-contained true -o ./publish/plang
     working dir ../
-- write out 'Publish Windows Window'
-- dotnet publish PlangWindowForms/PLangWindowForms.csproj -c Release -r win-x64 --self-contained true -o ./publish/plang
+- if %platform% == 'win-x64' then
+    - dotnet publish PlangWindowForms/PLangWindowForms.csproj -c Release -r win-x64 --self-contained true -o ./publish/plang
     working dir ../   
 - write out 'Compress plang folder'   
-- compress folder 'plang' to 'plang-windows.zip', overwrite
-- delete folder 'plang'
-- write out 'Publish Linux-x64 Console'
-- dotnet publish PlangConsole/PLangConsole.csproj -c Release -r linux-x64  --self-contained true -o ./publish/plang
-    working dir ../
-- compress folder 'plang' to 'plang-linux-x64.zip',
-    dont include base dir,  overwrite
-- delete folder 'plang'
-- write out 'Publish Linux-ARM64 Console'
-- dotnet publish PlangConsole/PLangConsole.csproj -c Release -r linux-arm64  --self-contained true -o ./publish/plang
-    working dir ../
-- compress folder 'plang' to 'plang-linux-arm64.zip',
-    dont include base dir, overwrite
-- delete folder 'plang'
-- write out 'Publish MacOS-x64 Console'
-- dotnet publish PlangConsole/PLangConsole.csproj -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/plang
-    working dir ../
-- compress folder 'plang' to 'plang-osx-x64.zip', 
-    dont include base dir, overwrite
-- delete folder 'plang'
-- write out 'Publish MacOS-ARM64 Console'
-- dotnet publish PlangConsole/PLangConsole.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true -o ./publish/plang
-    working dir ../
-- compress folder 'plang' to 'plang-osx-arm64.zip', 
-    dont include base dir, overwrite
+- compress folder 'plang' to 'plang-%platform%.zip', overwrite
+- copy 'plang/PlangLibrary.dll' to 'runtimes/%platform%/PlangLibrary.dll', create dir
+- copy 'plang/PlangLibrary.pdb' to 'runtimes/%platform%/PlangLibrary.pdb', create dir
 - delete folder 'plang'
 - write out "Done at %Now%"
 

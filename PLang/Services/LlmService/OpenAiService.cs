@@ -6,8 +6,6 @@ using PLang.Interfaces;
 using PLang.Models;
 using PLang.Services.LlmService;
 using PLang.Utils.Extractors;
-using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace PLang.Services.OpenAi
@@ -19,7 +17,11 @@ namespace PLang.Services.OpenAi
 		private readonly ILogger logger;
 		private readonly LlmCaching llmCaching;
 		private readonly PLangAppContext context;
-		private readonly string appId = "7d3112c4-d4a1-462b-bf83-417bb4f02994";
+
+		protected string appId = "7d3112c4-d4a1-462b-bf83-417bb4f02994";
+		protected string url = "https://api.openai.com/v1/chat/completions";
+		protected string settingKey = "OpenAiKey";
+
 
 		public IContentExtractor Extractor { get; set; }
 
@@ -31,10 +33,14 @@ namespace PLang.Services.OpenAi
 			this.settings = settings;
 
 			this.Extractor = new JsonExtractor();
+			if (this.GetType() != typeof(OpenAiService) && appId == "7d3112c4-d4a1-462b-bf83-417bb4f02994")
+			{
+				appId = "";
+			}
 		}
 
 
-		public virtual async Task<(T?, IError?)> Query<T>(LlmRequest question)
+		public virtual async Task<(T?, IError?)> Query<T>(LlmRequest question) where T : class
 		{
 			var result = await Query(question, typeof(T));
 			return ((T?)result.Item1, result.Item2);
@@ -61,10 +67,10 @@ namespace PLang.Services.OpenAi
 
 			var httpClient = new HttpClient();
 			var httpMethod = new HttpMethod("POST");
-			var request = new HttpRequestMessage(httpMethod, "https://api.openai.com/v1/chat/completions");
+			var request = new HttpRequestMessage(httpMethod, url);
 
 			settings.SetSharedSettings(appId);
-			string bearer = settings.Get(this.GetType(), "OpenAiKey", "", "Type in API key for OpenAI service");
+			string bearer = settings.Get(this.GetType(), settingKey, "", "Type in API key for LLM service");
 			settings.SetSharedSettings(null);
 			string data = $@"{{
 		""model"":""{question.model}"",
@@ -93,7 +99,7 @@ namespace PLang.Services.OpenAi
 				var json = JsonConvert.DeserializeObject<dynamic>(responseBody);
 				if (json == null || json.choices == null || json.choices.Count == 0)
 				{
-					return (null, new ServiceError("Could not parse OpenAI response: " + responseBody, this.GetType(),
+					return (null, new ServiceError("Could not parse Llm response: " + responseBody, this.GetType(),
 						HelpfulLinks: "This error should not happen under normal circumstances, please report the issue https://github.com/PLangHQ/plang/issues"
 						));
 				}
@@ -117,7 +123,7 @@ I could not deserialize your response. This is the error. Please try to fix it.
 {ex.ToString()}
 ### error in your response ###
 ";
-					question.promptMessage.Add(new LlmMessage("assistant", assitant));
+					question.promptMessage.Add(new LlmMessage("system", assitant));
 
 					var qu = new LlmRequest(question.type, question.promptMessage, question.model, question.caching);
 					return await Query(qu, responseType, ++errorCount);
