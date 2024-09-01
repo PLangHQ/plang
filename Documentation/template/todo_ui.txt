@@ -3,7 +3,12 @@
 Lets change the previous todo web service into a window app. 
 
 In this video I go through it step by step with a bit more info then is provided here
-https://www.youtube.com/watch?v=abew4btk34
+https://www.youtube.com/watch?v=RJYv5PUz9bY&list=PLbm1UMZKMaqfT4tqPtr-vhxMs4JGGFVEB&index=4
+
+you will learn:
+- how to create window app
+- how to structure the layout
+- how to call goals from your UI
 
 -- Warning --
 At version 0.1, it only runs on Windows. It should be available for all platforms(desktop, mobile, tablets, tv, etc.) in the future.
@@ -45,7 +50,9 @@ SaveTask
     ```
 
 
-If you like to learn how to use `%Identity%` in your web service, [we can do that for our Todo service](./Todo_Identity.md)
 
-Check out some more [Examples](https://github.com/PLangHQ/plang/tree/main/Tests) or other [Apps written by others](https://github.com/PLangHQ/apps) to start learning. It is all open source and you can view all the code.
+
+Next steps
+learn how to rethink the UX, (./todo_new_approch.md)
+
 

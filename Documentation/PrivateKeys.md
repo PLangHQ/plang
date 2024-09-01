@@ -1,46 +1,38 @@
-# Plang Private Keys Management Guide
+﻿# Private Keys in Plang
 
-Welcome to the comprehensive guide for managing private keys in the Plang programming environment. This document is crafted to assist developers in securely handling private keys, ensuring the integrity and confidentiality of their applications. Plang is compatible with Windows, Linux, and macOS, and this guide will cover the nuances of working with private keys across these platforms.
+In Plang, private keys are crucial for various operations, including encryption, blockchain activities, and messaging. This document provides a comprehensive guide on how private keys are managed, stored, and exported within the Plang environment.
 
-## Storing Private Keys
+## Storage of Private Keys
 
-In Plang, private keys are stored within a SQLite database located at `.db/system.sqlite`. It is important to emphasize that these keys are stored in plaintext and are not encrypted within the database.
+All private keys in Plang are stored in a SQLite database located at `.db/system.sqlite`. It is important to note that these keys are not encrypted, so securing access to this file is critical.
 
-### Root Private Key Storage
+### Default Storage Paths
 
-The root private key is stored in a global `system.sqlite` database. The path to this database is dependent on the operating system you are using:
+The default path for the `system.sqlite` file varies depending on the operating system:
 
 - **Windows**: `C:\Users\[Username]\AppData\Roaming\plang\.db\system.sqlite`
 - **Linux**: `/home/[Username]/plang/.db/system.sqlite`
 - **macOS**: `/Users/[Username]/plang/.db/system.sqlite`
 
-Please replace `[Username]` with your actual username on the system.
+If Plang does not have permission to write to these locations, it will default to writing in the directory from which Plang is executed.
 
-### Private Key Varieties
+## Types of Private Keys
 
-Plang manages three distinct types of private keys:
+Plang can create up to four types of private keys, depending on the modules in use:
 
-1. **Encryption Keys**: These keys are used to encrypt and decrypt data, ensuring that sensitive information remains secure.
-2. **Blockchain Keys**: These keys are essential for signing requests, enabling `%Identity%` (refer to [Identity](./Identity.md) for more details), and facilitating other blockchain-related actions.
-3. **Nostr Keys**: These keys are utilized for sending and receiving messages within the Nostr protocol.
+1. **Identity Keys**: Always created and used to encrypt and decrypt data. [Learn more about Identity Keys](./Identity.md)
+2. **Encryption Keys**: Created upon first use for data encryption and decryption.
+3. **Blockchain Keys**: Created upon first use for blockchain-related actions.
+4. **Nostr Keys**: Created upon first use for sending and receiving messages.
 
 ## Exporting Private Keys
 
-The `ExportPrivateKey` method in ModuleSettings.cs in Plang allows for the exportation of private keys. 
+When attempting to export private keys using the `ExportPrivate` method, Plang will prompt the user with three questions. The responses are analyzed by a language model to assess the likelihood of the user being deceived. If the risk is deemed high, Plang will block the export for 24 hours. This feature is a proof of concept aimed at preventing social engineering attacks on unsuspecting users. [Read more about this feature](https://ingig.substack.com/p/exporting-private-keys-in-plang).
 
-During the export process, Plang will prompt the user with three security questions. The responses are then analyzed by a Language Learning Model (LLM) to assess the likelihood of the user being a target of social engineering. If the risk is determined to be high, Plang will proactively block the export for a 24-hour period. 
+## Backup of Private Keys
 
-This feature serves as a proof of concept to enhance user protection against social engineering attacks.
+Backing up critical private keys is essential, especially in the early versions of Plang (v.0.1), as the language does not provide any automated backup solutions. Users must manually back up their keys to ensure data security and continuity.
 
+## Additional Reading
 
-### Security Considerations
-
-Developers must handle private keys with extreme caution due to their sensitive nature. While Plang includes security features to aid developers, it is imperative to adhere to key management and security best practices within your applications.
-
-## Backup Recommendations
-
-It is advisable to regularly back up critical private keys to prevent loss of access or data. Ensure that backups are stored securely and are accessible only to authorized personnel.
-
-## Conclusion
-
-This guide has outlined the key aspects of private key management within the Plang environment. By familiarizing yourself with the storage paths, key types, and the exportation process, you can confidently secure private keys in your development practices. Remember, prioritizing security is paramount when dealing with cryptographic materials.
+For those interested in the topic of private keys, consider reading this blog post about sharing private keys between two computers: [Plang and Local-First](https://ingig.substack.com/p/plang-and-local-first). Note that sharing Identity Keys between devices is not recommended. Each device should maintain its own identity, and services should support multiple identities per user.

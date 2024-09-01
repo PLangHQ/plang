@@ -16,9 +16,16 @@ It ask the LLM in basic terms, "What module fits best with the intent of the use
 
 The LLM wil then return a JSON response, with the name of the module to use, in this case it will return `FileModule`(https://github.com/PLangHQ/plang/blob/main/PLang/Modules/FileModule/Program.cs)
 
-At this point we construct the instruction that are needed to execute the user intent, this happens in the the InstructionBuilder(https://github.com/PLangHQ/plang/blob/main/PLang/Building/InstructionBuilder.cs)
+```json
+{
+    Text : "- read file.txt to %content%"
+    ModuleType : "PLang.Modules.FileModule"
+}
 
-We send the LLM list of all available methods in the FileModule, one of which is called ReadTextFile, the LLM will return a JSON with the function name that should be called and the parameters, in this case it will look like this
+
+At this point builder tries to create the instruction that are needed to execute the user intent, this happens in the the InstructionBuilder(https://github.com/PLangHQ/plang/blob/main/PLang/Building/InstructionBuilder.cs)
+
+We send the LLM list of all available methods in the `FileModule`, one of which is called `ReadTextFile`, the LLM will return a JSON with the function name that should be called and the parameters, in this case it will look like this
 
 ```json
 {
@@ -44,6 +51,6 @@ The builder then validates that the function exists in the FileModule and that t
 
 Now that we have the instruction on what should happen, when the statement `- read file.txt to %content%` should be executed, it is up to the runtime to read the instructions and load the `var content = FileModule.ReadTextFile("file.txt")` code
 
-This is simplified a bit, I encourage you to dig deeper, checking out the Building(https://github.com/PLangHQ/plang/tree/main/PLang/Building) part of the source code of the Plang Builder
+This is simplified a bit, I encourage you to dig deeper, checking out the Building(https://github.com/PLangHQ/plang/tree/main/PLang/Building) part of the source code of the Plang Builder. This requires undestanding and knowledge in C#
 
 

@@ -1,65 +1,60 @@
-﻿# Understanding the Plang Builder Process
+﻿# Plang Builder Documentation
 
-The Plang Builder is a sophisticated tool designed to interpret and execute `.goal` files written in the Plang programming language. This document provides a detailed walkthrough of how the Plang Builder processes a simple `ReadFile.goal` file to demonstrate its functionality.
+Welcome to the Plang Builder documentation! This guide will help you understand how Plang processes and builds your statements, using the example of reading a file. We'll walk through the process step-by-step, explaining how the Builder interprets and executes your Plang code.
 
 ## Example: ReadFile.goal
 
-Consider the following Plang code snippet:
+Let's start with a simple example of a Plang goal file, `ReadFile.goal`:
 
 ```plang
 ReadFile
 - read file.txt to %content%
 ```
 
-In this example, the goal is to read the contents of `file.txt` into the variable `%content%`. Here's how the Plang Builder processes this goal:
+### Explanation
 
-### Step 1: Parsing the Goal File
+In this example, we aim to read the contents of `file.txt` into the variable `%content%`. Here's how the Plang Builder processes this:
 
-The builder begins by reading the entire `.goal` file. It identifies each goal defined within the file, as a single `.goal` file can contain multiple goals. It then collects all the steps associated with each goal.
+1. **Reading the Goal File**: The Builder begins by reading the entire goal file. It identifies each goal within the file, as a `.goal` file can contain multiple goals. It also gathers all the steps associated with each goal.
 
-### Step 2: Processing Steps
+2. **Processing Each Step**: The Builder processes each step using the [StepBuilder](https://github.com/PLangHQ/plang/blob/main/PLang/Building/StepBuilder.cs). For our example, the step is `- read file.txt to %content%`. The Builder sends this step to the Language Learning Model (LLM) along with a list of all available modules, which can be found in the [modules README](./modules/README.md).
 
-Each step is processed using the [`StepBuilder`](https://github.com/PLangHQ/plang/blob/main/PLang/Building/StepBuilder.cs) component. For the step `- read file.txt to %content%`, the builder sends this step to the Language Learning Model (LLM) along with a list of all available modules (refer to [Modules Documentation](./modules/README.md)).
+3. **Determining the Appropriate Module**: The LLM is queried to determine which module best fits the user's intent. It responds with a JSON object indicating the module to use. For our example, the LLM returns:
 
-The LLM is queried to determine the best module that aligns with the user's intent. In this case, the LLM suggests using the `FileModule` (source code available [here](https://github.com/PLangHQ/plang/blob/main/PLang/Modules/FileModule/Program.cs)).
+   ```json
+   {
+       "Text": "- read file.txt to %content%",
+       "ModuleType": "PLang.Modules.FileModule"
+   }
+   ```
 
-### Step 3: Constructing Instructions
+   The module identified is `FileModule`, which is defined in the [FileModule source code](https://github.com/PLangHQ/plang/blob/main/PLang/Modules/FileModule/Program.cs).
 
-With the module identified, the `InstructionBuilder` constructs the necessary instructions to execute the user's intent. The builder queries the LLM again, this time providing a list of all methods available in the `FileModule`. The LLM responds with the appropriate function to call and its parameters. For this example, the response might look like:
+4. **Building Instructions**: The Builder then constructs the necessary instructions to execute the user's intent using the [InstructionBuilder](https://github.com/PLangHQ/plang/blob/main/PLang/Building/InstructionBuilder.cs). It sends the LLM a list of all available methods in the `FileModule`, including `ReadTextFile`. The LLM returns a JSON object specifying the function to call and its parameters:
 
-```json
-{
-  "Action": {
-    "FunctionName": "ReadTextFile",
-    "Parameters": [
-      {
-        "Type": "String",
-        "Name": "path",
-        "Value": "file.txt"
-      }
-    ],
-    "ReturnValue": [
-      {
-        "Type": "String",
-        "VariableName": "content"
-      }
-    ]
-  }
-}
-```
+   ```json
+   {
+     "Action": {
+       "FunctionName": "ReadTextFile",
+       "Parameters": [
+         {
+           "Type": "String",
+           "Name": "path",
+           "Value": "file.txt"
+         }
+       ],
+       "ReturnValue": [
+         {
+           "Type": "String",
+           "VariableName": "content"
+         }
+       ]
+     }
+   }
+   ```
 
-This JSON response, should match with the [ReadTextFile method in the FileModule](https://github.com/PLangHQ/plang/blob/main/PLang/Modules/FileModule/Program.cs)
+5. **Validation and Execution**: The Builder validates that the function exists in the `FileModule` and that the parameters match. If validation fails, it requests further information from the LLM, including error details. Once validated, the runtime executes the instruction, effectively running the code `var content = FileModule.ReadTextFile("file.txt")`.
 
-### Step 4: Validation and Execution
+This process is a simplified overview. For a deeper understanding, we encourage you to explore the [Building section of the Plang source code](https://github.com/PLangHQ/plang/tree/main/PLang/Building).
 
-The builder validates that the function exists within the `FileModule` and that the parameters match. If any discrepancies are found, it makes another request to the LLM with error information for correction.
-
-Once validated, the builder compiles the instructions into executable code. For this step, the runtime would execute the following code:
-
-```plang
-var content = FileModule.ReadTextFile("file.txt")
-```
-
-### Further Exploration
-
-This overview simplifies the actual complexity involved in the Plang Builder's process. For a deeper understanding, you are encouraged to explore the [Building directory](https://github.com/PLangHQ/plang/tree/main/PLang/Building) in the Plang Builder's source code repository.
+By following these steps, you can effectively use Plang to automate tasks and build complex workflows. Happy coding!

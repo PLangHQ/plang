@@ -1,124 +1,100 @@
-﻿# Todo New Approach Documentation
+﻿# Todo New Approach
+
+Welcome to the Todo New Approach tutorial! In this guide, we will explore a new way of designing user experiences for applications, specifically focusing on a Todo app. This approach emphasizes making the computer adjust to the user, rather than the user adjusting to the computer.
+
+## Video
+[![Watch the video](https://img.youtube.com/vi/0hSfGJYCBf8/hqdefault.jpg)](https://www.youtube.com/watch?v=0hSfGJYCBf8&list=PLbm1UMZKMaqfT4tqPtr-vhxMs4JGGFVEB&index=5)
+
+## What You Will Learn:
+- How to rethink the design of user experiences.
+- How to make the computer adjust to the user, not the other way around.
 
 ## Introduction
 
-In the pursuit of creating a more intuitive and natural todo application, we are adopting a methodology that mirrors the simplicity of jotting down tasks on a piece of paper. This document will guide you through the process of setting up a system that can interpret and organize text-based task inputs into a structured todo list.
+In the real world, creating a todo list is as simple as taking a pen and paper and jotting down tasks. This natural process is what we aim to replicate in our software design. Let's dive into how we can achieve this.
 
-## What will be covered
-In this tutorial we will cover the basics for working with plang. This includes.
+## Setting Up the Environment
 
-- Rethink how we make apps
-    - Computers adapt to user, not vice versa
-    - Keep the structured data
-- Read file from disk
-- For statements
+1. **Create a New Folder:**
+   - Create a folder named `llm`.
 
+2. **Create `system.txt`:**
+   - Inside the `llm` folder, create a file named `system.txt`.
+   - This file will simplify changing system commands without rebuilding the code.
 
-## Setting Up the System command
+3. **Add the Following to `system.txt`:**
+   ```txt
+   User will be provid you with a text of tasks. 
+   You job is to analyze the text and create list of tasks to return.
 
-### Step 1: Create the Folder and File
+   Current date & time is %Now%
 
-- Navigate to the `api` directory and create a new subdirectory named `llm`.
-- Within the `llm` directory, create a file named `system.txt`.
+   task: the description of the task
+   due_date: when the task is due, if not defined, set default to 2 days from now
+   category: categorize the user input by 3 categories, 'Work', "Home", 'Hobby'
+   ```
 
-### Step 2: Define System Commands
+## Creating the Task Processing Logic
 
-- Open the `system.txt` file and insert the following text:
+1. **Create `NewLlmTask.goal`:**
+   - In the `api` folder, create a file named `NewLlmTask.goal`.
 
-```txt
-User will provide you with a text of tasks. 
-Your job is to analyze the text and create a list of tasks to return.
+2. **Add the Following Code:**
+   ```plang
+   NewLlmTask
+   - read file llm/system.txt, write to %system%, load vars
+   - [llm] system:%system%
+           user: %request.tasks%
+           scheme:[{task:string, due_date:date, category:string}]
+           write to %taskList%
+   - for each %taskList%, call !SaveTask
 
-Current date & time is %Now%
+   SaveTask
+   - insert into Todos table, %item.task%, %item.due_date%, %item.category%, %Identity%
+   ```
 
-task: the description of the task
-due_date: when the task is due, if not defined, set default to 2 days from now
-category: categorize the user input by 3 categories, 'Work', 'Home', 'Hobby'
-```
+   **Explanation:**
+   - The code reads the system command from `system.txt` and processes the user's tasks from an HTTP request.
+   - It defines a schema and writes the result to the `%taskList%` variable.
+   - It then loops through the list and saves each item to the database.
 
-## Implementing the `NewLlmTask.goal`
+   **Tip:** You can write `for each %taskList%, call !SaveTask %task%=item` to reference the `%task%` variable in the `SaveTask` goal.
 
-### Step 1: Create the Goal File
+## Testing the New Approach
 
-- In the `api` folder, create a new file named `NewLlmTask.goal`.
+1. **Create a Test File:**
+   - In the `test` folder, create a file named `TestNewLlmTask`.
 
-### Step 2: Write the Goal Logic
+2. **Add the Following Code:**
+   ```plang
+   TestNewTask
+   - post http://localhost:8080/api/NewLlmTask
+       {
+           "tasks":"toothbrush
+               toothpaste
+               new oil for car, tomorrow
+               milk
+               talk with boss about salary, 2 days before end of month
+               solve credit card payment in system, in 7 days
+               "
+       }
+       timeout 2 min
+       write to %result%
+   - write out %result%
+   ```
 
-- Add the following plang code to the `NewLlmTask.goal` file:
+## What is This New Approach?
 
-```plang
-NewLlmTask
-- read file llm/system.txt, write to %system%, load variable
-- [llm] system:%system%
-        user: %request.tasks%
-        scheme:[{task:string, due_date:date, category:string}]
-        write to %taskList%
-- for each %taskList%, call !SaveTask
-- select * from Todos where %Identity%, write to %todos%
-- write out %todos%
+Think about how you create a todo list in the physical world. You simply write it down without worrying about structure. In today's software, we often use structured forms for data input, which can be cumbersome for users.
 
-SaveTask
-- insert into Todos table, %item.task%, %item.due_date%, %item.category%, %Identity%
-```
+This tutorial demonstrates a breakthrough in user experience design by eliminating the need for structured forms. The computer now adjusts to the user, allowing for a more natural interaction. This approach revolutionizes how we interact with software, making it more intuitive and user-friendly.
 
-### Explanation of the Code
+## Next Steps
 
-- The `NewLlmTask` goal starts by reading the `system.txt` configuration and loading the variables.
-- It processes the user's task input using the LLM model specified in the HTTP request, adhering to a defined schema, and stores the output in the `%taskList%` variable.
-- The `SaveTask` goal is then invoked for each task in `%taskList%`, inserting the task details into the database.
+Congratulations! You have completed the tutorial and are now ready to start writing your own apps. To further your learning:
 
-### Tip for Iteration
+- Explore how to build your steps in [How do I know how to build my steps](./modules/README.md).
+- Check out more [Examples](https://github.com/PLangHQ/plang/tree/main/Tests).
+- Discover [Apps written by others](https://github.com/PLangHQ/apps) to gain inspiration.
 
-- Utilize the syntax `for each %taskList%, call !SaveTask %task%=item` to loop through the tasks and reference the `%task%` variable within the `SaveTask` goal.
-
-## Testing the Implementation
-
-### Step 1: Create the Test File
-
-- In the `test` directory, create a file named `TestNewLlmTask.goal`.
-
-### Step 2: Define the Test Logic
-
-- Populate the `TestNewLlmTask.goal` file with the following plang code:
-
-```plang
-TestNewLlmTask
-- post http://localhost:8080/api/NewLlmTask
-    {
-        "tasks": "toothbrush
-                  toothpaste
-                  new oil for car, tomorrow
-                  milk
-                  talk with boss about salary, 2 days before end of month
-                  solve credit card payment in system, in 7 days"
-    }
-    timeout 2 min
-    write to %result%
-- write out %result%
-```
-
-> Note: The HTTP request timeout is set to 2 minutes to accommodate the potential processing time required by the LLM.
-
-## Building and Running the Web Server
-
-To build and start the web server, execute the following command:
-
-```plang
-plang exec
-```
-
-Ensure that you restart the server if it was already running to apply the new changes.
-
-## Executing the Test
-
-Run the test with the following command:
-
-```plang
-plang exec test/TestNewLlmTask
-```
-
-The program should have created multiple tasks in your database and printed out in the tasks that were created
-
-# Next
-
-Check out some more [Examples](https://github.com/PLangHQ/plang/tree/main/Tests) or other [Apps written by others](https://github.com/PLangHQ/apps) to start learning. It is all open source and you can view all the code.
+All resources are open source, allowing you to view and learn from the code. Happy coding!

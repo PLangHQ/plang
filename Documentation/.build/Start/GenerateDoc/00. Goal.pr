@@ -4,17 +4,17 @@
   "Text": "GenerateDoc",
   "GoalSteps": [
     {
-      "Text": "set var Name=%item.Name%",
+      "Text": "set default var Name=%item.Name%, %prevDoc% = \"\"",
       "Comment": null,
       "ModuleType": "PLang.Modules.LocalOrGlobalVariableModule",
-      "Name": "Set Variable",
-      "Description": "Assign the value of %item.Name% to the variable Name.",
-      "PrFileName": "01. Set Variable.pr",
-      "RelativePrPath": ".build\\Start\\GenerateDoc\\01. Set Variable.pr",
+      "Name": "Set Default Variables",
+      "Description": "Initialize the variable 'Name' with the value of 'item.Name' and set the variable 'prevDoc' to an empty string.",
+      "PrFileName": "01. Set Default Variables.pr",
+      "RelativePrPath": ".build\\Start\\GenerateDoc\\01. Set Default Variables.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-08-27T09:53:15.9034683+00:00",
+      "Generated": "2024-08-31T13:11:23.8558123+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -30,7 +30,7 @@
         "presencePenalty": 0.0,
         "maxLength": 4000,
         "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
         "type": "StepInformationBuilder",
         "promptMessage": [
           {
@@ -42,7 +42,7 @@
               },
               {
                 "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}"
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
               }
             ]
           },
@@ -60,30 +60,30 @@
             "content": [
               {
                 "type": "text",
-                "text": "set var Name=%item.Name%"
+                "text": "set default var Name=%item.Name%, %prevDoc% = \"\""
               }
             ]
           }
         ],
         "model": "gpt-4o-2024-08-06",
         "caching": true,
-        "RawResponse": null
+        "RawResponse": "```json\n{\n\t\"StepName\": \"Set Default Variables\",\n\t\"StepDescription\": \"Initialize the variable 'Name' with the value of 'item.Name' and set the variable 'prevDoc' to an empty string.\",\n\t\"Modules\": [\"PLang.Modules.LocalOrGlobalVariableModule\"]\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false
     },
     {
-      "Text": "read file %item.Guide%, into %content%",
+      "Text": "read file %item.Guide%, into %user%",
       "Comment": null,
       "ModuleType": "PLang.Modules.FileModule",
-      "Name": "ReadFile",
-      "Description": "Read the contents of the file located at the path specified by %item.Guide% and store the contents into the variable %content%.",
-      "PrFileName": "02. ReadFile.pr",
-      "RelativePrPath": ".build\\Start\\GenerateDoc\\02. ReadFile.pr",
+      "Name": "ReadFileIntoVariable",
+      "Description": "Read the contents of the file specified by the path in %item.Guide% and store the contents into the variable %user%.",
+      "PrFileName": "02. ReadFileIntoVariable.pr",
+      "RelativePrPath": ".build\\Start\\GenerateDoc\\02. ReadFileIntoVariable.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-08-27T09:53:21.9417687+00:00",
+      "Generated": "2024-08-31T13:10:15.1510341+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -99,7 +99,7 @@
         "presencePenalty": 0.0,
         "maxLength": 4000,
         "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
         "type": "StepInformationBuilder",
         "promptMessage": [
           {
@@ -111,7 +111,7 @@
               },
               {
                 "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}"
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
               }
             ]
           },
@@ -129,7 +129,145 @@
             "content": [
               {
                 "type": "text",
-                "text": "read file %item.Guide%, into %content%"
+                "text": "read file %item.Guide%, into %user%"
+              }
+            ]
+          }
+        ],
+        "model": "gpt-4o-2024-08-06",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepName\": \"ReadFileIntoVariable\",\n\t\"StepDescription\": \"Read the contents of the file specified by the path in %item.Guide% and store the contents into the variable %user%.\",\n\t\"Modules\": [\"PLang.Modules.FileModule\"]\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false
+    },
+    {
+      "Text": "if %skipPrevDoc% is empty",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.ConditionalModule",
+      "Name": "CheckIfVariableIsEmpty",
+      "Description": "Check if the variable %skipPrevDoc% is empty.",
+      "PrFileName": "03. CheckIfVariableIsEmpty.pr",
+      "RelativePrPath": ".build\\Start\\GenerateDoc\\03. CheckIfVariableIsEmpty.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2024-08-31T13:10:22.4596145+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 2,
+      "LineNumber": 14,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
+        "type": "StepInformationBuilder",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "if %skipPrevDoc% is empty"
+              }
+            ]
+          }
+        ],
+        "model": "gpt-4o-2024-08-06",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepName\": \"CheckIfVariableIsEmpty\",\n\t\"StepDescription\": \"Check if the variable %skipPrevDoc% is empty.\",\n\t\"Modules\": [\"PLang.Modules.ConditionalModule\"]\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false
+    },
+    {
+      "Text": "read file %item.OutputFilename%, write to %prevDoc%",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.FileModule",
+      "Name": "ReadAndWriteFile",
+      "Description": "Read the contents of the file specified by %item.OutputFilename% and write the contents to the file or location specified by %prevDoc%.",
+      "PrFileName": "03. ReadAndWriteFile.pr",
+      "RelativePrPath": ".build\\Start\\GenerateDoc\\03. ReadAndWriteFile.pr",
+      "Indent": 4,
+      "Execute": false,
+      "RunOnce": false,
+      "Generated": "2024-08-31T13:00:52.6752405+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 2,
+      "LineNumber": 15,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
+        "type": "StepInformationBuilder",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "read file %item.OutputFilename%, write to %prevDoc%"
               }
             ]
           }
@@ -146,21 +284,21 @@
       "Comment": null,
       "ModuleType": "PLang.Modules.FileModule",
       "Name": "ReadAndWriteFile",
-      "Description": "Read the contents of the file specified by the variable %item.System%, load the variables from the file, and write the data to the location specified by the variable %system%.",
-      "PrFileName": "03. ReadAndWriteFile.pr",
-      "RelativePrPath": ".build\\Start\\GenerateDoc\\03. ReadAndWriteFile.pr",
+      "Description": "Read the file located at the path specified by %item.System%, load its contents into variables, and then write the data to the location specified by %system%.",
+      "PrFileName": "04. ReadAndWriteFile.pr",
+      "RelativePrPath": ".build\\Start\\GenerateDoc\\04. ReadAndWriteFile.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-08-27T09:53:27.1228411+00:00",
+      "Generated": "2024-08-31T13:00:59.8096735+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 2,
-      "LineNumber": 14,
+      "Number": 3,
+      "LineNumber": 16,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -168,7 +306,7 @@
         "presencePenalty": 0.0,
         "maxLength": 4000,
         "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
         "type": "StepInformationBuilder",
         "promptMessage": [
           {
@@ -180,7 +318,7 @@
               },
               {
                 "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}"
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
               }
             ]
           },
@@ -205,76 +343,7 @@
         ],
         "model": "gpt-4o-2024-08-06",
         "caching": true,
-        "RawResponse": null
-      },
-      "EventBinding": null,
-      "IsEvent": false
-    },
-    {
-      "Text": "read file %item.OutputFilename%, write to %assistant%",
-      "Comment": null,
-      "ModuleType": "PLang.Modules.FileModule",
-      "Name": "ReadAndWriteFile",
-      "Description": "Read the contents of the file specified by the variable %item.OutputFilename% and write the contents to the variable %assistant%.",
-      "PrFileName": "04. ReadAndWriteFile.pr",
-      "RelativePrPath": ".build\\Start\\GenerateDoc\\04. ReadAndWriteFile.pr",
-      "Indent": 0,
-      "Execute": true,
-      "RunOnce": false,
-      "Generated": "2024-08-27T09:53:36.0924771+00:00",
-      "WaitForExecution": true,
-      "LoggerLevel": null,
-      "ErrorHandlers": null,
-      "CacheHandler": null,
-      "CancellationHandler": null,
-      "Custom": {},
-      "Number": 3,
-      "LineNumber": 15,
-      "LlmRequest": {
-        "temperature": 0.0,
-        "top_p": 0.0,
-        "frequencyPenalty": 0.0,
-        "presencePenalty": 0.0,
-        "maxLength": 4000,
-        "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
-        "promptMessage": [
-          {
-            "role": "system",
-            "content": [
-              {
-                "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
-              },
-              {
-                "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}"
-              }
-            ]
-          },
-          {
-            "role": "assistant",
-            "content": [
-              {
-                "type": "text",
-                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
-              }
-            ]
-          },
-          {
-            "role": "user",
-            "content": [
-              {
-                "type": "text",
-                "text": "read file %item.OutputFilename%, write to %assistant%"
-              }
-            ]
-          }
-        ],
-        "model": "gpt-4o-2024-08-06",
-        "caching": true,
-        "RawResponse": null
+        "RawResponse": "```json\n{\n\t\"StepName\": \"ReadAndWriteFile\",\n\t\"StepDescription\": \"Read the file located at the path specified by %item.System%, load its contents into variables, and then write the data to the location specified by %system%.\",\n\t\"Modules\": [\"PLang.Modules.FileModule\", \"PLang.Modules.LocalOrGlobalVariableModule\"]\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false
@@ -298,7 +367,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 4,
-      "LineNumber": 16,
+      "LineNumber": 17,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -349,25 +418,25 @@
       "IsEvent": false
     },
     {
-      "Text": "[llm] system:%system%\n    assistant: '## previously generated doc ## \n                %assistant%\n                ## previously generated doc ## '\n    user:%content%\n    model:'gpt-4-turbo'\n    max length = 4K\n    write to %result%",
+      "Text": "[llm] system:%system%\n    user:%user%\n    max length: 16K\n    model:'gpt-4o-2024-08-06'\n    write to %result%",
       "Comment": null,
       "ModuleType": "PLang.Modules.LlmModule",
-      "Name": "GenerateResponseWithLLM",
-      "Description": "Use the LLM model 'gpt-4-turbo' to generate a response based on the user's input stored in %content%. The response should be written to %result% and should not exceed a maximum length of 4K characters.",
-      "PrFileName": "06. GenerateResponseWithLLM.pr",
-      "RelativePrPath": ".build\\Start\\GenerateDoc\\06. GenerateResponseWithLLM.pr",
+      "Name": "Generate Text with LLM",
+      "Description": "Use a language model to generate a response based on the input from the system and user, with a maximum length of 16,000 characters, and write the output to the specified result variable.",
+      "PrFileName": "07. Generate Text with LLM.pr",
+      "RelativePrPath": ".build\\Start\\GenerateDoc\\07. Generate Text with LLM.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-08-27T09:53:48.9934821+00:00",
+      "Generated": "2024-08-31T13:46:25.9498544+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 5,
-      "LineNumber": 17,
+      "Number": 6,
+      "LineNumber": 18,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -375,7 +444,7 @@
         "presencePenalty": 0.0,
         "maxLength": 4000,
         "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
         "type": "StepInformationBuilder",
         "promptMessage": [
           {
@@ -387,7 +456,7 @@
               },
               {
                 "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}"
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
               }
             ]
           },
@@ -405,7 +474,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "[llm] system:%system%\n    assistant: '## previously generated doc ## \n                %assistant%\n                ## previously generated doc ## '\n    user:%content%\n    model:'gpt-4-turbo'\n    max length = 4K\n    write to %result%"
+                "text": "[llm] system:%system%\n    user:%user%\n    max length: 16K\n    model:'gpt-4o-2024-08-06'\n    write to %result%"
               }
             ]
           }
@@ -436,7 +505,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 6,
-      "LineNumber": 25,
+      "LineNumber": 23,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -487,25 +556,25 @@
       "IsEvent": false
     },
     {
-      "Text": "write %result% to %item.OutputFilename%",
+      "Text": "write %result% to %item.OutputFilename%, overwrite",
       "Comment": null,
       "ModuleType": "PLang.Modules.FileModule",
       "Name": "WriteToFile",
-      "Description": "Write the content of the variable %result% to the file specified by %item.OutputFilename%.",
-      "PrFileName": "08. WriteToFile.pr",
-      "RelativePrPath": ".build\\Start\\GenerateDoc\\08. WriteToFile.pr",
+      "Description": "Write the content of the variable %result% to the file specified by %item.OutputFilename%, overwriting any existing content in the file.",
+      "PrFileName": "09. WriteToFile.pr",
+      "RelativePrPath": ".build\\Start\\GenerateDoc\\09. WriteToFile.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-08-27T09:53:57.062532+00:00",
+      "Generated": "2024-08-31T13:41:53.5844257+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
-      "Number": 7,
-      "LineNumber": 26,
+      "Number": 8,
+      "LineNumber": 24,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -513,7 +582,7 @@
         "presencePenalty": 0.0,
         "maxLength": 4000,
         "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
         "type": "StepInformationBuilder",
         "promptMessage": [
           {
@@ -525,7 +594,7 @@
               },
               {
                 "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}"
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
               }
             ]
           },
@@ -543,14 +612,14 @@
             "content": [
               {
                 "type": "text",
-                "text": "write %result% to %item.OutputFilename%"
+                "text": "write %result% to %item.OutputFilename%, overwrite"
               }
             ]
           }
         ],
         "model": "gpt-4o-2024-08-06",
         "caching": true,
-        "RawResponse": null
+        "RawResponse": "```json\n{\n\t\"StepName\": \"WriteToFile\",\n\t\"StepDescription\": \"Write the content of the variable %result% to the file specified by %item.OutputFilename%, overwriting any existing content in the file.\",\n\t\"Modules\": [\"PLang.Modules.FileModule\"]\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false
@@ -574,7 +643,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 8,
-      "LineNumber": 27,
+      "LineNumber": 25,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -643,7 +712,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 9,
-      "LineNumber": 28,
+      "LineNumber": 26,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -695,24 +764,25 @@
     }
   ],
   "SubGoals": [],
-  "Description": "The GenerateDoc goal processes a document generation task by reading input files, interacting with a language model, and updating a database. It starts by setting the variable \\%Name\\% from \\%item.Name\\%. It reads content from files specified by \\%item.Guide\\%, \\%item.System\\%, and \\%item.OutputFilename\\%, storing them in \\%content\\%, \\%system\\%, and \\%assistant\\% respectively. It then logs a message about querying the language model with \\%Name\\%. The language model is invoked with the system prompt from \\%system\\%, a preamble from \\%assistant\\%, and user content from \\%content\\%, using the 'gpt-4-turbo' model with a maximum length of 4K tokens. The result is stored in \\%result\\%. A new folder named 'output' is created, and \\%result\\% is written to the file specified by \\%item.OutputFilename\\%. Finally, the 'docs' table is updated with the current time \\%Now\\% for the document ID \\%item.id\\%, and a completion message is logged with \\%Name\\%.",
+  "Description": "The GenerateDoc goal is designed to generate documentation based on provided item details. It initializes a variable for the name of the item and sets a previous document variable to an empty string. It reads a guide file associated with the item into a user variable. If the skip previous document variable is empty, it reads the output filename into the previous document variable. The system file is then read to load necessary variables. The goal proceeds to ask a language model (LLM) about the item name using the loaded system and user variables, and the result is stored in a result variable. Finally, it creates an output folder, writes the result to the specified output filename, updates the documentation table with the current timestamp, and confirms completion with a message about the item name.",
   "Visibility": 0,
   "GoalFileName": "Start.goal",
   "RelativeGoalPath": "\\Start.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Start\\GenerateDoc\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Start\\GenerateDoc",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "c5274cd2ff26d9af2af2ce0886be69cde06900698ada37424f73bce185440d17",
+  "Hash": "d37828937652bab6e731e51c86d799f3a7101a262fcf416a8ca30bd535fcfce8",
   "IncomingVariablesRequired": [
     "item.Name",
     "item.Guide",
-    "item.System",
     "item.OutputFilename",
+    "item.System",
     "item.id",
+    "skipPrevDoc",
     "Now"
   ]
 }

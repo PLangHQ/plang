@@ -1,14 +1,14 @@
-# Plang Settings Management Guide
+﻿# Plang Settings Documentation
 
 ## Introduction
 
-Welcome to the Plang Settings Management Guide. This document is designed to help you understand how to effectively manage and utilize settings within your Plang applications. Settings are a fundamental aspect of Plang, allowing you to define and retrieve configuration values that are essential for your application's functionality.
+In Plang, settings are a powerful feature that allows you to manage configuration values dynamically. This document will guide you through retrieving, adding, and customizing settings in Plang. Whether you're a beginner or an advanced user, this guide will help you understand how to effectively use settings in your Plang applications.
 
-## Accessing Settings
+## Retrieving Settings
 
-In Plang, settings are accessed using the `%Settings.Name_of_Key%` syntax. This enables you to fetch the value associated with a specific key within your code. For instance, to retrieve an API key, you would use `%Settings.API_KEY%`.
+To retrieve a setting in Plang, you can use the syntax `%Settings.Name_of_Key%`. For example, to access an API key stored in settings, you would use `%Settings.API_KEY%`. If the setting is not found or is empty, Plang will prompt the user to provide the value.
 
-Should a setting be undefined, Plang will prompt you to input a value for it. Here's an example of how to incorporate a setting within a goal:
+### Example
 
 ```plang
 APIRequest
@@ -16,36 +16,56 @@ APIRequest
     Bearer: %Settings.SomeAPIKey%
 ```
 
-## Defining New Settings Keys
+In this example, Plang will attempt to retrieve the `SomeAPIKey` from the settings. If the key is not found, the user will be prompted to enter it.
 
-Introducing a new settings key is as simple as referencing it in your Plang code. For example, `%Settings.MyKey%` will prompt Plang to search for this key in the settings database, which is located at `.db/system.sqlite`. If the key is found, its value will be utilized. If not, Plang will request the value from the user via the `AskUserHandler`. This process can be customized, as detailed in the advanced section below.
+## Adding New Settings Keys
 
-To alter or remove an existing key, you'll need to use a database tool to interact with the `.db/system.sqlite` database.
+When you reference a setting like `%Settings.MyKey%` in your Plang code, Plang will search for this key in the settings database located at `.db/system.sqlite`. If the key exists, its value will be returned. If not, Plang will ask the user for the value using the `AskUserHandler`, which can be customized.
+
+To change or remove a key, you will need to open the `.db/system.sqlite` database with a database tool.
 
 ## Advanced Customization
 
-### Customizing the Settings Service
+For advanced users, Plang allows customization of the settings service. This is useful if you want to use a custom storage medium for settings, such as environment files, cloud secret managers, or other secure storage solutions.
 
-For those who require a custom settings service, perhaps to integrate with different storage solutions like .env files or cloud-based secret managers, you can override the default service. This involves implementing the `ISettingsRepository` interface and injecting your custom service into the Plang runtime:
+### Overwriting the Settings Service
+
+You can overwrite the default settings service by injecting your own implementation. This is done by implementing the `ISettingsRepository` interface and injecting the DLL.
 
 ```plang
 Start
 - inject settings, 'mysettings', global
 ```
 
-This command directs Plang to use the service from the `services/mysettings/*.dll` directory and sets it as the global settings service for your application.
+This command tells the Plang runtime to inject the service located in the `services/mysettings/*.dll` folder and sets it to be global to the application.
 
-### Customizing the AskUser Service
+### Customizing the AskUserHandler
 
-If you need to tailor the user interaction when a setting is missing, you can implement your own `AskUser` service. This is useful for integrating with messaging modules or providing a unique user experience. To do this, adhere to the `IAskUserHandler` interface and inject your custom service:
+If you want to customize how Plang asks the user for input, you can inject your own `AskUserHandler` service. This is useful if you want to handle user prompts differently, such as sending a message through a messaging module.
+
+To do this, implement the `IAskUserHandler` interface and inject it:
 
 ```plang
 Start
 - inject askuser, 'myaskuser'
 ```
 
-Plang will then utilize your custom service from the `services/myaskuser` directory.
+Plang will look for your service in the `services/myaskuser` folder. Your service should implement the following method:
 
-## Conclusion
+```csharp
+public async Task<bool> Handle(AskUserException ex)
+```
 
-This guide has walked you through the essentials of managing settings in Plang. While the default settings service is adequate for most users, Plang's flexibility allows for customization to meet specific needs. Whether you're a beginner or an advanced user, understanding how to manage settings is key to building robust Plang applications.
+After processing the logic, call:
+
+```csharp
+await ex.InvokeCallback(value);
+```
+
+Here, `value` is the expected response from the user. For example, when creating a database connection, the response can be in natural language, and the LLM will map it correctly to establish the connection.
+
+## Further Reading
+
+For more information on creating your own services, refer to the [Services Documentation](./Services.md).
+
+This documentation provides a comprehensive overview of how to manage settings in Plang, from basic retrieval to advanced customization. By following these guidelines, you can effectively manage configuration values in your Plang applications.

@@ -150,11 +150,11 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\MergeFilesIntoOneVar\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\MergeFilesIntoOneVar",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "ac981e9a508ab4ad8ae088dd1830508b25afec00bfcc9bd10bd8ca2c59e4a2fb",
+  "Hash": "47ba35a3b389b19844551624dafd757fa649e29e047482341d6ba14fe49cc234",
   "IncomingVariablesRequired": [
     "path",
     "plangExamples"

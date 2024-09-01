@@ -1,12 +1,16 @@
 # Writing plang code
 
-This document serves as your gateway to programming in PLang, providing an overview of the built-in modules and their capabilities. 
+A step you write is mapped to a module. 
+
+Example:
+```plang
+- read file.txt, write to %content% 
+```
+This step will map to [File](#file) module.
 
 Here, you'll find concise descriptions of each module's core functions along with practical examples to kickstart your programming tasks. Whether you're handling data, automating processes, securing information, or interacting with web services, these modules equip you with a broad range of tools to implement solutions efficiently. 
 
-Explore the possibilities and leverage these examples as a foundation for your PLang projects.
-
-You can also create your own [custom module](https://github.com/PLangHQ/modules)
+You can also see [list of modules](https://github.com/PLangHQ/modules) that don't come built-in to extend the language even further or create your own [custom module](https://github.com/PLangHQ/modules/blob/main/README.md)
 
 ## Table of Contents
 

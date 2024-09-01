@@ -142,17 +142,17 @@
       "IsEvent": false
     },
     {
-      "Text": "[llm] system:%system_detail%\n        user: %file.Content%\n        model: 'gpt-4-0125-preview'\n        respond in .md\n        write to %doc_details%",
+      "Text": "[llm] system:%system_detail%\n        user: %file.Content%\n        respond in .md\n        write to %doc_details%",
       "Comment": null,
       "ModuleType": "PLang.Modules.LlmModule",
-      "Name": "GenerateResponseWithLLM",
-      "Description": "Use the LLM model 'gpt-4-0125-preview' to generate a response based on the user's input, which is the content of a file. The response should be formatted in Markdown and written to a specified document.",
-      "PrFileName": "03. GenerateResponseWithLLM.pr",
-      "RelativePrPath": ".build\\ModulesOverview\\CreateDetail\\03. GenerateResponseWithLLM.pr",
+      "Name": "GenerateMarkdownResponse",
+      "Description": "Use the system details and user-provided file content to generate a response in Markdown format and write it to the specified document details.",
+      "PrFileName": "03. GenerateMarkdownResponse.pr",
+      "RelativePrPath": ".build\\ModulesOverview\\CreateDetail\\03. GenerateMarkdownResponse.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-08-27T09:59:42.0557662+00:00",
+      "Generated": "2024-08-31T12:49:52.2889572+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -168,7 +168,7 @@
         "presencePenalty": 0.0,
         "maxLength": 4000,
         "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
         "type": "StepInformationBuilder",
         "promptMessage": [
           {
@@ -180,7 +180,7 @@
               },
               {
                 "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}"
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
               }
             ]
           },
@@ -198,14 +198,14 @@
             "content": [
               {
                 "type": "text",
-                "text": "[llm] system:%system_detail%\n        user: %file.Content%\n        model: 'gpt-4-0125-preview'\n        respond in .md\n        write to %doc_details%"
+                "text": "[llm] system:%system_detail%\n        user: %file.Content%\n        respond in .md\n        write to %doc_details%"
               }
             ]
           }
         ],
         "model": "gpt-4o-2024-08-06",
         "caching": true,
-        "RawResponse": null
+        "RawResponse": "```json\n{\n\t\"StepName\": \"GenerateMarkdownResponse\",\n\t\"StepDescription\": \"Use the system details and user-provided file content to generate a response in Markdown format and write it to the specified document details.\",\n\t\"Modules\": [\"PLang.Modules.LlmModule\"]\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false
@@ -229,7 +229,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 3,
-      "LineNumber": 19,
+      "LineNumber": 18,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -281,18 +281,18 @@
     }
   ],
   "SubGoals": [],
-  "Description": "The CreateDetail goal processes a file to generate a module overview document. It extracts the module name from the file path by removing specific prefixes and suffixes. It reads a template file for system details and uses an LLM to generate documentation details based on the file content. The generated documentation is then saved to a specified output path.",
+  "Description": "The CreateDetail goal is designed to generate a detailed overview document for a specified module. It begins by extracting the file name from a given file path, specifically removing the 'PLang.Modules.' and 'Module' parts to create a clean module name. Next, it reads a template file containing the overview details into a variable. The system then processes this detail along with the content of the specified file, generating a response in Markdown format. Finally, the resulting document is written to a designated output path using the cleaned module name.",
   "Visibility": 0,
   "GoalFileName": "ModulesOverview.goal",
   "RelativeGoalPath": "\\ModulesOverview.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ModulesOverview\\CreateDetail\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ModulesOverview\\CreateDetail",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "f363b30f0cd4094d65650add64c0e0348cc316401585e2614f1f5da333da1d2d",
+  "Hash": "a139a97bb53ce4c56daa6dac0495834c769c29073810b3549fa1fc6cb29ef9a2",
   "IncomingVariablesRequired": [
     "file.Path",
     "file.Content"

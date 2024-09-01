@@ -1,32 +1,40 @@
-﻿# Handling 3rd Party Libraries in PLang
+﻿# Using Third-Party Libraries in PLang
 
-When working with PLang, you might encounter scenarios where your code depends on external libraries not bundled with the PLang compiler. This guide will help you safely download and integrate these libraries into your PLang environment.
+PLang is a versatile language that allows you to extend its functionality by integrating third-party libraries. One common source for these libraries is NuGet, a popular package manager for .NET. This guide will walk you through the process of incorporating a third-party library into your PLang project.
 
 ## Understanding the Error
 
-If the PLang compiler throws an error indicating a missing file, it's likely that your code requires an external library. For instance, if you encounter an error related to a file you don't recognize, you will need to source this file from a trusted repository.
+When you attempt to use a third-party library in PLang, you might encounter an error indicating that the compiler cannot find a specific file. This typically happens when the library is not included with PLang by default. To resolve this, you need to manually download and integrate the library.
 
-## Safe Download Practices from NuGet
+## Steps to Use NuGet Packages in PLang
 
-NuGet.org is a popular platform for .NET libraries which can also be used with PLang. However, downloading and using third-party libraries requires caution:
+### 1. Identifying the Missing Library
 
-- **Search for the Library**: Go to [nuget.org](https://www.nuget.org) and enter the missing file or library name in the search bar.
-- **Assess the Library**: Before downloading, check the library's usage statistics. Libraries with higher usage are typically more reliable. However, high usage does not guarantee absolute safety.
-- **Download the Library**: Only download libraries from reputable sources and authors.
+When you receive an error about a missing file, note the library name. This is the library you need to find and download from NuGet.
 
-## Steps to Integrate a NuGet Package into PLang
+### 2. Download the Package
 
-1. **Download the Package**: Navigate to the appropriate NuGet library page and click "Download Package" to obtain a `.nuget` file.
-2. **Convert to Zip**: Change the extension of the downloaded `.nuget` file to `.zip`.
-3. **Extract and Deploy**: Unzip the file and place its contents into the PLang `.services` folder. Create the `.services` folder in your PLang directory if it does not exist.
+- Visit [nuget.org](https://www.nuget.org).
+- Enter the library name in the search bar and click "Search".
+- Review the search results carefully. Choose a package with a high number of downloads and active maintenance to minimize security risks.
 
-This method ensures that your PLang applications can utilize a wide range of functionalities provided by external libraries.
+### 3. Download and Prepare the Package
 
-## Practical Example: Integrating the Markdig Library
+- Click "Download Package" to receive a `.nuget` file.
+- Rename the `.nuget` file to `.zip`.
+- Unzip the file to access its contents.
 
-Consider a scenario where you need to use the Markdig library to format text in Markdown. Here’s how you might encounter and resolve an error:
+### 4. Integrate the Library into PLang
 
-### PLang Code Sample
+- Locate the `.dll` file within the unzipped contents. This is the file you need to integrate.
+- Create a `.services` folder in your PLang project directory if it doesn't already exist.
+- Place the `.dll` file into the `.services` folder.
+
+## Example: Using the Markdig Library
+
+Let's consider an example where you want to use the Markdig library to convert text to Markdown format.
+
+### PLang Code Example
 
 ```plang
 Run
@@ -35,12 +43,19 @@ Run
      with columns: name, email, comment, write to %users%
 ```
 
-### Error and Resolution
+### Error Encounter
 
-Running the above script without the Markdig library installed will result in an error. Follow these steps to resolve it:
+When you run `plang build`, you might see an error similar to the one below:
 
-1. **Identify the Error**: The PLang compiler will indicate a missing Markdig file.
-2. **Search on NuGet**: Find [Markdig on NuGet](https://www.nuget.org/packages?q=Markdig) and verify the library's activity and usage.
-3. **Download and Install**: Follow the steps outlined above to download, convert, and deploy the Markdig library into your `.services` folder.
+![Markdig error](./ErrorMarkdig.jpg)
 
-By following these guidelines, you can enhance your PLang applications while ensuring your system's security and integrity.
+This error indicates that the Markdig library is missing.
+
+### Resolving the Error
+
+1. **Search for Markdig on NuGet**: Go to [nuget.org](https://www.nuget.org/packages/Markdig) and search for "Markdig".
+2. **Download the Package**: Confirm the package is actively maintained and has a high number of downloads. Click "Download package".
+3. **Prepare the Package**: Rename the downloaded file to `.zip`, unzip it, and locate the `markdig.dll` file in the `.net 8` folder.
+4. **Integrate the Library**: Place `markdig.dll` into your project's `.services` folder.
+
+By following these steps, you can successfully integrate third-party libraries into your PLang projects, enhancing their functionality and capabilities. Always exercise caution when downloading and integrating external libraries to ensure the security and stability of your applications.

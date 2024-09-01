@@ -81,11 +81,11 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Start\\LoadDoc\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Start\\LoadDoc",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "90bf9478ea58be4779b01fff0b866045ddd95703a1d537f6f220b306d0f7691f",
+  "Hash": "88d57a85a62584502bdbbb1f0e23cab2bafdb0a0c61364c5853adba4d23549e9",
   "IncomingVariablesRequired": [
     "doc"
   ]

@@ -22,7 +22,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 30,
+      "LineNumber": 29,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -91,7 +91,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 1,
-      "LineNumber": 31,
+      "LineNumber": 30,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -142,17 +142,17 @@
       "IsEvent": false
     },
     {
-      "Text": "[llm] system:%system_simple%\n        user: %file.Content%\n        model: 'gpt-4-0125-preview'\n        respond in .md\n        write to %doc_simple%",
+      "Text": "[llm] system:%system_simple%\n        user: %file.Content%\n        respond in .md\n        write to %doc_simple%",
       "Comment": null,
       "ModuleType": "PLang.Modules.LlmModule",
-      "Name": "GenerateMarkdownResponse",
-      "Description": "Use the GPT-4 model to process the content from the variable %file.Content% and generate a response in markdown format. The response should be written to the variable %doc_simple%.",
-      "PrFileName": "03. GenerateMarkdownResponse.pr",
-      "RelativePrPath": ".build\\ModulesOverview\\CreateSimple\\03. GenerateMarkdownResponse.pr",
+      "Name": "Process and Write Content",
+      "Description": "Use the LLM to process the content from the variable %file.Content% and generate a response in Markdown format. Then, write the generated Markdown content to the variable %doc_simple%.",
+      "PrFileName": "03. Process and Write Content.pr",
+      "RelativePrPath": ".build\\ModulesOverview\\CreateSimple\\03. Process and Write Content.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-08-27T10:00:42.8705892+00:00",
+      "Generated": "2024-08-31T12:50:01.5299842+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -160,7 +160,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 2,
-      "LineNumber": 32,
+      "LineNumber": 31,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -168,7 +168,7 @@
         "presencePenalty": 0.0,
         "maxLength": 4000,
         "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
         "type": "StepInformationBuilder",
         "promptMessage": [
           {
@@ -180,7 +180,7 @@
               },
               {
                 "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}"
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
               }
             ]
           },
@@ -198,14 +198,14 @@
             "content": [
               {
                 "type": "text",
-                "text": "[llm] system:%system_simple%\n        user: %file.Content%\n        model: 'gpt-4-0125-preview'\n        respond in .md\n        write to %doc_simple%"
+                "text": "[llm] system:%system_simple%\n        user: %file.Content%\n        respond in .md\n        write to %doc_simple%"
               }
             ]
           }
         ],
         "model": "gpt-4o-2024-08-06",
         "caching": true,
-        "RawResponse": null
+        "RawResponse": "```json\n{\n\t\"StepName\": \"Process and Write Content\",\n\t\"StepDescription\": \"Use the LLM to process the content from the variable %file.Content% and generate a response in Markdown format. Then, write the generated Markdown content to the variable %doc_simple%.\",\n\t\"Modules\": [\"PLang.Modules.LlmModule\"]\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false
@@ -229,7 +229,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 3,
-      "LineNumber": 37,
+      "LineNumber": 35,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -281,18 +281,18 @@
     }
   ],
   "SubGoals": [],
-  "Description": "The CreateSimple goal processes a file by extracting its name without the extension, reads a template file, and uses an LLM to generate a markdown document based on the file's content. The generated document is then saved to a specified output directory.",
+  "Description": "The CreateSimple goal is designed to generate a simple overview document based on a specified file. It begins by extracting the file name without its extension from the provided file path, which is then stored in the variable \\%moduleName\\%. Next, it reads a template file located at 'template/modules/Overview/simple_overview.txt' into the variable \\%system_simple\\%, which is used to load variables. The system then processes the content of the specified file, \\%file.Content\\%, and generates a response in markdown format, which is stored in \\%doc_simple\\%. Finally, the generated document is written to the output directory 'output/modules_simple/' with the name derived from \\%moduleName\\%. This goal requires the file path to be provided to extract the module name and the content of the file to be processed.",
   "Visibility": 0,
   "GoalFileName": "ModulesOverview.goal",
   "RelativeGoalPath": "\\ModulesOverview.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ModulesOverview\\CreateSimple\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ModulesOverview\\CreateSimple",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "8719cb458fdc76c22c0ff8317b2692589564bc344b59e5187537872f079142ba",
+  "Hash": "61f04c6e73076d9698eecce32f37d2dfdab52280c39e5994c286f1fbf2d92a74",
   "IncomingVariablesRequired": [
     "file.Path",
     "file.Content"

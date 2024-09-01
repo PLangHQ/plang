@@ -1,77 +1,80 @@
-# Introduction to Variables in PLang
+﻿# Plang Variables Documentation
 
-Understanding variables is fundamental to learning programming with PLang. This guide aims to introduce novices to the concept of variables, their usage, and best practices in PLang.
+## Introduction to Variables
 
-## ELI5 Explanation of Variables
-Imagine you have a box where you can keep your toys. You can put in any toy you want, take it out, or replace it with a different toy. In programming, a variable is like this box.
+In programming, a variable is like a container that holds information. This information can be a number, text, or any other data type. Think of a variable as a labeled box where you can store and retrieve data whenever you need it. In Plang, variables are enclosed within percentage signs `%` to distinguish them from regular text.
 
-When you create a variable in a program, it's like you're saying, "Here's a box, and I'm going to name it something (like 'myToyBox')." Then, you can put something inside it, like a number or a word. For example, if you put the number 10 in 'myToyBox', it's like putting 10 toy cars in your box.
+### ELI5 Explanation
 
-You can always check what's inside your box, change the toys to something else, or even take all the toys out and leave it empty. Just like you decide what to put in or take out of your toy box, in a program, you decide what the variable (your box) holds and changes over time.
+Imagine you have a toy box labeled "Toys." You can put toys in it, take toys out, or even replace the toys with something else. In programming, a variable works similarly. You give it a name, like "Toys," and you can store different things in it, like numbers or words. When you want to use what's inside, you just refer to the label.
 
-So, in simple terms, a variable in programming is like a box that can hold different things, and you can change what's inside whenever you need to!
+## Setting Variables in Plang
 
-## Definition and Purpose of Variables
-
-Variables are named storage locations in your PLang programs that hold data. They are crucial for storing information that your program can manipulate and use.
-
-### Naming Variables
-
-Proper naming of variables is vital for readable and maintainable code. Here are some tips:
-
-- **Descriptive Names**: Use names that describe the content of the variable.
-- **Avoid Confusing Names**: Don't use names that could be mistaken for PLang keywords or functions.
-
-**Good Example**
-```plang
-set variable %userName% to 'Alice'
-```
-
-**Bad Example**
-```plang
-set variable %a% to 'Alice'
-```
-
-## Setting and Using Variables
-
-To set a variable in PLang, use the `set variable` syntax. For example:
+To set a variable in Plang, you use the `set` command followed by the variable name enclosed in `%`, an equal sign `=`, and the value you want to assign to it. Here's an example:
 
 ```plang
-set variable %greeting% to 'Hello, World!'
+Start
+- set %name% = "John"
+- write out %name%
 ```
 
-You can then use `%greeting%` in your program wherever you need its value.
+### Explanation
 
-## Variable Types and Values
+In the above code:
+- We start by setting a variable `%name%` to the value `"John"`.
+- The `write out` command then outputs the value of `%name%`, which is "John".
 
-Variables in PLang can hold different types of data, including numbers, strings, and more complex structures.
+## Date and Time Variables
 
-**Example: Assigning a String**
-```plang
-set variable %message% to 'Welcome to PLang!'
-```
-
-## Scope and Lifetime of Variables
-
-- **Local Variables**: Accessible only within the block they are declared.
-- **Global Variables**: Accessible throughout the program.
-
-## Manipulating Variable Values
-
-You can change the value of a variable at any point in your program.
+Plang provides built-in variables for date and time, such as `%Now%`, which represents the current date and time. Here's how you can use it:
 
 ```plang
-set variable %counter% to 0
-...
-set variable %counter% to 1
+Start
+- write out %Now%
 ```
 
-## Best Practices for Using Variables
+### Explanation
 
-- Be consistent in naming conventions.
-- Use comments to explain the purpose of variables when necessary.
+In this code:
+- The `write out` command outputs the current date and time using the `%Now%` variable.
 
-## Summary and Key Takeaways
+## Conditions
 
-Variables are essential in PLang programming, enabling you to store, manipulate, and reuse data effectively.
+Conditions allow you to execute certain parts of your code based on whether a condition is true or false. You can read more about conditions in the [Conditions documentation](./Conditions.md).
 
+```plang
+- set %isValid% = true
+- if %isValid% is true, call WriteOutIsValid
+
+WriteOutIsValid
+- write out %isValid%
+```
+
+### Explanation
+
+In this example:
+- We set a variable `%isValid%` to `true`.
+- The `if` statement checks if `%isValid%` is true. If it is, it calls the `WriteOutIsValid` goal.
+- The `WriteOutIsValid` goal writes out the value of `%isValid%`, which is `true`.
+
+## Loops
+
+Loops allow you to repeat a set of instructions for each item in a collection. When using loops in Plang, a new variable `%item%` is created to represent the current item in the loop. You can read more about loops in the [Loops documentation](./Loops.md).
+
+```plang
+Start
+- [code] generate list from 1 to 10, write to %numbers%
+- go through %numbers%, call PrintNumber
+
+PrintNumber
+- write out %item%
+```
+
+### Explanation
+
+In this loop example:
+- We generate a list of numbers from 1 to 10 and store it in the variable `%numbers%`.
+- The `go through` command iterates over each number in `%numbers%`, calling the `PrintNumber` goal for each one.
+- The `PrintNumber` goal writes out the current `%item%`, which represents each number in the list as the loop progresses.
+
+By understanding and using variables, conditions, and loops, you can create dynamic and flexible programs in Plang.

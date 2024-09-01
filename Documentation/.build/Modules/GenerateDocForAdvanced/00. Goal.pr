@@ -361,11 +361,11 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\GenerateDocForAdvanced\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\GenerateDocForAdvanced",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "4168af3f6f643ce7ad599b4d6508d75b7dd4a7371db1b73ae79827647f486de7",
+  "Hash": "96f5e6edf2241a875b901085bd47b9ec5085eeeca1800791dcf9e938bd1fd88e",
   "IncomingVariablesRequired": [
     "ModuleName",
     "module.namespace"

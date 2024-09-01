@@ -11,11 +11,16 @@ Following are the rules of plang programming language
     step can be multiple lines but then the line does not start with dash
     and each line added should be indented
 - A step should describe in simple term the intent of action that should happen.
-- Variables start and end with %
-- Line starting with dash(/) is a comment
+- Variables start and end with % (./Variables.md), e.g. %name%, %user.email%
+- Line starting with dash(/) is a comment, e.g. `/ this is a comment`
 - if statement can have indented steps, they are indented by 4 characters or tab
+- steps cannot start with `- else` or `- else if`, call goal when needing if and else (./Conditions.md)
+- user can call other goals `- call goal XXX`
+- deveoploer can loop through item(s) and call goal, `- go through %list%, call ProcessItem`(./Loop.md)
+- %Now% and %NowUtc% gives you access to current date & time(./Time.md)
 - [...] indicates to build to focus on specific module to build the step, e.g. [llm] uses LlmModule
 - \ is escape character for %, e.g. \%ThisWillNotBeVariable\%
+
 Example of plang source code
 ```plang
 MyApp
@@ -33,15 +38,17 @@ MyApp
     write to %content%
 - write out %content%
 - [code] create list of all 2 letter ISO country codes, write to %countryCodes%
+- call goal WriteHello
+
+WriteHello
+- write out "Hello plang world"
 ```
 
 demostrate to the user how you can write steps in natural language and multiple ways, since the intent is what is needed, not strict structure
 
-Multiple ways of doing the same thing. All these steps will read a file and load it into a variable
+Multiple ways of writing the same thing, as long as it has same intent. All these steps will read a file and load it into a variable
 ```plang
 - read text file.txt into %content%
 - file.txt should be read into %content%
 - load file.txt and put it into %content%
 ```
-
-Create a documentation that demostrates the rules of the plang programming language

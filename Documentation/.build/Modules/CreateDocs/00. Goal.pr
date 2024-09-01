@@ -495,11 +495,11 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\CreateDocs\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\CreateDocs",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "e22bcda802438cf527bd18fb57e95fadeb02cbb282a4a7c6ed3fbd5202029f48",
+  "Hash": "50d70b663ba43d45e479b97ca8fa82fc3a8733c16cc641bcbbb130da22ac8d02",
   "IncomingVariablesRequired": [
     "module.moduleName"
   ]

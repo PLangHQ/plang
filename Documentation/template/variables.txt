@@ -1,0 +1,43 @@
+
+explain what variables are in general terms
+give ELI5 explaination
+how to set variables
+
+```plang
+Start
+- set %name% = "John"
+- write out %name%
+```
+
+Date and time variable
+```plang
+Start
+- write out %Now%
+```
+
+Conditions
+you can read more about condition(./Conditions.md)
+
+```plang
+Start
+- set %isValid% = true
+- if %isValid% is true, call WriteOutIsValid
+
+WriteOutIsValid
+- write out %isValid%
+```
+
+Loops
+when going through loops, a new variable is created %item% that you can access, read more about loops(./Loops.md)
+
+```plang
+Start
+- [code] generate list from 1 to 10, write to %numbers%
+- go through %numbers%, call PrintNumber
+
+PrintNumber
+- write out %item%
+```
+
+Next step
+Learn about Conditions(./Conditions.md)

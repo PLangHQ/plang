@@ -1,23 +1,49 @@
-﻿# Performance Considerations in Plang
+﻿# Performance in Plang
 
-While it's important to set realistic expectations about the performance of any programming language, it's equally crucial to understand the context in which it operates and the potential for optimization. 
+## Understanding Plang's Performance
 
-Plang, admittedly, is not the fastest language out there, primarily due to its reliance on Reflections and the way variables are accessed and set. However, this is not the end of the story.
+Plang, as a language, is designed with simplicity and ease of use in mind, rather than raw execution speed. It leverages reflection for executing its operations, which inherently introduces some performance overhead. This means that accessing and setting variables in Plang is not as fast as in some other languages. However, this trade-off is intentional and does not significantly impact its intended use cases.
 
-### Optimization Potential
+### Why Performance Overhead Doesn't Matter
 
-The good news is that Plang has not yet been optimized in any way. 
+Plang is not designed for computationally intensive tasks, such as algorithms that require looping through thousands of items. These tasks are better suited for traditional programming languages that are optimized for such operations. Instead, Plang excels in scenarios where simplicity and rapid development are more critical than execution speed.
 
-There is significant room for improvement in both reflection usage and variable handling. With dedicated effort and time, it is expected that Plang's performance can be enhanced to approach that of native C# speeds.
+### Ideal Use Cases for Plang
 
-### Context of Use
+Plang is particularly well-suited for business applications, such as:
 
-It's essential to consider the intended use case for Plang. 
+- Web services
+- SaaS applications
+- Desktop applications
+- Automation scripts
 
-Plang is designed for automation tasks, which often replace manual processes that could take humans minutes or hours to complete. In this context, the additional milliseconds or even seconds added by Plang's current performance are negligible. 
+In these contexts, the simplicity and reduced code complexity that Plang offers can outweigh the performance overhead. For example, consider the following Plang code for an API request to get user information:
 
-The language excels in scenarios where ease of automation and development speed are more critical than raw execution speed.
+```plang
+GetUserInfo
+- select id, name, email, address, zip from users where id=%userId%, write to %user%
+- write out %user%
+```
 
-### Conclusion
+This code is straightforward and concise, focusing on what needs to be done without unnecessary complexity. The performance overhead is negligible in such scenarios.
 
-It is slow (for now), but does it really matter for the things you will be using it for? 
+### Handling Slow Operations
+
+Plang is often used for operations that are inherently slow, where the language's "slowness" becomes insignificant. For instance, consider the following example where Plang interacts with a language model (LLM):
+
+```plang
+AskAI
+- [llm] system: What is the sentiment of the user
+    user: %user%
+    scheme: {sentiment:"positive"|"neutral"|"negative"}
+    write to %answer%
+- write out %answer%
+```
+
+In this case, the response time of the LLM is much longer than the execution time of the Plang code itself. The additional milliseconds introduced by Plang's reflection-based execution are negligible in comparison.
+
+## Future Optimizations
+
+It's important to note that Plang has not yet been optimized for performance. There is potential for significant speed improvements, particularly in reflection and variable handling. As Plang evolves, it is expected to approach the performance of native C# code. However, even in its current state, Plang remains a powerful tool for its intended use cases.
+
+In summary, while Plang may not be the fastest language available, its design priorities make it an excellent choice for applications where simplicity, rapid development, and ease of use are more important than raw execution speed.

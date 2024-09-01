@@ -499,11 +499,11 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\GeneratePlangExamples\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\GeneratePlangExamples",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "895f793751dacb51769558287cbfa8077f2fa7460e94c67a260702c40afee501",
+  "Hash": "d7d6a9bcb3988cfa10e647ea57f15796bbd771ab1b358904dc728cfd70cf965a",
   "IncomingVariablesRequired": [
     "ModuleName",
     "module.moduleName"

@@ -3,16 +3,18 @@ Time can be access by `\%Now\%`
 \%Now\% is the C# object DateTime.Now
 \%NowUtc\% is the C# object DateTime.NowUtc
 developer can use simple syntax, 
-    Set time
-        \%Now=2000-12-31\%
-        \%Now=2000-12-31T24:30:45\%
-    Modify (micro, ms, sec(s), min(s), hour(s), day(s), month(s), year(s))
-        \%Now+1day\%, \%Now+115ms\%, \%Now+5years\%
-        \%Now-2days%, \%Now-53secs\%, \%Now-15years\%
+    SetTime
+        - set %pastDate% = \%Now=2000-12-31\%
+        - set %pastTime% = \%Now=2000-12-31T24:30:45\%
+    Modify
+        - set %oneDay% = \%Now+1day\%
+        - set %ms% = \%Now+115ms\%, 
+        - set %5years% = \%Now+5years\%
+        - set %2daysAgo% = \%Now-2days%,
+        - set %53secAgo% = \%Now-53secs\%, 
+        - set %15yearsAgo% = \%Now-15years\%
 
-developer can use all methods and properties from DateTime, can be found at https://learn.microsoft.com/en-us/dotnet/api/system.datetime?view=net-8.0
-list most common properties and methods used and give example with each, 
-Dont use .Now or .UtcNow as an example.
+
 
 
 
@@ -21,12 +23,18 @@ WorkWithNow
 - set variable \%futureDate\% to \%Now.AddYears(1)\%
 - set variable \%dayOfWeek\% to \%Now.DayOfWeek\%
 
+Advanced: 
+
+developer can use all methods and properties from DateTime, can be found at https://learn.microsoft.com/en-us/dotnet/api/system.datetime?view=net-8.0
+list most common properties and methods used and give example with each, 
+Dont use .Now or .UtcNow as an example.
+
 end with the ToString(string) example, show all the formats
 format follows the culture set in the device, the culture can be changed by calling 
 
 ```plang
-ChangeCulture
-- set culture to is-IS
+Start
+- write out %Now.ToString("d")%
 ```
 
 
@@ -53,6 +61,19 @@ ChangeCulture
 //       '\Mon\t\h\: M': Month: 6
 //       'HH:mm:ss.ffffzzz': 21:15:07.0000-07:00
 
+If the date & time format does not appear as you expected, you have the wrong culture
+you can change it
+```plang
+Start
+- set culture to Icelandic
+- write out %Now.ToString("d")%
+```
 
+This will print out '1.12.2024'(is-IS), instead of '12/1/2024'(en-US) if you computer is set to en-US
+Read more about culture(./modules/README.md#cultureinfo)
 
 Platform-Specific Examples are not needed
+
+
+Next step
+You have the understanding variables, conditions(if), loops and time in plang, lets start creating an app, a Todo app(./Todo_webservice.md)

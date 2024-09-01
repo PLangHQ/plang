@@ -46,6 +46,9 @@ the error handler will search for the word 'timeout' in Message property
 ```
 the error handler will only call HandleProgramError if the key is 'ProgramError'. Most common are GoalError, StepError, ProgramError, ServiceError depending on where the error occured. You can see all errors in the language here https://github.com/PLangHQ/plang/tree/main/PLang/Errors
 
+
+Handling status codes
+
 ```plang
 - get https://example.org/use_service_that_costs
     on error 402, call HandlePayment
@@ -88,6 +91,32 @@ Start
     ignore all errors
 ```
 
+## order of retry statement
+
+You can define when the retry statement should be runned, is it before you handle the error or after.
+
+For instance, when you have a slow website, you just want retry it few times before complaining about it
+```plang
+- open in browser, http://slow_website.com/
+    on error 'timeout', retry 10 times over 10 minutes, if that fails call HandleTimeoutError
+- write out 'yes, go connected'
+```
+
+In this instance, first plang tries 10 times to connect to that website, if it is succesfull it just moves to the next step, giving up after 10 minutes and 10 tries will call the `HandleTimeoutError` goal
+
+but in other case you would like to handle the error, and try again. In this example I am asking a webservice for some data, but it want to charge me for it(status 402)
+
+```plang
+- get https://service_that_cost.com
+    on error 402, call TransferMoney, retry 1 time
+
+TransferMoney
+- transfer %!error.Amount% to %!error.ToAddress%
+```
+
+So on this error, we first handle it, then we retry again.
+
+
 ## order of error handling
 
 The order of error handling matters, if error handling is defined like this
@@ -125,7 +154,7 @@ See ThrowErrorModule(./modules/PLang.Modules.ThrowErrorModule.md) for more infor
 
 ## Continue to next step
 
-The code can have an error, you can catch and decide to continue to the next step after it
+The code can have an error, you can catch and decide to continue to the next step after it. It´s using the IgnoreError property, basically ignoring the error
 
 ```plang
 Start

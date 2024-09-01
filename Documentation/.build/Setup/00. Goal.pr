@@ -142,7 +142,7 @@
       "IsEvent": false
     },
     {
-      "Text": "insert into docs Name='Todo Webservice'\n            Guide='template/todo_webservice.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./Todo.md'          ",
+      "Text": "insert into docs Name='Todo Webservice'\n            Guide='template/todo_webservice.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./Todo_webservice.md'          ",
       "Comment": null,
       "ModuleType": "PLang.Modules.DbModule",
       "Name": "InsertIntoDocs",
@@ -152,7 +152,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": true,
-      "Generated": "2024-08-27T09:48:41.571895+00:00",
+      "Generated": "2024-09-01T11:46:55.8977471+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -168,7 +168,7 @@
         "presencePenalty": 0.0,
         "maxLength": 4000,
         "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
         "type": "StepInformationBuilder",
         "promptMessage": [
           {
@@ -180,7 +180,7 @@
               },
               {
                 "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}"
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
               }
             ]
           },
@@ -198,14 +198,14 @@
             "content": [
               {
                 "type": "text",
-                "text": "insert into docs Name='Todo Webservice'\n            Guide='template/todo_webservice.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./Todo.md'          "
+                "text": "insert into docs Name='Todo Webservice'\n            Guide='template/todo_webservice.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./Todo_webservice.md'          "
               }
             ]
           }
         ],
         "model": "gpt-4o-2024-08-06",
         "caching": true,
-        "RawResponse": null
+        "RawResponse": "```json\n{\n\t\"StepName\": \"InsertIntoDocs\",\n\t\"StepDescription\": \"Insert a new record into the 'docs' table with specified values for Name, Guide, System, and OutputFilename.\",\n\t\"Modules\": [\"PLang.Modules.DbModule\"]\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false
@@ -978,17 +978,17 @@
       "IsEvent": false
     },
     {
-      "Text": "insert into docs Name='RuntimeLifcycle'\n            Guide='template/runtime_lifecycle.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./RuntimeLifcycle.md'",
+      "Text": "insert into docs Name='RuntimeLifecycle'\n            Guide='template/runtime_lifecycle.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./RuntimeLifecycle.md'",
       "Comment": null,
       "ModuleType": "PLang.Modules.DbModule",
       "Name": "InsertIntoDocs",
-      "Description": "Insert a new record into the 'docs' table with specified values for Name, Guide, System, and OutputFilename.",
+      "Description": "Insert a new record into the 'docs' table with the specified Name, Guide, System, and OutputFilename values.",
       "PrFileName": "15. InsertIntoDocs.pr",
       "RelativePrPath": ".build\\Setup\\15. InsertIntoDocs.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": true,
-      "Generated": "2024-08-27T09:51:04.9185593+00:00",
+      "Generated": "2024-08-31T14:44:41.5480906+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -1004,7 +1004,7 @@
         "presencePenalty": 0.0,
         "maxLength": 4000,
         "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
         "type": "StepInformationBuilder",
         "promptMessage": [
           {
@@ -1016,7 +1016,7 @@
               },
               {
                 "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}"
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
               }
             ]
           },
@@ -1034,20 +1034,20 @@
             "content": [
               {
                 "type": "text",
-                "text": "insert into docs Name='RuntimeLifcycle'\n            Guide='template/runtime_lifecycle.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./RuntimeLifcycle.md'"
+                "text": "insert into docs Name='RuntimeLifecycle'\n            Guide='template/runtime_lifecycle.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./RuntimeLifecycle.md'"
               }
             ]
           }
         ],
         "model": "gpt-4o-2024-08-06",
         "caching": true,
-        "RawResponse": null
+        "RawResponse": "```json\n{\n\t\"StepName\": \"InsertIntoDocs\",\n\t\"StepDescription\": \"Insert a new record into the 'docs' table with the specified Name, Guide, System, and OutputFilename values.\",\n\t\"Modules\": [\"PLang.Modules.DbModule\"]\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false
     },
     {
-      "Text": "insert into docs Name='BuilderLifcycle'\n            Guide='template/builder_lifecycle.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./BuilderLifcycle.md'  ",
+      "Text": "insert into docs Name='BuilderLifecycle'\n            Guide='template/builder_lifecycle.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./BuilderLifecycle.md'  ",
       "Comment": null,
       "ModuleType": "PLang.Modules.DbModule",
       "Name": "InsertIntoDocs",
@@ -1057,7 +1057,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": true,
-      "Generated": "2024-08-27T09:51:15.651369+00:00",
+      "Generated": "2024-08-31T14:44:53.0277859+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -1073,7 +1073,7 @@
         "presencePenalty": 0.0,
         "maxLength": 4000,
         "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
         "type": "StepInformationBuilder",
         "promptMessage": [
           {
@@ -1085,7 +1085,7 @@
               },
               {
                 "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}"
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
               }
             ]
           },
@@ -1103,14 +1103,14 @@
             "content": [
               {
                 "type": "text",
-                "text": "insert into docs Name='BuilderLifcycle'\n            Guide='template/builder_lifecycle.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./BuilderLifcycle.md'  "
+                "text": "insert into docs Name='BuilderLifecycle'\n            Guide='template/builder_lifecycle.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./BuilderLifecycle.md'  "
               }
             ]
           }
         ],
         "model": "gpt-4o-2024-08-06",
         "caching": true,
-        "RawResponse": null
+        "RawResponse": "```json\n{\n\t\"StepName\": \"InsertIntoDocs\",\n\t\"StepDescription\": \"Insert a new record into the 'docs' table with specified values for Name, Guide, System, and OutputFilename.\",\n\t\"Modules\": [\"PLang.Modules.DbModule\"]\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false
@@ -1806,17 +1806,17 @@
       "IsEvent": false
     },
     {
-      "Text": "insert into docs Name='StepProperties'\n    Guide='template/stepProperties.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./StepProperties.md'",
+      "Text": "insert into docs Name='StepProperties'\n    Guide='template/stepProperties.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./StepProperties.md'   ",
       "Comment": null,
-      "ModuleType": "PLang.Modules.DbModule",
+      "ModuleType": "PLang.Modules.FileModule",
       "Name": "InsertIntoDocs",
-      "Description": "Insert data into the 'docs' table with specified values for Name, Guide, System, and OutputFilename.",
+      "Description": "Insert data into a document with specified properties: Name as 'StepProperties', Guide as 'template/stepProperties.txt', System as 'template/guidance/teacher.txt', and OutputFilename as './StepProperties.md'.",
       "PrFileName": "27. InsertIntoDocs.pr",
       "RelativePrPath": ".build\\Setup\\27. InsertIntoDocs.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": true,
-      "Generated": "2024-08-27T15:11:39.8012558+00:00",
+      "Generated": "2024-08-31T14:41:37.7392636+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -1832,7 +1832,7 @@
         "presencePenalty": 0.0,
         "maxLength": 4000,
         "llmResponseType": "json",
-        "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
         "type": "StepInformationBuilder",
         "promptMessage": [
           {
@@ -1844,7 +1844,7 @@
               },
               {
                 "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}"
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
               }
             ]
           },
@@ -1862,31 +1862,312 @@
             "content": [
               {
                 "type": "text",
-                "text": "insert into docs Name='StepProperties'\n    Guide='template/stepProperties.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./StepProperties.md'"
+                "text": "insert into docs Name='StepProperties'\n    Guide='template/stepProperties.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./StepProperties.md'   "
               }
             ]
           }
         ],
         "model": "gpt-4o-2024-08-06",
         "caching": true,
-        "RawResponse": "```json\n{\n    \"StepName\": \"InsertIntoDocs\",\n    \"StepDescription\": \"Insert data into the 'docs' table with specified values for Name, Guide, System, and OutputFilename.\",\n    \"Modules\": [\"PLang.Modules.DbModule\"]\n}\n```"
+        "RawResponse": "```json\n{\n\t\"StepName\": \"InsertIntoDocs\",\n\t\"StepDescription\": \"Insert data into a document with specified properties: Name as 'StepProperties', Guide as 'template/stepProperties.txt', System as 'template/guidance/teacher.txt', and OutputFilename as './StepProperties.md'.\",\n\t\"Modules\": [\"PLang.Modules.FileModule\", \"PLang.Modules.DbModule\"]\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false
+    },
+    {
+      "Text": "insert into docs Name='Conditions'\n    Guide='template/Conditions.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Conditions.md'   ",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.DbModule",
+      "Name": "InsertIntoDocs",
+      "Description": "Insert a new entry into the 'docs' table with the specified Name, Guide, System, and OutputFilename values.",
+      "PrFileName": "28. InsertIntoDocs.pr",
+      "RelativePrPath": ".build\\Setup\\28. InsertIntoDocs.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": true,
+      "Generated": "2024-09-01T12:11:39.0777367+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 27,
+      "LineNumber": 109,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
+        "type": "StepInformationBuilder",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "insert into docs Name='Conditions'\n    Guide='template/Conditions.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Conditions.md'   "
+              }
+            ]
+          }
+        ],
+        "model": "gpt-4o-2024-08-06",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepName\": \"InsertIntoDocs\",\n\t\"StepDescription\": \"Insert a new entry into the 'docs' table with the specified Name, Guide, System, and OutputFilename values.\",\n\t\"Modules\": [\"PLang.Modules.DbModule\"]\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false
+    },
+    {
+      "Text": "insert into docs Name='TodoLlm'\n    Guide='template/todo_llm.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Todo_Llm.md'   ",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.DbModule",
+      "Name": "InsertIntoDocs",
+      "Description": "Insert a new record into the 'docs' table with the specified Name, Guide, System, and OutputFilename values.",
+      "PrFileName": "29. InsertIntoDocs.pr",
+      "RelativePrPath": ".build\\Setup\\29. InsertIntoDocs.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": true,
+      "Generated": "2024-09-01T13:42:56.7440659+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 28,
+      "LineNumber": 113,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
+        "type": "StepInformationBuilder",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "insert into docs Name='TodoLlm'\n    Guide='template/todo_llm.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Todo_Llm.md'   "
+              }
+            ]
+          }
+        ],
+        "model": "gpt-4o-2024-08-06",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepName\": \"InsertIntoDocs\",\n\t\"StepDescription\": \"Insert a new record into the 'docs' table with the specified Name, Guide, System, and OutputFilename values.\",\n\t\"Modules\": [\"PLang.Modules.DbModule\"]\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false
+    },
+    {
+      "Text": "insert into docs Name='Variables'\n    Guide='template/variables.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Variables.md' ",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.DbModule",
+      "Name": "InsertIntoDocs",
+      "Description": "Insert a new entry into the 'docs' table with the specified Name, Guide, System, and OutputFilename values.",
+      "PrFileName": "30. InsertIntoDocs.pr",
+      "RelativePrPath": ".build\\Setup\\30. InsertIntoDocs.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": true,
+      "Generated": "2024-09-01T13:58:40.2929221+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 29,
+      "LineNumber": 117,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
+        "type": "StepInformationBuilder",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "insert into docs Name='Variables'\n    Guide='template/variables.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Variables.md' "
+              }
+            ]
+          }
+        ],
+        "model": "gpt-4o-2024-08-06",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepName\": \"InsertIntoDocs\",\n\t\"StepDescription\": \"Insert a new entry into the 'docs' table with the specified Name, Guide, System, and OutputFilename values.\",\n\t\"Modules\": [\"PLang.Modules.DbModule\"]\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false
+    },
+    {
+      "Text": "insert into docs Name='Loops'\n    Guide='template/loops.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Loops.md'",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.DbModule",
+      "Name": "InsertIntoDocs",
+      "Description": "Insert a new record into the 'docs' table with the specified Name, Guide, System, and OutputFilename values.",
+      "PrFileName": "31. InsertIntoDocs.pr",
+      "RelativePrPath": ".build\\Setup\\31. InsertIntoDocs.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": true,
+      "Generated": "2024-09-01T13:58:50.1385052+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 30,
+      "LineNumber": 121,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
+        "type": "StepInformationBuilder",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "insert into docs Name='Loops'\n    Guide='template/loops.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Loops.md'"
+              }
+            ]
+          }
+        ],
+        "model": "gpt-4o-2024-08-06",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepName\": \"InsertIntoDocs\",\n\t\"StepDescription\": \"Insert a new record into the 'docs' table with the specified Name, Guide, System, and OutputFilename values.\",\n\t\"Modules\": [\"PLang.Modules.DbModule\"]\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false
     }
   ],
   "SubGoals": [],
-  "Description": "The 'Setup' goal creates a table named 'docs' with columns: Name, Guide, System, OutputFilename, Created, and LastUpdate. It then inserts multiple records into this table, each representing a document with specific attributes such as Name, Guide, System, and OutputFilename. The Created and LastUpdate columns are automatically set to the current datetime.",
+  "Description": "The Setup goal initializes a database table named 'docs' with specific columns: Name (required), Guide (string, required), System (string, required), OutputFilename (string, required), Created (datetime, now), and LastUpdate (datetime, now). It then populates this table with multiple entries, each representing a document with its corresponding Name, Guide, System, and OutputFilename. Each entry must have a unique Name and the Guide, System, and OutputFilename fields must be filled with valid paths and filenames.",
   "Visibility": 1,
   "GoalFileName": "Setup.goal",
   "RelativeGoalPath": "\\Setup.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Setup\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Setup",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "5ea697356a6ecae2374252fbc9501add033dbba0fcfe7920eed76644aef784fe",
-  "IncomingVariablesRequired": null
+  "Hash": "feb30cc82a9436d8d9d500e71ab37fab3cde5a78289c581aacabca2ffddb251c",
+  "IncomingVariablesRequired": [
+    "Name",
+    "Guide",
+    "System",
+    "OutputFilename"
+  ]
 }

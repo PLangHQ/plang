@@ -1,46 +1,28 @@
-# Todo Webservice Guide
+﻿# Todo Web Service Tutorial
 
-This guide will walk you through the process of creating a Todo web service using the Plang programming language. 
+Welcome to the Todo Web Service tutorial! In this guide, you will learn how to create a simple web service using the Plang programming language. This tutorial will walk you through setting up a web server, creating an API, managing a database table, and testing your application.
 
-> [!CAUTION]
-> **Heads up: Building code costs money**
-> Each code line incurs usually between $0.0006 - $0.0009 fee via LLM. The payoff? Exceptional efficiency gains. You can choose to use [Plang service(simpler) or OpenAI(cheaper)](./PlangOrOpenAI.md). Using Plang service supports the project
+## What You Will Learn
+- How to start a web server
+- How to set up an API
+- How to create a database table
+- How to insert data into a table
+- How to create and run tests
 
-## Prerequisites
+## Video Tutorial
+For a visual walkthrough, you can watch [this video](https://www.youtube.com/watch?v=m4QC19btS_I&list=PLbm1UMZKMaqfT4tqPtr-vhxMs4JGGFVEB&index=1). There might be some insights that are not in the written guide.
 
-- Plang installed & IDE setup [installed on your system](Install.md)
-- Optional: A REST client for testing the API endpoints
+[![Watch the video](https://img.youtube.com/vi/m4QC19btS_I/hqdefault.jpg)](https://www.youtube.com/watch?v=m4QC19btS_I&list=PLbm1UMZKMaqfT4tqPtr-vhxMs4JGGFVEB&index=1)
 
-## What will be covered
-In this tutorial we will cover the basics for working with plang. This includes.
+## Step-by-Step Guide
 
-- Database tables
-- Start web server
-- Goals (functions) / Steps / Variables / Date & time
-- Handle web request
-- Validation
-- Error handling
-- Insert into database
-- Respond to web request
-- Testing
+### Step 1: Create Project Folder
+Create a folder named `Todo` at a location of your choice. For example:
+- **Windows**: `C:\apps\Todo`
+- **MacOS/Linux**: `~/apps/Todo`
 
-## Video
-
-You can watch as I go through [this Todo app tutorial](https://www.youtube.com/watch?v=m4QC19btS_I&list=PLbm1UMZKMaqfT4tqPtr-vhxMs4JGGFVEB)
-
-## Steps
-
-### 1. Create a Project Directory
-
-Create a new directory named `Todo` at your preferred location. For instance, you can create it at `c:\apps\Todo` on Windows.
-
-For Linux and MacOS, you can create it at `~/apps/Todo`.
-
-### 2. Create `Setup.goal` 
-
-We will start by creating our database table where we want store our todos.
-
-In the `Todo` directory, create a new file named `Setup.goal` and add the following code:
+### Step 2: Setup Database Table
+Create a file named `Setup.goal` in the `Todo` folder with the following content:
 
 ```plang
 Setup
@@ -49,131 +31,104 @@ Setup
                 completed(bool, false), created(datetime, now)
 ```
 
-Each step in the Setup.goal file is only execute one time in the lifecycle of your application. 
+**Explanation**: This code sets up a database table named `Todos` with columns for `task`, `due_date`, `completed`, and `created`. Plang automatically manages an `Id` column for you, which is useful for event sourcing and syncing between devices.
 
-Note: Plang will automatically create and manage an `id` column for the table. By allowing Plang to handle `id` you enable syncing between devices. It's a technique called Event sourcing. You don't need to know anything about it at this stage.
-
-### 3. Build and Run `Setup.goal`
-
-> Cost estimate: $0.003
-
-Execute the `Setup.goal` file to create the `Todos` table in the database.
+### Step 3: Build and Run Setup
+To create the table in the database, build and run `Setup.goal`:
 
 ```bash
 plang exec Setup
 ```
 
-### 4. Create `Start.goal`
-
-The `Start.goal` is the default entry point into you application
-
-In the `Todo` directory, create a new file named `Start.goal` and add the following code:
-
+### Step 4: Start the Web Server
+Create a file named `Start.goal` in the `Todo` folder with the following content:
 
 ```plang
 Start
 - start webserver
 ```
-This will create a web server running on your computer, at http://localhost:8080 (link will not work just yet).
 
-### 5. Create `api` Directory
+### Step 5: Create API Folder
+Create a folder named `api` inside the `Todo` folder.
 
-In the `Todo` directory, create a new directory named `api`. `api` stands for application programming interface, it is how computers communicate between them.
-
-### 6. Create `NewTask.goal`
-
-In the `api` directory, create a new file named `NewTask.goal` and add the following code:
+### Step 6: Create New Task API
+Create a file named `NewTask.goal` in the `api` folder with the following content:
 
 ```plang
 NewTask
-- make sure that %request.task% and %request.due_date% is not empty, throw error
-- insert into Todos %request.task%, %request.due_date%, write to %id%
+- make sure that %task% and %due_date% is not empty, throw error
+- insert into Todos %task%, %due_date%, write to %id%
 - write out %id%
 ```
 
-### 7. Create `List.goal`
+**Explanation**: This code defines an API endpoint for creating a new task. It checks that `task` and `due_date` are not empty, inserts the data into the `Todos` table, and returns the new task's ID.
 
-In the `api` directory, create a new file named `List.goal` and add the following code:
+### Step 7: Create List API
+Create a file named `List.goal` in the `api` folder with the following content:
 
 ```plang
 List
-- select everything from Todos, write to %todos%
-- write out %todos%
+- select everything from Todos, write to %list%
+- write out %list%
 ```
-Note: if you are familiar with SQL, you could also write `select * from Todos`, previous statment is just in a more natural language
 
-### 8. Build and Run the Code 
+**Explanation**: This code defines an API endpoint for listing all tasks. It selects all entries from the `Todos` table and returns them.
 
-> Cost estimate: $0.15
-
-If you are using VS Code, then press F5 on your keyboard to build and run the code.
-
-If you prefer terminal, navigate to the root of the `Todo` directory and execute the following command:
+### Step 8: Build and Run the Application
+Ensure you are in the root of the `Todo` folder, then build and run the application:
 
 ```bash
 plang exec
 ```
 
-This will start a web server with the logic you've defined.
+**Explanation**: This command starts the web server with the defined logic.
 
-### 9. Test the API Endpoints
+### Step 9: Test the API
+#### Using a REST Client
+- **New Task**: Send a POST request to `http://localhost:8080/api/newtask` with the following JSON body:
+  ```json
+  {
+      "task": "Do homework",
+      "due_date": "2023-12-27"
+  }
+  ```
+  You should receive the ID of the new task.
 
-> Cost estimate: $0.07
+- **List Tasks**: Send a GET request to `http://localhost:8080/api/list` to retrieve the list of tasks.
 
-Lets create some data in your Todo list.
+#### Using Plang
+Create a folder named `test` in the root of the `Todo` folder.
 
-- Create `test` folder in the root of `Todo`
-- Create a new `TestNewTask.goal` file in the `test` directory with the following code:
-    ```plang
-    TestNewTask
-    - post http://localhost:8080/api/NewTask
-        {
-            "task":"Do homework",
-            "due_date": "%Now+2days%"
-        }
-        write to %result%
-    - write out %result%
-    ```
+- **New Task Test**: Create a file named `NewTask.goal` in the `test` folder with the following content:
 
-Then, execute the `TestNewTask.goal` file:
+  ```plang
+  NewTask 
+  - post http://localhost:8080/api/newtask
+      {
+          "task": "Do homework",
+          "due_date": "2023-12-27"
+      }
+  ```
 
-- Press F5 in VS Code, in the prompt window type in `TestNewTask` and press enter. When you type in `TestNewTask` into the prompt, you are telling plang that you want to run a specific goal
-- or if you prefer terminal
+  Execute the test:
 
-    ```bash
-    plang exec test/TestNewTask
-    ```
+  ```bash
+  plang exec test/NewTask
+  ```
 
-You should receive the `id` of the new task in the response.
+- **List Tasks Test**: Create a file named `GetList.goal` in the `test` folder with the following content:
 
-Alternativly, you can test the API endpoints using your favorite REST client.
+  ```plang
+  GetList 
+  - get http://localhost:8080/api/list, write to %todos%
+  - write out %todos%
+  ```
 
-To create a new task, send a POST request to `http://localhost:8080/api/NewTask` with the following JSON body:
+  Execute the test:
 
-```json
-{
-    "task":"Do homework",
-    "due_date": "2023-12-27"
-}
-```
-### 10. Retrieve all tasks
+  ```bash
+  plang exec test/GetList
+  ```
 
-To retrieve the list of tasks, send a GET request to [http://localhost:8080/api/List](http://localhost:8080/api/List) (you can click the link). This should return a list of tasks you've created.
-
-Alternatively, you can create a new `TestList.goal` file in the `test` directory with the following code:
-
-> Cost estimate: $0.025
-
-```plang
-TestList 
-- get http://localhost:8080/api/List, write to %todos%
-- write out %todos%
-```
-
-- Press F5 in VS Code, in the prompt window type in `TestList` and press enter
-- or if you prefer terminal
-    ```bash
-    plang exec test/TestList 
-    ```
-
-## [Next, add LLM to this todo app >](./Todo_Llm.md)
+## Next Steps
+To learn how to add LLM (Language Model) to your app, refer to the [next tutorial](./Todo_Llm.md).

@@ -51,6 +51,12 @@ namespace PLang.Utils
 		public static object ToFormat(string contentType, IError error, string[]? propertyOrder = null, string? extraInfo = null)
 		{
 			AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool detailedError);
+			if (error is MultipleError me)
+			{
+				if (me.Errors.Count == 0) error = me.InitialError;
+			}
+
+
 			if (error is UserDefinedError && contentType == "json")
 			{
 				if (JsonHelper.IsJson(error.Message))

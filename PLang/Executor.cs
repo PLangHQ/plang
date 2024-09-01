@@ -1,21 +1,16 @@
 ﻿using LightInject;
-using Microsoft.Extensions.Logging;
 using PLang.Building;
-using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
+using PLang.Errors;
 using PLang.Errors.Handlers;
-using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Resources;
 using PLang.Runtime;
-using PLang.SafeFileSystem;
 using PLang.Utils;
-using System.Diagnostics;
+using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Reflection;
-using PLang.Errors;
-using PLang.Errors.Builder;
 
 namespace PLang
 {
@@ -29,7 +24,7 @@ namespace PLang
 
 		private IBuilder builder;
 
-		private static FileSystemWatcher? watcher = null;
+		private static IFileSystemWatcher? watcher = null;
 
 		public Executor(IServiceContainer container)
 		{
@@ -154,7 +149,7 @@ namespace PLang
 		{
 			if (watcher == null)
 			{
-				watcher = new FileSystemWatcher();
+				watcher = fileSystem.FileSystemWatcher.New();
 			}
 
 			if (!fileSystem.Directory.Exists(path))

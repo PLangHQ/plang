@@ -9,21 +9,19 @@ LoadDocs
 - select * from docs, write to %docs%
 
 GenerateDoc
-- set var Name=%item.Name%
-- read file %item.Guide%, into %content%
+- set default var Name=%item.Name%, %prevDoc% = ""
+- read file %item.Guide%, into %user%
+- if %skipPrevDoc% is empty
+    - read file %item.OutputFilename%, write to %prevDoc%
 - read file %item.System%, load vars, write to %system%
-- read file %item.OutputFilename%, write to %assistant%
 - write out 'Asking LLM about %Name%'
 - [llm] system:%system%
-    assistant: '## previously generated doc ## 
-                %assistant%
-                ## previously generated doc ## '
-    user:%content%
-    model:'gpt-4-turbo'
-    max length = 4K
+    user:%user%
+    max length: 16K
+    model:'gpt-4o-2024-08-06'
     write to %result%
 - create folder output
-- write %result% to %item.OutputFilename%
+- write %result% to %item.OutputFilename%, overwrite
 - update docs table, set LastUpdate=%Now%, where id=%item.id%
 - write out 'Done with %Name%'
 

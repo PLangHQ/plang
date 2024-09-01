@@ -1,41 +1,19 @@
-# Introduction to `if` Statements in PLang
+﻿# Introduction to Conditions in Plang
 
-`if` statements are a fundamental part of programming in PLang, allowing your program to make decisions based on certain conditions.
+In programming, conditions are like decision-making tools that help your program decide what to do next based on certain criteria. Think of them as traffic lights for your code: they tell your program when to stop, go, or take a different route. Conditions allow your program to execute different actions depending on whether certain conditions are true or false.
 
-## ELI5 Explanation of `if` Statements
+## ELI5 Explanation of Conditions
 
-Imagine you're deciding what to wear. If it's raining, you wear a raincoat. If it's sunny, you wear a hat. Here, you're making a choice based on the weather. In programming, `if` statements work similarly. They let your program choose what to do based on certain conditions.
+Imagine you're playing a game where you have to decide what to do based on the weather. If it's sunny, you might decide to go outside and play. If it's raining, you might choose to stay indoors and read a book. Conditions in programming work similarly. They help your program make decisions based on the information it has, just like you decide what to do based on the weather.
 
-## Syntax of `if` Statements in PLang
+## Using Conditions in Plang
 
-In PLang, an `if` statement checks a condition and runs different goals or steps based on whether that condition is true.
+In Plang, conditions are used to control the flow of your program. They allow you to execute certain steps only if specific conditions are met. Let's look at some examples to understand how conditions work in Plang.
 
-### Basic Format
-```plang
-- if %condition% then call !GoalName, else !ElseGoalName
-```
-
-### With Sub-steps
-```plang
-- if %condition% then
-   - step1
-   - step2
-```
-
-## Using `if` Statements
-
-`if` statements are useful when you want different parts of your program to run under different conditions.
-
-**Example 1: Simple Condition**
-```plang
-- if %isAdmin% then call !ShowAdmin, else !ShowUser
-```
-
-**Example 2: With Sub-steps**
-
-Sub-steps are indented with 4 spaces. This is a rule
+### Example 1: If Statements with Sub Steps
 
 ```plang
+Start
 - if %isAdmin% then
    - call !ShowAdmin
    - write out 'This is admin'
@@ -44,19 +22,19 @@ Sub-steps are indented with 4 spaces. This is a rule
    - write out 'This is user'
 ```
 
-In these examples, the program decides which goal to call based on whether `%isAdmin%` or `%isUser%` is true.
+In this example, the program checks if the variable `%isAdmin%` is true. If it is, the program will execute the sub-steps: it will call the `!ShowAdmin` goal and write out "This is admin". Similarly, if `%isUser%` is true, it will call the `!ShowUser` goal and write out "This is user".
 
-## Else, Elseif
+### Example 2: If Statements Calling Other Goals
 
-You can have `if` and `else` in one line condition (see Example 1)
+```plang
+Start
+- if %isAdmin% then call !ShowAdmin, else !ShowUser
+```
 
-PLang doesn't have `else` or `elseif` with sub steps, so you need to write separate `if` statements for each condition.
+Here, the program checks if `%isAdmin%` is true. If it is, it calls the `!ShowAdmin` goal. If `%isAdmin%` is false, it calls the `!ShowUser` goal instead. This is a more compact way to handle conditions where you have a clear alternative action.
 
-## Best Practices
+### Important Note
 
-- Keep conditions simple and clear.
-- Use meaningful names for your variables to make the conditions understandable.
+In Plang, you cannot start steps with `- else` or `- else if`. These will not create valid condition statements. Always ensure that your conditions are structured correctly to avoid errors in your program.
 
-## Summary and Key Takeaways
-
-`if` statements in PLang are powerful tools that help your program make decisions and execute different code based on conditions.
+By understanding and using conditions, you can make your Plang programs more dynamic and responsive to different situations. Conditions are a fundamental part of programming, and mastering them will greatly enhance your ability to create complex and useful programs.
