@@ -93,7 +93,6 @@ Explore plang's features and capabilities:
     - **Builder**
         - **[Building your code](https://github.com/PLangHQ/plang/blob/main/Documentation/Builder.md)**: How does the builder take your intent and convert it to executable code.
         - **[Builder Lifecycle & Events](https://github.com/PLangHQ/plang/blob/main/Documentation/BuilderLifecycle.md)**: Sequence of operations when building plang and build events
-
     - **Extending the language**
         - **[Modules](https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
         - **[Services](https://github.com/PLangHQ/plang/blob/main/Documentation/Services.md)**: Learn how flexible the plang language is, e.g. using the db engine of your choice, your own caching service and more.

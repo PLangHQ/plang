@@ -27,16 +27,6 @@
         "Type": "String",
         "Name": "pathToWorkingDirInTerminal",
         "Value": "../"
-      },
-      {
-        "Type": "String",
-        "Name": "dataOutputVariable",
-        "Value": "data"
-      },
-      {
-        "Type": "String",
-        "Name": "errorDebugInfoOutputVariable",
-        "Value": "error"
       }
     ],
     "ReturnValues": null
@@ -50,8 +40,8 @@
     "presencePenalty": 0.0,
     "maxLength": 4000,
     "llmResponseType": "json",
-    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValues\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
-    "type": "PLang.Modules.TerminalModule.Builder",
+    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\": object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+    "model": "gpt-4o-2024-08-06",
     "promptMessage": [
       {
         "role": "system",
@@ -62,7 +52,7 @@
           },
           {
             "type": "text",
-            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValues\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
+            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\": object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
           }
         ]
       },
@@ -89,9 +79,9 @@
         ]
       }
     ],
-    "model": "gpt-4o-2024-08-06",
+    "type": "PLang.Modules.TerminalModule.Builder",
     "caching": true,
-    "RawResponse": "```json\n{\n  \"FunctionName\": \"RunTerminal\",\n  \"Parameters\": [\n    {\n      \"Type\": \"String\",\n      \"Name\": \"appExecutableName\",\n      \"Value\": \"dotnet\"\n    },\n    {\n      \"Type\": \"List`1<String>\",\n      \"Name\": \"parameters\",\n      \"Value\": [\n        \"publish\",\n        \"PlangWindowForms/PLangWindowForms.csproj\",\n        \"-c\",\n        \"Release\",\n        \"-r\",\n        \"win-x64\",\n        \"--self-contained\",\n        \"true\",\n        \"-o\",\n        \"./publish/plang\"\n      ]\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"pathToWorkingDirInTerminal\",\n      \"Value\": \"../\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"dataOutputVariable\",\n      \"Value\": \"data\"\n    },\n    {\n      \"Type\": \"String\",\n      \"Name\": \"errorDebugInfoOutputVariable\",\n      \"Value\": \"error\"\n    }\n  ],\n  \"ReturnValues\": null\n}\n```"
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"RunTerminal\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"appExecutableName\",\n\t\t\t\"Value\": \"dotnet\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"List`1<String>\",\n\t\t\t\"Name\": \"parameters\",\n\t\t\t\"Value\": [\n\t\t\t\t\"publish\",\n\t\t\t\t\"PlangWindowForms/PLangWindowForms.csproj\",\n\t\t\t\t\"-c\",\n\t\t\t\t\"Release\",\n\t\t\t\t\"-r\",\n\t\t\t\t\"win-x64\",\n\t\t\t\t\"--self-contained\",\n\t\t\t\t\"true\",\n\t\t\t\t\"-o\",\n\t\t\t\t\"./publish/plang\"\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"pathToWorkingDirInTerminal\",\n\t\t\t\"Value\": \"../\"\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
   },
   "RunOnBuild": false
 }

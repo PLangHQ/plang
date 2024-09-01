@@ -18,6 +18,8 @@ using PLang.Errors.Runtime;
 using System.ComponentModel;
 using PLang.Errors.Builder;
 using System.Reactive.Concurrency;
+using PLang.Errors.AskUser;
+using PLang.SafeFileSystem;
 
 namespace PLang.Building
 {
@@ -35,10 +37,11 @@ namespace PLang.Building
 		private readonly IEventRuntime eventRuntime;
 		private readonly PrParser prParser;
 		private readonly IErrorHandlerFactory exceptionHandlerFactory;
+		private readonly IAskUserHandlerFactory askUserHandlerFactory;
 
 		public Builder(ILogger logger, IPLangFileSystem fileSystem, ISettings settings, IGoalBuilder goalBuilder,
 			IEventBuilder eventBuilder, IEventRuntime eventRuntime,
-			PrParser prParser, IErrorHandlerFactory exceptionHandlerFactory)
+			PrParser prParser, IErrorHandlerFactory exceptionHandlerFactory, IAskUserHandlerFactory askUserHandlerFactory)
 		{
 
 			this.fileSystem = fileSystem;
@@ -49,6 +52,7 @@ namespace PLang.Building
 			this.eventRuntime = eventRuntime;
 			this.prParser = prParser;
 			this.exceptionHandlerFactory = exceptionHandlerFactory;
+			this.askUserHandlerFactory = askUserHandlerFactory;
 		}
 
 
@@ -113,6 +117,33 @@ namespace PLang.Building
 			}
 			catch (Exception ex)
 			{
+				if (ex is FileAccessException fa)
+				{
+					var fileAccessHandler = container.GetInstance<FileAccessHandler>();
+					var askUserFileAccess = new AskUserFileAccess(fa.AppName, fa.Path, fa.Message, fileAccessHandler.ValidatePathResponse);
+
+					(var isFaHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(askUserFileAccess);
+					if (isFaHandled) return await Start(container);
+
+					return ErrorHelper.GetMultipleError(askUserFileAccess, handlerError);
+				}
+
+				if (ex is MissingSettingsException mse)
+				{
+					var settingsError = new Errors.AskUser.AskUserError(mse.Message, async (object[]? result) =>
+					{
+						var value = result?[0] ?? null;
+						if (value is Array) value = ((object[])value)[0];
+
+						await mse.InvokeCallback(value);
+						return (true, null);
+					});
+
+					(var isMseHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(settingsError);
+					if (isMseHandled) return await Start(container);
+				}
+
+
 				var error = new ExceptionError(ex);
 				var handler = exceptionHandlerFactory.CreateHandler();
 				(var isHandled, var handleError) = await handler.Handle(error);
@@ -162,14 +193,14 @@ namespace PLang.Building
 
 		private void InitFolders()
 		{
-			var buildPath = Path.Join(fileSystem.RootDirectory, ".build");
+			var buildPath = fileSystem.Path.Join(fileSystem.RootDirectory, ".build");
 			if (!fileSystem.Directory.Exists(buildPath))
 			{
 				var dir = fileSystem.Directory.CreateDirectory(buildPath);
 				dir.Attributes = FileAttributes.Directory | FileAttributes.Hidden;
 			}
 
-			var dbPath = Path.Join(fileSystem.RootDirectory, ".db");
+			var dbPath = fileSystem.Path.Join(fileSystem.RootDirectory, ".db");
 			if (!fileSystem.Directory.Exists(dbPath))
 			{
 				var dir = fileSystem.Directory.CreateDirectory(dbPath);
@@ -183,15 +214,15 @@ namespace PLang.Building
 
 			foreach (var goalFile in goalFiles)
 			{
-				var buildFolderRelativePath = Path.Join(".build", goalFile.Replace(fileSystem.RootDirectory, "")).Replace(".goal", "");
-				var buildFolderAbsolutePath = Path.Join(fileSystem.RootDirectory, buildFolderRelativePath);
+				var buildFolderRelativePath = fileSystem.Path.Join(".build", goalFile.Replace(fileSystem.RootDirectory, "")).Replace(".goal", "");
+				var buildFolderAbsolutePath = fileSystem.Path.Join(fileSystem.RootDirectory, buildFolderRelativePath);
 
 				dirs = dirs.Where(p => !p.StartsWith(buildFolderAbsolutePath)).ToArray();
 			}
 
 			foreach (var dir in dirs)
 			{
-				var folderPath = Path.Join(fileSystem.RootDirectory, dir.Replace(fileSystem.BuildPath, ""));
+				var folderPath = fileSystem.Path.Join(fileSystem.RootDirectory, dir.Replace(fileSystem.BuildPath, ""));
 				if (!fileSystem.Directory.Exists(folderPath) && fileSystem.Directory.Exists(dir))
 				{
 					fileSystem.Directory.Delete(dir, true);
@@ -228,7 +259,7 @@ namespace PLang.Building
 
 		public void SetupBuildValidation()
 		{
-			var eventsPath = Path.Join(fileSystem.GoalsPath, "events", "external", "plang", "builder");
+			var eventsPath = fileSystem.Path.Join(fileSystem.GoalsPath, "events", "external", "plang", "builder");
 
 			if (fileSystem.Directory.Exists(eventsPath)) return;
 

@@ -22,7 +22,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 43,
+      "LineNumber": 29,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -31,7 +31,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -65,7 +65,7 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": "```json\n{\n  \"StepName\": \"DeleteFile\",\n  \"StepDescription\": \"Delete the file specified by the variable %item%.\",\n  \"Modules\": [\"PLang.Modules.FileModule\"]\n}\n```"
       },
@@ -81,11 +81,11 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Publish\\RemoveFile\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Publish\\RemoveFile",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "73187d324965b2a1984197e1efb20e32bf6508c331ce031d98f16b080810a0bc",
+  "Hash": "b07cf31eb8576e86fe4a9c3aec79137791371704744702575bbad582d01584ad",
   "IncomingVariablesRequired": [
     "item"
   ]

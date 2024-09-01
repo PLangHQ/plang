@@ -25,8 +25,9 @@ namespace PLang.Modules.FilterModule
 			return null;
 		}
 
-			[Description("operatorToFilter can be following: < > = startswith endswith contains")]
-		public async Task<object?> Filter(string propertyToExtract, object variableToExtractFrom, string propertyToFilterOn, string valueToFilterBy, string operatorToFilter, bool throwErrorWhenNothingFound = false)
+			[Description("operatorToFilter can be following: < > = startswith endswith contains. retrieveOneItem=first|last retrieveOneItem can also be a number representing the index")]
+		public async Task<object?> Filter(string propertyToExtract, object variableToExtractFrom, string propertyToFilterOn, string valueToFilterBy, string operatorToFilter, 
+				bool throwErrorWhenNothingFound = false, string? retrieveOneItem = null)
 		{
 			if (variableToExtractFrom == null || string.IsNullOrEmpty(variableToExtractFrom.ToString())) return null;
 
@@ -40,8 +41,17 @@ namespace PLang.Modules.FilterModule
 			}
 			else if (variableToExtractFrom is JArray jArray)
 			{
-				var filteredObject = GetFilteredJObject(jArray, propertyToFilterOn, filterPredicate, propertyToExtract);
-
+				var filteredObject = GetFilteredJObject(jArray, propertyToFilterOn, filterPredicate, propertyToExtract) as JArray;
+				if (filteredObject != null && retrieveOneItem != null)
+				{
+					if (retrieveOneItem == "first") return filteredObject.FirstOrDefault();
+					if (retrieveOneItem == "last") return filteredObject.FirstOrDefault();
+					if (int.TryParse(retrieveOneItem, out int idx))
+					{
+						if (filteredObject.Count > idx && idx >= 0) return filteredObject[idx];
+						return null;
+					}
+				}
 				return filteredObject;
 				
 			}
@@ -51,6 +61,16 @@ namespace PLang.Modules.FilterModule
 					.Where(item => filterPredicate((item as JObject)?[propertyToFilterOn]?.ToString()))
 					.ToList();
 
+				if (retrieveOneItem != null)
+				{
+					if (retrieveOneItem == "first") return filteredList.FirstOrDefault();
+					if (retrieveOneItem == "last") return filteredList.FirstOrDefault();
+					if (int.TryParse(retrieveOneItem, out int idx))
+					{
+						if (filteredList.Count > idx && idx >= 0) return filteredList[idx];
+						return null;
+					}
+				}
 				return filteredList;
 			}
 			else if (variableToExtractFrom is IDictionary<string, object> dictionary)

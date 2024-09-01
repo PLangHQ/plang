@@ -1,31 +1,31 @@
 {
   "Action": {
-    "FunctionName": "WriteToSystemOutput",
+    "FunctionName": "Write",
     "Parameters": [
       {
-        "Type": "Object?",
+        "Type": "Object",
         "Name": "content",
-        "Value": "Publish Linux-ARM64 Console"
+        "Value": "Compress plang folder"
       },
       {
-        "Type": "Boolean?",
+        "Type": "Boolean",
         "Name": "writeToBuffer",
         "Value": false
       },
       {
-        "Type": "String?",
+        "Type": "String",
         "Name": "type",
         "Value": "text"
       },
       {
-        "Type": "Int32?",
+        "Type": "Int32",
         "Name": "statusCode",
         "Value": 200
       }
     ],
     "ReturnValues": null
   },
-  "Text": "write out 'Publish Linux-ARM64 Console'",
+  "Text": "write out 'Compress plang folder'",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -34,8 +34,8 @@
     "presencePenalty": 0.0,
     "maxLength": 4000,
     "llmResponseType": "json",
-    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValues\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
-    "type": "PLang.Modules.GenericFunctionBuilder",
+    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\": object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+    "model": "gpt-4o-2024-08-06",
     "promptMessage": [
       {
         "role": "system",
@@ -46,7 +46,7 @@
           },
           {
             "type": "text",
-            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValues\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
+            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\": object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
           }
         ]
       },
@@ -64,14 +64,14 @@
         "content": [
           {
             "type": "text",
-            "text": "write out 'Publish Linux-ARM64 Console'"
+            "text": "write out 'Compress plang folder'"
           }
         ]
       }
     ],
-    "model": "gpt-4o-2024-08-06",
+    "type": "PLang.Modules.GenericFunctionBuilder",
     "caching": true,
-    "RawResponse": "```json\n{\n  \"FunctionName\": \"WriteToSystemOutput\",\n  \"Parameters\": [\n    {\n      \"Type\": \"Object?\",\n      \"Name\": \"content\",\n      \"Value\": \"Publish Linux-ARM64 Console\"\n    },\n    {\n      \"Type\": \"Boolean?\",\n      \"Name\": \"writeToBuffer\",\n      \"Value\": false\n    },\n    {\n      \"Type\": \"String?\",\n      \"Name\": \"type\",\n      \"Value\": \"text\"\n    },\n    {\n      \"Type\": \"Int32?\",\n      \"Name\": \"statusCode\",\n      \"Value\": 200\n    }\n  ]\n}\n```"
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"Write\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"Object\",\n\t\t\"Name\": \"content\",\n\t\t\"Value\": \"Compress plang folder\"\n\t}, {\n\t\t\"Type\": \"Boolean\",\n\t\t\"Name\": \"writeToBuffer\",\n\t\t\"Value\": false\n\t}, {\n\t\t\"Type\": \"String\",\n\t\t\"Name\": \"type\",\n\t\t\"Value\": \"text\"\n\t}, {\n\t\t\"Type\": \"Int32\",\n\t\t\"Name\": \"statusCode\",\n\t\t\"Value\": 200\n\t}]\n}\n```"
   },
   "RunOnBuild": false
 }
