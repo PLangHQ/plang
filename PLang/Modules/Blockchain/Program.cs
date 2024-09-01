@@ -27,10 +27,10 @@ using System.ComponentModel;
 using System.Numerics;
 using System.Text;
 using static PLang.Errors.AskUser.AskUserPrivateKeyExport;
-using static PLang.Modules.BlockchainModule.ModuleSettings;
+using static PLang.Modules.Blockchain.ModuleSettings;
 using PLang.Models;
 
-namespace PLang.Modules.BlockchainModule
+namespace PLang.Modules.Blockchain
 {   
 	
 	//todo: should cleanup any usage of keys, set them to null after usage
@@ -50,9 +50,9 @@ namespace PLang.Modules.BlockchainModule
 
 		private StreamingWebSocketClient? client = null;
 
-		public static readonly string CurrentWalletContextKey = "PLang.Modules.BlockchainModule.ModuleSettings.CurrentWallet";
-		public static readonly string CurrentAddressContextKey = "PLang.Modules.BlockchainModule.ModuleSettings.CurrentAddress";
-		public static readonly string CurrentRpcServerContextKey = "PLang.Modules.BlockchainModule.ModuleSettings.CurrentRpcServer";
+		public static readonly string CurrentWalletContextKey = "PLang.Modules.Blockchain.ModuleSettings.CurrentWallet";
+		public static readonly string CurrentAddressContextKey = "PLang.Modules.Blockchain.ModuleSettings.CurrentAddress";
+		public static readonly string CurrentRpcServerContextKey = "PLang.Modules.Blockchain.ModuleSettings.CurrentRpcServer";
 
 		public Program(ISettings settings, ILlmServiceFactory llmServiceFactory, 
 			IPseudoRuntime pseudoRuntime, IEngine engine, ILogger logger,PLangAppContext context) : base()

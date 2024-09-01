@@ -1,7 +1,7 @@
 ﻿using PLang.Interfaces;
 using System.ComponentModel;
 
-namespace PLang.Modules.CompressionModule
+namespace PLang.Modules.Compression
 {
 	public class Program : BaseProgram
 	{
@@ -19,7 +19,7 @@ namespace PLang.Modules.CompressionModule
 		{
 			filePath = GetPath(filePath);
 			saveToPath = GetPath(saveToPath);
-			
+
 
 			if (!fileSystem.File.Exists(filePath))
 			{
@@ -30,7 +30,7 @@ namespace PLang.Modules.CompressionModule
 				throw new DirectoryNotFoundException($"Directory {Path.GetDirectoryName(saveToPath)} does not exist.");
 			}
 
-			
+
 
 			await archiver.CompressFiles(new string[] { filePath }, saveToPath, compressionLevel, overwrite);
 		}
@@ -38,7 +38,7 @@ namespace PLang.Modules.CompressionModule
 
 		public async Task CompressFiles(string[] filePaths, string saveToPath, int compressionLevel = 0, bool overwrite = false)
 		{
-			for (int i=0;i<filePaths.Length;i++) 
+			for (int i = 0; i < filePaths.Length; i++)
 			{
 				filePaths[i] = GetPath(filePaths[i]);
 				if (!fileSystem.File.Exists(filePaths[i]))
@@ -69,7 +69,7 @@ namespace PLang.Modules.CompressionModule
 			}
 
 			await archiver.DecompressFile(sourceArchiveFileName, destinationDirectoryName, overwrite);
-			
+
 		}
 
 		public async Task CompressDirectory(string sourceDirectoryName, string destinationArchiveFileName, int compressionLevel = 0,
@@ -87,7 +87,9 @@ namespace PLang.Modules.CompressionModule
 				if (createDestinationDirectory)
 				{
 					fileSystem.Directory.CreateDirectory(Path.GetDirectoryName(destinationArchiveFileName));
-				} else {
+				}
+				else
+				{
 					throw new DirectoryNotFoundException($"Directory {Path.GetDirectoryName(destinationArchiveFileName)} does not exist.");
 				}
 			}

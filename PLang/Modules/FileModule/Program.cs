@@ -1,14 +1,19 @@
 ﻿using CsvHelper;
 using CsvHelper.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualBasic;
 using MiniExcelLibs;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Asn1.Cms;
 using PLang.Attributes;
+using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
+using PLang.Services.SigningService;
 using PLang.Utils;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -17,6 +22,7 @@ using System.Dynamic;
 using System.Globalization;
 using System.IO.Abstractions;
 using System.Linq.Dynamic.Core;
+using System.Linq.Dynamic.Core.CustomTypeProviders;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -31,16 +37,17 @@ namespace PLang.Modules.FileModule
 		private readonly ILogger logger;
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
+		private readonly IPLangSigningService signingService;
 
 		public Program(IPLangFileSystem fileSystem, ISettings settings,
-			ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine) : base()
+			ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine, IPLangSigningService signingService) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
 			this.logger = logger;
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
-
+			this.signingService = signingService;
 			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 		}
 
@@ -289,7 +296,9 @@ namespace PLang.Modules.FileModule
 				AllowComments = allowComments,
 				Comment = comment,
 				IgnoreBlankLines = ignoreBlankLines,
-				HasHeaderRecord = hasHeaderRecord, DetectColumnCountChanges = true, IgnoreReferences = false
+				HasHeaderRecord = hasHeaderRecord,
+				DetectColumnCountChanges = true,
+				IgnoreReferences = false
 			};
 
 			if (variableToWriteToCsv is JArray jArray)
@@ -328,11 +337,12 @@ namespace PLang.Modules.FileModule
 							}
 							csv.NextRecord();
 						}
-					} else
+					}
+					else
 					{
 						await csv.WriteRecordsAsync(enumer);
-						
-						
+
+
 					}
 
 
@@ -474,8 +484,8 @@ namespace PLang.Modules.FileModule
 			return paths.ToArray();
 		}
 
-			public async Task<string[]> GetFilePathsInDirectory(string directoryPath = "./", string searchPattern = "*",
-			string[]? excludePatterns = null, bool includeSubfolders = false, bool useRelativePath = true)
+		public async Task<string[]> GetFilePathsInDirectory(string directoryPath = "./", string searchPattern = "*",
+		string[]? excludePatterns = null, bool includeSubfolders = false, bool useRelativePath = true)
 		{
 			var searchOption = (includeSubfolders) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 			var absoluteDirectoryPath = GetPath(directoryPath);
@@ -509,7 +519,7 @@ namespace PLang.Modules.FileModule
 			}
 			await fileSystem.File.WriteAllBytesAsync(absolutePath, content);
 		}
-		public async Task WriteToFile(string path, string content, bool overwrite = false,
+		public async Task<(object?, IError)> WriteToFile(string path, string content, bool overwrite = false,
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			var absolutePath = GetPath(path);
@@ -519,19 +529,54 @@ namespace PLang.Modules.FileModule
 				fileSystem.Directory.CreateDirectory(dirPath);
 			}
 
-			if (overwrite)
+			bool fileExists = fileSystem.File.Exists(absolutePath);
+			if (fileExists && overwrite)
 			{
-				if (fileSystem.File.Exists(absolutePath))
-				{
-					fileSystem.File.Delete(absolutePath);
-				}
+				fileSystem.File.Delete(absolutePath);
+			} else if (fileExists)
+			{
+				return (null, new ProgramError($"File {path} already exists. If you want to overwrite it, include it in your step", 
+					goalStep, function,
+					FixSuggestion: "Rewrite step e.g. `- write %content% to file.txt, overwrite`"));
 			}
+
 			if (loadVariables && !string.IsNullOrEmpty(content))
 			{
 				content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
 			}
-			
 			await fileSystem.File.WriteAllTextAsync(absolutePath, content, encoding: GetEncoding(encoding));
+
+			return (await Sign(absolutePath, content), null);
+
+		}
+		
+		public async Task<bool> IsValidSignature(string absolutePath)
+		{
+			var fi = fileSystem.FileInfo.New(absolutePath);
+			object signature = new object(); //fi.Attributes[PlangIdentityService]
+			return signingService.VerifySignature(signature);
+		}
+
+		public async Task<object?> Sign(string absolutePath, object? obj) {
+			if (obj == null) return null;
+
+			Dictionary<string, object?> attributes = new();
+			var signature = signingService.Sign(obj);
+			attributes.Add("PlangIdentitySignature", signature); //sign content
+
+			string attributeFilePath = absolutePath + ".attributes";
+
+			using (var attributeFile = fileSystem.File.Create(attributeFilePath))
+			using (var writer = new StreamWriter(attributeFile))
+			{
+				foreach (var kvp in attributes)
+				{
+					writer.WriteLine($"{kvp.Key}={kvp.Value}");
+				}
+			}
+
+			fileSystem.File.SetAttributes(absolutePath, FileAttributes.Hidden);
+			return signature;
 		}
 
 		private Encoding GetEncoding(string encoding)
@@ -664,7 +709,7 @@ namespace PLang.Modules.FileModule
 				context.Remove(item.Key);
 			}
 
-			
+
 		}
 
 		private ConcurrentDictionary<string, Timer> timers = new ConcurrentDictionary<string, Timer>();
@@ -779,7 +824,7 @@ namespace PLang.Modules.FileModule
 			}
 		}
 
-		private void AddEventToTimer(object sender, FileSystemEventArgs e, long debounceTime, 
+		private void AddEventToTimer(object sender, FileSystemEventArgs e, long debounceTime,
 			string goalToCall, string[]? excludeFiles,
 			string absoluteFilePathVariableName, string fileNameVariableName,
 			string changeTypeVariableName, string senderVariableName

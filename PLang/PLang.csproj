@@ -39,6 +39,7 @@
     <PackageReference Include="Jil" Version="2.17.0" />
     <PackageReference Include="LightInject" Version="6.6.4" />
     <PackageReference Include="MailKit" Version="4.7.1.1" />
+    <PackageReference Include="MessagePack" Version="2.5.172" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.7" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.10.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.7" />

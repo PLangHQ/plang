@@ -1,4 +1,5 @@
 ﻿using BCrypt.Net;
+using MessagePack;
 using Microsoft.IdentityModel.Tokens;
 using NBitcoin.Secp256k1;
 using Nethereum.Signer;
@@ -9,6 +10,7 @@ using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Services.IdentityService;
 using PLang.Utils;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using static Dapper.SqlMapper;
@@ -28,6 +30,7 @@ namespace PLang.Services.SigningService
 	public interface IPLangSigningService
 	{
 		Task<string> GetPublicKey();
+		Dictionary<string, object> Sign(object obj);
 		Dictionary<string, object> Sign(byte[] seed, string content, string method, string url, string contract = "C0");
 		Dictionary<string, object> Sign(string? content, string method, string url, string contract = "C0", string? appId = null);
 		Dictionary<string, object> SignWithTimeout(byte[] seed, string content, string method, string url, DateTimeOffset expires, string contract = "C0");
@@ -40,12 +43,15 @@ namespace PLang.Services.SigningService
 		private readonly IAppCache appCache;
 		private readonly IPLangIdentityService identityService;
 		private readonly PLangAppContext context;
+		private readonly TypeHelper typeHelper;
+		public static readonly string PLangSigningServiceKey = "PLangSigningService";
 
-		public PLangSigningService(IAppCache appCache, IPLangIdentityService identityService, PLangAppContext context)
+		public PLangSigningService(IAppCache appCache, IPLangIdentityService identityService, PLangAppContext context, TypeHelper typeHelper)
 		{
 			this.appCache = appCache;
 			this.identityService = identityService;
 			this.context = context;
+			this.typeHelper = typeHelper;
 		}
 
 		public Dictionary<string, object> SignWithTimeout(string? content, string method, string url, DateTimeOffset expires, string contract = "C0", string? appId = null)
@@ -64,6 +70,11 @@ namespace PLang.Services.SigningService
 		{
 			return SignInternal(seed, content, method, url, contract, null);
 		}
+		public Dictionary<string, object> Sign(object obj)
+		{
+			return SignInternal(Formatter.ObjectToByteArray(obj), String.Empty, String.Empty, String.Empty, "C0");
+		}
+		
 
 		public async Task<string> GetPublicKey()
 		{
@@ -134,8 +145,21 @@ namespace PLang.Services.SigningService
 
 		}
 
+		public async Task<Dictionary<string, object?>> VerifySignature(object obj, object file)
+		{
+			if (obj is not Dictionary<string, object?> signatureData) return null;
 
-		public async Task<Dictionary<string, object?>> VerifySignature(string body, string method, string url, Dictionary<string, object> validationKeyValues)
+			var bytes = Formatter.ObjectToByteArray(file);
+
+			var moduleHelper = new ModuleHelper(typeHelper);
+			var module = moduleHelper.GetModule("Cryptocrapic") as PLang.Modules.Cryptographic.Program;
+			string hash = CryptographicHelper.ComputeKeccack(bytes);
+
+
+			return await VerifySignature(hash, "", "", signatureData);
+		}
+
+		public async Task<Dictionary<string, object?>> VerifySignature(string body, string method, string url, Dictionary<string, object?> validationKeyValues)
 		{
 			return await VerifySignature(appCache, body, method, url, validationKeyValues);
 		}
@@ -143,7 +167,7 @@ namespace PLang.Services.SigningService
 		/*
 		 * Return Identity(string) if signature is valid, else null  
 		 */
-		public static async Task<Dictionary<string, object?>> VerifySignature(IAppCache appCache, string body, string method, string url, Dictionary<string, object> validationKeyValues)
+		public static async Task<Dictionary<string, object?>> VerifySignature(IAppCache appCache, string body, string method, string url, Dictionary<string, object?> validationKeyValues)
 		{
 			var identities = new Dictionary<string, object?>();
 			if (validationKeyValues.ContainsKey("X-Signature-Address"))

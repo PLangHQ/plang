@@ -41,7 +41,7 @@ namespace PLang.Services.ArchiveService
 					 archive.CreateEntryFromFile(filePath, fileName, (CompressionLevel) compressionLevel);
 				
 				}
-
+				// set attribute, sign the data.
 			}
 		}
 

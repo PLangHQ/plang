@@ -1,5 +1,6 @@
 ﻿using Nethereum.KeyStore.Crypto;
 using Newtonsoft.Json;
+using Org.BouncyCastle.Utilities;
 using PLang.Interfaces;
 using PLang.Utils;
 using System.Security.Cryptography;
@@ -13,7 +14,7 @@ namespace PLang.Services.EncryptionService
 	public class Encryption : IEncryption
 	{
 		private readonly ISettings settings;
-		
+
 		public Encryption(ISettings settings)
 		{
 			this.settings = settings;
@@ -39,8 +40,8 @@ namespace PLang.Services.EncryptionService
 		public void AddPrivateKey(string privateKey)
 		{
 			var keys = settings.GetValues<EncryptionKey>(this.GetType());
-            if (keys.FirstOrDefault(p => p.PrivateKey == privateKey) == null)
-            {
+			if (keys.FirstOrDefault(p => p.PrivateKey == privateKey) == null)
+			{
 				keys.Add(new EncryptionKey(privateKey, keys.Count == 0));
 				settings.SetList(this.GetType(), keys);
 			}
@@ -74,21 +75,26 @@ namespace PLang.Services.EncryptionService
 
 			throw new Exception("Key to decrypt could not be found");
 		}
-
 		public string Encrypt(object data, string? keyHash = null)
 		{
 			var json = JsonConvert.SerializeObject(data);
-			byte[] dataBytes = Encoding.UTF8.GetBytes(json);
+			byte[] bytes = Encoding.UTF8.GetBytes(json);
+			return Convert.ToBase64String(Encrypt(bytes, keyHash));
+		}
+
+		public byte[] Encrypt(byte[] bytes, string? keyHash = null)
+		{
+
 			var key = GetKey(keyHash);
 			using (var aes = Aes.Create())
 			{
 				aes.Key = Convert.FromBase64String(key.PrivateKey);
-				aes.GenerateIV(); 
+				aes.GenerateIV();
 
 				byte[] encryptedData;
 				using (var encryptor = aes.CreateEncryptor())
 				{
-					encryptedData = encryptor.TransformFinalBlock(dataBytes, 0, dataBytes.Length);
+					encryptedData = encryptor.TransformFinalBlock(bytes, 0, bytes.Length);
 				}
 
 				// Combine IV and encrypted data for decryption later
@@ -97,7 +103,7 @@ namespace PLang.Services.EncryptionService
 				Buffer.BlockCopy(encryptedData, 0, result, aes.IV.Length, encryptedData.Length);
 				key = null;
 
-				return Convert.ToBase64String(result);
+				return result;
 			}
 		}
 

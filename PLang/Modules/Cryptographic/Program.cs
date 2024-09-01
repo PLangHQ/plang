@@ -1,20 +1,19 @@
 ﻿using Microsoft.IdentityModel.Tokens;
-using Nethereum.ABI;
 using PLang.Errors;
 using PLang.Errors.AskUser;
 using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Modules.CryptographicModule;
 using PLang.Services.LlmService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using static Dapper.SqlMapper;
 using static PLang.Errors.AskUser.AskUserPrivateKeyExport;
 
-namespace PLang.Modules.CryptographicModule
+namespace PLang.Modules.Cryptographic
 {
 	[Description("Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token")]
 	public class Program : BaseProgram, IDisposable
@@ -24,13 +23,15 @@ namespace PLang.Modules.CryptographicModule
 		private readonly ModuleSettings moduleSettings;
 		private readonly ISettings settings;
 		private readonly ILlmServiceFactory llmServiceFactory;
+		private readonly IPLangFileSystem fileSystem;
 
-		public Program(ISettings settings, IEncryptionFactory encryptionFactory, ILlmServiceFactory llmServiceFactory) : base()
+		public Program(ISettings settings, IEncryptionFactory encryptionFactory, ILlmServiceFactory llmServiceFactory, IPLangFileSystem fileSystem) : base()
 		{
-			this.encryption = encryptionFactory.CreateHandler();
-			this.moduleSettings = new ModuleSettings(settings);
+			encryption = encryptionFactory.CreateHandler();
+			moduleSettings = new ModuleSettings(settings);
 			this.settings = settings;
 			this.llmServiceFactory = llmServiceFactory;
+			this.fileSystem = fileSystem;
 		}
 
 
@@ -43,7 +44,7 @@ namespace PLang.Modules.CryptographicModule
 				return (null, new StepError($"System has been locked from exporting private keys. You will be able to export after {lockTimeout}", goalStep));
 			}
 
-			var response = settings.GetOrDefault<DecisionResponse>(typeof(AskUserPrivateKeyExport), GetType().Name, new DecisionResponse("none", "", DateTime.MinValue));
+			var response = settings.GetOrDefault(typeof(AskUserPrivateKeyExport), GetType().Name, new DecisionResponse("none", "", DateTime.MinValue));
 			if (response == null || response.Level == "none" || response.Expires < SystemTime.UtcNow())
 			{
 				var error = new AskUserPrivateKeyExport(llmServiceFactory, settings, GetType().Name);
@@ -68,7 +69,45 @@ namespace PLang.Modules.CryptographicModule
 			encryption.AddPrivateKey(privateKey);
 		}
 
+		public T GetModule<T>(string type) where T : BaseProgram
+		{
+			var typeObj = typeHelper.GetRuntimeType(type);
+			return (T)typeHelper.GetProgramInstance(typeObj.FullName);
+		}
+		public object GetModule(string type)
+		{
+			var typeObj = typeHelper.GetRuntimeType(type);
+			return typeHelper.GetProgramInstance(typeObj.FullName);
+		}
 
+
+
+		public async Task<bool> EncryptFileTo(string pathOrContent, string destination, bool overwrite, bool zipTheDestinationFile)
+		{
+
+			if (pathOrContent.StartsWith("/"))
+			{
+				pathOrContent = fileSystem.File.ReadAllText(pathOrContent);
+			}
+
+			if (zipTheDestinationFile)
+			{
+				var compression = GetModule("compression") as Compression.Program;
+				await compression.CompressFile(pathOrContent, destination);
+			}
+
+			var bytes = fileSystem.File.ReadAllBytes(destination);
+
+			var encrypt = GetModule("Encrypt") as Cryptographic.Program;
+			
+			var encryptedBytes = encryption.Encrypt(bytes);
+
+			var file = GetModule<FileModule.Program>("file") as FileModule.Program;
+			await file.WriteBytesToFile(pathOrContent, encryptedBytes, overwrite);//need to add all variables, that why we need object as settings for function, , loadVariables, emptyVariableIfNotFound, encoding
+			
+			return true;
+
+		}
 
 		public async Task<string> Encrypt(object content)
 		{
@@ -84,7 +123,7 @@ namespace PLang.Modules.CryptographicModule
 		{
 			if (string.IsNullOrEmpty(content)) return null;
 
-			byte[] bytes = Encoding.UTF8.GetBytes(content); 
+			byte[] bytes = Encoding.UTF8.GetBytes(content);
 			return Convert.ToBase64String(bytes);
 		}
 
@@ -122,7 +161,8 @@ namespace PLang.Modules.CryptographicModule
 					salt = BCrypt.Net.BCrypt.GenerateSalt();
 				}
 				return (BCrypt.Net.BCrypt.HashPassword(input, salt), null);
-			} else
+			}
+			else
 			{
 				if (useSalt && salt == null)
 				{
@@ -154,7 +194,8 @@ namespace PLang.Modules.CryptographicModule
 			if (hashAlgorithm == "bcrypt")
 			{
 				return BCrypt.Net.BCrypt.Verify(text, hash);
-			} else
+			}
+			else
 			{
 				if (useSalt && salt == null)
 				{

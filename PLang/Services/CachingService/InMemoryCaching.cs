@@ -1,12 +1,19 @@
 ﻿using PLang.Interfaces;
+using PLang.Services.SigningService;
 using System.Runtime.Caching;
 
 namespace PLang.Services.CachingService
 {
     public class InMemoryCaching : IAppCache
     {
+		private readonly IPLangSigningService signingService;
 
-        public async Task<object?> Get(string key)
+		public InMemoryCaching(IPLangSigningService signingService)
+		{
+			this.signingService = signingService;
+		}
+
+		public async Task<object?> Get(string key)
         {
 			return MemoryCache.Default.Get(key);
         }
@@ -15,6 +22,7 @@ namespace PLang.Services.CachingService
         {
             CacheItemPolicy policy = new CacheItemPolicy();
             policy.SlidingExpiration = slidingExpiration;
+            signingService.Sign(signingService.obj.)
             MemoryCache.Default.Set(key, value, policy);
         }
         public async Task Set(string key, object value, DateTimeOffset absoluteExpiration)

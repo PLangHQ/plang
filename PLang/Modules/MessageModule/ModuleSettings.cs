@@ -6,7 +6,7 @@ using PLang.Interfaces;
 using PLang.Models;
 using PLang.Services.LlmService;
 using PLang.Utils;
-using static PLang.Modules.BlockchainModule.ModuleSettings;
+using static PLang.Modules.Blockchain.ModuleSettings;
 
 namespace PLang.Modules.MessageModule
 {

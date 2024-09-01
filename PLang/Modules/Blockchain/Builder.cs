@@ -8,7 +8,7 @@ using PLang.Services.LlmService;
 using PLang.Services.SettingsService;
 using System.Dynamic;
 
-namespace PLang.Modules.BlockchainModule
+namespace PLang.Modules.Blockchain
 {
     public class Builder : BaseBuilder 
 	{

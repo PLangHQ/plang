@@ -10,9 +10,9 @@ using PLang.Services.LlmService;
 using PLang.Utils;
 using System.Text;
 using static Dapper.SqlMapper;
-using static PLang.Modules.BlockchainModule.ModuleSettings;
+using static PLang.Modules.Blockchain.ModuleSettings;
 
-namespace PLang.Modules.BlockchainModule
+namespace PLang.Modules.Blockchain
 {
     public class ModuleSettings : IModuleSettings
 	{
