@@ -1,10 +1,20 @@
 
 ## Todo window app with LLM
-Lets change the previous todo window to use LLM. 
+Lets change the previous todo app to use LLM. 
+
+We will learn how to use LLM in plang
 We will also learn how to modify the database.
 You will learn about run and forget.
+How to focus the builder on specific module, e.g. [llm]
+
+
+## Video of tutorial
+https://www.youtube.com/watch?v=pzgT_uNNNrE&list=PLbm1UMZKMaqfT4tqPtr-vhxMs4JGGFVEB&index=2
 
 1. Change Setup.goal
+
+*You will learn how to add column to existing table. *
+
 Add the following step your Setup.goal file
 ```
 - add column 'category' to tbl 'Todos'
@@ -37,7 +47,7 @@ Categorize
 - update table tasks, set %category% where %id%
 ```
 
-Explaination: 
+Explaination for plang code: 
 when we say, 'call !Categorize, dont wait', we instruct plang not to wait for the response
 of the !Categorize goal, this is because it is going to take a few seconds for the LLM to respond
 and we don't want the user to wait.
@@ -55,7 +65,20 @@ for more on llm, check out the LlmModule doc[./modules/PLang.Modules.LlmModule.m
 
 3. ### Test the API Endpoints
 
-Lets modify our `TestNewTask.goal` file (just change the task text)
+You can test the API endpoints using your favorite REST client.
+
+To create a new task, send a POST request to `http://localhost:8080/api/newtask` with the following JSON body:
+
+```json
+{
+    "task":"Buy some Lego",
+    "due_date": "2023-27-12"
+}    
+```
+Now if you open the http://localhost:8080/api/List, you should see that your new task has a category.
+
+
+Using Plang to test it. Lets modify our `TestNewTask.goal` file (just change the task text)
 
 - Modify `TestNewTask.goal` file in the `test` directory with the following code:
 
@@ -79,20 +102,8 @@ Then, execute the `TestNewTask.goal` file:
     plang exec test/TestNewTask
     ```
 
-Now if you open the http://localhost:8080/api/List, you should see that your new task has a category.
+after this has executed, open  http://localhost:8080/api/List, you should see that your new task has a category.
 
-Alternatively, you can test the API endpoints using your favorite REST client.
 
-To create a new task, send a POST request to `http://localhost:8080/api/newtask` with the following JSON body:
-
-```json
-{
-    "task":"Buy some Lego",
-    "due_date": "2023-27-12"
-}    
-```
-
-You can now go into two directions:
-- If you are running on a Windows machine (sorry, only Windows for now), let's change this [into a desktop app](./Todo_UI.md)
-- If you like to learn how to use `%Identity%` in your web service, [we can do that for our Todo service](./Todo_Identity.md)
-- Else, check out some more [Examples](https://github.com/PLangHQ/plang/tree/main/Tests) or other [Apps written by others](https://github.com/PLangHQ/apps) to start learning. It is all open source and you can view all the code.
+Next step
+ how to add %Identity% to your app, (./Todo_Identity.md)

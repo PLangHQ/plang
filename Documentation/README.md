@@ -62,7 +62,7 @@ Explore plang's features and capabilities:
 - **Basics for everybody**
     - **[Development Environment (IDE)](./IDE.md)**: This is where you write your code. Makes sure to setup your development environment.
     - **[Rules](./Rules.md)**: The basic rules to follow when writing plang code.
-- **Basics for beginners**
+- **Basics for beginners to programming**
     - **[Variables](./Variables.md)**: Learn about `%variables%` in plang and how to use them.
     - **[Conditions](./Conditions.md)**: Understanding `if` statements and conditional logic in plang.
     - **[Loops](./Loop.md)**: Explore how to go through a list of data
@@ -72,31 +72,38 @@ Explore plang's features and capabilities:
     - **[1. Todo Webservice](./Todo_webservice.md)**: Simple webservice. Learn how to setup webserver, api and database
     - **[2. Todo LLM](./Todo_Llm.md)**: How to use LLM in plang
     - **[3. Todo Identity](./Todo_Identity.md)**: Learn about how you handle 
-    - **[3. Todo New approach](./todo_new_approch.md)**: Learn how you can rething User experince with Plang
-    - **[3. Todo Identity](./Todo_UI.md)**: Learn about how you create GUI (early alpha)
+    - **[4. Todo Identity](./Todo_UI.md)**: Learn about how you create GUI (early alpha)
+    - **[5. Todo New approach](./todo_new_approch.md)**: Learn how you can rething User Experince with Plang    
 - **For everybody**
     - **[Debugging](./Debug.md)**: Learn how to debug when programming in the plang language
     - **[Examples](https://github.com/PLangHQ/plang/tree/main/Tests)**: See list of plang code examples, it can help you get started    
     - **[Apps](https://github.com/PLangHQ/apps/)**: See list of available apps, written in plang. Great for learning.
 - **Advanced**
-    - **[Identity](./Identity.md)**: What is Identity and why is it so important
-    - **[Private keys](./PrivateKeys.md)**: What private keys are in the system and where are they stored.
-    - **[Settings](./Settings.md)**: How to store and use settings in your app such as API keys and other sensitive data.
-    - **[Building your code](./Builder.md)**: How does the builder take your intent and convert it to executable code.
-    - **[Builder Lifecycle & Events](./BuilderLifcycle.md)**: Sequence of operations when building plang and build events
-    - **[Runtime Lifecycle](./RuntimeLifcycle.md)**: Sequence of operations when running plang
-    - **[Runtime & builder Events](./Events.md)**: Learn about event-driven programming in plang.    
+    - **Core**
+        - **[Identity](./Identity.md)**: What is Identity and why is it so important
+        - **[Private keys](./PrivateKeys.md)**: What private keys are in the system and where are they stored.
+        - **[Settings](./Settings.md)**: How to store and use settings in your app such as API keys and other sensitive data.
+        - **[Error Handling](./ErrorHandler.md)**: How to handle errors in Plang
+        - **[Cache Handling](./CachingHandler.md)**: How to cache in Plang
+    - **Runtime**
+        - **[Runtime Lifecycle](./RuntimeLifecycle.md)**: Sequence of operations when running plang
+        - **[Runtime & builder Events](./Events.md)**: Learn about event-driven programming in plang.    
+        - **[Startup parameters](./StartupParameters.md)**: Lists out what parameters can be injected at startup
+    - **Builder**
+        - **[Building your code](./Builder.md)**: How does the builder take your intent and convert it to executable code.
+        - **[Builder Lifecycle & Events](./BuilderLifecycle.md)**: Sequence of operations when building plang and build events
+    - **Extending the language**
+        - **[Modules](./modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
+        - **[Services](./Services.md)**: Learn how flexible the plang language is, e.g. using the db engine of your choice, your own caching service and more.
+        - **[3rd party libraries](./3rdPartyLibrary.md.md)**: Learn how use existing .Net library in Plang.
     - **[Performance](./Performance.md)**: What is the perfomance of plang? 
-    - **[Modules](./modules/README.md)**: Learn how to extend the language. Discover the different modules available in plang and their capabilities. 
-    - **[Services](./Services.md)**: Learn how flexible the plang language is, e.g. using the db engine of your choice, your own caching service and more.
-    - **[3rd party libraries](./3rdPartyLibrary.md.md)**: Learn how use existing .Net library in Plang.
-    - **[Use OpenAI API key or Local LLM](./PlangOrOpenAI.md)**: Shows how to use OpenAI API directly instead of PLang LLM service. Discusses status of local LLM
-    - **[Supported LLM](./SupportedAI.md)**: List of supported LLM models
-    - **[Error Handling](./ErrorHandler.md)**: How to handle errors in Plang
-    - **[Cache Handling](./CachingHandler.md)**: How to cache in Plang
-    - **[Startup parameters](./StartupParameters.md)**: Lists out what parameters can be injected at startup
+    - **LLM**
+        - **[Use OpenAI API key or Local LLM](./PlangOrOpenAI.md)**: Shows how to use OpenAI API directly instead of PLang LLM service. Discusses status of local LLM
+        - **[Supported LLM](./SupportedAI.md)**: List of supported LLM models
+
+    
     - **[Reserved keywords](https://github.com/PLangHQ/plang/blob/main/PLang/Utils/ReservedKeywords.cs)**: See list of reserved keywords in the language
-- **Developing the plang language**
+- **Developing the Plang language**
     - **[Help us create PLang](./PLangDevelopment.md)**: Information on how to help with development of plang programming language.
 - **Examples of actual apps**
     - List of apps at https://github.com/PLangHQ/apps

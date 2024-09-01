@@ -1,12 +1,12 @@
 ﻿# ErrorHandler Documentation
 
-## Overview
+## Introduction
 
-ErrorHandler in plang is a powerful feature that allows developers to manage and handle errors effectively within their plang scripts. This document provides a comprehensive guide on how to utilize ErrorHandler to improve the robustness and reliability of your plang applications.
+The `ErrorHandler` in Plang is a powerful feature that allows developers to manage and respond to errors effectively within their Plang scripts. This documentation will guide you through the basics of error handling, the properties of the `ErrorHandler`, and how to implement error handling in your Plang code.
 
-## Basic Usage
+## Basics of Error Handling
 
-ErrorHandler enables you to define specific actions based on the type of error encountered. Below is a simple example to illustrate its usage:
+In Plang, you can handle errors using the `on error` statement. This allows you to define specific actions to take when an error occurs. Here's a simple example:
 
 ```plang
 Start
@@ -18,39 +18,39 @@ ManageError
 - throw 'Error happened'
 ```
 
-In this example, if an error occurs during the `get` operation, the `ManageError` goal is invoked. This goal logs the error and throws an exception to halt further execution.
+In this example, if an error occurs during the `get` request, the `ManageError` goal is called. The error is logged, and an error message is thrown.
 
 ## ErrorHandler Properties
 
-ErrorHandler supports various properties to customize the error handling behavior:
+The `ErrorHandler` has several properties that allow you to customize how errors are handled:
 
-- **IgnoreError**: By default, this is set to `false`. If set to `true`, the error is caught but the execution continues to the next step.
-  - Example: `on error 'element not found', ignore`
-- **Message**: Checks if the specified text is present in the error message (case insensitive).
-  - Example: `on error 'timeout', call HandleTimeout`
-- **StatusCode**: Similar to HTTP status codes, where 400 indicates a user error and 500 indicates a server/system error.
-  - Example: `on error 402, call PayForService`
-- **Key**: Identifies the type of error (e.g., StepError, ServiceError, ProgramError).
-  - Example: `on error key:'ProgramError', call HandleProgramError`
-- **GoalToCall**: Specifies which goal to call when an error occurs, with the option to pass parameters.
-  - Example: `on error call HandleError %variable%`
-- **RetryHandler**: Defines how many times to retry the failed step over a specified period.
-  - Example: `retry 5 times over 3 minutes`
+- **IgnoreError**: Default is `false`. Allows you to catch an error but ignore it and continue to the next step. Example: `on error 'element not found', ignore`.
+
+- **Message**: The message of the error. You can check if the defined text is in the message (case insensitive). Example: `on error 'timeout', call HandleTimeout`.
+
+- **StatusCode**: The status code of the error, similar to HTTP status codes. Example: `on error 402, call PayForService`.
+
+- **Key**: The key of the error, which can vary. Common keys include `StepError`, `ServiceError`, and `ProgramError`. Example: `on error key:'ProgramError', call HandleProgramError`.
+
+- **GoalToCall**: Specifies which goal to call on the error. You can send parameters, e.g., `on error call HandleError %variable%`.
+
+- **RetryHandler**: Allows you to define how many times to retry the step over a specified period.
 
 ## Error Object
 
-The error object (`%!error%`) is automatically populated by the runtime and contains details about the error, including:
+The error object, defined as `%!error%` in Plang, is thrown by the runtime and sent to the error handler. It has the following properties:
 
-- **Message**: The error message.
-- **Key**: The type of error.
-- **StatusCode**: The error status code.
-- **Additional Properties**: Depending on the error type, additional properties may be available.
+- **Message**: The error message. It checks if the message contains a user-defined message (case insensitive).
 
-## Practical Examples
+- **Key**: The key of the error, which can vary. Common keys include `StepError`, `ServiceError`, and `ProgramError`.
 
-Here are some practical examples of using ErrorHandler in plang:
+- **StatusCode**: The status code (HTTP status codes) of the error. Codes 400 are user errors, and 500 are system errors.
 
-**Handling Timeouts**
+- **Other Properties**: Depending on the error type, you can see the properties by writing out the `%!error%` variable. Example: `- write out %!error%`.
+
+## Defining Error Handling
+
+You can define error handling in your Plang code like this:
 
 ```plang
 Start
@@ -61,21 +61,22 @@ HandleTimeout
 - log warning "Got timeout %!error%"
 ```
 
-**Handling Specific Error Keys**
+In this example, the error handler will search for the word 'timeout' in the `Message` property.
 
-```plang
-- get https://example.org
-    on error key 'ProgramError', call HandleProgramError
-```
+## Handling Status Codes
 
-**Handling Payment Required Errors**
+You can handle specific status codes using the `StatusCode` property:
 
 ```plang
 - get https://example.org/use_service_that_costs
     on error 402, call HandlePayment
 ```
 
-**Multiple Error Handlers**
+In this example, the error handler will call `HandlePayment` if the status code is 402.
+
+## Multiple Error Handlers
+
+You can define multiple error handlers for different scenarios:
 
 ```plang
 Start
@@ -83,11 +84,46 @@ Start
     on error 'timeout', retry 2 times over 30 seconds then call ManageTimeoutError
     on error 'host not found' call InternetDownError, retry 5 times over 5 minutes
     on error 402, call ExecutePayment
+
+ManageTimeoutError
+- write out error 'There was a timeout'
+- if %isProduction%
+    - throw error 'There was a time out'
+
+InternetDownError
+- write out error 'Internet is down'
+
+ExecutePayment
+- transfer 50 usdc to 0x123..
 ```
+
+In this example, different error handlers are defined for different error messages and status codes.
+
+## Ignoring Errors
+
+You can choose to ignore all errors and continue executing the next step:
+
+```plang
+Start
+- get http://example.org
+    ignore all errors
+```
+
+## Order of Retry Statement
+
+You can define when the retry statement should be executed, either before or after handling the error. For example:
+
+```plang
+- open in browser, http://slow_website.com/
+    on error 'timeout', retry 10 times over 10 minutes, if that fails call HandleTimeoutError
+- write out 'yes, go connected'
+```
+
+In this example, Plang tries 10 times to connect to the website. If it fails, it calls the `HandleTimeoutError` goal.
 
 ## Order of Error Handling
 
-The order in which error handlers are defined is crucial. Handlers earlier in the order can preempt later ones:
+The order of error handling matters. If error handling is defined like this:
 
 ```plang
 Start
@@ -96,21 +132,43 @@ Start
     on error 'timeout', call HandleTimeout
 ```
 
-In the above example, the `on error ignore` handler will catch and ignore all errors, preventing the `on error 'timeout'` handler from ever being triggered.
+The `on error 'timeout'` will never be called because `on error ignore` catches all errors and ignores them.
 
-## Ignoring All Errors
+## Handling Error in Call Stack
 
-To ignore all errors in a goal:
+When you want to handle an error but not stop the execution of a step, you can use the `end goal` command. For example:
 
 ```plang
 Start
-- get http://example.org
-    ignore all errors
+- select subscriberId from users, write to %users%
+- for each %users%, call ChargeUser %user%=item
+
+ChargeUser
+- get http://localhost:100/ChargeUser?userId=%user.id%, 
+    on error call HandleError
+- write out 'if error happens, this will not be written out'
+
+HandleError
+- write out %!error%
+- end goal and previous // you can also say 'end goal and 1 level more'
 ```
 
-## Using Events for Error Handling
+This will take the execution back to the `Start` goal and process the next user in the loop.
 
-You can also use events to handle errors:
+## Continue to Next Step
+
+You can catch an error and decide to continue to the next step:
+
+```plang
+Start
+- get https://doesNotExists,
+    on error call HandleError, continue to next step
+- write out 'This will run even tho prev step got error'
+```
+
+## Global Error Handling
+
+You can use events to handle errors globally:
 
 ```plang
 Events
@@ -124,4 +182,6 @@ HandleErrorOnGoal
 - write out error, 'Error on goal: %!error%'
 ```
 
-This guide should provide you with the necessary knowledge to implement and manage error handling in your plang scripts effectively, ensuring more robust and reliable applications.
+This allows you to define global error handling strategies for steps and goals.
+
+For more information on error types, visit the [Plang Errors](https://github.com/PLangHQ/plang/tree/main/PLang/Errors) page.

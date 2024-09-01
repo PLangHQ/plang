@@ -6,20 +6,35 @@ Environment.SpecialFolder.ApplicationData and Environment.SpecialFolder.Personal
 
 
 all private keys are stored in .db/system.sqlite
-they are not encrypted
+Important! they are not encrypted
 the root private key is stored in global system.sqlite is stored at (give example of path)
     C:\Users\[Username]\AppData\Roaming\plang\.db\system.sqlite on Windows
     /home/[Username]/plang/.db/system.sqlite on Linux
     /Users/[Username]/plang/.db/system.sqlite on macos
 
-There are 3 private keys
-- Encryption keys to encrypt & decrypt data
-- Blockchain keys, used to sign requests that enables (%Identity%)[./Identity.md] and other blockchain related actions
-- Nostr keys, used to send and recieve messages.
+When plang doesn't have permission to write to those locations, it will write into the folder where plang is running from
+
+## What private keys
+There are 4 private keys that can be created in the plang core code, depending on modules used
+
+Always created:
+- Identity keys to encrypt & decrypt data(./Identity.md) - Ed25519
+
+Created on first use:
+- Encryption keys to encrypt & decrypt data - default AES256, you can add any
+- Blockchain keys for blockchain related actions - it's blockchain
+- Nostr keys, used to send and recieve messages. AES256 keys.
 
 Exporting private keys
 when you try to export private by calling ExportPrivate method, plang will ask the user 3 questions
 the answer are sent to LLM which determines the liklyhood of the user being tricked, if it is high, plang blocks the export for 24 hours.
-this is meant as a proof of concept, to help prevent social engineering on unsuspected users.
+this is meant as a proof of concept, to help prevent social engineering on unsuspected users. Read more here https://ingig.substack.com/p/exporting-private-keys-in-plang
 
+## Backup keys
 Make sure to backup critical private keys. This is important in early version of plang as the language does not provide any type of backup
+
+At this time(v.0.1) there is no automated way of backing up the keys except you doing it your self. 
+
+## Might be interesting
+
+If you find private keys interesting, you might want to read this blog post about sharing private key between 2 computer(https://ingig.substack.com/p/plang-and-local-first). This should never be done with Identity keys. Each device should have it's own and services that support identity should support multiple identities per user.

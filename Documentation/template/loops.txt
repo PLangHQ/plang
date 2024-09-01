@@ -1,0 +1,92 @@
+
+what are loops
+create ELI5 explaination
+
+Examples:
+
+
+When you are going through a list, plang creates a new variable for you %item%
+
+simple example
+
+```plang
+Start
+- [code] generate list from 1 to 10, write to %numbers%
+- go through %numbers%, call PrintNumber
+
+PrintNumber
+- write out %item%
+```
+
+## define you own %item% variable
+
+you can define your own name for the %item% variable, in the example above, lets change %item% to %number%
+
+```plang
+Start
+- [code] generate list from 1 to 10, write to %numbers%
+- loop through %numbers%, call PrintNumber %number%=item
+
+PrintNumber
+- write out %number%
+```
+
+Lets write out all the files that is in our folder
+```plang
+Files
+- get files in './', write to %files%
+- foreach %files%, call !LoadText
+
+LoadText
+- write out 'Reading: %item.path%'
+- read file %item.path% into %content%
+- write out 'This is the content: %content%'
+```
+
+
+Lets see how it works with Http request, you can open https://cat-fact.herokuapp.com/facts to see what it gives you
+
+```plang
+CatFacts
+- GET https://cat-fact.herokuapp.com/facts, write to %facts%
+- go through %facts% !ShowFact fact=%item%
+
+ShowFact
+- write out '%fact.text% was created at %fact.createdAt%'
+```
+
+## Did you notice?
+
+Did you notice that in each example, the instruction on how to go through the list was different? `loop through`, `foreach`, `go through`. Plang is code in natural language, just be clear on what you want to happen.
+
+
+## Default Values in Loop Calls
+
+When you use a loop in PLang, some default values are automatically available:
+
+- `%list%`: The list you're looping through.
+- `%item%`: The current item in the loop.
+- `%position%`: The position of the current item. %position% starts at 0
+- `%listCount%`: The total number of items in the list.
+
+
+### Example with Default Values
+```plang
+ShowFact
+- Write out "This is fact nr. %position% of %listCount%, this is the %item%, from %list%"
+```
+
+You can overwrite the default names of those values. This can be helpful to make your code clear or of the goal you are calling requires specific name.
+```plang
+Products
+- select everything from products table, newest first, write to %products%
+- go through %products% call !ProcessProduct %productList%=list, %product%=item, %productPosition%=position, %numberOfProducts%=listCount
+
+ShowProduct
+- write out "This is product nr. %productPosition% of %numberOfProducts%, this is the %product%, from %productList%"
+```
+
+Give some best practices as the reader is a beginner in programming
+
+Next step
+Learn about Date and Time(./Time.md)

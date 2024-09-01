@@ -495,11 +495,11 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\builder\\events",
   "RelativePrPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals\\CheckCallingGoal\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals\\CheckCallingGoal",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "f5d28e170d17e97d1bd2a7d438dc991b437ca695b0b684fd0675b9ebbd07bae0",
+  "Hash": "09144ae905686729a09aecd31ccb9bec87c7bbb54cab8c86e8615608e717f25c",
   "IncomingVariablesRequired": [
     "step.RelativePrPath",
     "goal.GoalName",

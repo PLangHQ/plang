@@ -81,10 +81,10 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\builder\\events",
   "RelativePrPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals\\ShowAllValid\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals\\ShowAllValid",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "788130b4c3c3e425163567895d3143d473699fd2ea4a83f361f038cd3d5ced07",
+  "Hash": "f1f23fd3eb0c81c2f4047ca218ae694bd96786ae47d37b637a457fe6c49a9ba9",
   "IncomingVariablesRequired": null
 }

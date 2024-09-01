@@ -1,60 +1,78 @@
-# Rules of plang
+﻿# Rules of Plang
 
-Welcome to the plang programming language documentation. This guide will provide you with the necessary information to understand and apply the rules of plang effectively. plang is designed to be intuitive and flexible, allowing developers to write code in a natural language-like syntax. Below are the foundational rules that govern the structure and execution of plang code.
+Welcome to the documentation for the Plang programming language. This guide will help you understand the fundamental rules and syntax of Plang, enabling you to write effective and efficient Plang code. Plang is designed to be intuitive, allowing you to express your intentions clearly and concisely.
 
-## Goal Files
+## Basic Structure
 
-- **File Extension**: A plang goal file must have a `.goal` extension.
-- **Goal Name**: The goal name should be declared at the beginning of the file. It acts as the entry point, similar to a function in traditional programming languages.
-- **Multiple Goals**: A single `.goal` file can contain more than one goal. The first goal is public and can be initiated by a web server, while subsequent goals are private and cannot be web-initiated.
+### Goal Files
+- **File Extension**: Plang code is written in text files with the `.goal` extension.
+- **Goal Name**: Each file begins with a goal name, which functions similarly to a function in other programming languages.
+- **Multiple Goals**: A single goal file can contain multiple goals. The first goal is publicly visible, while subsequent goals are private.
+- **Visibility**: Private goals cannot be initiated by a web server.
 
-## Steps
+### Steps
+- **Step Definition**: Each step in a goal is a line starting with a dash (`-`). Steps can span multiple lines, provided that continuation lines are indented.
+- **Intent Description**: Steps should clearly describe the intended action in simple terms.
+- **Comments**: Lines starting with a dash followed by a slash (`-/`) are comments, e.g., `-/ this is a comment`.
 
-- **Definition**: A step is defined as a line starting with a dash (`-`). It represents an action or a set of actions to be performed.
-- **Multi-line Steps**: Steps can span multiple lines. In such cases, only the first line starts with a dash, and subsequent lines are indented for clarity.
-- **Natural Language**: Steps should be described in simple terms, focusing on the intent of the action.
+### Variables
+- **Syntax**: Variables are enclosed in percentage signs (`%`), e.g., `%name%`, `%user.email%`. For more details, refer to the [Variables documentation](./Variables.md).
 
-## Variables
+### Conditional Logic
+- **If Statements**: Conditional steps can be indented by four spaces or a tab. Note that steps cannot start with `- else` or `- else if`. Instead, use goal calls for conditional logic. For more information, see the [Conditions documentation](./Conditions.md).
 
-- **Syntax**: Variables are enclosed within percentage signs (`%`). For example, `%username%`.
+### Goal Calls
+- **Calling Goals**: You can call other goals using the syntax `- call goal XXX`.
 
-## Comments
+### Loops
+- **Looping Through Items**: Developers can loop through items and call goals using the syntax `- go through %list%, call ProcessItem`. For more details, refer to the [Loop documentation](./Loop.md).
 
-- **Syntax**: A line starting with forward slash (`/`) is considered a comment and will not be executed.
+### Time Access
+- **Current Date & Time**: Use `%Now%` and `%NowUtc%` to access the current date and time. More information is available in the [Time documentation](./Time.md).
 
-## Conditional Logic
+### Modules
+- **Module Focus**: Use square brackets (`[...]`) to specify a module for a step, e.g., `[llm]` uses the LlmModule.
 
-- **Indentation**: An `if` statement can include indented steps to define conditional actions. These should be indented by 4 spaces or a tab.
+### Escape Characters
+- **Escaping**: Use the backslash (`\`) as an escape character for `%`, e.g., `\%ThisWillNotBeVariable\%`.
 
-## Modules
+## Example of Plang Source Code
 
-- **Syntax**: To specify a module for a step, use square brackets with the module name (e.g., `[database]`).
-
-## Example plang Code
-
-Here is an example of a plang goal file named `MyApp.goal`:
+Below is an example of a Plang source code file, demonstrating various features and syntax:
 
 ```plang
 MyApp
 - if %user.isAdmin% is logged in then
     - write out 'Admin logged in'
-- Retrieve the list of todos from %todos% table
+- Retrieve the list of todos for %todos% database table
     cache for 3 minutes
-- Iterate through %todos%, calling !ProcessTodo for each item
+- go through %todos%, call !ProcessTodo
 / This is a comment explaining the next steps
-- Fetch data from https://example.org
+- get https://example.org
     Bearer %Settings.ApiKey%
     {
         data: "some text"
     }
     write to %content%
 - write out %content%
-- [code] Generate a list of all 2-letter ISO country codes and store in %countryCodes%
+- [code] create list of all 2 letter ISO country codes, write to %countryCodes%
+- call goal WriteHello
+
+WriteHello
+- write out "Hello plang world"
 ```
+
+### Explanation
+- The code begins with a goal named `MyApp`.
+- It checks if a user is an admin and logs a message if true.
+- It retrieves a list of todos, caches it, and processes each item.
+- A comment is included to explain the subsequent steps.
+- It makes an HTTP GET request and writes the response to a variable.
+- It demonstrates the use of modules and goal calls.
 
 ## Writing Steps in Natural Language
 
-plang allows you to write steps in various natural language forms, as long as the intent is clear. Here are multiple ways to perform the same action:
+Plang allows you to express steps in multiple ways, as long as the intent remains clear. Here are different ways to achieve the same result:
 
 ```plang
 - read text file.txt into %content%
@@ -62,10 +80,6 @@ plang allows you to write steps in various natural language forms, as long as th
 - load file.txt and put it into %content%
 ```
 
-Each of the above steps instructs plang to read the contents of `file.txt` and store it in the variable `%content%`.
+Each of these steps reads a file and loads its content into a variable, demonstrating Plang's flexibility in expressing actions.
 
-## Conclusion
-
-This document has outlined the core rules for writing plang code. 
-
-By following these guidelines, developers can create `.goal` files that are both efficient and easy to understand. Remember that plang prioritizes the intent of your steps, and its natural language flexibility allows for various expressions of that intent.
+By following these guidelines, you can effectively utilize Plang to create clear and maintainable code. Happy coding!

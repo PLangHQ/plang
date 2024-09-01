@@ -81,11 +81,11 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\runtime",
   "RelativePrPath": ".build\\events\\external\\plang\\runtime\\SendDebug\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\runtime\\SendDebug",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "47eb9d1234dd6f8b41b1a863337f3ec798f2bf89fc5a078a23a8d66e736f5f58",
+  "Hash": "b77f768f93199b199a3a21814598787b6d565b7c158adcbb1a9a8ca08b8ac060",
   "IncomingVariablesRequired": [
     "%!Goal%",
     "%!Step%",

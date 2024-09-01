@@ -1,0 +1,32 @@
+Write Short introduction what conditions are.
+
+Give ELI5 explanation on what conditions are, aimed at people that have not developed before and are learning how to develop.
+
+Here are some plang examples on conditions
+
+if statements can have sub steps or call other goals on true or false
+
+if with sub steps
+
+```plang
+Start
+- if %isAdmin% then
+   - call !ShowAdmin
+   - write out 'This is admin'
+- if %isUser% then
+   - call !ShowUser
+   - write out 'This is user'
+```
+
+if statement that call other goals
+
+
+```plang
+Start
+- if %isAdmin% then call !ShowAdmin, else !ShowUser
+```
+
+You cannot start steps with `- else` or `- else if`, those will not give any condition statement
+
+Next step
+Learn about Loops(./Loops.md)

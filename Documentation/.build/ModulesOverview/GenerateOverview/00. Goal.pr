@@ -22,7 +22,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 40,
+      "LineNumber": 38,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -81,11 +81,11 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ModulesOverview\\GenerateOverview\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ModulesOverview\\GenerateOverview",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "1af87059e307f06c50f65a3a263ec7df1d31a46aa728add17874202f71e13726",
+  "Hash": "3ec4cec460ea0c97b2ba9ba2621b88afff210fdf1145fbdb84a6eb286e0f75af",
   "IncomingVariablesRequired": [
     "file.Content"
   ]

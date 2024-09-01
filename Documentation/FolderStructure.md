@@ -1,56 +1,46 @@
-﻿# plang Project Folder Structure Guide
+﻿# Folder Structure Documentation for Plang
 
-This guide provides a comprehensive overview of the folder structure for a plang project. By adhering to this structure, you will maintain a well-organized codebase, making it easier for you and your team to develop, maintain, and scale your plang applications.
+This documentation provides an overview of the folder structure used in a Plang project. Understanding this structure is crucial for organizing your project files and ensuring that your application runs smoothly.
 
 ## Root Folder
 
-The root folder is the heart of your plang project. It's where you'll find the `Start.goal` and `Setup.goal` files, which are crucial for bootstrapping and configuring your application.
+The root folder is the main directory where your `Start.goal` and `Setup.goal` files are located. It serves as the entry point for your Plang application. For example, if you create your Plang project in `C:\apps\TestApp`, then `TestApp` is your root folder.
 
-### Key Directories in the Root Folder
+### Contents of the Root Folder
 
-- **.build**: This directory is reserved for files that are part of the build process.
-- **.db**: This directory is crucial for your application's data management. It contains:
-  - `system.sqlite`: The main database file for system-related data.
-  - `data.sqlite`: This file is generated when your application defines tables and needs a separate database for application data.
-
-For instance, if your plang project is located at `c:\apps\TestApp`, the `TestApp` directory is your root folder.
+- **.build Folder**: This folder is automatically generated and used for build-related files.
+- **.db Folder**: This folder contains the database files:
+  - `system.sqlite`: The main system database.
+  - `data.sqlite`: This file is created only if your application includes tables.
 
 ## API Folder
 
-The `api` folder is the default location for your application's RESTful services. While this is the standard, you can modify the API service path when you launch the web server.
+The `api` folder contains the REST services for your application. By default, this is where your API-related goals are stored, but this can be changed when starting the web server.
 
 ### Public Goals in the API Folder
 
-Public goals are the first goal in each file within the `api` folder and serve as the entry points for your API services. They include API-related specifications such as:
-
-- HTTP method (e.g., GET, POST)
-- Content encoding
-- Content type
-- Maximum content length
-- Caching control
-
-These specifications are included in the goal name, as shown in the following example:
+Public goals are the first goal in each file within the `api` folder. They contain API-related information such as the HTTP method, content encoding, content type, maximum content length, and caching control. These settings can be specified in the goal name. For example:
 
 ```plang
-GetList - POST, max length=1mb, public cache.
+GetList - POST, max length=1mb, public cache
 ```
+
+This line indicates that the `GetList` goal uses the POST method, has a maximum content length of 1MB, and uses public caching.
 
 ## UI Folder
 
-The `ui` folder is dedicated to the User Interface (UI) components of your application. It focuses on the data availability and structure without specifying the device type for the UI.
-
-By default, plang will construct the UI using HTML, JavaScript, and CSS, leveraging the Bootstrap framework for styling. Additionally, Font Awesome is included for icons.
+The `ui` folder contains files related to the user interface. It defines what data should be available and its structure, but not the specific device the UI is applied to. By default, Plang builds the UI using HTML, JavaScript, and CSS, leveraging the Bootstrap framework. Font Awesome is also available for use.
 
 ## Events Folder
 
-The `events` folder is where you'll place scripts for events that are triggered within the application. Detailed information about these events can be found in the [Events Documentation](./Events.md).
+The `events` folder contains [events that should run](./Events.md) in the application. This is where you define the event-driven logic for your application.
 
-## Modules Folder
+## .modules Folder
 
-The `.modules` folder is where you store `.dll` files that you want to include in your build process. This enables you to enhance plang with new features. For further details, refer to the [Modules Documentation](./modules/README.md).
+The `.modules` folder is used to include `.dll` files that you want to incorporate into your build process. This allows you to extend Plang with new features. For more information, refer to the [modules documentation](./modules/README.md).
 
-## Services Folder
+## .services Folder
 
-The `.services` folder is designed for overriding the base functionality of the plang language. Whether you need to modify the Low-Level Memory (LLM), caching, database, or other aspects, you can place the corresponding `.dll` in this folder and integrate it into your code. For more information, see the [Services Documentation](./Services.md).
+The `.services` folder allows you to override the base functionality of the Plang language. If you need to change the language model (LLM) used, caching, database, etc., you can use this folder to drop in the necessary `.dll` files and inject them into your code. For more details, see the [services documentation](./Services.md).
 
-By following this folder structure, you will ensure that your plang project is organized in a manner that promotes efficiency and clarity, which is essential for successful development and collaboration.
+By understanding and utilizing this folder structure, you can effectively organize and manage your Plang projects, ensuring a clean and efficient development process.

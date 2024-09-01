@@ -312,6 +312,18 @@ namespace PLang.Runtime
 			return error;
 		}
 
+		private void SetStepLogLevel(GoalStep step)
+		{
+			if (string.IsNullOrEmpty(step.LoggerLevel)) return;
+
+			Enum.TryParse(step.LoggerLevel, true, out Microsoft.Extensions.Logging.LogLevel logLevel);
+			AppContext.SetData("StepLogLevelByUser", logLevel);
+		}
+
+		private void ResetStepLogLevel()
+		{
+			AppContext.SetData("StepLogLevelByUser", null);
+		}
 		private void SetLogLevel(string? goalComment)
 		{
 			if (goalComment == null) return;
@@ -478,7 +490,9 @@ private async Task CacheGoal(Goal goal)
 
 		private async Task<IError?> RunStep(Goal goal, int goalStepIndex, int retryCount = 0)
 		{
+			
 			var step = goal.GoalSteps[goalStepIndex];
+			SetStepLogLevel(step);
 			try
 			{
 				if (HasExecuted(step)) return null;
@@ -515,8 +529,9 @@ private async Task CacheGoal(Goal goal)
 				var result = await HandleStepError(goal, step, goalStepIndex, error, retryCount);
 
 				return result;
-
-				
+			} finally
+			{
+				ResetStepLogLevel();
 			}
 
 		}

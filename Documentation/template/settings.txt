@@ -16,7 +16,7 @@ to change or remove key, you will need to open the .db/system.sqlite database wi
 
 Everything below is for advanced users, it is for customizing the language but few will need to
 
-it is possible to overwrite the settings service by injecting your own Settings service.
+it is possible to overwrite the settings service by injecting your own Settings service.(./Services.md)
 This is important when the developer want to user his own custom storage medium for settings, such as .env, Google Cloud's Secret Manager,  Azure Key Vault, AWS Secrets Manager, or other secure storage medium.
 To do that, you need to implement the ISettingsRepository and then injecting the dll 
 ```plang
@@ -43,3 +43,5 @@ await ex.InvokeCallback(value);
 where variable 'value' is the expected response. 
 
 For example, when creating database connection, the answer can be any natural language. The LLM will try to map it correctly to create the database connection
+
+Read all about how to create your own service(./Services.md)

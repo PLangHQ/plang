@@ -22,6 +22,8 @@ namespace PLang.Errors
 	{
 		public virtual GoalStep? Step { get; set; }
 		public virtual Goal? Goal { get; set; }
+		public string? FixSuggestion { get; set; } = FixSuggestion;
+		public string? HelpfulLinks { get; set; } = HelpfulLinks;
 
 		public virtual object ToFormat(string contentType = "text")
 		{

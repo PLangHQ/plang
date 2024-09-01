@@ -1,28 +1,38 @@
-# Todo Identity Integration Guide
+﻿# TodoIdentity Tutorial
 
-Welcome to the Todo Identity Integration Guide! This document will walk you through the process of enhancing your Todo web service with user-specific functionality using the `%Identity%` variable in `plang`. By the end of this guide, you'll be able to show tasks that belong to a specific user, ensuring a personalized experience.
+Welcome to the TodoIdentity tutorial! In this guide, we will enhance our Todo web service by integrating the `%Identity%` feature. This will allow us to display tasks specific to individual users, demonstrating the use of the built-in `%Identity%` variable in Plang.
 
-Before you begin, make sure you're familiar with the concept of `%Identity%` by reading [what is %Identity%](./Identity.md). You should also have completed the [previous tutorials](./Todo_webservice.md) to have the necessary `.goal` files ready.
+## What You Will Learn
+
+- How to integrate `%Identity%` into your Todo web service.
+- Understanding the `%Identity%` variable and its significance.
+- Using Plang's Events to simplify and secure your application.
+- Modifying existing goals to incorporate user-specific data.
+- Testing your application using Plang.
+
+## What is `%Identity%`
+
+In short, `%Identity%` acts like a `user_id` in your system. For a more detailed understanding, read [What is %Identity%](./Identity.md).
+
+## Video Tutorial
+
+[![TodoIdentity Video Tutorial](https://img.youtube.com/vi/0FYqllGVOQU/hqdefault.jpg)](https://www.youtube.com/watch?v=0FYqllGVOQU&list=PLbm1UMZKMaqfT4tqPtr-vhxMs4JGGFVEB&index=4)
 
 ## Prerequisites
 
-- Understanding of `%Identity%` ([Identity](./Identity.md))
-- Completion of [previous tutorials](./Todo_webservice.md)
+Before proceeding, ensure you have completed the previous tutorials to have the necessary `.goal` files. Start with the [previous tutorials](./Todo_webservice.md).
 
-## What will be covered
-In this tutorial we will cover the basics for working with plang. This includes.
+## Step-by-Step Guide
 
-- Use %Identity% - no more passwords :)
-- [Events](https://github.com/PLangHQ/plang/blob/main/Documentation/Events.md)
+### 1. Change `Setup.goal`
 
+Add the following step to your `Setup.goal` file:
 
-## Step-by-Step Integration
+```plang
+- add column 'Identity' to tbl 'Todos'
+```
 
-### Step 1: Modify `Setup.goal`
-
-> Cost estimated: $0.03
-
-First, you'll need to add an 'Identity' column to your 'Todos' table. Update your `Setup.goal` file with the following step:
+After adding it, your `Setup.goal` file should look like this:
 
 ```plang
 Setup
@@ -30,126 +40,108 @@ Setup
     columns:    task(string, not null), due_date(datetime, not null), 
                 completed(bool, false), created(datetime, now)
 - add column 'category' to tbl 'Todos'    
-- add column 'Identity'(string) to tbl 'Todos'             
+- add column 'Identity' to tbl 'Todos'             
 ```
 
-Now build & run `Setup` to create the column in database.
+### 2. Ensure `%Identity%` is Not Empty
 
-```bash
-plang exec Setup
-```
+*You will learn how to use [Events](./Events.md) and the power they give you to make your app simple and flexible.*
 
-
-### Step 2: Ensure `%Identity%` is not empty
-
-> Estimated cost: $1.07
-
-Create an `events` folder at the root of your Todos project and add a file named `Events.goal` with the following content:
+- Create a folder `events` in the root of Todos.
+- Create a file `Events.goal` in the `events` folder.
 
 ```plang
 Events
-- before each goal in 'api/*', call !CheckIdentity
-```
-__You can see available events in the [Events documentation](https://github.com/PLangHQ/plang/blob/main/Documentation/Events.md)__
-
-Create a new file, `CheckIdentity.goal` in `events` folder
-```plang
-CheckIdentity
-- if %Identity% is empty, call !ShowError
+- before any api/*, call CheckIdentity
 
 ShowError
-- write out error 'You need to sign the request'
+- if %Identity% is empty then
+    - write out error 'You need to sign the request'
 ```
 
-### Step 3: Update `NewTask.goal`
+This setup ensures authentication for your program in just three lines of code.
 
-Incorporate `%Identity%` into the insert statement within `NewTask.goal`:
+### 3. Change `NewTask.goal`
+
+Let's add `%Identity%` into the insert statement. Modify `NewTask.goal` as follows:
 
 ```plang
 NewTask
-- make sure that %request.task% and %request.due_date% is not empty, throw error
-- insert into Todos %request.task%, %request.due_date%, %Identity%, write to %id%
+- make sure that %task% and %due_date% is not empty, throw error
+- insert into Todos %task%, %due_date%, %Identity%, write to %id%
 - call !Categorize, dont wait
 - write out %id%
 
 Categorize
 - [llm]: system: categories the user input by 3 categories, 'Work', "home", 'hobby'
-    user: %request.task%
+    user: %task%
     scheme: {category:string}
-- update table todos, set %category% where %id%
+- update table tasks, set %category% where %id%
 ```
 
-### Step 4: Adjust `List.goal`
+We added `%Identity%` into the `- insert into ...` statement.
 
-Modify `List.goal` to filter tasks based on `%Identity%`:
+### 4. Change `List.goal`
+
+Filter on the `%Identity%` when selecting the list:
 
 ```plang
 List
 - select everything from Todos where %Identity%, write to %todos%
 - write out %todos%
 ```
-### Step 5: Build & run
 
-Now build and run the code 
+We added a `where` statement to the `- select everything...` step, filtering by your `%Identity%`.
 
-- In VS Code, press F5, leave the input box empty (it will default to Start.goal).
-- Or, in the terminal, run:
+### 5. Test Creating New Task
 
-    ```bash
-    plang exec
-    ```
+If you used your favorite REST client before, this is no longer an option. You need to write the test in Plang because the program needs to generate `%Identity%` for us.
 
-### Step 6: Test Creating a New Task
-
-Testing with a REST client is no longer an option due to the need for `%Identity%` generation. Instead, write the test in `plang`:
-
-Update the `TestNewTask.goal` file in the `test` directory:
+Modify `TestNewTask.goal` file in the `test` directory with the following code:
 
 ```plang
 TestNewTask
 - post http://localhost:8080/api/newtask
     {
         "task":"Do some grocery shopping",
-        "due_date": "%Now+2days%"
+        "due_date": "2023-27-12"
     }
     write to %result%
 - write out %result%
 ```
 
-Execute the `TestNewTask.goal` file:
+Then, execute the `TestNewTask.goal` file:
 
-
-- In VS Code, You already started the webserver in Step 5, so we need to use the terminal. Create New Terminal from the Terminal menu, navigate to you Todo folder.
-- Run:
+- Press F5 in VS Code, in the prompt window type in `TestNewTask` and press enter.
+- Or if you prefer terminal:
 
     ```bash
     plang exec test/TestNewTask
     ```
 
-### Step 7: Retrieve Your New Task
+### 6. Get My New Task
 
-Create a `plang` client to fetch the task list, which should now return only tasks associated with the `%Identity%`:
+Now we need to write a Plang client that retrieves the task list. We should only get one (not three) result back since we are now filtering on `%Identity%`.
 
-Create `TestList.goal` in the `tests` folder:
+Create `TestTasks.goal` in the `tests` folder:
 
 ```plang
-TestList
+TestTasks
 - get http://localhost:8080/api/list
     write to %todos%
 - write out %todos%
 ```
 
-Execute the `TestList.goal` file:
-
-- In VS Code, You already started the webserver in Step 5, so we need to use the terminal. Create New Terminal from the Terminal menu, navigate to you Todo folder.
-- In the terminal, run:
+- Press F5 in VS Code, in the prompt window type in `TestTasks` and press enter.
+- Or if you prefer terminal:
 
     ```bash
-    plang exec test/TestList
+    plang exec test/TestTasks
     ```
 
-## Next tutorial
-- If you are running on a Windows machine (sorry, only Windows for now), let's change the web service [into a desktop app](./Todo_UI.md)
+## Next Steps
+
+- If you are running on a Windows machine, let's change the web service [into a desktop app](./Todo_UI.md).
 - Else, [learn how you can rethink](./todo_new_approch.md) how you make apps, making the computer adapt to the user.
 
-Happy coding with `plang`!
+Check out some more [Examples](https://github.com/PLangHQ/plang/tree/main/Tests) or other [Apps written by others](https://github.com/PLangHQ/apps) to start learning. It is all open source, and you can view all the code.

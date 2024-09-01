@@ -81,11 +81,11 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\builder\\events",
   "RelativePrPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals\\ShowMissingGoals\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals\\ShowMissingGoals",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "0a3800fb116858e32e88c08274c8c3672090d0d0ff0d8afd3fc9761833a926f3",
+  "Hash": "1001e68a9db4097c66711ec4e73d20e14a50b6bc09714b2dabb20325ea6d88de",
   "IncomingVariablesRequired": [
     "missingGoals"
   ]

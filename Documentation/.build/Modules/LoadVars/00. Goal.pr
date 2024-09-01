@@ -495,11 +495,11 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\LoadVars\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\LoadVars",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "0f17738c57b29f54a30f87c60a097d277cbdad4555d16e39e257ee5e103025a6",
+  "Hash": "35b0fefec11f74c305086e6d6673073f35c7ca36ed01454c429cb2d44e9742ad",
   "IncomingVariablesRequired": [
     "module.moduleName",
     "module.namespace"

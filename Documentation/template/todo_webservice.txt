@@ -2,8 +2,16 @@
 ## Todo webservice
 Lets create the Todo web service. 
 
-You can also watch it in [this video](https://www.youtube.com/watch?v=abew4btk34). There might be some insights that are not in the written guide.
+You can also watch it in [this video](https://www.youtube.com/watch?v=m4QC19btS_I&list=PLbm1UMZKMaqfT4tqPtr-vhxMs4JGGFVEB&index=1). There might be some insights that are not in the written guide.
 There might be some insights that are not in the written guide.
+
+what you learn
+- how to start webserver
+- how to setup API
+- how create table
+- how to insert into table
+- how to create test
+
 
 1. create folder Todo, at the location of your choosing, I like c:\apps\Todo
 2. Create Setup.goal
@@ -83,3 +91,5 @@ Create file GetList.goal in `test`
     ```bash
     plang exec test/GetList
     ```
+
+Next step, how to add LLM to your app (./Todo_Llm.md)

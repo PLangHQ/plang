@@ -5,4 +5,18 @@ Then install the Visual Code extension can be found at
 https://marketplace.visualstudio.com/items?itemName=PlangHQ.plang-extension
 
 it allows you to debug your code.
-screenshot of plugin https://raw.githubusercontent.com/PLangHQ/plang.vscodeextension/main/screenshot.jpg
+
+
+screenshots of plugin
+
+IDE
+https://raw.githubusercontent.com/PLangHQ/plang.vscodeextension/main/IDE.png
+
+Variable view in debug mode
+https://github.com/PLangHQ/plang.vscodeextension/raw/main/variable_view.png
+
+Debug mode, doing step by step through code
+https://github.com/PLangHQ/plang.vscodeextension/raw/main/Debugger.png
+
+Detail information about the step, what code is actually executing
+https://github.com/PLangHQ/plang.vscodeextension/raw/main/functionDetails.png

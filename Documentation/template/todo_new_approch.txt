@@ -4,6 +4,13 @@ Lets rethink how we are doing the todo app. (and for all apps in general)
 
 Lets look at how we create a todo list in the real world. We take pen and paper, and start writing down. This is natural to us. 
 
+## Video
+https://www.youtube.com/watch?v=0hSfGJYCBf8&list=PLbm1UMZKMaqfT4tqPtr-vhxMs4JGGFVEB&index=5
+
+## You will learn:
+- how we can start to rething how we design the user experience. How the computer adjusts to the user and not user to computer
+
+
 So lets do that.
 
 Lets create a new folder `llm`, in there create `system.txt`, this is going to make simpler for us to change system commands to the llm without constantly rebuilding the code
@@ -56,4 +63,26 @@ TestNewTask
     write to %result%
 - write out %result%
 ```
+
+# What is this new approach, I didn't notice (LLM instruction: make this detailed to the point, emphazise on the ux change, as it is breakthrough)
+
+Think about how you do todos list in the phycical world, you take paper and pen and write it down, you dont structure it to well
+
+In todays software we structure the UX with forms, where user inputs his data. This is important because the software needs structure data. 
+
+What we did in this tutorial eliminates the form setup, changing completely how we interact with our software. The computer adjusts to the user, and the user does not have to adjust (by filling into forms) to the computer. 
+
+Computers should adjust to the user, not the other way around
+
+## Next steps
+You are now graduated, you can now start writing your own apps
+
+To get ideas how to do things
+How do I know how to build my steps(./modules/README.md)
+Check out some more [Examples](https://github.com/PLangHQ/plang/tree/main/Tests) 
+[Apps written by others](https://github.com/PLangHQ/apps) to start learning. 
+
+
+
+It is all open source and you can view all the code.
 

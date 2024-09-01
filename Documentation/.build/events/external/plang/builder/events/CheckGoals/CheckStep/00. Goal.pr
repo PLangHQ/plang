@@ -81,11 +81,11 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\builder\\events",
   "RelativePrPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals\\CheckStep\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals\\CheckStep",
-  "BuilderVersion": "0.1.0.14",
+  "BuilderVersion": "0.1.15.1",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "3f47eb7f8b70ba1acb6e0ac9ec606195ff4eaf21ad8c98f30cd54ecaa9d3e453",
+  "Hash": "6fd5a955f3fa6b6c60dd823b65ca068bc60911595095a6249fdd1cc573d0d87e",
   "IncomingVariablesRequired": [
     "%step.ModuleType%"
   ]

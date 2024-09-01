@@ -1,129 +1,107 @@
-# Todo with LLM Integration
+﻿# Todo Window App with LLM
 
-This guide will walk you through the process of enhancing a Todo web service by integrating LLM (Language Learning Model) capabilities. We'll also cover how to modify the database schema and introduce the concept of "run and forget" for asynchronous operations in plang.
+In this tutorial, we will enhance our previous Todo app by integrating a Language Learning Model (LLM). This will allow us to automate the categorization of tasks, making the user experience more seamless and efficient.
 
-## What we want to do
+## What You Will Learn
 
-What we we want is to categorize the tasks in the todo list. Since we have the power of LLM in the language, lets use it to categories the task for us. Saving us the very precious time of selecting a category.
+- How to use LLM in Plang
+- Modifying the database to add new columns
+- Implementing "run and forget" functionality
+- Focusing the builder on specific modules, such as [llm]
 
-## What will be covered
-In this tutorial we will cover the basics for working with plang. This includes.
+## Video of Tutorial
 
-- Modify database
-- Call a goal
-- Use LLM
-- Run and forget
-- Update database record
+[![Tutorial Video](https://img.youtube.com/vi/pzgT_uNNNrE/hqdefault.jpg)](https://www.youtube.com/watch?v=pzgT_uNNNrE&list=PLbm1UMZKMaqfT4tqPtr-vhxMs4JGGFVEB&index=2)
 
+## Step 1: Change Setup.goal
 
-## 1. Update `Setup.goal`
+*You will learn how to add a column to an existing table.*
 
-Let's add a new column to your `Todos` table, you need to modify the `Setup.goal` file. 
+Add the following step to your `Setup.goal` file:
 
-Add the following line into `Setup.goal`
+```plang
+- add column 'category' to tbl 'Todos'
+```
 
-> Cost estimate $0.03
-
-
-
-
-The `Setup.goal` file will look like this
+After adding it, your `Setup.goal` file should look like this:
 
 ```plang
 Setup
 - create table Todos 
     columns:    task(string, not null), due_date(datetime, not null), 
                 completed(bool, false), created(datetime, now)
-- add column 'category' to tbl 'Todos'
+- add column 'category' to tbl 'Todos'                
 ```
 
-By adding the `- add column 'category' to tbl 'Todos'` step, you instruct plang to update the database schema to include a new column named 'category'.
+This code adds a new column named 'category' to the existing 'Todos' table, allowing us to store the category of each task.
 
-Before you continue, run this
-```bash
-plang exec Setup
-```
+## Step 2: Change NewTask.goal
 
-## 2. Modify `NewTask.goal`
+We want to categorize tasks automatically using LLM to simplify the user experience. Modify `NewTask.goal` as follows:
 
-> Cost estimated: $0.08
-
-To categorize tasks automatically using LLM, you'll need to adjust the `NewTask.goal` file. 
-
-Here's the updated code:
 ```plang
 NewTask
-- make sure that %request.task% and %request.due_date% is not empty, throw error
-- insert into Todos %request.task%, %request.due_date%, write to %id%
+- if %task% or %due_date% is empty, throw error
+- insert into Todos, %task%, %due_date%, write to %id%
 - call !Categorize, dont wait
-- write out %id%
+- call !Todos
 
 Categorize
-- [llm] system: categories the user input by 3 categories, 'Work', "Home", 'Hobby'
-    user: %request.task%
+- [llm]: system: categories the user input by 3 categories, 'Work', "home", 'hobby'
+    user: %task%
     scheme: {category:string}
-- update table Todos, set %category% where %id%
+- update table tasks, set %category% where %id%
 ```
 
-#### Explanation
+### Explanation
 
-- The `call !Categorize, dont wait` step is an example of the "run and forget" pattern. It tells plang to call the `!Categorize` goal but not to wait for its completion. This is useful when the operation (like LLM processing) might take a few seconds, and you don't want to delay the user's workflow.
-- The `[llm]` tag in the `system:` step indicates that this step should utilize the LLM module. It's helpfull for the plang builder, not necesary.
-- The `scheme` keyword within the llm step defines the expected structure of the LLM's response. In this case, it expects a string value for `category`. The returned structure is automatically converted into variables, allowing you to use `%category%` in the subsequent step.
-- If you need a structured response from LLM, the `scheme` is essential. It's a powerful feature that ensures the LLM's output matches the expected format.
-- For more information on how to use the LLM module in plang, please refer to the LLM Module documentation: [PLang.Modules.LlmModule.md](./modules/PLang.Modules.LlmModule.md).
+- `call !Categorize, dont wait`: This instructs Plang not to wait for the response from the `!Categorize` goal, allowing the app to continue running while the LLM processes the task categorization.
+- `[llm]`: This indicates to Plang that the LLM module should be used. It helps the language detect which module to use.
+- `scheme`: This forces the LLM to return a specific structure, which is automatically loaded as a variable. In this case, `%category%` is used in the next step to update the task's category.
 
-### Start server
+For more on LLM, check out the [LlmModule documentation](./modules/PLang.Modules.LlmModule.md).
 
-Let's build and start the webserver
+## Step 3: Test the API Endpoints
 
-```bash
-plang exec
-```
-
-### Test the API Endpoints
-
-> Cost estimated: $0.025
-
-Lets modify our `TestNewTask.goal` file (just change the task text)
-
-- Modify `TestNewTask.goal` file in the `test` directory with the following code:
-
-    ```plang
-    TestNewTask
-    - post http://localhost:8080/api/NewTask
-        {
-            "task":"Buy some Lego",
-            "due_date": "%Now+2days%"
-        }
-        write to %result%
-    - write out %result%
-    ```
-
-Then, execute the `TestNewTask.goal` file:
-
-- Press F5 in VS Code, in the prompt window type in `TestNewTask` and press enter
-- or if you prefer terminal
-
-    ```bash
-    plang exec test/TestNewTask
-    ```
-
-Now if you open the http://localhost:8080/api/List, you should see that your new task has a category.
-
-Alternatively, you can test the API endpoints using your favorite REST client.
+You can test the API endpoints using your favorite REST client.
 
 To create a new task, send a POST request to `http://localhost:8080/api/newtask` with the following JSON body:
 
 ```json
 {
     "task":"Buy some Lego",
-    "due_date": "2023-12-27"
+    "due_date": "2023-27-12"
 }    
 ```
 
-# Next tutorials
+Now, if you open `http://localhost:8080/api/List`, you should see that your new task has a category.
 
+### Using Plang to Test
 
-- Learn how to use [%Identity% in plang](./Todo_Identity.md), instead of username & password.
+Modify your `TestNewTask.goal` file in the `test` directory with the following code:
 
+```plang
+TestNewTask
+- post http://localhost:8080/api/newtask
+    {
+        "task":"Buy some Lego",
+        "due_date": "2023-27-12"
+    }
+    write to %result%
+- write out %result%
+```
+
+Then, execute the `TestNewTask.goal` file:
+
+- Press F5 in VS Code, type `TestNewTask` in the prompt window, and press enter.
+- Or, if you prefer the terminal:
+
+    ```bash
+    plang exec test/TestNewTask
+    ```
+
+After execution, open `http://localhost:8080/api/List` to see that your new task has a category.
+
+## Next Steps
+
+Learn how to add `%Identity%` to your app by following the [next tutorial](./Todo_Identity.md).

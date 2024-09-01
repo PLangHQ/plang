@@ -1,15 +1,24 @@
 
+
+
 ## Add `%Identity%` to our Todo web service
 Lets change the previous todo web service to use %Identity%
 
 The `%Identity%` allows us to show only those tasks that belong to a specific user.
 This demostrates how to use the built in %Identity% variable
- 
+
+## What is `%Identity%`
+very short: it is like your `user_id` in the system. more for understanding it read [what is %Identity%](./Identity.md)
+
+## Video of tutorial
+https://www.youtube.com/watch?v=0FYqllGVOQU&list=PLbm1UMZKMaqfT4tqPtr-vhxMs4JGGFVEB&index=4
+
 # Prereq
-You need to understand [what is %Identity%](./Identity.md)
+
 You should have gone through prev. tutorials to have the .goal files, start [previous tutorials](./Todo_webservice.md)
 
 1. Change Setup.goal
+
 Add the following step your Setup.goal file
 ```
 - add column 'Identity' to tbl 'Todos'
@@ -25,16 +34,23 @@ Setup
 ```
 
 2. Make sure `%Identity%` is not empty
+
+*You will learn how to use Events(./Events.md) and the power they give you to make your app simple and flexible*
+
 - Create a folder `events` in root of Todos
 - Create a file `Events.goal` in `events` folder
 
 ```plang
 Events
-- if %Identity% is empty, call !ShowError
+- before any api/*, call CheckIdentity
 
 ShowError
-- write out error 'You need to sign the request'
+- if %Identity% is empty then
+    - write out error 'You need to sign the request'
 ```
+
+Now you have authentication solved for your program, in 3 lines of code
+
 
 3. Change NewTask.goal
 Let's add `%Identity%` into the insert statement
@@ -54,6 +70,9 @@ Categorize
 - update table tasks, set %category% where %id%
 ```
 
+we added `%Identity%` into the `- insert into ...` statement
+
+
 4. Change `List.goal`
 Lets filter on the %Identity% when selecting the list
 
@@ -62,6 +81,8 @@ List
 - select everything from Todos where %Identity%, write to %todos%
 - write out %todos%
 ```
+
+we added a `where` statement to the `- select everything...` step, where we are filtering out by your `%Identity%`
 
 5. Test creating new Task
 
@@ -113,4 +134,7 @@ Create `TestTasks.goal` in the `tests` folder
     plang exec test/TestTasks
     ```    
 
-Check out some more [Examples](https://github.com/PLangHQ/plang/tree/main/Tests) or other [Apps written by others](https://github.com/PLangHQ/apps) to start learning. It is all open source and you can view all the code.
+Next steps
+
+- If you are running on a Windows machine (sorry, only Windows for now), let's change the web service [into a desktop app](./Todo_UI.md)
+- Else, [learn how you can rethink](./todo_new_approch.md) how you make apps, making the computer adapt to the user

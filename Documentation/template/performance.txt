@@ -2,10 +2,40 @@ Plang is slow, lets admit that
 Plang runs everything using Reflections
 how variables in Plang are access and set is not so fast
 
-Here comes the but....
+Here comes the but.... It doesnt really matter
 
-It has not been optimized in any way
-so reflection and the variable handling can be sped up multiple times
-It will most likely get close to native c# speed, give us time
+So how doesn't it matter. Well Plang is not meant to write algroithms, looping through thousands of items. This is best done with regular operating languages.
 
-the language also isn't maybe for something that requires massive speed, it is automating things for you, something that a human takes minutes or hours to, that means that extra milliseconds dont really matter
+Plang is great for business app, such as web services, SaaS, desktop apps, or even scripts
+
+The simplified code that Plang allows you to write makes code simpler, fewer lines to execute. Lets take this example for a api request to get user info. Let's imagine you have the file `/api/GetUserInfo.goal`
+
+```plang
+GetUserInfo
+- select id, name, email, address, zip from users where id=%userId%, write to %user%
+- write out %user%
+```
+
+The code is simple, and it run just what it should.
+
+
+you will also use Plang for things that dont require massive speed, e.g. it is automating things for you, something that a human takes minutes or hours to, that means that extra milliseconds dont really matter
+
+Often you are using plang for slow things, where the "slowness" of the language becomes neglative, lets see example:
+
+```plang
+AskAI
+- [llm] system: What is the sentiment of the user
+    user: %user%
+    scheme: {sentiment:"positive"|"neutral"|"negative"}
+    write to %answer%
+- write out %answer%
+```
+
+Here the llm, is going to take much much longer to respond and the extra 10ms that the language cost is neglatable.
+
+On other front, it's good to know that
+
+Plang has not been optimized in any way, reflection and the variable handling can be sped up multiple times
+Plang will likely get pretty close to native c# speed, give it time
+

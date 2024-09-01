@@ -1,100 +1,112 @@
-# Time Management in plang
+﻿# Time Handling in Plang
 
-Managing time effectively is crucial in software development, and plang provides a powerful yet simple way to handle time through the reserved keyword `%Now%` and `%NowUTC%`. This keyword represents the current time and in UTC, mirroring the C# `DateTime.Now` and `DateTime.UtcNow` object, and allows developers to perform various time-related operations with ease.
+In Plang, time can be accessed and manipulated using specific syntax that leverages the underlying C# `DateTime` object. This documentation will guide you through accessing the current time, modifying time values, and utilizing various `DateTime` methods and properties.
 
 ## Accessing Current Time
 
-To access the current time in plang, use the reserved keyword `%Now%`. This keyword is directly linked to the C# `DateTime.Now` object and can be used as shown below:
+In Plang, `%Now%` is a reserved keyword that represents the current date and time, equivalent to the C# object `DateTime.Now`. Similarly, `%NowUtc%` corresponds to `DateTime.UtcNow`.
+
+### Example
 
 ```plang
--  %Now%
-- %NowUtc%
+Start
+- write out %Now%
 ```
 
-## Setting a Specific Time
+This will output the current date and time based on the system's local settings.
 
-You can set a specific time in plang by assigning a date and time string to the `%Now%` keyword. The syntax for setting time is as follows:
+## Setting Specific Dates and Times
+
+You can set specific dates and times using the `SetTime` goal. This allows you to define past or future dates and times.
+
+### Example
 
 ```plang
-Set time
-    - %Now=2000-12-31%
-    - %Now=2000-12-31T24:30:45%
+SetTime
+- set %pastDate% = %Now=2000-12-31%
+- set %pastTime% = %Now=2000-12-31T24:30:45%
 ```
 
-The first line sets the date, while the second line includes both the date and time.
+In this example, `%pastDate%` is set to December 31, 2000, and `%pastTime%` is set to a specific time on that date.
 
 ## Modifying Time
 
-plang allows you to modify the current time by adding or subtracting time units. Here's how you can do it:
+Plang allows you to easily modify time values by adding or subtracting time intervals.
+
+### Example
 
 ```plang
-- %Now+1day%       // Adds one day to the current time
-- %Now+115ms%      // Adds 115 milliseconds to the current time
-- %Now+5years%     // Adds five years to the current time
-- %Now-2days%      // Subtracts two days from the current time
-- %Now-53secs%     // Subtracts 53 seconds from the current time
-- %Now-15years%    // Subtracts fifteen years from the current time
+Modify
+- set %oneDay% = %Now+1day%
+- set %ms% = %Now+115ms%
+- set %5years% = %Now+5years%
+- set %2daysAgo% = %Now-2days%
+- set %53secAgo% = %Now-53secs%
+- set %15yearsAgo% = %Now-15years%
 ```
 
-## Utilizing DateTime Methods and Properties
+In this example, various time modifications are performed, such as adding days, milliseconds, and years, or subtracting days, seconds, and years from the current time.
 
-Developers can use all the methods and properties from the `DateTime` class in their plang code. The official documentation for `DateTime` is available at [Microsoft Docs](https://learn.microsoft.com/en-us/dotnet/api/system.datetime?view=net-8.0).
+## Working with DateTime Methods and Properties
 
-### Commonly Used Properties and Methods
+Developers can use all methods and properties from the C# `DateTime` class. For a comprehensive list, refer to the [Microsoft documentation](https://learn.microsoft.com/en-us/dotnet/api/system.datetime?view=net-8.0).
 
-Here are examples of commonly used `DateTime` properties and methods in plang, with the exception of `.Now` and `.UtcNow`:
+### Common Properties and Methods
 
-#### AddYears Method
+- **AddYears(int years)**: Adds a specified number of years to the current date.
+- **DayOfWeek**: Gets the day of the week represented by the current date.
 
-This method adds a specified number of years to the date.
+### Example
 
 ```plang
 WorkWithNow
 - set variable %futureDate% to %Now.AddYears(1)%
-```
-
-#### DayOfWeek Property
-
-This property retrieves the day of the week represented by the current `DateTime`.
-
-```plang
-WorkWithNow
 - set variable %dayOfWeek% to %Now.DayOfWeek%
 ```
 
-## Formatting DateTime with ToString
+In this example, `%futureDate%` is set to one year from the current date, and `%dayOfWeek%` retrieves the current day of the week.
 
-The `ToString` method converts the value of the current `DateTime` object to its equivalent string representation. The format follows the culture set on the device, which can be changed using the following plang code:
+## Formatting Dates and Times
 
-```plang
-ChangeCulture
-- set culture to is-IS
-```
+The `ToString(string)` method allows you to format dates and times according to specific patterns. The format follows the culture set on the device, which can be changed if needed.
 
-Here are various string formats you can use with the `ToString` method:
+### Example
 
 ```plang
-- write out %Now.ToString("d")%       // 6/15/2008
-- write out %Now.ToString("D")%       // Sunday, June 15, 2008
-- write out %Now.ToString("f")%       // Sunday, June 15, 2008 9:15 PM
-- write out %Now.ToString("F")%       // Sunday, June 15, 2008 9:15:07 PM
-- write out %Now.ToString("g")%       // 6/15/2008 9:15 PM
-- write out %Now.ToString("G")%       // 6/15/2008 9:15:07 PM
-- write out %Now.ToString("m")%       // June 15
-- write out %Now.ToString("o")%       // 2008-06-15T21:15:07.0000000
-- write out %Now.ToString("R")%       // Sun, 15 Jun 2008 21:15:07 GMT
-- write out %Now.ToString("s")%       // 2008-06-15T21:15:07
-- write out %Now.ToString("t")%       // 9:15 PM
-- write out %Now.ToString("T")%       // 9:15:07 PM
-- write out %Now.ToString("u")%       // 2008-06-15 21:15:07Z
-- write out %Now.ToString("U")%       // Monday, June 16, 2008 4:15:07 AM
-- write out %Now.ToString("y")%       // June, 2008
-- write out %Now.ToString("'h:mm:ss.ff t'")% // 9:15:07.00 P
-- write out %Now.ToString("'d MMM yyyy'")%   // 15 Jun 2008
-- write out %Now.ToString("'HH:mm:ss.f'")%   // 21:15:07.0
-- write out %Now.ToString("'dd MMM HH:mm:ss'")% // 15 Jun 21:15:07
-- write out %Now.ToString("'\\Mon\\t\\h\\: M'")% // Month: 6
-- write out %Now.ToString("'HH:mm:ss.ffffzzz'")% // 21:15:07.0000-07:00
+Start
+- write out %Now.ToString("d")%
 ```
 
-By using `%Now%` and the various methods and properties of the `DateTime` class, plang developers have a comprehensive toolkit for managing and formatting time in their applications.
+This will print the date in the short date pattern format. Here are some common format specifiers:
+
+- `d`: Short date pattern (e.g., 6/15/2008)
+- `D`: Long date pattern (e.g., Sunday, June 15, 2008)
+- `f`: Full date/time pattern (short time) (e.g., Sunday, June 15, 2008 9:15 PM)
+- `F`: Full date/time pattern (long time) (e.g., Sunday, June 15, 2008 9:15:07 PM)
+- `g`: General date/time pattern (short time) (e.g., 6/15/2008 9:15 PM)
+- `G`: General date/time pattern (long time) (e.g., 6/15/2008 9:15:07 PM)
+- `m`: Month day pattern (e.g., June 15)
+- `o`: Round-trip date/time pattern (e.g., 2008-06-15T21:15:07.0000000)
+- `R`: RFC1123 pattern (e.g., Sun, 15 Jun 2008 21:15:07 GMT)
+- `s`: Sortable date/time pattern (e.g., 2008-06-15T21:15:07)
+- `t`: Short time pattern (e.g., 9:15 PM)
+- `T`: Long time pattern (e.g., 9:15:07 PM)
+- `u`: Universal sortable date/time pattern (e.g., 2008-06-15 21:15:07Z)
+- `U`: Universal full date/time pattern (e.g., Monday, June 16, 2008 4:15:07 AM)
+- `y`: Year month pattern (e.g., June, 2008)
+
+### Changing Culture
+
+If the date and time format does not appear as expected, you may need to change the culture setting.
+
+```plang
+Start
+- set culture to Icelandic
+- write out %Now.ToString("d")%
+```
+
+This will print out '1.12.2024' (is-IS) instead of '12/1/2024' (en-US) if your computer is set to en-US. For more information on culture settings, refer to the [CultureInfo documentation](./modules/README.md#cultureinfo).
+
+## Next Steps
+
+Now that you have an understanding of variables, conditions, loops, and time in Plang, let's start creating an app. Check out the [Todo app documentation](./Todo_webservice.md) to get started.

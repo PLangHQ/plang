@@ -13,12 +13,12 @@
         "Value": [
           {
             "ParameterName": "id",
-            "VariableNameOrValue": "id",
+            "VariableNameOrValue": "%id%",
             "TypeFullName": "System.Int64"
           },
           {
             "ParameterName": "Name",
-            "VariableNameOrValue": "RuntimeLifcycle",
+            "VariableNameOrValue": "RuntimeLifecycle",
             "TypeFullName": "System.String"
           },
           {
@@ -33,7 +33,7 @@
           },
           {
             "ParameterName": "OutputFilename",
-            "VariableNameOrValue": "./RuntimeLifcycle.md",
+            "VariableNameOrValue": "./RuntimeLifecycle.md",
             "TypeFullName": "System.String"
           }
         ]
@@ -41,7 +41,7 @@
     ],
     "ReturnValues": null
   },
-  "Text": "insert into docs Name='RuntimeLifcycle'\n            Guide='template/runtime_lifecycle.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./RuntimeLifcycle.md'",
+  "Text": "insert into docs Name='RuntimeLifecycle'\n            Guide='template/runtime_lifecycle.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./RuntimeLifecycle.md'",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -50,7 +50,7 @@
     "presencePenalty": 0.0,
     "maxLength": 4000,
     "llmResponseType": "json",
-    "scheme": "{\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValues\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}",
+    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\": object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
     "type": "PLang.Modules.DbModule.Builder",
     "promptMessage": [
       {
@@ -58,7 +58,7 @@
         "content": [
           {
             "type": "text",
-            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nInt32 Insert(String sql, List<object>()? SqlParameters = null)  //returns number of rows affected\r\n## csharp function ##\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nSqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.\r\n%Now% variable is type of DateTime. %Now% variable should be injected as SqlParameter \r\nSqlParameters @id MUST be type System.Int64\r\nYou MUST modify the user command by adding id to the sql statement and parameter %id%.\r\nIf table name is a variable, keep the variable in the sql statement\r\nMake sure sql statement matches columns provided for the table.\r\n\r\nYou MUST generate a valid sql statement for SQLite.\r\nYou MUST provide SqlParameters if SQL has @parameter.\r\n"
+            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nInt32 Insert(String sql, List<object>()? SqlParameters = null)  //returns number of rows affected\r\n## csharp function ##\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nSqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.\r\n%Now% variable is type of DateTime. %Now% variable should be injected as SqlParameter \r\nSqlParameters @id MUST be type System.Int64. VariableNameOrValue=%id%\r\nYou MUST modify the user command by adding id to the sql statement and parameter %id%.\r\nIf table name is a variable, keep the variable in the sql statement\r\nMake sure sql statement matches columns provided for the table.\r\n\r\nYou MUST generate a valid sql statement for SQLite.\r\nYou MUST provide SqlParameters if SQL has @parameter.\r\n"
           },
           {
             "type": "text",
@@ -66,7 +66,7 @@
           },
           {
             "type": "text",
-            "text": "You MUST respond in JSON, scheme:\r\n {\"FunctionName\": string,\n\"Parameters\": [{\"Type\": string,\n\"Name\": string,\n\"Value\": object}],\n\"ReturnValues\"?: [{\"Type\": string,\n\"VariableName\": string}] = null}"
+            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\": object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
           }
         ]
       },
@@ -88,14 +88,14 @@
         "content": [
           {
             "type": "text",
-            "text": "insert into docs Name='RuntimeLifcycle'\n            Guide='template/runtime_lifecycle.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./RuntimeLifcycle.md'"
+            "text": "insert into docs Name='RuntimeLifecycle'\n            Guide='template/runtime_lifecycle.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./RuntimeLifecycle.md'"
           }
         ]
       }
     ],
     "model": "gpt-4o-2024-08-06",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"Insert\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"string\",\n\t\t\"Name\": \"sql\",\n\t\t\"Value\": \"insert into docs (id, Name, Guide, System, OutputFilename) values (@id, @Name, @Guide, @System, @OutputFilename)\"\n\t}, {\n\t\t\"Type\": \"List<object>\",\n\t\t\"Name\": \"SqlParameters\",\n\t\t\"Value\": [{\n\t\t\t\"ParameterName\": \"id\",\n\t\t\t\"VariableNameOrValue\": \"%id%\",\n\t\t\t\"TypeFullName\": \"System.Int64\"\n\t\t}, {\n\t\t\t\"ParameterName\": \"Name\",\n\t\t\t\"VariableNameOrValue\": \"RuntimeLifecycle\",\n\t\t\t\"TypeFullName\": \"System.String\"\n\t\t}, {\n\t\t\t\"ParameterName\": \"Guide\",\n\t\t\t\"VariableNameOrValue\": \"template/runtime_lifecycle.txt\",\n\t\t\t\"TypeFullName\": \"System.String\"\n\t\t}, {\n\t\t\t\"ParameterName\": \"System\",\n\t\t\t\"VariableNameOrValue\": \"template/guidance/teacher.txt\",\n\t\t\t\"TypeFullName\": \"System.String\"\n\t\t}, {\n\t\t\t\"ParameterName\": \"OutputFilename\",\n\t\t\t\"VariableNameOrValue\": \"./RuntimeLifecycle.md\",\n\t\t\t\"TypeFullName\": \"System.String\"\n\t\t}]\n\t}]\n}\n```"
   },
   "RunOnBuild": false
 }
