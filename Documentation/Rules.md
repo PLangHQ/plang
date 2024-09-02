@@ -13,7 +13,7 @@ Welcome to the documentation for the Plang programming language. This guide will
 ### Steps
 - **Step Definition**: Each step in a goal is a line starting with a dash (`-`). Steps can span multiple lines, provided that continuation lines are indented.
 - **Intent Description**: Steps should clearly describe the intended action in simple terms.
-- **Comments**: Lines starting with a dash followed by a slash (`-/`) are comments, e.g., `-/ this is a comment`.
+- **Comments**: Lines starting with a slash (`/`) are comments, e.g., `/ this is a comment`.
 
 ### Variables
 - **Syntax**: Variables are enclosed in percentage signs (`%`), e.g., `%name%`, `%user.email%`. For more details, refer to the [Variables documentation](./Variables.md).
