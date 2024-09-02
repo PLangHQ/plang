@@ -172,9 +172,7 @@ Always generate fully implemented javascript code
 
 			List<Parameter> parameters = new List<Parameter>();
 
-			var wrapper = new PlangVarHtmlWrapper();
-			//string? html = wrapper.WrapHtml(uiResponse.html);
-
+			
 			if (uiResponse.html != null) parameters.Add(new Parameter("string", "html", uiResponse.html));
 			if (uiResponse.css != null) parameters.Add(new Parameter("string", "css", uiResponse.css));
 			if (uiResponse.javascript != null) parameters.Add(new Parameter("string", "javascript", uiResponse.javascript));

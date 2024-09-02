@@ -1,10 +1,12 @@
 ﻿using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
+using PLang.Utils;
 using RazorEngineCore;
 using Scriban;
 using Scriban.Syntax;
 using System.Dynamic;
+using System.Text.RegularExpressions;
 
 namespace PLang.Modules.TemplateEngineModule
 {
