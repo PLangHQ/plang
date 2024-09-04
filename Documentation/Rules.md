@@ -25,7 +25,7 @@ Welcome to the documentation for the Plang programming language. This guide will
 - **Calling Goals**: You can call other goals using the syntax `- call goal XXX`.
 
 ### Loops
-- **Looping Through Items**: Developers can loop through items and call goals using the syntax `- go through %list%, call ProcessItem`. For more details, refer to the [Loop documentation](./Loop.md).
+- **Looping Through Items**: Developers can loop through items and call goals using the syntax `- go through %list%, call ProcessItem`. For more details, refer to the [Loop documentation](./Loops.md).
 
 ### Time Access
 - **Current Date & Time**: Use `%Now%` and `%NowUtc%` to access the current date and time. More information is available in the [Time documentation](./Time.md).
