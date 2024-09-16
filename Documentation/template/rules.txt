@@ -16,7 +16,7 @@ Following are the rules of plang programming language
 - if statement can have indented steps, they are indented by 4 characters or tab
 - steps cannot start with `- else` or `- else if`, call goal when needing if and else (./Conditions.md)
 - user can call other goals `- call goal XXX`
-- deveoploer can loop through item(s) and call goal, `- go through %list%, call ProcessItem`(./Loop.md)
+- deveoploer can loop through item(s) and call goal, `- go through %list%, call ProcessItem`(./Loops.md)
 - %Now% and %NowUtc% gives you access to current date & time(./Time.md)
 - [...] indicates to build to focus on specific module to build the step, e.g. [llm] uses LlmModule
 - \ is escape character for %, e.g. \%ThisWillNotBeVariable\%

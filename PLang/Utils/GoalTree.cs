@@ -2,12 +2,17 @@
 
 namespace PLang.Utils
 {
+
+
+
 	public class GoalTree<T>
 	{
 		public string Value { get; set; }
 		public int Indent { get; }
 		public int Index { get; set; }
 		public int Depth { get; set; }
+		public string GoalHash { get; set; }
+		public string StepHash { get; set; }
 		public bool IsRendered { get; set; }
 		public GoalTree<T>? Parent { get; set; }
 		public GoalTree<T> Current { get; set; }
@@ -60,20 +65,23 @@ namespace PLang.Utils
 				if (parent == null || parent.IsRendered) continue;
 				var children = parent.Children;
 
-				var matches = Regex.Matches(parent.Value, $"{{{{ ChildrenElements\\d+ }}}}");
+				var matches = Regex.Matches(parent.Value, $"{{{{ ChildElement\\d+ }}}}");
 				if (matches.Count == children.Count)
 				{
 					for (int i=0;i<children.Count;i++)
 					{
-						var str = parent.Value.ToString().Replace(matches[i].Value, children[i].Value);
-						parent.Value = str;
+						var content = SetId(children[i].StepHash, children[i].Value);
+						parent.Value = parent.Value.ToString().Replace(matches[i].Value, content);
+						
 					}
+					parent.Value = SetId(parent.GoalHash, parent.Value, "goal");
 				} else if (matches.Count > 0)
 				{
 					string collected = "";
 					foreach (var child in children)
 					{
-						collected += child.Value;
+						var content = SetId(child.StepHash, child.Value);
+						collected += content;
 					}
 
 					var str = parent.Value.ToString().Replace(matches[0].Value, collected);
@@ -81,18 +89,25 @@ namespace PLang.Utils
 					{
 						str = str.Replace(matches[i].Value, "");
 					}
-					parent.Value = str;
+					parent.Value = SetId(children[0].GoalHash, str, "goal");
 				}
 				else
 				{
+					string content = "";
 					foreach (var child in children)
 					{
-						parent.Value += child.Value;
+						content += SetId(child.StepHash, child.Value);
 					}
+					parent.Value += SetId(children[0].GoalHash, content, "goal");
 				}
 				parent.IsRendered = true;
 			}
-			return this.Value;
+
+			string html = SetId(this.GoalHash, this.Value, "goal");
+
+			return html;
+
+
 			/*
 			StringBuilder sb = new StringBuilder();
 			TraverseFromDeepest(node => {
@@ -117,6 +132,28 @@ namespace PLang.Utils
 				
 			});
 			return sb.ToString();*/
+		}
+
+		public string SetId(string id, string html, string section = "step")
+		{
+			/*if (section == "goal")
+			{
+				return $@"<plang id=""{id}"">{html}</plang>";
+			}*/
+
+			int idx = html.IndexOf("<");
+			if (idx == -1) return html;
+
+			int endIdx = html.IndexOf('>', idx);
+			if (endIdx == -1)
+			{
+				return html;
+			}
+			string newTag = html.Substring(idx, endIdx - idx + 1);
+			string newTagWithAttribute = newTag.Insert(newTag.Length - 1, $" plang-{section}-id=\"{id}\"");
+
+			// Reconstruct the HTML string with the new tag
+			return html.Substring(0, idx) + newTagWithAttribute + html.Substring(endIdx + 1);
 		}
 
 	}

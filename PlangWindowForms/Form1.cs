@@ -1,13 +1,18 @@
 using LightInject;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.Web.WebView2.Core;
 using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang;
 using PLang.Container;
+using PLang.Errors;
+using PLang.Events;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
+using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Utils;
 using PLangWindowForms;
@@ -15,8 +20,12 @@ using Scriban;
 using Scriban.Syntax;
 using System.Dynamic;
 using System.IO.Abstractions;
+using System.Security.Policy;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Web;
 using static PLang.Executor;
+using static PLang.Modules.UiModule.Program;
 
 namespace PlangWindowForms
 {
@@ -55,17 +64,17 @@ namespace PlangWindowForms
 
 		}
 
+
 		private void InitializeWebView()
 		{
 			this.webView = new Microsoft.Web.WebView2.WinForms.WebView2();
 			this.webView.Dock = System.Windows.Forms.DockStyle.Fill;
 			//this.webView.Source = new Uri("about:blank");
-			this.webView.NavigationStarting += WebView_NavigationStarting;
 			this.Controls.Add(this.webView);
 
 			this.AllowDrop = true;
 			this.DragEnter += new DragEventHandler(Form_DragEnter);
-			SetInitialHtmlContent();
+			
 		}
 		private void Form_DragEnter(object? sender, DragEventArgs e)
 		{
@@ -76,7 +85,7 @@ namespace PlangWindowForms
 		}
 
 		IPseudoRuntime pseudoRuntime;
-		private async Task SetInitialHtmlContent()
+		public async Task SetInitialHtmlContent()
 		{
 			var core = await CoreWebView2Environment.CreateAsync();
 
@@ -99,31 +108,6 @@ namespace PlangWindowForms
 				HandleResourcesRequests(args);
 			};
 
-			string callGoalJs = $@"
-
-			document.addEventListener('submit', function(event) {{
-				if (event.target && event.target.tagName === 'FORM') {{
-					event.preventDefault();
-console.log(event.target);
-					let formData = new FormData(event.target);
-console.log(formData);		
-					let jsonData = {{}};
-					formData.forEach((value, key) => {{ jsonData[key] = value }});
-console.log('json:',jsonData);
-var goalName = event.target.getAttribute('action');
-if (goalName == null) goalName = event.target.getAttribute('hx-post');
-
-					window.chrome.webview.postMessage({{GoalName:goalName, args:jsonData}});
-				}}
-            }}, true);
-
-		 window.callGoal = function(goalName, args) {{
-			console.log('goalName', goalName, 'args', args);
-			window.chrome.webview.postMessage({{GoalName:goalName, args:args}});
-		}}";
-			await webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(callGoalJs);
-
-
 			this.webView.CoreWebView2.WebMessageReceived += async (object? sender, CoreWebView2WebMessageReceivedEventArgs e) =>
 			{
 				await CoreWebView2_WebMessageReceived(sender, e);
@@ -141,49 +125,42 @@ if (goalName == null) goalName = event.target.getAttribute('hx-post');
 
 		public async Task Flush()
 		{
-			// TODO: not happy with this, it should use template engine from container
-			// it should not be getting the tree from context
-			var context = container.GetInstance<PLangAppContext>();
-			var tree = context.GetOrDefault(ReservedKeywords.GoalTree, default(GoalTree<string>));
-			if (tree == null) return;
-
-
-			var stringContent = tree.PrintTree();
-			var html = await CompileAndRun(stringContent);
-
-			context.Remove(ReservedKeywords.GoalTree);
-			if (html == null) return;
-
-			var target = engine.GetMemoryStack().Get<string>("!WebViewTarget");
-			if (target != null)
+			try
 			{
-				await ModifyContent(target, html);
-			}
-			else
+				// TODO: not happy with this, it should use template engine from container
+				// it should not be getting the tree from context
+				var context = container.GetInstance<PLangAppContext>();
+				var tree = context.GetOrDefault(ReservedKeywords.GoalTree, default(GoalTree<string>));
+				if (tree == null) return;
+
+
+				var stringContent = tree.PrintTree();
+				(var html, var error) = await CompileAndRun(stringContent);
+
+				ShowError(error);
+
+
+				context.Remove(ReservedKeywords.GoalTree);
+				if (string.IsNullOrEmpty(html)) return;
+
+				var target = engine.GetMemoryStack().Get<OutputTarget>(ReservedKeywords.OutputTarget);
+				if (target != null)
+				{
+					await ModifyContent(html, target, tree.GoalHash);
+				}
+				else
+				{
+					webView.CoreWebView2.NavigateToString(html);
+				}
+
+				await ListenToVariables();
+			} catch(Exception ex)
 			{
-				webView.CoreWebView2.NavigateToString(html);
+				ShowErrorInDevTools(new Error(ex.Message, Exception: ex));
 			}
 		}
 
 
-
-		private async Task<string> CompileAndRun(object? obj)
-		{
-			var expandoObject = new ExpandoObject() as IDictionary<string, object?>;
-			var templateContext = new TemplateContext();
-			foreach (var kvp in engine.GetMemoryStack().GetMemoryStack())
-			{
-				expandoObject.Add(kvp.Key, kvp.Value.Value);
-
-				var sv = ScriptVariable.Create(kvp.Key, ScriptVariableScope.Global);
-				templateContext.SetValue(sv, kvp.Value.Value);
-			}
-
-			var parsed = Template.Parse(obj.ToString());
-			var result = await parsed.RenderAsync(templateContext);
-
-			return result;
-		}
 
 
 		private async Task CoreWebView2_WebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
@@ -191,40 +168,51 @@ if (goalName == null) goalName = event.target.getAttribute('hx-post');
 			var receivedMessage = e.WebMessageAsJson;
 			if (receivedMessage == "\"{}\"") return;
 
-			var dynamic = JsonConvert.DeserializeObject<dynamic>(receivedMessage);
-
-			var parameters = new Dictionary<string, object>();
-			if (dynamic is string)
+			var jObj = JObject.Parse(receivedMessage);
+			if (jObj.ContainsKey("EventType"))
 			{
-				int i = 0;
+				await HandleEvent(jObj);
 				return;
 			}
-			if (dynamic is JObject jObj)
-			{
-				if (jObj.ContainsKey("args"))
-				{
-					parameters = jObj["args"].ToObject<Dictionary<string, object>>();
-				}
-				else
-				{
-					parameters = jObj.ToObject<Dictionary<string, object>>();
-				}
-				if (parameters == null) parameters = new();
-			}
-			else if (dynamic is JArray jArray)
-			{
 
-				parameters = jArray.ToObject<Dictionary<string, object>>();
-
-				if (parameters == null) parameters = new();
+			var context = engine.GetContext();
+			string outputTargetElement = "body";
+			if (context.TryGetValue(ReservedKeywords.DefaultTargetElement, out object? te) && !string.IsNullOrWhiteSpace(te.ToString()))
+			{
+				outputTargetElement = te.ToString() ?? "body";
 			}
+
+			if (jObj.ContainsKey("target") && !string.IsNullOrEmpty(jObj["target"].ToString()))
+			{
+				outputTargetElement = jObj["target"]?.ToString() ?? outputTargetElement;
+			}
+
+			var parameters = new Dictionary<string, object?>();
+			if (jObj.ContainsKey("args"))
+			{
+				parameters = jObj["args"]?.ToObject<Dictionary<string, object?>?>() ?? new();
+			}
+			else
+			{
+				parameters = jObj.ToObject<Dictionary<string, object?>?>();
+			}
+
 			try
 			{
-
-				parameters.Add("!WebViewTarget", ".uk-container");
+				(string goalName, Dictionary<string, object?>? param) = ParseUrl(jObj["GoalName"].ToString());
+				parameters.Add(ReservedKeywords.OutputTarget, new OutputTarget([outputTargetElement]));
+				if (param != null)
+				{
+					foreach (var p in param)
+					{
+						parameters.AddOrReplace(p.Key, p.Value);
+					}
+				}
 				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
-				await pseudoRuntime.RunGoal(engine, engine.GetContext(), "", dynamic.GoalName.ToString(), parameters);
+				engine.GetMemoryStack().GetMemoryStack().Clear();
+				var goalResult = await pseudoRuntime.RunGoal(engine, engine.GetContext(), "", goalName, parameters);
 
+				ShowErrorInDevTools(goalResult.error);
 			}
 			catch (Exception ex)
 			{
@@ -232,45 +220,53 @@ if (goalName == null) goalName = event.target.getAttribute('hx-post');
 			}
 		}
 
-		// innerHTML - outerHTML - beforebegin - afterbegin - beforeend - afterend
-		public async Task ModifyContent(string cssSelector, string? content, string swapping = "innerHTML")
+
+		public record JsVariable(string name, string goalToCall, Dictionary<string, object?>? parameters);
+		public async Task ListenToVariables()
+		{
+			var variables = engine.GetMemoryStack().GetVariablesWithEvent(VariableEventType.OnChange);
+			List<JsVariable> jsVars = new();
+			foreach (var variable in variables)
+			{
+				var @event = variable.Events.FirstOrDefault(p => p.EventType == VariableEventType.OnChange);
+				if (@event == null) continue;
+
+				jsVars.Add(new JsVariable(variable.Name, @event.goalName, @event.Parameters));
+			}
+			var jsVarsJson = JsonConvert.ToString(JsonConvert.SerializeObject(jsVars));
+
+			await ExecuteCode($@"plangUi.setVariablesToMonitor({jsVarsJson});");
+
+		}
+
+		// elementPosition: replace|replaceOuter|appendTo|afterElement|beforeElement|prependTo|insertAfter|insertBefore
+		public async Task ModifyContent(string content, OutputTarget outputTarget, string id)
 		{
 			string escapedHtmlContent = JsonConvert.ToString(content);
-			string action = $"targetElement.innerHTML = {escapedHtmlContent};";
-			if (swapping == "outerHTML")
-			{
-				action = $"targetElement.outerHTML = {escapedHtmlContent};";
-			}
-			if (swapping == "beforebegin")
-			{
-				action = $"targetElement.outerHTML = {escapedHtmlContent} + targetElement.outerHTML;";
-			}
-			if (swapping == "afterbegin")
-			{
-				action = $"targetElement.innerHTML = {escapedHtmlContent} + targetElement.innerHTML;";
-			}
-			if (swapping == "beforeend")
-			{
-				action = $"targetElement.innerHTML += {escapedHtmlContent};";
-			}
-			if (swapping == "afterend")
-			{
-				action = $"targetElement.outerHTML = targetElement.outerHTML + {escapedHtmlContent};";
-			}
+			
+			string selectors = string.Join(",", outputTarget.cssSelectors);
 
-			string script = $@"
-        var targetElement = document.querySelector('{cssSelector}');
-        if (targetElement) {{
-            {action}
-        }}
-    ";
+			string script = @$"plangUi.insertContent('{outputTarget.elementPosition}', '{id}', '{selectors}', {escapedHtmlContent}, {outputTarget.overwriteIfExists.ToString().ToLower()});";
+
 			SynchronizationContext.Post(async _ =>
 			{
 				//var task = webView.EnsureCoreWebView2Async();
 				//task.Wait();
-				await webView.CoreWebView2.ExecuteScriptAsync(script);
+				string str = await webView.CoreWebView2.ExecuteScriptAsync(@$"(function() {{
+	try {{
+		{script} 
+	}} catch (e) {{ 
+		return e.message;
+    }}
+}})();
+");
+				if (str != "null")
+				{
+					ShowError(new Error(str));
+				}
 			}, null);
 
+			
 		}
 
 		public async Task ExecuteCode(string content)
@@ -282,59 +278,148 @@ if (goalName == null) goalName = event.target.getAttribute('hx-post');
 
 		}
 
-		bool initialLoad = false;
-		private void RenderContent(string html)
-		{
-			var outputStreamFactory = container.GetInstance<IOutputStreamFactory>();
-			var outputStream = outputStreamFactory.CreateHandler();
 
-			var stream = outputStream.Stream;
-			var errorStream = outputStream.ErrorStream;
-			if (html == "Loading...")
+
+		List<FileSystemStream> fileStreams = new List<FileSystemStream>();
+
+		private void CoreWebView2_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
+		{
+			foreach (var fs in fileStreams)
 			{
-				if (initialLoad) return;
-				initialLoad = true;
+				fs.Close();
+			}
+			fileStreams.Clear();
+		}
+
+		private void CoreWebView2_ContentLoading(object? sender, CoreWebView2ContentLoadingEventArgs e)
+		{
+			int i = 0;
+		}
+
+		private void CoreWebView2_WebResourceResponseReceived(object? sender, CoreWebView2WebResourceResponseReceivedEventArgs e)
+		{
+			int i = 0;
+		}
+
+		private void CoreWebView2_NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
+		{
+			int i = 0;
+		}
+
+		private string EscapeChars(string? content)
+		{
+			if (content == null) return "";
+
+			return content.Replace("\\", "\\\\") // Escape backslashes
+								.Replace("'", "\\'")   // Escape single quotes
+								.Replace("\n", "\\n")  // Escape new lines
+								.Replace("\r", "\\r");
+		}
+
+
+		public void SetSize(int width, int height)
+		{
+			this.Size = new Size(width, height);
+
+		}
+
+		public void SetIcon(string? iconPath)
+		{
+			if (iconPath == null) return;
+			this.Icon = Icon.ExtractAssociatedIcon(iconPath);
+		}
+
+		public void SetTitle(string? title)
+		{
+			if (title == null) return;
+			this.Text = title;
+
+		}
+
+
+
+
+
+		private async Task HandleEvent(JObject @event)
+		{
+			if (@event == null) return;
+
+			if (@event["EventType"].Value<string>() == "OnChange")
+			{
+				var context = engine.GetContext();
+				var goal = new PLang.Building.Model.Goal();
+				context.AddOrReplace(ReservedKeywords.Goal, goal);
+
+				var variable = @event["Variable"];
+				var memoryStack = engine.GetMemoryStack();
+				memoryStack.Put(variable["name"].Value<string>(), variable["value"].Value<object?>());
+
+			}
+		}
+
+
+		private async Task<(string?, IError?)> CompileAndRun(object? obj)
+		{
+			var expandoObject = new ExpandoObject() as IDictionary<string, object?>;
+			var templateContext = new TemplateContext();
+			foreach (var kvp in engine.GetMemoryStack().GetMemoryStack())
+			{
+				expandoObject.Add(kvp.Key, kvp.Value.Value);
+
+				var sv = ScriptVariable.Create(kvp.Key, ScriptVariableScope.Global);
+				templateContext.SetValue(sv, kvp.Value.Value);
 			}
 
-			(string strVariables, string errorConsole) = ExtractErrorMessages(errorStream);
+			var templateEngine = container.GetInstance<PLang.Modules.TemplateEngineModule.Program>();
+			templateEngine.Init(container, new PLang.Building.Model.Goal(), new PLang.Building.Model.GoalStep(), new PLang.Building.Model.Instruction(new()), engine.GetMemoryStack(),
+				container.GetInstance<ILogger>(), container.GetInstance<PLangAppContext>(), container.GetInstance<ITypeHelper>(), container.GetInstance<ILlmServiceFactory>(),
+				container.GetInstance<ISettings>(), container.GetInstance<IAppCache>(), null);
+			return await templateEngine.RenderContent(obj.ToString(), "");
+			
+		}
 
-			webView.CoreWebView2.NavigationCompleted += async (object? sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e) =>
+		private (string goalName, Dictionary<string, object?>? param) ParseUrl(string url)
+		{
+			var parts = url.Split('?');
+			string basePath = parts[0];
+			string queryString = parts.Length > 1 ? parts[1] : string.Empty;
+
+			var queryParameters = HttpUtility.ParseQueryString(queryString);
+			var parameters = new Dictionary<string, object?>();
+
+			foreach (string key in queryParameters)
 			{
-				await HandleErrors(strVariables, errorConsole);
-			};
+				string? value = queryParameters[key];
+				if (value != null && Regex.IsMatch(value, "'[0-9]+'"))
+				{
+					value = value.Replace("'", "");
+				}
+
+				parameters[key] = value;
+			}
+			return (basePath, parameters);
+		}
+
+		private void ShowErrorInDevTools(IError? error)
+		{
+			if (error == null) return;
+
+
 			webView.CoreWebView2.OpenDevToolsWindow();
-			webView.CoreWebView2.ExecuteScriptAsync($"console.error('{EscapeChars(html)}');");
-
-			outputStream.Stream.Position = 0;
+			webView.CoreWebView2.ExecuteScriptAsync($"console.error('{EscapeChars(error.ToString())}');");
 		}
 
-		private (string strVariables, string errorConsole) ExtractErrorMessages(Stream errorStream)
+		private void ShowError(IError? error)
 		{
-			string strVariables = "";
-			string errorConsole = "";
-			if (errorStream != null)
-			{
-				errorStream.Position = 0;
+			if (error == null) return;
 
-				using (StreamReader reader = new StreamReader(errorStream, Encoding.UTF8, leaveOpen: true))
-				{
-					errorConsole = reader.ReadToEnd();
-				}
+			var errorDialog = new ErrorDialog();
+			errorDialog.ShowDialog(error, "Error");
 
-
-				if (!string.IsNullOrEmpty(errorConsole))
-				{
-					var variables = engine.GetMemoryStack().GetMemoryStack();
-
-					foreach (var variable in variables)
-					{
-						strVariables += "\\t" + variable.Key + ":" + JsonConvert.SerializeObject(variable.Value.Value) + "\\n";
-					}
-				}
-
-			}
-			return (strVariables, errorConsole);
+			//webView.CoreWebView2.OpenDevToolsWindow();
+			//webView.CoreWebView2.ExecuteScriptAsync($"console.error('{EscapeChars(html)}');");
 		}
+
 
 		private void HandleResourcesRequests(CoreWebView2WebResourceRequestedEventArgs args)
 		{
@@ -408,76 +493,5 @@ These variables are available:
 				await webView.CoreWebView2.ExecuteScriptAsync($"console.info('Help:\\n\\n{EscapeChars(result)}');");
 			}
 		}
-
-		List<FileSystemStream> fileStreams = new List<FileSystemStream>();
-
-		private void CoreWebView2_NavigationCompleted(object? sender, CoreWebView2NavigationCompletedEventArgs e)
-		{
-			foreach (var fs in fileStreams)
-			{
-				fs.Close();
-			}
-			fileStreams.Clear();
-		}
-
-		private void CoreWebView2_ContentLoading(object? sender, CoreWebView2ContentLoadingEventArgs e)
-		{
-			int i = 0;
-		}
-
-		private void CoreWebView2_WebResourceResponseReceived(object? sender, CoreWebView2WebResourceResponseReceivedEventArgs e)
-		{
-			int i = 0;
-		}
-
-		private void CoreWebView2_NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
-		{
-			int i = 0;
-		}
-
-		private string EscapeChars(string? content)
-		{
-			if (content == null) return "";
-
-			return content.Replace("\\", "\\\\") // Escape backslashes
-								.Replace("'", "\\'")   // Escape single quotes
-								.Replace("\n", "\\n")  // Escape new lines
-								.Replace("\r", "\\r");
-		}
-
-
-		private void WebView_NavigationStarting(object? sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationStartingEventArgs e)
-		{
-			if (e.Uri.StartsWith("app://"))
-			{
-				e.Cancel = true;
-
-				if (e.Uri == "app://buttonclicked")
-				{
-					MessageBox.Show("Button Clicked", "You clicked the button in the WebView2!", MessageBoxButtons.OK, MessageBoxIcon.Information);
-				}
-			}
-		}
-
-		public void SetSize(int width, int height)
-		{
-			this.Size = new Size(width, height);
-
-		}
-
-		public void SetIcon(string? iconPath)
-		{
-			if (iconPath == null) return;
-			this.Icon = Icon.ExtractAssociatedIcon(iconPath);
-		}
-
-		public void SetTitle(string? title)
-		{
-			if (title == null) return;
-			this.Text = title;
-
-		}
-
-
 	}
 }

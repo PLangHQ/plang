@@ -59,7 +59,7 @@ namespace PLang.Modules.CodeModule
 - Exception message should be for non-technical user
 - ALWAYS use long or long? instead of int or int?
 - Use long.TryParse When validating if variable is long
-- Do not reference any DTO classes. Use dynamic? if complex object is needed, else use object?.
+- Do not reference any DTO classes. Choose the type that seems to fit best when not defined by user input. Use dynamic? if complex object is needed.
 - Strings are defined with double quote ("")
 - Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. 
 - If PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into ExecutePlangCode method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.

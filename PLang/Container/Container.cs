@@ -39,6 +39,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Resources;
 using System.Text;
 using Websocket.Client.Logging;
 using static PLang.Modules.DbModule.ModuleSettings;
@@ -46,14 +47,14 @@ using static PLang.Modules.DbModule.ModuleSettings;
 
 namespace PLang.Container
 {
-    public static class Instance
+	public static class Instance
 	{
 		public record InjectedType(string InjectorName, Type ServiceType, Type ImplementationType);
 		private static readonly Dictionary<Type, InjectedType> injectedTypes = [];
 
 
 		public static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeAppStartupPath,
-			IAskUserHandlerFactory askUserHandlerFactory, IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory, 
+			IAskUserHandlerFactory askUserHandlerFactory, IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory,
 			IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory)
 		{
 			container.RegisterBaseForPLang(absoluteAppStartupPath, relativeAppStartupPath);
@@ -140,7 +141,7 @@ namespace PLang.Container
 			{
 				return new PLangFileSystem(absoluteAppStartupPath, relativeStartupAppPath, container.GetInstance<PLangAppContext>());
 			});
-			
+
 
 			container.RegisterSingleton<ILogger, Services.LoggerService.Logger<Executor>>(typeof(Logger).FullName);
 			container.RegisterSingleton(factory =>
@@ -358,7 +359,8 @@ namespace PLang.Container
 				{
 					context.AddOrReplace(ReservedKeywords.Inject_IEventSourceRepository, typeof(DisableEventSourceRepository).FullName);
 					return factory.GetInstance<IEventSourceRepository>(typeof(DisableEventSourceRepository).FullName);
-				} else if (dataSource.KeepHistory && dataSource.TypeFullName == typeof(SqliteConnection).FullName)
+				}
+				else if (dataSource.KeepHistory && dataSource.TypeFullName == typeof(SqliteConnection).FullName)
 				{
 					context.AddOrReplace(ReservedKeywords.Inject_IEventSourceRepository, typeof(SqliteEventSourceRepository).FullName);
 				}
@@ -579,7 +581,7 @@ namespace PLang.Container
 			};
 
 			string dllFilePath = fileSystem.Path.GetDirectoryName(fileSystem.Path.Combine(fileSystem.GoalsPath, ".services", injectorType));
-			string[] dllFiles = [ dllFilePath ];
+			string[] dllFiles = [dllFilePath];
 			if (!fileSystem.File.Exists(dllFilePath))
 			{
 				//var dirName = Path.GetDirectoryName(injectorType);

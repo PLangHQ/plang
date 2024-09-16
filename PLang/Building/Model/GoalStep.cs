@@ -65,7 +65,17 @@ namespace PLang.Building.Model
 [IgnoreDataMemberAttribute]
 
 		[System.Text.Json.Serialization.JsonIgnore]
-		public GoalStep NextStep { get; set; }
+		public GoalStep? NextStep { get
+			{
+				if (Goal.GoalSteps.Count > Number + 1)
+				{
+					return Goal.GoalSteps[Number + 1];
+				} else
+				{
+					return null;
+				}
+			}
+		}
 		[Newtonsoft.Json.JsonIgnore]
 [IgnoreDataMemberAttribute]
 
@@ -73,7 +83,9 @@ namespace PLang.Building.Model
 		public Goal Goal { get; set; }
 
 		public Dictionary<string, object> Custom { get; set; } = new Dictionary<string, object>();
-		public int Number { get; set; }
+		public int Number {
+			get; 
+			set; }
 		public int LineNumber { get; set; }
 		public LlmRequest LlmRequest { get; set; }
 		public EventBinding? EventBinding { get; set; } = null;

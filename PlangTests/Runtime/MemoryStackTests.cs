@@ -284,7 +284,7 @@ namespace PLang.Runtime.Tests
 			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
-			stack.AddOnCreateEvent("item", "Test", false);
+			stack.AddOnCreateEvent("item", "Test", "12", false);
 
 			stack.Put("item", 1);
 
@@ -298,7 +298,7 @@ namespace PLang.Runtime.Tests
 			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
-			stack.AddOnChangeEvent("item", "Test", false, false);
+			stack.AddOnChangeEvent("item", "Test", "12", false, false);
 
 			//first add the item, no event called
 			stack.Put("item", 1);
@@ -316,7 +316,7 @@ namespace PLang.Runtime.Tests
 			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
-			stack.AddOnChangeEvent("item", "Test", new(), true);
+			stack.AddOnChangeEvent("item", "Test", "12", new(), true);
 
 			//first add the item, no event called
 			stack.Put("item", 1);
@@ -335,7 +335,7 @@ namespace PLang.Runtime.Tests
 			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
-			stack.AddOnRemoveEvent("item", "Test", new());
+			stack.AddOnRemoveEvent("item", "Test", "12", new());
 
 			//first add the item, no event called
 			stack.Put("item", 1);
@@ -358,7 +358,7 @@ namespace PLang.Runtime.Tests
 			fieldInfo.SetValue(null, new Dictionary<string, ObjectValue>());
 
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
-			stack.AddOnRemoveEvent("item", "Test", true, new());
+			stack.AddOnRemoveEvent("item", "Test", "12", true, new());
 
 			//first add the item, no event called
 			stack.PutStatic("item", 1);
@@ -381,7 +381,7 @@ namespace PLang.Runtime.Tests
 			engine.GetContext().Returns(context);
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 
-			stack.AddOnCreateEvent("item", "Test", true, new());
+			stack.AddOnCreateEvent("item", "Test", "12", true, new());
 
 			//first add the item, no event called
 			stack.PutStatic("item", 1);
@@ -402,7 +402,7 @@ namespace PLang.Runtime.Tests
 			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
-			stack.AddOnChangeEvent("item", "Test", true, new());
+			stack.AddOnChangeEvent("item", "Test", "12", true, new());
 
 			//first add the item, no event called
 			stack.PutStatic("item", 1);

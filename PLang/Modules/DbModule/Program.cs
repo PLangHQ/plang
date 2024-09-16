@@ -4,13 +4,15 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using PLang.Exceptions;
+using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.EventSourceService;
 using PLang.Services.LlmService;
 using PLang.Utils;
+using System.Collections;
 using System.ComponentModel;
 using System.Data;
 using System.Globalization;
@@ -250,7 +252,22 @@ namespace PLang.Modules.DbModule
 					}
 					else
 					{
-						(object? value, Error? error) = ConvertObjectToType(p.VariableNameOrValue, p.TypeFullName, parameterName);
+						string prefix = "";
+						string postfix = "";
+						var variableName = p.VariableNameOrValue;
+						if (variableName.ToString().StartsWith("\\%"))
+						{
+							variableName = variableName.ToString().Substring(2);
+							prefix = "%";
+						}
+						if (variableName.ToString().EndsWith("\\%"))
+						{
+							variableName = variableName.ToString().TrimEnd('%').TrimEnd('\\');
+							postfix = "%";
+						}
+
+
+						(object? value, Error? error) = ConvertObjectToType(prefix + variableName + postfix, p.TypeFullName, parameterName);
 						if (error != null)
 						{
 							if (parameterName == "id" && eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
@@ -486,6 +503,7 @@ namespace PLang.Modules.DbModule
 				return (new(), prep.error);
 			}
 			var rows = (await prep.connection.QueryAsync<dynamic>(prep.sql, prep.param)).ToList();
+
 			Done(prep.connection);
 
 			return (rows == null) ? (new(), null) : (rows, null);
