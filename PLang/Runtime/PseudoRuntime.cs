@@ -21,7 +21,7 @@ namespace PLang.Runtime
 	{
 		Task<(IEngine engine, IError? error)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCall goalName, 
 			Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true, 
-			long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0);
+			long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0, bool keepMemoryStackOnAsync = false);
 	}
 
 	public class PseudoRuntime : IPseudoRuntime
@@ -50,7 +50,8 @@ namespace PLang.Runtime
 
 		public async Task<(IEngine engine, IError? error)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCall goalName, 
 			Dictionary<string, object?>? parameters, Goal? callingGoal = null, 
-			bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0)
+			bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, 
+			int indent = 0, bool keepMemoryStackOnAsync = false)
 		{
 			if (goalName == null || goalName.Value == null) return (engine, new Error($"Goal to call is empty. Calling goal is {callingGoal}"));
 			Goal? goal = null;
@@ -101,7 +102,7 @@ namespace PLang.Runtime
 			{
 				goal.ParentGoal = callingGoal;
 
-			} else
+			} else if (!keepMemoryStackOnAsync)
 			{
 				var newContext = new PLangAppContext();
 				foreach (var item in context)
@@ -111,8 +112,23 @@ namespace PLang.Runtime
 				engine.GetContext().Clear();
 				engine.GetContext().AddOrReplace(newContext);
 			}
-
+			
 			var memoryStack = engine.GetMemoryStack();
+			/*
+			var oldMemoryStack = new Dictionary<string, ObjectValue>();
+			if (memoryStack != null)
+			{
+				foreach (var item in memoryStack.GetMemoryStack())
+				{
+					if (!oldMemoryStack.ContainsKey(item.Key))
+					{
+						oldMemoryStack.Add(item.Key, item.Value);
+					}
+				}
+				memoryStack.Clear();
+			}*/
+
+
 			if (parameters != null)
 			{
 				foreach (var param in parameters)
@@ -130,8 +146,8 @@ namespace PLang.Runtime
 			context.AddOrReplace(ReservedKeywords.ParentGoalIndent, (prevIndent + indent));
 		
 			var task = engine.RunGoal(goal, waitForXMillisecondsBeforeRunningGoal);
-			
-
+			await task.ConfigureAwait(waitForExecution);
+			/*
 			if (waitForExecution)
 			{
 				try
@@ -142,8 +158,26 @@ namespace PLang.Runtime
 			} else if (delayWhenNotWaitingInMilliseconds > 0)
 			{
 				await Task.Delay((int) delayWhenNotWaitingInMilliseconds);
+				if (!waitForExecution)
+				{
+					context.Remove(ReservedKeywords.IsEvent);
+				}
+			}*/
+			/*
+			if (memoryStack != null)
+			{
+				memoryStack.GetMemoryStack().Clear();
+				var internalStack = memoryStack.GetMemoryStack();
+				foreach (var item in oldMemoryStack)
+				{
+					if (!internalStack.ContainsKey(item.Key))
+					{
+						internalStack.Add(item.Key, item.Value);
+					}
+				}
 			}
-			
+			*/
+
 			if (container != null)
 			{
 				container.Dispose();

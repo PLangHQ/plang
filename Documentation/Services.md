@@ -1,8 +1,10 @@
 # Services in PLang
 
-Services in PLang are powerful tools that extend its functionality through dependency injection. Developers can customize PLang by injecting various service types, enhancing its capabilities to suit specific needs.
+Services in PLang are powerful tools that overwrites plang functionality through dependency injection. Developers can customize PLang by injecting various service types, enhancing its capabilities to suit specific needs.
 
 > Note: More services will be added in the future. This implentation came late in development.
+
+It might be confusing if you should create a [module](./modules/README.md) or a service. You only create a service if you want overwrite any if these properties of the plang language.
 
 ## List of Services
 - **db**: Database connections.

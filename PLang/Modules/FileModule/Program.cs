@@ -147,7 +147,7 @@ namespace PLang.Modules.FileModule
 			return fileStream;
 		}
 
-		[Description("sheetsToVariable is name of sheet that should load into variable. Sheet1=%products% will load Sheet1 into %product% variable, Sheet2-A1:H53=%categories%, will load data from A1:H53 into %categories%")]
+		[Description("sheetsToVariable is name of sheet that should load into variable. Sheet1=%products% will load Sheet1 into %product% variable, Sheet2-A4=%categories%, will load data from A4 into %categories%")]
 		public async Task ReadExcelFile(string path, bool useHeaderRow = true, [HandlesVariable] Dictionary<string, object>? sheetsToVariable = null, int headerStartsInRow = 1)
 		{
 			var absolutePath = GetPath(path);
@@ -490,6 +490,12 @@ namespace PLang.Modules.FileModule
 			}
 
 			return paths.ToArray();
+		}
+
+		public async Task WriteBase64ToFile(string path, string base64, bool overwrite = false)
+		{
+			var bytes = Convert.FromBase64String(base64);
+			await WriteBytesToFile(path, bytes, overwrite);
 		}
 
 		public async Task WriteBytesToFile(string path, byte[] content, bool overwrite = false)

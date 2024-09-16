@@ -18,41 +18,73 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		{
 			this.settings = settings;
 		}
+
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
-		public async Task OnCreateVariableListener([HandlesVariable] string key, string goalName, [HandlesVariable] Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
+		public async Task OnCreateVariablesListener([HandlesVariable] string[] keys, string goalName, [HandlesVariable] Dictionary<string, object?>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
 		{
-			memoryStack.AddOnCreateEvent(key, goalName, false, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+			foreach (var key in keys)
+			{
+				memoryStack.AddOnCreateEvent(key, goalName, goal.Hash, false, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+			}
 		}
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
-		public async Task OnChangeVariableListener([HandlesVariable] string key, string goalName, bool notifyWhenCreated = true, [HandlesVariable] Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
+		public async Task OnChangeVariablesListener([HandlesVariable] string[] keys, string goalName, bool notifyWhenCreated = true, [HandlesVariable] Dictionary<string, object?>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
 		{
-			memoryStack.AddOnChangeEvent(key, goalName, false, notifyWhenCreated, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+			foreach (var key in keys)
+			{
+				memoryStack.AddOnChangeEvent(key, goalName, goal.Hash, false, notifyWhenCreated, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+				if (notifyWhenCreated)
+				{
+					memoryStack.AddOnCreateEvent(key, goalName, goal.Hash, false, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+
+				}
+			}
+		}
+		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
+		public async Task OnRemoveVariablesListener([HandlesVariable] string[] keys, string goalName, [HandlesVariable] Dictionary<string, object?>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
+		{
+			foreach (var key in keys)
+			{
+				memoryStack.AddOnRemoveEvent(key, goalName, goal.Hash, false, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+			}
+		}
+
+
+		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
+		public async Task OnCreateVariableListener([HandlesVariable] string key, string goalName, [HandlesVariable] Dictionary<string, object?>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
+		{
+			memoryStack.AddOnCreateEvent(key, goalName, goal.Hash, false, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+		}
+		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
+		public async Task OnChangeVariableListener([HandlesVariable] string key, string goalName, bool notifyWhenCreated = true, [HandlesVariable] Dictionary<string, object?>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
+		{
+			memoryStack.AddOnChangeEvent(key, goalName, goal.Hash, false, notifyWhenCreated, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
 			if (notifyWhenCreated)
 			{
-				memoryStack.AddOnCreateEvent(key, goalName, false, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+				memoryStack.AddOnCreateEvent(key, goalName, goal.Hash, false, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
 
 			}
 		}
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
-		public async Task OnRemoveVariableListener([HandlesVariable] string key, string goalName, [HandlesVariable] Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
+		public async Task OnRemoveVariableListener([HandlesVariable] string key, string goalName, [HandlesVariable] Dictionary<string, object?>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
 		{
-			memoryStack.AddOnRemoveEvent(key, goalName, false, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+			memoryStack.AddOnRemoveEvent(key, goalName, goal.Hash, false, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
 		}
 
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
-		public async Task OnCreateStaticVariableListener([HandlesVariable] string key, string goalName, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
+		public async Task OnCreateStaticVariableListener([HandlesVariable] string key, string goalName, Dictionary<string, object?>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
 		{
-			memoryStack.AddOnCreateEvent(key, goalName, true, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+			memoryStack.AddOnCreateEvent(key, goalName, goal.Hash, true, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
 		}
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
-		public async Task OnChangeStaticVariableListener([HandlesVariable] string key, string goalName, bool notifyWhenCreated = true, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
+		public async Task OnChangeStaticVariableListener([HandlesVariable] string key, string goalName, bool notifyWhenCreated = true, Dictionary<string, object?>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
 		{
-			memoryStack.AddOnChangeEvent(key, goalName, true, notifyWhenCreated, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+			memoryStack.AddOnChangeEvent(key, goalName, goal.Hash, true, notifyWhenCreated, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
 		}
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
-		public async Task OnRemoveStaticVariableListener([HandlesVariable] string key, string goalName, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
+		public async Task OnRemoveStaticVariableListener([HandlesVariable] string key, string goalName, Dictionary<string, object?>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50)
 		{
-			memoryStack.AddOnRemoveEvent(key, goalName, true, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+			memoryStack.AddOnRemoveEvent(key, goalName, goal.Hash, true, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
 		}
 
 		public async Task<string?> GetEnvironmentVariable(string key)
@@ -147,6 +179,14 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		public async Task SetVariable([HandlesVariable] string key, [HandlesVariable]  object? value = null, bool doNotLoadVariablesInValue = false)
 		{
 			object? content = (doNotLoadVariablesInValue) ? value : variableHelper.LoadVariables(value);
+			if (key.Contains("%"))
+			{
+				var newKey = variableHelper.LoadVariables(key);
+				if (!string.IsNullOrWhiteSpace(newKey.ToString()))
+				{
+					key = newKey.ToString();
+				}
+			}
 			memoryStack.Put(key, content);
 		}
 		[Description(@"Set multiple variables. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]

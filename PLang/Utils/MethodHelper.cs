@@ -60,7 +60,7 @@ namespace PLang.Utils
 
 		private async Task HandleMethodNotFound(object callingInstance, GenericFunction function)
 		{
-			throw new MissingMethodException($"Method {function.FunctionName} could not be found that matches with your statement.");
+			throw new MissingMethodException($"Method {function.FunctionName} could not be found that is defined in your instruction file.");
 
 			var methods = typeHelper.GetMethodsAsString(callingInstance.GetType(), function.FunctionName);
 			string system = @"Try to map user statement to methods that are available in my class, 
@@ -247,7 +247,8 @@ example of answer:
 							continue;
 						}
 
-					}
+					} 
+
 					if (parameter.ParameterType.Name.StartsWith("Dictionary"))
 					{
 						SetDictionaryParameter(parameter, variableValue, handlesAttribute, parameterValues);
@@ -317,7 +318,7 @@ example of answer:
 			Type elementType;
 			if (mainElementType.IsArray && variableValueIsArray)
 			{
-				var value = variableHelper.LoadVariables(variableValue);
+				var value = (handlesAttribute != null) ? variableValue: variableHelper.LoadVariables(variableValue);
 				if (value is JArray array)
 				{
 					parameterValues.Add(parameter.Name, array.ToObject(mainElementType));
