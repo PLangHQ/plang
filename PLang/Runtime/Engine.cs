@@ -198,6 +198,10 @@ namespace PLang.Runtime
 					debounceTokenSource = new CancellationTokenSource();
 
 					
+
+					// Call the debounced method with a delay
+
+					// Call the debounced method with a delay
 					Task.Delay(200, debounceTokenSource.Token)
 						.ContinueWith(t =>
 						{
@@ -314,11 +318,11 @@ namespace PLang.Runtime
 
 		private void ResetStepLogLevel()
 		{
-			AppContext.SetData("StepLogLevelByUser", null);
-		}
-		private void SetLogLevel(Goal goal)
-		{
 			if (goal.Comment == null && !goal.GoalName.Contains("[")) return;
+		}
+			if (goalComment == null) return;
+		{
+			if (goalComment == null) return;
 
 			string comment = (goal.Comment ?? string.Empty).ToLower();
 			string goalName = goal.GoalName.ToLower();
@@ -336,16 +340,16 @@ namespace PLang.Runtime
 		}
 
 		public async Task<IError?> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0)
-		{
-			if (waitForXMillisecondsBeforeRunningGoal > 0) await Task.Delay((int)waitForXMillisecondsBeforeRunningGoal);
-
-			AppContext.SetSwitch("Runtime", true);
 			SetLogLevel(goal);
 
 			foreach (var injection in goal.Injections)
 			{
 				((ServiceContainer)container).RegisterForPLangUserInjections(injection.Type, injection.Path, injection.IsGlobal);
 			}
+			if (waitForXMillisecondsBeforeRunningGoal > 0) await Task.Delay((int)waitForXMillisecondsBeforeRunningGoal);
+			SetLogLevel(goal.Comment);
+			AppContext.SetSwitch("Runtime", true);
+			SetLogLevel(goal.Comment);
 
 			int goalStepIndex = -1;
 			try

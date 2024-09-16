@@ -11,8 +11,7 @@ using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Text.RegularExpressions;
+using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Modules.TemplateEngineModule
 {
