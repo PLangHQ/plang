@@ -22,7 +22,7 @@ jobs:
         dotnet-version: '8.x'
 
     - name: Install dependencies
-      run: dotnet restore
+      run: dotnet restore PlangConsole/PLangConsole.csproj
 
     - name: Build the application
       run: dotnet build PlangConsole/PLangConsole.csproj --configuration Release
@@ -33,12 +33,12 @@ jobs:
     - name: Create installer directory
       run: |
         mkdir -p ./package/Applications/Plang
-        cp -R ./bin/Release/net8.0/osx-x64/publish/* ./package/Applications/Plang
+        cp -R ./PlangConsole/bin/Release/net8.0/osx-x64/publish/* ./package/Applications/Plang
 
     - name: Create macOS .pkg installer
       run: |
         pkgbuild --root ./package --identifier is.plang --version 0.1.15.2 --install-location /Applications/Plang PlangInstaller.pkg
-    
+
     - name: Sign the .pkg file
       run: |
         codesign --sign "Developer ID Installer: Ingi Gauti" PlangInstaller.pkg
