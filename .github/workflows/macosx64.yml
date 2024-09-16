@@ -25,10 +25,10 @@ jobs:
       run: dotnet restore
 
     - name: Build the application
-      run: dotnet build --configuration Release
+      run: dotnet build PlangConsole/PLangConsole.csproj --configuration Release
 
     - name: Publish for macOS
-      run: dotnet publish -c Release -r osx-x64 --self-contained
+      run: dotnet publish PlangConsole/PLangConsole.csproj -c Release -r osx-x64 --self-contained
 
     - name: Create installer directory
       run: |
