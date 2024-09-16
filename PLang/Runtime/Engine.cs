@@ -24,6 +24,7 @@ using PLang.Utils;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Abstractions;
 using System.Net;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
@@ -187,22 +188,20 @@ namespace PLang.Runtime
 
 		private static CancellationTokenSource debounceTokenSource;
 		private static readonly object debounceLock = new object();
-
+		private IFileSystemWatcher fileWatcher;
 		private void WatchForRebuild()
 		{
 			string path = fileSystem.Path.Join(fileSystem.RootDirectory, ".build");
-			var fileWatcher = fileSystem.FileSystemWatcher.New(path, "*.pr");
+			fileWatcher = fileSystem.FileSystemWatcher.New(path, "*.pr");
+
 			fileWatcher.Changed += (object sender, FileSystemEventArgs e) =>
 			{
 				lock (debounceLock)
 				{
-					// Cancel any previous delay task if still running
 					debounceTokenSource?.Cancel();
-
-					// Create a new cancellation token source for this event
 					debounceTokenSource = new CancellationTokenSource();
 
-					// Call the debounced method with a delay
+					
 					Task.Delay(200, debounceTokenSource.Token)
 						.ContinueWith(t =>
 						{
@@ -216,6 +215,8 @@ namespace PLang.Runtime
 
 
 			};
+			fileWatcher.IncludeSubdirectories = true;
+			fileWatcher.EnableRaisingEvents = true;
 		}
 
 
@@ -324,14 +325,17 @@ namespace PLang.Runtime
 		{
 			AppContext.SetData("StepLogLevelByUser", null);
 		}
-		private void SetLogLevel(string? goalComment)
+		private void SetLogLevel(Goal goal)
 		{
-			if (goalComment == null) return;
+			if (goal.Comment == null && !goal.GoalName.Contains("[")) return;
+
+			string comment = (goal.Comment ?? string.Empty).ToLower();
+			string goalName = goal.GoalName.ToLower();
 
 			string[] logLevels = ["trace", "debug", "information", "warning", "error"];
 			foreach (var logLevel in logLevels)
 			{
-				if (goalComment.ToLower().Contains($"[{logLevel}]"))
+				if (comment.Contains($"[{logLevel}]") || goalName.Contains($"[{logLevel}]"))
 				{
 					AppContext.SetData("GoalLogLevelByUser", Microsoft.Extensions.Logging.LogLevel.Trace);
 					return;
@@ -345,7 +349,7 @@ namespace PLang.Runtime
 			if (waitForXMillisecondsBeforeRunningGoal > 0) await Task.Delay((int)waitForXMillisecondsBeforeRunningGoal);
 
 			AppContext.SetSwitch("Runtime", true);
-			SetLogLevel(goal.Comment);
+			SetLogLevel(goal);
 
 			int goalStepIndex = -1;
 			try
@@ -407,13 +411,17 @@ namespace PLang.Runtime
 				AppContext.SetData("GoalLogLevelByUser", null);
 
 				var os = OutputStreamFactory.CreateHandler();
-				if (os is UIOutputStream && goal.ParentGoal == null)
+				if (os is UIOutputStream)
 				{
-					((UIOutputStream)os).Flush();
+					if (goal.ParentGoal == null)
+					{
+						((UIOutputStream)os).Flush();
+					}
 				}
 			}
 
 		}
+
 
 		private IError? FindEndGoalError(MultipleError me)
 		{
@@ -525,7 +533,7 @@ private async Task CacheGoal(Goal goal)
 			catch (Exception stepException)
 			{
 				
-				var error = new ExceptionError(stepException);
+				var error = new ExceptionError(stepException, stepException.Message, goal, step);
 				var result = await HandleStepError(goal, step, goalStepIndex, error, retryCount);
 
 				return result;

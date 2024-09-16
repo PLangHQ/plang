@@ -347,7 +347,8 @@ namespace PLang.Modules.HttpModule
 				}
 				httpClient.Timeout = new TimeSpan(0, 0, timeoutInSeconds);
 
-				var response = await httpClient.SendAsync(request);
+				var task = httpClient.SendAsync(request);
+				var response = await task;
 				if (!response.IsSuccessStatusCode)
 				{
 					string errorBody = await response.Content.ReadAsStringAsync();

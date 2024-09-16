@@ -10,6 +10,7 @@ using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
+using PLang.SafeFileSystem;
 using PLang.Services.AppsRepository;
 using PLang.Services.CachingService;
 using PLang.Services.LlmService;
@@ -66,6 +67,7 @@ namespace PLangTests
 		protected IErrorHandlerFactory errorHandlerFactory;
 		protected IErrorSystemHandlerFactory errorSystemHandlerFactory;
 		protected ISettingsRepositoryFactory settingsRepositoryFactory;
+		protected FileAccessHandler fileAccessHandler;
 		protected void Initialize()
 		{
 
@@ -86,7 +88,7 @@ namespace PLangTests
 			container = new ServiceContainer();
 			context = new PLangAppContext();
 			fileSystem = new PLangMockFileSystem();
-			fileSystem.AddFile(Path.Join(Environment.CurrentDirectory, ".build", "info.txt"), Guid.NewGuid().ToString());
+			fileSystem.AddFile(fileSystem.Path.Join(Environment.CurrentDirectory, ".build", "info.txt"), Guid.NewGuid().ToString());
 
 
 			container.RegisterInstance<IPLangFileSystem>(fileSystem);
@@ -94,6 +96,7 @@ namespace PLangTests
 			this.settingsRepository = new SqliteSettingsRepository(fileSystem, context, logger);
 			container.RegisterInstance<ISettingsRepository>(settingsRepository);
 
+			container.RegisterInstance<FileAccessHandler>(new FileAccessHandler(settings, llmServiceFactory, logger, fileSystem));
 
 			settingsRepositoryFactory = Substitute.For<ISettingsRepositoryFactory>();
 			settingsRepositoryFactory.CreateHandler().Returns(settingsRepository);
@@ -235,7 +238,7 @@ namespace PLangTests
 				Directory.CreateDirectory(dir);
 			}
 
-			string filePath = Path.Combine(dir, caller + ".json");
+			string filePath = fileSystem.Path.Combine(dir, caller + ".json");
 
 			List<TestResponse> responses = new List<TestResponse>();
 			if (File.Exists(filePath))
@@ -277,7 +280,7 @@ namespace PLangTests
 			{
 				return null;
 			}
-			string filePath = Path.Combine(dir, caller + ".json");
+			string filePath = fileSystem.Path.Combine(dir, caller + ".json");
 			if (!File.Exists(filePath)) return null;
 
 			var jsonFile = File.ReadAllText(filePath);
@@ -295,13 +298,13 @@ namespace PLangTests
 			{
 				string testPath = Environment.GetEnvironmentVariable("PlangTestPath");
 				if (string.IsNullOrEmpty(testPath)) throw new Exception("You must set the PlangTestPath environment variable. I should point to PlangTests folder. The PlangTests folder contains Modules folder");
-				return Path.Combine(testPath, "Modules", moduleFolder, "responses");
+				return fileSystem.Path.Combine(testPath, "Modules", moduleFolder, "responses");
 			}
 			else
 			{
-				string derivedClassDirectory = Path.GetDirectoryName(derivedClassPath);
+				string derivedClassDirectory = fileSystem.Path.GetDirectoryName(derivedClassPath);
 
-				string responsesDir = Path.GetFullPath(Path.Combine(derivedClassDirectory, $"../../../Modules/{moduleFolder}/responses"));
+				string responsesDir = fileSystem.Path.GetFullPath(fileSystem.Path.Combine(derivedClassDirectory, $"../../../Modules/{moduleFolder}/responses"));
 				return responsesDir;
 			}
 		}

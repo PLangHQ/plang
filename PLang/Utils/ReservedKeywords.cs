@@ -44,6 +44,10 @@ namespace PLang.Utils
 		public static readonly string Inject_OutputSystemStream = "!Inject_OutputSystemStream";
 		public static readonly string ParentGoalIndent = "!ParentGoalIndent";
 		public static readonly string GoalTree = "!GoalTree";
+		public  static readonly string VariableValue = "!VariableValue";
+		public static readonly string VariableName = "!VariableName";
+		public static readonly string OutputTarget = "!OutputTarget";
+		public static readonly string DefaultTargetElement = "!TargetElement";
 
 		private static List<string> keywords = new List<string>();
 		public static List<string> Keywords

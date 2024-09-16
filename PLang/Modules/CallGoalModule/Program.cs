@@ -16,7 +16,7 @@ namespace PLang.Modules.CallGoalModule
 
 		[Description("If backward slash(\\) is used by user, change to forward slash(/)")]
 		public async Task<IError?> RunGoal(GoalToCall goalName, Dictionary<string, object?>? parameters = null, bool waitForExecution = true, 
-			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0)
+			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, bool keepMemoryStackOnAsync = false)
 		{
 			if (string.IsNullOrEmpty(goalName))
 			{
@@ -28,7 +28,7 @@ namespace PLang.Modules.CallGoalModule
 
 			var result = await pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName,
 					variableHelper.LoadVariables(parameters), Goal, 
-					waitForExecution, delayWhenNotWaitingInMilliseconds, waitForXMillisecondsBeforeRunningGoal, goalStep.Indent);
+					waitForExecution, delayWhenNotWaitingInMilliseconds, waitForXMillisecondsBeforeRunningGoal, goalStep.Indent, keepMemoryStackOnAsync);
 			return result.error;
 			
 		}

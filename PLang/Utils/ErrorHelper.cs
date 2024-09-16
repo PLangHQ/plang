@@ -122,7 +122,7 @@ namespace PLang.Utils
 			}
 
 			string firstLine = $"";
-			if (step != null)
+			if (step != null && step.Goal != null)
 			{
 				firstLine = $@"📄 File: {step.Goal.RelativeGoalPath}:{step.LineNumber}
 🔢 Line: {step.LineNumber}

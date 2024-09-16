@@ -1,23 +1,14 @@
-﻿using OpenAI_API.Models;
+﻿using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
-using PLang.Runtime;
 using PLang.Utils;
-using PLang.Utils;
-using RazorEngineCore;
 using Scriban;
+using Scriban.Runtime;
 using Scriban.Syntax;
-using Sprache;
-using System;
-using System.Collections.Generic;
 using System.Dynamic;
-using System.IO.Abstractions;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Text.RegularExpressions;
+using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Modules.TemplateEngineModule
 {
@@ -38,27 +29,49 @@ namespace PLang.Modules.TemplateEngineModule
 
 				return (null, new ProgramError($"File {path} could not be found. Full path to the file is {fullPath}", goalStep, this.function));
 			}
-			var expandoObject = new ExpandoObject() as IDictionary<string, object?>;
+			string content = fileSystem.File.ReadAllText(fullPath);
+			return await RenderContent(content, fullPath);
+		}
+
+		public async Task<(string?, IError?)> RenderContent(string content, string fullPath) { 
+
 			var templateContext = new TemplateContext();
+			
+			
+			templateContext.MemberRenamer = member => member.Name;
+
+
+			var scriptObject = new ScriptObject();
+			scriptObject.Import("date_format", new Func<object, string, string>((input, format) =>
+			{
+				if (input is DateTime dateTime)
+				{
+					return dateTime.ToString(format);
+				}
+				else if (input is string str && DateTime.TryParse(str, out var parsedDate))
+				{
+					return parsedDate.ToString(format);
+				}
+				return input?.ToString() ?? string.Empty;
+			}));
+
+			// Push the custom function into the template context
+			templateContext.PushGlobal(scriptObject);
+
+
 			foreach (var kvp in memoryStack.GetMemoryStack())
 			{
-				expandoObject.Add(kvp.Key, kvp.Value.Value);
-
 				var sv = ScriptVariable.Create(kvp.Key, ScriptVariableScope.Global);
 				templateContext.SetValue(sv, kvp.Value.Value);
 			}
-
 			
-
-			string content = fileSystem.File.ReadAllText(fullPath);
-			
-			var parsed = Template.Parse(content);
-			try
-			{
+			try { 
+				var parsed = Template.Parse(content);
 				var result = await parsed.RenderAsync(templateContext);
 
 				return (result, null);
-			} catch (ScriptRuntimeException ex)
+			}
+			catch (ScriptRuntimeException ex)
 			{
 				var relativeFilePath = fullPath.AdjustPathToOs().Replace(fileSystem.RootDirectory, "");
 				var innerException = ex.InnerException as ScriptRuntimeException ?? ex;
@@ -69,7 +82,7 @@ namespace PLang.Modules.TemplateEngineModule
 				{
 					int.TryParse(match.Groups[1].Value?.Trim(), out int lineNumber);
 					int.TryParse(match.Groups[2].Value?.Trim(), out int columnNumber);
-					
+
 					message = $"{innerException.OriginalMessage} in {relativeFilePath} - line: {lineNumber} | column: {columnNumber}";
 					var lines = content.Split('\n');
 					if (lines.Length > lineNumber)
@@ -77,14 +90,16 @@ namespace PLang.Modules.TemplateEngineModule
 						var startPos = lineNumber - 3;
 						if (startPos < 0) startPos = 0;
 
-						var errorLines = lines.ToList().Skip(startPos).Take(lineNumber - startPos);
+						var errorLines = lines.ToList().Skip(startPos).Take(lineNumber - startPos + 2);
 						foreach (var errorLine in errorLines)
 						{
 							message += $"\n{startPos++}: {errorLine}";
 						}
 					}
 
-				} else {
+				}
+				else
+				{
 					message = $"{ex.Message} in {relativeFilePath}";
 				}
 				var pe = new ProgramError(message,

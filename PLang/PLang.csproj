@@ -72,6 +72,7 @@
     <PackageReference Include="Nethereum.JsonRpc.WebSocketClient" Version="4.21.2" />
     <PackageReference Include="Nethereum.RPC.Reactive" Version="4.21.2" />
     <PackageReference Include="Nethereum.Signer" Version="4.21.2" />
+    <PackageReference Include="NJsonSchema" Version="11.0.2" />
     <PackageReference Include="Nostr.Client" Version="2.0.0" />
     <PackageReference Include="NSec.Cryptography" Version="24.4.0" />
     <PackageReference Include="OpenAI" Version="1.11.0" />

@@ -15,6 +15,7 @@ using PLang.Runtime;
 using PLang.Utils;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Loader;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -252,6 +253,26 @@ These are the rules with variables:
 			List<string> servicesAssembly = new();
 			compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(SafeFileSystem.PLangFileSystem).Assembly.Location));
 			compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(System.IO.Abstractions.IDirectory).Assembly.Location));
+
+			compilation = compilation.AddSyntaxTrees(tree);
+
+			var model = compilation.GetSemanticModel(tree);
+			var diagnostics = model.GetDiagnostics().Where(d => d.Id == "CS0246"); // CS0246: The type or namespace name could not be found
+
+			foreach (var diagnostic in diagnostics)
+			{
+				var missingAssemblyName = diagnostic.GetMessage().Split('\'')[1];
+				var resolvedReference = TryResolveReference(answer.Using, missingAssemblyName);
+
+				if (resolvedReference != null)
+				{
+					compilation = compilation.AddReferences(resolvedReference);
+				}
+			}
+
+
+
+
 			foreach (var assembly in Assemblies)
 			{
 				if (assembly.ToLower() == "plang.safefilesystem") continue;
@@ -326,7 +347,7 @@ Search for {fileName} - https://www.nuget.org/packages?q={fileName}"));
 
 			}
 			//tree = tree.WithFilePath(dllFilePath.Replace(".dll", ".cs"));
-			compilation = compilation.AddSyntaxTrees(tree);
+			
 
 			if (!fileSystem.Directory.Exists(step.Goal.AbsolutePrFolderPath))
 			{
@@ -355,6 +376,18 @@ Search for {fileName} - https://www.nuget.org/packages?q={fileName}"));
 						if (str.Contains("PLangFileSystem.PLangFileSystem("))
 						{
 							error += "PLangFileSystem.PLangFileSystem cannot be contructed it is an abstract class. It must me injected into ExecutePlangCode(IPlangFileSystem fileSystem...)\n";
+						}
+						else if (str.Contains("Use of unassigned local variable"))
+						{
+							error += @"To solve the error 'Use of unassigned local variable'. Make sure to initialize the variable, for example
+
+Use of unassigned local variable 'number'
+
+long number = 0;
+long.TryParse(str, out number);
+";
+
+
 						}
 						error += diagnostic.ToString() + "\n";
 					}
@@ -392,6 +425,22 @@ Search for {fileName} - https://www.nuget.org/packages?q={fileName}"));
 		{
 			return parameterSyntax.Modifiers.Any(m => m.IsKind(SyntaxKind.RefKeyword)) ||
 				parameterSyntax.Modifiers.Any(m => m.IsKind(SyntaxKind.OutKeyword));
+		}
+
+		private MetadataReference TryResolveReference(string[] usingList, string assemblyName)
+		{
+			var assemblies = AssemblyLoadContext.Default.Assemblies;
+
+			foreach (var assembly in assemblies)
+			{
+				if (assembly.GetName().Name == assemblyName)
+				{
+					return MetadataReference.CreateFromFile(assembly.Location);
+				}
+			}
+
+			// Optionally, log or handle the fact that the assembly could not be resolved
+			return null;
 		}
 
 		private List<string> GetParameters(ImplementationResponse answer)

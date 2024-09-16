@@ -1,4 +1,5 @@
 ﻿using PLang.Building.Model;
+using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Utils;
@@ -85,10 +86,6 @@ namespace PLang.Building.Parsers
 				goal.GoalSteps[i].RelativePrPath = Path.Join(goal.RelativePrFolderPath, goal.GoalSteps[i].PrFileName).AdjustPathToOs();
 				goal.GoalSteps[i].AppStartupPath = appAbsoluteStartupPath.AdjustPathToOs();
 				goal.GoalSteps[i].Number = i;
-				if (goal.GoalSteps.Count > i + 1)
-				{
-					goal.GoalSteps[i].NextStep = goal.GoalSteps[i + 1];
-				}
 
 				/*if (setupOnceDictionary != null && setupOnceDictionary.ContainsKey(goal.GoalSteps[i].RelativePrPath))
 				{
@@ -248,28 +245,50 @@ namespace PLang.Building.Parsers
 					appStartupPath = Path.DirectorySeparatorChar.ToString() + appStartupPath;
 				}
 			}
+
+			var goals = GetAllGoals();
+
 			Goal? goal = null;
-			if (callingGoal != null && !goalNameOrPath.Contains(Path.DirectorySeparatorChar))
-			{
-				var newGoalPath = Path.Join(callingGoal.RelativePrFolderPath, goalNameOrPath);
-				goal = GetAllGoals().FirstOrDefault(p => p.RelativePrFolderPath.Equals(newGoalPath, StringComparison.OrdinalIgnoreCase));
-				if (goal != null) return goal;
-			}
-
-			goal = GetAllGoals().FirstOrDefault(p => p.RelativePrFolderPath.Equals(Path.Join(".build", goalNameOrPath), StringComparison.OrdinalIgnoreCase));
-			if (goal != null) return goal;
-
-			goal = GetAllGoals().FirstOrDefault(p => goalNameOrPath.TrimStart(Path.DirectorySeparatorChar).Equals(Path.Join(p.RelativeGoalFolderPath, p.GoalName).TrimStart(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase));
-			if (goal != null) return goal;
 
 			// first check for goal inside same goal file as the calling goal
-			if (callingGoal != null)
+			if (callingGoal != null && !goalNameOrPath.Contains(Path.DirectorySeparatorChar))
 			{
-				goal = GetAllGoals().FirstOrDefault(p => p.RelativeGoalFolderPath == callingGoal.RelativeGoalFolderPath && p.GoalName.Equals(goalNameOrPath, StringComparison.OrdinalIgnoreCase));
+				goal = goals.FirstOrDefault(p => p.RelativeGoalFolderPath == callingGoal.RelativeGoalFolderPath && p.GoalName.Equals(goalNameOrPath, StringComparison.OrdinalIgnoreCase));
 				if (goal != null) return goal;
 			}
 
-			goal = GetAllGoals().FirstOrDefault(p => p.GoalName == goalNameOrPath);
+			// match goal from root, e.g. /Start
+			if (goalNameOrPath.StartsWith(Path.DirectorySeparatorChar))
+			{
+				goal = goals.FirstOrDefault(p=> p.RelativePrFolderPath.Equals(Path.Join(".build", goalNameOrPath), StringComparison.OrdinalIgnoreCase));
+				if (goal != null) return goal;
+			}
+
+			// match goal from calling goal, e.g. calling goal is in /ui/ folder, when goalNameOrPath is user/edit, it matches /ui/user/edit.goal
+			if (callingGoal != null && !goalNameOrPath.StartsWith(Path.DirectorySeparatorChar))
+			{
+				var newGoalPath = Path.Join(".build", callingGoal.RelativeGoalFolderPath, goalNameOrPath);
+				goal = goals.FirstOrDefault(p => p.RelativePrFolderPath.Equals(newGoalPath, StringComparison.OrdinalIgnoreCase));
+				if (goal != null) return goal;
+			}
+			
+			goal = goals.FirstOrDefault(p => p.RelativePrFolderPath.Equals(Path.Join(".build", goalNameOrPath), StringComparison.OrdinalIgnoreCase));
+			if (goal != null) return goal;
+
+			goal = goals.FirstOrDefault(p => goalNameOrPath.TrimStart(Path.DirectorySeparatorChar).Equals(Path.Join(p.RelativeGoalFolderPath, p.GoalName).TrimStart(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase));
+			if (goal != null) return goal;
+
+
+			var possibleGoals = goals.Where(p => p.RelativePrFolderPath.EndsWith(goalNameOrPath, StringComparison.OrdinalIgnoreCase)).ToList();
+			if (possibleGoals.Count == 1) return possibleGoals[0];
+			if (possibleGoals.Count > 1)
+			{
+				var goalNames = possibleGoals.Select(p => {
+						return p.RelativePrFolderPath;
+					});
+				throw new GoalNotFoundException($"There are {possibleGoals.Count} to choose from. {string.Join(",", goalNames)}", appStartupPath, goalNameOrPath);
+			}
+
 			return goal;
 		}
 

@@ -36,6 +36,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Resources;
 using System.Text;
 using Websocket.Client.Logging;
 using static PLang.Modules.DbModule.ModuleSettings;
@@ -43,14 +44,14 @@ using static PLang.Modules.DbModule.ModuleSettings;
 
 namespace PLang.Container
 {
-    public static class Instance
+	public static class Instance
 	{
 		public record InjectedType(string InjectorName, Type ServiceType, Type ImplementationType);
 		private static readonly Dictionary<Type, InjectedType> injectedTypes = [];
 
 
 		public static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeAppStartupPath,
-			IAskUserHandlerFactory askUserHandlerFactory, IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory, 
+			IAskUserHandlerFactory askUserHandlerFactory, IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory,
 			IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory)
 		{
 			container.RegisterBaseForPLang(absoluteAppStartupPath, relativeAppStartupPath);
@@ -91,7 +92,7 @@ namespace PLang.Container
 
 			container.RegisterOutputStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IRazorEngine>(), container.GetInstance<IPLangFileSystem>(), iForm));
 			container.RegisterOutputSystemStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IRazorEngine>(), container.GetInstance<IPLangFileSystem>(), iForm));
-			
+
 			container.RegisterAskUserHandlerFactory(typeof(AskUserWindowHandler), true, new AskUserWindowHandler(askUserDialog));
 			container.RegisterErrorHandlerFactory(typeof(UiErrorHandler), true, new UiErrorHandler(errorDialog, container.GetInstance<IAskUserHandlerFactory>()));
 			container.RegisterErrorSystemHandlerFactory(typeof(UiErrorHandler), true, new UiErrorHandler(errorDialog, container.GetInstance<IAskUserHandlerFactory>()));
@@ -137,7 +138,7 @@ namespace PLang.Container
 			{
 				return new PLangFileSystem(absoluteAppStartupPath, relativeStartupAppPath, container.GetInstance<PLangAppContext>());
 			});
-			
+
 
 			container.RegisterSingleton<ILogger, Services.LoggerService.Logger<Executor>>(typeof(Logger).FullName);
 			container.RegisterSingleton(factory =>
@@ -356,7 +357,8 @@ namespace PLang.Container
 				{
 					context.AddOrReplace(ReservedKeywords.Inject_IEventSourceRepository, typeof(DisableEventSourceRepository).FullName);
 					return factory.GetInstance<IEventSourceRepository>(typeof(DisableEventSourceRepository).FullName);
-				} else if (dataSource.KeepHistory && dataSource.TypeFullName == typeof(SqliteConnection).FullName)
+				}
+				else if (dataSource.KeepHistory && dataSource.TypeFullName == typeof(SqliteConnection).FullName)
 				{
 					context.AddOrReplace(ReservedKeywords.Inject_IEventSourceRepository, typeof(SqliteEventSourceRepository).FullName);
 				}
@@ -420,35 +422,80 @@ namespace PLang.Container
 
 				AppDomain.CurrentDomain.AssemblyResolve += (sender, resolveArgs) =>
 				{
-					string assemblyPath = fileSystem.Path.Combine(fileSystem.RootDirectory, ".modules", new AssemblyName(resolveArgs.Name).Name + ".dll");
-					if (fileSystem.File.Exists(assemblyPath))
+					if (resolveArgs.RequestingAssembly == null)
 					{
-						return Assembly.LoadFile(assemblyPath);
+						return null;
+					}
+
+					var location = fileSystem.Path.GetDirectoryName(resolveArgs.RequestingAssembly.Location);
+					string assemblyPath = fileSystem.Path.Join(location, new AssemblyName(resolveArgs.Name).Name + ".dll");
+					if (File.Exists(assemblyPath))
+					{
+						return Assembly.LoadFrom(assemblyPath);
 					}
 					return null;
 				};
 
+				AppDomain.CurrentDomain.ResourceResolve += (sender, args) =>
+				{
+					var assembly = Assembly.GetExecutingAssembly(); // or resolveArgs.RequestingAssembly
 
-				var assemblyFiles = fileSystem.Directory.GetFiles(".modules", "*.dll");
+					var resourceName = new AssemblyName(args.Name).Name + ".txt";
+					var resourceFullName = assembly.GetManifestResourceNames()
+						.FirstOrDefault(n => n.EndsWith(resourceName));
+
+					if (resourceFullName != null)
+					{
+						// Return the resource as a stream
+						using (var stream = assembly.GetManifestResourceStream(resourceFullName))
+						{
+							return assembly;
+						}
+					}
+
+					return null;
+				};
+
+				var assemblyFiles = fileSystem.Directory.GetFiles(".modules", "*.dll", SearchOption.AllDirectories);
 				foreach (var file in assemblyFiles)
 				{
+					
+					var assembly = (file.ToLower().Contains("greining")) ? Assembly.LoadFile(file) : Assembly.LoadFrom(file);
+					var builderTypes = assembly.GetTypes()
+											  .Where(t => !t.IsAbstract && !t.IsInterface &&
+											  (typeof(BaseBuilder).IsAssignableFrom(t) || typeof(BaseProgram).IsAssignableFrom(t)))
+											  .ToList();
 
-					var assembly = Assembly.LoadFile(file);
-					 var builderTypes = assembly.GetTypes()
-											   .Where(t => !t.IsAbstract && !t.IsInterface &&
-											   (typeof(BaseBuilder).IsAssignableFrom(t) || typeof(BaseProgram).IsAssignableFrom(t)))
-											   .ToList();
+					var resources = assembly.GetManifestResourceNames();
+					foreach (var resourceName in resources)
+					{
+						using (var stream = assembly.GetManifestResourceStream(resourceName))
+						{
+							if (stream != null)
+							{
+								// Read the resource (optional, to ensure it's loaded into memory)
+								using (var reader = new StreamReader(stream))
+								{
+									var content = reader.ReadToEnd();
+								}
+							}
+						}
+					}
 
 					foreach (var type in builderTypes)
 					{
 						container.Register(type);  // or register with a specific interface if needed
 					}
+
 				}
 			}
 
 			RegisterUserGlobalInjections(container);
 
 		}
+
+
+
 		private static void RegisterUserGlobalInjections(ServiceContainer container)
 		{
 			var prParser = container.GetInstance<PrParser>();
@@ -559,7 +606,7 @@ namespace PLang.Container
 			};
 
 			string dllFilePath = fileSystem.Path.GetDirectoryName(fileSystem.Path.Combine(fileSystem.GoalsPath, ".services", injectorType));
-			string[] dllFiles = [ dllFilePath ];
+			string[] dllFiles = [dllFilePath];
 			if (!fileSystem.File.Exists(dllFilePath))
 			{
 				//var dirName = Path.GetDirectoryName(injectorType);

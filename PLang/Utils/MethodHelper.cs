@@ -59,7 +59,7 @@ namespace PLang.Utils
 
 		private async Task HandleMethodNotFound(object callingInstance, GenericFunction function)
 		{
-			throw new MissingMethodException($"Method {function.FunctionName} could not be found that matches with your statement.");
+			throw new MissingMethodException($"Method {function.FunctionName} could not be found that is defined in your instruction file.");
 
 			var methods = typeHelper.GetMethodsAsString(callingInstance.GetType(), function.FunctionName);
 			string system = @"Try to map user statement to methods that are available in my class, 
@@ -246,7 +246,8 @@ example of answer:
 							continue;
 						}
 
-					}
+					} 
+
 					if (parameter.ParameterType.Name.StartsWith("Dictionary"))
 					{
 						SetDictionaryParameter(parameter, variableValue, handlesAttribute, parameterValues);
@@ -305,13 +306,17 @@ example of answer:
 		private void SetArrayParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
 		{
 			bool variableValueIsArray = variableValue.ToString().StartsWith("[");
+			if (variableValueIsArray && variableValue is string str)
+			{
+				variableValue = JsonConvert.DeserializeObject<JArray>(str);
+			}
 			int arrayLength = variableValueIsArray ? ((JArray)variableValue).Count : 1;
 			var rootElementType = parameter.ParameterType.GetElementType();
 			var mainElementType = parameter.ParameterType;
 			Type elementType;
 			if (mainElementType.IsArray && variableValueIsArray)
 			{
-				var value = variableHelper.LoadVariables(variableValue);
+				var value = (handlesAttribute != null) ? variableValue: variableHelper.LoadVariables(variableValue);
 				if (value is JArray array)
 				{
 					parameterValues.Add(parameter.Name, array.ToObject(mainElementType));

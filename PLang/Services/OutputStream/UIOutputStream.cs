@@ -55,8 +55,13 @@ namespace PLang.Services.OutputStream
 			IForm.SynchronizationContext.Post(_ =>
 			{
 				int be = 0;
-
-				IForm.Flush();
+				try
+				{
+					IForm.Flush();
+				} catch (Exception e)
+				{
+					int i = 0;
+				}
 			}, null);
 
 		}
@@ -97,7 +102,11 @@ namespace PLang.Services.OutputStream
 				return;
 			}
 
-			await IForm.ExecuteCode($"showNotification('{obj.ToString().Replace("'", "\\'")}');");
+			await IForm.ExecuteCode($@"UIkit.notification({{ message: '{obj.ToString().Replace("'", "\\'")}',
+				status: 'primary',
+				pos: 'top-right',
+				timeout: 15000
+			}});");
 			//byte[] bytes = Encoding.UTF8.GetBytes(html);
 
 			//await Stream.WriteAsync(bytes, 0, bytes.Length);

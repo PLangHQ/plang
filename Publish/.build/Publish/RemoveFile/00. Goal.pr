@@ -70,7 +70,8 @@
         "RawResponse": "```json\n{\n  \"StepName\": \"DeleteFile\",\n  \"StepDescription\": \"Delete the file specified by the variable %item%.\",\n  \"Modules\": [\"PLang.Modules.FileModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "8aad7aed406f6ea5b597aeffc0cc3afca21cbebe5135c250c1c5c25aa8386b03"
     }
   ],
   "SubGoals": [],
@@ -81,11 +82,11 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Publish\\RemoveFile\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Publish\\RemoveFile",
-  "BuilderVersion": "0.1.15.1",
+  "BuilderVersion": "0.1.15.2",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "b07cf31eb8576e86fe4a9c3aec79137791371704744702575bbad582d01584ad",
+  "Hash": "2906b53ce7e6e5a76b3fafc1f2b5ca95f06ba484b7e1f5e89e95c8e766408932",
   "IncomingVariablesRequired": [
     "item"
   ]

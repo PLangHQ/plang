@@ -3,11 +3,12 @@ using PLang.Interfaces;
 using PLang.Services.SettingsService;
 using PLang.Utils;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 
 namespace PLang.Modules.EnvironmentModule
 {
-	[Description("Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture")]
+	[Description("Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app")]
 	public class Program : BaseProgram
 	{
 		private readonly ISettings settings;
@@ -89,6 +90,13 @@ namespace PLang.Modules.EnvironmentModule
 			var ci = new CultureInfo(code);
 			Thread.CurrentThread.CurrentUICulture = ci;
 			CultureInfo.DefaultThreadCurrentUICulture = ci;
+		}
+
+		public async Task<IError?> OpenFileInDefaultApp(string filePath)
+		{
+			var absolutePath = GetPath(filePath);
+			var process = Process.Start(new ProcessStartInfo(absolutePath) { UseShellExecute = true });
+			return null;
 		}
 	}
 }

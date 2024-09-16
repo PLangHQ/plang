@@ -1,8 +1,12 @@
-﻿using PLang.Attributes;
+﻿using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using NJsonSchema;
+using PLang.Attributes;
 using PLang.Errors;
 using PLang.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Modules;
 using System.Data;
 using System.Reflection;
@@ -21,6 +25,7 @@ namespace PLang.Utils
 		List<Type> GetBuilderModules();
 		Type? GetBuilderType(string module);
 		Type? GetRuntimeType(string? module);
+		string GetMethodNamesAsString(Type type, string? methodName = null);
 	}
 
 	public class TypeHelper : ITypeHelper
@@ -141,10 +146,10 @@ namespace PLang.Utils
 
 			return types;
 		}
-
-		public string GetMethodsAsString(Type type, string? methodName = null)
+		public string GetMethodNamesAsString(Type type, string? methodName = null)
 		{
 			if (type == null) return "";
+
 
 			var methods = type.GetMethods().Where(p => p.DeclaringType.Name == "Program");
 			if (methodName != null)
@@ -152,7 +157,6 @@ namespace PLang.Utils
 				methods = type.GetMethods().Where(p => p.Name == methodName);
 			}
 			List<string> methodDescs = new List<string>();
-			var strMethods = "";
 
 			foreach (var method in methods)
 			{
@@ -161,6 +165,37 @@ namespace PLang.Utils
 				if (method.Name == "Run" || method.Name == "Dispose" || method.IsSpecialName) continue;
 
 
+
+				strMethod += method.Name;
+				var descriptions = method.CustomAttributes.Where(p => p.AttributeType.Name == "DescriptionAttribute");
+				foreach (var desc in descriptions)
+				{
+					if (!strMethod.Contains(" // ")) strMethod += " // ";
+
+					strMethod += desc.ConstructorArguments.FirstOrDefault().Value + ". ";
+				}
+				methodDescs.Add(strMethod);
+			}
+
+			return string.Join("", methodDescs);
+		}
+		public string GetMethodsAsString(Type type, string? methodName = null)
+		{
+			if (type == null) return "";
+
+			
+			var methods = type.GetMethods().Where(p => p.DeclaringType.Name == "Program");
+			if (methodName != null)
+			{
+				methods = type.GetMethods().Where(p => p.Name == methodName);
+			}
+			List<string> methodDescs = new List<string>();
+
+			foreach (var method in methods)
+			{
+				var strMethod = "";
+				if (method.Module.Name != type.Module.Name) continue;
+				if (method.Name == "Run" || method.Name == "Dispose" || method.IsSpecialName) continue;
 
 				strMethod += method.Name + "(";
 				var parameters = method.GetParameters();
@@ -194,6 +229,12 @@ namespace PLang.Utils
 						{
 							strMethod += " = " + param.DefaultValue;
 						}
+					}
+
+					var paramDescs = param.CustomAttributes.Where(p => p.AttributeType.Name == "DescriptionAttribute");
+					foreach (var desc in paramDescs)
+					{
+						strMethod += " /* " + desc.ConstructorArguments.FirstOrDefault().Value + " */ ";
 					}
 
 				}
@@ -505,7 +546,7 @@ namespace PLang.Utils
 			string modulesDirectory = Path.Combine(goalPath, ".modules");
 			if (!fileSystem.Directory.Exists(modulesDirectory)) return;
 
-			foreach (var dll in fileSystem.Directory.GetFiles(modulesDirectory, "*.dll"))
+			foreach (var dll in fileSystem.Directory.GetFiles(modulesDirectory, "*.dll", SearchOption.AllDirectories))
 			{
 				// Load the assembly
 				Assembly loadedAssembly = Assembly.LoadFile(dll);
@@ -558,6 +599,52 @@ namespace PLang.Utils
 
 			return keywords;
 
+		}
+
+
+		public static object? ConvertToType(object? value, Type targetType)
+		{
+			if (value == null) return null;
+
+			if (targetType.Name == "String" && (value is JObject || value is JArray || value is JToken || value is JProperty))
+			{
+				return value.ToString();
+			}
+
+			if (targetType == null)
+				throw new ArgumentNullException(nameof(targetType));
+
+			if (value == null)
+				return null;
+
+			if (targetType.IsInstanceOfType(value))
+				return value;
+
+			try
+			{
+				if (targetType.Name.StartsWith("Nullable"))
+				{
+					targetType = targetType.GenericTypeArguments[0];
+				}
+
+				var parseMethod = targetType.GetMethod("Parse", new[] { typeof(string) });
+				if (parseMethod != null)
+				{
+					return parseMethod.Invoke(null, new object[] { value.ToString() });
+				}
+
+
+			}
+			catch { }
+
+			try
+			{
+				return Convert.ChangeType(value, targetType);
+			}
+			catch (Exception ex)
+			{
+				return value;
+			}
 		}
 	}
 }
