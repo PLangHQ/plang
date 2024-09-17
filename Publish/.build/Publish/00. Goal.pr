@@ -70,7 +70,8 @@
         "RawResponse": "```json\n{\n  \"StepName\": \"WriteOutMessage\",\n  \"StepDescription\": \"Output the message 'Starting at %Now%' to the user interface or console.\",\n  \"Modules\": [\"PLang.Modules.OutputModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "5b5ce318a3e102f7b32761aed19039b25f33c661c0281fe950d914a6dee6f31b"
     },
     {
       "Text": "write out 'Building project'",
@@ -139,7 +140,8 @@
         "RawResponse": "```json\n{\n\t\"StepName\": \"OutputText\",\n\t\"StepDescription\": \"Output the text 'Building project' to the user interface or console.\",\n\t\"Modules\": [\"PLang.Modules.OutputModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "77afabb4965adfff6dfff0ccbc966a6be03b99be87dc193ff593235643ab187d"
     },
     {
       "Text": "dotnet build Plang.sln -c Release,  working dir ../",
@@ -208,7 +210,8 @@
         "RawResponse": "```json\n{\n    \"StepName\": \"BuildDotNetSolution\",\n    \"StepDescription\": \"Build the .NET solution file 'Plang.sln' in Release configuration using the 'dotnet build' command, with the working directory set to one level up from the current directory.\",\n    \"Modules\": [\"PLang.Modules.TerminalModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "db1866a2014b0a825abfc05701dd642e0a044ba13cd49ada5d193d7bf01204d5"
     },
     {
       "Text": "delete folder 'runtimes' and subfiles",
@@ -277,7 +280,8 @@
         "RawResponse": "```json\n{\n\t\"StepName\": \"DeleteFolderAndSubfiles\",\n\t\"StepDescription\": \"Delete the folder named 'runtimes' along with all its subfiles and subdirectories.\",\n\t\"Modules\": [\"PLang.Modules.FileModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "18dc65516c6754480d5072e65b760066a5276bf209d5ec253f7211ecf2625a52"
     },
     {
       "Text": "create folder 'runtimes'",
@@ -346,7 +350,8 @@
         "RawResponse": "```json\n{\n\t\"StepName\": \"CreateFolder\",\n\t\"StepDescription\": \"Create a folder named 'runtimes' in the file system.\",\n\t\"Modules\": [\"PLang.Modules.FileModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "0ac885608b865269d1f453a69d765f047c7d03a255b7bc4361a5f774852e8a4b"
     },
     {
       "Text": "get file paths of .zip in ./, write to %zipFiles%",
@@ -415,7 +420,8 @@
         "RawResponse": "```json\n{\n  \"StepName\": \"GetZipFilePaths\",\n  \"StepDescription\": \"Retrieve all file paths with a .zip extension in the current directory and store them in the variable %zipFiles%.\",\n  \"Modules\": [\"PLang.Modules.FileModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "a015b602f211193e73045dcbc6e4750a6c86a7b49e3e762c9f2fe03394f31c38"
     },
     {
       "Text": "foreach %zipFiles% call !RemoveFile",
@@ -484,7 +490,8 @@
         "RawResponse": "```json\n{\n  \"StepName\": \"Iterate and Remove Files\",\n  \"StepDescription\": \"Iterate over each file in the list %zipFiles% and call the function !RemoveFile for each file to remove it.\",\n  \"Modules\": [\"PLang.Modules.LoopModule\", \"PLang.Modules.CallGoalModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "25ef87e8f46303d66b8f15dad3de5fea6dad919470d1f15e5f53cf298428eaf6"
     },
     {
       "Text": "[code] create string list for 'win-x64', 'linux-x64', 'linux-arm64', 'osx-x64', 'osx-arm64', write to %platforms%",
@@ -553,7 +560,8 @@
         "RawResponse": "```json\n{\n\t\"StepName\": \"CreatePlatformList\",\n\t\"StepDescription\": \"Create a list of strings containing the platform identifiers 'win-x64', 'linux-x64', 'linux-arm64', 'osx-x64', and 'osx-arm64', and assign this list to the variable %platforms%.\",\n\t\"Modules\": [\"PLang.Modules.CodeModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "2577bd7a0160a9f3fa02652289a7fb1b3546a7389a43ff2bda267609f9e0ea52"
     },
     {
       "Text": "foreach %platforms%, call BuildPlatform %platform%=item",
@@ -622,7 +630,8 @@
         "RawResponse": "```json\n{\n\t\"StepName\": \"Iterate and Call Function\",\n\t\"StepDescription\": \"Iterate over each item in the %platforms% list and call the function BuildPlatform with the current item as the parameter.\",\n\t\"Modules\": [\"PLang.Modules.LoopModule\", \"PLang.Modules.CallGoalModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "e7f9d86aff49f6288847fd1eeaa530ed86584e0b7a727cf47bee8f858731b31c"
     },
     {
       "Text": "copy folder 'runtimes', to '../../services\\Template\\MyService\\lib', overwrite if exists, include all files",
@@ -691,7 +700,8 @@
         "RawResponse": "```json\n{\n\t\"StepName\": \"CopyFolder\",\n\t\"StepDescription\": \"Copy the folder 'runtimes' to the destination '../../services\\\\Template\\\\MyService\\\\lib', overwriting if it already exists, and include all files within the folder.\",\n\t\"Modules\": [\"PLang.Modules.FileModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "17f0ae45eaed3fdb67da744d49d8722cc2596fba9098c91c0ce6b2c3e32dc720"
     },
     {
       "Text": "copy folder 'runtimes', to '../../modules\\Template\\MyModule\\lib', overwrite if exists, include all files",
@@ -760,7 +770,8 @@
         "RawResponse": "```json\n{\n\t\"StepName\": \"CopyFolder\",\n\t\"StepDescription\": \"Copy the folder named 'runtimes' to the destination path '../../modules\\\\Template\\\\MyModule\\\\lib'. Overwrite the folder if it already exists and include all files within the folder.\",\n\t\"Modules\": [\"PLang.Modules.FileModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "3696c5b283918880f025a3a2a29557ac5e571e6ca07ad079cdf1d095427cb750"
     }
   ],
   "SubGoals": [
@@ -774,11 +785,11 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Publish\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Publish",
-  "BuilderVersion": "0.1.15.1",
+  "BuilderVersion": "0.1.15.2",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "ae559168c8134ec233eed88a538825032bd966ee1c5605bd888903343ebcf130",
+  "Hash": "d21ca4d937716e338e2ebdcd57bee8257eee32ff95c61c5c2d94eb85e927fe41",
   "IncomingVariablesRequired": [
     "Now",
     "zipFiles",
