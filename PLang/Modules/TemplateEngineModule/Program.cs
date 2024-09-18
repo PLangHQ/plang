@@ -18,6 +18,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using System.Globalization;
 
 namespace PLang.Modules.TemplateEngineModule
 {
@@ -40,6 +41,7 @@ namespace PLang.Modules.TemplateEngineModule
 			}
 			var expandoObject = new ExpandoObject() as IDictionary<string, object?>;
 			var templateContext = new TemplateContext();
+			templateContext.PushCulture(CultureInfo.CurrentCulture);
 			foreach (var kvp in memoryStack.GetMemoryStack())
 			{
 				expandoObject.Add(kvp.Key, kvp.Value.Value);

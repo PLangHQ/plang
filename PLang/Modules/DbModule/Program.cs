@@ -24,7 +24,7 @@ using Org.BouncyCastle.Crypto;
 
 namespace PLang.Modules.DbModule
 {
-	[Description("Database access, select, insert, update, delete and execute raw sql. Handles transactions")]
+	[Description("Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources")]
 	public class Program : BaseProgram, IDisposable
 	{
 		public static string DbConnectionContextKey = "DbConnection";

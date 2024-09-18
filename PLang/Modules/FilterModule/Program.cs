@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.ComponentModel;
+using System.Linq.Dynamic.Core;
 
 namespace PLang.Modules.FilterModule
 {
@@ -55,9 +56,9 @@ namespace PLang.Modules.FilterModule
 				return filteredObject;
 				
 			}
-			else if (variableToExtractFrom is IList<object> list)
+			else if (variableToExtractFrom is System.Collections.IList list)
 			{
-				var filteredList = list
+				var filteredList = list.ToDynamicList()
 					.Where(item => filterPredicate((item as JObject)?[propertyToFilterOn]?.ToString()))
 					.ToList();
 

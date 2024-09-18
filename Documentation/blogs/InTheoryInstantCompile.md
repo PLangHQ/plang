@@ -1,34 +1,59 @@
-# In Theory: Instant compile time with plang
+# In Theory: Instant Compile Time with Plang
 
-I will go through how the builder works, takes your step, converts to executable code. I will show how plang will be close to instant compile time within 1 year(August 2024). No matter how big the project is or how many files are in it.
+Let’s take a look at how the Plang builder works and why it can deliver near-instant compile times, no matter the size of your project. This system compiles only what’s new or changed, making build times essentially disappear.
 
-### How the builder works.
+### How It Works
 
-The builder takes your goals and goes through each step, it figures out with help of LLM how to map it to methods(functions) in C#. These instructions are then stored in a .pr file. It is a simple json. You can read it. Basic programmer will be able to understand it.
+The Plang builder takes your goals file, processes each step, and uses an LLM to map it to methods in a module. These instructions are saved in a `.pr` file, a simple JSON that anyone can read. Once a step is processed and mapped, you never need to compile it again unless you change it.
 
-Now that we have instruction for our steps, we never have to compile that statement ever again. Think about it, you never have to compile that code again. Not unless it changes.
+That’s the core idea—compile once, never again, unless you modify something. So when you run the builder, the only thing sent to the LLM is the step you’ve just written. With GPT-4o-mini, this happens in around 500ms, making build times almost instant. [Read more about the builder here](https://github.com/PLangHQ/plang/blob/main/Documentation/Builder.md).
 
-So the only thing that is sent to llm to compile is the step you just created, nothing else. This means even now with gpt-4o-mini, we could send the step and get answer withing 500ms. That is a pretty fast build time.
+### Example in Action
 
-Now imagine when it's free, when you have the LLM running on your computer. What will be created?
-
-### How the process works
-
-Best with example:
+Here’s a simple example:
 
 ```plang
 - read file.txt, into %content%
 ```
 
-Plang buidler takes this, and ask the LLM to give a module that you think will work. It will return the file module, and it will generate this json
+The builder looks at this step and asks the LLM which module to use. It picks the file module and generates this JSON, which gets saved in a `.pr` file:
 
 ```json
-
+"Action": {
+    "FunctionName": "ReadTextFile",
+    "Parameters": [
+      {
+        "Type": "String",
+        "Name": "path",
+        "Value": "file.txt"
+      },
+      {
+        "Type": "String",
+        "Name": "returnValueIfFileNotExisting",
+        "Value": null
+      },
+      {
+        "Type": "Boolean",
+        "Name": "throwErrorOnNotFound",
+        "Value": true
+      }
+    ],
+    "ReturnValues": null
+  }
 ```
 
-Then when plang runs the code, it loads this json, and using reflection/dynamic it loads the class described int the .pr files, the function and parameters and executes that method.
+Next time you run the code, Plang loads this JSON file, dynamically loads the class, passes in the parameters, and runs the method. It doesn’t need to compile that step again because nothing has changed. This is faster and more secure, too. The code execution is based on text files that can be signed and reviewed—no more hidden behavior in compiled binaries.
 
-This of course has huge impact on security, the execution layer is now text file that can be signed. 
+### Commit the `.build` Folder
 
+Here’s something different: you should commit the `.build` folder. That way, when another developer pulls your project, they won’t need to rebuild the entire codebase. All the compiled steps are already there, saving time for everyone.
 
+### The Future of Instant Compiling
 
+If you never change the step `- read file.txt, into %content%`, it won’t ever be rebuilt. Plang only rebuilds what’s new or modified. That means even in large projects, only the lines you work on are affected. 
+
+Today, this already gives you decent build times, but looking ahead, it gets even better. Plang could eventually monitor your changes in real-time. As soon as you write a new step, it could start compiling the previous one immediately. With faster LLMs—and even better, when it runs locally—you’ll reach a point where you never wait for builds.
+
+No more staring at progress bars while waiting for code to compile. [Here’s the future we’re aiming for](https://xkcd.com/303/).
+
+![Compiling](https://imgs.xkcd.com/comics/compiling.png)

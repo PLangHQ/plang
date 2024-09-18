@@ -35,7 +35,10 @@ namespace PLang.Modules.DbModule
 		}
 
 
-		public record DataSource(string Name, string TypeFullName, string ConnectionString, string DbName, string SelectTablesAndViews, string SelectColumns, bool KeepHistory = true, bool IsDefault = false);
+		public record DataSource(string Name, string TypeFullName, string ConnectionString, string DbName, string SelectTablesAndViews, string SelectColumns, bool KeepHistory = true, bool IsDefault = false)
+		{
+			public bool IsDefault { get; set; } = IsDefault;
+		}
 
 
 		public async Task<IError?> CreateDataSource(string dataSourceName = "data", string? localPath = null, string dbType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
@@ -218,10 +221,12 @@ Be concise"));
 			var dataSources = await GetAllDataSources();
 			if (dataSources.Count == 0)
 			{
-				dataSource = new DataSource(dataSource.Name, dataSource.TypeFullName, dataSource.ConnectionString, 
-									dataSource.DbName, dataSource.SelectTablesAndViews, 
-									dataSource.SelectColumns, dataSource.KeepHistory, true);
+				dataSource.IsDefault = true;
+			} else if (dataSource.IsDefault)
+			{
+				dataSources.ForEach(p => p.IsDefault = false);
 			}
+
 			var dataSourceIdx = dataSources.FindIndex(p => p.Name == dataSource.Name);
 			if (dataSourceIdx != -1)
 			{

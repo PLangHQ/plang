@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Info.plist -->
+
+<plist version="1.0">
+<dict>
+    <!-- Basic App Information -->
+    <key>CFBundleName</key>
+    <string>Plang</string>
+    <key>CFBundleIdentifier</key>
+    <string>is.plang</string>
+    <key>CFBundleVersion</key>
+    <string>0.1.15.2</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.15.2</string>
+
+    <!-- URL Scheme -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>plang</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>plang</string>
+            </array>
+        </dict>
+    </array>
+
+    <!-- Document Types -->
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>GOAL Document</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>goal</string>
+            </array>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>is.plang.goal</string>
+            </array>
+        </dict>
+    </array>
+
+    <!-- Uniform Type Identifiers (UTIs) -->
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>is.plang.goal</string>
+            <key>UTTypeDescription</key>
+            <string>GOAL Document</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+                <string>public.text</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>goal</string>
+                </array>
+                <key>public.mime-type</key>
+                <string>application/x-goal</string>
+            </dict>
+        </dict>
+    </array>
+</dict>
+</plist>

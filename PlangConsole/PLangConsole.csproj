@@ -15,5 +15,23 @@
   <ItemGroup>
     <ProjectReference Include="..\PLang\PLang.csproj" />
   </ItemGroup>
+	
+	<PropertyGroup Condition="'$(RuntimeIdentifier)' == 'osx-x64' Or '$(RuntimeIdentifier)' == 'osx-arm64'">
+		<UseAppHost>true</UseAppHost>
+		<MacOSAppBundle>true</MacOSAppBundle>
+		<OutputType>Exe</OutputType>
+		<RuntimeIdentifier>$(RuntimeIdentifier)</RuntimeIdentifier>
+		<ApplicationIcon>Icon.icns</ApplicationIcon>
+		<!-- Optional: if you have an app icon -->
+		<IntermediateOutputPath>bin\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\</IntermediateOutputPath>
+		<CodesignKey>Developer ID Application: Ingi Gauti</CodesignKey>
+		<CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+		<!-- Optional: if you have entitlements -->
+	</PropertyGroup>
+
+	<!-- Include the custom Info.plist -->
+	<ItemGroup Condition="'$(RuntimeIdentifier)' == 'osx-x64' Or '$(RuntimeIdentifier)' == 'osx-arm64'">
+		<BundleResource Include="Info.plist" />
+	</ItemGroup>
 
 </Project>

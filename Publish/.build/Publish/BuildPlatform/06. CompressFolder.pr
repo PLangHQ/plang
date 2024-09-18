@@ -20,7 +20,7 @@
       {
         "Type": "Boolean?",
         "Name": "includeBaseDirectory",
-        "Value": true
+        "Value": false
       },
       {
         "Type": "Boolean?",
@@ -35,7 +35,7 @@
     ],
     "ReturnValues": null
   },
-  "Text": "compress folder 'plang' to 'plang-%platform%.zip', overwrite",
+  "Text": "compress folder 'plang', dont include base, to 'plang-%platform%.zip', overwrite",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -44,7 +44,7 @@
     "presencePenalty": 0.0,
     "maxLength": 4000,
     "llmResponseType": "json",
-    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\": object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
     "model": "gpt-4o-2024-08-06",
     "promptMessage": [
       {
@@ -56,7 +56,7 @@
           },
           {
             "type": "text",
-            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\": object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
           }
         ]
       },
@@ -74,14 +74,14 @@
         "content": [
           {
             "type": "text",
-            "text": "compress folder 'plang' to 'plang-%platform%.zip', overwrite"
+            "text": "compress folder 'plang', dont include base, to 'plang-%platform%.zip', overwrite"
           }
         ]
       }
     ],
     "type": "PLang.Modules.GenericFunctionBuilder",
     "caching": true,
-    "RawResponse": "```json\n{\n\t\"FunctionName\": \"CompressDirectory\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"sourceDirectoryName\",\n\t\t\t\"Value\": \"plang\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"destinationArchiveFileName\",\n\t\t\t\"Value\": \"plang-%platform%.zip\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Int32?\",\n\t\t\t\"Name\": \"compressionLevel\",\n\t\t\t\"Value\": 0\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean?\",\n\t\t\t\"Name\": \"includeBaseDirectory\",\n\t\t\t\"Value\": true\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean?\",\n\t\t\t\"Name\": \"createDestinationDirectory\",\n\t\t\t\"Value\": true\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean?\",\n\t\t\t\"Name\": \"overwriteDestinationFile\",\n\t\t\t\"Value\": true\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"CompressDirectory\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"sourceDirectoryName\",\n\t\t\t\"Value\": \"plang\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"destinationArchiveFileName\",\n\t\t\t\"Value\": \"plang-%platform%.zip\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Int32?\",\n\t\t\t\"Name\": \"compressionLevel\",\n\t\t\t\"Value\": 0\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean?\",\n\t\t\t\"Name\": \"includeBaseDirectory\",\n\t\t\t\"Value\": false\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean?\",\n\t\t\t\"Name\": \"createDestinationDirectory\",\n\t\t\t\"Value\": true\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean?\",\n\t\t\t\"Name\": \"overwriteDestinationFile\",\n\t\t\t\"Value\": true\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
   },
   "RunOnBuild": false
 }

@@ -63,6 +63,9 @@ Mobile phones have for example extremly high security to store you private key, 
 
 > It should be noted that plang does not implement any security measure as of version 0.1 and the private key is stored in clear text on the computer. This will of course be fixed in future versions.
 
+## Data Mining
+%Identity% doesn’t stop services from mining your data, but it ensures that they can only analyze how you interact with their platform—strictly behavior data. Because no personal information is ever transmitted, this behavioral data remains entirely anonymous. Plus, with Plang's client-side code being open source, you can always verify that no personal data is being shared.
+
 ## Want to Dig Deeper, Want to Use `%Identity%`?
 
 These examples show how you can use `%Identity%` in your plang goal files to manage user interactions and data securely and efficiently.
@@ -134,15 +137,18 @@ Preferences
 - select preferences from userSettings where Identity=%Identity%
 - call !CustomizeContent %preferences%
 ```
+
 ### What is `%MyIdentity%`
-While %Identity% is used for the incoming message, the `%MyIdentity%` is your own identity on you device.
+
+The `%MyIdentity%` variable is your go-to for viewing your system’s identity. Unlike `%Identity%`, which reflects the identity of the computer or person sending you a message or request, `%MyIdentity%` specifically represents your computer’s identity. In short, if you need to know what identity your system will share during a request, you’ll refer to `%MyIdentity%`.
 
 ```plang
 Start
 - write out 'My identity is %MyIdentity%'
 ```
 
-This identity will be sent with every Http request you do, any file access outside of the app scope and any message sent.
+This identity is automatically included in every HTTP request, any file access outside your app’s scope, and every message you send.
+
 
 ### C# - Advanced Programming
 

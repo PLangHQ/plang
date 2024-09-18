@@ -19,7 +19,7 @@ BuildPlatform
     - dotnet publish PlangWindowForms/PLangWindowForms.csproj -c Release -r win-x64 --self-contained true -o ./publish/plang
     working dir ../   
 - write out 'Compress plang folder'   
-- compress folder 'plang' to 'plang-%platform%.zip', overwrite
+- compress folder 'plang', dont include base, to 'plang-%platform%.zip', overwrite
 - copy 'plang/PlangLibrary.dll' to 'runtimes/%platform%/PlangLibrary.dll', create dir
 - copy 'plang/PlangLibrary.pdb' to 'runtimes/%platform%/PlangLibrary.pdb', create dir
 - delete folder 'plang'

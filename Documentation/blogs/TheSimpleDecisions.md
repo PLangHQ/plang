@@ -1,66 +1,65 @@
-# The simple decisions
+# The Simple Decisions
 
-Every day are making simple decisions, they dont take much brain power from us but they take effort. You need open that email, go to that system, login, lookup it up, say, 'that is ok'
+Every day, we make simple decisions. These decisions don't require much brainpower, but they do require effort. You have to open that email, log into the system, look something up, and say, "that's fine."
 
-This decisions are not all the critical to us, although they might be to others, are filled in our lifes.
+While these decisions may not seem critical to us, they can be essential for others, and they fill up our day-to-day lives.
 
-We can take many of these decisions and move them now to a computer, since computer understands us, it can do the lookup and make those simple decisions
+Now, imagine if we could offload many of these mundane tasks to a computer. Since computers are getting better at understanding our intentions, they could handle the lookups and make those straightforward decisions for us.
 
-And this is where Plang shines.
+This is where Plang shines.
 
-Now let's imagine your are customer support, you get emails in and these are the decision that need to be made
+### A Customer Support Example
 
-I have a client, their customer support tickets coming in is 90% the same 10 issues. What I do is create a goal for each of those issues.
+Picture this: You're working in customer support. You receive a flood of emails, and most of them revolve around the same 10 issues. 
 
-One issue that is common, is the user has lost his coupon that he bought from the website.
+I have a client whose customer support tickets are 90% the same recurring problems. So, what do we do? We create a goal for each of those issues.
 
-The email body is something like this
+Take one common issue: a user has lost their coupon purchased from the website. 
 
-    from: user@example.org
-    Hi, I lost my coupon for the Christmas show, can you help me.
+The email looks something like this:
 
-Let's solve this in plang
+```
+From: user@example.org  
+Hi, I lost my coupon for the Christmas show. Can you help me?
+```
 
-## The plan
+Let's solve this with Plang.
 
-The system gets the email sent to it, at that point we need to make decision
+## The Plan
 
-- Can we process the email
-- If we can process, 
-    - call the goal that matches email
-- If we cannot process, dont do anything
+The system gets the email, and now it has to make a decision:
 
-## Code
+1. Can we process this email?
+2. If we can, find the goal that matches the email's content.
+3. If we can't, do nothing.
 
-We have three variables available to us that is sent into the plang app:
-- %email% of user
-- %body% is the email body
-- %subject% is the email subject
+### Code Breakdown
 
+We have three variables available that are sent into the Plang app:
+- `%email%`: the user's email
+- `%body%`: the email's content
+- `%subject%`: the email's subject line
 
-Let's create the goal `ProcessEmail.goal`
+Let’s create a goal called `ProcessEmail.goal`:
 
 ```plang
 ProcessEmail
-- [llm] system: You are processing email.
-            You should select the goal that matches the email. 
-            If no goal is found, set goal as null.
+- [llm] system: You are processing an email.
+            Your task is to select the goal that matches the email. 
+            If no goal is found, set the goal to null.
             == Goals ==
             GoalName: LostCoupon
-            Description: When user is asking about his lost coupons.
-
-            ....
+            Description: When a user is asking about their lost coupons.
             == Goals ==
-        user: "Subject:%subject%
+        user: "Subject: %subject%
                 Body: %body%"
-        scheme: {GoalName:string}
+        scheme: {GoalName: string}
 - if %GoalName% is not null, call goal %GoalName%
 ```
 
-Next we create the file `LostCoupon.goal`. 
+Next, we create the file `LostCoupon.goal`. 
 
-Next we need to query the database for this user in our database, we do that by finding the user in the database by his email `user@example.org` and all the products that he has bought.
-
+We now need to query the database to find the user and retrieve the products they’ve purchased. We do this by looking up the user in the database via their email, `user@example.org`, and fetching all associated orders.
 
 ```plang
 LostCoupon
@@ -70,14 +69,14 @@ LostCoupon
         join products p on p.id=o.product_id
         where u.email=%email%
     write to %orders%
-- [llm] system: You are provided a list of orders for a user
-    see if you can find the product and coupon he is asking for. 
-    If you find the coupon that matches the product user is looking for, create email to the user, with the user name.
+- [llm] system: You have a list of the user’s orders.
+    Look for the product and coupon related to the user's request.
+    If you find the matching coupon, create an email to the user using their name.
     == orders ==
     %orders%
     == orders ==
     user: %body%
-    scheme: {isFound:bool, body:string}
+    scheme: {isFound: bool, body: string}
 - if %isFound% then call CouponFoundEmail, else call NotFoundCouponEmail
 
 CouponFoundEmail
@@ -86,20 +85,26 @@ CouponFoundEmail
 NotFoundCouponEmail
 - send email to %email%, body="We could not find your coupon"
 ```
-> Note: This has been simplified for this article, you need to do bit more description for the LLM and we should mark the email as process in some way, depending on your email system. 
 
-We define the `scheme` as `{isFound:bool, body:string}`. The LLM will then give us this information that we can use.
+> Note: This is a simplified version for the sake of the article. In a real scenario, you'd need to add more detail for the LLM and also ensure the email is marked as processed in your system.
 
-## No database access
+We define the `scheme` as `{isFound: bool, body: string}`, and the LLM will use this information to proceed.
 
-Let's say you don't have database access, but you have access to an admin system that can answer this question. This can be solve we the WebCrawler module
+## No Database Access?
+
+Let’s say you don’t have access to a database but instead have access to an admin system that can provide the information you need. This can be solved with the WebCrawler module.
 
 ```plang
 CrawlForCoupon
 - open https://example.org/admin
 - set #username = %Settings.Username%
-- set #password = %Settings.Password
+- set #password = %Settings.Password%
+- click #login
+- set #email input value %email%
+- click #lookupUser button
+- extract #coupons, to %coupons%
+```
 
+Now, you’ve collected all the user’s coupons into a variable. You can send this data to the LLM by calling the `LostCoupon` goal, or if you want to cut down on LLM costs, you could parse the HTML yourself.
 
-
-
+This simple flow shows how Plang can automate the small, everyday decisions that tend to pile up, leaving you more time to focus on the work that really matters.
