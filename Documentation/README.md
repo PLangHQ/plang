@@ -73,7 +73,7 @@ Explore plang's features and capabilities:
     - **[1. Todo Webservice](https://github.com/PLangHQ/plang/blob/main/Documentation/Todo_webservice.md)**: Simple webservice. Learn how to setup webserver, api and database
     - **[2. Todo LLM](https://github.com/PLangHQ/plang/blob/main/Documentation/Todo_Llm.md)**: How to use LLM in plang
     - **[3. Todo Identity](https://github.com/PLangHQ/plang/blob/main/Documentation/Todo_Identity.md)**: Learn about how you handle 
-    - **[4. Todo Identity](https://github.com/PLangHQ/plang/blob/main/Documentation/Todo_UI.md)**: Learn about how you create GUI (early alpha)
+    - **[4. Todo GUI](https://github.com/PLangHQ/plang/blob/main/Documentation/Todo_UI.md)**: Learn about how you create GUI (early alpha)
     - **[5. Todo New approach](https://github.com/PLangHQ/plang/blob/main/Documentation/todo_new_approch.md)**: Learn how you can rething User Experince with Plang    
 - **For everybody**
     - **[Debugging](https://github.com/PLangHQ/plang/blob/main/Documentation/Debug.md)**: Learn how to debug when programming in the plang language

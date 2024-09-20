@@ -39,9 +39,11 @@ Start
 
 This command tells the Plang runtime to inject the service located in the `services/mysettings/*.dll` folder and sets it to be global to the application.
 
-### Customizing the AskUserHandler
+### Customizing how it asks user
 
-If you want to customize how Plang asks the user for input, you can inject your own `AskUserHandler` service. This is useful if you want to handle user prompts differently, such as sending a message through a messaging module.
+If you want to customize how Plang asks the user for input, you can inject your own [`AskUserHandler` service](https://github.com/PLangHQ/plang/blob/main/Documentation/Services.md#askuser-service). This is useful if you want to handle user prompts differently.
+
+Let’s say you have a Plang app running on a server. You can configure it to alert your admin if a setting is missing. The app could [send a message](https://github.com/PLangHQ/plang/blob/main/Documentation/blogs/Messaging.md) or email, then pause while waiting for a response. Once the admin provides the answer, the app updates the setting and resumes from where it left off. 
 
 To do this, implement the `IAskUserHandler` interface and inject it:
 
@@ -63,6 +65,9 @@ await ex.InvokeCallback(value);
 ```
 
 Here, `value` is the expected response from the user. For example, when creating a database connection, the response can be in natural language, and the LLM will map it correctly to establish the connection.
+
+You can check out the [AskUserMessage service](https://github.com/PLangHQ/services/tree/main/PLang.AskUserMessage) already in the git repo
+
 
 ## Further Reading
 

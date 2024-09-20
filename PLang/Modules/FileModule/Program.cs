@@ -19,6 +19,7 @@ using System.IO.Abstractions;
 using System.Linq.Dynamic.Core;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml;
 
 
 namespace PLang.Modules.FileModule
@@ -509,7 +510,7 @@ namespace PLang.Modules.FileModule
 			}
 			await fileSystem.File.WriteAllBytesAsync(absolutePath, content);
 		}
-		public async Task WriteToFile(string path, string content, bool overwrite = false,
+		public async Task WriteToFile(string path, object content, bool overwrite = false,
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			var absolutePath = GetPath(path);
@@ -526,12 +527,18 @@ namespace PLang.Modules.FileModule
 					fileSystem.File.Delete(absolutePath);
 				}
 			}
-			if (loadVariables && !string.IsNullOrEmpty(content))
+			if (content is XmlDocument doc)
+			{
+				doc.Save(absolutePath);
+				return;
+			}
+
+			if (loadVariables && !string.IsNullOrEmpty(content.ToString()))
 			{
 				content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
 			}
 			
-			await fileSystem.File.WriteAllTextAsync(absolutePath, content, encoding: GetEncoding(encoding));
+			await fileSystem.File.WriteAllTextAsync(absolutePath, content.ToString(), encoding: GetEncoding(encoding));
 		}
 
 		private Encoding GetEncoding(string encoding)

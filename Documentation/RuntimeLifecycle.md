@@ -10,7 +10,7 @@ When you start a Plang application, the following sequence of events occurs:
 
 2. **Run Before Start App Events**: Any events defined to run before the application starts are executed.
 
-3. **Run Setup.goal File**: The `Setup.goal` file is executed. This file typically contains initialization logic for your application.
+3. **Run Setup.goal File**: The `Setup.goal` file is executed. This file typically contains steps such as database setup or other action that should only run once. After a step in the Setup.goal has run once, it will never run again, even after restart. If you add a new step, that step will run on next run.
 
 4. **Start Scheduler**: The scheduler is started, which manages the execution of goals and events.
 

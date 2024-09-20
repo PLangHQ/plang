@@ -14,6 +14,7 @@ using System.Collections;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Caching;
+using System.Xml;
 using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Utils
@@ -546,7 +547,12 @@ example of answer:
 				{
 					return parseMethod.Invoke(null, new object[] { value.ToString() });
 				}
-
+				if (targetType.Name == "XmlDocument")
+				{
+					XmlDocument doc = new XmlDocument();
+					doc.LoadXml(value.ToString());
+					return doc;
+				}
 
 			}
 			catch { }
@@ -559,7 +565,7 @@ example of answer:
 			{
 				if (targetType.Name == "String")
 				{
-					return JsonConvert.SerializeObject(value, Formatting.Indented);
+					return JsonConvert.SerializeObject(value, Newtonsoft.Json.Formatting.Indented);
 				}
 				return parameterInfo.DefaultValue;
 			}

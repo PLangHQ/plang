@@ -1,4 +1,4 @@
-﻿# Todo Window App with LLM
+﻿# Todo App with LLM
 
 In this tutorial, we will enhance our previous Todo app by integrating a Language Learning Model (LLM). This will allow us to automate the categorization of tasks, making the user experience more seamless and efficient.
 

@@ -86,7 +86,7 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 
 
-		private async Task<ChromeDriver> GetDriver(string browserType = "Chrome", bool headless = false, bool useUserSession = false, string userSessionPath = "",
+		private async Task<WebDriver> GetDriver(string browserType = "Chrome", bool headless = false, bool useUserSession = false, string userSessionPath = "",
 			bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null, int timeoutInSeconds = 60)
 		{
 			if (!context.ContainsKey("SeleniumBrowser"))
@@ -94,7 +94,7 @@ namespace PLang.Modules.WebCrawlerModule
 				logger.LogDebug("Key SeleniumBrowser not existing. Starting browser");
 				await StartBrowser(browserType, headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, timeoutInSeconds);
 			}
-			return context["SeleniumBrowser"] as ChromeDriver;
+			return context["SeleniumBrowser"] as WebDriver;
 		}
 
 		private async Task<IWebElement> GetElement(string? cssSelector = null)
@@ -140,7 +140,7 @@ namespace PLang.Modules.WebCrawlerModule
 			{
 				url = "https://" + url;
 			}
-
+			
 			driver.Navigate().GoToUrl(url);
 
 			var logs = driver.Manage().Logs.GetLog(LogType.Browser);
