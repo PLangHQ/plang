@@ -160,7 +160,7 @@ namespace PLang.Events
 				return ([], new Error(".build folder does not exists. Run 'plang build' first."));
 			}
 			var eventsFolderPath = Path.Join(buildPath, "events");
-			if (!fileSystem.Directory.Exists(eventsFolderPath)) return new();
+			if (!fileSystem.Directory.Exists(eventsFolderPath)) return (new(), null);
 
 			string eventsFolderName = (!builder) ? "Events" : "BuilderEvents";
 

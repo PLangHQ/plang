@@ -10,6 +10,7 @@ using PLang.Utils;
 using System.ComponentModel;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using static Dapper.SqlMapper;
 using static PLang.Errors.AskUser.AskUserPrivateKeyExport;
@@ -24,13 +25,15 @@ namespace PLang.Modules.CryptographicModule
 		private readonly ModuleSettings moduleSettings;
 		private readonly ISettings settings;
 		private readonly ILlmServiceFactory llmServiceFactory;
+		private readonly IPLangFileSystem fileSystem;
 
-		public Program(ISettings settings, IEncryptionFactory encryptionFactory, ILlmServiceFactory llmServiceFactory) : base()
+		public Program(ISettings settings, IEncryptionFactory encryptionFactory, ILlmServiceFactory llmServiceFactory, IPLangFileSystem fileSystem) : base()
 		{
 			this.encryption = encryptionFactory.CreateHandler();
 			this.moduleSettings = new ModuleSettings(settings);
 			this.settings = settings;
 			this.llmServiceFactory = llmServiceFactory;
+			this.fileSystem = fileSystem;
 		}
 
 
@@ -84,7 +87,7 @@ namespace PLang.Modules.CryptographicModule
 		{
 			if (string.IsNullOrEmpty(content)) return null;
 
-			byte[] bytes = Encoding.UTF8.GetBytes(content); 
+			byte[] bytes = Encoding.UTF8.GetBytes(content);
 			return Convert.ToBase64String(bytes);
 		}
 
@@ -122,7 +125,8 @@ namespace PLang.Modules.CryptographicModule
 					salt = BCrypt.Net.BCrypt.GenerateSalt();
 				}
 				return (BCrypt.Net.BCrypt.HashPassword(input, salt), null);
-			} else
+			}
+			else
 			{
 				if (useSalt && salt == null)
 				{
@@ -154,7 +158,8 @@ namespace PLang.Modules.CryptographicModule
 			if (hashAlgorithm == "bcrypt")
 			{
 				return BCrypt.Net.BCrypt.Verify(text, hash);
-			} else
+			}
+			else
 			{
 				if (useSalt && salt == null)
 				{
@@ -162,6 +167,38 @@ namespace PLang.Modules.CryptographicModule
 				}
 				return text.ComputeHash(hashAlgorithm, salt).Hash.Equals(hash);
 			}
+		}
+
+		[Description("Used to verify hash comparing file and a hash. hashAlgorithm: md5 | sha1 | sha256 | sha512. encoding: base64|hex")]
+		public async Task<(bool, IError?)> VerifyHashOfFile(string filePath, string expectedHash, string hashAlgorithm = "sha256", string encoding = "base64")
+		{
+			var absolutePath = GetPath(filePath);
+			if (!fileSystem.File.Exists(absolutePath))
+			{
+				return (false, new ProgramError($"File {filePath} could not be found", goalStep, function, FixSuggestion: $"Make sure that the file {filePath} exists. The absolute path to it is {absolutePath}"));
+			}
+
+			var fileBytes = await File.ReadAllBytesAsync(absolutePath);
+			var hashAlgo = EncryptionHelper.GetCryptoStandard(hashAlgorithm, expectedHash);
+			var fileHashBytes = hashAlgo.ComputeHash(fileBytes);
+			string fileHash = "";
+			if (encoding == "hex")
+			{
+				fileHash = BitConverter.ToString(fileHashBytes);
+			}
+			else
+			{
+				fileHash = Convert.ToBase64String(fileHashBytes);
+			}
+
+			int idx = expectedHash.IndexOf("-");
+			if (idx != -1)
+			{
+				expectedHash = expectedHash.Substring(idx + 1);
+			}
+
+			return (fileHash.Equals(expectedHash.ToLowerInvariant()), null);
+
 		}
 
 		public void Dispose()

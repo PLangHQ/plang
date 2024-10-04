@@ -24,7 +24,6 @@ namespace PLang.Modules.LlmModule.Tests
 			base.Initialize();
 
 			LoadOpenAI();
-			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new Builder();
 			builder.InitBaseBuilder("PLang.Modules.LlmModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);

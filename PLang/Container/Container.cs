@@ -7,6 +7,7 @@ using Nethereum.RPC.Accounts;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using Nostr.Client.Client;
+using OpenQA.Selenium.DevTools.V129.Audits;
 using PLang.Building;
 using PLang.Building.Parsers;
 using PLang.Errors.Handlers;
@@ -147,7 +148,7 @@ namespace PLang.Container
 				return factory.GetInstance<ILogger>(type);
 			});
 
-
+			container.RegisterSingleton<DependancyHelper>();
 			container.RegisterSingleton<PrParser>();
 		}
 
@@ -303,13 +304,14 @@ namespace PLang.Container
 				var settings = container.GetInstance<ISettings>();
 				var llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
 				var logger = container.GetInstance<ILogger>();
+				var typeHelper = container.GetInstance<ITypeHelper>();
 
 
 				IDbConnection? dbConnection = GetDbConnection(factory, context);
 				if (dbConnection != null) return dbConnection;
 
 				dbConnection = factory.GetInstance<IDbConnection>(typeof(DbConnectionUndefined).FullName);
-				var moduleSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger);
+				var moduleSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger, typeHelper);
 
 				dbConnection = moduleSettings.GetDefaultDbConnection(factory).Result;
 				if (dbConnection != null) return dbConnection;
@@ -343,8 +345,9 @@ namespace PLang.Container
 				var dbConnection = factory.GetInstance<IDbConnection>(dbType);
 				var logger = container.GetInstance<ILogger>();
 				var llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
+				var typeHelper = container.GetInstance<ITypeHelper>();
 
-				var moduleSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger);
+				var moduleSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger, typeHelper);
 				var dataSources = moduleSettings.GetAllDataSources().Result;
 				if (dataSources.Count == 0)
 				{
@@ -420,35 +423,48 @@ namespace PLang.Container
 
 				AppDomain.CurrentDomain.AssemblyResolve += (sender, resolveArgs) =>
 				{
-					string assemblyPath = fileSystem.Path.Combine(fileSystem.RootDirectory, ".modules", new AssemblyName(resolveArgs.Name).Name + ".dll");
-					if (fileSystem.File.Exists(assemblyPath))
+					var baseDirectory = fileSystem.Path.Combine(fileSystem.RootDirectory, ".modules");
+					var files = fileSystem.Directory.GetFiles(baseDirectory, new AssemblyName(resolveArgs.Name).Name + ".dll", SearchOption.AllDirectories);
+					if (files.Length > 0)
 					{
-						return Assembly.LoadFile(assemblyPath);
+						return Assembly.LoadFile(files[0]);
 					}
 					return null;
 				};
-
-
-				var assemblyFiles = fileSystem.Directory.GetFiles(".modules", "*.dll");
+				var dependancyHelper = container.GetInstance<DependancyHelper>();
+				dependancyHelper.LoadModules(typeof(BaseProgram), fileSystem.GoalsPath);
+				/*
+				var assemblyFiles = fileSystem.Directory.GetFiles(".modules", "*.dll", SearchOption.AllDirectories);
 				foreach (var file in assemblyFiles)
 				{
-
+					
 					var assembly = Assembly.LoadFile(file);
-					 var builderTypes = assembly.GetTypes()
-											   .Where(t => !t.IsAbstract && !t.IsInterface &&
-											   (typeof(BaseBuilder).IsAssignableFrom(t) || typeof(BaseProgram).IsAssignableFrom(t)))
-											   .ToList();
+					List<Type> builderTypes = new();
+					try
+					{
+						builderTypes = assembly.GetTypes()
+												  .Where(t => !t.IsAbstract && !t.IsInterface &&
+												  (typeof(BaseBuilder).IsAssignableFrom(t) || typeof(BaseProgram).IsAssignableFrom(t)))
+												  .ToList();
+					} catch (ReflectionTypeLoadException ex)
+					{
+						LoadDependencies(container, fileSystem, file, ex);
+					}
+
 
 					foreach (var type in builderTypes)
 					{
 						container.Register(type);  // or register with a specific interface if needed
 					}
-				}
+				}*/
 			}
 
 			RegisterUserGlobalInjections(container);
 
 		}
+
+		
+
 		private static void RegisterUserGlobalInjections(ServiceContainer container)
 		{
 			var prParser = container.GetInstance<PrParser>();

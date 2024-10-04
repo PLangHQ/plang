@@ -22,16 +22,18 @@ namespace PLang.Modules.DbModule
 		private readonly PLangAppContext context;
 		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly ILogger logger;
+		private readonly ITypeHelper typeHelper;
 		private string defaultLocalDbPath = "./.db/data.sqlite";
 		public record SqlStatement(string SelectTablesAndViewsInMyDatabaseSqlStatement, string SelectColumnsFromTablesSqlStatement);
 
-		public ModuleSettings(IPLangFileSystem fileSystem, ISettings settings, PLangAppContext context, ILlmServiceFactory llmServiceFactory, ILogger logger)
+		public ModuleSettings(IPLangFileSystem fileSystem, ISettings settings, PLangAppContext context, ILlmServiceFactory llmServiceFactory, ILogger logger, ITypeHelper typeHelper)
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
 			this.context = context;
 			this.llmServiceFactory = llmServiceFactory;
 			this.logger = logger;
+			this.typeHelper = typeHelper;
 		}
 
 
@@ -337,7 +339,7 @@ where the CreateDataSource would create the database and table
 			context.AddOrReplace(ReservedKeywords.CurrentDataSource, dataSources[0]);
 			return dataSources[0];
 		}
-		private Type GetDbType(string typeFullName)
+		private Type? GetDbType(string typeFullName)
 		{
 			var types = GetSupportedDbTypes();
 			return types.FirstOrDefault(p => p.FullName == typeFullName);
@@ -345,7 +347,6 @@ where the CreateDataSource would create the database and table
 
 		public  List<Type> GetSupportedDbTypes()
 		{
-			var typeHelper = new TypeHelper(fileSystem, settings);
 			var types = typeHelper.GetTypesByType(typeof(IDbConnection)).ToList();
 			types.Remove(typeof(DbConnectionUndefined));
 

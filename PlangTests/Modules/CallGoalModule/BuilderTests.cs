@@ -23,7 +23,7 @@ namespace PLang.Modules.CallGoalModule.Tests
 			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
 			var llmService = new PLang.Services.OpenAi.OpenAiService(settings, logger, llmCaching, context);
 			llmServiceFactory.CreateHandler().Returns(llmService);
-			typeHelper = new TypeHelper(fileSystem, settings);
+		
 
 			builder = new Builder();
 			builder.InitBaseBuilder("PLang.Modules.CallGoalModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);

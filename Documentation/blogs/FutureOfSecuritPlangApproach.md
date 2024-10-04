@@ -36,7 +36,7 @@ What does that mean? It simplifies programming, drastically. It takes care of mu
 
 And it’s not just a black box. The execution layer is in plain text, not binary, so both security experts and tools like large language models can easily validate it, preventing potential bad behavior.
 
-The gap between Plang and C# is razor-thin—usually just a few lines of code. This thin layer creates a buffer zone. If a bug exists in the C# code, it’s easier to catch and correct. And when a vulnerability is discovered, like the infamous Log4j issue, Plang could address it with an update, meaning you wouldn’t have to modify your code at all.
+The gap between Plang and C# is razor-thin—usually just a few lines of code. This thin layer creates a buffer zone, a firewall. If a bug exists in the C# code, it’s easier to catch and correct. And when a vulnerability is discovered, like the infamous Log4j issue, Plang could address it with an update, meaning you wouldn’t have to modify your code at all.
 
 ### SaaS Integration: Simplicity and Security in Minutes
 

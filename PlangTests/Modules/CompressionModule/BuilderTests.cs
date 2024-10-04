@@ -26,8 +26,6 @@ namespace PLang.Modules.CompressionModule.Tests
 			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
 			LoadOpenAI();
 
-			typeHelper = new TypeHelper(fileSystem, settings);
-
 			builder = new GenericFunctionBuilder();
 			builder.InitBaseBuilder("PLang.Modules.CompressionModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 

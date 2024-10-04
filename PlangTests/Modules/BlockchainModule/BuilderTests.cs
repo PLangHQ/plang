@@ -52,7 +52,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var moduleSettings = new ModuleSettings(settings, llmServiceFactory);
 			
 			//var fileSystem = new PLangMockFileSystem();
-			typeHelper = new TypeHelper(fileSystem, settings);
+			//typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new Builder(settings, context, llmServiceFactory);
 			builder.InitBaseBuilder("PLang.Modules.BlockchainModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);

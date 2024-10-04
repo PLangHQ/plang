@@ -1,13 +1,6 @@
 ﻿using Microsoft.Web.WebView2.WinForms;
 using Newtonsoft.Json;
-using OpenQA.Selenium.DevTools.V124.WebAudio;
 using PLang.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace PLangWindowForms
 {

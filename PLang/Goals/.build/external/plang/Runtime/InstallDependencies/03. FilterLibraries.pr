@@ -1,0 +1,77 @@
+{
+  "Action": {
+    "FunctionName": "FilterOnProperty",
+    "Parameters": [
+      {
+        "Type": "Object",
+        "Name": "variableToExtractFrom",
+        "Value": "%libraries%"
+      },
+      {
+        "Type": "String",
+        "Name": "propertyToFilterOn",
+        "Value": "%libraryName%/"
+      },
+      {
+        "Type": "String",
+        "Name": "operatorOnPropertyToFilterOn",
+        "Value": "startswith"
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "Object",
+        "VariableName": "library"
+      }
+    ]
+  },
+  "Text": "filter %libraries% where property starts with \"%libraryName%/\", write to %library%",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+    "model": "gpt-4o-2024-08-06",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nFilterOnProperty(Object variableToExtractFrom, String propertyToFilterOn, String? operatorOnPropertyToFilterOn = \"=\", String? retrieveOneItem)  : Object  // Use this function when the intent is to filter a list based solely on the property name or pattern of the property name, without needing to match a specific value within that property. \r\nThis function is suitable when the user specifies conditions like \"property starts with\", \"property ends with\", or \"property contains\" without mentioning a value to filter by.\r\n\r\noperatorOnPropertyToFilterOn can be: =|!=|startswith|endswith|contains\r\nretrieveOneItem: null|first|last|number (retrieveOneItem can also be a number representing the index.)\r\ncan return a list of elements or one element, depending on if retrieveOneItem is set.\r\n<example>\r\n- filter %list% where property is 'Name' => variableToExtractFrom=\"%list%\", propertyToFilterOn=\"Name\"\r\n- filter %list% where property contains 'Addr', return the first => variableToExtractFrom=\"%list%\", propertyToFilterOn=\"Name\", operatorOnPropertyToFilterOn=\"contains\", retrieveOneItem=\"first\"\r\n</example>\r\n. \nFilterOnPropertyAndValue(Object variableToExtractFrom, String propertyToFilterOn, String valueToFilterBy, String? operatorToFilterOnValue = \"=\", String? operatorOnPropertyToFilter = \"=\", String? propertyToExtract, Boolean? throwErrorWhenNothingFound = False, String? retrieveOneItem, String? operatorToFilterOnValueComparer = \"insensitive\")  : void  //  Use this function when the intent is to filter a list based on both the property name and a specific value within that property. \r\nThis function is appropriate when the user specifies conditions that involve both a property and a value, such as \"property is 'Name' and value is 'John'\", or when operators on both the property and value are needed.\r\n\r\npropertyToFilterOn: required, property of a list to filter on\r\nvalueToFilterBy: required, find a specific value on the propertyToFilterOn\r\noperatorOnPropertyToFilter can be following(sperated by |): <|>|equals|startswith|endswith|contains.\r\nretrieveOneItem: first|last|retrieveOneItem can also be a number representing the index.\r\noperatorOnPropertyToFilter: equals|startswith|endswith|contains\r\npropertyToExtract: by default it returns the element that matches the property, but when propertyToExtract is specified it will find that property and return the object from that property\r\noperatorToFilterOnValueComparer: insensitive|case-sensitive\r\n<example>\r\n- filter %json% where property starts with \"%item%/\" and has \"John\" as value, write to %libraries% => variableToExtractFrom=\"%json%\", \r\n\tpropertyToFilterOn=\"%item%/\", valueToFilterBy=\"John\", operatorToFilterOnValue=\"contains\", operatorOnPropertyToFilter=\"startswith\"\r\n\toperatorToFilterOnValueComparer=\"insensitive\"\r\n- filter %list% where property is \"Quantity\" and is larger then \"10\", give me first, write to %library% => variableToExtractFrom=\"%list%\", \r\n\tpropertyToFilterOn=\"Quantity\", valueToFilterBy=\"10\", operatorToFilterOnValue=\">\", operatorOnPropertyToFilter=\"=\"\r\n\toperatorToFilterOnValueComparer=\"case-sensitive\"\r\n\tretrieveOneItem=\"first\"\r\n</example>\r\n.\r\n## functions available ends ##\r\n## defined variables ##\r\nlibraries (type:Object), libraryName (type:object), library (type:object), \r\n## defined variables ##"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "filter %libraries% where property starts with \"%libraryName%/\", write to %library%"
+          }
+        ]
+      }
+    ],
+    "type": "PLang.Modules.GenericFunctionBuilder",
+    "caching": true,
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"FilterOnProperty\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"Name\": \"variableToExtractFrom\",\n\t\t\t\"Value\": \"%libraries%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"propertyToFilterOn\",\n\t\t\t\"Value\": \"%libraryName%/\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"operatorOnPropertyToFilterOn\",\n\t\t\t\"Value\": \"startswith\"\n\t\t}\n\t],\n\t\"ReturnValues\": [{\n\t\t\"Type\": \"Object\",\n\t\t\"VariableName\": \"library\"\n\t}]\n}\n```"
+  },
+  "RunOnBuild": false
+}

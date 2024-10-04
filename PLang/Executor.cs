@@ -7,10 +7,12 @@ using PLang.Errors.Handlers;
 using PLang.Interfaces;
 using PLang.Resources;
 using PLang.Runtime;
+using PLang.SafeFileSystem;
 using PLang.Utils;
 using System.IO.Abstractions;
 using System.IO.Compression;
 using System.Reflection;
+using static PLang.Executor;
 
 namespace PLang
 {
@@ -39,6 +41,38 @@ namespace PLang
 		{
 			Runtime = 0,
 			Builder = 1
+		}
+
+		public async static Task<IError?> RunGoal(string goalName, Dictionary<string, object?>? parameters = null)
+		{
+			AppContext.SetSwitch("InternalGoalRun", true);
+			AppContext.SetSwitch("Runtime", true);
+			var container = new ServiceContainer();
+			container.RegisterForPLangConsole(Environment.CurrentDirectory, System.IO.Path.DirectorySeparatorChar.ToString());
+
+			var engine = container.GetInstance<IEngine>();
+			engine.Init(container);
+
+			if (parameters != null)
+			{
+				foreach (var param in parameters)
+				{
+					engine.GetMemoryStack().Put(param.Key, param.Value);
+				}
+			}
+			var prParser = container.GetInstance<PrParser>();
+			var fileAccessHandler = container.GetInstance<FileAccessHandler>();
+			var fileSystem = container.GetInstance<IPLangFileSystem>();
+
+			await prParser.GoalFromGoalsFolder(fileSystem.RootDirectory, fileAccessHandler);
+
+			var allGoals = prParser.GetAllGoals();
+			var goal = allGoals.FirstOrDefault(p => p.RelativeGoalPath.Equals(goalName.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
+			if (goal == null) return new Error($"Goal {goalName} could not be found");
+
+			var error = await engine.RunGoal(goal);
+			AppContext.SetSwitch("InternalGoalRun", false);
+			return error;
 		}
 
 		public async Task Execute(string[] args, ExecuteType executeType)
@@ -126,9 +160,10 @@ namespace PLang
 
 		public void SetupDebug()
 		{
+
 			Console.WriteLine("-- Debug mode");
 			AppContext.SetSwitch(ReservedKeywords.Debug, true);
-
+			/*
 			var eventsPath = fileSystem.Path.Join(fileSystem.GoalsPath, "events", "external", "plang", "runtime");
 
 			if (fileSystem.Directory.Exists(eventsPath)) return;
@@ -139,7 +174,7 @@ namespace PLang
 			using (ZipArchive archive = new ZipArchive(ms))
 			{
 				archive.ExtractToDirectory(fileSystem.GoalsPath, true);
-			}
+			}*/
 			return;
 
 		}

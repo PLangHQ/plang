@@ -259,6 +259,7 @@ namespace PLang.Building
 
 		public void SetupBuildValidation()
 		{
+			/*
 			var eventsPath = fileSystem.Path.Join(fileSystem.GoalsPath, "events", "external", "plang", "builder");
 
 			if (fileSystem.Directory.Exists(eventsPath)) return;
@@ -271,7 +272,7 @@ namespace PLang.Building
 				archive.ExtractToDirectory(fileSystem.GoalsPath, true);
 			}
 			return;
-
+			*/
 		}
 	}
 

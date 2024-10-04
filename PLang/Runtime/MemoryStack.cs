@@ -11,6 +11,7 @@ using PLang.Services.SettingsService;
 using PLang.Utils;
 using Sprache;
 using System.Collections;
+using System.Collections.Specialized;
 using System.Data;
 using System.Diagnostics;
 using System.Dynamic;
@@ -899,29 +900,39 @@ namespace PLang.Runtime
 				{
 					value = null;
 				}
+			} else if (obj is NameValueCollection nvc)
+			{
+				var key = nvc.AllKeys.FirstOrDefault(p => p.ToLower() == propertyDescription.ToLower());
+				if (key != null)
+				{
+					value = nvc[key];
+				}
+				else
+				{
+					value = null;
+				}
 			}
 			else
 			{
 				var property = type.GetProperties().Where(p => p.Name.ToLower() == propertyDescription.ToLower()).FirstOrDefault();
 				if (property == null)
 				{
-					object? parsedObject = null;
-					if (obj is JToken || (obj is string && JsonHelper.IsJson(obj, out parsedObject)))
+					JToken? token = TryConvertToJToken(obj);
+					if (token != null)
 					{
 						IEnumerable<JToken> tokens;
-						if (parsedObject == null) parsedObject = obj;
 
-						if (parsedObject is JArray)
+						if (token is JArray)
 						{
-							tokens = ((JArray)parsedObject).SelectTokens(propertyDescription);
+							tokens = ((JArray)token).SelectTokens(propertyDescription);
 						}
-						else if (parsedObject is JObject)
+						else if (token is JObject)
 						{
-							tokens = ((JObject)parsedObject).SelectTokens(propertyDescription);
+							tokens = ((JObject)token).SelectTokens(propertyDescription);
 						}
 						else
 						{
-							tokens = ((JToken)parsedObject).SelectTokens(propertyDescription);
+							tokens = ((JToken)token).SelectTokens(propertyDescription);
 						}
 						var array = tokens.ToArray();
 						if (array.Length != 1)
@@ -974,6 +985,26 @@ namespace PLang.Runtime
 			return objectValue;
 
 		}
+
+		private JToken? TryConvertToJToken(object obj)
+		{
+			if (obj is JToken token) return token;
+			if (obj is string && JsonHelper.IsJson(obj, out object? parsed)) return (JToken?) parsed;
+			if (obj is IList list)
+			{
+				if (list.Count > 0 && list[0] is JProperty)
+				{
+					return new JObject(list);
+				}
+				return JArray.FromObject(obj);
+			}
+			if (obj is IDictionary dict)
+			{
+				return JArray.FromObject(obj);
+			}
+			return JObject.FromObject(obj);
+		}
+
 		private ObjectValue ExecuteMethod(ObjectValue objValue, string methodDescription, string variableName)
 		{
 			var obj = objValue.Value;

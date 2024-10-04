@@ -5,7 +5,6 @@ using Microsoft.CodeAnalysis.Emit;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using OpenQA.Selenium.DevTools.V124.WebAudio;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Errors.Builder;

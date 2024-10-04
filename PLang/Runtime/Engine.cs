@@ -1,8 +1,6 @@
 ﻿using LightInject;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
-using NBitcoin;
-using NBitcoin.Secp256k1;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
@@ -21,16 +19,12 @@ using PLang.Services.AppsRepository;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Utils;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
 using System.Net;
-using System.Reflection.Metadata.Ecma335;
-using System.Text;
 
 namespace PLang.Runtime
 {
-    public interface IEngine
+	public interface IEngine
 	{
 		IOutputStreamFactory OutputStreamFactory { get; }
 		void AddContext(string key, object value);
@@ -38,7 +32,7 @@ namespace PLang.Runtime
 		MemoryStack GetMemoryStack();
 		void Init(IServiceContainer container);
 		Task Run(List<string> goalsToRun);
-		Task<IError> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0);
+		Task<IError?> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0);
 		Goal? GetGoal(string goalName, Goal? callingGoal = null);
 		List<Goal> GetGoalsAvailable(string appPath, string goalName);
 
@@ -105,6 +99,7 @@ namespace PLang.Runtime
 			this.context.AddOrReplace(key, value);
 		}
 		public PLangAppContext GetContext() => this.context;
+
 
 		public async Task Run(List<string> goalsToRun)
 		{
@@ -299,11 +294,6 @@ namespace PLang.Runtime
 				return new Error($"Could not load pr file at {prFileAbsolutePath}");
 			}
 
-			foreach (var injection in goal.Injections)
-			{
-				((ServiceContainer)container).RegisterForPLangUserInjections(injection.Type, injection.Path, injection.IsGlobal);
-			}
-
 			var error = await RunGoal(goal);
 
 			stopwatch.Stop();
@@ -312,40 +302,23 @@ namespace PLang.Runtime
 			return error;
 		}
 
-		private void SetStepLogLevel(GoalStep step)
-		{
-			if (string.IsNullOrEmpty(step.LoggerLevel)) return;
-
-			Enum.TryParse(step.LoggerLevel, true, out Microsoft.Extensions.Logging.LogLevel logLevel);
-			AppContext.SetData("StepLogLevelByUser", logLevel);
-		}
-
-		private void ResetStepLogLevel()
-		{
-			AppContext.SetData("StepLogLevelByUser", null);
-		}
-		private void SetLogLevel(string? goalComment)
-		{
-			if (goalComment == null) return;
-
-			string[] logLevels = ["trace", "debug", "information", "warning", "error"];
-			foreach (var logLevel in logLevels)
-			{
-				if (goalComment.ToLower().Contains($"[{logLevel}]"))
-				{
-					AppContext.SetData("GoalLogLevelByUser", Microsoft.Extensions.Logging.LogLevel.Trace);
-					return;
-				}
-			}
-			return;
-		}
-
+		
 		public async Task<IError?> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0)
 		{
+			if (goal == null)
+			{
+				return new Error("Goal instance was null when trying to RunGoal");
+			}
+
 			if (waitForXMillisecondsBeforeRunningGoal > 0) await Task.Delay((int)waitForXMillisecondsBeforeRunningGoal);
 
 			AppContext.SetSwitch("Runtime", true);
 			SetLogLevel(goal.Comment);
+
+			foreach (var injection in goal.Injections)
+			{
+				((ServiceContainer)container).RegisterForPLangUserInjections(injection.Type, injection.Path, injection.IsGlobal);
+			}
 
 			int goalStepIndex = -1;
 			try
@@ -426,6 +399,35 @@ namespace PLang.Runtime
 			}
 			return null;
 		}
+
+		private void SetStepLogLevel(GoalStep step)
+		{
+			if (string.IsNullOrEmpty(step.LoggerLevel)) return;
+
+			Enum.TryParse(step.LoggerLevel, true, out Microsoft.Extensions.Logging.LogLevel logLevel);
+			AppContext.SetData("StepLogLevelByUser", logLevel);
+		}
+
+		private void ResetStepLogLevel()
+		{
+			AppContext.SetData("StepLogLevelByUser", null);
+		}
+		private void SetLogLevel(string? goalComment)
+		{
+			if (goalComment == null) return;
+
+			string[] logLevels = ["trace", "debug", "information", "warning", "error"];
+			foreach (var logLevel in logLevels)
+			{
+				if (goalComment.ToLower().Contains($"[{logLevel}]"))
+				{
+					AppContext.SetData("GoalLogLevelByUser", Microsoft.Extensions.Logging.LogLevel.Trace);
+					return;
+				}
+			}
+			return;
+		}
+
 
 		/*
 private async Task<bool> CachedGoal(Goal goal)
@@ -728,6 +730,7 @@ private async Task CacheGoal(Goal goal)
 			List<string> goalsToRun = new();
 			if (goalNames.Count > 0)
 			{
+				
 				var goalFiles = fileSystem.Directory.GetFiles(fileSystem.BuildPath, ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
 				foreach (var goalName in goalNames)
 				{

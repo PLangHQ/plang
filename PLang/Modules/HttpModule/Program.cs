@@ -22,8 +22,15 @@ namespace PLang.Modules.HttpModule
 	{
 		public async Task<IError?> DownloadFile(string url, string pathToSaveTo,
 			bool overwriteFile = false,
-			Dictionary<string, object>? headers = null, bool createPathToSaveTo = true)
+			Dictionary<string, object>? headers = null, bool createPathToSaveTo = true, bool doNotDownloadIfFileExists = false)
 		{
+
+			var absoluteSaveTo = GetPath(pathToSaveTo);
+			if (fileSystem.File.Exists(absoluteSaveTo))
+			{
+				return null;
+			}
+			
 			using (var client = httpClientFactory.CreateClient())
 			{
 				if (headers != null)
@@ -41,11 +48,12 @@ namespace PLang.Modules.HttpModule
 				using (HttpResponseMessage response = await client.GetAsync(url))
 				{
 					response.EnsureSuccessStatusCode();
-					if (fileSystem.File.Exists(pathToSaveTo))
+
+					if (fileSystem.File.Exists(absoluteSaveTo))
 					{
 						if (overwriteFile)
 						{
-							fileSystem.File.Delete(pathToSaveTo);
+							fileSystem.File.Delete(absoluteSaveTo);
 						}
 						else
 						{
@@ -54,7 +62,7 @@ namespace PLang.Modules.HttpModule
 					}
 					if (createPathToSaveTo)
 					{
-						string? dirPath = Path.GetDirectoryName(pathToSaveTo);
+						string? dirPath = Path.GetDirectoryName(absoluteSaveTo);
 						if (dirPath != null && !fileSystem.Directory.Exists(dirPath))
 						{
 							fileSystem.Directory.CreateDirectory(dirPath);
@@ -62,7 +70,7 @@ namespace PLang.Modules.HttpModule
 					}
 
 					await using (Stream contentStream = await response.Content.ReadAsStreamAsync(),
-								 fileStream = fileSystem.FileStream.New(pathToSaveTo, FileMode.Create, FileAccess.Write, FileShare.None))
+								 fileStream = fileSystem.FileStream.New(absoluteSaveTo, FileMode.Create, FileAccess.Write, FileShare.None))
 					{
 						await contentStream.CopyToAsync(fileStream);
 					}

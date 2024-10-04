@@ -22,7 +22,7 @@ namespace PLang.Utils
 
 		public static List<string> GetGoalFilesToBuild(IPLangFileSystem fileSystem, string goalPath)
 		{
-			string[] anyFile = fileSystem.Directory.GetFiles(goalPath, "*.goal", SearchOption.TopDirectoryOnly);
+			string[] anyFile = fileSystem.Directory.GetFiles(goalPath, "*.goal", SearchOption.AllDirectories);
 			if (anyFile.Length == 0)
 			{
 				throw new BuilderException($"No goal files found in directory. Are you in the correct directory? I am running from {goalPath}");

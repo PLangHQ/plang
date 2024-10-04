@@ -1,6 +1,6 @@
 # Security - Isolated User Storage Pattern
 
-When you are using sqlite database for you web service, you can seperate each user data into seperate database, this will provide extra security in a way that there is no chance of one user getting other users data, as the data it self live in seperate databases. I call this *Isolated User Storage Pattern*
+In Plang, when you are using sqlite database for your web service, you can seperate each user data into seperate database, this will provide extra security in a way that there is no chance of one user getting other users data, as the data it self live in seperate databases. I call this *Isolated User Storage Pattern*
 
 In a typical way when we are retrieveing users data, it looks something like this
 
@@ -51,6 +51,6 @@ Lets say you want to know how many bookmarks are in the system, one option is to
 SaveBookmark
 - set datasource as '%Identity%/.db/data.sqlite'
 - insert into bookmarks %pageId%
-- set datasource as 'main'
+- set datasource as 'data'
 - update table stats set bookmark_count=bookmark_count+1
 ```

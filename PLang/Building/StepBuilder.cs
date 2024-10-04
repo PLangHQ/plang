@@ -1,12 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
-using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Schema;
-using OpenQA.Selenium.DevTools.V124.CSS;
 using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Errors;
-using PLang.Errors.AskUser;
 using PLang.Errors.Builder;
 using PLang.Errors.Handlers;
 using PLang.Events;
@@ -18,8 +14,6 @@ using PLang.Runtime;
 using PLang.Services.CompilerService;
 using PLang.Services.LlmService;
 using PLang.Utils;
-using RazorEngineCore;
-using System.ComponentModel;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
@@ -48,7 +42,7 @@ namespace PLang.Building
 
 		public StepBuilder(Lazy<ILogger> logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 					IInstructionBuilder instructionBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
-					MemoryStack memoryStack, VariableHelper variableHelper, IErrorHandlerFactory exceptionHandlerFactory, 
+					MemoryStack memoryStack, VariableHelper variableHelper, IErrorHandlerFactory exceptionHandlerFactory,
 					PLangAppContext context, ISettings settings)
 		{
 			this.fileSystem = fileSystem;
@@ -79,7 +73,7 @@ namespace PLang.Building
 			if (excludeModules == null) { excludeModules = new List<string>(); }
 
 			try
-			{				
+			{
 				if (StepHasBeenBuild(step, stepIndex, excludeModules)) return null;
 
 				var error = await eventRuntime.RunBuildStepEvents(EventType.Before, goal, step, stepIndex);
@@ -88,7 +82,7 @@ namespace PLang.Building
 				// build info about step, name, description and module type
 				(step, error) = await BuildStepInformation(goal, step, stepIndex, excludeModules, errorCount);
 				if (error != null) return error;
-				
+
 
 				// builds the instruction set to execute
 				(var instruction, error) = await instructionBuilder.BuildInstruction(this, goal, step, step.ModuleType, stepIndex, excludeModules, errorCount);
@@ -101,11 +95,13 @@ namespace PLang.Building
 
 				// builds properties on the step, caching, errorhandling, logger
 				(step, error) = await BuildStepProperties(goal, step, instruction, stepIndex, excludeModules, errorCount);
-				if (error != null) return error;				
+				if (error != null) return error;
 
 				//Set reload to false after Build Instruction
 				step.Reload = false;
 				step.Generated = DateTime.Now;
+				var assembly = Assembly.GetAssembly(this.GetType());
+				step.BuilderVersion = assembly.GetName().Version.ToString();
 
 				return await eventRuntime.RunBuildStepEvents(EventType.After, goal, step, stepIndex);
 			}
@@ -149,6 +145,7 @@ namespace PLang.Building
 			AppContext.TryGetSwitch(ReservedKeywords.StrictBuild, out bool isStrict);
 			if (isStrict && step.Number != stepIndex) return false;
 			if (step.PrFileName == null || excludeModules.Count > 0) return false;
+			if (!step.PrFileName.StartsWith((step.Number+1).ToString().PadLeft(2, '0'))) return false;
 
 			if (!fileSystem.File.Exists(step.AbsolutePrFilePath))
 			{
@@ -212,6 +209,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 
 			logger.Value.LogInformation($"- Find module for {step.Text}");
 			llmQuestion.Reload = false;
+
 			(var stepInformation, var llmError) = await llmServiceFactory.CreateHandler().Query<StepInformation>(llmQuestion);
 			if (llmError != null) return (step, llmError as IBuilderError);
 
@@ -227,7 +225,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			{
 				return (step, new StepBuilderError(noBuildErrorMessage, step, HelpfulLinks: "https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md", FixSuggestion: fixSuggestions));
 
-			}			
+			}
 
 			step.ModuleType = module;
 			step.Name = stepInformation.StepName;
@@ -244,6 +242,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 
 			step.RunOnce = (goal.RelativePrFolderPath.ToLower().Contains(".build" + Path.DirectorySeparatorChar + "setup"));
 			return (step, null);
+
 		}
 
 		private string GetPrFileName(int stepIndex, string stepName)
@@ -252,7 +251,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			return strStepNr + ". " + stepName + ".pr";
 		}
 
-		
+
 		private async Task<IBuilderError?> HandleBuildInstructionError(Goal goal, GoalStep step, int stepIndex, List<string> excludeModules, int errorCount, IBuilderError? error)
 		{
 			if (error is not InvalidFunctionsError)
@@ -279,8 +278,8 @@ Builder will continue on other steps but not this one: ({step.Text}).
 
 		private async Task<(GoalStep step, IBuilderError? error)> BuildStepProperties(Goal goal, GoalStep step, Instruction instruction, int stepIndex, List<string> excludeModules, int errorCount)
 		{
-			
-		
+
+
 
 			LlmRequest llmQuestion = GetBuildStepPropertiesQuestion(goal, step, instruction);
 
@@ -345,7 +344,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 ";
 			}
 
-			var asyncSystemText = @"WaitForExecution: Default is true. Indicates if code should wait for execution to finish."; 
+			var asyncSystemText = @"WaitForExecution: Default is true. Indicates if code should wait for execution to finish.";
 			if (!canBeAsync)
 			{
 				asyncSystemText = "WaitForExecution: is always true";
@@ -438,7 +437,7 @@ $@"You are provided with a statement from the user.
 This statement is a step in a Function. 
 
 You MUST determine which module can be used to solve the statement.
-You MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A
+You MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set [""N/A""]
 
 variable is defined with starting and ending %, e.g. %filePath%
 ! defines a call to a function
@@ -551,7 +550,7 @@ Be Concise
 						if (string.IsNullOrEmpty(localPath)) localPath = "./.db/data.sqlite";
 					}
 
-					var moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger.Value);
+					var moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger.Value, typeHelper);
 					moduleSettings.CreateDataSource(dataSourceName, localPath, databaseType, isDefaultForApp, keepHistoryEventSourcing).Wait();
 
 					datasources = settings.GetValues<DataSource>(typeof(PLang.Modules.DbModule.ModuleSettings)).ToList();

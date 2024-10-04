@@ -21,8 +21,9 @@
 		<MacOSAppBundle>true</MacOSAppBundle>
 		<OutputType>Exe</OutputType>
 		<RuntimeIdentifier>$(RuntimeIdentifier)</RuntimeIdentifier>
+		<!--
 		<ApplicationIcon>Icon.icns</ApplicationIcon>
-		<!-- Optional: if you have an app icon -->
+		 Optional: if you have an app icon -->
 		<IntermediateOutputPath>bin\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\</IntermediateOutputPath>
 		<CodesignKey>Developer ID Application: Ingi Gauti</CodesignKey>
 		<CodesignEntitlements>Entitlements.plist</CodesignEntitlements>

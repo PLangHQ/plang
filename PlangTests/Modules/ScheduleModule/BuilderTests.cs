@@ -24,7 +24,6 @@ namespace PLang.Modules.ScheduleModule.Tests
 			base.Initialize();
 
 			LoadOpenAI();
-			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
 			builder.InitBaseBuilder("PLang.Modules.ScheduleModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);

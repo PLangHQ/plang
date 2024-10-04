@@ -26,7 +26,6 @@ namespace PLang.Modules.CryptographicModule.Tests
 
 			LoadOpenAI();
 
-			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
 			builder.InitBaseBuilder("PLang.Modules.CryptographicModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);

@@ -4,6 +4,10 @@
 
 In Plang, settings are a powerful feature that allows you to manage configuration values dynamically. This document will guide you through retrieving, adding, and customizing settings in Plang. Whether you're a beginner or an advanced user, this guide will help you understand how to effectively use settings in your Plang applications.
 
+## The goal for setting
+
+The goal of Plang is to avoid the nightmare of complex configuration setups. Instead of getting lost in layers of settings, plang tries to streamline the process. For example, if your Plang app detects a missing setting, it can notify the admin, wait for input, and automatically apply the update—keeping things simple and running smoothly without endless configuration headaches.
+
 ## Retrieving Settings
 
 To retrieve a setting in Plang, you can use the syntax `%Settings.Name_of_Key%`. For example, to access an API key stored in settings, you would use `%Settings.API_KEY%`. If the setting is not found or is empty, Plang will prompt the user to provide the value.
@@ -13,10 +17,10 @@ To retrieve a setting in Plang, you can use the syntax `%Settings.Name_of_Key%`.
 ```plang
 APIRequest
 - get http://some-api.com
-    Bearer: %Settings.SomeAPIKey%
+    Bearer: %Settings.Some_API_Key%
 ```
 
-In this example, Plang will attempt to retrieve the `SomeAPIKey` from the settings. If the key is not found, the user will be prompted to enter it.
+In this example, Plang will attempt to retrieve the `Some_API_Key` from the settings. If the key is not found, the user will be prompted to enter it.
 
 ## Adding New Settings Keys
 

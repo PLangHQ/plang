@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using OpenQA.Selenium.DevTools.V124.Page;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Builder;

@@ -1,4 +1,6 @@
-﻿namespace PLang.Utils
+﻿using System.Net.Http;
+
+namespace PLang.Utils
 {
 	public class SimpleHttpClientFactory : IHttpClientFactory
 	{

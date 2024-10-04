@@ -41,7 +41,7 @@ namespace PLang.Utils
 			}
 			else
 			{
-				if (goal != null)
+				if (goal != null && goal.AbsoluteGoalFolderPath.StartsWith(fileSystem.GoalsPath))
 				{
 					pathWithDirSep = Path.Join(goal.AbsoluteGoalFolderPath, pathWithDirSep);
 				}

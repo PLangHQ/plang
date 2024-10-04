@@ -54,11 +54,11 @@ namespace PLang.Modules.WebCrawlerModule
 			return userDataDir;
 		}
 
-		[Description("browserType=Chrome|Edge|Firefox|IE|Safari")]
+		[Description("browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.")]
 		public async Task StartBrowser(string browserType = "Chrome", bool headless = false, bool useUserSession = false, string userSessionPath = "",
-			bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null, int timoutInSeconds = 30)
+			bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null, int timoutInSeconds = 30, bool hideTestingMode = false)
 		{
-			driver = GetBrowserType(browserType, headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions);
+			driver = GetBrowserType(browserType, headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, hideTestingMode);
 
 			driver.Manage().Timeouts().AsynchronousJavaScript = TimeSpan.FromSeconds(timoutInSeconds);
 			driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(timoutInSeconds);
@@ -68,18 +68,18 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 
 		private WebDriver GetBrowserType(string browserType, bool headless, bool useUserSession,
-			string userSessionPath, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions)
+			string userSessionPath, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode)
 		{
 			switch (browserType)
 			{
 				case "Edge":
-					return GetEdgeDriver(headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions);
+					return GetEdgeDriver(headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, hideTestingMode);
 				case "Firefox":
-					return GetFirefoxDriver(headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions);
+					return GetFirefoxDriver(headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, hideTestingMode);
 				case "Safari":
-					return GetSafariDriver(headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions);
+					return GetSafariDriver(headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, hideTestingMode);
 				default:
-					return GetChromeDriver(headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions);
+					return GetChromeDriver(headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, hideTestingMode);
 			}
 
 
@@ -126,9 +126,10 @@ namespace PLang.Modules.WebCrawlerModule
 
 		}
 
+		[Description("browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.")]
 		public async Task NavigateToUrl(string url, string browserType = "Chrome", bool headless = false, bool useUserSession = false,
 				string userSessionPath = "", bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null,
-				string? browserConsoleOutputVariableName = null, int timeoutInSecods = 30)
+				string? browserConsoleOutputVariableName = null, int timeoutInSecods = 30, bool hideTestingMode = false)
 		{
 			if (string.IsNullOrEmpty(url))
 			{
@@ -514,13 +515,13 @@ namespace PLang.Modules.WebCrawlerModule
 			}
 		}
 
-		private SafariDriver GetSafariDriver(bool headless, bool useUserSession, string userSessionPath, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions)
+		private SafariDriver GetSafariDriver(bool headless, bool useUserSession, string userSessionPath, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode)
 		{
 			var options = new SafariOptions();
 
 			return new SafariDriver(options);
 		}
-		private FirefoxDriver GetFirefoxDriver(bool headless, bool useUserSession, string userSessionPath, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions)
+		private FirefoxDriver GetFirefoxDriver(bool headless, bool useUserSession, string userSessionPath, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode)
 		{
 			FirefoxOptions options = new FirefoxOptions();
 			if (useUserSession && string.IsNullOrEmpty(userSessionPath))
@@ -550,7 +551,7 @@ namespace PLang.Modules.WebCrawlerModule
 			}
 			return new FirefoxDriver(options);
 		}
-		private ChromiumDriver GetEdgeDriver(bool headless, bool useUserSession, string userSessionPath, bool incognito, bool kioskMode, Dictionary<string, string> argumentOptions)
+		private ChromiumDriver GetEdgeDriver(bool headless, bool useUserSession, string userSessionPath, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode)
 		{
 			var options = new EdgeOptions();
 			if (useUserSession && string.IsNullOrEmpty(userSessionPath))
@@ -580,13 +581,18 @@ namespace PLang.Modules.WebCrawlerModule
 
 			return new EdgeDriver(options);
 		}
-		private ChromiumDriver GetChromeDriver(bool headless, bool useUserSession, string userSessionPath, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions)
+		private ChromiumDriver GetChromeDriver(bool headless, bool useUserSession, string userSessionPath, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode)
 		{
 			ChromeOptions options = new ChromeOptions();
 
 			if (useUserSession && string.IsNullOrEmpty(userSessionPath))
 			{
-				options.AddArgument(@$"user-data-dir={GetChromeUserDataDir()}");
+				var path = GetChromeUserDataDir();
+				logger.LogDebug($"Using user path: {path}");
+				options.AddArgument(@$"user-data-dir={path}");
+			} else if (!string.IsNullOrEmpty(userSessionPath))
+			{
+				options.AddArgument(@$"user-data-dir={userSessionPath}");
 			}
 			if (headless)
 			{
@@ -610,11 +616,39 @@ namespace PLang.Modules.WebCrawlerModule
 			}
 			options.SetLoggingPreference(LogType.Browser, OpenQA.Selenium.LogLevel.All);
 
+			if (hideTestingMode)
+			{
+				options.AddExcludedArgument("enable-automation");
+				options.AddAdditionalOption("useAutomationExtension", false);
+				
+				options.AddArgument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36");
+				options.AddExcludedArgument("enable-automation");
+
+				options.AddArgument("--disable-blink-features=AutomationControlled");
+			}
+
 			var service = ChromeDriverService.CreateDefaultService();
 			service.SuppressInitialDiagnosticInformation = true;
 			service.HideCommandPromptWindow = true;
 
-			return new ChromeDriver(service, options);
+			var driver = new ChromeDriver(service, options);
+
+			if (hideTestingMode) {
+				// After initializing the driver
+				IJavaScriptExecutor js = (IJavaScriptExecutor)driver;
+
+				// Override the navigator.webdriver property to undefined
+				js.ExecuteScript("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})");
+				js.ExecuteScript(@" 
+    Object.defineProperty(navigator, 'plugins', { 
+        get: () => [1, 2, 3], 
+    }); 
+    Object.defineProperty(navigator, 'languages', { 
+        get: () => ['en-US', 'en'], 
+    });
+");
+			}
+			return driver;
 		}
 
 	}

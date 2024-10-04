@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json.Linq;
 using PLang.Modules.FilterModule;
 
 namespace PLangTests.Modules.FilterModule
@@ -19,7 +20,7 @@ namespace PLangTests.Modules.FilterModule
 			list.Add(obj2);
 
 			var p = new Program();
-			var result = (p.FilterOutProperties("$..id", list).Result).ToList();
+			var result = ((List<JToken>) p.FilterOnProperty(list, "$..id").Result.Item1).ToList();
 
 			Assert.IsNotNull(result);
 			Assert.AreEqual(2, result.Count);
