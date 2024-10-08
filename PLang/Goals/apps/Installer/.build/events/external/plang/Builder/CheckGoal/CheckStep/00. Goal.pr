@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "96d0700edb56f41a6db68b3fde9ec959f4c2142b65f3e254533b971a7761c4a2",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "2ea7fb81f1c4ef213ba5a2678b39ae550c3ad1502f6f9a781dd9c8d208b26210",
+      "BuilderVersion": null
     }
   ],
   "SubGoals": [],
@@ -87,7 +87,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "8595f16c3596d978051bd9d810099779c728765a6c26f745ade44fd7f7fc5c0c",
+  "Hash": "efcbeac660f11e7a0f75cab71994f1807c268aff77a8e40cef7d67d4922b0725",
   "IncomingVariablesRequired": [
     "step.ModuleType"
   ]

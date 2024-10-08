@@ -660,10 +660,17 @@ private async Task CacheGoal(Goal goal)
 			context.AddOrReplace(ReservedKeywords.Step, goalStep);
 			context.AddOrReplace(ReservedKeywords.Instruction, instruction);
 
-			var classInstance = container.GetInstance(classType) as BaseProgram;
-			if (classInstance == null)
+			BaseProgram? classInstance;
+			try
 			{
-				return new Error($"Could not create instance of {classType}");
+				classInstance = container.GetInstance(classType) as BaseProgram;
+				if (classInstance == null)
+				{
+					return new Error($"Could not create instance of {classType}");
+				}
+			} catch (MissingSettingsException mse)
+			{
+				return await HandleMissingSettings(mse, goal, goalStep, stepIndex);				
 			}
 
 			var llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
@@ -724,8 +731,24 @@ private async Task CacheGoal(Goal goal)
 			}
 		}
 
+		private async Task<IError?> HandleMissingSettings(MissingSettingsException mse, Goal goal, GoalStep goalStep, int stepIndex)
+		{
+			var settingsError = new Errors.AskUser.AskUserError(mse.Message, async (object[]? result) =>
+			{
+				var value = result?[0] ?? null;
+				if (value is Array) value = ((object[])value)[0];
 
+				await mse.InvokeCallback(value);
+				return (true, null);
+			});
 
+			(var isMseHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(settingsError);
+			if (isMseHandled)
+			{
+				return await ProcessPrFile(goal, goalStep, stepIndex);
+			}
+			return handlerError ?? new StepError(mse.Message, goalStep, Exception: mse);
+		}
 
 		private List<string> GetStartGoals(List<string> goalNames)
 		{

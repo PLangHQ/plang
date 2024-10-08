@@ -6,6 +6,8 @@ using Nethereum.JsonRpc.WebSocketClient;
 using Nethereum.RPC.Accounts;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Nostr.Client.Client;
 using OpenQA.Selenium.DevTools.V129.Audits;
 using PLang.Building;
@@ -420,40 +422,45 @@ namespace PLang.Container
 
 				AppDomain.CurrentDomain.AssemblyResolve += (sender, resolveArgs) =>
 				{
+					if (AppContext.TryGetSwitch("InternalGoalRun", out bool isEnabled) && isEnabled) return null;
+
+					string assemblyName = new AssemblyName(resolveArgs.Name).Name;
 					var baseDirectory = fileSystem.Path.Combine(fileSystem.RootDirectory, ".modules");
-					var files = fileSystem.Directory.GetFiles(baseDirectory, new AssemblyName(resolveArgs.Name).Name + ".dll", SearchOption.AllDirectories);
+					var files = fileSystem.Directory.GetFiles(baseDirectory, assemblyName + ".dll", SearchOption.AllDirectories);
 					if (files.Length > 0)
 					{
 						return Assembly.LoadFile(files[0]);
+					} else
+					{
+						var depsFiles = fileSystem.Directory.GetFiles(baseDirectory, "*.deps.json", SearchOption.AllDirectories);
+						foreach (var dep in depsFiles)
+						{
+							var content = fileSystem.File.ReadAllText(dep);
+							var json = JsonConvert.DeserializeObject(content) as JObject;
+							var libs = json.GetValue("libraries") as JObject;
+							if (libs == null) continue;
+
+							foreach (var prop in libs.Properties())
+							{
+								if (prop.Name.StartsWith(assemblyName + "/"))
+								{
+									var dirPath = fileSystem.Path.GetDirectoryName(dep);
+									var dependancyHelper = container.GetInstance<DependancyHelper>();
+									return dependancyHelper.InstallDependancy(dirPath, dep, assemblyName);
+								}
+							}
+
+							int i = 0;
+						}
 					}
 					return null;
 				};
 				var dependancyHelper = container.GetInstance<DependancyHelper>();
-				dependancyHelper.LoadModules(typeof(BaseProgram), fileSystem.GoalsPath);
-				/*
-				var assemblyFiles = fileSystem.Directory.GetFiles(".modules", "*.dll", SearchOption.AllDirectories);
-				foreach (var file in assemblyFiles)
-				{
-					
-					var assembly = Assembly.LoadFile(file);
-					List<Type> builderTypes = new();
-					try
-					{
-						builderTypes = assembly.GetTypes()
-												  .Where(t => !t.IsAbstract && !t.IsInterface &&
-												  (typeof(BaseBuilder).IsAssignableFrom(t) || typeof(BaseProgram).IsAssignableFrom(t)))
-												  .ToList();
-					} catch (ReflectionTypeLoadException ex)
-					{
-						LoadDependencies(container, fileSystem, file, ex);
-					}
-
-
-					foreach (var type in builderTypes)
-					{
-						container.Register(type);  // or register with a specific interface if needed
-					}
-				}*/
+				var modules = dependancyHelper.LoadModules(typeof(BaseProgram), fileSystem.GoalsPath);
+				foreach (var module in modules) {
+					container.Register(module);
+				}
+				
 			}
 
 			RegisterUserGlobalInjections(container);

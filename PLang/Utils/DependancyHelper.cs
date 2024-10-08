@@ -19,7 +19,7 @@ namespace PLang.Utils
 			this.prParser = prParser;
 		}
 
-	
+
 
 		public List<Type> LoadModules(Type assignableFromType, string goalPath)
 		{
@@ -47,26 +47,25 @@ namespace PLang.Utils
 				}
 				catch (ReflectionTypeLoadException ex)
 				{
-					if (!AppContext.TryGetSwitch("InternalGoalRun", out bool isEnabled) || !isEnabled)
-					{
-						LoadDependencies(dll, ex, assignableFromType, goalPath);
-					}
+
+					var assembly = LoadDependencies(dll, ex, assignableFromType, goalPath);
+
 				}
 			}
 			return modules;
 
 		}
 
-		private void LoadDependencies(string file, ReflectionTypeLoadException ex, Type assignableFromType, string goalPath)
+		private Assembly? LoadDependencies(string file, ReflectionTypeLoadException ex, Type assignableFromType, string goalPath)
 		{
+			if (AppContext.TryGetSwitch("InternalGoalRun", out bool isEnabled) && isEnabled) return null;
+
 			var fileNameWithoutExtension = fileSystem.Path.GetFileNameWithoutExtension(file);
 			var dirPath = fileSystem.Path.GetDirectoryName(file);
 			var depsFilePath = fileSystem.Path.Join(dirPath, fileNameWithoutExtension + ".deps.json");
 			if (!fileSystem.File.Exists(depsFilePath)) throw ex;
 
-			var parameters = new Dictionary<string, object?>();
-			parameters.Add("depsFile", depsFilePath);
-			parameters.Add("pathToSave", dirPath);
+
 
 			List<string> libraries = new();
 
@@ -74,40 +73,62 @@ namespace PLang.Utils
 			if (le is FileNotFoundException fne && fne.FileName != null)
 			{
 				var library = fne.FileName.Substring(0, fne.FileName.IndexOf(','));
-				parameters.Add("libraryName", library);
 
-				logger.LogDebug($"Installing depency {library}, data is coming from {depsFilePath} and nuget package will be saved it to {dirPath}");
+				return InstallDependancy(dirPath, depsFilePath, library);
+			}
+			throw ex;
 
-				var installerFolder = fileSystem.Path.Join(fileSystem.RootDirectory, "apps/Installer").AdjustPathToOs();
-				if (!fileSystem.Directory.Exists(installerFolder)) {
-					var plangFolder = AppContext.BaseDirectory;
-					string planInstallerFolder = fileSystem.Path.Join(plangFolder, "Goals/apps/Installer").AdjustPathToOs();
-					/*
-					var task = fileAccessHandler.ValidatePathResponse(fileSystem.RootDirectory, planInstallerFolder, "y");
-					task.Wait();
-					(var success, var error2) = task.Result;
-					if (error2 != null) throw new Exception(error2.ToString());
-					*/
-					DirectoryHelper.Copy(planInstallerFolder, installerFolder);
-					prParser.ForceLoadAllGoals();
-				}
 
+		}
+
+		public Assembly? InstallDependancy(string? dirPath, string depsFilePath, string library)
+		{
+			if (AppContext.TryGetSwitch("InternalGoalRun", out bool isEnabled) && isEnabled) return null;
+
+			var parameters = new Dictionary<string, object?>();
+			parameters.Add("depsFile", depsFilePath);
+			parameters.Add("pathToSave", dirPath);
+			parameters.Add("libraryName", library);
+
+			logger.LogDebug($"Installing depency {library}, data is coming from {depsFilePath} and nuget package will be saved it to {dirPath}");
+
+			var installerFolder = fileSystem.Path.Join(fileSystem.RootDirectory, "apps/Installer").AdjustPathToOs();
+			if (!fileSystem.Directory.Exists(installerFolder))
+			{
+				var plangFolder = AppContext.BaseDirectory;
+				string planInstallerFolder = fileSystem.Path.Join(plangFolder, "Goals/apps/Installer").AdjustPathToOs();
+				/*
+				var task = fileAccessHandler.ValidatePathResponse(fileSystem.RootDirectory, planInstallerFolder, "y");
+				task.Wait();
+				(var success, var error2) = task.Result;
+				if (error2 != null) throw new Exception(error2.ToString());
+				*/
+				DirectoryHelper.Copy(planInstallerFolder, installerFolder);
+				prParser.ForceLoadAllGoals();
+			}
+			try
+			{
 				var error = Executor.RunGoal("/apps/Installer/InstallDependencies.goal", parameters).GetAwaiter().GetResult();
 				if (error != null)
 				{
 					throw new Exception(error.ToString());
 				}
-
-				var dllFiles = fileSystem.Directory.GetFiles(dirPath, "*.dll", SearchOption.AllDirectories);
-				foreach (var dll in dllFiles)
-				{
-					Assembly loadedAssembly = Assembly.LoadFile(dll);
-				}
-				return;
 			}
-			throw ex;
+			catch (Exception ex)
+			{
+				int i = 0;
+				throw;
+			}
 
-
+			var dllFiles = fileSystem.Directory.GetFiles(dirPath, "*.dll", SearchOption.AllDirectories);
+			foreach (var dll in dllFiles)
+			{
+				if (dll.Contains(library))
+				{
+					return Assembly.LoadFile(dll);
+				}
+			}
+			return null;
 		}
 	}
 }

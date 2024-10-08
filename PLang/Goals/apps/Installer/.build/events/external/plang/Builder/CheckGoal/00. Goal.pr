@@ -16,7 +16,7 @@
       "RunOnce": false,
       "Generated": "2024-10-07T13:11:12.1056119+00:00",
       "WaitForExecution": true,
-      "LoggerLevel": "information",
+      "LoggerLevel": null,
       "ErrorHandlers": null,
       "CacheHandler": null,
       "CancellationHandler": null,
@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "27725d517bb5c16f9a15b54ba4e276da987cb1f8afe600cffec44b6a9f941957",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "09c1b64242d017f054a30d50a9b424092a0e918449830a1a5bb9ebc325e4165e",
+      "BuilderVersion": null
     },
     {
       "Text": "get content of all '00. Goal.pr' files, in ../, include subfolder, write into %goalFiles%",
@@ -142,8 +142,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "3628fe984dc94dd3380f879de157d5610c482ec151f182f9cb07cd592438fdb4",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "4143d47da61e4a04601ce361692e0fcd729715360e88d55dfdafd9a991236982",
+      "BuilderVersion": null
     },
     {
       "Text": "go throug %goalFiles%, call !CheckGoal item=%goal%",
@@ -213,8 +213,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "f464b2963494791bb748d5da3342645313fa89d7015ace041cc7b1de7548363a",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "0b949c83a4b9e6bbba290153d62c5bab893755a5af182f68c80bb08f78623d2b",
+      "BuilderVersion": null
     },
     {
       "Text": "if %missingGoals% is not empty then, call ShowMissingGoals, else ShowAllValid",
@@ -284,8 +284,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "ae63c4f71b89613e7ee3a3829c19b332ccfbc30860fbaa7a07ae511693bd4c60",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "3a58482270c93324d0ef55a24a1fb8f650f1ab1815a3f6274fedb86e8697e1eb",
+      "BuilderVersion": null
     }
   ],
   "SubGoals": [
@@ -306,7 +306,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "918f6a95e9b9b364341af6f29992da087049249f2bfc57ea14acbed9e11c8538",
+  "Hash": "cc6d047ef92d415a3b1b8d647b2e148174b66b5c1be9edd0a9b510d602fa087c",
   "IncomingVariablesRequired": [
     "goal",
     "missingGoals"

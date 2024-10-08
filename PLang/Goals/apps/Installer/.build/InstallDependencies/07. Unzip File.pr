@@ -20,7 +20,7 @@
     ],
     "ReturnValues": null
   },
-  "Text": "unzip \"%pathToSave%/%library.path%.nupkg\", to %pathToSave%/%library.path%, overwrite",
+  "Text": "unzip \"%pathToSave%/%library.path%.nupkg\", to %pathToSave%/%library.path%, overwrite\n    on error message 'process cannot access', ignore",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -59,7 +59,7 @@
         "content": [
           {
             "type": "text",
-            "text": "unzip \"%pathToSave%/%library.path%.nupkg\", to %pathToSave%/%library.path%, overwrite"
+            "text": "unzip \"%pathToSave%/%library.path%.nupkg\", to %pathToSave%/%library.path%, overwrite\n    on error message 'process cannot access', ignore"
           }
         ]
       }

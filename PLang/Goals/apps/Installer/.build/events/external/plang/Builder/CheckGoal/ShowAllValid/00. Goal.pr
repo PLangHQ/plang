@@ -16,7 +16,7 @@
       "RunOnce": false,
       "Generated": "2024-10-07T13:11:14.5868669+00:00",
       "WaitForExecution": true,
-      "LoggerLevel": "information",
+      "LoggerLevel": null,
       "ErrorHandlers": null,
       "CacheHandler": null,
       "CancellationHandler": null,
@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "49f754cc76822521c7ba41db23ce0f0365d18226c7b934f711c74b86dc989812",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "5f71ce3f0148cabe6f49cfde832f035497218c45b2f7e502fbc65fb3dd739b13",
+      "BuilderVersion": null
     }
   ],
   "SubGoals": [],
@@ -87,6 +87,6 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "594b59a830fa514e3a4a3b8dfd22779e5111feb7119ef5eddb83a7b5c9864c84",
+  "Hash": "3cf1ee6e84e10e1fd0345db9925d41bb1482b7c3f90d410fd1242e80d85a0c11",
   "IncomingVariablesRequired": null
 }

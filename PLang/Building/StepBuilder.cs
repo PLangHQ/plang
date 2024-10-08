@@ -341,6 +341,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		on error call HandleError => { IgnoreError = false, GoalToCall = ""HandleError"", RetryHandler = null }
 		on error retry 3 times over 3 seconds, call HandleError => { IgnoreError = false, GoalToCall = ""HandleError"", RunRetryBeforeCallingGoalToCall = true, RetryHandler = { RetryCount = 3, RetryDelayInMilliseconds = 1000 } }
 		on error call HandleError, retry 3 times over 3 seconds => { IgnoreError = false, GoalToCall = ""HandleError"", RunRetryBeforeCallingGoalToCall = false, RetryHandler = { RetryCount = 3, RetryDelayInMilliseconds = 1000 } }
+		on error message 'timeout' ignore error => {[{ IgnoreError = true, Mesage = ""timeout"", RetryHandler = null }], CachingHandler = null}
 ";
 			}
 

@@ -89,7 +89,7 @@ namespace PLang.Modules.TerminalModule
 					foreach (var parameter in parameters) {
 						if (parameter == null) continue;
 
-						if (parameter.Contains(" "))
+						if (parameter.Contains(" ") && !parameter.Contains("\""))
 						{
 							command += " \"" + parameter + "\"";
 						} else
