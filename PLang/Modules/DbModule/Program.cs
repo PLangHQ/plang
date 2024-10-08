@@ -21,6 +21,8 @@ using PLang.Errors.Builder;
 using PLang.Errors.Runtime;
 using System.Collections;
 using Org.BouncyCastle.Crypto;
+using System.Dynamic;
+using PLang.Attributes;
 
 namespace PLang.Modules.DbModule
 {
@@ -40,8 +42,10 @@ namespace PLang.Modules.DbModule
 		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly IEventSourceRepository eventSourceRepository;
 		private readonly ILogger logger;
+		private readonly ITypeHelper typeHelper;
 
-		public Program(IDbConnection dbConnection, IPLangFileSystem fileSystem, ISettings settings, ILlmServiceFactory llmServiceFactory, IEventSourceRepository eventSourceRepository, PLangAppContext context, ILogger logger) : base()
+		public Program(IDbConnection dbConnection, IPLangFileSystem fileSystem, ISettings settings, ILlmServiceFactory llmServiceFactory, 
+			IEventSourceRepository eventSourceRepository, PLangAppContext context, ILogger logger, ITypeHelper typeHelper) : base()
 		{
 			this.dbConnection = dbConnection;
 			this.fileSystem = fileSystem;
@@ -49,9 +53,10 @@ namespace PLang.Modules.DbModule
 			this.llmServiceFactory = llmServiceFactory;
 			this.eventSourceRepository = eventSourceRepository;
 			this.logger = logger;
+			this.typeHelper = typeHelper;
 			this.context = context;
 
-			this.moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger);
+			this.moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger, typeHelper);
 		}
 
 		[Description("localPath is location of the database on the drive for sqlite. localPath can be string with variables, default is null")]
@@ -116,16 +121,16 @@ namespace PLang.Modules.DbModule
 			{
 				return new Error("Loading extension only works for Sqlite", "NotSupported");
 			}
-			
+
 			fileName = GetPath(fileName);
 			if (!fileSystem.File.Exists(fileName))
 			{
 				return new Error("File could not be found.", "FileNotFound");
 			}
 
-			((SqliteConnection)dbConnection).LoadExtension(fileName, procName); 
+			((SqliteConnection)dbConnection).LoadExtension(fileName, procName);
 			return null;
-			
+
 		}
 
 		[Description("Returns tables and views in database with the columns description")]
@@ -283,7 +288,7 @@ namespace PLang.Modules.DbModule
 					try
 					{
 						string value = FormatType(obj.ToString(), targetType);
-						return (parseMethod.Invoke(null, [ value ]), null);
+						return (parseMethod.Invoke(null, [value]), null);
 					}
 					catch { }
 				}
@@ -296,14 +301,14 @@ namespace PLang.Modules.DbModule
 				{
 					var array = Array.CreateInstance(targetType.GenericTypeArguments[0], jarray.Count);
 					int idx = 0;
-					foreach ( JToken item in jarray)
+					foreach (JToken item in jarray)
 					{
 						var tmp = item.ToObject(targetType.GenericTypeArguments[0]);
 						array.SetValue(tmp, idx++);
 					}
 					return (array, null);
 				}
-				
+
 
 				return (Convert.ChangeType(obj, targetType), null);
 			}
@@ -387,7 +392,8 @@ namespace PLang.Modules.DbModule
 
 				int rowsAffected = 0;
 				var prepare = Prepare(sql, null);
-				if (prepare.error != null) {
+				if (prepare.error != null)
+				{
 					return (0, prepare.error);
 				}
 
@@ -582,7 +588,7 @@ namespace PLang.Modules.DbModule
 			{
 				Done(prepare.connection);
 			}
-			return (rowsAffected,null);
+			return (rowsAffected, null);
 
 		}
 		[Description("Insert statement that will return the id of the inserted row. Use only if user requests the id")]
@@ -619,34 +625,90 @@ namespace PLang.Modules.DbModule
 
 		}
 
-		[Description("Insert a list(bulk) into database, return number of rows inserted")]
-		public async Task<(int, IError?)> InsertBulk(string tableName, List<object> items, string? dataSourceName = null)
+		private List<string> GetProperties(object obj)
 		{
-			if (!string.IsNullOrEmpty(dataSourceName))
+			if (obj is JObject jObject)
 			{
-				await SetDataSourceName(dataSourceName);
+				return jObject.Properties().Select(p => p.Name).ToList();
 			}
+			else if (obj is ExpandoObject eo)
+			{
+				return ((IDictionary<string, object>)eo).Keys.ToList();
+			}
+			else
+			{
+				var type = obj.GetType();
+				var properties = type.GetProperties().Select(p => p.Name).ToList();
+				if (properties.Count > 0) return properties;
+
+				return GetProperties(JObject.FromObject(obj));
+			}
+		}
+
+		private object? GetValue(object obj, string propertyName)
+		{
+			propertyName = propertyName.Replace("%", "");
+			if (obj is JObject jObject)
+			{
+				return jObject[propertyName];
+			}
+			else if (obj is ExpandoObject eo)
+			{
+				return ((IDictionary<string, object>)eo)[propertyName];
+			}
+			else
+			{
+				var type = obj.GetType();
+				var property = obj.GetType().GetProperty(propertyName);
+				if (property != null)
+				{
+					return property.GetValue(obj);
+				} else
+				{
+					return GetValue(JObject.FromObject(obj), propertyName);
+				}
+			}
+			return null;
+		}
+
+		[Description("Insert a list(bulk) into database, return number of rows inserted. columnMapping maps which property of itemsToInsert should match with a column")]
+		public async Task<(int, IError?)> InsertBulk(string tableName, List<object> itemsToInsert, [HandlesVariable] Dictionary<string, object>? columnMapping = null)
+		{
+			if (itemsToInsert.Count == 0) return (0, null);
+
 			var dataSource = await moduleSettings.GetCurrentDataSource();
-			var sqlSelectColumns = await moduleSettings.FormatSelectColumnsStatement(tableName);
-			var result = await Select(sqlSelectColumns);
-			if (result.error != null)
+
+			var propertiesInItems = GetProperties(itemsToInsert[0]);
+			if (columnMapping == null)
 			{
-				return (0, result.error);
-			}
-			var columnsInTable = result.rows as List<dynamic>;
-			if (columnsInTable == null)
-			{
-				return (0, new Error($"Table {tableName} could not be found", "TableNotFound"));
+				var sqlSelectColumns = await moduleSettings.FormatSelectColumnsStatement(tableName);
+				var result = await Select(sqlSelectColumns);
+				if (result.error != null)
+				{
+					return (0, result.error);
+				}
+				var columnsInTable = result.rows as List<dynamic>;
+				if (columnsInTable == null)
+				{
+					return (0, new Error($"Table {tableName} could not be found", "TableNotFound"));
+				}
+
+				columnMapping = new();
+				foreach (var column in columnsInTable)
+				{
+					if (propertiesInItems.FirstOrDefault(p => p.Equals(column.name, StringComparison.OrdinalIgnoreCase)) != null)
+					{
+						columnMapping.Add(column.name, column.name);
+					}
+				}
 			}
 
-			string? sql = GetBulkSql(tableName, columnsInTable, items, dataSource);
+			string? sql = GetBulkSql(tableName, columnMapping, itemsToInsert, dataSource);
 			if (sql == null) return (0, null);
 
-			
-
 			int affectedRows = 0;
-			var generator = new IdGenerator(items.Count);
-
+			var generator = new IdGenerator(1);
+			var id = generator.ElementAt(0);
 			IDbTransaction? transaction = context.ContainsKey(DbTransactionContextKey) ? context[DbTransactionContextKey] as IDbTransaction : null;
 			if (transaction == null)
 			{
@@ -654,34 +716,47 @@ namespace PLang.Modules.DbModule
 			}
 
 			// TODO: This is actually not the most optimized bulk insert, it's inserting each row at a time
-			for (int i = 0; i < items.Count; i++)
+			for (int i = 0; i < itemsToInsert.Count; i++)
 			{
 				var param = new List<object>();
-				var row = (JObject)items[i];
-
-				foreach (var column in columnsInTable)
+				bool rowHasAnyValue = false;
+				foreach (var column in columnMapping)
 				{
-					if (column.name == "id")
+					string cleanedColumnValue = column.Value.ToString().Replace("%", "");
+					if (column.Key == "id")
 					{
-						param.Add(new ParameterInfo("id", generator.ElementAt(i), typeof(Int64).FullName));
+						param.Add(new ParameterInfo("id", id + i, typeof(Int64).FullName));
 					}
-					else if (row.ContainsKey(column.name))
+					else if (propertiesInItems.FirstOrDefault(p => p.Equals(cleanedColumnValue, StringComparison.OrdinalIgnoreCase)) != null)
 					{
-						var obj = row[column.name];
-						if (obj is ObjectValue ov)
+						var obj = GetValue(itemsToInsert[i], cleanedColumnValue);
+						if (obj == null)
 						{
-							param.Add(new ParameterInfo(column.name, ov.Value, ov.Type.FullName));
+							param.Add(new ParameterInfo(column.Key, obj, typeof(DBNull).FullName));
+							continue;
+						}
+						else if (obj is ObjectValue ov)
+						{
+							param.Add(new ParameterInfo(column.Key, ov.Value, ov.Type.FullName));
+						}
+						else if (obj is JValue value)
+						{
+							param.Add(new ParameterInfo(column.Key, value.Value, value.Value.GetType().FullName));
 						}
 						else
 						{
-							param.Add(new ParameterInfo(column.name, obj, ConvertFromColumnTypeToCSharpType(column.type)));
+							param.Add(new ParameterInfo(column.Key, obj, obj.GetType().FullName));
 						}
+						rowHasAnyValue = true;
 					}
 
 				}
+				if (!rowHasAnyValue) { continue; }
+
 				var insertResult = await Insert(sql, param);
-				//bad thing, but just because Id generator, getting same id
-				Thread.Sleep(1);
+				Console.WriteLine($"{i} of {itemsToInsert.Count}");
+				
+
 				if (insertResult.error != null)
 				{
 					await Rollback();
@@ -712,12 +787,12 @@ namespace PLang.Modules.DbModule
 			throw new Exception($"Could not map type: {type} to C# object");
 		}
 
-		private string? GetBulkSql(string tableName, List<dynamic> columnsInTable, List<object> items, ModuleSettings.DataSource dataSource)
+		private string? GetBulkSql(string tableName, Dictionary<string, object> mapping, List<object> items, ModuleSettings.DataSource dataSource)
 		{
 			if (items.Count == 0) return null;
 
 
-			var row = (JObject)items[0];
+			var objProperties = GetProperties(items[0]);
 			string? columns = null;
 			string? values = null;
 			if (dataSource.KeepHistory)
@@ -725,15 +800,15 @@ namespace PLang.Modules.DbModule
 				columns = "id";
 				values = "@id";
 			}
-			foreach (var column in columnsInTable)
+			foreach (var column in mapping)
 			{
-				if (row.ContainsKey(column.name))
+				if (objProperties.FirstOrDefault(p => p.Equals(column.Value.ToString().Replace("%", ""), StringComparison.OrdinalIgnoreCase)) != null)
 				{
 					if (columns != null) columns += ", ";
-					columns += column.name;
+					columns += column.Key;
 
 					if (values != null) values += ", ";
-					values += $"@{column.name}";
+					values += $"@{column.Key}";
 				}
 			}
 

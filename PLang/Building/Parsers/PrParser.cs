@@ -1,8 +1,10 @@
 ﻿using PLang.Building.Model;
 using PLang.Interfaces;
 using PLang.Runtime;
+using PLang.SafeFileSystem;
 using PLang.Utils;
 using System.Text.RegularExpressions;
+using static PLang.Runtime.Startup.ModuleLoader;
 
 namespace PLang.Building.Parsers
 {
@@ -33,56 +35,56 @@ namespace PLang.Building.Parsers
 			}
 
 			var appsPath = absolutePrFilePath.Replace(appAbsoluteStartupPath, "");
-			if (appsPath.StartsWith(Path.DirectorySeparatorChar + "apps" + Path.DirectorySeparatorChar))
+			if (appsPath.StartsWith(fileSystem.Path.DirectorySeparatorChar + "apps" + fileSystem.Path.DirectorySeparatorChar))
 			{
-				var paths = appsPath.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
-				appsPath = Path.DirectorySeparatorChar + paths[0] + Path.DirectorySeparatorChar + paths[1];
+				var paths = appsPath.Split(fileSystem.Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
+				appsPath = fileSystem.Path.DirectorySeparatorChar + paths[0] + fileSystem.Path.DirectorySeparatorChar + paths[1];
 				goal.AppName = paths[1];
 
 				goal.RelativeAppStartupFolderPath = appsPath;
-				goal.RelativeGoalFolderPath = Path.TrimEndingDirectorySeparator(Path.Join(appsPath, goal.RelativeGoalFolderPath));
-				goal.RelativeGoalPath = Path.TrimEndingDirectorySeparator(Path.Join(appsPath, goal.RelativeGoalPath));
-				goal.RelativePrPath = Path.TrimEndingDirectorySeparator(Path.Join(appsPath, goal.RelativePrPath));
-				goal.RelativePrFolderPath = Path.TrimEndingDirectorySeparator(Path.Join(appsPath, goal.RelativePrFolderPath));
-				goal.AbsoluteAppStartupFolderPath = Path.TrimEndingDirectorySeparator(Path.Join(appAbsoluteStartupPath, appsPath));
+				goal.RelativeGoalFolderPath = fileSystem.Path.TrimEndingDirectorySeparator(fileSystem.Path.Join(appsPath, goal.RelativeGoalFolderPath));
+				goal.RelativeGoalPath = fileSystem.Path.TrimEndingDirectorySeparator(fileSystem.Path.Join(appsPath, goal.RelativeGoalPath));
+				goal.RelativePrPath = fileSystem.Path.TrimEndingDirectorySeparator(fileSystem.Path.Join(appsPath, goal.RelativePrPath));
+				goal.RelativePrFolderPath = fileSystem.Path.TrimEndingDirectorySeparator(fileSystem.Path.Join(appsPath, goal.RelativePrFolderPath));
+				goal.AbsoluteAppStartupFolderPath = fileSystem.Path.TrimEndingDirectorySeparator(fileSystem.Path.Join(appAbsoluteStartupPath, appsPath));
 
 			}
-			else if (appsPath.StartsWith(Path.DirectorySeparatorChar + ".services" + Path.DirectorySeparatorChar))
+			else if (appsPath.StartsWith(fileSystem.Path.DirectorySeparatorChar + ".services" + fileSystem.Path.DirectorySeparatorChar))
 			{
 				int i = 0;
-				var paths = appsPath.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
-				appsPath = Path.DirectorySeparatorChar + paths[0] + Path.DirectorySeparatorChar + paths[1];
+				var paths = appsPath.Split(fileSystem.Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
+				appsPath = fileSystem.Path.DirectorySeparatorChar + paths[0] + fileSystem.Path.DirectorySeparatorChar + paths[1];
 				goal.AppName = paths[1];
 
 				goal.RelativeAppStartupFolderPath = appsPath;
-				goal.RelativeGoalFolderPath = Path.TrimEndingDirectorySeparator(Path.Join(appsPath, goal.RelativeGoalFolderPath));
-				goal.RelativeGoalPath = Path.TrimEndingDirectorySeparator(Path.Join(appsPath, goal.RelativeGoalPath));
-				goal.RelativePrPath = Path.TrimEndingDirectorySeparator(Path.Join(appsPath, goal.RelativePrPath));
-				goal.RelativePrFolderPath = Path.TrimEndingDirectorySeparator(Path.Join(appsPath, goal.RelativePrFolderPath));
-				goal.AbsoluteAppStartupFolderPath = Path.TrimEndingDirectorySeparator(Path.Join(appAbsoluteStartupPath, appsPath));
+				goal.RelativeGoalFolderPath = fileSystem.Path.TrimEndingDirectorySeparator(fileSystem.Path.Join(appsPath, goal.RelativeGoalFolderPath));
+				goal.RelativeGoalPath = fileSystem.Path.TrimEndingDirectorySeparator(fileSystem.Path.Join(appsPath, goal.RelativeGoalPath));
+				goal.RelativePrPath = fileSystem.Path.TrimEndingDirectorySeparator(fileSystem.Path.Join(appsPath, goal.RelativePrPath));
+				goal.RelativePrFolderPath = fileSystem.Path.TrimEndingDirectorySeparator(fileSystem.Path.Join(appsPath, goal.RelativePrFolderPath));
+				goal.AbsoluteAppStartupFolderPath = fileSystem.Path.TrimEndingDirectorySeparator(fileSystem.Path.Join(appAbsoluteStartupPath, appsPath));
 			}
 			else
 			{
-				goal.AppName = Path.DirectorySeparatorChar.ToString();
+				goal.AppName = fileSystem.Path.DirectorySeparatorChar.ToString();
 
 				goal.AbsoluteAppStartupFolderPath = appAbsoluteStartupPath;
-				goal.RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString();
+				goal.RelativeAppStartupFolderPath = fileSystem.Path.DirectorySeparatorChar.ToString();
 			}
 
 
-			goal.AbsoluteGoalPath = Path.Join(appAbsoluteStartupPath, goal.RelativeGoalPath);
-			goal.AbsoluteGoalFolderPath = Path.Join(appAbsoluteStartupPath, goal.RelativeGoalFolderPath);
+			goal.AbsoluteGoalPath = fileSystem.Path.Join(appAbsoluteStartupPath, goal.RelativeGoalPath);
+			goal.AbsoluteGoalFolderPath = fileSystem.Path.Join(appAbsoluteStartupPath, goal.RelativeGoalFolderPath);
 
-			goal.AbsolutePrFilePath = Path.Join(appAbsoluteStartupPath, goal.RelativePrPath);
-			goal.AbsolutePrFolderPath = Path.Join(appAbsoluteStartupPath, goal.RelativePrFolderPath);
+			goal.AbsolutePrFilePath = fileSystem.Path.Join(appAbsoluteStartupPath, goal.RelativePrPath);
+			goal.AbsolutePrFolderPath = fileSystem.Path.Join(appAbsoluteStartupPath, goal.RelativePrFolderPath);
 
 			AdjustPathsToOS(goal);
 
 			//var setupOnceDictionary = settings.GetOrDefault<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", new());
 			for (int i = 0; i < goal.GoalSteps.Count; i++)
 			{
-				goal.GoalSteps[i].AbsolutePrFilePath = Path.Join(goal.AbsolutePrFolderPath, goal.GoalSteps[i].PrFileName).AdjustPathToOs();
-				goal.GoalSteps[i].RelativePrPath = Path.Join(goal.RelativePrFolderPath, goal.GoalSteps[i].PrFileName).AdjustPathToOs();
+				goal.GoalSteps[i].AbsolutePrFilePath = fileSystem.Path.Join(goal.AbsolutePrFolderPath, goal.GoalSteps[i].PrFileName).AdjustPathToOs();
+				goal.GoalSteps[i].RelativePrPath = fileSystem.Path.Join(goal.RelativePrFolderPath, goal.GoalSteps[i].PrFileName).AdjustPathToOs();
 				goal.GoalSteps[i].AppStartupPath = appAbsoluteStartupPath.AdjustPathToOs();
 				goal.GoalSteps[i].Number = i;
 				if (goal.GoalSteps.Count > i + 1)
@@ -136,16 +138,44 @@ namespace PLang.Building.Parsers
 			return LoadAllGoals(true);
 		}
 		private static readonly object _lock = new object();
+
+		public async Task<List<Goal>> GoalFromGoalsFolder(string appName, IFileAccessHandler fileAccessHandler)
+		{
+			var path = AppContext.BaseDirectory;
+			await fileAccessHandler.ValidatePathResponse(appName, path, "y");
+			// not using IPlangFileSystem here, we need to get the goal in the runtime folder
+			var files = fileSystem.Directory.GetFiles(fileSystem.Path.Join(path, "Goals", ".build"), ISettings.GoalFileName, SearchOption.AllDirectories).ToList();			
+			
+			var goals = new List<Goal>();
+			foreach (var file in files)
+			{
+				var goal = ParsePrFile(file);
+				if (goal != null)
+				{
+					if (allGoals.FirstOrDefault(p => p.RelativePrPath == goal.RelativePrPath) == null)
+					{
+						allGoals.Add(goal);
+					}
+					if (goal.Visibility == Visibility.Public && publicGoals.FirstOrDefault(p => p.RelativePrPath == goal.RelativePrPath) == null)
+					{
+						publicGoals.Add(goal);
+					}
+				}
+			}		
+
+			return allGoals;
+		}
+
 		public List<Goal> LoadAllGoals(bool force = false)
 		{
 			if (allGoals.Count > 0 && !force) return allGoals;
 
-			if (!fileSystem.Directory.Exists(Path.Join(fileSystem.RootDirectory, ".build")))
+			if (!fileSystem.Directory.Exists(fileSystem.Path.Join(fileSystem.RootDirectory, ".build")))
 			{
 				return new List<Goal>();
 			}
 		
-			var files = fileSystem.Directory.GetFiles(Path.Join(fileSystem.RootDirectory, ".build"), ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
+			var files = fileSystem.Directory.GetFiles(fileSystem.Path.Join(fileSystem.RootDirectory, ".build"), ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
 
 			files = files.Select(file => new
 			{
@@ -157,9 +187,9 @@ namespace PLang.Building.Parsers
 			}).OrderBy(file => file.Order)
 				.ThenBy(file => file.FileName) 
 				.Select(file => file.FileName).ToList();
-			if (fileSystem.Directory.Exists(Path.Join(fileSystem.RootDirectory, "apps")))
+			if (fileSystem.Directory.Exists(fileSystem.Path.Join(fileSystem.RootDirectory, "apps")))
 			{
-				var unsortedFiles = fileSystem.Directory.GetFiles(Path.Join(fileSystem.RootDirectory, "apps"), ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
+				var unsortedFiles = fileSystem.Directory.GetFiles(fileSystem.Path.Join(fileSystem.RootDirectory, "apps"), ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
 				unsortedFiles = unsortedFiles.Select(file => new
 				{
 					FileName = file,
@@ -234,7 +264,7 @@ namespace PLang.Building.Parsers
 			 * if you want to use app, path must start with apps/
 			 */
 			appStartupPath = appStartupPath.AdjustPathToOs();
-			if (appStartupPath == Path.DirectorySeparatorChar.ToString())
+			if (appStartupPath == fileSystem.Path.DirectorySeparatorChar.ToString())
 			{
 				appStartupPath = fileSystem.RootDirectory;
 			}
@@ -242,24 +272,24 @@ namespace PLang.Building.Parsers
 
 			if (appStartupPath != fileSystem.RootDirectory)
 			{
-				appStartupPath = appStartupPath.TrimEnd(Path.DirectorySeparatorChar);
-				if (!appStartupPath.StartsWith(Path.DirectorySeparatorChar.ToString()))
+				appStartupPath = appStartupPath.TrimEnd(fileSystem.Path.DirectorySeparatorChar);
+				if (!appStartupPath.StartsWith(fileSystem.Path.DirectorySeparatorChar.ToString()))
 				{
-					appStartupPath = Path.DirectorySeparatorChar.ToString() + appStartupPath;
+					appStartupPath = fileSystem.Path.DirectorySeparatorChar.ToString() + appStartupPath;
 				}
 			}
 			Goal? goal = null;
-			if (callingGoal != null && !goalNameOrPath.Contains(Path.DirectorySeparatorChar))
+			if (callingGoal != null && !goalNameOrPath.Contains(fileSystem.Path.DirectorySeparatorChar))
 			{
-				var newGoalPath = Path.Join(callingGoal.RelativePrFolderPath, goalNameOrPath);
+				var newGoalPath = fileSystem.Path.Join(callingGoal.RelativePrFolderPath, goalNameOrPath);
 				goal = GetAllGoals().FirstOrDefault(p => p.RelativePrFolderPath.Equals(newGoalPath, StringComparison.OrdinalIgnoreCase));
 				if (goal != null) return goal;
 			}
 
-			goal = GetAllGoals().FirstOrDefault(p => p.RelativePrFolderPath.Equals(Path.Join(".build", goalNameOrPath), StringComparison.OrdinalIgnoreCase));
+			goal = GetAllGoals().FirstOrDefault(p => p.RelativePrFolderPath.Equals(fileSystem.Path.Join(".build", goalNameOrPath), StringComparison.OrdinalIgnoreCase));
 			if (goal != null) return goal;
 
-			goal = GetAllGoals().FirstOrDefault(p => goalNameOrPath.TrimStart(Path.DirectorySeparatorChar).Equals(Path.Join(p.RelativeGoalFolderPath, p.GoalName).TrimStart(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase));
+			goal = GetAllGoals().FirstOrDefault(p => goalNameOrPath.TrimStart(fileSystem.Path.DirectorySeparatorChar).Equals(fileSystem.Path.Join(p.RelativeGoalFolderPath, p.GoalName).TrimStart(fileSystem.Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase));
 			if (goal != null) return goal;
 
 			// first check for goal inside same goal file as the calling goal
@@ -281,7 +311,7 @@ namespace PLang.Building.Parsers
 			foreach (var groupedGoal in groupedGoals)
 			{
 				var goal = groupedGoal.FirstOrDefault();
-				if (goal != null && goal.RelativeAppStartupFolderPath.StartsWith(Path.DirectorySeparatorChar + "apps"))
+				if (goal != null && goal.RelativeAppStartupFolderPath.StartsWith(fileSystem.Path.DirectorySeparatorChar + "apps"))
 				{
 					goals.Add(goal);
 				}

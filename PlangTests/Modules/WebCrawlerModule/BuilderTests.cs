@@ -21,7 +21,6 @@ namespace PLangTests.Modules.WebCrawlerModule
             Initialize();
 
             LoadOpenAI();
-            typeHelper = new TypeHelper(fileSystem, settings);
 
             builder = new Builder();
             builder.InitBaseBuilder("PLang.Modules.WebCrawlerModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using OpenAI.Chat;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
@@ -12,7 +13,6 @@ namespace PLang.Services.OpenAi
 {
 	public class OpenAiService : ILlmService
 	{
-		OpenAI_API.OpenAIAPI api;
 		private readonly ISettings settings;
 		private readonly ILogger logger;
 		private readonly LlmCaching llmCaching;

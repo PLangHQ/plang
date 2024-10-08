@@ -46,7 +46,7 @@ namespace PLang.Modules.CompressionModule
 					throw new FileNotFoundException($"{filePaths[i]} does not exist.");
 				}
 			}
-
+			 
 			saveToPath = GetPath(saveToPath);
 			if (!fileSystem.Directory.Exists(Path.GetDirectoryName(saveToPath)))
 			{

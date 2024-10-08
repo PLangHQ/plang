@@ -44,7 +44,7 @@ namespace PLang.Modules
 		private IOutputStreamFactory outputStreamFactory;
 		private IPLangFileSystem fileSystem;
 		private MethodHelper methodHelper;
-		private FileAccessHandler fileAccessHandler;
+		private IFileAccessHandler fileAccessHandler;
 		private IAskUserHandlerFactory askUserHandlerFactory;
 		private ISettings settings;
 		public HttpListenerContext HttpListenerContext
@@ -89,7 +89,7 @@ namespace PLang.Modules
 			this.typeHelper = typeHelper;
 			this.llmServiceFactory = llmServiceFactory;
 			methodHelper = new MethodHelper(goalStep, variableHelper, memoryStack, typeHelper, llmServiceFactory);
-			fileAccessHandler = container.GetInstance<FileAccessHandler>();
+			fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 		}
 
 		public virtual async Task<IError?> Run()

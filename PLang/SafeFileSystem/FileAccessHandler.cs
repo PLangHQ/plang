@@ -7,10 +7,15 @@ using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Services.LlmService;
+using PLang.Utils;
 
 namespace PLang.SafeFileSystem
 {
-	public class FileAccessHandler
+	public interface IFileAccessHandler
+	{
+		Task<(bool, IError?)> ValidatePathResponse(string appName, string path, string? answer);
+	}
+	public class FileAccessHandler : IFileAccessHandler
 	{
 		private readonly ISettings settings;
 		private readonly ILlmServiceFactory llmServiceFactory;
@@ -92,6 +97,7 @@ GiveAccess : yes|no|null"));
 
 		private void AddFileAccess(string appName, string path, DateTime expires)
 		{
+			path = path.AdjustPathToOs();
 			var fileAccesses = settings.GetValues<FileAccessControl>(typeof(PLangFileSystem));
 			var fileAccess = fileAccesses.FirstOrDefault(a => a.appName == appName && a.path == path);
 			if (fileAccess != null)

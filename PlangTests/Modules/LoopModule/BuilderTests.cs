@@ -26,7 +26,7 @@ namespace PLang.Modules.LoopModule.Tests
 			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
 			var llmService = new OpenAiService(settings, logger, llmCaching, context);
 			llmServiceFactory.CreateHandler().Returns(llmService);
-			typeHelper = new TypeHelper(fileSystem, settings);
+
 
 			builder = new GenericFunctionBuilder();
 			builder.InitBaseBuilder("PLang.Modules.LoopModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);

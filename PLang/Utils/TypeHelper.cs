@@ -1,9 +1,12 @@
-﻿using PLang.Attributes;
+﻿using Microsoft.Extensions.Logging;
+using NBitcoin.Secp256k1;
+using PLang.Attributes;
 using PLang.Errors;
 using PLang.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Modules;
+using System.ComponentModel;
 using System.Data;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -21,23 +24,27 @@ namespace PLang.Utils
 		List<Type> GetBuilderModules();
 		Type? GetBuilderType(string module);
 		Type? GetRuntimeType(string? module);
+		List<Type> GetTypesByType(Type type);
 	}
 
 	public class TypeHelper : ITypeHelper
 	{
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ISettings settings;
-
+		private readonly DependancyHelper dependancyHelper;
 		private static List<Type> runtimeModules = new List<Type>();
 		private static List<Type> baseRuntimeModules = new List<Type>();
 		private static List<Type> builderModules = new List<Type>();
 		private static List<Type> baseBuilderModules = new List<Type>();
 
-		public TypeHelper(IPLangFileSystem fileSystem, ISettings settings)
+		public TypeHelper(IPLangFileSystem fileSystem, ISettings settings, DependancyHelper dependancyHelper)
 		{
-			LoadModules(fileSystem, fileSystem.GoalsPath);
+			runtimeModules = dependancyHelper.LoadModules(typeof(BaseProgram), fileSystem.GoalsPath);
+			builderModules = dependancyHelper.LoadModules(typeof(BaseBuilder), fileSystem.GoalsPath);
+
 			this.fileSystem = fileSystem;
 			this.settings = settings;
+			this.dependancyHelper = dependancyHelper;
 		}
 
 
@@ -418,7 +425,7 @@ namespace PLang.Utils
 				{
 					json += $@"{propName}: {prop.PropertyType.Name.ToLower()}";
 				}
-				var attribute = prop.GetCustomAttribute<DefaultValueAttribute>();
+				var attribute = prop.GetCustomAttribute<System.ComponentModel.DefaultValueAttribute>();
 				if (attribute != null)
 				{
 					//schema[prop.Name] = " = " + ((DefaultValueAttribute) attribute).Value;
@@ -451,74 +458,6 @@ namespace PLang.Utils
 			return json;
 		}
 
-
-
-		public static void LoadModules(IPLangFileSystem fileSystem, string goalPath)
-		{
-			if (runtimeModules.Count == 0)
-			{
-				LoadRuntimeModules(fileSystem, goalPath);
-			}
-			if (builderModules.Count == 0)
-			{
-				LoadBuilderModules(fileSystem, goalPath);
-			}
-		}
-
-		private static void LoadBuilderModules(IPLangFileSystem fileSystem, string goalPath)
-		{
-			var executingAssembly = Assembly.GetExecutingAssembly();
-
-			builderModules = executingAssembly.GetTypes()
-				.Where(t => typeof(BaseBuilder).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
-			.ToList();
-			baseBuilderModules.AddRange(runtimeModules);
-
-			string modulesDirectory = Path.Combine(goalPath, ".modules");
-			if (!fileSystem.Directory.Exists(modulesDirectory)) return;
-
-			foreach (var dll in fileSystem.Directory.GetFiles(modulesDirectory, "*.dll"))
-			{
-				// Load the assembly
-				Assembly loadedAssembly = Assembly.LoadFile(dll);
-
-				// Get types that implement IProgram from the loaded assembly
-				var typesFromAssembly = loadedAssembly.GetTypes()
-					.Where(t => typeof(BaseBuilder).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
-					.ToList();
-
-				// Add the found types to the main list
-				builderModules.AddRange(typesFromAssembly);
-			}
-
-		}
-
-		private static void LoadRuntimeModules(IPLangFileSystem fileSystem, string goalPath)
-		{
-			var executingAssembly = Assembly.GetExecutingAssembly();
-
-			runtimeModules = executingAssembly.GetTypes()
-				.Where(t => typeof(BaseProgram).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
-			.ToList();
-			baseRuntimeModules.AddRange(runtimeModules);
-
-			string modulesDirectory = Path.Combine(goalPath, ".modules");
-			if (!fileSystem.Directory.Exists(modulesDirectory)) return;
-
-			foreach (var dll in fileSystem.Directory.GetFiles(modulesDirectory, "*.dll"))
-			{
-				// Load the assembly
-				Assembly loadedAssembly = Assembly.LoadFile(dll);
-
-				// Get types that implement IProgram from the loaded assembly
-				var typesFromAssembly = loadedAssembly.GetTypes()
-					.Where(t => typeof(BaseProgram).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
-					.ToList();
-
-				// Add the found types to the main list
-				runtimeModules.AddRange(typesFromAssembly);
-			}
-		}
 		public Type? GetBuilderType(string module)
 		{
 			if (!module.EndsWith(".Builder")) module += ".Builder";

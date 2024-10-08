@@ -191,14 +191,14 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError,
             var eventsPath = Path.Join(fileSystem.GoalsPath, "events");
             if (fileSystem.File.Exists(eventsPath + ".goal"))
             {
-                return ([], new Error("Events.goal file must be located in the events folder."));
+                return (new(), new Error("Events.goal file must be located in the events folder."));
             }
             if (fileSystem.File.Exists(eventsPath + "build.goal"))
             {
-				return ([], new Error("EventsBuild.goal file must be located in the events folder."));
+				return (new(), new Error("EventsBuild.goal file must be located in the events folder."));
             }
 
-            if (!fileSystem.Directory.Exists(eventsPath)) return new();
+            if (!fileSystem.Directory.Exists(eventsPath)) return (new(), null);
 
             return (fileSystem.Directory.GetFiles(eventsPath, "*.goal", SearchOption.AllDirectories)
                 .Where(file =>

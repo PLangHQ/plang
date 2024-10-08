@@ -306,6 +306,11 @@ example of answer:
 		private void SetArrayParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
 		{
 			bool variableValueIsArray = variableValue.ToString().StartsWith("[");
+			if (variableValue is string)
+			{
+				variableValue = JArray.Parse(variableValue.ToString());
+			}
+
 			int arrayLength = variableValueIsArray ? ((JArray)variableValue).Count : 1;
 			var rootElementType = parameter.ParameterType.GetElementType();
 			var mainElementType = parameter.ParameterType;

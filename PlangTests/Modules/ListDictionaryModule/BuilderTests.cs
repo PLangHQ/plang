@@ -24,7 +24,7 @@ namespace PLang.Modules.ListDictionaryModule.Tests
 			base.Initialize();
 
 			LoadOpenAI();
-			typeHelper = new TypeHelper(fileSystem, settings);
+
 
 			builder = new GenericFunctionBuilder();
 			builder.InitBaseBuilder("PLang.Modules.ListDictionaryModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);

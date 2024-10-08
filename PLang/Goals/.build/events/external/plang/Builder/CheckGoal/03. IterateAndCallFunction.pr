@@ -1,37 +1,28 @@
 {
   "Action": {
-    "FunctionName": "RunTerminal",
+    "FunctionName": "RunLoop",
     "Parameters": [
       {
         "Type": "String",
-        "Name": "appExecutableName",
-        "Value": "dotnet"
+        "Name": "variableToLoopThrough",
+        "Value": "%goalFiles%"
       },
       {
-        "Type": "List`1<String>",
+        "Type": "GoalToCall",
+        "Name": "goalNameToCall",
+        "Value": "!CheckGoal"
+      },
+      {
+        "Type": "Dictionary`2<String, Object>",
         "Name": "parameters",
-        "Value": [
-          "publish",
-          "PlangConsole/PLangConsole.csproj",
-          "-c",
-          "Release",
-          "-r",
-          "%platform%",
-          "--self-contained",
-          "true",
-          "-o",
-          "./publish/plang"
-        ]
-      },
-      {
-        "Type": "String",
-        "Name": "pathToWorkingDirInTerminal",
-        "Value": "../"
+        "Value": {
+          "item": "%goal%"
+        }
       }
     ],
     "ReturnValues": null
   },
-  "Text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r %platform% --self-contained true -o ./publish/plang\n    working dir ../",
+  "Text": "go throug %goalFiles%, call !CheckGoal item=%goal%",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -61,11 +52,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nRead(String variableName)  : void\nRunTerminal(String appExecutableName, List`1<String>? parameters, String? pathToWorkingDirInTerminal, String? dataOutputVariable = \"data\", String? errorDebugInfoOutputVariable = \"error\", String? dataStreamDelta, String? debugErrorStreamDelta)  : ReturnDictionary`2\r\n## functions available ends ##\r\n## defined variables ##\r\nplatform (type:object), \r\n## defined variables ##"
-          },
-          {
-            "type": "text",
-            "text": "Remove % around dataOutputVariable and errorDebugInfoOutputVariable"
+            "text": "## functions available starts ##\r\nRunLoop(String variableToLoopThrough, GoalToCall goalNameToCall, Dictionary`2<String, Object>? parameters)  : void  // Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called.\r\n## functions available ends ##\r\n## defined variables ##\r\ngoalFiles (type:List`1), goal (type:object), \r\n## defined variables ##"
           }
         ]
       },
@@ -74,12 +61,12 @@
         "content": [
           {
             "type": "text",
-            "text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r %platform% --self-contained true -o ./publish/plang\n    working dir ../"
+            "text": "go throug %goalFiles%, call !CheckGoal item=%goal%"
           }
         ]
       }
     ],
-    "type": "PLang.Modules.TerminalModule.Builder",
+    "type": "PLang.Modules.GenericFunctionBuilder",
     "caching": true,
     "RawResponse": null
   },

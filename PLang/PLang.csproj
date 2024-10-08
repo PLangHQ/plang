@@ -9,20 +9,21 @@
     <AssemblyName>PLangLibrary</AssemblyName>
     <TargetFrameworks>net8.0</TargetFrameworks>
     <SelfContained>true</SelfContained>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <!--<RuntimeIdentifier>win-x64</RuntimeIdentifier>-->
     <SignAssembly>False</SignAssembly>
-    <FileVersion>0.1.15.2</FileVersion>
-		<AssemblyVersion>0.1.15.2</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
+		<AssemblyVersion>$(Version)</AssemblyVersion>
 
 		<Authors>Ingi Gauti Ragnarsson</Authors>
 		<Company>Plang</Company>
-		<PackageId>YourPackageId</PackageId>
+		<PackageId>PlangLibrary</PackageId>
 		<Title>PlangLibrary</Title>
 		<Description>Plang language core</Description>
 		<PackageTags>plang</PackageTags>
 		<RepositoryUrl>https://github.com/PLangHQ/plang/</RepositoryUrl>
-		<PackageLicenseExpression>LGPL</PackageLicenseExpression>
+		<PackageLicenseExpression>LGPL-2.0-or-later</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<IncludeSymbols>true</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
@@ -38,32 +39,32 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="build\**" />
-    <EmbeddedResource Remove="build\**" />
-    <None Remove="build\**" />
+    <Content Include="Goals\.build\info.txt" />
+		<None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
+
+
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="CsvHelper" Version="33.0.1" />
     <PackageReference Include="Dapper" Version="2.1.35" />
-    <PackageReference Include="HtmlAgilityPack" Version="1.11.64" />
     <PackageReference Include="IdGen" Version="3.0.7" />
     <PackageReference Include="Jil" Version="2.17.0" />
     <PackageReference Include="LightInject" Version="6.6.4" />
-    <PackageReference Include="MailKit" Version="4.7.1.1" />
-    <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.7" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.10.0" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.8" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.11.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.8" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
-    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.6.3" />
-    <PackageReference Include="Microsoft.Net.Http.Headers" Version="8.0.7" />
-    <PackageReference Include="MimeKit" Version="4.7.1" />
-    <PackageReference Include="MiniExcel" Version="1.33.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.1.0" />
+    <PackageReference Include="Microsoft.Net.Http.Headers" Version="8.0.8" />
+    <PackageReference Include="MimeKit" Version="4.8.0" />
+    <PackageReference Include="MiniExcel" Version="1.34.2" />
     <PackageReference Include="NCrontab.Signed" Version="3.3.3" />
     <PackageReference Include="Nethereum.Accounts" Version="4.21.2" />
     <PackageReference Include="Nethereum.Contracts" Version="4.21.2" />
@@ -72,21 +73,21 @@
     <PackageReference Include="Nethereum.JsonRpc.WebSocketClient" Version="4.21.2" />
     <PackageReference Include="Nethereum.RPC.Reactive" Version="4.21.2" />
     <PackageReference Include="Nethereum.Signer" Version="4.21.2" />
+    <PackageReference Include="Nethereum.Util.Rest" Version="4.25.0" />
     <PackageReference Include="Nostr.Client" Version="2.0.0" />
     <PackageReference Include="NSec.Cryptography" Version="24.4.0" />
-    <PackageReference Include="OpenAI" Version="1.11.0" />
-    <PackageReference Include="pythonnet" Version="3.0.3" />
+    <PackageReference Include="OpenAI" Version="2.0.0" />
+    <PackageReference Include="pythonnet" Version="3.0.4" />
     <PackageReference Include="RazorEngineCore" Version="2024.4.1" />
-    <PackageReference Include="Renci.SshNet.Async" Version="1.4.0" />
     <PackageReference Include="Scriban.Signed" Version="5.10.0" />
-    <PackageReference Include="Selenium.Support" Version="4.22.0" />
-    <PackageReference Include="Selenium.WebDriver" Version="4.22.0" />
+    <PackageReference Include="Selenium.Support" Version="4.25.0" />
+    <PackageReference Include="Selenium.WebDriver" Version="4.25.0" />
     <PackageReference Include="SeleniumExtras.WaitHelpers" Version="1.0.2" />
     <PackageReference Include="Sprache" Version="2.3.1" />
     <PackageReference Include="System.CodeDom" Version="8.0.0" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.3" />
-    <PackageReference Include="System.IO.Abstractions" Version="21.0.22" />
-    <PackageReference Include="System.Linq.Dynamic.Core" Version="1.4.3" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.1.0" />
+    <PackageReference Include="System.IO.Abstractions" Version="21.0.29" />
+    <PackageReference Include="System.Linq.Dynamic.Core" Version="1.4.5" />
     <PackageReference Include="System.Management" Version="8.0.0" />
     <PackageReference Include="System.Net.Security" Version="4.3.2" />
     <PackageReference Include="System.Reflection.MetadataLoadContext" Version="8.0.0" />
@@ -115,11 +116,15 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+
+		<None Include="Goals\**\*" Exclude="**\.db\**\*.*">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Goals\Builder\" />
-    <Folder Include="Goals\Runtime\" />
-  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="echo &quot;Building plang code&quot;&#xD;&#xA;&#xD;&#xA;cd &quot;$(ProjectDir)Goals&quot; &amp;&amp; plang build &gt; output.txt&#xA;type output.txt&#xA;&#xD;&#xA;cd &quot;$(ProjectDir)Goals/apps/Installer&quot; &amp;&amp; plang build &gt; output2.txt&#xA;type output2.txt&#xA;&#xD;&#xA;findstr /C:&quot;Failed to build&quot; output.txt&#xD;&#xA;&#xA;set BuildError=%25errorlevel%25&#xA;&#xA;if %25BuildError%25 equ 0 (&#xA;  exit 1&#xA;)&#xA;exit 0" />
+  </Target>
 
 </Project>

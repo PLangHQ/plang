@@ -43,19 +43,12 @@ namespace PLang.Modules.PythonModule
 			string? stdOutVariableName = null, string? stdErrorVariableName = null)
 		{
 
-			var result = new Dictionary<string, object>();
 			
 
 			if (fileSystem.File.Exists("requirements.txt"))
 			{
-				var requiredmentsResult = await terminalProgram.RunTerminal("pip install -r requirements.txt");
-				if (requiredmentsResult != null)
-				{
-					foreach (var item in requiredmentsResult)
-					{
-						result.AddOrReplace(item.Key, item.Value);
-					}
-				}
+				await terminalProgram.RunTerminal("pip install -r requirements.txt");
+				
 			}
 
 

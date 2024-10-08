@@ -119,7 +119,7 @@ namespace PLang.Building
 			{
 				if (ex is FileAccessException fa)
 				{
-					var fileAccessHandler = container.GetInstance<FileAccessHandler>();
+					var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 					var askUserFileAccess = new AskUserFileAccess(fa.AppName, fa.Path, fa.Message, fileAccessHandler.ValidatePathResponse);
 
 					(var isFaHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(askUserFileAccess);
@@ -259,6 +259,7 @@ namespace PLang.Building
 
 		public void SetupBuildValidation()
 		{
+			/*
 			var eventsPath = fileSystem.Path.Join(fileSystem.GoalsPath, "events", "external", "plang", "builder");
 
 			if (fileSystem.Directory.Exists(eventsPath)) return;
@@ -271,7 +272,7 @@ namespace PLang.Building
 				archive.ExtractToDirectory(fileSystem.GoalsPath, true);
 			}
 			return;
-
+			*/
 		}
 	}
 

@@ -1,4 +1,4 @@
-﻿using HtmlAgilityPack;
+﻿
 using Scriban;
 using Scriban.Syntax;
 using System;
@@ -12,6 +12,7 @@ using System.Xml;
 
 namespace PLang.Modules.UiModule
 {
+	/*
 	public class PlangVarHtmlWrapper
 	{
 		static void ProcessForLoops(HtmlNode bodyNode)
@@ -167,6 +168,6 @@ namespace PLang.Modules.UiModule
 		}
 	}
 
-
+	*/
 
 }

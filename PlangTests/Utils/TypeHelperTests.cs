@@ -21,7 +21,6 @@ namespace PLang.Utils.Tests
 		[TestMethod()]
 		public void GetMethodsTest()
 		{
-			var typeHelper = new TypeHelper(fileSystem, settings);
 
 			var methods = typeHelper.GetMethodsAsString(typeof(PLang.Modules.DbModule.Program));
 			Assert.IsTrue(methods.Contains("Select") && methods.Contains("Insert"));
@@ -33,7 +32,6 @@ namespace PLang.Utils.Tests
 		[TestMethod()]
 		public void GetTypeTest()
 		{
-			var typeHelper = new TypeHelper(fileSystem, settings);
 			var type = typeHelper.GetRuntimeType("PLang.Modules.CodeModule");
 
 			Assert.IsTrue(typeof(PLang.Modules.CodeModule.Program) == type);

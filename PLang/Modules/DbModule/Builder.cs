@@ -51,7 +51,7 @@ namespace PLang.Modules.DbModule
 		public record DbGenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValue = null, string? Warning = null) : GenericFunction(FunctionName, Parameters, ReturnValue);
 		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep goalStep)
 		{
-			moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger);
+			moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger, typeHelper);
 			(var buildInstruction, var buildError) = await base.Build(goalStep);
 			if (buildError != null) return (null, buildError);
 
@@ -82,7 +82,7 @@ DatabaseType: Define the database type. The .net library being used is {dataSour
 {typeHelper.GetMethodsAsString(typeof(Program))}
 ## functions available ends ##
 ");
-			var program = new Program(db, fileSystem, settings, llmServiceFactory, new DisableEventSourceRepository(), context, logger);
+			var program = new Program(db, fileSystem, settings, llmServiceFactory, new DisableEventSourceRepository(), context, logger, typeHelper);
 			if (!string.IsNullOrEmpty(dataSource.SelectTablesAndViews))
 			{
 
@@ -248,6 +248,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 - select * from %table% WHERE %name% and value_id=%valueId%, write to %result% => sql: SELECT * FROM %table% WHERE name=@name and value_id=@valueId, ReturnValue: %result%, SqlParameters:[{{ParameterName:name, VariableNameOrValue:%name%, TypeFullName:string}}, {{ParameterName:valueId, VariableNameOrValue:%valueId%, TypeFullName:int}}] 
 - select id, name from users, write to %user% => then ReturnValue is %user% object
 - select id, name from users => then ReturnValue is %id%, %name% objects
+- select * from addresses WHERE address like %address%% => sql SELECT * from addresses WHERE address LIKE @address, SqlParameters:[{{""ParameterName"":""address"", ""VariableNameOrValue"":""%address%%"", ""TypeFullName"":""int64""}}]
 # examples #
 # ParameterInfo scheme #
 {TypeHelper.GetJsonSchemaForRecord(typeof(ParameterInfo))}

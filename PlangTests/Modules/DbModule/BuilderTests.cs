@@ -34,7 +34,6 @@ namespace PLang.Modules.DbModule.Tests
 			datasources.Add(new DataSource("MainDb", "", "", "", "", ""));
 			settings.GetValues<DataSource>(typeof(ModuleSettings)).Returns(datasources);
 
-			typeHelper = new TypeHelper(fileSystem, settings);
 
 			var db = new SqliteConnection("DataSource=In memory;Version=3");
 

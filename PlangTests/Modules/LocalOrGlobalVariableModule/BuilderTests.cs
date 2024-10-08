@@ -26,8 +26,6 @@ namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
 
 			LoadOpenAI();
 
-			typeHelper = new TypeHelper(fileSystem, settings);
-
 			builder = new GenericFunctionBuilder();
 			builder.InitBaseBuilder("PLang.Modules.LocalOrGlobalVariableModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 

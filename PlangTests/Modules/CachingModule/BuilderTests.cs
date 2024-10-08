@@ -28,7 +28,6 @@ namespace PLang.Modules.CachingModule.Tests
 			var aiService = new OpenAiService(settings, logger, llmCaching, context);
 			llmServiceFactory.CreateHandler().Returns(aiService);
 
-			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
 			builder.InitBaseBuilder("PLang.Modules.CachingModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);

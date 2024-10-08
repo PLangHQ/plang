@@ -1,7 +1,4 @@
-﻿using OpenQA.Selenium.DevTools.V124.Target;
-using System.Reflection;
-
-namespace PLang.Utils
+﻿namespace PLang.Utils
 {
 	public static class ReservedKeywords
 	{

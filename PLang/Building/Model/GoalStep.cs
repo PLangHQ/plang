@@ -79,5 +79,6 @@ namespace PLang.Building.Model
 		public EventBinding? EventBinding { get; set; } = null;
 		public bool IsEvent { get; set; } = false;
 		public string Hash { get; set; }
+		public string BuilderVersion { get; set; }
 	}
 }

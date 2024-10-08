@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using System.Data;
@@ -8,9 +9,8 @@ namespace PLang.Utils
 	internal class DbConnectionUndefined : IDbConnection
 	{
 		string errorMessage = "";
-		public DbConnectionUndefined(IPLangFileSystem fileSystem, ISettings settings)
+		public DbConnectionUndefined(IPLangFileSystem fileSystem, ISettings settings, ITypeHelper typeHelper)
 		{
-			var typeHelper = new TypeHelper(fileSystem, settings);
 			var types = typeHelper.GetTypesByType(typeof(IDbConnection)).ToList();
 			types.Remove(typeof(DbConnectionUndefined));
 			if (types.FirstOrDefault(p => p == typeof(SqliteConnection)) == null)

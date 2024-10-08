@@ -73,7 +73,7 @@ namespace PLang.Runtime
 
 				if (context.ContainsKey(ReservedKeywords.IsEvent))
 				{
-					engine.AddContext(ReservedKeywords.IsEvent, true);
+					engine.GetContext().AddOrReplace(ReservedKeywords.IsEvent, true);
 				}
 
 				goal = engine.GetGoal(goalToRun);

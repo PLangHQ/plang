@@ -6,8 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>plang</AssemblyName>
-    <AssemblyVersion>0.1.15.2</AssemblyVersion>
-    <FileVersion>0.1.15.2</FileVersion>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
     <SignAssembly>False</SignAssembly>
 		<PublishSingleFile>false</PublishSingleFile>
   </PropertyGroup>
@@ -21,8 +21,9 @@
 		<MacOSAppBundle>true</MacOSAppBundle>
 		<OutputType>Exe</OutputType>
 		<RuntimeIdentifier>$(RuntimeIdentifier)</RuntimeIdentifier>
+		<!--
 		<ApplicationIcon>Icon.icns</ApplicationIcon>
-		<!-- Optional: if you have an app icon -->
+		 Optional: if you have an app icon -->
 		<IntermediateOutputPath>bin\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\</IntermediateOutputPath>
 		<CodesignKey>Developer ID Application: Ingi Gauti</CodesignKey>
 		<CodesignEntitlements>Entitlements.plist</CodesignEntitlements>

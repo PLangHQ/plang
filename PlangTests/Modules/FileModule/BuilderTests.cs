@@ -25,7 +25,6 @@ namespace PLang.Modules.FileModule.Tests
 			base.Initialize();
 
 			LoadOpenAI();
-			typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new GenericFunctionBuilder();
 			builder.InitBaseBuilder("PLang.Modules.FileModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);

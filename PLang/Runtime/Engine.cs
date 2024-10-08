@@ -1,8 +1,6 @@
 ﻿using LightInject;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
-using NBitcoin;
-using NBitcoin.Secp256k1;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
@@ -21,16 +19,12 @@ using PLang.Services.AppsRepository;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Utils;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
 using System.Net;
-using System.Reflection.Metadata.Ecma335;
-using System.Text;
 
 namespace PLang.Runtime
 {
-    public interface IEngine
+	public interface IEngine
 	{
 		IOutputStreamFactory OutputStreamFactory { get; }
 		void AddContext(string key, object value);
@@ -38,7 +32,7 @@ namespace PLang.Runtime
 		MemoryStack GetMemoryStack();
 		void Init(IServiceContainer container);
 		Task Run(List<string> goalsToRun);
-		Task<IError> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0);
+		Task<IError?> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0);
 		Goal? GetGoal(string goalName, Goal? callingGoal = null);
 		List<Goal> GetGoalsAvailable(string appPath, string goalName);
 
@@ -71,7 +65,7 @@ namespace PLang.Runtime
 		public void Init(IServiceContainer container)
 		{
 			this.container = container;
-
+			 
 			this.context = container.GetInstance<PLangAppContext>();
 			this.fileSystem = container.GetInstance<IPLangFileSystem>();
 			this.identityService = container.GetInstance<IPLangIdentityService>();
@@ -105,6 +99,7 @@ namespace PLang.Runtime
 			this.context.AddOrReplace(key, value);
 		}
 		public PLangAppContext GetContext() => this.context;
+
 
 		public async Task Run(List<string> goalsToRun)
 		{
@@ -235,7 +230,7 @@ namespace PLang.Runtime
 
 		private async Task<(bool, IError?)> HandleFileAccessError(FileAccessRequestError fare)
 		{
-			var fileAccessHandler = container.GetInstance<FileAccessHandler>();
+			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 			var askUserFileAccess = new AskUserFileAccess(fare.AppName, fare.Path, fare.Message, fileAccessHandler.ValidatePathResponse);
 			
 			return await askUserHandlerFactory.CreateHandler().Handle(askUserFileAccess);
@@ -299,11 +294,6 @@ namespace PLang.Runtime
 				return new Error($"Could not load pr file at {prFileAbsolutePath}");
 			}
 
-			foreach (var injection in goal.Injections)
-			{
-				((ServiceContainer)container).RegisterForPLangUserInjections(injection.Type, injection.Path, injection.IsGlobal);
-			}
-
 			var error = await RunGoal(goal);
 
 			stopwatch.Stop();
@@ -312,40 +302,23 @@ namespace PLang.Runtime
 			return error;
 		}
 
-		private void SetStepLogLevel(GoalStep step)
-		{
-			if (string.IsNullOrEmpty(step.LoggerLevel)) return;
-
-			Enum.TryParse(step.LoggerLevel, true, out Microsoft.Extensions.Logging.LogLevel logLevel);
-			AppContext.SetData("StepLogLevelByUser", logLevel);
-		}
-
-		private void ResetStepLogLevel()
-		{
-			AppContext.SetData("StepLogLevelByUser", null);
-		}
-		private void SetLogLevel(string? goalComment)
-		{
-			if (goalComment == null) return;
-
-			string[] logLevels = ["trace", "debug", "information", "warning", "error"];
-			foreach (var logLevel in logLevels)
-			{
-				if (goalComment.ToLower().Contains($"[{logLevel}]"))
-				{
-					AppContext.SetData("GoalLogLevelByUser", Microsoft.Extensions.Logging.LogLevel.Trace);
-					return;
-				}
-			}
-			return;
-		}
-
+		
 		public async Task<IError?> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0)
 		{
+			if (goal == null)
+			{
+				return new Error("Goal instance was null when trying to RunGoal");
+			}
+
 			if (waitForXMillisecondsBeforeRunningGoal > 0) await Task.Delay((int)waitForXMillisecondsBeforeRunningGoal);
 
 			AppContext.SetSwitch("Runtime", true);
 			SetLogLevel(goal.Comment);
+
+			foreach (var injection in goal.Injections)
+			{
+				((ServiceContainer)container).RegisterForPLangUserInjections(injection.Type, injection.Path, injection.IsGlobal);
+			}
 
 			int goalStepIndex = -1;
 			try
@@ -427,6 +400,35 @@ namespace PLang.Runtime
 			return null;
 		}
 
+		private void SetStepLogLevel(GoalStep step)
+		{
+			if (string.IsNullOrEmpty(step.LoggerLevel)) return;
+
+			Enum.TryParse(step.LoggerLevel, true, out Microsoft.Extensions.Logging.LogLevel logLevel);
+			AppContext.SetData("StepLogLevelByUser", logLevel);
+		}
+
+		private void ResetStepLogLevel()
+		{
+			AppContext.SetData("StepLogLevelByUser", null);
+		}
+		private void SetLogLevel(string? goalComment)
+		{
+			if (goalComment == null) return;
+
+			string[] logLevels = ["trace", "debug", "information", "warning", "error"];
+			foreach (var logLevel in logLevels)
+			{
+				if (goalComment.ToLower().Contains($"[{logLevel}]"))
+				{
+					AppContext.SetData("GoalLogLevelByUser", Microsoft.Extensions.Logging.LogLevel.Trace);
+					return;
+				}
+			}
+			return;
+		}
+
+
 		/*
 private async Task<bool> CachedGoal(Goal goal)
 {
@@ -482,6 +484,8 @@ private async Task CacheGoal(Goal goal)
 
 		private async Task<IError?> HandleGoalError(IError error, Goal goal, int goalStepIndex)
 		{
+			if (error.Goal == null) error.Goal = goal;
+			if (error.Step == null && goal != null && goal.GoalSteps.Count > goalStepIndex-1) error.Step = goal.GoalSteps[goalStepIndex]; 
 			if (error is IErrorHandled || error is UserDefinedError) return error;
 
 			var eventError = await eventRuntime.RunGoalErrorEvents(context, goal, goalStepIndex, error);
@@ -656,10 +660,17 @@ private async Task CacheGoal(Goal goal)
 			context.AddOrReplace(ReservedKeywords.Step, goalStep);
 			context.AddOrReplace(ReservedKeywords.Instruction, instruction);
 
-			var classInstance = container.GetInstance(classType) as BaseProgram;
-			if (classInstance == null)
+			BaseProgram? classInstance;
+			try
 			{
-				return new Error($"Could not create instance of {classType}");
+				classInstance = container.GetInstance(classType) as BaseProgram;
+				if (classInstance == null)
+				{
+					return new Error($"Could not create instance of {classType}");
+				}
+			} catch (MissingSettingsException mse)
+			{
+				return await HandleMissingSettings(mse, goal, goalStep, stepIndex);				
 			}
 
 			var llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
@@ -720,14 +731,31 @@ private async Task CacheGoal(Goal goal)
 			}
 		}
 
+		private async Task<IError?> HandleMissingSettings(MissingSettingsException mse, Goal goal, GoalStep goalStep, int stepIndex)
+		{
+			var settingsError = new Errors.AskUser.AskUserError(mse.Message, async (object[]? result) =>
+			{
+				var value = result?[0] ?? null;
+				if (value is Array) value = ((object[])value)[0];
 
+				await mse.InvokeCallback(value);
+				return (true, null);
+			});
 
+			(var isMseHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(settingsError);
+			if (isMseHandled)
+			{
+				return await ProcessPrFile(goal, goalStep, stepIndex);
+			}
+			return handlerError ?? new StepError(mse.Message, goalStep, Exception: mse);
+		}
 
 		private List<string> GetStartGoals(List<string> goalNames)
 		{
 			List<string> goalsToRun = new();
 			if (goalNames.Count > 0)
 			{
+				
 				var goalFiles = fileSystem.Directory.GetFiles(fileSystem.BuildPath, ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
 				foreach (var goalName in goalNames)
 				{

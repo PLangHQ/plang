@@ -22,7 +22,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 29,
+      "LineNumber": 30,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -71,7 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "8aad7aed406f6ea5b597aeffc0cc3afca21cbebe5135c250c1c5c25aa8386b03"
+      "Hash": "728997a6ad6f6d7c04739ab1f5be30c0e336d73fe046889d5acf9fbc77e6a435",
+      "BuilderVersion": null
     }
   ],
   "SubGoals": [],
@@ -82,11 +83,11 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Publish\\RemoveFile\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Publish\\RemoveFile",
-  "BuilderVersion": "0.1.15.2",
+  "BuilderVersion": "1.0.0.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "2906b53ce7e6e5a76b3fafc1f2b5ca95f06ba484b7e1f5e89e95c8e766408932",
+  "Hash": "9222e8f76c6f1280cc05d30017a1b6d214a4d395c512f83c247c79c3f9e42423",
   "IncomingVariablesRequired": [
     "item"
   ]

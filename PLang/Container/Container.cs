@@ -6,7 +6,10 @@ using Nethereum.JsonRpc.WebSocketClient;
 using Nethereum.RPC.Accounts;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Nostr.Client.Client;
+using OpenQA.Selenium.DevTools.V129.Audits;
 using PLang.Building;
 using PLang.Building.Parsers;
 using PLang.Errors.Handlers;
@@ -89,8 +92,8 @@ namespace PLang.Container
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
 
-			container.RegisterOutputStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IRazorEngine>(), container.GetInstance<IPLangFileSystem>(), iForm));
-			container.RegisterOutputSystemStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IRazorEngine>(), container.GetInstance<IPLangFileSystem>(), iForm));
+			container.RegisterOutputStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IPLangFileSystem>(), iForm));
+			container.RegisterOutputSystemStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IPLangFileSystem>(), iForm));
 			
 			container.RegisterAskUserHandlerFactory(typeof(AskUserWindowHandler), true, new AskUserWindowHandler(askUserDialog));
 			container.RegisterErrorHandlerFactory(typeof(UiErrorHandler), true, new UiErrorHandler(errorDialog, container.GetInstance<IAskUserHandlerFactory>()));
@@ -147,7 +150,7 @@ namespace PLang.Container
 				return factory.GetInstance<ILogger>(type);
 			});
 
-
+			container.RegisterSingleton<DependancyHelper>();
 			container.RegisterSingleton<PrParser>();
 		}
 
@@ -177,12 +180,9 @@ namespace PLang.Container
 
 		private static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeStartupAppPath)
 		{
-
-
 			container.RegisterSingleton<MemoryStack>();
-			container.RegisterSingleton<FileAccessHandler>();
+			container.RegisterSingleton<IFileAccessHandler, FileAccessHandler>();
 
-			container.RegisterSingleton<IRazorEngine, RazorEngine>();
 			container.RegisterSingleton<IEngine, Engine>();
 			container.RegisterSingleton<ISettings, Settings>();
 			container.RegisterSingleton<IBuilder, Building.Builder>();
@@ -303,13 +303,14 @@ namespace PLang.Container
 				var settings = container.GetInstance<ISettings>();
 				var llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
 				var logger = container.GetInstance<ILogger>();
+				var typeHelper = container.GetInstance<ITypeHelper>();
 
 
 				IDbConnection? dbConnection = GetDbConnection(factory, context);
 				if (dbConnection != null) return dbConnection;
 
 				dbConnection = factory.GetInstance<IDbConnection>(typeof(DbConnectionUndefined).FullName);
-				var moduleSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger);
+				var moduleSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger, typeHelper);
 
 				dbConnection = moduleSettings.GetDefaultDbConnection(factory).Result;
 				if (dbConnection != null) return dbConnection;
@@ -343,8 +344,9 @@ namespace PLang.Container
 				var dbConnection = factory.GetInstance<IDbConnection>(dbType);
 				var logger = container.GetInstance<ILogger>();
 				var llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
+				var typeHelper = container.GetInstance<ITypeHelper>();
 
-				var moduleSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger);
+				var moduleSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger, typeHelper);
 				var dataSources = moduleSettings.GetAllDataSources().Result;
 				if (dataSources.Count == 0)
 				{
@@ -420,35 +422,53 @@ namespace PLang.Container
 
 				AppDomain.CurrentDomain.AssemblyResolve += (sender, resolveArgs) =>
 				{
-					string assemblyPath = fileSystem.Path.Combine(fileSystem.RootDirectory, ".modules", new AssemblyName(resolveArgs.Name).Name + ".dll");
-					if (fileSystem.File.Exists(assemblyPath))
+					if (AppContext.TryGetSwitch("InternalGoalRun", out bool isEnabled) && isEnabled) return null;
+
+					string assemblyName = new AssemblyName(resolveArgs.Name).Name;
+					var baseDirectory = fileSystem.Path.Combine(fileSystem.RootDirectory, ".modules");
+					var files = fileSystem.Directory.GetFiles(baseDirectory, assemblyName + ".dll", SearchOption.AllDirectories);
+					if (files.Length > 0)
 					{
-						return Assembly.LoadFile(assemblyPath);
+						return Assembly.LoadFile(files[0]);
+					} else
+					{
+						var depsFiles = fileSystem.Directory.GetFiles(baseDirectory, "*.deps.json", SearchOption.AllDirectories);
+						foreach (var dep in depsFiles)
+						{
+							var content = fileSystem.File.ReadAllText(dep);
+							var json = JsonConvert.DeserializeObject(content) as JObject;
+							var libs = json.GetValue("libraries") as JObject;
+							if (libs == null) continue;
+
+							foreach (var prop in libs.Properties())
+							{
+								if (prop.Name.StartsWith(assemblyName + "/"))
+								{
+									var dirPath = fileSystem.Path.GetDirectoryName(dep);
+									var dependancyHelper = container.GetInstance<DependancyHelper>();
+									return dependancyHelper.InstallDependancy(dirPath, dep, assemblyName);
+								}
+							}
+
+							int i = 0;
+						}
 					}
 					return null;
 				};
-
-
-				var assemblyFiles = fileSystem.Directory.GetFiles(".modules", "*.dll");
-				foreach (var file in assemblyFiles)
-				{
-
-					var assembly = Assembly.LoadFile(file);
-					 var builderTypes = assembly.GetTypes()
-											   .Where(t => !t.IsAbstract && !t.IsInterface &&
-											   (typeof(BaseBuilder).IsAssignableFrom(t) || typeof(BaseProgram).IsAssignableFrom(t)))
-											   .ToList();
-
-					foreach (var type in builderTypes)
-					{
-						container.Register(type);  // or register with a specific interface if needed
-					}
+				var dependancyHelper = container.GetInstance<DependancyHelper>();
+				var modules = dependancyHelper.LoadModules(typeof(BaseProgram), fileSystem.GoalsPath);
+				foreach (var module in modules) {
+					container.Register(module);
 				}
+				
 			}
 
 			RegisterUserGlobalInjections(container);
 
 		}
+
+		
+
 		private static void RegisterUserGlobalInjections(ServiceContainer container)
 		{
 			var prParser = container.GetInstance<PrParser>();
