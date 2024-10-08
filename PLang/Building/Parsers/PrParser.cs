@@ -281,31 +281,31 @@ namespace PLang.Building.Parsers
 			Goal? goal = null;
 
 			// first check for goal inside same goal file as the calling goal
-			if (callingGoal != null && !goalNameOrPath.Contains(Path.DirectorySeparatorChar))
+			if (callingGoal != null && !goalNameOrPath.Contains(fileSystem.Path.DirectorySeparatorChar))
 			{
 				goal = goals.FirstOrDefault(p => p.RelativeGoalFolderPath == callingGoal.RelativeGoalFolderPath && p.GoalName.Equals(goalNameOrPath, StringComparison.OrdinalIgnoreCase));
 				if (goal != null) return goal;
 			}
 
 			// match goal from root, e.g. /Start
-			if (goalNameOrPath.StartsWith(Path.DirectorySeparatorChar))
+			if (goalNameOrPath.StartsWith(fileSystem.Path.DirectorySeparatorChar))
 			{
-				goal = goals.FirstOrDefault(p=> p.RelativePrFolderPath.Equals(Path.Join(".build", goalNameOrPath), StringComparison.OrdinalIgnoreCase));
+				goal = goals.FirstOrDefault(p=> p.RelativePrFolderPath.Equals(fileSystem.Path.Join(".build", goalNameOrPath), StringComparison.OrdinalIgnoreCase));
 				if (goal != null) return goal;
 			}
 
 			// match goal from calling goal, e.g. calling goal is in /ui/ folder, when goalNameOrPath is user/edit, it matches /ui/user/edit.goal
-			if (callingGoal != null && !goalNameOrPath.StartsWith(Path.DirectorySeparatorChar))
+			if (callingGoal != null && !goalNameOrPath.StartsWith(fileSystem.Path.DirectorySeparatorChar))
 			{
-				var newGoalPath = Path.Join(".build", callingGoal.RelativeGoalFolderPath, goalNameOrPath);
+				var newGoalPath = fileSystem.Path.Join(".build", callingGoal.RelativeGoalFolderPath, goalNameOrPath);
 				goal = goals.FirstOrDefault(p => p.RelativePrFolderPath.Equals(newGoalPath, StringComparison.OrdinalIgnoreCase));
 				if (goal != null) return goal;
 			}
 			
-			goal = goals.FirstOrDefault(p => p.RelativePrFolderPath.Equals(Path.Join(".build", goalNameOrPath), StringComparison.OrdinalIgnoreCase));
+			goal = goals.FirstOrDefault(p => p.RelativePrFolderPath.Equals(fileSystem.Path.Join(".build", goalNameOrPath), StringComparison.OrdinalIgnoreCase));
 			if (goal != null) return goal;
 
-			goal = goals.FirstOrDefault(p => goalNameOrPath.TrimStart(Path.DirectorySeparatorChar).Equals(Path.Join(p.RelativeGoalFolderPath, p.GoalName).TrimStart(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase));
+			goal = goals.FirstOrDefault(p => goalNameOrPath.TrimStart(fileSystem.Path.DirectorySeparatorChar).Equals(fileSystem.Path.Join(p.RelativeGoalFolderPath, p.GoalName).TrimStart(fileSystem.Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase));
 			if (goal != null) return goal;
 
 
