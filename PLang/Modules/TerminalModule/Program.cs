@@ -9,6 +9,7 @@ using PLang.Services.OutputStream;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace PLang.Modules.TerminalModule
 {
@@ -35,9 +36,9 @@ namespace PLang.Modules.TerminalModule
 			memoryStack.Put(variableName, result);
 		}
 
-		public async Task<ReturnDictionary<string, object>> RunTerminal(string appExecutableName, List<string>? parameters = null,
+		public async Task RunTerminal(string appExecutableName, List<string>? parameters = null,
 			string? pathToWorkingDirInTerminal = null,
-			[HandlesVariable] string? dataOutputVariable = "data", [HandlesVariable] string? errorDebugInfoOutputVariable = "error",
+			[HandlesVariable] string? dataOutputVariable = null, [HandlesVariable] string? errorDebugInfoOutputVariable = null,
 			[HandlesVariable] string? dataStreamDelta = null, [HandlesVariable] string? debugErrorStreamDelta = null
 			)
 		{
@@ -71,7 +72,7 @@ namespace PLang.Modules.TerminalModule
 			else
 			{
 				logger.LogError("Unsupported OS");
-				return new ReturnDictionary<string, object>();
+				return;
 			}
 
 			var dict = new ReturnDictionary<string, object?>();
@@ -79,9 +80,9 @@ namespace PLang.Modules.TerminalModule
 			// Start the process
 			using (Process process = new Process { StartInfo = startInfo })
 			{
-				string? dataOutput = null;
-				string? errorOutput = null;
-				bool canWriteDataOutputNext = false;
+				StringBuilder? dataOutput = new();
+				StringBuilder? errorOutput = new();
+
 				string command = appExecutableName;
 				if (parameters != null)
 				{
@@ -104,22 +105,13 @@ namespace PLang.Modules.TerminalModule
 					//logger.LogInformation(e.Data);
 					if (string.IsNullOrWhiteSpace(e.Data)) return;
 
-					canWriteDataOutputNext = !RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-					if (!canWriteDataOutputNext && e.Data.ToLower().Contains(appExecutableName))
+					if (dataStreamDelta != null)
 					{
-						canWriteDataOutputNext = true;
-						return;
+						memoryStack.Put(dataStreamDelta, e.Data);
 					}
 
-					if (canWriteDataOutputNext)
-					{
-						if (dataStreamDelta != null)
-						{
-							memoryStack.Put(dataStreamDelta, e.Data);
-						}
-
-						dataOutput += e.Data + Environment.NewLine;
-					}
+					dataOutput.Append(e.Data + Environment.NewLine);
+					
 					logger.LogTrace(e.Data);
 				};
 
@@ -127,19 +119,12 @@ namespace PLang.Modules.TerminalModule
 				process.ErrorDataReceived += (sender, e) =>
 				{
 					if (string.IsNullOrWhiteSpace(e.Data)) return;
-					//logger.LogInformation(e.Data);
+					
 					if (!string.IsNullOrEmpty(debugErrorStreamDelta))
 					{
 						memoryStack.Put(debugErrorStreamDelta, e.Data);
-					} else
-					{
-						if (string.IsNullOrWhiteSpace(errorOutput))
-						{
-							logger.LogError("Command: " + command);
-						}
-						logger.LogError(e.Data);
 					}
-					errorOutput += e.Data + Environment.NewLine;
+					errorOutput.Append(e.Data + Environment.NewLine);
 
 					logger.LogTrace(e.Data);
 				};
@@ -166,18 +151,17 @@ namespace PLang.Modules.TerminalModule
 
 				if (!string.IsNullOrEmpty(dataOutputVariable))
 				{
-					dict.Add(dataOutputVariable, RemoveLastLine(dataOutput));
+					memoryStack.Put(dataOutputVariable, RemoveLastLine(dataOutput.ToString()));
 				}
 
 				if (!string.IsNullOrEmpty(errorDebugInfoOutputVariable))
 				{
-					dict.Add(errorDebugInfoOutputVariable, errorOutput);
+					memoryStack.Put(errorDebugInfoOutputVariable, errorOutput.ToString());
 				}
 
 				logger.LogTrace("Done with TerminalModule");
 			}
 
-			return dict;
 		}
 
 		string? RemoveLastLine(string? input)

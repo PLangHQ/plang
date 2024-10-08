@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
+using PLang.Building.Parsers;
 using PLang.Interfaces;
+using PLang.SafeFileSystem;
 using System.Reflection;
 
 namespace PLang.Utils
@@ -8,11 +10,13 @@ namespace PLang.Utils
 	{
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ILogger logger;
+		private readonly PrParser prParser;
 
-		public DependancyHelper(IPLangFileSystem fileSystem, ILogger logger)
+		public DependancyHelper(IPLangFileSystem fileSystem, ILogger logger, PrParser prParser)
 		{
 			this.fileSystem = fileSystem;
 			this.logger = logger;
+			this.prParser = prParser;
 		}
 
 	
@@ -28,7 +32,7 @@ namespace PLang.Utils
 			.ToList();
 			modules.AddRange(builderModules);
 
-			string modulesDirectory = Path.Combine(goalPath, ".modules");
+			string modulesDirectory = fileSystem.Path.Combine(goalPath, ".modules");
 			if (!fileSystem.Directory.Exists(modulesDirectory)) return modules;
 			var dllFiles = fileSystem.Directory.GetFiles(modulesDirectory, "*.dll");
 			foreach (var dll in dllFiles)
@@ -72,9 +76,23 @@ namespace PLang.Utils
 				var library = fne.FileName.Substring(0, fne.FileName.IndexOf(','));
 				parameters.Add("libraryName", library);
 
-				logger.LogDebug($"Installing depency {library}, data is comding from {depsFilePath} and nuget package will be saved it to {dirPath}");
+				logger.LogDebug($"Installing depency {library}, data is coming from {depsFilePath} and nuget package will be saved it to {dirPath}");
 
-				var error = Executor.RunGoal("/external/plang/Runtime/InstallDependencies.goal", parameters).GetAwaiter().GetResult();
+				var installerFolder = fileSystem.Path.Join(fileSystem.RootDirectory, "apps/Installer").AdjustPathToOs();
+				if (!fileSystem.Directory.Exists(installerFolder)) {
+					var plangFolder = AppContext.BaseDirectory;
+					string planInstallerFolder = fileSystem.Path.Join(plangFolder, "Goals/apps/Installer").AdjustPathToOs();
+					/*
+					var task = fileAccessHandler.ValidatePathResponse(fileSystem.RootDirectory, planInstallerFolder, "y");
+					task.Wait();
+					(var success, var error2) = task.Result;
+					if (error2 != null) throw new Exception(error2.ToString());
+					*/
+					DirectoryHelper.Copy(planInstallerFolder, installerFolder);
+					prParser.ForceLoadAllGoals();
+				}
+
+				var error = Executor.RunGoal("/apps/Installer/InstallDependencies.goal", parameters).GetAwaiter().GetResult();
 				if (error != null)
 				{
 					throw new Exception(error.ToString());

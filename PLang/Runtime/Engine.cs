@@ -65,7 +65,7 @@ namespace PLang.Runtime
 		public void Init(IServiceContainer container)
 		{
 			this.container = container;
-
+			 
 			this.context = container.GetInstance<PLangAppContext>();
 			this.fileSystem = container.GetInstance<IPLangFileSystem>();
 			this.identityService = container.GetInstance<IPLangIdentityService>();
@@ -230,7 +230,7 @@ namespace PLang.Runtime
 
 		private async Task<(bool, IError?)> HandleFileAccessError(FileAccessRequestError fare)
 		{
-			var fileAccessHandler = container.GetInstance<FileAccessHandler>();
+			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 			var askUserFileAccess = new AskUserFileAccess(fare.AppName, fare.Path, fare.Message, fileAccessHandler.ValidatePathResponse);
 			
 			return await askUserHandlerFactory.CreateHandler().Handle(askUserFileAccess);
@@ -484,6 +484,8 @@ private async Task CacheGoal(Goal goal)
 
 		private async Task<IError?> HandleGoalError(IError error, Goal goal, int goalStepIndex)
 		{
+			if (error.Goal == null) error.Goal = goal;
+			if (error.Step == null && goal != null && goal.GoalSteps.Count > goalStepIndex-1) error.Step = goal.GoalSteps[goalStepIndex]; 
 			if (error is IErrorHandled || error is UserDefinedError) return error;
 
 			var eventError = await eventRuntime.RunGoalErrorEvents(context, goal, goalStepIndex, error);

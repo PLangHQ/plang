@@ -139,7 +139,7 @@ namespace PLang.Building.Parsers
 		}
 		private static readonly object _lock = new object();
 
-		public async Task<List<Goal>> GoalFromGoalsFolder(string appName, FileAccessHandler fileAccessHandler)
+		public async Task<List<Goal>> GoalFromGoalsFolder(string appName, IFileAccessHandler fileAccessHandler)
 		{
 			var path = AppContext.BaseDirectory;
 			await fileAccessHandler.ValidatePathResponse(appName, path, "y");

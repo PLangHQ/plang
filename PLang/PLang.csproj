@@ -9,20 +9,21 @@
     <AssemblyName>PLangLibrary</AssemblyName>
     <TargetFrameworks>net8.0</TargetFrameworks>
     <SelfContained>true</SelfContained>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <!--<RuntimeIdentifier>win-x64</RuntimeIdentifier>-->
     <SignAssembly>False</SignAssembly>
-    <FileVersion>0.1.15.2</FileVersion>
-		<AssemblyVersion>0.1.15.2</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
+		<AssemblyVersion>$(Version)</AssemblyVersion>
 
 		<Authors>Ingi Gauti Ragnarsson</Authors>
 		<Company>Plang</Company>
-		<PackageId>YourPackageId</PackageId>
+		<PackageId>PlangLibrary</PackageId>
 		<Title>PlangLibrary</Title>
 		<Description>Plang language core</Description>
 		<PackageTags>plang</PackageTags>
 		<RepositoryUrl>https://github.com/PLangHQ/plang/</RepositoryUrl>
-		<PackageLicenseExpression>LGPL</PackageLicenseExpression>
+		<PackageLicenseExpression>LGPL-2.0-or-later</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<IncludeSymbols>true</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
@@ -39,6 +40,7 @@
 
   <ItemGroup>
     <Content Include="Goals\.build\info.txt" />
+		<None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 
@@ -114,19 +116,12 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-		<None Update="Goals\**\*">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Include="Goals\.build\**\*.pr">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
-		<None Include="Goals\.build\**\*.dll">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
-		<None Include="Goals\.build\**\*.pbr">
+
+		<None Include="Goals\**\*" Exclude="**\.db\**\*.*">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
   </ItemGroup>
+
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <Exec Command="echo &quot;Building plang code&quot;&#xD;&#xA;&#xD;&#xA;cd &quot;$(ProjectDir)Goals&quot; &amp;&amp; plang build &gt; output.txt&#xA;&#xA;type output.txt&#xA;&#xA;findstr /C:&quot;Failed to build&quot; output.txt&#xA;set BuildError=%25errorlevel%25&#xA;&#xA;if %25BuildError%25 equ 0 (&#xA;  exit 1&#xA;)&#xA;exit 0" />

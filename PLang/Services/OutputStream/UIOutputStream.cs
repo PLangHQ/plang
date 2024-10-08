@@ -1,14 +1,7 @@
-﻿using Microsoft.AspNetCore.Razor.Language;
-using NBitcoin.Secp256k1;
-using Org.BouncyCastle.Utilities.IO;
-using Org.BouncyCastle.Utilities.Zlib;
-using PLang.Building.Model;
+﻿using PLang.Building.Model;
 using PLang.Interfaces;
-using PLang.Modules.UiModule;
 using PLang.Runtime;
 using RazorEngineCore;
-using System.Dynamic;
-using System.IO;
 using System.IO.Abstractions;
 using System.Text;
 
@@ -16,7 +9,6 @@ namespace PLang.Services.OutputStream
 {
 	public class UIOutputStream : IOutputStream
 	{
-		private readonly IRazorEngine razorEngine;
 		private readonly IFileSystem fileSystem;
 
 		public MemoryStack? MemoryStack { get; internal set; }
@@ -27,9 +19,8 @@ namespace PLang.Services.OutputStream
 		StringBuilder sb;
 		public Action<string>? onFlush { get; set; }
 		public IForm IForm { get; set; }
-		public UIOutputStream(IRazorEngine razorEngine, IFileSystem fileSystem, IForm iForm)
+		public UIOutputStream(IFileSystem fileSystem, IForm iForm)
 		{
-			this.razorEngine = razorEngine;
 			this.fileSystem = fileSystem;
 			IForm = iForm;
 			Stream = new MemoryStream();

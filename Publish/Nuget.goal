@@ -1,0 +1,9 @@
+Nuget
+- read "version.txt", into %version%
+- write out 'Publish nuget - Version:%version%'
+- dotnet pack --configuration Release -p:Version=%version%, working dir ../PLang
+- dotnet nuget push ../PLang/bin/Release/PlangLibrary.%version%.nupkg --api-key %Settings.NugetApiKey% --source https://api.nuget.org/v3/index.json
+    , write to %output%, %error%
+- if %output% contains "already exists and cannot be modified"
+    - show error "Version %version% is already published"
+- write out "Published - %version%"

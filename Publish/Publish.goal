@@ -1,7 +1,8 @@
 Publish
 - write out "Starting at %Now%"
-- write out 'Building project'
-- dotnet build Plang.sln -c Release,  working dir ../
+- read "version.txt", into %version%
+- write out 'Building project - Version:%version%'
+- dotnet build Plang.sln -c Release -p:Version=%version%,  working dir ../
 - delete folder 'runtimes' and subfiles
 - create folder 'runtimes'
 - get file paths of .zip in ./, write to %zipFiles%
@@ -13,10 +14,10 @@ Publish
 
 BuildPlatform
 - write out 'Publish %platform%'
-- dotnet publish PlangConsole/PLangConsole.csproj -c Release -r %platform% --self-contained true -o ./publish/plang
+- dotnet publish PlangConsole/PLangConsole.csproj -c Release -r %platform% --self-contained true -o ./publish/plang -p:Version=%version%
     working dir ../
 - if %platform% == 'win-x64' then
-    - dotnet publish PlangWindowForms/PLangWindowForms.csproj -c Release -r win-x64 --self-contained true -o ./publish/plang
+    - dotnet publish PlangWindowForms/PLangWindowForms.csproj -c Release -r win-x64 --self-contained true -o ./publish/plang -p:Version=%version%
     working dir ../   
 - write out 'Compress plang folder'   
 - compress folder 'plang', dont include base, to 'plang-%platform%.zip', overwrite

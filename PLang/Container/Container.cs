@@ -90,8 +90,8 @@ namespace PLang.Container
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
 
-			container.RegisterOutputStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IRazorEngine>(), container.GetInstance<IPLangFileSystem>(), iForm));
-			container.RegisterOutputSystemStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IRazorEngine>(), container.GetInstance<IPLangFileSystem>(), iForm));
+			container.RegisterOutputStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IPLangFileSystem>(), iForm));
+			container.RegisterOutputSystemStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IPLangFileSystem>(), iForm));
 			
 			container.RegisterAskUserHandlerFactory(typeof(AskUserWindowHandler), true, new AskUserWindowHandler(askUserDialog));
 			container.RegisterErrorHandlerFactory(typeof(UiErrorHandler), true, new UiErrorHandler(errorDialog, container.GetInstance<IAskUserHandlerFactory>()));
@@ -178,12 +178,9 @@ namespace PLang.Container
 
 		private static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeStartupAppPath)
 		{
-
-
 			container.RegisterSingleton<MemoryStack>();
-			container.RegisterSingleton<FileAccessHandler>();
+			container.RegisterSingleton<IFileAccessHandler, FileAccessHandler>();
 
-			container.RegisterSingleton<IRazorEngine, RazorEngine>();
 			container.RegisterSingleton<IEngine, Engine>();
 			container.RegisterSingleton<ISettings, Settings>();
 			container.RegisterSingleton<IBuilder, Building.Builder>();

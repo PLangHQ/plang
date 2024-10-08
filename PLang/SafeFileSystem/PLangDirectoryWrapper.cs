@@ -386,6 +386,9 @@ namespace PLang.SafeFileSystem
             return base.EnumerateFileSystemEntries(path, searchPattern, enumerationOptions);
         }
 #endif
+
+
+		
 	}
 }
 

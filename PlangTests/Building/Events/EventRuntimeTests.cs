@@ -21,7 +21,7 @@ namespace PLang.Building.Events.Tests
 		public void Init()
 		{
 			base.Initialize();
-			eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHandlerFactory, errorSystemHandlerFactory, logger);
+			eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHandlerFactory, errorSystemHandlerFactory, logger, fileAccessHandler);
 		}
 
 		[TestMethod()]

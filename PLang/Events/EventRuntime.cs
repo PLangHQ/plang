@@ -13,8 +13,10 @@ using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
+using PLang.SafeFileSystem;
 using PLang.Utils;
 using RazorEngineCore;
+using System.IO;
 using System.Text.RegularExpressions;
 
 namespace PLang.Events
@@ -48,12 +50,14 @@ namespace PLang.Events
 		private readonly IErrorHandlerFactory errorHandlerFactory;
 		private readonly IErrorSystemHandlerFactory errorSystemHandlerFactory;
 		private readonly ILogger logger;
+		private readonly IFileAccessHandler fileAccessHandler;
 		private List<EventBinding>? runtimeEvents = null;
 		private List<EventBinding>? bulderEvents = null;
 		private IServiceContainer? container;
 
 		public EventRuntime(IPLangFileSystem fileSystem, ISettings settings, IPseudoRuntime pseudoRuntime,
-			PrParser prParser, IEngine engine, IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory, ILogger logger)
+			PrParser prParser, IEngine engine, IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory,
+			ILogger logger, IFileAccessHandler fileAccessHandler)
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
@@ -63,6 +67,7 @@ namespace PLang.Events
 			this.errorHandlerFactory = errorHandlerFactory;
 			this.errorSystemHandlerFactory = errorSystemHandlerFactory;
 			this.logger = logger;
+			this.fileAccessHandler = fileAccessHandler;
 		}
 
 		public void SetContainer(IServiceContainer container)
@@ -124,10 +129,12 @@ namespace PLang.Events
 				}
 			}
 			logger.LogDebug("Loaded {0} events", events.Count);
+			// todo: wtf Ingi?
 			if (builder)
 			{
 				bulderEvents = events;
-			} else
+			}
+			else
 			{
 				runtimeEvents = events;
 			}
@@ -138,7 +145,7 @@ namespace PLang.Events
 
 		private bool ShouldRunEvent(string[]? runOnlyOnStartArguments)
 		{
-			if (runOnlyOnStartArguments == null || runOnlyOnStartArguments.Length ==0) return true;
+			if (runOnlyOnStartArguments == null || runOnlyOnStartArguments.Length == 0) return true;
 
 			var startArgs = AppContext.GetData(ReservedKeywords.ParametersAtAppStart) as string[];
 			if (startArgs == null) return false;
@@ -159,29 +166,57 @@ namespace PLang.Events
 			{
 				return ([], new Error(".build folder does not exists. Run 'plang build' first."));
 			}
-			var eventsFolderPath = Path.Join(buildPath, "events");
-			if (!fileSystem.Directory.Exists(eventsFolderPath)) return (new(), null);
-
-			string eventsFolderName = (!builder) ? "Events" : "BuilderEvents";
-
-			var rootEventsFolderPath = Path.Join(eventsFolderPath, eventsFolderName);
-			var rootEventFilePath = Path.Join(rootEventsFolderPath, "00. Goal.pr");
-			var rootEventFileExists = fileSystem.File.Exists(rootEventFilePath);
 
 			List<string> eventFiles = new();
-			var externalEventsPath = Path.Join(eventsFolderPath, "external");
+			string eventsFolderName = (!builder) ? "Events" : "BuilderEvents";
+
+			CopyPlangEvents();
+			var eventsFolderPath = fileSystem.Path.Join(buildPath, "events");
+
+			if (!fileSystem.Directory.Exists(eventsFolderPath)) return (eventFiles, null);
+
+			var rootEventsFolderPath = fileSystem.Path.Join(eventsFolderPath, eventsFolderName);
+			var rootEventFilePath = fileSystem.Path.Join(rootEventsFolderPath, "00. Goal.pr");
+			var rootEventFileExists = fileSystem.File.Exists(rootEventFilePath);
+
+
+			var externalEventsPath = fileSystem.Path.Join(eventsFolderPath, "external");
 			if (fileSystem.Directory.Exists(externalEventsPath))
 			{
 				var externalEventsDirectories = fileSystem.Directory.GetDirectories(externalEventsPath, eventsFolderName, SearchOption.AllDirectories);
 
-				eventFiles = externalEventsDirectories.SelectMany(dir => fileSystem.Directory.GetFiles(dir, "00. Goal.pr"))
-									 .ToList();
-			}	
+				eventFiles.AddRange(externalEventsDirectories.SelectMany(dir => fileSystem.Directory.GetFiles(dir, "00. Goal.pr"))
+									 .ToList());
+			}
+
+
+
+
 			if (rootEventFileExists)
 			{
 				eventFiles.Add(rootEventFilePath);
 			}
 			return (eventFiles, null);
+
+		}
+
+		private void CopyPlangEvents()
+		{
+			string plangGoalsPath = fileSystem.Path.Join(fileSystem.RootDirectory, "events/external/plang");
+			if (fileSystem.Directory.Exists(plangGoalsPath)) return;
+
+			var plangFolder = AppContext.BaseDirectory;
+			string plangEventsFolder = fileSystem.Path.Join(plangFolder, "Goals/events").AdjustPathToOs();
+			string plangBuildEventsFolder = fileSystem.Path.Join(plangFolder, "Goals/.build/events").AdjustPathToOs();
+			 
+			var task = fileAccessHandler.ValidatePathResponse(fileSystem.RootDirectory, plangEventsFolder, "y");
+			task.Wait();
+			(var success, var error) = task.Result;
+			
+
+			DirectoryHelper.Copy(plangEventsFolder, fileSystem.Path.Join(fileSystem.RootDirectory, "events").AdjustPathToOs());
+			DirectoryHelper.Copy(plangBuildEventsFolder, fileSystem.Path.Join(fileSystem.RootDirectory, ".build/events").AdjustPathToOs());
+			prParser.ForceLoadAllGoals();
 
 		}
 
@@ -201,7 +236,7 @@ namespace PLang.Events
 				context.Add(ReservedKeywords.IsEvent, true);
 
 				logger.LogDebug("Run event type {0} on scope {1}, binding to {2} calling {3}", eventType, eventScope, eve.GoalToBindTo, eve.GoalToCall);
-				var task = pseudoRuntime.RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), eve.GoalToCall, parameters);
+				var task = pseudoRuntime.RunGoal(engine, context, fileSystem.Path.DirectorySeparatorChar.ToString(), eve.GoalToCall, parameters);
 				if (eve.WaitForExecution)
 				{
 					await task;
@@ -216,12 +251,12 @@ namespace PLang.Events
 				}
 
 				if (error == null) return null;
-				
+
 				if (isBuilder)
 				{
 					return new BuilderEventError(error.Message, eve, InitialError: error);
 				}
-				return new RuntimeEventError( error.Message, eve, InitialError: error);
+				return new RuntimeEventError(error.Message, eve, InitialError: error);
 			}
 			return null;
 
@@ -305,18 +340,6 @@ namespace PLang.Events
 
 		}
 
-		private async Task ShowDefaultError(IError error, GoalStep? step)
-		{
-
-			if (error is UserDefinedError)
-			{
-				await errorHandlerFactory.CreateHandler().ShowError(error);
-			} else
-			{
-				await errorSystemHandlerFactory.CreateHandler().ShowError(error);
-			}
-		}
-
 		private async Task<IEventError?> Run(PLangAppContext context, EventBinding eve, Goal? goal, GoalStep? step = null, IError? error = null, bool isBuilder = false)
 		{
 			try
@@ -324,7 +347,7 @@ namespace PLang.Events
 				var parameters = new Dictionary<string, object?>();
 				parameters.Add(ReservedKeywords.Event, eve);
 				parameters.Add(ReservedKeywords.Goal, goal);
-				parameters.Add("!error", error);
+				parameters.Add(ReservedKeywords.Error, error);
 				context.TryAdd(ReservedKeywords.IsEvent, true);
 
 				if (step != null) parameters.Add(ReservedKeywords.Step, step);
@@ -348,7 +371,7 @@ namespace PLang.Events
 					return new RuntimeEventError(exception.Message, eve, goal, step, Exception: exception);
 				}
 				if (task.Result.error == null) return null;
-				if (task.Result.error is IErrorHandled eh) return eh; // new HandledEventError(task.Result.error, task.Result.error.StatusCode, task.Result.error.Key, task.Result.error.Message);
+				if (task.Result.error is IErrorHandled eh) return eh;
 				if (task.Result.error is UserDefinedError ude) return ude;
 
 				if (isBuilder)
@@ -412,8 +435,8 @@ namespace PLang.Events
 			List<EventBinding> eventsToRun = new();
 			eventsToRun.AddRange(runtimeEvents.Where(p => p.EventType == EventType.Before && p.EventScope == EventScope.StepError).ToList());
 
-			
-			
+
+
 			var errorHandler = StepHelper.GetErrorHandlerForStep(step.ErrorHandlers, error);
 			if (errorHandler != null)
 			{
@@ -421,7 +444,8 @@ namespace PLang.Events
 				{
 					var eventBinding = new EventBinding(EventType.Before, EventScope.StepError, goal.RelativeGoalPath, errorHandler.GoalToCall, true, step.Number, step.Text, true, null, errorHandler.IgnoreError);
 					eventsToRun.Add(eventBinding);
-				} else if (errorHandler.IgnoreError)
+				}
+				else if (errorHandler.IgnoreError)
 				{
 					return null;
 				}
@@ -444,27 +468,27 @@ namespace PLang.Events
 					{
 						var eventError = await Run(context, eve, goal, step, error);
 						if (eventError != null)
-						{							
+						{
 							multiError.Add(eventError);
 						}
 					}
 
 					//comment: this might be a bad idea, what happens when you have multiple events, on should continue other not
 					if (!shouldContinueNextStep) shouldContinueNextStep = eve.OnErrorContinueNextStep;
-					
+
 				}
 				if (shouldContinueNextStep) return null;
 				if (multiError.Errors.Count == 0) return multiError.InitialError;
 
 				var endGoal = multiError.Errors.FirstOrDefault(p => p is EndGoal);
 				if (endGoal != null) { return endGoal; }
-				
+
 			}
-			
+
 			return error;
 		}
 
-		
+
 
 
 		/*
@@ -515,7 +539,7 @@ namespace PLang.Events
 			}
 
 			// GoalToBindTo = Hello.goal
-			if (goalToBindTo.Contains(".") && Path.GetExtension(goalToBindTo) == ".goal")
+			if (goalToBindTo.Contains(".") && fileSystem.Path.GetExtension(goalToBindTo) == ".goal")
 			{
 				return goal.GoalFileName.ToLower() == goalToBindTo || goal.RelativeGoalPath.ToLower() == goalToBindTo;
 			}
@@ -528,14 +552,14 @@ namespace PLang.Events
 			if (goalToBindTo.Contains(":"))
 			{
 				string[] bindings = goalToBindTo.Split(":", StringSplitOptions.RemoveEmptyEntries);
-				string goalFileName = Path.GetExtension(bindings[0]) == ".goal" ? bindings[0] : bindings[0] + ".goal";
+				string goalFileName = fileSystem.Path.GetExtension(bindings[0]) == ".goal" ? bindings[0] : bindings[0] + ".goal";
 				goalFileName = ChangeDirectorySeperators(goalFileName);
 
 				return goal.RelativeGoalPath.ToLower() == goalFileName && goal.GoalName.ToLower() == bindings[1].ToLower();
 			}
 
 			// GoalToBindTo = AppName.StepName
-			if (goalToBindTo.Contains(".") && goal.AppName != Path.DirectorySeparatorChar.ToString())
+			if (goalToBindTo.Contains(".") && goal.AppName != fileSystem.Path.DirectorySeparatorChar.ToString())
 			{
 				string[] bindings = goalToBindTo.Split(".", StringSplitOptions.RemoveEmptyEntries);
 				if (goal.AppName.ToLower() != bindings[0].ToLower()) return false;

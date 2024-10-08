@@ -61,7 +61,7 @@ namespace PLang
 				}
 			}
 			var prParser = container.GetInstance<PrParser>();
-			var fileAccessHandler = container.GetInstance<FileAccessHandler>();
+			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 
 			await prParser.GoalFromGoalsFolder(fileSystem.RootDirectory, fileAccessHandler);

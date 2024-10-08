@@ -119,7 +119,7 @@ namespace PLang.Building
 			{
 				if (ex is FileAccessException fa)
 				{
-					var fileAccessHandler = container.GetInstance<FileAccessHandler>();
+					var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 					var askUserFileAccess = new AskUserFileAccess(fa.AppName, fa.Path, fa.Message, fileAccessHandler.ValidatePathResponse);
 
 					(var isFaHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(askUserFileAccess);
