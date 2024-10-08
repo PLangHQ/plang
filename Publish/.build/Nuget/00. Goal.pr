@@ -355,8 +355,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "2acde81a687859fc38a72234f5f8cd6f508605d05a1378d9794800937984e214",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "90281449bb392631035050bf49f4df0684aed8adc5fb26308b2c6859a762b153",
+      "BuilderVersion": null
     },
     {
       "Text": "show error \"Version %version% is already published\"",
@@ -426,8 +426,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "8a0edc445e2bdaf9dd9fe5ab7b6c181164303585b4f76500ed16a0463038586f",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "7d8b288be7a05d855dab377defc050e5593cadf178d9fb3e54fa996c421df536",
+      "BuilderVersion": null
     },
     {
       "Text": "write out \"Published - %version%\"",
@@ -497,8 +497,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "07f44c714f399d69c4b23e20b37debf05bcbed9a6959453a1c61eba2e5f99b7a",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "134304b4f6092604a523c66360dde2e918eebd3dd22682b5b2b4b11f3ad5085b",
+      "BuilderVersion": null
     }
   ],
   "SubGoals": [],
@@ -524,6 +524,6 @@
   },
   "Injections": [],
   "Signature": null,
-  "Hash": "a90aa00bbddfec8c3ca98cf761541238ec5c93057c4fcba399f30f2398f52e33",
+  "Hash": "0276edb2cb654764689ad97050725cb5119944f02dc7fd3d9e841f32d95a0287",
   "IncomingVariablesRequired": null
 }

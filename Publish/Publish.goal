@@ -9,8 +9,6 @@ Publish
 - foreach %zipFiles% call !RemoveFile
 - [code] create string list for 'win-x64', 'linux-x64', 'linux-arm64', 'osx-x64', 'osx-arm64', write to %platforms%
 - foreach %platforms%, call BuildPlatform %platform%=item
-- copy folder 'runtimes', to '../../services\Template\MyService\lib', overwrite if exists, include all files
-- copy folder 'runtimes', to '../../modules\Template\MyModule\lib', overwrite if exists, include all files
 
 BuildPlatform
 - write out 'Publish %platform%'

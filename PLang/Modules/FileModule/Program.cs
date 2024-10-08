@@ -581,6 +581,8 @@ namespace PLang.Modules.FileModule
 			bool includeSubfoldersAndFiles = false, bool overwriteFiles = false)
 		{
 			directoryPath = directoryPath.AdjustPathToOs();
+			destinationPath = destinationPath.AdjustPathToOs();
+
 			bool isAppFolder = false;
 			if (directoryPath.StartsWith("."))
 			{
