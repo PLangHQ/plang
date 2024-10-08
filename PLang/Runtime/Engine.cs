@@ -431,18 +431,6 @@ namespace PLang.Runtime
 			return null;
 		}
 
-		private void SetStepLogLevel(GoalStep step)
-		{
-			if (string.IsNullOrEmpty(step.LoggerLevel)) return;
-
-			Enum.TryParse(step.LoggerLevel, true, out Microsoft.Extensions.Logging.LogLevel logLevel);
-			AppContext.SetData("StepLogLevelByUser", logLevel);
-		}
-
-		private void ResetStepLogLevel()
-		{
-			AppContext.SetData("StepLogLevelByUser", null);
-		}
 		private void SetLogLevel(string? goalComment)
 		{
 			if (goalComment == null) return;
