@@ -5,51 +5,49 @@
 
 ![Plang Logo](https://plang.is/android-chrome-192x192.png)
 
-***Plang is a modern programming language written in natural language.***
+***Plang is a general-purpose programming language that allows developers to write code in natural human language.***
 
-Join our community on [Discord](https://discord.gg/A8kYUymsDD) | Follow us on [Twitter](https://twitter.com/planghq) | [Youtube channel](https://www.youtube.com/@plangHQ)
+[Download Plang](https://github.com/PLangHQ/plang/releases) | [Discord](https://discord.gg/A8kYUymsDD) | [Twitter](https://twitter.com/planghq) | [Youtube](https://www.youtube.com/@plangHQ) | [Podcast](https://podcasters.spotify.com/pod/show/plang/)
 
 
 ## Introduction
 
-Plang is a programming language written in natural language.
+Plang is a programming language written in natural human language.
 
 Plang is a new type of programming language that provides various features over other operation programming languages. It has built in Identity, built in database, built in messaging, solves syncing between device, and more. 
 
-Plang provides the developer with features that he already is familiar with such as variables, condition and for statements as well as powerfull standard library, and language is easily extendable.
+Plang provides the developer with features that he already is familiar with such as variables, condition and for statements as well as powerfull standard library, and plang is easily extendable.
 
-Plang provides increased security and privacy to both developer and users of their application, for free as in beer.
+Plang provides increased security and privacy to both developer and users of their application, for free.
 
-## Example of user registration
+## Quick intro
 
-This is an example of how effienct it is to written in plang. 
+In Plang, you write in natural language, meaning you can code in any spoken language. This makes it incredibly accessible and easy to understand, even for those who are new to programming.
 
-Following is executable plang code for user registration
+For example, let's [create an app](https://github.com/PLangHQ/plang/blob/main/Documentation/blogs/QuickIntro.md) that reads data from a web service and inserts that data into a database.
 
 ```plang
-CreateUser
-- Make sure %password% and %email% is not empty
-- Hash %password%, write to %hashedPassword%
-- Insert into users, %hashedPassword%, %email%
-- Post, create user in MailChimp
-    Bearer %Settings.MailChimpApi%
-    %email%
-- Create bearer token from %email%, write to %bearer%
-- Write %bearer% to web response
+LoadPosts
+- get https://jsonplaceholder.typicode.com/posts/, write to %posts%
+- go through %posts%, call InsertPost 
+
+InsertPost
+- insert into posts, %item.title%, %item.body%
 ```
 
-These 6 steps replace over [100+ lines of C#/Java/Typescript code](https://gist.github.com/ingig/491ac9b13d65f40cc24ee5aed0408be3), or if you do clean code programming, dozens of files.
+This is straightforward. While there are a few [basic rules](https://github.com/PLangHQ/plang/blob/main/Documentation/Rules.md), Plang eliminates the need for strict syntax, making it intuitive and easy to use. 
 
-> [!TIP]
-> **You do not create user in this way in Plang, it is much [simpler](https://github.com/PLangHQ/plang/blob/main/Documentation/Identity.md#examples). This example is only provided for familiarity.**
+## Why Plang?
 
-## Installation
+Plang is a high-level, natural language programming framework that simplifies coding by allowing developers to define business logic in plain language. 
 
-> [!CAUTION]
-> **Heads up: Building code costs money**
-> Building each code line incurs usually between $0.002 - $0.009 fee via LLM. The payoff? Exceptional efficiency gains. You can choose to use [Plang service(simpler) or OpenAI(cheaper)](https://github.com/PLangHQ/plang/blob/main/Documentation/PlangOrOpenAI.md). Using Plang service supports the Plang project
+It reduces complexity and bridges the gap between business and technical teams, making it easier to maintain, modify, and understand software. By focusing on goals and steps, Plang abstracts much of the low-level coding, enabling faster development, reduced bugs, and more secure applications, especially in data-sensitive areas
 
-Set up Plang on your system. Download Plang from [the download page](https://github.com/PLangHQ/plang/releases) and follow our [Installation Guide](https://github.com/PLangHQ/plang/blob/main/Documentation/Install.md).
+## Screenshot
+Below is a screenshot from the developer tool (IDE) while coding in Plang
+
+![Plang IDE](./IDE.png)
+
 
 ## Getting Started
 
@@ -72,7 +70,7 @@ Explore plang's features and capabilities:
     Create a simple Todo app to get familiar with rules and ability of plang
     - **[1. Todo Webservice](https://github.com/PLangHQ/plang/blob/main/Documentation/Todo_webservice.md)**: Simple webservice. Learn how to setup webserver, api and database
     - **[2. Todo LLM](https://github.com/PLangHQ/plang/blob/main/Documentation/Todo_Llm.md)**: How to use LLM in plang
-    - **[3. Todo Identity](https://github.com/PLangHQ/plang/blob/main/Documentation/Todo_Identity.md)**: Learn about how you handle 
+    - **[3. Todo Identity](https://github.com/PLangHQ/plang/blob/main/Documentation/Todo_Identity.md)**: Learn to use `%Identity%`
     - **[4. Todo GUI](https://github.com/PLangHQ/plang/blob/main/Documentation/Todo_UI.md)**: Learn about how you create GUI (early alpha)
     - **[5. Todo New approach](https://github.com/PLangHQ/plang/blob/main/Documentation/todo_new_approch.md)**: Learn how you can rething User Experince with Plang    
 - **For everybody**

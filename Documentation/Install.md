@@ -2,6 +2,10 @@
 
 Welcome to the installation guide for the Plang programming language. This guide will walk you through the steps to install Plang on your system. By the end of this guide, you will have Plang installed and ready for use on your Windows, Linux, or MacOS machine.
 
+> [!CAUTION]
+> **Heads up: Building code costs money**
+> Building each code line incurs usually between $0.002 - $0.009 fee via LLM. The payoff? Exceptional efficiency gains. You can choose to use [Plang service(simpler) or OpenAI(cheaper)](https://github.com/PLangHQ/plang/blob/main/Documentation/PlangOrOpenAI.md). Using Plang service supports the Plang project
+
 ## Table of Contents
 
 - [Installing Plang on Windows](#installing-plang-on-windows)

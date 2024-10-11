@@ -2,6 +2,11 @@
 
 Welcome to the Todo Web Service tutorial! In this guide, you will learn how to create a simple web service using the Plang programming language. This tutorial will walk you through setting up a web server, creating an API, managing a database table, and testing your application.
 
+## Before starting
+
+Make sure you have [installed Plang](./Install.md) & [IDE](/IDE.md)
+
+
 ## What You Will Learn
 - How to start a web server
 - How to set up an API

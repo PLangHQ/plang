@@ -2,7 +2,7 @@
 
 This guide will walk you through the process of installing the Plang extension for Visual Studio Code (VS Code). This extension will enable you to write, debug, and manage your Plang code efficiently.
 
-## Prerequisites
+## Before you start
 
 Before you begin, ensure you have Visual Studio Code installed on your system. If you haven't installed it yet, you can download it from the [Visual Studio Code website](https://code.visualstudio.com/).
 
