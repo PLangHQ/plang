@@ -53,13 +53,13 @@ namespace PLang.Modules.UiModule
 		[Description("Executes javascript code. The javascript code should be structure in following way: (function() { function nameOfFunction() { // System;your job is to create the code here } nameOfFunction(); }")]
 		public async Task ExecuteJavascript(string javascript)
 		{
+			if (string.IsNullOrEmpty(javascript)) return;
+
 			var outputStream = outputStreamFactory.CreateHandler();
 			if (outputStream is not UIOutputStream)
 			{
 				throw new RuntimeException("Incorrect output stream. You probably ran the command: plang run, but you should run: plangw run");
 			}
-
-			if (string.IsNullOrEmpty(javascript)) return;
 
 			var os = (UIOutputStream)outputStream;
 			os.MemoryStack = memoryStack;

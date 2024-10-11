@@ -6,7 +6,7 @@ using System.Runtime.Serialization;
 namespace PLang.Building.Model
 {
 
-    public class GoalStep
+	public class GoalStep
 	{
 		public GoalStep()
 		{
@@ -24,13 +24,13 @@ namespace PLang.Building.Model
 		public string? Description { get; set; }
 		public string PrFileName { get; set; }
 		public string RelativePrPath { get; set; }
-		
+
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
 		public string AbsolutePrFilePath { get; set; }
 		[Newtonsoft.Json.JsonIgnore]
-[IgnoreDataMemberAttribute]
+		[IgnoreDataMemberAttribute]
 
 		[System.Text.Json.Serialization.JsonIgnore]
 		public string AppStartupPath { get; set; }
@@ -39,7 +39,7 @@ namespace PLang.Building.Model
 		public bool Execute { get; set; }
 		public bool RunOnce { get; set; }
 		[Newtonsoft.Json.JsonIgnore]
-[IgnoreDataMemberAttribute]
+		[IgnoreDataMemberAttribute]
 
 		[System.Text.Json.Serialization.JsonIgnore]
 		public DateTime? Executed { get; set; }
@@ -52,40 +52,53 @@ namespace PLang.Building.Model
 		public CachingHandler? CacheHandler { get; set; }
 		public CancellationHandler? CancellationHandler { get; set; }
 		[Newtonsoft.Json.JsonIgnore]
-[IgnoreDataMemberAttribute]
+		[IgnoreDataMemberAttribute]
 
 		[System.Text.Json.Serialization.JsonIgnore]
 		public string? PreviousText { get; set; }
 		[Newtonsoft.Json.JsonIgnore]
-[IgnoreDataMemberAttribute]
+		[IgnoreDataMemberAttribute]
 
 		[System.Text.Json.Serialization.JsonIgnore]
 		public bool Reload { get; set; }
 		[Newtonsoft.Json.JsonIgnore]
-[IgnoreDataMemberAttribute]
+		[IgnoreDataMemberAttribute]
 
 		[System.Text.Json.Serialization.JsonIgnore]
-		public GoalStep? NextStep { get
+		public GoalStep? NextStep
+		{
+			get
 			{
-				if (Goal.GoalSteps.Count > Number + 1)
+				if (Goal.GoalSteps.Count > Index + 1)
 				{
-					return Goal.GoalSteps[Number + 1];
-				} else
+					return Goal.GoalSteps[Index + 1];
+				}
+				else
 				{
 					return null;
 				}
 			}
 		}
 		[Newtonsoft.Json.JsonIgnore]
-[IgnoreDataMemberAttribute]
-
+		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
 		public Goal Goal { get; set; }
 
 		public Dictionary<string, object> Custom { get; set; } = new Dictionary<string, object>();
-		public int Number {
-			get; 
-			set; }
+		public int Number
+		{
+			get;
+			set;
+		}
+
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public int Index
+		{
+			get;
+			set;
+		}
 		public int LineNumber { get; set; }
 		public LlmRequest LlmRequest { get; set; }
 		public EventBinding? EventBinding { get; set; } = null;

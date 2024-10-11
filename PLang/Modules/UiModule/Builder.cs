@@ -27,6 +27,10 @@ namespace PLang.Modules.UiModule
 
 		public async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, IError? error = null, int errorCount = 0)
 		{
+			if (errorCount > 3)
+			{
+				return (null, new BuilderError($"Tried {errorCount} times. Could not get LLM to build valid code. Try to rephrase your step {step.Text}"));
+			}
 
 			if (error == null)
 			{
@@ -66,7 +70,7 @@ Response with only the function name you would choose");
 					return buildFunction;
 				}
 			}
-			
+
 
 			var nextStep = step.NextStep;
 
@@ -221,10 +225,10 @@ stick to user intent and DO NOT assume elements not described, for example DO NO
 {variables}
 ### variables available ###");
 
-			if (error != null )
+			if (error != null)
 			{
-				
-				AppendToSystemCommand($@"This is my attempt nr {errorCount+1} in I ask you about this. There was an error in code you generated.
+
+				AppendToSystemCommand($@"This is my attempt nr {errorCount + 1} in I ask you about this. There was an error in code you generated.
 {error.Message}
 
 Please correct this.
@@ -249,15 +253,16 @@ Please correct this.
 				return await Build(step, error, errorCount);
 			}
 
-			for (var i=0;i< subElements.Count;i++)
+			for (var i = 0; i < subElements.Count; i++)
 			{
-				if (uiResponse == null || string.IsNullOrEmpty(uiResponse.html)) {
+				if (uiResponse == null || string.IsNullOrEmpty(uiResponse.html))
+				{
 					//rebuild
 				}
 				if (!uiResponse.html.Contains($"{{{{ ChildElement{i} }}}}"))
 				{
 					missingChildren.Add($"{{{{ ChildElement{i} }}}}");
-					
+
 					//rebuild
 				}
 			}
@@ -274,7 +279,7 @@ Please correct this.
 
 			List<Parameter> parameters = new List<Parameter>();
 
-			
+
 			if (uiResponse.html != null) parameters.Add(new Parameter("string", "html", uiResponse.html));
 			if (uiResponse.css != null) parameters.Add(new Parameter("string", "css", uiResponse.css));
 			if (uiResponse.javascript != null) parameters.Add(new Parameter("string", "javascript", uiResponse.javascript));
@@ -287,7 +292,7 @@ Please correct this.
 			return (instruction, null);
 		}
 
-		
+
 	}
 
 	public record UiResponse(string? html = null, string? javascript = null, string? css = null);

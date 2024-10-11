@@ -211,6 +211,7 @@ namespace PLang.Building.Parsers
 					{
 						prevStep = prevBuildGoal.GoalSteps.FirstOrDefault(p => p.Text == goals[i].GoalSteps[b].Text);
 					}
+					goals[i].GoalSteps[b].Index = b;
 
 					if (prevStep != null)
 					{
