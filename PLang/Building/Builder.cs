@@ -78,9 +78,15 @@ namespace PLang.Building
 				if (error != null) return error;
 
 				var eventError = await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.Before, EventScope.StartOfApp, true);
-				if (eventError != null && !eventError.IgnoreError)
+				if (eventError != null)
 				{
-					return eventError;
+					if (!eventError.IgnoreError)
+					{
+						return eventError;
+					} else
+					{
+						logger.LogError(eventError.ToString());
+					}
 				}
 
 				foreach (string file in goalFiles)

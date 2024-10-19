@@ -22,12 +22,13 @@ using System.Net;
 using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web;
 
 namespace PLang.Modules.WebserverModule
 {
 	[Description("Start webserver, write to Body, Header, Cookie, send file to client")]
-	internal class Program : BaseProgram
+	public class Program : BaseProgram
 	{
 		private readonly ILogger logger;
 		private readonly IEventRuntime eventRuntime;
@@ -85,21 +86,56 @@ namespace PLang.Modules.WebserverModule
 			if (webserverInfo == null) return false;
 
 			await StartWebserver(webserverInfo.WebserverName, webserverInfo.Scheme, webserverInfo.Host, webserverInfo.Port,
-				webserverInfo.MaxContentLengthInBytes, webserverInfo.DefaultResponseContentEncoding, webserverInfo.SignedRequestRequired, webserverInfo.PublicPaths);
+				webserverInfo.MaxContentLengthInBytes, webserverInfo.DefaultResponseContentEncoding, webserverInfo.SignedRequestRequired, webserverInfo.Routings);
 
 			return true;
 		}
 
 		public record WebserverInfo(HttpListener Listener, string WebserverName, string Scheme, string Host, int Port,
-			long MaxContentLengthInBytes, string DefaultResponseContentEncoding, bool SignedRequestRequired, List<string>? PublicPaths);
+			long MaxContentLengthInBytes, string DefaultResponseContentEncoding, bool SignedRequestRequired, List<Routing>? Routings)
+		{
+			public List<Routing>? Routings;
+		}
 
 
+		public record Routing(string Path, GoalToCall? GoalToCall = null, string? Method = null, string ContentType = "text/html", 
+									Dictionary<string, object?>? Parameters = null, long? MaxContentLength = null, string? DefaultResponseContentEncoding = null);
+
+
+		public async Task<IError?> AddRoute(string path, GoalToCall? goalToCall = null, string? method = null, string ContentType = "text/html",
+									Dictionary<string, object?>? Parameters = null, long? MaxContentLength = null, string? DefaultResponseContentEncoding = null, 
+									string? webserverName = null)
+		{
+			WebserverInfo? webserverInfo = null;
+			if (webserverName != null)
+			{
+				webserverInfo = listeners.FirstOrDefault(p => p.WebserverName == webserverName);
+				if (webserverInfo == null)
+				{
+					return new ProgramError($"Could not find {webserverName} webserver. Are you defining the correct name?", goalStep, function);
+				}
+			} else if (listeners.Count > 1)
+			{
+				return new ProgramError($"There are {listeners.Count} servers, please define which webserver you want to assign this routing to.", goalStep, function,
+						FixSuggestion: $"rewrite the step to include the server name e.g. `- {goalStep.Text}, on {listeners[0].WebserverName} webserver");
+			} else if (listeners.Count == 0)
+			{
+				return new ProgramError($"There are 0 servers, please define a webserver.", goalStep, function,
+						FixSuggestion: $"create a step before adding a route e.g. `- start webserver");
+			}
+
+			if (webserverInfo == null) webserverInfo = listeners[0];
+
+			if (webserverInfo.Routings == null) webserverInfo.Routings = new();
+			webserverInfo.Routings.Add(new Routing(path, goalToCall, method, ContentType, Parameters, MaxContentLength, DefaultResponseContentEncoding));
+
+			return null;
+		}
 
 		public async Task<WebserverInfo> StartWebserver(string webserverName = "default", string scheme = "http", string host = "localhost",
 			int port = 8080, long maxContentLengthInBytes = 4096 * 1024,
 			string defaultResponseContentEncoding = "utf-8",
-			bool signedRequestRequired = false,
-			List<string>? publicPaths = null)
+			bool signedRequestRequired = false, List<Routing>? routings = null)
 		{
 			if (listeners.FirstOrDefault(p => p.WebserverName == webserverName) != null)
 			{
@@ -111,7 +147,12 @@ namespace PLang.Modules.WebserverModule
 				throw new RuntimeException($"Port {port} is already in use. Select different port to run on, e.g.\n-Start webserver, port 4687");
 			}
 
-			publicPaths = publicPaths ?? new List<string> { "api", "api.goal" };
+			if (routings == null)
+			{
+				routings = new List<Routing>();
+				routings.Add(new Routing("/api/*", "/api/*", ContentType: "application/json"));
+			}
+
 			var listener = new HttpListener();
 
 			listener.Prefixes.Add(scheme + "://" + host + ":" + port + "/");
@@ -120,7 +161,7 @@ namespace PLang.Modules.WebserverModule
 			var assembly = Assembly.GetAssembly(this.GetType());
 			string version = assembly!.GetName().Version!.ToString();
 
-			var webserverInfo = new WebserverInfo(listener, webserverName, scheme, host, port, maxContentLengthInBytes, defaultResponseContentEncoding, signedRequestRequired, publicPaths);
+			var webserverInfo = new WebserverInfo(listener, webserverName, scheme, host, port, maxContentLengthInBytes, defaultResponseContentEncoding, signedRequestRequired, routings);
 			listeners.Add(webserverInfo);
 
 			logger.LogDebug($"Listening on {host}:{port}...");
@@ -160,7 +201,7 @@ namespace PLang.Modules.WebserverModule
 						{
 
 							requestedFile = httpContext.Request.Url?.LocalPath;
-							goalPath = GetGoalPath(publicPaths, httpContext.Request);
+							goalPath = GetGoalPath(routings, httpContext.Request);
 
 							if (string.IsNullOrEmpty(goalPath))
 							{
@@ -507,7 +548,7 @@ Error:
 		}
 
 
-		private string GetGoalPath(List<string> publicPaths, HttpListenerRequest request)
+		private string GetGoalPath(List<Routing> routings, HttpListenerRequest request)
 		{
 			if (request == null || request.Url == null) return "";
 			var goalName = request.Url.LocalPath.AdjustPathToOs();
@@ -524,10 +565,9 @@ Error:
 				logger.LogDebug($"Path doesnt exists - goalBuildDirPath:{goalBuildDirPath}");
 				return "";
 			}
-			foreach (var publicPath in publicPaths)
+			foreach (var route in routings)
 			{
-				string path = Path.Join(fileSystem.BuildPath, publicPath).AdjustPathToOs();
-				if (goalBuildDirPath.StartsWith(path, StringComparison.OrdinalIgnoreCase))
+				if (Regex.IsMatch(request.Url.LocalPath.AdjustPathToOs(), route.Path.AdjustPathToOs()))
 				{
 					return goalBuildDirPath;
 				}

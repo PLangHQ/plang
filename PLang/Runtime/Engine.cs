@@ -317,14 +317,10 @@ namespace PLang.Runtime
 			AppContext.SetData("StepLogLevelByUser", logLevel);
 		}
 
-		private void ResetStepLogLevel()
+		private void ResetStepLogLevel(Goal goal)
 		{
 			if (goal.Comment == null && !goal.GoalName.Contains("[")) return;
-		}
-			if (goalComment == null) return;
-		{
-			if (goalComment == null) return;
-
+		
 			string comment = (goal.Comment ?? string.Empty).ToLower();
 			string goalName = goal.GoalName.ToLower();
 
@@ -340,15 +336,10 @@ namespace PLang.Runtime
 			return;
 		}
 
-		public async Task<IError?> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0)
-			SetLogLevel(goal);
-
-			foreach (var injection in goal.Injections)
-			{
-				((ServiceContainer)container).RegisterForPLangUserInjections(injection.Type, injection.Path, injection.IsGlobal);
-			}
+		public async Task<IError?> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0) { 
+			
 			if (waitForXMillisecondsBeforeRunningGoal > 0) await Task.Delay((int)waitForXMillisecondsBeforeRunningGoal);
-			SetLogLevel(goal.Comment);
+			
 			AppContext.SetSwitch("Runtime", true);
 			SetLogLevel(goal.Comment);
 
@@ -559,7 +550,7 @@ private async Task CacheGoal(Goal goal)
 				return result;
 			} finally
 			{
-				ResetStepLogLevel();
+				ResetStepLogLevel(goal);
 			}
 
 		}

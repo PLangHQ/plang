@@ -6,6 +6,7 @@ using PLang.Models;
 using PLang.Modules;
 using System.Data;
 using System.Reflection;
+using Websocket.Client.Logging;
 
 namespace PLang.Utils
 {
@@ -73,26 +74,32 @@ namespace PLang.Utils
 			string modulesDirectory = Path.Combine(fileSystem.GoalsPath, ".modules");
 			if (fileSystem.Directory.Exists(modulesDirectory))
 			{
-
+				List<string> loaded = new();
 				foreach (var dll in fileSystem.Directory.GetFiles(modulesDirectory, "*.dll", SearchOption.AllDirectories))
 				{
-					// Load the assembly
 					Assembly loadedAssembly = Assembly.LoadFile(dll);
 					List<Type> typesFromAssembly;
-					// Get types that implement IProgram from the loaded assembly
-					if (type.IsInterface || type.IsAbstract)
-					{
-						typesFromAssembly = loadedAssembly.GetTypes().Where(t => type.IsAssignableFrom(t)).ToList();
-					}
-					else
-					{
-						typesFromAssembly = loadedAssembly.GetTypes().Where(t => t == type).ToList();
-					}
 
-					if (typesFromAssembly.Count > 0)
+					try
 					{
-						// Add the found types to the main list
-						types.AddRange(typesFromAssembly);
+						if (type.IsInterface || type.IsAbstract)
+						{
+							typesFromAssembly = loadedAssembly.GetTypes().Where(t => type.IsAssignableFrom(t)).ToList();
+						}
+						else
+						{
+							typesFromAssembly = loadedAssembly.GetTypes().Where(t => t == type).ToList();
+						}
+
+						if (typesFromAssembly.Count > 0)
+						{
+							// Add the found types to the main list
+							types.AddRange(typesFromAssembly);
+						}
+					} catch (Exception ex)
+					{
+						//Console.WriteLine(ex.Message);
+						continue;
 					}
 				}
 			}
@@ -100,24 +107,6 @@ namespace PLang.Utils
 			string servicesDirectory = Path.Combine(fileSystem.GoalsPath, ".services");
 			if (fileSystem.Directory.Exists(servicesDirectory))
 			{
-				AppDomain.CurrentDomain.AssemblyResolve += (sender, resolveArgs) =>
-				{
-					var files = fileSystem.Directory.GetFiles(Path.Join(fileSystem.RootDirectory, ".services"),
-						new AssemblyName(resolveArgs.Name).Name + ".dll", SearchOption.AllDirectories);
-
-					var latestFile = files
-						   .Select(f => new { FilePath = f, Version = GetAssemblyVersion(f) })
-						   .OrderByDescending(x => x.Version)
-						   .FirstOrDefault();
-
-
-					if (latestFile != null)
-					{
-						return Assembly.LoadFile(latestFile.FilePath);
-					}
-					return null;
-				};
-
 				foreach (var dll in fileSystem.Directory.GetFiles(servicesDirectory, "*.dll", SearchOption.AllDirectories))
 				{
 

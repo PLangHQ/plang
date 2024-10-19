@@ -88,7 +88,7 @@ namespace PLang.Building.Parsers
 				goal.GoalSteps[i].RelativePrPath = fileSystem.Path.Join(goal.RelativePrFolderPath, goal.GoalSteps[i].PrFileName).AdjustPathToOs();
 				goal.GoalSteps[i].AppStartupPath = appAbsoluteStartupPath.AdjustPathToOs();
 				goal.GoalSteps[i].Number = i;
-
+				goal.GoalSteps[i].Index = i;
 				/*if (setupOnceDictionary != null && setupOnceDictionary.ContainsKey(goal.GoalSteps[i].RelativePrPath))
 				{
 					goal.GoalSteps[i].Executed = setupOnceDictionary[goal.GoalSteps[i].RelativePrPath];

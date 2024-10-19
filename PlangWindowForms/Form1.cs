@@ -161,11 +161,16 @@ namespace PlangWindowForms
 		}
 
 
-
+		private string? lastJsonMesage = null;
 
 		private async Task CoreWebView2_WebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
 		{
 			var receivedMessage = e.WebMessageAsJson;
+			await RenderMessage(receivedMessage);
+		}
+
+		private async Task RenderMessage(string receivedMessage)
+		{
 			if (receivedMessage == "\"{}\"") return;
 
 			var jObj = JObject.Parse(receivedMessage);
@@ -213,13 +218,14 @@ namespace PlangWindowForms
 				var goalResult = await pseudoRuntime.RunGoal(engine, engine.GetContext(), "", goalName, parameters);
 
 				ShowErrorInDevTools(goalResult.error);
+
+				lastJsonMesage = receivedMessage;
 			}
 			catch (Exception ex)
 			{
 				MessageBox.Show(ex.Message + "\n\n" + ex.ToString());
 			}
 		}
-
 
 		public record JsVariable(string name, string goalToCall, Dictionary<string, object?>? parameters);
 		public async Task ListenToVariables()
@@ -294,15 +300,28 @@ namespace PlangWindowForms
 		private void CoreWebView2_ContentLoading(object? sender, CoreWebView2ContentLoadingEventArgs e)
 		{
 			int i = 0;
+			
 		}
 
 		private void CoreWebView2_WebResourceResponseReceived(object? sender, CoreWebView2WebResourceResponseReceivedEventArgs e)
 		{
 			int i = 0;
 		}
-
+		bool isReloading = false;
 		private void CoreWebView2_NavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
 		{
+			if (e.NavigationId == 3 && e.NavigationKind == CoreWebView2NavigationKind.Reload)
+			{
+				if (lastJsonMesage != null)
+				{
+					RenderMessage(lastJsonMesage);
+				}
+				else
+				{
+					SetInitialHtmlContent();
+					
+				}
+			}
 			int i = 0;
 		}
 

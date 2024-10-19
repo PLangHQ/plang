@@ -43,7 +43,7 @@ namespace PLang
 			Builder = 1
 		}
 
-		public async static Task<IError?> RunGoal(string goalName, Dictionary<string, object?>? parameters = null)
+		public async static Task<(IEngine Engine, IError? Error)> RunGoal(string goalName, Dictionary<string, object?>? parameters = null)
 		{
 			AppContext.SetSwitch("InternalGoalRun", true);
 			AppContext.SetSwitch("Runtime", true);
@@ -68,11 +68,11 @@ namespace PLang
 
 			var allGoals = prParser.GetAllGoals();
 			var goal = allGoals.FirstOrDefault(p => p.RelativeGoalPath.Equals(goalName.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
-			if (goal == null) return new Error($"Goal {goalName} could not be found");
+			if (goal == null) return (engine, new Error($"Goal {goalName} could not be found"));
 
 			var error = await engine.RunGoal(goal);
 			AppContext.SetSwitch("InternalGoalRun", false);
-			return error;
+			return (engine, error);
 		}
 
 		public async Task Execute(string[] args, ExecuteType executeType)
@@ -82,7 +82,7 @@ namespace PLang
 			{
 				var assembly = Assembly.GetAssembly(this.GetType());
 
-				Console.WriteLine("PLang version: " + assembly.GetName().Version.ToString());
+				Console.WriteLine("plang version: " + assembly.GetName().Version.ToString());
 				return;
 			}
 

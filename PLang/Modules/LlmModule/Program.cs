@@ -14,6 +14,7 @@ using PLang.Runtime;
 using PLang.Services.LlmService;
 using PLang.Utils;
 using PLang.Utils.Extractors;
+using System.Collections;
 using System.ComponentModel;
 using System.Dynamic;
 using static PLang.Services.LlmService.PLangLlmService;
@@ -151,8 +152,9 @@ namespace PLang.Modules.LlmModule
 			for (int i =0;i<promptMessages.Count;i++)
 			{
 				var message = promptMessages[i];
-				foreach (var c in message.Content)
+				for (int idx = 0; idx < message.Content.Count; idx++)
 				{
+					var c = message.Content[idx];
 					if (c.Text != null)
 					{
 						var obj = variableHelper.LoadVariables(c.Text);
@@ -162,7 +164,27 @@ namespace PLang.Modules.LlmModule
 
 					if (c.ImageUrl != null)
 					{
-						c.ImageUrl.Url = variableHelper.LoadVariables(c.ImageUrl.Url).ToString();
+						var imageUrls = variableHelper.LoadVariables(c.ImageUrl.Url);
+						if (imageUrls is IList list)
+						{
+							c.ImageUrl.Url = list[0].ToString();
+							for (int b=1;b<list.Count;b++)
+							{							
+
+								var imageUrl = new ImageUrl(list[b].ToString());
+
+								var llmContent = new LlmContent(c.Text, c.Type, imageUrl);
+
+								message.Content.Add(llmContent);
+								idx++;
+								
+							}
+						}
+						else
+						{
+
+							c.ImageUrl.Url = imageUrls.ToString();
+						}
 					}
 					
 				}

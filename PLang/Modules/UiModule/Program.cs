@@ -31,12 +31,33 @@ namespace PLang.Modules.UiModule
 	{
 		private readonly IOutputStreamFactory outputStreamFactory;
 		private readonly IPLangFileSystem fileSystem;
+		private readonly MemoryStack memoryStack;
 
-		public Program(IOutputStreamFactory outputStream, IPLangFileSystem fileSystem) : base()
+		public Program(IOutputStreamFactory outputStream, IPLangFileSystem fileSystem, MemoryStack memoryStack) : base()
 		{
 			this.outputStreamFactory = outputStream;
 			this.fileSystem = fileSystem;
+			this.memoryStack = memoryStack;
 		}
+
+		/* - render template 'User.template', write to %output%*/
+		public async Task<(object?, IError?)> RenderFile(string path, Dictionary<string, string?>? returnValues = null)
+		{
+			var parameters = new Dictionary<string, object?>();
+			parameters.Add("path", path);
+			(var engine, var error) = await Executor.RunGoal("/modules/ui/RenderFile", parameters);
+			ReturnDictionary<string, object?> rd = new();
+			if (returnValues != null) {
+
+				var engineMemoryStack = engine.GetMemoryStack();
+				foreach (var returnValue in returnValues)
+				{
+					rd.AddOrReplace(returnValue.Key, engineMemoryStack.Get(returnValue.Key));
+				}
+			}
+			return (rd, null);
+		}
+
 
 		private string EscapeTextForJavascript(string content)
 		{

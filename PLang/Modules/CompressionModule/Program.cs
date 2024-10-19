@@ -1,5 +1,6 @@
 ﻿using PLang.Interfaces;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 
 namespace PLang.Modules.CompressionModule
 {
@@ -73,7 +74,8 @@ namespace PLang.Modules.CompressionModule
 		}
 
 		public async Task CompressDirectory(string sourceDirectoryName, string destinationArchiveFileName, int compressionLevel = 0,
-			bool includeBaseDirectory = true, bool createDestinationDirectory = true, bool overwriteDestinationFile = false)
+			bool includeBaseDirectory = true, bool createDestinationDirectory = true, bool overwriteDestinationFile = false, string[]? excludePatterns = null
+			)
 		{
 			sourceDirectoryName = GetPath(sourceDirectoryName);
 			if (!fileSystem.Directory.Exists(sourceDirectoryName))
@@ -95,7 +97,25 @@ namespace PLang.Modules.CompressionModule
 			{
 				fileSystem.File.Delete(destinationArchiveFileName);
 			}
-			await archiver.CompressDirectory(sourceDirectoryName, destinationArchiveFileName, compressionLevel, includeBaseDirectory);
+
+			if (excludePatterns != null)
+			{
+				List<string> filesToCompress = new();
+				var files = fileSystem.Directory.GetFiles(sourceDirectoryName, "*", SearchOption.AllDirectories);
+				foreach (var file in files)
+				{
+					if (excludePatterns != null && excludePatterns.Any(pattern => Regex.IsMatch(file, pattern)))
+					{
+						continue;
+					}
+					filesToCompress.Add(file);
+				}
+				await CompressFiles(filesToCompress.ToArray(), destinationArchiveFileName, compressionLevel, overwriteDestinationFile);
+			}
+			else
+			{
+				await archiver.CompressDirectory(sourceDirectoryName, destinationArchiveFileName, compressionLevel, includeBaseDirectory);
+			}
 		}
 	}
 }

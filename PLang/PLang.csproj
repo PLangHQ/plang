@@ -53,6 +53,7 @@
     <PackageReference Include="Jil" Version="2.17.0" />
     <PackageReference Include="LightInject" Version="6.6.4" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.10" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.11.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0" />
@@ -120,6 +121,10 @@
 		<None Include="Goals\**\*" Exclude="**\.db\**\*.*">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Goals\modules\ui\" />
   </ItemGroup>
 
 

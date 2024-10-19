@@ -360,6 +360,10 @@ namespace PLang.Modules.HttpModule
 				if (!response.IsSuccessStatusCode)
 				{
 					string errorBody = await response.Content.ReadAsStringAsync();
+					if (string.IsNullOrEmpty(errorBody))
+					{
+						errorBody = $"{response.ReasonPhrase} ({(int) response.StatusCode})";
+					}
 					return (null, new ProgramError(errorBody, goalStep, function, StatusCode: (int) response.StatusCode));
 				}
 

@@ -86,7 +86,7 @@
         "OnErrorContinueNextStep": false
       },
       "IsEvent": true,
-      "Hash": "a9dc96a6102bb2d1550d8b4114575d445205e5bf9ebca8c5e40b262e4600c368",
+      "Hash": null,
       "BuilderVersion": null
     }
   ],
@@ -98,10 +98,10 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang",
   "RelativePrPath": ".build\\events\\external\\plang\\BuilderEvents\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\BuilderEvents",
-  "BuilderVersion": "1.0.0.0",
+  "BuilderVersion": null,
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "2a4d8800631b1c7f2a0be63e6423b0564ddc1a1c7cd2c281188055cf75dd8ebb",
+  "Hash": null,
   "IncomingVariablesRequired": null
 }
