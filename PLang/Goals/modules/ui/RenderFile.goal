@@ -5,6 +5,3 @@ RenderFile
 - call goal GetJavascript, write to %javascript%
 - call goal GetCss, write to %css%
 - write out %html%
-
-GetJavascript
-- 

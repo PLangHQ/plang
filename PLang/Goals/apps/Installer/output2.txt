@@ -1,7 +1,7 @@
-Build Start:12:01:36 - (Information) - 
+Build Start:11:47:18 - (Information) - 
 - Event step before builder ends, call goal !/events/external/plang/Builder/CheckGoals already built - (Information) - 
-- Event step before each step, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug already built - (Information) - 
-- Event step before goal ends, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug already built - (Information) - 
+- Building event step before each step, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug - (Information) - 
+- Building event step before goal ends, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug - (Information) - 
 
 Start to build CheckGoals - \events\external\plang\Builder\CheckGoal.goal - (Information) - 
 - Step Log Information is already built - (Information) - 
@@ -54,4 +54,4 @@ All goals being called exist - (Information) -
 
 
 🎉 Build was succesfull! - (Warning) - 
-Build done - Time:,75 sec - started at 18.10.2024 12:01:37 - (Information) - 
+Build done - Time:,82 sec - started at 21.10.2024 11:47:18 - (Information) - 
