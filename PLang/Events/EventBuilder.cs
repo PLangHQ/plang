@@ -179,7 +179,7 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError,
             if (prGoal == null || prGoal.GoalSteps == null || prGoal.GoalSteps.Count <= stepIndex) return false;
             if (stepIndex == prGoal.GoalSteps.Count || prGoal.GoalSteps[stepIndex].EventBinding == null) return false;
 
-            var isFound = prGoal.GoalSteps.FirstOrDefault(p => p.Text == step.Text && p.Number == stepIndex) != null;
+            var isFound = prGoal.GoalSteps.FirstOrDefault(p => p.PrFileName != null && p.Text == step.Text && p.Number == stepIndex) != null;
 
             return isFound;
 

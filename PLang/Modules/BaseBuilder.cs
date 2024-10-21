@@ -154,6 +154,11 @@ This is the error(s)
 		{
 			this.assistant = assistantCommand;
 		}
+		string model = null;
+		public void SetModel(string model)
+		{
+			this.model = model;
+		}
 
 		public virtual LlmRequest GetLlmRequest(GoalStep step, Type responseType, string? errorMessage = null)
 		{			
@@ -202,7 +207,10 @@ This is the error(s)
 			llmRequest.temperature = 0;
 			llmRequest.frequencyPenalty = 0;
 			llmRequest.presencePenalty = 0;
-
+			if (model != null)
+			{
+				llmRequest.model = model;
+			}
 			return llmRequest;
 
 		}

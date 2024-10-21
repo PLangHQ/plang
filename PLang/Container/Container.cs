@@ -9,6 +9,7 @@ using Nethereum.Web3.Accounts;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Nostr.Client.Client;
+using OpenQA.Selenium.DevTools.V127.Runtime;
 using OpenQA.Selenium.DevTools.V129.Audits;
 using PLang.Building;
 using PLang.Building.Parsers;
@@ -34,26 +35,33 @@ using PLang.Services.SettingsService;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using RazorEngineCore;
+using System.ComponentModel;
 using System.Data;
 using System.IO;
+using System.IO.Abstractions;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Reflection.Metadata;
+using System.Resources;
 using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using Websocket.Client.Logging;
 using static PLang.Modules.DbModule.ModuleSettings;
 
 
 namespace PLang.Container
 {
-    public static class Instance
+	public static class Instance
 	{
 		public record InjectedType(string InjectorName, Type ServiceType, Type ImplementationType);
 		private static readonly Dictionary<Type, InjectedType> injectedTypes = [];
 
 
 		public static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeAppStartupPath,
-			IAskUserHandlerFactory askUserHandlerFactory, IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory, 
+			IAskUserHandlerFactory askUserHandlerFactory, IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory,
 			IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory)
 		{
 			container.RegisterBaseForPLang(absoluteAppStartupPath, relativeAppStartupPath);
@@ -94,7 +102,7 @@ namespace PLang.Container
 
 			container.RegisterOutputStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IPLangFileSystem>(), iForm));
 			container.RegisterOutputSystemStreamFactory(typeof(UIOutputStream), true, new UIOutputStream(container.GetInstance<IPLangFileSystem>(), iForm));
-			
+
 			container.RegisterAskUserHandlerFactory(typeof(AskUserWindowHandler), true, new AskUserWindowHandler(askUserDialog));
 			container.RegisterErrorHandlerFactory(typeof(UiErrorHandler), true, new UiErrorHandler(errorDialog, container.GetInstance<IAskUserHandlerFactory>()));
 			container.RegisterErrorSystemHandlerFactory(typeof(UiErrorHandler), true, new UiErrorHandler(errorDialog, container.GetInstance<IAskUserHandlerFactory>()));
@@ -140,7 +148,7 @@ namespace PLang.Container
 			{
 				return new PLangFileSystem(absoluteAppStartupPath, relativeStartupAppPath, container.GetInstance<PLangAppContext>());
 			});
-			
+
 
 			container.RegisterSingleton<ILogger, Services.LoggerService.Logger<Executor>>(typeof(Logger).FullName);
 			container.RegisterSingleton(factory =>
@@ -152,6 +160,8 @@ namespace PLang.Container
 
 			container.RegisterSingleton<DependancyHelper>();
 			container.RegisterSingleton<PrParser>();
+
+			SetupAssemblyResolve(container.GetInstance<IPLangFileSystem>(), container.GetInstance<DependancyHelper>());
 		}
 
 		private static void RegisterEventRuntime(this ServiceContainer container, bool isBuilder = false)
@@ -358,7 +368,8 @@ namespace PLang.Container
 				{
 					context.AddOrReplace(ReservedKeywords.Inject_IEventSourceRepository, typeof(DisableEventSourceRepository).FullName);
 					return factory.GetInstance<IEventSourceRepository>(typeof(DisableEventSourceRepository).FullName);
-				} else if (dataSource.KeepHistory && dataSource.TypeFullName == typeof(SqliteConnection).FullName)
+				}
+				else if (dataSource.KeepHistory && dataSource.TypeFullName == typeof(SqliteConnection).FullName)
 				{
 					context.AddOrReplace(ReservedKeywords.Inject_IEventSourceRepository, typeof(SqliteEventSourceRepository).FullName);
 				}
@@ -398,6 +409,75 @@ namespace PLang.Container
 			throw new RuntimeException($"Could not get implementaion name for {reservedKeyword}");
 		}
 
+		private static void SetupAssemblyResolve(IPLangFileSystem fileSystem, DependancyHelper dependancyHelper)
+		{
+			AppDomain.CurrentDomain.AssemblyResolve += (sender, resolveArgs) =>
+			{
+				if (AppContext.TryGetSwitch("InternalGoalRun", out bool isEnabled) && isEnabled) return null;
+
+				string assemblyPath = fileSystem.Path.Combine(fileSystem.RootDirectory, ".services", new AssemblyName(resolveArgs.Name).Name + ".dll");
+				if (fileSystem.File.Exists(assemblyPath))
+				{
+					return Assembly.LoadFile(assemblyPath);
+				}
+
+				
+				string assemblyName = new AssemblyName(resolveArgs.Name).Name;
+				var baseDirectory = fileSystem.Path.Combine(fileSystem.RootDirectory, ".modules");
+				var files = fileSystem.Directory.GetFiles(baseDirectory, assemblyName + ".dll", SearchOption.AllDirectories);
+
+				if (files.Length > 0)
+				{
+
+					var netVersionPattern = @"net(?<version>\d+(\.\d+)?)(coreapp)?";
+
+					// Parse and prioritize .NET versions in descending order (e.g., net8.0, net7.0, etc.)
+					var matchedAssembly = files
+						.Select(file => new { File = file, Match = Regex.Match(file, netVersionPattern) })
+						.Where(x => x.Match.Success)
+						.OrderByDescending(x => GetVersionPriority(x.Match.Groups["version"].Value))
+						.Select(x => x.File)
+						.FirstOrDefault();
+
+
+					return Assembly.LoadFile(matchedAssembly);
+				}
+				else
+				{
+					var depsFiles = fileSystem.Directory.GetFiles(baseDirectory, "*.deps.json", SearchOption.AllDirectories);
+					foreach (var dep in depsFiles)
+					{
+						var content = fileSystem.File.ReadAllText(dep);
+						var json = JsonConvert.DeserializeObject(content) as JObject;
+						var libs = json.GetValue("libraries") as JObject;
+						if (libs == null) continue;
+
+						var dirPath = fileSystem.Path.GetDirectoryName(dep);
+
+						foreach (var prop in libs.Properties())
+						{
+							if (prop.Name.StartsWith(assemblyName + "/"))
+							{
+								var name = prop.Name.Substring(0, prop.Name.IndexOf("/"));
+
+
+								return dependancyHelper.InstallDependancy(dirPath, dep, name);
+							}
+						}
+
+						var foundAssemblyName = FindAssemblyPackage(json, assemblyName + ".dll");
+						if (foundAssemblyName != null)
+						{
+							var assmebly = dependancyHelper.InstallDependancy(dirPath, dep, foundAssemblyName);
+							return assmebly;
+						}
+						int i = 0;
+					}
+				}
+				return null;
+			};
+		}
+
 		private static void RegisterModules(ServiceContainer container)
 		{
 
@@ -419,55 +499,54 @@ namespace PLang.Container
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			if (fileSystem.Directory.Exists(".modules"))
 			{
-
-				AppDomain.CurrentDomain.AssemblyResolve += (sender, resolveArgs) =>
-				{
-					if (AppContext.TryGetSwitch("InternalGoalRun", out bool isEnabled) && isEnabled) return null;
-
-					string assemblyName = new AssemblyName(resolveArgs.Name).Name;
-					var baseDirectory = fileSystem.Path.Combine(fileSystem.RootDirectory, ".modules");
-					var files = fileSystem.Directory.GetFiles(baseDirectory, assemblyName + ".dll", SearchOption.AllDirectories);
-					if (files.Length > 0)
-					{
-						return Assembly.LoadFile(files[0]);
-					} else
-					{
-						var depsFiles = fileSystem.Directory.GetFiles(baseDirectory, "*.deps.json", SearchOption.AllDirectories);
-						foreach (var dep in depsFiles)
-						{
-							var content = fileSystem.File.ReadAllText(dep);
-							var json = JsonConvert.DeserializeObject(content) as JObject;
-							var libs = json.GetValue("libraries") as JObject;
-							if (libs == null) continue;
-
-							foreach (var prop in libs.Properties())
-							{
-								if (prop.Name.StartsWith(assemblyName + "/"))
-								{
-									var dirPath = fileSystem.Path.GetDirectoryName(dep);
-									var dependancyHelper = container.GetInstance<DependancyHelper>();
-									return dependancyHelper.InstallDependancy(dirPath, dep, assemblyName);
-								}
-							}
-
-							int i = 0;
-						}
-					}
-					return null;
-				};
 				var dependancyHelper = container.GetInstance<DependancyHelper>();
 				var modules = dependancyHelper.LoadModules(typeof(BaseProgram), fileSystem.GoalsPath);
-				foreach (var module in modules) {
+				foreach (var module in modules)
+				{
 					container.Register(module);
 				}
-				
+
 			}
 
 			RegisterUserGlobalInjections(container);
 
 		}
+		static double GetVersionPriority(string version)
+		{
+			if (double.TryParse(version, out double parsedVersion))
+			{
+				return parsedVersion; // Return parsed version as the priority
+			}
 
-		
+			return 0; // Default if parsing fails
+		}
+		private static string? FindAssemblyPackage(JObject jsonObject, string assemblyName)
+		{
+			var targets = jsonObject["targets"];
+
+			if (targets != null)
+			{
+				foreach (var target in targets.Children<JProperty>())
+				{
+					foreach (var library in target.Value.Children<JProperty>())
+					{
+						var runtime = library.Value["runtime"];
+						if (runtime != null)
+						{
+							foreach (var assembly in runtime.Children<JProperty>())
+							{
+								if (assembly.Name.EndsWith(assemblyName, StringComparison.OrdinalIgnoreCase))
+								{
+									return library.Name.Substring(0, library.Name.IndexOf("/"));
+								}
+							}
+						}
+					}
+				}
+			}
+
+			return null;
+		}
 
 		private static void RegisterUserGlobalInjections(ServiceContainer container)
 		{
@@ -568,18 +647,8 @@ namespace PLang.Container
 				return null;
 			}
 
-			AppDomain.CurrentDomain.AssemblyResolve += (sender, resolveArgs) =>
-			{
-				string assemblyPath = fileSystem.Path.Combine(fileSystem.RootDirectory, ".services", new AssemblyName(resolveArgs.Name).Name + ".dll");
-				if (fileSystem.File.Exists(assemblyPath))
-				{
-					return Assembly.LoadFile(assemblyPath);
-				}
-				return null;
-			};
-
 			string dllFilePath = fileSystem.Path.GetDirectoryName(fileSystem.Path.Combine(fileSystem.GoalsPath, ".services", injectorType));
-			string[] dllFiles = [ dllFilePath ];
+			string[] dllFiles = [dllFilePath];
 			if (!fileSystem.File.Exists(dllFilePath))
 			{
 				//var dirName = Path.GetDirectoryName(injectorType);

@@ -1,0 +1,6 @@
+You are provided with a html template that is a design.
+Give CSS according to uikit to make this look nice.
+
+Here are some default values:
+%defaultCssValues%
+

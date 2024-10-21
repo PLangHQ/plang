@@ -16,6 +16,9 @@ using System.Runtime.InteropServices;
 using SeleniumExtras.WaitHelpers;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
+using PLang.Errors;
+using PLang.Errors.Runtime;
+using System.Xml.Linq;
 
 namespace PLang.Modules.WebCrawlerModule
 {
@@ -165,14 +168,70 @@ namespace PLang.Modules.WebCrawlerModule
 			js.ExecuteScript("arguments[0].scrollIntoView(true);", element);
 		}
 
-		public async Task WaitForElementToAppear(string cssSelector, int timoutInSeconds = 30)
+		[Description("operatorOnText can be equals|contains|startswith|endswith")]
+		public async Task<IWebElement?> GetElementByText(string text, string operatorOnText = "equals")
+		{
+			var driver = await GetDriver();
+			if (operatorOnText == "equals")
+			{
+				return driver.FindElement(By.XPath($"//*[text() = '{text}']"));
+			}
+			if (operatorOnText == "contains")
+			{
+				return driver.FindElement(By.XPath($"//*[contains(text(), '{text}')]"));
+			}
+			if (operatorOnText == "startswith")
+			{
+				return driver.FindElement(By.XPath($"//*[starts-with(text(), '{text}')]"));
+
+			}
+			if (operatorOnText == "equals")
+			{
+				return driver.FindElement(By.XPath($"//*[substring(text(), string-length(text()) - string-length('{text}') + 1) = '{text}']"));
+
+			}
+			return null;
+		}
+
+		public async Task WaitForElementToDissapear(object elementOrCssSelector, int timeoutInSeconds)
+		{
+			var driver = await GetDriver();
+			await SetTimeout(timeoutInSeconds);
+
+			WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(timeoutInSeconds));
+			var element = (elementOrCssSelector is string) ? driver.FindElement(By.TagName(elementOrCssSelector.ToString())) : elementOrCssSelector as IWebElement;
+
+			wait.Until(ExpectedConditions.StalenessOf(element));
+		}
+
+		public async Task WaitForElementToAppear(string cssSelector, int timeoutInSeconds = 30, bool waitForElementToChange = false)
 		{
 			var driver = await GetDriver();
 
-			await SetTimeout(timoutInSeconds);
+			await SetTimeout(timeoutInSeconds);
 
-			WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(timoutInSeconds));
-			wait.Until(ExpectedConditions.ElementIsVisible(By.CssSelector(cssSelector)));
+			WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(timeoutInSeconds));
+			if (waitForElementToChange)
+			{
+				var originalBody = driver.FindElement(By.TagName(cssSelector));
+
+				wait.Until(drv =>
+				{
+					try
+					{
+						var newBody = drv.FindElement(By.TagName(cssSelector));
+						return !newBody.Equals(originalBody); 
+					}
+					catch (NoSuchElementException)
+					{
+						return false;
+					}
+				});
+			}
+			else
+			{
+				wait.Until(ExpectedConditions.ElementIsVisible(By.CssSelector(cssSelector)));
+			}
 
 			await ResetTimeout();
 
@@ -463,15 +522,30 @@ namespace PLang.Modules.WebCrawlerModule
 			await Task.Delay(milliseconds);
 		}
 
-		public async Task TakeScreenshotOfWebsite(string saveToPath)
+		public async Task<IError?> TakeScreenshotOfWebsite(string saveToPath, bool overwrite = false)
 		{
-			if (!fileSystem.Directory.Exists(Path.GetDirectoryName(saveToPath)))
+			
+			if (string.IsNullOrWhiteSpace(saveToPath))
 			{
-				return;
+				return new ProgramError("The path where to save the screenshot cannot be empty", goalStep, function);
 			}
 
+			var absolutePath = GetPath(saveToPath);
+			var folderPath = Path.GetDirectoryName(absolutePath);
+			if (!fileSystem.Directory.Exists(folderPath))
+			{
+				fileSystem.Directory.CreateDirectory(folderPath);
+			}
+
+			if (!overwrite && fileSystem.File.Exists(absolutePath))
+			{
+				return new ProgramError("File exists and will not be overwritten.", goalStep, function, FixSuggestion: $"Rewrite your step to include that you want to overwrite the file, e.g. `- {goalStep.Text}, overwrite`");
+			}
+
+			var driver = await GetDriver();
 			var screenShot = driver.GetScreenshot();
-			screenShot.SaveAsFile(saveToPath);
+			screenShot.SaveAsFile(absolutePath);
+			return null;
 		}
 
 		private string ConvertKeyCommand(string value)

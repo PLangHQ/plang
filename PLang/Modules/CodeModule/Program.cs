@@ -67,12 +67,12 @@ namespace PLang.Modules.CodeModule
 						}
 					}
 				}
-
+				/*
 				AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
 				{
 					var assembly = serviceAssemblies.FirstOrDefault(p => p.FullName == args.Name);
 					return assembly;
-				};
+				};*/
 
 				Type? type = assembly.GetType(answer.Namespace + "." + answer.Name);
 				if (type == null)

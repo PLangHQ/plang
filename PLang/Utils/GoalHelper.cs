@@ -37,7 +37,7 @@ namespace PLang.Utils
 
 
 			string[] dirsToExclude = new string[] { "apps", ".modules", ".services", ".build", ".deploy", ".db" };
-			string[] filesToExclude = new string[] { "Events.goal", "BuildEvents.goal" };
+			string[] filesToExclude = new string[] { "Events.goal", "BuilderEvents.goal" };
 
 
 			// Filter out excluded directories and files first to simplify subsequent operations

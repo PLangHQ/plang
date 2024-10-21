@@ -48,8 +48,9 @@ namespace PLang.Utils
 			return str;
 		}
 
-		public static string MaxLength(this string txt, int maxLength, string trailing = "...")
+		public static string MaxLength(this string? txt, int maxLength, string trailing = "...")
 		{
+			if (txt == null) return "";
 			if (txt.Length <= maxLength) return txt;
 			return txt.Substring(0, maxLength) + trailing;
 		}

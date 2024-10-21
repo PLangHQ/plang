@@ -33,7 +33,12 @@ namespace PLang.Runtime
 		public MemoryStackPathNotFoundException(string message) : base(message) { }
 	}
 
-	public record VariableEvent(string EventType, GoalToCall goalName, Dictionary<string, object?>? Parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50);
+	public record VariableEvent(string EventType, GoalToCall goalName, Dictionary<string, object?>? Parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50, string hash = null)
+	{
+		public Dictionary<string, object?>? Parameters { get; set; } = Parameters;
+		public bool waitForResponse { get; set; } = waitForResponse;
+		public int delayWhenNotWaitingInMilliseconds { get; set; } = delayWhenNotWaitingInMilliseconds;
+	};
 
 	public class ObjectValue
 	{
@@ -55,8 +60,8 @@ namespace PLang.Runtime
 	}
 	public class MemoryStack
 	{
-		Dictionary<string, ObjectValue> variables = new Dictionary<string, ObjectValue>();
-		static Dictionary<string, ObjectValue> staticVariables = new Dictionary<string, ObjectValue>();
+		Dictionary<string, ObjectValue?> variables = new Dictionary<string, ObjectValue?>();
+		static Dictionary<string, ObjectValue?> staticVariables = new Dictionary<string, ObjectValue?>();
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
 		private readonly ISettings settings;
@@ -79,7 +84,17 @@ namespace PLang.Runtime
 			return staticVariables;
 		}
 
+		public List<ObjectValue> GetVariablesWithEvent(string eventName)
+		{
 
+			var items = variables.Where(p => p.Value.Events.FirstOrDefault(p => p.EventType == eventName) != null).ToList();
+			List<ObjectValue> values = new();
+			foreach (var item in items)
+			{
+				values.Add(item.Value);
+			}
+			return values;
+		}
 
 		public record VariableExecutionPlan(string VariableName, ObjectValue ObjectValue, List<string> Calls, int Index = 0, string? JsonPath = null);
 
@@ -600,7 +615,17 @@ namespace PLang.Runtime
 					{
 						objectValue = ExecuteMethod(objectValue, call, keyPlan.VariableName);
 					}
-					else
+					else if (obj.GetType().Name == "DapperRow")
+					{
+						var row = ((IDictionary<string, object>)obj);
+						var column = row.Keys.FirstOrDefault(p => p.Equals(call, StringComparison.OrdinalIgnoreCase));
+						if (column == null)
+						{
+							throw new VariableDoesNotExistsException($"{call} does not exist on variable {keyPlan.VariableName}, there for I cannot set {key}");
+						}
+						row[column] = value;
+						objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
+					} else 
 					{
 						Type type = obj.GetType();
 						PropertyInfo? propInfo = type.GetProperties().FirstOrDefault(p => p.Name.ToLower() == call.ToLower());
@@ -686,6 +711,9 @@ namespace PLang.Runtime
 			var events = objectValue.Events.Where(p => p.EventType == eventType);
 			foreach (var eve in events)
 			{
+				if (eve.Parameters == null) eve.Parameters = new();
+				eve.Parameters.AddOrReplace(ReservedKeywords.VariableName, objectValue.Name);
+				eve.Parameters.AddOrReplace(ReservedKeywords.VariableValue, objectValue.Value);
 				var task = Task.Run(async () =>
 				{
 					var context = engine.GetContext();
@@ -694,6 +722,8 @@ namespace PLang.Runtime
 						var goal = context[ReservedKeywords.Goal] as Goal;
 						if (goal != null)
 						{
+							if (eve.goalName == goal.GoalName) return;
+
 							context.AddOrReplace(ReservedKeywords.IsEvent, true);
 							var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, eve.goalName, eve.Parameters);
 							if (result.error != null)
@@ -722,6 +752,8 @@ namespace PLang.Runtime
 
 		public string Clean(string str)
 		{
+			if (str == null) return "";
+
 			str = str.Trim();
 			bool isVariable = IsVariable(str);
 
@@ -772,7 +804,7 @@ namespace PLang.Runtime
 				// Convert the value to the underlying type and then convert it to the nullable type
 				try
 				{
-					return GetInstance(value, targetType, underlyingType);
+					return TypeHelper.ConvertToType(value, underlyingType);
 				}
 				catch (Exception ex)
 				{
@@ -808,7 +840,7 @@ namespace PLang.Runtime
 
 			try
 			{
-				return Convert.ChangeType(value, targetType);
+				return TypeHelper.ConvertToType(value, targetType);
 			}
 			catch (Exception ex)
 			{
@@ -1293,7 +1325,31 @@ namespace PLang.Runtime
 			return Get(key, true);
 		}
 
-		public void AddOnCreateEvent(string key, string goalName, bool staticVariable = false, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 0)
+		private string CleanGoalName(string goalName)
+		{
+			return Clean(goalName).Replace("!", "");
+		}
+
+		private void AddEvent(ObjectValue objectValue, string eventType, string callingGoalHash, string goalName, Dictionary<string, object?>? parameters, bool waitForResponse, int delayWhenNotWaitingInMilliseconds)
+		{
+			goalName = CleanGoalName(goalName);
+
+			var existingEvent = objectValue.Events.FirstOrDefault(p => p.EventType == eventType && p.goalName == goalName);
+			if (existingEvent != null)
+			{
+				existingEvent.Parameters = parameters;
+				existingEvent.waitForResponse = waitForResponse;
+				existingEvent.delayWhenNotWaitingInMilliseconds = delayWhenNotWaitingInMilliseconds;
+			}
+			else
+			{
+				objectValue.Events.Add(new VariableEvent(eventType, goalName, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds, callingGoalHash));
+			}
+		}
+
+		public void AddOnCreateEvent(string key, string goalName, string callingGoalHash, bool staticVariable = false, 
+				Dictionary<string, object?>? parameters = null, bool waitForResponse = true,
+				int delayWhenNotWaitingInMilliseconds = 0)
 		{
 			key = Clean(key);
 			var variables = (staticVariable) ? staticVariables : this.variables;
@@ -1303,14 +1359,14 @@ namespace PLang.Runtime
 				Put(key, null, staticVariable, false);
 				objectValue = GetObjectValue(key, staticVariable);
 			}
-			var eve = objectValue.Events.FirstOrDefault(p => p.EventType == VariableEventType.OnCreate && p.goalName == goalName);
-			if (eve == null)
-			{
-				objectValue.Events.Add(new VariableEvent(VariableEventType.OnCreate, goalName, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds));
-				variables.AddOrReplace(key, objectValue);
-			}
+
+			AddEvent(objectValue, VariableEventType.OnCreate, callingGoalHash, goalName, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+			variables.AddOrReplace(key, objectValue);
 		}
-		public void AddOnChangeEvent(string key, string goalName, bool staticVariable = false, bool notifyWhenCreated = true, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 0)
+
+
+
+		public void AddOnChangeEvent(string key, string goalName, string callingGoalHash, bool staticVariable = false, bool notifyWhenCreated = true, Dictionary<string, object?>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 0)
 		{
 			key = Clean(key);
 			var variables = (staticVariable) ? staticVariables : this.variables;
@@ -1320,16 +1376,14 @@ namespace PLang.Runtime
 				Put(key, null, staticVariable, notifyWhenCreated);
 				objectValue = GetObjectValue(key, staticVariable, notifyWhenCreated);
 			};
-			var eve = objectValue.Events.FirstOrDefault(p => p.EventType == VariableEventType.OnChange && p.goalName == goalName);
-			if (eve == null)
-			{
-				objectValue.Events.Add(new VariableEvent(VariableEventType.OnChange, goalName, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds));
-				variables.AddOrReplace(key, objectValue);
-			}
+
+			AddEvent(objectValue, VariableEventType.OnChange, callingGoalHash, goalName, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+			variables.AddOrReplace(key, objectValue);
+
 		}
 
 
-		public void AddOnRemoveEvent(string key, string goalName, bool staticVariable = false, Dictionary<string, object>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 0)
+		public void AddOnRemoveEvent(string key, string goalName, string callingGoalHash, bool staticVariable = false, Dictionary<string, object?>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 0)
 		{
 			key = Clean(key);
 			var variables = (staticVariable) ? staticVariables : this.variables;
@@ -1337,13 +1391,11 @@ namespace PLang.Runtime
 			var objectValue = GetObjectValue(key, staticVariable);
 			if (objectValue == null) return;
 
-			var eve = objectValue.Events.FirstOrDefault(p => p.EventType == VariableEventType.OnRemove && p.goalName == goalName);
-			if (eve == null)
-			{
-				objectValue.Events.Add(new VariableEvent(VariableEventType.OnRemove, goalName, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds));
-				variables.AddOrReplace(key, objectValue);
 
-			}
+			AddEvent(objectValue, VariableEventType.OnRemove, callingGoalHash, goalName, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
+			variables.AddOrReplace(key, objectValue);
+
+
 		}
 
 		internal void Clear()

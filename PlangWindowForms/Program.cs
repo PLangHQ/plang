@@ -18,6 +18,9 @@ namespace PlangWindowForms
 			ApplicationConfiguration.Initialize();
 
 			var form = new Form1(args);
+			form.SetInitialHtmlContent().ConfigureAwait(false);
+
+
 			form.FormClosed += Form_FormClosed;
 			Application.Run(form);
 

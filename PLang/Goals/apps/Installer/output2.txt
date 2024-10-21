@@ -1,0 +1,57 @@
+Build Start:11:47:18 - (Information) - 
+- Event step before builder ends, call goal !/events/external/plang/Builder/CheckGoals already built - (Information) - 
+- Building event step before each step, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug - (Information) - 
+- Building event step before goal ends, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug - (Information) - 
+
+Start to build CheckGoals - \events\external\plang\Builder\CheckGoal.goal - (Information) - 
+- Step Log Information is already built - (Information) - 
+- Step GetContentOfGoalFiles is already built - (Information) - 
+- Step IterateAndCallFunction is already built - (Information) - 
+- Step Conditional Call Based on Missing Goals is already built - (Information) - 
+Done building goal CheckGoals - (Information) - 
+
+Start to build CheckGoal - \events\external\plang\Builder\CheckGoal.goal - (Information) - 
+- Step Iterate and Call Function is already built - (Information) - 
+Done building goal CheckGoal - (Information) - 
+
+Start to build CheckStep - \events\external\plang\Builder\CheckGoal.goal - (Information) - 
+- Step Check Module Type and Call Goal is already built - (Information) - 
+Done building goal CheckStep - (Information) - 
+
+Start to build CheckCallingGoal - \events\external\plang\Builder\CheckGoal.goal - (Information) - 
+- Step ReadFileIntoVariable is already built - (Information) - 
+- Step Set String Variable is already built - (Information) - 
+- Step CheckGoalToCall is already built - (Information) - 
+- Step Search Directories is already built - (Information) - 
+- Step CreateEmptyList is already built - (Information) - 
+- Step CheckIfDirectoryListIsEmpty is already built - (Information) - 
+- Step Append to Missing Goals is already built - (Information) - 
+Done building goal CheckCallingGoal - (Information) - 
+
+Start to build ShowMissingGoals - \events\external\plang\Builder\CheckGoal.goal - (Information) - 
+- Step LogWarning is already built - (Information) - 
+Done building goal ShowMissingGoals - (Information) - 
+
+Start to build ShowAllValid - \events\external\plang\Builder\CheckGoal.goal - (Information) - 
+- Step Log Information is already built - (Information) - 
+Done building goal ShowAllValid - (Information) - 
+
+Start to build SendDebug - \events\external\plang\Runtime\SendDebug.goal - (Information) - 
+- Step Post HTTP Request is already built - (Information) - 
+Done building goal SendDebug - (Information) - 
+
+Start to build InstallDependencies - \InstallDependencies.goal - (Information) - 
+- Step ReadFileIntoJson is already built - (Information) - 
+- Step Filter JSON for Libraries is already built - (Information) - 
+- Step FilterLibraries is already built - (Information) - 
+- Step CheckIfLibraryIsEmpty is already built - (Information) - 
+- Step EndWithError is already built - (Information) - 
+- Step DownloadFileIfNotExists is already built - (Information) - 
+- Step Unzip File is already built - (Information) - 
+Done building goal InstallDependencies - (Information) - 
+Validating goals called - (Information) - 
+All goals being called exist - (Information) - 
+
+
+🎉 Build was succesfull! - (Warning) - 
+Build done - Time:,82 sec - started at 21.10.2024 11:47:18 - (Information) - 

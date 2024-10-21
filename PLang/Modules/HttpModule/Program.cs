@@ -355,10 +355,15 @@ namespace PLang.Modules.HttpModule
 				}
 				httpClient.Timeout = new TimeSpan(0, 0, timeoutInSeconds);
 
-				var response = await httpClient.SendAsync(request);
+				var task = httpClient.SendAsync(request);
+				var response = await task;
 				if (!response.IsSuccessStatusCode)
 				{
 					string errorBody = await response.Content.ReadAsStringAsync();
+					if (string.IsNullOrEmpty(errorBody))
+					{
+						errorBody = $"{response.ReasonPhrase} ({(int) response.StatusCode})";
+					}
 					return (null, new ProgramError(errorBody, goalStep, function, StatusCode: (int) response.StatusCode));
 				}
 

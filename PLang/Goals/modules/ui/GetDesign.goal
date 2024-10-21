@@ -1,0 +1,9 @@
+GetDesign
+- set default value %loadVars% = true, %system% = null
+- read text file %path%, load vars: %loadVars%, write to %template%
+- read text file %customSystem%, write to %customSystem%
+- if %system% = null then
+    - read llm/RenderFileSystem.txt, write to %system%
+- [llm] system: %system% %customSystem%
+        user: %template%
+        write to %design% 

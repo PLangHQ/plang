@@ -250,7 +250,7 @@ namespace PLang.Events
 					memoryStack.Remove(ReservedKeywords.Event);
 				}
 
-				if (error == null) return null;
+				if (error == null) continue;
 
 				if (isBuilder)
 				{
