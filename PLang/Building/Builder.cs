@@ -223,7 +223,8 @@ namespace PLang.Building
 				var buildFolderRelativePath = fileSystem.Path.Join(".build", goalFile.Replace(fileSystem.RootDirectory, "")).Replace(".goal", "");
 				var buildFolderAbsolutePath = fileSystem.Path.Join(fileSystem.RootDirectory, buildFolderRelativePath);
 
-				dirs = dirs.Where(p => !p.StartsWith(buildFolderAbsolutePath)).ToArray();
+				dirs = dirs.Where(p => !p.Equals(buildFolderAbsolutePath, StringComparison.OrdinalIgnoreCase)).ToArray();
+				dirs = dirs.Where(p => !p.StartsWith(fileSystem.Path.Join(buildFolderAbsolutePath, fileSystem.Path.DirectorySeparatorChar.ToString()), StringComparison.OrdinalIgnoreCase)).ToArray();
 			}
 
 			foreach (var dir in dirs)

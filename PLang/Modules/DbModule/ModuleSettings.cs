@@ -1,7 +1,9 @@
 ﻿using LightInject;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using PLang.Errors;
+using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser.Database;
 using PLang.Interfaces;
@@ -81,7 +83,7 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 			(var result, var queryError) = await llmServiceFactory.CreateHandler().Query<DatabaseTypeResponse>(llmRequest);
 			if (result == null)
 			{
-				throw new BuilderException("Could not get information from LLM service. Try again.");
+				return new BuilderError("Could not get information from LLM service. Try again.");
 			}
 			if (dataSources.Count == 0) setAsDefaultForApp = true;
 
@@ -266,7 +268,7 @@ Be concise"));
 			{
 				if (!fileSystem.File.Exists(localDbPath))
 				{
-					return (null, GetDataSourceNotFoundError(dataSourceName));
+					return (null, await GetDataSourceNotFoundError(dataSourceName));
 				}
 				//var dataSource = new DataSource("data", typeof(SqliteConnection).FullName, "Data Source=" + localDbPath, "sqlite", )
 			}
@@ -280,14 +282,18 @@ Be concise"));
 				dataSource = dataSources.FirstOrDefault(p => p.Name == dataSourceName);
 			}
 
-			if (dataSource == null) return (null, GetDataSourceNotFoundError(dataSourceName));
+			if (dataSource == null) return (null, await GetDataSourceNotFoundError(dataSourceName));
 
 			context.AddOrReplace(ReservedKeywords.CurrentDataSource, dataSource);
 			return (dataSource, null);
 		}
 
-		public Error GetDataSourceNotFoundError(string dataSourceName)
+		public async Task<Error> GetDataSourceNotFoundError(string dataSourceName)
 		{
+			var dataSources = await GetAllDataSources();
+			logger.LogDebug("Datasources: {0}", JsonConvert.SerializeObject(dataSources));
+			logger.LogDebug("All Settings: {0}", JsonConvert.SerializeObject(settings.GetAllSettings()));
+			
 			return new Error($"Datasource {dataSourceName} does not exists", Key: "DataSourceNotFound",
 						FixSuggestion: $@"create a step that create a new Data source, e.g.
 - create datasource 'my/custom/path/data.sqlite'

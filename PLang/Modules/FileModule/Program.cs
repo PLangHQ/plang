@@ -81,8 +81,8 @@ namespace PLang.Modules.FileModule
 			var absolutePath = GetPath(path);
 			return (fileSystem.ValidatePath(absolutePath) != null);
 		}
-
-		public async Task<string> ReadBinaryFileAndConvertToBase64(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false)
+		[Description("includeDataUrl add the data and mimetype of the file into the return string, e.g. data:image/png;base64,...")]
+		public async Task<string> ReadBinaryFileAndConvertToBase64(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false, bool includeDataUrl = false)
 		{
 			var absolutePath = GetPath(path);
 
@@ -97,7 +97,15 @@ namespace PLang.Modules.FileModule
 				return returnValueIfFileNotExisting;
 			}
 			byte[] fileBytes = await fileSystem.File.ReadAllBytesAsync(absolutePath);
-			return Convert.ToBase64String(fileBytes);
+
+			string base64 = Convert.ToBase64String(fileBytes);
+			if (includeDataUrl)
+			{
+				string mimeType = MimeTypeHelper.GetMimeType(path);
+				base64 = $"data:{mimeType};base64,{base64}";
+			}
+
+			return base64;
 		}
 
 		public async Task<string> ReadTextFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false,

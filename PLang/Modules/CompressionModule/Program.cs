@@ -98,13 +98,25 @@ namespace PLang.Modules.CompressionModule
 				fileSystem.File.Delete(destinationArchiveFileName);
 			}
 
-			if (excludePatterns != null)
+			if (excludePatterns != null && excludePatterns.Length > 0)
 			{
 				List<string> filesToCompress = new();
 				var files = fileSystem.Directory.GetFiles(sourceDirectoryName, "*", SearchOption.AllDirectories);
+
+				List<string> patterns = new();
+				foreach (var excludePattern in excludePatterns)
+				{
+					patterns.Add("^" + Regex.Escape(excludePattern)
+									.Replace(@"\*", ".*")    // Convert '*' to '.*'
+									.Replace(@"\?", ".")      // Convert '?' to '.'
+						  + "$");
+				}
+				
+
+
 				foreach (var file in files)
 				{
-					if (excludePatterns != null && excludePatterns.Any(pattern => Regex.IsMatch(file, pattern)))
+					if (patterns.Any(pattern => Regex.IsMatch(file, pattern)))
 					{
 						continue;
 					}

@@ -12,4 +12,8 @@ SendDebug
         "!Error":"%!error%",
         }
     timeout 30 min
+    on error 'No connection could', call WriteToConsole
     write to %!DebugReponse%
+
+WriteToConsole
+- logger warning 'Could not connect to IDE for debugging'

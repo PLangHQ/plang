@@ -41,6 +41,17 @@ namespace PLang.Modules.UiModule
 		}
 
 
+		public async Task<(string?, IError?)> RenderImageToHtml(string path)
+		{
+			var param = new Dictionary<string, object?>();
+			param.Add("path", path);
+			var result = await Executor.RunGoal("/modules/ui/RenderFile", param);
+			if (result.Error != null) return (null, result.Error);
+
+			var html = result.Engine.GetMemoryStack().Get<string>("html");
+			return (html, null);
+		}
+
 		private string EscapeTextForJavascript(string content)
 		{
 			return string.IsNullOrEmpty(content) ? "''" : JsonConvert.ToString(content); ;

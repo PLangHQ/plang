@@ -551,25 +551,11 @@ Error:
 		private string GetGoalPath(List<Routing> routings, HttpListenerRequest request)
 		{
 			if (request == null || request.Url == null) return "";
-			var goalName = request.Url.LocalPath.AdjustPathToOs();
-
-			if (goalName.StartsWith(Path.DirectorySeparatorChar))
-			{
-				goalName = goalName.Substring(1);
-			}
-			goalName = goalName.RemoveExtension();
-			var goalBuildDirPath = Path.Join(fileSystem.BuildPath, goalName).AdjustPathToOs();
-
-			if (!fileSystem.Directory.Exists(goalBuildDirPath))
-			{
-				logger.LogDebug($"Path doesnt exists - goalBuildDirPath:{goalBuildDirPath}");
-				return "";
-			}
 			foreach (var route in routings)
 			{
-				if (Regex.IsMatch(request.Url.LocalPath.AdjustPathToOs(), route.Path.AdjustPathToOs()))
+				if (Regex.IsMatch(request.Url.LocalPath, route.Path))
 				{
-					return goalBuildDirPath;
+					return GetGoalBuildDirPath(request);
 				}
 
 			}
@@ -577,7 +563,24 @@ Error:
 			return "";
 		}
 
+		private string GetGoalBuildDirPath(HttpListenerRequest request)
+		{
+			if (request == null || request.Url == null) return "";
 
+			var goalName = request.Url.LocalPath.AdjustPathToOs();
+
+			if (goalName.StartsWith(Path.DirectorySeparatorChar))
+			{
+				goalName = goalName.Substring(1);
+			}
+			goalName = goalName.RemoveExtension();
+			string goalBuildDirPath = Path.Join(fileSystem.BuildPath, goalName).AdjustPathToOs();
+			if (fileSystem.Directory.Exists(goalBuildDirPath)) return goalBuildDirPath;
+
+			logger.LogDebug($"Path doesnt exists - goalBuildDirPath:{goalBuildDirPath}");
+			return "";
+			
+		}
 
 		private async Task<IError?> ParseRequest(HttpListenerContext? context, IPLangIdentityService identityService, string? method, MemoryStack memoryStack)
 		{

@@ -88,6 +88,7 @@ namespace PLang.Modules.ScheduleModule
 		public async Task StartScheduler()
 		{
 
+
 			IEngine engine = this.engine;
 			ISettings settings = this.settings;
 			PrParser prParser = this.PrParser;
@@ -120,6 +121,11 @@ namespace PLang.Modules.ScheduleModule
 		{
 			RunContainer(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
 
+			/*
+			 * This causes scheduled tasks in app to run (and not working 100% correct)
+			 * I dont think it should start them for security reasons
+			 *
+			 
 			var apps = prParser.GetApps();
 			foreach (var app in apps)
 			{
@@ -134,7 +140,7 @@ namespace PLang.Modules.ScheduleModule
 					, container.GetInstance<IPseudoRuntime>(), container.GetInstance<IPLangFileSystem>());
 
 			}
-
+			*/
 
 		}
 
@@ -144,7 +150,7 @@ namespace PLang.Modules.ScheduleModule
 			var list = moduleSettings.GetCronJobs();
 			list = CleanDeletedCronJobs(settings, fileSystem, list);
 
-
+			logger.LogDebug($"{list.Count} cron jobs to run: " + JsonConvert.SerializeObject(list));
 			if (list.Count == 0) return;
 
 			Task.Run((Func<Task?>)(async () =>
@@ -178,17 +184,19 @@ namespace PLang.Modules.ScheduleModule
 			return cronJobs;
 		}
 
+
 		private async Task RunScheduledTasks(ISettings settings, IEngine engine, PrParser prParser, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem, IOutputStreamFactory outputStreamFactory)
 		{
+			logger.LogDebug("Running 1 min cron check");
 			CronJob item = null;
 			try
 			{
-				var list = settings.GetValues<CronJob>(typeof(ModuleSettings));
+				var list = settings.GetValues<CronJob>(typeof(ModuleSettings)).Where(p => !p.IsArchived).ToList();
 
 				for (int i = 0; i < list.Count; i++)
 				{
 					item = list[i];
-
+					
 					var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory);
 					var schedule = CrontabSchedule.Parse(item.CronCommand);
 

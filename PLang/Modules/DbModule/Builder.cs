@@ -258,7 +258,9 @@ You MUST provide SqlParameters if SQL has @parameter.
 
 			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
 			return await base.Build(goalStep);
+			
 		}
+
 
 		private Task<(Instruction?, IBuilderError?)> CreateTable(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
 		{

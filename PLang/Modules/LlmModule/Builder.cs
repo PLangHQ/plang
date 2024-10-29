@@ -99,18 +99,21 @@ promptMessages:
 ]
 
 content can also have the type of image_url, the content of image_url json property can be a URL or a base64 of image.
-when using base64 append data:XXXX/YYYY;base64, where XXXX/YYYY is the data type, such as image/jpg, image/png, image/gif
+only ""user"" role can send image
+
+""role"": ""user"",
 ""content"": [
     {
         ""type"": ""image_url"",
         ""image_url"": {
-            ""url"": ""data:image/jpeg;base64,%base64OfImage%""
+            ""url"": ""%base64OfImage%""
         }
     }
 ]
 
 or url 
 
+""role"": ""user"",
 ""content"": [
    {
         ""type"": ""image_url"",

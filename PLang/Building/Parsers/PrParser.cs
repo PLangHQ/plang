@@ -314,9 +314,9 @@ namespace PLang.Building.Parsers
 			if (possibleGoals.Count > 1)
 			{
 				var goalNames = possibleGoals.Select(p => {
-						return p.RelativePrFolderPath;
+						return p.RelativeGoalPath;
 					});
-				throw new GoalNotFoundException($"There are {possibleGoals.Count} to choose from. {string.Join(",", goalNames)}", appStartupPath, goalNameOrPath);
+				throw new GoalNotFoundException($"{goalNameOrPath} Could not be found. There are {possibleGoals.Count} to choose from. {string.Join(",", goalNames)}", appStartupPath, goalNameOrPath);
 			}
 
 			return goal;

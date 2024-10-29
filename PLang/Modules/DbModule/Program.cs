@@ -25,6 +25,7 @@ using System.Collections;
 using Org.BouncyCastle.Crypto;
 using System.Dynamic;
 using PLang.Attributes;
+using System.Threading.Tasks.Dataflow;
 
 namespace PLang.Modules.DbModule
 {
@@ -136,25 +137,31 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("Returns tables and views in database with the columns description")]
-		public async Task<(string, IError?)> GetDatabaseStructure()
+		public async Task<(Dictionary<string, object>?, IError?)> GetDatabaseStructure(string[]? tables = null, string? dataSourceName = null)
 		{
 			var dataSource = await moduleSettings.GetCurrentDataSource();
 			var result = await Select(dataSource.SelectTablesAndViews);
 			if (result.error != null)
 			{
-				return (String.Empty, result.error);
+				return (null, result.error);
 			}
-			StringBuilder sb = new StringBuilder();
+			var dict = new Dictionary<string, object>();
 			foreach (var item in result.rows)
 			{
 				var tbl = (dynamic)item;
-				sb.Append("TableName: " + tbl.name);
-				var sql = await moduleSettings.FormatSelectColumnsStatement(tbl.name);
 
-				var columns = await Select(sql);
-				sb.Append($"\nColumns:{JsonConvert.SerializeObject(columns)}\n\n");
+				if (tables != null)
+				{
+					if (tables.FirstOrDefault(p => p.Equals(tbl.name, StringComparison.OrdinalIgnoreCase)) == null) {
+						continue;
+					}
+				}
+				var sql = await moduleSettings.FormatSelectColumnsStatement(tbl.name);
+				var columns = await Select(sql);			
+				dict.Add(tbl.name, columns);
+
 			}
-			return (sb.ToString(), null);
+			return (dict, null);
 		}
 
 		public async void Dispose()

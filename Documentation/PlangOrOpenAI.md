@@ -30,7 +30,7 @@ plang exec --llmservice=openai
 
 ## Setting Environment Variables
 
-You can set the `PLangLllmService` environment variable to either 'plang' or 'openai' based on your preference. This variable configures which service Plang should use by default. Setting this variable eliminates the need to specify the `--llmservice` parameter in your commands.
+You can set the `PLangLlmService` environment variable to either 'plang' or 'openai' based on your preference. This variable configures which service Plang should use by default. Setting this variable eliminates the need to specify the `--llmservice` parameter in your commands.
 
 You might need to restart any your terminal or Visual Code after you change environment settings.
 
@@ -40,10 +40,14 @@ Visual Studio Code users can enhance their development experience by configuring
 
 ## Local LLM Development
 
-While there is currently no local LLM available, developers interested in experimenting with or developing a local version can set it up by adding the `PLangLllmServiceUrl` environment variable. The value should start with 'http' and point to your local server. For instance, if your local LLM is running on port 5000, set it to `http://localhost:5000/path/to/llm/`.
+While there is currently no local LLM available, developers interested in experimenting with or developing a local version can set it up by adding the `PLangLlmServiceUrl` environment variable. The value should start with 'http' and point to your local server. For instance, if your local LLM is running on port 5000, set it to `http://localhost:5000/path/to/llm/`.
+
+The model that plang uses is `gpt-4o`, since the local model doesn't have that, you can overwrite the model type by adding environment variable `PLangLlmModelOverwrite`. This will overwrite all model settings in the system.
+
+This is a temporary setup to be able use local LLM, this should be solved by using [creating a service](./Services.md)
 
 ## Comparison and Future Prospects
 
-Both the Plang service and OpenAI use GPT4-Turbo, so there is no difference in the quality of results. The choice between the two may depend on your preference for supporting the Plang project or utilizing existing OpenAI services. We aim to provide a faster and more cost-effective service in the future, enhancing the efficiency of the build process which currently does not require a large-scale LLM.
+Both the Plang service and OpenAI use GPT-4o, so there is no difference in the quality of results. The choice between the two may depend on your preference for supporting the Plang project or utilizing existing OpenAI services. We aim to provide a faster and more cost-effective service in the future, enhancing the efficiency of the build process which currently does not require a large-scale LLM.
 
 By choosing the Plang service, you are directly supporting the development of the project and potentially enabling the creation of a more affordable LLM solution in the future.

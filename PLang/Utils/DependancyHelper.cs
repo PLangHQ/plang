@@ -37,11 +37,7 @@ namespace PLang.Utils
 			var dllFiles = fileSystem.Directory.GetFiles(modulesDirectory, "*.dll");
 			foreach (var dll in dllFiles)
 			{
-				if (dll.Contains("pdfium"))
-				{
-					//DynamicNativeLoader.ReadExportedFunctions(dll);
-					continue;
-				}
+				
 				Assembly loadedAssembly = Assembly.LoadFile(dll);
 				try
 				{
@@ -89,7 +85,7 @@ namespace PLang.Utils
 		public Assembly? InstallDependancy(string? dirPath, string depsFilePath, string library)
 		{
 			if (AppContext.TryGetSwitch("InternalGoalRun", out bool isEnabled) && isEnabled) return null;
-
+			
 			var parameters = new Dictionary<string, object?>();
 			parameters.Add("depsFile", depsFilePath);
 			parameters.Add("pathToSave", dirPath);
@@ -113,7 +109,7 @@ namespace PLang.Utils
 			}
 			try
 			{
-				(var error, var engine) = Executor.RunGoal("/apps/Installer/InstallDependencies.goal", parameters).GetAwaiter().GetResult();
+				(var engine, var error) = Executor.RunGoal("/apps/Installer/InstallDependencies.goal", parameters).GetAwaiter().GetResult();
 				if (error != null)
 				{
 					throw new Exception(error.ToString());

@@ -3,13 +3,14 @@ using Newtonsoft.Json.Linq;
 using Nostr.Client.Json;
 using PLang.Attributes;
 using PLang.Interfaces;
+using System.Collections;
 using System.ComponentModel;
 using System.Text;
 using System.Web;
 
 namespace PLang.Modules.LocalOrGlobalVariableModule
 {
-	[Description("Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.")]
+	[Description("Set & Get local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.")]
 	public class Program : BaseProgram
 	{
 		private readonly ISettings settings;
@@ -176,10 +177,15 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		}
 
 		[Description(@"Set variable. Developer might use single/double quote to indicate the string value. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
-		public async Task SetVariable([HandlesVariable] string key, [HandlesVariable]  object? value = null, bool doNotLoadVariablesInValue = false)
+		public async Task SetVariable([HandlesVariable] string key, [HandlesVariable]  object? value = null, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
 			object? content = (doNotLoadVariablesInValue) ? value : variableHelper.LoadVariables(value);
-			if (key.Contains("%"))
+
+			if (onlyIfValueIsNot?.ToString() == "null" && value == null) return;
+			if (onlyIfValueIsNot?.ToString() == "empty" && (value == null || IsEmpty(value))) return;
+			if (onlyIfValueIsNot != null && onlyIfValueIsNot == value) return;
+
+			if (key.Contains("%") && keyIsDynamic)
 			{
 				var newKey = variableHelper.LoadVariables(key);
 				if (!string.IsNullOrWhiteSpace(newKey.ToString()))
@@ -189,35 +195,49 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			}
 			memoryStack.Put(key, content);
 		}
-		[Description(@"Set multiple variables. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
-		public async Task SetVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, bool doNotLoadVariablesInValue = false)
+
+		private bool IsEmpty(object? value)
+		{
+			if (value == null) return true;
+			if (value is string str && string.IsNullOrWhiteSpace(str)) return true;
+			if (value is JToken token && (
+				   token.Type == JTokenType.Null || // JSON null
+				   (token.Type == JTokenType.Object && !token.HasValues) || 
+				   (token.Type == JTokenType.Array && !token.HasValues) || 
+				   (token.Type == JTokenType.String && string.IsNullOrEmpty(token.ToString())) || 
+				   (token.Type == JTokenType.Property && ((JProperty)token).Value == null))) return true;
+			if (value is IList list && list.Count == 0) return true;
+			if (value is IDictionary dict && dict.Count == 0) return true;
+			
+			return false;
+		}
+
+		[Description(@"Set multiple variables. If value is json, make sure to format it as valid json, use double quote("") by escaping it. onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
+		public async Task SetVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
 			foreach (var key in keyValues)
-			{
-				object? content = (doNotLoadVariablesInValue) ? key.Value : variableHelper.LoadVariables(key.Value);
-				memoryStack.Put(key.Key, content);
+			{				
+				await SetVariable(key.Key, key.Value, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot);
 			}
 		}
-		[Description(@"Set value on variables. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
-		public async Task SetValuesOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, bool doNotLoadVariablesInValue = false)
+		[Description(@"Set value on variables. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
+		public async Task SetValuesOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
 			foreach (var key in keyValues)
 			{
-				object? content = (doNotLoadVariablesInValue) ? key.Value : variableHelper.LoadVariables(key.Value);
-				memoryStack.Put(key.Key, content);
+				await SetVariable(key.Key, key.Value, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot);
 			}
 
 		}
-		[Description(@"Set default value on variables if not set. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
-		public async Task SetDefaultValueOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, bool doNotLoadVariablesInValue = false)
+		[Description(@"Set default value on variables if not set. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
+		public async Task SetDefaultValueOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
 			foreach (var key in keyValues)
 			{
 				var objectValue = memoryStack.GetObjectValue2(key.Key, false);
 				if (!objectValue.Initiated)
 				{
-					object? content = (doNotLoadVariablesInValue) ? key.Value : variableHelper.LoadVariables(key.Value);
-					memoryStack.Put(key.Key, content);
+					await SetVariable(key.Key, key.Value, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot);
 				}
 			}
 

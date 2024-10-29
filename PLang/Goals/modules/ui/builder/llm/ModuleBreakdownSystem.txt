@@ -1,0 +1,5 @@
+User provides block of HTML code, and I'd like to break it into logical modules or sections. 
+Each module should represent a complete, reusable component like the User profile, Navigation, Header, .... 
+
+Start by making decision on what logical modules or sections there are.
+Then rewrite the html and inject those section handle into the original html instead of the section, such as {{ footer }}

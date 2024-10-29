@@ -31,11 +31,11 @@
     "ReturnValues": [
       {
         "Type": "Object",
-        "VariableName": "!DebugReponse"
+        "VariableName": "%!DebugReponse%"
       }
     ]
   },
-  "Text": "post http://localhost:60877/\n    data: {\n        \"!Goal\":\"%!Goal%\", \n        \"!Step\":\"%!Step%\",\n        \"!Event\":\"%!Event%\",\n        \"!IsHttpRequest\":\"%!IsHttpRequest%\",\n        \"!StepIndex\": %!StepIndex%,\n        \"!Instruction\": \"%!Instruction%\",\n        \"!MemoryStack\":\"%!memorystack%\",\n        \"AbsolutePath\":\"%!Goal.AbsoluteGoalPath%\",        \n        \"!Error\":\"%!error%\",\n        }\n    timeout 30 min\n    write to %!DebugReponse%",
+  "Text": "post http://localhost:60877/\n    data: {\n        \"!Goal\":\"%!Goal%\", \n        \"!Step\":\"%!Step%\",\n        \"!Event\":\"%!Event%\",\n        \"!IsHttpRequest\":\"%!IsHttpRequest%\",\n        \"!StepIndex\": %!StepIndex%,\n        \"!Instruction\": \"%!Instruction%\",\n        \"!MemoryStack\":\"%!memorystack%\",\n        \"AbsolutePath\":\"%!Goal.AbsoluteGoalPath%\",        \n        \"!Error\":\"%!error%\",\n        }\n    timeout 30 min\n    on error 'No connection could', call WriteToConsole\n    write to %!DebugReponse%",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -74,14 +74,14 @@
         "content": [
           {
             "type": "text",
-            "text": "post http://localhost:60877/\n    data: {\n        \"!Goal\":\"%!Goal%\", \n        \"!Step\":\"%!Step%\",\n        \"!Event\":\"%!Event%\",\n        \"!IsHttpRequest\":\"%!IsHttpRequest%\",\n        \"!StepIndex\": %!StepIndex%,\n        \"!Instruction\": \"%!Instruction%\",\n        \"!MemoryStack\":\"%!memorystack%\",\n        \"AbsolutePath\":\"%!Goal.AbsoluteGoalPath%\",        \n        \"!Error\":\"%!error%\",\n        }\n    timeout 30 min\n    write to %!DebugReponse%"
+            "text": "post http://localhost:60877/\n    data: {\n        \"!Goal\":\"%!Goal%\", \n        \"!Step\":\"%!Step%\",\n        \"!Event\":\"%!Event%\",\n        \"!IsHttpRequest\":\"%!IsHttpRequest%\",\n        \"!StepIndex\": %!StepIndex%,\n        \"!Instruction\": \"%!Instruction%\",\n        \"!MemoryStack\":\"%!memorystack%\",\n        \"AbsolutePath\":\"%!Goal.AbsoluteGoalPath%\",        \n        \"!Error\":\"%!error%\",\n        }\n    timeout 30 min\n    on error 'No connection could', call WriteToConsole\n    write to %!DebugReponse%"
           }
         ]
       }
     ],
     "type": "PLang.Modules.HttpModule.Builder",
     "caching": true,
-    "RawResponse": "```json\n{\n\t\"FunctionName\": \"Post\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"url\",\n\t\t\t\"Value\": \"http://localhost:60877/\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"Name\": \"data\",\n\t\t\t\"Value\": {\n\t\t\t\t\"!Goal\": \"%!Goal%\",\n\t\t\t\t\"!Step\": \"%!Step%\",\n\t\t\t\t\"!Event\": \"%!Event%\",\n\t\t\t\t\"!IsHttpRequest\": \"%!IsHttpRequest%\",\n\t\t\t\t\"!StepIndex\": \"%!StepIndex%\",\n\t\t\t\t\"!Instruction\": \"%!Instruction%\",\n\t\t\t\t\"!MemoryStack\": \"%!memorystack%\",\n\t\t\t\t\"AbsolutePath\": \"%!Goal.AbsoluteGoalPath%\",\n\t\t\t\t\"!Error\": \"%!error%\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Int32\",\n\t\t\t\"Name\": \"timeoutInSeconds\",\n\t\t\t\"Value\": 1800\n\t\t}\n\t],\n\t\"ReturnValues\": [\n\t\t{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"VariableName\": \"!DebugReponse\"\n\t\t}\n\t]\n}\n```"
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"Post\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"url\",\n\t\t\t\"Value\": \"http://localhost:60877/\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"Name\": \"data\",\n\t\t\t\"Value\": {\n\t\t\t\t\"!Goal\": \"%!Goal%\",\n\t\t\t\t\"!Step\": \"%!Step%\",\n\t\t\t\t\"!Event\": \"%!Event%\",\n\t\t\t\t\"!IsHttpRequest\": \"%!IsHttpRequest%\",\n\t\t\t\t\"!StepIndex\": \"%!StepIndex%\",\n\t\t\t\t\"!Instruction\": \"%!Instruction%\",\n\t\t\t\t\"!MemoryStack\": \"%!memorystack%\",\n\t\t\t\t\"AbsolutePath\": \"%!Goal.AbsoluteGoalPath%\",\n\t\t\t\t\"!Error\": \"%!error%\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Int32\",\n\t\t\t\"Name\": \"timeoutInSeconds\",\n\t\t\t\"Value\": 1800\n\t\t}\n\t],\n\t\"ReturnValues\": [\n\t\t{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"VariableName\": \"%!DebugReponse%\"\n\t\t}\n\t]\n}\n```"
   },
   "RunOnBuild": false
 }

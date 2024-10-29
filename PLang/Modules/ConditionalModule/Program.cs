@@ -213,7 +213,7 @@ namespace PLang.Modules.ConditionalModule
 			{
 				if (VariableHelper.IsVariable(goalToCallOnTrue))
 				{
-					goalToCallOnTrue = variableHelper.LoadVariables(goalToCallOnTrue).ToString();
+					goalToCallOnTrue = variableHelper.LoadVariables(goalToCallOnTrue)?.ToString();
 				}
 				if (goalToCallOnTrueParameters?.Count == 1 && VariableHelper.IsVariable(goalToCallOnTrueParameters.FirstOrDefault().Value))
 				{
@@ -229,7 +229,7 @@ namespace PLang.Modules.ConditionalModule
 			{
 				if (VariableHelper.IsVariable(goalToCallOnFalse))
 				{
-					goalToCallOnFalse = variableHelper.LoadVariables(goalToCallOnFalse).ToString();
+					goalToCallOnFalse = variableHelper.LoadVariables(goalToCallOnFalse)?.ToString();
 				}
 				
 				if (goalToCallOnFalseParameters?.Count == 1 && VariableHelper.IsVariable(goalToCallOnFalseParameters.FirstOrDefault().Value))

@@ -1,0 +1,12 @@
+Create select statements for the variables, here is table information, it is ok to select everything(*) from table. 
+
+<tables>
+%tablesAndColumns%
+<tables>
+
+<setupFile>
+%setupFile%
+<setupFile>
+
+Make sure to generate sql foreach variable. Make sure to use only the columns available in the tables when generating sql
+If variable does not fit with database object and you cannot contruct sql statement for it, create mock data.

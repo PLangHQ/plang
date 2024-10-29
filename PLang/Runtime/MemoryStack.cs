@@ -627,18 +627,26 @@ namespace PLang.Runtime
 						objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
 					} else 
 					{
-						Type type = obj.GetType();
-						PropertyInfo? propInfo = type.GetProperties().FirstOrDefault(p => p.Name.ToLower() == call.ToLower());
-						if (propInfo == null)
+						if (obj is JToken token)
 						{
-							throw new VariableDoesNotExistsException($"{call} does not exist on variable {keyPlan.VariableName}, there for I cannot set {key}");
+							token[call] = JToken.FromObject(value);
+							objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
 						}
-						if (value != null && value.GetType() != propInfo.PropertyType)
+						else
 						{
-							value = Convert.ChangeType(value, propInfo.PropertyType);
+							Type type = obj.GetType();
+							PropertyInfo? propInfo = type.GetProperties().FirstOrDefault(p => p.Name.ToLower() == call.ToLower());
+							if (propInfo == null)
+							{
+								throw new VariableDoesNotExistsException($"{call} does not exist on variable {keyPlan.VariableName}, there for I cannot set {key}");
+							}
+							if (value != null && value.GetType() != propInfo.PropertyType)
+							{
+								value = Convert.ChangeType(value, propInfo.PropertyType);
+							}
+							propInfo.SetValue(obj, value);
+							objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
 						}
-						propInfo.SetValue(obj, value);
-						objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
 					}
 
 				}

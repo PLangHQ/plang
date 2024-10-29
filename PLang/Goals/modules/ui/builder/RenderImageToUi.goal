@@ -1,0 +1,48 @@
+RenderImageToUi
+- read base64 of %path%, include data url, write to %base64%
+- read llm/RenderImageToUiSystem.txt, write to %system%
+- [llm] system: %system%
+		image: %base64%
+		scheme: {modules:[{name: string, summary:string, html:string, css:string, javascript:string, variables:string[]}],  html:string,  css:string,  javascript:string} 
+		write to %page%
+- call goal BuildSql
+- foreach %page.modules%, call GenerateDetail item=%module%
+
+BuildSql
+- filter all "variables" from %page%, write to %variablesUsed%
+- set default value of %dataSource% = 'data'
+- get all tables and columns in database, datasource: %dataSource% , write to %tablesAndColumns%
+- read "/Setup.goal", default value "Setup", write to %setupFile%
+- read llm/BuildSqlSystem.txt, load vars, write to %buildSqlSystem%
+- [llm] system: %buildSqlSystem%
+    user: %variablesUsed%
+    scheme:  [{sql:string, variableName:string, mockData:string}]
+    write to %sqlResponse%
+
+GenerateDetail
+- read llm/DetailTemplateSystem.txt, load vars, %detailTemplateSystem%
+- filter all "name" where != %module.name%, write to %excludedModuleNames%
+- [llm] system: %detailTemplateSystem%
+    user: %module.html% %module.css% %module.module.javascript%
+    image: %base64%
+    scheme: {html:string, css:string, javascript:string}
+    write to %detailResponse%
+- set %retryCount% = 0
+- call goal IsDetailTemplateValid
+
+IsDetailTemplateValid
+- read llm/IsDetailTemplateValidSystem.txt, %IsDetailTemplateValid%
+- [llm] system: %IsDetailTemplateValid%
+    user: %detailResponse%
+    remember last conversation
+    scheme:  {isValid:bool, html:string|null, css:string|null, javascript:string|null}
+    write to %correctedResponse%
+- if %correctedResponse.isValid% = false then
+    - if %retryCount% < 2 then
+        - set %retryCount% = %retryCount% + 1
+        - call goal IsDetailTemplateValid
+    - if %retryCount% >= 2 then
+        return error "Tried 2 times but couldn't get valid html"
+- if %correctedResponse.isValid%
+
+

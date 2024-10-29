@@ -1,0 +1,5 @@
+upload image, create rough draft of it and split into modules
+go through the modules and fine tune them, make them better, see if I need to break them more up? e.g. chat
+    check if code is valid, and fix it.
+extract variables, determine if they should be read from database
+

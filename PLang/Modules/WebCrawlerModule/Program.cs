@@ -25,9 +25,11 @@ namespace PLang.Modules.WebCrawlerModule
 	[Description("Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content")]
 	public class Program : BaseProgram, IDisposable
 	{
-		WebDriver? driver = null;
+
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ILogger logger;
+		private readonly string BrowserContextKey = "!BrowserContextKey";
+		private readonly string BrowserStartPropertiesContextKey = "!BrowserStartPropertiesContextKey";
 
 		public Program(PLangAppContext context, IPLangFileSystem fileSystem, ILogger logger) : base()
 		{
@@ -59,15 +61,27 @@ namespace PLang.Modules.WebCrawlerModule
 
 		[Description("browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.")]
 		public async Task StartBrowser(string browserType = "Chrome", bool headless = false, bool useUserSession = false, string userSessionPath = "",
-			bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null, int timoutInSeconds = 30, bool hideTestingMode = false)
+			bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null, int? timoutInSeconds = 30, bool hideTestingMode = false)
 		{
-			driver = GetBrowserType(browserType, headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, hideTestingMode);
+			Dictionary<string, object?> startProperties = new();
+			startProperties.Add("browserType", browserType);
+			startProperties.Add("headless", headless);
+			startProperties.Add("useUserSession", useUserSession);
+			startProperties.Add("userSessionPath", userSessionPath);
+			startProperties.Add("incognito", incognito);
+			startProperties.Add("kioskMode", kioskMode);
+			startProperties.Add("argumentOptions", argumentOptions);
+			startProperties.Add("timoutInSeconds", timoutInSeconds);
+			startProperties.Add("hideTestingMode", hideTestingMode);
 
-			driver.Manage().Timeouts().AsynchronousJavaScript = TimeSpan.FromSeconds(timoutInSeconds);
-			driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(timoutInSeconds);
-			driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(timoutInSeconds);
+			var driver = GetBrowserType(browserType, headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, hideTestingMode);
 
-			context.TryAdd("SeleniumBrowser", driver);
+			driver.Manage().Timeouts().AsynchronousJavaScript = TimeSpan.FromSeconds(timoutInSeconds ?? 30);
+			driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(timoutInSeconds ?? 30);
+			driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(timoutInSeconds ?? 30);
+
+			context.TryAdd(BrowserContextKey, driver);
+			context.TryAdd(BrowserStartPropertiesContextKey, startProperties);
 		}
 
 		private WebDriver GetBrowserType(string browserType, bool headless, bool useUserSession,
@@ -84,26 +98,34 @@ namespace PLang.Modules.WebCrawlerModule
 				default:
 					return GetChromeDriver(headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, hideTestingMode);
 			}
+		}
 
+		private async Task RestartBrowserInstance()
+		{
+			await CloseBrowser();
 
+			var startProperties = context[BrowserStartPropertiesContextKey] as Dictionary<string, object?>;
+			await StartBrowser(startProperties["browserType"] as string, (bool)startProperties["headless"], (bool)startProperties["useUserSession"], startProperties["userSessionPath"] as string,
+				(bool)startProperties["incognito"], (bool)startProperties["kioskMode"], startProperties["argumentOptions"] as Dictionary<string, string>, startProperties["timoutInSeconds"] as int?,
+				(bool)startProperties["hideTestingMode"]);
 		}
 
 
 		private async Task<WebDriver> GetDriver(string browserType = "Chrome", bool headless = false, bool useUserSession = false, string userSessionPath = "",
-			bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null, int timeoutInSeconds = 60)
+			bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null, int? timeoutInSeconds = null)
 		{
-			if (!context.ContainsKey("SeleniumBrowser"))
+			if (!context.ContainsKey(BrowserContextKey))
 			{
 				logger.LogDebug("Key SeleniumBrowser not existing. Starting browser");
 				await StartBrowser(browserType, headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, timeoutInSeconds);
 			}
-			return context["SeleniumBrowser"] as WebDriver;
+			return context[BrowserContextKey] as WebDriver;
 		}
 
 		private async Task<IWebElement> GetElement(string? cssSelector = null)
 		{
 			var driver = await GetDriver();
-			if (cssSelector == null) cssSelector = GetCssSelector();
+			if (cssSelector == null) cssSelector = await GetCssSelector();
 
 			var element = driver.FindElement(By.CssSelector(cssSelector));
 
@@ -118,40 +140,46 @@ namespace PLang.Modules.WebCrawlerModule
 
 		public async Task CloseBrowser()
 		{
-			if (!context.ContainsKey("SeleniumBrowser")) return;
+			if (!context.ContainsKey(BrowserContextKey)) return;
 
-			var driver = context["SeleniumBrowser"] as ChromeDriver;
+			var driver = context[BrowserContextKey] as WebDriver;
 			if (driver == null) return;
 
 			driver.Quit();
-			context.Remove("SeleniumBrowser");
-
-
+			context.Remove(BrowserContextKey);
 		}
+
+		public void Dispose()
+		{
+			CloseBrowser().Wait();
+		}
+
 
 		[Description("browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.")]
 		public async Task NavigateToUrl(string url, string browserType = "Chrome", bool headless = false, bool useUserSession = false,
 				string userSessionPath = "", bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null,
-				string? browserConsoleOutputVariableName = null, int timeoutInSecods = 30, bool hideTestingMode = false)
+				string? browserConsoleOutputVariableName = null, int? timeoutInSecods = null, bool hideTestingMode = false)
 		{
 			if (string.IsNullOrEmpty(url))
 			{
 				throw new RuntimeException("url cannot be empty");
 			}
 
-			var driver = await GetDriver(browserType, headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, timeoutInSecods);
+
 			if (!url.StartsWith("http"))
 			{
 				url = "https://" + url;
 			}
-			
+
+			var driver = await GetDriver(browserType, headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, timeoutInSecods);
 			driver.Navigate().GoToUrl(url);
 
-			var logs = driver.Manage().Logs.GetLog(LogType.Browser);
 			if (browserConsoleOutputVariableName != null)
 			{
+				var logs = driver.Manage().Logs.GetLog(LogType.Browser);
 				memoryStack.Put(browserConsoleOutputVariableName, logs);
 			}
+
 		}
 
 		public async Task ScrollToBottom()
@@ -220,7 +248,7 @@ namespace PLang.Modules.WebCrawlerModule
 					try
 					{
 						var newBody = drv.FindElement(By.TagName(cssSelector));
-						return !newBody.Equals(originalBody); 
+						return !newBody.Equals(originalBody);
 					}
 					catch (NoSuchElementException)
 					{
@@ -259,7 +287,7 @@ namespace PLang.Modules.WebCrawlerModule
 			originalPageLoad = driver.Manage().Timeouts().PageLoad;
 			originalImplicitWait = driver.Manage().Timeouts().ImplicitWait;
 
-			driver.Manage().Timeouts().AsynchronousJavaScript = TimeSpan.FromSeconds((int) timoutInSeconds);
+			driver.Manage().Timeouts().AsynchronousJavaScript = TimeSpan.FromSeconds((int)timoutInSeconds);
 			driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds((int)timoutInSeconds);
 			driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds((int)timoutInSeconds);
 		}
@@ -319,7 +347,7 @@ namespace PLang.Modules.WebCrawlerModule
 			alert.Accept();
 		}
 
-		private string GetCssSelector(string? cssSelector = null)
+		private async Task<string> GetCssSelector(string? cssSelector = null)
 		{
 			if (string.IsNullOrEmpty(cssSelector) && context.ContainsKey("prevCssSelector"))
 			{
@@ -328,6 +356,7 @@ namespace PLang.Modules.WebCrawlerModule
 
 			if (cssSelector == null)
 			{
+				var driver = await GetDriver();
 				var focusedElement = (IWebElement)((IJavaScriptExecutor)driver).ExecuteScript("return document.activeElement;");
 				cssSelector = GetCssSelector(focusedElement, driver);
 			}
@@ -344,7 +373,7 @@ namespace PLang.Modules.WebCrawlerModule
 			try
 			{
 				await SetTimeout(timeoutInSeconds);
-				cssSelector = GetCssSelector(cssSelector);
+				cssSelector = await GetCssSelector(cssSelector);
 				var element = await GetElement(cssSelector);
 				var input = ConvertKeyCommand(value);
 				element.SendKeys(input);
@@ -362,7 +391,7 @@ namespace PLang.Modules.WebCrawlerModule
 			try
 			{
 				await SetTimeout(timeoutInSeconds);
-				cssSelector = GetCssSelector(cssSelector);
+				cssSelector = await GetCssSelector(cssSelector);
 				var element = await GetElement(cssSelector);
 				element.SendKeys(value);
 				SetCssSelector(cssSelector);
@@ -379,7 +408,7 @@ namespace PLang.Modules.WebCrawlerModule
 			try
 			{
 				await SetTimeout(timeoutInSeconds);
-				cssSelector = GetCssSelector(cssSelector);
+				cssSelector = await GetCssSelector(cssSelector);
 				var element = await GetElement(cssSelector);
 
 
@@ -400,7 +429,7 @@ namespace PLang.Modules.WebCrawlerModule
 			try
 			{
 				await SetTimeout(timeoutInSeconds);
-				cssSelector = GetCssSelector(cssSelector);
+				cssSelector = await GetCssSelector(cssSelector);
 				var element = await GetElement(cssSelector);
 				var selectElement = new SelectElement(element);
 				selectElement.SelectByText(text);
@@ -417,7 +446,7 @@ namespace PLang.Modules.WebCrawlerModule
 			try
 			{
 				await SetTimeout(timeoutInSeconds);
-				cssSelector = GetCssSelector(cssSelector);
+				cssSelector = await GetCssSelector(cssSelector);
 				var element = await GetElement(cssSelector);
 				element.Submit();
 			}
@@ -456,7 +485,7 @@ namespace PLang.Modules.WebCrawlerModule
 
 		public async Task<ReadOnlyCollection<IWebElement>> GetElements(string? cssSelector = null)
 		{
-			cssSelector = GetCssSelector(cssSelector);
+			cssSelector = await GetCssSelector(cssSelector);
 			var driver = await GetDriver();
 			var elements = driver.FindElements(By.CssSelector(cssSelector));
 
@@ -465,7 +494,7 @@ namespace PLang.Modules.WebCrawlerModule
 
 		public async Task<string> FindElementAndExtractAttribute(string attribute, string? cssSelector = null, IWebElement? element = null)
 		{
-			cssSelector = GetCssSelector(cssSelector);
+			cssSelector = await GetCssSelector(cssSelector);
 			List<string> results = new List<string>();
 
 			ReadOnlyCollection<IWebElement> elements;
@@ -483,7 +512,7 @@ namespace PLang.Modules.WebCrawlerModule
 
 		public async Task<List<string>> ExtractContent(bool clearHtml = true, string? cssSelector = null, IWebElement? element = null)
 		{
-			cssSelector = GetCssSelector(cssSelector);
+			cssSelector = await GetCssSelector(cssSelector);
 			List<string> results = new List<string>();
 
 			ReadOnlyCollection<IWebElement> elements;
@@ -524,7 +553,7 @@ namespace PLang.Modules.WebCrawlerModule
 
 		public async Task<IError?> TakeScreenshotOfWebsite(string saveToPath, bool overwrite = false)
 		{
-			
+
 			if (string.IsNullOrWhiteSpace(saveToPath))
 			{
 				return new ProgramError("The path where to save the screenshot cannot be empty", goalStep, function);
@@ -554,11 +583,6 @@ namespace PLang.Modules.WebCrawlerModule
 			if (value == "\\r") return "\r";
 			if (value == "\\n") return "\n";
 			return value;
-		}
-
-		public void Dispose()
-		{
-			CloseBrowser().Wait();
 		}
 
 
@@ -664,7 +688,8 @@ namespace PLang.Modules.WebCrawlerModule
 				var path = GetChromeUserDataDir();
 				logger.LogDebug($"Using user path: {path}");
 				options.AddArgument(@$"user-data-dir={path}");
-			} else if (!string.IsNullOrEmpty(userSessionPath))
+			}
+			else if (!string.IsNullOrEmpty(userSessionPath))
 			{
 				options.AddArgument(@$"user-data-dir={userSessionPath}");
 			}
@@ -694,7 +719,7 @@ namespace PLang.Modules.WebCrawlerModule
 			{
 				options.AddExcludedArgument("enable-automation");
 				options.AddAdditionalOption("useAutomationExtension", false);
-				
+
 				options.AddArgument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36");
 				options.AddExcludedArgument("enable-automation");
 
@@ -707,7 +732,8 @@ namespace PLang.Modules.WebCrawlerModule
 
 			var driver = new ChromeDriver(service, options);
 
-			if (hideTestingMode) {
+			if (hideTestingMode)
+			{
 				// After initializing the driver
 				IJavaScriptExecutor js = (IJavaScriptExecutor)driver;
 

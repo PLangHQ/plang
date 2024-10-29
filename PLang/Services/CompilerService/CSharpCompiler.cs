@@ -448,7 +448,17 @@ long.TryParse(str, out number);
 			if (answer is CodeImplementationResponse cir)
 			{
 				if (cir.InputParameters != null) parameters.AddRange(cir.InputParameters);
-				if (cir.OutParameters != null) parameters.AddRange(cir.OutParameters);
+				if (cir.OutParameters != null)
+				{
+					foreach (var parameter in cir.OutParameters)
+					{
+						if (!parameters.Contains(parameter))
+						{
+							parameters.Add(parameter);
+						}
+					}
+					
+				}
 			}
 			else
 			{

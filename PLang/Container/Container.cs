@@ -161,7 +161,7 @@ namespace PLang.Container
 			container.RegisterSingleton<DependancyHelper>();
 			container.RegisterSingleton<PrParser>();
 
-			SetupAssemblyResolve(container.GetInstance<IPLangFileSystem>(), container.GetInstance<DependancyHelper>());
+			SetupAssemblyResolve(container.GetInstance<IPLangFileSystem>(), container.GetInstance<ILogger>(), container.GetInstance<DependancyHelper>());
 		}
 
 		private static void RegisterEventRuntime(this ServiceContainer container, bool isBuilder = false)
@@ -409,7 +409,7 @@ namespace PLang.Container
 			throw new RuntimeException($"Could not get implementaion name for {reservedKeyword}");
 		}
 
-		private static void SetupAssemblyResolve(IPLangFileSystem fileSystem, DependancyHelper dependancyHelper)
+		private static void SetupAssemblyResolve(IPLangFileSystem fileSystem, ILogger logger, DependancyHelper dependancyHelper)
 		{
 			AppDomain.CurrentDomain.AssemblyResolve += (sender, resolveArgs) =>
 			{
@@ -421,58 +421,64 @@ namespace PLang.Container
 					return Assembly.LoadFile(assemblyPath);
 				}
 
-				
-				string assemblyName = new AssemblyName(resolveArgs.Name).Name;
-				var baseDirectory = fileSystem.Path.Combine(fileSystem.RootDirectory, ".modules");
-				var files = fileSystem.Directory.GetFiles(baseDirectory, assemblyName + ".dll", SearchOption.AllDirectories);
-
-				if (files.Length > 0)
+				try
 				{
+					string assemblyName = new AssemblyName(resolveArgs.Name).Name;
+					var baseDirectory = fileSystem.Path.Combine(fileSystem.RootDirectory, ".modules");
+					var files = fileSystem.Directory.GetFiles(baseDirectory, assemblyName + ".dll", SearchOption.AllDirectories);
 
-					var netVersionPattern = @"net(?<version>\d+(\.\d+)?)(coreapp)?";
-
-					// Parse and prioritize .NET versions in descending order (e.g., net8.0, net7.0, etc.)
-					var matchedAssembly = files
-						.Select(file => new { File = file, Match = Regex.Match(file, netVersionPattern) })
-						.Where(x => x.Match.Success)
-						.OrderByDescending(x => GetVersionPriority(x.Match.Groups["version"].Value))
-						.Select(x => x.File)
-						.FirstOrDefault();
-
-
-					return Assembly.LoadFile(matchedAssembly);
-				}
-				else
-				{
-					var depsFiles = fileSystem.Directory.GetFiles(baseDirectory, "*.deps.json", SearchOption.AllDirectories);
-					foreach (var dep in depsFiles)
+					if (files.Length > 0)
 					{
-						var content = fileSystem.File.ReadAllText(dep);
-						var json = JsonConvert.DeserializeObject(content) as JObject;
-						var libs = json.GetValue("libraries") as JObject;
-						if (libs == null) continue;
 
-						var dirPath = fileSystem.Path.GetDirectoryName(dep);
+						var netVersionPattern = @"net(?<version>\d+(\.\d+)?)(coreapp)?";
 
-						foreach (var prop in libs.Properties())
-						{
-							if (prop.Name.StartsWith(assemblyName + "/"))
-							{
-								var name = prop.Name.Substring(0, prop.Name.IndexOf("/"));
+						// Parse and prioritize .NET versions in descending order (e.g., net8.0, net7.0, etc.)
+						var matchedAssembly = files
+							.Select(file => new { File = file, Match = Regex.Match(file, netVersionPattern) })
+							.Where(x => x.Match.Success)
+							.OrderByDescending(x => GetVersionPriority(x.Match.Groups["version"].Value))
+							.Select(x => x.File)
+							.FirstOrDefault();
 
 
-								return dependancyHelper.InstallDependancy(dirPath, dep, name);
-							}
-						}
-
-						var foundAssemblyName = FindAssemblyPackage(json, assemblyName + ".dll");
-						if (foundAssemblyName != null)
-						{
-							var assmebly = dependancyHelper.InstallDependancy(dirPath, dep, foundAssemblyName);
-							return assmebly;
-						}
-						int i = 0;
+						return Assembly.LoadFile(matchedAssembly);
 					}
+					else
+					{
+						var depsFiles = fileSystem.Directory.GetFiles(baseDirectory, "*.deps.json", SearchOption.AllDirectories);
+						foreach (var dep in depsFiles)
+						{
+							var content = fileSystem.File.ReadAllText(dep);
+							var json = JsonConvert.DeserializeObject(content) as JObject;
+							var libs = json.GetValue("libraries") as JObject;
+							if (libs == null) continue;
+
+							var dirPath = fileSystem.Path.GetDirectoryName(dep);
+
+							foreach (var prop in libs.Properties())
+							{
+								if (prop.Name.StartsWith(assemblyName + "/"))
+								{
+									var name = prop.Name.Substring(0, prop.Name.IndexOf("/"));
+
+
+									return dependancyHelper.InstallDependancy(dirPath, dep, name);
+								}
+							}
+
+							var foundAssemblyName = FindAssemblyPackage(json, assemblyName + ".dll");
+							if (foundAssemblyName != null)
+							{
+								var assmebly = dependancyHelper.InstallDependancy(dirPath, dep, foundAssemblyName);
+								return assmebly;
+							}
+							int i = 0;
+						}
+					}
+				} catch (Exception ex)
+				{
+					//logger.LogError(ex, ex.Message);
+					return null;
 				}
 				return null;
 			};

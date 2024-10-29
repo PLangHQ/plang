@@ -123,7 +123,7 @@ namespace PLang.Building
 				}
 				else
 				{
-					error = new ExceptionError(ex, Step: step, Goal: goal);
+					error = new ExceptionError(ex, Message: ex.Message, Step: step, Goal: goal);
 				}
 				(var isHandled, var handlerError) = await exceptionHandlerFactory.CreateHandler().Handle(error);
 				if (isHandled)
@@ -145,7 +145,7 @@ namespace PLang.Building
 			AppContext.TryGetSwitch(ReservedKeywords.StrictBuild, out bool isStrict);
 			if (isStrict && step.Number != stepIndex) return false;
 			if (step.PrFileName == null || excludeModules.Count > 0) return false;
-			if (!step.PrFileName.StartsWith((step.Number+1).ToString().PadLeft(2, '0'))) return false;
+			if (!step.PrFileName.StartsWith((stepIndex + 1).ToString().PadLeft(2, '0'))) return false;
 
 			if (!fileSystem.File.Exists(step.AbsolutePrFilePath))
 			{
@@ -219,7 +219,13 @@ Builder will continue on other steps but not this one: ({step.Text}).
 				return await BuildStepInformation(goal, step, stepIndex, excludeModules, ++errorCount);
 			}
 
-			var module = stepInformation.Modules.FirstOrDefault();
+			if (stepInformation.Modules == null)
+			{
+				return (step, new StepBuilderError($"LLM response looks to be invalid as modules is null. This is not normal behaviour.", step, 
+					FixSuggestion: "Run with trace logger enabled to view the raw output of LLM. `plang build --logger=trace`", ContinueBuild: false, StatusCode: 500));
+			}
+
+			var module = stepInformation.Modules?.FirstOrDefault();
 			var moduleType = typeHelper.GetRuntimeType(module);
 			if (moduleType == null || module == null || module == "N/A")
 			{
@@ -273,13 +279,10 @@ Builder will continue on other steps but not this one: ({step.Text}).
 
 		private async Task<(GoalStep step, IBuilderError? error)> BuildStepProperties(Goal goal, GoalStep step, Instruction instruction, int stepIndex, List<string> excludeModules, int errorCount)
 		{
-
-
-
 			LlmRequest llmQuestion = GetBuildStepPropertiesQuestion(goal, step, instruction);
 
 			logger.Value.LogInformation($"- Building properties for {step.Text}");
-			llmQuestion.Reload = false;
+			
 			(var stepProperties, var llmError) = await llmServiceFactory.CreateHandler().Query<StepProperties>(llmQuestion);
 			if (llmError != null) return (step, llmError as IBuilderError);
 

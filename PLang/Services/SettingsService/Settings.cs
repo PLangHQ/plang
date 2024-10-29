@@ -142,8 +142,9 @@ namespace PLang.Services.SettingsService
             }
 
             if (key == null) key = type;
+            var settingsRepo = settingsRepositoryFactory.CreateHandler();
 
-            var setting = settingsRepositoryFactory.CreateHandler().Get(callingType.FullName, type, key);
+			var setting = settingsRepositoryFactory.CreateHandler().Get(callingType.FullName, type, key);
             if (setting == null) return new();
 
             List<T> list = JsonConvert.DeserializeObject<List<T>>(setting.Value) ?? new();

@@ -201,6 +201,10 @@ namespace PLang.Modules
 					{
 						error.Step = goalStep;
 					}
+					if (error is ProgramError pe)
+					{
+						pe.GenericFunction = function;
+					}
 
 					if (error.Goal == null)
 					{

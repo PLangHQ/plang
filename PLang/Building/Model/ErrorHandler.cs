@@ -15,7 +15,7 @@ namespace PLang.Building.Model
 		public int? StatusCode { get; set; }
 
 		[DefaultValueAttribute(null)]
-		[System.ComponentModel.Description("Default keys in the system are StepError, ProgramError, StepError. Other keys can be defined by user")]
+		[System.ComponentModel.Description("Key can be defined by user")]
 		public string? Key { get; set; }
 
 		[DefaultValueAttribute(null)]

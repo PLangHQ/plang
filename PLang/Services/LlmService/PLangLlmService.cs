@@ -29,6 +29,7 @@ namespace PLang.Services.LlmService
 		private readonly IPLangFileSystem fileSystem;
 		private readonly MemoryStack memoryStack;
 		private string url = "https://llm.plang.is/api/Llm";
+		private string? modelOverwrite = null;
 		private readonly string appId = "206bb559-8c41-4c4a-b0b7-283ef73dc8ce";
 		private readonly string BuyCreditInfo = @"You need to purchase credits to use Plang LLM service, click this link to purchase: {0}. Run again after payment.
 
@@ -49,10 +50,16 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 			this.Extractor = new JsonExtractor();
 
 			//Only for development of plang
-			var plangLlmService = Environment.GetEnvironmentVariable("PLangLllmServiceUrl");
+			var plangLlmService = Environment.GetEnvironmentVariable("PLangLlmServiceUrl");
 			if (!string.IsNullOrEmpty(plangLlmService) && plangLlmService.StartsWith("http"))
 			{
 				url = plangLlmService;
+			}
+
+			var model = Environment.GetEnvironmentVariable("PLangLlmModelOverwrite");
+			if (!string.IsNullOrEmpty(model))
+			{
+				modelOverwrite = model;
 			}
 		}
 
@@ -90,10 +97,12 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 					{
 						context.AddOrReplace(ReservedKeywords.Llm, cachedLlmQuestion.RawResponse);
 					}
+					logger.LogTrace("Using cached response from LLM:" + cachedLlmQuestion.RawResponse);
 
 					var result = Extractor.Extract(cachedLlmQuestion.RawResponse, responseType);
 					if (result != null && !string.IsNullOrEmpty(result.ToString()))
 					{
+						question.RawResponse = cachedLlmQuestion.RawResponse;
 						return (result, null);
 					}
 
@@ -105,7 +114,7 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 			parameters.Add("messages", question.promptMessage);
 			parameters.Add("temperature", question.temperature);
 			parameters.Add("top_p", question.top_p);
-			parameters.Add("model", question.model);
+			parameters.Add("model", (modelOverwrite == null) ? question.model : modelOverwrite);
 			parameters.Add("frequency_penalty", question.frequencyPenalty);
 			parameters.Add("presence_penalty", question.presencePenalty);
 			parameters.Add("type", question.type);
@@ -123,6 +132,8 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 			request.Headers.UserAgent.ParseAdd("plang llm v0.1");
 
 			string body = StringHelper.ConvertToString(parameters);
+			
+			logger.LogTrace("Body request to LLM:" + body);
 
 			request.Content = new StringContent(body, Encoding.GetEncoding("utf-8"), "application/json");
 			httpClient.Timeout = new TimeSpan(0, 5, 0);
@@ -131,10 +142,12 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 			var response = await httpClient.SendAsync(request);
 
 			string responseContent = await response.Content.ReadAsStringAsync();
+
 			if (string.IsNullOrWhiteSpace(responseContent))
 			{
 				return (null, new ServiceError("llm.plang.is appears to be down. Try again in few minutes. If it does not come back up soon, check out our Discord https://discord.gg/A8kYUymsDD for a chat", this.GetType()));
-			}			
+			}
+			logger.LogTrace("LLM response:" + responseContent);
 
 			var rawResponse = JsonConvert.DeserializeObject(responseContent)?.ToString() ?? "";
 			question.RawResponse = rawResponse;

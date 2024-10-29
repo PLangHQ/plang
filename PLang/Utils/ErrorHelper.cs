@@ -110,7 +110,7 @@ namespace PLang.Utils
 			string? fixSuggestions = null;
 			if (error.FixSuggestion != null)
 			{
-				fixSuggestions = $@"🛠️ Fix Suggestions:
+				fixSuggestions = $@"🛠️  Fix Suggestions:
 {FormatLine(error.FixSuggestion, "-", true)}";
 			}
 			string? helpfulLinks = null;

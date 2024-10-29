@@ -111,7 +111,7 @@ We will go through each row, check if the row is valid, and if it is, we insert 
 ```plang
 ProcessExcel
 - read e-products.xlsx, "A5", has header, Sheet 'Prices', into %rows%
-- go through %rows%, call CheckRow
+- go through %rows%, call FixRow
 
 FixRow
 - set variable %productId% = %item.Product ID%
