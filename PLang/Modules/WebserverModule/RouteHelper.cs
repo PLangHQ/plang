@@ -10,7 +10,7 @@ namespace PLang.Modules.WebserverModule
 	public static class RouteHelper
 	{
 
-		public static string GetGoalPath(IPLangFileSystem fileSystem, MemoryStack memoryStack, ILogger logger, string url, List<Routing> routings)
+		public static string GetGoalPath(IPLangFileSystem fileSystem, MemoryStack memoryStack, ILogger logger, string url, List<GoalRouting> routings)
 		{
 			if (string.IsNullOrEmpty(url)) return "";
 

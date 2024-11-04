@@ -20,6 +20,8 @@ namespace PLang.Services.OutputStream
 
 		public Stream ErrorStream => throw new NotImplementedException();
 
+		public string ContentType => "text/plain";
+
 		public Task<string> Ask(string text, string type = "ask", int statusCode = 104)
 		{
 			throw new NotImplementedException();
