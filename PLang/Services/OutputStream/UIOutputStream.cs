@@ -19,6 +19,9 @@ namespace PLang.Services.OutputStream
 		StringBuilder sb;
 		public Action<string>? onFlush { get; set; }
 		public IForm IForm { get; set; }
+
+		public string ContentType => "text/plain";
+
 		public UIOutputStream(IFileSystem fileSystem, IForm iForm)
 		{
 			this.fileSystem = fileSystem;

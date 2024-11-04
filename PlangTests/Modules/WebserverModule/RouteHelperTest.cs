@@ -21,8 +21,8 @@ namespace PLangTests.Modules.WebserverModule
 		{
 			//string Path, GoalToCall GoalToCall, string? Method = null, string ContentType = "text/html", 
 			// Dictionary<string, object?>? Parameters = null, long? MaxContentLength = null, string? DefaultResponseContentEncoding = null
-			List<Routing> routings = new();
-			routings.Add(new Routing("/api/*"));
+			List<GoalRouting> routings = new();
+			routings.Add(new GoalRouting("/api/*"));
 
 			string folderPath = Path.Join(fileSystem.BuildPath, "api/GetUser".AdjustPathToOs());
 			fileSystem.AddDirectory(folderPath);
@@ -38,8 +38,8 @@ namespace PLangTests.Modules.WebserverModule
 		{
 			//string Path, GoalToCall GoalToCall, string? Method = null, string ContentType = "text/html", 
 			// Dictionary<string, object?>? Parameters = null, long? MaxContentLength = null, string? DefaultResponseContentEncoding = null
-			List<Routing> routings = new();
-			routings.Add(new Routing("/category/%name%", "/category/default"));
+			List<GoalRouting> routings = new();
+			routings.Add(new GoalRouting("/category/%name%", "/category/default"));
 
 			string folderPath = Path.Join(fileSystem.BuildPath, "/category/default".AdjustPathToOs());
 			fileSystem.AddDirectory(folderPath);

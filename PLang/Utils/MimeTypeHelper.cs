@@ -8,12 +8,17 @@ namespace PLang.Utils
 {
 	public class MimeTypeHelper
 	{
-
 		public static string GetMimeType(string fileName)
+		{
+			var mimeType = GetWebMimeType(fileName);
+			if (mimeType == null) return "application/octet-stream";
+			return mimeType;
+		}
+		public static string? GetWebMimeType(string fileName)
 		{
 			string extension = Path.GetExtension(fileName).ToLowerInvariant();
 
-			string mimeType = extension switch
+			string? mimeType = extension switch
 			{
 				".mp3" => "audio/mpeg",
 				".wav" => "audio/wav",
@@ -32,7 +37,8 @@ namespace PLang.Utils
 				".3gp" => "video/3gpp",
 				".3g2" => "video/3gpp2",
 				".mkv" => "video/x-matroska",
-				".jpeg, .jpg" => "image/jpeg",
+				".jpeg" => "image/jpeg",
+				".jpg" => "image/jpeg",
 				".png" => "image/png",
 				".gif" => "image/gif",
 				".bmp" => "image/bmp",
@@ -58,10 +64,7 @@ namespace PLang.Utils
 				".rar" => "application/vnd.rar",
 				".7z" => "application/x-7z-compressed",
 				".js" => "application/javascript",
-				".php" => "application/x-httpd-php",
-				".bin" => "application/octet-stream",
-				_ => "application/octet-stream", // Default MIME type if no match is found
-
+				_ => null
 			};
 			return mimeType;
 		}

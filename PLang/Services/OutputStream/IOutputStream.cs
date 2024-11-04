@@ -4,6 +4,7 @@ namespace PLang.Services.OutputStream
 {
 	public interface IOutputStream
 	{
+		public string ContentType { get; }
 		public Stream Stream { get; }
 		public Stream ErrorStream { get; }
 		public Task Write(object? obj, string type = "text", int statusCode = 200);

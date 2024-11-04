@@ -37,11 +37,17 @@ namespace PLang.Services.OutputStream
 			return this;
 		}
 
-		public IOutputStream CreateHandler(string? name = null)
+		public IOutputStream CreateHandler(string[]? acceptTypes = null)
 		{
-			var serviceName = (name != null) ? name : currentType;
+			if (acceptTypes == null) return container.GetInstance<IOutputStream>("text/plain");
 
-			return container.GetInstance<IOutputStream>(serviceName);
+			foreach (var acceptType in acceptTypes)
+			{
+				var formatter = container.GetInstance<IOutputStream>(acceptType);
+				if (formatter != null) return formatter;
+			}
+
+			return container.GetInstance<IOutputStream>("text/plain");
 		}
 	}
 }

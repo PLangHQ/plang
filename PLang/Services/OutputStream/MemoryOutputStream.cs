@@ -10,6 +10,8 @@ namespace PLang.Services.OutputStream
 
 		public Stream ErrorStream => new MemoryStream();
 
+		public string ContentType => "application/octet-stream";
+
 		public Task<string> Ask(string text, string type = "text", int statusCode = 200)
 		{
 			return null;

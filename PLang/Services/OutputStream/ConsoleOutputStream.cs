@@ -17,6 +17,8 @@ namespace PLang.Services.OutputStream
 		public Stream Stream => Console.OpenStandardOutput();
 		public Stream ErrorStream => Console.OpenStandardError();
 
+		public string ContentType => "text/plain";
+
 		public async Task<string> Ask(string text, string type = "text", int statusCode = 104)
 		{
 			Console.WriteLine(text);
