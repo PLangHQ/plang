@@ -14,6 +14,7 @@ using Newtonsoft.Json.Linq;
 using PLang.Models;
 using System.Collections;
 using PLang.Utils;
+using Microsoft.Extensions.Logging;
 
 namespace PLang.Modules.ConditionalModule
 {
@@ -23,12 +24,14 @@ namespace PLang.Modules.ConditionalModule
 		private readonly IEngine engine;
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IPLangFileSystem fileSystem;
+		private readonly ILogger logger;
 
-		public Program(IEngine engine, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem) : base()
+		public Program(IEngine engine, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem, ILogger logger) : base()
 		{
 			this.engine = engine;
 			this.pseudoRuntime = pseudoRuntime;
 			this.fileSystem = fileSystem;
+			this.logger = logger;
 		}
 		/*
 		 * 
@@ -190,6 +193,7 @@ namespace PLang.Modules.ConditionalModule
 						}
 					}
 				}
+				logger.LogTrace("Parameters:{0}", parametersObject);
 
 				// The first parameter is the instance you want to call the method on. For static methods, you should pass null.
 				// The second parameter is an object array containing the arguments of the method.

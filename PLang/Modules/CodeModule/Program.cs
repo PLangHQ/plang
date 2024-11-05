@@ -138,7 +138,7 @@ namespace PLang.Modules.CodeModule
 					}
 				}
 				var args = parametersObject.ToArray();
-
+				logger.LogTrace("Parameters:{0}", args);
 				object? result = method.Invoke(null, args);
 
 				for (int i = 0; i < parameters.Length; i++)
