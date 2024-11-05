@@ -77,61 +77,86 @@ namespace PLang.Modules
 			{
 				logger.LogError(errorMessage);
 				return (null, new StepBuilderError("Could not get a valid function from LLM. You need to adjust your wording.", step));
+			} else if (errorCount > 0)
+			{
+				logger.LogWarning("Couldn't handle response from LLM, trying again");
 			}
+
 			if (responseType == null) responseType = typeof(GenericFunction);
 
 			var question = GetLlmRequest(step, responseType, errorMessage);
 			question.Reload = step.Reload;
 
-			(var result, var queryError) = await llmServiceFactory.CreateHandler().Query(question, responseType);
-			if (queryError != null) return (null, queryError as IBuilderError);
-			if (result == null || (result is string str && string.IsNullOrEmpty(str)))
+			try
 			{
-				return (null, new StepBuilderError($"Could not build for {responseType.Name}", step));
-			}
-			if (result is GenericFunction gf && gf.FunctionName == "N/A" && errorCount >= 3)
-			{
-				return (null, new StepBuilderError($"Could find function to match step in module {step.ModuleType}", step));
-			}
-
-			var instruction = new Instruction(result);
-			instruction.LlmRequest = question;
-
-			var methodHelper = new MethodHelper(step, variableHelper, memoryStack, typeHelper, llmServiceFactory);
-			var invalidFunctions = methodHelper.ValidateFunctions(instruction.GetFunctions(), step.ModuleType, memoryStack);
-			
-			if (invalidFunctions != null)
-			{
-				if (invalidFunctions.Key == "N/A")
+				(var result, var queryError) = await llmServiceFactory.CreateHandler().Query(question, responseType);
+				if (queryError != null) return (null, queryError as IBuilderError);
+				if (result == null || (result is string str && string.IsNullOrEmpty(str)))
 				{
-					return (null, invalidFunctions);
+					return (null, new StepBuilderError($"Could not build for {responseType.Name}", step));
+				}
+				if (result is GenericFunction gf && gf.FunctionName == "N/A" && errorCount >= 3)
+				{
+					return (null, new StepBuilderError($"Could find function to match step in module {step.ModuleType}", step));
 				}
 
-				errorMessage = @$"## Error from previous LLM request ## 
+				var instruction = new Instruction(result);
+				instruction.LlmRequest = question;
+
+				var methodHelper = new MethodHelper(step, variableHelper, memoryStack, typeHelper, llmServiceFactory);
+				var invalidFunctions = methodHelper.ValidateFunctions(instruction.GetFunctions(), step.ModuleType, memoryStack);
+
+				if (invalidFunctions != null)
+				{
+					if (invalidFunctions.Key == "N/A")
+					{
+						return (null, invalidFunctions);
+					}
+
+					errorMessage = @$"## Error from previous LLM request ## 
 Previous response from LLM caused error. This was your response.
 {Newtonsoft.Json.JsonConvert.SerializeObject(instruction.Action)}
 
 This is the error(s)
 ";
-				foreach (var invalidFunction in invalidFunctions.Errors)
-				{
-					errorMessage += " - " + invalidFunction.Message;
-				}
-				errorMessage += $@"Make sure to fix the error and return valid JSON response
+					foreach (var invalidFunction in invalidFunctions.Errors)
+					{
+						errorMessage += " - " + invalidFunction.Message;
+					}
+					errorMessage += $@"Make sure to fix the error and return valid JSON response
 ## Error from previous LLM request ##
 
 				";
-				return await Build(step, responseType, errorMessage, ++errorCount);
+					return await Build(step, responseType, errorMessage, ++errorCount);
+				}
+
+				//cleanup for next time
+				appendedSystemCommand.Clear();
+				appendedAssistantCommand.Clear();
+				assistant = "";
+				system = "";
+
+
+				return (instruction, null);
+			} catch (ParsingException ex)
+			{
+				string? innerMessage = ex.InnerException?.Message;
+				if (ex.InnerException?.InnerException != null)
+				{
+					innerMessage = ex.InnerException?.InnerException.Message;
+				}
+				
+				return await Build(step, responseType, 
+					$@"
+<error>
+{innerMessage}
+{ex.Message}
+<error>
+
+Previous LLM request resulted in this error, see in <error>. 
+Make sure to use the information in <error> to return valid JSON response"
+, ++errorCount);
 			}
-
-			//cleanup for next time
-			appendedSystemCommand.Clear();
-			appendedAssistantCommand.Clear();
-			assistant = "";
-			system = "";
-
-
-			return (instruction, null);
 		}
 
 		public record Parameter(string Type, string Name, object? Value);

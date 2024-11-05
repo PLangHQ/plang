@@ -5,8 +5,21 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
-    <IsPackable>false</IsPackable>
+    <IsPackable>true</IsPackable>
     <IsTestProject>true</IsTestProject>
+
+		<Authors>Ingi Gauti Ragnarsson</Authors>
+		<Company>Plang</Company>
+		<PackageId>PlangLibrary.Tests</PackageId>
+		<Title>PlangLibrary.Tests</Title>
+		<Description>Plang language test library for core</Description>
+		<PackageTags>plang</PackageTags>
+		<RepositoryUrl>https://github.com/PLangHQ/plang/</RepositoryUrl>
+		<PackageLicenseExpression>LGPL-2.0-or-later</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -33,6 +46,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PLang\PLang.csproj" />
+		<None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>

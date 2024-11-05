@@ -142,8 +142,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "8433b616a0b1d8706aa4994b33b8b4f3cfdee33413b5cabbeb403927521a4fae",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "2d7e6f46139a3770f6a6e232c8d0be4b8cd89917fef68aa562cbe1acbf34a3b7",
+      "BuilderVersion": null
     },
     {
       "Text": "dotnet publish PlangConsole/PLangConsole.csproj -c Release -r %platform% --self-contained true -o ./publish/plang -p:Version=%version%\n    working dir ../",
@@ -213,8 +213,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "16f2274e47690689e8f1713db35cffde7b68a3651a2a125d5f5e201c498c6569",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "af00b2b934b824ad0f4d5ae08099c9910ed9f04e3860bc01150127742f5b43f5",
+      "BuilderVersion": null
     },
     {
       "Text": "if %platform% == 'win-x64' then",
@@ -284,8 +284,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "a67c9a057b803e202f423180dfffd13652ecd157655ca8b1656d79e7826c7b14",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "f4d1f858788a6f625c521bd6e8b0351eee6aec2a5814edd8a43024753a0930ac",
+      "BuilderVersion": null
     },
     {
       "Text": "dotnet publish PlangWindowForms/PLangWindowForms.csproj -c Release -r win-x64 --self-contained true -o ./publish/plang -p:Version=%version%\n    working dir ../   ",
@@ -355,8 +355,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "b7a4b747bd6af09a9caf6ffdf1a3a0431e17d6ef07b5540c2c90abf973a1bec9",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "8f8d796864397f9c74f893b241815e4f44fedb5bd95969bbf678595d0287f33e",
+      "BuilderVersion": null
     },
     {
       "Text": "write out 'Compress plang folder'",
@@ -426,8 +426,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "3eab2b21b405df5f7817271c70cd34c66476c1ba39d6c8a58225edc3ba422dd3",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "7ce3ee8d12d37019bde5428abeb62722f28de73afeaec83ad10eefc28bef8667",
+      "BuilderVersion": null
     },
     {
       "Text": "compress folder 'plang', dont include base, to 'plang-%platform%.zip', overwrite",
@@ -497,8 +497,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "d32bf11827265de028b4e2e309c60e1af49ed47184cb0e018aea364b85ad0d22",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "43cc9b6fc24c488d7a050e8fef0da1e71b0bca0c755f2eee584152a8080da019",
+      "BuilderVersion": null
     },
     {
       "Text": "delete folder 'plang'",
@@ -568,8 +568,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "5e926c285af704c55a73aa50feac6101cf320f8e48139d36a739172b61aa485e",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "127e44073d2c4f91d8eef2aff143f30960fc78bb9c1f64cccc5df37d1820314c",
+      "BuilderVersion": null
     },
     {
       "Text": "write out \"Done at %Now%\"",
@@ -639,8 +639,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "27ed0fd37edb7296f16c8f7b1b0d2e35283eb4d2522038cd05cc93177f417857",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "0e0c8f062034f04180ec0f2b7fcdba574a3deef980169152a3fa59c6e808e84e",
+      "BuilderVersion": null
     }
   ],
   "SubGoals": [],
@@ -655,7 +655,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "c1c73794debcef0a2160c2456d55a0a4314895f90e97503cbaa9b44c5ee7c364",
+  "Hash": "c5260c65674c91f8a0035f12f40bc80207bdc9f8f5222732f6585f0a3b7e744b",
   "IncomingVariablesRequired": [
     "platform",
     "version"

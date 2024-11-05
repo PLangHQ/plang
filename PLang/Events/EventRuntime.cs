@@ -283,7 +283,7 @@ namespace PLang.Events
 
 		}
 
-		private async Task<IError?> HandleError(PLangAppContext context, Goal goal, IError error, GoalStep? step, List<EventBinding> eventsToRun)
+		private async Task<IError?> HandleGoalError(PLangAppContext context, Goal goal, IError error, GoalStep? step, List<EventBinding> eventsToRun)
 		{
 			if (eventsToRun.Count == 0) return error;
 
@@ -332,11 +332,12 @@ namespace PLang.Events
 		public async Task<IError?> RunGoalErrorEvents(PLangAppContext context, Goal goal, int goalStepIndex, IError error)
 		{
 			if (runtimeEvents == null || context.ContainsKey(ReservedKeywords.IsEvent)) return error;
+			
 
 			var step = (goalStepIndex != -1 && goalStepIndex < goal.GoalSteps.Count) ? goal.GoalSteps[goalStepIndex] : null;
 			var eventsToRun = runtimeEvents.Where(p => p.EventScope == EventScope.GoalError).ToList();
 
-			return await HandleError(context, goal, error, step, eventsToRun);
+			return await HandleGoalError(context, goal, error, step, eventsToRun);
 
 		}
 
@@ -433,9 +434,7 @@ namespace PLang.Events
 			}
 
 			List<EventBinding> eventsToRun = new();
-			eventsToRun.AddRange(runtimeEvents.Where(p => p.EventType == EventType.Before && p.EventScope == EventScope.StepError).ToList());
-
-
+			//eventsToRun.AddRange(runtimeEvents.Where(p => p.EventType == EventType.Before && p.EventScope == EventScope.StepError).ToList());
 
 			var errorHandler = StepHelper.GetErrorHandlerForStep(step.ErrorHandlers, error);
 			if (errorHandler != null)
@@ -451,7 +450,7 @@ namespace PLang.Events
 				}
 			}
 
-			eventsToRun.AddRange(runtimeEvents.Where(p => p.EventType == EventType.After && p.EventScope == EventScope.StepError).ToList());
+			eventsToRun.AddRange(runtimeEvents.Where(p => p.EventScope == EventScope.StepError).ToList());
 
 			if (eventsToRun.Count == 0)
 			{
@@ -460,29 +459,19 @@ namespace PLang.Events
 			}
 			else
 			{
-				bool shouldContinueNextStep = false;
-				var multiError = new MultipleError(error);
 				foreach (var eve in eventsToRun)
 				{
 					if (GoalHasBinding(goal, eve) && IsStepMatch(step, eve))
 					{
 						var eventError = await Run(context, eve, goal, step, error);
-						if (eventError != null)
-						{
-							multiError.Add(eventError);
-						}
+						if (eventError != null) return eventError;
+
+						if (eve.OnErrorContinueNextStep) return null;
+
+						return error;
 					}
 
-					//comment: this might be a bad idea, what happens when you have multiple events, on should continue other not
-					if (!shouldContinueNextStep) shouldContinueNextStep = eve.OnErrorContinueNextStep;
-
 				}
-				if (shouldContinueNextStep) return null;
-				if (multiError.Errors.Count == 0) return multiError.InitialError;
-
-				var endGoal = multiError.Errors.FirstOrDefault(p => p is EndGoal);
-				if (endGoal != null) { return endGoal; }
-
 			}
 
 			return error;

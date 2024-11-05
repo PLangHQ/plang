@@ -142,8 +142,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "c8328a1cc190a4d7d34cc98c5ad554aff302b854671731f328d5d0695e156095",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "241063416d24f218706c9821b2a861003305aa331fdf1525794102d7a138d4c9",
+      "BuilderVersion": null
     },
     {
       "Text": "write out 'Building project - Version:%version%'",
@@ -355,8 +355,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "ffd1509aad419e087ca91f2609e8be741212c191d1c3f9a61432f8286923aa62",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "ca92ecf58065e1d0a8a8fdd8b96c64600c1a3eaf24a42a662938d004fbcf162b",
+      "BuilderVersion": null
     },
     {
       "Text": "foreach %zipFiles% call !RemoveFile",
@@ -426,8 +426,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "988216d22990efef6c618609c16bbb9df2a30359ddeb83bcbf889d38fbdd6be1",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "8bfa95e8108b405fdcb1ecd7e069048dbd394f7c32eaba83fc67b2bd76dc32c8",
+      "BuilderVersion": null
     },
     {
       "Text": "[code] create string list for 'linux-x64', 'win-x64', 'linux-arm64', 'osx-x64', 'osx-arm64', write to %platforms%",
@@ -497,8 +497,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "f1880c8900d82a3a3846b4535c2a3a0fe6b166c9096f608327ff2d89c27766c7",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "4f35bfbc8e02565764fb0adecac40a496102fd57b611219ac84f0a45ac36e767",
+      "BuilderVersion": null
     },
     {
       "Text": "foreach %platforms%, call BuildPlatform %platform%=item",
@@ -568,8 +568,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "ab0ec8d30714395b7735e23d109d7ec1986859b10ae08116d69bea305b5f8030",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "aa4b2c369ca42545f4daa2a093b5cf51a25f8fd43d096f2adec40c321a1a8a88",
+      "BuilderVersion": null
     }
   ],
   "SubGoals": [
@@ -587,7 +587,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "6fbdb86546e6d11ace5b2ac41c39e549bae3bf3aeb2c2d34bf708f47e9cf529e",
+  "Hash": "8ffa69cc70534f1817348704c9d62da79c8360fa8d42a07641677b679e687c57",
   "IncomingVariablesRequired": [
     "Now",
     "version",

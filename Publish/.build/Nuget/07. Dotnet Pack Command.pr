@@ -1,26 +1,51 @@
 {
   "Action": {
-    "FunctionName": "Throw",
+    "FunctionName": "RunTerminal",
     "Parameters": [
       {
-        "Type": "Object",
-        "Name": "message",
-        "Value": "Version %version% is already published"
+        "Type": "String",
+        "Name": "appExecutableName",
+        "Value": "dotnet"
+      },
+      {
+        "Type": "List`1<String>",
+        "Name": "parameters",
+        "Value": [
+          "pack",
+          "--configuration",
+          "Release",
+          "-p:Version=%version%"
+        ]
       },
       {
         "Type": "String",
-        "Name": "type",
-        "Value": "error"
+        "Name": "pathToWorkingDirInTerminal",
+        "Value": "../PlangTests"
       },
       {
-        "Type": "Int32",
-        "Name": "statusCode",
-        "Value": 400
+        "Type": "String",
+        "Name": "dataOutputVariable",
+        "Value": null
+      },
+      {
+        "Type": "String",
+        "Name": "errorDebugInfoOutputVariable",
+        "Value": null
+      },
+      {
+        "Type": "String",
+        "Name": "dataStreamDelta",
+        "Value": null
+      },
+      {
+        "Type": "String",
+        "Name": "debugErrorStreamDelta",
+        "Value": null
       }
     ],
     "ReturnValues": null
   },
-  "Text": "show error \"Version %version% is already published\"",
+  "Text": "dotnet pack --configuration Release -p:Version=%version%, working dir ../PlangTests",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -30,7 +55,7 @@
     "maxLength": 4000,
     "llmResponseType": "json",
     "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-    "model": "gpt-4o-2024-08-06",
+    "model": "gpt-4o",
     "promptMessage": [
       {
         "role": "system",
@@ -50,7 +75,11 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nThrow(Object message, String? type = \"error\", Int32? statusCode = 400)  : void  // When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc. type can be error|critical. statusCode(like http status code) should be defined by user.. \nEndGoalExecution(String? message, Int32? levels = 0)  : void  // When user intends the execution of the goal to stop without giving a error response. This is equal to doing return in a function. Depth is how far up the stack it should end, previous goal is 1. \nEndApp()  : void // Shutdown the application.\r\n## functions available ends ##\r\n## defined variables ##\r\nversion (type:String), \r\n## defined variables ##"
+            "text": "## functions available starts ##\r\nRead(String variableName)  : void\nRunTerminal(String appExecutableName, List`1<String>? parameters, String? pathToWorkingDirInTerminal, String? dataOutputVariable, String? errorDebugInfoOutputVariable, String? dataStreamDelta, String? debugErrorStreamDelta)  : void\r\n## functions available ends ##\r\n## defined variables ##\r\nversion (type:String), \r\n## defined variables ##"
+          },
+          {
+            "type": "text",
+            "text": "Remove % around dataOutputVariable and errorDebugInfoOutputVariable"
           }
         ]
       },
@@ -59,14 +88,14 @@
         "content": [
           {
             "type": "text",
-            "text": "show error \"Version %version% is already published\""
+            "text": "dotnet pack --configuration Release -p:Version=%version%, working dir ../PlangTests"
           }
         ]
       }
     ],
-    "type": "PLang.Modules.GenericFunctionBuilder",
+    "type": "PLang.Modules.TerminalModule.Builder",
     "caching": true,
-    "RawResponse": "```json\n{\n\t\"FunctionName\": \"Throw\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"Name\": \"message\",\n\t\t\t\"Value\": \"Version %version% is already published\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"type\",\n\t\t\t\"Value\": \"error\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Int32\",\n\t\t\t\"Name\": \"statusCode\",\n\t\t\t\"Value\": 400\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"RunTerminal\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"appExecutableName\",\n\t\t\t\"Value\": \"dotnet\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"List`1<String>\",\n\t\t\t\"Name\": \"parameters\",\n\t\t\t\"Value\": [\n\t\t\t\t\"pack\",\n\t\t\t\t\"--configuration\",\n\t\t\t\t\"Release\",\n\t\t\t\t\"-p:Version=%version%\"\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"pathToWorkingDirInTerminal\",\n\t\t\t\"Value\": \"../PlangTests\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"dataOutputVariable\",\n\t\t\t\"Value\": null\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"errorDebugInfoOutputVariable\",\n\t\t\t\"Value\": null\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"dataStreamDelta\",\n\t\t\t\"Value\": null\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"debugErrorStreamDelta\",\n\t\t\t\"Value\": null\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
   },
   "RunOnBuild": false
 }

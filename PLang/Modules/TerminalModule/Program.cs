@@ -45,6 +45,9 @@ namespace PLang.Modules.TerminalModule
 			if (string.IsNullOrWhiteSpace(pathToWorkingDirInTerminal))
 			{
 				pathToWorkingDirInTerminal = fileSystem.GoalsPath;
+			} else
+			{
+				pathToWorkingDirInTerminal = GetPath(pathToWorkingDirInTerminal);
 			}
 			ProcessStartInfo startInfo = new ProcessStartInfo
 			{

@@ -5,5 +5,10 @@ Nuget
 - dotnet nuget push ../PLang/bin/Release/PlangLibrary.%version%.nupkg --api-key %Settings.NugetApiKey% --source https://api.nuget.org/v3/index.json
     , write to %output%, %error%
 - if %output% contains "already exists and cannot be modified"
-    - show error "Version %version% is already published"
+    - logger warning "Version %version% is already published"
+- dotnet pack --configuration Release -p:Version=%version%, working dir ../PlangTests
+- dotnet nuget push ../PLang/bin/Release/PlangLibrary.Tests.%version%.nupkg --api-key %Settings.NugetApiKey% --source https://api.nuget.org/v3/index.json
+    , write to %output%, %error%
+- if %output% contains "already exists and cannot be modified"
+    - logger warning "Test Version %version% is already published"
 - write out "Published - %version%"

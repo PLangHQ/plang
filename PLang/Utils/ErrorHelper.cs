@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Builder;
+using PLang.Errors.Events;
 using PLang.Errors.Runtime;
 using static PLang.Modules.BaseBuilder;
 
@@ -53,6 +54,10 @@ namespace PLang.Utils
 			if (error is MultipleError me)
 			{
 				if (me.Errors.Count == 0) error = me.InitialError;
+			}
+			if (error is RuntimeEventError rve && rve.InitialError != null)
+			{
+				error = rve.InitialError;
 			}
 
 

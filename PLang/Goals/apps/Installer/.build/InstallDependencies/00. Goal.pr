@@ -146,17 +146,17 @@
       "BuilderVersion": null
     },
     {
-      "Text": "filter %libraries% where property starts with \"%libraryName%/\", return first, write to %library%",
+      "Text": "filter %libraries% where property starts with \"%libraryName%/\",return first, write to %library%",
       "Comment": null,
       "ModuleType": "PLang.Modules.FilterModule",
       "Name": "FilterLibraries",
-      "Description": "Filter the list of libraries to find the first library whose property starts with the specified library name followed by a slash, and write the result to the variable %library%.",
+      "Description": "Filter the list of libraries to find the first one where the property starts with the specified library name followed by a slash, and write the result to the variable %library%.",
       "PrFileName": "03. FilterLibraries.pr",
       "RelativePrPath": ".build\\InstallDependencies\\03. FilterLibraries.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-10-29T14:07:57.5728343+00:00",
+      "Generated": "2024-11-04T16:22:10.4776901+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -202,18 +202,18 @@
             "content": [
               {
                 "type": "text",
-                "text": "filter %libraries% where property starts with \"%libraryName%/\", return first, write to %library%"
+                "text": "filter %libraries% where property starts with \"%libraryName%/\",return first, write to %library%"
               }
             ]
           }
         ],
         "type": "StepInformationBuilder",
         "caching": true,
-        "RawResponse": "```json\n{\n\t\"StepName\": \"FilterLibraries\",\n\t\"StepDescription\": \"Filter the list of libraries to find the first library whose property starts with the specified library name followed by a slash, and write the result to the variable %library%.\",\n\t\"Modules\": [\"PLang.Modules.FilterModule\", \"PLang.Modules.ListDictionaryModule\"]\n}\n```"
+        "RawResponse": "```json\n{\n\t\"StepName\": \"FilterLibraries\",\n\t\"StepDescription\": \"Filter the list of libraries to find the first one where the property starts with the specified library name followed by a slash, and write the result to the variable %library%.\",\n\t\"Modules\": [\"PLang.Modules.FilterModule\", \"PLang.Modules.ListDictionaryModule\"]\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "9e37f3ab032c563813e543f3c0b1c21ec765141200bffaa3dca8199e0f89b59c",
+      "Hash": "685bbf9632fd48f82464bb17653d3b8cdfadf9c2e88039e053789cbb8669cf24",
       "BuilderVersion": "1.0.0.0"
     },
     {
@@ -284,8 +284,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "ce0a95a24a0a8d731502986ab725f686057840fff8265dc360d99dc09f43702b",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "728bd93e64eb2c49bccbea0885f28c91f7c0a3af471c577c7051d03e889950d2",
+      "BuilderVersion": null
     },
     {
       "Text": "end with error, 'Library %libraryName% could not be found in depency file'",
@@ -355,8 +355,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "b274d931c6511581aa10caaa84ae01a87519d6a8edcdc26f28a934a60a8bfb37",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "332ccb6140ce575a8ab18a1dc77a5558b9fb8b93e4550416c3bd402722180d4a",
+      "BuilderVersion": null
     },
     {
       "Text": "download file https://www.nuget.org/api/v2/package/%library.path% if it doesnt exist and save to \"%pathToSave%/%library.path%.nupkg\"",
@@ -426,8 +426,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "120cbcded0166d9180f5ff9b66b672556ff3d7b9f7a804cdca0eff3be77fcbec",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "d199734a5f3a562d4373900b743314a902bfb9235c4301b04a4a6e5973a91d2c",
+      "BuilderVersion": null
     },
     {
       "Text": "unzip \"%pathToSave%/%library.path%.nupkg\", to %pathToSave%/%library.path%, overwrite\n    on error message 'process cannot access', ignore",
@@ -513,7 +513,7 @@
     }
   ],
   "SubGoals": [],
-  "Description": "The InstallDependencies goal is designed to read a dependencies file specified by \\%depsFile\\%, filter the contents to find libraries, and then locate a specific library defined by \\%libraryName\\%. If the library is found, it downloads the corresponding package from NuGet and unzips it to a specified path. If the library cannot be found, an error is raised. Additionally, it validates the SHA512 signature of the downloaded package.",
+  "Description": "The InstallDependencies goal is designed to read a dependencies file specified by \\%depsFile\\%, parse it into a JSON format stored in \\%json\\%, and filter the JSON to extract libraries into \\%libraries\\%. It then searches for a specific library, indicated by \\%libraryName\\%, within the filtered libraries. If the library is not found, the process will terminate with an error message indicating that the library could not be found. If the library is found, the goal will check if the corresponding package file exists at the specified path. If it does not exist, it will download the package from the NuGet repository using the path defined in \\%library.path\\% and save it to the specified location \\%pathToSave\\%. The goal also includes a validation step for the SHA512 signature of the downloaded package, throwing an error if the signature does not match. Finally, it unzips the downloaded package to the specified path, allowing for overwriting existing files while ignoring access errors.",
   "Visibility": 1,
   "GoalFileName": "InstallDependencies.goal",
   "RelativeGoalPath": "\\InstallDependencies.goal",
@@ -524,7 +524,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "f6db9922685ddec575ba9e851765e0278b5c28a84e2b8c23e5df1abddc28eae6",
+  "Hash": "c459c46b5bf7402023838cc1e9a7fe5f79fe03256523a6dd6ad4b1b9b708fa8a",
   "IncomingVariablesRequired": [
     "depsFile",
     "libraryName",

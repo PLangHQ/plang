@@ -93,7 +93,7 @@ namespace PLang.Events
 User will provide event binding, you will be provided with c# model to map the code to. 
 {buildLlmSystemInfo}
 
-EventType is required, Error defaults to 'Before' EventType if not defined by user.
+EventType is required, Error defaults to 'After' EventType if not defined by user.
 EventScope defines at what stage the event should run, it can be on goal, step, start of app, end of app, etc. See EventScope definition below.
 GoalToBindTo is required. This can a specific Goal or more generic, such as bind to all goals in specific folder. When undefined set as *. Convert to matching pattern(regex) for folder matching. e.g. input value could be /api, if bind to goal is api/*, it should match
 GoalToCall is required. This should be a specific goal, should start with !. Example: !AppName/GoalName.  

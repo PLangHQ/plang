@@ -159,6 +159,7 @@ namespace PLang.Modules.ScheduleModule
 
 				while (true)
 				{
+					
 					await RunScheduledTasks(settings, engine, prParser, logger, pseudoRuntime, fileSystem, outputStreamFactory);
 
 					//run every 1 min
@@ -188,7 +189,7 @@ namespace PLang.Modules.ScheduleModule
 		private async Task RunScheduledTasks(ISettings settings, IEngine engine, PrParser prParser, ILogger logger, IPseudoRuntime pseudoRuntime, IPLangFileSystem fileSystem, IOutputStreamFactory outputStreamFactory)
 		{
 			logger.LogDebug("Running 1 min cron check");
-			CronJob item = null;
+			CronJob? item = null;
 			try
 			{
 				var list = settings.GetValues<CronJob>(typeof(ModuleSettings)).Where(p => !p.IsArchived).ToList();
@@ -215,6 +216,8 @@ namespace PLang.Modules.ScheduleModule
 
 					using (CancellationTokenSource cts = new CancellationTokenSource())
 					{
+						engine.GetMemoryStack().Clear();
+
 						int maxExecutionTime = (item.MaxExecutionTimeInMilliseconds == 0) ? 30000 : item.MaxExecutionTimeInMilliseconds;
 						cts.CancelAfter(maxExecutionTime);
 						var result = await pseudoRuntime.RunGoal(engine, engine.GetContext(), fileSystem.RelativeAppPath, item.GoalName, item.Parameters);

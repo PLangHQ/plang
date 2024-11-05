@@ -94,7 +94,7 @@ can return a list of elements or one element, depending on if retrieveOneItem is
 This function is appropriate when the user specifies conditions that involve both a property and a value, such as ""property is 'Name' and value is 'John'"", or when operators on both the property and value are needed.
 
 propertyToFilterOn: required, property of a list to filter on
-valueToFilterBy: required, find a specific value on the propertyToFilterOn
+valueToFilterBy: required, find a specific Value that is stored in the propertyToFilterOn
 operatorOnPropertyToFilter can be following(sperated by |): <|>|equals|startswith|endswith|contains.
 retrieveOneItem: first|last|retrieveOneItem can also be a number representing the index.
 operatorOnPropertyToFilter: equals|startswith|endswith|contains
