@@ -53,3 +53,7 @@ Get detailed information about the current step and the code being executed.
 
 
 These features and tools will enhance your development experience with Plang, making it easier to write, test, and debug your code. Enjoy coding with Plang in Visual Studio Code!
+
+## Back to Get Started
+
+Now go back to the [Get Started](./GetStarted.md) page to write your first plang app, "Hello plang world"
