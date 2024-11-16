@@ -104,6 +104,12 @@ Now lets test this, run the following from your `Todo` folder
 plang test/TestNewLllmTask
 ```
 
+You now view what you added by runing
+
+```bash
+plang test/GetList
+```
+
 ## What is This New Approach?
 
 Think about how you create a todo list in the physical world. You simply write it down without worrying about structure. In today's software, we often use structured forms for data input, which can be cumbersome for users.
