@@ -1,4 +1,6 @@
-﻿using LightInject;
+﻿using System.Data;
+using System.Runtime.CompilerServices;
+using LightInject;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using NSubstitute;
@@ -20,293 +22,284 @@ using PLang.Services.SettingsService;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using PLangTests.Mocks;
-using System.Data;
-using System.Runtime.CompilerServices;
 using static PLang.Modules.BaseBuilder;
+using Path = System.IO.Path;
 
-namespace PLangTests
+namespace PLangTests;
+
+public class BasePLangTest
 {
-	public class BasePLangTest
-	{
-		protected IServiceContainer container;
+    protected IAppCache appCache;
+    protected IPLangAppsRepository appsRepository;
+    protected IArchiver archiver;
+    protected IAskUserHandler askUserHandler;
+    protected IAskUserHandlerFactory askUserHandlerFactory;
+    protected IServiceContainer container;
+    protected IServiceContainerFactory containerFactory;
+    protected PLangAppContext context;
+    protected IDbConnection db;
+    protected IEncryption encryption;
+    protected IEncryptionFactory encryptionFactory;
+    protected IEngine engine;
+    protected IErrorHandler errorHandler;
+    protected IErrorHandlerFactory errorHandlerFactory;
+    protected IErrorSystemHandlerFactory errorSystemHandlerFactory;
+    protected IEventRuntime eventRuntime;
+    protected IEventSourceRepository eventSourceRepository;
+    protected IFileAccessHandler fileAccessHandler;
+    protected PLangMockFileSystem fileSystem;
+    protected HttpClient httpClient;
+    protected IHttpClientFactory httpClientFactory;
+    protected IPLangIdentityService identityService;
+    protected LlmCaching llmCaching;
+    protected ILlmService llmService;
+    protected ILlmServiceFactory llmServiceFactory;
 
-		protected MockLogger logger;
-		protected PLangMockFileSystem fileSystem;
-		protected ILlmService llmService;
-		protected ILlmServiceFactory llmServiceFactory;
-		protected IPseudoRuntime pseudoRuntime;
-		protected IEngine engine;
-		protected ISettingsRepository settingsRepository;
-		protected ISettings settings;
-		protected IEventRuntime eventRuntime;
-		protected ITypeHelper typeHelper;
-		protected PrParser prParser;
-		protected PLangAppContext context;
-		protected HttpClient httpClient;
-		protected LlmCaching llmCaching;
-		protected IServiceContainerFactory containerFactory;
-		protected MemoryStack memoryStack;
-		protected VariableHelper variableHelper;
-		protected IDbConnection db;
-		protected IArchiver archiver;
-		protected IEventSourceRepository eventSourceRepository;
-		protected IEncryption encryption;
-		protected IEncryptionFactory encryptionFactory;
-		protected IOutputStream outputStream;
-		protected IOutputStream outputSystemStream;
-		protected IOutputStreamFactory outputStreamFactory;
-		protected IOutputSystemStreamFactory outputSystemStreamFactory;
-		protected IAppCache appCache;
-		protected IPLangIdentityService identityService;
-		protected IPLangSigningService signingService;
-		protected IPLangAppsRepository appsRepository;
-		protected IHttpClientFactory httpClientFactory;
-		protected IAskUserHandlerFactory askUserHandlerFactory;
-		protected IAskUserHandler askUserHandler;
-		protected IErrorHandler errorHandler;
-		protected IErrorHandlerFactory errorHandlerFactory;
-		protected IErrorSystemHandlerFactory errorSystemHandlerFactory;
-		protected ISettingsRepositoryFactory settingsRepositoryFactory;
-		protected IFileAccessHandler fileAccessHandler;
-		protected void Initialize()
-		{
+    protected MockLogger logger;
+    protected MemoryStack memoryStack;
+    protected IOutputStream outputStream;
+    protected IOutputStreamFactory outputStreamFactory;
+    protected IOutputStream outputSystemStream;
+    protected IOutputSystemStreamFactory outputSystemStreamFactory;
+    protected PrParser prParser;
+    protected IPseudoRuntime pseudoRuntime;
+    protected ISettings settings;
+    protected ISettingsRepository settingsRepository;
+    protected ISettingsRepositoryFactory settingsRepositoryFactory;
+    protected IPLangSigningService signingService;
+    protected ITypeHelper typeHelper;
+    protected VariableHelper variableHelper;
 
-			container = CreateServiceContainer();
+    protected void Initialize()
+    {
+        container = CreateServiceContainer();
+    }
 
-		}
+    protected void LoadOpenAI()
+    {
+        settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>())
+            .Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
 
-		protected void LoadOpenAI()
-		{
-			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
+        var llmService = new OpenAiService(settings, logger, llmCaching, context);
+        llmServiceFactory.CreateHandler().Returns(llmService);
+    }
 
-			var llmService = new OpenAiService(settings, logger, llmCaching, context);
-			llmServiceFactory.CreateHandler().Returns(llmService);
-		}
-		protected IServiceContainer CreateServiceContainer()
-		{
-			AppContext.SetSwitch(ReservedKeywords.Test, true);
-			container = new ServiceContainer();
-			context = new PLangAppContext();
-			fileSystem = new PLangMockFileSystem();
-			fileSystem.AddFile(System.IO.Path.Join(Environment.CurrentDirectory, ".build", "info.txt"), Guid.NewGuid().ToString());
-
-
-			container.RegisterInstance<IPLangFileSystem>(fileSystem);
-			container.RegisterInstance<IServiceContainer>(container);
-			this.settingsRepository = new SqliteSettingsRepository(fileSystem, context, logger);
-			container.RegisterInstance<ISettingsRepository>(settingsRepository);
-
-			fileAccessHandler = Substitute.For<IFileAccessHandler>();
-			settingsRepositoryFactory = Substitute.For<ISettingsRepositoryFactory>();
-			settingsRepositoryFactory.CreateHandler().Returns(settingsRepository);
-			container.RegisterInstance<ISettingsRepositoryFactory>(settingsRepositoryFactory);
-
-			containerFactory = Substitute.For<IServiceContainerFactory>();
-			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), 
-				Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), Arg.Any<IErrorSystemHandlerFactory>(), Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
-			{
-				var container = CreateServiceContainer();
-
-				IEngine engine = container.GetInstance<IEngine>();
-				engine.GetMemoryStack().Returns(a =>
-				{
-					return new MemoryStack(pseudoRuntime, engine, settings, context);
-				});
-				return container;
-			});
-			container.RegisterInstance<IServiceContainerFactory>(containerFactory);
-
-			context = new PLangAppContext();
-			container.RegisterInstance(context);
-
-			context.AddOrReplace(ReservedKeywords.Inject_Caching, typeof(InMemoryCaching).FullName);
-
-			appCache = new InMemoryCaching();
-			container.RegisterInstance<IAppCache>(appCache, "PLang.Services.CachingService.InMemoryCaching");
-
-			logger = Substitute.For<MockLogger>();
-			//logger = new PLang.Utils.Logger<BasePLangTest>();
-			container.RegisterInstance<ILogger>(logger);
-
-			identityService = Substitute.For<IPLangIdentityService>();
-			container.RegisterInstance(identityService);
-			signingService = Substitute.For<IPLangSigningService>();
-			container.RegisterInstance(signingService);
-
-			llmService = Substitute.For<ILlmService>();
-			container.RegisterInstance(llmService);
-			llmServiceFactory = Substitute.For<ILlmServiceFactory>();
-			llmServiceFactory.CreateHandler().Returns(llmService);
-			container.RegisterInstance(llmServiceFactory);
-
-			askUserHandler = Substitute.For<IAskUserHandler>();
-			container.RegisterInstance(askUserHandler);
-			askUserHandlerFactory = Substitute.For<IAskUserHandlerFactory>();
-			askUserHandlerFactory.CreateHandler().Returns(askUserHandler);
-			container.RegisterInstance(askUserHandlerFactory);
-
-			outputStream = Substitute.For<IOutputStream>();
-			container.RegisterInstance(outputStream);
-			outputStreamFactory = Substitute.For<IOutputStreamFactory>();
-			outputStreamFactory.CreateHandler().Returns(outputStream);
-			container.RegisterInstance(outputStreamFactory);
-
-			outputSystemStream = Substitute.For<IOutputStream>();
-			container.RegisterInstance(outputSystemStream);
-			outputSystemStreamFactory = Substitute.For<IOutputSystemStreamFactory>();
-			outputSystemStreamFactory.CreateHandler().Returns(outputStream);
-			container.RegisterInstance(outputStreamFactory);
+    protected IServiceContainer CreateServiceContainer()
+    {
+        AppContext.SetSwitch(ReservedKeywords.Test, true);
+        container = new ServiceContainer();
+        context = new PLangAppContext();
+        fileSystem = new PLangMockFileSystem();
+        fileSystem.AddFile(Path.Join(Environment.CurrentDirectory, ".build", "info.txt"), Guid.NewGuid().ToString());
 
 
-			httpClientFactory = Substitute.For<IHttpClientFactory>();
-			container.RegisterInstance(httpClientFactory);
+        container.RegisterInstance<IPLangFileSystem>(fileSystem);
+        container.RegisterInstance<IServiceContainer>(container);
+        settingsRepository = new SqliteSettingsRepository(fileSystem, context, logger);
+        container.RegisterInstance<ISettingsRepository>(settingsRepository);
 
-			encryption = Substitute.For<IEncryption>();
-			container.RegisterInstance(encryption);
-			encryptionFactory = Substitute.For<IEncryptionFactory>();
-			encryptionFactory.CreateHandler().Returns(encryption);
+        fileAccessHandler = Substitute.For<IFileAccessHandler>();
+        settingsRepositoryFactory = Substitute.For<ISettingsRepositoryFactory>();
+        settingsRepositoryFactory.CreateHandler().Returns(settingsRepository);
+        container.RegisterInstance<ISettingsRepositoryFactory>(settingsRepositoryFactory);
 
-			container.RegisterInstance(encryptionFactory);
+        containerFactory = Substitute.For<IServiceContainerFactory>();
+        containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(),
+            Arg.Any<IOutputStreamFactory>(),
+            Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(),
+            Arg.Any<IErrorSystemHandlerFactory>(), Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
+        {
+            var container = CreateServiceContainer();
 
-			appsRepository = Substitute.For<IPLangAppsRepository>();
-			container.RegisterInstance(appsRepository);
+            var engine = container.GetInstance<IEngine>();
+            engine.GetMemoryStack().Returns(a => { return new MemoryStack(pseudoRuntime, engine, settings, context); });
+            return container;
+        });
+        container.RegisterInstance<IServiceContainerFactory>(containerFactory);
 
-			engine = Substitute.For<IEngine>();
-			container.RegisterInstance(engine);
+        context = new PLangAppContext();
+        container.RegisterInstance(context);
 
-			settings = Substitute.For<ISettings>();
+        context.AddOrReplace(ReservedKeywords.Inject_Caching, typeof(InMemoryCaching).FullName);
 
-			container.RegisterInstance<ISettings>(settings);
-			pseudoRuntime = Substitute.For<IPseudoRuntime>();
-			container.RegisterInstance(pseudoRuntime);
+        appCache = new InMemoryCaching();
+        container.RegisterInstance<IAppCache>(appCache, "PLang.Services.CachingService.InMemoryCaching");
 
-			eventRuntime = Substitute.For<IEventRuntime>();
-			container.RegisterInstance(eventRuntime);
+        logger = Substitute.For<MockLogger>();
+        //logger = new PLang.Utils.Logger<BasePLangTest>();
+        container.RegisterInstance<ILogger>(logger);
 
-			errorHandler = Substitute.For<IErrorHandler>();
-			container.RegisterInstance(errorHandler);
-			errorHandlerFactory = Substitute.For<IErrorHandlerFactory>();
-			container.RegisterInstance(errorHandlerFactory);
+        identityService = Substitute.For<IPLangIdentityService>();
+        container.RegisterInstance(identityService);
+        signingService = Substitute.For<IPLangSigningService>();
+        container.RegisterInstance(signingService);
 
-			errorSystemHandlerFactory = Substitute.For<IErrorSystemHandlerFactory>();
-			container.RegisterInstance(errorSystemHandlerFactory);
-			db = Substitute.For<IDbConnection>();
-			//container.RegisterInstance(db);
+        llmService = Substitute.For<ILlmService>();
+        container.RegisterInstance(llmService);
+        llmServiceFactory = Substitute.For<ILlmServiceFactory>();
+        llmServiceFactory.CreateHandler().Returns(llmService);
+        container.RegisterInstance(llmServiceFactory);
 
-			eventSourceRepository = Substitute.For<IEventSourceRepository>();
-			container.RegisterInstance(eventSourceRepository);
+        askUserHandler = Substitute.For<IAskUserHandler>();
+        container.RegisterInstance(askUserHandler);
+        askUserHandlerFactory = Substitute.For<IAskUserHandlerFactory>();
+        askUserHandlerFactory.CreateHandler().Returns(askUserHandler);
+        container.RegisterInstance(askUserHandlerFactory);
 
-			container.Register<EventBuilder>();
+        outputStream = Substitute.For<IOutputStream>();
+        container.RegisterInstance(outputStream);
+        outputStreamFactory = Substitute.For<IOutputStreamFactory>();
+        outputStreamFactory.CreateHandler().Returns(outputStream);
+        container.RegisterInstance(outputStreamFactory);
 
-			container.Register<IGoalParser, GoalParser>();
+        outputSystemStream = Substitute.For<IOutputStream>();
+        container.RegisterInstance(outputSystemStream);
+        outputSystemStreamFactory = Substitute.For<IOutputSystemStreamFactory>();
+        outputSystemStreamFactory.CreateHandler().Returns(outputStream);
+        container.RegisterInstance(outputStreamFactory);
 
-			typeHelper = Substitute.For<ITypeHelper>();
-			container.RegisterInstance(typeHelper);
 
-			memoryStack = new MemoryStack(pseudoRuntime, engine, settings, context);
-			container.RegisterInstance(memoryStack);
+        httpClientFactory = Substitute.For<IHttpClientFactory>();
+        container.RegisterInstance(httpClientFactory);
 
-			archiver = Substitute.For<IArchiver>();
-			container.RegisterInstance(archiver);
+        encryption = Substitute.For<IEncryption>();
+        container.RegisterInstance(encryption);
+        encryptionFactory = Substitute.For<IEncryptionFactory>();
+        encryptionFactory.CreateHandler().Returns(encryption);
 
-			prParser = new PrParser(fileSystem);
-			container.RegisterInstance(prParser);
+        container.RegisterInstance(encryptionFactory);
 
-			llmCaching = new LlmCaching(fileSystem, settings);
-			container.RegisterInstance(llmCaching);
+        appsRepository = Substitute.For<IPLangAppsRepository>();
+        container.RegisterInstance(appsRepository);
 
-			variableHelper = new VariableHelper(context, memoryStack, settings);
-			container.RegisterInstance(variableHelper);
+        engine = Substitute.For<IEngine>();
+        container.RegisterInstance(engine);
 
-			container.RegisterInstance(prParser);
-			return container;
-		}
+        settings = Substitute.For<ISettings>();
 
-		public record TestResponse(string stepText, string response, DateTimeOffset? created = null);
+        container.RegisterInstance<ISettings>(settings);
+        pseudoRuntime = Substitute.For<IPseudoRuntime>();
+        container.RegisterInstance(pseudoRuntime);
 
-		public void Store(string stepText, string? response, [CallerMemberName] string caller = "")
-		{
-			if (string.IsNullOrWhiteSpace(response)) return;
+        eventRuntime = Substitute.For<IEventRuntime>();
+        container.RegisterInstance(eventRuntime);
 
-			if (string.IsNullOrWhiteSpace(stepText)) throw new Exception("stepText cannot be empty");
-			if (string.IsNullOrWhiteSpace(caller)) throw new Exception("caller cannot be empty");
+        errorHandler = Substitute.For<IErrorHandler>();
+        container.RegisterInstance(errorHandler);
+        errorHandlerFactory = Substitute.For<IErrorHandlerFactory>();
+        container.RegisterInstance(errorHandlerFactory);
 
-			var dir = GetSourceResponseDir();
-			if (!Directory.Exists(dir))
-			{
-				Directory.CreateDirectory(dir);
-			}
+        errorSystemHandlerFactory = Substitute.For<IErrorSystemHandlerFactory>();
+        container.RegisterInstance(errorSystemHandlerFactory);
+        db = Substitute.For<IDbConnection>();
+        //container.RegisterInstance(db);
 
-			string filePath = System.IO.Path.Combine(dir, caller + ".json");
+        eventSourceRepository = Substitute.For<IEventSourceRepository>();
+        container.RegisterInstance(eventSourceRepository);
 
-			List<TestResponse> responses = new List<TestResponse>();
-			if (File.Exists(filePath))
-			{
-				var jsonFile = File.ReadAllText(filePath);
-				responses = JsonConvert.DeserializeObject<List<TestResponse>>(jsonFile) ?? new List<TestResponse>();
-				var idx = responses.FindIndex(p => p.stepText == stepText);
-				if (idx != -1)
-				{
-					return;
-				}
-			}
-			responses.Add(new TestResponse(stepText, response, DateTimeOffset.Now));
-			File.WriteAllText(filePath, JsonConvert.SerializeObject(responses, Formatting.Indented));
-		}
-		public ILlmService? GetLlmService(string stepText, string caller = "", Type? type = null)
-		{
-			var testResponse = GetLlmTestResponse(stepText, caller);
-			if (testResponse == null) return null;
+        container.Register<EventBuilder>();
 
-			if (type == null) type = typeof(GenericFunction);
+        container.Register<IGoalParser, GoalParser>();
 
-			var llmService = Substitute.For<ILlmService>();
-			llmService.Query(Arg.Any<LlmRequest>(), type).Returns(p =>
-			{
-				return JsonConvert.DeserializeObject(testResponse, type);
-			});
-			llmServiceFactory.CreateHandler().Returns(llmService);
+        typeHelper = Substitute.For<ITypeHelper>();
+        container.RegisterInstance(typeHelper);
 
-			return llmService;
+        memoryStack = new MemoryStack(pseudoRuntime, engine, settings, context);
+        container.RegisterInstance(memoryStack);
 
-		}
-		public string? GetLlmTestResponse(string stepText, [CallerMemberName] string caller = "")
-		{
-			if (string.IsNullOrWhiteSpace(caller)) throw new Exception("caller cannot be empty");
+        archiver = Substitute.For<IArchiver>();
+        container.RegisterInstance(archiver);
 
-			var dir = GetSourceResponseDir();
-			if (!Directory.Exists(dir))
-			{
-				return null;
-			}
-			string filePath = System.IO.Path.Combine(dir, caller + ".json");
-			if (!File.Exists(filePath)) return null;
+        prParser = new PrParser(fileSystem);
+        container.RegisterInstance(prParser);
 
-			var jsonFile = File.ReadAllText(filePath);
-			var responses = JsonConvert.DeserializeObject<List<TestResponse>>(jsonFile) ?? new List<TestResponse>();
-			var testReponse = responses.FirstOrDefault(p => p.stepText == stepText);
-			if (testReponse == null) return null;
-			return testReponse.response;
-		}
+        llmCaching = new LlmCaching(fileSystem, settings);
+        container.RegisterInstance(llmCaching);
 
-		public string GetSourceResponseDir()
-		{
-			string derivedClassPath = this.GetType().Assembly.Location;
-			string moduleFolder = this.GetType().Namespace.Replace("PLang.Modules.", "").Replace(".Tests", "");
-			if (derivedClassPath.ToLower().Contains("ncrunch"))
-			{
-				string testPath = Environment.GetEnvironmentVariable("PlangTestPath");
-				if (string.IsNullOrEmpty(testPath)) throw new Exception("You must set the PlangTestPath environment variable. I should point to PlangTests folder. The PlangTests folder contains Modules folder");
-				return System.IO.Path.Combine(testPath, "Modules", moduleFolder, "responses");
-			}
-			else
-			{
-				string derivedClassDirectory = System.IO.Path.GetDirectoryName(derivedClassPath);
+        variableHelper = new VariableHelper(context, memoryStack, settings);
+        container.RegisterInstance(variableHelper);
 
-				string responsesDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(derivedClassDirectory, $"../../../Modules/{moduleFolder}/responses"));
-				return responsesDir;
-			}
-		}
+        container.RegisterInstance(prParser);
+        return container;
+    }
 
-	}
+    public void Store(string stepText, string? response, [CallerMemberName] string caller = "")
+    {
+        if (string.IsNullOrWhiteSpace(response)) return;
+
+        if (string.IsNullOrWhiteSpace(stepText)) throw new Exception("stepText cannot be empty");
+        if (string.IsNullOrWhiteSpace(caller)) throw new Exception("caller cannot be empty");
+
+        var dir = GetSourceResponseDir();
+        if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+
+        var filePath = Path.Combine(dir, caller + ".json");
+
+        List<TestResponse> responses = new();
+        if (File.Exists(filePath))
+        {
+            var jsonFile = File.ReadAllText(filePath);
+            responses = JsonConvert.DeserializeObject<List<TestResponse>>(jsonFile) ?? new List<TestResponse>();
+            var idx = responses.FindIndex(p => p.stepText == stepText);
+            if (idx != -1) return;
+        }
+
+        responses.Add(new TestResponse(stepText, response, DateTimeOffset.Now));
+        File.WriteAllText(filePath, JsonConvert.SerializeObject(responses, Formatting.Indented));
+    }
+
+    public ILlmService? GetLlmService(string stepText, string caller = "", Type? type = null)
+    {
+        var testResponse = GetLlmTestResponse(stepText, caller);
+        if (testResponse == null) return null;
+
+        if (type == null) type = typeof(GenericFunction);
+
+        var llmService = Substitute.For<ILlmService>();
+        llmService.Query(Arg.Any<LlmRequest>(), type).Returns(p =>
+        {
+            return JsonConvert.DeserializeObject(testResponse, type);
+        });
+        llmServiceFactory.CreateHandler().Returns(llmService);
+
+        return llmService;
+    }
+
+    public string? GetLlmTestResponse(string stepText, [CallerMemberName] string caller = "")
+    {
+        if (string.IsNullOrWhiteSpace(caller)) throw new Exception("caller cannot be empty");
+
+        var dir = GetSourceResponseDir();
+        if (!Directory.Exists(dir)) return null;
+        var filePath = Path.Combine(dir, caller + ".json");
+        if (!File.Exists(filePath)) return null;
+
+        var jsonFile = File.ReadAllText(filePath);
+        var responses = JsonConvert.DeserializeObject<List<TestResponse>>(jsonFile) ?? new List<TestResponse>();
+        var testReponse = responses.FirstOrDefault(p => p.stepText == stepText);
+        if (testReponse == null) return null;
+        return testReponse.response;
+    }
+
+    public string GetSourceResponseDir()
+    {
+        var derivedClassPath = GetType().Assembly.Location;
+        var moduleFolder = GetType().Namespace.Replace("PLang.Modules.", "").Replace(".Tests", "");
+        if (derivedClassPath.ToLower().Contains("ncrunch"))
+        {
+            var testPath = Environment.GetEnvironmentVariable("PlangTestPath");
+            if (string.IsNullOrEmpty(testPath))
+                throw new Exception(
+                    "You must set the PlangTestPath environment variable. I should point to PlangTests folder. The PlangTests folder contains Modules folder");
+            return Path.Combine(testPath, "Modules", moduleFolder, "responses");
+        }
+
+        var derivedClassDirectory = Path.GetDirectoryName(derivedClassPath);
+
+        var responsesDir =
+            Path.GetFullPath(Path.Combine(derivedClassDirectory, $"../../../Modules/{moduleFolder}/responses"));
+        return responsesDir;
+    }
+
+    public record TestResponse(string stepText, string response, DateTimeOffset? created = null);
 }

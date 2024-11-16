@@ -1,10 +1,10 @@
-﻿using LightInject;
+﻿using System.IO.Abstractions.TestingHelpers;
+using LightInject;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using PLang.Building.Model;
 using PLang.Container;
 using PLang.Errors.Handlers;
-using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Services.OutputStream;
@@ -12,178 +12,179 @@ using PLang.Utils;
 using PLangTests;
 using PLangTests.Helpers;
 using PLangTests.Mocks;
-using System.IO.Abstractions.TestingHelpers;
 
-namespace PLang.Runtime.Tests
+namespace PLang.Runtime.Tests;
+
+[TestClass]
+public class PseudoRuntimeTests : BasePLangTest
 {
-	[TestClass()]
-	public class PseudoRuntimeTests : BasePLangTest
-	{
-		PseudoRuntime pseudoRuntime;
-		[TestInitialize()]
-		public void Init()
-		{
-			base.Initialize();
-			SetupGoals();
-		}
+    private PseudoRuntime pseudoRuntime;
 
-		private void SetupGoals()
-		{
-			var settings = container.GetInstance<ISettings>();
-			var fileSystem = (PLangMockFileSystem) container.GetInstance<IPLangFileSystem>();	
+    [TestInitialize]
+    public void Init()
+    {
+        Initialize();
+        SetupGoals();
+    }
 
-			// Goal file that is in root app
-			string GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName), new MockFileData(GoalWith1Step));
+    private void SetupGoals()
+    {
+        var settings = container.GetInstance<ISettings>();
+        var fileSystem = (PLangMockFileSystem)container.GetInstance<IPLangFileSystem>();
 
-			// Goal file that is inside the apps folder
-			string GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName), new MockFileData(GoalWith2Steps));
+        // Goal file that is in root app
+        var GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName),
+            new MockFileData(GoalWith1Step));
 
-			prParser.ForceLoadAllGoals();
+        // Goal file that is inside the apps folder
+        var GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName),
+            new MockFileData(GoalWith2Steps));
 
-
-			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, outputSystemStreamFactory, errorHandlerFactory, errorSystemHandlerFactory, askUserHandlerFactory);
-
-		}
-
-		[TestMethod()]
-		public async Task RunGoalTest_InternalApp()
-		{
-			var context = new PLangAppContext();
-			context.Add("Test", 1);
-			engine.GetGoal("GoalWith1Step.goal").Returns(new Goal());
-			await pseudoRuntime.RunGoal(engine, context, @"\", "GoalWith1Step.goal", new Dictionary<string, object?>());
-
-			await engine.Received(1).RunGoal(Arg.Any<Goal>());
-		}
+        prParser.ForceLoadAllGoals();
 
 
-		
+        pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, outputSystemStreamFactory,
+            errorHandlerFactory, errorSystemHandlerFactory, askUserHandlerFactory);
+    }
 
-		[TestMethod()]
-		public async Task RunGoalTest_AppInAppsFolder_ShouldNotGetContext()
-		{
-			containerFactory = Substitute.For<IServiceContainerFactory>();
-			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(),
-				Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), errorSystemHandlerFactory, Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
-			{
-				var container = CreateServiceContainer();
+    [TestMethod]
+    public async Task RunGoalTest_InternalApp()
+    {
+        var context = new PLangAppContext();
+        context.Add("Test", 1);
+        engine.GetGoal("GoalWith1Step.goal").Returns(new Goal());
+        await pseudoRuntime.RunGoal(engine, context, @"\", "GoalWith1Step.goal", new Dictionary<string, object?>());
 
-				IEngine engine = container.GetInstance<IEngine>();
-				engine.GetMemoryStack().Returns(a =>
-				{
-					return new MemoryStack(pseudoRuntime, engine, settings, context);
-				});
-				engine.GetGoal("GoalWith2Steps").Returns(new Goal());
-				return container;
-			});
+        await engine.Received(1).RunGoal(Arg.Any<Goal>());
+    }
 
 
-			
-			context.Add("Test", 1);
+    [TestMethod]
+    public async Task RunGoalTest_AppInAppsFolder_ShouldNotGetContext()
+    {
+        containerFactory = Substitute.For<IServiceContainerFactory>();
+        containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(),
+            Arg.Any<IOutputStreamFactory>(),
+            Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), errorSystemHandlerFactory,
+            Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
+        {
+            var container = CreateServiceContainer();
 
-			engine.GetMemoryStack().Returns(new MemoryStack(pseudoRuntime, engine, settings, context));
-
-			var parameters = new PLangAppContext();
-			parameters.Add("Name", "Jim");
-
-			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, outputSystemStreamFactory, errorHandlerFactory, errorSystemHandlerFactory, askUserHandlerFactory);
-
-			await pseudoRuntime.RunGoal(engine, context, @"\", "apps/GoalWith2Steps/GoalWith2Steps", parameters);
-
-			await engine.Received(1).RunGoal(Arg.Any<Goal>());
-
-			engine.Received(1).GetMemoryStack();
-
-		}
-
-		[TestMethod()]
-		public async Task RunGoalTest_GoalNotFound()
-		{	
-
-			(var e, var err) = await pseudoRuntime.RunGoal(engine, new(), @"\", "UnknownGoal.goal", new Dictionary<string, object>());
-			Assert.AreEqual("No goals available", err.Message);
-		}
-
-		[TestMethod]
-		public void GetAppAbsolutePath()
-		{
-			string absolutePathToGoal = Path.Join(fileSystem.RootDirectory, "", "apps/GoalWith2Steps/GoalWith2Steps");
-			var result = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoal);
-
-			Assert.AreEqual(Path.Join(fileSystem.RootDirectory, "apps", "GoalWith2Steps"), result.absolutePath);
-			Assert.AreEqual("GoalWith2Steps", result.goalName);
-
-			string absolutePathToGoalInService = Path.Join(fileSystem.RootDirectory, "", ".services/MyService/SendStuff");
-			var pathToService = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoalInService);
-
-			Assert.AreEqual(Path.Join(fileSystem.RootDirectory, ".services", "MyService"), pathToService.absolutePath);
-			Assert.AreEqual("SendStuff", pathToService.goalName);
-
-			string absolutePathToGoalInModule = Path.Join(fileSystem.RootDirectory, "", ".modules/MyModule");
-			var pathToModule = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoalInModule);
-
-			Assert.AreEqual(Path.Join(fileSystem.RootDirectory, ".modules", "MyModule"), pathToModule.absolutePath);
-			Assert.AreEqual("Start", pathToModule.goalName);
+            var engine = container.GetInstance<IEngine>();
+            engine.GetMemoryStack().Returns(a => { return new MemoryStack(pseudoRuntime, engine, settings, context); });
+            engine.GetGoal("GoalWith2Steps").Returns(new Goal());
+            return container;
+        });
 
 
-			string absolutePathToGoalInModuleInApp = Path.Join(fileSystem.RootDirectory, "", ".modules/MyModule/apps/MyInternalApp/Start");
-			var pathToAppInModule = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoalInModuleInApp);
+        context.Add("Test", 1);
 
-			Assert.AreEqual(Path.Join(fileSystem.RootDirectory, ".modules/MyModule/apps/".AdjustPathToOs(), "MyInternalApp"), pathToAppInModule.absolutePath);
-			Assert.AreEqual("Start", pathToAppInModule.goalName);
+        engine.GetMemoryStack().Returns(new MemoryStack(pseudoRuntime, engine, settings, context));
 
-			string absolutePathToGoalInModuleInApp2 = Path.Join(fileSystem.RootDirectory, "", ".modules/MyModule/apps/MyInternalApp/DoStuff");
-			var pathToAppInModule2 = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoalInModuleInApp2);
+        var parameters = new PLangAppContext();
+        parameters.Add("Name", "Jim");
 
-			Assert.AreEqual(Path.Join(fileSystem.RootDirectory, ".modules/MyModule/apps/".AdjustPathToOs(), "MyInternalApp"), pathToAppInModule2.absolutePath);
-			Assert.AreEqual("DoStuff", pathToAppInModule2.goalName);
-		}
+        pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, outputSystemStreamFactory,
+            errorHandlerFactory, errorSystemHandlerFactory, askUserHandlerFactory);
 
+        await pseudoRuntime.RunGoal(engine, context, @"\", "apps/GoalWith2Steps/GoalWith2Steps", parameters);
 
+        await engine.Received(1).RunGoal(Arg.Any<Goal>());
 
-		[TestMethod()]
-		public async Task RunGoalTest_ParametersSetInMemoryStack()
-		{
-			containerFactory = Substitute.For<IServiceContainerFactory>();
-			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), 
-				Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), errorSystemHandlerFactory, Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
-			{
-				var container = CreateServiceContainer();
+        engine.Received(1).GetMemoryStack();
+    }
 
-				IEngine engine = container.GetInstance<IEngine>();
-				engine.GetMemoryStack().Returns(a =>
-				{
-					return new MemoryStack(pseudoRuntime, engine, settings, new PLangAppContext());
-				});
-				engine.GetGoal("GoalWith2Steps").Returns(new Goal());
-				return container;
-			});
+    [TestMethod]
+    public async Task RunGoalTest_GoalNotFound()
+    {
+        var (e, err) = await pseudoRuntime.RunGoal(engine, new PLangAppContext(), @"\", "UnknownGoal.goal",
+            new Dictionary<string, object>());
+        Assert.AreEqual("No goals available", err.Message);
+    }
 
+    [TestMethod]
+    public void GetAppAbsolutePath()
+    {
+        var absolutePathToGoal = Path.Join(fileSystem.RootDirectory, "", "apps/GoalWith2Steps/GoalWith2Steps");
+        var result = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoal);
 
-			var context = new PLangAppContext();
-			context.Add("Test", 1);
-			
-			var memoryStackMock = Substitute.For<MemoryStack>(pseudoRuntime, engine, settings, context);
+        Assert.AreEqual(Path.Join(fileSystem.RootDirectory, "apps", "GoalWith2Steps"), result.absolutePath);
+        Assert.AreEqual("GoalWith2Steps", result.goalName);
 
-			engine.GetMemoryStack().Returns(memoryStackMock);
-			var parameters = new Dictionary<string, object>
-	{
-		{"%Name", "Jim"},
-		{"Age", 30}
-	};
+        var absolutePathToGoalInService = Path.Join(fileSystem.RootDirectory, "", ".services/MyService/SendStuff");
+        var pathToService = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoalInService);
 
-			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, outputSystemStreamFactory, errorHandlerFactory, errorSystemHandlerFactory, askUserHandlerFactory);
+        Assert.AreEqual(Path.Join(fileSystem.RootDirectory, ".services", "MyService"), pathToService.absolutePath);
+        Assert.AreEqual("SendStuff", pathToService.goalName);
 
-			await pseudoRuntime.RunGoal(engine, context, @"\", "apps/GoalWith2Steps/GoalWith2Steps", parameters);
+        var absolutePathToGoalInModule = Path.Join(fileSystem.RootDirectory, "", ".modules/MyModule");
+        var pathToModule = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoalInModule);
 
-			memoryStackMock.Received(1).Put("Name", "Jim");
-			memoryStackMock.Received(1).Put("Age", 30);
-		}
+        Assert.AreEqual(Path.Join(fileSystem.RootDirectory, ".modules", "MyModule"), pathToModule.absolutePath);
+        Assert.AreEqual("Start", pathToModule.goalName);
 
 
+        var absolutePathToGoalInModuleInApp =
+            Path.Join(fileSystem.RootDirectory, "", ".modules/MyModule/apps/MyInternalApp/Start");
+        var pathToAppInModule = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoalInModuleInApp);
+
+        Assert.AreEqual(
+            Path.Join(fileSystem.RootDirectory, ".modules/MyModule/apps/".AdjustPathToOs(), "MyInternalApp"),
+            pathToAppInModule.absolutePath);
+        Assert.AreEqual("Start", pathToAppInModule.goalName);
+
+        var absolutePathToGoalInModuleInApp2 =
+            Path.Join(fileSystem.RootDirectory, "", ".modules/MyModule/apps/MyInternalApp/DoStuff");
+        var pathToAppInModule2 = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoalInModuleInApp2);
+
+        Assert.AreEqual(
+            Path.Join(fileSystem.RootDirectory, ".modules/MyModule/apps/".AdjustPathToOs(), "MyInternalApp"),
+            pathToAppInModule2.absolutePath);
+        Assert.AreEqual("DoStuff", pathToAppInModule2.goalName);
+    }
 
 
-	}
+    [TestMethod]
+    public async Task RunGoalTest_ParametersSetInMemoryStack()
+    {
+        containerFactory = Substitute.For<IServiceContainerFactory>();
+        containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(),
+            Arg.Any<IOutputStreamFactory>(),
+            Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), errorSystemHandlerFactory,
+            Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
+        {
+            var container = CreateServiceContainer();
+
+            var engine = container.GetInstance<IEngine>();
+            engine.GetMemoryStack().Returns(a =>
+            {
+                return new MemoryStack(pseudoRuntime, engine, settings, new PLangAppContext());
+            });
+            engine.GetGoal("GoalWith2Steps").Returns(new Goal());
+            return container;
+        });
+
+
+        var context = new PLangAppContext();
+        context.Add("Test", 1);
+
+        var memoryStackMock = Substitute.For<MemoryStack>(pseudoRuntime, engine, settings, context);
+
+        engine.GetMemoryStack().Returns(memoryStackMock);
+        var parameters = new Dictionary<string, object>
+        {
+            { "%Name", "Jim" },
+            { "Age", 30 }
+        };
+
+        pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, outputSystemStreamFactory,
+            errorHandlerFactory, errorSystemHandlerFactory, askUserHandlerFactory);
+
+        await pseudoRuntime.RunGoal(engine, context, @"\", "apps/GoalWith2Steps/GoalWith2Steps", parameters);
+
+        memoryStackMock.Received(1).Put("Name", "Jim");
+        memoryStackMock.Received(1).Put("Age", 30);
+    }
 }

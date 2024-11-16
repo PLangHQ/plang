@@ -1,46 +1,41 @@
-﻿using Newtonsoft.Json;
-using PLang.Model;
+﻿namespace PLang.Interfaces;
 
-
-namespace PLang.Interfaces
+public class Identity
 {
-	public class Identity
-	{
-		public Identity(string name, string identifier, object? value, bool isDefault = false)
-		{
-			this.Name = name;
-			this.Identifier = identifier;
-			this.Created = DateTime.Now;
-			this.Value = value;
-			this.IsDefault = isDefault;
-		}
-		public string Name { get; set; }
-		public string Identifier { get; set; }
-		public bool IsDefault { get; set; } = false;
-		public bool IsArchived { get; set; } = false;
-		public DateTime Created { get; set; }
-		public object? Value { get; private set; }
+    public Identity(string name, string identifier, object? value, bool isDefault = false)
+    {
+        Name = name;
+        Identifier = identifier;
+        Created = DateTime.Now;
+        Value = value;
+        IsDefault = isDefault;
+    }
 
-		public void ClearValue()
-		{
-			Value = null;
-		}
-	}
+    public string Name { get; set; }
+    public string Identifier { get; set; }
+    public bool IsDefault { get; set; }
+    public bool IsArchived { get; set; } = false;
+    public DateTime Created { get; set; }
+    public object? Value { get; private set; }
 
-	public interface IPLangIdentityService
-	{
+    public void ClearValue()
+    {
+        Value = null;
+    }
+}
 
-		public Identity CreateIdentity(string name, bool setAsDefault = false);
-		public Identity GetIdentity(string name);
-		public Identity SetIdentity(string name);
-		Identity GetCurrentIdentity();
-		public Identity? ArchiveIdentity(string identifier);
-		public IEnumerable<Identity> GetAllIdentities();
-		public IEnumerable<Identity> GetIdentities();
-		
+public interface IPLangIdentityService
+{
+    public Identity CreateIdentity(string name, bool setAsDefault = false);
+    public Identity GetIdentity(string name);
+    public Identity SetIdentity(string name);
+    Identity GetCurrentIdentity();
+    public Identity? ArchiveIdentity(string identifier);
+    public IEnumerable<Identity> GetAllIdentities();
+    public IEnumerable<Identity> GetIdentities();
 
-		public Task<bool> Authenticate(Dictionary<string, string> keyValues);
-		Identity GetCurrentIdentityWithPrivateKey();
-		void UseSharedIdentity(string? appId = null);
-	}
+
+    public Task<bool> Authenticate(Dictionary<string, string> keyValues);
+    Identity GetCurrentIdentityWithPrivateKey();
+    void UseSharedIdentity(string? appId = null);
 }

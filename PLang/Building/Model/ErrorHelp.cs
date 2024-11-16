@@ -1,10 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace PLang.Building.Model;
 
-namespace PLang.Building.Model
-{
-	public record ErrorHelp(string userFriendlyMessage, string howToFix);
-}
+public record ErrorHelp(string userFriendlyMessage, string howToFix);

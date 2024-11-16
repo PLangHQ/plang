@@ -1,18 +1,12 @@
-﻿using PLang.Runtime;
+﻿namespace PLang.Services.OutputStream;
 
-namespace PLang.Services.OutputStream
+public interface IOutputStream
 {
-	public interface IOutputStream
-	{
-		public string ContentType { get; }
-		public Stream Stream { get; }
-		public Stream ErrorStream { get; }
-		public Task Write(object? obj, string type = "text", int statusCode = 200);
-        public Task WriteToBuffer(object? obj, string type = "text", int statusCode = 200);
-        public string Read();
-        public Task<string> Ask(string text, string type = "text", int statusCode = 200);
-
-    }
-
-    
+    public string ContentType { get; }
+    public Stream Stream { get; }
+    public Stream ErrorStream { get; }
+    public Task Write(object? obj, string type = "text", int statusCode = 200);
+    public Task WriteToBuffer(object? obj, string type = "text", int statusCode = 200);
+    public string Read();
+    public Task<string> Ask(string text, string type = "text", int statusCode = 200);
 }

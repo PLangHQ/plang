@@ -1,260 +1,228 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Collections;
+using System.Security.Cryptography;
+using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Services.SigningService;
-using PLang.Utils;
-using System.Security.Cryptography;
-using System.Text.RegularExpressions;
 
-namespace PLang.Services.SettingsService
+namespace PLang.Services.SettingsService;
+
+public class Settings : ISettings
 {
+    public static readonly string SaltKey = "__Salt__";
+    private readonly PLangAppContext context;
+    private readonly IPLangFileSystem fileSystem;
+    private readonly IPLangIdentityService identityService;
+    private readonly ILogger logger;
+    private readonly ISettingsRepositoryFactory settingsRepositoryFactory;
+    private readonly IPLangSigningService signingService;
 
-    public class Settings : ISettings
+    public Settings(ISettingsRepositoryFactory settingsRepositoryFactory, IPLangFileSystem fileSystem, ILogger logger,
+        PLangAppContext context, IPLangIdentityService identityService, IPLangSigningService signingService)
     {
-        private readonly ISettingsRepositoryFactory settingsRepositoryFactory;
-        private readonly IPLangFileSystem fileSystem;
-        private readonly ILogger logger;
-        private readonly PLangAppContext context;
-        private readonly IPLangIdentityService identityService;
-        private readonly IPLangSigningService signingService;
+        this.settingsRepositoryFactory = settingsRepositoryFactory;
+        this.fileSystem = fileSystem;
+        this.logger = logger;
+        this.context = context;
+        this.identityService = identityService;
+        this.signingService = signingService;
+    }
 
-        public Settings(ISettingsRepositoryFactory settingsRepositoryFactory, IPLangFileSystem fileSystem, ILogger logger, PLangAppContext context, IPLangIdentityService identityService, IPLangSigningService signingService)
+
+    public string AppId
+    {
+        get
         {
-            this.settingsRepositoryFactory = settingsRepositoryFactory;
-            this.fileSystem = fileSystem;
-            this.logger = logger;
-            this.context = context;
-            this.identityService = identityService;
-            this.signingService = signingService;
-        }
-
-
-        public string AppId
-        {
-            get
+            var buildPath = Path.Join(fileSystem.RootDirectory, ".build");
+            var infoFile = Path.Combine(buildPath!, "info.txt");
+            string appId;
+            if (fileSystem.File.Exists(infoFile))
             {
+                appId = fileSystem.File.ReadAllText(infoFile);
+                var pattern = @"\b[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\b";
 
-                var buildPath = Path.Join(fileSystem.RootDirectory, ".build");
-                string infoFile = Path.Combine(buildPath!, "info.txt");
-                string appId;
-                if (fileSystem.File.Exists(infoFile))
-                {
-                    appId = fileSystem.File.ReadAllText(infoFile);
-                    string pattern = @"\b[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\b";
-
-                    Match match = Regex.Match(appId, pattern);
-                    if (!string.IsNullOrEmpty(match.Value))
-                    {
-                        return match.Value;
-                    }
-                }
-
-                string guid = Guid.NewGuid().ToString();
-                appId = $"\n\nAppId: {guid}";
-                if (fileSystem.File.Exists(infoFile))
-                {
-                    fileSystem.File.AppendAllText(infoFile, appId);
-                }
-                else
-                {
-                    fileSystem.File.WriteAllText(infoFile, appId);
-                }
-                return guid;
-            }
-        }
-
-        public bool IsDefaultSystemDbPath
-		{
-            get { return settingsRepositoryFactory.CreateHandler().IsDefaultSystemDbPath;  }
-        }
-
-
-		private void InitFolders()
-		{
-			var buildPath = Path.Join(fileSystem.RootDirectory, ".build");
-			if (!fileSystem.Directory.Exists(buildPath))
-			{
-				var dir = fileSystem.Directory.CreateDirectory(buildPath);
-				dir.Attributes = FileAttributes.Directory | FileAttributes.Hidden;
-			}
-
-			var dbPath = Path.Join(fileSystem.RootDirectory, ".db");
-			if (!fileSystem.Directory.Exists(dbPath))
-			{
-				var dir = fileSystem.Directory.CreateDirectory(dbPath);
-				dir.Attributes = FileAttributes.Directory | FileAttributes.Hidden;
-			}
-		}
-
-        private void SetInternal<T>(Type callingType, string type, string key, T? value)
-        {
-            if (string.IsNullOrEmpty(callingType.FullName) || !callingType.FullName.Contains("."))
-            {
-                throw new BuilderException($"Class '{callingType}' must have a name and namespace");
+                var match = Regex.Match(appId, pattern);
+                if (!string.IsNullOrEmpty(match.Value)) return match.Value;
             }
 
-            string settingValue = JsonConvert.SerializeObject(value);
-
-            var signature = ""; //todo sign settings
-            var setting = new Setting(AppId, callingType.FullName, type, key, settingValue);
-            var handler = settingsRepositoryFactory.CreateHandler();
-
-			handler.Set(setting);
-        }
-
-
-
-        public void Set<T>(Type callingType, string key, T value)
-        {
-            var typeName = typeof(T).FullName;
-
-            if (value is System.Collections.IList && value.GetType().IsGenericType)
-            {
-                throw new Exception("Use SetList for saving lists");
-            }
-            SetInternal(callingType, typeName, key, value);
-        }
-        public void SetList<T>(Type callingType, T value, string? key = null)
-        {
-            var typeName = typeof(T).FullName;
-
-            if (value is System.Collections.IList && value.GetType().IsGenericType)
-            {
-                var listType = value.GetType();
-                var listItemType = listType.GetGenericArguments()[0];
-                typeName = listItemType.FullName;
-            }
-
-            if (key == null) key = typeName;
-
-            SetInternal(callingType, typeName, key, value);
-        }
-
-
-        public List<T> GetValues<T>(Type callingType, string? key = null)
-        {
-            var type = typeof(T).FullName;
-            if (key == null && (callingType == typeof(string) || callingType.IsPrimitive))
-            {
-                throw new ArgumentException("key is missing");
-            }
-
-            if (key == null) key = type;
-            var settingsRepo = settingsRepositoryFactory.CreateHandler();
-
-			var setting = settingsRepositoryFactory.CreateHandler().Get(callingType.FullName, type, key);
-            if (setting == null) return new();
-
-            List<T> list = JsonConvert.DeserializeObject<List<T>>(setting.Value) ?? new();
-            return list;
-        }
-
-        public void Remove<T>(Type callingType, string? key = null)
-        {
-            var type = typeof(T).FullName;
-            if (key == null) key = type;
-
-            var setting = settingsRepositoryFactory.CreateHandler().Get(callingType.FullName, type, key);
-            if (setting == null) return;
-
-            settingsRepositoryFactory.CreateHandler().Remove(setting);
-        }
-
-
-        public T Get<T>(Type callingType, string key, T defaultValue, string explain)
-        {
-            if (defaultValue == null)
-            {
-                throw new RuntimeException("defaultValue cannot be null");
-            }
-            var type = defaultValue.GetType().FullName;
-
-            var setting = settingsRepositoryFactory.CreateHandler().Get(callingType.FullName, type, key);
-            if (setting == null)
-            {
-                throw new MissingSettingsException(callingType, type, key, defaultValue, explain, SetInternal);
-            }
-
-            var obj = JsonConvert.DeserializeObject<T>(setting.Value);
-            if (obj == null)
-            {
-                throw new MissingSettingsException(callingType, type, key, defaultValue, explain, SetInternal);
-            }
-            return obj;
-        }
-        public T GetOrDefault<T>(Type callingType, string? key, T defaultValue)
-        {
-            var type = typeof(T).FullName;
-            if (key == null) key = type;
-
-			var setting = settingsRepositoryFactory.CreateHandler().Get(callingType.FullName, type, key);
-			if (setting == null) return defaultValue;
-
-            T? obj;
-            if (typeof(T) == typeof(string) && !string.IsNullOrEmpty(setting.Value) && !setting.Value.StartsWith("\""))
-            {
-                obj = (T) Convert.ChangeType(setting.Value, typeof(T));
-            }
+            var guid = Guid.NewGuid().ToString();
+            appId = $"\n\nAppId: {guid}";
+            if (fileSystem.File.Exists(infoFile))
+                fileSystem.File.AppendAllText(infoFile, appId);
             else
-            {
-                obj = JsonConvert.DeserializeObject<T>(setting.Value);
-            }
-            if (obj == null) return defaultValue;
-            return obj;
+                fileSystem.File.WriteAllText(infoFile, appId);
+            return guid;
+        }
+    }
+
+    public bool IsDefaultSystemDbPath => settingsRepositoryFactory.CreateHandler().IsDefaultSystemDbPath;
+
+
+    public void Set<T>(Type callingType, string key, T value)
+    {
+        var typeName = typeof(T).FullName;
+
+        if (value is IList && value.GetType().IsGenericType) throw new Exception("Use SetList for saving lists");
+        SetInternal(callingType, typeName, key, value);
+    }
+
+    public void SetList<T>(Type callingType, T value, string? key = null)
+    {
+        var typeName = typeof(T).FullName;
+
+        if (value is IList && value.GetType().IsGenericType)
+        {
+            var listType = value.GetType();
+            var listItemType = listType.GetGenericArguments()[0];
+            typeName = listItemType.FullName;
         }
 
-        public void SetSharedSettings(string appId)
+        if (key == null) key = typeName;
+
+        SetInternal(callingType, typeName, key, value);
+    }
+
+
+    public List<T> GetValues<T>(Type callingType, string? key = null)
+    {
+        var type = typeof(T).FullName;
+        if (key == null && (callingType == typeof(string) || callingType.IsPrimitive))
+            throw new ArgumentException("key is missing");
+
+        if (key == null) key = type;
+        var settingsRepo = settingsRepositoryFactory.CreateHandler();
+
+        var setting = settingsRepositoryFactory.CreateHandler().Get(callingType.FullName, type, key);
+        if (setting == null) return new List<T>();
+
+        List<T> list = JsonConvert.DeserializeObject<List<T>>(setting.Value) ?? new List<T>();
+        return list;
+    }
+
+    public void Remove<T>(Type callingType, string? key = null)
+    {
+        var type = typeof(T).FullName;
+        if (key == null) key = type;
+
+        var setting = settingsRepositoryFactory.CreateHandler().Get(callingType.FullName, type, key);
+        if (setting == null) return;
+
+        settingsRepositoryFactory.CreateHandler().Remove(setting);
+    }
+
+
+    public T Get<T>(Type callingType, string key, T defaultValue, string explain)
+    {
+        if (defaultValue == null) throw new RuntimeException("defaultValue cannot be null");
+        var type = defaultValue.GetType().FullName;
+
+        var setting = settingsRepositoryFactory.CreateHandler().Get(callingType.FullName, type, key);
+        if (setting == null)
+            throw new MissingSettingsException(callingType, type, key, defaultValue, explain, SetInternal);
+
+        var obj = JsonConvert.DeserializeObject<T>(setting.Value);
+        if (obj == null) throw new MissingSettingsException(callingType, type, key, defaultValue, explain, SetInternal);
+        return obj;
+    }
+
+    public T GetOrDefault<T>(Type callingType, string? key, T defaultValue)
+    {
+        var type = typeof(T).FullName;
+        if (key == null) key = type;
+
+        var setting = settingsRepositoryFactory.CreateHandler().Get(callingType.FullName, type, key);
+        if (setting == null) return defaultValue;
+
+        T? obj;
+        if (typeof(T) == typeof(string) && !string.IsNullOrEmpty(setting.Value) && !setting.Value.StartsWith("\""))
+            obj = (T)Convert.ChangeType(setting.Value, typeof(T));
+        else
+            obj = JsonConvert.DeserializeObject<T>(setting.Value);
+        if (obj == null) return defaultValue;
+        return obj;
+    }
+
+    public void SetSharedSettings(string appId)
+    {
+        settingsRepositoryFactory.CreateHandler().SetSharedDataSource(appId);
+    }
+
+    public bool Contains<T>(Type callingType, string? key = null)
+    {
+        var type = typeof(T).FullName;
+        if (key == null) key = type;
+
+        var setting = settingsRepositoryFactory.CreateHandler().Get(GetType().FullName, type, key);
+        return setting != null;
+    }
+
+    public IEnumerable<Setting> GetAllSettings()
+    {
+        return settingsRepositoryFactory.CreateHandler().GetSettings();
+    }
+
+    public string GetSalt()
+    {
+        var salt = GetOrDefault<string>(GetType(), SaltKey, null);
+        if (salt != null) return salt;
+
+        salt = GenerateSalt(32);
+        var setting = new Setting("1", GetType().FullName, salt.GetType().ToString(), SaltKey,
+            JsonConvert.SerializeObject(salt));
+        settingsRepositoryFactory.CreateHandler().Set(setting);
+
+        return setting.Value;
+    }
+
+    public string SerializeSettings()
+    {
+        return settingsRepositoryFactory.CreateHandler().SerializeSettings();
+    }
+
+
+    private void InitFolders()
+    {
+        var buildPath = Path.Join(fileSystem.RootDirectory, ".build");
+        if (!fileSystem.Directory.Exists(buildPath))
         {
-            settingsRepositoryFactory.CreateHandler().SetSharedDataSource(appId);
+            var dir = fileSystem.Directory.CreateDirectory(buildPath);
+            dir.Attributes = FileAttributes.Directory | FileAttributes.Hidden;
         }
-        public void RemoveSharedSettings()
+
+        var dbPath = Path.Join(fileSystem.RootDirectory, ".db");
+        if (!fileSystem.Directory.Exists(dbPath))
         {
-            settingsRepositoryFactory.CreateHandler().SetSharedDataSource();
+            var dir = fileSystem.Directory.CreateDirectory(dbPath);
+            dir.Attributes = FileAttributes.Directory | FileAttributes.Hidden;
         }
+    }
 
-        public bool Contains<T>(Type callingType, string? key = null)
-        {
-            var type = typeof(T).FullName;
-            if (key == null) key = type;
+    private void SetInternal<T>(Type callingType, string type, string key, T? value)
+    {
+        if (string.IsNullOrEmpty(callingType.FullName) || !callingType.FullName.Contains("."))
+            throw new BuilderException($"Class '{callingType}' must have a name and namespace");
 
-            var setting = settingsRepositoryFactory.CreateHandler().Get(GetType().FullName, type, key);
-            return setting != null;
+        var settingValue = JsonConvert.SerializeObject(value);
 
-		}
+        var signature = ""; //todo sign settings
+        var setting = new Setting(AppId, callingType.FullName, type, key, settingValue);
+        var handler = settingsRepositoryFactory.CreateHandler();
 
-        public IEnumerable<Setting> GetAllSettings()
-        {
-            return settingsRepositoryFactory.CreateHandler().GetSettings();
-        }
-        public static readonly string SaltKey = "__Salt__";
-        public string GetSalt()
-        {
-            var salt = GetOrDefault<string>(GetType(), SaltKey, null); 
-            if (salt != null)
-            {
-                return salt;
-            }
+        handler.Set(setting);
+    }
 
-            salt = GenerateSalt(32);
-            var setting = new Setting("1", GetType().FullName, salt.GetType().ToString(), SaltKey, JsonConvert.SerializeObject(salt));
-            settingsRepositoryFactory.CreateHandler().Set(setting);
+    public void RemoveSharedSettings()
+    {
+        settingsRepositoryFactory.CreateHandler().SetSharedDataSource();
+    }
 
-            return setting.Value;
-        }
-
-        private string GenerateSalt(int length)
-        {
-            byte[] salt = new byte[length];
-            RandomNumberGenerator.Fill(salt);
-            return Convert.ToBase64String(salt);
-        }
-
-        public string SerializeSettings()
-        {
-            return settingsRepositoryFactory.CreateHandler().SerializeSettings();
-        }
-
+    private string GenerateSalt(int length)
+    {
+        var salt = new byte[length];
+        RandomNumberGenerator.Fill(salt);
+        return Convert.ToBase64String(salt);
     }
 }

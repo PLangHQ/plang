@@ -1,37 +1,28 @@
-﻿namespace PLang.Utils
+﻿namespace PLang.Utils;
+
+public class DirectoryHelper
 {
-	public class DirectoryHelper
-	{
-		public static void Copy(string sourceDir, string destinationDir, bool copySubDirs = true)
-		{
-			if (!Directory.Exists(sourceDir))
-			{
-				throw new DirectoryNotFoundException($"Source directory does not exist: {sourceDir}");
-			}
-			 
-			DirectoryInfo dir = new DirectoryInfo(sourceDir);
-			DirectoryInfo[] dirs = dir.GetDirectories();
+    public static void Copy(string sourceDir, string destinationDir, bool copySubDirs = true)
+    {
+        if (!Directory.Exists(sourceDir))
+            throw new DirectoryNotFoundException($"Source directory does not exist: {sourceDir}");
 
-			if (!Directory.Exists(destinationDir))
-			{
-				Directory.CreateDirectory(destinationDir);
-			}
+        var dir = new DirectoryInfo(sourceDir);
+        DirectoryInfo[] dirs = dir.GetDirectories();
 
-			foreach (FileInfo file in dir.GetFiles())
-			{
-				string targetFilePath = System.IO.Path.Combine(destinationDir, file.Name);
-				file.CopyTo(targetFilePath, true);
-			}
+        if (!Directory.Exists(destinationDir)) Directory.CreateDirectory(destinationDir);
 
-			if (copySubDirs)
-			{
-				foreach (DirectoryInfo subdir in dirs)
-				{
-					string targetSubDirPath = System.IO.Path.Combine(destinationDir, subdir.Name);
-					Copy(subdir.FullName, targetSubDirPath, copySubDirs);
-				}
-			}
+        foreach (var file in dir.GetFiles())
+        {
+            var targetFilePath = Path.Combine(destinationDir, file.Name);
+            file.CopyTo(targetFilePath, true);
+        }
 
-		}
-	}
+        if (copySubDirs)
+            foreach (var subdir in dirs)
+            {
+                var targetSubDirPath = Path.Combine(destinationDir, subdir.Name);
+                Copy(subdir.FullName, targetSubDirPath, copySubDirs);
+            }
+    }
 }

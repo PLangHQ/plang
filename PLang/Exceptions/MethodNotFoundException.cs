@@ -1,7 +1,8 @@
-﻿namespace PLang.Exceptions
+﻿namespace PLang.Exceptions;
+
+public class MethodNotFoundException : Exception
 {
-	public class MethodNotFoundException : Exception
-	{
-		public MethodNotFoundException(string message) : base(message) { }
-	}
+    public MethodNotFoundException(string message) : base(message)
+    {
+    }
 }

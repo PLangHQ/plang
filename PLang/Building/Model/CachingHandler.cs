@@ -1,16 +1,14 @@
-﻿using PLang.Attributes;
+﻿using System.ComponentModel;
 
-namespace PLang.Building.Model
+namespace PLang.Building.Model;
+
+public class CachingHandler
 {
+    [Attributes.DefaultValue(50)] public long TimeInMilliseconds { get; set; }
 
-	public class CachingHandler
-	{
-		[DefaultValueAttribute(50)]
-		public long TimeInMilliseconds { get; set; }
-		[DefaultValueAttribute(null)]
-		public string? CacheKey { get; set; } = null;
-		[DefaultValueAttribute(0)]
-		[System.ComponentModel.Description("Sliding = 0, Absolute = 1")]
-		public int CachingType { get; set; } = 0;
-	}
+    [Attributes.DefaultValue(null)] public string? CacheKey { get; set; } = null;
+
+    [Attributes.DefaultValue(0)]
+    [Description("Sliding = 0, Absolute = 1")]
+    public int CachingType { get; set; } = 0;
 }

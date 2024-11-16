@@ -1,8 +1,7 @@
-﻿namespace PLang.Services.CompilerService
+﻿namespace PLang.Services.CompilerService;
+
+public class ParameterType
 {
-	public class ParameterType
-	{
-		public string Name { get; set; }
-		public string FullTypeName { get; set; }
-	}
+    public string Name { get; set; }
+    public string FullTypeName { get; set; }
 }

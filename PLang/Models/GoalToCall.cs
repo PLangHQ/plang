@@ -1,30 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace PLang.Models;
 
-namespace PLang.Models
+public class GoalToCall
 {
-	public class GoalToCall
-	{
-		public string? Value { get; }
+    public GoalToCall(string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value)) Value = value.Replace("!", "");
+    }
 
-		public GoalToCall(string? value)
-		{
-			if (!string.IsNullOrWhiteSpace(value))
-			{
-				Value = value.Replace("!", "");
-			}
-			
-		}
+    public string? Value { get; }
 
-		public override string? ToString() => Value;
+    public override string? ToString()
+    {
+        return Value;
+    }
 
-		// Implicit conversion from string to GoalToCall
-		public static implicit operator GoalToCall(string? value) => new GoalToCall(value);
+    // Implicit conversion from string to GoalToCall
+    public static implicit operator GoalToCall(string? value)
+    {
+        return new GoalToCall(value);
+    }
 
-		// Implicit conversion from GoalToCall to string
-		public static implicit operator string?(GoalToCall goalToCall) => goalToCall.Value;
-	}
+    // Implicit conversion from GoalToCall to string
+    public static implicit operator string?(GoalToCall goalToCall)
+    {
+        return goalToCall.Value;
+    }
 }

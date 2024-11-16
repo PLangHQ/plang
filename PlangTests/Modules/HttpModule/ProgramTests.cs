@@ -1,89 +1,87 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System.Net;
+using System.Text;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using PLang.Modules.HttpModule;
-using System.Net;
-using System.Net.Http;
-using System.Security.Policy;
-using System.Text;
 
-namespace PLangTests.Modules.HttpModule
+namespace PLangTests.Modules.HttpModule;
+
+[TestClass]
+public class ProgramTests : BasePLangTest
 {
-	[TestClass]
-	public class ProgramTests : BasePLangTest
-	{
+    private Program p;
 
-		public class TestHttpMessageHandler : HttpMessageHandler
-		{
-			private readonly string url;
-			private readonly object data;
-			private readonly bool signRequest;
-			private readonly Dictionary<string, object>? headers;
-			private readonly string encoding;
-			private readonly string contentType;
+    [TestInitialize]
+    public void Init()
+    {
+        Initialize();
 
-			public TestHttpMessageHandler(string url, object data, bool signRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json")
-			{
-				this.url = url;
-				this.data = data;
-				this.signRequest = signRequest;
-				this.headers = headers;
-				this.encoding = encoding;
-				this.contentType = contentType;
-			}
+        p = new Program(fileSystem, signingService, httpClientFactory);
 
-			protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-			{
-				Assert.AreEqual(request.RequestUri.ToString(), url);
-				Assert.IsTrue(request.Headers.UserAgent.ToString().StartsWith("plang v"));
-				foreach (var header in headers)
-				{
-					var headerValue = request.Headers.FirstOrDefault(p => p.Key == header.Key).Value;
-					Assert.AreEqual(header.Value, headerValue.ToList()[0]);
-				}
-				Assert.AreEqual(encoding, request.Content.Headers.ContentType.CharSet);
-				Assert.AreEqual(contentType, request.Content.Headers.ContentType.MediaType);
+        p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings,
+            appCache, null);
+    }
 
-				return new HttpResponseMessage
-				{
-					StatusCode = HttpStatusCode.OK,
-					Content = new StringContent("{\"key\":\"value\"}", Encoding.GetEncoding(encoding), contentType)
-				};
-			}
+    [TestMethod]
+    public async Task Request_Test()
+    {
+        var url = "http://example.org/";
+        object data = new { Name = "Stanley Hudson" };
+        var doNotSignRequest = false;
+        var headers = new Dictionary<string, object>();
+        headers.Add("X-Testing", "1");
+        headers.Add("X-Testing-2", "2");
+        var encoding = "utf-8";
+        var contentType = "application/json";
 
+        signingService.Sign(Arg.Any<string>(), Arg.Any<string>(), "/").Returns(new Dictionary<string, object>());
+        httpClientFactory.CreateClient()
+            .Returns(new HttpClient(new TestHttpMessageHandler(url, data, doNotSignRequest, headers, encoding,
+                contentType)));
 
-		}
+        var result = await p.Post(url, data, doNotSignRequest, headers, encoding, contentType);
+    }
 
-		Program p;
-		[TestInitialize]
-		public void Init()
-		{
-			base.Initialize();
-			
-			p = new Program(fileSystem, signingService, httpClientFactory);
+    public class TestHttpMessageHandler : HttpMessageHandler
+    {
+        private readonly string contentType;
+        private readonly object data;
+        private readonly string encoding;
+        private readonly Dictionary<string, object>? headers;
+        private readonly bool signRequest;
+        private readonly string url;
 
-			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, null);
-		}
+        public TestHttpMessageHandler(string url, object data, bool signRequest = false,
+            Dictionary<string, object>? headers = null, string encoding = "utf-8",
+            string contentType = "application/json")
+        {
+            this.url = url;
+            this.data = data;
+            this.signRequest = signRequest;
+            this.headers = headers;
+            this.encoding = encoding;
+            this.contentType = contentType;
+        }
 
-		[TestMethod]
-		public async Task Request_Test()
-		{
-			string url = "http://example.org/";
-			object data = new { Name = "Stanley Hudson" };
-			bool doNotSignRequest = false;
-			var headers = new Dictionary<string, object>();
-			headers.Add("X-Testing", "1");
-			headers.Add("X-Testing-2", "2");
-			string encoding = "utf-8";
-			string contentType = "application/json";
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            Assert.AreEqual(request.RequestUri.ToString(), url);
+            Assert.IsTrue(request.Headers.UserAgent.ToString().StartsWith("plang v"));
+            foreach (var header in headers)
+            {
+                var headerValue = request.Headers.FirstOrDefault(p => p.Key == header.Key).Value;
+                Assert.AreEqual(header.Value, headerValue.ToList()[0]);
+            }
 
-			signingService.Sign(Arg.Any<string>(), Arg.Any<string>(), "/", "C0").Returns(new Dictionary<string, object>());
-			httpClientFactory.CreateClient().Returns(new HttpClient(new TestHttpMessageHandler(url, data, doNotSignRequest, headers, encoding, contentType)));
+            Assert.AreEqual(encoding, request.Content.Headers.ContentType.CharSet);
+            Assert.AreEqual(contentType, request.Content.Headers.ContentType.MediaType);
 
-			var result = await p.Post(url, data, doNotSignRequest, headers, encoding, contentType);
-
-
-		}
-
-
-	}
+            return new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent("{\"key\":\"value\"}", Encoding.GetEncoding(encoding), contentType)
+            };
+        }
+    }
 }

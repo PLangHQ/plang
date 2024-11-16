@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace PLang.Exceptions;
 
-namespace PLang.Exceptions
+public class BuildStatusException : Exception
 {
-	public class BuildStatusException : Exception
-	{
-		public BuildStatusException(string message) : base(message) { }
-	}
+    public BuildStatusException(string message) : base(message)
+    {
+    }
 }

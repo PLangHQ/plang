@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using System.Runtime.CompilerServices;
+using Microsoft.Data.Sqlite;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using NSubstitute;
@@ -6,265 +7,251 @@ using PLang.Building.Model;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Services.OpenAi;
-using PLang.Utils;
 using PLangTests;
-using System.Data;
-using System.Runtime.CompilerServices;
 using static PLang.Modules.BaseBuilder;
 using static PLang.Modules.DbModule.Builder;
 using static PLang.Modules.DbModule.ModuleSettings;
 
-namespace PLang.Modules.DbModule.Tests
+namespace PLang.Modules.DbModule.Tests;
+
+[TestClass]
+public class BuilderTests : BasePLangTest
 {
-	[TestClass()]
-	public class BuilderTests : BasePLangTest
-	{
-		Builder builder;
+    private Builder builder;
+
+    [TestInitialize]
+    public void Init()
+    {
+        Initialize();
 
-		[TestInitialize]
-		public void Init()
-		{
-			base.Initialize();
+        settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>())
+            .Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
+        var llmService = new OpenAiService(settings, logger, llmCaching, context);
 
-			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
-			var llmService = new OpenAiService(settings, logger, llmCaching, context);
+        var datasources = new List<DataSource>();
+        datasources.Add(new DataSource("local", "", "", "", "", ""));
+        datasources.Add(new DataSource("MainDb", "", "", "", "", ""));
+        settings.GetValues<DataSource>(typeof(ModuleSettings)).Returns(datasources);
 
-			var datasources =new  List<DataSource>();
-			datasources.Add(new DataSource("local", "", "", "", "", ""));
-			datasources.Add(new DataSource("MainDb", "", "", "", "", ""));
-			settings.GetValues<DataSource>(typeof(ModuleSettings)).Returns(datasources);
 
+        var db = new SqliteConnection("DataSource=In memory;Version=3");
 
-			var db = new SqliteConnection("DataSource=In memory;Version=3");
+        builder = new Builder(fileSystem, db, settings, context, llmServiceFactory, typeHelper, logger, memoryStack,
+            variableHelper);
+        builder.InitBaseBuilder("PLang.Modules.DbModule", fileSystem, llmServiceFactory, typeHelper, memoryStack,
+            context, variableHelper, logger);
+    }
 
-			builder = new Builder(fileSystem, db, settings, context, llmServiceFactory, typeHelper, logger, memoryStack, variableHelper);
-			builder.InitBaseBuilder("PLang.Modules.DbModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+    private void SetupResponse(string stepText, string functionName, Type? type = null,
+        [CallerMemberName] string caller = "")
+    {
+        var llmService = GetLlmService(stepText, caller, type);
+        if (llmService == null) return;
 
-		}
+        var db = new SqliteConnection("DataSource=In memory;Version=3");
+        var aiService = Substitute.For<ILlmService>();
 
-		private void SetupResponse(string stepText, string functionName, Type? type = null, [CallerMemberName] string caller = "")
-		{
-			var llmService = GetLlmService(stepText, caller, type);
-			if (llmService == null) return;
+        llmService.Query(Arg.Any<LlmRequest>(), typeof(FunctionInfo)).Returns(p =>
+        {
+            return JsonConvert.DeserializeObject(@$"{{""FunctionName"": ""{functionName}""}}",
+                typeof(FunctionInfo));
+        });
 
-			var db = new SqliteConnection("DataSource=In memory;Version=3");
-			var aiService = Substitute.For<ILlmService>();
 
-			llmService.Query(Arg.Any<LlmRequest>(), typeof(FunctionInfo)).Returns(p => {
-				return JsonConvert.DeserializeObject(@$"{{""FunctionName"": ""{functionName}""}}", typeof(FunctionInfo));
-			});
+        var dataSources = new List<DataSource>();
+        dataSources.Add(new DataSource("data", "Microsoft.Data.Sqlite.SqliteConnection", "", "", "", ""));
+        settings.GetValues<DataSource>(typeof(ModuleSettings)).Returns(dataSources);
 
+        builder = new Builder(fileSystem, db, settings, context, llmServiceFactory, typeHelper, logger, memoryStack,
+            variableHelper);
+        builder.InitBaseBuilder("PLang.Modules.DbModule", fileSystem, llmServiceFactory, typeHelper, memoryStack,
+            context, variableHelper, logger);
+    }
 
-			var dataSources = new List<DataSource>();
-			dataSources.Add(new DataSource("data", "Microsoft.Data.Sqlite.SqliteConnection", "", "", "", ""));
-			settings.GetValues<DataSource>(typeof(ModuleSettings)).Returns(dataSources);
+    public GoalStep GetStep(string text)
+    {
+        var step = new GoalStep();
+        step.Text = text;
+        step.ModuleType = "PLang.Modules.DbModule";
+        return step;
+    }
 
-			builder = new Builder(fileSystem, db, settings, context, llmServiceFactory, typeHelper, logger, memoryStack, variableHelper);
-			builder.InitBaseBuilder("PLang.Modules.DbModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
-		}
+    [DataTestMethod]
+    [DataRow("set datasource as 'MainDb'")]
+    public async Task SetDataSouceName_Test(string text)
+    {
+        SetupResponse(text, "SetDataSouceName");
 
-		public GoalStep GetStep(string text)
-		{
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
-			step.ModuleType = "PLang.Modules.DbModule";
-			return step;
-		}
+        var step = GetStep(text);
 
-		[DataTestMethod]
-		[DataRow("set datasource as 'MainDb'")]
-		public async Task SetDataSouceName_Test(string text)
-		{
-		
-			SetupResponse(text, "SetDataSouceName");
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as GenericFunction;
 
-			var step = GetStep(text);
+        Store(text, instruction.LlmRequest.RawResponse);
 
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+        Assert.AreEqual("SetDataSouceName", gf.FunctionName);
+        Assert.AreEqual("name", gf.Parameters[0].Name);
+        Assert.AreEqual("MainDb", gf.Parameters[0].Value);
+    }
 
-			Store(text, instruction.LlmRequest.RawResponse);
+    [DataTestMethod]
+    [DataRow("begin transaction")]
+    public async Task BeginTransaction_Test(string text)
+    {
+        SetupResponse(text, "BeginTransaction");
 
-			Assert.AreEqual("SetDataSouceName", gf.FunctionName);
-			Assert.AreEqual("name", gf.Parameters[0].Name);
-			Assert.AreEqual("MainDb", gf.Parameters[0].Value);
+        var step = GetStep(text);
 
-		}
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as GenericFunction;
 
-		[DataTestMethod]
-		[DataRow("begin transaction")]
-		public async Task BeginTransaction_Test(string text)
-		{
+        Store(text, instruction.LlmRequest.RawResponse);
 
-			SetupResponse(text, "BeginTransaction");
+        Assert.AreEqual("BeginTransaction", gf.FunctionName);
+        Assert.AreEqual(0, gf.Parameters.Count);
+    }
 
-			var step = GetStep(text);
+    [DataTestMethod]
+    [DataRow("end transaction")]
+    public async Task EndTransaction_Test(string text)
+    {
+        SetupResponse(text, "EndTransaction");
 
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+        var step = GetStep(text);
 
-			Store(text, instruction.LlmRequest.RawResponse);
-			
-			Assert.AreEqual("BeginTransaction", gf.FunctionName);
-			Assert.AreEqual(0, gf.Parameters.Count);
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as GenericFunction;
 
-		}
+        Store(text, instruction.LlmRequest.RawResponse);
 
-		[DataTestMethod]
-		[DataRow("end transaction")]
-		public async Task EndTransaction_Test(string text)
-		{
+        Assert.AreEqual("EndTransaction", gf.FunctionName);
+        Assert.AreEqual(0, gf.Parameters.Count);
+    }
 
-			SetupResponse(text, "EndTransaction");
 
-			var step = GetStep(text);
+    [DataTestMethod]
+    [DataRow("select name from users where id=%id%, write to %result%")]
+    public async Task Select_Test(string text)
+    {
+        SetupResponse(text, "Select");
 
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+        var step = GetStep(text);
 
-			Store(text, instruction.LlmRequest.RawResponse);
-			
-			Assert.AreEqual("EndTransaction", gf.FunctionName);
-			Assert.AreEqual(0, gf.Parameters.Count);
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as GenericFunction;
 
-		}
+        Store(text, instruction.LlmRequest.RawResponse);
 
+        Assert.AreEqual("Select", gf.FunctionName);
+        Assert.AreEqual("sql", gf.Parameters[0].Name);
+        Assert.AreEqual("select name from users where id=@id", gf.Parameters[0].Value);
 
+        Assert.AreEqual("Parameters", gf.Parameters[1].Name);
 
-		[DataTestMethod]
-		[DataRow("select name from users where id=%id%, write to %result%")]
-		public async Task Select_Test(string text)
-		{
+        var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(gf.Parameters[1].Value.ToString());
+        Assert.AreEqual("%id%", dict["@id"]);
 
-			SetupResponse(text, "Select");
+        Assert.AreEqual("result", gf.ReturnValues[0].VariableName);
+    }
 
-			var step = GetStep(text);
 
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+    [DataTestMethod]
+    [DataRow("update users, set name=%name% where id=%id%")]
+    public async Task Update_Test(string text)
+    {
+        SetupResponse(text, "Update");
 
-			Store(text, instruction.LlmRequest.RawResponse);
-			
-			Assert.AreEqual("Select", gf.FunctionName);
-			Assert.AreEqual("sql", gf.Parameters[0].Name);
-			Assert.AreEqual("select name from users where id=@id", gf.Parameters[0].Value);
+        var step = GetStep(text);
 
-			Assert.AreEqual("Parameters", gf.Parameters[1].Name);
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as DbGenericFunction;
 
-			var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(gf.Parameters[1].Value.ToString());
-			Assert.AreEqual("%id%", dict["@id"]);
+        Store(text, instruction.LlmRequest.RawResponse);
 
-			Assert.AreEqual("result", gf.ReturnValues[0].VariableName);
+        Assert.AreEqual("Update", gf.FunctionName);
+        Assert.AreEqual("sql", gf.Parameters[0].Name);
+        Assert.AreEqual("update users set name=@name where id=@id", gf.Parameters[0].Value);
 
-		}
+        Assert.AreEqual("Parameters", gf.Parameters[1].Name);
 
+        var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(gf.Parameters[1].Value.ToString());
+        Assert.AreEqual("%name%", dict["@name"]);
+        Assert.AreEqual("%id%", dict["@id"]);
+    }
 
 
-		[DataTestMethod]
-		[DataRow("update users, set name=%name% where id=%id%")]
-		public async Task Update_Test(string text)
-		{
+    [DataTestMethod]
+    [DataRow("insert into users (name) values (%name%)")]
+    public async Task Insert_Test(string text)
+    {
+        SetupResponse(text, "Insert");
 
-			SetupResponse(text, "Update");
+        var step = GetStep(text);
 
-			var step = GetStep(text);
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as GenericFunction;
 
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as DbGenericFunction;
+        Store(text, instruction.LlmRequest.RawResponse);
 
-			Store(text, instruction.LlmRequest.RawResponse);
-			
-			Assert.AreEqual("Update", gf.FunctionName);
-			Assert.AreEqual("sql", gf.Parameters[0].Name);
-			Assert.AreEqual("update users set name=@name where id=@id", gf.Parameters[0].Value);
+        Assert.AreEqual("Insert", gf.FunctionName);
+        Assert.AreEqual("sql", gf.Parameters[0].Name);
+        Assert.AreEqual("insert into users (id, name) values (@id, @name)", gf.Parameters[0].Value);
 
-			Assert.AreEqual("Parameters", gf.Parameters[1].Name);
+        Assert.AreEqual("Parameters", gf.Parameters[1].Name);
 
-			var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(gf.Parameters[1].Value.ToString());
-			Assert.AreEqual("%name%", dict["@name"]);
-			Assert.AreEqual("%id%", dict["@id"]);
+        var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(gf.Parameters[1].Value.ToString());
+        Assert.AreEqual("%name%", dict["@name"]);
+        Assert.AreEqual("%id%", dict["@id"]);
+    }
 
-		}
 
+    [DataTestMethod]
+    [DataRow("insert into users (name) values (%name%), write into %id%")]
+    public async Task InsertAndSelectId_Test(string text)
+    {
+        SetupResponse(text, "Insert");
 
-		[DataTestMethod]
-		[DataRow("insert into users (name) values (%name%)")]
-		public async Task Insert_Test(string text)
-		{
-			SetupResponse(text, "Insert");
+        var step = GetStep(text);
 
-			var step = GetStep(text);
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as GenericFunction;
 
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+        Store(text, instruction.LlmRequest.RawResponse);
 
-			Store(text, instruction.LlmRequest.RawResponse);
-			
-			Assert.AreEqual("Insert", gf.FunctionName);
-			Assert.AreEqual("sql", gf.Parameters[0].Name);
-			Assert.AreEqual("insert into users (id, name) values (@id, @name)", gf.Parameters[0].Value);
+        Assert.AreEqual("InsertAndSelectIdOfInsertedRow", gf.FunctionName);
+        Assert.AreEqual("sql", gf.Parameters[0].Name);
+        Assert.AreEqual("insert into users (id, name) values (@id, @name)", gf.Parameters[0].Value);
 
-			Assert.AreEqual("Parameters", gf.Parameters[1].Name);
+        Assert.AreEqual("Parameters", gf.Parameters[1].Name);
 
-			var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(gf.Parameters[1].Value.ToString());
-			Assert.AreEqual("%name%", dict["@name"]);
-			Assert.AreEqual("%id%", dict["@id"]);
+        var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(gf.Parameters[1].Value.ToString());
+        Assert.AreEqual("%name%", dict["@name"]);
+        Assert.AreEqual("%id%", dict["@id"]);
 
-		}
+        Assert.AreEqual("id", gf.ReturnValues[0].VariableName);
+    }
 
 
+    [DataTestMethod]
+    [DataRow("delete users where id=%id%")]
+    public async Task Delete_Test(string text)
+    {
+        SetupResponse(text, "Delete");
 
-		[DataTestMethod]
-		[DataRow("insert into users (name) values (%name%), write into %id%")]
-		public async Task InsertAndSelectId_Test(string text)
-		{
-			SetupResponse(text, "Insert");
+        var step = GetStep(text);
 
-			var step = GetStep(text);
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as DbGenericFunction;
 
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+        Store(text, instruction.LlmRequest.RawResponse);
 
-			Store(text, instruction.LlmRequest.RawResponse);
-			
-			Assert.AreEqual("InsertAndSelectIdOfInsertedRow", gf.FunctionName);
-			Assert.AreEqual("sql", gf.Parameters[0].Name);
-			Assert.AreEqual("insert into users (id, name) values (@id, @name)", gf.Parameters[0].Value);
+        Assert.AreEqual("Delete", gf.FunctionName);
+        Assert.AreEqual("sql", gf.Parameters[0].Name);
+        Assert.AreEqual("DELETE FROM users WHERE id=@id", gf.Parameters[0].Value);
 
-			Assert.AreEqual("Parameters", gf.Parameters[1].Name);
+        Assert.AreEqual("Parameters", gf.Parameters[1].Name);
 
-			var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(gf.Parameters[1].Value.ToString());
-			Assert.AreEqual("%name%", dict["@name"]);
-			Assert.AreEqual("%id%", dict["@id"]);
-
-			Assert.AreEqual("id", gf.ReturnValues[0].VariableName);
-
-		}
-
-
-		[DataTestMethod]
-		[DataRow("delete users where id=%id%")]
-		public async Task Delete_Test(string text)
-		{
-			SetupResponse(text, "Delete");
-
-			var step = GetStep(text);
-
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as DbGenericFunction;
-
-			Store(text, instruction.LlmRequest.RawResponse);
-			
-			Assert.AreEqual("Delete", gf.FunctionName);
-			Assert.AreEqual("sql", gf.Parameters[0].Name);
-			Assert.AreEqual("DELETE FROM users WHERE id=@id", gf.Parameters[0].Value);
-
-			Assert.AreEqual("Parameters", gf.Parameters[1].Name);
-
-			var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(gf.Parameters[1].Value.ToString());
-			Assert.AreEqual("%id%", dict["@id"]);
-
-		}
-
-	}
+        var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(gf.Parameters[1].Value.ToString());
+        Assert.AreEqual("%id%", dict["@id"]);
+    }
 }

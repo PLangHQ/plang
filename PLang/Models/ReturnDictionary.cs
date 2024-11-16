@@ -1,8 +1,9 @@
-﻿namespace PLang.Models
+﻿namespace PLang.Models;
+
+public interface IReturnDictionary
 {
-	public interface IReturnDictionary { }
-	public class ReturnDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IReturnDictionary
-	{
-		public ReturnDictionary() : base() { }
-	}
+}
+
+public class ReturnDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IReturnDictionary
+{
 }

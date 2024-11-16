@@ -1,6 +1,5 @@
-﻿namespace PLang.Interfaces
+﻿namespace PLang.Interfaces;
+
+public interface IModuleSettings
 {
-	public interface IModuleSettings
-	{
-	}
 }

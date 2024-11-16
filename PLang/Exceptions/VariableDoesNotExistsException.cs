@@ -1,7 +1,8 @@
-﻿namespace PLang.Exceptions
+﻿namespace PLang.Exceptions;
+
+public class VariableDoesNotExistsException : Exception
 {
-	public class VariableDoesNotExistsException : Exception
-	{
-		public VariableDoesNotExistsException(string message) : base(message) { }
-	}
+    public VariableDoesNotExistsException(string message) : base(message)
+    {
+    }
 }

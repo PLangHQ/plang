@@ -1,66 +1,64 @@
 ﻿using Microsoft.Extensions.Logging;
-using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.AskUser;
-using PLang.Exceptions;
-using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Services.LlmService;
 using PLang.Utils;
 
-namespace PLang.SafeFileSystem
+namespace PLang.SafeFileSystem;
+
+public interface IFileAccessHandler
 {
-	public interface IFileAccessHandler
-	{
-		Task<(bool, IError?)> ValidatePathResponse(string appName, string path, string? answer);
-	}
-	public class FileAccessHandler : IFileAccessHandler
-	{
-		private readonly ISettings settings;
-		private readonly ILlmServiceFactory llmServiceFactory;
-		private readonly ILogger logger;
-		private readonly IPLangFileSystem fileSystem;
+    Task<(bool, IError?)> ValidatePathResponse(string appName, string path, string? answer);
+}
 
-		public FileAccessHandler(ISettings settings, ILlmServiceFactory llmServiceFactory, ILogger logger, IPLangFileSystem fileSystem)
-		{
-			this.settings = settings;
-			this.llmServiceFactory = llmServiceFactory;
-			this.logger = logger;
-			this.fileSystem = fileSystem;
-		}
+public class FileAccessHandler : IFileAccessHandler
+{
+    private readonly IPLangFileSystem fileSystem;
+    private readonly ILlmServiceFactory llmServiceFactory;
+    private readonly ILogger logger;
+    private readonly ISettings settings;
 
-		public record FileAccessResponse(string GiveAccess, DateTime? Expires);
+    public FileAccessHandler(ISettings settings, ILlmServiceFactory llmServiceFactory, ILogger logger,
+        IPLangFileSystem fileSystem)
+    {
+        this.settings = settings;
+        this.llmServiceFactory = llmServiceFactory;
+        this.logger = logger;
+        this.fileSystem = fileSystem;
+    }
 
-		//very basic access control, could add Access type(read, write, del), status such as blocked
-		//appName is weak validation, need to find new way
+    //very basic access control, could add Access type(read, write, del), status such as blocked
+    //appName is weak validation, need to find new way
 
-		// using a proof of access should probably be the solution
-		// when getting access, sign the request with root
-		// the signature is then validated by root before giving access next time
+    // using a proof of access should probably be the solution
+    // when getting access, sign the request with root
+    // the signature is then validated by root before giving access next time
 
-		public async Task<(bool, IError?)> ValidatePathResponse(string appName, string path, string? answer)
-		{
-			if (string.IsNullOrWhiteSpace(answer)) return (false, null);
+    public async Task<(bool, IError?)> ValidatePathResponse(string appName, string path, string? answer)
+    {
+        if (string.IsNullOrWhiteSpace(answer)) return (false, null);
 
-			answer = answer.ToLower();
-			if (answer == "n" || answer == "no") return (true, null);
-			if (settings == null) return (false, new Error("Settings is not loaded", StatusCode: 500));
+        answer = answer.ToLower();
+        if (answer == "n" || answer == "no") return (true, null);
+        if (settings == null) return (false, new Error("Settings is not loaded", StatusCode: 500));
 
-			if (answer == "y" || answer == "yes" || answer == "ok")
-			{
-				var expires = DateTime.UtcNow.AddSeconds(90);
-				AddFileAccess(appName, path, expires);
+        if (answer == "y" || answer == "yes" || answer == "ok")
+        {
+            var expires = DateTime.UtcNow.AddSeconds(90);
+            AddFileAccess(appName, path, expires);
 
-				logger.LogDebug($"{appName} has access to {path} until {expires}");
-				return (true, null);
-			}
+            logger.LogDebug($"{appName} has access to {path} until {expires}");
+            return (true, null);
+        }
 
 
-			var dateTimeStr = DateTimeOffset.UtcNow.ToString("G");
+        var dateTimeStr = DateTimeOffset.UtcNow.ToString("G");
 
-			var promptMessage = new List<LlmMessage>();
-			promptMessage.Add(new LlmMessage("system", @$"The user response should answer the question: Should give access to a file path
+        var promptMessage = new List<LlmMessage>();
+        promptMessage.Add(new LlmMessage("system",
+            @$"The user response should answer the question: Should give access to a file path
 
 Determine the answer from the user that fits the json scheme. 
 If you cannot determine, GiveAccess should be null
@@ -69,45 +67,43 @@ Expires should be in the format yyyy-MM-ddTHH:mm:ss
 
 current time is {dateTimeStr}
 GiveAccess : yes|no|null"));
-			promptMessage.Add(new LlmMessage("user", answer));
+        promptMessage.Add(new LlmMessage("user", answer));
 
-			var llmRequest = new LlmRequest("FileAccess", promptMessage);
+        var llmRequest = new LlmRequest("FileAccess", promptMessage);
 
-			(var result, var requestError) = await llmServiceFactory.CreateHandler().Query<FileAccessResponse>(llmRequest);
-			if (requestError != null) return (false, requestError);
+        var (result, requestError) = await llmServiceFactory.CreateHandler().Query<FileAccessResponse>(llmRequest);
+        if (requestError != null) return (false, requestError);
 
-			if (result == null || result.GiveAccess == null) return (false, new FileAccessRequestError(appName, path, $"{appName} is trying to access {path}. Do you accept that?"));
-			if (result.GiveAccess.ToLower() == "no") return (true, null);
+        if (result == null || result.GiveAccess == null)
+            return (false,
+                new FileAccessRequestError(appName, path,
+                    $"{appName} is trying to access {path}. Do you accept that?"));
+        if (result.GiveAccess.ToLower() == "no") return (true, null);
 
-			if (result.GiveAccess.ToLower() == "yes")
-			{
-				var expires = result.Expires ?? DateTime.UtcNow.AddSeconds(30);
+        if (result.GiveAccess.ToLower() == "yes")
+        {
+            var expires = result.Expires ?? DateTime.UtcNow.AddSeconds(30);
 
-				if (dateTimeStr == expires.ToString("G"))
-				{
-					expires = DateTime.UtcNow.AddSeconds(30);
-				}
+            if (dateTimeStr == expires.ToString("G")) expires = DateTime.UtcNow.AddSeconds(30);
 
-				AddFileAccess(appName, path, expires);
-				logger.LogDebug($"{appName} has access to {path} until {expires}");
-			}
+            AddFileAccess(appName, path, expires);
+            logger.LogDebug($"{appName} has access to {path} until {expires}");
+        }
 
-			return (true, null);
-		}
+        return (true, null);
+    }
 
-		private void AddFileAccess(string appName, string path, DateTime expires)
-		{
-			path = path.AdjustPathToOs();
-			var fileAccesses = settings.GetValues<FileAccessControl>(typeof(PLangFileSystem));
-			var fileAccess = fileAccesses.FirstOrDefault(a => a.appName == appName && a.path == path);
-			if (fileAccess != null)
-			{
-				fileAccesses.Remove(fileAccess);
-			}
+    private void AddFileAccess(string appName, string path, DateTime expires)
+    {
+        path = path.AdjustPathToOs();
+        var fileAccesses = settings.GetValues<FileAccessControl>(typeof(PLangFileSystem));
+        var fileAccess = fileAccesses.FirstOrDefault(a => a.appName == appName && a.path == path);
+        if (fileAccess != null) fileAccesses.Remove(fileAccess);
 
-			fileAccesses.Add(new FileAccessControl(appName, path, expires));
-			settings.SetList(typeof(PLangFileSystem), fileAccesses);
-			fileSystem.SetFileAccess(fileAccesses);
-		}
-	}
+        fileAccesses.Add(new FileAccessControl(appName, path, expires));
+        settings.SetList(typeof(PLangFileSystem), fileAccesses);
+        fileSystem.SetFileAccess(fileAccesses);
+    }
+
+    public record FileAccessResponse(string GiveAccess, DateTime? Expires);
 }

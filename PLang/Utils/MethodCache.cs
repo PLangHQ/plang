@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Reflection;
 
-namespace PLang.Utils
+namespace PLang.Utils;
+
+internal static class MethodCache
 {
-	internal static class MethodCache
-	{
-
-		public static Dictionary<string, MethodInfo> Cache = new Dictionary<string, MethodInfo>();
-	}
+    public static Dictionary<string, MethodInfo> Cache = new();
 }

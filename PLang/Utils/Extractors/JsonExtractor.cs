@@ -1,129 +1,117 @@
-﻿using Newtonsoft.Json;
-using PLang.Exceptions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
+using PLang.Exceptions;
 
-namespace PLang.Utils.Extractors
+namespace PLang.Utils.Extractors;
+
+public class JsonExtractor : GenericExtractor, IContentExtractor
 {
-	public class JsonExtractor : GenericExtractor, IContentExtractor
-	{
-		public JsonExtractor() : base("json") { }
+    public JsonExtractor() : base("json")
+    {
+    }
 
-		public new T Extract<T>(string content)
-		{
-			return (T)Extract(content, typeof(T));
-		}
+    public new T Extract<T>(string content)
+    {
+        return (T)Extract(content, typeof(T));
+    }
 
-		public static string FixMalformedJson(string json)
-		{
+    public new object? Extract(string? content, Type responseType)
+    {
+        if (content == null) return null;
+        if (responseType == typeof(string)) return content;
 
-			var verbatimStringRegex = new Regex(@"@?""([^""\\]|\\.)*""", RegexOptions.Multiline);
+        try
+        {
+            try
+            {
+                if (content.Trim().Contains("```" + LlmResponseType))
+                    content = ExtractByType(content, "json").ToString()!;
+                return JsonConvert.DeserializeObject(content, responseType) ?? "";
+            }
+            catch (Exception ex)
+            {
+                var newContent = FixMalformedJson(content);
+                var obj = JsonConvert.DeserializeObject(newContent, responseType);
+                if (obj != null) return obj;
 
-			var newJson = verbatimStringRegex.Replace(json, match =>
-			{
-				string unescaped = match.Value.Trim();
-				if (unescaped.StartsWith("@")) unescaped = unescaped.Substring(1);
-				string pattern = @"\\(?!"")(.)";
-				unescaped = Regex.Replace(unescaped, pattern, @"\\$1");
+                throw new ParsingException($"Error parsing content to json. Content:\n\n{content}", ex);
+            }
+        }
+        catch
+        {
+            try
+            {
+                // Use a regular expression to match JSON-like objects
+                var regex = new Regex(@"\{(?:[^{}]|(?<Level>\{)|(?<-Level>\}))+\}",
+                    RegexOptions.Multiline | RegexOptions.Compiled);
+                //Regex regex = new Regex(@"(\{.*?\}|\[.*?\])", RegexOptions.Singleline | RegexOptions.Compiled);
+                var newContent = FixMalformedJson(content);
+                var matches = regex.Matches(newContent);
+                if (responseType.IsArray)
+                {
+                    var sb = new StringBuilder("[");
+                    foreach (Match match in matches)
+                        if (match.Success)
+                        {
+                            if (sb.Length > 1) sb.Append(",");
+                            sb.Append(match.Value);
+                        }
 
-				unescaped = unescaped //.Substring(2, match.Value.Length - 3) // Remove leading @ and trailing "
-									  //.Replace(@"\", @"\\")
-											.Replace("\"\"", "\\\"") // Replace double quotes
-											.Replace("\r\n", "\\n")   // Replace newlines
-											.Replace("\n", "\\n");     // Replace newlines (alternative format)
-				return unescaped; // Add enclosing quotes
-			});
-			return newJson;
-		}
+                    sb.Append("]");
+                    return JsonConvert.DeserializeObject(sb.ToString(), responseType) ?? "";
+                }
 
-		public new object? Extract(string? content, Type responseType)
-		{
-			if (content == null) return null;
-			if (responseType == typeof(string)) return content;
+                foreach (Match match in matches)
+                    if (match.Success)
+                        try
+                        {
+                            return JsonConvert.DeserializeObject(match.Value, responseType) ?? "";
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new ParsingException($"Error parsing content to json. Content:\n\n{content}", ex);
+                        }
 
-			try
-			{
-				try
-				{
-					if (content.Trim().Contains("```" + this.LlmResponseType))
-					{
-						content = ExtractByType(content, "json").ToString()!;
-					}
-					return JsonConvert.DeserializeObject(content, responseType) ?? "";
-				}
-				catch (Exception ex)
-				{
+                throw new ParsingException($"Error parsing content to json. Content:\n\n{content}",
+                    new Exception("Error parsing content to json"));
+            }
+            catch (Exception ex2)
+            {
+                throw new ParsingException($"Error parsing content to json. Content:\n\n{content}", ex2);
+            }
+        }
+    }
 
-					var newContent = FixMalformedJson(content);
-					var obj = JsonConvert.DeserializeObject(newContent, responseType);
-					if (obj != null) return obj;
+    public new string GetRequiredResponse(Type type)
+    {
+        var strScheme = TypeHelper.GetJsonSchema(type);
+        return GetRequiredResponse(strScheme);
+    }
 
-					throw new ParsingException($"Error parsing content to json. Content:\n\n{content}", ex);
-				}
-			}
-			catch
-			{
-				try
-				{
-					// Use a regular expression to match JSON-like objects
-					Regex regex = new Regex(@"\{(?:[^{}]|(?<Level>\{)|(?<-Level>\}))+\}", RegexOptions.Multiline | RegexOptions.Compiled);
-					//Regex regex = new Regex(@"(\{.*?\}|\[.*?\])", RegexOptions.Singleline | RegexOptions.Compiled);
-					var newContent = FixMalformedJson(content);
-					MatchCollection matches = regex.Matches(newContent);
-					if (responseType.IsArray)
-					{
-						StringBuilder sb = new StringBuilder("[");
-						foreach (Match match in matches)
-						{
-							if (match.Success)
-							{
-								if (sb.Length > 1) sb.Append(",");
-								sb.Append(match.Value.ToString());
-							}
+    public static string FixMalformedJson(string json)
+    {
+        var verbatimStringRegex = new Regex(@"@?""([^""\\]|\\.)*""", RegexOptions.Multiline);
 
-						}
-						sb.Append("]");
-						return JsonConvert.DeserializeObject(sb.ToString(), responseType) ?? "";
-					}
+        var newJson = verbatimStringRegex.Replace(json, match =>
+        {
+            var unescaped = match.Value.Trim();
+            if (unescaped.StartsWith("@")) unescaped = unescaped.Substring(1);
+            var pattern = @"\\(?!"")(.)";
+            unescaped = Regex.Replace(unescaped, pattern, @"\\$1");
 
-					foreach (Match match in matches)
-					{
-						if (match.Success)
-						{
-							try
-							{
-								return JsonConvert.DeserializeObject(match.Value.ToString(), responseType) ?? "";
-							}
-							catch (Exception ex)
-							{
-								throw new ParsingException($"Error parsing content to json. Content:\n\n{content}", ex);
-							}
+            unescaped = unescaped //.Substring(2, match.Value.Length - 3) // Remove leading @ and trailing "
+                //.Replace(@"\", @"\\")
+                .Replace("\"\"", "\\\"") // Replace double quotes
+                .Replace("\r\n", "\\n") // Replace newlines
+                .Replace("\n", "\\n"); // Replace newlines (alternative format)
+            return unescaped; // Add enclosing quotes
+        });
+        return newJson;
+    }
 
-						}
-					}
-
-					throw new ParsingException($"Error parsing content to json. Content:\n\n{content}", new Exception("Error parsing content to json"));
-				}
-				catch (Exception ex2)
-				{
-					throw new ParsingException($"Error parsing content to json. Content:\n\n{content}", ex2);
-				}
-			}
-		}
-
-		public new string GetRequiredResponse(Type type)
-		{
-			string strScheme = TypeHelper.GetJsonSchema(type);
-			return GetRequiredResponse(strScheme);
-		}
-
-		public new string GetRequiredResponse(string scheme)
-		{
-			return $"You MUST respond in JSON, scheme:\r\n {scheme}";
-		}
-	}
+    public new string GetRequiredResponse(string scheme)
+    {
+        return $"You MUST respond in JSON, scheme:\r\n {scheme}";
+    }
 }

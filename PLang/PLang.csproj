@@ -1,130 +1,129 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Library</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>PLang</RootNamespace>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AssemblyName>PLangLibrary</AssemblyName>
-    <TargetFrameworks>net8.0</TargetFrameworks>
-    <SelfContained>true</SelfContained>
-    <!--<RuntimeIdentifier>win-x64</RuntimeIdentifier>-->
-    <SignAssembly>False</SignAssembly>
-    <FileVersion>$(Version)</FileVersion>
-		<AssemblyVersion>$(Version)</AssemblyVersion>
+    <PropertyGroup>
+        <OutputType>Library</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <RootNamespace>PLang</RootNamespace>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyName>PLangLibrary</AssemblyName>
+        <TargetFrameworks>net8.0</TargetFrameworks>
+        <SelfContained>true</SelfContained>
+        <!--<RuntimeIdentifier>win-x64</RuntimeIdentifier>-->
+        <SignAssembly>False</SignAssembly>
+        <FileVersion>$(Version)</FileVersion>
+        <AssemblyVersion>$(Version)</AssemblyVersion>
 
-		<Authors>Ingi Gauti Ragnarsson</Authors>
-		<Company>Plang</Company>
-		<PackageId>PlangLibrary</PackageId>
-		<Title>PlangLibrary</Title>
-		<Description>Plang language core</Description>
-		<PackageTags>plang</PackageTags>
-		<RepositoryUrl>https://github.com/PLangHQ/plang/</RepositoryUrl>
-		<PackageLicenseExpression>LGPL-2.0-or-later</PackageLicenseExpression>
-		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<IncludeSymbols>true</IncludeSymbols>
-		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
-	</PropertyGroup>
+        <Authors>Ingi Gauti Ragnarsson</Authors>
+        <Company>Plang</Company>
+        <PackageId>PlangLibrary</PackageId>
+        <Title>PlangLibrary</Title>
+        <Description>Plang language core</Description>
+        <PackageTags>plang</PackageTags>
+        <RepositoryUrl>https://github.com/PLangHQ/plang/</RepositoryUrl>
+        <PackageLicenseExpression>LGPL-2.0-or-later</PackageLicenseExpression>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-    <Deterministic>True</Deterministic>
-  </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+        <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+        <Deterministic>True</Deterministic>
+    </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
-    <Deterministic>True</Deterministic>
-  </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+        <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+        <Deterministic>True</Deterministic>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <Content Include="Goals\.build\info.txt" />
-		<None Include="README.md" Pack="true" PackagePath="\" />
-  </ItemGroup>
+    <ItemGroup>
+        <Content Include="Goals\.build\info.txt"/>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
 
 
+    <ItemGroup>
+        <PackageReference Include="BCrypt.Net-Next" Version="4.0.3"/>
+        <PackageReference Include="CsvHelper" Version="33.0.1"/>
+        <PackageReference Include="Dapper" Version="2.1.35"/>
+        <PackageReference Include="IdGen" Version="3.0.7"/>
+        <PackageReference Include="Jil" Version="2.17.0"/>
+        <PackageReference Include="LightInject" Version="6.6.4"/>
+        <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.10"/>
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0"/>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.11.0"/>
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10"/>
+        <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1"/>
+        <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1"/>
+        <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.1.2"/>
+        <PackageReference Include="Microsoft.Net.Http.Headers" Version="8.0.10"/>
+        <PackageReference Include="MimeKit" Version="4.8.0"/>
+        <PackageReference Include="MiniExcel" Version="1.34.2"/>
+        <PackageReference Include="NCrontab.Signed" Version="3.3.3"/>
+        <PackageReference Include="Nethereum.Accounts" Version="4.26.0"/>
+        <PackageReference Include="Nethereum.Contracts" Version="4.26.0"/>
+        <PackageReference Include="Nethereum.HdWallet" Version="4.26.0"/>
+        <PackageReference Include="Nethereum.JsonRpc.RpcClient" Version="4.26.0"/>
+        <PackageReference Include="Nethereum.JsonRpc.WebSocketClient" Version="4.26.0"/>
+        <PackageReference Include="Nethereum.RPC.Reactive" Version="4.26.0"/>
+        <PackageReference Include="Nethereum.Signer" Version="4.26.0"/>
+        <PackageReference Include="Nethereum.Util.Rest" Version="4.26.0"/>
+        <PackageReference Include="Nostr.Client" Version="2.0.0"/>
+        <PackageReference Include="NSec.Cryptography" Version="24.4.0"/>
+        <PackageReference Include="OpenAI" Version="2.0.0"/>
+        <PackageReference Include="pythonnet" Version="3.0.4"/>
+        <PackageReference Include="RazorEngineCore" Version="2024.4.1"/>
+        <PackageReference Include="Scriban.Signed" Version="5.10.0"/>
+        <PackageReference Include="Selenium.Support" Version="4.25.0"/>
+        <PackageReference Include="Selenium.WebDriver" Version="4.25.0"/>
+        <PackageReference Include="SeleniumExtras.WaitHelpers" Version="1.0.2"/>
+        <PackageReference Include="Sprache" Version="2.3.1"/>
+        <PackageReference Include="System.CodeDom" Version="8.0.0"/>
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.1.2"/>
+        <PackageReference Include="System.IO.Abstractions" Version="21.0.29"/>
+        <PackageReference Include="System.Linq.Dynamic.Core" Version="1.4.5"/>
+        <PackageReference Include="System.Management" Version="8.0.0"/>
+        <PackageReference Include="System.Net.Security" Version="4.3.2"/>
+        <PackageReference Include="System.Reflection.MetadataLoadContext" Version="8.0.1"/>
+        <PackageReference Include="System.Runtime.Caching" Version="8.0.1"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2"/>
+        <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0"/>
+        <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-    <PackageReference Include="CsvHelper" Version="33.0.1" />
-    <PackageReference Include="Dapper" Version="2.1.35" />
-    <PackageReference Include="IdGen" Version="3.0.7" />
-    <PackageReference Include="Jil" Version="2.17.0" />
-    <PackageReference Include="LightInject" Version="6.6.4" />
-    <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.10" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.11.0" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
-    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.1.2" />
-    <PackageReference Include="Microsoft.Net.Http.Headers" Version="8.0.10" />
-    <PackageReference Include="MimeKit" Version="4.8.0" />
-    <PackageReference Include="MiniExcel" Version="1.34.2" />
-    <PackageReference Include="NCrontab.Signed" Version="3.3.3" />
-    <PackageReference Include="Nethereum.Accounts" Version="4.26.0" />
-    <PackageReference Include="Nethereum.Contracts" Version="4.26.0" />
-    <PackageReference Include="Nethereum.HdWallet" Version="4.26.0" />
-    <PackageReference Include="Nethereum.JsonRpc.RpcClient" Version="4.26.0" />
-    <PackageReference Include="Nethereum.JsonRpc.WebSocketClient" Version="4.26.0" />
-    <PackageReference Include="Nethereum.RPC.Reactive" Version="4.26.0" />
-    <PackageReference Include="Nethereum.Signer" Version="4.26.0" />
-    <PackageReference Include="Nethereum.Util.Rest" Version="4.26.0" />
-    <PackageReference Include="Nostr.Client" Version="2.0.0" />
-    <PackageReference Include="NSec.Cryptography" Version="24.4.0" />
-    <PackageReference Include="OpenAI" Version="2.0.0" />
-    <PackageReference Include="pythonnet" Version="3.0.4" />
-    <PackageReference Include="RazorEngineCore" Version="2024.4.1" />
-    <PackageReference Include="Scriban.Signed" Version="5.10.0" />
-    <PackageReference Include="Selenium.Support" Version="4.25.0" />
-    <PackageReference Include="Selenium.WebDriver" Version="4.25.0" />
-    <PackageReference Include="SeleniumExtras.WaitHelpers" Version="1.0.2" />
-    <PackageReference Include="Sprache" Version="2.3.1" />
-    <PackageReference Include="System.CodeDom" Version="8.0.0" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.1.2" />
-    <PackageReference Include="System.IO.Abstractions" Version="21.0.29" />
-    <PackageReference Include="System.Linq.Dynamic.Core" Version="1.4.5" />
-    <PackageReference Include="System.Management" Version="8.0.0" />
-    <PackageReference Include="System.Net.Security" Version="4.3.2" />
-    <PackageReference Include="System.Reflection.MetadataLoadContext" Version="8.0.1" />
-    <PackageReference Include="System.Runtime.Caching" Version="8.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
-    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
-    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
-  </ItemGroup>
+    <ItemGroup>
+        <Compile Update="Resources\InternalApps.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>InternalApps.resx</DependentUpon>
+        </Compile>
+    </ItemGroup>
 
-  <ItemGroup>
-    <Compile Update="Resources\InternalApps.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>InternalApps.resx</DependentUpon>
-    </Compile>
-  </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Update="Resources\InternalApps.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>InternalApps.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+    </ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Update="Resources\InternalApps.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>InternalApps.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-  </ItemGroup>
+    <ItemGroup>
+        <None Update="appsettings.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
 
-  <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+        <None Include="Goals\**\*" Exclude="**\.db\**\*.*">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 
-		<None Include="Goals\**\*" Exclude="**\.db\**\*.*">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Goals\modules\ui\runtime\" />
-  </ItemGroup>
+    <ItemGroup>
+        <Folder Include="Goals\modules\ui\runtime\"/>
+    </ItemGroup>
 
 </Project>

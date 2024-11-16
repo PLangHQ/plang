@@ -1,8 +1,6 @@
-﻿namespace PLang.Errors.Builder
-{
-	public interface IBuilderError : IError
-	{
-		public bool ContinueBuild { get; }
+﻿namespace PLang.Errors.Builder;
 
-	}
+public interface IBuilderError : IError
+{
+    public bool ContinueBuild { get; }
 }

@@ -1,40 +1,34 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PLang.Utils;
+using PLang.Modules.DbModule;
 using PLangTests;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace PLang.Utils.Tests
+namespace PLang.Utils.Tests;
+
+[TestClass]
+public class TypeHelperTests : BasePLangTest
 {
-	[TestClass()]
-	public class TypeHelperTests : BasePLangTest
-	{
-		[TestInitialize]
-		public void Init() {
-			Initialize();
-		}
+    [TestInitialize]
+    public void Init()
+    {
+        Initialize();
+    }
 
 
-		[TestMethod()]
-		public void GetMethodsTest()
-		{
+    [TestMethod]
+    public void GetMethodsTest()
+    {
+        var methods = typeHelper.GetMethodsAsString(typeof(Program));
+        Assert.IsTrue(methods.Contains("Select") && methods.Contains("Insert"));
 
-			var methods = typeHelper.GetMethodsAsString(typeof(PLang.Modules.DbModule.Program));
-			Assert.IsTrue(methods.Contains("Select") && methods.Contains("Insert"));
+        methods = typeHelper.GetMethodsAsString(typeof(Modules.LocalOrGlobalVariableModule.Program));
+        Assert.IsTrue(methods.Contains("SetVariable") && methods.Contains("SetDefaultValueOnVariables"));
+    }
 
-			methods = typeHelper.GetMethodsAsString(typeof(PLang.Modules.LocalOrGlobalVariableModule.Program));
-			Assert.IsTrue(methods.Contains("SetVariable") && methods.Contains("SetDefaultValueOnVariables"));
-		}
+    [TestMethod]
+    public void GetTypeTest()
+    {
+        var type = typeHelper.GetRuntimeType("PLang.Modules.CodeModule");
 
-		[TestMethod()]
-		public void GetTypeTest()
-		{
-			var type = typeHelper.GetRuntimeType("PLang.Modules.CodeModule");
-
-			Assert.IsTrue(typeof(PLang.Modules.CodeModule.Program) == type);
-		}
-	}
+        Assert.IsTrue(typeof(Modules.CodeModule.Program) == type);
+    }
 }

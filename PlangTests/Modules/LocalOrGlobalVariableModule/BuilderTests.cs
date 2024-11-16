@@ -1,255 +1,237 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System.Runtime.CompilerServices;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
-using NSubstitute;
 using PLang.Building.Model;
-using PLang.Interfaces;
-using PLang.SafeFileSystem;
-using PLang.Services.LlmService;
-using PLang.Services.OpenAi;
-using PLang.Utils;
 using PLangTests;
-using System.Runtime.CompilerServices;
-using PLang.Modules.LocalOrGlobalVariableModule;
 using static PLang.Modules.BaseBuilder;
 
-namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
+namespace PLang.Modules.LocalOrGlobalVariableModule.Tests;
+
+[TestClass]
+public class BuilderTests : BasePLangTest
 {
-	[TestClass()]
-	public class BuilderTests : BasePLangTest
-	{
-		BaseBuilder builder;
+    private BaseBuilder builder;
 
-		[TestInitialize]
-		public void Init()
-		{
-			base.Initialize();
+    [TestInitialize]
+    public void Init()
+    {
+        Initialize();
 
-			LoadOpenAI();
+        LoadOpenAI();
 
-			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.LocalOrGlobalVariableModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+        builder = new GenericFunctionBuilder();
+        builder.InitBaseBuilder("PLang.Modules.LocalOrGlobalVariableModule", fileSystem, llmServiceFactory, typeHelper,
+            memoryStack, context, variableHelper, logger);
+    }
 
-		}
 
+    private void SetupResponse(string stepText, Type? type = null, [CallerMemberName] string caller = "")
+    {
+        var llmService = GetLlmService(stepText, caller, type);
+        if (llmService == null) return;
 
-		private void SetupResponse(string stepText, Type? type = null, [CallerMemberName] string caller = "")
-		{
-			var llmService = GetLlmService(stepText, caller, type);
-			if (llmService == null) return;
+        builder = new GenericFunctionBuilder();
+        builder.InitBaseBuilder("PLang.Modules.LocalOrGlobalVariableModule", fileSystem, llmServiceFactory, typeHelper,
+            memoryStack, context, variableHelper, logger);
+    }
 
-			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.LocalOrGlobalVariableModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
-		}
+    public GoalStep GetStep(string text)
+    {
+        var step = new GoalStep();
+        step.Text = text;
+        step.ModuleType = "PLang.Modules.LocalOrGlobalVariableModule";
+        return step;
+    }
 
-		public GoalStep GetStep(string text)
-		{
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
-			step.ModuleType = "PLang.Modules.LocalOrGlobalVariableModule";
-			return step;
-		}
+    [DataTestMethod]
+    [DataRow("set 'name' as %name%")]
+    public async Task SetVariable_Test(string text)
+    {
+        SetupResponse(text);
 
-		[DataTestMethod]
-		[DataRow("set 'name' as %name%")]
-		public async Task SetVariable_Test(string text)
-		{
-			SetupResponse(text);
+        var step = GetStep(text);
 
-			var step = GetStep(text);		
-			 
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+        Store(text, instruction.LlmRequest.RawResponse);
 
-			Assert.AreEqual("SetVariable", gf.FunctionName);
-			Assert.AreEqual("key", gf.Parameters[0].Name);
-			Assert.AreEqual("name", gf.Parameters[0].Value);
-			Assert.AreEqual("value", gf.Parameters[1].Name);
-			Assert.AreEqual("%name%", gf.Parameters[1].Value);
+        Assert.AreEqual("SetVariable", gf.FunctionName);
+        Assert.AreEqual("key", gf.Parameters[0].Name);
+        Assert.AreEqual("name", gf.Parameters[0].Value);
+        Assert.AreEqual("value", gf.Parameters[1].Name);
+        Assert.AreEqual("%name%", gf.Parameters[1].Value);
+    }
 
-		}
 
+    [DataTestMethod]
+    [DataRow("set static 'name' as %name%")]
+    public async Task SetStaticVariable_Test(string text)
+    {
+        SetupResponse(text);
 
+        var step = GetStep(text);
 
-		[DataTestMethod]
-		[DataRow("set static 'name' as %name%")]
-		public async Task SetStaticVariable_Test(string text)
-		{
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as GenericFunction;
 
-			SetupResponse(text);
+        Store(text, instruction.LlmRequest.RawResponse);
 
-			var step = GetStep(text);
+        Assert.AreEqual("SetStaticVariable", gf.FunctionName);
+        Assert.AreEqual("key", gf.Parameters[0].Name);
+        Assert.AreEqual("name", gf.Parameters[0].Value);
+        Assert.AreEqual("value", gf.Parameters[1].Name);
+        Assert.AreEqual("%name%", gf.Parameters[1].Value);
+    }
 
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+    [DataTestMethod]
+    [DataRow("get 'name' var into %name%")]
+    public async Task GetVariable_Test(string text)
+    {
+        SetupResponse(text);
 
-			Assert.AreEqual("SetStaticVariable", gf.FunctionName);
-			Assert.AreEqual("key", gf.Parameters[0].Name);
-			Assert.AreEqual("name", gf.Parameters[0].Value);
-			Assert.AreEqual("value", gf.Parameters[1].Name);
-			Assert.AreEqual("%name%", gf.Parameters[1].Value);
+        var step = GetStep(text);
 
-		}
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as GenericFunction;
 
+        Store(text, instruction.LlmRequest.RawResponse);
 
-		[DataTestMethod]
-		[DataRow("get 'name' var into %name%")]
-		public async Task GetVariable_Test(string text)
-		{
-			SetupResponse(text);
+        Assert.AreEqual("GetVariable", gf.FunctionName);
+        Assert.AreEqual("key", gf.Parameters[0].Name);
+        Assert.AreEqual("name", gf.Parameters[0].Value);
+        Assert.AreEqual("name", gf.ReturnValues[0].VariableName);
+    }
 
-			var step = GetStep(text);
 
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+    [DataTestMethod]
+    [DataRow("get static 'name' var into %name%")]
+    public async Task GetStaticVariable_Test(string text)
+    {
+        SetupResponse(text);
 
-			Store(text, instruction.LlmRequest.RawResponse);
+        var step = GetStep(text);
 
-			Assert.AreEqual("GetVariable", gf.FunctionName);
-			Assert.AreEqual("key", gf.Parameters[0].Name);
-			Assert.AreEqual("name", gf.Parameters[0].Value);
-			Assert.AreEqual("name", gf.ReturnValues[0].VariableName);
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as GenericFunction;
 
-		}
+        Store(text, instruction.LlmRequest.RawResponse);
 
+        Assert.AreEqual("GetStaticVariable", gf.FunctionName);
+        Assert.AreEqual("key", gf.Parameters[0].Name);
+        Assert.AreEqual("name", gf.Parameters[0].Value);
+        Assert.AreEqual("name", gf.ReturnValues[0].VariableName);
+    }
 
-		[DataTestMethod]
-		[DataRow("get static 'name' var into %name%")]
-		public async Task GetStaticVariable_Test(string text)
-		{
-			SetupResponse(text);
+    [DataTestMethod]
+    [DataRow("remove variable 'name'")]
+    public async Task RemoveVariable_Test(string text)
+    {
+        SetupResponse(text);
 
-			var step = GetStep(text);
+        var step = GetStep(text);
 
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+        Store(text, instruction.LlmRequest.RawResponse);
 
-			Assert.AreEqual("GetStaticVariable", gf.FunctionName);
-			Assert.AreEqual("key", gf.Parameters[0].Name);
-			Assert.AreEqual("name", gf.Parameters[0].Value);
-			Assert.AreEqual("name", gf.ReturnValues[0].VariableName);
+        Assert.AreEqual("RemoveVariable", gf.FunctionName);
+        Assert.AreEqual("key", gf.Parameters[0].Name);
+        Assert.AreEqual("name", gf.Parameters[0].Value);
+    }
 
-		}
+    [DataTestMethod]
+    [DataRow("remove static variable 'name'")]
+    public async Task RemoveStaticVariable_Test(string text)
+    {
+        SetupResponse(text);
 
-		[DataTestMethod]
-		[DataRow("remove variable 'name'")]
-		public async Task RemoveVariable_Test(string text)
-		{
-			SetupResponse(text);
+        var step = GetStep(text);
 
-			var step = GetStep(text);
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as GenericFunction;
 
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+        Store(text, instruction.LlmRequest.RawResponse);
 
-			Store(text, instruction.LlmRequest.RawResponse);
+        Assert.AreEqual("RemoveStaticVariable", gf.FunctionName);
+        Assert.AreEqual("key", gf.Parameters[0].Name);
+        Assert.AreEqual("name", gf.Parameters[0].Value);
+    }
 
-			Assert.AreEqual("RemoveVariable", gf.FunctionName);
-			Assert.AreEqual("key", gf.Parameters[0].Name);
-			Assert.AreEqual("name", gf.Parameters[0].Value);
+    [DataTestMethod]
+    [DataRow("listen to variable 'name', call !Process name=%full_name%, %zip%")]
+    public async Task OnCreateVariableListener_Test(string text)
+    {
+        SetupResponse(text);
 
-		}
+        var step = GetStep(text);
 
-		[DataTestMethod]
-		[DataRow("remove static variable 'name'")]
-		public async Task RemoveStaticVariable_Test(string text)
-		{
-			SetupResponse(text);
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as GenericFunction;
 
-			var step = GetStep(text);
+        Store(text, instruction.LlmRequest.RawResponse);
 
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+        Assert.AreEqual("OnCreateVariableListener", gf.FunctionName);
+        Assert.AreEqual("key", gf.Parameters[0].Name);
+        Assert.AreEqual("name", gf.Parameters[0].Value);
+        Assert.AreEqual("goalName", gf.Parameters[1].Name);
+        Assert.AreEqual("!Process", gf.Parameters[1].Value);
+        Assert.AreEqual("parameters", gf.Parameters[2].Name);
 
-			Store(text, instruction.LlmRequest.RawResponse);
+        var dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(gf.Parameters[2].Value.ToString());
+        Assert.AreEqual("%full_name%", dict["name"]);
+        Assert.AreEqual("%zip%", dict["zip"]);
+    }
 
-			Assert.AreEqual("RemoveStaticVariable", gf.FunctionName);
-			Assert.AreEqual("key", gf.Parameters[0].Name);
-			Assert.AreEqual("name", gf.Parameters[0].Value);
+    [DataTestMethod]
+    [DataRow("listen to change on variable 'name', call !Process name=%full_name%, %phone%")]
+    public async Task OnChangeVariableListener_Test(string text)
+    {
+        SetupResponse(text);
 
-		}
+        var step = GetStep(text);
 
-		[DataTestMethod]
-		[DataRow("listen to variable 'name', call !Process name=%full_name%, %zip%")]
-		public async Task OnCreateVariableListener_Test(string text)
-		{
-			SetupResponse(text);
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as GenericFunction;
 
-			var step = GetStep(text);
+        Store(text, instruction.LlmRequest.RawResponse);
 
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+        Assert.AreEqual("OnChangeVariableListener", gf.FunctionName);
+        Assert.AreEqual("key", gf.Parameters[0].Name);
+        Assert.AreEqual("name", gf.Parameters[0].Value);
+        Assert.AreEqual("goalName", gf.Parameters[1].Name);
+        Assert.AreEqual("!Process", gf.Parameters[1].Value);
+        Assert.AreEqual("parameters", gf.Parameters[3].Name);
 
-			Store(text, instruction.LlmRequest.RawResponse);
+        var dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(gf.Parameters[3].Value.ToString());
+        Assert.AreEqual("%full_name%", dict["name"]);
+        Assert.AreEqual("%phone%", dict["phone"]);
+    }
 
-			Assert.AreEqual("OnCreateVariableListener", gf.FunctionName);
-			Assert.AreEqual("key", gf.Parameters[0].Name);
-			Assert.AreEqual("name", gf.Parameters[0].Value);
-			Assert.AreEqual("goalName", gf.Parameters[1].Name);
-			Assert.AreEqual("!Process", gf.Parameters[1].Value);
-			Assert.AreEqual("parameters", gf.Parameters[2].Name);
+    [DataTestMethod]
+    [DataRow("listen to remove on variable 'name', call !Process name=%full_name%, %key%")]
+    public async Task OnRemoveVariableListener_Test(string text)
+    {
+        SetupResponse(text);
 
-			var dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(gf.Parameters[2].Value.ToString());
-			Assert.AreEqual("%full_name%", dict["name"]);
-			Assert.AreEqual("%zip%", dict["zip"]);
+        var step = GetStep(text);
 
-		}
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as GenericFunction;
 
-		[DataTestMethod]
-		[DataRow("listen to change on variable 'name', call !Process name=%full_name%, %phone%")]
-		public async Task OnChangeVariableListener_Test(string text)
-		{
-			SetupResponse(text);
+        Store(text, instruction.LlmRequest.RawResponse);
 
-			var step = GetStep(text);
+        Assert.AreEqual("OnRemoveVariableListener", gf.FunctionName);
+        Assert.AreEqual("key", gf.Parameters[0].Name);
+        Assert.AreEqual("name", gf.Parameters[0].Value);
+        Assert.AreEqual("goalName", gf.Parameters[1].Name);
+        Assert.AreEqual("!Process", gf.Parameters[1].Value);
+        Assert.AreEqual("parameters", gf.Parameters[2].Name);
 
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
-
-			Store(text, instruction.LlmRequest.RawResponse);
-
-			Assert.AreEqual("OnChangeVariableListener", gf.FunctionName);
-			Assert.AreEqual("key", gf.Parameters[0].Name);
-			Assert.AreEqual("name", gf.Parameters[0].Value);
-			Assert.AreEqual("goalName", gf.Parameters[1].Name);
-			Assert.AreEqual("!Process", gf.Parameters[1].Value);
-			Assert.AreEqual("parameters", gf.Parameters[3].Name);
-
-			var dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(gf.Parameters[3].Value.ToString());
-			Assert.AreEqual("%full_name%", dict["name"]);
-			Assert.AreEqual("%phone%", dict["phone"]);
-
-		}
-
-		[DataTestMethod]
-		[DataRow("listen to remove on variable 'name', call !Process name=%full_name%, %key%")]
-		public async Task OnRemoveVariableListener_Test(string text)
-		{
-			SetupResponse(text);
-
-			var step = GetStep(text);
-
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
-
-			Store(text, instruction.LlmRequest.RawResponse);
-
-			Assert.AreEqual("OnRemoveVariableListener", gf.FunctionName);
-			Assert.AreEqual("key", gf.Parameters[0].Name);
-			Assert.AreEqual("name", gf.Parameters[0].Value);
-			Assert.AreEqual("goalName", gf.Parameters[1].Name);
-			Assert.AreEqual("!Process", gf.Parameters[1].Value);
-			Assert.AreEqual("parameters", gf.Parameters[2].Name);
-
-			var dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(gf.Parameters[2].Value.ToString());
-			Assert.AreEqual("%full_name%", dict["name"]);
-			Assert.AreEqual("%key%", dict["key"]);
-
-		}
-	}
+        var dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(gf.Parameters[2].Value.ToString());
+        Assert.AreEqual("%full_name%", dict["name"]);
+        Assert.AreEqual("%key%", dict["key"]);
+    }
 }

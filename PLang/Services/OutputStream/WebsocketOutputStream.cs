@@ -1,50 +1,48 @@
-﻿using PLang.Interfaces;
+﻿using System.Net.WebSockets;
+using System.Text;
 using PLang.Services.SigningService;
-using PLang.Utils;
-using System.Net.WebSockets;
 
-namespace PLang.Services.OutputStream
+namespace PLang.Services.OutputStream;
+
+public class WebsocketOutputStream : IOutputStream
 {
-	public class WebsocketOutputStream : IOutputStream
-	{
-		private readonly WebSocket webSocket;
-		private readonly IPLangSigningService signingService;
+    private readonly IPLangSigningService signingService;
+    private readonly WebSocket webSocket;
 
-		public WebsocketOutputStream(WebSocket webSocket, IPLangSigningService signingService)
-		{			
-			this.webSocket = webSocket;
-			this.signingService = signingService;
-			Stream = new MemoryStream();
-			ErrorStream = new MemoryStream();
-		}
+    public WebsocketOutputStream(WebSocket webSocket, IPLangSigningService signingService)
+    {
+        this.webSocket = webSocket;
+        this.signingService = signingService;
+        Stream = new MemoryStream();
+        ErrorStream = new MemoryStream();
+    }
 
-		public Stream Stream { get; private set; }
-		public Stream ErrorStream { get; private set; }
+    public Stream Stream { get; }
+    public Stream ErrorStream { get; }
 
-		public string ContentType => "text/plain";
+    public string ContentType => "text/plain";
 
-		public async Task<string> Ask(string text, string type = "text", int statusCode = 200)
-		{
-			return "";
-		}
+    public async Task<string> Ask(string text, string type = "text", int statusCode = 200)
+    {
+        return "";
+    }
 
-		public string Read()
-		{
-			return "";
-		}
+    public string Read()
+    {
+        return "";
+    }
 
-		public async Task Write(object? obj, string type = "text", int statusCode = 200)
-		{
-			if (obj == null) { return; }
+    public async Task Write(object? obj, string type = "text", int statusCode = 200)
+    {
+        if (obj == null) return;
 
-			byte[] buffer = System.Text.Encoding.UTF8.GetBytes(obj.ToString()!);
-			await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+        var buffer = Encoding.UTF8.GetBytes(obj.ToString()!);
+        await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true,
+            CancellationToken.None);
+    }
 
-		}
-
-		public async Task WriteToBuffer(object? obj, string type = "text", int statusCode = 200)
-		{
-			await Write(obj, type, statusCode);
-		}
-	}
+    public async Task WriteToBuffer(object? obj, string type = "text", int statusCode = 200)
+    {
+        await Write(obj, type, statusCode);
+    }
 }

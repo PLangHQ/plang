@@ -1,24 +1,21 @@
 ﻿using PLang.Building.Model;
 using PLang.Errors.Builder;
 using PLang.Exceptions;
-using PLang.Models;
 using PLang.Utils;
-using static PLang.Services.LlmService.PLangLlmService;
 
-namespace PLang.Modules.LlmModule
+namespace PLang.Modules.LlmModule;
+
+public class Builder : BaseBuilder
 {
-	public class Builder : BaseBuilder
-	{
-		public Builder() : base() { }
+    public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step)
+    {
+        return await Build(step);
+    }
 
-		public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step)
-		{
-			return await Build(step, null, 0);
-		}
-
-		public async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, string? error = null, int errorCount = 0)
-		{
-			AppendToSystemCommand(@"The following user request is for constructing a message to LLM engine
+    public async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step,
+        string? error = null, int errorCount = 0)
+    {
+        AppendToSystemCommand(@"The following user request is for constructing a message to LLM engine
 
 llmResponseType can be null, text, json, markdown or html. default is null. If scheme is defined then use json, unless user defines otherwise
 
@@ -127,38 +124,33 @@ or url
 
 ## examples ##
 ");
-			if (error != null)
-			{
-				AppendToAssistantCommand(error);
-			}
-			
-			(var instruction, var buildError) = await base.Build(step);
-            if (buildError != null || instruction == null)
+        if (error != null) AppendToAssistantCommand(error);
+
+        var (instruction, buildError) = await base.Build(step);
+        if (buildError != null || instruction == null)
+            return (null, buildError ?? new StepBuilderError("Could not build step", step));
+
+        var genericFunction = instruction.Action as GenericFunction;
+        if (genericFunction != null)
+        {
+            var scheme = genericFunction.Parameters.FirstOrDefault(p => p.Name == "scheme");
+            var responseType = genericFunction.Parameters.FirstOrDefault(p => p.Name == "llmResponseType");
+            if (scheme != null && scheme.Value != null && responseType?.Value.ToString() == "json" &&
+                !JsonHelper.LookAsJsonScheme(scheme.Value.ToString()))
             {
-                return (null, buildError ?? new StepBuilderError("Could not build step", step));
+                if (errorCount < 2)
+                {
+                    error =
+                        $"\nChatGPT generated follow scheme property: {scheme.Value}\n\nThis is not valid json. Can you try to generate a valid json from user request.";
+                    return await Build(step, error, ++errorCount);
+                }
+
+                throw new BuilderStepException(
+                    $"Could not determine scheme for the step. Make sure to include a json scheme, e.g. {{Result:string}}. Step: {step.Text}",
+                    step);
             }
+        }
 
-			var genericFunction = instruction.Action as GenericFunction;
-			if (genericFunction != null)
-			{
-				var scheme = genericFunction.Parameters.FirstOrDefault(p => p.Name == "scheme");
-				var responseType = genericFunction.Parameters.FirstOrDefault(p => p.Name == "llmResponseType");
-				if (scheme != null && scheme.Value != null && responseType?.Value.ToString() == "json" && !JsonHelper.LookAsJsonScheme(scheme.Value.ToString()))
-				{
-					if (errorCount < 2)
-					{
-						error = $"\nChatGPT generated follow scheme property: {scheme.Value}\n\nThis is not valid json. Can you try to generate a valid json from user request.";
-						return await Build(step, error, ++errorCount);
-					}
-
-					throw new BuilderStepException($"Could not determine scheme for the step. Make sure to include a json scheme, e.g. {{Result:string}}. Step: {step.Text}", step);
-				}
-			}
-			return (instruction, null);
-		}
-		
-
-
-	}
+        return (instruction, null);
+    }
 }
-

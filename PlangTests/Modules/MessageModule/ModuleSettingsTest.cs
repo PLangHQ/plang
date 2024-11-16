@@ -3,189 +3,186 @@ using NSubstitute;
 using PLang.Interfaces;
 using PLang.Modules.MessageModule;
 
-namespace PLangTests.Modules.MessageModule
+namespace PLangTests.Modules.MessageModule;
+
+[TestClass]
+public class ModuleSettingsTest : BasePLangTest
 {
-	[TestClass()]
-	public class ModuleSettingsTest : BasePLangTest
-	{
-		ModuleSettings moduleSettings;
-		[TestInitialize]
-		public void Init()
-		{
-			base.Initialize();
+    private ModuleSettings moduleSettings;
 
-			moduleSettings = new ModuleSettings(settings, llmServiceFactory);
-		}
+    [TestInitialize]
+    public void Init()
+    {
+        Initialize();
+
+        moduleSettings = new ModuleSettings(settings, llmServiceFactory);
+    }
 
 
+    [TestMethod]
+    public void GetDefaultRelays_Test()
+    {
+        var relays = moduleSettings.GetRelays();
 
-		[TestMethod]
-		public void GetDefaultRelays_Test()
-		{
+        Assert.AreEqual(4, relays.Count);
+    }
 
-			var relays = moduleSettings.GetRelays();
+    [TestMethod]
+    public void AddRelay_Test()
+    {
+        settings = Substitute.For<ISettings>();
+        var relayServer = new List<string>
+        {
+            "wss://relay.damus.io"
+        };
+        settings.GetValues<string>(typeof(ModuleSettings)).Returns(relayServer);
 
-			Assert.AreEqual(4, relays.Count);
+        moduleSettings = new ModuleSettings(settings, llmServiceFactory);
+        moduleSettings.AddRelay("wss://relay.damus.io");
+        moduleSettings.AddRelay("wss://relay.damus.com");
 
+        settings.Received(1).SetList(typeof(ModuleSettings),
+            Arg.Is<List<string>>(p => p.Contains("wss://relay.damus.com")));
+    }
 
-		}
+    [TestMethod]
+    public void RemoveRelay_Test()
+    {
+        settings = Substitute.For<ISettings>();
+        var relayServer = new List<string>
+        {
+            "wss://relay.damus.io",
+            "wss://relay.damus.com"
+        };
+        settings.GetValues<string>(typeof(ModuleSettings)).Returns(relayServer);
 
-		[TestMethod]
-		public void AddRelay_Test()
-		{
+        moduleSettings = new ModuleSettings(settings, llmServiceFactory);
+        moduleSettings.RemoveRelay("wss://relay.damus.io");
 
-			settings = NSubstitute.Substitute.For<ISettings>();
-			var relayServer = new List<string>()
-			{
-				"wss://relay.damus.io"
-			};
-			settings.GetValues<string>(typeof(ModuleSettings)).Returns(relayServer);
-
-			moduleSettings = new ModuleSettings(settings, llmServiceFactory);
-			moduleSettings.AddRelay("wss://relay.damus.io");
-			moduleSettings.AddRelay("wss://relay.damus.com");
-
-			settings.Received(1).SetList(typeof(ModuleSettings), Arg.Is<List<string>>(p => p.Contains("wss://relay.damus.com")));
-		}
-
-		[TestMethod]
-		public void RemoveRelay_Test()
-		{
-			settings = NSubstitute.Substitute.For<ISettings>();
-			var relayServer = new List<string>()
-			{
-				"wss://relay.damus.io",
-				"wss://relay.damus.com"
-			};
-			settings.GetValues<string>(typeof(ModuleSettings)).Returns(relayServer);
-
-			moduleSettings = new ModuleSettings(settings, llmServiceFactory);
-			moduleSettings.RemoveRelay("wss://relay.damus.io");
-
-			settings.Received(1).SetList(typeof(ModuleSettings), Arg.Is<List<string>>(p => p.Count == 1));
-		}
+        settings.Received(1).SetList(typeof(ModuleSettings), Arg.Is<List<string>>(p => p.Count == 1));
+    }
 
 
-		[TestMethod]
-		public void CreateAccount_Test()
-		{
-			moduleSettings = new ModuleSettings(settings, llmServiceFactory);
-			moduleSettings.CreateNewAccount();
+    [TestMethod]
+    public void CreateAccount_Test()
+    {
+        moduleSettings = new ModuleSettings(settings, llmServiceFactory);
+        moduleSettings.CreateNewAccount();
 
-			settings.Received(1).SetList(typeof(ModuleSettings), Arg.Any<List<NostrKey>>());
-		}
-
-
-		[TestMethod]
-		public void ArchiveAccount_SetSecondAccountAsDefault_Test()
-		{
-			settings = NSubstitute.Substitute.For<ISettings>();
-			settings.GetValues<NostrKey>(typeof(ModuleSettings)).Returns(new List<NostrKey>()
-			{
-				new NostrKey("Default", "a", "b", "c")
-				{
-					IsDefault = true
-				},
-				new NostrKey("Default", "g", "e", "f")
-			}); ;
+        settings.Received(1).SetList(typeof(ModuleSettings), Arg.Any<List<NostrKey>>());
+    }
 
 
-			moduleSettings = new ModuleSettings(settings, llmServiceFactory);
-			moduleSettings.ArchiveAccount("c");
-
-			settings.Received(1).SetList(typeof(ModuleSettings), Arg.Any<List<NostrKey>>());
-
-		}
-
-		[TestMethod]
-		public void ArchiveAccount_Test()
-		{
-			settings = NSubstitute.Substitute.For<ISettings>();
-			settings.GetValues<NostrKey>(typeof(ModuleSettings)).Returns(new List<NostrKey>()
-			{
-				new NostrKey("Default", "a", "b", "c")
-				{
-					IsDefault = true
-				},
-				new NostrKey("Default", "g", "e", "f")
-			}); ;
+    [TestMethod]
+    public void ArchiveAccount_SetSecondAccountAsDefault_Test()
+    {
+        settings = Substitute.For<ISettings>();
+        settings.GetValues<NostrKey>(typeof(ModuleSettings)).Returns(new List<NostrKey>
+        {
+            new("Default", "a", "b", "c")
+            {
+                IsDefault = true
+            },
+            new("Default", "g", "e", "f")
+        });
+        ;
 
 
-			moduleSettings = new ModuleSettings(settings, llmServiceFactory);
-			moduleSettings.ArchiveAccount("f");
+        moduleSettings = new ModuleSettings(settings, llmServiceFactory);
+        moduleSettings.ArchiveAccount("c");
 
-			settings.Received(1).SetList(typeof(ModuleSettings), Arg.Any<List<NostrKey>>());
+        settings.Received(1).SetList(typeof(ModuleSettings), Arg.Any<List<NostrKey>>());
+    }
 
-		}
-
-		[TestMethod]
-		public void ArchiveAccount_CreatesNewAccount_Test()
-		{
-			settings = NSubstitute.Substitute.For<ISettings>();
-			settings.GetValues<NostrKey>(typeof(ModuleSettings)).Returns(new List<NostrKey>()
-			{
-				new NostrKey("Default", "a", "b", "c")
-			}); ;
-
-
-			moduleSettings = new ModuleSettings(settings, llmServiceFactory);
-			moduleSettings.ArchiveAccount("c");
-
-			settings.Received(2).SetList(typeof(ModuleSettings), Arg.Any<List<NostrKey>>());
-
-		}
-
-		[TestMethod]
-		public void SetAsDefault_Test()
-		{
-			settings = NSubstitute.Substitute.For<ISettings>();
-			settings.GetValues<NostrKey>(typeof(ModuleSettings)).Returns(new List<NostrKey>()
-			{
-				new NostrKey("Default", "a", "b", "c")
-				{
-					IsDefault = true
-				},
-				new NostrKey("Default2", "g", "e", "f")
-			}); ;
+    [TestMethod]
+    public void ArchiveAccount_Test()
+    {
+        settings = Substitute.For<ISettings>();
+        settings.GetValues<NostrKey>(typeof(ModuleSettings)).Returns(new List<NostrKey>
+        {
+            new("Default", "a", "b", "c")
+            {
+                IsDefault = true
+            },
+            new("Default", "g", "e", "f")
+        });
+        ;
 
 
-			moduleSettings = new ModuleSettings(settings, llmServiceFactory);
-			moduleSettings.SetDefaultAccount("f");
+        moduleSettings = new ModuleSettings(settings, llmServiceFactory);
+        moduleSettings.ArchiveAccount("f");
 
-			moduleSettings.SetDefaultAccount("Default");
+        settings.Received(1).SetList(typeof(ModuleSettings), Arg.Any<List<NostrKey>>());
+    }
 
-
-			settings.Received(2).SetList(typeof(ModuleSettings), Arg.Any<List<NostrKey>>());
-
-		}
-
-		[TestMethod]
-		public void GetAccounts()
-		{
-			settings = NSubstitute.Substitute.For<ISettings>();
-			settings.GetValues<NostrKey>(typeof(ModuleSettings)).Returns(new List<NostrKey>()
-			{
-				new NostrKey("Default", "a", "b", "c")
-				{
-					IsDefault = true
-				},
-				new NostrKey("Default2", "g", "e", "f")
-			}); ;
+    [TestMethod]
+    public void ArchiveAccount_CreatesNewAccount_Test()
+    {
+        settings = Substitute.For<ISettings>();
+        settings.GetValues<NostrKey>(typeof(ModuleSettings)).Returns(new List<NostrKey>
+        {
+            new("Default", "a", "b", "c")
+        });
+        ;
 
 
-			moduleSettings = new ModuleSettings(settings, llmServiceFactory);
-			var accounts = moduleSettings.GetAccounts();
-			Assert.IsTrue(accounts[0].PrivateKeyBech32 == "");
-			Assert.IsTrue(accounts[1].PrivateKeyBech32 == "");
-		}
+        moduleSettings = new ModuleSettings(settings, llmServiceFactory);
+        moduleSettings.ArchiveAccount("c");
 
-		[TestMethod]
-		public void SetLastDmAccess()
-		{
-			moduleSettings = new ModuleSettings(settings, llmServiceFactory);
-			moduleSettings.SetLastDmAccess(DateTimeOffset.UtcNow);
+        settings.Received(2).SetList(typeof(ModuleSettings), Arg.Any<List<NostrKey>>());
+    }
 
-			settings.Received(1).Set(typeof(ModuleSettings), ModuleSettings.NostrDMSince, Arg.Any<DateTimeOffset>());
-		}
-	}
+    [TestMethod]
+    public void SetAsDefault_Test()
+    {
+        settings = Substitute.For<ISettings>();
+        settings.GetValues<NostrKey>(typeof(ModuleSettings)).Returns(new List<NostrKey>
+        {
+            new("Default", "a", "b", "c")
+            {
+                IsDefault = true
+            },
+            new("Default2", "g", "e", "f")
+        });
+        ;
+
+
+        moduleSettings = new ModuleSettings(settings, llmServiceFactory);
+        moduleSettings.SetDefaultAccount("f");
+
+        moduleSettings.SetDefaultAccount("Default");
+
+
+        settings.Received(2).SetList(typeof(ModuleSettings), Arg.Any<List<NostrKey>>());
+    }
+
+    [TestMethod]
+    public void GetAccounts()
+    {
+        settings = Substitute.For<ISettings>();
+        settings.GetValues<NostrKey>(typeof(ModuleSettings)).Returns(new List<NostrKey>
+        {
+            new("Default", "a", "b", "c")
+            {
+                IsDefault = true
+            },
+            new("Default2", "g", "e", "f")
+        });
+        ;
+
+
+        moduleSettings = new ModuleSettings(settings, llmServiceFactory);
+        var accounts = moduleSettings.GetAccounts();
+        Assert.IsTrue(accounts[0].PrivateKeyBech32 == "");
+        Assert.IsTrue(accounts[1].PrivateKeyBech32 == "");
+    }
+
+    [TestMethod]
+    public void SetLastDmAccess()
+    {
+        moduleSettings = new ModuleSettings(settings, llmServiceFactory);
+        moduleSettings.SetLastDmAccess(DateTimeOffset.UtcNow);
+
+        settings.Received(1).Set(typeof(ModuleSettings), ModuleSettings.NostrDMSince, Arg.Any<DateTimeOffset>());
+    }
 }

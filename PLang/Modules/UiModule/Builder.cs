@@ -4,37 +4,35 @@ using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Utils;
 
-namespace PLang.Modules.UiModule
+namespace PLang.Modules.UiModule;
 
+public class Builder : BaseBuilder
 {
-	public class Builder : BaseBuilder
-	{
-		private readonly ILogger logger;
-		private readonly ITypeHelper typeHelper;
+    private readonly ILogger logger;
+    private readonly ITypeHelper typeHelper;
 
-		public Builder(ILogger logger, ITypeHelper typeHelper) : base()
-		{
-			this.logger = logger;
-			this.typeHelper = typeHelper;
-		}
+    public Builder(ILogger logger, ITypeHelper typeHelper)
+    {
+        this.logger = logger;
+        this.typeHelper = typeHelper;
+    }
 
-		public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step)
-		{
-			return await Build(step, null, 0);
-		}
+    public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step)
+    {
+        return await Build(step);
+    }
 
-		public record FunctionName(string Name);
+    public async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step,
+        IError? error = null, int errorCount = 0)
+    {
+        if (errorCount > 3)
+            return (null,
+                new BuilderError(
+                    $"Tried {errorCount} times. Could not get LLM to build valid code. Try to rephrase your step {step.Text}"));
 
-		public async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, IError? error = null, int errorCount = 0)
-		{
-			if (errorCount > 3)
-			{
-				return (null, new BuilderError($"Tried {errorCount} times. Could not get LLM to build valid code. Try to rephrase your step {step.Text}"));
-			}
-
-			if (error == null)
-			{
-				SetSystem(@"Your job is: 
+        if (error == null)
+        {
+            SetSystem(@"Your job is: 
 1. Parse user intent
 2. Map the intent to one of C# function available provided to you
 3. Return a valid JSON
@@ -52,41 +50,39 @@ If there is some api key, settings, config replace it with %Settings.Get(""setti
 The user is build or manipulating user interface written in html. His intent will reflect that
 Response with only the function name you would choose");
 
-				string methods = typeHelper.GetMethodNamesAsString(typeof(Program));
-				SetAssistant($"### function available ###\n{methods}### function available ###");
+            var methods = typeHelper.GetMethodNamesAsString(typeof(Program));
+            SetAssistant($"### function available ###\n{methods}### function available ###");
 
-				var buildFunctionName = await base.Build<FunctionName>(step);
+            var buildFunctionName = await base.Build<FunctionName>(step);
 
-				var functionName = buildFunctionName.Instruction.Action as FunctionName;
-
-
-				if (buildFunctionName.BuilderError != null) return (null, buildFunctionName.BuilderError);
-
-				if (functionName.Name != "RenderHtml")
-				{
-					var buildFunction = await base.Build(step);
-
-					if (buildFunction.BuilderError != null) return (null, buildFunction.BuilderError);
-					return buildFunction;
-				}
-			}
+            var functionName = buildFunctionName.Instruction.Action as FunctionName;
 
 
-			var nextStep = step.NextStep;
+            if (buildFunctionName.BuilderError != null) return (null, buildFunctionName.BuilderError);
 
-			List<string> subElements = new();
-			while (nextStep != null && nextStep.Indent == step.Indent + 4)
-			{
-				subElements.Add(nextStep.Text);
-				nextStep = nextStep.NextStep;
-			}
+            if (functionName.Name != "RenderHtml")
+            {
+                var buildFunction = await base.Build(step);
+
+                if (buildFunction.BuilderError != null) return (null, buildFunction.BuilderError);
+                return buildFunction;
+            }
+        }
 
 
+        var nextStep = step.NextStep;
 
-			string childElementsSystem = "";
-			if (subElements.Count > 0)
-			{
-				childElementsSystem = $@"## ChildElement rules #
+        List<string> subElements = new();
+        while (nextStep != null && nextStep.Indent == step.Indent + 4)
+        {
+            subElements.Add(nextStep.Text);
+            nextStep = nextStep.NextStep;
+        }
+
+
+        var childElementsSystem = "";
+        if (subElements.Count > 0)
+            childElementsSystem = $@"## ChildElement rules #
 DO NOT generate html for Children Elements
 
 Children are elements that are child element in the dom of the user input
@@ -96,34 +92,34 @@ Insert {{{{ ChildElement0 }}}}, {{{{ ChildElement1 }}}}, {{{{ ChildElementN }}}}
 - {string.Join("\n- ", subElements)}
 ## Current child elements ##
 ";
-			}
 
-			string scribanExamples = $@"### Scriban examples ###
+        var scribanExamples = @"### Scriban examples ###
 FROM user command, generate using Scriban
 
 Variables in plural are lists, singular is object. 
 
-{{{{ for product in products }}}}
+{{ for product in products }}
     <li>
-      <h2>{{{{ product.name }}}}</h2>
-           Price: {{{{ product.price }}}}
-           {{{{ product.description | string.truncate 15 }}}}
+      <h2>{{ product.name }}</h2>
+           Price: {{ product.price }}
+           {{ product.description | string.truncate 15 }}
     </li>
-  {{{{ end }}
+  {{ end }
 
-<h3>{{{{book.Title}}}}</h3>
+<h3>{{book.Title}}</h3>
 
-{{{{ var isUserLoggedIn = isLoggedIn }}}}
+{{ var isUserLoggedIn = isLoggedIn }}
 
-{{{{ if isUserLoggedIn }}}}
-    <p>Welcome back, {{{{ user.Username }}}}</p>
-{{{{ else }}}}
+{{ if isUserLoggedIn }}
+    <p>Welcome back, {{ user.Username }}</p>
+{{ else }}
     <p>Please log in.</p>
-{{{{ end }}}}
+{{ end }}
 ### Scriban examples ###";
-			var variables = GetVariablesInStep(step);
+        var variables = GetVariablesInStep(step);
 
-			SetSystem(@$"You are a code generator specialist generating valid, strict and to the book code with nice looking GUI from Plang programming language. 
+        SetSystem(
+            @$"You are a code generator specialist generating valid, strict and to the book code with nice looking GUI from Plang programming language. 
 Create the html, javascript and css from the user intent using vanilla javascript, UIkit 3.15.10 and Scriban template engine
 {childElementsSystem}
 ## Plang Rules ##
@@ -221,80 +217,73 @@ describe user intent and create a plan for it
 stick to user intent and DO NOT assume elements not described, for example DO NOT create form element, buttons, etc. that are not in user intent 
 ## code_gen_plan rules ##
 ");
-			SetAssistant($@"### variables available ###
+        SetAssistant($@"### variables available ###
 {variables}
 ### variables available ###");
 
-			if (error != null)
-			{
-
-				AppendToSystemCommand($@"This is my attempt nr {errorCount + 1} in I ask you about this. There was an error in code you generated.
+        if (error != null)
+            AppendToSystemCommand(
+                $@"This is my attempt nr {errorCount + 1} in I ask you about this. There was an error in code you generated.
 {error.Message}
 
 Please correct this.
 ");
-			}
 
-			var build = await base.Build<UiResponse>(step);
-			if (build.BuilderError != null || build.Instruction == null)
-			{
-				return (null, build.BuilderError ?? new StepBuilderError("Could not build step", step));
-			}
+        var build = await base.Build<UiResponse>(step);
+        if (build.BuilderError != null || build.Instruction == null)
+            return (null, build.BuilderError ?? new StepBuilderError("Could not build step", step));
 
-			List<string> missingChildren = new();
-			var uiResponse = build.Instruction.Action as UiResponse;
+        List<string> missingChildren = new();
+        var uiResponse = build.Instruction.Action as UiResponse;
 
-			if (!string.IsNullOrEmpty(uiResponse.html) && !uiResponse.html.Contains("<"))
-			{
-				errorCount++;
-				error = new Error($"You didn't response with valid html. Your previous response was: {uiResponse.html}");
+        if (!string.IsNullOrEmpty(uiResponse.html) && !uiResponse.html.Contains("<"))
+        {
+            errorCount++;
+            error = new Error($"You didn't response with valid html. Your previous response was: {uiResponse.html}");
 
-				logger.LogWarning("Html didn't contain child elements, asking LLM again");
-				return await Build(step, error, errorCount);
-			}
+            logger.LogWarning("Html didn't contain child elements, asking LLM again");
+            return await Build(step, error, errorCount);
+        }
 
-			for (var i = 0; i < subElements.Count; i++)
-			{
-				if (uiResponse == null || string.IsNullOrEmpty(uiResponse.html))
-				{
-					//rebuild
-				}
-				if (!uiResponse.html.Contains($"{{{{ ChildElement{i} }}}}"))
-				{
-					missingChildren.Add($"{{{{ ChildElement{i} }}}}");
+        for (var i = 0; i < subElements.Count; i++)
+        {
+            if (uiResponse == null || string.IsNullOrEmpty(uiResponse.html))
+            {
+                //rebuild
+            }
 
-					//rebuild
-				}
-			}
+            if (!uiResponse.html.Contains($"{{{{ ChildElement{i} }}}}"))
+                missingChildren.Add($"{{{{ ChildElement{i} }}}}");
+            //rebuild
+        }
 
-			if (missingChildren.Count > 0)
-			{
-				errorCount++;
-				error = new Error($"There is missing {{{{ ChildElementN }}}} in your response, there should be {missingChildren.Count} child elements. Your previous response was: {uiResponse.html}");
+        if (missingChildren.Count > 0)
+        {
+            errorCount++;
+            error = new Error(
+                $"There is missing {{{{ ChildElementN }}}} in your response, there should be {missingChildren.Count} child elements. Your previous response was: {uiResponse.html}");
 
-				logger.LogWarning("Html didn't contain child elements, asking LLM again");
-				return await Build(step, error, errorCount);
-			}
+            logger.LogWarning("Html didn't contain child elements, asking LLM again");
+            return await Build(step, error, errorCount);
+        }
 
 
-			List<Parameter> parameters = new List<Parameter>();
+        List<Parameter> parameters = new();
 
 
-			if (uiResponse.html != null) parameters.Add(new Parameter("string", "html", uiResponse.html));
-			if (uiResponse.css != null) parameters.Add(new Parameter("string", "css", uiResponse.css));
-			if (uiResponse.javascript != null) parameters.Add(new Parameter("string", "javascript", uiResponse.javascript));
+        if (uiResponse.html != null) parameters.Add(new Parameter("string", "html", uiResponse.html));
+        if (uiResponse.css != null) parameters.Add(new Parameter("string", "css", uiResponse.css));
+        if (uiResponse.javascript != null) parameters.Add(new Parameter("string", "javascript", uiResponse.javascript));
 
-			var gf = new GenericFunction("RenderHtml", parameters, null);
-
-
-			var instruction = new Instruction(gf);
-			instruction.LlmRequest = build.Instruction.LlmRequest;
-			return (instruction, null);
-		}
+        var gf = new GenericFunction("RenderHtml", parameters);
 
 
-	}
+        var instruction = new Instruction(gf);
+        instruction.LlmRequest = build.Instruction.LlmRequest;
+        return (instruction, null);
+    }
 
-	public record UiResponse(string? html = null, string? javascript = null, string? css = null);
+    public record FunctionName(string Name);
 }
 
+public record UiResponse(string? html = null, string? javascript = null, string? css = null);

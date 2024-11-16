@@ -1,38 +1,38 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AssemblyName>plang</AssemblyName>
-    <AssemblyVersion>$(Version)</AssemblyVersion>
-    <FileVersion>$(Version)</FileVersion>
-    <SignAssembly>False</SignAssembly>
-		<PublishSingleFile>false</PublishSingleFile>
-  </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyName>plang</AssemblyName>
+        <AssemblyVersion>$(Version)</AssemblyVersion>
+        <FileVersion>$(Version)</FileVersion>
+        <SignAssembly>False</SignAssembly>
+        <PublishSingleFile>false</PublishSingleFile>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\PLang\PLang.csproj" />
-  </ItemGroup>
-	
-	<PropertyGroup Condition="'$(RuntimeIdentifier)' == 'osx-x64' Or '$(RuntimeIdentifier)' == 'osx-arm64'">
-		<UseAppHost>true</UseAppHost>
-		<MacOSAppBundle>true</MacOSAppBundle>
-		<OutputType>Exe</OutputType>
-		<RuntimeIdentifier>$(RuntimeIdentifier)</RuntimeIdentifier>
-		<!--
-		<ApplicationIcon>Icon.icns</ApplicationIcon>
-		 Optional: if you have an app icon -->
-		<IntermediateOutputPath>bin\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\</IntermediateOutputPath>
-		<CodesignKey>Developer ID Application: Ingi Gauti</CodesignKey>
-		<CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
-		<!-- Optional: if you have entitlements -->
-	</PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\PLang\PLang.csproj"/>
+    </ItemGroup>
 
-	<!-- Include the custom Info.plist -->
-	<ItemGroup Condition="'$(RuntimeIdentifier)' == 'osx-x64' Or '$(RuntimeIdentifier)' == 'osx-arm64'">
-		<BundleResource Include="Info.plist" />
-	</ItemGroup>
+    <PropertyGroup Condition="'$(RuntimeIdentifier)' == 'osx-x64' Or '$(RuntimeIdentifier)' == 'osx-arm64'">
+        <UseAppHost>true</UseAppHost>
+        <MacOSAppBundle>true</MacOSAppBundle>
+        <OutputType>Exe</OutputType>
+        <RuntimeIdentifier>$(RuntimeIdentifier)</RuntimeIdentifier>
+        <!--
+        <ApplicationIcon>Icon.icns</ApplicationIcon>
+         Optional: if you have an app icon -->
+        <IntermediateOutputPath>bin\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\</IntermediateOutputPath>
+        <CodesignKey>Developer ID Application: Ingi Gauti</CodesignKey>
+        <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+        <!-- Optional: if you have entitlements -->
+    </PropertyGroup>
+
+    <!-- Include the custom Info.plist -->
+    <ItemGroup Condition="'$(RuntimeIdentifier)' == 'osx-x64' Or '$(RuntimeIdentifier)' == 'osx-arm64'">
+        <BundleResource Include="Info.plist"/>
+    </ItemGroup>
 
 </Project>

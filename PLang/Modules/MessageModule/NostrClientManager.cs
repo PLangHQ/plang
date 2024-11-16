@@ -1,63 +1,54 @@
-﻿using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+﻿using System.Net.WebSockets;
+using Microsoft.Extensions.Logging;
 using Nostr.Client.Client;
 using Nostr.Client.Communicator;
-using Nostr.Client.Responses;
-using System.Net.WebSockets;
-using Websocket.Client;
 
-namespace PLang.Modules.MessageModule
+namespace PLang.Modules.MessageModule;
+
+public class NostrClientManager
 {
-	public class NostrClientManager
-	{
-		private NostrMultiWebsocketClient _client = null;
+    private NostrMultiWebsocketClient _client;
 
-		public NostrMultiWebsocketClient GetClient(List<string> relayUrls)
-		{
-			if (_client != null) return _client;
+    public NostrMultiWebsocketClient GetClient(List<string> relayUrls)
+    {
+        if (_client != null) return _client;
 
 
-			NostrWebsocketCommunicator[] relays = new NostrWebsocketCommunicator[relayUrls.Count];
-			for (int i = 0; i < relayUrls.Count; i++)
-			{
-				relays[i] = new NostrWebsocketCommunicator(new Uri(relayUrls[i]));
-			}
+        NostrWebsocketCommunicator[] relays = new NostrWebsocketCommunicator[relayUrls.Count];
+        for (var i = 0; i < relayUrls.Count; i++) relays[i] = new NostrWebsocketCommunicator(new Uri(relayUrls[i]));
 
-			var communicators = CreateCommunicators(relayUrls);
-			ILogger<NostrWebsocketClient> nostrLogger = new Services.LoggerService.Logger<NostrWebsocketClient>();
-			
-			_client = new NostrMultiWebsocketClient(nostrLogger, communicators.ToArray());
-			communicators.ForEach(x => x.Start());
+        var communicators = CreateCommunicators(relayUrls);
+        ILogger<NostrWebsocketClient> nostrLogger = new Services.LoggerService.Logger<NostrWebsocketClient>();
 
-			return _client;
+        _client = new NostrMultiWebsocketClient(nostrLogger, communicators.ToArray());
+        communicators.ForEach(x => x.Start());
 
-		}
-	
-		private List<NostrWebsocketCommunicator> CreateCommunicators(List<string> relays)
-		{
-			var communicators = new List<NostrWebsocketCommunicator>();
-			relays.ForEach(relay => communicators.Add(CreateCommunicator(new Uri(relay))));
-			return communicators;
-		}
+        return _client;
+    }
 
-		private NostrWebsocketCommunicator CreateCommunicator(Uri uri)
-		{
-			var comm = new NostrWebsocketCommunicator(uri, () =>
-			{
-				var client = new ClientWebSocket();
-				client.Options.SetRequestHeader("Origin", "http://localhost");
-				return client;
-			});
+    private List<NostrWebsocketCommunicator> CreateCommunicators(List<string> relays)
+    {
+        var communicators = new List<NostrWebsocketCommunicator>();
+        relays.ForEach(relay => communicators.Add(CreateCommunicator(new Uri(relay))));
+        return communicators;
+    }
 
-			SetCommunicatorParam(comm, uri);
+    private NostrWebsocketCommunicator CreateCommunicator(Uri uri)
+    {
+        var comm = new NostrWebsocketCommunicator(uri, () =>
+        {
+            var client = new ClientWebSocket();
+            client.Options.SetRequestHeader("Origin", "http://localhost");
+            return client;
+        });
 
-			return comm;
-		}
+        SetCommunicatorParam(comm, uri);
 
-		private void SetCommunicatorParam(NostrWebsocketCommunicator comm, Uri uri)
-		{
-			comm.Name = uri.Host;
-			
-		}
-	}
+        return comm;
+    }
+
+    private void SetCommunicatorParam(NostrWebsocketCommunicator comm, Uri uri)
+    {
+        comm.Name = uri.Host;
+    }
 }

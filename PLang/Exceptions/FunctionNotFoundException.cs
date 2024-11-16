@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace PLang.Exceptions;
 
-namespace PLang.Exceptions
+public class FunctionNotFoundException : Exception
 {
-	public class FunctionNotFoundException : Exception
-	{
-		public FunctionNotFoundException(string moduleName) : base(moduleName) { }
-	}
+    public FunctionNotFoundException(string moduleName) : base(moduleName)
+    {
+    }
 }

@@ -1,9 +1,8 @@
-﻿namespace PLang.Errors
-{
-	public record ErrorHandled(IError Error) : Error(Error.Message), IErrorHandled
-	{
-		public bool IgnoreError => false;
+﻿namespace PLang.Errors;
 
-		public IError? InitialError { get; } = Error;
-	}
+public record ErrorHandled(IError Error) : Error(Error.Message), IErrorHandled
+{
+    public bool IgnoreError => false;
+
+    public IError? InitialError { get; } = Error;
 }

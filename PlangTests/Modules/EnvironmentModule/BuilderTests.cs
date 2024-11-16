@@ -1,83 +1,79 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using NSubstitute;
+﻿using System.Runtime.CompilerServices;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PLang.Building.Model;
-using PLang.Services.OpenAi;
-using PLang.Utils;
 using PLangTests;
-using System.Runtime.CompilerServices;
 using static PLang.Modules.BaseBuilder;
 
-namespace PLang.Modules.EnvironmentModule.Tests
+namespace PLang.Modules.EnvironmentModule.Tests;
+
+[TestClass]
+public class BuilderTests : BasePLangTest
 {
-	[TestClass()]
-	public class BuilderTests : BasePLangTest
-	{
-		BaseBuilder builder;
+    private BaseBuilder builder;
 
-		[TestInitialize]
-		public void Init()
-		{
-			base.Initialize();
-			
-			LoadOpenAI();
+    [TestInitialize]
+    public void Init()
+    {
+        Initialize();
 
-			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.EnvironmentModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+        LoadOpenAI();
 
-		}
+        builder = new GenericFunctionBuilder();
+        builder.InitBaseBuilder("PLang.Modules.EnvironmentModule", fileSystem, llmServiceFactory, typeHelper,
+            memoryStack, context, variableHelper, logger);
+    }
 
-		private void SetupResponse(string stepText, Type? type = null, [CallerMemberName] string caller = "")
-		{
-			var llmService = GetLlmService(stepText, caller, type);
-			if (llmService == null) return;
+    private void SetupResponse(string stepText, Type? type = null, [CallerMemberName] string caller = "")
+    {
+        var llmService = GetLlmService(stepText, caller, type);
+        if (llmService == null) return;
 
-			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.EnvironmentModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
-		}
-		public GoalStep GetStep(string text)
-		{
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
-			step.ModuleType = "PLang.Modules.EnvironmentModule";
-			return step;
-		}
+        builder = new GenericFunctionBuilder();
+        builder.InitBaseBuilder("PLang.Modules.EnvironmentModule", fileSystem, llmServiceFactory, typeHelper,
+            memoryStack, context, variableHelper, logger);
+    }
 
-		[DataTestMethod]
-		[DataRow("set language to icelandic")]
-		public async Task SetCultureLanguageCode_Test(string text)
-		{
-			SetupResponse(text);
+    public GoalStep GetStep(string text)
+    {
+        var step = new GoalStep();
+        step.Text = text;
+        step.ModuleType = "PLang.Modules.EnvironmentModule";
+        return step;
+    }
 
-			var step = GetStep(text);
+    [DataTestMethod]
+    [DataRow("set language to icelandic")]
+    public async Task SetCultureLanguageCode_Test(string text)
+    {
+        SetupResponse(text);
 
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+        var step = GetStep(text);
 
-			Store(text, instruction.LlmRequest.RawResponse);
-			
-			Assert.AreEqual("SetCultureLanguageCode", gf.FunctionName);
-			Assert.AreEqual("code", gf.Parameters[0].Name);
-			Assert.AreEqual("is-IS", gf.Parameters[0].Value);
-		}
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as GenericFunction;
 
-		[DataTestMethod]
-		[DataRow("set ui language to english uk")]
-		public async Task SetCultureUILanguageCode_Test(string text)
-		{
-			SetupResponse(text);
+        Store(text, instruction.LlmRequest.RawResponse);
 
-			var step = GetStep(text);
+        Assert.AreEqual("SetCultureLanguageCode", gf.FunctionName);
+        Assert.AreEqual("code", gf.Parameters[0].Name);
+        Assert.AreEqual("is-IS", gf.Parameters[0].Value);
+    }
 
-			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+    [DataTestMethod]
+    [DataRow("set ui language to english uk")]
+    public async Task SetCultureUILanguageCode_Test(string text)
+    {
+        SetupResponse(text);
 
-			Store(text, instruction.LlmRequest.RawResponse);
+        var step = GetStep(text);
 
-			Assert.AreEqual("SetCultureUILanguageCode", gf.FunctionName);
-			Assert.AreEqual("code", gf.Parameters[0].Name);
-			Assert.AreEqual("en-GB", gf.Parameters[0].Value);
-		}
+        var (instruction, error) = await builder.Build(step);
+        var gf = instruction.Action as GenericFunction;
 
+        Store(text, instruction.LlmRequest.RawResponse);
 
-	}
+        Assert.AreEqual("SetCultureUILanguageCode", gf.FunctionName);
+        Assert.AreEqual("code", gf.Parameters[0].Name);
+        Assert.AreEqual("en-GB", gf.Parameters[0].Value);
+    }
 }

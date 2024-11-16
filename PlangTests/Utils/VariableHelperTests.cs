@@ -1,188 +1,170 @@
-﻿using LightInject;
-using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
-using PLang.Building;
-
 using PLang.Runtime;
 using PLang.Services.SettingsService;
 using PLangTests;
-using System;
-using System.Collections.Generic;
-using System.IO.Abstractions;
-using System.Linq;
-using System.Security.Cryptography.Pkcs;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace PLang.Utils.Tests
+namespace PLang.Utils.Tests;
+
+[TestClass]
+public class VariableHelperTests : BasePLangTest
 {
-    [TestClass()]
-	public class VariableHelperTests : BasePLangTest
-	{
-		[TestInitialize]
-		public void Initialize()
-		{
-			base.Initialize();
-		}
+    [TestInitialize]
+    public void Initialize()
+    {
+        base.Initialize();
+    }
 
 
+    [TestMethod]
+    public void LoadVariablesTest()
+    {
+        var memoryStack = new MemoryStack(pseudoRuntime, engine, settings, context);
+        memoryStack.Put("name", "John");
+        memoryStack.Put("age", 12);
+        memoryStack.Put("userInfo", new { address = "Location 32", zip = 662 });
 
-		[TestMethod()]
-		public void LoadVariablesTest()
-		{
+        context.Add(ReservedKeywords.MemoryStack, memoryStack);
 
-			var memoryStack = new Runtime.MemoryStack(pseudoRuntime, engine, settings, context);
-			memoryStack.Put("name", "John");
-			memoryStack.Put("age", 12);
-			memoryStack.Put("userInfo", new { address = "Location 32", zip = 662 });
+        var helper = new VariableHelper(context, memoryStack, settings);
+        var text =
+            "Hello %name%, your age is %age%, and you live at %userInfo.address% and %userInfo.zip%, is this correct?";
+        text = helper.LoadVariables(text).ToString();
 
-			context.Add(ReservedKeywords.MemoryStack, memoryStack);
+        Assert.AreEqual("Hello John, your age is 12, and you live at Location 32 and 662, is this correct?",
+            text);
 
-			var helper = new VariableHelper(context, memoryStack, settings);
-			var text = "Hello %name%, your age is %age%, and you live at %userInfo.address% and %userInfo.zip%, is this correct?";
-			text = helper.LoadVariables(text).ToString();
+        var text2 = "%name%%age%%userInfo.address%%userInfo.zip%";
+        text2 = helper.LoadVariables(text2).ToString();
 
-			Assert.AreEqual("Hello John, your age is 12, and you live at Location 32 and 662, is this correct?",
-				text);
+        Assert.AreEqual("John12Location 32662",
+            text2);
+    }
 
-			var text2 = "%name%%age%%userInfo.address%%userInfo.zip%";
-			text2 = helper.LoadVariables(text2).ToString();
+    [TestMethod]
+    public void TestVariableWithMethods()
+    {
+        // set 'name' as %Name.Trim()%
+        var memoryStack = new MemoryStack(pseudoRuntime, engine, settings, context);
+        memoryStack.Put("TestName", " John ");
+        memoryStack.Put("name", "%TestName.Trim()%");
 
-			Assert.AreEqual("John12Location 32662",
-				text2);
-		}
+        var name = memoryStack.Get("name");
+        Assert.AreEqual("John", name);
 
-		[TestMethod()]
-		public void TestVariableWithMethods()
-		{
-			// set 'name' as %Name.Trim()%
-			var memoryStack = new Runtime.MemoryStack(pseudoRuntime, engine, settings, context);
-			memoryStack.Put("TestName", " John ");
-			memoryStack.Put("name", "%TestName.Trim()%");
+        var dateTime = DateTime.Now;
+        var strDateTime = dateTime.ToString("yyyy-MM-dd");
+        memoryStack.Put("today", dateTime);
+        var today = memoryStack.Get("today.ToString(\"yyyy-MM-dd\")");
+        Assert.AreEqual(strDateTime, today);
 
-			var name = memoryStack.Get("name");
-			Assert.AreEqual("John", name);
+        var hello = "hello \"quoted\" world";
+        var text = "App says:" + hello;
 
-			var dateTime = DateTime.Now;
-			var strDateTime = dateTime.ToString("yyyy-MM-dd");
-			memoryStack.Put("today", dateTime);
-			var today = memoryStack.Get("today.ToString(\"yyyy-MM-dd\")");
-			Assert.AreEqual(strDateTime, today);
+        memoryStack.Put("txt", text);
 
-			string hello = "hello \"quoted\" world";
-			string text = "App says:" + hello;
+        var textBack = memoryStack.Get("txt.JsonSafe()");
+        Assert.AreEqual("App says:hello \\\"quoted\\\" world", textBack);
 
-			memoryStack.Put("txt", text);
+        memoryStack.Put("test", "App is saying hello to you");
+        var textReplace = memoryStack.Get(@"test.Replace(""App"", ""PLang"").Replace(""hello"", ""hi"")");
+        Assert.AreEqual("PLang is saying hi to you", textReplace);
+    }
 
-			var textBack = memoryStack.Get("txt.JsonSafe()");
-			Assert.AreEqual("App says:hello \\\"quoted\\\" world", textBack);
+    [TestMethod]
+    public void LoadVariablesTest2()
+    {
+        var memoryStack = new MemoryStack(pseudoRuntime, engine, settings, context);
+        memoryStack.Put("text", "world");
+        memoryStack.Put("text2", "plang");
 
-			memoryStack.Put("test", "App is saying hello to you");
-			var textReplace = memoryStack.Get(@"test.Replace(""App"", ""PLang"").Replace(""hello"", ""hi"")");
-			Assert.AreEqual("PLang is saying hi to you", textReplace);
+        context.Add(ReservedKeywords.MemoryStack, memoryStack);
+        var variableHelper = new VariableHelper(context, memoryStack, settings);
 
-		}
+        settings.Get<string>(typeof(Settings), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns("mega");
 
-		[TestMethod()]
-		public void LoadVariablesTest2()
-		{
-			var memoryStack = new MemoryStack(pseudoRuntime, engine, settings, context);
-			memoryStack.Put("text", "world");
-			memoryStack.Put("text2", "plang");
+        Dictionary<string, object> dict = new();
+        dict.Add("stuff", "Hello %text%");
+        dict.Add("stuff2", "Hello %text2%");
+        dict.Add("stuff3", @"This is it %Settings.Get(""key"", """", """")%");
+        dict = variableHelper.LoadVariables(dict);
 
-			context.Add(ReservedKeywords.MemoryStack, memoryStack);
-			var variableHelper = new VariableHelper(context, memoryStack, settings);
+        Assert.AreEqual("Hello world", dict["stuff"]);
+        Assert.AreEqual("Hello plang", dict["stuff2"]);
+        Assert.AreEqual("This is it mega", dict["stuff3"]);
+    }
 
-			settings.Get<string>(typeof(Settings), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns("mega");
+    [TestMethod]
+    public void LoadVariables_TestContextRervedKeywords()
+    {
+        var memoryStack = new MemoryStack(pseudoRuntime, engine, settings, context);
+        memoryStack.Put("text", "world");
+        memoryStack.Put("text2", "plang");
 
-			Dictionary<string, object> dict = new Dictionary<string, object>();
-			dict.Add("stuff", "Hello %text%");
-			dict.Add("stuff2", "Hello %text2%");
-			dict.Add("stuff3", @"This is it %Settings.Get(""key"", """", """")%");
-			dict = variableHelper.LoadVariables(dict);
-
-			Assert.AreEqual("Hello world", dict["stuff"]);
-			Assert.AreEqual("Hello plang", dict["stuff2"]);
-			Assert.AreEqual("This is it mega", dict["stuff3"]);
-		}
-		[TestMethod()]
-		public void LoadVariables_TestContextRervedKeywords()
-		{
-			var memoryStack = new MemoryStack(pseudoRuntime, engine, settings, context);
-			memoryStack.Put("text", "world");
-			memoryStack.Put("text2", "plang");
-
-			context.Add(ReservedKeywords.Goal, new { GoalObject = true });
-			context.Add(ReservedKeywords.MemoryStack, memoryStack);
-			var variableHelper = new VariableHelper(context, memoryStack, settings);
-
-
-			settings.Get<string>(typeof(Settings), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns("mega");
-
-			Dictionary<string, object> dict = new Dictionary<string, object>();
-			dict.Add("stuff", "Hello %text%");
-			dict.Add("stuff2", "Hello %text2%");
-			dict.Add("stuff3", @"This is it %Settings.Get(""key"", """", """")%");
-			dict.Add("goal", "This is %!Goal%");
-			dict = variableHelper.LoadVariables(dict);
-
-			Assert.AreEqual("Hello world", dict["stuff"]);
-			Assert.AreEqual("Hello plang", dict["stuff2"]);
-			Assert.AreEqual("This is it mega", dict["stuff3"]);
-			Assert.AreEqual("This is { GoalObject = True }", dict["goal"].ToString().Replace("\n", "").Replace("\r", ""));
-		}
+        context.Add(ReservedKeywords.Goal, new { GoalObject = true });
+        context.Add(ReservedKeywords.MemoryStack, memoryStack);
+        var variableHelper = new VariableHelper(context, memoryStack, settings);
 
 
-		[TestMethod()]
-		public void LoadVariables_TestNow()
-		{
-			DateTime now = DateTime.Now;
-			SystemTime.Now = () =>
-			{
-				return now;
-			};
+        settings.Get<string>(typeof(Settings), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns("mega");
 
-			string content = "Hello %Now%";
+        Dictionary<string, object> dict = new();
+        dict.Add("stuff", "Hello %text%");
+        dict.Add("stuff2", "Hello %text2%");
+        dict.Add("stuff3", @"This is it %Settings.Get(""key"", """", """")%");
+        dict.Add("goal", "This is %!Goal%");
+        dict = variableHelper.LoadVariables(dict);
 
-			var result = variableHelper.LoadVariables(content, false);
-
-			Assert.AreEqual("Hello " + now.ToString(), result);
-
-			content = "Hello %Now.ToString(\"s\")%";
-
-			result = variableHelper.LoadVariables(content, false);
-
-			Assert.AreEqual("Hello " + now.ToString("s"), result);
-		}
+        Assert.AreEqual("Hello world", dict["stuff"]);
+        Assert.AreEqual("Hello plang", dict["stuff2"]);
+        Assert.AreEqual("This is it mega", dict["stuff3"]);
+        Assert.AreEqual("This is { GoalObject = True }", dict["goal"].ToString().Replace("\n", "").Replace("\r", ""));
+    }
 
 
-		[TestMethod]
-		public void LoadVariableInJObject()
-		{
-			var jObject = new JObject();
-			jObject.Add("to", "user@example.org");
-			jObject.Add("subject", "hello world");
+    [TestMethod]
+    public void LoadVariables_TestNow()
+    {
+        var now = DateTime.Now;
+        SystemTime.Now = () => { return now; };
 
-			memoryStack.Put("domain", "plang");
-			memoryStack.Put("request", jObject);
+        var content = "Hello %Now%";
 
-			var jobj = JObject.Parse(@$"{{
+        var result = variableHelper.LoadVariables(content, false);
+
+        Assert.AreEqual("Hello " + now, result);
+
+        content = "Hello %Now.ToString(\"s\")%";
+
+        result = variableHelper.LoadVariables(content, false);
+
+        Assert.AreEqual("Hello " + now.ToString("s"), result);
+    }
+
+
+    [TestMethod]
+    public void LoadVariableInJObject()
+    {
+        var jObject = new JObject();
+        jObject.Add("to", "user@example.org");
+        jObject.Add("subject", "hello world");
+
+        memoryStack.Put("domain", "plang");
+        memoryStack.Put("request", jObject);
+
+        var jobj = JObject.Parse(@"{
 				""From"": ""example@example.org"",
 				""ReplyTo"": ""%domain%@example.org"",
 				""To"": ""%request.to%"",
 				""Subject"": ""%request.subject%"",
 				""MessageStream"": ""outbound"",
-				}}");
+				}");
 
-			var result = variableHelper.LoadVariables(jobj);
+        var result = variableHelper.LoadVariables(jobj);
 
-			Assert.IsTrue(result.ToString().Contains("plang@example.org"));
-			Assert.IsTrue(result.ToString().Contains("user@example.org"));
-			Assert.IsTrue(result.ToString().Contains("hello world"));
-
-
-		}
-	}
+        Assert.IsTrue(result.ToString().Contains("plang@example.org"));
+        Assert.IsTrue(result.ToString().Contains("user@example.org"));
+        Assert.IsTrue(result.ToString().Contains("hello world"));
+    }
 }

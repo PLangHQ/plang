@@ -1,33 +1,29 @@
-﻿using PLang.Attributes;
+﻿using System.ComponentModel;
 using PLang.Models;
 
-namespace PLang.Building.Model
+namespace PLang.Building.Model;
+
+public class ErrorHandler
 {
-	public class ErrorHandler
-	{
-		[DefaultValueAttribute(false)]
-		[System.ComponentModel.Description("This will cause the code execution to continue to the next step")]
-		public bool IgnoreError { get; set; } = false;
+    [Attributes.DefaultValue(false)]
+    [Description("This will cause the code execution to continue to the next step")]
+    public bool IgnoreError { get; set; } = false;
 
-		[DefaultValueAttribute(null)]
-		public string? Message { get; set; }
-		[DefaultValueAttribute(null)]
-		public int? StatusCode { get; set; }
+    [Attributes.DefaultValue(null)] public string? Message { get; set; }
 
-		[DefaultValueAttribute(null)]
-		[System.ComponentModel.Description("Key can be defined by user")]
-		public string? Key { get; set; }
+    [Attributes.DefaultValue(null)] public int? StatusCode { get; set; }
 
-		[DefaultValueAttribute(null)]
-		public GoalToCall? GoalToCall { get; set; }
-		[DefaultValueAttribute(null)]
-		public Dictionary<string, object?>? GoalToCallParameters { get; set; }
+    [Attributes.DefaultValue(null)]
+    [Description("Key can be defined by user")]
+    public string? Key { get; set; }
 
-		[DefaultValueAttribute(null)]
-		public RetryHandler? RetryHandler { get; set; }
-		[DefaultValueAttribute(false)]
-		[System.ComponentModel.Description("When user wants to run retry on the step before executing GoalToCall")]
-		public bool RunRetryBeforeCallingGoalToCall { get; set; }
+    [Attributes.DefaultValue(null)] public GoalToCall? GoalToCall { get; set; }
 
-	}
+    [Attributes.DefaultValue(null)] public Dictionary<string, object?>? GoalToCallParameters { get; set; }
+
+    [Attributes.DefaultValue(null)] public RetryHandler? RetryHandler { get; set; }
+
+    [Attributes.DefaultValue(false)]
+    [Description("When user wants to run retry on the step before executing GoalToCall")]
+    public bool RunRetryBeforeCallingGoalToCall { get; set; }
 }

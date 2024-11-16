@@ -1,17 +1,23 @@
 ﻿using PLang.Building.Model;
-using PLang.Utils;
 
-namespace PLang.Errors.Builder
+namespace PLang.Errors.Builder;
+
+public record StepBuilderError(
+    string Message,
+    GoalStep Step,
+    string Key = "StepBuilder",
+    int StatusCode = 400,
+    bool ContinueBuild = true,
+    Exception? ex = null,
+    string? FixSuggestion = null,
+    string? HelpfulLinks = null) : GoalBuilderError(Message, Step.Goal, Key, StatusCode, ContinueBuild, ex,
+    FixSuggestion, HelpfulLinks)
 {
-	public record StepBuilderError(string Message, GoalStep Step, string Key = "StepBuilder", int StatusCode = 400, bool ContinueBuild = true, Exception? ex = null, string? FixSuggestion = null, string? HelpfulLinks = null) : GoalBuilderError(Message, Step.Goal, Key, StatusCode, ContinueBuild, ex, FixSuggestion, HelpfulLinks)
-	{
-		public override GoalStep Step { get; set; } = Step;
-		public override Goal Goal { get; set; } = Step.Goal;
+    public override GoalStep Step { get; set; } = Step;
+    public override Goal Goal { get; set; } = Step.Goal;
 
-		public override string ToString()
-		{
-			return base.ToString();
-		}
-	}
-
+    public override string ToString()
+    {
+        return base.ToString();
+    }
 }

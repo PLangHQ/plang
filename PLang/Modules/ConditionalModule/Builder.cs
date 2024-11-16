@@ -1,60 +1,44 @@
-﻿using PLang.Utils;
-using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Logging;
 using PLang.Building.Model;
-
-using System.Net;
-using PLang.Modules.ConditionalModule;
-using System;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis;
-using System.Runtime.InteropServices;
-using PLang.Building;
 using PLang.Building.Parsers;
-using Sprache;
+using PLang.Errors.Builder;
 using PLang.Interfaces;
-using static PLang.Services.CompilerService.CSharpCompiler;
-using PLang.Exceptions;
-using PLang.Utils.Extractors;
 using PLang.Runtime;
 using PLang.Services.CompilerService;
-using Microsoft.Extensions.Logging;
-using PLang.Errors;
-using PLang.Errors.Builder;
+using PLang.Utils.Extractors;
 
-namespace PLang.Modules.ConditionalModule
+namespace PLang.Modules.ConditionalModule;
+
+public class Builder : BaseBuilder
 {
-	public class Builder : BaseBuilder
-	{
-		private readonly IPLangFileSystem fileSystem;
-		private readonly PrParser prParser;
-		private readonly MemoryStack memoryStack;
-		private readonly ILogger logger;
+    private readonly IPLangFileSystem fileSystem;
+    private readonly ILogger logger;
+    private readonly MemoryStack memoryStack;
+    private readonly PrParser prParser;
 
-		public Builder(IPLangFileSystem fileSystem, PrParser prParser, MemoryStack memoryStack, ILogger logger) : base()
-		{
-			this.fileSystem = fileSystem;
-			this.prParser = prParser;
-			this.memoryStack = memoryStack;
-			this.logger = logger;
-		}
+    public Builder(IPLangFileSystem fileSystem, PrParser prParser, MemoryStack memoryStack, ILogger logger)
+    {
+        this.fileSystem = fileSystem;
+        this.prParser = prParser;
+        this.memoryStack = memoryStack;
+        this.logger = logger;
+    }
 
-		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step)
-		{
-			return await Build(step, null);
-		}
+    public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step)
+    {
+        return await Build(step);
+    }
 
-		private async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, CompilerError? error = null, int errorCount = 0)
-		{
-			if (errorCount++ > 3)
-			{
-				return (null, error ?? new StepBuilderError("Could not compile code for this step", step));
-			}
+    private async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, CompilerError? error = null,
+        int errorCount = 0)
+    {
+        if (errorCount++ > 3)
+            return (null, error ?? new StepBuilderError("Could not compile code for this step", step));
 
-			var compiler = new CSharpCompiler(fileSystem, prParser, logger);
-			var dllName = compiler.GetPreviousBuildDllNamesToExclude(step);
+        var compiler = new CSharpCompiler(fileSystem, prParser, logger);
+        var dllName = compiler.GetPreviousBuildDllNamesToExclude(step);
 
-			SetSystem(@$"Act as a senior C# developer, that converts the user intent into a valid C#(Version. 11) code. 
+        SetSystem(@$"Act as a senior C# developer, that converts the user intent into a valid C#(Version. 11) code. 
 
 ## Rules ##
 - Generate static class. The code generated should have 1 method with the static method named ExecutePlangCode and return bool. 
@@ -90,7 +74,7 @@ namespace PLang.Modules.ConditionalModule
 - Assemblies: dll to reference to compile using Roslyn
 ## Response information ##
 ");
-			AppendToAssistantCommand(@"## examples ##
+        AppendToAssistantCommand(@"## examples ##
 'if %isValid% is true then', this condition would return true if %isValid% is true. 
 'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false.
 
@@ -104,34 +88,26 @@ namespace PLang.Modules.ConditionalModule
 'if file %path% exists, call DoStuff => public static bool ExecutePlangCode(string? path, IPlangFileSystem fileSystem) { return fileSystem.File.Exists(path); }
 ## examples ##
 ");
-			if (error != null)
-			{
-				AppendToAssistantCommand(error.LlmInstruction);
-			}
+        if (error != null) AppendToAssistantCommand(error.LlmInstruction);
 
-			base.SetContentExtractor(new CSharpExtractor());
-			(var codeInstruction, var buildError) = await Build<ConditionImplementationResponse>(step);
-			if (buildError != null) return (null, buildError);
+        SetContentExtractor(new CSharpExtractor());
+        var (codeInstruction, buildError) = await Build<ConditionImplementationResponse>(step);
+        if (buildError != null) return (null, buildError);
 
-			//go back to default extractor
-			base.SetContentExtractor(new JsonExtractor());
+        //go back to default extractor
+        SetContentExtractor(new JsonExtractor());
 
-			var answer = (ImplementationResponse)codeInstruction.Action;
-			(var implementation, var compilerError) = await compiler.BuildCode(answer, step, memoryStack);
-			if (compilerError != null)
-			{
-				logger.LogWarning($"- Error compiling code - will ask LLM again ({errorCount} of 3 attempts) - Error:{compilerError}");
-				return await Build(step, compilerError, errorCount);
-			}
+        var answer = (ImplementationResponse)codeInstruction.Action;
+        var (implementation, compilerError) = await compiler.BuildCode(answer, step, memoryStack);
+        if (compilerError != null)
+        {
+            logger.LogWarning(
+                $"- Error compiling code - will ask LLM again ({errorCount} of 3 attempts) - Error:{compilerError}");
+            return await Build(step, compilerError, errorCount);
+        }
 
-			var newInstruction = new Instruction(implementation!);
-			newInstruction.LlmRequest = codeInstruction.LlmRequest;
-			return (newInstruction, null);
-
-
-		}
-
-
-	}
+        var newInstruction = new Instruction(implementation!);
+        newInstruction.LlmRequest = codeInstruction.LlmRequest;
+        return (newInstruction, null);
+    }
 }
-

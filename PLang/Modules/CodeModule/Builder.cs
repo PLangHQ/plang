@@ -1,53 +1,48 @@
 ﻿using Microsoft.Extensions.Logging;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
-using PLang.Errors;
 using PLang.Errors.Builder;
-using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.CompilerService;
 using PLang.Utils.Extractors;
-using static PLang.Services.CompilerService.CSharpCompiler;
 
-namespace PLang.Modules.CodeModule
+namespace PLang.Modules.CodeModule;
+
+internal class Builder : BaseBuilder
 {
-	internal class Builder : BaseBuilder
-	{
+    private readonly IPLangFileSystem fileSystem;
+    private readonly ILogger logger;
+    private readonly MemoryStack memoryStack;
+    private readonly PrParser prParser;
+    private int errorCount = 0;
 
-		private readonly IPLangFileSystem fileSystem;
-		private readonly PrParser prParser;
-		private readonly MemoryStack memoryStack;
-		private readonly ILogger logger;
-		private int errorCount = 0;
-
-		public Builder(IPLangFileSystem fileSystem, PrParser prParser, MemoryStack memoryStack, ILogger logger) : base()
-		{
-			this.fileSystem = fileSystem;
-			this.prParser = prParser;
-			this.memoryStack = memoryStack;
-			this.logger = logger;
-		}
+    public Builder(IPLangFileSystem fileSystem, PrParser prParser, MemoryStack memoryStack, ILogger logger)
+    {
+        this.fileSystem = fileSystem;
+        this.prParser = prParser;
+        this.memoryStack = memoryStack;
+        this.logger = logger;
+    }
 
 
-		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step)
-		{
-			return await Build(step, null);
-		}
+    public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step)
+    {
+        return await Build(step);
+    }
 
 
-		public async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, CompilerError? error = null, int errorCount = 0)
-		{
-			if (errorCount++ > 3)
-			{
-				return (null, error ?? new StepBuilderError("Could not compile code for this step", step));
-			}
+    public async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, CompilerError? error = null,
+        int errorCount = 0)
+    {
+        if (errorCount++ > 3)
+            return (null, error ?? new StepBuilderError("Could not compile code for this step", step));
 
-			var compiler = new CSharpCompiler(fileSystem, prParser, logger);
-			var dllName = compiler.GetPreviousBuildDllNamesToExclude(step);
+        var compiler = new CSharpCompiler(fileSystem, prParser, logger);
+        var dllName = compiler.GetPreviousBuildDllNamesToExclude(step);
 
-			//TODO: Any file access should have IPLangFileSystem fileSystem injected and use it as fileSystem.File... or fileSystem.Directory....
-			SetSystem(@$"Act as a senior C# developer, that converts the user statement into a C#(Version. 9) code. 
+        //TODO: Any file access should have IPLangFileSystem fileSystem injected and use it as fileSystem.File... or fileSystem.Directory....
+        SetSystem(@$"Act as a senior C# developer, that converts the user statement into a C#(Version. 9) code. 
 
 ## Rules ##
 - Generate static class. The code generated should have 1 method with the static method named ExecutePlangCode and return void. 
@@ -84,75 +79,60 @@ namespace PLang.Modules.CodeModule
 ## Response information ##
 ");
 
-			AppendToAssistantCommand($@"
+        AppendToAssistantCommand(@"
 ## examples ##
-%list.Count%*50, write to %result% => ExecutePlangCode(long? listαCount, out long result) {{
+%list.Count%*50, write to %result% => ExecutePlangCode(long? listαCount, out long result) {
     //validate input parameter 
     result = listαCount*50;
-}}
+}
 InputParameters: [""%list.Count%""]
 OutParameters: [""%result%""]
 
-%response.data.total%*%response.data.total_amount%, write to %allTotal%, => ExecutePlangCode(dynamic? response.data.total, dynamic? response.data.total_amount, out long allTotal) {{ 
+%response.data.total%*%response.data.total_amount%, write to %allTotal%, => ExecutePlangCode(dynamic? response.data.total, dynamic? response.data.total_amount, out long allTotal) { 
       //validate input parameter 
       long allTotal = response.data.total*response.data.total_amount;
-}}
+}
 InputParameters: [""%response.data.total%"", ""%response.data.total_amount%""]
 OutParameters: [""%allTotal%""]
 
-check if %dirPath% exists, write to %folderExists% => ExecutePlangCode(IPlangFileSystem fileSystem, string dirPath, out bool folderExists) {{
+check if %dirPath% exists, write to %folderExists% => ExecutePlangCode(IPlangFileSystem fileSystem, string dirPath, out bool folderExists) {
 	//validate input parameter 
 	folderExists = fileSystem.Directory.Exists(dirPath);
-}}
+}
 InputParameters: [""%dirPath%""]
 OutParameters: [""%folderExists%""]
 
-get filename of %filePath%, write to %fileName% => ExecutePlangCode(IPlangFileSystem fileSystem, string filePath, out string fileName) {{
+get filename of %filePath%, write to %fileName% => ExecutePlangCode(IPlangFileSystem fileSystem, string filePath, out string fileName) {
 	//validate input parameter 
 	fileName = fileSystem.Path.GetFileName(filePath);
-}}
+}
 InputParameters: [""fileSystem"", ""%filePath%""]
 OutParameters: [""%fileName%""]
 ## examples ##");
 
-			if (error != null)
-			{
-				AppendToAssistantCommand(error.LlmInstruction);
-			}
+        if (error != null) AppendToAssistantCommand(error.LlmInstruction);
 
-			base.SetContentExtractor(new CSharpExtractor());
-			
-			(var instruction, var buildError) = await Build<CodeImplementationResponse>(step);
-			if (buildError != null) return (null, buildError);
+        SetContentExtractor(new CSharpExtractor());
 
-			if (instruction == null)
-			{
-				return (null, new StepBuilderError("Could not create instruction file", step));
-			}
+        var (instruction, buildError) = await Build<CodeImplementationResponse>(step);
+        if (buildError != null) return (null, buildError);
 
-			//go back to default extractor
-			base.SetContentExtractor(new JsonExtractor());
-			var answer = (CodeImplementationResponse)instruction.Action;
+        if (instruction == null) return (null, new StepBuilderError("Could not create instruction file", step));
 
-			(var implementation, var compilerError) = await compiler.BuildCode(answer, step, memoryStack);
-			if (compilerError != null)
-			{
-				logger.LogWarning($"- Error compiling code - will ask LLM again - Error:{compilerError} - Code:{compilerError.LlmInstruction}");
-				return await Build(step, compilerError, errorCount);
-			}
+        //go back to default extractor
+        SetContentExtractor(new JsonExtractor());
+        var answer = (CodeImplementationResponse)instruction.Action;
 
-			var newInstruction = new Instruction(implementation!);
-			newInstruction.LlmRequest = instruction.LlmRequest;
-			return (newInstruction, null);
+        var (implementation, compilerError) = await compiler.BuildCode(answer, step, memoryStack);
+        if (compilerError != null)
+        {
+            logger.LogWarning(
+                $"- Error compiling code - will ask LLM again - Error:{compilerError} - Code:{compilerError.LlmInstruction}");
+            return await Build(step, compilerError, errorCount);
+        }
 
-
-		}
-
-
-
-
-	}
-
-
+        var newInstruction = new Instruction(implementation!);
+        newInstruction.LlmRequest = instruction.LlmRequest;
+        return (newInstruction, null);
+    }
 }
-

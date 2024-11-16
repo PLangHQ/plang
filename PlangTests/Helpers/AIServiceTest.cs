@@ -3,25 +3,28 @@ using PLang.Interfaces;
 using PLang.Models;
 using PLang.Utils.Extractors;
 
-namespace PLangTests.Helpers
+namespace PLangTests.Helpers;
+
+public class AIServiceTest : ILlmService
 {
-	public class AIServiceTest : ILlmService
-	{
-		public IContentExtractor Extractor { get { return new JsonExtractor(); } set { } }
+    public IContentExtractor Extractor
+    {
+        get => new JsonExtractor();
+        set { }
+    }
 
-		public async Task<(object?, IError?)> GetBalance()
-		{
-			return (null, null);
-		}
+    public async Task<(object?, IError?)> GetBalance()
+    {
+        return (null, null);
+    }
 
-		public Task<(T?, IError?)> Query<T>(LlmRequest question) where T : class
-		{
-			return Task.FromResult<(T?, IError)>(default);
-		}
+    public Task<(T?, IError?)> Query<T>(LlmRequest question) where T : class
+    {
+        return Task.FromResult<(T?, IError)>(default);
+    }
 
-		public Task<(object?, IError?)> Query(LlmRequest question, Type responseType)
-		{
-			return Task.FromResult<(object?, IError)>(default);
-		}
-	}
+    public Task<(object?, IError?)> Query(LlmRequest question, Type responseType)
+    {
+        return Task.FromResult<(object?, IError)>(default);
+    }
 }

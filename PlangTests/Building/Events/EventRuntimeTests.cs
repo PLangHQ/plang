@@ -1,529 +1,21 @@
-﻿using LightInject;
+﻿using System.IO.Abstractions.TestingHelpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using NSubstitute;
 using PLang.Building.Model;
+using PLang.Errors;
 using PLang.Events;
 using PLang.Interfaces;
+using PLang.Models;
 using PLangTests;
 using PLangTests.Helpers;
-using PLangTests.Mocks;
-using System.IO.Abstractions.TestingHelpers;
-using PLang.Errors;
 
-namespace PLang.Building.Events.Tests
+namespace PLang.Building.Events.Tests;
+
+[TestClass]
+public class EventRuntimeTests : BasePLangTest
 {
-    [TestClass()]
-	public class EventRuntimeTests : BasePLangTest
-	{
-		EventRuntime eventRuntime;
-		[TestInitialize]
-		public void Init()
-		{
-			base.Initialize();
-			eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHandlerFactory, errorSystemHandlerFactory, logger, fileAccessHandler);
-		}
-
-		[TestMethod()]
-		public void IsGoalMatchTest_Should_Not_Match_GoalName_NotSame()
-		{
-			var goal = new Model.Goal();
-			goal.GoalName = "TestGoal";
-
-			var eventBinding = new EventBinding(EventType.Before, EventScope.Goal, "Start", "Start");
-
-			
-			var result = eventRuntime.GoalHasBinding(goal, eventBinding);
-			Assert.IsFalse(result);
-		}
-
-		[TestMethod()]
-		public void IsGoalMatchTest_Should_Match_GoalName_Same()
-		{
-			var goal = new Model.Goal();
-			goal.GoalName = "Start";
-			goal.Visibility = Visibility.Public;
-			var eventBinding = new EventBinding(EventType.Before, EventScope.Goal, "Start", "Start2");
-
-			var result = eventRuntime.GoalHasBinding(goal, eventBinding);
-			Assert.IsTrue(result);
-		}
-
-
-
-		[TestMethod()]
-		public void IsGoalMatchTest_Should_Match_GoalName_Matches_Pattern2()
-		{
-			
-			string goalFilePath = Path.Join(fileSystem.BuildPath, "Start", "Start.pr");
-			var content = PrReaderHelper.GetPrFileRaw("Start.pr");
-			fileSystem.AddFile(goalFilePath, new MockFileData(content));
-			
-			var goal = prParser.ParsePrFile(goalFilePath);
-
-			var events = JsonConvert.DeserializeObject<List<EventBinding>>(eventJson);
-
-			// Test GoalToBindTo = Start
-			var result = eventRuntime.GoalHasBinding(goal, events[0]);
-			Assert.IsTrue(result);
-
-			// Test GoalToBindTo = Hello.goal
-			result = eventRuntime.GoalHasBinding(goal, events[3]);
-			Assert.IsTrue(result);
-
-
-			goal = new Model.Goal();
-			goal.GoalName = "Start";
-			goal.RelativeGoalFolderPath = @"\api\";
-			goal.RelativeGoalPath = @"\api\Start.goal";
-			goal.Visibility = Model.Visibility.Public;
-			goal.GoalFileName = @"\api\Start.goal";
-			goal.AppName = @"\";
-			//Test GoalToBindTo = api/*
-			result = eventRuntime.GoalHasBinding(goal, events[2]);
-			Assert.IsTrue(result);
-
-			result = eventRuntime.GoalHasBinding(goal, events[1]);
-			Assert.IsFalse(result);
-
-			//Test GoalToBindTo = api/*
-			goal.RelativeGoalFolderPath = "/stuff/api/dodo";
-			result = eventRuntime.GoalHasBinding(goal, events[2]);
-			Assert.IsFalse(result);
-
-			//Test GoalToBindTo = *
-			result = eventRuntime.GoalHasBinding(goal, events[5]);
-			Assert.IsTrue(result);
-
-
-			// GoalToBindTo = GenerateData(.goal)?:ProcessFile
-			goal.Visibility = Model.Visibility.Private;
-			goal.GoalName = "Process";
-			goal.RelativeGoalPath = "/Start.goal";
-			result = eventRuntime.GoalHasBinding(goal, events[4]);
-			Assert.IsTrue(result);
-
-			// GoalToBindTo = SampleApp.Hello
-
-			fileSystem.RemoveFile(goalFilePath);
-
-			string helloWorld = PrReaderHelper.GetPrFileRaw("HelloWorld.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "TestApp", ".build", ISettings.GoalFileName), new MockFileData(helloWorld));
-
-			prParser.ForceLoadAllGoals();
-			var goals = prParser.GetAllGoals();
-			result = eventRuntime.GoalHasBinding(goals[0], events[1]);
-			Assert.IsTrue(result);
-		}
-
-		[TestMethod()]
-		public async Task RunStepEventsTest_CallEventBeforeAppStart()
-		{
-			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
-			var content = PrReaderHelper.GetPrFileRaw("Events/BeforeAppStartEvent.pr");
-			fileSystem.AddFile(eventPrFile, new MockFileData(content));
-
-			// Goal file that is in root app
-			string GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName), new MockFileData(GoalWith1Step));
-
-			// Goal file that is inside the apps folder
-			string GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName), new MockFileData(GoalWith2Steps));
-
-			prParser.ForceLoadAllGoals();
-
-			// load event runtime
-			await eventRuntime.Load();
-				
-			await eventRuntime.RunStartEndEvents(new(), EventType.Before, EventScope.StartOfApp);
-				
-			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
-						@"\", new Models.GoalToCall("Process"), Arg.Any<Dictionary<string, object?>>());
-			
-		}
-
-		[TestMethod()]
-		public async Task RunStepEventsTest_CallEventAfterAppStart()
-		{
-
-			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
-			var content = PrReaderHelper.GetPrFileRaw("Events/AfterAppStartEvent.pr");
-			fileSystem.AddFile(eventPrFile, new MockFileData(content));
-
-			// Goal file that is in root app
-			string GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName), new MockFileData(GoalWith1Step));
-
-			// Goal file that is inside the apps folder
-			string GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName), new MockFileData(GoalWith2Steps));
-
-			prParser.ForceLoadAllGoals();
-
-			// load event runtime
-			await eventRuntime.Load();
-
-			await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.After, EventScope.StartOfApp);
-
-			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
-						@"\", "!Process", Arg.Any<Dictionary<string, object?>>());
-
-		}
-
-		[TestMethod()]
-		public async Task RunStepEventsTest_CallEventOnErrorAppStart()
-		{
-			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
-			var content = PrReaderHelper.GetPrFileRaw("Events/OnErrorAppStartEvent.pr");
-			fileSystem.AddFile(eventPrFile, new MockFileData(content));
-
-			// Goal file that is in root app
-			string GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName), new MockFileData(GoalWith1Step));
-
-			// Goal file that is inside the apps folder
-			string GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName), new MockFileData(GoalWith2Steps));
-
-			prParser.ForceLoadAllGoals();
-
-			// load event runtime
-			await eventRuntime.Load();
-
-			await eventRuntime.RunStartEndEvents(new(), EventType.Before, EventScope.AppError);
-
-			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
-						@"\", "!Process", Arg.Any<Dictionary<string, object?>>());
-
-		}
-		[TestMethod()]
-		public async Task RunStepEventsTest_CallEventAppEnd()
-		{
-
-			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
-			var content = PrReaderHelper.GetPrFileRaw("Events/AppEndEvent.pr");
-			fileSystem.AddFile(eventPrFile, new MockFileData(content));
-
-			// Goal file that is in root app
-			string GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName), new MockFileData(GoalWith1Step));
-
-			// Goal file that is inside the apps folder
-			string GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName), new MockFileData(GoalWith2Steps));
-
-			prParser.ForceLoadAllGoals();
-
-			// load event runtime
-			await eventRuntime.Load();
-
-			await eventRuntime.RunStartEndEvents(new(), EventType.Before, EventScope.EndOfApp);
-			// test that both Before and After type works. When app ends there is no difference between Before and After
-			await eventRuntime.RunStartEndEvents(new(), EventType.After, EventScope.EndOfApp);
-
-			await pseudoRuntime.Received(2).RunGoal(engine, Arg.Any<PLangAppContext>(),
-						@"\", "!Process", Arg.Any<Dictionary<string, object?>>());
-
-		}
-
-		[TestMethod()]
-		public async Task RunStepEventsTest_CallEventOnErrorOnApp()
-		{
-			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
-			var content = PrReaderHelper.GetPrFileRaw("Events/OnErrorAppRunningEvent.pr");
-			fileSystem.AddFile(eventPrFile, new MockFileData(content));
-
-			// Goal file that is in root app
-			string GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName), new MockFileData(GoalWith1Step));
-
-			// Goal file that is inside the apps folder
-			string GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName), new MockFileData(GoalWith2Steps));
-
-			prParser.ForceLoadAllGoals();
-
-			// load event runtime
-			await eventRuntime.Load();
-
-			await eventRuntime.RunStartEndEvents(new(), EventType.After, EventScope.AppError);
-
-			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
-						@"\", "!Process", Arg.Any<Dictionary<string, object?>>());
-
-		}
-
-		[TestMethod()]
-		public async Task RunStepEventsTest_CallEventBeforeGoalHasRun()
-		{
-
-			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
-			var content = PrReaderHelper.GetPrFileRaw("Events/BeforeGoalEvent.pr");
-			fileSystem.AddFile(eventPrFile, new MockFileData(content));
-
-			// Goal file that is in root app
-			string GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName), new MockFileData(GoalWith1Step));
-
-			// Goal file that is inside the apps folder
-			string GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName), new MockFileData(GoalWith2Steps));
-
-			prParser.ForceLoadAllGoals();
-
-			// load event runtime
-			await eventRuntime.Load();
-
-			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
-			foreach (var goal in goals)
-			{
-
-				await eventRuntime.RunGoalEvents(new(), EventType.Before, goal);
-
-				await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
-							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
-			}
-		}
-
-		[TestMethod()]
-		public async Task RunStepEventsTest_CallEventAfterGoalHasRun()
-		{
-
-			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
-			var content = PrReaderHelper.GetPrFileRaw("Events/AfterGoalEvent.pr");
-			fileSystem.AddFile(eventPrFile, new MockFileData(content));
-
-			// Goal file that is in root app
-			string GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName), new MockFileData(GoalWith1Step));
-
-			// Goal file that is inside the apps folder
-			string GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName), new MockFileData(GoalWith2Steps));
-
-			prParser.ForceLoadAllGoals();
-
-			// load event runtime
-			await eventRuntime.Load();
-
-			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
-			foreach (var goal in goals)
-			{
-
-				await eventRuntime.RunGoalEvents(new(), EventType.After, goal);
-
-				await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
-							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
-			}
-		}
-
-		[TestMethod()]
-		public async Task RunStepEventsTest_CallEventBeforeStepHasRun()
-		{
-			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
-			var content = PrReaderHelper.GetPrFileRaw("Events/BeforeStepEvent.pr");
-			fileSystem.AddFile(eventPrFile, new MockFileData(content));
-
-			// Goal file that is in root app
-			string GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName), new MockFileData(GoalWith1Step));
-
-			// Goal file that is inside the apps folder
-			string GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName), new MockFileData(GoalWith2Steps));
-
-			prParser.ForceLoadAllGoals();
-
-			// load event runtime
-			await eventRuntime.Load();
-
-			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
-			foreach (var goal in goals)
-			{
-				foreach (var step in goal.GoalSteps)
-				{
-					await eventRuntime.RunStepEvents(new(), EventType.Before, goal, step);
-				}
-				await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<PLangAppContext>(),
-							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
-			}
-		}
-
-
-		[TestMethod()]
-		public async Task RunStepEventsTest_CallEventAfterStepHasRun()
-		{
-			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
-			var content = PrReaderHelper.GetPrFileRaw("Events/AfterStepEvent.pr");
-			fileSystem.AddFile(eventPrFile, new MockFileData(content));
-
-			// Goal file that is in root app
-			string GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName), new MockFileData(GoalWith1Step));
-
-			// Goal file that is inside the apps folder
-			string GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName), new MockFileData(GoalWith2Steps));
-
-			prParser.ForceLoadAllGoals();
-
-			// load event runtime
-			await eventRuntime.Load();
-
-			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
-			foreach (var goal in goals)
-			{
-				foreach (var step in goal.GoalSteps)
-				{
-					await eventRuntime.RunStepEvents(new(), EventType.After, goal, step);
-				}
-				await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<PLangAppContext>(),
-							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
-			}
-		}
-
-
-		[TestMethod()]
-		public async Task RunStepEventsTest_CallEventOnGoalError()
-		{
-
-			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
-			var content = PrReaderHelper.GetPrFileRaw("Events/OnErrorGoalEvent.pr");
-			fileSystem.AddFile(eventPrFile, new MockFileData(content));
-
-			// Goal file that is in root app
-			string GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName), new MockFileData(GoalWith1Step));
-
-			// Goal file that is inside the apps folder
-			string GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName), new MockFileData(GoalWith2Steps));
-
-			prParser.ForceLoadAllGoals();
-
-			// load event runtime
-			await eventRuntime.Load();
-
-			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
-			foreach (var goal in goals)
-			{
-				await eventRuntime.RunGoalErrorEvents(new(), goal, 0, new Error("Test"));
-				await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
-							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
-			}
-		}
-
-
-		[TestMethod()]
-		public async Task RunStepEventsTest_CallEventOnStepError()
-		{
-			// setup mocked events files
-			string eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
-			var content = PrReaderHelper.GetPrFileRaw("Events/OnErrorStepEvent.pr");
-			fileSystem.AddFile(eventPrFile, new MockFileData(content));
-
-			// Goal file that is in root app
-			string GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName), new MockFileData(GoalWith1Step));
-
-			// Goal file that is inside the apps folder
-			string GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName), new MockFileData(GoalWith2Steps));
-
-			prParser.ForceLoadAllGoals();
-
-			// load event runtime
-			await eventRuntime.Load();
-
-			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
-			foreach (var goal in goals)
-			{
-				foreach (var step in goal.GoalSteps)
-				{
-					await eventRuntime.RunOnErrorStepEvents(new(), new Error("Test error"), goal, step);
-				}
-				await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<PLangAppContext>(),
-							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
-			}
-		}
-
-		[TestMethod()]
-		public void GetRuntimeEventsFilesTest_MakeSureRootEventsIsLast()
-		{
-			// 2 event files added
-			string mainEventFile = Path.Join(fileSystem.BuildPath, "events", "Events", ISettings.GoalFileName);
-			fileSystem.AddFile(mainEventFile, new MockFileData(""));
-			var externalEventFile = Path.Join(fileSystem.BuildPath, "events", "external", "plang", "runtime", "Events", ISettings.GoalFileName);
-			fileSystem.AddFile(externalEventFile, new MockFileData(""));
-			//some other files
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "Process", ISettings.GoalFileName), new MockFileData(""));
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "HelloWorld", ISettings.GoalFileName), new MockFileData(""));
-
-			var eventFiles = eventRuntime.GetEventsFiles(fileSystem.BuildPath, false);
-
-			Assert.AreEqual(2, eventFiles.EventFiles.Count);
-			Assert.AreEqual(externalEventFile, eventFiles.EventFiles[0]);
-			Assert.AreEqual(mainEventFile, eventFiles.EventFiles[1]);
-
-		}
-
-		[TestMethod()]
-		public void GetRuntimeEventsFilesTest_MakeSureRootBuilderEventsIsLast()
-		{
-			// 2 event files added
-			string mainEventFile = Path.Join(fileSystem.BuildPath, "events", "BuilderEvents", ISettings.GoalFileName);
-			fileSystem.AddFile(mainEventFile, new MockFileData(""));
-			var externalEventFile = Path.Join(fileSystem.BuildPath, "events", "external", "plang", "runtime", "BuilderEvents", ISettings.GoalFileName);
-			fileSystem.AddFile(externalEventFile, new MockFileData(""));
-			//other files
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "apps", "HelloWorld", ".build", "events", ISettings.GoalFileName), new MockFileData(""));
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "Process", ISettings.GoalFileName), new MockFileData(""));
-			fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "helloWorld", ISettings.GoalFileName), new MockFileData(""));
-
-			(var eventFiles, var error) = eventRuntime.GetEventsFiles(fileSystem.BuildPath, true);
-
-			Assert.AreEqual(2, eventFiles.Count);
-			Assert.AreEqual(externalEventFile, eventFiles[0]);
-			Assert.AreEqual(mainEventFile, eventFiles[1]);
-
-		}
-
-		[TestMethod]
-		public async Task LoadEvents()
-		{
-
-			var content = PrReaderHelper.GetPrFileRaw("Events/Events.pr");
-			fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName), new MockFileData(content));
-			prParser.ForceLoadAllGoals();
-
-			await eventRuntime.Load();
-			var events = await eventRuntime.GetRuntimeEvents();
-
-			Assert.AreEqual(3, events.Count);
-			Assert.AreEqual(EventType.Before, events[0].EventType);
-			Assert.AreEqual(EventScope.StartOfApp, events[0].EventScope);
-			Assert.AreEqual("Process", events[0].GoalToCall.ToString());
-			Assert.AreEqual(null, events[0].GoalToBindTo);
-
-			Assert.AreEqual(EventType.After, events[1].EventType);
-			Assert.AreEqual(EventScope.Step, events[1].EventScope);
-			Assert.AreEqual("Process", events[1].GoalToCall.ToString());
-			Assert.AreEqual("*", events[1].GoalToBindTo.ToString());
-		}
-
-
-		string eventJson = @"[
+    private readonly string eventJson = @"[
   {
     ""EventType"": ""After"",
     ""EventScope"": ""Step"",
@@ -567,5 +59,521 @@ namespace PLang.Building.Events.Tests
   }
 ]";
 
-	}
+    private EventRuntime eventRuntime;
+
+    [TestInitialize]
+    public void Init()
+    {
+        Initialize();
+        eventRuntime = new EventRuntime(fileSystem, settings, pseudoRuntime, prParser, engine, errorHandlerFactory,
+            errorSystemHandlerFactory, logger, fileAccessHandler);
+    }
+
+    [TestMethod]
+    public void IsGoalMatchTest_Should_Not_Match_GoalName_NotSame()
+    {
+        var goal = new Goal();
+        goal.GoalName = "TestGoal";
+
+        var eventBinding = new EventBinding(EventType.Before, EventScope.Goal, "Start", "Start");
+
+
+        var result = eventRuntime.GoalHasBinding(goal, eventBinding);
+        Assert.IsFalse(result);
+    }
+
+    [TestMethod]
+    public void IsGoalMatchTest_Should_Match_GoalName_Same()
+    {
+        var goal = new Goal();
+        goal.GoalName = "Start";
+        goal.Visibility = Visibility.Public;
+        var eventBinding = new EventBinding(EventType.Before, EventScope.Goal, "Start", "Start2");
+
+        var result = eventRuntime.GoalHasBinding(goal, eventBinding);
+        Assert.IsTrue(result);
+    }
+
+
+    [TestMethod]
+    public void IsGoalMatchTest_Should_Match_GoalName_Matches_Pattern2()
+    {
+        var goalFilePath = Path.Join(fileSystem.BuildPath, "Start", "Start.pr");
+        var content = PrReaderHelper.GetPrFileRaw("Start.pr");
+        fileSystem.AddFile(goalFilePath, new MockFileData(content));
+
+        var goal = prParser.ParsePrFile(goalFilePath);
+
+        var events = JsonConvert.DeserializeObject<List<EventBinding>>(eventJson);
+
+        // Test GoalToBindTo = Start
+        var result = eventRuntime.GoalHasBinding(goal, events[0]);
+        Assert.IsTrue(result);
+
+        // Test GoalToBindTo = Hello.goal
+        result = eventRuntime.GoalHasBinding(goal, events[3]);
+        Assert.IsTrue(result);
+
+
+        goal = new Goal();
+        goal.GoalName = "Start";
+        goal.RelativeGoalFolderPath = @"\api\";
+        goal.RelativeGoalPath = @"\api\Start.goal";
+        goal.Visibility = Visibility.Public;
+        goal.GoalFileName = @"\api\Start.goal";
+        goal.AppName = @"\";
+        //Test GoalToBindTo = api/*
+        result = eventRuntime.GoalHasBinding(goal, events[2]);
+        Assert.IsTrue(result);
+
+        result = eventRuntime.GoalHasBinding(goal, events[1]);
+        Assert.IsFalse(result);
+
+        //Test GoalToBindTo = api/*
+        goal.RelativeGoalFolderPath = "/stuff/api/dodo";
+        result = eventRuntime.GoalHasBinding(goal, events[2]);
+        Assert.IsFalse(result);
+
+        //Test GoalToBindTo = *
+        result = eventRuntime.GoalHasBinding(goal, events[5]);
+        Assert.IsTrue(result);
+
+
+        // GoalToBindTo = GenerateData(.goal)?:ProcessFile
+        goal.Visibility = Visibility.Private;
+        goal.GoalName = "Process";
+        goal.RelativeGoalPath = "/Start.goal";
+        result = eventRuntime.GoalHasBinding(goal, events[4]);
+        Assert.IsTrue(result);
+
+        // GoalToBindTo = SampleApp.Hello
+
+        fileSystem.RemoveFile(goalFilePath);
+
+        var helloWorld = PrReaderHelper.GetPrFileRaw("HelloWorld.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "TestApp", ".build", ISettings.GoalFileName),
+            new MockFileData(helloWorld));
+
+        prParser.ForceLoadAllGoals();
+        var goals = prParser.GetAllGoals();
+        result = eventRuntime.GoalHasBinding(goals[0], events[1]);
+        Assert.IsTrue(result);
+    }
+
+    [TestMethod]
+    public async Task RunStepEventsTest_CallEventBeforeAppStart()
+    {
+        // setup mocked events files
+        var eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
+        var content = PrReaderHelper.GetPrFileRaw("Events/BeforeAppStartEvent.pr");
+        fileSystem.AddFile(eventPrFile, new MockFileData(content));
+
+        // Goal file that is in root app
+        var GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName),
+            new MockFileData(GoalWith1Step));
+
+        // Goal file that is inside the apps folder
+        var GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName),
+            new MockFileData(GoalWith2Steps));
+
+        prParser.ForceLoadAllGoals();
+
+        // load event runtime
+        await eventRuntime.Load();
+
+        await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.Before, EventScope.StartOfApp);
+
+        await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
+            @"\", new GoalToCall("Process"), Arg.Any<Dictionary<string, object?>>());
+    }
+
+    [TestMethod]
+    public async Task RunStepEventsTest_CallEventAfterAppStart()
+    {
+        // setup mocked events files
+        var eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
+        var content = PrReaderHelper.GetPrFileRaw("Events/AfterAppStartEvent.pr");
+        fileSystem.AddFile(eventPrFile, new MockFileData(content));
+
+        // Goal file that is in root app
+        var GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName),
+            new MockFileData(GoalWith1Step));
+
+        // Goal file that is inside the apps folder
+        var GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName),
+            new MockFileData(GoalWith2Steps));
+
+        prParser.ForceLoadAllGoals();
+
+        // load event runtime
+        await eventRuntime.Load();
+
+        await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.After, EventScope.StartOfApp);
+
+        await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
+            @"\", "!Process", Arg.Any<Dictionary<string, object?>>());
+    }
+
+    [TestMethod]
+    public async Task RunStepEventsTest_CallEventOnErrorAppStart()
+    {
+        // setup mocked events files
+        var eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
+        var content = PrReaderHelper.GetPrFileRaw("Events/OnErrorAppStartEvent.pr");
+        fileSystem.AddFile(eventPrFile, new MockFileData(content));
+
+        // Goal file that is in root app
+        var GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName),
+            new MockFileData(GoalWith1Step));
+
+        // Goal file that is inside the apps folder
+        var GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName),
+            new MockFileData(GoalWith2Steps));
+
+        prParser.ForceLoadAllGoals();
+
+        // load event runtime
+        await eventRuntime.Load();
+
+        await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.Before, EventScope.AppError);
+
+        await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
+            @"\", "!Process", Arg.Any<Dictionary<string, object?>>());
+    }
+
+    [TestMethod]
+    public async Task RunStepEventsTest_CallEventAppEnd()
+    {
+        // setup mocked events files
+        var eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
+        var content = PrReaderHelper.GetPrFileRaw("Events/AppEndEvent.pr");
+        fileSystem.AddFile(eventPrFile, new MockFileData(content));
+
+        // Goal file that is in root app
+        var GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName),
+            new MockFileData(GoalWith1Step));
+
+        // Goal file that is inside the apps folder
+        var GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName),
+            new MockFileData(GoalWith2Steps));
+
+        prParser.ForceLoadAllGoals();
+
+        // load event runtime
+        await eventRuntime.Load();
+
+        await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.Before, EventScope.EndOfApp);
+        // test that both Before and After type works. When app ends there is no difference between Before and After
+        await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.After, EventScope.EndOfApp);
+
+        await pseudoRuntime.Received(2).RunGoal(engine, Arg.Any<PLangAppContext>(),
+            @"\", "!Process", Arg.Any<Dictionary<string, object?>>());
+    }
+
+    [TestMethod]
+    public async Task RunStepEventsTest_CallEventOnErrorOnApp()
+    {
+        // setup mocked events files
+        var eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
+        var content = PrReaderHelper.GetPrFileRaw("Events/OnErrorAppRunningEvent.pr");
+        fileSystem.AddFile(eventPrFile, new MockFileData(content));
+
+        // Goal file that is in root app
+        var GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName),
+            new MockFileData(GoalWith1Step));
+
+        // Goal file that is inside the apps folder
+        var GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName),
+            new MockFileData(GoalWith2Steps));
+
+        prParser.ForceLoadAllGoals();
+
+        // load event runtime
+        await eventRuntime.Load();
+
+        await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.After, EventScope.AppError);
+
+        await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
+            @"\", "!Process", Arg.Any<Dictionary<string, object?>>());
+    }
+
+    [TestMethod]
+    public async Task RunStepEventsTest_CallEventBeforeGoalHasRun()
+    {
+        // setup mocked events files
+        var eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
+        var content = PrReaderHelper.GetPrFileRaw("Events/BeforeGoalEvent.pr");
+        fileSystem.AddFile(eventPrFile, new MockFileData(content));
+
+        // Goal file that is in root app
+        var GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName),
+            new MockFileData(GoalWith1Step));
+
+        // Goal file that is inside the apps folder
+        var GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName),
+            new MockFileData(GoalWith2Steps));
+
+        prParser.ForceLoadAllGoals();
+
+        // load event runtime
+        await eventRuntime.Load();
+
+        var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
+        foreach (var goal in goals)
+        {
+            await eventRuntime.RunGoalEvents(new PLangAppContext(), EventType.Before, goal);
+
+            await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
+                goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
+        }
+    }
+
+    [TestMethod]
+    public async Task RunStepEventsTest_CallEventAfterGoalHasRun()
+    {
+        // setup mocked events files
+        var eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
+        var content = PrReaderHelper.GetPrFileRaw("Events/AfterGoalEvent.pr");
+        fileSystem.AddFile(eventPrFile, new MockFileData(content));
+
+        // Goal file that is in root app
+        var GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName),
+            new MockFileData(GoalWith1Step));
+
+        // Goal file that is inside the apps folder
+        var GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName),
+            new MockFileData(GoalWith2Steps));
+
+        prParser.ForceLoadAllGoals();
+
+        // load event runtime
+        await eventRuntime.Load();
+
+        var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
+        foreach (var goal in goals)
+        {
+            await eventRuntime.RunGoalEvents(new PLangAppContext(), EventType.After, goal);
+
+            await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
+                goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
+        }
+    }
+
+    [TestMethod]
+    public async Task RunStepEventsTest_CallEventBeforeStepHasRun()
+    {
+        // setup mocked events files
+        var eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
+        var content = PrReaderHelper.GetPrFileRaw("Events/BeforeStepEvent.pr");
+        fileSystem.AddFile(eventPrFile, new MockFileData(content));
+
+        // Goal file that is in root app
+        var GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName),
+            new MockFileData(GoalWith1Step));
+
+        // Goal file that is inside the apps folder
+        var GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName),
+            new MockFileData(GoalWith2Steps));
+
+        prParser.ForceLoadAllGoals();
+
+        // load event runtime
+        await eventRuntime.Load();
+
+        var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
+        foreach (var goal in goals)
+        {
+            foreach (var step in goal.GoalSteps)
+                await eventRuntime.RunStepEvents(new PLangAppContext(), EventType.Before, goal, step);
+            await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<PLangAppContext>(),
+                goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
+        }
+    }
+
+
+    [TestMethod]
+    public async Task RunStepEventsTest_CallEventAfterStepHasRun()
+    {
+        // setup mocked events files
+        var eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
+        var content = PrReaderHelper.GetPrFileRaw("Events/AfterStepEvent.pr");
+        fileSystem.AddFile(eventPrFile, new MockFileData(content));
+
+        // Goal file that is in root app
+        var GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName),
+            new MockFileData(GoalWith1Step));
+
+        // Goal file that is inside the apps folder
+        var GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName),
+            new MockFileData(GoalWith2Steps));
+
+        prParser.ForceLoadAllGoals();
+
+        // load event runtime
+        await eventRuntime.Load();
+
+        var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
+        foreach (var goal in goals)
+        {
+            foreach (var step in goal.GoalSteps)
+                await eventRuntime.RunStepEvents(new PLangAppContext(), EventType.After, goal, step);
+            await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<PLangAppContext>(),
+                goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
+        }
+    }
+
+
+    [TestMethod]
+    public async Task RunStepEventsTest_CallEventOnGoalError()
+    {
+        // setup mocked events files
+        var eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
+        var content = PrReaderHelper.GetPrFileRaw("Events/OnErrorGoalEvent.pr");
+        fileSystem.AddFile(eventPrFile, new MockFileData(content));
+
+        // Goal file that is in root app
+        var GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName),
+            new MockFileData(GoalWith1Step));
+
+        // Goal file that is inside the apps folder
+        var GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName),
+            new MockFileData(GoalWith2Steps));
+
+        prParser.ForceLoadAllGoals();
+
+        // load event runtime
+        await eventRuntime.Load();
+
+        var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
+        foreach (var goal in goals)
+        {
+            await eventRuntime.RunGoalErrorEvents(new PLangAppContext(), goal, 0, new Error("Test"));
+            await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
+                goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
+        }
+    }
+
+
+    [TestMethod]
+    public async Task RunStepEventsTest_CallEventOnStepError()
+    {
+        // setup mocked events files
+        var eventPrFile = Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName);
+        var content = PrReaderHelper.GetPrFileRaw("Events/OnErrorStepEvent.pr");
+        fileSystem.AddFile(eventPrFile, new MockFileData(content));
+
+        // Goal file that is in root app
+        var GoalWith1Step = PrReaderHelper.GetPrFileRaw("GoalWith1Step.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "GoalWith1Step", ISettings.GoalFileName),
+            new MockFileData(GoalWith1Step));
+
+        // Goal file that is inside the apps folder
+        var GoalWith2Steps = PrReaderHelper.GetPrFileRaw("GoalWith2Steps.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "apps", "GoalWith2Steps", ".build", ISettings.GoalFileName),
+            new MockFileData(GoalWith2Steps));
+
+        prParser.ForceLoadAllGoals();
+
+        // load event runtime
+        await eventRuntime.Load();
+
+        var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
+        foreach (var goal in goals)
+        {
+            foreach (var step in goal.GoalSteps)
+                await eventRuntime.RunOnErrorStepEvents(new PLangAppContext(), new Error("Test error"), goal, step);
+            await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<PLangAppContext>(),
+                goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
+        }
+    }
+
+    [TestMethod]
+    public void GetRuntimeEventsFilesTest_MakeSureRootEventsIsLast()
+    {
+        // 2 event files added
+        var mainEventFile = Path.Join(fileSystem.BuildPath, "events", "Events", ISettings.GoalFileName);
+        fileSystem.AddFile(mainEventFile, new MockFileData(""));
+        var externalEventFile = Path.Join(fileSystem.BuildPath, "events", "external", "plang", "runtime", "Events",
+            ISettings.GoalFileName);
+        fileSystem.AddFile(externalEventFile, new MockFileData(""));
+        //some other files
+        fileSystem.AddFile(
+            Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "Process", ISettings.GoalFileName),
+            new MockFileData(""));
+        fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "HelloWorld", ISettings.GoalFileName), new MockFileData(""));
+
+        var eventFiles = eventRuntime.GetEventsFiles(fileSystem.BuildPath);
+
+        Assert.AreEqual(2, eventFiles.EventFiles.Count);
+        Assert.AreEqual(externalEventFile, eventFiles.EventFiles[0]);
+        Assert.AreEqual(mainEventFile, eventFiles.EventFiles[1]);
+    }
+
+    [TestMethod]
+    public void GetRuntimeEventsFilesTest_MakeSureRootBuilderEventsIsLast()
+    {
+        // 2 event files added
+        var mainEventFile = Path.Join(fileSystem.BuildPath, "events", "BuilderEvents", ISettings.GoalFileName);
+        fileSystem.AddFile(mainEventFile, new MockFileData(""));
+        var externalEventFile = Path.Join(fileSystem.BuildPath, "events", "external", "plang", "runtime",
+            "BuilderEvents", ISettings.GoalFileName);
+        fileSystem.AddFile(externalEventFile, new MockFileData(""));
+        //other files
+        fileSystem.AddFile(
+            Path.Join(fileSystem.BuildPath, "apps", "HelloWorld", ".build", "events", ISettings.GoalFileName),
+            new MockFileData(""));
+        fileSystem.AddFile(
+            Path.Join(fileSystem.GoalsPath, "apps", "HelloWorld", ".build", "Process", ISettings.GoalFileName),
+            new MockFileData(""));
+        fileSystem.AddFile(Path.Join(fileSystem.GoalsPath, "helloWorld", ISettings.GoalFileName), new MockFileData(""));
+
+        var (eventFiles, error) = eventRuntime.GetEventsFiles(fileSystem.BuildPath, true);
+
+        Assert.AreEqual(2, eventFiles.Count);
+        Assert.AreEqual(externalEventFile, eventFiles[0]);
+        Assert.AreEqual(mainEventFile, eventFiles[1]);
+    }
+
+    [TestMethod]
+    public async Task LoadEvents()
+    {
+        var content = PrReaderHelper.GetPrFileRaw("Events/Events.pr");
+        fileSystem.AddFile(Path.Join(fileSystem.BuildPath, "events", ISettings.GoalFileName),
+            new MockFileData(content));
+        prParser.ForceLoadAllGoals();
+
+        await eventRuntime.Load();
+        var events = await eventRuntime.GetRuntimeEvents();
+
+        Assert.AreEqual(3, events.Count);
+        Assert.AreEqual(EventType.Before, events[0].EventType);
+        Assert.AreEqual(EventScope.StartOfApp, events[0].EventScope);
+        Assert.AreEqual("Process", events[0].GoalToCall.ToString());
+        Assert.AreEqual(null, events[0].GoalToBindTo);
+
+        Assert.AreEqual(EventType.After, events[1].EventType);
+        Assert.AreEqual(EventScope.Step, events[1].EventScope);
+        Assert.AreEqual("Process", events[1].GoalToCall.ToString());
+        Assert.AreEqual("*", events[1].GoalToBindTo.ToString());
+    }
 }
