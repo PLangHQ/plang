@@ -26,6 +26,11 @@ Before you begin, ensure you have Visual Studio Code installed on your system. I
    - Once installed, you should see the Plang extension listed in your installed extensions.
    - You can now start using the extension to write and debug Plang code.
 
+## Back to Get Started
+
+Now go back to the [Get Started](./GetStarted.md) page to write your first plang app, "Hello plang world"
+
+
 ## Features of the Plang Extension
 
 ### Debugging: 
