@@ -58,12 +58,21 @@ Create a `SaveTask.goal` file to save new tasks to the database.
 
 ```plang
 SaveTask
-- if %task% or %due_date% is empty, throw error
+- if %task% or %due_date% is empty
+    - show error "task and due date cannot be empty"
 - insert into Todos, %task%, %due_date%
 - call !Todos
 ```
 
 **Explanation**: This code checks if the task or due date is empty, throws an error if so, otherwise inserts the new task into the Todos database and refreshes the Todos view.
+
+#### Build code
+
+Lets build the code
+
+```bash
+plang build
+```
 
 ### Step 6: Run the App
 To run the app, use `plangw.exe` instead of `plang.exe`.

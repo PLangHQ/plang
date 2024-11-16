@@ -61,12 +61,15 @@ Create a file named `NewTask.goal` in the `api` folder with the following conten
 
 ```plang
 NewTask
-- make sure that %task% and %due_date% is not empty, throw error
-- insert into Todos %task%, %due_date%, write to %id%
+- if %request.task% and %request.due_date% is empty
+    - show error "Task & due_date cannot be empty"
+- insert into Todos %request.task%, %request.due_date%, write to %id%
 - write out %id%
 ```
 
-**Explanation**: This code defines an API endpoint for creating a new task. It checks that `task` and `due_date` are not empty, inserts the data into the `Todos` table, and returns the new task's ID.
+**Explanation**: This code defines an API endpoint for creating a new task. It checks that `request.task` and `request.due_date` are not empty, inserts the data into the `Todos` table, and returns the new task's ID.
+
+`request` is the http request object that is coming from the user
 
 ### Step 7: Create List API
 Create a file named `List.goal` in the `api` folder with the following content:

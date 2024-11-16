@@ -31,7 +31,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -65,12 +65,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "de4a2561df9e2b32a9ee0860fbec8707a725905f1ec86f02b2f34a04459b0ece",
+      "BuilderVersion": null
     },
     {
       "Text": "set string var %goalToCall% = %stepPr.Action.Parameters[1].Value.ToString().Replace(\"!\", \"\")%",
@@ -100,7 +102,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -134,12 +136,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "64b668cfd2451839477049110af87db8bae974c6927dc1eec136ab6a2d1320f9",
+      "BuilderVersion": null
     },
     {
       "Text": "if %goalToCall% != \"String\" then",
@@ -169,7 +173,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -203,12 +207,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "e99998675bb0fda740086f8ed7ddf3e127d66b711a968c47df89d16b97fc4dbf",
+      "BuilderVersion": null
     },
     {
       "Text": "search in /.build/ for all dirs with name '%goalToCall%' , write to %dirs%",
@@ -238,7 +244,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -272,12 +278,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "d56ee6a2f91a1e37bdda7df76e6e91243902808967f9acd983c91f96b3c3d903",
+      "BuilderVersion": null
     },
     {
       "Text": "create list %missingGoals% = []",
@@ -307,7 +315,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -341,12 +349,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "90a6f56ea69cb58a5c58096470555cd3b976e3b1e78dbb9656d681bb30d04633",
+      "BuilderVersion": null
     },
     {
       "Text": "if %dirs.Length% == 0 then",
@@ -376,7 +386,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -410,12 +420,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "bb6b8cfdca38230565b16c55b3f847139816c15629591d84d6351270a78e12ef",
+      "BuilderVersion": null
     },
     {
       "Text": "append to %missingGoals% = '%goal.GoalName% - %step.Text% - Missing goal: %goalToCall%'",
@@ -445,7 +457,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -479,12 +491,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "94cc4d7de4c5a08b35537eec9f6cbcfec0c57c8ed6cb454e3a1594376a491368",
+      "BuilderVersion": null
     }
   ],
   "SubGoals": [],
@@ -495,11 +509,11 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\builder\\events",
   "RelativePrPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals\\CheckCallingGoal\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals\\CheckCallingGoal",
-  "BuilderVersion": "0.1.15.1",
+  "BuilderVersion": "0.15.5.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "09144ae905686729a09aecd31ccb9bec87c7bbb54cab8c86e8615608e717f25c",
+  "Hash": "94e3b2ab8338268adf5200abe6276ae4ab1b9b9091a408ead51eaa6b4cb1dd36",
   "IncomingVariablesRequired": [
     "step.RelativePrPath",
     "goal.GoalName",

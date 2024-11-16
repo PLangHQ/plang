@@ -41,16 +41,17 @@ We want to categorize tasks automatically using LLM to simplify the user experie
 
 ```plang
 NewTask
-- if %task% or %due_date% is empty, throw error
-- insert into Todos, %task%, %due_date%, write to %id%
+- if %request.task% and %request.due_date% is empty
+    - show error "Task & due_date cannot be empty"
+- insert into Todos, %request.task%, %request.due_date%, write to %id%
 - call !Categorize, dont wait
-- call !Todos
+- write out %id%
 
 Categorize
 - [llm]: system: categories the user input by 3 categories, 'Work', "home", 'hobby'
-    user: %task%
+    user: %request.task%
     scheme: {category:string}
-- update table tasks, set %category% where %id%
+- update table Todos, set %category% where %id%
 ```
 
 ### Explanation
@@ -70,7 +71,7 @@ To create a new task, send a POST request to `http://localhost:8080/api/newtask`
 ```json
 {
     "task":"Buy some Lego",
-    "due_date": "2023-27-12"
+    "due_date": "2023-12-27"
 }    
 ```
 
@@ -85,7 +86,7 @@ TestNewTask
 - post http://localhost:8080/api/newtask
     {
         "task":"Buy some Lego",
-        "due_date": "2023-27-12"
+        "due_date": "2023-12-27"
     }
     write to %result%
 - write out %result%

@@ -16,11 +16,12 @@ In the real world, creating a todo list is as simple as taking a pen and paper a
 ## Setting Up the Environment
 
 1. **Create a New Folder:**
-   - Create a folder named `llm`.
+   - Inside the `api` folder, create a folder named `llm`.
 
 2. **Create `system.txt`:**
    - Inside the `llm` folder, create a file named `system.txt`.
    - This file will simplify changing system commands without rebuilding the code.
+   - Path: `/api/llm/system.txt`
 
 3. **Add the Following to `system.txt`:**
    ```txt
@@ -66,22 +67,22 @@ In the real world, creating a todo list is as simple as taking a pen and paper a
    - In the `test` folder, create a file named `TestNewLlmTask`.
 
 2. **Add the Following Code:**
-   ```plang
-   TestNewTask
-   - post http://localhost:8080/api/NewLlmTask
-       {
-           "tasks":"toothbrush
-               toothpaste
-               new oil for car, tomorrow
-               milk
-               talk with boss about salary, 2 days before end of month
-               solve credit card payment in system, in 7 days
-               "
-       }
-       timeout 2 min
-       write to %result%
-   - write out %result%
-   ```
+```plang
+TestNewLlmTask
+- post http://localhost:8080/api/NewLlmTask
+    {
+        "tasks":"toothbrush
+            toothpaste
+            new oil for car, tomorrow
+            milk
+            talk with boss about salary, 2 days before end of month
+            solve credit card payment in system, in 7 days
+            "
+    }
+    timeout 2 min
+    write to %result%
+- write out %result%
+```
 
 ## What is This New Approach?
 

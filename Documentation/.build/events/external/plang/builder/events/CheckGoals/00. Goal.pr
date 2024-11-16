@@ -31,7 +31,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -65,12 +65,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "84f33823629c27453b86ad1b7c5cb46314675b9985b60b7079e049a57a0cad78",
+      "BuilderVersion": null
     },
     {
       "Text": "get content of all '00. Goal.pr' files, in ../, include subfolder, write into %goalFiles%",
@@ -100,7 +102,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -134,12 +136,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "3f6a64e3579410731c901ec26c833e461fce04b4a318e3e9b385ababfa46dcd1",
+      "BuilderVersion": null
     },
     {
       "Text": "go throug %goalFiles%, call !CheckGoal item=%goal%",
@@ -169,7 +173,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -203,12 +207,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "59e45b9295812607b7509328f4e47c66051763864962eb65d1921caeca696306",
+      "BuilderVersion": null
     },
     {
       "Text": "if %missingGoals% is not empty then, call ShowMissingGoals, else ShowAllValid",
@@ -238,7 +244,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -272,12 +278,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "e53bd924133f384ef4ccc7e8ca974d4f320757c562a630c39046fb374bf59dd6",
+      "BuilderVersion": null
     }
   ],
   "SubGoals": [
@@ -294,10 +302,10 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\builder\\events",
   "RelativePrPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals",
-  "BuilderVersion": "0.1.15.1",
+  "BuilderVersion": "0.15.5.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "1ed9d43aa6e693e2bde9b83ee199de9c87085b4243e2e83d290e3b1c43161a12",
+  "Hash": "2482998aef88d2c193b9ace87ed4ff565a54acb2fbe8854624695591ecdd4f93",
   "IncomingVariablesRequired": null
 }

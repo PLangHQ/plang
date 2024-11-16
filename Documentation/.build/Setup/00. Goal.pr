@@ -31,7 +31,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -65,12 +65,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "2024145a761e5c31a2d788283715689cd3e9e8d7e64c32646a64bac6b0687275",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='Get Started'\n            Guide='template/getstarted.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./GetStarted.md'",
@@ -100,7 +102,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -134,12 +136,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "ea587fe15faea5f5cf256cfd402ae6aae4b88ddf17f2e3800f703ffcd340b9d0",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='Todo Webservice'\n            Guide='template/todo_webservice.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./Todo_webservice.md'          ",
@@ -169,7 +173,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -203,12 +207,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": "```json\n{\n\t\"StepName\": \"InsertIntoDocs\",\n\t\"StepDescription\": \"Insert a new record into the 'docs' table with specified values for Name, Guide, System, and OutputFilename.\",\n\t\"Modules\": [\"PLang.Modules.DbModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "23c4ea51432fba61238fd66485f589013fce09887e8f25466b587aa757c87f37",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='Todo Window app'\n            Guide='template/todo_ui.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./Todo_UI.md'",
@@ -238,7 +244,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -272,12 +278,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "4b6f4d8b51a22141921adca596b4d8d6158eb1e678c37105965f1ae3d9535101",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='Install'\n            Guide='template/install.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./Install.md'      ",
@@ -307,7 +315,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -341,12 +349,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "797a3addb21774c16054a65e0dcb8472708c568e2dd8489138bff4b2efb6ea0a",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='IDE'\n            Guide='template/ide.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./IDE.md'                                    ",
@@ -376,7 +386,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -410,12 +420,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "bca396c023e80f35c849f61e1022d07589096f70a2ffc0f981e72f0e5443307b",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='Plang or OpenAI'\n            Guide='template/plang_or_openai.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./PlangOrOpenAI.md'                           ",
@@ -449,7 +461,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -483,12 +495,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "b8f258fe7b9ae14d3635951899c35ff4231ed6dc5ef535eb6e7eca4b13887366",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='Settings'\n            Guide='template/settings.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./Settings.md'           ",
@@ -518,7 +532,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -552,12 +566,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "0e41f24008f1783c5ff7002190fdb486873a2a5da3162d9f8d8aa5a134273945",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='TodoIdentity'\n            Guide='template/todo_identity.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./Todo_Identity.md'        ",
@@ -591,7 +607,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -625,12 +641,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "6dd365f2ff803fb4960bae1dd9553fe307e4efcc7bae909313ecb7f57a512ac1",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='Rules'\n            Guide='template/rules.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./Rules.md'  ",
@@ -660,7 +678,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -694,12 +712,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "717a3fb601553399c67b2c8d68b1d3ba27e070a39dcf460d39311d4c6b7b3145",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='Time'\n            Guide='template/time.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./Time.md'                                                       ",
@@ -729,7 +749,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -763,12 +783,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "9f31ca329799cbf1c5851789b3b84f9f0ba805b2f50ebf34d94cde0f1c8029a3",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='PrivateKeys'\n            Guide='template/private_keys.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./PrivateKeys.md'    ",
@@ -798,7 +820,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -832,12 +854,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "3e95205209058d7dee63a0394fea8b6d5a0648ec99ecfe39918f48d4129d141a",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='Debug'\n            Guide='template/debug.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./Debug.md'     ",
@@ -867,7 +891,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -901,12 +925,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "6e910cccfbc3a2db632c1866878582ed9055dbfdcfeff2923308311f16787a93",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='PlangDevelopment'\n            Guide='template/plang_development.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./PlangDevelopment.md'                ",
@@ -936,7 +962,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -970,12 +996,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "ad500ca7abc38e80a378b4d9f13cbb836a31fbb8cdc8e39e8c13ec03727b36db",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='RuntimeLifecycle'\n            Guide='template/runtime_lifecycle.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./RuntimeLifecycle.md'",
@@ -1005,7 +1033,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -1039,12 +1067,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": "```json\n{\n\t\"StepName\": \"InsertIntoDocs\",\n\t\"StepDescription\": \"Insert a new record into the 'docs' table with the specified Name, Guide, System, and OutputFilename values.\",\n\t\"Modules\": [\"PLang.Modules.DbModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "3adfd02ca4f9b47d82ef4231e102e9bce9b1f02e6dcfcb4de369b318d4c6d3ac",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='BuilderLifecycle'\n            Guide='template/builder_lifecycle.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./BuilderLifecycle.md'  ",
@@ -1074,7 +1104,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -1108,12 +1138,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": "```json\n{\n\t\"StepName\": \"InsertIntoDocs\",\n\t\"StepDescription\": \"Insert a new record into the 'docs' table with specified values for Name, Guide, System, and OutputFilename.\",\n\t\"Modules\": [\"PLang.Modules.DbModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "022f2076826a97c8b1bdafa3cdf3de23a5da0f2bbcf037b383d8d1bf4cde55d2",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='SupportedAI'\n            Guide='template/supported_ai.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./SupportedAI.md'   ",
@@ -1143,7 +1175,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -1177,12 +1209,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "3983e7fc08c639247e8df570b97440206168515aace14377d911c60b7bbe2d63",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='FolderStructure'\n            Guide='template/folder_structure.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./FolderStructure.md'            ",
@@ -1212,7 +1246,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -1246,12 +1280,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "ca9cd5b0915fa634663c0025624e25c5dcec862ce2f06165ab492110d30ff547",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='TodoNewApproach'\n            Guide='template/todo_new_approch.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./todo_new_approch.md'",
@@ -1281,7 +1317,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -1315,12 +1351,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "f3ee2a84710b679ee6f4aa0ae9e6b09f18eef86d6ca98d84d9b2e561bee3e950",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='Performance'\n    Guide='template/performance.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Performance.md'",
@@ -1350,7 +1388,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -1384,12 +1422,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "f9877b2ad01fb26e6547753b3297e9ff37510d720ab102cf5ae7b35737e7de1d",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='Builder'\n    Guide='template/builder.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Builder.md' ",
@@ -1419,7 +1459,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -1453,12 +1493,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "c4ff722b4a8d70f68cbcd935e9dc1c3a8addc54d1b153f9742f485f8b18acdc0",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='3rdPartyLibrary'\n    Guide='template/3rdPartyLibrary.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./3rdPartyLibrary.md'    ",
@@ -1488,7 +1530,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -1522,12 +1564,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "ffc85f35e50c550d1976926d1c3b51991bb933522cf7c5883227126a9847794d",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='StartupParameters'\n    Guide='template/startup_parameters.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./StartupParameters.md'     ",
@@ -1557,7 +1601,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -1591,12 +1635,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "660d9f25fe5203ca46c41e1639376a7a487d068105985dcd53707300879828af",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='Events'\n    Guide='template/events.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Events.md'     ",
@@ -1626,7 +1672,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -1660,12 +1706,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": "```json\n{\n    \"StepName\": \"InsertIntoDocs\",\n    \"StepDescription\": \"Insert a new document into the 'docs' database with the specified Name, Guide, System, and OutputFilename.\",\n    \"Modules\": [\"PLang.Modules.DbModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "15268fd477d20044b017eb61e67b6af6145c0dc537cbc8fb9729fddfd3de4487",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='ErrorHandler'\n    Guide='template/errorHandler.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./ErrorHandler.md'      ",
@@ -1695,7 +1743,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -1729,12 +1777,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": "```json\n{\n    \"StepName\": \"InsertIntoDocs\",\n    \"StepDescription\": \"Insert a new entry into the 'docs' table with specified values for Name, Guide, System, and OutputFilename.\",\n    \"Modules\": [\"PLang.Modules.DbModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "ca35e10f37ca29109a5fc2c1206201f0e0a02df6c3c06405d18606ee8c14376f",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='CachingHandler'\n    Guide='template/cachingHandler.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./CachingHandler.md'",
@@ -1764,7 +1814,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -1798,12 +1848,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": "```json\n{\n    \"StepName\": \"InsertIntoDocs\",\n    \"StepDescription\": \"Insert a new entry into the 'docs' table with specified values for Name, Guide, System, and OutputFilename.\",\n    \"Modules\": [\"PLang.Modules.DbModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "4327ea039fb271fba831326c71b0cfbad5c38130887a326434dae8bfdc4a27b7",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='StepProperties'\n    Guide='template/stepProperties.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./StepProperties.md'   ",
@@ -1833,7 +1885,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -1867,12 +1919,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": "```json\n{\n\t\"StepName\": \"InsertIntoDocs\",\n\t\"StepDescription\": \"Insert data into a document with specified properties: Name as 'StepProperties', Guide as 'template/stepProperties.txt', System as 'template/guidance/teacher.txt', and OutputFilename as './StepProperties.md'.\",\n\t\"Modules\": [\"PLang.Modules.FileModule\", \"PLang.Modules.DbModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "6304d4fec785c631de78bd738106ea7c630824c27b6d99976a8163081ec2610c",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='Conditions'\n    Guide='template/Conditions.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Conditions.md'   ",
@@ -1902,7 +1956,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -1936,12 +1990,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": "```json\n{\n\t\"StepName\": \"InsertIntoDocs\",\n\t\"StepDescription\": \"Insert a new entry into the 'docs' table with the specified Name, Guide, System, and OutputFilename values.\",\n\t\"Modules\": [\"PLang.Modules.DbModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "f184a4e2f90f7dbb80ab75756226ab1b52c3f53effb70cd0806a5ac0b5ef6535",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='TodoLlm'\n    Guide='template/todo_llm.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Todo_Llm.md'   ",
@@ -1971,7 +2027,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -2005,12 +2061,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": "```json\n{\n\t\"StepName\": \"InsertIntoDocs\",\n\t\"StepDescription\": \"Insert a new record into the 'docs' table with the specified Name, Guide, System, and OutputFilename values.\",\n\t\"Modules\": [\"PLang.Modules.DbModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "33ed6da9cf42668febf0bc1a315fd4b52e3da05a4aeb0a4e1aa023d0af019bb6",
+      "BuilderVersion": null
     },
     {
       "Text": "insert into docs Name='Variables'\n    Guide='template/variables.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Variables.md' ",
@@ -2040,7 +2098,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -2074,25 +2132,27 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": "```json\n{\n\t\"StepName\": \"InsertIntoDocs\",\n\t\"StepDescription\": \"Insert a new entry into the 'docs' table with the specified Name, Guide, System, and OutputFilename values.\",\n\t\"Modules\": [\"PLang.Modules.DbModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "3ebc4db37fd33ef7a8a86424e10a39a37d7cac7e9d073c2d8870f12ca091617a",
+      "BuilderVersion": null
     },
     {
-      "Text": "insert into docs Name='Loops'\n    Guide='template/loops.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Loops.md'",
+      "Text": "insert into docs Name='Loops'\n    Guide='template/loops.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Loops.md'       ",
       "Comment": null,
-      "ModuleType": "PLang.Modules.DbModule",
-      "Name": "InsertIntoDocs",
-      "Description": "Insert a new record into the 'docs' table with the specified Name, Guide, System, and OutputFilename values.",
-      "PrFileName": "31. InsertIntoDocs.pr",
-      "RelativePrPath": ".build\\Setup\\31. InsertIntoDocs.pr",
+      "ModuleType": null,
+      "Name": null,
+      "Description": null,
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
-      "RunOnce": true,
-      "Generated": "2024-09-01T13:58:50.1385052+00:00",
+      "RunOnce": false,
+      "Generated": "0001-01-01T00:00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -2101,73 +2161,51 @@
       "Custom": {},
       "Number": 30,
       "LineNumber": 121,
-      "LlmRequest": {
-        "temperature": 0.0,
-        "top_p": 0.0,
-        "frequencyPenalty": 0.0,
-        "presencePenalty": 0.0,
-        "maxLength": 4000,
-        "llmResponseType": "json",
-        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
-        "type": "StepInformationBuilder",
-        "promptMessage": [
-          {
-            "role": "system",
-            "content": [
-              {
-                "type": "text",
-                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set N/A\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
-              },
-              {
-                "type": "text",
-                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
-              }
-            ]
-          },
-          {
-            "role": "assistant",
-            "content": [
-              {
-                "type": "text",
-                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
-              }
-            ]
-          },
-          {
-            "role": "user",
-            "content": [
-              {
-                "type": "text",
-                "text": "insert into docs Name='Loops'\n    Guide='template/loops.txt'\n    System='template/guidance/teacher.txt'\n    OutputFilename='./Loops.md'"
-              }
-            ]
-          }
-        ],
-        "model": "gpt-4o-2024-08-06",
-        "caching": true,
-        "RawResponse": "```json\n{\n\t\"StepName\": \"InsertIntoDocs\",\n\t\"StepDescription\": \"Insert a new record into the 'docs' table with the specified Name, Guide, System, and OutputFilename values.\",\n\t\"Modules\": [\"PLang.Modules.DbModule\"]\n}\n```"
-      },
+      "LlmRequest": null,
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": null,
+      "BuilderVersion": null
+    },
+    {
+      "Text": "create table blogs, fileName(string), summary(string), created(datetime, now), updated(datetime, now), isLesson(bool, false)",
+      "Comment": null,
+      "ModuleType": null,
+      "Name": null,
+      "Description": null,
+      "PrFileName": null,
+      "RelativePrPath": null,
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "0001-01-01T00:00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 31,
+      "LineNumber": 126,
+      "LlmRequest": null,
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": null,
+      "BuilderVersion": null
     }
   ],
   "SubGoals": [],
-  "Description": "The Setup goal initializes a database table named 'docs' with specific columns: Name (required), Guide (string, required), System (string, required), OutputFilename (string, required), Created (datetime, now), and LastUpdate (datetime, now). It then populates this table with multiple entries, each representing a document with its corresponding Name, Guide, System, and OutputFilename. Each entry must have a unique Name and the Guide, System, and OutputFilename fields must be filled with valid paths and filenames.",
+  "Description": "The Setup goal initializes two tables: 'docs' and 'blogs'. The 'docs' table is created with several required columns including Name, Guide, System, and OutputFilename, along with optional datetime columns for Created and LastUpdate. The goal then populates the 'docs' table with multiple entries, each containing specific templates for guides and corresponding output filenames. Finally, the 'blogs' table is created with columns for fileName, summary, created, updated, and a boolean isLesson, which defaults to false.",
   "Visibility": 1,
   "GoalFileName": "Setup.goal",
   "RelativeGoalPath": "\\Setup.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Setup\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Setup",
-  "BuilderVersion": "0.1.15.1",
+  "BuilderVersion": "0.15.5.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "feb30cc82a9436d8d9d500e71ab37fab3cde5a78289c581aacabca2ffddb251c",
-  "IncomingVariablesRequired": [
-    "Name",
-    "Guide",
-    "System",
-    "OutputFilename"
-  ]
+  "Hash": "5fa35fff1d8f6a89eee0b6c8e6e8abbeabbfe931f5be21d6a2dbd92701e47dae",
+  "IncomingVariablesRequired": null
 }

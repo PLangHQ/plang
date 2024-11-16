@@ -43,6 +43,14 @@ Setup
 - add column 'Identity' to tbl 'Todos'             
 ```
 
+#### Run Setup
+
+Lets create that column in our db.
+
+```bash
+plang exec Setup
+```
+
 ### 2. Ensure `%Identity%` is Not Empty
 
 *You will learn how to use [Events](./Events.md) and the power they give you to make your app simple and flexible.*
@@ -53,8 +61,11 @@ Setup
 ```plang
 Events
 - before any api/*, call CheckIdentity
+```
+The `Events.goal` file cannot contain goal, so lets create a new file `CheckIdentity.goal`
 
-ShowError
+```plang
+CheckIdentity
 - if %Identity% is empty then
     - write out error 'You need to sign the request'
 ```

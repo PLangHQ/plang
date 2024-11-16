@@ -31,7 +31,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -65,12 +65,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "104d9c1bd89573a588f80b020ddb76c4537b32ca8f5fd33b4a48d1a55f536b28",
+      "BuilderVersion": null
     }
   ],
   "SubGoals": [],
@@ -81,11 +83,11 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\builder\\events",
   "RelativePrPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals\\ShowMissingGoals\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals\\ShowMissingGoals",
-  "BuilderVersion": "0.1.15.1",
+  "BuilderVersion": "0.15.5.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "1001e68a9db4097c66711ec4e73d20e14a50b6bc09714b2dabb20325ea6d88de",
+  "Hash": "71bf8674addccf862f79b4c17bbcd86edd23b2ec6449935217e19fe28190e71b",
   "IncomingVariablesRequired": [
     "missingGoals"
   ]

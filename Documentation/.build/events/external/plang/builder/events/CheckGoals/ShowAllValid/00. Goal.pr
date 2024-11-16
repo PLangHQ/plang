@@ -31,7 +31,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -65,12 +65,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "092f957fc4b85b3c9fb7f46ed47cd86e2956f64deb9dd8304e5d5d59a1f8081c",
+      "BuilderVersion": null
     }
   ],
   "SubGoals": [],
@@ -81,10 +83,10 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\builder\\events",
   "RelativePrPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals\\ShowAllValid\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals\\ShowAllValid",
-  "BuilderVersion": "0.1.15.1",
+  "BuilderVersion": "0.15.5.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "f1f23fd3eb0c81c2f4047ca218ae694bd96786ae47d37b637a457fe6c49a9ba9",
+  "Hash": "5827feee6da000f707530e74cbf7b0aff511dec14f68c003a44ad8312f7990ab",
   "IncomingVariablesRequired": null
 }

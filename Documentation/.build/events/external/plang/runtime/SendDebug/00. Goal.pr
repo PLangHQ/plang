@@ -31,7 +31,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -65,12 +65,14 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": "```json\n{\n    \"StepName\": \"Post HTTP Request\",\n    \"StepDescription\": \"Send a POST request to the URL 'http://localhost:60877/' with the specified data payload, set a timeout of 30 minutes, and write the response to the variable %debugReponse%.\",\n    \"Modules\": [\"PLang.Modules.HttpModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "e556b40b8a58b1b86f9c2a4896b29a8b411c38abbd23bfd33c2a3dd646d51b26",
+      "BuilderVersion": null
     }
   ],
   "SubGoals": [],
@@ -81,11 +83,11 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\runtime",
   "RelativePrPath": ".build\\events\\external\\plang\\runtime\\SendDebug\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\runtime\\SendDebug",
-  "BuilderVersion": "0.1.15.1",
+  "BuilderVersion": "0.15.5.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "b77f768f93199b199a3a21814598787b6d565b7c158adcbb1a9a8ca08b8ac060",
+  "Hash": "77e7c31fbb09930321e223d0d15b13cfeec00046817f5b0ad91400a43c1971a2",
   "IncomingVariablesRequired": [
     "%!Goal%",
     "%!Step%",
