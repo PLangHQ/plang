@@ -35,6 +35,14 @@ Setup
 
 This code adds a new column named 'category' to the existing 'Todos' table, allowing us to store the category of each task.
 
+### Build and run
+
+Lets build and run the changes.
+
+```bash 
+plang exec Setup
+```
+
 ## Step 2: Change NewTask.goal
 
 We want to categorize tasks automatically using LLM to simplify the user experience. Modify `NewTask.goal` as follows:
@@ -61,6 +69,22 @@ Categorize
 - `scheme`: This forces the LLM to return a specific structure, which is automatically loaded as a variable. In this case, `%category%` is used in the next step to update the task's category.
 
 For more on LLM, check out the [LlmModule documentation](./modules/PLang.Modules.LlmModule.md).
+
+### Build and Restart webserver
+
+Lets build these changes
+
+```bash
+plang build
+```
+
+You also want to restart your server if it is running already
+
+So kill the webserver that is running and run following in your `Todo` folder
+
+```bash
+plang
+```
 
 ## Step 3: Test the API Endpoints
 

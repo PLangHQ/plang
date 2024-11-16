@@ -61,8 +61,8 @@ Create a file named `NewTask.goal` in the `api` folder with the following conten
 
 ```plang
 NewTask
-- if %request.task% and %request.due_date% is empty
-    - show error "Task & due_date cannot be empty"
+- if %request.task% or %request.due_date% is empty
+    - show error "Task or due_date cannot be empty"
 - insert into Todos %request.task%, %request.due_date%, write to %id%
 - write out %id%
 ```

@@ -84,6 +84,26 @@ TestNewLlmTask
 - write out %result%
 ```
 
+## Build, restart and run
+
+Lets build our code
+
+```bash
+plang build
+```
+
+After you have build it, restart your webserver, kill the process and run following in your `Todo` folder
+
+```bash
+plang
+```
+
+Now lets test this, run the following from your `Todo` folder
+
+```bash
+plang test/TestNewLllmTask
+```
+
 ## What is This New Approach?
 
 Think about how you create a todo list in the physical world. You simply write it down without worrying about structure. In today's software, we often use structured forms for data input, which can be cumbersome for users.

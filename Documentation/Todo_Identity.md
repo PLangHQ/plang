@@ -51,6 +51,8 @@ Lets create that column in our db.
 plang exec Setup
 ```
 
+You should now see `Identity` in your Todos table
+
 ### 2. Ensure `%Identity%` is Not Empty
 
 *You will learn how to use [Events](./Events.md) and the power they give you to make your app simple and flexible.*
