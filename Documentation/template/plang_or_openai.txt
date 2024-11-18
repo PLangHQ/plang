@@ -1,7 +1,7 @@
 Developers have 2 way of building code, using Plang service or OpenAI. This is a guide on how to use each
 
 ## plang 
-You can use plang service to build your code or if you have OpenAI api key you can use GPT4-Turbo.
+You can use plang service to build your code or if you have OpenAI api key you can use that.
 
 When you use plang service, you are supporting the project. 
 The plang service cost excatly 2x what using Open AI key would cost.
@@ -39,7 +39,7 @@ You will recieve the standard OpenAI json request(https://platform.openai.com/do
 
 
 # Which is better
-Plang service uses gpt4-turbo from OpenAI, so there is no difference in results. 
+Plang service uses gpt4o from OpenAI, so there is no difference in results. 
 Hopefully in the future we can provide you with faster and much cheaper service
 By using our service your are supporting the project, development 
 and hopefully enabling us to create a cheaper llm 
