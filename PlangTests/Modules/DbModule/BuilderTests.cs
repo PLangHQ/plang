@@ -38,7 +38,7 @@ namespace PLang.Modules.DbModule.Tests
 			var db = new SqliteConnection("DataSource=In memory;Version=3");
 
 			builder = new Builder(fileSystem, db, settings, context, llmServiceFactory, typeHelper, logger, memoryStack, variableHelper);
-			builder.InitBaseBuilder("PLang.Modules.DbModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.DbModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, "");
 
 		}
 
@@ -60,7 +60,7 @@ namespace PLang.Modules.DbModule.Tests
 			settings.GetValues<DataSource>(typeof(ModuleSettings)).Returns(dataSources);
 
 			builder = new Builder(fileSystem, db, settings, context, llmServiceFactory, typeHelper, logger, memoryStack, variableHelper);
-			builder.InitBaseBuilder("PLang.Modules.DbModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.DbModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, "");
 		}
 
 		public GoalStep GetStep(string text)

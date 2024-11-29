@@ -86,7 +86,7 @@ DatabaseType: Define the database type. The .net library being used is {dataSour
 			if (!string.IsNullOrEmpty(dataSource.SelectTablesAndViews))
 			{
 
-				var result = await program.Select(dataSource.SelectTablesAndViews, new List<object>() { new ParameterInfo("Database", dataSource.DbName, "System.String") });
+				var result = await program.Select(dataSource.SelectTablesAndViews, new List<ParameterInfo>() { new ParameterInfo("Database", dataSource.DbName, "System.String") });
 
 				if (result.rows != null)
 				{

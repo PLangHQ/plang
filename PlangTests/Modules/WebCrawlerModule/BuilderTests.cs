@@ -23,7 +23,7 @@ namespace PLangTests.Modules.WebCrawlerModule
             LoadOpenAI();
 
             builder = new Builder();
-            builder.InitBaseBuilder("PLang.Modules.WebCrawlerModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+            builder.InitBaseBuilder("PLang.Modules.WebCrawlerModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, "");
 
         }
 
@@ -34,7 +34,7 @@ namespace PLangTests.Modules.WebCrawlerModule
             if (llmService == null) return;
 
             builder = new Builder();
-            builder.InitBaseBuilder("PLang.Modules.WebCrawlerModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+            builder.InitBaseBuilder("PLang.Modules.WebCrawlerModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, "");
         }
 
         public GoalStep GetStep(string text)

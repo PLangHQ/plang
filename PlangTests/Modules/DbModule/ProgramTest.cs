@@ -63,7 +63,7 @@ namespace PLangTests.Modules.DbModule
 
 			await p.CreateTable("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, address TEXT, phone TEXT)");
 
-			var dict = new List<object>();
+			var dict = new List<ParameterInfo>();
 			dict.Add(new ParameterInfo("name", "Dwight Schrute", "System.String"));
 			dict.Add(new ParameterInfo("address", "1725 Slough Avenue in Scranton, PA", "System.String"));
 			dict.Add(new ParameterInfo("phone", "717 555 0177", "System.String"));
@@ -72,17 +72,17 @@ namespace PLangTests.Modules.DbModule
 			var result = (dynamic) await p.Select("SELECT * FROM users");
 			Assert.AreEqual(1, result.Count);
 
-			dict = new List<object>();
+			dict = new List<ParameterInfo>();
 			dict.Add(new ParameterInfo("id", id, "System.Int64"));
 			dict.Add(new ParameterInfo("name", "Micheal Scott", "System.String"));
 			await p.Update("UPDATE users SET name=@name WHERE id=@id", dict);
 
-			dict = new List<object>();
+			dict = new List<ParameterInfo>();
 			dict.Add(new ParameterInfo("id", id, "System.Int64"));
 			var user = (dynamic)await p.Select("SELECT * FROM users WHERE id=@id", dict);
 			Assert.AreEqual("Micheal Scott", user[0].name);
 
-			dict = new List<object>();
+			dict = new List<ParameterInfo>();
 			dict.Add(new ParameterInfo("name", "Jim Harper", "System.String"));
 			dict.Add(new ParameterInfo("address", "1725 Slough Avenue in Scranton, PA", "System.String"));
 			dict.Add(new ParameterInfo("phone", "717 555 0178", "System.String"));
@@ -92,7 +92,7 @@ namespace PLangTests.Modules.DbModule
 			result = await p.Select("SELECT * FROM users");
 			Assert.AreEqual(2, result.Count);
 
-			dict = new List<object>();
+			dict = new List<ParameterInfo>();
 			dict.Add(new ParameterInfo("id", id, "System.Int64"));
 			await p.Delete("DELETE FROM users where id=@id", dict);
 
@@ -120,7 +120,7 @@ namespace PLangTests.Modules.DbModule
 
 			await p.CreateTable("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, address TEXT, phone TEXT)");
 
-			var dict = new List<object>();
+			var dict = new List<ParameterInfo>();
 			dict.Add(new ParameterInfo("id", "12", "System.Int64"));
 			dict.Add(new ParameterInfo("name", "Dwight Schrute", "System.String"));
 			dict.Add(new ParameterInfo("address", "1725 Slough Avenue in Scranton, PA", "System.String"));
@@ -132,17 +132,17 @@ namespace PLangTests.Modules.DbModule
 			var result = (dynamic)await p.Select("SELECT * FROM users");
 			Assert.AreEqual(1, result.Count);
 
-			dict = new List<object>();
+			dict = new List<ParameterInfo>();
 			dict.Add(new ParameterInfo("id", id, "System.Int64"));
 			dict.Add(new ParameterInfo("name", "Micheal Scott", "System.String"));
 			await p.Update("UPDATE users SET name=@name WHERE id=@id", dict);
 
-			dict = new List<object>();
+			dict = new List<ParameterInfo>();
 			dict.Add(new ParameterInfo("id", id, "System.Int64"));
 			var user = (dynamic)await p.Select("SELECT * FROM users WHERE id=@id", dict);
 			Assert.AreEqual("Micheal Scott", user[0].name);
 
-			dict = new List<object>();
+			dict = new List<ParameterInfo>();
 			dict.Add(new ParameterInfo("name", "Jim Harper", "System.String"));
 			dict.Add(new ParameterInfo("address", "1725 Slough Avenue in Scranton, PA", "System.String"));
 			dict.Add(new ParameterInfo("phone", "717 555 0178", "System.String"));
@@ -152,7 +152,7 @@ namespace PLangTests.Modules.DbModule
 			result = await p.Select("SELECT * FROM users");
 			Assert.AreEqual(2, result.Count);
 
-			dict = new List<object>();
+			dict = new List<ParameterInfo>();
 			dict.Add(new ParameterInfo("id", id, "System.Int64"));
 			await p.Delete("DELETE FROM users where id=@id", dict);
 

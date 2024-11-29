@@ -26,6 +26,7 @@ using System.Text.RegularExpressions;
 using System.Web;
 using static PLang.Executor;
 using static PLang.Modules.UiModule.Program;
+using System.ComponentModel;
 
 namespace PlangWindowForms
 {
@@ -39,6 +40,7 @@ namespace PlangWindowForms
 		IPLangFileSystem fileSystem;
 		Executor pLang;
 		private string[] args;
+		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public SynchronizationContext SynchronizationContext { get; set; }
 		public Form1(string[] args)
 		{
