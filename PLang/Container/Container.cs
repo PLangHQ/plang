@@ -1,7 +1,6 @@
 ﻿using LightInject;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
-using NBitcoin.Secp256k1;
 using Nethereum.JsonRpc.WebSocketClient;
 using Nethereum.RPC.Accounts;
 using Nethereum.Web3;
@@ -9,8 +8,6 @@ using Nethereum.Web3.Accounts;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Nostr.Client.Client;
-using OpenQA.Selenium.DevTools.V127.Runtime;
-using OpenQA.Selenium.DevTools.V129.Audits;
 using PLang.Building;
 using PLang.Building.Parsers;
 using PLang.Errors.Handlers;
@@ -34,20 +31,12 @@ using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
 using PLang.Services.SigningService;
 using PLang.Utils;
-using RazorEngineCore;
-using System.ComponentModel;
 using System.Data;
-using System.IO;
-using System.IO.Abstractions;
 using System.Net;
-using System.Net.Http;
 using System.Reflection;
-using System.Reflection.Metadata;
-using System.Resources;
 using System.Text;
-using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
+using PLang.Services.Channels;
 using Websocket.Client.Logging;
 using static PLang.Modules.DbModule.ModuleSettings;
 
@@ -83,6 +72,9 @@ namespace PLang.Container
 			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
+			/*
+			container.RegisterChannel(new WebserverChannel(httpContext.Response.OutputStream, httpContext.Request.InputStream, httpContext.Request.AcceptTypes, httpContext.Response.ContentType), 
+				new ConsoleConduit(), new ConsoleConduit());*/
 			container.RegisterOutputStreamFactory(typeof(JsonOutputStream), true, new JsonOutputStream(httpContext));
 			container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
 
@@ -116,6 +108,10 @@ namespace PLang.Container
 			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
+			container.RegisterChannelManager(new ChannelManager(ConsoleChannel.GetDefaultChannels()));
+			
+
+			
 			container.RegisterOutputStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
 			container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
 			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler(container.GetInstance<IOutputSystemStreamFactory>()));

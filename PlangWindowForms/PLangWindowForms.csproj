@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -10,6 +9,8 @@
     <FileVersion>$(Version)</FileVersion>
     <AssemblyName>plangw</AssemblyName>
 		<PreserveCompilationContext>true</PreserveCompilationContext>
+		<LangVersion>default</LangVersion>
+		<TargetFramework>net9.0-windows</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>

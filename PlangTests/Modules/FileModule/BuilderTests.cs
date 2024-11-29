@@ -27,7 +27,7 @@ namespace PLang.Modules.FileModule.Tests
 			LoadOpenAI();
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.FileModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.FileModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, "");
 
 		}
 
@@ -37,7 +37,7 @@ namespace PLang.Modules.FileModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.FileModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.FileModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, "");
 		}
 
 		public GoalStep GetStep(string text)

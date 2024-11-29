@@ -29,7 +29,7 @@ namespace PLang.Modules.HttpModule.Tests
 			llmServiceFactory.CreateHandler().Returns(llmService);
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.HttpModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.HttpModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, "");
 
 		}
 
@@ -39,7 +39,7 @@ namespace PLang.Modules.HttpModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.HttpModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.HttpModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, "");
 		}
 		public GoalStep GetStep(string text)
 		{

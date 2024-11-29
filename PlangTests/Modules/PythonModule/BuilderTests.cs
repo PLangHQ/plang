@@ -29,7 +29,7 @@ namespace PLang.Modules.PythonModule.Tests
 
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.PythonModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.PythonModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, "");
 
 		}
 
@@ -40,7 +40,7 @@ namespace PLang.Modules.PythonModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.PythonModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.PythonModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, "");
 		}
 
 		public GoalStep GetStep(string text)

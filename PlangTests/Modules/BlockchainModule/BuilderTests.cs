@@ -55,7 +55,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			//typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new Builder(settings, context, llmServiceFactory);
-			builder.InitBaseBuilder("PLang.Modules.BlockchainModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.BlockchainModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, "");
 
 			
 		}
@@ -68,7 +68,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var moduleSettings = new ModuleSettings(settings, llmServiceFactory);
 
 			builder = new Builder(settings, context, llmServiceFactory);
-			builder.InitBaseBuilder("PLang.Modules.BlockchainModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.BlockchainModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, "");
 		}
 
 		public GoalStep GetStep(string text)

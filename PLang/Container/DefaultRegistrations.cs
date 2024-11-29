@@ -1,8 +1,8 @@
 ﻿using LightInject;
-using NBitcoin.Secp256k1;
 using PLang.Errors.Handlers;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
+using PLang.Services.Channels;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
@@ -13,6 +13,10 @@ namespace PLang.Container
 	public static class DefaultRegistrations
 	{
 
+		public static void RegisterChannelManager(this ServiceContainer container, ChannelManager manager)
+		{
+			container.Register<ChannelManager>(_ => manager, manager.GetType().FullName);
+		}
 
 		public static void RegisterErrorHandlerFactory(this ServiceContainer container, Type type, bool isDefault = false, IErrorHandler? instance = null)
 		{

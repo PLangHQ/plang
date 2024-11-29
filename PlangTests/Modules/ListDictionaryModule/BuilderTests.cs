@@ -27,7 +27,7 @@ namespace PLang.Modules.ListDictionaryModule.Tests
 
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.ListDictionaryModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.ListDictionaryModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, "");
 
 		}
 
@@ -37,7 +37,7 @@ namespace PLang.Modules.ListDictionaryModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.ListDictionaryModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder("PLang.Modules.ListDictionaryModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, "");
 		}
 		public GoalStep GetStep(string text)
 		{

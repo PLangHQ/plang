@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using PLang.Building.Model;
-using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Interfaces;
@@ -9,11 +9,6 @@ using PLang.Runtime;
 using PLang.Services.LlmService;
 using PLang.Utils;
 using PLang.Utils.Extractors;
-using System.Runtime.InteropServices;
-using Websocket.Client.Logging;
-using static PLang.Modules.DbModule.Builder;
-using static PLang.Modules.DbModule.ModuleSettings;
-using static System.Net.Mime.MediaTypeNames;
 using Instruction = PLang.Building.Model.Instruction;
 
 namespace PLang.Modules
@@ -36,13 +31,14 @@ namespace PLang.Modules
 		private PLangAppContext context;
 		private VariableHelper variableHelper;
 		private IContentExtractor contentExtractor;
+		protected string MethodName { get; set; } 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		protected BaseBuilder()
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		{ }
 
 		public void InitBaseBuilder(string module, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper,
-			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ILogger logger)
+			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ILogger logger, string methodName)
 		{
 			this.module = module;
 			this.fileSystem = fileSystem;
@@ -52,7 +48,7 @@ namespace PLang.Modules
 			this.context = context;
 			this.variableHelper = variableHelper;
 			this.logger = logger;
-
+			MethodName = methodName;
 			appendedSystemCommand = new List<string>();
 			appendedAssistantCommand = new List<string>();
 		}
@@ -82,14 +78,14 @@ namespace PLang.Modules
 				logger.LogWarning("Couldn't handle response from LLM, trying again");
 			}
 
-			if (responseType == null) responseType = typeof(GenericFunction);
+			if (responseType == null) responseType = typeof(MethodResponse);
 
 			var question = GetLlmRequest(step, responseType, errorMessage);
 			question.Reload = step.Reload;
 
 			try
 			{
-				(var result, var queryError) = await llmServiceFactory.CreateHandler().Query(question, responseType);
+				var (result, queryError) = await llmServiceFactory.CreateHandler().Query(question, responseType);
 				if (queryError != null) return (null, queryError as IBuilderError);
 				if (result == null || (result is string str && string.IsNullOrEmpty(str)))
 				{
@@ -242,58 +238,64 @@ Make sure to use the information in <error> to return valid JSON response"
 
 		private string GetDefaultSystemText()
 		{
-
+			var programType = typeHelper.GetRuntimeType(module);
+			var methodDescription = TypeHelper.GetMethodDescription(programType, MethodName);
+			var settings = new JsonSerializerSettings
+			{
+				TypeNameHandling = TypeNameHandling.None
+			};
+			string methodDescJson = JsonConvert.SerializeObject(methodDescription.Item1, settings);
 			return $@"
 Your job is: 
 1. Parse user intent
-2. Map the intent to one of C# function provided to you
-3. Return a valid JSON
+2. Map the user intent to a C# method according to <method_description> provided to you
+3. Return a valid JSON according to <response_definition>
 
 Variable is defined with starting and ending %, e.g. %filePath%. 
 %Variable% MUST be wrapped in quotes("") in json response, e.g. {{ ""name"":""%name%"" }}
 Variables should not be changed, they can include dot(.) and parentheses()
 Keep \n, \r, \t that are submitted to you for string variables
-Parameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==
-
-== QuoteExample ==
-get url ""http://example.org"" => Value: ""http://example.org""
-write out 'Hello world' => Value: ""Hello world""
-== QuoteExample ==
 
 If there is some api key, settings, config replace it with %Settings.Get(""settingName"", ""defaultValue"", ""Explain"")% 
 - settingName would be the api key, config key, 
 - defaultValue for settings is the usual value given, make it """" if no value can be default
 - Explain is an explanation about the setting that novice user can understand.
 
+<method_description>
+{methodDescJson}
+<method_description>
 
-
-JSON scheme information
-FunctionName: Name of the function to use from list of functions, if no function matches set as ""N/A""
-Parameters: List of parameters that are needed according to the user intent.
-- Type: the object type in c#
-- Name: name of the variable
-- Value: ""%variable%"" or hardcode string that should be used
-ReturnValue rules
-- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable
-- If no %variable% is defined then set as null.
+<response_definition>
+public class MethodResponse
+{{
+    public string MethodName {{ get; set; }}
+    public List<ParameterDescriptionResponse> Parameters {{ get; set; }}
+    public ReturnValueResponse ReturnType {{ get; set; }}
+    
+}}
+public class ParameterDescriptionResponse
+{{
+    public string Type {{ get; init; }}
+    public string Name {{ get; init; }}
+    public object Value {{ get; init; }}
+}}
+public class ReturnValueResponse
+{{
+    public string Type {{ get; init; }}
+    [Description(""The %variable% that is being written into when ReturnValueResponse.Type is not void"")]
+    public string VariableName {{ get; init; }}
+    public int? DeleteAfterNumberOfUsage {{ get; init; }} = null;
+    public int? DeleteAfterSeconds {{ get; init; }} = null;
+}}
+<response_definition>
 ".Trim();
 		}
 
 		private string GetDefaultAssistantText(GoalStep step)
 		{
-			var programType = typeHelper.GetRuntimeType(module);
 			var variables = GetVariablesInStep(step).Replace("%", "");
-			var methods = typeHelper.GetMethodsAsString(programType);
 
 			string assistant = "";
-			if (!string.IsNullOrEmpty(methods))
-			{
-				assistant = $@"
-## functions available starts ##
-{methods.Trim()}
-## functions available ends ##";
-			}
-
 			if (!string.IsNullOrEmpty(variables))
 			{
 				assistant += @$"

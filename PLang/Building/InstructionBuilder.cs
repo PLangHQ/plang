@@ -4,6 +4,7 @@ using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Modules;
 using PLang.Runtime;
 using PLang.Services.LlmService;
@@ -46,10 +47,23 @@ namespace PLang.Building
 
 		public async Task<(Model.Instruction?, IBuilderError?)> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep step, string module, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
 		{
-			var classInstance = builderFactory.Create(module);
-			classInstance.InitBaseBuilder(module, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 			logger.LogInformation($"- Build using {module}");
+
+			var (llmRequest, error) = GetFindMethodLlmRequest(module, step);
+			if (error != null) return (null, error);
+			
+			var (methodName, llmError) = await llmServiceFactory.CreateHandler().Query<MethodName>(llmRequest);
+			if (llmError != null) return (null, new BuilderError(llmError.Message, llmError.Key, llmError.StatusCode, true, llmError.Exception, llmError.FixSuggestion, llmError.HelpfulLinks));
+			if (methodName == null || string.IsNullOrWhiteSpace(methodName.Name))
+			{
+				return (null, new BuilderError("Could not determine method name"));
+			}
+			
+			logger.LogInformation($"- Using method {methodName.Name}");
+			
+			var classInstance = builderFactory.Create(module);
+			classInstance.InitBaseBuilder(module, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger, methodName.Name);
 
 			var build = await classInstance.Build(step);
 			if (build.BuilderError != null || build.Instruction == null || build.Instruction.Action == null)
@@ -78,6 +92,33 @@ namespace PLang.Building
 			WriteInstructionFile(step, instruction);
 			return (instruction, null);
 		}
+
+		private (LlmRequest? LlmREquest, IBuilderError? Error) GetFindMethodLlmRequest(string module, GoalStep step)
+		{
+			
+			var programType = typeHelper.GetRuntimeType(module);
+			if (programType == null)
+			{
+				return (null, new BuilderError($"Could not find program type for {module}"));
+			}
+			
+			var methods = typeHelper.GetMethodsAsString(programType);
+			var system = @$"Your job is: 
+1. Parse user intent
+2. Map the intent to one of C# <methods> provided to you
+3. Return a valid JSON 
+
+<methods>
+{methods}
+</methods>
+";
+			var messages = new List<LlmMessage>();
+			messages.Add(new LlmMessage("system", system));
+			messages.Add(new LlmMessage("user", step.Text));
+			var llmRequest = new LlmRequest("FindMethod", messages, "gpt-4o-mini");
+			return (llmRequest, null);
+		}
+
 		private async Task<(Model.Instruction?, IBuilderError?)> Retry(StepBuilder stepBuilder, GroupedBuildErrors invalidFunctionError, string module, Goal goal, GoalStep step, int stepIndex, List<string>? excludeModules, int errorCount)
 		{
 			errorCount++; //always increase the errorCount to prevent endless requests

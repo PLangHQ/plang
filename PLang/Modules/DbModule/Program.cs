@@ -16,16 +16,8 @@ using System.Collections;
 using System.ComponentModel;
 using System.Data;
 using System.Globalization;
-using System.Text;
-using static Dapper.SqlMapper;
-using PLang.Errors;
-using PLang.Errors.Builder;
-using PLang.Errors.Runtime;
-using System.Collections;
-using Org.BouncyCastle.Crypto;
 using System.Dynamic;
 using PLang.Attributes;
-using System.Threading.Tasks.Dataflow;
 
 namespace PLang.Modules.DbModule
 {
@@ -171,33 +163,16 @@ namespace PLang.Modules.DbModule
 
 		public record ParameterInfo(string ParameterName, object VariableNameOrValue, string TypeFullName);
 
-		private (IDbConnection connection, DynamicParameters param, string sql, IError? error) Prepare(string sql, List<object>? Parameters = null, bool isInsert = false)
+		private (IDbConnection connection, DynamicParameters param, string sql, IError? error) Prepare(string sql, List<ParameterInfo>? parameters = null, bool isInsert = false)
 		{
 			IDbConnection connection = context.ContainsKey(DbConnectionContextKey) ? context[DbConnectionContextKey] as IDbConnection : dbConnection;
 			var multipleErrors = new GroupedErrors("SqlParameters");
 			var param = new DynamicParameters();
-			if (Parameters != null)
+			if (parameters != null)
 			{
-				foreach (var parameter in Parameters)
+				foreach (var p in parameters)
 				{
-					var p = parameter as ParameterInfo;
-					if (parameter is JObject)
-					{
-						if (((JObject)parameter).GetValue("Type") != null)
-						{
-							var obj = (JObject)parameter;
-							p = new ParameterInfo(obj.GetValue("Name").ToString(), obj.GetValue("Value"), obj.GetValue("Type").ToString());
-						}
-						else
-						{
-							p = ((JObject)parameter).ToObject<ParameterInfo>();
-						}
-					}
-					else if (parameter is string && JsonHelper.IsJson(parameter))
-					{
-						p = JsonConvert.DeserializeObject<ParameterInfo>(parameter.ToString());
-					}
-
+					
 					var parameterName = p.ParameterName.Replace("@", "");
 					if (parameterName.Contains("."))
 					{
@@ -461,7 +436,7 @@ namespace PLang.Modules.DbModule
 
 		}
 
-		public async Task<(object?, IError? errors)> SelectOneRow(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
+		public async Task<(object?, IError? errors)> SelectOneRow(string sql, List<ParameterInfo>? SqlParameters = null, string? dataSourceName = null)
 		{
 			if (!string.IsNullOrEmpty(dataSourceName))
 			{
@@ -497,7 +472,7 @@ namespace PLang.Modules.DbModule
 
 		}
 
-		public async Task<(List<object> rows, IError? error)> Select(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
+		public async Task<(List<object> rows, IError? error)> Select(string sql, List<ParameterInfo>? SqlParameters = null, string? dataSourceName = null)
 		{
 			if (!string.IsNullOrEmpty(dataSourceName))
 			{
@@ -527,7 +502,7 @@ namespace PLang.Modules.DbModule
 			return type.IsValueType && !type.IsPrimitive ? Activator.CreateInstance(type) : null;
 		}
 
-		public async Task<(int, IError?)> Update(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
+		public async Task<(int, IError?)> Update(string sql, List<ParameterInfo>? SqlParameters = null, string? dataSourceName = null)
 		{
 			if (!string.IsNullOrEmpty(dataSourceName))
 			{
@@ -551,7 +526,7 @@ namespace PLang.Modules.DbModule
 			return (result, null);
 		}
 
-		public async Task<(int, IError?)> Delete(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
+		public async Task<(int, IError?)> Delete(string sql, List<ParameterInfo>? SqlParameters = null, string? dataSourceName = null)
 		{
 			if (!string.IsNullOrEmpty(dataSourceName))
 			{
@@ -576,7 +551,7 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("Basic insert statement. Will return affected row count")]
-		public async Task<(int rowsAffected, IError? error)> Insert(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
+		public async Task<(int rowsAffected, IError? error)> Insert(string sql, List<ParameterInfo>? SqlParameters = null, string? dataSourceName = null)
 		{
 			if (!string.IsNullOrEmpty(dataSourceName))
 			{
@@ -617,7 +592,7 @@ namespace PLang.Modules.DbModule
 
 		}
 		[Description("Insert statement that will return the id of the inserted row. Use only if user requests the id")]
-		public async Task<(object?, IError?)> InsertAndSelectIdOfInsertedRow(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
+		public async Task<(object?, IError?)> InsertAndSelectIdOfInsertedRow(string sql, List<ParameterInfo>? SqlParameters = null, string? dataSourceName = null)
 		{
 			if (!string.IsNullOrEmpty(dataSourceName))
 			{
@@ -743,7 +718,7 @@ namespace PLang.Modules.DbModule
 			// TODO: This is actually not the most optimized bulk insert, it's inserting each row at a time
 			for (int i = 0; i < itemsToInsert.Count; i++)
 			{
-				var param = new List<object>();
+				var param = new List<ParameterInfo>();
 				bool rowHasAnyValue = false;
 				foreach (var column in columnMapping)
 				{
@@ -849,7 +824,7 @@ namespace PLang.Modules.DbModule
 		{
 			var dataSource = await moduleSettings.GetCurrentDataSource();
 
-			List<object> parameters = new List<object>();
+			List<ParameterInfo> parameters = new List<ParameterInfo>();
 			parameters.Add(new ParameterInfo("Database", dataSource.DbName, "System.String"));
 
 			(var connection, var par, _, var error) = Prepare("", parameters);
