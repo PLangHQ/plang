@@ -282,7 +282,7 @@ namespace PLang.Modules.FileModule
 				}
 			}
 
-			IWriterConfiguration writeConfig = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
+			IWriterConfiguration writeConfig = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.CurrentCulture)
 			{
 				Delimiter = delimiter,
 				BadDataFound = data =>
