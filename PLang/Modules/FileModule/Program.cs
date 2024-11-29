@@ -358,7 +358,7 @@ namespace PLang.Modules.FileModule
 				bool allowComments = false, char comment = '#', string? goalToCallOnBadData = null)
 		{
 			var absolutePath = GetPath(path);
-			var readConfig = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
+			var readConfig = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.CurrentCulture)
 			{
 				Delimiter = delimiter,
 				BadDataFound = data =>
