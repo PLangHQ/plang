@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace PLang.Utils
 {
@@ -32,16 +33,19 @@ namespace PLang.Utils
 				".3gp" => "video/3gpp",
 				".3g2" => "video/3gpp2",
 				".mkv" => "video/x-matroska",
-				".jpeg, .jpg" => "image/jpeg",
+				".jpeg" => "image/jpeg",
+				".jpg" => "image/jpeg",
 				".png" => "image/png",
 				".gif" => "image/gif",
 				".bmp" => "image/bmp",
 				".svg" => "image/svg+xml",
 				".webp" => "image/webp",
 				".ico" => "image/vnd.microsoft.icon",
-				".tif, .tiff" => "image/tiff",
+				".tif" => "image/tiff",
+				".tiff" => "image/tiff",
 				".txt" => "text/plain",
-				".html, .htm" => "text/html",
+				".html" => "text/html",
+				".htm" => "text/html",
 				".css" => "text/css",
 				".csv" => "text/csv",
 				".json" => "application/json",

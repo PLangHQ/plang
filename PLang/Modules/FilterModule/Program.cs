@@ -12,6 +12,46 @@ namespace PLang.Modules.FilterModule
 	[Description("Allow user to filter, select, query from a variable and get specific item from that variable.")]
 	public class Program : BaseProgram
 	{ 
+
+		[Description("Gets an item from list, giving the first, last or by index according to user definition. retrieveOneItem: first|last|number (retrieveOneItem can also be a number representing the index.)")]
+		public async Task<object?> GetItem(object variableToExtractFrom, string retrieveOneItem)
+		{
+			if (variableToExtractFrom is not JArray && !variableToExtractFrom.GetType().Name.StartsWith("List") &&
+				!variableToExtractFrom.GetType().Name.StartsWith("Dictionary")) return variableToExtractFrom;
+
+			if (variableToExtractFrom is JArray jarray)
+			{
+				if (retrieveOneItem == "first") return jarray.FirstOrDefault();
+				if (retrieveOneItem == "last") return jarray.LastOrDefault();
+				return jarray[int.Parse(retrieveOneItem)];
+			}
+
+			if (variableToExtractFrom.GetType().Name.StartsWith("List"))
+			{
+				var list = (IList)variableToExtractFrom;
+				if (retrieveOneItem == "first") return list[0];
+				if (retrieveOneItem == "first") return list[list.Count - 1];
+				return list[int.Parse(retrieveOneItem)];
+			}
+
+			if (variableToExtractFrom.GetType().Name.StartsWith("Dictionary"))
+			{
+				var dict = (IDictionary)variableToExtractFrom;
+				int counter = 0;
+				object? outItem = null;
+				foreach (var item in dict)
+				{
+					if (retrieveOneItem == "first") return item;
+					if (counter++ == int.Parse(retrieveOneItem)) return item;
+					outItem = item;
+				}
+				if (retrieveOneItem == "last") return outItem;
+				
+			}
+
+			return null;
+		}
+
 		[Description(@"Use this function when the intent is to filter a list based solely on the property name or pattern of the property name, without needing to match a specific value within that property. 
 This function is suitable when the user specifies conditions like ""property starts with"", ""property ends with"", or ""property contains"" without mentioning a value to filter by.
 

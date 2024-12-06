@@ -142,8 +142,16 @@ or url
 			if (genericFunction != null)
 			{
 				var scheme = genericFunction.Parameters.FirstOrDefault(p => p.Name == "scheme");
-				var responseType = genericFunction.Parameters.FirstOrDefault(p => p.Name == "llmResponseType");
-				if (scheme != null && scheme.Value != null && responseType?.Value.ToString() == "json" && !JsonHelper.LookAsJsonScheme(scheme.Value.ToString()))
+				var responseTypeParameter = genericFunction.Parameters.FirstOrDefault(p => p.Name == "llmResponseType");
+                string responseType = responseTypeParameter?.Value as string;
+
+				if (string.IsNullOrEmpty(responseType))
+                {
+					error = $"\nLLM gave empty responseType in last request. Please make sure that you give responseType.";
+					return await Build(step, error, ++errorCount);
+				}
+
+				if (scheme != null && scheme.Value != null && responseType == "json" && !JsonHelper.LookAsJsonScheme(scheme.Value.ToString()))
 				{
 					if (errorCount < 2)
 					{
