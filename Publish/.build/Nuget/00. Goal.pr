@@ -371,7 +371,7 @@
       "RunOnce": false,
       "Generated": "2024-11-04T13:43:27.0946921+00:00",
       "WaitForExecution": true,
-      "LoggerLevel": "warning",
+      "LoggerLevel": null,
       "ErrorHandlers": null,
       "CacheHandler": null,
       "CancellationHandler": null,
@@ -426,8 +426,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "80b330c0e1067f883878fdc31f9f65ad4e749ef9271eeffe6c065ceccede768e",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "c61b04271019766b818d510803583152e139611071cf95514d436f11c9636779",
+      "BuilderVersion": null
     },
     {
       "Text": "dotnet pack --configuration Release -p:Version=%version%, working dir ../PlangTests",
@@ -497,8 +497,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "a83fd742058179136c66405d8640e2e2c725584323f5d491e289ec8f81e9bd51",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "130e0d664783af91f7046fa7e1ae9d06977e5b8faa5c13f23e27c2b77cb46129",
+      "BuilderVersion": null
     },
     {
       "Text": "dotnet nuget push ../PLang/bin/Release/PlangLibrary.Tests.%version%.nupkg --api-key %Settings.NugetApiKey% --source https://api.nuget.org/v3/index.json\n    , write to %output%, %error%",
@@ -568,8 +568,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "132c02ccdf188984c7d1128fa1b871c87698db768d9cd93536a86de1e22020c0",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "5e42b6480d98f074e352dd780e226fcb3ddee6ba3538f10b61630f4d129fc316",
+      "BuilderVersion": null
     },
     {
       "Text": "if %output% contains \"already exists and cannot be modified\"",
@@ -639,8 +639,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "cd7bc05109946aeeccde3a7d63f85b211592c78ea6ffe07cc0024eb3c0d43dcc",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "81537517217bcf59eeef59477072c786753b1f8b862e00b33d1249cf80242941",
+      "BuilderVersion": null
     },
     {
       "Text": "logger warning \"Test Version %version% is already published\"",
@@ -655,7 +655,7 @@
       "RunOnce": false,
       "Generated": "2024-11-04T13:44:09.143388+00:00",
       "WaitForExecution": true,
-      "LoggerLevel": "warning",
+      "LoggerLevel": null,
       "ErrorHandlers": null,
       "CacheHandler": null,
       "CancellationHandler": null,
@@ -710,8 +710,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "453ddc712162d90335a8f0eda3e7d516dec08a0d4965ee5c560e7eb66f988c33",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "d29eaa492624c9910dc000443cd8bf0164fd1974b44b037a4efa35003ec4f1f2",
+      "BuilderVersion": null
     },
     {
       "Text": "write out \"Published - %version%\"",
@@ -781,8 +781,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "dfde4f4a4481187d44e1706ee371e334b3513db22b6b332e871c2c95e990fdcd",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "1f78ba4933c6c8a5f069feec72898875e313e46b6f793d45d5ace0fa71c4b408",
+      "BuilderVersion": null
     }
   ],
   "SubGoals": [],
@@ -808,6 +808,6 @@
   },
   "Injections": [],
   "Signature": null,
-  "Hash": "b9bb731f59c302798139931a65ff9187b848f9d9b448fda236030611f6b1cb2f",
+  "Hash": "994d2f0f1c9879128209a17aef0c9dd67056a6fd416ef31de784d75a9c0b10d9",
   "IncomingVariablesRequired": null
 }
