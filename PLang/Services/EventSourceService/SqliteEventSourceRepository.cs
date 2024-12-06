@@ -74,9 +74,10 @@ namespace PLang.Services.EventSourceService
 
 			try
 			{
-
-				await dbConnection.ExecuteAsync("INSERT INTO __Events__ (id, data, key_hash, processed) VALUES (@id, @data, @key_hash, 1)",
-				new { id = eventId, data = encryptedData, key_hash = pkey }, transaction);
+				while (!(await InsertIntoEvent(dbConnection, eventId, encryptedData, pkey, transaction)))
+				{
+					++eventId;
+				}			
 				
 				var result = await dbConnection.ExecuteAsync(sql, parameters, transaction);
 
@@ -90,6 +91,22 @@ namespace PLang.Services.EventSourceService
 
 		}
 
+		private async Task<bool> InsertIntoEvent(IDbConnection dbConnection, long eventId, string encryptedData, string pkey, IDbTransaction? transaction)
+		{
+			try
+			{
+				await dbConnection.ExecuteAsync("INSERT INTO __Events__ (id, data, key_hash, processed) VALUES (@id, @data, @key_hash, 1)",
+					new { id = eventId, data = encryptedData, key_hash = pkey }, transaction);
+				return true;
+			} catch (Exception ex)
+			{
+				if (ex.Message.Contains("UNIQUE constraint failed: __Events__.id"))
+				{
+					return false;
+				}
+				throw;
+			}
+		}
 
 		public async Task<List<EventData>> GetUnprocessedData()
 		{

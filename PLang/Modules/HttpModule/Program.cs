@@ -295,7 +295,7 @@ namespace PLang.Modules.HttpModule
 				if (data != null)
 				{
 					string body = StringHelper.ConvertToString(data);
-
+					
 					request.Content = new StringContent(body, System.Text.Encoding.GetEncoding(encoding), contentType);
 				}
 				if (!doNotSignRequest)

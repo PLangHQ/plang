@@ -2,6 +2,7 @@
 using CsvHelper.Configuration;
 using Microsoft.Extensions.Logging;
 using MiniExcelLibs;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Exceptions;
@@ -106,6 +107,26 @@ namespace PLang.Modules.FileModule
 			}
 
 			return base64;
+		}
+
+		public async Task<List<object>> ReadJsonLineFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false,
+			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? newLineSymbol = null)
+		{
+			var content = await ReadTextFile(path, returnValueIfFileNotExisting, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding);
+			var parsedObjects = new List<dynamic>();
+			newLineSymbol ??= Environment.NewLine;
+
+			var lines = content.Split(newLineSymbol);
+			foreach (var line in lines)
+			{
+				if (string.IsNullOrEmpty(line)) continue;
+				var jsonObject = JsonConvert.DeserializeObject(line);
+				if (jsonObject != null)
+				{
+					parsedObjects.Add(jsonObject);
+				}
+			}
+			return parsedObjects;
 		}
 
 		public async Task<string> ReadTextFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false,

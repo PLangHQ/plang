@@ -44,7 +44,6 @@ namespace PLang.Utils
 			this.dependancyHelper = dependancyHelper;
 		}
 
-
 		private static Version GetAssemblyVersion(string filePath)
 		{
 			try

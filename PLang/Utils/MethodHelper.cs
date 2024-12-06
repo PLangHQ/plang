@@ -11,9 +11,11 @@ using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.LlmService;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Caching;
+using System.Text.RegularExpressions;
 using System.Xml;
 using static PLang.Modules.BaseBuilder;
 
@@ -334,6 +336,7 @@ example of answer:
 				}
 				
 			}
+
 			if (!variableValueIsArray)
 			{
 				parameterValues.Add(parameter.Name, variableHelper.LoadVariables(variableValue));
@@ -406,6 +409,22 @@ example of answer:
 			else if (variableValue != null && variableValue.GetType().Name.StartsWith("List"))
 			{
 				list = (System.Collections.IList)variableValue;
+			} else if (variableValue is string && Regex.IsMatch(variableValue.ToString(), "\\[(.*)\\]"))
+			{
+				Match match = Regex.Match(variableValue.ToString(), "\\[(.*)\\]");
+				if (match.Success)
+				{
+					var items = match.Value.TrimStart('[').TrimEnd(']').Split(',');
+					list = new List<object>();
+					foreach (var item in items)
+					{
+						list.Add(item.Trim());
+					}
+				}
+			} else if (!variableValue.GetType().Name.StartsWith("List"))
+			{
+				list = new List<object>();
+				list.Add(variableValue);
 			}
 
 			if (handlesAttribute != null)
@@ -413,20 +432,24 @@ example of answer:
 				parameterValues.Add(parameter.Name, list);
 				return;
 			}
+			
 
+			var instanceList = Activator.CreateInstance(parameter.ParameterType);
+			var addMethod = instanceList.GetType().GetMethod("Add");
+			
 			for (int i = 0; list != null && i < list.Count; i++)
 			{
 				object? obj = variableHelper.LoadVariables(list[i]);
 				if (obj != null && parameter.ParameterType.GenericTypeArguments[0] == typeof(string))
 				{
-					list[i] = obj.ToString();
+					addMethod.Invoke(instanceList, new object[] { obj.ToString() });
 				}
 				else
 				{
-					list[i] = obj;
+					addMethod.Invoke(instanceList, new object[] { obj });
 				}
 			}
-			parameterValues.Add(parameter.Name, list);
+			parameterValues.Add(parameter.Name, instanceList);
 		}
 
 		private Dictionary<string, object?> MapJArray(JArray jArray)

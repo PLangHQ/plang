@@ -220,6 +220,7 @@ GoalApiIfo:
 	Determine the Method and write description of this api, using the content of the file.
 	Method can be: GET, POST, DELETE, PUT, PATCH, OPTIONS, HEAD. The content will describe a function in multiple steps.
 	From the first line, you should extrapolate the CacheControl if the user defines it.
+	ContentType: can be application/json, text/html, etc
 	CacheControlPrivateOrPublic: public or private
 	NoCacheOrNoStore: no-cache or no-store"));
 				promptMessage.Add(new LlmMessage("user", goal.GetGoalAsString()));
@@ -308,7 +309,7 @@ Be concise
 		}
 		private bool GoalNameContainsMethod(Goal goal)
 		{
-			var goalName = goal.GoalName.ToUpper();
+			var goalName = goal.GoalName.ToUpper() + " " + goal.Comment;
 			var match = Regex.Match(goalName, @"\s*(GET|POST|DELETE|PATCH|OPTION|HEAD|PUT)($|.*)");
 			return match.Success;
 		}

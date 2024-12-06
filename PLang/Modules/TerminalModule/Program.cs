@@ -44,7 +44,7 @@ namespace PLang.Modules.TerminalModule
 		{
 			if (string.IsNullOrWhiteSpace(pathToWorkingDirInTerminal))
 			{
-				pathToWorkingDirInTerminal = fileSystem.GoalsPath;
+				pathToWorkingDirInTerminal = Goal.AbsoluteGoalFolderPath;
 			} else
 			{
 				pathToWorkingDirInTerminal = GetPath(pathToWorkingDirInTerminal);
@@ -59,10 +59,36 @@ namespace PLang.Modules.TerminalModule
 				WorkingDirectory = pathToWorkingDirInTerminal
 			};
 
+			string command = appExecutableName;
+			if (parameters != null)
+			{
+				foreach (var parameter in parameters)
+				{
+					if (parameter == null) continue;
+
+					if (parameter.Contains(" ") && !parameter.Contains("\""))
+					{
+						command += " \"" + parameter + "\"";
+					}
+					else
+					{
+						command += " " + parameter;
+					}
+				}
+			}
+
+
 			// Determine the OS and set the appropriate command interpreter
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
-				startInfo.FileName = "cmd.exe";
+				if (command.Contains("|") || command.Contains(">"))
+				{
+					startInfo.FileName = "powershell.exe";
+				}
+				else
+				{
+					startInfo.FileName = "cmd.exe";
+				}
 			}
 			else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
 			{
@@ -86,21 +112,7 @@ namespace PLang.Modules.TerminalModule
 				StringBuilder? dataOutput = new();
 				StringBuilder? errorOutput = new();
 
-				string command = appExecutableName;
-				if (parameters != null)
-				{
-					foreach (var parameter in parameters) {
-						if (parameter == null) continue;
-
-						if (parameter.Contains(" ") && !parameter.Contains("\""))
-						{
-							command += " \"" + parameter + "\"";
-						} else
-						{
-							command += " " + parameter;
-						}
-					}
-				}
+				
 
 
 				process.OutputDataReceived += (sender, e) =>

@@ -19,6 +19,7 @@ using PLang.Services.SigningService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Net;
+using System.Net.Mime;
 using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
@@ -197,12 +198,13 @@ namespace PLang.Modules.WebserverModule
 						string? goalPath = null;
 						string? requestedFile = null;
 						var container = new ServiceContainer();
+						string contentType = "application/json";
 						try
 						{
 
 							requestedFile = httpContext.Request.Url?.LocalPath;
 							goalPath = GetGoalPath(routings, httpContext.Request);
-
+							
 							if (string.IsNullOrEmpty(goalPath))
 							{
 								ProcessGeneralRequest(httpContext);
@@ -249,7 +251,7 @@ namespace PLang.Modules.WebserverModule
 								continue;
 							}
 							httpContext.Response.ContentEncoding = Encoding.GetEncoding(defaultResponseContentEncoding);
-							httpContext.Response.ContentType = "application/json";
+							httpContext.Response.ContentType = contentType;
 							httpContext.Response.SendChunked = true;
 							httpContext.Response.AddHeader("X-Goal-Hash", goal.Hash);
 							httpContext.Response.AddHeader("X-Goal-Signature", goal.Signature);
@@ -287,7 +289,7 @@ namespace PLang.Modules.WebserverModule
 							var engine = container.GetInstance<IEngine>();
 							engine.Init(container);
 							engine.HttpContext = httpContext;
-
+							httpContext.Response.ContentType = contentType;
 							var requestMemoryStack = engine.GetMemoryStack();
 							var identityService = container.GetInstance<IPLangIdentityService>();
 							var error = await ParseRequest(httpContext, identityService, goal.GoalInfo.GoalApiInfo!.Method, requestMemoryStack);

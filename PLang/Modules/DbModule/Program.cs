@@ -696,8 +696,8 @@ namespace PLang.Modules.DbModule
 			return null;
 		}
 
-		[Description("Insert a list(bulk) into database, return number of rows inserted. columnMapping maps which property of itemsToInsert should match with a column")]
-		public async Task<(int, IError?)> InsertBulk(string tableName, List<object> itemsToInsert, [HandlesVariable] Dictionary<string, object>? columnMapping = null)
+		[Description("Insert a list(bulk) into database, return number of rows inserted. columnMapping maps which variable should match with a column. variables prefixed with %item.% are part of itemsToInsert, else they are local variable")]
+		public async Task<(int, IError?)> InsertBulk(string tableName, List<object> itemsToInsert, [HandlesVariable] Dictionary<string, object>? columnMapping = null, bool ignoreContraintOnInsert = false)
 		{
 			if (itemsToInsert.Count == 0) return (0, null);
 
@@ -728,7 +728,7 @@ namespace PLang.Modules.DbModule
 				}
 			}
 
-			string? sql = GetBulkSql(tableName, columnMapping, itemsToInsert, dataSource);
+			string? sql = GetBulkSql(tableName, columnMapping, itemsToInsert, ignoreContraintOnInsert, dataSource);
 			if (sql == null) return (0, null);
 
 			int affectedRows = 0;
@@ -747,14 +747,16 @@ namespace PLang.Modules.DbModule
 				bool rowHasAnyValue = false;
 				foreach (var column in columnMapping)
 				{
-					string cleanedColumnValue = column.Value.ToString().Replace("%", "");
+					string cleanedColumnValue = column.Value.ToString().Replace("%", "").Replace("item.", "");
+					bool isListItem = column.Value.ToString().Contains("item.");
 					if (column.Key == "id")
 					{
 						param.Add(new ParameterInfo("id", id + i, typeof(Int64).FullName));
 					}
-					else if (propertiesInItems.FirstOrDefault(p => p.Equals(cleanedColumnValue, StringComparison.OrdinalIgnoreCase)) != null)
+					else if (propertiesInItems.FirstOrDefault(p => p.Equals(cleanedColumnValue, StringComparison.OrdinalIgnoreCase)) != null
+						|| memoryStack.Contains(cleanedColumnValue))
 					{
-						var obj = GetValue(itemsToInsert[i], cleanedColumnValue);
+						var obj = (isListItem) ? GetValue(itemsToInsert[i], cleanedColumnValue) : memoryStack.Get(cleanedColumnValue);
 						if (obj == null)
 						{
 							param.Add(new ParameterInfo(column.Key, obj, typeof(DBNull).FullName));
@@ -779,9 +781,6 @@ namespace PLang.Modules.DbModule
 				if (!rowHasAnyValue) { continue; }
 
 				var insertResult = await Insert(sql, param);
-				Console.WriteLine($"{i} of {itemsToInsert.Count}");
-				
-
 				if (insertResult.error != null)
 				{
 					await Rollback();
@@ -812,7 +811,7 @@ namespace PLang.Modules.DbModule
 			throw new Exception($"Could not map type: {type} to C# object");
 		}
 
-		private string? GetBulkSql(string tableName, Dictionary<string, object> mapping, List<object> items, ModuleSettings.DataSource dataSource)
+		private string? GetBulkSql(string tableName, Dictionary<string, object> mapping, List<object> items, bool ignoreContraintOnInsert, ModuleSettings.DataSource dataSource)
 		{
 			if (items.Count == 0) return null;
 
@@ -824,19 +823,45 @@ namespace PLang.Modules.DbModule
 			{
 				columns = "id";
 				values = "@id";
+				if (!mapping.ContainsKey("id")) mapping.Add("id", "id");
 			}
 			foreach (var column in mapping)
 			{
-				if (objProperties.FirstOrDefault(p => p.Equals(column.Value.ToString().Replace("%", ""), StringComparison.OrdinalIgnoreCase)) != null)
+				var valueKey = column.Value.ToString().Replace("%", "");
+				if (!valueKey.Contains("item."))
 				{
-					if (columns != null) columns += ", ";
-					columns += column.Key;
+					if (memoryStack.Contains(valueKey))
+					{
+						if (columns != null) columns += ", ";
+						columns += column.Key;
 
-					if (values != null) values += ", ";
-					values += $"@{column.Key}";
+						if (values != null) values += ", ";
+						values += $"@{column.Key}";
+					}
+				}
+				else
+				{
+					valueKey = valueKey.Replace("item.", "");
+					if (objProperties.FirstOrDefault(p => p.Equals(valueKey, StringComparison.OrdinalIgnoreCase)) != null)
+					{
+						if (columns != null) columns += ", ";
+						columns += column.Key;
+
+						if (values != null) values += ", ";
+						values += $"@{column.Key}";
+					}
 				}
 			}
-
+			if (ignoreContraintOnInsert)
+			{
+				if (dataSource.TypeFullName.ToLower().Contains("sqlite"))
+				{
+					return $"INSERT OR IGNORE INTO {tableName} ({columns}) VALUES ({values})";
+				} else
+				{
+					throw new Exception("Only support sqlite. You can help improve the code, it's open source");
+				}
+			}
 			return $"INSERT INTO {tableName} ({columns}) VALUES ({values})";
 		}
 

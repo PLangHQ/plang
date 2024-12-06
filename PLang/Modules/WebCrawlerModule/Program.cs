@@ -19,6 +19,7 @@ using Microsoft.Extensions.Logging;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using System.Xml.Linq;
+using System.CodeDom.Compiler;
 
 namespace PLang.Modules.WebCrawlerModule
 {
@@ -197,9 +198,9 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 
 		[Description("operatorOnText can be equals|contains|startswith|endswith")]
-		public async Task<IWebElement?> GetElementByText(string text, string operatorOnText = "equals")
+		public async Task<IWebElement?> GetElementByText(string text, string operatorOnText = "equals", int? timeoutInSeconds = null)
 		{
-			var driver = await GetDriver();
+			var driver = await GetDriver(timeoutInSeconds: timeoutInSeconds);
 			if (operatorOnText == "equals")
 			{
 				return driver.FindElement(By.XPath($"//*[text() = '{text}']"));
@@ -340,11 +341,12 @@ namespace PLang.Modules.WebCrawlerModule
 			}
 		}
 
-		public async Task AcceptPrompt()
+		public async Task<string> AcceptAlert()
 		{
 			var driver = await GetDriver();
 			IAlert alert = driver.SwitchTo().Alert();
 			alert.Accept();
+			return alert.Text;
 		}
 
 		private async Task<string> GetCssSelector(string? cssSelector = null)
@@ -488,8 +490,79 @@ namespace PLang.Modules.WebCrawlerModule
 			cssSelector = await GetCssSelector(cssSelector);
 			var driver = await GetDriver();
 			var elements = driver.FindElements(By.CssSelector(cssSelector));
-
+			
 			return elements;
+		}
+
+		public async Task<(ReadOnlyCollection<IWebElement>?, IError?)> GetElementsInsideElement(string elementName, IWebElement element)
+		{
+			if (element == null) return (null, new ProgramError("You must send in element to look inside", goalStep, function));
+
+			return (element.FindElements(By.CssSelector(elementName)), null);
+		}
+
+		public async Task<List<dynamic>> SerializeElements(List<ReadOnlyCollection<IWebElement>> elementsArray)
+		{
+			List<dynamic> list = new List<dynamic>();
+			foreach (var elements in elementsArray)
+			{
+
+				
+				var driver = await GetDriver();
+				foreach (var element in elements)
+				{
+
+					string tagName = element.TagName;
+
+					Dictionary<string, string> attributes = GetAllAttributes(driver, element);
+
+					if (tagName == "form")
+					{
+						var inputs = element.FindElements(By.XPath(".//input"));
+						var serializedInputs = await SerializeElements([inputs]);
+						var serializableElement = new
+						{
+							TagName = tagName,
+							Attributes = attributes,
+							Text = element.Text,
+							Inputs = serializedInputs
+						};
+						list.Add(serializableElement);
+					}
+					else
+					{
+						var serializableElement = new
+						{
+							TagName = tagName,
+							Attributes = attributes,
+							Text = element.Text
+						};
+						list.Add(serializableElement);
+					}
+
+
+
+				}
+			}
+			int i = 0;
+			return list;
+		}
+
+		private Dictionary<string, string> GetAllAttributes(IWebDriver driver, IWebElement element)
+		{
+			string script = @"
+        var attributes = arguments[0].attributes;
+        var result = {};
+        for (var i = 0; i < attributes.length; i++) {
+            result[attributes[i].name] = attributes[i].value;
+        }
+        return result;
+    ";
+			var jsExecutor = ((IJavaScriptExecutor)driver);
+			// Execute the script and return the attributes as a dictionary
+			var attributes = jsExecutor.ExecuteScript(script, element);
+			return ((Dictionary<string, object>)attributes)
+					.ToDictionary(k => k.Key, k => k.Value?.ToString() ?? string.Empty);
 		}
 
 		public async Task<string> FindElementAndExtractAttribute(string attribute, string? cssSelector = null, IWebElement? element = null)
@@ -497,17 +570,12 @@ namespace PLang.Modules.WebCrawlerModule
 			cssSelector = await GetCssSelector(cssSelector);
 			List<string> results = new List<string>();
 
-			ReadOnlyCollection<IWebElement> elements;
-			if (element != null)
-			{
-				elements = element.FindElements(By.CssSelector(cssSelector));
-			}
-			else
+			if (element == null)
 			{
 				var driver = await GetDriver();
-				elements = driver.FindElements(By.CssSelector(cssSelector));
+				element = driver.FindElement(By.CssSelector(cssSelector));
 			}
-			return "";
+			return element.GetAttribute(attribute);
 		}
 
 		public async Task<List<string>> ExtractContent(bool clearHtml = true, string? cssSelector = null, IWebElement? element = null)
@@ -599,6 +667,9 @@ namespace PLang.Modules.WebCrawlerModule
 			else if (!string.IsNullOrEmpty(classes))
 			{
 				return $"{tagName}.{string.Join('.', classes.Split(' '))}";
+			} else if (!string.IsNullOrEmpty(tagName))
+			{
+				return tagName;
 			}
 			else
 			{
