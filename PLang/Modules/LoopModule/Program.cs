@@ -41,7 +41,7 @@ namespace PLang.Modules.LoopModule
 			return name;
 		}
 
-		[Description("Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called")]
+		[Description("Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called. Predefined variables are %list%, %item%, %position%, %listCount%, use can overwrite those using parameters")]
 		public async Task<IError?> RunLoop([HandlesVariableAttribute] string variableToLoopThrough, GoalToCall goalNameToCall, [HandlesVariableAttribute] Dictionary<string, object?>? parameters = null)
 		{
 			if (parameters == null) parameters = new();
