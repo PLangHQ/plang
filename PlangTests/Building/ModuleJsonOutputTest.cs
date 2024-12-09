@@ -1,22 +1,13 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PLang.Modules.ListDictionaryModule;
-using PLang.Utils;
-using PLangTests;
-using Json.Schema.Generation;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Schema;
-using Newtonsoft.Json.Schema.Generation;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Methods;
-using PLang.Modules.OutputModule;
 using PLang.Services.Channels;
-using PLang.Services.CompilerService;
-using JsonConverter = System.Text.Json.Serialization.JsonConverter;
-using JsonSchema = Json.Schema.JsonSchema;
+using PLang.Utils;
+using PLangTests;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace PLang.Building.Tests;
@@ -33,7 +24,7 @@ public class ModuleJsonOutputTest : BasePLangTest
     [TestMethod]
     public void ModuleJsonOutputTest_Test()
     {
-        var json = TypeHelper.GetJsonSchema(typeof(MethodResponse));
+        var json = TypeHelper.GetJsonSchema(typeof(MethodExecution));
 
         int i = 0;
     }
@@ -111,7 +102,7 @@ public class ModuleJsonOutputTest : BasePLangTest
   }
 }";
 
-        var methodResponse = JsonConvert.DeserializeObject<MethodResponse>(llmResponse);
+        var methodResponse = JsonConvert.DeserializeObject<MethodExecution>(llmResponse);
 
 
         string sql = methodResponse.Parameters[0].GetValue<string>();
@@ -126,57 +117,6 @@ public class ModuleJsonOutputTest : BasePLangTest
     }
 
 
-    public (bool, MultipleError?) IsValid(MethodResponse methodResponse, Type type)
-    {
-        var methodInfos = type.GetMethods().Where(m => m.Name == methodResponse.MethodName);
-        if (!methodInfos.Any())
-            return (false,
-                new MultipleError(new MethodNotFoundError($"Method {methodResponse.MethodName} not found.",
-                    methodResponse.MethodName, type)));
-
-        MultipleError methodErrors = null;
-        foreach (var methodInfo in methodInfos)
-        {
-            MultipleError me = null;
-            bool validMethod = true;
-            foreach (var parameter in methodInfo.GetParameters())
-            {
-                var obj = methodResponse.GetParameter(parameter.Name, parameter.ParameterType);
-                if (obj.Error != null)
-                {
-                    validMethod = false;
-                    if (me == null)
-                    {
-                        me = new MultipleError(obj.Error);
-                    }
-                    else
-                    {
-                        me.Add(obj.Error);
-                    }
-                }
-            }
-
-            if (validMethod)
-            {
-                return (true, null);
-            }
-            else
-            {
-                if (methodErrors == null)
-                {
-                    methodErrors = new MultipleError(new MethodNotMatchingWithParametersError(
-                        $"Method {methodInfo.Name} could not be match with parameters.", methodInfo.Name, type, me));
-                }
-                else
-                {
-                    methodErrors.Add(new MethodNotMatchingWithParametersError(
-                        $"Method {methodInfo.Name} could not be match with parameters.", methodInfo.Name, type, me));
-                }
-            }
-        }
-
-        return ((methodErrors == null), methodErrors);
-    }
     
     
     
@@ -259,7 +199,7 @@ public class ModuleJsonOutputTest : BasePLangTest
   }
 }";
         
-        var methodResponse = JsonConvert.DeserializeObject<MethodResponse>(llmResponse);
+        var methodResponse = JsonConvert.DeserializeObject<MethodExecution>(llmResponse);
 
 
         var addresses = methodResponse.Parameters[0].GetValue<Dictionary<string, Address>>();
@@ -298,7 +238,7 @@ public class ModuleJsonOutputTest : BasePLangTest
     }
 }";
              
-             var methodResponse = JsonConvert.DeserializeObject<MethodResponse>(llmResponse);
+             var methodResponse = JsonConvert.DeserializeObject<MethodExecution>(llmResponse);
      
      
              var addresses = methodResponse.Parameters[0].GetValue<Dictionary<string, object>>();

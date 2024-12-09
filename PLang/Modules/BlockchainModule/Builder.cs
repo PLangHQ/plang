@@ -41,7 +41,7 @@ namespace PLang.Modules.BlockchainModule
 			(var instruction, var buildError) = await base.Build(step);
 			if (buildError != null) return (null, buildError);
 
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Action as MethodExecution;
 			var abi = gf.Parameters.FirstOrDefault(p => p.Name.ToLower() == "abi");
 			if (abi != null && abi.Value.ToString().Contains("\"inputs\"")) {
 				var obj = JsonConvert.DeserializeObject<Dictionary<string, object>>(abi.Value.ToString());

@@ -81,7 +81,7 @@ namespace PLang.Utils
 
 			Goal? goal = null;
 			GoalStep? step = null;
-			GenericFunction? genericFunction = null;
+			Modules.BaseBuilder.MethodExecution? genericFunction = null;
 			Dictionary<string, object?>? parameterValues = null;
 			Exception? exception = null;
 			if (propertyOrder != null)
@@ -104,7 +104,7 @@ namespace PLang.Utils
 			if (property != null) step = (GoalStep?)property.GetValue(error);
 
 			property = properties.FirstOrDefault(p => p.Name.Equals("GenericFunction"));
-			if (detailedError && property != null) genericFunction = (GenericFunction?)property.GetValue(error);
+			if (detailedError && property != null) genericFunction = (Modules.BaseBuilder.MethodExecution?)property.GetValue(error);
 
 			property = properties.FirstOrDefault(p => p.Name.Equals("ParameterValues"));
 			if (detailedError && property != null) parameterValues = (Dictionary<string, object?>?)property.GetValue(error);

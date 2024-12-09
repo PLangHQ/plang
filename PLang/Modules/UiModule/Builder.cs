@@ -284,7 +284,7 @@ Please correct this.
 			if (uiResponse.css != null) parameters.Add(new Parameter("string", "css", uiResponse.css));
 			if (uiResponse.javascript != null) parameters.Add(new Parameter("string", "javascript", uiResponse.javascript));
 
-			var gf = new GenericFunction("RenderHtml", parameters, null);
+			var gf = new MethodExecution("RenderHtml", parameters, null);
 
 
 			var instruction = new Instruction(gf);

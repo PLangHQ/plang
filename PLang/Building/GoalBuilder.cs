@@ -28,7 +28,7 @@ using System.Xml.Linq;
 namespace PLang.Building
 {
 
-    public interface IGoalBuilder
+	public interface IGoalBuilder
 	{
 		Task<IBuilderError?> BuildGoal(IServiceContainer container, string goalFileAbsolutePath, int errorCount = 0);
 		public List<IBuilderError> BuildErrors { get; init; }
@@ -81,7 +81,8 @@ namespace PLang.Building
 				if (buildEventError != null && !buildEventError.ContinueBuild)
 				{
 					return buildEventError;
-				} else if (buildEventError != null)
+				}
+				else if (buildEventError != null)
 				{
 					logger.LogWarning(buildEventError.ToFormat().ToString());
 				}
@@ -131,9 +132,9 @@ namespace PLang.Building
 		{
 			foreach (var injection in goal.Injections)
 			{
-				
+
 				RegisterForPLangUserInjections(container, injection.Type, injection.Path, injection.IsGlobal, injection.EnvironmentVariable, injection.EnvironmentVariableValue);
-				
+
 			}
 		}
 
@@ -147,31 +148,29 @@ namespace PLang.Building
 				var instruction = prParser.ParseInstructionFile(injection);
 				if (instruction == null) continue;
 
-				var gfs = instruction.GetFunctions();
-				if (gfs != null && gfs.Length > 0)
-				{
-					var gf = gfs[0];
+				var method = instruction.GetMethodExecution();
+				if (method == null) continue;
 
-					var typeParam = gf.Parameters.FirstOrDefault(p => p.Name == "type");
-					var pathToDllParam = gf.Parameters.FirstOrDefault(p => p.Name == "pathToDll");
-					var isGlobalParam = gf.Parameters.FirstOrDefault(p => p.Name == "isDefaultOrGlobalForWholeApp");
-					var environmentVariableParam = gf.Parameters.FirstOrDefault(p => p.Name == "environmentVariable");
-					var environmentVariableValueParam = gf.Parameters.FirstOrDefault(p => p.Name == "environmentVariableValue");
+				var typeParam = method.Parameters.FirstOrDefault(p => p.Name == "type");
+				var pathToDllParam = method.Parameters.FirstOrDefault(p => p.Name == "pathToDll");
+				var isGlobalParam = method.Parameters.FirstOrDefault(p => p.Name == "isDefaultOrGlobalForWholeApp");
+				var environmentVariableParam = method.Parameters.FirstOrDefault(p => p.Name == "environmentVariable");
+				var environmentVariableValueParam = method.Parameters.FirstOrDefault(p => p.Name == "environmentVariableValue");
 
-					string type = (typeParam == null) ? null : (string)typeParam.Value;
-					string pathToDll = (pathToDllParam == null) ? null : (string)pathToDllParam.Value;
-					bool isGlobal = (isGlobalParam == null) ? false : (bool)isGlobalParam.Value;
-					string? environmentVariable = (environmentVariableParam == null) ? null : (string?)environmentVariableParam.Value;
-					string environmentVariableValue = (environmentVariableValueParam == null) ? null : (string?)environmentVariableValueParam.Value;
+				string type = (typeParam == null) ? null : (string)typeParam.Value;
+				string pathToDll = (pathToDllParam == null) ? null : (string)pathToDllParam.Value;
+				bool isGlobal = (isGlobalParam == null) ? false : (bool)isGlobalParam.Value;
+				string? environmentVariable = (environmentVariableParam == null) ? null : (string?)environmentVariableParam.Value;
+				string environmentVariableValue = (environmentVariableValueParam == null) ? null : (string?)environmentVariableValueParam.Value;
 
-					var dependancyInjection = new Injections(type, pathToDll, isGlobal, environmentVariable, environmentVariableValue);
+				var dependancyInjection = new Injections(type, pathToDll, isGlobal, environmentVariable, environmentVariableValue);
 
-					goal.Injections.Add(dependancyInjection);
-				}
+				goal.Injections.Add(dependancyInjection);
+
 
 			}
 
-			
+
 		}
 
 		private void RegisterForPLangUserInjections(IServiceContainer container, string type, string path, bool isGlobal, string? environmentVariable = null, string? environmentVariableValue = null)
@@ -192,7 +191,7 @@ namespace PLang.Building
 			goal.BuilderVersion = assembly.GetName().Version.ToString();
 			goal.Hash = "";
 			goal.Hash = JsonConvert.SerializeObject(goal).ComputeHash().Hash;
-			
+
 			fileSystem.File.WriteAllText(goal.AbsolutePrFilePath, JsonConvert.SerializeObject(goal, Formatting.Indented));
 		}
 
@@ -209,7 +208,8 @@ namespace PLang.Building
 			}
 			var isWebApiMethod = GoalNameContainsMethod(goal) || goal.RelativeGoalFolderPath.Contains(Path.DirectorySeparatorChar + "api");
 
-			if (!isWebApiMethod && !goal.Text.Contains(" ")) {
+			if (!isWebApiMethod && !goal.Text.Contains(" "))
+			{
 				return await CreateDescriptionForGoal(goal, oldGoal);
 			}
 			if (goal.GoalInfo == null || goal.GoalInfo.GoalApiInfo == null || goal.Text == null || goal.Text != oldGoal?.Text)
@@ -234,7 +234,7 @@ GoalApiIfo:
 					goal.GoalInfo = result;
 				}
 
-			} 
+			}
 			return (goal, null);
 		}
 
@@ -294,7 +294,8 @@ Be concise
 			var dirs = fileSystem.Directory.GetDirectories(goal.AbsolutePrFolderPath);
 			foreach (var dir in dirs)
 			{
-				foreach (var subGoal in goal.SubGoals) {
+				foreach (var subGoal in goal.SubGoals)
+				{
 
 					dirs = dirs.Where(p => !p.StartsWith(Path.Join(goal.AbsolutePrFolderPath, subGoal))).ToArray();
 				}

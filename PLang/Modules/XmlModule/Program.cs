@@ -36,7 +36,7 @@ namespace PLang.Modules.XmlModule
 			XmlNode? node = xmlDoc.SelectSingleNode(insertElementInsideElement);
 			if (node == null)
 			{
-				return (xmlDoc, new ProgramError($"Could not find {insertElementInsideElement} in your xml", goalStep, function));
+				return (xmlDoc, new ProgramError($"Could not find {insertElementInsideElement} in your xml", goalStep, methodExecution));
 			}
 
 			if (subElements != null)

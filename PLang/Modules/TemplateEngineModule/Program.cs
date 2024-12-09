@@ -30,7 +30,7 @@ namespace PLang.Modules.TemplateEngineModule
 			if (!fileSystem.File.Exists(fullPath))
 			{
 
-				return (null, new ProgramError($"File {path} could not be found. Full path to the file is {fullPath}", goalStep, this.function));
+				return (null, new ProgramError($"File {path} could not be found. Full path to the file is {fullPath}", goalStep, this.methodExecution));
 			}
 			string content = fileSystem.File.ReadAllText(fullPath);
 			return await RenderContent(content, fullPath);
@@ -106,7 +106,7 @@ namespace PLang.Modules.TemplateEngineModule
 					message = $"{ex.Message} in {relativeFilePath}";
 				}
 				var pe = new ProgramError(message,
-						goalStep, function, Exception: ex,
+						goalStep, methodExecution, Exception: ex,
 						HelpfulLinks: @"Description of the language syntax: https://github.com/scriban/scriban/blob/master/doc/language.md
 Built-in functions: https://github.com/scriban/scriban/blob/master/doc/builtins.md
 Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtime.md"

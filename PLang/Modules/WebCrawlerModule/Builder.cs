@@ -11,7 +11,7 @@ namespace PLang.Modules.WebCrawlerModule
 		public override Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep goalStep)
 		{
 			AppendToAssistantCommand("Make sure to convert html tags into correct css selector format");
-			return base.Build<GenericFunction>(goalStep);
+			return base.Build<MethodExecution>(goalStep);
 		}
 
 

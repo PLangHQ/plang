@@ -42,7 +42,7 @@ namespace PLang.Utils.Tests
 			products.Add(new { Name = "Product2", Price = 22 });
 			memoryStack.Put("products", products);
 
-			var gf = JsonConvert.DeserializeObject<GenericFunction>(@"{
+			var gf = JsonConvert.DeserializeObject<Modules.BaseBuilder.MethodExecution>(@"{
     ""FunctionName"": ""AddToList"",
     ""Parameters"": [
       {
@@ -82,7 +82,7 @@ namespace PLang.Utils.Tests
 			memoryStack.Put("fileName", "file.txt");
 
 	
-			var gf = JsonConvert.DeserializeObject<GenericFunction>(@"{
+			var gf = JsonConvert.DeserializeObject<Modules.BaseBuilder.MethodExecution>(@"{
     ""FunctionName"": ""ReadTextFile"",
     ""Parameters"": [
       {
@@ -125,7 +125,7 @@ namespace PLang.Utils.Tests
 			memoryStack.Put("csvData", "1,2,3");
 
 			var goalStep = new Building.Model.GoalStep();
-			var gf = JsonConvert.DeserializeObject<GenericFunction>(@"{
+			var gf = JsonConvert.DeserializeObject<Modules.BaseBuilder.MethodExecution>(@"{
     ""FunctionName"": ""WriteExcelFile"",
     ""Parameters"": [
       {
@@ -163,7 +163,7 @@ namespace PLang.Utils.Tests
 			memoryStack.Put("excelData", "a,b,c");
 
 			var goalStep = new Building.Model.GoalStep();
-			var gf = JsonConvert.DeserializeObject<GenericFunction>(@"{
+			var gf = JsonConvert.DeserializeObject<Modules.BaseBuilder.MethodExecution>(@"{
     ""FunctionName"": ""WriteExcelFile"",
     ""Parameters"": [
       {
@@ -205,7 +205,7 @@ namespace PLang.Utils.Tests
 			memoryStack.Put("excelData", "a,b,c");
 
 			var goalStep = new Building.Model.GoalStep();
-			var gf = JsonConvert.DeserializeObject<GenericFunction>(@"{
+			var gf = JsonConvert.DeserializeObject<Modules.BaseBuilder.MethodExecution>(@"{
     ""FunctionName"": ""WriteExcelFile2"",
     ""Parameters"": [
       {
@@ -243,7 +243,7 @@ namespace PLang.Utils.Tests
 		[TestMethod()]
 		public async Task GetMethodAndParameters_Nullable_Test()
 		{
-			var gf = JsonConvert.DeserializeObject<GenericFunction>(@"{
+			var gf = JsonConvert.DeserializeObject<Modules.BaseBuilder.MethodExecution>(@"{
     ""FunctionName"": ""HashInput"",
     ""Parameters"": [
       {
@@ -276,7 +276,7 @@ namespace PLang.Utils.Tests
         [ExpectedException(typeof(MissingMethodException))]
 		public async Task GetMethodAndParameters_ThrowsMethodNotFound_Test()
 		{
-			var gf = JsonConvert.DeserializeObject<GenericFunction>(@"{
+			var gf = JsonConvert.DeserializeObject<Modules.BaseBuilder.MethodExecution>(@"{
     ""FunctionName"": ""DoStuff"",
     ""Parameters"": [
       {
@@ -300,7 +300,7 @@ namespace PLang.Utils.Tests
 		[TestMethod()]
 		public async Task GetMethodAndParameters_Dictionary_Test()
 		{
-			var gf = JsonConvert.DeserializeObject<GenericFunction>(@"{
+			var gf = JsonConvert.DeserializeObject<Modules.BaseBuilder.MethodExecution>(@"{
     ""FunctionName"": ""Insert"",
     ""Parameters"": [
       {
@@ -344,7 +344,7 @@ namespace PLang.Utils.Tests
 		[TestMethod()]
 		public async Task GetMethodAndParameters_Dictionary2_Test()
 		{
-			var gf = JsonConvert.DeserializeObject<GenericFunction>(@"{
+			var gf = JsonConvert.DeserializeObject<Modules.BaseBuilder.MethodExecution>(@"{
     ""FunctionName"": ""Insert"",
     ""Parameters"": [
       {
@@ -389,7 +389,7 @@ namespace PLang.Utils.Tests
 		[TestMethod()]
 		public async Task GetMethodAndParameters_Dictionary_HandleVariable_Test()
 		{
-			var gf = JsonConvert.DeserializeObject<GenericFunction>(@"{
+			var gf = JsonConvert.DeserializeObject<Modules.BaseBuilder.MethodExecution>(@"{
     ""FunctionName"": ""Insert2"",
     ""Parameters"": [
       {
@@ -434,7 +434,7 @@ namespace PLang.Utils.Tests
 		[TestMethod()]
 		public async Task GetMethodAndParameters_List_Test()
 		{
-			var gf = JsonConvert.DeserializeObject<GenericFunction>(@"{
+			var gf = JsonConvert.DeserializeObject<Modules.BaseBuilder.MethodExecution>(@"{
     ""FunctionName"": ""AddToList"",
     ""Parameters"": [
       {
@@ -479,7 +479,7 @@ namespace PLang.Utils.Tests
 		[TestMethod()]
 		public async Task GetMethodAndParameters_List_Obj_isNull_Test()
 		{
-			var gf = JsonConvert.DeserializeObject<GenericFunction>(@"{
+			var gf = JsonConvert.DeserializeObject<Modules.BaseBuilder.MethodExecution>(@"{
     ""FunctionName"": ""AddToList"",
     ""Parameters"": [
       {
@@ -511,7 +511,7 @@ namespace PLang.Utils.Tests
 		[TestMethod()]
 		public async Task GetMethodAndParameters_List_HandleVariables_Test()
 		{
-			var gf = JsonConvert.DeserializeObject<GenericFunction>(@"{
+			var gf = JsonConvert.DeserializeObject<Modules.BaseBuilder.MethodExecution>(@"{
     ""FunctionName"": ""AddToList2"",
     ""Parameters"": [
       {

@@ -55,7 +55,7 @@ namespace PLang.Modules.CallGoalModule.Tests
 			var step = GetStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Action as BaseBuilder.MethodExecution;
 
 			Store(text, instruction.LlmRequest.RawResponse);
 			
@@ -79,7 +79,7 @@ namespace PLang.Modules.CallGoalModule.Tests
 			var step = GetStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Action as BaseBuilder.MethodExecution;
 
 			Store(text, instruction.LlmRequest.RawResponse);
 

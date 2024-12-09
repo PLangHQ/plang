@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Utils;
-using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Exceptions
 {
@@ -11,7 +10,7 @@ namespace PLang.Exceptions
 		public string Type { get; }
 		public GoalStep? Step { get; set; }
 		public Dictionary<string, object?>? ParameterValues { get; }
-		public GenericFunction? GenericFunction { get; }
+		public MethodExecution? MethodExecution { get; }
 
 		public RuntimeProgramException(string message, int statusCode, string type, GoalStep? step) : base(message)
 		{
@@ -19,11 +18,11 @@ namespace PLang.Exceptions
 			Type = type;
 			Step = step;
 		}
-		public RuntimeProgramException(string message, int statusCode, string type, GoalStep step, GenericFunction genericFunction, Dictionary<string, object?> parameterValues, Exception? ex = null) : base(message, ex)
+		public RuntimeProgramException(string message, int statusCode, string type, GoalStep step, MethodExecution genericFunction, Dictionary<string, object?> parameterValues, Exception? ex = null) : base(message, ex)
 		{
 			this.Step = step;
 			ParameterValues = parameterValues;
-			GenericFunction = genericFunction;
+			MethodExecution = genericFunction;
 			StatusCode = statusCode;
 			Type = type;
 		}
@@ -49,7 +48,7 @@ StackTrace: {ex.StackTrace}
 				AppContext.TryGetSwitch(ReservedKeywords.CSharpDebug, out isDebug);
 			}
 
-			if (isDebug && Step != null && GenericFunction != null)
+			if (isDebug && Step != null && MethodExecution != null)
 			{
 				error += $@"
 
@@ -57,14 +56,14 @@ Error happend at
 	Step: {Step.Text} line {Step.LineNumber}
 	Goal: {Step.Goal.GoalName} in {Step.Goal.GoalFileName}
 
-	Calling {Step.ModuleType}.Program.{GenericFunction.FunctionName} 
+	Calling {Step.ModuleType}.Program.{MethodExecution.FunctionName} 
 		Parameters:
-			{JsonConvert.SerializeObject(GenericFunction.Parameters)} 
+			{JsonConvert.SerializeObject(MethodExecution.Parameters)} 
 
 		Parameter values:
 {JsonConvert.SerializeObject(ParameterValues)}
 
-		Return value {JsonConvert.SerializeObject(GenericFunction.ReturnValues)}
+		Return value {JsonConvert.SerializeObject(MethodExecution.ReturnValues)}
 	
 	------
 	Exception: {this.Message}

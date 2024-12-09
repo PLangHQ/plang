@@ -36,7 +36,7 @@ namespace PLang.Modules
 		protected PLangAppContext context;
 		protected VariableHelper variableHelper;
 		protected ITypeHelper typeHelper;
-		protected GenericFunction function;
+		protected MethodExecution methodExecution;
 		private ILlmServiceFactory llmServiceFactory;
 		private ILogger logger;
 		private IServiceContainer container;
@@ -94,38 +94,35 @@ namespace PLang.Modules
 
 		public virtual async Task<IError?> Run()
 		{
-			var functions = instruction.GetFunctions();
-			foreach (var function in functions)
-			{
-				var error = await RunFunction(function);
-				if (error != null) return error;
-			}
-			return null;
+			var methodExecution = instruction.GetMethodExecution();
+			if (methodExecution == null) return new StepError("Not method information to execute", goalStep);
+
+			return await RunMethod(methodExecution);
 		}
 
-		public async Task<IError?> RunFunction(GenericFunction function)
+		public async Task<IError?> RunMethod(MethodExecution methodExectuion)
 		{
 			Dictionary<string, object?> parameterValues = null;
-			this.function = function; // this is to give sub classes access to current function running.
+			this.methodExecution = methodExectuion; // this is to give sub classes access to current function running.
 			try
 			{
-				MethodInfo? method = await methodHelper.GetMethod(this, function);
+				MethodInfo? method = await methodHelper.GetMethod(this, methodExectuion);
 				if (method == null)
 				{
-					return new StepError($"Could not load method {function.FunctionName} to run", goalStep, "MethodNotFound", 500);
+					return new StepError($"Could not load method {methodExectuion.MethodName} to run", goalStep, "MethodNotFound", 500);
 				}
 
 				logger.LogDebug("Method:{0}.{1}({2})", goalStep.ModuleType, method.Name, method.GetParameters());
 
 				//TODO: Should move this caching check up the call stack. code is doing to much work before returning cache
-				if (await LoadCached(method, function)) return null;
+				if (await LoadCached(method, methodExectuion)) return null;
 
 				if (method.ReturnType != typeof(Task) && method.ReturnType.BaseType != typeof(Task))
 				{
 					return new Error($"The method {method.Name} does not return Task. Method that are called must return Task");
 				}
 
-				parameterValues = methodHelper.GetParameterValues(method, function);
+				parameterValues = methodHelper.GetParameterValues(method, methodExectuion);
 				logger.LogTrace("Parameters:{0}", parameterValues);
 
 
@@ -168,10 +165,10 @@ namespace PLang.Modules
 						});
 
 						(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(settingsError);
-						if (isHandled) return await RunFunction(function);
+						if (isHandled) return await RunMethod(methodExectuion);
 					}
 
-					var pe = new ProgramError(ex.Message, goalStep, function, parameterValues, Exception: ex);
+					var pe = new ProgramError(ex.Message, goalStep, methodExectuion, parameterValues, Exception: ex);
 
 					if (this is IDisposable disposable)
 					{
@@ -193,7 +190,7 @@ namespace PLang.Modules
 					{
 						(var isHandled, var handlerError) = await HandleAskUser(aue);
 						
-						if (isHandled) return await RunFunction(function);
+						if (isHandled) return await RunMethod(methodExectuion);
 
 						return ErrorHelper.GetMultipleError(error, handlerError);
 					}
@@ -203,7 +200,7 @@ namespace PLang.Modules
 					}
 					if (error is ProgramError pe)
 					{
-						pe.GenericFunction = function;
+						pe.GenericFunction = methodExectuion;
 					}
 
 					if (error.Goal == null)
@@ -213,7 +210,7 @@ namespace PLang.Modules
 					return error;
 				}
 
-				SetReturnValue(function, result);
+				SetReturnValue(methodExectuion, result);
 
 				await SetCachedItem(result);
 				return null;
@@ -233,9 +230,9 @@ namespace PLang.Modules
 					});
 
 					(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(settingsError);
-					if (isHandled) return await RunFunction(function);
+					if (isHandled) return await RunMethod(methodExectuion);
 				}
-				var pe = new ProgramError(ex.Message, goalStep, function, parameterValues, "ProgramError", 500, Exception: ex);
+				var pe = new ProgramError(ex.Message, goalStep, methodExectuion, parameterValues, "ProgramError", 500, Exception: ex);
 				
 				return pe;
 			}
@@ -257,7 +254,7 @@ namespace PLang.Modules
 			var askUserFileAccess = new AskUserFileAccess(fa.AppName, fa.Path, fa.Message, fileAccessHandler.ValidatePathResponse);
 
 			(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(askUserFileAccess);
-			if (isHandled) return await RunFunction(function);
+			if (isHandled) return await RunMethod(methodExecution);
 
 			return ErrorHelper.GetMultipleError(askUserFileAccess, handlerError);
 		}
@@ -309,22 +306,19 @@ namespace PLang.Modules
 			return (null, new Error("Could not extract return value or error"));
 		}
 
-		private void SetReturnValue(GenericFunction function, object? result)
+		private void SetReturnValue(MethodExecution methodExecution, object? result)
 		{
-			if (function.ReturnValues == null || function.ReturnValues.Count == 0) return;
+			if (methodExecution.ReturnType == null) return;
 
-
+			var returnValue = methodExecution.ReturnType;
 			if (result == null)
-			{
-				foreach (var returnValue in function.ReturnValues)
-				{
-					memoryStack.Put(returnValue.VariableName, null);
-				}
+			{		
+				memoryStack.Put(returnValue.VariableName, null);
 			}
 			else if (result is IReturnDictionary || result.GetType().Name == "DapperRow")
 			{
 				var dict = (IDictionary<string, object>)result;
-				foreach (var returnValue in function.ReturnValues)
+				foreach (var returnValue in methodExecution.ReturnValues)
 				{
 					var key = dict.Keys.FirstOrDefault(p => p.Replace("%", "").ToLower() == returnValue.VariableName.Replace("%", "").ToLower());
 					if (key == null)
@@ -338,7 +332,7 @@ namespace PLang.Modules
 			}
 			else
 			{
-				foreach (var returnValue in function.ReturnValues)
+				foreach (var returnValue in methodExecution.ReturnValues)
 				{
 					memoryStack.Put(returnValue.VariableName, result);
 				}
@@ -363,7 +357,7 @@ namespace PLang.Modules
 			}
 		}
 
-		private async Task<bool> LoadCached(MethodInfo method, GenericFunction function)
+		private async Task<bool> LoadCached(MethodInfo method, MethodExecution methodExecution)
 		{
 			if (goalStep?.CacheHandler == null || goalStep.CacheHandler?.CacheKey == null) return false;
 
@@ -384,9 +378,9 @@ namespace PLang.Modules
 				if (cacheKey == null) return false;
 
 				var obj = await appCache.Get(cacheKey);
-				if (obj != null && function.ReturnValues != null && function.ReturnValues.Count > 0)
+				if (obj != null && methodExecution.ReturnType != null)
 				{
-					foreach (var returnValue in function.ReturnValues)
+					foreach (var returnValue in methodExecution.ReturnValues)
 					{
 						logger.LogDebug($"Cache was hit for {goalStep.CacheHandler.CacheKey}");
 						memoryStack.Put(returnValue.VariableName, obj);
@@ -449,7 +443,7 @@ namespace PLang.Modules
 			return PathHelper.GetPath(path, fileSystem, this.Goal);
 		}
 
-		protected async Task<(string?, IError?)> AssistWithError(string error, GoalStep step, GenericFunction function)
+		protected async Task<(string?, IError?)> AssistWithError(string error, GoalStep step, BaseBuilder.MethodExecution function)
 		{
 			AppContext.TryGetSwitch("llmerror", out bool isEnabled);
 			if (!isEnabled) return (null, null);

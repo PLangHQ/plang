@@ -6,14 +6,19 @@ using PLang.Errors.Methods;
 
 namespace PLang.Building.Model;
 
-public class MethodResponse
+public class MethodExecution
 {
     public required string ClassName { get; set; }
     public required string MethodName { get; set; }
-    public List<ParameterDescriptionResponse>? Parameters { get; set; }
+    public List<ParameterDescriptionResponse> Parameters { get; set; }
     public ReturnValueResponse? ReturnType { get; set; }
 
-    public (T?, IError?) GetParameter<T>(string parameterName)
+	public MethodExecution()
+    {
+        Parameters = new List<ParameterDescriptionResponse>();
+    }
+
+	public (T?, IError?) GetParameter<T>(string parameterName)
     {
         var targetType = typeof(T);
         var result = GetParameter(parameterName, targetType);
@@ -21,6 +26,7 @@ public class MethodResponse
     }
     public (object? Instance, IError? Error) GetParameter(string parameterName, Type targetType)
     {
+        if (Parameters == null) return (null, new ParameterNotFoundError($"No parameters for method. Parameter {parameterName} was not found.", targetType));
         foreach (ParameterDescriptionResponse parameter in Parameters)
         {
             if (parameter.Name == parameterName)

@@ -67,7 +67,7 @@ can return a list of elements or one element, depending on if retrieveOneItem is
 		{
 			if (variableToExtractFrom == null)
 			{
-				return (null, new ProgramError("variableToExtractFrom cannot be empty", goalStep, function));
+				return (null, new ProgramError("variableToExtractFrom cannot be empty", goalStep, methodExecution));
 			}
 
 			List<object>? filteredList = null;

@@ -98,13 +98,13 @@ namespace PLang.Modules.CodeModule
 						if (outType == null) continue;
 						if (answer.OutParameters == null)
 						{
-							return new ProgramError($"{parameters[i].Name} is not defined in code. Please rebuild step", goalStep, function, StatusCode: 500);
+							return new ProgramError($"{parameters[i].Name} is not defined in code. Please rebuild step", goalStep, methodExecution, StatusCode: 500);
 						}
 
 						var outParameter = answer.OutParameters.FirstOrDefault(p => p.ParameterName == parameters[i].Name);
 						if (outParameter == null)
 						{
-							return new ProgramError($"{parameters[i].Name} could not be found in build code. Please rebuild step", goalStep, function, StatusCode: 500);
+							return new ProgramError($"{parameters[i].Name} could not be found in build code. Please rebuild step", goalStep, methodExecution, StatusCode: 500);
 						}
 
 						var value = memoryStack.Get(outParameter.VariableName, parameters[i].ParameterType);
@@ -130,7 +130,7 @@ namespace PLang.Modules.CodeModule
 							var inParameter = answer.InputParameters.FirstOrDefault(p => p.ParameterName == parameters[i].Name);
 							if (inParameter == null)
 							{
-								return new ProgramError($"{parameters[i].Name} could not be found in build code. Please rebuild step", goalStep, function, StatusCode: 500);
+								return new ProgramError($"{parameters[i].Name} could not be found in build code. Please rebuild step", goalStep, methodExecution, StatusCode: 500);
 							}
 							var value = memoryStack.Get(inParameter.VariableName, parameters[i].ParameterType);
 							parametersObject.Add(value);

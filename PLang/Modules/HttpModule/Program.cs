@@ -57,7 +57,7 @@ namespace PLang.Modules.HttpModule
 						}
 						else
 						{
-							return new ProgramError($"File already exists at that location", goalStep, function);
+							return new ProgramError($"File already exists at that location", goalStep, methodExecution);
 						}
 					}
 					if (createPathToSaveTo)
@@ -119,7 +119,7 @@ namespace PLang.Modules.HttpModule
 				var requestUrl = variableHelper.LoadVariables(url);
 				if (requestUrl == null)
 				{
-					return (null, new ProgramError("url cannot be empty", goalStep, function));
+					return (null, new ProgramError("url cannot be empty", goalStep, methodExecution));
 				}
 
 				var request = new HttpRequestMessage(new HttpMethod(httpMethod), requestUrl.ToString());
@@ -155,7 +155,7 @@ namespace PLang.Modules.HttpModule
 								}
 								else
 								{
-									return (null, new ProgramError($"{fileName} could not be found", goalStep, function));
+									return (null, new ProgramError($"{fileName} could not be found", goalStep, methodExecution));
 								}
 							}
 							else
@@ -268,7 +268,7 @@ namespace PLang.Modules.HttpModule
 			var requestUrl = variableHelper.LoadVariables(url);
 			if (requestUrl == null)
 			{
-				return (null, new ProgramError("url cannot be empty", goalStep, function));
+				return (null, new ProgramError("url cannot be empty", goalStep, methodExecution));
 			}
 			if (!requestUrl.ToString().ToLower().StartsWith("http"))
 			{
@@ -313,7 +313,7 @@ namespace PLang.Modules.HttpModule
 					{
 						errorBody = $"{response.ReasonPhrase} ({(int) response.StatusCode})";
 					}
-					return (null, new ProgramError(errorBody, goalStep, function, StatusCode: (int) response.StatusCode));
+					return (null, new ProgramError(errorBody, goalStep, methodExecution, StatusCode: (int) response.StatusCode));
 				}
 
 				var mediaType = response.Content.Headers.ContentType?.MediaType;
@@ -332,7 +332,7 @@ namespace PLang.Modules.HttpModule
 					}
 					catch (Exception ex)
 					{
-						return (null, new ProgramError(ex.Message, goalStep, function));
+						return (null, new ProgramError(ex.Message, goalStep, methodExecution));
 					}
 				}
 				else if (IsXml(response.Content.Headers.ContentType?.MediaType))

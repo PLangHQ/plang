@@ -258,7 +258,7 @@ namespace PLangTests
 			var testResponse = GetLlmTestResponse(stepText, caller);
 			if (testResponse == null) return null;
 
-			if (type == null) type = typeof(GenericFunction);
+			if (type == null) type = typeof(MethodExecution);
 
 			var llmService = Substitute.For<ILlmService>();
 			llmService.Query(Arg.Any<LlmRequest>(), type).Returns(p =>

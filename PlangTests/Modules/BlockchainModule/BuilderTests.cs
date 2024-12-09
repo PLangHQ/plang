@@ -88,7 +88,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var step = GetStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Action as BaseBuilder.MethodExecution;
 
 			Store(text, instruction.LlmRequest.RawResponse);
 			Assert.AreEqual("GetRpcServers", gf.FunctionName);
@@ -104,7 +104,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var step = GetStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Action as BaseBuilder.MethodExecution;
 
 			Store(text,instruction.LlmRequest.RawResponse);
 			
@@ -129,7 +129,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var step = GetStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Action as BaseBuilder.MethodExecution;
 
 			Store(text,instruction.LlmRequest.RawResponse);
 			//Assert.AreEqual("1", instruction.LlmQuestion.RawResponse);
@@ -153,7 +153,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			SetupResponse(text);
 			var step = GetStep(text);
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Action as BaseBuilder.MethodExecution;
 
 			Store(text, instruction.LlmRequest.RawResponse);
 
@@ -171,7 +171,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var step = GetStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Action as BaseBuilder.MethodExecution;
 			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("GetWallets", gf.FunctionName);
@@ -194,7 +194,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var step = GetStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Action as BaseBuilder.MethodExecution;
 			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("SetCurrentWallet", gf.FunctionName);
@@ -219,7 +219,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var step = GetStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Action as BaseBuilder.MethodExecution;
 			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("GetOrCreateWallet", gf.FunctionName);
@@ -242,7 +242,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var step = GetStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Action as BaseBuilder.MethodExecution;
 			Store(text, instruction.LlmRequest.RawResponse);
 
 			Assert.AreEqual("SetCurrentAddress", gf.FunctionName);
@@ -265,7 +265,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var step = GetStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Action as BaseBuilder.MethodExecution;
 
 			Store(text, instruction.LlmRequest.RawResponse);
 			
@@ -286,7 +286,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var step = GetStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Action as BaseBuilder.MethodExecution;
 
 			Store(text, instruction.LlmRequest.RawResponse); 
 			
@@ -312,7 +312,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var step = GetStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Action as BaseBuilder.MethodExecution;
 
 			Store(text, instruction.LlmRequest.RawResponse);
 			
@@ -333,7 +333,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 
 			var step = GetStep(text);
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Action as BaseBuilder.MethodExecution;
 
 			Store(text, instruction.LlmRequest.RawResponse);
 			
@@ -355,7 +355,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var step = GetStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Action as BaseBuilder.MethodExecution;
 
 			Store(text, instruction.LlmRequest.RawResponse);
 			
@@ -382,7 +382,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var step = GetStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Action as BaseBuilder.MethodExecution;
 
 			Store(text, instruction.LlmRequest.RawResponse);
 			

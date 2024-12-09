@@ -107,7 +107,7 @@ namespace PLang.Modules.UiModule
 			if (cssSelectors == null || cssSelectors.Length == 0)
 			{
 				return new ProgramError("You haven't defined any target element. Either remove the step to use the default target or define a target"
-					, goalStep, function,
+					, goalStep, methodExecution,
 					FixSuggestion: $@"Here are examples of how to write step to target an element:
 	- append content to #chatWindow
 	- replace everyting in #main

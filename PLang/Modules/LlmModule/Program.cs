@@ -212,7 +212,7 @@ namespace PLang.Modules.LlmModule
 				context.AddOrReplace(PreviousConversationKey, promptMessages);
 				context.AddOrReplace(PreviousConversationSchemeKey, scheme);
 
-				if (function == null || function.ReturnValues == null || function.ReturnValues.Count == 0)
+				if (methodExecution == null || methodExecution.ReturnValues == null || methodExecution.ReturnValues.Count == 0)
 				{
 					if (response is JObject)
 					{
@@ -232,10 +232,10 @@ namespace PLang.Modules.LlmModule
 					}
 				}
 
-				if (function != null && function.ReturnValues != null && function.ReturnValues.Count > 0)
+				if (methodExecution != null && methodExecution.ReturnValues != null && methodExecution.ReturnValues.Count > 0)
 				{
 					var returnDict = new ReturnDictionary<string, object?>();
-					foreach (var returnValue in function.ReturnValues)
+					foreach (var returnValue in methodExecution.ReturnValues)
 					{
 						returnDict.AddOrReplace(returnValue.VariableName, response);
 					}
@@ -245,7 +245,7 @@ namespace PLang.Modules.LlmModule
 			}
 			catch (Exception ex)
 			{
-				error = new ProgramError(ex.Message, goalStep, function);
+				error = new ProgramError(ex.Message, goalStep, methodExecution);
 			} finally {
 				LogLevel logLevel = LogLevel.Trace;
 				Enum.TryParse(loggerLevel, true, out logLevel);

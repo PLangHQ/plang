@@ -113,15 +113,15 @@ namespace PLang.Modules.WebserverModule
 				webserverInfo = listeners.FirstOrDefault(p => p.WebserverName == webserverName);
 				if (webserverInfo == null)
 				{
-					return new ProgramError($"Could not find {webserverName} webserver. Are you defining the correct name?", goalStep, function);
+					return new ProgramError($"Could not find {webserverName} webserver. Are you defining the correct name?", goalStep, methodExecution);
 				}
 			} else if (listeners.Count > 1)
 			{
-				return new ProgramError($"There are {listeners.Count} servers, please define which webserver you want to assign this routing to.", goalStep, function,
+				return new ProgramError($"There are {listeners.Count} servers, please define which webserver you want to assign this routing to.", goalStep, methodExecution,
 						FixSuggestion: $"rewrite the step to include the server name e.g. `- {goalStep.Text}, on {listeners[0].WebserverName} webserver");
 			} else if (listeners.Count == 0)
 			{
-				return new ProgramError($"There are 0 servers, please define a webserver.", goalStep, function,
+				return new ProgramError($"There are 0 servers, please define a webserver.", goalStep, methodExecution,
 						FixSuggestion: $"create a step before adding a route e.g. `- start webserver");
 			}
 

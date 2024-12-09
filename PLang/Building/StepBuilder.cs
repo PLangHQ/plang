@@ -163,7 +163,7 @@ namespace PLang.Building
 			// lets load the return value into memoryStack
 			if (action.Contains("ReturnValues"))
 			{
-				var gf = JsonConvert.DeserializeObject<GenericFunction>(action);
+				var gf = JsonConvert.DeserializeObject<MethodExecution>(action);
 				LoadVariablesIntoMemoryStack(gf, memoryStack, context, settings);
 			}
 			else if (action.Contains("OutParameterDefinition"))
@@ -393,7 +393,7 @@ You might not need to map the error handling or cache handler if this service is
 			bool canBeAsync = true;
 
 			var moduleType = typeHelper.GetRuntimeType(step.ModuleType);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Action as MethodExecution;
 			if (moduleType != null && gf != null)
 			{
 				var method = moduleType.GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(p => p.Name == gf.FunctionName);
@@ -482,7 +482,7 @@ Be Concise
 			return llmRequest;
 		}
 
-		public void LoadVariablesIntoMemoryStack(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
+		public void LoadVariablesIntoMemoryStack(MethodExecution? gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
 		{
 			if (gf == null) return;
 
@@ -496,7 +496,7 @@ Be Concise
 
 			LoadParameters(gf, memoryStack, context, settings);
 		}
-		private void LoadParameters(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
+		private void LoadParameters(MethodExecution? gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
 		{
 			// todo: hack for now, should be able to load dynamically variables that are being set at build time
 			// might have to structure the build

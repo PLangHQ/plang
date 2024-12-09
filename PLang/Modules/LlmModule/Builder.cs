@@ -138,7 +138,7 @@ or url
                 return (null, buildError ?? new StepBuilderError("Could not build step", step));
             }
 
-			var genericFunction = instruction.Action as GenericFunction;
+			var genericFunction = instruction.Action as MethodExecution;
 			if (genericFunction != null)
 			{
 				var scheme = genericFunction.Parameters.FirstOrDefault(p => p.Name == "scheme");

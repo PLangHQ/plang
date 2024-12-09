@@ -15,8 +15,15 @@ namespace PLang.Building.Model
 	{
 		public string? Text { get; set; }
 		public bool Reload { get; set; }
-		public LlmRequest LlmRequest { get; set; }
+		public LlmRequest? LlmRequest { get; set; }
 		public bool RunOnBuild { get; set; }
+
+		public MethodExecution? GetMethodExecution()
+		{
+			if (string.IsNullOrEmpty(Action.ToString())) return null;
+			return JsonConvert.DeserializeObject<MethodExecution>(Action.ToString());
+		}
+		/*
 		public GenericFunction[] GetFunctions()
 		{
 			try
@@ -39,6 +46,6 @@ namespace PLang.Building.Model
 			{
 				throw;
 			}
-		}
+		}*/
 	};
 }

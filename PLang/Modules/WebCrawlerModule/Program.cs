@@ -496,7 +496,7 @@ namespace PLang.Modules.WebCrawlerModule
 
 		public async Task<(ReadOnlyCollection<IWebElement>?, IError?)> GetElementsInsideElement(string elementName, IWebElement element)
 		{
-			if (element == null) return (null, new ProgramError("You must send in element to look inside", goalStep, function));
+			if (element == null) return (null, new ProgramError("You must send in element to look inside", goalStep, methodExecution));
 
 			return (element.FindElements(By.CssSelector(elementName)), null);
 		}
@@ -624,7 +624,7 @@ namespace PLang.Modules.WebCrawlerModule
 
 			if (string.IsNullOrWhiteSpace(saveToPath))
 			{
-				return new ProgramError("The path where to save the screenshot cannot be empty", goalStep, function);
+				return new ProgramError("The path where to save the screenshot cannot be empty", goalStep, methodExecution);
 			}
 
 			var absolutePath = GetPath(saveToPath);
@@ -636,7 +636,7 @@ namespace PLang.Modules.WebCrawlerModule
 
 			if (!overwrite && fileSystem.File.Exists(absolutePath))
 			{
-				return new ProgramError("File exists and will not be overwritten.", goalStep, function, FixSuggestion: $"Rewrite your step to include that you want to overwrite the file, e.g. `- {goalStep.Text}, overwrite`");
+				return new ProgramError("File exists and will not be overwritten.", goalStep, methodExecution, FixSuggestion: $"Rewrite your step to include that you want to overwrite the file, e.g. `- {goalStep.Text}, overwrite`");
 			}
 
 			var driver = await GetDriver();

@@ -48,14 +48,14 @@ namespace PLang.Modules.DbModule
 		}
 
 		public record FunctionInfo(string DatabaseType, string FunctionName, string[]? TableNames = null);
-		public record DbGenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValue = null, string? Warning = null) : GenericFunction(FunctionName, Parameters, ReturnValue);
+		public record DbGenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValue = null, string? Warning = null) : MethodExecution(FunctionName, Parameters, ReturnValue);
 		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep goalStep)
 		{
 			moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger, typeHelper);
 			(var buildInstruction, var buildError) = await base.Build(goalStep);
 			if (buildError != null) return (null, buildError);
 
-			var gf = buildInstruction.Action as GenericFunction;
+			var gf = buildInstruction.Action as MethodExecution;
 			if (gf != null && gf.FunctionName == "CreateDataSource")
 			{
 				await CreateDataSource(gf);
@@ -152,7 +152,7 @@ You MUST provide Parameters if SQL has @parameter.
 
 		}
 
-		private async Task SetDataSourceName(GenericFunction gf)
+		private async Task SetDataSourceName(MethodExecution gf)
 		{
 			var parameter = gf.Parameters.FirstOrDefault(p => p.Name == "name");
 			if (parameter == null) return;
@@ -166,7 +166,7 @@ You MUST provide Parameters if SQL has @parameter.
 
 		}
 
-		private async Task CreateDataSource(GenericFunction gf)
+		private async Task CreateDataSource(MethodExecution gf)
 		{
 			var dataSourceName = gf.Parameters.FirstOrDefault(p => p.Name == "name");
 			if (dataSourceName == null || dataSourceName.Value == null || string.IsNullOrEmpty(dataSourceName.Value.ToString()))

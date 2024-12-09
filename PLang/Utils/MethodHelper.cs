@@ -5,6 +5,7 @@ using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Errors.Handlers;
+using PLang.Errors.Methods;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
@@ -38,15 +39,15 @@ namespace PLang.Utils
 			this.llmServiceFactory = llmServiceFactory;
 		}
 
-		public async Task<MethodInfo?> GetMethod(object callingInstance, GenericFunction function)
+		public async Task<MethodInfo?> GetMethod(object callingInstance, MethodExecution methodExecution)
 		{
-			string cacheKey = callingInstance.GetType().FullName + "_" + function.FunctionName;
+			string cacheKey = callingInstance.GetType().FullName + "_" + methodExecution.MethodName;
 
 			var methods = callingInstance.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
 			string? error = null;
 			var method = methods.FirstOrDefault(p => {
-				if (p.Name == function.FunctionName) {
-					error = IsParameterMatch(p, function.Parameters);
+				if (p.Name == methodExecution.MethodName) {
+					error = IsParameterMatch(p, methodExecution.Parameters);
 					if (error == null) return true;
 				}
 
@@ -54,13 +55,13 @@ namespace PLang.Utils
 			});
 			if (method != null) return method;
 
-			throw new MissingMethodException($"Method {function.FunctionName} could not be found that matches with your statement. " + error);
+			throw new MissingMethodException($"Method {methodExecution.FunctionName} could not be found that matches with your statement. " + error);
 			//await HandleMethodNotFound(callingInstance, function);
 			return null;
 		}
 
 
-		private async Task HandleMethodNotFound(object callingInstance, GenericFunction function)
+		private async Task HandleMethodNotFound(object callingInstance, Modules.BaseBuilder.MethodExecution function)
 		{
 			throw new MissingMethodException($"Method {function.FunctionName} could not be found that is defined in your instruction file.");
 
@@ -93,7 +94,7 @@ example of answer:
 		public record MethodNotFoundResponse(string Text);
 
 
-		public GroupedBuildErrors? ValidateFunctions(GenericFunction[] functions, string module, MemoryStack memoryStack)
+		public GroupedBuildErrors? ValidateFunctions(Modules.BaseBuilder.MethodExecution[] functions, string module, MemoryStack memoryStack)
 		{
 			var multipleError = new GroupedBuildErrors("InvalidFunction");
 			if (functions == null || functions[0] == null) return null;
@@ -149,7 +150,7 @@ example of answer:
 
 
 
-		public string? IsParameterMatch(MethodInfo p, List<Parameter> parameters)
+		public string? IsParameterMatch(MethodInfo p, List<ParameterDescriptionResponse> parameters)
 		{
 			string? error = null;
 			foreach (var methodParameter in p.GetParameters())
@@ -206,7 +207,7 @@ example of answer:
 			return error;
 		}
 
-		public Dictionary<string, object?> GetParameterValues(MethodInfo method, GenericFunction function)
+		public Dictionary<string, object?> GetParameterValues(MethodInfo method, MethodExecution function)
 		{
 			var parameterValues = new Dictionary<string, object?>();
 			var parameters = method.GetParameters();
@@ -598,6 +599,63 @@ example of answer:
 				}
 				return parameterInfo.DefaultValue;
 			}
+		}
+
+
+
+		public (bool IsValid, MultipleError? Errors) IsMethodExecutionValid(MethodExecution? methodResponse, string moduleType)
+		{
+
+			var type = typeHelper.GetRuntimeType(moduleType);
+
+			var methodInfos = type.GetMethods().Where(m => m.Name == methodResponse.MethodName);
+			if (!methodInfos.Any())
+				return (false,
+					new MultipleError(new MethodNotFoundError($"Method {methodResponse.MethodName} not found.",
+						methodResponse.MethodName, type)));
+
+			MultipleError methodErrors = null;
+			foreach (var methodInfo in methodInfos)
+			{
+				MultipleError me = null;
+				bool validMethod = true;
+				foreach (var parameter in methodInfo.GetParameters())
+				{
+					var obj = methodResponse.GetParameter(parameter.Name, parameter.ParameterType);
+					if (obj.Error != null)
+					{
+						validMethod = false;
+						if (me == null)
+						{
+							me = new MultipleError(obj.Error);
+						}
+						else
+						{
+							me.Add(obj.Error);
+						}
+					}
+				}
+
+				if (validMethod)
+				{
+					return (true, null);
+				}
+				else
+				{
+					if (methodErrors == null)
+					{
+						methodErrors = new MultipleError(new MethodNotMatchingWithParametersError(
+							$"Method {methodInfo.Name} could not be match with parameters.", methodInfo.Name, type, me));
+					}
+					else
+					{
+						methodErrors.Add(new MethodNotMatchingWithParametersError(
+							$"Method {methodInfo.Name} could not be match with parameters.", methodInfo.Name, type, me));
+					}
+				}
+			}
+
+			return ((methodErrors == null), methodErrors);
 		}
 	}
 }

@@ -64,7 +64,7 @@ namespace PLang.Modules
 		}
 		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step)
 		{
-			return await Build(step, typeof(GenericFunction));
+			return await Build(step, typeof(MethodExecution));
 		}
 
 		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, Type? responseType = null, string? errorMessage = null, int errorCount = 0)
@@ -78,7 +78,7 @@ namespace PLang.Modules
 				logger.LogWarning("Couldn't handle response from LLM, trying again");
 			}
 
-			if (responseType == null) responseType = typeof(MethodResponse);
+			if (responseType == null) responseType = typeof(MethodExecution);
 
 			var question = GetLlmRequest(step, responseType, errorMessage);
 			question.Reload = step.Reload;
@@ -91,7 +91,7 @@ namespace PLang.Modules
 				{
 					return (null, new StepBuilderError($"Could not build for {responseType.Name}", step));
 				}
-				if (result is GenericFunction gf && gf.FunctionName == "N/A" && errorCount >= 3)
+				if (result is MethodExecution gf && gf.MethodName == "N/A" && errorCount >= 3)
 				{
 					return (null, new StepBuilderError($"Could find function to match step in module {step.ModuleType}", step));
 				}
@@ -100,29 +100,19 @@ namespace PLang.Modules
 				instruction.LlmRequest = question;
 
 				var methodHelper = new MethodHelper(step, variableHelper, memoryStack, typeHelper, llmServiceFactory);
-				var invalidFunctions = methodHelper.ValidateFunctions(instruction.GetFunctions(), step.ModuleType, memoryStack);
+				var validation = methodHelper.IsMethodExecutionValid(instruction.GetMethodExecution(), step.ModuleType);
 
-				if (invalidFunctions != null)
+				if (!validation.IsValid)
 				{
-					if (invalidFunctions.Key == "N/A")
-					{
-						return (null, invalidFunctions);
-					}
-
 					errorMessage = @$"## Error from previous LLM request ## 
-Previous response from LLM caused error. This was your response.
-{Newtonsoft.Json.JsonConvert.SerializeObject(instruction.Action)}
+Previous response from LLM caused <error>. 
+<error>
+{validation.Errors.ToString()}
+<error>
 
-This is the error(s)
-";
-					foreach (var invalidFunction in invalidFunctions.Errors)
-					{
-						errorMessage += " - " + invalidFunction.Message;
-					}
-					errorMessage += $@"Make sure to fix the error and return valid JSON response
+Make sure to fix the error and return valid JSON response
 ## Error from previous LLM request ##
-
-				";
+";					
 					return await Build(step, responseType, errorMessage, ++errorCount);
 				}
 
@@ -154,11 +144,11 @@ Make sure to use the information in <error> to return valid JSON response"
 , ++errorCount);
 			}
 		}
-
+		/*
 		public record Parameter(string Type, string Name, object? Value);
 		public record ReturnValue(string Type, string VariableName);
-		public record GenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValues = null);
-
+		public record MethodExecution(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValues = null);
+		*/
 		public void AppendToSystemCommand(string appendedSystemCommand)
 		{
 			this.appendedSystemCommand.Add(appendedSystemCommand);

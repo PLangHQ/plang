@@ -255,7 +255,7 @@ namespace PLang.Modules.DbModule
 							if (parameterName == "id" && eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
 							{
 								var dataSource = moduleSettings.GetCurrentDataSource().Result;
-								multipleErrors.Add(new ProgramError($"Parameter @id is empty. Are you on the right data source? Current data source is {dataSource.Name}", goalStep, function));
+								multipleErrors.Add(new ProgramError($"Parameter @id is empty. Are you on the right data source? Current data source is {dataSource.Name}", goalStep, methodExecution));
 							}
 							multipleErrors.Add(error);
 						}
@@ -451,10 +451,10 @@ namespace PLang.Modules.DbModule
 
 			if (result.rows.Count == 0)
 			{
-				if (this.function == null || this.function.ReturnValues == null || this.function.ReturnValues.Count == 1) return (null, null);
+				if (this.methodExecution == null || this.methodExecution.ReturnValues == null || this.methodExecution.ReturnValues.Count == 1) return (null, null);
 
 				var dict = new ReturnDictionary<string, object?>();
-				foreach (var rv in this.function.ReturnValues)
+				foreach (var rv in this.methodExecution.ReturnValues)
 				{
 					dict.Add(rv.VariableName, GetDefaultValue(rv.Type));
 				}
@@ -582,7 +582,7 @@ namespace PLang.Modules.DbModule
 					ShowWarning(ex);
 					return (rowsAffected, null);
 				}
-				return (0, new ProgramError(ex.Message, goalStep, function, Exception: ex));
+				return (0, new ProgramError(ex.Message, goalStep, methodExecution, Exception: ex));
 			}
 			finally
 			{
