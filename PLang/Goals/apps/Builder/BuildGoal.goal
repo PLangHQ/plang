@@ -1,0 +1,47 @@
+BuildGoal
+- get goal in %file%, write to %goals%
+- foreach %goals%, call BuildStep %goal%=item
+
+BuildStep
+- foreach %goal.GoalSteps%, call BuildAction %step%=item
+- write %goal% to "%goal.RelativeGoalPath%"
+
+BuildAction
+- [plang] get available modules for %step.Text%, write to %modules%
+- read llm/buildActionSelectModuleSystem.txt, load vars, write to %selectModuleSystem%
+- [llm] system:%selectModuleSystem%
+        user: %step.Text%
+        scheme: {moduleName:string, prFileName:string}
+        write to %selectedModule%
+- if %selectedModule.moduleName% == "N/A" then
+    - throw error "Could not find module for %step.Text%"
+- get available methods in %selectedModule.moduleName%, write to %methods%
+- ready llm/buildActionSelectMethodSystem.txt, load vars, write to %selectMethodSystem%
+- [llm] system: %selectMethodSystem%
+        user: %step.Text%
+        scheme: {methodName:string}
+        write to %selectedMethod%
+- if %selectedMethod.methodName% == "N/A" then
+    - append to string list %excludedModules% = %selectedModule.moduleName%
+    - call !BuildAction
+    - end goal
+- get method description from %selectedMethod.methodName% in %selectedModule.moduleName%, write to %methodDescription%
+- get method mapping scheme, write to %scheme%
+- read llm/buildActionMapToMethodSystem.txt, load vars, write to %system%
+- [llm] system: %system%
+    user: %step.Text%
+    response type : json
+    scheme: %scheme%
+    write to %action%
+- set %stepInfo% = {
+        ModuleName:%selectedModule.moduleName%,
+        MethodName:%selectedMethod.methodName%,
+        Action: %action%,
+        StepIndex: %step.Index%,
+        Text: %step.Text%,
+        Indent: %step.Indent%,
+        Comment: %step.Comment%
+    }
+- set %goal.GoalSteps[position].PrFileName% = %prFileName%
+    %goal.GoalSteps[position].RelativePrFileName% = %relativePrFileName%
+- write %stepInfo% to %step.RelativePrPath%

@@ -151,7 +151,7 @@ or url
 					return await Build(step, error, ++errorCount);
 				}
 
-				if (scheme != null && scheme.Value != null && responseType == "json" && !JsonHelper.LookAsJsonScheme(scheme.Value.ToString()))
+				if (scheme != null && scheme.Value != null && !VariableHelper.IsVariable(scheme.Value) && responseType == "json" && !JsonHelper.LookAsJsonScheme(scheme.Value.ToString()))
 				{
 					if (errorCount < 2)
 					{

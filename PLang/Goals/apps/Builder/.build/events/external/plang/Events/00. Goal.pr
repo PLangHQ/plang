@@ -14,7 +14,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-01-13T20:19:31.6630629+00:00",
+      "Generated": "2024-12-09T18:46:43.754053+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -57,7 +57,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-01-13T20:19:31.66946+00:00",
+      "Generated": "2024-12-09T18:46:43.7655912+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -77,49 +77,6 @@
           "Value": "/events/external/plang/Runtime/SendDebug"
         },
         "IncludePrivate": true,
-        "StepNumber": null,
-        "StepText": null,
-        "WaitForExecution": true,
-        "RunOnlyOnStartParameter": [
-          "--debug"
-        ],
-        "OnErrorContinueNextStep": false
-      },
-      "IsEvent": true,
-      "Hash": null,
-      "BuilderVersion": null
-    },
-    {
-      "Text": "on app start, call !/events/external/plang/Runtime/Runtime, parameter --debug",
-      "Comment": null,
-      "ModuleType": null,
-      "Name": null,
-      "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\external\\plang\\Events\\Events.pr",
-      "Indent": 0,
-      "Execute": true,
-      "RunOnce": false,
-      "Generated": "2025-01-13T20:19:31.6761582+00:00",
-      "WaitForExecution": true,
-      "LoggerLevel": null,
-      "ErrorHandlers": null,
-      "CacheHandler": null,
-      "CancellationHandler": null,
-      "Custom": {},
-      "Number": 2,
-      "LineNumber": 4,
-      "LlmRequest": null,
-      "EventBinding": {
-        "EventType": "After",
-        "EventScope": "StartOfApp",
-        "GoalToBindTo": {
-          "Value": "*"
-        },
-        "GoalToCall": {
-          "Value": "/events/external/plang/Runtime/Runtime"
-        },
-        "IncludePrivate": false,
         "StepNumber": null,
         "StepText": null,
         "WaitForExecution": true,
