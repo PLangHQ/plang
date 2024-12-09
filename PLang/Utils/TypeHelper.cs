@@ -565,4 +565,421 @@ namespace PLang.Utils
 			}
 		}
 	}
-}
+
+	
+        public static (MethodDescription?, IBuilderError?) GetMethodDescription(Type type, string methodName)
+		{
+			var method = type.GetMethods().FirstOrDefault(m => m.Name == methodName);
+			if (method == null)
+				return (null, new BuilderError($"Method {methodName} not found in type {type.FullName}."));
+
+			string? methodDescription = null;
+			var descAttribute =
+				method.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
+			if (descAttribute != null)
+			{
+				methodDescription = descAttribute.ConstructorArguments[0].Value as string;
+			}
+
+			var parameters = method.GetParameters();
+
+			var paramsDesc = GetParameterDescriptions(parameters);
+			if (paramsDesc.Error != null) return (null, paramsDesc.Error);
+
+			var returnValueInfo = GetReturnValue(method);
+
+			var md = new MethodDescription()
+			{
+				Description = methodDescription,
+				MethodName = method.Name,
+				Parameters = paramsDesc.ParameterDescriptions!,
+				ReturnValue = returnValueInfo,
+			};
+
+			return (md, null);
+		}
+
+		private static ReturnValue? GetReturnValue(MethodInfo method)
+		{
+			if (method.ReturnType.GenericTypeArguments.Length > 0)
+			{
+				if (method.ReturnType.GenericTypeArguments[0].Name.StartsWith("Tuple"))
+				{
+					var type = method.ReturnType.GenericTypeArguments[0].GenericTypeArguments
+						.FirstOrDefault(p => !typeof(IError).IsAssignableFrom(p));
+					if (type != null && type.FullName != null)
+					{
+						return new ReturnValue()
+						{
+							Type = type.FullName
+						};
+					}
+				}
+				else
+				{
+					return new ReturnValue()
+					{
+						Type = method.ReturnType.GenericTypeArguments[0].FullName
+					};
+				}
+			}
+
+			return null;
+		}
+
+		public static object? GetParameterInfoDefaultValue(ParameterInfo parameterInfo)
+		{
+			if (parameterInfo.HasDefaultValue) return parameterInfo.DefaultValue;
+
+			var attribute = parameterInfo.GetCustomAttribute<System.ComponentModel.DefaultValueAttribute>();
+			if (attribute != null)
+			{
+				return attribute.Value ?? "null";
+			}
+
+			if (!parameterInfo.HasDefaultValue && parameterInfo.ParameterType.ToString() != "System.Object")
+			{
+				var constructors = parameterInfo.ParameterType.GetConstructors();
+				constructors = constructors.Where(c => c.GetParameters().Length == 0).ToArray();
+				if (constructors.Length > 0)
+				{
+					return Activator.CreateInstance(parameterInfo.ParameterType);
+				}
+			}
+
+			return null;
+		}
+
+		private static (List<IPropertyDescription>? ParameterDescriptions, IBuilderError? Error) GetParameterDescriptions(ParameterInfo[] parameters)
+		{
+			List<IPropertyDescription> parametersDescriptions = new();
+			foreach (var parameterInfo in parameters)
+			{
+				if (parameterInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "JsonIgnoreAttribute") !=
+					null) continue;
+
+				if (string.IsNullOrWhiteSpace(parameterInfo.Name))
+				{
+					return (null, new BuilderError($"Parameter '{parameterInfo.Name}' has no name."));
+				}
+
+				if (parameterInfo.ParameterType == typeof(List<object>))
+				{
+					return (null, new BuilderError($"Parameter '{parameterInfo.Name}' is List<object>. It cannot be a unclear object, it must be a defined class"));
+				}
+
+				object? defaultValue = GetParameterInfoDefaultValue(parameterInfo);
+
+				IPropertyDescription pd;
+				if (IsConsideredPrimitive(parameterInfo.ParameterType))
+				{
+					pd = new PrimitiveDescription
+					{
+						Type = parameterInfo.ParameterType.ToString(),
+						Name = parameterInfo.Name,
+						DefaultValue = defaultValue
+					};
+				}
+				else if (parameterInfo.ParameterType.IsEnum)
+				{
+					var enums = Enum.GetNames(parameterInfo.ParameterType);
+					var defaultEnum = (defaultValue != null) ? Enum.Parse(parameterInfo.ParameterType, defaultValue.ToString()) : defaultValue;
+					pd = new EnumDescription()
+					{
+						Type = parameterInfo.ParameterType.ToString(),
+						Name = parameterInfo.Name,
+						AvailableValues = string.Join("|", enums),
+						DefaultValue = defaultEnum
+					};
+				}
+				else
+				{
+					Type item = parameterInfo.ParameterType;
+					if (parameterInfo.ParameterType.Name == "List`1")
+					{
+						item = parameterInfo.ParameterType.GenericTypeArguments[0];
+					}
+
+
+					object? instance = null;
+					if (item.ToString() != "System.Object")
+					{
+						var constructors = item.GetConstructors();
+						constructors = constructors.Where(c => c.GetParameters().Length == 0).ToArray();
+						if (constructors.Length > 0)
+						{
+							instance = Activator.CreateInstance(item);
+						}
+					}
+
+					pd = new ComplexDescription()
+					{
+						Type = parameterInfo.ParameterType.ToString(),
+						Name = parameterInfo.Name,
+						TypeProperties = GetPropertyInfos(item.GetProperties(), instance)
+					};
+				}
+
+
+				if (parameterInfo.CustomAttributes.FirstOrDefault(p =>
+						p.AttributeType.Name is "NullableAttribute" or "OptionalAttribute") != null)
+				{
+					//pd.Defa = false;
+				}
+
+
+				if (parameterInfo.ParameterType == typeof(List<string>))
+				{
+					pd.Type = "List<string>";
+				}
+				else if (parameterInfo.ParameterType.FullName != null &&
+						 parameterInfo.ParameterType.FullName.StartsWith("System.Collections.Generic.Dictionary"))
+				{
+					pd.Type =
+						$"Dictionary<{parameterInfo.ParameterType.GenericTypeArguments[0].Name}, {parameterInfo.ParameterType.GenericTypeArguments[1].Name}>";
+				}
+				else if (parameterInfo.ParameterType.Name == "Nullable`1")
+				{
+					//pd.IsRequired = false;
+				}
+
+
+
+				var description =
+					parameterInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
+				if (description != null)
+				{
+					pd.Description += description.ConstructorArguments[0].Value;
+				}
+
+				parametersDescriptions.Add(pd);
+			}
+
+			return (parametersDescriptions, null);
+		}
+
+		private static List<IPropertyDescription>? GetPropertyInfos(PropertyInfo[] properties, object? instance)
+		{
+			List<IPropertyDescription> parameterDescriptions = new();
+			foreach (var propertyInfo in properties)
+			{
+
+
+				if (!propertyInfo.CanWrite || propertyInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "JsonIgnoreAttribute") !=
+					null) continue;
+
+				var propertyType = propertyInfo.PropertyType;
+				if (propertyInfo.PropertyType.Name.StartsWith("Nullable`1"))
+				{
+					propertyType = propertyInfo.PropertyType.GenericTypeArguments[0];
+				}
+
+				object? defaultValue = null;
+				if (instance != null)
+				{
+					try
+					{
+						defaultValue = instance.GetType().GetProperty(propertyType.Name)?.GetValue(instance);
+					}
+					catch
+					{
+						// ignored
+					}
+				}
+
+				IPropertyDescription pd;
+				if (IsConsideredPrimitive(propertyType))
+				{
+					pd = new PrimitiveDescription
+					{
+						Type = propertyInfo.PropertyType.ToString(),
+						Name = propertyInfo.Name,
+						DefaultValue = defaultValue
+					};
+				}
+				else if (propertyType.IsEnum)
+				{
+					var enums = Enum.GetNames(propertyType);
+					var defaultEnum = (defaultValue != null) ? Enum.Parse(propertyType, defaultValue.ToString()) : defaultValue;
+					pd = new EnumDescription()
+					{
+						Type = propertyInfo.PropertyType.ToString(),
+						Name = propertyInfo.Name,
+						AvailableValues = string.Join("|", enums),
+						DefaultValue = defaultEnum
+					};
+				}
+				else
+				{
+					object? instance2 = null;
+					if (propertyType.ToString() != "System.Object")
+					{
+						var constructors = propertyType.GetConstructors();
+						constructors = constructors.Where(c => c.GetParameters().Length == 0).ToArray();
+						if (constructors.Length > 0)
+						{
+							instance2 = Activator.CreateInstance(propertyType);
+						}
+					}
+
+					pd = new ComplexDescription()
+					{
+						Type = propertyType.ToString(),
+						Name = propertyInfo.Name,
+						TypeProperties = GetPropertyInfos(propertyType.GetProperties(), instance2)
+					};
+				}
+
+				if (propertyInfo.CustomAttributes.FirstOrDefault(p =>
+						p.AttributeType.Name is "NullableAttribute" or "OptionalAttribute") != null)
+				{
+					//  pd.IsRequired = false;
+				}
+
+
+				if (propertyType == typeof(List<string>))
+				{
+					pd.Type = "List<string>";
+				}
+				else if (propertyType.FullName != null &&
+						 propertyType.FullName.StartsWith("System.Collections.Generic.Dictionary"))
+				{
+					pd.Type =
+						$"Dictionary<{propertyType.GenericTypeArguments[0].Name}, {propertyType.GenericTypeArguments[1].Name}>";
+				}
+
+				var description =
+					propertyInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
+				if (description != null)
+				{
+					pd.Description += description.ConstructorArguments[0].Value;
+				}
+
+				parameterDescriptions.Add(pd);
+			}
+
+			return (parameterDescriptions.Count > 0) ? parameterDescriptions : null;
+		}
+
+		private static bool IsConsideredPrimitive(Type type)
+		{
+
+			return type.IsPrimitive ||
+				   type == typeof(string) ||
+				   type == typeof(DateTime) ||
+				   type == typeof(Guid) ||
+				   type == typeof(TimeSpan) ||
+				   type == typeof(Uri) ||
+				   type == typeof(decimal) ||
+				   type == typeof(BigInteger) ||
+				   type == typeof(Version);
+		}
+
+		public static (string?, IBuilderError?) GetMethodAsJson(Type type, string methodName)
+		{
+			var method = type.GetMethods().FirstOrDefault(m => m.Name == methodName);
+			if (method == null)
+				return (null, new BuilderError($"Method {methodName} not found in type {type.FullName}."));
+
+			var parameters = method.GetParameters();
+			var nl = Environment.NewLine;
+
+			string json = $@"{{{nl}""MethodName"": ""{methodName}"",{nl}""Parameters"": {nl}[";
+			foreach (var prop in parameters)
+			{
+				//var defaultValue = Activator.CreateInstance();
+				if (prop.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "JsonIgnoreAttribute") !=
+					null) continue;
+
+				json += $@"{{""Type"": ""{prop.ParameterType.ToString()}""\n""Name""";
+				var propName = "\t\"" + prop.Name + "\"";
+				if (prop.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "NullableAttribute") != null)
+				{
+					propName += "?";
+				}
+
+				if (json.Length > 2) json += ",\n";
+				if (prop.ParameterType == typeof(List<string>))
+				{
+					json += $@"{propName}: string[]";
+				}
+				else if (prop.ParameterType.FullName.StartsWith("System.Collections.Generic.Dictionary"))
+				{
+					json +=
+						$@"{propName} : {{ {prop.ParameterType.GenericTypeArguments[0].Name} : {prop.ParameterType.GenericTypeArguments[1].Name}, ... }}";
+				}
+				else if (prop.ParameterType.Name == "Nullable`1")
+				{
+					json += $@"{propName}?: {prop.ParameterType.GenericTypeArguments[0].Name}";
+				}
+				else if (prop.ParameterType.IsGenericType)
+				{
+					var args = prop.ParameterType.GetGenericArguments();
+					if (args.Length == 1)
+					{
+						json += $@"{propName}: [" + GetJsonSchema(args[0]) + "]";
+					}
+					else if (args.Length == 2)
+					{
+						json += $@"{propName}: {{ ""key"": {args[0].Name}, ""value"": {args[1].Name} }}";
+					}
+				}
+				else if (prop.ParameterType.IsClass && prop.ParameterType.Namespace.StartsWith("PLang"))
+				{
+					json += $@"{propName}: " + GetJsonSchema(prop.ParameterType);
+					/*
+                    json += $@"""{prop.Name}:"" {{";
+                    var properties = prop.PropertyType.GetProperties();
+                    for (int i=0;i<properties.Length;i++)
+                    {
+                        if (i != 0) json += ", ";
+                        json += $@"""{properties[i].Name}"": {properties[i].PropertyType.Name}";
+                    }
+                    json += "}";*/
+				}
+				else if (prop.ParameterType.IsEnum)
+				{
+					json += $@"{propName}: enum";
+					//prop.PropertyType.GetFields();
+				}
+				else if (prop.ParameterType.Namespace == type.Namespace)
+				{
+					json += $@"{propName}: " + GetJsonSchema(prop.ParameterType);
+				}
+				else
+				{
+					json += $@"{propName}: {prop.ParameterType.Name.ToLower()}";
+				}
+
+				var attribute = prop.GetCustomAttribute<System.ComponentModel.DefaultValueAttribute>();
+				if (attribute != null)
+				{
+					//schema[prop.Name] = " = " + ((DefaultValueAttribute) attribute).Value;
+					json += " = " + ((attribute.Value == null) ? "null" : attribute.Value);
+				}
+				/*
+                else if (constructorParameters != null && constructorParameters.ContainsKey(prop.Name))
+                {
+                    var item = constructorParameters[prop.Name];
+                    if (item.HasDefaultValue)
+                    {
+                        json += " = " + ((item.DefaultValue == null) ? "null" : item.DefaultValue);
+                    }
+                }*/
+				else if (prop.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "NullableAttribute") != null)
+				{
+					//json += " = null";
+				}
+
+				var description =
+					prop.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
+				if (description != null)
+				{
+					json += " // " + description.ConstructorArguments[0].Value;
+				}
+			}
+
+			string returnType = method.ReturnType.ToString();
+			return (json + @$"],\n""ReturnType"":{returnType}\n}}", null);
+		}
+	}
