@@ -1,12 +1,14 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using PLang.Building.Model;
 using PLang.Errors;
+using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Interfaces;
-using PLang.Models;
 using PLang.Modules;
 using System.Data;
+using System.Numerics;
 using System.Reflection;
-using Websocket.Client.Logging;
 
 namespace PLang.Utils
 {
@@ -22,26 +24,21 @@ namespace PLang.Utils
 		Type? GetRuntimeType(string? module);
 		string GetMethodNamesAsString(Type type, string? methodName = null);
 		List<Type> GetTypesByType(Type type);
+		List<MethodDescription> GetMethodDescriptions(Type type, string? methodName = null);
 	}
 
 	public class TypeHelper : ITypeHelper
 	{
 		private readonly IPLangFileSystem fileSystem;
-		private readonly ISettings settings;
-		private readonly DependancyHelper dependancyHelper;
 		private static List<Type> runtimeModules = new List<Type>();
-		private static List<Type> baseRuntimeModules = new List<Type>();
 		private static List<Type> builderModules = new List<Type>();
-		private static List<Type> baseBuilderModules = new List<Type>();
 
-		public TypeHelper(IPLangFileSystem fileSystem, ISettings settings, DependancyHelper dependancyHelper)
+		public TypeHelper(IPLangFileSystem fileSystem, DependancyHelper dependancyHelper)
 		{
 			runtimeModules = dependancyHelper.LoadModules(typeof(BaseProgram), fileSystem.GoalsPath);
 			builderModules = dependancyHelper.LoadModules(typeof(BaseBuilder), fileSystem.GoalsPath);
 
 			this.fileSystem = fileSystem;
-			this.settings = settings;
-			this.dependancyHelper = dependancyHelper;
 		}
 
 		private static Version GetAssemblyVersion(string filePath)
@@ -95,7 +92,8 @@ namespace PLang.Utils
 							// Add the found types to the main list
 							types.AddRange(typesFromAssembly);
 						}
-					} catch (Exception ex)
+					}
+					catch (Exception ex)
 					{
 						//Console.WriteLine(ex.Message);
 						continue;
@@ -132,44 +130,55 @@ namespace PLang.Utils
 
 			return types;
 		}
-		public string GetMethodNamesAsString(Type type, string? methodName = null)
-		{
-			if (type == null) return "";
 
+		public List<MethodDescription> GetMethodDescriptions(Type? type, string? methodName = null)
+		{
+			if (type == null) return new();
 
 			var methods = type.GetMethods().Where(p => p.DeclaringType.Name == "Program");
 			if (methodName != null)
 			{
 				methods = type.GetMethods().Where(p => p.Name == methodName);
 			}
-			List<string> methodDescs = new List<string>();
+			List<MethodDescription> methodDescs = new();
 
 			foreach (var method in methods)
 			{
+				
 				var strMethod = "";
 				if (method.Module.Name != type.Module.Name) continue;
 				if (method.Name == "Run" || method.Name == "Dispose" || method.IsSpecialName) continue;
 
-
+				var md = new MethodDescription();
+				md.MethodName = method.Name;
 
 				strMethod += method.Name;
 				var descriptions = method.CustomAttributes.Where(p => p.AttributeType.Name == "DescriptionAttribute");
 				foreach (var desc in descriptions)
 				{
-					if (!strMethod.Contains(" // ")) strMethod += " // ";
-
-					strMethod += desc.ConstructorArguments.FirstOrDefault().Value + ". ";
+					md.Description += desc.ConstructorArguments.FirstOrDefault().Value + ". ";
+					
 				}
-				methodDescs.Add(strMethod);
+				methodDescs.Add(md);
 			}
 
-			return string.Join("", methodDescs);
+			return methodDescs;
+		}
+
+		public string GetMethodNamesAsString(Type type, string? methodName = null)
+		{
+			JsonSerializerSettings settings = new JsonSerializerSettings()
+			{
+				NullValueHandling = NullValueHandling.Ignore
+			};
+			return JsonConvert.SerializeObject(GetMethodDescriptions(type, methodName), settings:settings, formatting: Formatting.None);
+
 		}
 		public string GetMethodsAsString(Type type, string? methodName = null)
 		{
 			if (type == null) return "";
 
-			
+
 			var methods = type.GetMethods().Where(p => p.DeclaringType.Name == "Program");
 			if (methodName != null)
 			{
@@ -564,10 +573,10 @@ namespace PLang.Utils
 				return value;
 			}
 		}
-	}
 
-	
-        public static (MethodDescription?, IBuilderError?) GetMethodDescription(Type type, string methodName)
+
+
+		public static (MethodDescription?, IBuilderError?) GetMethodDescription(Type type, string methodName)
 		{
 			var method = type.GetMethods().FirstOrDefault(m => m.Name == methodName);
 			if (method == null)
@@ -617,9 +626,13 @@ namespace PLang.Utils
 				}
 				else
 				{
+					var type = method.ReturnType.GenericTypeArguments[0].GenericTypeArguments
+						.FirstOrDefault(p => !typeof(IError).IsAssignableFrom(p));
+					var returnValueType = type?.FullName ?? "void";
+
 					return new ReturnValue()
 					{
-						Type = method.ReturnType.GenericTypeArguments[0].FullName
+						Type = returnValueType
 					};
 				}
 			}
@@ -983,3 +996,4 @@ namespace PLang.Utils
 			return (json + @$"],\n""ReturnType"":{returnType}\n}}", null);
 		}
 	}
+}

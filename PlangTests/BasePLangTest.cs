@@ -68,6 +68,7 @@ namespace PLangTests
 		protected IErrorSystemHandlerFactory errorSystemHandlerFactory;
 		protected ISettingsRepositoryFactory settingsRepositoryFactory;
 		protected IFileAccessHandler fileAccessHandler;
+		protected DependancyHelper dependancyHelper;
 		protected void Initialize()
 		{
 
@@ -200,7 +201,9 @@ namespace PLangTests
 
 			container.Register<IGoalParser, GoalParser>();
 
-			typeHelper = Substitute.For<ITypeHelper>();
+			dependancyHelper = new DependancyHelper(fileSystem, logger, prParser);
+
+			typeHelper = new TypeHelper(fileSystem, dependancyHelper);
 			container.RegisterInstance(typeHelper);
 
 			memoryStack = new MemoryStack(pseudoRuntime, engine, settings, context);

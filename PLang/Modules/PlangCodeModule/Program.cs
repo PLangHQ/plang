@@ -1,12 +1,16 @@
 ﻿using Microsoft.Extensions.Logging;
+using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Runtime;
+using PLang.Utils;
 using System.ComponentModel;
+using System.Reflection;
 using System.Text.RegularExpressions;
+using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Modules.PlangCodeModule
 {
@@ -28,7 +32,7 @@ namespace PLang.Modules.PlangCodeModule
 		{
 			string path = GetPath(filePath);
 			return goalParser.ParseGoalFile(path);
-		} 
+		}
 
 		public async Task<(string?, IError?)> GetModules(string stepText, List<string> excludeModules)
 		{
@@ -50,18 +54,74 @@ namespace PLang.Modules.PlangCodeModule
 		public async Task<string> GetMethods(string moduleName)
 		{
 			var programType = typeHelper.GetRuntimeType(moduleName);
-			var methods = typeHelper.GetMethodsAsString(programType);
+			var methods = typeHelper.GetMethodNamesAsString(programType);
 			return methods;
-		} 
+		}
 
-		public async Task<string> GetMethodDescription(string moduleName, string methodName)
+		public async Task<(MethodDescription?, IError?)> GetMethodDescription(string moduleName, string methodName)
 		{
-			return "";
+			var programType = typeHelper.GetRuntimeType(moduleName);
+			return TypeHelper.GetMethodDescription(programType, methodName);
 		}
 
 		public async Task<string> GetMethodMappingScheme()
 		{
-			return "";
+			string scheme = TypeHelper.GetJsonSchema(typeof(MethodExecution));
+			return scheme;
+		}
+
+		public async Task<(Dictionary<string, object>?, IError?)> GetStepProperties(string moduleName, string methodName)
+		{
+			bool canBeCached = true;
+			bool canHaveErrorHandling = true;
+			bool canBeCancelled = true;
+			bool canBeAsync = true;
+
+			Dictionary<string, object> properties = new();
+
+			var moduleType = typeHelper.GetRuntimeType(moduleName);
+			if (moduleType == null)
+			{
+				return (null, new BuilderError($"Could not find {moduleName} in list of available modules."));
+			}
+			if (moduleType != null)
+			{
+				var method = moduleType.GetMethods(BindingFlags.Public | BindingFlags.Instance).FirstOrDefault(p => p.Name == methodName);
+				if (method == null)
+				{
+					return (null, new BuilderError($"Could not find {methodName} in {moduleName} in list of available methods."));
+				}
+
+				var attribute = method.GetCustomAttribute<MethodSettingsAttribute>();
+
+				if (attribute != null)
+				{
+					canBeCached = attribute.CanBeCached;
+					canHaveErrorHandling = attribute.CanHaveErrorHandling;
+					canBeAsync = attribute.CanBeAsync;
+					canBeCancelled = attribute.CanBeCancelled;
+				}
+			}
+
+			if (canBeAsync)
+			{
+				properties.Add("WaitForExecution", "{WaitForExecution:bool = true}");
+			} 
+			if (canBeCached)
+			{
+				properties.Add("CachingHandler", TypeHelper.GetJsonSchema(typeof(CachingHandler)));
+			}
+			if (canHaveErrorHandling)
+			{
+				properties.Add("ErrorHandler", TypeHelper.GetJsonSchema(typeof(ErrorHandler)));
+			}
+			
+			if (canBeCancelled)
+			{
+				properties.Add("CancellationHandler", TypeHelper.GetJsonSchema(typeof(CancellationHandler)));
+			}
+
+			return (properties, null);
 		}
 
 		private List<string> GetUserRequestedModule(string stepText)

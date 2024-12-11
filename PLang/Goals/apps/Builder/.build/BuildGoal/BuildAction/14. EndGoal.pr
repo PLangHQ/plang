@@ -1,15 +1,10 @@
 {
   "Action": {
-    "FunctionName": "GetMethodMappingScheme",
+    "FunctionName": "EndGoalExecution",
     "Parameters": [],
-    "ReturnValues": [
-      {
-        "Type": "object",
-        "VariableName": "%scheme%"
-      }
-    ]
+    "ReturnValues": null
   },
-  "Text": "get method mapping scheme, write to %scheme%",
+  "Text": "end goal",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -39,7 +34,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nGetGoals(String filePath)  : List`1 \nGetModules(String stepText, List`1<String> excludeModules)  : String \nGetMethods(String moduleName)  : String \nGetMethodMappingScheme()  : String\r\n## functions available ends ##\r\n## defined variables ##\r\nscheme (type:object), \r\n## defined variables ##"
+            "text": "## functions available starts ##\r\nThrow(Object message, String? type = \"error\", Int32? statusCode = 400)  : void  // When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc. type can be error|critical. statusCode(like http status code) should be defined by user.. \nEndGoalExecution(String? message, Int32? levels = 0)  : void  // When user intends the execution of the goal to stop without giving a error response. This is equal to doing return in a function. Depth is how far up the stack it should end, previous goal is 1. \nEndApp()  : void // Shutdown the application.\r\n## functions available ends ##"
           }
         ]
       },
@@ -48,14 +43,14 @@
         "content": [
           {
             "type": "text",
-            "text": "get method mapping scheme, write to %scheme%"
+            "text": "end goal"
           }
         ]
       }
     ],
     "type": "PLang.Modules.GenericFunctionBuilder",
     "caching": true,
-    "RawResponse": "```json\n{\n\t\"FunctionName\": \"GetMethodMappingScheme\",\n\t\"Parameters\": [],\n\t\"ReturnValues\": [{\n\t\t\"Type\": \"object\",\n\t\t\"VariableName\": \"%scheme%\"\n\t}]\n}\n```"
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"EndGoalExecution\",\n\t\"Parameters\": []\n}\n```"
   },
   "RunOnBuild": false
 }

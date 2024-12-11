@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace PLang.Attributes
+﻿namespace PLang.Attributes
 {
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
 	public class MethodSettingsAttribute : Attribute
@@ -12,12 +6,16 @@ namespace PLang.Attributes
 		public bool CanBeCached { get; set; }
 		public bool CanHaveErrorHandling { get; set; }
 		public bool CanBeAsync { get; set; }
+		public bool CanBeCancelled { get; set; }
+		public bool ExcludeFromBuild { get; set; }
 
-		public MethodSettingsAttribute(bool canBeCached = true, bool canHaveErrorHandling = true, bool canBeAsync = true)
+		public MethodSettingsAttribute(bool canBeCached = true, bool canHaveErrorHandling = true, bool canBeAsync = true, bool canBeCancelled = true, bool excludeFromBuild = false)
 		{
 			CanBeCached = canBeCached;
 			CanHaveErrorHandling = canHaveErrorHandling;
 			CanBeAsync = canBeAsync;
+			CanBeCancelled = canBeCancelled;
+			ExcludeFromBuild = excludeFromBuild;
 		}
 	}
 }

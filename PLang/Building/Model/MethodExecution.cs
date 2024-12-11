@@ -8,10 +8,15 @@ namespace PLang.Building.Model;
 
 public class MethodExecution
 {
-	public required string ClassName { get; set; }
 	public required string MethodName { get; set; }
+	[Description("Give the input a name using snake_case")]
+	public required string Name { get; set; }
+	[Description("Write description of what the step does")]
+	public required string Description { get; set; }
+	[Description("Indicates if step should run and forget (in new thread)")]
+	public required bool WaitForExecution { get; set; } = false;
 	public List<ParameterDescriptionResponse> Parameters { get; set; }
-	public ReturnValueResponse? ReturnType { get; set; }
+	public List<ReturnValueResponse>? ReturnType { get; set; }
 
 	public MethodExecution()
 	{
@@ -42,7 +47,7 @@ public class ParameterDescriptionResponse
 {
 	public string Type { get; init; }
 	public string Name { get; init; }
-	[Description("Value can be a primitive object such as int, string, etc. or List<ParameterDescriptionResponse> when type is complex")]
+	[Description("Value can be a primitive object such as int, string, etc. or List<Parameters> when type is complex")]
 	public object? Value { get; init; }
 
 	public Type? GetType()

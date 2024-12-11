@@ -1,2 +1,7 @@
 Hello
 - write out "Hello plang world"
+- call goal Bye
+
+Bye
+- read file.txt, set as "bye (not found)" if no file, write to %content%
+- write out %content%
