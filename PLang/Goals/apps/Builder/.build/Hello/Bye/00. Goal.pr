@@ -1,20 +1,20 @@
 {
-  "GoalName": "Hello",
+  "GoalName": "Bye",
   "Comment": null,
-  "Text": "Hello",
+  "Text": "Bye",
   "GoalSteps": [
     {
-      "Text": "write out \"Hello plang world\"",
+      "Text": "read file.txt, set as \"bye (not found)\" if no file, write to %content%",
       "Comment": null,
-      "ModuleType": "PLang.Modules.OutputModule",
-      "Name": "WriteOutput",
-      "Description": "Output the text 'Hello plang world' to the user interface or console.",
-      "PrFileName": "01. WriteOutput.pr",
-      "RelativePrPath": ".build\\Hello\\01. WriteOutput.pr",
+      "ModuleType": "PLang.Modules.FileModule",
+      "Name": "ReadFileAndSetContent",
+      "Description": "Attempt to read 'file.txt'. If the file does not exist, set the content to 'bye (not found)'. Write the result to the variable %content%.",
+      "PrFileName": "01. ReadFileAndSetContent.pr",
+      "RelativePrPath": ".build\\Hello\\Bye\\01. ReadFileAndSetContent.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-12-09T18:35:54.4120135+00:00",
+      "Generated": "2024-12-10T11:13:47.8108496+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -22,7 +22,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 2,
+      "LineNumber": 6,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -60,32 +60,32 @@
             "content": [
               {
                 "type": "text",
-                "text": "write out \"Hello plang world\""
+                "text": "read file.txt, set as \"bye (not found)\" if no file, write to %content%"
               }
             ]
           }
         ],
         "type": "StepInformationBuilder",
         "caching": true,
-        "RawResponse": "```json\n{\n\t\"StepName\": \"WriteOutput\",\n\t\"StepDescription\": \"Output the text 'Hello plang world' to the user interface or console.\",\n\t\"Modules\": [\"PLang.Modules.OutputModule\"]\n}\n```"
+        "RawResponse": "```json\n{\n\t\"StepName\": \"ReadFileAndSetContent\",\n\t\"StepDescription\": \"Attempt to read 'file.txt'. If the file does not exist, set the content to 'bye (not found)'. Write the result to the variable %content%.\",\n\t\"Modules\": [\"PLang.Modules.FileModule\", \"PLang.Modules.ConditionalModule\", \"PLang.Modules.LocalOrGlobalVariableModule\"]\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "103d630cf6c75c6dc98e937ee879e1680c595cff872c2289afb5248778915f42",
+      "Hash": "af4f01c6fe8ff731ec2221cfda8b8f9ff9c93b6dd7def8454fba927eadaf13fe",
       "BuilderVersion": null
     },
     {
-      "Text": "call goal Bye",
+      "Text": "write out %content%",
       "Comment": null,
-      "ModuleType": "PLang.Modules.CallGoalModule",
-      "Name": "CallGoalBye",
-      "Description": "Invoke the goal named 'Bye'.",
-      "PrFileName": "02. CallGoalBye.pr",
-      "RelativePrPath": ".build\\Hello\\02. CallGoalBye.pr",
+      "ModuleType": "PLang.Modules.OutputModule",
+      "Name": "WriteOutContent",
+      "Description": "Output the value of the variable %content% to the user interface or console.",
+      "PrFileName": "02. WriteOutContent.pr",
+      "RelativePrPath": ".build\\Hello\\Bye\\02. WriteOutContent.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-12-10T11:13:40.2808394+00:00",
+      "Generated": "2024-12-10T11:13:49.268082+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -93,7 +93,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 1,
-      "LineNumber": 3,
+      "LineNumber": 7,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -131,35 +131,33 @@
             "content": [
               {
                 "type": "text",
-                "text": "call goal Bye"
+                "text": "write out %content%"
               }
             ]
           }
         ],
         "type": "StepInformationBuilder",
         "caching": true,
-        "RawResponse": "```json\n{\n\t\"StepName\": \"CallGoalBye\",\n\t\"StepDescription\": \"Invoke the goal named 'Bye'.\",\n\t\"Modules\": [\"PLang.Modules.CallGoalModule\"]\n}\n```"
+        "RawResponse": "```json\n{\n\t\"StepName\": \"WriteOutContent\",\n\t\"StepDescription\": \"Output the value of the variable %content% to the user interface or console.\",\n\t\"Modules\": [\"PLang.Modules.OutputModule\"]\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "97b619f7a3473ff847d6c54dd879b59c7a63b3399c085e4629ec1dfed1ce551b",
+      "Hash": "106394ea0e4b8549d921bb4a790e2b25616791deb563ae86a95da51d2b6bafde",
       "BuilderVersion": null
     }
   ],
-  "SubGoals": [
-    "Bye"
-  ],
-  "Description": "This Goal named Hello outputs the string 'Hello plang world' and then calls another Goal named Bye.",
-  "Visibility": 1,
+  "SubGoals": [],
+  "Description": "The Goal 'Bye' reads the contents of a file named 'file.txt'. If the file is not found, it sets the variable \\%content\\% to 'bye (not found)'. After determining the value of \\%content\\%, it writes out the content to the output.",
+  "Visibility": 0,
   "GoalFileName": "Hello.goal",
   "RelativeGoalPath": "\\Hello.goal",
   "RelativeGoalFolderPath": "\\",
-  "RelativePrPath": ".build\\Hello\\00. Goal.pr",
-  "RelativePrFolderPath": ".build\\Hello",
+  "RelativePrPath": ".build\\Hello\\Bye\\00. Goal.pr",
+  "RelativePrFolderPath": ".build\\Hello\\Bye",
   "BuilderVersion": "1.0.0.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "0ea7c03f4ec989b753a07c62cecad97412fbb84e707d6b81c60131f431eb91ea",
+  "Hash": "126f37402ef1b7c208d5011c5d41dc3fb9ed87d752951b2ad4d8a096fc2315c1",
   "IncomingVariablesRequired": null
 }

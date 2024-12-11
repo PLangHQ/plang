@@ -1,21 +1,15 @@
 {
   "Action": {
-    "FunctionName": "GetMethods",
-    "Parameters": [
-      {
-        "Type": "String",
-        "Name": "moduleName",
-        "Value": "%selectedModule.moduleName%"
-      }
-    ],
+    "FunctionName": "GetMethodMappingScheme",
+    "Parameters": [],
     "ReturnValues": [
       {
-        "Type": "object",
-        "VariableName": "methodDescription"
+        "Type": "String",
+        "VariableName": "%scheme%"
       }
     ]
   },
-  "Text": "get method description from %selectedMethod.methodName% in %selectedModule.moduleName%, write to %methodDescription%",
+  "Text": "get method mapping scheme, write to %scheme%",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -45,7 +39,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nGetGoals(String filePath)  : List`1 \nGetModules(String stepText, List`1<String> excludeModules)  : String \nGetMethods(String moduleName)  : String \nGetMethodMappingScheme()  : String\r\n## functions available ends ##\r\n## defined variables ##\r\nselectedMethod.methodName (type:object), selectedModule.moduleName (type:object), methodDescription (type:object), \r\n## defined variables ##"
+            "text": "## functions available starts ##\r\nGetGoals(String filePath)  : List`1 \nGetModules(String stepText, List`1<String> excludeModules)  : String \nGetMethods(String moduleName)  : String \nGetMethodDescription(String moduleName, String methodName)  : MethodDescription \nGetMethodMappingScheme()  : String\r\n## functions available ends ##\r\n## defined variables ##\r\nscheme (type:object), \r\n## defined variables ##"
           }
         ]
       },
@@ -54,14 +48,14 @@
         "content": [
           {
             "type": "text",
-            "text": "get method description from %selectedMethod.methodName% in %selectedModule.moduleName%, write to %methodDescription%"
+            "text": "get method mapping scheme, write to %scheme%"
           }
         ]
       }
     ],
     "type": "PLang.Modules.GenericFunctionBuilder",
     "caching": true,
-    "RawResponse": "```json\n{\n\t\"FunctionName\": \"GetMethods\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"String\",\n\t\t\"Name\": \"moduleName\",\n\t\t\"Value\": \"%selectedModule.moduleName%\"\n\t}],\n\t\"ReturnValues\": [{\n\t\t\"Type\": \"object\",\n\t\t\"VariableName\": \"methodDescription\"\n\t}]\n}\n```"
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"GetMethodMappingScheme\",\n\t\"Parameters\": [],\n\t\"ReturnValues\": [{\n\t\t\"Type\": \"String\",\n\t\t\"VariableName\": \"%scheme%\"\n\t}]\n}\n```"
   },
   "RunOnBuild": false
 }

@@ -7,6 +7,8 @@ BuildStep
 - write %goal% to "%goal.RelativeGoalPath%"
 
 BuildAction
+- if %reload% is false and %step.PrFile.Text% equals %step.Text% then
+    - end goal
 - [plang] get available modules for %step.Text%, write to %modules%
 - read llm/buildActionSelectModuleSystem.txt, load vars, write to %selectModuleSystem%
 - [llm] system:%selectModuleSystem%
@@ -20,6 +22,7 @@ BuildAction
 - [llm] system: %selectMethodSystem%
         user: %step.Text%
         scheme: {methodName:string}
+        continue from last
         write to %selectedMethod%
 - if %selectedMethod.methodName% == "N/A" then
     - append to string list %excludedModules% = %selectedModule.moduleName%
@@ -31,8 +34,16 @@ BuildAction
 - [llm] system: %system%
     user: %step.Text%
     response type : json
+    continue from last
     scheme: %scheme%
     write to %action%
+- [plang] get scheme for step properties for %selectedMethod.methodName% in %selectedModule.moduleName%, write to %propertiesScheme%
+- read llm/buildActionMapPropertiesSystem.txt, load vars, write to %mapPropertiesSystem%
+- [llm] system: %mapPropertiesSystem%
+    user: %step.Text%
+    continue from last
+    scheme: %propertiesScheme%
+    write to %properties%
 - set %stepInfo% = {
         ModuleName:%selectedModule.moduleName%,
         MethodName:%selectedMethod.methodName%,
@@ -41,6 +52,7 @@ BuildAction
         Text: %step.Text%,
         Indent: %step.Indent%,
         Comment: %step.Comment%
+        Generated: %Now%
     }
 - set %goal.GoalSteps[position].PrFileName% = %prFileName%
     %goal.GoalSteps[position].RelativePrFileName% = %relativePrFileName%

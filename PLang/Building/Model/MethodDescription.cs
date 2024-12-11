@@ -15,6 +15,7 @@ public interface IPropertyDescription
 	public string Description { get; set; }
 	public string Type { get; set; }
 	public string Name { get; set; }
+	public object? DefaultValue { get; set; }
 
 }
 public class PrimitiveDescription : IPropertyDescription
@@ -30,6 +31,7 @@ public class ComplexDescription : IPropertyDescription
 	public string Type { get; set; }
 	public string Name { get; set; }
 	public string Description { get; set; }
+	public object? DefaultValue { get; set; }
 	public List<IPropertyDescription> TypeProperties { get; set; }
 }
 

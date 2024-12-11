@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.SettingsService;
+using System.Collections;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -176,9 +177,10 @@ namespace PLang.Utils
 			string strValue = value.ToString().TrimEnd(']') ?? "";
 			string fullName = value.GetType().FullName ?? "";
 
-			if (!fullName.StartsWith("System.")) return false;
-			
-			return true;
+			if (value is IDictionary || value is IList) return true;
+			if (strValue.Equals(fullName)) return true;
+
+			return false;
 		}
 
 		public static bool IsRecordType(Type type)
