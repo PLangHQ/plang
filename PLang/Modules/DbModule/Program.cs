@@ -703,7 +703,7 @@ namespace PLang.Modules.DbModule
 			return null;
 		}
 
-		[Description("Insert a list(bulk) into database, return number of rows inserted. columnMapping maps which variable should match with a column.")]
+		[Description("Insert a list(bulk) into database, return number of rows inserted. columnMapping maps which variable should match with a column. User will define that he is using bulk insert.")]
 		public async Task<(int, IError?)> InsertBulk(string tableName, List<object> itemsToInsert, [HandlesVariable] Dictionary<string, object>? columnMapping = null, bool ignoreContraintOnInsert = false)
 		{
 			if (itemsToInsert.Count == 0) return (0, null);

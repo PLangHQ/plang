@@ -179,7 +179,8 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 					filteredList = dynamicList
 						.Where(item =>
 						{
-							return filterPredicate((item as JObject)?[propertyToFilterOn]?.ToString());
+							var obj = (JValue) (item as JObject)?[propertyToFilterOn];
+							return filterPredicate(obj.Value);
 
 						})
 						.ToList();

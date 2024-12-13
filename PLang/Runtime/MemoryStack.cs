@@ -818,6 +818,10 @@ namespace PLang.Runtime
 			{
 				return dictionary;
 
+			} else if (value is JToken token)
+			{
+				if (targetType == typeof(string)) return token.ToString();
+				return token.ToObject(targetType);
 			}
 			else if (value is IList list)
 			{
@@ -1037,6 +1041,7 @@ namespace PLang.Runtime
 			{
 				return JArray.FromObject(obj);
 			}
+			if (obj is char) return new JValue(obj.ToString());
 			return JObject.FromObject(obj);
 		}
 
