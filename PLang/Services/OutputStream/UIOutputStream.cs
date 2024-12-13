@@ -29,7 +29,7 @@ namespace PLang.Services.OutputStream
 			sb = new StringBuilder();
 		}
 
-		public async Task<string> Ask(string text, string type = "ask", int statusCode = 104)
+		public async Task<string> Ask(string text, string type = "ask", int statusCode = 104, Dictionary<string, object>? parameters = null)
 		{
 			return "";
 			//throw new NotImplementedException();

@@ -241,7 +241,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			step.RelativePrPath = Path.Join(goal.RelativePrFolderPath, step.PrFileName);
 			step.LlmRequest = llmQuestion;
 			step.Number = stepIndex;
-			step.RunOnce = (goal.RelativePrFolderPath.ToLower().Contains(".build" + Path.DirectorySeparatorChar + "setup"));
+			step.RunOnce = (goal.GoalFileName.Equals("Setup.goal", StringComparison.OrdinalIgnoreCase));
 			return (step, null);
 
 		}

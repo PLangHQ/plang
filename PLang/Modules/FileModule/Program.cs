@@ -437,7 +437,7 @@ namespace PLang.Modules.FileModule
 			return key;
 		}
 
-		public record FileInfo(string Path, string Content, string FileName, DateTime Created, DateTime LastWriteTime, string FolderPath);
+		public record FileInfo(string Path, string AbsolutePath, string Content, string FileName, DateTime Created, DateTime LastWriteTime, string FolderPath);
 
 
 		public async Task SaveMultipleFiles(List<FileInfo> files, bool loadVariables = false,
@@ -467,22 +467,23 @@ namespace PLang.Modules.FileModule
 			var files = fileSystem.Directory.GetFiles(absoluteFolderPath, searchPattern, searchOption);
 
 			List<FileInfo> result = new List<FileInfo>();
-			foreach (var file in files)
+			foreach (var absoluteFilePath in files)
 			{
-				if (excludePatterns != null && excludePatterns.Any(pattern => Regex.IsMatch(file, pattern)))
+				if (excludePatterns != null && excludePatterns.Any(pattern => Regex.IsMatch(absoluteFilePath, pattern)))
 				{
 					continue;
 				}
 
-				if (!fileSystem.File.Exists(file))
+				if (!fileSystem.File.Exists(absoluteFilePath))
 				{
-					logger.LogWarning($"!Warning! File {file} not found");
+					logger.LogWarning($"!Warning! File {absoluteFilePath} not found");
 				}
 
-				var fileInfo = new System.IO.FileInfo(file);
-				string fileName = fileSystem.Path.GetFileName(file);
-				var content = await fileSystem.File.ReadAllTextAsync(file);
-				result.Add(new FileInfo(file, content, fileName, fileInfo.CreationTime, fileInfo.LastWriteTime, fileInfo.DirectoryName));
+				var fileInfo = new System.IO.FileInfo(absoluteFilePath);
+				var relativePath = absoluteFilePath.Replace(fileSystem.RootDirectory, "");
+				string fileName = fileSystem.Path.GetFileName(absoluteFilePath);
+				var content = await fileSystem.File.ReadAllTextAsync(absoluteFilePath);
+				result.Add(new FileInfo(relativePath, absoluteFilePath, content, fileName, fileInfo.CreationTime, fileInfo.LastWriteTime, fileInfo.DirectoryName));
 			}
 			return result;
 		}

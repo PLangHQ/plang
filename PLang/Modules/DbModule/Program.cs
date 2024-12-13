@@ -297,8 +297,15 @@ namespace PLang.Modules.DbModule
 
 		private (object?, Error?) ConvertObjectToType(object obj, string typeFullName, string parameterName)
 		{
+			// TODO: because of bad structure in building, can be removed when fix
+			if (typeFullName == "String") typeFullName = "System.String";
 
 			Type? targetType = Type.GetType(typeFullName);
+			if (targetType == null)
+			{
+				typeFullName = ConvertFromColumnTypeToCSharpType(typeFullName);
+				targetType = Type.GetType(typeFullName);
+			}
 			try
 			{
 				if (targetType == null)
@@ -575,7 +582,7 @@ namespace PLang.Modules.DbModule
 			return (rowsAffected, null);
 		}
 
-		[Description("Basic insert statement. Will return affected row count")]
+		[Description("Insert into table. Will return affected row count")]
 		public async Task<(int rowsAffected, IError? error)> Insert(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
 		{
 			if (!string.IsNullOrEmpty(dataSourceName))
@@ -696,7 +703,7 @@ namespace PLang.Modules.DbModule
 			return null;
 		}
 
-		[Description("Insert a list(bulk) into database, return number of rows inserted. columnMapping maps which variable should match with a column. variables prefixed with %item.% are part of itemsToInsert, else they are local variable")]
+		[Description("Insert a list(bulk) into database, return number of rows inserted. columnMapping maps which variable should match with a column.")]
 		public async Task<(int, IError?)> InsertBulk(string tableName, List<object> itemsToInsert, [HandlesVariable] Dictionary<string, object>? columnMapping = null, bool ignoreContraintOnInsert = false)
 		{
 			if (itemsToInsert.Count == 0) return (0, null);
@@ -799,14 +806,14 @@ namespace PLang.Modules.DbModule
 
 		private string ConvertFromColumnTypeToCSharpType(string type)
 		{
-			if (type == "TEXT") return typeof(String).FullName;
-			if (type == "INTEGER") return typeof(long).FullName;
+			if (type == "TEXT" || type.Equals("string", StringComparison.OrdinalIgnoreCase)) return typeof(String).FullName;
+			if (type == "INTEGER" || type.Equals("int", StringComparison.OrdinalIgnoreCase)) return typeof(long).FullName;
 			if (type == "REAL") return typeof(double).FullName;
 			if (type == "BLOB") return typeof(byte[]).FullName;
 			if (type == "NUMERIC") return typeof(double).FullName;
-			if (type == "BOOLEAN") return typeof(bool).FullName;
+			if (type == "BOOLEAN" || type.Equals("bool", StringComparison.OrdinalIgnoreCase)) return typeof(bool).FullName;
 			if (type == "NULL") return typeof(DBNull).FullName;
-			if (type == "BIGINT") return typeof(Int64).FullName;
+			if (type == "BIGINT" || type.Equals("int64", StringComparison.OrdinalIgnoreCase)) return typeof(Int64).FullName;
 
 			throw new Exception($"Could not map type: {type} to C# object");
 		}

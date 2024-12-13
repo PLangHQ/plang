@@ -95,7 +95,7 @@ namespace PLang.Modules.WebserverModule
 		public record WebserverInfo(HttpListener Listener, string WebserverName, string Scheme, string Host, int Port,
 			long MaxContentLengthInBytes, string DefaultResponseContentEncoding, bool SignedRequestRequired, List<Routing>? Routings)
 		{
-			public List<Routing>? Routings;
+			public List<Routing>? Routings { get; set; } = Routings;
 		}
 
 
@@ -151,7 +151,7 @@ namespace PLang.Modules.WebserverModule
 			if (routings == null)
 			{
 				routings = new List<Routing>();
-				routings.Add(new Routing("/api/*", "/api/*", ContentType: "application/json"));
+				routings.Add(new Routing("/api/.*", "", ContentType: "application/json"));
 			}
 
 			var listener = new HttpListener();
@@ -282,14 +282,14 @@ namespace PLang.Modules.WebserverModule
 
 							logger.LogDebug($"Register container for webserver - AbsoluteAppStartupFolderPath:{goal.AbsoluteAppStartupFolderPath}");
 
-							container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, Path.DirectorySeparatorChar.ToString(), httpContext);
+							container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, Path.DirectorySeparatorChar.ToString(), httpContext, httpContext.Response.ContentType);
 							var context = container.GetInstance<PLangAppContext>();
 							context.Add(ReservedKeywords.IsHttpRequest, true);
 
 							var engine = container.GetInstance<IEngine>();
 							engine.Init(container);
 							engine.HttpContext = httpContext;
-							httpContext.Response.ContentType = contentType;
+
 							var requestMemoryStack = engine.GetMemoryStack();
 							var identityService = container.GetInstance<IPLangIdentityService>();
 							var error = await ParseRequest(httpContext, identityService, goal.GoalInfo.GoalApiInfo!.Method, requestMemoryStack);
@@ -308,11 +308,15 @@ namespace PLang.Modules.WebserverModule
 								continue;
 							} else
 							{
+								
 								var streamFactory = container.GetInstance<IOutputStreamFactory>();
 								var stream = streamFactory.CreateHandler().Stream;
-
-								stream.Seek(0, SeekOrigin.Begin);
-								stream.CopyTo(resp.OutputStream);
+								if (resp.OutputStream.CanWrite)
+								{
+									stream.Seek(0, SeekOrigin.Begin);
+									stream.CopyTo(resp.OutputStream);
+								}
+								
 							}
 
 						}
@@ -376,7 +380,7 @@ Error:
 			if (requestedFile == null) return;
 
 			var container = new ServiceContainer();
-			container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath, httpContext);
+			container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath, httpContext, "text/html");
 
 			requestedFile = requestedFile.Replace("/", Path.DirectorySeparatorChar.ToString()).Replace(@"\", Path.DirectorySeparatorChar.ToString());
 
@@ -555,9 +559,9 @@ Error:
 			if (request == null || request.Url == null) return "";
 			foreach (var route in routings)
 			{
-				if (Regex.IsMatch(request.Url.LocalPath, route.Path))
+				if (Regex.IsMatch(request.Url.LocalPath, "^" + route.Path + "$"))
 				{
-					return GetGoalBuildDirPath(request);
+					return GetGoalBuildDirPath(route, request);
 				}
 
 			}
@@ -565,8 +569,16 @@ Error:
 			return "";
 		}
 
-		private string GetGoalBuildDirPath(HttpListenerRequest request)
+		private string GetGoalBuildDirPath(Routing routing, HttpListenerRequest request)
 		{
+			if (!string.IsNullOrEmpty(routing.GoalToCall))
+			{
+				var goal = prParser.GetGoalByAppAndGoalName(fileSystem.RelativeAppPath, routing.GoalToCall);
+				if (goal != null)
+				{
+					return goal.AbsolutePrFolderPath;
+				}
+			}
 			if (request == null || request.Url == null) return "";
 
 			var goalName = request.Url.LocalPath.AdjustPathToOs();

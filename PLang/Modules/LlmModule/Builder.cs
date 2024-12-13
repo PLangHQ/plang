@@ -147,7 +147,7 @@ or url
 
 				if (string.IsNullOrEmpty(responseType))
                 {
-					error = $"\nLLM gave empty responseType in last request. Please make sure that you give responseType.";
+					error = $"\nLLM gave empty responseType in last request. Please make sure that you give responseType. If non is defined set it as text";
 					return await Build(step, error, ++errorCount);
 				}
 

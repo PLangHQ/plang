@@ -11,7 +11,7 @@ namespace PLang.Modules.FilterModule
 {
 	[Description("Allow user to filter, select, query from a variable and get specific item from that variable.")]
 	public class Program : BaseProgram
-	{ 
+	{
 
 		[Description("Gets an item from list, giving the first, last or by index according to user definition. retrieveOneItem: first|last|number (retrieveOneItem can also be a number representing the index.)")]
 		public async Task<object?> GetItem(object variableToExtractFrom, string retrieveOneItem)
@@ -46,7 +46,7 @@ namespace PLang.Modules.FilterModule
 					outItem = item;
 				}
 				if (retrieveOneItem == "last") return outItem;
-				
+
 			}
 
 			return null;
@@ -73,7 +73,7 @@ can return a list of elements or one element, depending on if retrieveOneItem is
 			List<object>? filteredList = null;
 			if (variableToExtractFrom is IList list)
 			{
-				for (int i=0;i<list.Count;i++)
+				for (int i = 0; i < list.Count; i++)
 				{
 					JToken obj = variableToExtractFrom as JToken ?? JToken.FromObject(list[i]);
 					if (obj is JProperty prop)
@@ -87,7 +87,8 @@ can return a list of elements or one element, depending on if retrieveOneItem is
 					}
 					if (filteredList != null) i = list.Count;
 				}
-			} else
+			}
+			else
 			{
 				JToken obj = variableToExtractFrom as JToken ?? JToken.FromObject(variableToExtractFrom);
 				if (obj == null)
@@ -96,8 +97,8 @@ can return a list of elements or one element, depending on if retrieveOneItem is
 				}
 				throw new Exception("Dont know what this code should do. So throw error");
 				var filterObj2 = GetFilteredJObject(obj, propertyToFilterOn, operatorOnPropertyToFilterOn);
-			} 
-			
+			}
+
 
 			// Handle retrieval logic
 			if (retrieveOneItem == "first") return (filteredList?.FirstOrDefault(), null);
@@ -138,7 +139,7 @@ valueToFilterBy: required, find a specific Value that is stored in the propertyT
 operatorOnPropertyToFilter can be following(sperated by |): <|>|equals|startswith|endswith|contains.
 retrieveOneItem: first|last|retrieveOneItem can also be a number representing the index.
 operatorOnPropertyToFilter: equals|startswith|endswith|contains
-propertyToExtract: by default it returns the element that matches the property, but when propertyToExtract is specified it will find that property and return the object from that property
+propertyToExtract: by default it returns the element that matches the property, when propertyToExtract is specified it will find that property and return the object from that property.
 operatorToFilterOnValue: =|!= 
 operatorToFilterOnValueComparer: insensitive|case-sensitive
 <example>
@@ -151,31 +152,60 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 	retrieveOneItem=""first""
 </example>
 ")]
-		public async Task<object?> FilterOnPropertyAndValue(object variableToExtractFrom, string propertyToFilterOn, string valueToFilterBy, string? operatorToFilterOnValue = "=", 
-			 string operatorOnPropertyToFilter = "=", string? propertyToExtract = null, bool throwErrorWhenNothingFound = false, string? retrieveOneItem = null, 
+		public async Task<object?> FilterOnPropertyAndValue(object variableToExtractFrom, string propertyToFilterOn, string valueToFilterBy, string? operatorToFilterOnValue = "=",
+			 string operatorOnPropertyToFilter = "=", string? propertyToExtract = null, bool throwErrorWhenNothingFound = false, string? retrieveOneItem = null,
 			 string operatorToFilterOnValueComparer = "insensitive")
-		{ 
+		{
 			if (variableToExtractFrom == null || string.IsNullOrEmpty(variableToExtractFrom.ToString())) return null;
+			if (valueToFilterBy == "null") valueToFilterBy = null;
 
-			Func<string, bool> filterPredicate = GetPredicate(operatorToFilterOnValue, valueToFilterBy, operatorToFilterOnValueComparer);
-			
+			Func<object?, bool> filterPredicate = GetPredicate(operatorToFilterOnValue, valueToFilterBy, operatorToFilterOnValueComparer);
+
 			List<object> filteredList = new();
 			if (variableToExtractFrom is JObject jObject)
 			{
-				filteredList = GetFilteredJObject(jObject, propertyToFilterOn, operatorOnPropertyToFilter, filterPredicate, propertyToExtract); 
+				filteredList = GetFilteredJObject(jObject, propertyToFilterOn, operatorOnPropertyToFilter, filterPredicate, propertyToExtract);
 			}
 			else if (variableToExtractFrom is JArray jArray)
 			{
-				var filteredObject = GetFilteredJObject(jArray, propertyToFilterOn, operatorOnPropertyToFilter, filterPredicate, propertyToExtract);
-				
+				filteredList = GetFilteredJObject(jArray, propertyToFilterOn, operatorOnPropertyToFilter, filterPredicate, propertyToExtract);
+
 			}
 			else if (variableToExtractFrom is System.Collections.IList list)
 			{
-				filteredList = list.ToDynamicList()
-					.Where(item => filterPredicate((item as JObject)?[propertyToFilterOn]?.ToString()))
-					.ToList();
+				var dynamicList = list.ToDynamicList();
+				if (dynamicList.Count > 0 && dynamicList[0] is JObject)
+				{
+					filteredList = dynamicList
+						.Where(item =>
+						{
+							return filterPredicate((item as JObject)?[propertyToFilterOn]?.ToString());
 
-				
+						})
+						.ToList();
+				}
+				else if (dynamicList.Count > 0 && dynamicList[0] is JArray)
+				{
+					foreach (var itemInlist in dynamicList)
+					{
+						var array = (itemInlist as JArray).ToDynamicList();
+
+						filteredList.AddRange(array
+						.Where(item =>
+						{
+							var obj = item as JObject;
+							if (obj == null) { return false; }
+
+							var jValue = obj?[propertyToFilterOn] as JValue;
+							
+							return filterPredicate(jValue?.Value);
+
+						})
+						.ToList());
+					}
+				}
+
+
 			}
 			else if (variableToExtractFrom is IDictionary<string, object> dictionary)
 			{
@@ -209,7 +239,7 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 
 		}
 
-		private List<object>? GetFilteredJObject(JToken jToken, string propertyToFilterOn, string propertyToFilterOnOperator, Func<string, bool>? filterPredicate = null, string? propertyToExtract = null)
+		private List<object>? GetFilteredJObject(JToken jToken, string propertyToFilterOn, string propertyToFilterOnOperator, Func<object, bool>? filterPredicate = null, string? propertyToExtract = null)
 		{
 			var list = new List<object>();
 			if (jToken is JArray jArray)
@@ -225,7 +255,7 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 				var obj = MatchProperty(propertyToFilterOn, propertyToFilterOnOperator, filterPredicate, propertyToExtract, property);
 				list.AddRange(obj);
 			}
-			if (jToken is not JObject) return null;
+			if (jToken is not JObject) return list;
 
 			var properties = (jToken as JObject).Properties();
 			foreach (var prop in properties)
@@ -237,12 +267,15 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 			return list;
 		}
 
-		private List<object>? MatchProperty(string propertyToFilterOn, string propertyToFilterOnOperator, Func<string, bool>? filterPredicate, string? propertyToExtract, JProperty prop)
+		private List<object>? MatchProperty(string propertyToFilterOn, string propertyToFilterOnOperator, Func<object?, bool>? filterPredicate, string? propertyToExtract, JProperty prop)
 		{
+			object? value = prop.Value;
+			if (value is JValue jValue) value = jValue.Value;
+
 			if (propertyToFilterOnOperator == "=")
 			{
 				if (prop.Name.Equals(propertyToFilterOn, StringComparison.OrdinalIgnoreCase) &&
-								(filterPredicate == null || filterPredicate(prop.Value.ToString())))
+								(filterPredicate == null || filterPredicate(value)))
 				{
 					if (string.IsNullOrEmpty(propertyToExtract)) return [prop.Value];
 					if (prop.Name == propertyToExtract) return [prop.Value];
@@ -252,7 +285,7 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 			else if (propertyToFilterOnOperator == "startswith")
 			{
 				if (prop.Name.StartsWith(propertyToFilterOn, StringComparison.OrdinalIgnoreCase) &&
-													(filterPredicate == null || filterPredicate(prop.Value.ToString())))
+													(filterPredicate == null || filterPredicate(prop.Value)))
 				{
 					if (string.IsNullOrEmpty(propertyToExtract)) return [prop.Value];
 					if (prop.Name.StartsWith(propertyToExtract)) return [prop.Value];
@@ -262,7 +295,7 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 			else if (propertyToFilterOnOperator == "endswith")
 			{
 				if (prop.Name.EndsWith(propertyToFilterOn, StringComparison.OrdinalIgnoreCase) &&
-													(filterPredicate == null || filterPredicate(prop.Value.ToString())))
+													(filterPredicate == null || filterPredicate(prop.Value)))
 				{
 					if (string.IsNullOrEmpty(propertyToExtract)) return [prop.Value];
 					if (prop.Name.EndsWith(propertyToExtract)) return [prop.Value];
@@ -272,7 +305,7 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 			else if (propertyToFilterOnOperator == "contains")
 			{
 				if (prop.Name.Contains(propertyToFilterOn, StringComparison.OrdinalIgnoreCase) &&
-													(filterPredicate == null || filterPredicate(prop.Value.ToString())))
+													(filterPredicate == null || filterPredicate(prop.Value)))
 				{
 					if (string.IsNullOrEmpty(propertyToExtract)) return [prop.Value];
 					if (prop.Name.Contains(propertyToExtract)) return [prop.Value];
@@ -310,18 +343,35 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 			return ParseParent(prop.Parent, propertyToExtract);
 		}
 
-		private Func<string, bool> GetPredicate(string operatorToFilter, string valueToFilterBy, string operatorToFilterOnValueComparer)
+		private Func<object, bool> GetPredicate(string operatorToFilter, string valueToFilterBy, string operatorToFilterOnValueComparer)
 		{
 			var comparer = (operatorToFilterOnValueComparer == "insensitive") ? StringComparison.OrdinalIgnoreCase : StringComparison.InvariantCulture;
 			return operatorToFilter.ToLower() switch
 			{
-				"contains" => new Func<string, bool>(v => v.Contains(valueToFilterBy, comparer)),
-				"startwith" => new Func<string, bool>(v => v.StartsWith(valueToFilterBy, comparer)),
-				"endswith" => new Func<string, bool>(v => v.EndsWith(valueToFilterBy, comparer)), // Similar to contains
-				"=" => new Func<string, bool>(v => v.Equals(valueToFilterBy, comparer)),
-				"!=" => new Func<string, bool>(v => !v.Equals(valueToFilterBy, comparer)),
-				">" => new Func<string, bool>(v => double.TryParse(v, out var result) && result > double.Parse(valueToFilterBy)),
-				"<" => new Func<string, bool>(v => double.TryParse(v, out var result) && result < double.Parse(valueToFilterBy)),
+				"contains" => new Func<object, bool>(v =>
+				{
+
+
+					return v != null && v.ToString().Contains(valueToFilterBy, comparer);
+			}),
+
+				"startwith" => new Func<object, bool>(v => v != null && v.ToString().StartsWith(valueToFilterBy, comparer)),
+				"endswith" => new Func<object, bool>(v => v != null && v.ToString().EndsWith(valueToFilterBy, comparer)), // Similar to contains
+				"=" => new Func<object, bool>(v =>
+				{
+					if (v == null && valueToFilterBy == null) return true;
+					if (v == null) return false;
+
+					if (v is string str)
+					{
+						return str != null && str.Equals(valueToFilterBy, comparer);
+					}
+
+					return v != null && v.Equals(valueToFilterBy);
+				}),
+				"!=" => new Func<object, bool>(v => v != null && !v.Equals(valueToFilterBy)),
+				">" => new Func<object, bool>(v => v != null && double.TryParse(v.ToString(), out var result) && result > double.Parse(valueToFilterBy)),
+				"<" => new Func<object, bool>(v => v != null && double.TryParse(v.ToString(), out var result) && result < double.Parse(valueToFilterBy)),
 				_ => throw new ArgumentException($"Unsupported operator: {operatorToFilter}")
 			};
 		}

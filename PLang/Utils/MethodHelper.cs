@@ -21,7 +21,7 @@ using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Utils
 {
-    public class MethodHelper
+	public class MethodHelper
 	{
 		private GoalStep goalStep;
 		private readonly VariableHelper variableHelper;
@@ -44,8 +44,10 @@ namespace PLang.Utils
 
 			var methods = callingInstance.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
 			string? error = null;
-			var method = methods.FirstOrDefault(p => {
-				if (p.Name == function.FunctionName) {
+			var method = methods.FirstOrDefault(p =>
+			{
+				if (p.Name == function.FunctionName)
+				{
 					error = IsParameterMatch(p, function.Parameters);
 					if (error == null) return true;
 				}
@@ -166,7 +168,7 @@ example of answer:
 				{
 					error += $"{methodParameter.Name} ({parameterType}) is missing from parameters. {methodParameter.Name} is a required parameter\n";
 				}
-				
+
 				if (parameter != null && parameter.Value != null && parameterType == "string" && parameter.Value.ToString().StartsWith("\"") && parameter.Value.ToString().EndsWith("\""))
 				{
 					error += $"{methodParameter.Name} is string, the property Value cannot start and end with quote(\").";
@@ -196,7 +198,8 @@ example of answer:
 						{
 							error += $"{methodParameter.Name} ({methodParameter.ParameterType.Name}) is missing\n";
 						}
-					} else if (!methodParameter.ParameterType.Name.ToLower().StartsWith("nullable") && !methodParameter.IsOptional && !methodParameter.HasDefaultValue)
+					}
+					else if (!methodParameter.ParameterType.Name.ToLower().StartsWith("nullable") && !methodParameter.IsOptional && !methodParameter.HasDefaultValue)
 					{
 						error += $"{methodParameter.Name} ({methodParameter.ParameterType.Name}) is missing\n";
 					}
@@ -249,7 +252,7 @@ example of answer:
 							continue;
 						}
 
-					} 
+					}
 
 					if (parameter.ParameterType.Name.StartsWith("Dictionary"))
 					{
@@ -320,21 +323,23 @@ example of answer:
 			Type elementType;
 			if (mainElementType.IsArray && variableValueIsArray)
 			{
-				var value = (handlesAttribute != null) ? variableValue: variableHelper.LoadVariables(variableValue);
+				var value = (handlesAttribute != null) ? variableValue : variableHelper.LoadVariables(variableValue);
 				if (value is JArray array)
 				{
 					parameterValues.Add(parameter.Name, array.ToObject(mainElementType));
 					return;
-				} else if (value is string && JsonHelper.IsJson(value, out object strArray))
+				}
+				else if (value is string && JsonHelper.IsJson(value, out object strArray))
 				{
-					parameterValues.Add(parameter.Name, ((JToken) strArray).ToObject(mainElementType));
+					parameterValues.Add(parameter.Name, ((JToken)strArray).ToObject(mainElementType));
 					return;
-				} else if (value.GetType().IsArray) 
+				}
+				else if (value.GetType().IsArray)
 				{
 					parameterValues.Add(parameter.Name, value);
 					return;
 				}
-				
+
 			}
 
 			if (!variableValueIsArray)
@@ -375,11 +380,12 @@ example of answer:
 			parameterValues.Add(parameter.Name, newArray);
 		}
 
-		private void SetListParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
+		private void SetListParameter(ParameterInfo parameter, object? variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
 		{
 			if (parameter.Name == null) return;
 
 			System.Collections.IList? list = null;
+
 			if (VariableHelper.IsVariable(variableValue))
 			{
 				variableValue = variableHelper.LoadVariables(variableValue);
@@ -397,8 +403,11 @@ example of answer:
 					variableValue = JArray.Parse(str);
 				}
 			}
-
-			if (variableValue is JArray)
+			if (variableValue == null)
+			{
+				list = new List<object>();
+			}
+			else if (variableValue is JArray)
 			{
 				list = ((JArray)variableValue).ToObject(parameter.ParameterType) as System.Collections.IList;
 			}
@@ -409,7 +418,8 @@ example of answer:
 			else if (variableValue != null && variableValue.GetType().Name.StartsWith("List"))
 			{
 				list = (System.Collections.IList)variableValue;
-			} else if (variableValue is string && Regex.IsMatch(variableValue.ToString(), "\\[(.*)\\]"))
+			}
+			else if (variableValue is string && Regex.IsMatch(variableValue.ToString(), "\\[(.*)\\]"))
 			{
 				Match match = Regex.Match(variableValue.ToString(), "\\[(.*)\\]");
 				if (match.Success)
@@ -421,7 +431,8 @@ example of answer:
 						list.Add(item.Trim());
 					}
 				}
-			} else if (!variableValue.GetType().Name.StartsWith("List"))
+			}
+			else if (!variableValue.GetType().Name.StartsWith("List"))
 			{
 				list = new List<object>();
 				list.Add(variableValue);
@@ -432,11 +443,15 @@ example of answer:
 				parameterValues.Add(parameter.Name, list);
 				return;
 			}
-			
+			if (list == null || list.Count == 0)
+			{
+				parameterValues.Add(parameter.Name, list);
+				return;
+			}
 
 			var instanceList = Activator.CreateInstance(parameter.ParameterType);
 			var addMethod = instanceList.GetType().GetMethod("Add");
-			
+
 			for (int i = 0; list != null && i < list.Count; i++)
 			{
 				object? obj = variableHelper.LoadVariables(list[i]);
@@ -449,6 +464,7 @@ example of answer:
 					addMethod.Invoke(instanceList, new object[] { obj });
 				}
 			}
+
 			parameterValues.Add(parameter.Name, instanceList);
 		}
 
@@ -477,10 +493,12 @@ example of answer:
 					{
 						dict = jobject.ToDictionary();
 					}
-				} else if (obj is JObject jObject)
+				}
+				else if (obj is JObject jObject)
 				{
 					dict = jObject.ToDictionary();
-				} else
+				}
+				else
 				{
 					dict = obj as Dictionary<string, object?>;
 				}

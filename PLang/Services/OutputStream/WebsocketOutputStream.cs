@@ -21,7 +21,7 @@ namespace PLang.Services.OutputStream
 		public Stream Stream { get; private set; }
 		public Stream ErrorStream { get; private set; }
 
-		public async Task<string> Ask(string text, string type = "text", int statusCode = 200)
+		public async Task<string> Ask(string text, string type = "text", int statusCode = 200, Dictionary<string, object>? parameters = null)
 		{
 			return "";
 		}

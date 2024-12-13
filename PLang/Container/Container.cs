@@ -77,14 +77,21 @@ namespace PLang.Container
 			RegisterEventRuntime(container);
 		}
 
-		public static void RegisterForPLangWebserver(this ServiceContainer container, string appStartupPath, string relativeAppPath, HttpListenerContext httpContext)
+		public static void RegisterForPLangWebserver(this ServiceContainer container, string appStartupPath, string relativeAppPath, HttpListenerContext httpContext, string contentType)
 		{
 			container.RegisterBaseForPLang(appStartupPath, relativeAppPath);
 			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
-			container.RegisterOutputStreamFactory(typeof(JsonOutputStream), true, new JsonOutputStream(httpContext));
-			container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
+			if (contentType == "application/json")
+			{
+				container.RegisterOutputStreamFactory(typeof(JsonOutputStream), true, new JsonOutputStream(httpContext));
+				container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
+			} else
+			{
+				container.RegisterOutputStreamFactory(typeof(TextOutputStream), true, new TextOutputStream(httpContext));
+				container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
+			}
 
 			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler(container.GetInstance<IOutputSystemStreamFactory>()));
 			container.RegisterErrorHandlerFactory(typeof(HttpErrorHandler), true, new HttpErrorHandler(httpContext, container.GetInstance<IAskUserHandlerFactory>(), container.GetInstance<ILogger>()));

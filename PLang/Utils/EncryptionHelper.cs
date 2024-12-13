@@ -6,18 +6,22 @@ namespace PLang.Utils
 	{
 		private static string[] supportedAlgos = ["SHA56", "SHA512", "SHA1", "MD5"];
 
-		public static HashAlgorithm GetCryptoStandard(string algorithm, string expectedHash)
+		public static HashAlgorithm GetCryptoStandard(string algorithm = "SHA56", string? expectedHash = null)
 		{
-			int idx = expectedHash.IndexOf("-");
-			if (idx != -1)
+			if (expectedHash != null)
 			{
-				var algo = expectedHash.Substring(0, idx);
-				var supported = supportedAlgos.FirstOrDefault(p => p.Equals(algo, StringComparison.OrdinalIgnoreCase));
-				if (supported != null)
+				int idx = expectedHash.IndexOf("-");
+				if (idx != -1)
 				{
-					algorithm = supported;
+					var algo = expectedHash.Substring(0, idx);
+					var supported = supportedAlgos.FirstOrDefault(p => p.Equals(algo, StringComparison.OrdinalIgnoreCase));
+					if (supported != null)
+					{
+						algorithm = supported;
+					}
 				}
 			}
+
 			switch (algorithm.ToUpperInvariant())
 			{
 				case "SHA256":
@@ -32,5 +36,6 @@ namespace PLang.Utils
 					throw new NotSupportedException($"Algorithm {algorithm} is not supported.");
 			}
 		}
+
 	}
 }

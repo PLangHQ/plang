@@ -1,5 +1,4 @@
-﻿using MimeKit;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Errors;
 using PLang.Utils;
@@ -9,56 +8,36 @@ using System.Text;
 
 namespace PLang.Services.OutputStream
 {
-	public class JsonOutputStream : IOutputStream, IDisposable
+	public class TextOutputStream : IOutputStream, IDisposable
 	{
 		private readonly HttpListenerContext httpContext;
 		private readonly MemoryStream memoryStream;
-		public JsonOutputStream(HttpListenerContext httpContext)
+		public TextOutputStream(HttpListenerContext httpContext)
 		{
 			this.httpContext = httpContext;
 			this.memoryStream = new MemoryStream();
-			httpContext.Response.ContentType = "application/json";
 		}
 
 		public Stream Stream { get { return this.memoryStream; } }
 		public Stream ErrorStream { get { return this.memoryStream; } }
 
-		public async Task<string> Ask(string text, string type, int statusCode = 200, Dictionary<string, object>? parameters = null)
+		public async Task<string> Ask(string text, string type, int statusCode = 400, Dictionary<string, object>? parameters = null)
 		{
 			httpContext.Response.SendChunked = true;
-			httpContext.Response.StatusCode = statusCode;
-			if (parameters == null || !parameters.ContainsKey("url"))
-			{
-				throw new Exception("url parameter must be defined");
-			}
+			httpContext.Response.StatusCode = 400;
 
 			using (var writer = new StreamWriter(httpContext.Response.OutputStream, httpContext.Response.ContentEncoding ?? Encoding.UTF8))
 			{
 				if (text != null)
 				{
-					var url = parameters["url"];
-					parameters.Remove("url");
-					
-					var askObj = new
-					{
-						type= "ask",
-						statusCode = statusCode,
-						url = url,
-						body = text, 
-						parameters = parameters
-					};
-					/*
 					string content = text.ToString();
-					if (!JsonHelper.IsJson(content))
-					{
-						content = JsonConvert.SerializeObject(content);
-					}*/
+					
 
-					await writer.WriteAsync(JsonConvert.SerializeObject(askObj));
+					await writer.WriteAsync(content);
 				}
 				await writer.FlushAsync();
 			}
-			return null;
+			return "";
 		}
 
 		public void Dispose()
@@ -86,10 +65,7 @@ namespace PLang.Services.OutputStream
 			else
 			{
 				string content = obj.ToString()!;
-				if (!JsonHelper.IsJson(content))
-				{
-					content = JsonConvert.SerializeObject(obj);
-				}
+				
 
 				return content;
 			}

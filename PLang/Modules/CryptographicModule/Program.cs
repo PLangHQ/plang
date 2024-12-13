@@ -201,6 +201,31 @@ namespace PLang.Modules.CryptographicModule
 
 		}
 
+		public async Task<(string?, IError?)> GetHashOfFile(string filePath, string hashAlgorithm = "sha256", string encoding = "base64")
+		{
+			var absolutePath = GetPath(filePath);
+			if (!fileSystem.File.Exists(absolutePath))
+			{
+				return (null, new ProgramError($"File {filePath} could not be found", goalStep, function, FixSuggestion: $"Make sure that the file {filePath} exists. The absolute path to it is {absolutePath}"));
+			}
+
+			var fileBytes = await File.ReadAllBytesAsync(absolutePath);
+			var hashAlgo = EncryptionHelper.GetCryptoStandard(hashAlgorithm);
+			var fileHashBytes = hashAlgo.ComputeHash(fileBytes);
+			string fileHash = "";
+			if (encoding == "hex")
+			{
+				fileHash = BitConverter.ToString(fileHashBytes);
+			}
+			else
+			{
+				fileHash = Convert.ToBase64String(fileHashBytes);
+			}
+			return (fileHash, null);
+
+
+		}
+
 		public void Dispose()
 		{
 			context.Remove(CurrentBearerToken);

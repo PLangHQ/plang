@@ -95,6 +95,7 @@ namespace PLang.Modules.LoopModule
 					var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalNameToCall, goalParameters, Goal);
 					if (result.error != null) return result.error;
 				}
+
 			}
 			else if (obj is IEnumerable enumerables)
 			{

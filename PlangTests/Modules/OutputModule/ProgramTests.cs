@@ -21,7 +21,7 @@ namespace PLangTests.Modules.OutputModule
 			var p = new Program(outputStreamFactory, outputSystemStreamFactory);
 			var result = await p.Ask("Hello, how are your?");
 
-			Assert.AreEqual("good", result);
+			Assert.AreEqual("good", result.Item1);
 		}
 
 		[TestMethod]

@@ -5,6 +5,7 @@ using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Runtime;
 using PLang.Utils;
+using System.Collections;
 using System.ComponentModel;
 
 namespace PLang.Modules.ListDictionaryModule
@@ -48,10 +49,10 @@ namespace PLang.Modules.ListDictionaryModule
 			if (listInstance == null) listInstance = new List<object>();
 
 			listInstance.AddRange(value);
-			
+
 			return listInstance;
 		}
-		
+
 		[Description("Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToList")]
 		public async Task<List<object>> AddToList(object? value, List<object>? listInstance = null)
 		{

@@ -20,7 +20,7 @@ namespace PLang.Services.OutputStream
 
 		public Stream ErrorStream => throw new NotImplementedException();
 
-		public Task<string> Ask(string text, string type = "ask", int statusCode = 104)
+		public Task<string> Ask(string text, string type = "ask", int statusCode = 104, Dictionary<string, object>? parameters = null)
 		{
 			throw new NotImplementedException();
 		}

@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using static PLang.Utils.VariableHelper;
 
 namespace PLang.Utils
 {
@@ -133,19 +134,22 @@ namespace PLang.Utils
 				}
 				return array;
 			}
+			if (variables.Count == 1 && IsVariable(content)) return variables[0].Value;
 
 			foreach (var variable in variables)
 			{
-				string strValue = "";
+				string? strValue = null;
 				if (variable.Value != null && ShouldSerializeToText(variable.Value))
 				{
 					strValue = JsonSerialize(variable.Value).ToString();
 				}
 				else
 				{
-					strValue = variable.Value?.ToString() ?? "";
+					strValue = variable.Value?.ToString() ?? null;
 				}
-				content = content.Replace(variable.Key, strValue.ToString());
+				
+
+				content = content.Replace(variable.Key, strValue);
 			}
 			return content;
 

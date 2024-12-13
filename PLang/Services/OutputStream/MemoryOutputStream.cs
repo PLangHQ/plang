@@ -10,7 +10,7 @@ namespace PLang.Services.OutputStream
 
 		public Stream ErrorStream => new MemoryStream();
 
-		public Task<string> Ask(string text, string type = "text", int statusCode = 200)
+		public Task<string> Ask(string text, string type = "text", int statusCode = 200, Dictionary<string, object>? parameters = null)
 		{
 			return null;
 		}

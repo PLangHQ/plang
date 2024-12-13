@@ -69,11 +69,11 @@ namespace PLang.Modules.DbModule
 			var dataSource = await moduleSettings.GetCurrentDataSource();
 
 
-			SetSystem(@$"Parse user command.
+			SetSystem(@$"Parse user intent.
 
 variable is defined with starting and ending %, e.g. %filePath%
 
-FunctionName: Select the correct function from list of available functions based on user command
+FunctionName: Select the correct function from list of available functions based on user intent
 TableNames: Table names in sql statement, leave variables as is
 DatabaseType: Define the database type. The .net library being used is {dataSource.TypeFullName}, determine the database type from the library");
 
