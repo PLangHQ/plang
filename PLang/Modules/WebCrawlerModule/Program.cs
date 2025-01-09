@@ -345,8 +345,9 @@ namespace PLang.Modules.WebCrawlerModule
 		{
 			var driver = await GetDriver();
 			IAlert alert = driver.SwitchTo().Alert();
+			string text = alert.Text;
 			alert.Accept();
-			return alert.Text;
+			return text;
 		}
 
 		private async Task<string> GetCssSelector(string? cssSelector = null)
