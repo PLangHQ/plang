@@ -630,17 +630,38 @@ namespace PLang.Runtime
 						else
 						{
 							Type type = obj.GetType();
-							PropertyInfo? propInfo = type.GetProperties().FirstOrDefault(p => p.Name.ToLower() == call.ToLower());
-							if (propInfo == null)
+							PropertyInfo? propInfo;
+							if (call.Contains("[") && call.Contains("]"))
 							{
-								throw new VariableDoesNotExistsException($"{call} does not exist on variable {keyPlan.VariableName}, there for I cannot set {key}");
+								string name = call.Substring(0, call.IndexOf("["));
+								string idxName = call.Replace(name, "").Replace("[", "").Replace("]", "");
+
+								propInfo = type.GetProperties().FirstOrDefault(p => p.Name.ToLower() == name.ToLower());
+								if (propInfo == null)
+								{
+									throw new VariableDoesNotExistsException($"{call} does not exist on variable {keyPlan.VariableName}, there for I cannot set {key}");
+								}
+								var list = propInfo?.GetValue(obj) as IList;
+								var position = variables[idxName];
+								list[(int)position.Value] = value;
+								propInfo.SetValue(obj, list);
+								objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
 							}
-							if (value != null && value.GetType() != propInfo.PropertyType)
+							else
 							{
-								value = Convert.ChangeType(value, propInfo.PropertyType);
+								propInfo = type.GetProperties().FirstOrDefault(p => p.Name.ToLower() == call.ToLower());
+							
+								if (propInfo == null)
+								{
+									throw new VariableDoesNotExistsException($"{call} does not exist on variable {keyPlan.VariableName}, there for I cannot set {key}");
+								}
+								if (value != null && value.GetType() != propInfo.PropertyType)
+								{
+									value = Convert.ChangeType(value, propInfo.PropertyType);
+								}
+								propInfo.SetValue(obj, value);
+								objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
 							}
-							propInfo.SetValue(obj, value);
-							objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
 						}
 					}
 
