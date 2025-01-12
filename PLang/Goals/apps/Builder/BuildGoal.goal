@@ -16,7 +16,8 @@ BuildAction
         scheme: {moduleName:string, prFileName:string}
         write to %selectedModule%
 - if %selectedModule.moduleName% == "N/A" then
-    - throw error "Could not find module for %step.Text%"
+    - write out info "Could not find module for %step.Text%"
+    - end goal
 - get available methods in %selectedModule.moduleName%, write to %methods%
 - ready llm/buildActionSelectMethodSystem.txt, load vars, write to %selectMethodSystem%
 - [llm] system: %selectMethodSystem%

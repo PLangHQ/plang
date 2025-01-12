@@ -1,26 +1,10 @@
 {
   "Action": {
-    "FunctionName": "Throw",
-    "Parameters": [
-      {
-        "Type": "Object",
-        "Name": "message",
-        "Value": "Could not find module for %step.Text%"
-      },
-      {
-        "Type": "String",
-        "Name": "type",
-        "Value": "error"
-      },
-      {
-        "Type": "Int32",
-        "Name": "statusCode",
-        "Value": 400
-      }
-    ],
+    "FunctionName": "EndGoalExecution",
+    "Parameters": [],
     "ReturnValues": null
   },
-  "Text": "throw error \"Could not find module for %step.Text%\"",
+  "Text": "end goal",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -50,7 +34,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nThrow(Object message, String? type = \"error\", Int32? statusCode = 400)  : void  // When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc. type can be error|critical. statusCode(like http status code) should be defined by user.. \nEndGoalExecution(String? message, Int32? levels = 0)  : void  // When user intends the execution of the goal to stop without giving a error response. This is equal to doing return in a function. Depth is how far up the stack it should end, previous goal is 1. \nEndApp()  : void // Shutdown the application.\r\n## functions available ends ##\r\n## defined variables ##\r\nstep.Text (type:object), \r\n## defined variables ##"
+            "text": "## functions available starts ##\r\nThrow(Object message, String? type = \"error\", Int32? statusCode = 400)  : void  // When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc. type can be error|critical. statusCode(like http status code) should be defined by user.. \nEndGoalExecution(String? message, Int32? levels = 0)  : void  // When user intends the execution of the goal to stop without giving a error response. This is equal to doing return in a function. Depth is how far up the stack it should end, previous goal is 1. \nEndApp()  : void // Shutdown the application.\r\n## functions available ends ##"
           }
         ]
       },
@@ -59,14 +43,14 @@
         "content": [
           {
             "type": "text",
-            "text": "throw error \"Could not find module for %step.Text%\""
+            "text": "end goal"
           }
         ]
       }
     ],
     "type": "PLang.Modules.GenericFunctionBuilder",
     "caching": true,
-    "RawResponse": "```json\n{\n\t\"FunctionName\": \"Throw\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"Name\": \"message\",\n\t\t\t\"Value\": \"Could not find module for %step.Text%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"type\",\n\t\t\t\"Value\": \"error\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Int32\",\n\t\t\t\"Name\": \"statusCode\",\n\t\t\t\"Value\": 400\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"EndGoalExecution\",\n\t\"Parameters\": []\n}\n```"
   },
   "RunOnBuild": false
 }
