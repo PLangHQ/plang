@@ -833,7 +833,15 @@ namespace PLang.Runtime
 					}
 
 					list = (IList)((JArray)value).ToObject(targetType);
+					return list;
 				}
+
+				if (targetType.FullName.StartsWith("System.Collections.Generic.List`1[[System.String") && value is string[] strArray)
+				{
+					return strArray.ToList();
+				}
+
+
 				return list;
 			}
 			else if (value is IEnumerable<KeyValuePair<string, int>> keyValuePairs)

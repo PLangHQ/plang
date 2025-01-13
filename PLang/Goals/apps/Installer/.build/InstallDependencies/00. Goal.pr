@@ -213,8 +213,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "685bbf9632fd48f82464bb17653d3b8cdfadf9c2e88039e053789cbb8669cf24",
-      "BuilderVersion": "1.0.0.0"
+      "Hash": "7c9ca0618c44cf3b57b675136787e069e724c3c4e9f5ab4e2b1e4b4e948c8d31",
+      "BuilderVersion": null
     },
     {
       "Text": "if %library% is empty",
@@ -524,7 +524,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "c459c46b5bf7402023838cc1e9a7fe5f79fe03256523a6dd6ad4b1b9b708fa8a",
+  "Hash": "0134f0a91cb6c50e760f0f3072dc5080b858975a07017df225fccae5e8ddee47",
   "IncomingVariablesRequired": [
     "depsFile",
     "libraryName",

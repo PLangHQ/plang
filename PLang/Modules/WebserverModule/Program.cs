@@ -99,13 +99,13 @@ namespace PLang.Modules.WebserverModule
 		}
 
 
-		public record Routing(string Path, GoalToCall? GoalToCall = null, string? Method = null, string ContentType = "text/html", 
+		public record Routing(string Path, GoalToCall? GoalToCall = null, string? Method = null, string ContentType = "text/html",
 									Dictionary<string, object?>? Parameters = null, long? MaxContentLength = null, string? DefaultResponseContentEncoding = null);
 
 
 		public async Task<IError?> AddRoute(string path, GoalToCall? goalToCall = null, string? method = null, string ContentType = "text/html",
-									Dictionary<string, object?>? Parameters = null, long? MaxContentLength = null, string? DefaultResponseContentEncoding = null, 
-									string? webserverName = null)
+									Dictionary<string, object?>? Parameters = null, long? MaxContentLength = null, string? DefaultResponseContentEncoding = null,
+									string? webserverName = "default")
 		{
 			WebserverInfo? webserverInfo = null;
 			if (webserverName != null)
@@ -115,11 +115,13 @@ namespace PLang.Modules.WebserverModule
 				{
 					return new ProgramError($"Could not find {webserverName} webserver. Are you defining the correct name?", goalStep, function);
 				}
-			} else if (listeners.Count > 1)
+			}
+			else if (listeners.Count > 1)
 			{
 				return new ProgramError($"There are {listeners.Count} servers, please define which webserver you want to assign this routing to.", goalStep, function,
 						FixSuggestion: $"rewrite the step to include the server name e.g. `- {goalStep.Text}, on {listeners[0].WebserverName} webserver");
-			} else if (listeners.Count == 0)
+			}
+			else if (listeners.Count == 0)
 			{
 				return new ProgramError($"There are 0 servers, please define a webserver.", goalStep, function,
 						FixSuggestion: $"create a step before adding a route e.g. `- start webserver");
@@ -178,9 +180,9 @@ namespace PLang.Modules.WebserverModule
 				{
 					while (true)
 					{
-						
+
 						var httpContext = listener.GetContext();
-					
+
 						var request = httpContext.Request;
 						var resp = httpContext.Response;
 
@@ -203,8 +205,8 @@ namespace PLang.Modules.WebserverModule
 						{
 
 							requestedFile = httpContext.Request.Url?.LocalPath;
-							goalPath = GetGoalPath(routings, httpContext.Request);
-							
+							(goalPath, var routing) = GetGoalPath(routings, httpContext.Request);
+
 							if (string.IsNullOrEmpty(goalPath))
 							{
 								ProcessGeneralRequest(httpContext);
@@ -245,17 +247,18 @@ namespace PLang.Modules.WebserverModule
 								continue;
 							}
 
-							if (goal.GoalInfo?.GoalApiInfo == null || string.IsNullOrEmpty(goal.GoalInfo.GoalApiInfo?.Method))
+							if (!IsValidMethod(routing, request, goal))
 							{
 								await WriteError(resp, $"METHOD is not defined on goal");
 								continue;
 							}
+
 							httpContext.Response.ContentEncoding = Encoding.GetEncoding(defaultResponseContentEncoding);
-							httpContext.Response.ContentType = contentType;
+							httpContext.Response.ContentType = routing.ContentType;
 							httpContext.Response.SendChunked = true;
 							httpContext.Response.AddHeader("X-Goal-Hash", goal.Hash);
 							httpContext.Response.AddHeader("X-Goal-Signature", goal.Signature);
-							if (goal.GoalInfo.GoalApiInfo != null)
+							if (goal.GoalInfo != null && goal.GoalInfo.GoalApiInfo != null)
 							{
 								if (goal.GoalInfo.GoalApiInfo.ContentEncoding != null)
 								{
@@ -290,14 +293,15 @@ namespace PLang.Modules.WebserverModule
 							engine.Init(container);
 							engine.HttpContext = httpContext;
 
+							engine.AddContext(ReservedKeywords.StartingEngine, this.engine);
 							var requestMemoryStack = engine.GetMemoryStack();
 							var identityService = container.GetInstance<IPLangIdentityService>();
-							var error = await ParseRequest(httpContext, identityService, goal.GoalInfo.GoalApiInfo!.Method, requestMemoryStack);
+							var error = await ParseRequest(httpContext, identityService, request.HttpMethod, requestMemoryStack);
 
 							if (error != null)
 							{
 								await ShowError(container, error);
-								
+
 								continue;
 							}
 
@@ -306,9 +310,10 @@ namespace PLang.Modules.WebserverModule
 							{
 								await ShowError(container, error);
 								continue;
-							} else
+							}
+							else
 							{
-								
+
 								var streamFactory = container.GetInstance<IOutputStreamFactory>();
 								var stream = streamFactory.CreateHandler().Stream;
 								if (resp.OutputStream.CanWrite)
@@ -316,7 +321,7 @@ namespace PLang.Modules.WebserverModule
 									stream.Seek(0, SeekOrigin.Begin);
 									stream.CopyTo(resp.OutputStream);
 								}
-								
+
 							}
 
 						}
@@ -356,6 +361,18 @@ Error:
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
 			return webserverInfo;
+		}
+
+		private bool IsValidMethod(Routing routing, HttpListenerRequest request, Goal goal)
+		{
+			if (routing.Method != null && routing.Method.Equals(request.HttpMethod, StringComparison.OrdinalIgnoreCase)) return true;
+
+			if (goal.GoalInfo?.GoalApiInfo != null && request.HttpMethod.Equals(goal.GoalInfo.GoalApiInfo?.Method, StringComparison.OrdinalIgnoreCase))
+			{
+				return true;
+			}
+			return false;
+
 		}
 
 		private async Task ShowError(ServiceContainer container, IError error)
@@ -535,7 +552,7 @@ Error:
 				response.Close();
 				return;
 			}
-			
+
 			response.ContentType = GetMimeType(path);
 
 			var fileInfo = fileSystem.FileInfo.New(path);
@@ -554,19 +571,19 @@ Error:
 		}
 
 
-		private string GetGoalPath(List<Routing> routings, HttpListenerRequest request)
+		private (string, Routing?) GetGoalPath(List<Routing> routings, HttpListenerRequest request)
 		{
-			if (request == null || request.Url == null) return "";
+			if (request == null || request.Url == null) return ("", null);
 			foreach (var route in routings)
 			{
 				if (Regex.IsMatch(request.Url.LocalPath, "^" + route.Path + "$"))
 				{
-					return GetGoalBuildDirPath(route, request);
+					return (GetGoalBuildDirPath(route, request), route);
 				}
 
 			}
 
-			return "";
+			return ("", null);
 		}
 
 		private string GetGoalBuildDirPath(Routing routing, HttpListenerRequest request)
@@ -593,7 +610,7 @@ Error:
 
 			logger.LogDebug($"Path doesnt exists - goalBuildDirPath:{goalBuildDirPath}");
 			return "";
-			
+
 		}
 
 		private async Task<IError?> ParseRequest(HttpListenerContext? context, IPLangIdentityService identityService, string? method, MemoryStack memoryStack)

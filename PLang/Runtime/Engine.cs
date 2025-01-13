@@ -1,6 +1,7 @@
 ﻿using LightInject;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
+using MimeKit.IO.Filters;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
@@ -37,6 +38,7 @@ namespace PLang.Runtime
 		Task<IError?> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0);
 		Goal? GetGoal(string goalName, Goal? callingGoal = null);
 		List<Goal> GetGoalsAvailable(string appPath, string goalName);
+		Task<IError?> RunFromStep(string prFile);
 
 		public HttpListenerContext? HttpContext { get; set; }
 	}
@@ -343,7 +345,7 @@ namespace PLang.Runtime
 			AppContext.SetSwitch("Runtime", true);
 			SetLogLevel(goal.Comment);
 
-			int goalStepIndex = -1;
+			int stepIndex = -1;
 			try
 			{
 				logger.LogTrace("RootDirectory:{0}", fileSystem.RootDirectory);
@@ -358,32 +360,8 @@ namespace PLang.Runtime
 				if (eventError != null) return eventError;
 
 				//if (await CachedGoal(goal)) return null;
-
-				for (goalStepIndex = 0; goalStepIndex < goal.GoalSteps.Count; goalStepIndex++)
-				{
-					var runStepError = await RunStep(goal, goalStepIndex);
-					if (runStepError != null)
-					{
-						if (runStepError is MultipleError me)
-						{
-
-							var hasEndGoal = FindEndGoalError(me);
-							if (hasEndGoal != null) runStepError = hasEndGoal;
-						}
-						if (runStepError is EndGoal endGoal)
-						{
-							logger.LogDebug($"Exiting goal because of end goal: {endGoal}");
-							goalStepIndex = goal.GoalSteps.Count;
-							if (endGoal.Levels-- > 0)
-							{								
-								return endGoal;
-							}
-							continue;
-						} 
-						runStepError = await HandleGoalError(runStepError, goal, goalStepIndex);
-						if (runStepError != null) return runStepError;
-					}
-				}
+				(stepIndex, var stepError) = await RunSteps(goal);
+				if (stepError != null) return stepError;
 				//await CacheGoal(goal);
 
 				eventError = await eventRuntime.RunGoalEvents(context, EventType.After, goal);
@@ -395,7 +373,7 @@ namespace PLang.Runtime
 				var error = new Error(ex.Message, Exception: ex);
 				if (context.ContainsKey(ReservedKeywords.IsEvent)) return error;
 
-				var eventError = await HandleGoalError(error, goal, goalStepIndex);
+				var eventError = await HandleGoalError(error, goal, stepIndex);
 				return eventError;
 			}
 			finally
@@ -414,6 +392,35 @@ namespace PLang.Runtime
 
 		}
 
+		private async Task<(int StepIndex, IError? Error)> RunSteps(Goal goal, int stepIndex = 0)
+		{
+			for (; stepIndex < goal.GoalSteps.Count; stepIndex++)
+			{
+				var runStepError = await RunStep(goal, stepIndex);
+				if (runStepError != null)
+				{
+					if (runStepError is MultipleError me)
+					{
+
+						var hasEndGoal = FindEndGoalError(me);
+						if (hasEndGoal != null) runStepError = hasEndGoal;
+					}
+					if (runStepError is EndGoal endGoal)
+					{
+						logger.LogDebug($"Exiting goal because of end goal: {endGoal}");
+						stepIndex = goal.GoalSteps.Count;
+						if (endGoal.Levels-- > 0)
+						{
+							return (stepIndex, endGoal);
+						}
+						continue;
+					}
+					runStepError = await HandleGoalError(runStepError, goal, stepIndex);
+					if (runStepError != null) return (stepIndex, runStepError);
+				}
+			}
+			return (stepIndex, null);
+		}
 
 		private IError? FindEndGoalError(MultipleError me)
 		{
@@ -505,6 +512,20 @@ private async Task CacheGoal(Goal goal)
 
 			var eventError = await eventRuntime.RunGoalErrorEvents(context, goal, goalStepIndex, error);
 			return eventError;
+		}
+
+		public async Task<IError?> RunFromStep(string prFile)
+		{
+			prParser.ForceLoadAllGoals();
+
+			var goalPath = fileSystem.Path.GetDirectoryName(prFile);
+			var goalFile = fileSystem.Path.Join(goalPath, ISettings.GoalFileName);
+
+			var goal = prParser.ParsePrFile(goalFile);
+			var step = goal.GoalSteps.FirstOrDefault(p => p.AbsolutePrFilePath == prFile);
+
+			var result = await RunSteps(goal, step.Index);
+			return result.Error;
 		}
 
 		private async Task<IError?> RunStep(Goal goal, int goalStepIndex, int retryCount = 0)

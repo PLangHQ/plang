@@ -45,7 +45,7 @@
 		public static readonly string VariableName = "!VariableName";
 		public static readonly string OutputTarget = "!OutputTarget";
 		public static readonly string DefaultTargetElement = "!TargetElement";
-
+		internal static string StartingEngine = "!StartingEngine";
 		private static List<string> keywords = new List<string>();
 		public static List<string> Keywords
 		{

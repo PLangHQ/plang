@@ -1,5 +1,7 @@
-﻿using PLang.Errors;
+﻿using Org.BouncyCastle.Bcpg;
+using PLang.Errors;
 using PLang.Interfaces;
+using PLang.Runtime;
 using PLang.Services.SettingsService;
 using PLang.Utils;
 using System.ComponentModel;
@@ -14,12 +16,14 @@ namespace PLang.Modules.EnvironmentModule
 		private readonly ISettings settings;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ISettingsRepositoryFactory settingsRepositoryFactory;
+		private readonly IEngine engine;
 
-		public Program(ISettings settings, IPLangFileSystem fileSystem, ISettingsRepositoryFactory settingsRepositoryFactory)
+		public Program(ISettings settings, IPLangFileSystem fileSystem, ISettingsRepositoryFactory settingsRepositoryFactory, IEngine engine)
 		{
 			this.settings = settings;
 			this.fileSystem = fileSystem;
 			this.settingsRepositoryFactory = settingsRepositoryFactory;
+			this.engine = engine;
 		}
 
 		public async Task<IError> SetSettingsDbPath(string path)
@@ -97,6 +101,22 @@ namespace PLang.Modules.EnvironmentModule
 			var absolutePath = GetPath(filePath);
 			var process = Process.Start(new ProcessStartInfo(absolutePath) { UseShellExecute = true });
 			return null;
+		}
+
+
+		public async Task<IError?> RunStep(string prFileName)
+		{
+			var absolutePrFileName = fileSystem.Path.Join(fileSystem.GoalsPath, prFileName);
+
+			var startingEngine = engine.GetContext()[ReservedKeywords.StartingEngine] as IEngine;
+			if (startingEngine == null) startingEngine = engine;
+
+			return await startingEngine.RunFromStep(absolutePrFileName);
+		}
+
+		public async Task KeepAlive(string message = "App KeepAlive")
+		{
+			base.KeepAlive(this, message);
 		}
 	}
 }
