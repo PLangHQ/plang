@@ -45,7 +45,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nRunGoal(GoalToCall goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForExecution = True, Int32? delayWhenNotWaitingInMilliseconds = 50, UInt32? waitForXMillisecondsBeforeRunningGoal = 0, Boolean? keepMemoryStackOnAsync = False)  : void  // If backward slash(\\) is used by user, change to forward slash(/).\r\n## functions available ends ##"
+            "text": "## functions available starts ##\r\nRunGoal(GoalToCall goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForExecution = True, Int32? delayWhenNotWaitingInMilliseconds = 50, UInt32? waitForXMillisecondsBeforeRunningGoal = 0, Boolean? keepMemoryStackOnAsync = False)  : void  // Call/Runs another goal. goalName can be prefixed with !. If backward slash(\\) is used by user, change to forward slash(/).\r\n## functions available ends ##"
           },
           {
             "type": "text",

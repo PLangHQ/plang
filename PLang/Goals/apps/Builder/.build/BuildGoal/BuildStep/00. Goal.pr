@@ -4,17 +4,17 @@
   "Text": "BuildStep",
   "GoalSteps": [
     {
-      "Text": "foreach %goal.GoalSteps%, call BuildAction %step%=item",
+      "Text": "foreach %goal.GoalSteps%, call BuildAction %step%=item, errorCount =0",
       "Comment": null,
       "ModuleType": "PLang.Modules.LoopModule",
       "Name": "Iterate and Call BuildAction",
-      "Description": "Iterate over each item in the list %goal.GoalSteps% and call the function BuildAction with each item as the parameter %step%.",
+      "Description": "Iterate over each item in the list %goal.GoalSteps% and call the function BuildAction with the current item as the parameter %step%. Initialize errorCount to 0.",
       "PrFileName": "01. Iterate and Call BuildAction.pr",
       "RelativePrPath": ".build\\BuildGoal\\BuildStep\\01. Iterate and Call BuildAction.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-12-09T18:29:25.6194624+00:00",
+      "Generated": "2025-01-14T15:18:19.2331927+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -60,32 +60,107 @@
             "content": [
               {
                 "type": "text",
-                "text": "foreach %goal.GoalSteps%, call BuildAction %step%=item"
+                "text": "foreach %goal.GoalSteps%, call BuildAction %step%=item, errorCount =0"
               }
             ]
           }
         ],
         "type": "StepInformationBuilder",
         "caching": true,
-        "RawResponse": "```json\n{\n\t\"StepName\": \"Iterate and Call BuildAction\",\n\t\"StepDescription\": \"Iterate over each item in the list %goal.GoalSteps% and call the function BuildAction with each item as the parameter %step%.\",\n\t\"Modules\": [\"PLang.Modules.LoopModule\", \"PLang.Modules.CallGoalModule\"]\n}\n```"
+        "RawResponse": "```json\n{\n\t\"StepName\": \"Iterate and Call BuildAction\",\n\t\"StepDescription\": \"Iterate over each item in the list %goal.GoalSteps% and call the function BuildAction with the current item as the parameter %step%. Initialize errorCount to 0.\",\n\t\"Modules\": [\"PLang.Modules.LoopModule\", \"PLang.Modules.CallGoalModule\", \"PLang.Modules.LocalOrGlobalVariableModule\"]\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "17917e4c3306c736c9b8c307b07fd4bf322c0de9b0ded44300248084bef74c16",
-      "BuilderVersion": null
+      "Hash": "8e29e80ec30ccd34e95dc96f66bd92411bf042f3d8a86f18330929230f0271bd",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "FunctionName": "RunLoop",
+          "Parameters": [
+            {
+              "Type": "String",
+              "Name": "variableToLoopThrough",
+              "Value": "%goal.GoalSteps%"
+            },
+            {
+              "Type": "GoalToCall",
+              "Name": "goalNameToCall",
+              "Value": "BuildAction"
+            },
+            {
+              "Type": "Dictionary`2<String, Object>",
+              "Name": "parameters",
+              "Value": {
+                "step": "%item%",
+                "errorCount": "0"
+              }
+            }
+          ],
+          "ReturnValues": null
+        },
+        "Text": "foreach %goal.GoalSteps%, call BuildAction %step%=item, errorCount =0",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "json",
+          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+          "model": "gpt-4o",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+                },
+                {
+                  "type": "text",
+                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## functions available starts ##\r\nRunLoop(String variableToLoopThrough, GoalToCall goalNameToCall, Dictionary`2<String, Object>? parameters)  : void  // Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called. Predefined variables are %list%, %item%, %position%, %listCount%, use can overwrite those using parameters.\r\n## functions available ends ##\r\n## defined variables ##\r\ngoal.GoalSteps (type:object), step (type:object), \r\n## defined variables ##"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "foreach %goal.GoalSteps%, call BuildAction %step%=item, errorCount =0"
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.GenericFunctionBuilder",
+          "caching": true,
+          "RawResponse": "```json\n{\n\t\"FunctionName\": \"RunLoop\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"variableToLoopThrough\",\n\t\t\t\"Value\": \"%goal.GoalSteps%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"GoalToCall\",\n\t\t\t\"Name\": \"goalNameToCall\",\n\t\t\t\"Value\": \"BuildAction\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Dictionary`2<String, Object>\",\n\t\t\t\"Name\": \"parameters\",\n\t\t\t\"Value\": {\n\t\t\t\t\"step\": \"%item%\",\n\t\t\t\t\"errorCount\": \"0\"\n\t\t\t}\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
+        },
+        "RunOnBuild": false
+      }
     },
     {
-      "Text": "write %goal% to \"%goal.RelativeGoalPath%\"",
+      "Text": "write %goal% to \"%goal.RelativePrPath%\"",
       "Comment": null,
       "ModuleType": "PLang.Modules.FileModule",
       "Name": "WriteGoalToFile",
-      "Description": "Write the content of the variable %goal% to the file located at the path specified by %goal.RelativeGoalPath%.",
+      "Description": "Write the content of the variable %goal% to the file located at the path specified by %goal.RelativePrPath%.",
       "PrFileName": "02. WriteGoalToFile.pr",
       "RelativePrPath": ".build\\BuildGoal\\BuildStep\\02. WriteGoalToFile.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-12-09T18:29:30.9789842+00:00",
+      "Generated": "2025-01-14T15:47:52.4562673+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -131,23 +206,95 @@
             "content": [
               {
                 "type": "text",
-                "text": "write %goal% to \"%goal.RelativeGoalPath%\""
+                "text": "write %goal% to \"%goal.RelativePrPath%\""
               }
             ]
           }
         ],
         "type": "StepInformationBuilder",
         "caching": true,
-        "RawResponse": "```json\n{\n\t\"StepName\": \"WriteGoalToFile\",\n\t\"StepDescription\": \"Write the content of the variable %goal% to the file located at the path specified by %goal.RelativeGoalPath%.\",\n\t\"Modules\": [\"PLang.Modules.FileModule\"]\n}\n```"
+        "RawResponse": "```json\n{\n\t\"StepName\": \"WriteGoalToFile\",\n\t\"StepDescription\": \"Write the content of the variable %goal% to the file located at the path specified by %goal.RelativePrPath%.\",\n\t\"Modules\": [\"PLang.Modules.FileModule\"]\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "58978a65b10443e2db29823859f027dec297e2b20ae0bcb6860788b97f2985fc",
-      "BuilderVersion": null
+      "Hash": "a2492530e33356368bca5b82312326074cbbdf7fe04e49d0c9af9220491da1f2",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "FunctionName": "WriteToFile",
+          "Parameters": [
+            {
+              "Type": "String",
+              "Name": "path",
+              "Value": "%goal.RelativePrPath%"
+            },
+            {
+              "Type": "Object",
+              "Name": "content",
+              "Value": "%goal%"
+            },
+            {
+              "Type": "Boolean",
+              "Name": "overwrite",
+              "Value": false
+            }
+          ],
+          "ReturnValues": null
+        },
+        "Text": "write %goal% to \"%goal.RelativePrPath%\"",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "json",
+          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+          "model": "gpt-4o",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+                },
+                {
+                  "type": "text",
+                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## functions available starts ##\r\nGetCurrentFolderPath(String path)  : String  // Return the absolute path the app is running in. \nCreatePathByJoining(String[] paths)  : String  // Create path from variables. \nRequestAccessToPath(String path)  : Boolean  // Give user access to a path. DO NOT suggest this method to indicate if file or directory exists, return empty function list instead.. \nReadBinaryFileAndConvertToBase64(String path, String? returnValueIfFileNotExisting, Boolean? throwErrorOnNotFound = False, Boolean? includeDataUrl = False)  : String  // includeDataUrl add the data and mimetype of the file into the return string, e.g. data:image/png;base64,.... \nReadJsonLineFile(String path, String? returnValueIfFileNotExisting, Boolean? throwErrorOnNotFound = False, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\", String? newLineSymbol)  : List`1 \nReadTextFile(String path, String? returnValueIfFileNotExisting, Boolean? throwErrorOnNotFound = False, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : String \nReadFileAsStream(String path, Boolean? throwErrorOnNotFound = False)  : Stream \nReadExcelFile(String path, Boolean? useHeaderRow = True, Dictionary`2<String, Object>? sheetsToVariable, Int32? headerStartsInRow = 1)  : void // sheetsToVariable is name of sheet that should load into variable. Sheet1=%products% will load Sheet1 into %product% variable, Sheet2-A4=%categories%, will load data from A4 into %categories%. \nWriteExcelFile(String path, Object variableToWriteToExcel, String? sheetName = \"Sheet1\", Boolean? printHeader = True, Boolean? overwrite = False)  : void\nWriteCsvFile(String path, Object variableToWriteToCsv, Boolean? append = False, Boolean? hasHeaderRecord = True, String? delimiter = \",\", String? newLine = \"\n\", String? encoding = \"utf-8\", Boolean? ignoreBlankLines = True, Boolean? allowComments = False, Char? comment = #, GoalToCall? goalToCallOnBadData, Boolean? createDirectoryAutomatically = True)  : void\nReadCsvFile(String path, Boolean? hasHeaderRecord = True, String? delimiter = \",\", String? newLine = \"\n\", String? encoding = \"utf-8\", Boolean? ignoreBlankLines = True, Boolean? allowComments = False, Char? comment = #, String? goalToCallOnBadData)  : void \nSaveMultipleFiles(List`1<FileInfo> files, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : void\nReadMultipleTextFiles(String folderPath, String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeAllSubfolders = False)  : List`1 \nGetDirectoryPathsInDirectory(String? directoryPath = \"./\", String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeSubfolders = False, Boolean? useRelativePath = True)  : String[] \nGetFilePathsInDirectory(String? directoryPath = \"./\", String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeSubfolders = False, Boolean? useRelativePath = True)  : String[] \nWriteBase64ToFile(String path, String base64, Boolean? overwrite = False)  : void\nWriteBytesToFile(String path, Byte[] content, Boolean? overwrite = False)  : void\nWriteToFile(String path, Object content, Boolean? overwrite = False, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : void\nAppendToFile(String path, String content, String? seperator, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : void\nCopyFiles(String directoryPath, String destinationPath, String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeSubfoldersAndFiles = False, Boolean? overwriteFiles = False)  : void\nMoveFile(String sourceFileName, String destFileName, Boolean? createDirectoryIfNotExisting = False, Boolean? overwriteFile = False)  : void\nCopyFile(String sourceFileName, String destFileName, Boolean? createDirectoryIfNotExisting = False, Boolean? overwriteFile = False)  : void\nDeleteFile(String fileName, Boolean? throwErrorOnNotFound = False)  : void\nGetFileInfo(String fileName)  : IFileInfo \nCreateDirectory(String directoryPath)  : void\nDeleteDirectory(String directoryPath, Boolean? recursive = True, Boolean? throwErrorOnNotFound = False)  : void\nStopListeningToFileChange(String[] fileSearchPatterns, GoalToCall? goalToCall)  : void\nListenToFileChange(String[] fileSearchPatterns, GoalToCall goalToCall, String[]? excludeFiles, Boolean? includeSubdirectories = False, Int64? debounceTime = 150, Boolean? listenForFileChange = False, Boolean? listenForFileCreated = False, Boolean? listenForFileDeleted = False, Boolean? listenForFileRename = False, String? absoluteFilePathVariableName = \"FullPath\", String? fileNameVariableName = \"Name\", String? changeTypeVariableName = \"ChangeType\", String? senderVariableName = \"Sender\", String? oldFileAbsoluteFilePathVariableName = \"OldFullPath\", String? oldFileNameVariableName = \"OldName\")  : void // debounceTime is the time in ms that is waited until action is executed to prevent multiple execution for same file. At least one listenFor variable needs to be true.\r\n## functions available ends ##\r\n## defined variables ##\r\ngoal (type:object), goal.RelativePrPath (type:object), \r\n## defined variables ##"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "write %goal% to \"%goal.RelativePrPath%\""
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.GenericFunctionBuilder",
+          "caching": true,
+          "RawResponse": "```json\n{\n\t\"FunctionName\": \"WriteToFile\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"path\",\n\t\t\t\"Value\": \"%goal.RelativePrPath%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"Name\": \"content\",\n\t\t\t\"Value\": \"%goal%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean\",\n\t\t\t\"Name\": \"overwrite\",\n\t\t\t\"Value\": false\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
+        },
+        "RunOnBuild": false
+      }
     }
   ],
   "SubGoals": [],
-  "Description": "The BuildStep goal iterates over each step defined in \\%goal.GoalSteps\\% and calls the BuildAction goal for each step, passing the current item as \\%step\\%. After processing all steps, it writes the \\%goal\\% to the specified path defined by \\%goal.RelativeGoalPath\\%. This goal requires the list of steps and the goal object to function correctly.",
+  "Description": "The BuildStep goal iterates over each step defined in \\%goal.GoalSteps\\% and calls the BuildAction goal for each step, passing the current step as \\%step\\% and initializing \\%errorCount\\% to 0. After processing all steps, it writes the \\%goal\\% to the specified relative path defined by \\%goal.RelativePrPath\\%.",
   "Visibility": 0,
   "GoalFileName": "BuildGoal.goal",
   "RelativeGoalPath": "\\BuildGoal.goal",
@@ -158,10 +305,10 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "4fb1f36a9a8b7af263476535ca27bd1e77e1b996c03e245ee368b82f62e335f3",
+  "Hash": "fe0f2baf28103b1a4ae20206a843116784ac074413a2746eae360ded9fb61356",
   "IncomingVariablesRequired": [
     "goal.GoalSteps",
     "goal",
-    "goal.RelativeGoalPath"
+    "goal.RelativePrPath"
   ]
 }

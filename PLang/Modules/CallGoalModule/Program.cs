@@ -14,7 +14,7 @@ namespace PLang.Modules.CallGoalModule
 	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine, IPLangAppsRepository appsRepository, PrParser prParser) : BaseProgram()
 	{
 
-		[Description("If backward slash(\\) is used by user, change to forward slash(/)")]
+		[Description("Call/Runs another goal. goalName can be prefixed with !. If backward slash(\\) is used by user, change to forward slash(/)")]
 		public async Task<IError?> RunGoal(GoalToCall goalName, Dictionary<string, object?>? parameters = null, bool waitForExecution = true, 
 			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, bool keepMemoryStackOnAsync = false)
 		{

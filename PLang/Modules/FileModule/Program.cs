@@ -76,6 +76,12 @@ namespace PLang.Modules.FileModule
 			return fileSystem.GoalsPath;
 		}
 
+		[Description("Create path from variables")]
+		public async Task<string> CreatePathByJoining(string[] paths)
+		{
+			return fileSystem.Path.Join(paths);
+		}
+
 		[Description("Give user access to a path. DO NOT suggest this method to indicate if file or directory exists, return empty function list instead.")]
 		public async Task<bool> RequestAccessToPath(string path)
 		{
@@ -572,6 +578,9 @@ namespace PLang.Modules.FileModule
 			if (loadVariables && !string.IsNullOrEmpty(content.ToString()))
 			{
 				content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
+			} else if (content.ToString() == content.GetType().ToString())
+			{
+				content = JsonConvert.SerializeObject(content, Newtonsoft.Json.Formatting.Indented);
 			}
 			
 			await fileSystem.File.WriteAllTextAsync(absolutePath, content.ToString(), encoding: GetEncoding(encoding));

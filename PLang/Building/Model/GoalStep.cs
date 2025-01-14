@@ -105,5 +105,7 @@ namespace PLang.Building.Model
 		public bool IsEvent { get; set; } = false;
 		public string Hash { get; set; }
 		public string BuilderVersion { get; set; }
+
+		public object? PrFile { get; set; }
 	}
 }

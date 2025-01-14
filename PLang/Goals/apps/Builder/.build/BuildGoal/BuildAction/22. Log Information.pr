@@ -1,26 +1,26 @@
 {
   "Action": {
-    "FunctionName": "GetModules",
+    "FunctionName": "Log",
     "Parameters": [
       {
         "Type": "String",
-        "Name": "stepText",
-        "Value": "%step.Text%"
+        "Name": "message",
+        "Value": "Using %selectedMethod.methodName% method to build step"
       },
       {
-        "Type": "List`1<String>",
-        "Name": "excludeModules",
-        "Value": "new List<string>()"
+        "Type": "String",
+        "Name": "loggerLevel",
+        "Value": "information"
+      },
+      {
+        "Type": "Object[]",
+        "Name": "args",
+        "Value": null
       }
     ],
-    "ReturnValues": [
-      {
-        "Type": "String",
-        "VariableName": "%modules%"
-      }
-    ]
+    "ReturnValues": null
   },
-  "Text": "[plang] get available modules for %step.Text%, write to %modules%",
+  "Text": "log info \"Using %selectedMethod.methodName% method to build step\"",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -50,7 +50,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nGetGoals(String filePath)  : List`1 \nGetModules(String stepText, List`1<String> excludeModules)  : String \nGetMethods(String moduleName)  : String \nGetMethodDescription(String moduleName, String methodName)  : MethodDescription \nGetMethodMappingScheme()  : String\r\n## functions available ends ##\r\n## defined variables ##\r\nstep.Text (type:object), modules (type:object), \r\n## defined variables ##"
+            "text": "## functions available starts ##\r\nLog(String message, String? loggerLevel = \"information\", Object[]? args)  : void // loggerLevel can be trace, debug, information, warning, error. args can be null if not defined.\r\n## functions available ends ##\r\n## defined variables ##\r\nselectedMethod.methodName (type:object), \r\n## defined variables ##"
           }
         ]
       },
@@ -59,14 +59,14 @@
         "content": [
           {
             "type": "text",
-            "text": "[plang] get available modules for %step.Text%, write to %modules%"
+            "text": "log info \"Using %selectedMethod.methodName% method to build step\""
           }
         ]
       }
     ],
     "type": "PLang.Modules.GenericFunctionBuilder",
     "caching": true,
-    "RawResponse": "```json\n{\n\t\"FunctionName\": \"GetModules\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"stepText\",\n\t\t\t\"Value\": \"%step.Text%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"List`1<String>\",\n\t\t\t\"Name\": \"excludeModules\",\n\t\t\t\"Value\": \"new List<string>()\"\n\t\t}\n\t],\n\t\"ReturnValues\": [{\n\t\t\"Type\": \"String\",\n\t\t\"VariableName\": \"%modules%\"\n\t}]\n}\n```"
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"Log\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"message\",\n\t\t\t\"Value\": \"Using %selectedMethod.methodName% method to build step\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"loggerLevel\",\n\t\t\t\"Value\": \"information\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Object[]\",\n\t\t\t\"Name\": \"args\",\n\t\t\t\"Value\": null\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
   },
   "RunOnBuild": false
 }

@@ -139,7 +139,7 @@ or url
             }
 
 			var genericFunction = instruction.Action as GenericFunction;
-			if (genericFunction != null)
+			if (genericFunction != null && genericFunction.FunctionName == "AskLlm")
 			{
 				var scheme = genericFunction.Parameters.FirstOrDefault(p => p.Name == "scheme");
 				var responseTypeParameter = genericFunction.Parameters.FirstOrDefault(p => p.Name == "llmResponseType");

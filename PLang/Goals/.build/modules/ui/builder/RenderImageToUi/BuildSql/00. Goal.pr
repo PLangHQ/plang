@@ -71,8 +71,80 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "2d7740903c36d7005616f998bb2ead8102f1194bc29a1b6b0c9036fb57ddd226",
-      "BuilderVersion": null
+      "Hash": "cc1235c76515b9c7577eda6921db1aa0f7ffff4431b95f7db4e5b58043eea9cf",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "FunctionName": "FilterOnProperty",
+          "Parameters": [
+            {
+              "Type": "Object",
+              "Name": "variableToExtractFrom",
+              "Value": "%page%"
+            },
+            {
+              "Type": "String",
+              "Name": "propertyToFilterOn",
+              "Value": "variables"
+            }
+          ],
+          "ReturnValues": [
+            {
+              "Type": "Object",
+              "VariableName": "variablesUsed"
+            }
+          ]
+        },
+        "Text": "filter all \"variables\" from %page%, write to %variablesUsed%",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "json",
+          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+          "model": "gpt-4o-2024-08-06",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+                },
+                {
+                  "type": "text",
+                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## functions available starts ##\r\nFilterOnProperty(Object variableToExtractFrom, String propertyToFilterOn, String? operatorOnPropertyToFilterOn = \"=\", String? retrieveOneItem)  : Object  // Use this function when the intent is to filter a list based solely on the property name or pattern of the property name, without needing to match a specific value within that property. \r\nThis function is suitable when the user specifies conditions like \"property starts with\", \"property ends with\", or \"property contains\" without mentioning a value to filter by.\r\n\r\noperatorOnPropertyToFilterOn can be: =|!=|startswith|endswith|contains\r\nretrieveOneItem: null|first|last|number (retrieveOneItem can also be a number representing the index.)\r\ncan return a list of elements or one element, depending on if retrieveOneItem is set.\r\n<example>\r\n- filter %list% where property is 'Name' => variableToExtractFrom=\"%list%\", propertyToFilterOn=\"Name\"\r\n- filter %list% where property contains 'Addr', return the first => variableToExtractFrom=\"%list%\", propertyToFilterOn=\"Name\", operatorOnPropertyToFilterOn=\"contains\", retrieveOneItem=\"first\"\r\n</example>\r\n. \nFilterOnPropertyAndValue(Object variableToExtractFrom, String propertyToFilterOn, String valueToFilterBy, String? operatorToFilterOnValue = \"=\", String? operatorOnPropertyToFilter = \"=\", String? propertyToExtract, Boolean? throwErrorWhenNothingFound = False, String? retrieveOneItem, String? operatorToFilterOnValueComparer = \"insensitive\")  : void  //  Use this function when the intent is to filter a list based on both the property name and a specific value within that property. \r\nThis function is appropriate when the user specifies conditions that involve both a property and a value, such as \"property is 'Name' and value is 'John'\", or when operators on both the property and value are needed.\r\n\r\npropertyToFilterOn: required, property of a list to filter on\r\nvalueToFilterBy: required, find a specific value on the propertyToFilterOn\r\noperatorOnPropertyToFilter can be following(sperated by |): <|>|equals|startswith|endswith|contains.\r\nretrieveOneItem: first|last|retrieveOneItem can also be a number representing the index.\r\noperatorOnPropertyToFilter: equals|startswith|endswith|contains\r\npropertyToExtract: by default it returns the element that matches the property, but when propertyToExtract is specified it will find that property and return the object from that property\r\noperatorToFilterOnValueComparer: insensitive|case-sensitive\r\n<example>\r\n- filter %json% where property starts with \"%item%/\" and has \"John\" as value, write to %libraries% => variableToExtractFrom=\"%json%\", \r\n\tpropertyToFilterOn=\"%item%/\", valueToFilterBy=\"John\", operatorToFilterOnValue=\"contains\", operatorOnPropertyToFilter=\"startswith\"\r\n\toperatorToFilterOnValueComparer=\"insensitive\"\r\n- filter %list% where property is \"Quantity\" and is larger then \"10\", give me first, write to %library% => variableToExtractFrom=\"%list%\", \r\n\tpropertyToFilterOn=\"Quantity\", valueToFilterBy=\"10\", operatorToFilterOnValue=\">\", operatorOnPropertyToFilter=\"=\"\r\n\toperatorToFilterOnValueComparer=\"case-sensitive\"\r\n\tretrieveOneItem=\"first\"\r\n</example>\r\n.\r\n## functions available ends ##\r\n## defined variables ##\r\npage (type:object), variablesUsed (type:object), \r\n## defined variables ##"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "filter all \"variables\" from %page%, write to %variablesUsed%"
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.GenericFunctionBuilder",
+          "caching": true,
+          "RawResponse": "```json\n{\n\t\"FunctionName\": \"FilterOnProperty\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"Name\": \"variableToExtractFrom\",\n\t\t\t\"Value\": \"%page%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"propertyToFilterOn\",\n\t\t\t\"Value\": \"variables\"\n\t\t}\n\t],\n\t\"ReturnValues\": [{\n\t\t\"Type\": \"Object\",\n\t\t\"VariableName\": \"variablesUsed\"\n\t}]\n}\n```"
+        },
+        "RunOnBuild": false
+      }
     },
     {
       "Text": "set default value of %dataSource% = 'data'",
@@ -142,8 +214,72 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "927c3440ce6abd034a8a33c5bdd4574861302304143ca64a898bad7cd256a589",
-      "BuilderVersion": null
+      "Hash": "8b27ad55f5d3ee7c28943ba89dbb805085d3a5ff6047b3eb7f7f5f5d8aa13e31",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "FunctionName": "SetDefaultValueOnVariables",
+          "Parameters": [
+            {
+              "Type": "Dictionary`2<String, Object>",
+              "Name": "keyValues",
+              "Value": {
+                "%dataSource%": "data"
+              }
+            }
+          ],
+          "ReturnValues": null
+        },
+        "Text": "set default value of %dataSource% = 'data'",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "json",
+          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+          "model": "gpt-4o-2024-08-06",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+                },
+                {
+                  "type": "text",
+                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## functions available starts ##\r\nOnCreateVariablesListener(String[] keys, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnChangeVariablesListener(String[] keys, String goalName, Boolean? notifyWhenCreated = True, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnRemoveVariablesListener(String[] keys, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnCreateVariableListener(String key, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnChangeVariableListener(String key, String goalName, Boolean? notifyWhenCreated = True, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnRemoveVariableListener(String key, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnCreateStaticVariableListener(String key, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnChangeStaticVariableListener(String key, String goalName, Boolean? notifyWhenCreated = True, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnRemoveStaticVariableListener(String key, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void // goalName should be prefix with !, it can whole word only but can contain dot(.). \nGetEnvironmentVariable(String key)  : String \nLoadVariables(String key)  : void \nSetStringVariable(String key, String? value, Boolean? urlDecode = False, Boolean? htmlDecode = False, Boolean? doNotLoadVariablesInValue = False)  : void // Set string variable. Developer might use single/double quote to indicate the string value, the wrapped quote should not be included in the value. If value is json, make sure to format it as valid json, use double quote(\") by escaping it. \nSetJsonObjectVariable(String key, Object? value, Boolean? doNotLoadVariablesInValue = False)  : void // Set json variable.. \nSetNumberVariable(String key, Nullable`1<Int64>? value)  : void // Set int/long variable.. \nSetDoubleVariable(String key, Nullable`1<Double>? value)  : void // Set double variable.. \nSetFloatVariable(String key, Nullable`1<Single>? value)  : void // Set float variable.. \nSetBoolVariable(String key, Nullable`1<Boolean>? value)  : void // Set bool variable.. \nSetVariable(String key, Object? value, Boolean? doNotLoadVariablesInValue = False)  : void // Set variable. Developer might use single/double quote to indicate the string value. If value is json, make sure to format it as valid json, use double quote(\") by escaping it. \nSetVariables(Dictionary`2<String, Object> keyValues, Boolean? doNotLoadVariablesInValue = False)  : void // Set multiple variables. If value is json, make sure to format it as valid json, use double quote(\") by escaping it. \nSetValuesOnVariables(Dictionary`2<String, Object> keyValues, Boolean? doNotLoadVariablesInValue = False)  : void // Set value on variables. If value is json, make sure to format it as valid json, use double quote(\") by escaping it. \nSetDefaultValueOnVariables(Dictionary`2<String, Object> keyValues, Boolean? doNotLoadVariablesInValue = False)  : void // Set default value on variables if not set. If value is json, make sure to format it as valid json, use double quote(\") by escaping it. \nAppendToVariable(String key, Object? value, Char? seperator = \n, String? valueLocation = \"postfix\", String? seperatorLocation = \"end\", Boolean? shouldBeUnique = False, Boolean? doNotLoadVariablesInValue = False)  : void  // Append to variable. valueLocation=postfix|prefix seperatorLocation=end|start. \nGetVariable(String key)  : void \nRemoveVariable(String key)  : void\nSetStaticVariable(String key, Object value)  : void\nGetStaticVariable(String key)  : void \nRemoveStaticVariable(String key)  : void\nSetSettingValue(String key, Object value)  : void // Sets a value to %Settings.XXXX% variable. \nSetDefaultSettingValue(String key, Object value)  : void // Sets a value to %Settings.XXXX% variable but only if it is not set before. \nConvertToBase64(String key)  : String\r\n## functions available ends ##\r\n## defined variables ##\r\ndataSource (type:object), \r\n## defined variables ##"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "set default value of %dataSource% = 'data'"
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.GenericFunctionBuilder",
+          "caching": true,
+          "RawResponse": "```json\n{\n\t\"FunctionName\": \"SetDefaultValueOnVariables\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"Dictionary`2<String, Object>\",\n\t\t\"Name\": \"keyValues\",\n\t\t\"Value\": {\n\t\t\t\"%dataSource%\": \"data\"\n\t\t}\n\t}]\n}\n```"
+        },
+        "RunOnBuild": false
+      }
     },
     {
       "Text": "get all tables and columns in database, datasource: %dataSource% , write to %tablesAndColumns%",
@@ -213,8 +349,80 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "0519c29faec1e31542c83efff8cc08e83efd764aadc36fa689764cc09b68cde2",
-      "BuilderVersion": null
+      "Hash": "5f9b5767bd68c3e3afd961c7685941e2dfea01e29a4baf20b696d768461d49e9",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "FunctionName": "GetDatabaseStructure",
+          "Parameters": [
+            {
+              "Type": "String[]",
+              "Name": "tables",
+              "Value": null
+            },
+            {
+              "Type": "String",
+              "Name": "dataSourceName",
+              "Value": "%dataSource%"
+            }
+          ],
+          "ReturnValues": [
+            {
+              "Type": "Dictionary<String, Object>",
+              "VariableName": "%tablesAndColumns%"
+            }
+          ]
+        },
+        "Text": "get all tables and columns in database, datasource: %dataSource% , write to %tablesAndColumns%",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "json",
+          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+          "model": "gpt-4o-2024-08-06",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Generate the SQL statement from user command. \r\nThe SQL statement MUST be a valid SQL statement for SQLite. \r\nMake sure to use correct data types that match SQLite\r\nYou MUST provide Parameters if SQL has @parameter.\r\n\r\n"
+                },
+                {
+                  "type": "text",
+                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## functions available defined in csharp ##\r\nCreateDataSource(String? name = \"data\", String? localPath, String? databaseType = \"sqlite\", Boolean? setAsDefaultForApp = False, Boolean? keepHistoryEventSourcing = False)  : void // localPath is location of the database on the drive for sqlite. localPath can be string with variables, default is null. \nSetDataSourceName(String name, String? localPath)  : void \nBeginTransaction()  : void\nEndTransaction()  : void\nRollback()  : void\nLoadExtension(String fileName, String? procName)  : void \nGetDatabaseStructure(String[]? tables, String? dataSourceName)  : Dicionary<String, Object>  // Returns tables and views in database with the columns description. \nInsertEventSourceData(Int64 id, String data, String keyHash)  : Int32 \nExecute(String sql, String? dataSourceName)  : Int32 \nCreateTable(String sql, String? dataSourceName)  : Int32 \nSelectOneRow(String sql, List`1<Object>? SqlParameters, String? dataSourceName)  : Object \nSelect(String sql, List`1<Object>? SqlParameters, String? dataSourceName)  : List<Object> \nUpdate(String sql, List`1<Object>? SqlParameters, String? dataSourceName)  : Int32 \nDelete(String sql, List`1<Object>? SqlParameters, String? dataSourceName)  : Int32 \nInsert(String sql, List`1<Object>? SqlParameters, String? dataSourceName)  : Int32  // Basic insert statement. Will return affected row count. \nInsertAndSelectIdOfInsertedRow(String sql, List`1<Object>? SqlParameters, String? dataSourceName)  : Object  // Insert statement that will return the id of the inserted row. Use only if user requests the id. \nInsertBulk(String tableName, List`1<Object> itemsToInsert, Dictionary`2<String, Object>? columnMapping)  : Int32  // Insert a list(bulk) into database, return number of rows inserted. columnMapping maps which property of itemsToInsert should match with a column. \nGetAdditionalSystemErrorInfo()  : String \nGetAdditionalAssistantErrorInfo()  : String \n\r\n## functions available ends ##\r\n"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "get all tables and columns in database, datasource: %dataSource% , write to %tablesAndColumns%"
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.DbModule.Builder",
+          "caching": true,
+          "RawResponse": "```json\n{\n\t\"FunctionName\": \"GetDatabaseStructure\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"String[]\",\n\t\t\"Name\": \"tables\",\n\t\t\"Value\": null\n\t}, {\n\t\t\"Type\": \"String\",\n\t\t\"Name\": \"dataSourceName\",\n\t\t\"Value\": \"%dataSource%\"\n\t}],\n\t\"ReturnValues\": [{\n\t\t\"Type\": \"Dictionary<String, Object>\",\n\t\t\"VariableName\": \"%tablesAndColumns%\"\n\t}]\n}\n```"
+        },
+        "RunOnBuild": false
+      }
     },
     {
       "Text": "read \"/Setup.goal\", default value \"Setup\", write to %setupFile%",
@@ -284,8 +492,85 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "58fc53fbb52c2b4ddf0285c4d408131f60190b2ce2ea80e8fc4c6f31a272ab23",
-      "BuilderVersion": null
+      "Hash": "ad581c982d4fa65bb7eb1c1b4b8beeee9df1c31a476bdc875d451927d479c052",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "FunctionName": "ReadTextFile",
+          "Parameters": [
+            {
+              "Type": "String",
+              "Name": "path",
+              "Value": "/Setup.goal"
+            },
+            {
+              "Type": "String",
+              "Name": "returnValueIfFileNotExisting",
+              "Value": "Setup"
+            },
+            {
+              "Type": "Boolean",
+              "Name": "throwErrorOnNotFound",
+              "Value": false
+            }
+          ],
+          "ReturnValues": [
+            {
+              "Type": "String",
+              "VariableName": "setupFile"
+            }
+          ]
+        },
+        "Text": "read \"/Setup.goal\", default value \"Setup\", write to %setupFile%",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "json",
+          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+          "model": "gpt-4o-2024-08-06",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+                },
+                {
+                  "type": "text",
+                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## functions available starts ##\r\nGetCurrentFolderPath(String path)  : String  // Return the absolute path the app is running in. \nRequestAccessToPath(String path)  : Boolean  // Give user access to a path. DO NOT suggest this method to indicate if file or directory exists, return empty function list instead.. \nReadBinaryFileAndConvertToBase64(String path, String? returnValueIfFileNotExisting, Boolean? throwErrorOnNotFound = False, Boolean? includeDataUrl = False)  : String  // includeDataUrl add the data and mimetype of the file into the return string, e.g. data:image/png;base64,.... \nReadTextFile(String path, String? returnValueIfFileNotExisting, Boolean? throwErrorOnNotFound = False, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : String \nReadFileAsStream(String path, Boolean? throwErrorOnNotFound = False)  : Stream \nReadExcelFile(String path, Boolean? useHeaderRow = True, Dictionary`2<String, Object>? sheetsToVariable, Int32? headerStartsInRow = 1)  : void // sheetsToVariable is name of sheet that should load into variable. Sheet1=%products% will load Sheet1 into %product% variable, Sheet2-A4=%categories%, will load data from A4 into %categories%. \nWriteExcelFile(String path, Object variableToWriteToExcel, String? sheetName = \"Sheet1\", Boolean? printHeader = True, Boolean? overwrite = False)  : void\nWriteCsvFile(String path, Object variableToWriteToCsv, Boolean? append = False, Boolean? hasHeaderRecord = True, String? delimiter = \",\", String? newLine = \"\n\", String? encoding = \"utf-8\", Boolean? ignoreBlankLines = True, Boolean? allowComments = False, Char? comment = #, GoalToCall? goalToCallOnBadData, Boolean? createDirectoryAutomatically = True)  : void\nReadCsvFile(String path, Boolean? hasHeaderRecord = True, String? delimiter = \",\", String? newLine = \"\n\", String? encoding = \"utf-8\", Boolean? ignoreBlankLines = True, Boolean? allowComments = False, Char? comment = #, String? goalToCallOnBadData)  : void \nSaveMultipleFiles(List`1<FileInfo> files, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : void\nReadMultipleTextFiles(String folderPath, String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeAllSubfolders = False)  : List`1 \nGetDirectoryPathsInDirectory(String? directoryPath = \"./\", String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeSubfolders = False, Boolean? useRelativePath = True)  : String[] \nGetFilePathsInDirectory(String? directoryPath = \"./\", String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeSubfolders = False, Boolean? useRelativePath = True)  : String[] \nWriteBase64ToFile(String path, String base64, Boolean? overwrite = False)  : void\nWriteBytesToFile(String path, Byte[] content, Boolean? overwrite = False)  : void\nWriteToFile(String path, Object content, Boolean? overwrite = False, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : void\nAppendToFile(String path, String content, String? seperator, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : void\nCopyFiles(String directoryPath, String destinationPath, String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeSubfoldersAndFiles = False, Boolean? overwriteFiles = False)  : void\nMoveFile(String sourceFileName, String destFileName, Boolean? createDirectoryIfNotExisting = False, Boolean? overwriteFile = False)  : void\nCopyFile(String sourceFileName, String destFileName, Boolean? createDirectoryIfNotExisting = False, Boolean? overwriteFile = False)  : void\nDeleteFile(String fileName, Boolean? throwErrorOnNotFound = False)  : void\nGetFileInfo(String fileName)  : IFileInfo \nCreateDirectory(String directoryPath)  : void\nDeleteDirectory(String directoryPath, Boolean? recursive = True, Boolean? throwErrorOnNotFound = False)  : void\nStopListeningToFileChange(String[] fileSearchPatterns, GoalToCall? goalToCall)  : void\nListenToFileChange(String[] fileSearchPatterns, GoalToCall goalToCall, String[]? excludeFiles, Boolean? includeSubdirectories = False, Int64? debounceTime = 150, Boolean? listenForFileChange = False, Boolean? listenForFileCreated = False, Boolean? listenForFileDeleted = False, Boolean? listenForFileRename = False, String? absoluteFilePathVariableName = \"FullPath\", String? fileNameVariableName = \"Name\", String? changeTypeVariableName = \"ChangeType\", String? senderVariableName = \"Sender\", String? oldFileAbsoluteFilePathVariableName = \"OldFullPath\", String? oldFileNameVariableName = \"OldName\")  : void // debounceTime is the time in ms that is waited until action is executed to prevent multiple execution for same file. At least one listenFor variable needs to be true.\r\n## functions available ends ##\r\n## defined variables ##\r\nsetupFile (type:object), \r\n## defined variables ##"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "read \"/Setup.goal\", default value \"Setup\", write to %setupFile%"
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.GenericFunctionBuilder",
+          "caching": true,
+          "RawResponse": "```json\n{\n\t\"FunctionName\": \"ReadTextFile\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"path\",\n\t\t\t\"Value\": \"/Setup.goal\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"returnValueIfFileNotExisting\",\n\t\t\t\"Value\": \"Setup\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean\",\n\t\t\t\"Name\": \"throwErrorOnNotFound\",\n\t\t\t\"Value\": false\n\t\t}\n\t],\n\t\"ReturnValues\": [{\n\t\t\"Type\": \"String\",\n\t\t\"VariableName\": \"setupFile\"\n\t}]\n}\n```"
+        },
+        "RunOnBuild": false
+      }
     },
     {
       "Text": "read llm/BuildSqlSystem.txt, load vars, write to %buildSqlSystem%",
@@ -355,8 +640,80 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "c230dc10ad73418d5313992cf74d0d46ff61afdbed7900d60950332bc864c98a",
-      "BuilderVersion": null
+      "Hash": "cdf838714d455757e724130b596f90a97e296caba6445df85a14bf6276ba4320",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "FunctionName": "ReadTextFile",
+          "Parameters": [
+            {
+              "Type": "String",
+              "Name": "path",
+              "Value": "llm/BuildSqlSystem.txt"
+            },
+            {
+              "Type": "Boolean",
+              "Name": "loadVariables",
+              "Value": true
+            }
+          ],
+          "ReturnValues": [
+            {
+              "Type": "String",
+              "VariableName": "buildSqlSystem"
+            }
+          ]
+        },
+        "Text": "read llm/BuildSqlSystem.txt, load vars, write to %buildSqlSystem%",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "json",
+          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+          "model": "gpt-4o-2024-08-06",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+                },
+                {
+                  "type": "text",
+                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## functions available starts ##\r\nGetCurrentFolderPath(String path)  : String  // Return the absolute path the app is running in. \nRequestAccessToPath(String path)  : Boolean  // Give user access to a path. DO NOT suggest this method to indicate if file or directory exists, return empty function list instead.. \nReadBinaryFileAndConvertToBase64(String path, String? returnValueIfFileNotExisting, Boolean? throwErrorOnNotFound = False, Boolean? includeDataUrl = False)  : String  // includeDataUrl add the data and mimetype of the file into the return string, e.g. data:image/png;base64,.... \nReadTextFile(String path, String? returnValueIfFileNotExisting, Boolean? throwErrorOnNotFound = False, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : String \nReadFileAsStream(String path, Boolean? throwErrorOnNotFound = False)  : Stream \nReadExcelFile(String path, Boolean? useHeaderRow = True, Dictionary`2<String, Object>? sheetsToVariable, Int32? headerStartsInRow = 1)  : void // sheetsToVariable is name of sheet that should load into variable. Sheet1=%products% will load Sheet1 into %product% variable, Sheet2-A4=%categories%, will load data from A4 into %categories%. \nWriteExcelFile(String path, Object variableToWriteToExcel, String? sheetName = \"Sheet1\", Boolean? printHeader = True, Boolean? overwrite = False)  : void\nWriteCsvFile(String path, Object variableToWriteToCsv, Boolean? append = False, Boolean? hasHeaderRecord = True, String? delimiter = \",\", String? newLine = \"\n\", String? encoding = \"utf-8\", Boolean? ignoreBlankLines = True, Boolean? allowComments = False, Char? comment = #, GoalToCall? goalToCallOnBadData, Boolean? createDirectoryAutomatically = True)  : void\nReadCsvFile(String path, Boolean? hasHeaderRecord = True, String? delimiter = \",\", String? newLine = \"\n\", String? encoding = \"utf-8\", Boolean? ignoreBlankLines = True, Boolean? allowComments = False, Char? comment = #, String? goalToCallOnBadData)  : void \nSaveMultipleFiles(List`1<FileInfo> files, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : void\nReadMultipleTextFiles(String folderPath, String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeAllSubfolders = False)  : List`1 \nGetDirectoryPathsInDirectory(String? directoryPath = \"./\", String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeSubfolders = False, Boolean? useRelativePath = True)  : String[] \nGetFilePathsInDirectory(String? directoryPath = \"./\", String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeSubfolders = False, Boolean? useRelativePath = True)  : String[] \nWriteBase64ToFile(String path, String base64, Boolean? overwrite = False)  : void\nWriteBytesToFile(String path, Byte[] content, Boolean? overwrite = False)  : void\nWriteToFile(String path, Object content, Boolean? overwrite = False, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : void\nAppendToFile(String path, String content, String? seperator, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : void\nCopyFiles(String directoryPath, String destinationPath, String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeSubfoldersAndFiles = False, Boolean? overwriteFiles = False)  : void\nMoveFile(String sourceFileName, String destFileName, Boolean? createDirectoryIfNotExisting = False, Boolean? overwriteFile = False)  : void\nCopyFile(String sourceFileName, String destFileName, Boolean? createDirectoryIfNotExisting = False, Boolean? overwriteFile = False)  : void\nDeleteFile(String fileName, Boolean? throwErrorOnNotFound = False)  : void\nGetFileInfo(String fileName)  : IFileInfo \nCreateDirectory(String directoryPath)  : void\nDeleteDirectory(String directoryPath, Boolean? recursive = True, Boolean? throwErrorOnNotFound = False)  : void\nStopListeningToFileChange(String[] fileSearchPatterns, GoalToCall? goalToCall)  : void\nListenToFileChange(String[] fileSearchPatterns, GoalToCall goalToCall, String[]? excludeFiles, Boolean? includeSubdirectories = False, Int64? debounceTime = 150, Boolean? listenForFileChange = False, Boolean? listenForFileCreated = False, Boolean? listenForFileDeleted = False, Boolean? listenForFileRename = False, String? absoluteFilePathVariableName = \"FullPath\", String? fileNameVariableName = \"Name\", String? changeTypeVariableName = \"ChangeType\", String? senderVariableName = \"Sender\", String? oldFileAbsoluteFilePathVariableName = \"OldFullPath\", String? oldFileNameVariableName = \"OldName\")  : void // debounceTime is the time in ms that is waited until action is executed to prevent multiple execution for same file. At least one listenFor variable needs to be true.\r\n## functions available ends ##\r\n## defined variables ##\r\nbuildSqlSystem (type:object), \r\n## defined variables ##"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "read llm/BuildSqlSystem.txt, load vars, write to %buildSqlSystem%"
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.GenericFunctionBuilder",
+          "caching": true,
+          "RawResponse": "```json\n{\n\t\"FunctionName\": \"ReadTextFile\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"path\",\n\t\t\t\"Value\": \"llm/BuildSqlSystem.txt\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean\",\n\t\t\t\"Name\": \"loadVariables\",\n\t\t\t\"Value\": true\n\t\t}\n\t],\n\t\"ReturnValues\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"VariableName\": \"buildSqlSystem\"\n\t\t}\n\t]\n}\n```"
+        },
+        "RunOnBuild": false
+      }
     },
     {
       "Text": "[llm] system: %buildSqlSystem%\n    user: %variablesUsed%\n    scheme:  [{sql:string, variableName:string, mockData:string}]\n    write to %sqlResponse%",
@@ -426,8 +783,108 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "397eea67ea60d89e16885135784707dca2bdc034a7359c2e4d7361477b517cc0",
-      "BuilderVersion": null
+      "Hash": "fa3b329f48afbb82a3b0b8f82e477bdd7eb14859c04323db7bcfd58b1e541fb4",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "FunctionName": "AskLlm",
+          "Parameters": [
+            {
+              "Type": "List<LlmMessage>",
+              "Name": "promptMessages",
+              "Value": [
+                {
+                  "role": "system",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "%buildSqlSystem%"
+                    }
+                  ]
+                },
+                {
+                  "role": "user",
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "%variablesUsed%"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "Type": "String",
+              "Name": "scheme",
+              "Value": "[{sql:string, variableName:string, mockData:string}]"
+            },
+            {
+              "Type": "String",
+              "Name": "llmResponseType",
+              "Value": "json"
+            }
+          ],
+          "ReturnValues": [
+            {
+              "Type": "object",
+              "VariableName": "sqlResponse"
+            }
+          ]
+        },
+        "Text": "[llm] system: %buildSqlSystem%\n    user: %variablesUsed%\n    scheme:  [{sql:string, variableName:string, mockData:string}]\n    write to %sqlResponse%",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "json",
+          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+          "model": "gpt-4o-2024-08-06",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+                },
+                {
+                  "type": "text",
+                  "text": "The following user request is for constructing a message to LLM engine\r\n\r\nllmResponseType can be null, text, json, markdown or html. default is null. If scheme is defined then use json, unless user defines otherwise\r\n\r\npromptMessages contains the system, assistant and user messages. assistant or user message is required.\r\nDetermine what part is system, assistant and user properties. If you cannot map it, the whole user request should be on user role\r\nif user does not define model, set model to \"gpt-4-vision-preview\" if content type is image_url\r\nmodel is default gpt-4o-mini\r\nthe json scheme from promptMessages without image is : {role:string, content:[{type:string, text:string}]} \r\nthe json scheme from promptMessages with image is : {role:string, content:[{type:string, image_url:{url:string}]} \r\n\r\n## examples ##\r\nsystem: %system%, assistant: %assistant%, user: %user%\r\n\r\npromptMessages: \r\n[\r\n\t{\r\n        \"role\": \"system\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%system%\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"assistant\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%assistant%\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"user\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%user%\"\r\n            }\r\n        ]\r\n    }\r\n]\r\n\r\n\r\nsystem: do stuff, user: this is data from user, write to %data%, %output% and %dest% => scheme: null, llResponseType=null\r\nsystem: setup up system, asssistant: some assistant stuff, user: this is data from user, scheme: {data:string, year:number, name:string} => scheme:  {data:string, year:number, name:string}\r\n\r\npromptMessages: \r\n[\r\n\t{\r\n        \"role\": \"system\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"setup up system\\nYou MUST respond in JSON, scheme:{data:string, year:number, name:string}\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"assistant\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"some assistant stuff\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"user\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"this is data from user\"\r\n            }\r\n        ]\r\n    }\r\n]\r\n\r\ncontent can also have the type of image_url, the content of image_url json property can be a URL or a base64 of image.\r\nwhen using base64 append data:XXXX/YYYY;base64, where XXXX/YYYY is the data type, such as image/jpg, image/png, image/gif\r\n\"content\": [\r\n    {\r\n        \"type\": \"image_url\",\r\n        \"image_url\": {\r\n            \"url\": \"data:image/jpeg;base64,%base64OfImage%\"\r\n        }\r\n    }\r\n]\r\n\r\nor url \r\n\r\n\"content\": [\r\n   {\r\n        \"type\": \"image_url\",\r\n        \"image_url\": {\r\n            \"url\": \"http://example.org/image.jpg\"\r\n        }\r\n    }\r\n]\r\n\r\n\r\n\r\n## examples ##\r\n"
+                },
+                {
+                  "type": "text",
+                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## functions available starts ##\r\nAppendToSystem(String system)  : void\nAppendToAssistant(String assistant)  : void\nAppendToUser(String user)  : void\nAskLlm(List`1<LlmMessage> promptMessages, String? scheme, String? model = \"gpt-4o-mini\", Double? temperature = 0, Double? topP = 0, Double? frequencyPenalty = 0, Double? presencePenalty = 0, Int32? maxLength = 4000, Boolean? cacheResponse = True, String? llmResponseType, String? loggerLevel = \"trace\", Boolean? continuePrevConversation = False)  : IReturnDictionary \nUseSharedIdentity(Boolean? useSharedIdentity = True)  : void\nGetLlmIdentity()  : String \nGetBalance()  : void  // Get the current balance at the LLM service.\r\n## functions available ends ##\r\n## defined variables ##\r\nbuildSqlSystem (type:String), variablesUsed (type:Object), sqlResponse (type:object), \r\n## defined variables ##"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[llm] system: %buildSqlSystem%\n    user: %variablesUsed%\n    scheme:  [{sql:string, variableName:string, mockData:string}]\n    write to %sqlResponse%"
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.LlmModule.Builder",
+          "caching": true,
+          "RawResponse": "```json\n{\n    \"FunctionName\": \"AskLlm\",\n    \"Parameters\": [\n        {\n            \"Type\": \"List<LlmMessage>\",\n            \"Name\": \"promptMessages\",\n            \"Value\": [\n                {\n                    \"role\": \"system\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"%buildSqlSystem%\"\n                        }\n                    ]\n                },\n                {\n                    \"role\": \"user\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"%variablesUsed%\"\n                        }\n                    ]\n                }\n            ]\n        },\n        {\n            \"Type\": \"String\",\n            \"Name\": \"scheme\",\n            \"Value\": \"[{sql:string, variableName:string, mockData:string}]\"\n        },\n        {\n            \"Type\": \"String\",\n            \"Name\": \"llmResponseType\",\n            \"Value\": \"json\"\n        }\n    ],\n    \"ReturnValues\": [\n        {\n            \"Type\": \"object\",\n            \"VariableName\": \"sqlResponse\"\n        }\n    ]\n}\n```"
+        },
+        "RunOnBuild": false
+      }
     }
   ],
   "SubGoals": [],
@@ -442,7 +899,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "debf52231afa86dcc7b02c1a8f7fa48107e2ee8731e8b6f4bff91fcb570765b7",
+  "Hash": "3ce38a0e09b48d71a0e475266c2f8ec49093ef85d6c69c8647f3f1bee47164de",
   "IncomingVariablesRequired": [
     "page"
   ]

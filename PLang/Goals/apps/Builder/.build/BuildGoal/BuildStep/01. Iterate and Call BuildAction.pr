@@ -16,13 +16,14 @@
         "Type": "Dictionary`2<String, Object>",
         "Name": "parameters",
         "Value": {
-          "step": "%item%"
+          "step": "%item%",
+          "errorCount": "0"
         }
       }
     ],
     "ReturnValues": null
   },
-  "Text": "foreach %goal.GoalSteps%, call BuildAction %step%=item",
+  "Text": "foreach %goal.GoalSteps%, call BuildAction %step%=item, errorCount =0",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -61,14 +62,14 @@
         "content": [
           {
             "type": "text",
-            "text": "foreach %goal.GoalSteps%, call BuildAction %step%=item"
+            "text": "foreach %goal.GoalSteps%, call BuildAction %step%=item, errorCount =0"
           }
         ]
       }
     ],
     "type": "PLang.Modules.GenericFunctionBuilder",
     "caching": true,
-    "RawResponse": "```json\n{\n\t\"FunctionName\": \"RunLoop\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"variableToLoopThrough\",\n\t\t\t\"Value\": \"%goal.GoalSteps%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"GoalToCall\",\n\t\t\t\"Name\": \"goalNameToCall\",\n\t\t\t\"Value\": \"BuildAction\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Dictionary`2<String, Object>\",\n\t\t\t\"Name\": \"parameters\",\n\t\t\t\"Value\": {\n\t\t\t\t\"step\": \"%item%\"\n\t\t\t}\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"RunLoop\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"variableToLoopThrough\",\n\t\t\t\"Value\": \"%goal.GoalSteps%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"GoalToCall\",\n\t\t\t\"Name\": \"goalNameToCall\",\n\t\t\t\"Value\": \"BuildAction\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Dictionary`2<String, Object>\",\n\t\t\t\"Name\": \"parameters\",\n\t\t\t\"Value\": {\n\t\t\t\t\"step\": \"%item%\",\n\t\t\t\t\"errorCount\": \"0\"\n\t\t\t}\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
   },
   "RunOnBuild": false
 }

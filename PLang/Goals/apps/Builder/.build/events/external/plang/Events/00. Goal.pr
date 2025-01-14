@@ -9,12 +9,12 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\external\\plang\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-01-09T17:10:51.7980613+00:00",
+      "Generated": "2025-01-14T18:21:55.4434109+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -44,7 +44,8 @@
       },
       "IsEvent": true,
       "Hash": null,
-      "BuilderVersion": null
+      "BuilderVersion": null,
+      "PrFile": null
     },
     {
       "Text": "before goal ends, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug",
@@ -52,12 +53,12 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\external\\plang\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-01-09T17:10:51.8054616+00:00",
+      "Generated": "2025-01-14T18:21:55.4506181+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -87,7 +88,8 @@
       },
       "IsEvent": true,
       "Hash": null,
-      "BuilderVersion": null
+      "BuilderVersion": null,
+      "PrFile": null
     }
   ],
   "SubGoals": [],

@@ -95,9 +95,9 @@ namespace PLang.Modules
 				{
 					return (null, new StepBuilderError($"Could not build for {responseType.Name}", step));
 				}
-				if (result is GenericFunction gf && gf.FunctionName == "N/A" && errorCount >= 3)
+				if (result is GenericFunction gf && gf.FunctionName == "N/A")
 				{
-					return (null, new StepBuilderError($"Could find function to match step in module {step.ModuleType}", step));
+					return (null, new InvalidModuleError(step.ModuleType, $"Could find function to match step in module {step.ModuleType}"));
 				}
 
 				var instruction = new Instruction(result);

@@ -35,11 +35,57 @@ namespace PLang.Runtime.Tests
 		public record DataTestRecord(int value);
 
 		[TestMethod]
+		public void Test_MathPlan()
+		{
+
+			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
+			var mathPlan = stack.GetMathPlan("%count+1%", "count");
+
+			Assert.AreEqual('+', mathPlan.Operator);
+			Assert.AreEqual(1, mathPlan.Operand);
+
+
+			mathPlan = stack.GetMathPlan("%count++%", "count");
+
+			Assert.AreEqual('+', mathPlan.Operator);
+			Assert.AreEqual(2, mathPlan.Operand);
+
+			mathPlan = stack.GetMathPlan("%count+++%", "count");
+
+			Assert.AreEqual('+', mathPlan.Operator);
+			Assert.AreEqual(3, mathPlan.Operand);
+
+			mathPlan = stack.GetMathPlan("%count*5%", "count");
+
+			Assert.AreEqual('*', mathPlan.Operator);
+			Assert.AreEqual(5, mathPlan.Operand);
+
+			mathPlan = stack.GetMathPlan("%count/10%", "count");
+
+			Assert.AreEqual('/', mathPlan.Operator);
+			Assert.AreEqual(10, mathPlan.Operand);
+
+
+			stack.Put("count", 2);
+			mathPlan = stack.GetMathPlan("%count*2.3%", "count");
+
+			Assert.AreEqual('*', mathPlan.Operator);
+			Assert.AreEqual(2.3, mathPlan.Operand);
+
+			var objValue = stack.GetObjectValue("count", false);
+
+			mathPlan.Execute(objValue);
+
+
+			Assert.AreEqual(4.6, objValue.Value);
+		}
+
+		[TestMethod]
 		public void GetVariableExecutionPlan_Test()
 		{
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			stack.Put("data", "1");
-			var plan = stack.GetVariableExecutionPlan("data", false);
+			var plan = stack.GetVariableExecutionPlan("data", "data", false);
 
 			Assert.AreEqual(plan.VariableName, "data");
 			Assert.AreEqual(plan.Calls.Count, 0);
@@ -55,7 +101,7 @@ namespace PLang.Runtime.Tests
 			//rows[idx].Email
 
 			stack.Put("dataTest", new DataTestClass() { Number = 1, Title = "Hello", Date = DateTime.Now });
-			plan = stack.GetVariableExecutionPlan("dataTest", false);
+			plan = stack.GetVariableExecutionPlan("dataTest", "dataTest", false);
 
 			var testClass = plan.ObjectValue.Value as DataTestClass;
 			Assert.AreEqual(plan.VariableName, "dataTest");
@@ -63,14 +109,14 @@ namespace PLang.Runtime.Tests
 			Assert.AreEqual(plan.Calls.Count, 0);
 			Assert.AreEqual(plan.Index, 0);
 
-			plan = stack.GetVariableExecutionPlan("dataTest.Title", false);
+			plan = stack.GetVariableExecutionPlan("dataTest.Title", "dataTest.Title", false);
 			testClass = plan.ObjectValue.Value as DataTestClass;
 			Assert.AreEqual(plan.VariableName, "dataTest");
 			Assert.AreEqual(plan.Calls.Count, 1);
 			Assert.AreEqual(plan.Calls[0], "Title");
 			Assert.AreEqual(testClass.Number, 1);
 
-			plan = stack.GetVariableExecutionPlan("dataTest.Title.ToUpper()", false);
+			plan = stack.GetVariableExecutionPlan("dataTest.Title.ToUpper()", "dataTest.Title.ToUpper()", false);
 
 			Assert.AreEqual(plan.VariableName, "dataTest");
 			Assert.AreEqual(plan.Calls.Count, 2);
@@ -80,7 +126,7 @@ namespace PLang.Runtime.Tests
 
 			Assert.AreEqual(testClass.Title, "Hello");
 
-			plan = stack.GetVariableExecutionPlan("dataTest.Date.ToString(\"G\")", false);
+			plan = stack.GetVariableExecutionPlan("dataTest.Date.ToString(\"G\")", "dataTest.Date.ToString(\"G\")", false);
 
 			Assert.AreEqual(plan.VariableName, "dataTest");
 			Assert.AreEqual(plan.Calls.Count, 2);
@@ -95,7 +141,7 @@ namespace PLang.Runtime.Tests
 			list.Add(new DataTestClass() { Number = 2, Title = "Hello2", Date = DateTime.Now.AddDays(1) });
 			stack.Put("dataTestList", list);
 
-			plan = stack.GetVariableExecutionPlan("dataTestList[2].Date.ToString(\"d\")", false);
+			plan = stack.GetVariableExecutionPlan("dataTestList[2].Date.ToString(\"d\")", "dataTestList[2].Date.ToString(\"d\")", false);
 
 			Assert.AreEqual("dataTestList", plan.VariableName);
 			Assert.AreEqual(2, plan.Calls.Count);
@@ -110,7 +156,7 @@ namespace PLang.Runtime.Tests
 			Assert.AreEqual(list2[1].Title, "Hello2");
 
 			stack.Put("idx", 2);
-			plan = stack.GetVariableExecutionPlan("dataTestList[idx].Date.ToString(\"d\")", false);
+			plan = stack.GetVariableExecutionPlan("%dataTestList[idx].Date.ToString(\"d\")%", "dataTestList[idx].Date.ToString(\"d\")", false);
 
 			Assert.AreEqual(plan.VariableName, "dataTestList");
 			Assert.AreEqual(plan.Calls.Count, 2);

@@ -1,31 +1,21 @@
 {
   "Action": {
-    "FunctionName": "Write",
+    "FunctionName": "Log",
     "Parameters": [
       {
-        "Type": "Object",
-        "Name": "content",
-        "Value": "Could not find module for %step.Text%"
-      },
-      {
-        "Type": "Boolean",
-        "Name": "writeToBuffer",
-        "Value": false
+        "Type": "String",
+        "Name": "message",
+        "Value": "Building properties for %step.Name%"
       },
       {
         "Type": "String",
-        "Name": "type",
-        "Value": "info"
-      },
-      {
-        "Type": "Int32",
-        "Name": "statusCode",
-        "Value": 200
+        "Name": "loggerLevel",
+        "Value": "information"
       }
     ],
     "ReturnValues": null
   },
-  "Text": "write out info \"Could not find module for %step.Text%\"",
+  "Text": "log info \"Building properties for %step.Name%\"",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -55,7 +45,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nAsk(String text, String? type = \"text\", Int32? statusCode = 200, String? regexPattern, String? errorMessage)  : String  // Send response to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.. \nWriteToSystemOutput(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  : void  // Write to the system output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. \nWriteJson(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  : void  // Write to the json output. Make sure content is valid JSON format. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. \nWrite(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  : void  // Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text.\r\n## functions available ends ##\r\n## defined variables ##\r\nstep.Text (type:object), \r\n## defined variables ##"
+            "text": "## functions available starts ##\r\nLog(String message, String? loggerLevel = \"information\", Object[]? args)  : void // loggerLevel can be trace, debug, information, warning, error. args can be null if not defined.\r\n## functions available ends ##\r\n## defined variables ##\r\nstep.Name (type:object), \r\n## defined variables ##"
           }
         ]
       },
@@ -64,14 +54,14 @@
         "content": [
           {
             "type": "text",
-            "text": "write out info \"Could not find module for %step.Text%\""
+            "text": "log info \"Building properties for %step.Name%\""
           }
         ]
       }
     ],
     "type": "PLang.Modules.GenericFunctionBuilder",
     "caching": true,
-    "RawResponse": "```json\n{\n\t\"FunctionName\": \"Write\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"Name\": \"content\",\n\t\t\t\"Value\": \"Could not find module for %step.Text%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean\",\n\t\t\t\"Name\": \"writeToBuffer\",\n\t\t\t\"Value\": false\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"type\",\n\t\t\t\"Value\": \"info\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Int32\",\n\t\t\t\"Name\": \"statusCode\",\n\t\t\t\"Value\": 200\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"Log\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"message\",\n\t\t\t\"Value\": \"Building properties for %step.Name%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"loggerLevel\",\n\t\t\t\"Value\": \"information\"\n\t\t}\n\t]\n}\n```"
   },
   "RunOnBuild": false
 }

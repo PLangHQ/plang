@@ -144,7 +144,7 @@ namespace PLang.Utils
 
 			foreach (var method in methods)
 			{
-				
+
 				var strMethod = "";
 				if (method.Module.Name != type.Module.Name) continue;
 				if (method.Name == "Run" || method.Name == "Dispose" || method.IsSpecialName) continue;
@@ -157,7 +157,7 @@ namespace PLang.Utils
 				foreach (var desc in descriptions)
 				{
 					md.Description += desc.ConstructorArguments.FirstOrDefault().Value + ". ";
-					
+
 				}
 				methodDescs.Add(md);
 			}
@@ -171,7 +171,7 @@ namespace PLang.Utils
 			{
 				NullValueHandling = NullValueHandling.Ignore
 			};
-			return JsonConvert.SerializeObject(GetMethodDescriptions(type, methodName), settings:settings, formatting: Formatting.None);
+			return JsonConvert.SerializeObject(GetMethodDescriptions(type, methodName), settings: settings, formatting: Formatting.None);
 
 		}
 		public string GetMethodsAsString(Type type, string? methodName = null)
@@ -626,18 +626,34 @@ namespace PLang.Utils
 				}
 				else
 				{
-					var type = method.ReturnType.GenericTypeArguments[0].GenericTypeArguments
-						.FirstOrDefault(p => !typeof(IError).IsAssignableFrom(p));
-					var returnValueType = type?.FullName ?? "void";
+					var returnValueType = GetTypeToUse(method.ReturnType);
+					if (returnValueType == "void") return null;
 
 					return new ReturnValue()
 					{
 						Type = returnValueType
 					};
+
 				}
 			}
 
 			return null;
+		}
+
+		private static string GetTypeToUse(Type type)
+		{
+			var typeToUse = "void";
+			if (type.GenericTypeArguments[0].GenericTypeArguments.Length > 0)
+			{
+				var tmp = type.GenericTypeArguments[0].GenericTypeArguments
+						.FirstOrDefault(p => !typeof(IError).IsAssignableFrom(p));
+				typeToUse = tmp?.FullName;
+			}
+			else
+			{
+				typeToUse = type.GenericTypeArguments.FirstOrDefault(p => !typeof(IError).IsAssignableFrom(p))?.FullName;
+			}
+			return typeToUse ?? "void";
 		}
 
 		public static object? GetParameterInfoDefaultValue(ParameterInfo parameterInfo)

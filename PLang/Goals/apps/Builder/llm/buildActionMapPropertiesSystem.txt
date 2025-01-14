@@ -6,3 +6,5 @@ For cancellation, user would structure it as 'cancel after ...'
 For event binding, user would structure it as 'before step runs...' 
 
 These are example, you must understand the intent of the user and if it maps to these intents.
+
+Set values as null when they dont apply

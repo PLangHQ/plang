@@ -50,6 +50,8 @@ namespace PLang.Modules.OutputModule
 			}
 			
 		}
+
+		/*
 		[Description("Write to the system output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text")]
 		public async Task<IError?> WriteToSystemOutput(object? content = null, bool writeToBuffer = false, string type = "text", int statusCode = 200)
 		{
@@ -67,30 +69,32 @@ namespace PLang.Modules.OutputModule
 			}
 			return null;
 		}
-
+		
 		[Description("Write to the json output. Make sure content is valid JSON format. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text")]
 		public async Task<IError?> WriteJson([HandlesVariable] object? content = null, bool writeToBuffer = false, string type = "text", int statusCode = 200)
 		{
 			object? ble = variableHelper.LoadVariables(content);
 			int i = 0;
 			return null;
-		}
+		}*/
+
+		public record WriteOutput(object content, bool writeToBuffer = false, string type = "text", int statusCode = 200);
 
 		[Description("Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text")]
-		public async Task<IError?> Write(object? content = null, bool writeToBuffer = false, string type = "text", int statusCode = 200)
+		public async Task<IError?> Write(WriteOutput writeOutput)
 		{
-			if (statusCode >= 400)
+			if (writeOutput.statusCode >= 400)
 			{
 				//await outputStream.CreateHandler().Write(content, type, statusCode);
-				return new UserDefinedError(content.ToString(), goalStep, StatusCode: statusCode);
+				return new UserDefinedError(writeOutput.content.ToString(), goalStep, StatusCode: writeOutput.statusCode);
 			}
-			if (writeToBuffer)
+			if (writeOutput.writeToBuffer)
 			{
-				await outputStreamFactory.CreateHandler().WriteToBuffer(content, type, statusCode);
+				await outputStreamFactory.CreateHandler().WriteToBuffer(writeOutput.content, writeOutput.type, writeOutput.statusCode);
 			}
 			else
 			{
-				await outputStreamFactory.CreateHandler().Write(content, type, statusCode);
+				await outputStreamFactory.CreateHandler().Write(writeOutput.content, writeOutput.type, writeOutput.statusCode);
 			}
 			return null;
 		}

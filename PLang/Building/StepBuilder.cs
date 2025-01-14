@@ -88,6 +88,13 @@ namespace PLang.Building
 				(var instruction, error) = await instructionBuilder.BuildInstruction(this, goal, step, step.ModuleType, stepIndex, excludeModules, errorCount);
 				if (error != null)
 				{
+					if (error is InvalidModuleError ime)
+					{
+						excludeModules.Add(ime.ModuleType);
+						this.logger.Value.LogWarning($"Could not match intent to {ime.ModuleType}. Trying different module");
+						return await BuildStep(goal, stepIndex, excludeModules, errorCount);
+					}
+
 					error = await HandleBuildInstructionError(goal, step, stepIndex, excludeModules, errorCount, error);
 					if (error != null) return error;
 				}
@@ -420,10 +427,16 @@ You might not need to map the error handling or cache handler if this service is
 
 			var modulesAvailable = typeHelper.GetModulesAsString(excludeModules);
 			var userRequestedModule = GetUserRequestedModule(step);
-			if (excludeModules != null && excludeModules.Count == 1 && userRequestedModule.Count == 1
-				&& userRequestedModule.FirstOrDefault(p => p.Equals(excludeModules[0])) != null)
+			if (excludeModules != null)
 			{
-				throw new BuilderStepException($"Could not map {step.Text} to {userRequestedModule[0]}");
+				if (excludeModules.Count == 1 && userRequestedModule.Count == 1 && userRequestedModule.FirstOrDefault(p => p.Equals(excludeModules[0])) != null)
+				{
+					throw new BuilderStepException($"Could not map {step.Text} to {userRequestedModule[0]}");
+				}
+				foreach (var excludedModule in excludeModules)
+				{
+					userRequestedModule.Remove(excludedModule);
+				}
 			}
 
 			if (userRequestedModule.Count > 0)
@@ -591,16 +604,16 @@ Be Concise
 			{
 				var matchValue = match.Value.ToLower().Replace("[", "").Replace("]", "");
 				List<string> userRequestedModules = new List<string>();
-				var module = modules.FirstOrDefault(p => p.Name.ToLower() == matchValue);
+				var module = modules.FirstOrDefault(p => p.FullName.Equals(matchValue, StringComparison.OrdinalIgnoreCase));
 				if (module != null)
 				{
-					userRequestedModules.Add(module.Name);
+					userRequestedModules.Add(module.FullName);
 				}
 				else
 				{
 					foreach (var tmp in modules)
 					{
-						if (tmp.FullName != null && tmp.FullName.ToLower().Contains(matchValue.ToLower()))
+						if (tmp.FullName != null && tmp.FullName.Replace("PLang.Modules.", "").ToLower().Contains(matchValue.ToLower()))
 						{
 							userRequestedModules.Add(tmp.FullName.Replace(".Program", ""));
 						}

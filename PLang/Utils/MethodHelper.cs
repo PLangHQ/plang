@@ -405,7 +405,8 @@ example of answer:
 			}
 			if (variableValue == null)
 			{
-				list = new List<object>();
+				list = Activator.CreateInstance(parameter.ParameterType) as IList;
+				
 			}
 			else if (variableValue is JArray)
 			{
@@ -434,7 +435,7 @@ example of answer:
 			}
 			else if (!variableValue.GetType().Name.StartsWith("List"))
 			{
-				list = new List<object>();
+				list = Activator.CreateInstance(parameter.ParameterType) as IList;
 				list.Add(variableValue);
 			}
 

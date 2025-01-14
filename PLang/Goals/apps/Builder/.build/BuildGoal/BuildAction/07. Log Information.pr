@@ -1,21 +1,26 @@
 {
   "Action": {
-    "FunctionName": "RunGoal",
+    "FunctionName": "Log",
     "Parameters": [
       {
-        "Type": "GoalToCall",
-        "Name": "goalName",
-        "Value": "!BuildAction"
+        "Type": "String",
+        "Name": "message",
+        "Value": "Building %step.Text%"
       },
       {
-        "Type": "Dictionary<String, Object>",
-        "Name": "parameters",
+        "Type": "String",
+        "Name": "loggerLevel",
+        "Value": "information"
+      },
+      {
+        "Type": "Object[]",
+        "Name": "args",
         "Value": null
       }
     ],
     "ReturnValues": null
   },
-  "Text": "call !BuildAction",
+  "Text": "log info \"Building %step.Text%\"",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -45,11 +50,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nRunGoal(GoalToCall goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForExecution = True, Int32? delayWhenNotWaitingInMilliseconds = 50, UInt32? waitForXMillisecondsBeforeRunningGoal = 0, Boolean? keepMemoryStackOnAsync = False)  : void  // If backward slash(\\) is used by user, change to forward slash(/).\r\n## functions available ends ##"
-          },
-          {
-            "type": "text",
-            "text": "\r\n== Examples starts ==\r\ncall !ParseText => ParseText is goalName, no parameters\r\ncall !Gmail/Search %query%, => Gmail/Search is goalName,  %query% is key and value in parameters\r\ncall Folder/Search q=%fileName% => Folder/Search is goalName, parameter key is q, and value is %fileName%\r\n== Examples ends ==\r\n"
+            "text": "## functions available starts ##\r\nLog(String message, String? loggerLevel = \"information\", Object[]? args)  : void // loggerLevel can be trace, debug, information, warning, error. args can be null if not defined.\r\n## functions available ends ##\r\n## defined variables ##\r\nstep.Text (type:object), \r\n## defined variables ##"
           }
         ]
       },
@@ -58,14 +59,14 @@
         "content": [
           {
             "type": "text",
-            "text": "call !BuildAction"
+            "text": "log info \"Building %step.Text%\""
           }
         ]
       }
     ],
-    "type": "PLang.Modules.CallGoalModule.Builder",
+    "type": "PLang.Modules.GenericFunctionBuilder",
     "caching": true,
-    "RawResponse": "```json\n{\n\t\"FunctionName\": \"RunGoal\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"GoalToCall\",\n\t\t\t\"Name\": \"goalName\",\n\t\t\t\"Value\": \"!BuildAction\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Dictionary<String, Object>\",\n\t\t\t\"Name\": \"parameters\",\n\t\t\t\"Value\": null\n\t\t}\n\t]\n}\n```"
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"Log\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"message\",\n\t\t\t\"Value\": \"Building %step.Text%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"loggerLevel\",\n\t\t\t\"Value\": \"information\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Object[]\",\n\t\t\t\"Name\": \"args\",\n\t\t\t\"Value\": null\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
   },
   "RunOnBuild": false
 }

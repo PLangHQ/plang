@@ -1,7 +1,8 @@
-Hello
-- write out "Hello plang world"
+﻿Hello
+/ This is a comment
+- write out "Hello plang world", type = warning
 - call goal Bye
 
 Bye
-- read file.txt, set as "bye (not found)" if no file, write to %content%
+- read file.txt, set as "bye (not found)" if no file, write to %content%, remove on first usage
 - write out %content%

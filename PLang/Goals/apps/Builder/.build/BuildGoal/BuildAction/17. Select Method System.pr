@@ -3,7 +3,7 @@
     "FunctionName": "AskLlm",
     "Parameters": [
       {
-        "Type": "List<LlmMessage>",
+        "Type": "List`1<LlmMessage>",
         "Name": "promptMessages",
         "Value": [
           {
@@ -11,7 +11,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "%mapPropertiesSystem%"
+                "text": "%selectMethodSystem%"
               }
             ]
           },
@@ -29,7 +29,7 @@
       {
         "Type": "String",
         "Name": "scheme",
-        "Value": "%propertiesScheme%"
+        "Value": "{methodName:string}"
       },
       {
         "Type": "Boolean",
@@ -45,11 +45,11 @@
     "ReturnValues": [
       {
         "Type": "object",
-        "VariableName": "%properties%"
+        "VariableName": "selectedMethod"
       }
     ]
   },
-  "Text": "[llm] system: %mapPropertiesSystem%\n    user: %step.Text%\n    continue from last\n    scheme: %propertiesScheme%\n    write to %properties%",
+  "Text": "[llm] system: %selectMethodSystem%\n        user: %step.Text%\n        scheme: {methodName:string}\n        continue from last\n        write to %selectedMethod%",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -83,11 +83,11 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nAppendToSystem(String system)  : void\nAppendToAssistant(String assistant)  : void\nAppendToUser(String user)  : void\nAskLlm(List`1<LlmMessage> promptMessages, String? scheme, String? model = \"gpt-4o-mini\", Double? temperature = 0, Double? topP = 0, Double? frequencyPenalty = 0, Double? presencePenalty = 0, Int32? maxLength = 4000, Boolean? cacheResponse = True, String? llmResponseType, String? loggerLevel = \"trace\", Boolean? continuePrevConversation = False)  : IReturnDictionary \nUseSharedIdentity(Boolean? useSharedIdentity = True)  : void\nGetLlmIdentity()  : String \nGetBalance()  : void  // Get the current balance at the LLM service.\r\n## functions available ends ##\r\n## defined variables ##\r\nmapPropertiesSystem (type:String), step.Text (type:object), propertiesScheme (type:Dicionary<String, Object>), properties (type:object), \r\n## defined variables ##"
+            "text": "## functions available starts ##\r\nAppendToSystem(String system)  : void\nAppendToAssistant(String assistant)  : void\nAppendToUser(String user)  : void\nGetPreviousMessages()  : List`1  // Retrieves all previous messages. \nAskLlm(List`1<LlmMessage> promptMessages, String? scheme, String? model = \"gpt-4o-mini\", Double? temperature = 0, Double? topP = 0, Double? frequencyPenalty = 0, Double? presencePenalty = 0, Int32? maxLength = 4000, Boolean? cacheResponse = True, String? llmResponseType, String? loggerLevel = \"trace\", Boolean? continuePrevConversation = False)  : IReturnDictionary \nUseSharedIdentity(Boolean? useSharedIdentity = True)  : void\nGetLlmIdentity()  : String \nGetBalance()  : void  // Get the current balance at the LLM service.\r\n## functions available ends ##\r\n## defined variables ##\r\nselectMethodSystem (type:object), step.Text (type:object), selectedMethod (type:object), \r\n## defined variables ##"
           },
           {
             "type": "text",
-            "text": "\nLLM gave empty responseType in last request. Please make sure that you give responseType."
+            "text": "\nLLM gave empty responseType in last request. Please make sure that you give responseType. If non is defined set it as text"
           }
         ]
       },
@@ -96,14 +96,14 @@
         "content": [
           {
             "type": "text",
-            "text": "[llm] system: %mapPropertiesSystem%\n    user: %step.Text%\n    continue from last\n    scheme: %propertiesScheme%\n    write to %properties%"
+            "text": "[llm] system: %selectMethodSystem%\n        user: %step.Text%\n        scheme: {methodName:string}\n        continue from last\n        write to %selectedMethod%"
           }
         ]
       }
     ],
     "type": "PLang.Modules.LlmModule.Builder",
     "caching": true,
-    "RawResponse": "```json\n{\n    \"FunctionName\": \"AskLlm\",\n    \"Parameters\": [\n        {\n            \"Type\": \"List<LlmMessage>\",\n            \"Name\": \"promptMessages\",\n            \"Value\": [\n                {\n                    \"role\": \"system\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"%mapPropertiesSystem%\"\n                        }\n                    ]\n                },\n                {\n                    \"role\": \"user\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"%step.Text%\"\n                        }\n                    ]\n                }\n            ]\n        },\n        {\n            \"Type\": \"String\",\n            \"Name\": \"scheme\",\n            \"Value\": \"%propertiesScheme%\"\n        },\n        {\n            \"Type\": \"Boolean\",\n            \"Name\": \"continuePrevConversation\",\n            \"Value\": true\n        },\n        {\n            \"Type\": \"String\",\n            \"Name\": \"llmResponseType\",\n            \"Value\": \"json\"\n        }\n    ],\n    \"ReturnValues\": [\n        {\n            \"Type\": \"object\",\n            \"VariableName\": \"%properties%\"\n        }\n    ]\n}\n```"
+    "RawResponse": "```json\n{\n    \"FunctionName\": \"AskLlm\",\n    \"Parameters\": [\n        {\n            \"Type\": \"List`1<LlmMessage>\",\n            \"Name\": \"promptMessages\",\n            \"Value\": [\n                {\n                    \"role\": \"system\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"%selectMethodSystem%\"\n                        }\n                    ]\n                },\n                {\n                    \"role\": \"user\",\n                    \"content\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"%step.Text%\"\n                        }\n                    ]\n                }\n            ]\n        },\n        {\n            \"Type\": \"String\",\n            \"Name\": \"scheme\",\n            \"Value\": \"{methodName:string}\"\n        },\n        {\n            \"Type\": \"Boolean\",\n            \"Name\": \"continuePrevConversation\",\n            \"Value\": true\n        },\n        {\n            \"Type\": \"String\",\n            \"Name\": \"llmResponseType\",\n            \"Value\": \"json\"\n        }\n    ],\n    \"ReturnValues\": [\n        {\n            \"Type\": \"object\",\n            \"VariableName\": \"selectedMethod\"\n        }\n    ]\n}\n```"
   },
   "RunOnBuild": false
 }

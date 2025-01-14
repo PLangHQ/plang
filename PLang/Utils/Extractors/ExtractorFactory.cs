@@ -47,7 +47,7 @@ namespace PLang.Utils.Extractors
 				extractor = new GenericExtractor(question.llmResponseType);
 			}
 
-			var systemMessage = question.promptMessage.FirstOrDefault(p => p.Role == "system");
+			var systemMessage = question.promptMessage.LastOrDefault(p => p.Role == "system");
 			if (systemMessage == null)
 			{
 				systemMessage = new LlmMessage() { Role = "system", Content = new() };

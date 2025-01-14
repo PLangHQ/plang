@@ -71,8 +71,75 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "199754ea95a6b9609da1bed5258e158841f1f2537a0ca66a5f3bd4157f698d06",
-      "BuilderVersion": null
+      "Hash": "5f8d90a8d748f172d4890a773b8db8a80e6f07964005990be8ca861bc59d01fe",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "FunctionName": "Log",
+          "Parameters": [
+            {
+              "Type": "String",
+              "Name": "message",
+              "Value": "%missingGoals%"
+            },
+            {
+              "Type": "String",
+              "Name": "loggerLevel",
+              "Value": "warning"
+            }
+          ],
+          "ReturnValues": null
+        },
+        "Text": "logger warning '%missingGoals%'",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "json",
+          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+          "model": "gpt-4o-2024-08-06",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+                },
+                {
+                  "type": "text",
+                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## functions available starts ##\r\nLog(String message, String? loggerLevel = \"information\", Object[]? args)  : void // loggerLevel can be trace, debug, information, warning, error. args can be null if not defined.\r\n## functions available ends ##\r\n## defined variables ##\r\nmissingGoals (type:List`1), \r\n## defined variables ##"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "logger warning '%missingGoals%'"
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.GenericFunctionBuilder",
+          "caching": true,
+          "RawResponse": null
+        },
+        "RunOnBuild": false
+      }
     }
   ],
   "SubGoals": [],
@@ -87,7 +154,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "1e2d0dac96ebeab123095337777d4ae935820ba1e424bb171eae86101d599f14",
+  "Hash": "94f1bbd25c63ffe6700483cb16066da04c4c7563452599f63d4be80928e34b87",
   "IncomingVariablesRequired": [
     "missingGoals"
   ]

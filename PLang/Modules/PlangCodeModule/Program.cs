@@ -133,7 +133,7 @@ namespace PLang.Modules.PlangCodeModule
 			{
 				var matchValue = match.Value.ToLower().Replace("[", "").Replace("]", "");
 				List<string> userRequestedModules = new List<string>();
-				var module = modules.FirstOrDefault(p => p.Name.ToLower() == matchValue);
+				var module = modules.FirstOrDefault(p => p.FullName.Equals(matchValue, StringComparison.OrdinalIgnoreCase));
 				if (module != null)
 				{
 					userRequestedModules.Add(module.Name);
@@ -142,7 +142,7 @@ namespace PLang.Modules.PlangCodeModule
 				{
 					foreach (var tmp in modules)
 					{
-						if (tmp.FullName != null && tmp.FullName.ToLower().Contains(matchValue.ToLower()))
+						if (tmp.FullName != null && tmp.FullName.Replace("PLang.Modules.", "").Contains(matchValue, StringComparison.OrdinalIgnoreCase))
 						{
 							userRequestedModules.Add(tmp.FullName.Replace(".Program", ""));
 						}
