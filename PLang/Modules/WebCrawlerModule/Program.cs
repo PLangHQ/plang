@@ -9,7 +9,7 @@ using OpenQA.Selenium.Safari;
 using OpenQA.Selenium.Support.UI;
 using PLang.Exceptions;
 using PLang.Interfaces;
-using PLang.Utils;
+using PLang.Utils; 
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
@@ -123,7 +123,12 @@ namespace PLang.Modules.WebCrawlerModule
 			return context[BrowserContextKey] as WebDriver;
 		}
 
-		private async Task<IWebElement> GetElement(string? cssSelector = null)
+		public async Task<PlangWebElement> GetElement(string? cssSelector = null)
+		{
+			return GetPlangWebElement(await GetWebElement(cssSelector));
+		}
+
+		private async Task<IWebElement> GetWebElement(string? cssSelector = null)
 		{
 			var driver = await GetDriver();
 			if (cssSelector == null) cssSelector = await GetCssSelector();
@@ -190,35 +195,44 @@ namespace PLang.Modules.WebCrawlerModule
 			js.ExecuteScript("window.scrollTo(0, document.body.scrollHeight);");
 		}
 
-		public async Task ScrollToElement(IWebElement element)
+		public async Task ScrollToElement(PlangWebElement element)
 		{
 			var driver = await GetDriver();
+
 			IJavaScriptExecutor js = (IJavaScriptExecutor)driver;
-			js.ExecuteScript("arguments[0].scrollIntoView(true);", element);
+			js.ExecuteScript("arguments[0].scrollIntoView(true);", element.WebElement);
 		}
 
 		[Description("operatorOnText can be equals|contains|startswith|endswith")]
-		public async Task<IWebElement?> GetElementByText(string text, string operatorOnText = "equals", int? timeoutInSeconds = null)
+		public async Task<PlangWebElement?> GetElementByText(string text, string operatorOnText = "equals", int? timeoutInSeconds = null, string? cssSelector = null)
 		{
-			var driver = await GetDriver(timeoutInSeconds: timeoutInSeconds);
+			ISearchContext driver = await GetDriver(timeoutInSeconds: timeoutInSeconds);
+			if (cssSelector != null)
+			{
+				driver = driver.FindElement(By.CssSelector(cssSelector));
+			}
+
+			IWebElement? element = null;
 			if (operatorOnText == "equals")
 			{
-				return driver.FindElement(By.XPath($"//*[text() = '{text}']"));
+				element = driver.FindElement(By.XPath($"//*[text() = '{text}']"));
 			}
 			if (operatorOnText == "contains")
 			{
-				return driver.FindElement(By.XPath($"//*[contains(text(), '{text}')]"));
+				element = driver.FindElement(By.XPath($"//*[contains(text(), '{text}')]"));
 			}
 			if (operatorOnText == "startswith")
 			{
-				return driver.FindElement(By.XPath($"//*[starts-with(text(), '{text}')]"));
+				element = driver.FindElement(By.XPath($"//*[starts-with(text(), '{text}')]"));
 
 			}
 			if (operatorOnText == "equals")
 			{
-				return driver.FindElement(By.XPath($"//*[substring(text(), string-length(text()) - string-length('{text}') + 1) = '{text}']"));
+				element = driver.FindElement(By.XPath($"//*[substring(text(), string-length(text()) - string-length('{text}') + 1) = '{text}']"));
 
 			}
+
+			if (element != null) return GetPlangWebElement(element);
 			return null;
 		}
 
@@ -299,7 +313,8 @@ namespace PLang.Modules.WebCrawlerModule
 			try
 			{
 				await SetTimeout(timoutInSeconds);
-				var element = await GetElement(cssSelector);
+				var element = await GetWebElement(cssSelector);
+
 				new Actions(driver).MoveToElement(element).Perform();
 			}
 			finally
@@ -308,14 +323,21 @@ namespace PLang.Modules.WebCrawlerModule
 			}
 		}
 
+		public async Task ClickOnElement(PlangWebElement element)
+		{
+			
+			element.WebElement.Click();
+		}
+
 		public async Task Click(string cssSelector, int elementAtToClick = 0, bool clickAllMatchingElements = false, int? timeoutInSeconds = null)
 		{
 			try
 			{
+				var driver = await GetDriver();
 				await SetTimeout(timeoutInSeconds);
 				if (!clickAllMatchingElements)
 				{
-					var element = await GetElement(cssSelector);
+					var element = await GetWebElement(cssSelector);
 					element.Click();
 				}
 				else
@@ -325,12 +347,12 @@ namespace PLang.Modules.WebCrawlerModule
 					{
 						if (elements.Count >= elementAtToClick)
 						{
-							elements[elements.Count - 1].Click();
+							elements[elements.Count - 1].WebElement.Click();
 						}
 					}
 					foreach (var element in elements)
 					{
-						element.Click();
+						element.WebElement.Click();
 					}
 				}
 				SetCssSelector(cssSelector);
@@ -377,7 +399,7 @@ namespace PLang.Modules.WebCrawlerModule
 			{
 				await SetTimeout(timeoutInSeconds);
 				cssSelector = await GetCssSelector(cssSelector);
-				var element = await GetElement(cssSelector);
+				var element = await GetWebElement(cssSelector);
 				var input = ConvertKeyCommand(value);
 				element.SendKeys(input);
 				SetCssSelector(cssSelector);
@@ -388,6 +410,18 @@ namespace PLang.Modules.WebCrawlerModule
 			}
 		}
 
+		[Description("set the text of an element other than input by cssSelector")]
+		public async Task SetTextOnElement(string text, string? cssSelector = null, int? timeoutInSeconds = null, bool clearElementFirst = true)
+		{
+
+			await SetTimeout(timeoutInSeconds);
+			cssSelector = await GetCssSelector(cssSelector);
+			var element = await GetWebElement(cssSelector);
+			if (clearElementFirst) element.Clear();
+			element.SendKeys(text);
+			SetCssSelector(cssSelector);
+		}
+
 		[Description("set the value of an input by cssSelector")]
 		public async Task Input(string value, string? cssSelector = null, int? timeoutInSeconds = null)
 		{
@@ -395,7 +429,7 @@ namespace PLang.Modules.WebCrawlerModule
 			{
 				await SetTimeout(timeoutInSeconds);
 				cssSelector = await GetCssSelector(cssSelector);
-				var element = await GetElement(cssSelector);
+				var element = await GetWebElement(cssSelector);
 				element.SendKeys(value);
 				SetCssSelector(cssSelector);
 			}
@@ -412,7 +446,7 @@ namespace PLang.Modules.WebCrawlerModule
 			{
 				await SetTimeout(timeoutInSeconds);
 				cssSelector = await GetCssSelector(cssSelector);
-				var element = await GetElement(cssSelector);
+				var element = await GetWebElement(cssSelector);
 
 
 				var selectElement = new SelectElement(element);
@@ -433,7 +467,7 @@ namespace PLang.Modules.WebCrawlerModule
 			{
 				await SetTimeout(timeoutInSeconds);
 				cssSelector = await GetCssSelector(cssSelector);
-				var element = await GetElement(cssSelector);
+				var element = await GetWebElement(cssSelector);
 				var selectElement = new SelectElement(element);
 				selectElement.SelectByText(text);
 			}
@@ -450,7 +484,7 @@ namespace PLang.Modules.WebCrawlerModule
 			{
 				await SetTimeout(timeoutInSeconds);
 				cssSelector = await GetCssSelector(cssSelector);
-				var element = await GetElement(cssSelector);
+				var element = await GetWebElement(cssSelector);
 				element.Submit();
 			}
 			finally
@@ -486,23 +520,63 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 		*/
 
-		public async Task<ReadOnlyCollection<IWebElement>> GetElements(string? cssSelector = null)
+		private List<PlangWebElement> GetPlangWebElements(ReadOnlyCollection<IWebElement> elements)
+		{
+			List<PlangWebElement> plangElements = new();
+			foreach (var element in elements)
+			{
+				plangElements.Add(GetPlangWebElement(element));
+			}
+			return plangElements;	
+		}
+
+		private PlangWebElement GetPlangWebElement(IWebElement element)
+		{
+			var plangWebElement = new PlangWebElement();
+
+			plangWebElement.Location = new Location() { X = element.Location.X, Y = element.Location.Y };
+			plangWebElement.Size = new Size() { Height = element.Size.Height, Width = element.Size.Width };
+			plangWebElement.Displayed = element.Displayed;
+			plangWebElement.Enabled = element.Enabled;
+			plangWebElement.Location = new Location() { X = element.Location.X, Y = element.Location.Y };
+			plangWebElement.Selected = element.Selected;
+			plangWebElement.Text = element.Text;
+			plangWebElement.TagName = element.TagName;
+			plangWebElement.WebElement = element;
+			if (element is WebElement webElement)
+			{
+				plangWebElement.ComputedAccessibleLabel = webElement.ComputedAccessibleLabel;
+				plangWebElement.ComputedAccessibleRole = webElement.ComputedAccessibleRole;
+				plangWebElement.Coordinates = new Coordinates()
+				{
+					AuxiliaryLocator = webElement.Coordinates.AuxiliaryLocator.ToString(),
+					LocationInDom = new Location() { X = webElement.Coordinates.LocationInDom.X, Y = webElement.Coordinates.LocationInDom.Y },
+					LocationInViewport = new Location() { X = webElement.Coordinates.LocationInViewport.X, Y = webElement.Coordinates.LocationInViewport.Y }
+				};				
+			}
+			
+			return plangWebElement;
+		}
+
+
+
+		public async Task<List<PlangWebElement>> GetElements(string? cssSelector = null)
 		{
 			cssSelector = await GetCssSelector(cssSelector);
 			var driver = await GetDriver();
 			var elements = driver.FindElements(By.CssSelector(cssSelector));
 			
-			return elements;
+			return GetPlangWebElements(elements);
 		}
 
-		public async Task<(ReadOnlyCollection<IWebElement>?, IError?)> GetElementsInsideElement(string elementName, IWebElement element)
+		public async Task<(List<PlangWebElement>?, IError?)> GetElementsInsideElement(string elementName, IWebElement element)
 		{
 			if (element == null) return (null, new ProgramError("You must send in element to look inside", goalStep, function));
 
-			return (element.FindElements(By.CssSelector(elementName)), null);
+			return (GetPlangWebElements(element.FindElements(By.CssSelector(elementName))), null);
 		}
 
-		public async Task<List<dynamic>> SerializeElements(List<ReadOnlyCollection<IWebElement>> elementsArray)
+		public async Task<List<dynamic>> SerializeElements(List<List<PlangWebElement>> elementsArray)
 		{
 			List<dynamic> list = new List<dynamic>();
 			foreach (var elements in elementsArray)
@@ -519,8 +593,8 @@ namespace PLang.Modules.WebCrawlerModule
 
 					if (tagName == "form")
 					{
-						var inputs = element.FindElements(By.XPath(".//input"));
-						var serializedInputs = await SerializeElements([inputs]);
+						var inputs = element.WebElement.FindElements(By.XPath(".//input"));
+						var serializedInputs = await SerializeElements([GetPlangWebElements(inputs)]);
 						var serializableElement = new
 						{
 							TagName = tagName,
@@ -549,7 +623,7 @@ namespace PLang.Modules.WebCrawlerModule
 			return list;
 		}
 
-		private Dictionary<string, string> GetAllAttributes(IWebDriver driver, IWebElement element)
+		private Dictionary<string, string> GetAllAttributes(IWebDriver driver, PlangWebElement element)
 		{
 			string script = @"
         var attributes = arguments[0].attributes;
@@ -560,38 +634,44 @@ namespace PLang.Modules.WebCrawlerModule
         return result;
     ";
 			var jsExecutor = ((IJavaScriptExecutor)driver);
+
 			// Execute the script and return the attributes as a dictionary
-			var attributes = jsExecutor.ExecuteScript(script, element);
+			var attributes = jsExecutor.ExecuteScript(script, element.WebElement);
 			return ((Dictionary<string, object>)attributes)
 					.ToDictionary(k => k.Key, k => k.Value?.ToString() ?? string.Empty);
 		}
 
-		public async Task<string> FindElementAndExtractAttribute(string attribute, string? cssSelector = null, IWebElement? element = null)
+		public async Task<string> FindElementAndExtractAttribute(string attribute, string? cssSelector = null, PlangWebElement? element = null)
 		{
 			cssSelector = await GetCssSelector(cssSelector);
 			List<string> results = new List<string>();
+
+			var driver = await GetDriver();
+			IWebElement ielement;
 
 			if (element == null)
 			{
-				var driver = await GetDriver();
-				element = driver.FindElement(By.CssSelector(cssSelector));
+				ielement = driver.FindElement(By.CssSelector(cssSelector));
+			} else
+			{
+				ielement = element.WebElement;
 			}
-			return element.GetAttribute(attribute);
+			return ielement.GetAttribute(attribute);
 		}
 
-		public async Task<List<string>> ExtractContent(bool clearHtml = true, string? cssSelector = null, IWebElement? element = null)
+		public async Task<List<string>> ExtractContent(bool clearHtml = true, string? cssSelector = null, PlangWebElement? element = null)
 		{
 			cssSelector = await GetCssSelector(cssSelector);
 			List<string> results = new List<string>();
-
+			
+			var driver = await GetDriver();
 			ReadOnlyCollection<IWebElement> elements;
 			if (element != null)
 			{
-				elements = element.FindElements(By.CssSelector(cssSelector));
+				elements = element.WebElement.FindElements(By.CssSelector(cssSelector));
 			}
 			else
-			{
-				var driver = await GetDriver();
+			{				
 				elements = driver.FindElements(By.CssSelector(cssSelector));
 			}
 			foreach (var e in elements)

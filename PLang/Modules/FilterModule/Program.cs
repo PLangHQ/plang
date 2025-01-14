@@ -204,6 +204,23 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 						})
 						.ToList());
 					}
+				} else
+				{
+
+					foreach (var item in list)
+					{
+						var property = item.GetType().GetProperties().FirstOrDefault(p => p.Name.Equals(propertyToFilterOn, StringComparison.OrdinalIgnoreCase));
+						if (property != null)
+						{
+							var result = filterPredicate(property.GetValue(item));
+							if (result)
+							{
+								filteredList.Add(item);
+							}
+						}
+
+					}
+
 				}
 
 

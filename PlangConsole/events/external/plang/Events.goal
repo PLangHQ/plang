@@ -1,0 +1,4 @@
+Events
+- before each step, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug
+- before goal ends, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug
+- on app start, call !/events/external/plang/Runtime/Runtime, parameter --debug

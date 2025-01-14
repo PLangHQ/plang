@@ -1,0 +1,7 @@
+Runtime
+- start webserver, name: "Runtime.Debug.RunStep", port 60878
+- add route "/events/external/plang/Runtime/RunStep" (POST), webserver: "Runtime.Debug.RunStep", call RunStep
+
+RunStep
+- log warning 'Running from step %request.prFileName%'
+- [env] run step %request.prFileName%
