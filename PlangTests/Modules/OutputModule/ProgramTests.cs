@@ -28,7 +28,7 @@ namespace PLangTests.Modules.OutputModule
 		public async Task Write_Test()
 		{			
 			var p = new Program(outputStreamFactory, outputSystemStreamFactory);
-			await p.Write(new Program.WriteOutput("Hello, how are your?"));
+			await p.Write("Hello, how are your?");
 
 			await outputStream.Received(1).Write(Arg.Any<object>());
 		}

@@ -1,4 +1,4 @@
-Build Start:21:17:01 - (Information) - 
+Build Start:10:55:09 - (Information) - 
 - Event step before builder ends, call goal !/events/external/plang/Builder/CheckGoals already built - (Information) - 
 - Building event step before each step, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug - (Information) - 
 - Building event step before goal ends, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug - (Information) - 
@@ -54,4 +54,4 @@ All goals being called exist - (Information) -
 
 
 🎉 Build was succesfull! - (Warning) - 
-Build done - Time:,54 sec - started at 14.1.2025 21:17:01 - (Information) - 
+Build done - Time:,61 sec - started at 15.1.2025 10:55:10 - (Information) - 

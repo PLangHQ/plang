@@ -32,7 +32,7 @@
     "maxLength": 4000,
     "llmResponseType": "json",
     "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-    "model": "gpt-4o-2024-08-06",
+    "model": "gpt-4o",
     "promptMessage": [
       {
         "role": "system",
@@ -52,7 +52,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nRunLoop(String variableToLoopThrough, GoalToCall goalNameToCall, Dictionary`2<String, Object>? parameters)  : void  // Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called.\r\n## functions available ends ##\r\n## defined variables ##\r\npage.modules (type:object), module (type:object), \r\n## defined variables ##"
+            "text": "## functions available starts ##\r\nRunLoop(String variableToLoopThrough, GoalToCall goalNameToCall, Dictionary`2<String, Object>? parameters)  : void  // Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called. Predefined variables are %list%, %item%, %position%, %listCount%, use can overwrite those using parameters.\r\n## functions available ends ##\r\n## defined variables ##\r\npage.modules (type:object), module (type:object), \r\n## defined variables ##"
           }
         ]
       },
@@ -68,7 +68,7 @@
     ],
     "type": "PLang.Modules.GenericFunctionBuilder",
     "caching": true,
-    "RawResponse": "```json\n{\n\t\"FunctionName\": \"RunLoop\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"variableToLoopThrough\",\n\t\t\t\"Value\": \"%page.modules%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"GoalToCall\",\n\t\t\t\"Name\": \"goalNameToCall\",\n\t\t\t\"Value\": \"GenerateDetail\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Dictionary`2<String, Object>\",\n\t\t\t\"Name\": \"parameters\",\n\t\t\t\"Value\": {\n\t\t\t\t\"item\": \"%module%\"\n\t\t\t}\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"RunLoop\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"variableToLoopThrough\",\n\t\t\t\"Value\": \"%page.modules%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"GoalToCall\",\n\t\t\t\"Name\": \"goalNameToCall\",\n\t\t\t\"Value\": \"GenerateDetail\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Dictionary`2<String, Object>\",\n\t\t\t\"Name\": \"parameters\",\n\t\t\t\"Value\": {\n\t\t\t\t\"item\": \"%module%\"\n\t\t\t}\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
   },
   "RunOnBuild": false
 }

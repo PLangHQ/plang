@@ -51,7 +51,6 @@ namespace PLang.Modules.OutputModule
 			
 		}
 
-		/*
 		[Description("Write to the system output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text")]
 		public async Task<IError?> WriteToSystemOutput(object? content = null, bool writeToBuffer = false, string type = "text", int statusCode = 200)
 		{
@@ -76,25 +75,24 @@ namespace PLang.Modules.OutputModule
 			object? ble = variableHelper.LoadVariables(content);
 			int i = 0;
 			return null;
-		}*/
+		}
 
-		public record WriteOutput(object content, bool writeToBuffer = false, string type = "text", int statusCode = 200);
 
 		[Description("Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text")]
-		public async Task<IError?> Write(WriteOutput writeOutput)
+		public async Task<IError?> Write(object content, bool writeToBuffer = false, string type = "text", int statusCode = 200)
 		{
-			if (writeOutput.statusCode >= 400)
+			if (statusCode >= 400)
 			{
 				//await outputStream.CreateHandler().Write(content, type, statusCode);
-				return new UserDefinedError(writeOutput.content.ToString(), goalStep, StatusCode: writeOutput.statusCode);
+				return new UserDefinedError(content.ToString(), goalStep, StatusCode: statusCode);
 			}
-			if (writeOutput.writeToBuffer)
+			if (writeToBuffer)
 			{
-				await outputStreamFactory.CreateHandler().WriteToBuffer(writeOutput.content, writeOutput.type, writeOutput.statusCode);
+				await outputStreamFactory.CreateHandler().WriteToBuffer(content, type, statusCode);
 			}
 			else
 			{
-				await outputStreamFactory.CreateHandler().Write(writeOutput.content, writeOutput.type, writeOutput.statusCode);
+				await outputStreamFactory.CreateHandler().Write(content, type, statusCode);
 			}
 			return null;
 		}
