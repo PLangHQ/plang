@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 Build Start:20:19:32 - (Information) - 
+=======
+Build Start:21:17:01 - (Information) - 
+>>>>>>> Stashed changes
 - Event step before builder ends, call goal !/events/external/plang/Builder/CheckGoals already built - (Information) - 
 - Event step before each step, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug already built - (Information) - 
 - Event step before goal ends, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug already built - (Information) - 
@@ -54,4 +58,8 @@ All goals being called exist - (Information) -
 
 
 🎉 Build was succesfull! - (Warning) - 
+<<<<<<< Updated upstream
 Build done - Time:,4 sec - started at 13.1.2025 20:19:33 - (Information) - 
+=======
+Build done - Time:,54 sec - started at 14.1.2025 21:17:01 - (Information) - 
+>>>>>>> Stashed changes

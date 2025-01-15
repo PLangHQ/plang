@@ -194,7 +194,13 @@ namespace PLang.Modules.WebCrawlerModule
 			IJavaScriptExecutor js = (IJavaScriptExecutor)driver;
 			js.ExecuteScript("window.scrollTo(0, document.body.scrollHeight);");
 		}
-
+		public async Task ScrollToElementByCssSelector(string cssSelector)
+		{
+			var driver = await GetDriver();
+			var element = driver.FindElement(By.CssSelector(cssSelector));
+			IJavaScriptExecutor js = (IJavaScriptExecutor)driver;
+			js.ExecuteScript("arguments[0].scrollIntoView(true);", element);
+		}
 		public async Task ScrollToElement(PlangWebElement element)
 		{
 			var driver = await GetDriver();
@@ -543,6 +549,7 @@ namespace PLang.Modules.WebCrawlerModule
 			plangWebElement.Text = element.Text;
 			plangWebElement.TagName = element.TagName;
 			plangWebElement.WebElement = element;
+			plangWebElement.InnerHtml = element.GetAttribute("innerHTML");
 			if (element is WebElement webElement)
 			{
 				plangWebElement.ComputedAccessibleLabel = webElement.ComputedAccessibleLabel;

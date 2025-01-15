@@ -9,12 +9,16 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\external\\plang\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
+<<<<<<< Updated upstream
       "Generated": "2025-01-13T20:19:31.6630629+00:00",
+=======
+      "Generated": "2025-01-14T21:16:48.2023924+00:00",
+>>>>>>> Stashed changes
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -52,12 +56,16 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\external\\plang\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
+<<<<<<< Updated upstream
       "Generated": "2025-01-13T20:19:31.66946+00:00",
+=======
+      "Generated": "2025-01-14T21:16:48.2093436+00:00",
+>>>>>>> Stashed changes
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -100,7 +108,11 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
+<<<<<<< Updated upstream
       "Generated": "2025-01-13T20:19:31.6761582+00:00",
+=======
+      "Generated": "2025-01-14T21:16:59.8333985+00:00",
+>>>>>>> Stashed changes
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,

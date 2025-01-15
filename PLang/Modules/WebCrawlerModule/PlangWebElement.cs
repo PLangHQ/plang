@@ -24,6 +24,7 @@ namespace PLang.Modules.WebCrawlerModule
 		public Size Size { get; set; }
 		public string TagName { get; set; }
 		public string Text { get; set; }
+		public string InnerHtml { get; set; }	
 
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
