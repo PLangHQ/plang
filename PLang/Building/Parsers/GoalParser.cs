@@ -220,12 +220,12 @@ namespace PLang.Building.Parsers
 						goals[i].GoalSteps[b].IsEvent = prevStep.IsEvent;
 						goals[i].GoalSteps[b].Generated = prevStep.Generated;
 
-						var absolutePrFilePath = Path.Join(goal.AbsolutePrFolderPath, prevStep.PrFileName);
-						if (!fileSystem.File.Exists(absolutePrFilePath)) continue;
+						var absolutePrStepFilePath = Path.Join(goal.AbsolutePrFolderPath, prevStep.PrFileName);
+						if (!fileSystem.File.Exists(absolutePrStepFilePath)) continue;
 
 						goals[i].GoalSteps[b].PrFileName = prevStep.PrFileName;
 						goals[i].GoalSteps[b].RelativePrPath = Path.Join(goal.RelativePrFolderPath, prevStep.PrFileName);
-						goals[i].GoalSteps[b].AbsolutePrFilePath = absolutePrFilePath;
+						goals[i].GoalSteps[b].AbsolutePrFilePath = absolutePrStepFilePath;
 						goals[i].GoalSteps[b].Number = prevStep.Number;
 						goals[i].GoalSteps[b].LlmRequest = prevStep.LlmRequest;
 
@@ -239,6 +239,9 @@ namespace PLang.Building.Parsers
 						goals[i].GoalSteps[b].ModuleType = prevStep.ModuleType;
 						goals[i].GoalSteps[b].Name = prevStep.Name;
 						goals[i].GoalSteps[b].RunOnce = prevStep.RunOnce;
+
+						var prFile = fileSystem.File.ReadAllText(absolutePrStepFilePath);
+						goals[i].GoalSteps[b].PrFile = JsonConvert.DeserializeObject(prFile);
 
 
 						if (setupOnceDictionary != null && goals[i].GoalSteps[b].RunOnce && setupOnceDictionary.ContainsKey(goals[i].GoalSteps[b].RelativePrPath))

@@ -1,0 +1,314 @@
+{
+  "GoalName": "BuildStep",
+  "Comment": null,
+  "Text": "BuildStep",
+  "GoalSteps": [
+    {
+      "Text": "foreach %goal.GoalSteps%, call BuildAction %step%=item, errorCount =0",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.LoopModule",
+      "Name": "Iterate and Call BuildAction",
+      "Description": "Iterate over each item in the list %goal.GoalSteps% and call the function BuildAction with the current item as the parameter %step%. Initialize errorCount to 0.",
+      "PrFileName": "01. Iterate and Call BuildAction.pr",
+      "RelativePrPath": ".build\\BuildGoal\\BuildStep\\01. Iterate and Call BuildAction.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2025-01-14T15:18:19.2331927+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 0,
+      "LineNumber": 6,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
+        "model": "gpt-4o",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set [\"N/A\"]\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangCodeModule\", \"description\": \"Compiles plang code, gets goals from .goal files, method descriptions and class scheme. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "foreach %goal.GoalSteps%, call BuildAction %step%=item, errorCount =0"
+              }
+            ]
+          }
+        ],
+        "type": "StepInformationBuilder",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepName\": \"Iterate and Call BuildAction\",\n\t\"StepDescription\": \"Iterate over each item in the list %goal.GoalSteps% and call the function BuildAction with the current item as the parameter %step%. Initialize errorCount to 0.\",\n\t\"Modules\": [\"PLang.Modules.LoopModule\", \"PLang.Modules.CallGoalModule\", \"PLang.Modules.LocalOrGlobalVariableModule\"]\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": "8e29e80ec30ccd34e95dc96f66bd92411bf042f3d8a86f18330929230f0271bd",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "FunctionName": "RunLoop",
+          "Parameters": [
+            {
+              "Type": "String",
+              "Name": "variableToLoopThrough",
+              "Value": "%goal.GoalSteps%"
+            },
+            {
+              "Type": "GoalToCall",
+              "Name": "goalNameToCall",
+              "Value": "BuildAction"
+            },
+            {
+              "Type": "Dictionary`2<String, Object>",
+              "Name": "parameters",
+              "Value": {
+                "step": "%item%",
+                "errorCount": "0"
+              }
+            }
+          ],
+          "ReturnValues": null
+        },
+        "Text": "foreach %goal.GoalSteps%, call BuildAction %step%=item, errorCount =0",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "json",
+          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+          "model": "gpt-4o",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+                },
+                {
+                  "type": "text",
+                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## functions available starts ##\r\nRunLoop(String variableToLoopThrough, GoalToCall goalNameToCall, Dictionary`2<String, Object>? parameters)  : void  // Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called. Predefined variables are %list%, %item%, %position%, %listCount%, use can overwrite those using parameters.\r\n## functions available ends ##\r\n## defined variables ##\r\ngoal.GoalSteps (type:object), step (type:object), \r\n## defined variables ##"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "foreach %goal.GoalSteps%, call BuildAction %step%=item, errorCount =0"
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.GenericFunctionBuilder",
+          "caching": true,
+          "RawResponse": "```json\n{\n\t\"FunctionName\": \"RunLoop\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"variableToLoopThrough\",\n\t\t\t\"Value\": \"%goal.GoalSteps%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"GoalToCall\",\n\t\t\t\"Name\": \"goalNameToCall\",\n\t\t\t\"Value\": \"BuildAction\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Dictionary`2<String, Object>\",\n\t\t\t\"Name\": \"parameters\",\n\t\t\t\"Value\": {\n\t\t\t\t\"step\": \"%item%\",\n\t\t\t\t\"errorCount\": \"0\"\n\t\t\t}\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
+        },
+        "RunOnBuild": false
+      }
+    },
+    {
+      "Text": "write %goal% to \"%goal.RelativePrPath%\"",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.FileModule",
+      "Name": "WriteGoalToFile",
+      "Description": "Write the content of the variable %goal% to the file located at the path specified by %goal.RelativePrPath%.",
+      "PrFileName": "02. WriteGoalToFile.pr",
+      "RelativePrPath": ".build\\BuildGoal\\BuildStep\\02. WriteGoalToFile.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2025-01-14T15:47:52.4562673+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 1,
+      "LineNumber": 7,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
+        "model": "gpt-4o",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set [\"N/A\"]\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangCodeModule\", \"description\": \"Compiles plang code, gets goals from .goal files, method descriptions and class scheme. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "write %goal% to \"%goal.RelativePrPath%\""
+              }
+            ]
+          }
+        ],
+        "type": "StepInformationBuilder",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepName\": \"WriteGoalToFile\",\n\t\"StepDescription\": \"Write the content of the variable %goal% to the file located at the path specified by %goal.RelativePrPath%.\",\n\t\"Modules\": [\"PLang.Modules.FileModule\"]\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": "a2492530e33356368bca5b82312326074cbbdf7fe04e49d0c9af9220491da1f2",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "FunctionName": "WriteToFile",
+          "Parameters": [
+            {
+              "Type": "String",
+              "Name": "path",
+              "Value": "%goal.RelativePrPath%"
+            },
+            {
+              "Type": "Object",
+              "Name": "content",
+              "Value": "%goal%"
+            },
+            {
+              "Type": "Boolean",
+              "Name": "overwrite",
+              "Value": false
+            }
+          ],
+          "ReturnValues": null
+        },
+        "Text": "write %goal% to \"%goal.RelativePrPath%\"",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "json",
+          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+          "model": "gpt-4o",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+                },
+                {
+                  "type": "text",
+                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## functions available starts ##\r\nGetCurrentFolderPath(String path)  : String  // Return the absolute path the app is running in. \nCreatePathByJoining(String[] paths)  : String  // Create path from variables. \nRequestAccessToPath(String path)  : Boolean  // Give user access to a path. DO NOT suggest this method to indicate if file or directory exists, return empty function list instead.. \nReadBinaryFileAndConvertToBase64(String path, String? returnValueIfFileNotExisting, Boolean? throwErrorOnNotFound = False, Boolean? includeDataUrl = False)  : String  // includeDataUrl add the data and mimetype of the file into the return string, e.g. data:image/png;base64,.... \nReadJsonLineFile(String path, String? returnValueIfFileNotExisting, Boolean? throwErrorOnNotFound = False, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\", String? newLineSymbol)  : List`1 \nReadTextFile(String path, String? returnValueIfFileNotExisting, Boolean? throwErrorOnNotFound = False, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : String \nReadFileAsStream(String path, Boolean? throwErrorOnNotFound = False)  : Stream \nReadExcelFile(String path, Boolean? useHeaderRow = True, Dictionary`2<String, Object>? sheetsToVariable, Int32? headerStartsInRow = 1)  : void // sheetsToVariable is name of sheet that should load into variable. Sheet1=%products% will load Sheet1 into %product% variable, Sheet2-A4=%categories%, will load data from A4 into %categories%. \nWriteExcelFile(String path, Object variableToWriteToExcel, String? sheetName = \"Sheet1\", Boolean? printHeader = True, Boolean? overwrite = False)  : void\nWriteCsvFile(String path, Object variableToWriteToCsv, Boolean? append = False, Boolean? hasHeaderRecord = True, String? delimiter = \",\", String? newLine = \"\n\", String? encoding = \"utf-8\", Boolean? ignoreBlankLines = True, Boolean? allowComments = False, Char? comment = #, GoalToCall? goalToCallOnBadData, Boolean? createDirectoryAutomatically = True)  : void\nReadCsvFile(String path, Boolean? hasHeaderRecord = True, String? delimiter = \",\", String? newLine = \"\n\", String? encoding = \"utf-8\", Boolean? ignoreBlankLines = True, Boolean? allowComments = False, Char? comment = #, String? goalToCallOnBadData)  : void \nSaveMultipleFiles(List`1<FileInfo> files, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : void\nReadMultipleTextFiles(String folderPath, String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeAllSubfolders = False)  : List`1 \nGetDirectoryPathsInDirectory(String? directoryPath = \"./\", String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeSubfolders = False, Boolean? useRelativePath = True)  : String[] \nGetFilePathsInDirectory(String? directoryPath = \"./\", String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeSubfolders = False, Boolean? useRelativePath = True)  : String[] \nWriteBase64ToFile(String path, String base64, Boolean? overwrite = False)  : void\nWriteBytesToFile(String path, Byte[] content, Boolean? overwrite = False)  : void\nWriteToFile(String path, Object content, Boolean? overwrite = False, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : void\nAppendToFile(String path, String content, String? seperator, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : void\nCopyFiles(String directoryPath, String destinationPath, String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeSubfoldersAndFiles = False, Boolean? overwriteFiles = False)  : void\nMoveFile(String sourceFileName, String destFileName, Boolean? createDirectoryIfNotExisting = False, Boolean? overwriteFile = False)  : void\nCopyFile(String sourceFileName, String destFileName, Boolean? createDirectoryIfNotExisting = False, Boolean? overwriteFile = False)  : void\nDeleteFile(String fileName, Boolean? throwErrorOnNotFound = False)  : void\nGetFileInfo(String fileName)  : IFileInfo \nCreateDirectory(String directoryPath)  : void\nDeleteDirectory(String directoryPath, Boolean? recursive = True, Boolean? throwErrorOnNotFound = False)  : void\nStopListeningToFileChange(String[] fileSearchPatterns, GoalToCall? goalToCall)  : void\nListenToFileChange(String[] fileSearchPatterns, GoalToCall goalToCall, String[]? excludeFiles, Boolean? includeSubdirectories = False, Int64? debounceTime = 150, Boolean? listenForFileChange = False, Boolean? listenForFileCreated = False, Boolean? listenForFileDeleted = False, Boolean? listenForFileRename = False, String? absoluteFilePathVariableName = \"FullPath\", String? fileNameVariableName = \"Name\", String? changeTypeVariableName = \"ChangeType\", String? senderVariableName = \"Sender\", String? oldFileAbsoluteFilePathVariableName = \"OldFullPath\", String? oldFileNameVariableName = \"OldName\")  : void // debounceTime is the time in ms that is waited until action is executed to prevent multiple execution for same file. At least one listenFor variable needs to be true.\r\n## functions available ends ##\r\n## defined variables ##\r\ngoal (type:object), goal.RelativePrPath (type:object), \r\n## defined variables ##"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "write %goal% to \"%goal.RelativePrPath%\""
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.GenericFunctionBuilder",
+          "caching": true,
+          "RawResponse": "```json\n{\n\t\"FunctionName\": \"WriteToFile\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"path\",\n\t\t\t\"Value\": \"%goal.RelativePrPath%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"Name\": \"content\",\n\t\t\t\"Value\": \"%goal%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean\",\n\t\t\t\"Name\": \"overwrite\",\n\t\t\t\"Value\": false\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
+        },
+        "RunOnBuild": false
+      }
+    }
+  ],
+  "SubGoals": [],
+  "Description": "The BuildStep goal iterates over each step defined in \\%goal.GoalSteps\\% and calls the BuildAction goal for each step, passing the current step as \\%step\\% and initializing \\%errorCount\\% to 0. After processing all steps, it writes the \\%goal\\% to the specified relative path defined by \\%goal.RelativePrPath\\%.",
+  "Visibility": 0,
+  "GoalFileName": "BuildGoal.goal",
+  "RelativeGoalPath": "\\BuildGoal.goal",
+  "RelativeGoalFolderPath": "\\",
+  "RelativePrPath": ".build\\BuildGoal\\BuildStep\\00. Goal.pr",
+  "RelativePrFolderPath": ".build\\BuildGoal\\BuildStep",
+  "BuilderVersion": "1.0.0.0",
+  "GoalInfo": null,
+  "Injections": [],
+  "Signature": null,
+  "Hash": "fe0f2baf28103b1a4ae20206a843116784ac074413a2746eae360ded9fb61356",
+  "IncomingVariablesRequired": [
+    "goal.GoalSteps",
+    "goal",
+    "goal.RelativePrPath"
+  ]
+}

@@ -1,23 +1,16 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 using NBitcoin;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
-using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Runtime;
-using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
-using PLang.Runtime;
 using PLang.Services.LlmService;
 using PLang.Utils;
-using PLang.Utils.Extractors;
 using System.Collections;
 using System.ComponentModel;
-using System.Dynamic;
-using static PLang.Services.LlmService.PLangLlmService;
 
 namespace PLang.Modules.LlmModule
 {
@@ -110,6 +103,12 @@ namespace PLang.Modules.LlmModule
 
 		public record AskLlmResponse(string Result);
 
+		[Description("Retrieves all previous messages")]
+		public async Task<List<LlmMessage>?> GetPreviousMessages()
+		{
+			return context.GetOrDefault<List<LlmMessage>>(PreviousConversationKey, new());
+		}
+
 		public async Task<(IReturnDictionary?, IError?)> AskLlm(
 			[HandlesVariable] List<LlmMessage> promptMessages,
 			string? scheme = null,
@@ -147,6 +146,7 @@ namespace PLang.Modules.LlmModule
 			} else
 			{
 				context.Remove(PreviousConversationKey);
+				context.Remove(PreviousConversationSchemeKey);
 			}
 
 			for (int i =0;i<promptMessages.Count;i++)

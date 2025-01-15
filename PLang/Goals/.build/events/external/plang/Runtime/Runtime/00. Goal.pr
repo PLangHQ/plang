@@ -71,8 +71,75 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "c8ed9bf5311e73d4af6d8a78f870c278b8e3de9fcb6a1954c4f9aef02c41ab50",
-      "BuilderVersion": null
+      "Hash": "3239ed2e6ded5e0092a4f2219fc747a073b2e811df68bff49828f1c6fc6903bd",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "FunctionName": "StartWebserver",
+          "Parameters": [
+            {
+              "Type": "String",
+              "Name": "webserverName",
+              "Value": "Runtime.Debug.RunStep"
+            },
+            {
+              "Type": "Int32",
+              "Name": "port",
+              "Value": 60878
+            }
+          ],
+          "ReturnValues": null
+        },
+        "Text": "start webserver, name: \"Runtime.Debug.RunStep\", port 60878",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "json",
+          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+          "model": "gpt-4o",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+                },
+                {
+                  "type": "text",
+                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## functions available starts ##\r\nShutdownWebserver(String webserverName)  : WebserverInfo \nRestartWebserver(String? webserverName = \"default\")  : Boolean \nAddRoute(String path, GoalToCall? goalToCall, String? method, String? ContentType = \"text/html\", Dictionary`2<String, Object>? Parameters, Nullable`1<Int64>? MaxContentLength, String? DefaultResponseContentEncoding, String? webserverName)  : void \nStartWebserver(String? webserverName = \"default\", String? scheme = \"http\", String? host = \"localhost\", Int32? port = 8080, Int64? maxContentLengthInBytes = 4194304, String? defaultResponseContentEncoding = \"utf-8\", Boolean? signedRequestRequired = False, List`1<Routing>? routings)  : WebserverInfo \nRedirect(String url)  : void\nWriteToResponseHeader(Dictionary`2<String, Object> headers)  : void\nGetUserIp(String? headerKey)  : String  // headerKey should be null unless specified by user. \nGetRequestHeader(String key)  : String \nGetCookie(String name)  : String \nWriteCookie(String name, String value, Int32? expiresInSeconds = 604800)  : void\nDeleteCookie(String name)  : void\nSendFileToClient(String path, String? fileName)  : void\nVerifySignature(HttpListenerRequest request, String body, MemoryStack memoryStack)  : void\nSendToWebSocket(GoalToCall goalToCall, Dictionary`2<String, Object>? parameters, String? webSocketName = \"default\")  : void\nStartWebSocketConnection(String url, GoalToCall goalToCall, String? webSocketName = \"default\", String? contentRecievedVariableName = \"%content%\")  : WebSocketInfo\r\n## functions available ends ##"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "start webserver, name: \"Runtime.Debug.RunStep\", port 60878"
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.GenericFunctionBuilder",
+          "caching": true,
+          "RawResponse": "```json\n{\n\t\"FunctionName\": \"StartWebserver\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"webserverName\",\n\t\t\t\"Value\": \"Runtime.Debug.RunStep\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Int32\",\n\t\t\t\"Name\": \"port\",\n\t\t\t\"Value\": 60878\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
+        },
+        "RunOnBuild": false
+      }
     },
     {
       "Text": "add route \"/events/external/plang/Runtime/RunStep\" (POST), webserver: \"Runtime.Debug.RunStep\", call RunStep",
@@ -142,8 +209,85 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "be9dd96e766a87436ca8e444479a9879b3c615a6769f5c5ea56f46bdff564faf",
-      "BuilderVersion": null
+      "Hash": "4eb98b5eb6fbeccf26df5af8cf33a62fc580cdbbacf575b1e09650a1c3db0b5b",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "FunctionName": "AddRoute",
+          "Parameters": [
+            {
+              "Type": "String",
+              "Name": "path",
+              "Value": "/events/external/plang/Runtime/RunStep"
+            },
+            {
+              "Type": "GoalToCall",
+              "Name": "goalToCall",
+              "Value": "RunStep"
+            },
+            {
+              "Type": "String",
+              "Name": "method",
+              "Value": "POST"
+            },
+            {
+              "Type": "String",
+              "Name": "webserverName",
+              "Value": "Runtime.Debug.RunStep"
+            }
+          ],
+          "ReturnValues": null
+        },
+        "Text": "add route \"/events/external/plang/Runtime/RunStep\" (POST), webserver: \"Runtime.Debug.RunStep\", call RunStep",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "json",
+          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+          "model": "gpt-4o",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+                },
+                {
+                  "type": "text",
+                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## functions available starts ##\r\nShutdownWebserver(String webserverName)  : WebserverInfo \nRestartWebserver(String? webserverName = \"default\")  : Boolean \nAddRoute(String path, GoalToCall? goalToCall, String? method, String? ContentType = \"text/html\", Dictionary`2<String, Object>? Parameters, Nullable`1<Int64>? MaxContentLength, String? DefaultResponseContentEncoding, String? webserverName = \"default\")  : void \nStartWebserver(String? webserverName = \"default\", String? scheme = \"http\", String? host = \"localhost\", Int32? port = 8080, Int64? maxContentLengthInBytes = 4194304, String? defaultResponseContentEncoding = \"utf-8\", Boolean? signedRequestRequired = False, List`1<Routing>? routings)  : WebserverInfo \nRedirect(String url)  : void\nWriteToResponseHeader(Dictionary`2<String, Object> headers)  : void\nGetUserIp(String? headerKey)  : String  // headerKey should be null unless specified by user. \nGetRequestHeader(String key)  : String \nGetCookie(String name)  : String \nWriteCookie(String name, String value, Int32? expiresInSeconds = 604800)  : void\nDeleteCookie(String name)  : void\nSendFileToClient(String path, String? fileName)  : void\nVerifySignature(HttpListenerRequest request, String body, MemoryStack memoryStack)  : void\nSendToWebSocket(GoalToCall goalToCall, Dictionary`2<String, Object>? parameters, String? webSocketName = \"default\")  : void\nStartWebSocketConnection(String url, GoalToCall goalToCall, String? webSocketName = \"default\", String? contentRecievedVariableName = \"%content%\")  : WebSocketInfo\r\n## functions available ends ##"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "add route \"/events/external/plang/Runtime/RunStep\" (POST), webserver: \"Runtime.Debug.RunStep\", call RunStep"
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.GenericFunctionBuilder",
+          "caching": true,
+          "RawResponse": "```json\n{\n\t\"FunctionName\": \"AddRoute\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"path\",\n\t\t\t\"Value\": \"/events/external/plang/Runtime/RunStep\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"GoalToCall\",\n\t\t\t\"Name\": \"goalToCall\",\n\t\t\t\"Value\": \"RunStep\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"method\",\n\t\t\t\"Value\": \"POST\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"webserverName\",\n\t\t\t\"Value\": \"Runtime.Debug.RunStep\"\n\t\t}\n\t]\n}\n```"
+        },
+        "RunOnBuild": false
+      }
     }
   ],
   "SubGoals": [
@@ -160,6 +304,6 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "3ad80f6544425800b98311910ae70a9dff6f8bbad85e2971943d1e9bf3b7d2a0",
+  "Hash": "5cb1f6a90c1c31af5ed0a136cd516c566347a1e86281a1d98333735e81396409",
   "IncomingVariablesRequired": null
 }

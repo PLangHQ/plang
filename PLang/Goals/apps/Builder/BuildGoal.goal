@@ -1,0 +1,74 @@
+BuildGoal
+- get goal in %file%, write to %goals%
+- foreach %goals%, call BuildStep %goal%=item
+
+BuildStep
+- foreach %goal.GoalSteps%, call BuildAction %step%=item, errorCount =0
+- write %goal% to "%goal.RelativePrPath%"
+
+BuildAction
+/- write out "prFileText: %step.PrFile% | stepText: %step.Text%"
+- if %reload% is false and %step.PrFile.Text% equals %step.Text% then
+    - log info "Step %step.Name% is already built"
+    - end goal
+- if %errorCount% > 3 then
+    - log warning "Failed to build %step.Text% after 3 attempts"
+    - end goal
+- log info "Building %step.Text%"
+- [plang] get available modules for %step.Text%, %excludedModules% , write to %modules%
+- read llm/buildActionSelectModuleSystem.txt, load vars, write to %selectModuleSystem%
+- [llm] system:%selectModuleSystem%
+        user: %step.Text%
+        scheme: {moduleName:string, prFileName:string}
+        write to %selectedModule%
+- if %selectedModule.moduleName% == "N/A" then
+    - log error "Could not find module for %step.Text%"
+    - end goal
+- log info "Using %selectedModule.moduleName% to build step"
+- get available methods in %selectedModule.moduleName%, write to %methods%
+- ready llm/buildActionSelectMethodSystem.txt, load vars, write to %selectMethodSystem%
+- [llm] system: %selectMethodSystem%
+        user: %step.Text%
+        scheme: {methodName:string}
+        continue from last
+        write to %selectedMethod%
+- if %selectedMethod.methodName% == "N/A" then
+    - append to string list %excludedModules% = %selectedModule.moduleName%
+    - call !BuildAction errorCount=%errorCount+%
+    - end goal
+- log info "Using %selectedMethod.methodName% method to build step"    
+- get method description from %selectedMethod.methodName% in %selectedModule.moduleName%, write to %methodDescription%
+- get method mapping scheme, write to %scheme%
+- read llm/buildActionMapToMethodSystem.txt, load vars, write to %system%
+- [llm] system: %system%
+    user: %step.Text%
+    response type : json
+    continue from last
+    scheme: %scheme%
+    write to %action%
+- [plang] get scheme for step properties for %selectedMethod.methodName% in %selectedModule.moduleName%, write to %propertiesScheme%
+- read llm/buildActionMapPropertiesSystem.txt, load vars, write to %mapPropertiesSystem%
+- log info "Building properties for %step.Name%"
+- [llm] system: %mapPropertiesSystem%
+    user: %step.Text%
+    continue from last
+    scheme: %propertiesScheme%
+    write to %properties%
+- [llm] get previous messages, write to %llmMessages%
+- set %stepInfo% = {
+        ModuleName:%selectedModule.moduleName%,
+        Action: %action%,
+        StepIndex: %step.Index%,
+        Text: %step.Text%,
+        Indent: %step.Indent%,
+        Comment: %step.Comment%
+        Llm: %llmMessages%
+        Generated: %Now%
+    }
+- [code] incriment %position% + 1, pad left with 0, max 2 numbers, add period,
+    append %selectedModule.prFileName%, e.g. "01. %selectedModule.prFileName%"
+    write to %fileName%
+- create path %goal.RelativePrFolderPath%, %fileName%, write to %relativePrFileName%
+/- set %goal.GoalSteps[position].PrFileName% = %prFileName%
+/    %goal.GoalSteps[position].RelativePrFileName% = %relativePrFileName%
+- write %stepInfo% to /%relativePrFileName%

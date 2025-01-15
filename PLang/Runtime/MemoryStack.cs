@@ -13,6 +13,7 @@ using System.Collections;
 using System.Collections.Specialized;
 using System.Data;
 using System.Dynamic;
+using System.Globalization;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using static PLang.Utils.VariableHelper;
@@ -91,7 +92,68 @@ namespace PLang.Runtime
 			return values;
 		}
 
-		public record VariableExecutionPlan(string VariableName, ObjectValue ObjectValue, List<string> Calls, int Index = 0, string? JsonPath = null);
+		public record MathPlan(char @Operator, object Operand)
+		{
+			public ObjectValue Execute(ObjectValue objectValue)
+			{
+				if (!objectValue.Initiated)
+				{
+					objectValue = new ObjectValue(objectValue.Name, Activator.CreateInstance(Operand.GetType()), Operand.GetType(), null);
+				}
+
+				if (objectValue.Value is not int or long or double or float or decimal)
+				{
+					return objectValue;
+				}
+				var currentValue = objectValue.Value;
+				if (Operand is int or long)
+				{
+					var value = Convert.ToInt64(currentValue);
+					var oper = Convert.ToInt64(Operand);
+					objectValue.Value = Operator switch
+					{
+						'+' => value + oper,
+						'-' => value - oper,
+						'*' => value * oper,
+						'/' => value / oper,
+						'^' => Math.Pow(value, oper),
+						_ => throw new InvalidOperationException($"Unknown operator ({Operator})")
+					};
+				} else  if (Operand is decimal)
+				{
+					var value = Convert.ToDecimal(currentValue);
+					var oper = Convert.ToDecimal(Operand);
+					objectValue.Value = Operator switch
+					{
+						'+' => value + oper,
+						'-' => value - oper,
+						'*' => value * oper,
+						'/' => value / oper,
+						'^' => Math.Pow(Convert.ToDouble(currentValue), Convert.ToDouble(Operand)),
+						_ => throw new InvalidOperationException($"Unknown operator ({Operator})")
+					};
+				} else  if (Operand is double or float)
+				{
+
+					var value = Convert.ToDouble(currentValue);
+					var oper = Convert.ToDouble(Operand);
+					objectValue.Value = Operator switch
+					{
+						'+' => value + oper,
+						'-' => value - oper,
+						'*' => value * oper,
+						'/' => value / oper,
+						'^' => Math.Pow(value, oper),
+						_ => throw new InvalidOperationException($"Unknown operator ({Operator})")
+					};
+				}
+				return objectValue;
+			}
+		};
+		public record VariableExecutionPlan(string VariableName, ObjectValue ObjectValue, List<string> Calls, int Index = 0, string? JsonPath = null, MathPlan? MathPlan = null)
+		{
+			public ObjectValue ObjectValue { get; set; } = ObjectValue;
+		};
 
 
 		public ObjectValue GetObjectValue(string variableName, bool staticVariable, bool initiate = false)
@@ -123,20 +185,22 @@ namespace PLang.Runtime
 			return new ObjectValue(variableName, null, typeof(Nullable), null, initiate);
 		}
 
-		public VariableExecutionPlan GetVariableExecutionPlan(string key, bool staticVariable)
+		public VariableExecutionPlan GetVariableExecutionPlan(string originalKey, string cleanKey, bool staticVariable)
 		{
-			if (key == null) throw new ArgumentNullException(nameof(key));
+			if (cleanKey == null) throw new ArgumentNullException(nameof(cleanKey));
 
-			key = Clean(key);
+			cleanKey = Clean(cleanKey);
 
 			// position%. %item.title
-			if (variables.ContainsKey(key))
+			if (variables.ContainsKey(cleanKey))
 			{
-				return new VariableExecutionPlan(key, variables[key], new List<string>());
+				return new VariableExecutionPlan(cleanKey, variables[cleanKey], new List<string>());
 			}
-			if (!key.Contains(".") && !key.Contains("[")) return new VariableExecutionPlan(key, new ObjectValue(key, null, null, null, false), new List<string>());
 
-			string[] keySplit = key.Split('.');
+			MathPlan? mathPlan = GetMathPlan(originalKey, cleanKey);
+			if (!cleanKey.Contains(".") && !cleanKey.Contains("[")) return new VariableExecutionPlan(cleanKey, new ObjectValue(cleanKey, null, null, null, false), new List<string>(), MathPlan: mathPlan);
+
+			string[] keySplit = cleanKey.Split('.');
 			int index = 0;
 			string dictKey = "";
 			string? jsonPath = null;
@@ -182,12 +246,12 @@ namespace PLang.Runtime
 			}
 
 			List<string> calls;
-
 			if (objectValue == null) objectValue = GetObjectValue(variableName, staticVariable);
+
 			if (objectValue.Value == null)
 			{
 				calls = GetCalls(keySplit, jsonPath);
-				return new VariableExecutionPlan(variableName, objectValue, calls, index, jsonPath);
+				return new VariableExecutionPlan(variableName, objectValue, calls, index, jsonPath, mathPlan);
 			}
 
 			var valueType = objectValue.Value.GetType();
@@ -209,7 +273,7 @@ namespace PLang.Runtime
 				}
 			}
 
-			if (jsonPath == null && ((index == 0 && dictKey == "" && key.Contains("[") && key.Contains("]")) || (objectValue.Value is JObject || objectValue.Value is JArray)))
+			if (jsonPath == null && ((index == 0 && dictKey == "" && cleanKey.Contains("[") && cleanKey.Contains("]")) || (objectValue.Value is JObject || objectValue.Value is JArray)))
 			{
 				jsonPath = null;
 				if (keySplit.Length == 1 && keySplit[0].Contains("[") && keySplit[0].Contains("]"))
@@ -241,7 +305,47 @@ namespace PLang.Runtime
 			}
 			calls = GetCalls(keySplit, jsonPath);
 
-			return new VariableExecutionPlan(variableName, objectValue, calls, index, jsonPath);
+			return new VariableExecutionPlan(variableName, objectValue, calls, index, jsonPath, mathPlan);
+		}
+
+		public MathPlan? GetMathPlan(string originalKey, string cleanKey)
+		{
+			string key = originalKey.Trim('%');
+
+			var operators = new[] { '+', '-', '*', '/', '^' };
+
+			int index = key.IndexOfAny(operators);
+			if (index == -1)
+				return null;
+
+			string variable = key.Substring(index);
+			int operatorCounter = 0;
+			char? @operator = null;
+			object operand = null;
+			for (int i=0;i<variable.Length;i++)
+			{
+				bool isOperator = operators.Any(p => p == variable[i]);
+				if (isOperator)
+				{
+					operatorCounter++;
+					@operator = variable[i];
+				} else
+				{
+					var tmp = variable.Substring(i);
+					if (int.TryParse(tmp, out int result))
+					{
+						operand = result;
+					} else if (double.TryParse(tmp, NumberFormatInfo.InvariantInfo, out double result2))
+					{
+						operand = result2;
+					}
+					i = variable.Length;
+				}
+			}
+			if (operand == null && operatorCounter > 0) operand = operatorCounter;
+			if (@operator == null || operand == null) return null;
+
+			return new MathPlan((char) @operator, operand);
 		}
 
 		public bool HasProperty(object? obj, string? propertyName)
@@ -352,10 +456,10 @@ namespace PLang.Runtime
 			return GetObjectValue2(key, staticVariable).Value;
 		}
 
-		public ObjectValue GetObjectValue2(string? key, bool staticVariable = false)
+		public ObjectValue GetObjectValue2(string? originalKey, bool staticVariable = false)
 		{
-			if (key == null) return new ObjectValue("", null, typeof(Nullable), null, false);
-			key = Clean(key);
+			if (string.IsNullOrEmpty(originalKey)) return new ObjectValue("", null, typeof(Nullable), null, false);
+			string key = Clean(originalKey);
 
 			var keyLower = key.ToLower();
 			if (IsNow(keyLower))
@@ -392,7 +496,12 @@ namespace PLang.Runtime
 				return variables[varKey.Key];
 			}
 
-			var plan = GetVariableExecutionPlan(key, staticVariable);
+			var plan = GetVariableExecutionPlan(originalKey, key, staticVariable);
+			if (plan.MathPlan != null)
+			{
+				plan.ObjectValue = plan.MathPlan.Execute(plan.ObjectValue);
+			}
+
 			if (plan.VariableName.Equals("settings", StringComparison.OrdinalIgnoreCase) && plan.Calls.Count > 0)
 			{
 				var value = settings.Get<string>(typeof(Settings), plan.Calls[0], "", $"What is settings for {plan.Calls[0]}:");
@@ -511,10 +620,10 @@ namespace PLang.Runtime
 			Put(key, value, true);
 		}
 
-		public void Put(string key, object? value, bool staticVariable = false, bool initialize = true, bool convertToJson = true)
+		public void Put(string originalKey, object? value, bool staticVariable = false, bool initialize = true, bool convertToJson = true)
 		{
-			if (key == null) return;
-			key = Clean(key);
+			if (string.IsNullOrEmpty(originalKey)) return;
+			string key = Clean(originalKey);
 
 			if (key.ToLower() == "!memorystack")
 			{
@@ -548,7 +657,7 @@ namespace PLang.Runtime
 			}
 			if (VariableHelper.IsVariable(strValue))
 			{
-				var plan = GetVariableExecutionPlan(strValue, staticVariable);
+				var plan = GetVariableExecutionPlan(originalKey, strValue, staticVariable);
 				ObjectValue variableValue = plan.ObjectValue;
 				foreach (var call in plan.Calls)
 				{
@@ -573,7 +682,7 @@ namespace PLang.Runtime
 
 			if (key.Contains("."))
 			{
-				var keyPlan = GetVariableExecutionPlan(key, staticVariable);
+				var keyPlan = GetVariableExecutionPlan(originalKey, key, staticVariable);
 
 				ObjectValue objectValue = keyPlan.ObjectValue;
 				foreach (var call in keyPlan.Calls)
@@ -630,17 +739,38 @@ namespace PLang.Runtime
 						else
 						{
 							Type type = obj.GetType();
-							PropertyInfo? propInfo = type.GetProperties().FirstOrDefault(p => p.Name.ToLower() == call.ToLower());
-							if (propInfo == null)
+							PropertyInfo? propInfo;
+							if (call.Contains("[") && call.Contains("]"))
 							{
-								throw new VariableDoesNotExistsException($"{call} does not exist on variable {keyPlan.VariableName}, there for I cannot set {key}");
+								string name = call.Substring(0, call.IndexOf("["));
+								string idxName = call.Replace(name, "").Replace("[", "").Replace("]", "");
+
+								propInfo = type.GetProperties().FirstOrDefault(p => p.Name.ToLower() == name.ToLower());
+								if (propInfo == null)
+								{
+									throw new VariableDoesNotExistsException($"{call} does not exist on variable {keyPlan.VariableName}, there for I cannot set {key}");
+								}
+								var list = propInfo?.GetValue(obj) as IList;
+								var position = variables[idxName];
+								list[(int)position.Value] = value;
+								propInfo.SetValue(obj, list);
+								objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
 							}
-							if (value != null && value.GetType() != propInfo.PropertyType)
+							else
 							{
-								value = Convert.ChangeType(value, propInfo.PropertyType);
+								propInfo = type.GetProperties().FirstOrDefault(p => p.Name.ToLower() == call.ToLower());
+							
+								if (propInfo == null)
+								{
+									throw new VariableDoesNotExistsException($"{call} does not exist on variable {keyPlan.VariableName}, there for I cannot set {key}");
+								}
+								if (value != null && value.GetType() != propInfo.PropertyType)
+								{
+									value = Convert.ChangeType(value, propInfo.PropertyType);
+								}
+								propInfo.SetValue(obj, value);
+								objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
 							}
-							propInfo.SetValue(obj, value);
-							objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
 						}
 					}
 
@@ -764,6 +894,7 @@ namespace PLang.Runtime
 			if (isVariable && str.EndsWith("%")) str = str.Remove(str.Length - 1);
 			if (str.StartsWith("@")) str = str.Substring(1);
 			if (str.StartsWith("$.")) str = str.Remove(0, 2);
+			str = str.TrimEnd('+').TrimEnd('-');
 			str = Regex.Replace(str, "α([0-9]+)α", match => $"[{match.Groups[1].Value}]");
 
 			return str.Replace("α", ".");

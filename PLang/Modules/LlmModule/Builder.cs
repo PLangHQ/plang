@@ -139,7 +139,7 @@ or url
             }
 
 			var genericFunction = instruction.Action as GenericFunction;
-			if (genericFunction != null)
+			if (genericFunction != null && genericFunction.FunctionName == "AskLlm")
 			{
 				var scheme = genericFunction.Parameters.FirstOrDefault(p => p.Name == "scheme");
 				var responseTypeParameter = genericFunction.Parameters.FirstOrDefault(p => p.Name == "llmResponseType");
@@ -151,7 +151,7 @@ or url
 					return await Build(step, error, ++errorCount);
 				}
 
-				if (scheme != null && scheme.Value != null && responseType == "json" && !JsonHelper.LookAsJsonScheme(scheme.Value.ToString()))
+				if (scheme != null && scheme.Value != null && !VariableHelper.IsVariable(scheme.Value) && responseType == "json" && !JsonHelper.LookAsJsonScheme(scheme.Value.ToString()))
 				{
 					if (errorCount < 2)
 					{

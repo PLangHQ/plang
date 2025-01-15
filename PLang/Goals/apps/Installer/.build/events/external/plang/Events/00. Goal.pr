@@ -9,16 +9,12 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": null,
-      "RelativePrPath": null,
+      "PrFileName": "Events.pr",
+      "RelativePrPath": ".build\\events\\external\\plang\\Events\\Events.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-<<<<<<< Updated upstream
-      "Generated": "2025-01-13T20:10:12.4718764+00:00",
-=======
       "Generated": "2025-01-14T21:16:50.5273338+00:00",
->>>>>>> Stashed changes
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -48,7 +44,8 @@
       },
       "IsEvent": true,
       "Hash": null,
-      "BuilderVersion": null
+      "BuilderVersion": null,
+      "PrFile": null
     },
     {
       "Text": "before goal ends, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug",
@@ -56,16 +53,12 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": null,
-      "RelativePrPath": null,
+      "PrFileName": "Events.pr",
+      "RelativePrPath": ".build\\events\\external\\plang\\Events\\Events.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-<<<<<<< Updated upstream
-      "Generated": "2025-01-13T20:10:12.4793274+00:00",
-=======
       "Generated": "2025-01-14T21:16:50.5354284+00:00",
->>>>>>> Stashed changes
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -95,7 +88,8 @@
       },
       "IsEvent": true,
       "Hash": null,
-      "BuilderVersion": null
+      "BuilderVersion": null,
+      "PrFile": null
     }
   ],
   "SubGoals": [],
