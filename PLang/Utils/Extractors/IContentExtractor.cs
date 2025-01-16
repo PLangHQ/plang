@@ -12,6 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 using static PLang.Modules.BaseBuilder;
 using static PLang.Services.CompilerService.CSharpCompiler;
 
@@ -115,12 +116,15 @@ namespace PLang.Utils.Extractors
 				var ci = new CodeImplementationResponse(cir.Namespace, cir.Name, implementation, cir.InputParameters, cir.OutParameters, cir.Using, cir.Assemblies);
 
 				return ci;
-			} else
+			} else if (responseType == typeof(ConditionImplementationResponse))
 			{
 				var cir = jsonObject as ConditionImplementationResponse;
 				var ci = new ConditionImplementationResponse(cir.Namespace, cir.Name, implementation, cir.InputParameters, cir.Using, cir.Assemblies, cir.GoalToCallOnTrue, cir.GoalToCallOnFalse, cir.GoalToCallOnTrueParameters, cir.GoalToCallOnFalseParameters);
 
 				return ci;
+			} else
+			{
+				return implementation;
 			}
 
 			throw new BuilderException($"Response type '{responseType}' is not valid");

@@ -107,6 +107,63 @@ namespace PLang.Modules.HttpModule
 			return await Request(url, "DELETE", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
 
+		[Description("Send binary file to server. Make sure to set correct headers on correct header variable, requestHeaders or contentHeader")]
+		public async Task<(object?, IError?)> SendBinaryOfFile(string url, string filePath, string httpMethod = "POST",
+			Dictionary<string, object>? requestHeaders = null, Dictionary<string, object>? contentHeaders = null, 
+			string encoding = "utf-8", int timeoutInSeconds = 30)
+		{
+			var requestUrl = variableHelper.LoadVariables(url);
+			if (requestUrl == null)
+			{
+				return (null, new ProgramError("url cannot be empty", goalStep, function));
+			}
+
+
+			using (var httpClient = httpClientFactory.CreateClient())
+			using (var fileStream = File.OpenRead(filePath))
+			{
+				var request = new HttpRequestMessage(new HttpMethod(httpMethod), requestUrl.ToString());
+
+				
+				if (requestHeaders != null)
+				{
+					foreach (var header in requestHeaders)
+					{
+						var value = variableHelper.LoadVariables(header.Value).ToString();
+						request.Headers.TryAddWithoutValidation(header.Key, value);
+					}
+				}
+				request.Headers.UserAgent.ParseAdd("plang v0.1");
+				var content = new StreamContent(fileStream);
+
+				content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+				if (contentHeaders != null)
+				{
+					foreach (var header in contentHeaders)
+					{
+						var value = variableHelper.LoadVariables(header.Value).ToString();
+						content.Headers.TryAddWithoutValidation(header.Key, value);
+					}
+				}
+
+				request.Content = content;
+				var response = await httpClient.SendAsync(request);
+
+				if (response.IsSuccessStatusCode)
+				{
+
+					string responseBody = await response.Content.ReadAsStringAsync();
+					return (responseBody, null);
+				}
+				else
+				{
+					
+					var errorDetails = await response.Content.ReadAsStringAsync();
+					return (null, new ProgramError(errorDetails, goalStep, function));
+				}
+			}
+		}
+
 		[Description("Post a FileStream to url. When a variable is defined with @ sign, it defines that it should be a FileStream. data may contain something like file=@%fileName%;type=%fileType%, then keep as one value for the file parameter. The function will parse the file and type")]
 		public async Task<(object?, IError?)> PostMultipartFormData(string url, object data, string httpMethod = "POST",
 			bool doNotSignRequest = false, Dictionary<string, object>? headers = null,

@@ -1,0 +1,7 @@
+Reddit
+- navigate to https://www.reddit.com/r/plang/submit/, use profile, hide bot, timeout 5 sec
+- [webc] write %post% to element, "faceplate-textarea-input"
+- [webc] write "Hello" to element, div[slot="rte"]
+- [webc] click on id="submit-post-button"
+- wait 3 sec
+- [webc] click mod-action-button[aria-label="Approve content"], located in shadow dom shreddit-mod-inline-actions

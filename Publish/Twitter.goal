@@ -1,0 +1,5 @@
+Twitter
+- navigate to https://x.com/home, hide being bot, use user profile
+- wait 3 sec
+- [webc] write %post% to div[class="public-DraftStyleDefault-block public-DraftStyleDefault-ltr"] > span, timeout 3 sec, dont clear
+- click on button main[role=main] button[role="button"][data-testid="tweetButtonInline"]

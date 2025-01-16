@@ -578,7 +578,7 @@ namespace PLang.Modules.FileModule
 			if (loadVariables && !string.IsNullOrEmpty(content.ToString()))
 			{
 				content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
-			} else if (content.ToString() == content.GetType().ToString())
+			} else if (content != null && content.ToString() == content.GetType().ToString())
 			{
 				content = JsonConvert.SerializeObject(content, Newtonsoft.Json.Formatting.Indented);
 			}
