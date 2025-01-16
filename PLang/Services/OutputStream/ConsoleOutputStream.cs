@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -47,7 +48,14 @@ namespace PLang.Services.OutputStream
 			SetColor(statusCode);
 			if (!content.StartsWith(fullName))
 			{
-				Console.WriteLine(content);
+				if (IsRecord(obj))
+				{
+					Console.WriteLine(JsonConvert.SerializeObject(obj, Formatting.Indented));
+				}
+				else
+				{
+					Console.WriteLine(content);
+				}
 			}
 			else
 			{
@@ -55,6 +63,12 @@ namespace PLang.Services.OutputStream
 			}
 			Console.ResetColor();
 
+		}
+
+		private bool IsRecord(object obj)
+		{
+			var type = obj.GetType();
+			return type.GetMethod("PrintMembers", BindingFlags.Instance | BindingFlags.NonPublic) != null;
 		}
 
 		public async Task WriteToBuffer(object? obj, string type, int statusCode = 200)
