@@ -583,7 +583,7 @@ namespace PLang.Modules.FileModule
 				content = JsonConvert.SerializeObject(content, Newtonsoft.Json.Formatting.Indented);
 			}
 			
-			await fileSystem.File.WriteAllTextAsync(absolutePath, content.ToString(), encoding: GetEncoding(encoding));
+			await fileSystem.File.WriteAllTextAsync(absolutePath, content?.ToString(), encoding: GetEncoding(encoding));
 		}
 
 		private Encoding GetEncoding(string encoding)
