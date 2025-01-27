@@ -13,7 +13,7 @@ using System.ComponentModel;
 
 namespace PLang.Modules.LoopModule
 {
-	[Description("While, for, foreach, loops through a list")]
+	[Description("While, for, foreach, loops, go through a list")]
 	public class Program : BaseProgram
 	{
 		private readonly ILogger logger;

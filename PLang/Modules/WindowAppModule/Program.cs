@@ -37,7 +37,7 @@ namespace PLang.Modules.WindowAppModule
 			if (iconPath != null) os.IForm.SetIcon(iconPath);
 			
 			var result = await pseudoRuntime.RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), goalName, parameters, Goal);
-
+			//((UIOutputStream)os).IForm.Flush(result.output.Data.ToString());
 			os.IForm.Visible = true;
 			return result.error;
 		}

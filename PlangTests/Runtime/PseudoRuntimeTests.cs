@@ -102,7 +102,7 @@ namespace PLang.Runtime.Tests
 		public async Task RunGoalTest_GoalNotFound()
 		{	
 
-			(var e, var err) = await pseudoRuntime.RunGoal(engine, new(), @"\", "UnknownGoal.goal", new Dictionary<string, object>());
+			(var e, var err, var output) = await pseudoRuntime.RunGoal(engine, new(), @"\", "UnknownGoal.goal", new Dictionary<string, object>());
 			Assert.AreEqual("No goals available", err.Message);
 		}
 

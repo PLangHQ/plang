@@ -13,6 +13,21 @@ namespace PLang.Modules.FilterModule
 	public class Program : BaseProgram
 	{
 
+		[Description("Joins a list of items into one string")]
+		public async Task<string?> Join(List<object> list, string seperator = ", ", string[]? exclude = null)
+		{
+			string? str = null;
+			foreach (var item in list)
+			{
+				if (str != null) str += seperator;
+				if (exclude == null || exclude.FirstOrDefault(p => p.Equals(exclude.ToString(), StringComparison.OrdinalIgnoreCase)) == null)
+				{
+					str += item.ToString();
+				}
+			}
+			return str;
+		}
+
 		[Description("Gets an item from list, giving the first, last or by index according to user definition. retrieveOneItem: first|last|number (retrieveOneItem can also be a number representing the index.)")]
 		public async Task<object?> GetItem(object variableToExtractFrom, string retrieveOneItem)
 		{

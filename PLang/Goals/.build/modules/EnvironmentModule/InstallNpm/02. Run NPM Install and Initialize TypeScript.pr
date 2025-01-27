@@ -1,0 +1,93 @@
+{
+  "Action": {
+    "FunctionName": "RunTerminal",
+    "Parameters": [
+      {
+        "Type": "String",
+        "Name": "appExecutableName",
+        "Value": "npm"
+      },
+      {
+        "Type": "List`1<String>",
+        "Name": "parameters",
+        "Value": [
+          "install",
+          "-g",
+          "esbuild",
+          "typescript",
+          "&&",
+          "npm",
+          "install",
+          "react",
+          "react-dom",
+          "@types/react",
+          "@types/react-dom",
+          "%packageName%",
+          "--save-dev",
+          "&&",
+          "tsc",
+          "--init"
+        ]
+      },
+      {
+        "Type": "String",
+        "Name": "pathToWorkingDirInTerminal",
+        "Value": "/javascript"
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Text": "terminal \"npm install -g esbuild typescript && npm install react react-dom @types/react @types/react-dom %packageName% --save-dev && tsc --init\"\n    working dir /javascript",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+    "model": "gpt-4o",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nRead(String variableName)  : void\nRunTerminal(String appExecutableName, List`1<String>? parameters, String? pathToWorkingDirInTerminal, String? dataOutputVariable, String? errorDebugInfoOutputVariable, String? dataStreamDelta, String? debugErrorStreamDelta, Boolean? hideTerminal = False)  : void\r\n## functions available ends ##\r\n## defined variables ##\r\npackageName (type:object), \r\n## defined variables ##"
+          },
+          {
+            "type": "text",
+            "text": "Remove % around dataOutputVariable and errorDebugInfoOutputVariable"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "terminal \"npm install -g esbuild typescript && npm install react react-dom @types/react @types/react-dom %packageName% --save-dev && tsc --init\"\n    working dir /javascript"
+          }
+        ]
+      }
+    ],
+    "type": "PLang.Modules.TerminalModule.Builder",
+    "caching": true,
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"RunTerminal\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"appExecutableName\",\n\t\t\t\"Value\": \"npm\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"List`1<String>\",\n\t\t\t\"Name\": \"parameters\",\n\t\t\t\"Value\": [\n\t\t\t\t\"install\",\n\t\t\t\t\"-g\",\n\t\t\t\t\"esbuild\",\n\t\t\t\t\"typescript\",\n\t\t\t\t\"&&\",\n\t\t\t\t\"npm\",\n\t\t\t\t\"install\",\n\t\t\t\t\"react\",\n\t\t\t\t\"react-dom\",\n\t\t\t\t\"@types/react\",\n\t\t\t\t\"@types/react-dom\",\n\t\t\t\t\"%packageName%\",\n\t\t\t\t\"--save-dev\",\n\t\t\t\t\"&&\",\n\t\t\t\t\"tsc\",\n\t\t\t\t\"--init\"\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"pathToWorkingDirInTerminal\",\n\t\t\t\"Value\": \"/javascript\"\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
+  },
+  "RunOnBuild": false
+}

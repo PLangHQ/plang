@@ -104,6 +104,8 @@ namespace PLang.Building
 				(step, error) = await BuildStepProperties(goal, step, instruction, stepIndex, excludeModules, errorCount);
 				if (error != null) return error;
 
+				CheckForBuildRunner(goal, step, instruction);
+
 				//Set reload to false after Build Instruction
 				step.Reload = false;
 				step.Generated = DateTime.Now;
@@ -143,6 +145,27 @@ namespace PLang.Building
 
 					return ErrorHelper.GetMultipleBuildError(error, handlerError);
 				}
+			}
+
+		}
+
+		private void CheckForBuildRunner(Goal goal, GoalStep step, Instruction instruction)
+		{
+			var program = typeHelper.GetRuntimeModules().FirstOrDefault(p => p.FullName == step.ModuleType + ".Program");
+			if (program == null) return;
+
+			var gf = instruction.Action as GenericFunction;
+			if (gf == null) return;
+
+			var method = program.GetMethod(gf.FunctionName);
+			if (method == null) return;
+
+			var attribute = method.GetCustomAttribute(typeof(BuildRunner));
+			if (attribute != null)
+			{
+				string goalFiles = "";
+				//Engine.RunGoal(attribute.ToString(), goalFiles)
+				int i = 0;
 			}
 
 		}

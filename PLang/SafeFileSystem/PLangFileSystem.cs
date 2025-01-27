@@ -6,6 +6,8 @@ using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Utils;
 using System.IO.Abstractions;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using Websocket.Client.Logging;
 
 namespace PLang.SafeFileSystem
@@ -109,7 +111,25 @@ namespace PLang.SafeFileSystem
 			this.fileAccesses = fileAccesses;
 		}
 
+		public bool IsPathRooted(string? path)
+		{
+			if (string.IsNullOrWhiteSpace(path))
+			{
+				throw new Exception("path cannot be empty");
+			}
 
+			if (path.StartsWith("//")) return true;
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			{
+				if (Regex.IsMatch(path, "^[A-Z]{1}:", RegexOptions.IgnoreCase))
+				{
+					return true;
+				}
+			}
+
+			return false;
+
+		}
 
 		public string ValidatePath(string? path)
 		{
@@ -122,10 +142,15 @@ namespace PLang.SafeFileSystem
 			{
 				throw new Exception("File access has not been initated. Call IPLangFileSystem.Init");
 			}
-			if (!Path.IsPathRooted(path))
+
+			if (!IsPathRooted(path))
 			{
 				path = Path.GetFullPath(Path.Join(RootDirectory, path));
+			} else if (path != null && path.StartsWith("//"))
+			{
+				path = path.Substring(0, 1);
 			}
+
 			RootDirectory = RootDirectory.TrimEnd(Path.DirectorySeparatorChar);
 			path = Path.GetFullPath(path);
 			if (!path.StartsWith(RootDirectory, StringComparison.OrdinalIgnoreCase))

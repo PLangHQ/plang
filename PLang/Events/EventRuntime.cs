@@ -241,7 +241,7 @@ namespace PLang.Events
 				{
 					await task;
 				}
-				(_, var error) = task.Result;
+				(_, var error, var output) = task.Result;
 
 				context.Remove(ReservedKeywords.IsEvent);
 				if (context.TryGetValue(ReservedKeywords.MemoryStack, out var obj0) && obj0 != null)

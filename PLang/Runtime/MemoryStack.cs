@@ -38,21 +38,35 @@ namespace PLang.Runtime
 
 	public class ObjectValue
 	{
+		private object? value;
 		public ObjectValue(string name, object? value, Type? type, ObjectValue? parent = null, bool Initiated = true)
 		{
 			Name = name;
-			Value = value;
+			this.value = value;
 			Type = type;
 			this.Initiated = Initiated;
 			Parent = parent;
+			Created = DateTime.Now;
+			Updated = DateTime.Now;
 		}
 
 		public List<VariableEvent> Events = new List<VariableEvent>();
 		public string Name { get; set; }
-		public object? Value { get; set; }
+		public object? Value
+		{
+			get { return this.value;  }
+			set
+			{
+				this.value = value;
+				Updated = DateTime.Now;
+			}
+		}
 		public Type? Type { get; set; }
 		public bool Initiated { get; set; }
 		public ObjectValue? Parent { get; set; }
+
+		public DateTime Created { get; private set; }
+		public DateTime Updated { get; set; }
 	}
 	public class MemoryStack
 	{
@@ -119,7 +133,8 @@ namespace PLang.Runtime
 						'^' => Math.Pow(value, oper),
 						_ => throw new InvalidOperationException($"Unknown operator ({Operator})")
 					};
-				} else  if (Operand is decimal)
+				}
+				else if (Operand is decimal)
 				{
 					var value = Convert.ToDecimal(currentValue);
 					var oper = Convert.ToDecimal(Operand);
@@ -132,7 +147,8 @@ namespace PLang.Runtime
 						'^' => Math.Pow(Convert.ToDouble(currentValue), Convert.ToDouble(Operand)),
 						_ => throw new InvalidOperationException($"Unknown operator ({Operator})")
 					};
-				} else  if (Operand is double or float)
+				}
+				else if (Operand is double or float)
 				{
 
 					var value = Convert.ToDouble(currentValue);
@@ -322,20 +338,22 @@ namespace PLang.Runtime
 			int operatorCounter = 0;
 			char? @operator = null;
 			object operand = null;
-			for (int i=0;i<variable.Length;i++)
+			for (int i = 0; i < variable.Length; i++)
 			{
 				bool isOperator = operators.Any(p => p == variable[i]);
 				if (isOperator)
 				{
 					operatorCounter++;
 					@operator = variable[i];
-				} else
+				}
+				else
 				{
 					var tmp = variable.Substring(i);
 					if (int.TryParse(tmp, out int result))
 					{
 						operand = result;
-					} else if (double.TryParse(tmp, NumberFormatInfo.InvariantInfo, out double result2))
+					}
+					else if (double.TryParse(tmp, NumberFormatInfo.InvariantInfo, out double result2))
 					{
 						operand = result2;
 					}
@@ -345,7 +363,7 @@ namespace PLang.Runtime
 			if (operand == null && operatorCounter > 0) operand = operatorCounter;
 			if (@operator == null || operand == null) return null;
 
-			return new MathPlan((char) @operator, operand);
+			return new MathPlan((char)@operator, operand);
 		}
 
 		public bool HasProperty(object? obj, string? propertyName)
@@ -729,7 +747,8 @@ namespace PLang.Runtime
 						}
 						row[column] = value;
 						objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
-					} else 
+					}
+					else
 					{
 						if (obj is JToken token)
 						{
@@ -759,7 +778,7 @@ namespace PLang.Runtime
 							else
 							{
 								propInfo = type.GetProperties().FirstOrDefault(p => p.Name.ToLower() == call.ToLower());
-							
+
 								if (propInfo == null)
 								{
 									throw new VariableDoesNotExistsException($"{call} does not exist on variable {keyPlan.VariableName}, there for I cannot set {key}");
@@ -949,7 +968,8 @@ namespace PLang.Runtime
 			{
 				return dictionary;
 
-			} else if (value is JToken token)
+			}
+			else if (value is JToken token)
 			{
 				if (targetType == typeof(string)) return token.ToString();
 				return token.ToObject(targetType);
@@ -1078,7 +1098,8 @@ namespace PLang.Runtime
 				{
 					value = null;
 				}
-			} else if (obj is NameValueCollection nvc)
+			}
+			else if (obj is NameValueCollection nvc)
 			{
 				var key = nvc.AllKeys.FirstOrDefault(p => p.ToLower() == propertyDescription.ToLower());
 				if (key != null)
@@ -1167,7 +1188,7 @@ namespace PLang.Runtime
 		private JToken? TryConvertToJToken(object obj)
 		{
 			if (obj is JToken token) return token;
-			if (obj is string && JsonHelper.IsJson(obj, out object? parsed)) return (JToken?) parsed;
+			if (obj is string && JsonHelper.IsJson(obj, out object? parsed)) return (JToken?)parsed;
 			if (obj is IList list)
 			{
 				if (list.Count > 0 && list[0] is JProperty)
@@ -1494,7 +1515,7 @@ namespace PLang.Runtime
 			}
 		}
 
-		public void AddOnCreateEvent(string key, string goalName, string callingGoalHash, bool staticVariable = false, 
+		public void AddOnCreateEvent(string key, string goalName, string callingGoalHash, bool staticVariable = false,
 				Dictionary<string, object?>? parameters = null, bool waitForResponse = true,
 				int delayWhenNotWaitingInMilliseconds = 0)
 		{

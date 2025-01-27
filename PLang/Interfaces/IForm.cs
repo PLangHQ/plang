@@ -1,4 +1,5 @@
-﻿using static PLang.Modules.UiModule.Program;
+﻿using PLang.Services.OutputStream;
+using static PLang.Modules.UiModule.Program;
 
 namespace PLang.Interfaces
 {
@@ -9,7 +10,7 @@ namespace PLang.Interfaces
 		void SetTitle(string? title);
 		Task ModifyContent(string content, OutputTarget outputTarget, string id);
 		Task ExecuteCode(string content);
-		Task Flush();
+		Task Flush(string content);
 
 		public SynchronizationContext SynchronizationContext { get; set; }
 		bool Visible { get; set; }

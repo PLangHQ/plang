@@ -80,6 +80,7 @@
     <PackageReference Include="OpenAI" Version="2.1.0" />
     <PackageReference Include="pythonnet" Version="3.0.5" />
     <PackageReference Include="RazorEngineCore" Version="2024.4.1" />
+    <PackageReference Include="ReverseMarkdown" Version="4.6.0" />
     <PackageReference Include="Scriban.Signed" Version="5.12.1" />
     <PackageReference Include="Selenium.Support" Version="4.27.0" />
     <PackageReference Include="Selenium.WebDriver" Version="4.27.0" />
@@ -124,11 +125,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Goals\modules\EnvironmentModule\llm\" />
     <Folder Include="Goals\modules\ui\runtime\" />
   </ItemGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="echo &quot;Building plang code&quot;&#xD;&#xA;&#xD;&#xA;cd &quot;$(ProjectDir)Goals&quot; &amp;&amp; plang build &gt; output.txt&#xD;&#xA;type output.txt&#xD;&#xA;&#xD;&#xA;cd &quot;$(ProjectDir)Goals/apps/Installer&quot; &amp;&amp; plang build &gt; output2.txt&#xD;&#xA;type output2.txt&#xD;&#xA;&#xD;&#xA;findstr /C:&quot;Failed to build&quot; output.txt&#xD;&#xA;&#xD;&#xA;set BuildError=%25errorlevel%25&#xD;&#xA;&#xD;&#xA;if %25BuildError%25 equ 0 (&#xD;&#xA;  exit 1&#xD;&#xA;)&#xD;&#xA;exit 0" />
-  </Target>
 
 </Project>

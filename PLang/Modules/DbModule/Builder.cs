@@ -271,7 +271,8 @@ You MUST provide SqlParameters if SQL has @parameter.
 				keepHistoryCommand = @$"You MUST add id to create statement.
 If id is not defined then add id to the create statement 
 The id MUST NOT be auto incremental, but is primary key.
-The id should be datatype long/bigint/.. which fits {functionInfo.DatabaseType}.";
+The id should be datatype long/bigint/.. which fits {functionInfo.DatabaseType}.
+";
 			}
 			else
 			{
@@ -313,7 +314,7 @@ TypeFullName is Full name of the type in c#, System.String, System.Double, etc.
 %Now% variable is type of DateTime. %Now% variable should be injected as SqlParameter 
 {appendToSystem}
 String sql IS required
-
+integer/int should always be System.Int64. 
 If table name is a variable, keep the variable in the sql statement
 You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
 You MUST provide SqlParameters if SQL has @parameter.
@@ -350,7 +351,7 @@ SqlParameters is List of ParameterInfo(string ParameterName, string VariableName
 TypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.
 All integers are type of System.Int64.
 %Now% variable is type of DateTime. %Now% variable should be injected as SqlParameter 
-
+integer/int should always be System.Int64. 
 {appendToSystem}
 If table name is a variable, keep the variable in the sql statement
 You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
@@ -409,6 +410,7 @@ TypeFullName is Full name of the type in c#, System.String, System.Double, Syste
 {eventSourcing}
 If table name is a variable, keep the variable in the sql statement
 Make sure sql statement matches columns provided for the table.
+integer/int should always be System.Int64. 
 
 You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
 You MUST provide SqlParameters if SQL has @parameter.
@@ -462,6 +464,7 @@ InsertAndSelectIdOfInsertedRow returns a value that should be written into %vari
 If table name is a variable, keep the variable in the sql statement
 You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
 You MUST provide SqlParameters if SQL has @parameter.
+integer/int should always be System.Int64. 
 ");
 			if (dataSource.KeepHistory)
 			{

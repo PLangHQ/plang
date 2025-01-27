@@ -14,12 +14,14 @@ using PLang.Errors.Handlers;
 using System.Web;
 using PLang.Models;
 using PLang.Errors.Runtime;
+using Nethereum.ABI.CompilationMetadata;
+using System.IO;
 
 namespace PLang.Runtime
 {
     public interface IPseudoRuntime
 	{
-		Task<(IEngine engine, IError? error)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCall goalName, 
+		Task<(IEngine engine, IError? error, IOutput output)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCall goalName, 
 			Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true, 
 			long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0, bool keepMemoryStackOnAsync = false);
 	}
@@ -48,12 +50,19 @@ namespace PLang.Runtime
 			this.askUserHandlerFactory = askUserHandlerFactory;
 		}
 
-		public async Task<(IEngine engine, IError? error)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCall goalName, 
+		public async Task<(IEngine engine, IError? error, IOutput? output)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCall goalName, 
 			Dictionary<string, object?>? parameters, Goal? callingGoal = null, 
 			bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, 
 			int indent = 0, bool keepMemoryStackOnAsync = false)
 		{
-			if (goalName == null || goalName.Value == null) return (engine, new Error($"Goal to call is empty. Calling goal is {callingGoal}"));
+
+			
+
+			if (goalName == null || goalName.Value == null) {
+				var error = new Error($"Goal to call is empty. Calling goal is {callingGoal}");
+				var output2 = new TextOutput("Error", "text/html", false, error, "desktop");
+				return (engine, error, output2);
+			}
 			Goal? goal = null;
 			ServiceContainer? container = null;
 
@@ -87,7 +96,12 @@ namespace PLang.Runtime
 			if (goal == null)
 			{
 				var goalsAvailable = engine.GetGoalsAvailable(appPath, goalToRun);
-				if (goalsAvailable == null || goalsAvailable.Count == 0) return (engine, new Error($"No goals available at {appPath} trying to run {goalToRun}"));
+				if (goalsAvailable == null || goalsAvailable.Count == 0)
+				{
+					var error2 = new Error($"No goals available at {appPath} trying to run {goalToRun}");
+					var output2 = new TextOutput("Error", "text/html", false, error2, "desktop");
+					return (engine, error2, output2);
+				}
 
 				var goals = string.Join('\n', goalsAvailable.OrderBy(p => p.GoalName).Select(p => $" - {p.GoalName} -> Path:{p.RelativeGoalPath}"));
 				string strGoalsAvailable = "";
@@ -96,7 +110,10 @@ namespace PLang.Runtime
 					strGoalsAvailable = $" These goals are available: \n{goals}";
 
 				}
-				return (engine, new Error($"WARNING! - Goal '{goalName}' at {fileSystem.RootDirectory} was not found.{strGoalsAvailable}"));
+
+				var error = new Error($"WARNING! - Goal '{goalName}' at {fileSystem.RootDirectory} was not found.{strGoalsAvailable}");
+				var output3 = new TextOutput("Error", "text/html", false, error, "desktop");
+				return (engine, error, output3);
 			}
 			if (waitForExecution) 
 			{
@@ -186,10 +203,25 @@ namespace PLang.Runtime
 
 			if (task.IsFaulted && task.Exception != null)
 			{
-				var error = new Error(task.Exception.Message, Exception: task.Exception);
-				return (engine, error);
+				var error3 = new Error(task.Exception.Message, Exception: task.Exception);
+				var output3 = new TextOutput("Error", "text/html", false, error3, "desktop");
+				return (engine, error3, output3);
 			}
-			return (engine, task.Result);
+			/*
+			var stream = outputStreamFactory.CreateHandler().Stream;
+			string? data = null;
+			if (stream.CanRead)
+			{
+				
+				using (var reader = new StreamReader(stream))
+				{
+					data = reader.ReadToEnd();
+				}
+			}
+			var outputStream = outputStreamFactory.CreateHandler().Stream;
+			var output = new TextOutput(data, "text/html", false, null, "desktop");
+			*/
+			return (engine, task.Result, new TextOutput("", "text/html", false, null, "desktop"));
 
 		}
 

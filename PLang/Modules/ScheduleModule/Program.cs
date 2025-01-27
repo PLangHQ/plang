@@ -9,6 +9,7 @@ using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
@@ -53,6 +54,33 @@ namespace PLang.Modules.ScheduleModule
 			//make sure we always wait for execution
 			goalStep.WaitForExecution = true;
 			await Task.Delay(sleepTimeInMilliseconds);
+		}
+
+		public async Task<IError?> WaitOnVariable([HandlesVariable] string variableName, long timeInMilliseconds, string eventOnVariable = "not_changed", GoalToCall? goalToCall = null, Dictionary<string, object?>? parameters = null)
+		{
+			if (timeInMilliseconds == 0)
+			{
+				return new ProgramError("You must define the time period to wait on a variable", goalStep, function);
+			}
+
+
+			bool hasChanged = true;
+			while (hasChanged)
+			{
+				var obj = memoryStack.GetObjectValue(variableName, false);
+				var totalMilliseconds = new TimeSpan(DateTime.Now.Ticks - obj.Updated.Ticks).TotalMilliseconds;
+				if (totalMilliseconds > timeInMilliseconds)
+				{
+					hasChanged = false;
+				}
+
+				await Task.Delay(100);
+			}
+			if (goalToCall == null) return null;
+
+			var result = await pseudoRuntime.RunGoal(engine, context, fileSystem.RelativeAppPath, goalToCall, parameters);
+
+			return result.error;
 		}
 
 		public record CronJob(string AbsolutePrFilePath, string CronCommand, GoalToCall GoalName, Dictionary<string, object?>? Parameters = null, DateTime? NextRun = null, int MaxExecutionTimeInMilliseconds = 30000)

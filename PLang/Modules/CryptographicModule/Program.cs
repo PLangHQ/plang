@@ -6,7 +6,9 @@ using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Services.LlmService;
+using PLang.Services.SigningService;
 using PLang.Utils;
+using PLang.Utils.Extractors;
 using System.ComponentModel;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -27,7 +29,8 @@ namespace PLang.Modules.CryptographicModule
 		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly IPLangFileSystem fileSystem;
 
-		public Program(ISettings settings, IEncryptionFactory encryptionFactory, ILlmServiceFactory llmServiceFactory, IPLangFileSystem fileSystem) : base()
+		public Program(ISettings settings, IEncryptionFactory encryptionFactory,
+				ILlmServiceFactory llmServiceFactory, IPLangFileSystem fileSystem) : base()
 		{
 			this.encryption = encryptionFactory.CreateHandler();
 			this.moduleSettings = new ModuleSettings(settings);
@@ -273,6 +276,8 @@ namespace PLang.Modules.CryptographicModule
 				return false;
 			}
 		}
+
+		
 
 
 
