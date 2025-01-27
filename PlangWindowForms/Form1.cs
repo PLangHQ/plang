@@ -27,6 +27,8 @@ using System.Web;
 using static PLang.Executor;
 using static PLang.Modules.UiModule.Program;
 using System.ComponentModel;
+using System.Net.Http;
+using System;
 
 namespace PlangWindowForms
 {
@@ -38,6 +40,7 @@ namespace PlangWindowForms
 		ServiceContainer container;
 		IEngine engine;
 		IPLangFileSystem fileSystem;
+		IOutputStreamFactory outputStreamFactory;
 		Executor pLang;
 		private string[] args;
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -59,6 +62,7 @@ namespace PlangWindowForms
 				new AskUserDialog(), new ErrorDialog(), this);
 
 			fileSystem = container.GetInstance<IPLangFileSystem>();
+			outputStreamFactory = container.GetInstance<IOutputStreamFactory>();
 			pLang = new Executor(container);
 
 			InitializeComponent();
@@ -125,17 +129,19 @@ namespace PlangWindowForms
 		}
 
 
-		public async Task Flush()
+		public async Task Flush(string str)
 		{
 			try
 			{
 				// TODO: not happy with this, it should use template engine from container
 				// it should not be getting the tree from context
 				var context = container.GetInstance<PLangAppContext>();
-				var tree = context.GetOrDefault(ReservedKeywords.GoalTree, default(GoalTree<string>));
-				if (tree == null) return;
 
+				
 
+				webView.CoreWebView2.NavigateToString(str);
+				
+				/*
 				var stringContent = tree.PrintTree();
 				(var html, var error) = await CompileAndRun(stringContent);
 
@@ -156,6 +162,7 @@ namespace PlangWindowForms
 				}
 
 				await ListenToVariables();
+				*/
 			} catch(Exception ex)
 			{
 				ShowErrorInDevTools(new Error(ex.Message, Exception: ex));
@@ -323,6 +330,20 @@ namespace PlangWindowForms
 					SetInitialHtmlContent();
 					
 				}
+			} else if (e.Uri.StartsWith("plang:"))
+			{
+				var parsedUrl = ParseUrl(e.Uri);
+				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
+				//engine.GetMemoryStack().GetMemoryStack().Clear();
+				//goalName = args.Request.Uri.ToString().Replace("plang:", "", StringComparison.OrdinalIgnoreCase);
+				Task.Run(() =>
+				{
+					var task = pseudoRuntime.RunGoal(engine, engine.GetContext(), "", parsedUrl.goalName, parsedUrl.param);
+					task.Wait();
+					var goalResult = task.Result;
+					int i = 0;
+				});
+
 			}
 			int i = 0;
 		}
@@ -402,7 +423,7 @@ namespace PlangWindowForms
 		private (string goalName, Dictionary<string, object?>? param) ParseUrl(string url)
 		{
 			var parts = url.Split('?');
-			string basePath = parts[0];
+			string basePath = parts[0].Replace("plang:", "", StringComparison.OrdinalIgnoreCase);
 			string queryString = parts.Length > 1 ? parts[1] : string.Empty;
 
 			var queryParameters = HttpUtility.ParseQueryString(queryString);
@@ -441,19 +462,51 @@ namespace PlangWindowForms
 			//webView.CoreWebView2.ExecuteScriptAsync($"console.error('{EscapeChars(html)}');");
 		}
 
+		public static Stream ConvertStringToStream(string input, Encoding? encoding = null)
+		{
+			encoding ??= Encoding.UTF8; // Default to UTF-8 if no encoding is provided
 
+			var memoryStream = new MemoryStream();
+			using (var writer = new StreamWriter(memoryStream, encoding, leaveOpen: true))
+			{
+				writer.Write(input);
+				writer.Flush();
+			}
+			memoryStream.Position = 0;
+			return memoryStream;
+		}
 		private void HandleResourcesRequests(CoreWebView2WebResourceRequestedEventArgs args)
 		{
 			var resourceType = args.ResourceContext;
-			if (args.Request.Uri.StartsWith("local://ui/"))
+			bool isMedia = resourceType == CoreWebView2WebResourceContext.Image || resourceType == CoreWebView2WebResourceContext.Media;
+			bool isLocalFileRequest = args.Request.Uri.StartsWith("plang:");
+			string? mimeType = MimeTypeHelper.GetWebMimeType(args.Request.Uri.Replace("plang:", ""));
+			if (mimeType != null)
 			{
-				string fileName = args.Request.Uri.Replace("local://", "");
+				//isMedia = true;
+			}
+			if (!isMedia && args.Request.Uri.StartsWith("plang:"))
+			{
+				(string goalName, Dictionary<string, object?>? param) = ParseUrl(args.Request.Uri);
+				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
+				//engine.GetMemoryStack().GetMemoryStack().Clear();
+				//goalName = args.Request.Uri.ToString().Replace("plang:", "", StringComparison.OrdinalIgnoreCase);
+				var task =  pseudoRuntime.RunGoal(engine, engine.GetContext(), "", goalName, param);
+				task.Wait();
+				var goalResult = task.Result;
+
+				var stream = ConvertStringToStream(goalResult.output.Data.ToString());
+				args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(stream, 200, "Ok", $"Content-Type: text/html");
+			} else if (args.Request.Uri.StartsWith("local:"))
+			{
+				string fileName = args.Request.Uri.Replace("local:", "");
+
 				if (fileSystem.File.Exists(fileName))
 				{
 					var fs = fileSystem.File.Open(fileName, FileMode.Open, FileAccess.Read);
 
 					fs.Position = 0;
-					string mimeType = (Path.GetExtension(fileName) == ".css") ? "text/css" : "application/javascript";
+					mimeType = (Path.GetExtension(fileName) == ".css") ? "text/css" : "application/javascript";
 					args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(fs, 200, "Ok", $"Content-Type: {mimeType}");
 
 					fileStreams.Add(fs);
@@ -464,10 +517,32 @@ namespace PlangWindowForms
 
 
 			// Allow only image, video, and audio requests
-			if (resourceType != CoreWebView2WebResourceContext.Image &&
-			resourceType != CoreWebView2WebResourceContext.Media)
+			if (isMedia)
 			{
-				args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(null, 404, "Blocked", "");
+
+				if (args.Request.Uri.StartsWith("http://") || args.Request.Uri.StartsWith("https://"))
+				{
+					return;
+				}
+					var url = ParseUrl(args.Request.Uri);
+				var absolutePath = Path.Join(fileSystem.RootDirectory, url.goalName);
+				if (!fileSystem.File.Exists(absolutePath))
+				{
+					return;
+				}
+				try
+				{
+					using (var fs = fileSystem.FileStream.New(absolutePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete,
+	bufferSize: 4096,
+	FileOptions.SequentialScan))
+					{
+
+						args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(fs, 404, "Blocked", "");
+					}
+				} catch (Exception ex)
+				{
+					int i = 0;
+				}
 			}
 		}
 

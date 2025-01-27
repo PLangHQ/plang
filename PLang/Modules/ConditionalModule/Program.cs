@@ -15,6 +15,7 @@ using PLang.Models;
 using System.Collections;
 using PLang.Utils;
 using Microsoft.Extensions.Logging;
+using PLang.Services.OutputStream;
 
 namespace PLang.Modules.ConditionalModule
 {
@@ -212,7 +213,7 @@ namespace PLang.Modules.ConditionalModule
 
 		private async Task<IError?> ExecuteResult(bool result, GoalToCall? goalToCallOnTrue, Dictionary<string, object?>? goalToCallOnTrueParameters, GoalToCall? goalToCallOnFalse, Dictionary<string, object?>? goalToCallOnFalseParameters)
 		{
-			Task<(IEngine, IError? error)>? task = null;
+			Task<(IEngine, IError? error, IOutput output)>? task = null;
 			if (result && goalToCallOnTrue != null && goalToCallOnTrue.Value != null)
 			{
 				if (VariableHelper.IsVariable(goalToCallOnTrue))

@@ -1,20 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
-
-namespace PLang.Utils
+﻿namespace PLang.Utils
 {
 	public class MimeTypeHelper
 	{
+		public static string? GetWebMimeType(string fileName) {
 
-		public static string GetMimeType(string fileName)
-		{
 			string extension = Path.GetExtension(fileName).ToLowerInvariant();
-
-			string mimeType = extension switch
+			string? mimeType = extension switch
 			{
 				".mp3" => "audio/mpeg",
 				".wav" => "audio/wav",
@@ -64,10 +55,17 @@ namespace PLang.Utils
 				".js" => "application/javascript",
 				".php" => "application/x-httpd-php",
 				".bin" => "application/octet-stream",
-				_ => "application/octet-stream", // Default MIME type if no match is found
+				_ => null, // Default MIME type if no match is found
 
 			};
 			return mimeType;
+		}
+		public static string GetMimeType(string fileName)
+		{
+			string? mimeType = GetWebMimeType(fileName);
+			if (mimeType != null) return mimeType;
+			return "application/octet-stream";
+			
 		}
 	}
 }

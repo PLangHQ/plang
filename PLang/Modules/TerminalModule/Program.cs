@@ -13,8 +13,8 @@ using System.Text;
 
 namespace PLang.Modules.TerminalModule
 {
-    [Description("Terminal/Console access to run external applications")]
-	public class Program : BaseProgram
+	[Description("Terminal/Console access to run external applications")]
+	public class Program : BaseProgram, IDisposable
 	{
 		private readonly ILogger logger;
 		private readonly ISettings settings;
@@ -39,13 +39,15 @@ namespace PLang.Modules.TerminalModule
 		public async Task RunTerminal(string appExecutableName, List<string>? parameters = null,
 			string? pathToWorkingDirInTerminal = null,
 			[HandlesVariable] string? dataOutputVariable = null, [HandlesVariable] string? errorDebugInfoOutputVariable = null,
-			[HandlesVariable] string? dataStreamDelta = null, [HandlesVariable] string? debugErrorStreamDelta = null
+			[HandlesVariable] string? dataStreamDelta = null, [HandlesVariable] string? debugErrorStreamDelta = null,
+			bool hideTerminal = false
 			)
 		{
 			if (string.IsNullOrWhiteSpace(pathToWorkingDirInTerminal))
 			{
 				pathToWorkingDirInTerminal = Goal.AbsoluteGoalFolderPath;
-			} else
+			}
+			else
 			{
 				pathToWorkingDirInTerminal = GetPath(pathToWorkingDirInTerminal);
 			}
@@ -54,11 +56,11 @@ namespace PLang.Modules.TerminalModule
 				RedirectStandardInput = true,
 				RedirectStandardOutput = true,
 				RedirectStandardError = true,
-				CreateNoWindow = false,
+				CreateNoWindow = hideTerminal,
 				UseShellExecute = false,
-				WorkingDirectory = pathToWorkingDirInTerminal
-			};
+				WorkingDirectory = pathToWorkingDirInTerminal,
 
+			};
 			string command = appExecutableName;
 			if (parameters != null)
 			{
@@ -107,75 +109,81 @@ namespace PLang.Modules.TerminalModule
 			var dict = new ReturnDictionary<string, object?>();
 
 			// Start the process
-			using (Process process = new Process { StartInfo = startInfo })
+			Process process = new Process { StartInfo = startInfo };
+			
+			StringBuilder? dataOutput = new();
+			StringBuilder? errorOutput = new();
+
+
+
+
+			process.OutputDataReceived += (sender, e) =>
 			{
-				StringBuilder? dataOutput = new();
-				StringBuilder? errorOutput = new();
+				//logger.LogInformation(e.Data);
+				if (string.IsNullOrWhiteSpace(e.Data)) return;
 
-				
-
-
-				process.OutputDataReceived += (sender, e) =>
+				if (dataStreamDelta != null)
 				{
-					//logger.LogInformation(e.Data);
-					if (string.IsNullOrWhiteSpace(e.Data)) return;
+					memoryStack.Put(dataStreamDelta, e.Data);
+				}
 
-					if (dataStreamDelta != null)
-					{
-						memoryStack.Put(dataStreamDelta, e.Data);
-					}
+				dataOutput.Append(e.Data + Environment.NewLine);
 
-					dataOutput.Append(e.Data + Environment.NewLine);
-					
-					logger.LogTrace(e.Data);
-				};
+				logger.LogTrace(e.Data);
+			};
 
 
-				process.ErrorDataReceived += (sender, e) =>
+			process.ErrorDataReceived += (sender, e) =>
+			{
+				if (string.IsNullOrWhiteSpace(e.Data)) return;
+
+				if (!string.IsNullOrEmpty(debugErrorStreamDelta))
 				{
-					if (string.IsNullOrWhiteSpace(e.Data)) return;
-					
-					if (!string.IsNullOrEmpty(debugErrorStreamDelta))
-					{
-						memoryStack.Put(debugErrorStreamDelta, e.Data);
-					}
-					errorOutput.Append(e.Data + Environment.NewLine);
+					memoryStack.Put(debugErrorStreamDelta, e.Data);
+				}
+				errorOutput.Append(e.Data + Environment.NewLine);
 
-					logger.LogTrace(e.Data);
-				};
+				logger.LogTrace(e.Data);
+			};
 
-				process.Exited += (sender, e) =>
-				{
-					//logger.LogDebug($"Exited");
-				};
+			process.Exited += (sender, e) =>
+			{
+				//logger.LogDebug($"Exited");
+			};
 
-				process.Start();
+			process.Start();
 
-				process.BeginOutputReadLine(); // Start asynchronous read of output
-				process.BeginErrorReadLine(); // Start asynchronous read of error
+			process.BeginOutputReadLine(); // Start asynchronous read of output
+			process.BeginErrorReadLine(); // Start asynchronous read of error
 
-				// Get the input stream
-				StreamWriter sw = process.StandardInput;
+			// Get the input stream
+			StreamWriter sw = process.StandardInput;
 
-				// Write the command to run the application with parameters
-				
-				sw.WriteLine(command);
+			// Write the command to run the application with parameters
 
-				sw.Close(); // Close the input stream to signal completion
+			sw.WriteLine(command);
+
+			sw.Close(); // Close the input stream to signal completion
+			if (goalStep.WaitForExecution)
+			{
 				await process.WaitForExitAsync();
-
-				if (!string.IsNullOrEmpty(dataOutputVariable))
-				{
-					memoryStack.Put(dataOutputVariable, RemoveLastLine(dataOutput.ToString()));
-				}
-
-				if (!string.IsNullOrEmpty(errorDebugInfoOutputVariable))
-				{
-					memoryStack.Put(errorDebugInfoOutputVariable, errorOutput.ToString());
-				}
-
-				logger.LogTrace("Done with TerminalModule");
+			} else
+			{
+				KeepAlive(process, "Process");
 			}
+
+			if (!string.IsNullOrEmpty(dataOutputVariable))
+			{
+				memoryStack.Put(dataOutputVariable, RemoveLastLine(dataOutput.ToString()));
+			}
+
+			if (!string.IsNullOrEmpty(errorDebugInfoOutputVariable))
+			{
+				memoryStack.Put(errorDebugInfoOutputVariable, errorOutput.ToString());
+			}
+
+			logger.LogTrace("Done with TerminalModule");
+
 
 		}
 
@@ -196,7 +204,10 @@ namespace PLang.Modules.TerminalModule
 			return string.Join(Environment.NewLine, lines, 0, lines.Length - 1);
 		}
 
-
+		public void Dispose()
+		{
+			throw new NotImplementedException();
+		}
 	}
 }
 

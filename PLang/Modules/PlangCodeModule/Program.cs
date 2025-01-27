@@ -1,10 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Exceptions;
+using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Utils;
 using System.ComponentModel;
@@ -19,19 +21,63 @@ namespace PLang.Modules.PlangCodeModule
 	{
 		private readonly ILogger logger;
 		private readonly IGoalParser goalParser;
+		private readonly IPLangFileSystem fileSystem;
 
-		public Program(ILogger logger, IGoalParser goalParser) : base()
+		public Program(ILogger logger, IGoalParser goalParser, IPLangFileSystem fileSystem) : base()
 		{
 			this.logger = logger;
 			this.goalParser = goalParser;
-
+			this.fileSystem = fileSystem;
 		}
 
-
-		public async Task<List<Goal>> GetGoals(string filePath)
+		[Description("Get goals in file or folder. visiblity is either public|public_and_private|private")]
+		public async Task<object> GetGoals(string filePath, string visiblity = "public", string[]? fields = null)
 		{
+			List<Goal> goals = new List<Goal>();
 			string path = GetPath(filePath);
-			return goalParser.ParseGoalFile(path);
+			if (path.EndsWith(".goal"))
+			{
+				goals = goalParser.ParseGoalFile(path);
+			} else {
+				var files = fileSystem.Directory.GetFiles(path);
+				foreach (var file in files)
+				{
+					goals.AddRange(goalParser.ParseGoalFile(file));
+				}
+			}
+			if (visiblity == "public")
+			{
+				goals = goals.Where(p => p.Visibility == Visibility.Public).ToList();
+			}
+			if (visiblity == "private")
+			{
+				goals = goals.Where(p => p.Visibility == Visibility.Private).ToList();
+			}
+			if (fields == null) return goals;
+
+			JArray array = new JArray();
+			foreach (var goal in goals)
+			{
+				var jObject = new JObject();
+				foreach (var field in fields)
+				{
+
+					var property = goal.GetType().GetProperties().FirstOrDefault(p => p.Name.Equals(field, StringComparison.OrdinalIgnoreCase));
+					if (property != null)
+					{						
+						var value = property.GetValue(goal);
+						if (value != null)
+						{
+							jObject.Add(field, value.ToString());
+						}
+					}
+
+				}
+				array.Add(jObject);
+			}
+			
+
+			return array;
 		}
 
 		public async Task<(string?, IError?)> GetModules(string stepText, List<string> excludeModules)

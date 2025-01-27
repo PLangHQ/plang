@@ -1,7 +1,9 @@
-﻿using PLang.Building.Model;
+﻿using Newtonsoft.Json;
+using PLang.Building.Model;
 using PLang.Interfaces;
 using PLang.Runtime;
 using RazorEngineCore;
+using System.IO;
 using System.IO.Abstractions;
 using System.Text;
 
@@ -42,13 +44,24 @@ namespace PLang.Services.OutputStream
 
 		public void Flush()
 		{
-			int i = 0;
+			if (!Stream.CanRead) return;
+
+			string str = "";			
+			using (var tw = new StreamReader(Stream, leaveOpen: true))
+			{
+				Stream.Position = 0;
+				str = tw.ReadToEnd();
+
+				Stream.SetLength(0); // Truncate the stream
+				Stream.Position = 0;
+			}
+
 			IForm.SynchronizationContext.Post(_ =>
 			{
 				int be = 0;
 				try
 				{
-					IForm.Flush();
+					IForm.Flush(str);
 				} catch (Exception e)
 				{
 					int i = 0;
@@ -72,6 +85,18 @@ namespace PLang.Services.OutputStream
 		public async Task Write(object? obj, string type = "text", int statusCode = 200, int stepNr = -1)
 		{
 			if (obj == null) return;
+			if (statusCode == 200)
+			{
+				byte[] bytes;
+				if (obj is string || obj.GetType().IsPrimitive) {
+					bytes = Encoding.UTF8.GetBytes(obj.ToString());
+				} else {
+					bytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj));
+				}
+
+				Stream.Write(bytes, 0, bytes.Length);
+				
+			}
 			if (statusCode >= 300)
 			{
 				byte[] bytes = Encoding.UTF8.GetBytes(sb.ToString());
@@ -93,78 +118,6 @@ namespace PLang.Services.OutputStream
 				return;
 			}
 
-			await IForm.ExecuteCode($@"UIkit.notification({{ message: '{obj.ToString().Replace("'", "\\'")}',
-				status: 'primary',
-				pos: 'top-right',
-				timeout: 15000
-			}});");
-			//byte[] bytes = Encoding.UTF8.GetBytes(html);
-
-			//await Stream.WriteAsync(bytes, 0, bytes.Length);
-			/*
-
-			ErrorStream = new MemoryStream();
-
-			string errorMessage = ex.Message;
-			string cshtmlFile = ex.Source;
-			string stackTrace = ex.StackTrace;
-			int line = 0;
-			string searchIndex = "cshtml:line";
-			int lineIdx = stackTrace.IndexOf(searchIndex);
-			if (lineIdx != -1)
-			{
-				int endIdx = stackTrace.IndexOf(Environment.NewLine) - lineIdx - searchIndex.Length;
-				int startIdx = lineIdx + searchIndex.Length;
-				if (endIdx > 0 && startIdx > 0 && startIdx < stackTrace.Length)
-				{
-					int.TryParse(stackTrace.Substring(startIdx, endIdx).Trim(), out line); ;
-				}
-			}
-			if (compiled != null)
-			{
-				var ms = new MemoryStream();
-				compiled.SaveToStream(ms);
-				ms.Position = 0;
-
-				ReadLong(ms);
-				SkipBuffer(ms); // Skip assembly bytecode
-				SkipBuffer(ms);
-				SkipBuffer(ms);
-
-				string sourceCode = ReadString(ms);
-				string[] lines = sourceCode.Split("\n");
-
-				string error = $@"{errorMessage} at line: {line}";
-				if (lines.Length > line)
-				{
-					int lineIndex = (line - 1 >= 0) ? line : 0;
-					error += Environment.NewLine + Environment.NewLine + lines[lineIndex];
-				}
-				error += Environment.NewLine + Environment.NewLine + $@"Following is the generated source code:
-
-{sourceCode}
-
-# plang code being executed #
-{GoalStep.Text}
-# plang code being executed #
-
-# full plang source code #
-{Goal.GetGoalAsString()}
-# full plang source code #
-";
-
-				byte[] bytes = Encoding.UTF8.GetBytes(error);
-				await ErrorStream.WriteAsync(bytes, 0, bytes.Length);
-
-				int i = 0;
-
-
-			}
-			else
-			{
-
-				throw;
-			}*/
 		}
 
 

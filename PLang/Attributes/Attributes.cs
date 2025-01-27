@@ -25,6 +25,16 @@ namespace PLang.Attributes
 	}
 
 	[AttributeUsage(AttributeTargets.Method)]
+	public class BuildRunner : Attribute
+	{
+		public string GoalName { get; }
+		public BuildRunner(string goalName)
+		{
+			GoalName = goalName;
+		}
+	}
+
+	[AttributeUsage(AttributeTargets.Method)]
 	public class VisibleInheritationAttribute : Attribute { }
 
 	[AttributeUsage(AttributeTargets.Method)]

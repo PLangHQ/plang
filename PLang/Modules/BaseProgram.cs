@@ -502,7 +502,7 @@ Be Concise";
 		}
 
 
-		public IError? TaskHasError(Task<(IEngine, IError? error)> task)
+		public IError? TaskHasError(Task<(IEngine, IError? error, IOutput output)> task)
 		{
 
 			if (task.Exception != null)

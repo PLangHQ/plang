@@ -10,6 +10,7 @@ using PLang.Services.SigningService;
 using PLang.Utils;
 using System.ComponentModel;
 using static PLang.Errors.AskUser.AskUserPrivateKeyExport;
+using PLang.Utils.Extractors;
 
 namespace PLang.Modules.IdentityModule
 {
@@ -77,6 +78,18 @@ namespace PLang.Modules.IdentityModule
 		public async Task<Dictionary<string, object>> Sign(string content, string method, string url, string contract = "C0")
 		{
 			return signingService.Sign(method, url, contract);
+		}
+
+		public async Task<bool> VerifySignature2(string text, string? publicKey = null)
+		{
+			var jsonExtractor = new JsonExtractor();
+			var obj = jsonExtractor.Extract<dynamic>(text);
+			var message = signingService.VerifySignature("", "", "", obj);
+			if (publicKey != null)
+			{
+				return message["X-Signature-Public-Key"] == publicKey;
+			}
+			return true;
 		}
 
 		[Description("validationKeyValues should have these keys: X-Signature, X-Signature-Created(type is long, unix time), X-Signature-Nonce, X-Signature-Public-Key, X-Signature-Contract=\"CO\". Return dictionary with Identity and IdentityNotHashed")]

@@ -199,11 +199,6 @@ namespace PLang.Runtime
 					debounceTokenSource?.Cancel();
 					debounceTokenSource = new CancellationTokenSource();
 
-					
-					
-
-					// Call the debounced method with a delay
-
 					// Call the debounced method with a delay
 					Task.Delay(200, debounceTokenSource.Token)
 						.ContinueWith(t =>

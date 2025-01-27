@@ -1,26 +1,25 @@
-﻿using NBitcoin.Logging;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Chromium;
+using OpenQA.Selenium.DevTools;
 using OpenQA.Selenium.Edge;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Interactions;
 using OpenQA.Selenium.Safari;
 using OpenQA.Selenium.Support.UI;
+using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Utils;
+using SeleniumExtras.WaitHelpers;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
-using SeleniumExtras.WaitHelpers;
-using System.Collections.Generic;
-using Microsoft.Extensions.Logging;
-using PLang.Errors;
-using PLang.Errors.Runtime;
-using System.Xml.Linq;
-using System.CodeDom.Compiler;
-using System.Data;
+using System.Threading;
+using DevToolsSessionDomains = OpenQA.Selenium.DevTools.V130.DevToolsSessionDomains;
 
 namespace PLang.Modules.WebCrawlerModule
 {
@@ -62,21 +61,21 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 
 		[Description("browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.")]
-		public async Task StartBrowser(string browserType = "Chrome", bool headless = false, bool useUserSession = false, string userSessionPath = "",
+		public async Task StartBrowser(string browserType = "Chrome", bool headless = false, bool useUserSession = false, string profileName = "",
 			bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null, int? timoutInSeconds = 30, bool hideTestingMode = false)
 		{
 			Dictionary<string, object?> startProperties = new();
 			startProperties.Add("browserType", browserType);
 			startProperties.Add("headless", headless);
 			startProperties.Add("useUserSession", useUserSession);
-			startProperties.Add("userSessionPath", userSessionPath);
+			startProperties.Add("userSessionPath", profileName);
 			startProperties.Add("incognito", incognito);
 			startProperties.Add("kioskMode", kioskMode);
 			startProperties.Add("argumentOptions", argumentOptions);
 			startProperties.Add("timoutInSeconds", timoutInSeconds);
 			startProperties.Add("hideTestingMode", hideTestingMode);
 
-			var driver = GetBrowserType(browserType, headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, hideTestingMode);
+			var driver = GetBrowserType(browserType, headless, useUserSession, profileName, incognito, kioskMode, argumentOptions, hideTestingMode);
 
 			driver.Manage().Timeouts().AsynchronousJavaScript = TimeSpan.FromSeconds(timoutInSeconds ?? 30);
 			driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(timoutInSeconds ?? 30);
@@ -87,29 +86,19 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 
 		private WebDriver GetBrowserType(string browserType, bool headless, bool useUserSession,
-			string userSessionPath, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode)
+			string profileName, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode)
 		{
 			switch (browserType)
 			{
 				case "Edge":
-					return GetEdgeDriver(headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, hideTestingMode);
+					return GetEdgeDriver(headless, useUserSession, profileName, incognito, kioskMode, argumentOptions, hideTestingMode);
 				case "Firefox":
-					return GetFirefoxDriver(headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, hideTestingMode);
+					return GetFirefoxDriver(headless, useUserSession, profileName, incognito, kioskMode, argumentOptions, hideTestingMode);
 				case "Safari":
-					return GetSafariDriver(headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, hideTestingMode);
+					return GetSafariDriver(headless, useUserSession, profileName, incognito, kioskMode, argumentOptions, hideTestingMode);
 				default:
-					return GetChromeDriver(headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, hideTestingMode);
+					return GetChromeDriver(headless, useUserSession, profileName, incognito, kioskMode, argumentOptions, hideTestingMode);
 			}
-		}
-
-		private async Task RestartBrowserInstance()
-		{
-			await CloseBrowser();
-
-			var startProperties = context[BrowserStartPropertiesContextKey] as Dictionary<string, object?>;
-			await StartBrowser(startProperties["browserType"] as string, (bool)startProperties["headless"], (bool)startProperties["useUserSession"], startProperties["userSessionPath"] as string,
-				(bool)startProperties["incognito"], (bool)startProperties["kioskMode"], startProperties["argumentOptions"] as Dictionary<string, string>, startProperties["timoutInSeconds"] as int?,
-				(bool)startProperties["hideTestingMode"]);
 		}
 
 
@@ -173,7 +162,7 @@ namespace PLang.Modules.WebCrawlerModule
 
 		[Description("browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.")]
 		public async Task NavigateToUrl(string url, string browserType = "Chrome", bool headless = false, bool useUserSession = false,
-				string userSessionPath = "", bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null,
+				string profileName = "", bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null,
 				string? browserConsoleOutputVariableName = null, int? timeoutInSecods = null, bool hideTestingMode = false)
 		{
 			if (string.IsNullOrEmpty(url))
@@ -187,7 +176,7 @@ namespace PLang.Modules.WebCrawlerModule
 				url = "https://" + url;
 			}
 
-			var driver = await GetDriver(browserType, headless, useUserSession, userSessionPath, incognito, kioskMode, argumentOptions, timeoutInSecods);
+			var driver = await GetDriver(browserType, headless, useUserSession, profileName, incognito, kioskMode, argumentOptions, timeoutInSecods);
 			driver.Navigate().GoToUrl(url);
 
 			if (browserConsoleOutputVariableName != null)
@@ -251,7 +240,12 @@ namespace PLang.Modules.WebCrawlerModule
 			if (element != null) return GetPlangWebElement(element);
 			return null;
 		}
-
+		public async Task WaitForUrl(string expectedUrl, int timeoutInSeconds)
+		{
+			var driver = await GetDriver();
+			WebDriverWait wait = new WebDriverWait(driver, new TimeSpan(0, 0, timeoutInSeconds));
+			wait.Until(d => d.Url.Contains(expectedUrl));
+		}
 		public async Task WaitForElementToDissapear(object elementOrCssSelector, int timeoutInSeconds)
 		{
 			var driver = await GetDriver();
@@ -705,10 +699,11 @@ namespace PLang.Modules.WebCrawlerModule
 			{
 				ielement = element.WebElement;
 			}
-			return ielement.GetAttribute(attribute);
+			return ielement.GetDomAttribute(attribute);
 		}
 
-		public async Task<List<string>> ExtractContent(bool clearHtml = true, string? cssSelector = null, PlangWebElement? element = null)
+
+		public async Task<List<string>> ExtractContent(string? cssSelector = null, PlangWebElement? element = null, string outputFormat = "html")
 		{
 			cssSelector = await GetCssSelector(cssSelector);
 			List<string> results = new List<string>();
@@ -723,11 +718,21 @@ namespace PLang.Modules.WebCrawlerModule
 			{
 				elements = driver.FindElements(By.CssSelector(cssSelector));
 			}
+
 			foreach (var e in elements)
 			{
-				string text = (clearHtml) ? e.GetAttribute("innerText") : e.GetAttribute("outerHTML");
+				string text = (outputFormat == "text") ? e.GetAttribute("innerText") : e.GetAttribute("outerHTML");
 				results.Add(text);
 			}
+			if (outputFormat == "md")
+			{
+				var converter = new ReverseMarkdown.Converter();
+				for (int i = 0; i < results.Count;i++)
+				{
+					results[i] = converter.Convert(results[i]);
+				}
+			}
+
 			SetCssSelector(cssSelector);
 			return results;
 		}
@@ -741,6 +746,25 @@ namespace PLang.Modules.WebCrawlerModule
 			}
 
 			driver.SwitchTo().Window(tabs[tabIndex]);
+
+		}
+
+		public async Task ListenToNetworkTraffic(string url, string oper)
+		{
+			var driver = await GetDriver();
+			var devTools = driver as IDevTools;
+			var session = devTools.GetDevToolsSession();
+
+
+			var network = session.GetVersionSpecificDomains<DevToolsSessionDomains>().Network;
+			
+			network.RequestWillBeSent += (sender, e) =>
+			{
+				Console.WriteLine($"Request URL: {e.Request.Url}");
+			};
+
+			// Enable the network domain to start listening
+			await network.Enable(new OpenQA.Selenium.DevTools.V130.Network.EnableCommandSettings());
 
 		}
 
@@ -815,16 +839,23 @@ namespace PLang.Modules.WebCrawlerModule
 			}
 		}
 
-		private SafariDriver GetSafariDriver(bool headless, bool useUserSession, string userSessionPath, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode)
+		private SafariDriver GetSafariDriver(bool headless, bool useUserSession, string profileName, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode)
 		{
 			var options = new SafariOptions();
-
+			if (!string.IsNullOrEmpty(profileName))
+			{
+				throw new NotImplementedException("Not implemented for Safari. You can help building plang https://github.com/PLangHQ");
+			}
 			return new SafariDriver(options);
 		}
-		private FirefoxDriver GetFirefoxDriver(bool headless, bool useUserSession, string userSessionPath, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode)
+		private FirefoxDriver GetFirefoxDriver(bool headless, bool useUserSession, string profileName, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode)
 		{
 			FirefoxOptions options = new FirefoxOptions();
-			if (useUserSession && string.IsNullOrEmpty(userSessionPath))
+			if (!string.IsNullOrEmpty(profileName))
+			{
+				throw new NotImplementedException("Not implemented for Firefox. You can help building plang https://github.com/PLangHQ");
+			}
+			if (useUserSession && string.IsNullOrEmpty(profileName))
 			{
 				options.AddArgument(@$"user-data-dir={GetChromeUserDataDir()}");
 			}
@@ -851,12 +882,15 @@ namespace PLang.Modules.WebCrawlerModule
 			}
 			return new FirefoxDriver(options);
 		}
-		private ChromiumDriver GetEdgeDriver(bool headless, bool useUserSession, string userSessionPath, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode)
+		private ChromiumDriver GetEdgeDriver(bool headless, bool useUserSession, string profileName, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode)
 		{
 			var options = new EdgeOptions();
-			if (useUserSession && string.IsNullOrEmpty(userSessionPath))
+			if (useUserSession && string.IsNullOrEmpty(profileName))
 			{
 				options.AddArgument(@$"user-data-dir={GetChromeUserDataDir()}");
+			} else if (!string.IsNullOrEmpty(profileName))
+			{
+				throw new NotImplementedException("Not implemented for Edge. You can help building plang https://github.com/PLangHQ");
 			}
 			if (headless)
 			{
@@ -881,19 +915,57 @@ namespace PLang.Modules.WebCrawlerModule
 
 			return new EdgeDriver(options);
 		}
-		private ChromiumDriver GetChromeDriver(bool headless, bool useUserSession, string userSessionPath, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode)
+
+		private string GetChromeProfileFolder(string profileName)
+		{
+			string localStatePath = fileSystem.Path.Join(GetChromeUserDataDir(), "Local State");
+
+			// Read and parse the Local State file
+			string localStateContent = File.ReadAllText(localStatePath);
+			JObject localStateJson = JObject.Parse(localStateContent);
+
+			// Navigate to the profiles metadata
+			var profileInfo = localStateJson["profile"]["info_cache"];
+			if (profileInfo == null)
+			{
+				throw new InvalidOperationException("Profile info not found in Local State file.");
+			}
+
+			// Find the folder corresponding to the profile name
+			foreach (JToken profile in profileInfo)
+			{
+				var property = profile as JProperty;
+				if (property == null) continue;
+
+
+				string name = property.Value["name"].ToString(); //.Key; // e.g., "Profile 1"
+				
+				if (string.Equals(profileName, name, StringComparison.OrdinalIgnoreCase))
+				{
+					return property.Name;
+				}
+			}
+
+			throw new InvalidOperationException("Profile info not found in Local State file.");
+		}
+
+		private ChromiumDriver GetChromeDriver(bool headless, bool useUserSession, string profileName, bool incognito, bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode)
 		{
 			ChromeOptions options = new ChromeOptions();
 
-			if (useUserSession && string.IsNullOrEmpty(userSessionPath))
+			if (useUserSession && string.IsNullOrEmpty(profileName))
 			{
 				var path = GetChromeUserDataDir();
 				logger.LogDebug($"Using user path: {path}");
 				options.AddArgument(@$"user-data-dir={path}");
 			}
-			else if (!string.IsNullOrEmpty(userSessionPath))
+			else if (!string.IsNullOrEmpty(profileName))
 			{
-				options.AddArgument(@$"user-data-dir={userSessionPath}");
+				string profilePath = GetChromeProfileFolder(profileName);
+				var path = GetChromeUserDataDir();
+				options.AddArgument(@$"user-data-dir={path}");
+				options.AddArgument($"--profile-directory={profilePath}"); // Specify the profile folder
+
 			}
 			if (headless)
 			{
@@ -916,7 +988,6 @@ namespace PLang.Modules.WebCrawlerModule
 				}
 			}
 			options.SetLoggingPreference(LogType.Browser, OpenQA.Selenium.LogLevel.All);
-
 			if (hideTestingMode)
 			{
 				options.AddExcludedArgument("enable-automation");

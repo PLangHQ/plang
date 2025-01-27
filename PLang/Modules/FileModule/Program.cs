@@ -5,6 +5,7 @@ using MiniExcelLibs;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
+using PLang.Errors;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
@@ -69,6 +70,49 @@ namespace PLang.Modules.FileModule
 			return fileSystem.RootDirectory;
 		}
 		*/
+
+		public async Task<IError?> WaitForFile(string filePath, int timeoutInMilliseconds = 30 * 1000, bool waitForAccess = false)
+		{
+			var absolutePath = GetPath(filePath);
+			var startTime = DateTime.UtcNow;
+			while (!fileSystem.File.Exists(absolutePath))
+			{
+				if ((DateTime.UtcNow - startTime).TotalMilliseconds > timeoutInMilliseconds)
+				{
+					return new Error($"File not found within the timeout period: {absolutePath}");
+				}
+
+				await Task.Delay(50);
+			}
+
+			if (!waitForAccess) return null;
+
+			// Ensure the file is accessible (not locked)
+			while (true)
+			{
+				try
+				{
+					using (var stream = File.Open(absolutePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+					{
+						break;
+					}
+				}
+				catch (IOException)
+				{
+					// File is locked, retry after a short delay
+					if ((DateTime.UtcNow - startTime).TotalMilliseconds > timeoutInMilliseconds)
+					{
+						return new Error($"File could not be accessed within the timeout period: {absolutePath}");
+					}
+
+					await Task.Delay(50);
+				}
+			}
+
+
+			return null;
+
+		}
 
 		[Description("Return the absolute path the app is running in")]
 		public async Task<string> GetCurrentFolderPath(string path)
@@ -325,7 +369,9 @@ namespace PLang.Modules.FileModule
 				AllowComments = allowComments,
 				Comment = comment,
 				IgnoreBlankLines = ignoreBlankLines,
-				HasHeaderRecord = hasHeaderRecord, DetectColumnCountChanges = true, IgnoreReferences = false
+				HasHeaderRecord = hasHeaderRecord,
+				DetectColumnCountChanges = true,
+				IgnoreReferences = false
 			};
 
 			if (variableToWriteToCsv is JArray jArray)
@@ -364,11 +410,12 @@ namespace PLang.Modules.FileModule
 							}
 							csv.NextRecord();
 						}
-					} else
+					}
+					else
 					{
 						await csv.WriteRecordsAsync(enumer);
-						
-						
+
+
 					}
 
 
@@ -511,8 +558,8 @@ namespace PLang.Modules.FileModule
 			return paths.ToArray();
 		}
 
-			public async Task<string[]> GetFilePathsInDirectory(string directoryPath = "./", string searchPattern = "*",
-			string[]? excludePatterns = null, bool includeSubfolders = false, bool useRelativePath = true)
+		public async Task<string[]> GetFilePathsInDirectory(string directoryPath = "./", string searchPattern = "*",
+		string[]? excludePatterns = null, bool includeSubfolders = false, bool useRelativePath = true)
 		{
 			var searchOption = (includeSubfolders) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 			var absoluteDirectoryPath = GetPath(directoryPath);
@@ -578,11 +625,12 @@ namespace PLang.Modules.FileModule
 			if (loadVariables && !string.IsNullOrEmpty(content.ToString()))
 			{
 				content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
-			} else if (content != null && content.ToString() == content.GetType().ToString())
+			}
+			else if (content != null && content.ToString() == content.GetType().ToString())
 			{
 				content = JsonConvert.SerializeObject(content, Newtonsoft.Json.Formatting.Indented);
 			}
-			
+
 			await fileSystem.File.WriteAllTextAsync(absolutePath, content?.ToString(), encoding: GetEncoding(encoding));
 		}
 
@@ -718,7 +766,7 @@ namespace PLang.Modules.FileModule
 				context.Remove(item.Key);
 			}
 
-			
+
 		}
 
 		private ConcurrentDictionary<string, Timer> timers = new ConcurrentDictionary<string, Timer>();
@@ -833,7 +881,7 @@ namespace PLang.Modules.FileModule
 			}
 		}
 
-		private void AddEventToTimer(object sender, FileSystemEventArgs e, long debounceTime, 
+		private void AddEventToTimer(object sender, FileSystemEventArgs e, long debounceTime,
 			string goalToCall, string[]? excludeFiles,
 			string absoluteFilePathVariableName, string fileNameVariableName,
 			string changeTypeVariableName, string senderVariableName

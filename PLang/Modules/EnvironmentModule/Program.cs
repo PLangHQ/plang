@@ -1,4 +1,5 @@
 ﻿using Org.BouncyCastle.Bcpg;
+using PLang.Attributes;
 using PLang.Errors;
 using PLang.Interfaces;
 using PLang.Runtime;
@@ -7,10 +8,11 @@ using PLang.Utils;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.InteropServices;
 
 namespace PLang.Modules.EnvironmentModule
 {
-	[Description("Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app")]
+	[Description("Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install")]
 	public class Program : BaseProgram
 	{
 		private readonly ISettings settings;
@@ -66,6 +68,10 @@ namespace PLang.Modules.EnvironmentModule
 		{
 			return settings.SerializeSettings();
 		}
+		public async Task<string> GetOSDescription()
+		{
+			return RuntimeInformation.OSDescription;
+		}
 
 		public async Task<bool> IsInDebugMode()
 		{
@@ -117,6 +123,13 @@ namespace PLang.Modules.EnvironmentModule
 		public async Task KeepAlive(string message = "App KeepAlive")
 		{
 			base.KeepAlive(this, message);
+		}
+
+		[BuildRunner("InstallNpm")]
+		public async Task InstallNpm(string packageName)
+		{
+			//Install npm is being executed at build time
+			return;
 		}
 	}
 }
