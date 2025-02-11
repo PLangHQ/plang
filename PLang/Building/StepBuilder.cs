@@ -159,14 +159,14 @@ namespace PLang.Building
 
 			var method = program.GetMethod(gf.FunctionName);
 			if (method == null) return;
-
+			/*
 			var attribute = method.GetCustomAttribute(typeof(BuildRunner));
 			if (attribute != null)
 			{
 				string goalFiles = "";
 				//Engine.RunGoal(attribute.ToString(), goalFiles)
 				int i = 0;
-			}
+			}*/
 
 		}
 
@@ -478,7 +478,7 @@ variable is defined with starting and ending %, e.g. %filePath%
 ! defines a call to a function
 
 Modules: Name of module. Suggest 1-3 modules that could be used to solve the step.
-StepName: Short name for step
+StepName: Short name for step, lower case, use _ instead of /
 StepDescription: Rewrite the step as you understand it, make it detailed
 Read the description of each module, then determine which module to use.
 Make sure to return valid JSON, escape double quote if needed

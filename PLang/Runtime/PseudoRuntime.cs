@@ -1,25 +1,18 @@
 ﻿using LightInject;
-using Nethereum.ABI.Util;
 using PLang.Building.Model;
-using PLang.Building.Parsers;
 using PLang.Container;
-using PLang.Exceptions;
-using PLang.Exceptions.AskUser;
-using PLang.Interfaces;
-using PLang.Services.AppsRepository;
-using PLang.Services.OutputStream;
-using PLang.Utils;
 using PLang.Errors;
 using PLang.Errors.Handlers;
-using System.Web;
+using PLang.Exceptions.AskUser;
+using PLang.Interfaces;
 using PLang.Models;
-using PLang.Errors.Runtime;
-using Nethereum.ABI.CompilationMetadata;
-using System.IO;
+using PLang.SafeFileSystem;
+using PLang.Services.OutputStream;
+using PLang.Utils;
 
 namespace PLang.Runtime
 {
-    public interface IPseudoRuntime
+	public interface IPseudoRuntime
 	{
 		Task<(IEngine engine, IError? error, IOutput output)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCall goalName, 
 			Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true, 
@@ -66,13 +59,14 @@ namespace PLang.Runtime
 			Goal? goal = null;
 			ServiceContainer? container = null;
 
-			string absolutePathToGoal = Path.Join(fileSystem.RootDirectory, appPath, goalName).AdjustPathToOs();
+			string absolutePathToGoal = fileSystem.Path.Join(fileSystem.RootDirectory, appPath, goalName).AdjustPathToOs();
 			string goalToRun = goalName;
+			
 			if (CreateNewContainer(absolutePathToGoal))
 			{
 				var pathAndGoal = GetAppAbsolutePath(absolutePathToGoal);
 				string absoluteAppStartupPath = pathAndGoal.absolutePath;
-				string relativeAppStartupPath = Path.DirectorySeparatorChar.ToString();
+				string relativeAppStartupPath = fileSystem.Path.DirectorySeparatorChar.ToString();
 				goalToRun = pathAndGoal.goalName;
 
 				container = serviceContainerFactory.CreateContainer(context, absoluteAppStartupPath, relativeAppStartupPath, outputStreamFactory, outputSystemStreamFactory, 
@@ -131,20 +125,6 @@ namespace PLang.Runtime
 			}
 			
 			var memoryStack = engine.GetMemoryStack();
-			/*
-			var oldMemoryStack = new Dictionary<string, ObjectValue>();
-			if (memoryStack != null)
-			{
-				foreach (var item in memoryStack.GetMemoryStack())
-				{
-					if (!oldMemoryStack.ContainsKey(item.Key))
-					{
-						oldMemoryStack.Add(item.Key, item.Value);
-					}
-				}
-				memoryStack.Clear();
-			}*/
-
 
 			if (parameters != null)
 			{
@@ -164,36 +144,6 @@ namespace PLang.Runtime
 		
 			var task = engine.RunGoal(goal, waitForXMillisecondsBeforeRunningGoal);
 			await task.ConfigureAwait(waitForExecution);
-			/*
-			if (waitForExecution)
-			{
-				try
-				{
-					await task;
-				}
-				catch { }
-			} else if (delayWhenNotWaitingInMilliseconds > 0)
-			{
-				await Task.Delay((int) delayWhenNotWaitingInMilliseconds);
-				if (!waitForExecution)
-				{
-					context.Remove(ReservedKeywords.IsEvent);
-				}
-			}*/
-			/*
-			if (memoryStack != null)
-			{
-				memoryStack.GetMemoryStack().Clear();
-				var internalStack = memoryStack.GetMemoryStack();
-				foreach (var item in oldMemoryStack)
-				{
-					if (!internalStack.ContainsKey(item.Key))
-					{
-						internalStack.Add(item.Key, item.Value);
-					}
-				}
-			}
-			*/
 
 			if (container != null)
 			{
@@ -207,20 +157,7 @@ namespace PLang.Runtime
 				var output3 = new TextOutput("Error", "text/html", false, error3, "desktop");
 				return (engine, error3, output3);
 			}
-			/*
-			var stream = outputStreamFactory.CreateHandler().Stream;
-			string? data = null;
-			if (stream.CanRead)
-			{
-				
-				using (var reader = new StreamReader(stream))
-				{
-					data = reader.ReadToEnd();
-				}
-			}
-			var outputStream = outputStreamFactory.CreateHandler().Stream;
-			var output = new TextOutput(data, "text/html", false, null, "desktop");
-			*/
+
 			return (engine, task.Result, new TextOutput("", "text/html", false, null, "desktop"));
 
 		}
@@ -237,10 +174,10 @@ namespace PLang.Runtime
 			var item = dict.OrderByDescending(p => p.Value).FirstOrDefault();
 			if (item.Value == -1) return (absolutePathToGoal, "");
 
-			var idx = absolutePathToGoal.IndexOf(Path.DirectorySeparatorChar, item.Value + item.Key.Length + 1);
+			var idx = absolutePathToGoal.IndexOf(fileSystem.Path.DirectorySeparatorChar, item.Value + item.Key.Length + 1);
 			if (idx == -1)
 			{
-				idx = absolutePathToGoal.IndexOf(Path.DirectorySeparatorChar, item.Value + item.Key.Length);
+				idx = absolutePathToGoal.IndexOf(fileSystem.Path.DirectorySeparatorChar, item.Value + item.Key.Length);
 			}
 
 			var absolutePathToApp = absolutePathToGoal.Substring(0, idx);
@@ -251,12 +188,12 @@ namespace PLang.Runtime
 					absolutePathToApp = absolutePathToGoal;
 				}
 			}
-			if (absolutePathToApp.EndsWith(Path.DirectorySeparatorChar))
+			if (absolutePathToApp.EndsWith(fileSystem.Path.DirectorySeparatorChar))
 			{
-				absolutePathToApp = absolutePathToApp.TrimEnd(Path.DirectorySeparatorChar);
+				absolutePathToApp = absolutePathToApp.TrimEnd(fileSystem.Path.DirectorySeparatorChar);
 			}
 
-			var goalName = absolutePathToGoal.Replace(absolutePathToApp, "").TrimStart(Path.DirectorySeparatorChar);
+			var goalName = absolutePathToGoal.Replace(absolutePathToApp, "").TrimStart(fileSystem.Path.DirectorySeparatorChar);
 			if (string.IsNullOrEmpty(goalName)) goalName = "Start";
 
 			return (absolutePathToApp, goalName);
@@ -264,9 +201,9 @@ namespace PLang.Runtime
 
 		private bool CreateNewContainer(string absoluteGoalPath)
 		{
-			string servicesFolder = Path.Join(fileSystem.RootDirectory, ".services");
-			string modulesFolder = Path.Join(fileSystem.RootDirectory, ".modules");
-			string appsFolder = Path.Join(fileSystem.RootDirectory, "apps");
+			string servicesFolder = fileSystem.Path.Join(fileSystem.RootDirectory, ".services");
+			string modulesFolder = fileSystem.Path.Join(fileSystem.RootDirectory, ".modules");
+			string appsFolder = fileSystem.Path.Join(fileSystem.RootDirectory, "apps");
 			return absoluteGoalPath.StartsWith(servicesFolder) || absoluteGoalPath.StartsWith(modulesFolder) || absoluteGoalPath.StartsWith(appsFolder);
 		}
 

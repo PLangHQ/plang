@@ -88,6 +88,19 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 		{
 			Extractor = ExtractorFactory.GetExtractor(question, responseType);
 			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebug);
+
+			if (question.model.StartsWith("o"))
+			{
+				for (int i = 0; i < question.promptMessage.Count; i++)
+				{
+					if (question.promptMessage[i].Role == "system" || question.promptMessage[i].Role == "assistant")
+					{
+						question.promptMessage[i].Role = "developer";
+					}
+				}
+			}
+
+
 			var cachedLlmQuestion = llmCaching.GetCachedQuestion(appId, question);
 			if (!question.Reload && question.caching && cachedLlmQuestion != null && cachedLlmQuestion.RawResponse != null)
 			{
@@ -110,6 +123,8 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 				catch { }
 			}
 
+			
+
 			Dictionary<string, object?> parameters = new();
 			parameters.Add("messages", question.promptMessage);
 			parameters.Add("temperature", question.temperature);
@@ -118,7 +133,14 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 			parameters.Add("frequency_penalty", question.frequencyPenalty);
 			parameters.Add("presence_penalty", question.presencePenalty);
 			parameters.Add("type", question.type);
-			parameters.Add("maxLength", question.maxLength);
+			if (question.model.ToLower().StartsWith("o"))
+			{
+				parameters.Add("max_completion_tokens", question.maxLength);
+			}
+			else
+			{
+				parameters.Add("maxLength", question.maxLength);
+			}
 			parameters.Add("responseType", question.llmResponseType);
 
 			var assembly = Assembly.GetAssembly(this.GetType());
@@ -149,7 +171,16 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 			}
 			logger.LogTrace("LLM response:" + responseContent);
 
-			var rawResponse = JsonConvert.DeserializeObject(responseContent)?.ToString() ?? "";
+			string? rawResponse = null;
+			try
+			{
+				rawResponse = JsonConvert.DeserializeObject(responseContent)?.ToString() ?? "";
+			}
+			catch (Exception ex)
+			{
+				throw new Exception($"Error parsing JSON response from LLM. The response was {responseContent}", ex);
+			}
+
 			question.RawResponse = rawResponse;
 			if (isDebug)
 			{

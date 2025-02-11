@@ -1,7 +1,9 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Errors;
+using PLang.Errors.Methods;
 using PLang.Errors.Runtime;
 using System.Collections;
 using System.ComponentModel;
@@ -9,9 +11,37 @@ using System.Linq.Dynamic.Core;
 
 namespace PLang.Modules.FilterModule
 {
-	[Description("Allow user to filter, select, query from a variable and get specific item from that variable.")]
+	[Description("Allow user to find text, filter, select, query from a variable and get specific item from that variable.")]
 	public class Program : BaseProgram
 	{
+
+		[Description("matching: contains|startwith|endwith|equals. retrieveOneItem: first|last|number (retrieveOneItem can also be a number representing the index.)")]
+		public async Task<object?> FindTextInContent(string content, string textToFind, string matching = "contains", string? retrieveOneItem = null)
+		{
+			string[] lines = content.Split(new char[] { '\r', '\n' });
+			IEnumerable<string> matchedLines = null;
+			
+			if (matching == "startwith")
+			{
+				matchedLines = lines.Where(p => p.TrimStart().StartsWith(textToFind, StringComparison.OrdinalIgnoreCase));
+			} else if (matching == "endwith")
+			{
+				matchedLines = lines.Where(p => p.TrimEnd().EndsWith(textToFind, StringComparison.OrdinalIgnoreCase));
+			} else if (matching == "equals")
+			{
+				matchedLines = lines.Where(p => p.Equals(textToFind, StringComparison.OrdinalIgnoreCase));
+			} else
+			{
+				matchedLines = lines.Where(p => p.Contains(textToFind, StringComparison.OrdinalIgnoreCase));
+			}
+
+			if (retrieveOneItem == "first") return matchedLines.FirstOrDefault();
+			if (retrieveOneItem == "last") return matchedLines.FirstOrDefault();
+			if (int.TryParse(retrieveOneItem, out var idx)) return matchedLines.ElementAtOrDefault(idx);
+
+			return matchedLines.ToList();
+
+		}
 
 		[Description("Joins a list of items into one string")]
 		public async Task<string?> Join(List<object> list, string seperator = ", ", string[]? exclude = null)

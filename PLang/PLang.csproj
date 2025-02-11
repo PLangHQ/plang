@@ -51,6 +51,7 @@
     <PackageReference Include="IdGen" Version="3.0.7" />
     <PackageReference Include="Jil" Version="2.17.0" />
     <PackageReference Include="LightInject" Version="7.0.1" />
+    <PackageReference Include="Markdig.Signed" Version="0.40.0" />
     <PackageReference Include="MessagePack" Version="3.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="9.0.1" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.1" />
@@ -78,6 +79,7 @@
     <PackageReference Include="Nostr.Client" Version="2.0.0" />
     <PackageReference Include="NSec.Cryptography" Version="24.4.0" />
     <PackageReference Include="OpenAI" Version="2.1.0" />
+    <PackageReference Include="PdfPig" Version="0.1.9" />
     <PackageReference Include="pythonnet" Version="3.0.5" />
     <PackageReference Include="RazorEngineCore" Version="2024.4.1" />
     <PackageReference Include="ReverseMarkdown" Version="4.6.0" />
@@ -128,5 +130,9 @@
     <Folder Include="Goals\modules\EnvironmentModule\llm\" />
     <Folder Include="Goals\modules\ui\runtime\" />
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="echo &quot;Building plang code&quot;&#xD;&#xA;&#xD;&#xA;cd &quot;$(ProjectDir)Goals&quot; &amp;&amp; plang build &gt; output.txt&#xD;&#xA;type output.txt&#xD;&#xA;&#xD;&#xA;cd &quot;$(ProjectDir)Goals/apps/Installer&quot; &amp;&amp; plang build &gt; output2.txt&#xD;&#xA;type output2.txt&#xD;&#xA;&#xD;&#xA;findstr /C:&quot;Failed to build&quot; output.txt&#xD;&#xA;&#xD;&#xA;set BuildError=%25errorlevel%25&#xD;&#xA;&#xD;&#xA;if %25BuildError%25 equ 0 (&#xD;&#xA;  exit 1&#xD;&#xA;)&#xD;&#xA;exit 0" />
+  </Target>
 
 </Project>

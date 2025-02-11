@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
@@ -26,7 +27,7 @@ using System.Xml;
 
 namespace PLang.Modules.FileModule
 {
-	[Description("Handle file system access. Listen to files and dirs. Get permission to file and folder paths")]
+	[Description("Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream")]
 	public class Program : BaseProgram, IDisposable
 	{
 		private readonly IPLangFileSystem fileSystem;
@@ -159,14 +160,17 @@ namespace PLang.Modules.FileModule
 			return base64;
 		}
 
-		public async Task<List<object>> ReadJsonLineFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false,
+		public async Task<(List<object>?, IError?)> ReadJsonLineFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false,
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? newLineSymbol = null)
 		{
-			var content = await ReadTextFile(path, returnValueIfFileNotExisting, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding);
-			var parsedObjects = new List<dynamic>();
 			newLineSymbol ??= Environment.NewLine;
-
-			var lines = content.Split(newLineSymbol);
+			var lines = (await ReadTextFile(path, returnValueIfFileNotExisting, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding, newLineSymbol) as string[]);
+			if (lines == null)
+			{
+				return (null, new ProgramError($"Could not split file on {newLineSymbol}", goalStep, function));
+			}
+			var parsedObjects = new List<dynamic>();
+			
 			foreach (var line in lines)
 			{
 				if (string.IsNullOrEmpty(line)) continue;
@@ -176,11 +180,11 @@ namespace PLang.Modules.FileModule
 					parsedObjects.Add(jsonObject);
 				}
 			}
-			return parsedObjects;
+			return (parsedObjects, null);
 		}
 
-		public async Task<string> ReadTextFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false,
-			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
+		public async Task<object> ReadTextFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false,
+			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? splitOn = null)
 		{
 			var absolutePath = GetPath(path);
 
@@ -194,7 +198,7 @@ namespace PLang.Modules.FileModule
 				return returnValueIfFileNotExisting;
 			}
 
-			using (var stream = fileSystem.FileStream.New(absolutePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+			using (var stream = fileSystem.FileStream.New(absolutePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 			{
 				using (var reader = new StreamReader(stream, encoding: GetEncoding(encoding)))
 				{
@@ -202,6 +206,15 @@ namespace PLang.Modules.FileModule
 					if (loadVariables && !string.IsNullOrEmpty(content))
 					{
 						content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
+					}
+
+					if (content != null && splitOn != null)
+					{
+						if (splitOn == "\n" && content.Contains("\r"))
+						{
+							return content.Split("\r\n");
+						}
+						return content.Split(splitOn);
 					}
 					return content ?? "";
 
@@ -577,6 +590,10 @@ namespace PLang.Modules.FileModule
 
 		public async Task WriteBase64ToFile(string path, string base64, bool overwrite = false)
 		{
+			if (base64.Contains(","))
+			{
+				base64 = base64.Substring(base64.IndexOf(",") + 1);
+			}
 			var bytes = Convert.FromBase64String(base64);
 			await WriteBytesToFile(path, bytes, overwrite);
 		}
@@ -730,13 +747,28 @@ namespace PLang.Modules.FileModule
 			return fileSystem.FileInfo.New(absoluteFileName);
 		}
 
-		public async Task CreateDirectory(string directoryPath)
+		public async Task<string> CreateDirectory(string directoryPath, bool incrementalNaming = false)
 		{
 			var absoluteDirectoryPath = GetPath(directoryPath);
 			if (!fileSystem.Directory.Exists(absoluteDirectoryPath))
 			{
 				fileSystem.Directory.CreateDirectory(absoluteDirectoryPath);
 			}
+			else if (incrementalNaming)
+			{
+
+				int counter = 1;
+				string newDirectoryPath = absoluteDirectoryPath;
+
+				while (fileSystem.Directory.Exists(newDirectoryPath))
+				{
+					newDirectoryPath = $"{absoluteDirectoryPath} ({counter})";
+					counter++;
+				}
+				fileSystem.Directory.CreateDirectory(newDirectoryPath);
+				return newDirectoryPath;
+			}
+			return absoluteDirectoryPath;
 		}
 		public async Task DeleteDirectory(string directoryPath, bool recursive = true, bool throwErrorOnNotFound = false)
 		{
@@ -930,6 +962,14 @@ namespace PLang.Modules.FileModule
 					logger.LogError(ex, goalStep.Text);
 				}
 			}
+		}
+
+		[Description("Reads pdf file and loads into return variable. format can be md|text. imageAction can be none|base64|pathToFolder.")]
+		public async Task<(string, IError?)> ReadPdf(string path, string format = "md", string imageAction = "none", bool includePageNr = true, string? password = null)
+		{
+			var absolutePath = GetPath(path);
+			PdfToMarkdownConverter pdf = new PdfToMarkdownConverter(fileSystem, goal);
+			return (pdf.ConvertPdfToMarkdown(absolutePath, format, includePageNr, imageAction, password), null);
 		}
 
 

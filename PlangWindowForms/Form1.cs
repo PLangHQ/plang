@@ -29,6 +29,7 @@ using static PLang.Modules.UiModule.Program;
 using System.ComponentModel;
 using System.Net.Http;
 using System;
+using System.IO;
 
 namespace PlangWindowForms
 {
@@ -75,12 +76,13 @@ namespace PlangWindowForms
 		{
 			this.webView = new Microsoft.Web.WebView2.WinForms.WebView2();
 			this.webView.Dock = System.Windows.Forms.DockStyle.Fill;
+
 			//this.webView.Source = new Uri("about:blank");
 			this.Controls.Add(this.webView);
 
 			this.AllowDrop = true;
 			this.DragEnter += new DragEventHandler(Form_DragEnter);
-			
+
 		}
 		private void Form_DragEnter(object? sender, DragEventArgs e)
 		{
@@ -93,25 +95,46 @@ namespace PlangWindowForms
 		IPseudoRuntime pseudoRuntime;
 		public async Task SetInitialHtmlContent()
 		{
-			var core = await CoreWebView2Environment.CreateAsync();
+			//	var core = await CoreWebView2Environment.CreateAsync();
+			var environmentOptions = new CoreWebView2EnvironmentOptions
+			{
+				AdditionalBrowserArguments = "--allow-insecure-localhost"
+			};
 
-			var core2 = core.CreateCoreWebView2ControllerOptions();
+			var environment = await CoreWebView2Environment.CreateAsync(null, null, environmentOptions);
 
-			var task = webView.EnsureCoreWebView2Async();
+			var task = webView.EnsureCoreWebView2Async(environment);
 			await task;
 
 			if (task.Exception != null)
 			{
-				Console.WriteLine(task.Exception);
+				MessageBox.Show(task.Exception.ToString());
 			}
+
+			//webView.CoreWebView2.SetVirtualHostNameToFolderMapping("local", fileSystem.GoalsPath, CoreWebView2HostResourceAccessKind.Allow);
+
+			webView.CoreWebView2.PermissionRequested += (sender, args) =>
+			{
+
+				args.State = CoreWebView2PermissionState.Allow;
+
+			};
+
+			webView.CoreWebView2.Settings.AreHostObjectsAllowed = true;
+			webView.CoreWebView2.Settings.IsWebMessageEnabled = true;
+			webView.CoreWebView2.Settings.IsScriptEnabled = true;
+
+
 			webView.CoreWebView2.NavigationStarting += CoreWebView2_NavigationStarting;
 			webView.CoreWebView2.WebResourceResponseReceived += CoreWebView2_WebResourceResponseReceived;
 			webView.CoreWebView2.ContentLoading += CoreWebView2_ContentLoading;
 			webView.CoreWebView2.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
 			webView.CoreWebView2.NavigationCompleted += CoreWebView2_NavigationCompleted;
-			webView.CoreWebView2.WebResourceRequested += (sender, args) =>
+			webView.CoreWebView2.WebResourceRequested += async (sender, args) =>
 			{
-				HandleResourcesRequests(args);
+				await HandleResourcesRequests(args);
+				int i = 0;
+				
 			};
 
 			this.webView.CoreWebView2.WebMessageReceived += async (object? sender, CoreWebView2WebMessageReceivedEventArgs e) =>
@@ -128,42 +151,28 @@ namespace PlangWindowForms
 			await pLang.Execute(args, ExecuteType.Runtime);
 		}
 
-
+		string content = "";
 		public async Task Flush(string str)
 		{
 			try
 			{
-				// TODO: not happy with this, it should use template engine from container
-				// it should not be getting the tree from context
-				var context = container.GetInstance<PLangAppContext>();
+				if (string.IsNullOrEmpty(str)) return;
 
-				
-
-				webView.CoreWebView2.NavigateToString(str);
-				
-				/*
-				var stringContent = tree.PrintTree();
-				(var html, var error) = await CompileAndRun(stringContent);
-
-				ShowError(error);
-
-
-				context.Remove(ReservedKeywords.GoalTree);
-				if (string.IsNullOrEmpty(html)) return;
-
-				var target = engine.GetMemoryStack().Get<OutputTarget>(ReservedKeywords.OutputTarget);
-				if (target != null)
+				content = str;
+				if (outputTargetElement == "body")
 				{
-					await ModifyContent(html, target, tree.GoalHash);
-				}
-				else
+					webView.Source = new Uri("https://local/temp.html");
+				} else
 				{
-					webView.CoreWebView2.NavigateToString(html);
+
+					string script = $"window.updateContent({System.Text.Json.JsonSerializer.Serialize(content)}, '{outputTargetElement}', '{domOperation}');";
+					var result = await webView.ExecuteScriptAsync(script);
+					int i = 0;
+
 				}
 
-				await ListenToVariables();
-				*/
-			} catch(Exception ex)
+			}
+			catch (Exception ex)
 			{
 				ShowErrorInDevTools(new Error(ex.Message, Exception: ex));
 			}
@@ -174,10 +183,13 @@ namespace PlangWindowForms
 
 		private async Task CoreWebView2_WebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
 		{
+			
 			var receivedMessage = e.WebMessageAsJson;
 			await RenderMessage(receivedMessage);
+			
 		}
-
+		string outputTargetElement = "body";
+		string domOperation = "innerHTML";
 		private async Task RenderMessage(string receivedMessage)
 		{
 			if (receivedMessage == "\"{}\"") return;
@@ -190,38 +202,24 @@ namespace PlangWindowForms
 			}
 
 			var context = engine.GetContext();
-			string outputTargetElement = "body";
-			if (context.TryGetValue(ReservedKeywords.DefaultTargetElement, out object? te) && !string.IsNullOrWhiteSpace(te.ToString()))
-			{
-				outputTargetElement = te.ToString() ?? "body";
-			}
 
-			if (jObj.ContainsKey("target") && !string.IsNullOrEmpty(jObj["target"].ToString()))
-			{
-				outputTargetElement = jObj["target"]?.ToString() ?? outputTargetElement;
-			}
+			outputTargetElement = jObj["outputTarget"]?.ToString() ?? "body";
+			domOperation = jObj["domOperation"]?.ToString() ?? "innerHTML";
+
+			string goalName = jObj["goalName"].ToString();
 
 			var parameters = new Dictionary<string, object?>();
 			if (jObj.ContainsKey("args"))
 			{
 				parameters = jObj["args"]?.ToObject<Dictionary<string, object?>?>() ?? new();
 			}
-			else
+			else if (jObj.ContainsKey("parameters"))
 			{
-				parameters = jObj.ToObject<Dictionary<string, object?>?>();
+				parameters = jObj["parameters"]?.ToObject<Dictionary<string, object?>?>();
 			}
 
 			try
-			{
-				(string goalName, Dictionary<string, object?>? param) = ParseUrl(jObj["GoalName"].ToString());
-				parameters.Add(ReservedKeywords.OutputTarget, new OutputTarget([outputTargetElement]));
-				if (param != null)
-				{
-					foreach (var p in param)
-					{
-						parameters.AddOrReplace(p.Key, p.Value);
-					}
-				}
+			{				
 				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
 				engine.GetMemoryStack().GetMemoryStack().Clear();
 				var goalResult = await pseudoRuntime.RunGoal(engine, engine.GetContext(), "", goalName, parameters);
@@ -258,7 +256,7 @@ namespace PlangWindowForms
 		public async Task ModifyContent(string content, OutputTarget outputTarget, string id)
 		{
 			string escapedHtmlContent = JsonConvert.ToString(content);
-			
+
 			string selectors = string.Join(",", outputTarget.cssSelectors);
 
 			string script = @$"plangUi.insertContent('{outputTarget.elementPosition}', '{id}', '{selectors}', {escapedHtmlContent}, {outputTarget.overwriteIfExists.ToString().ToLower()});";
@@ -281,7 +279,7 @@ namespace PlangWindowForms
 				}
 			}, null);
 
-			
+
 		}
 
 		public async Task ExecuteCode(string content)
@@ -309,7 +307,7 @@ namespace PlangWindowForms
 		private void CoreWebView2_ContentLoading(object? sender, CoreWebView2ContentLoadingEventArgs e)
 		{
 			int i = 0;
-			
+
 		}
 
 		private void CoreWebView2_WebResourceResponseReceived(object? sender, CoreWebView2WebResourceResponseReceivedEventArgs e)
@@ -328,9 +326,10 @@ namespace PlangWindowForms
 				else
 				{
 					SetInitialHtmlContent();
-					
+
 				}
-			} else if (e.Uri.StartsWith("plang:"))
+			}
+			else if (e.Uri.StartsWith("plang:"))
 			{
 				var parsedUrl = ParseUrl(e.Uri);
 				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
@@ -400,34 +399,32 @@ namespace PlangWindowForms
 		}
 
 
-		private async Task<(string?, IError?)> CompileAndRun(object? obj)
+		private (string goalName, Dictionary<string, object?>? param) ParseUrl(string url, CoreWebView2WebResourceRequest request = null)
 		{
-			var expandoObject = new ExpandoObject() as IDictionary<string, object?>;
-			var templateContext = new TemplateContext();
-			foreach (var kvp in engine.GetMemoryStack().GetMemoryStack())
+			var parameters = new Dictionary<string, object?>();
+			if (request != null)
 			{
-				expandoObject.Add(kvp.Key, kvp.Value.Value);
-
-				var sv = ScriptVariable.Create(kvp.Key, ScriptVariableScope.Global);
-				templateContext.SetValue(sv, kvp.Value.Value);
+				using var contentStream = request.Content;
+				
+				if (contentStream != null)
+				{
+					using var reader = new StreamReader(contentStream);
+					string postData = reader.ReadToEnd();
+					var jObject = JObject.Parse(postData);
+					var properties = jObject.Properties();
+					foreach ( var property in properties )
+					{
+						parameters.Add(property.Name, property.Value);
+					}
+				}
 			}
-
-			var templateEngine = container.GetInstance<PLang.Modules.TemplateEngineModule.Program>();
-			templateEngine.Init(container, new PLang.Building.Model.Goal(), new PLang.Building.Model.GoalStep(), new PLang.Building.Model.Instruction(new()), engine.GetMemoryStack(),
-				container.GetInstance<ILogger>(), container.GetInstance<PLangAppContext>(), container.GetInstance<ITypeHelper>(), container.GetInstance<ILlmServiceFactory>(),
-				container.GetInstance<ISettings>(), container.GetInstance<IAppCache>(), null);
-			return await templateEngine.RenderContent(obj.ToString(), "");
 			
-		}
-
-		private (string goalName, Dictionary<string, object?>? param) ParseUrl(string url)
-		{
 			var parts = url.Split('?');
-			string basePath = parts[0].Replace("plang:", "", StringComparison.OrdinalIgnoreCase);
+			string basePath = parts[0].Replace("https://goal", "", StringComparison.OrdinalIgnoreCase);
 			string queryString = parts.Length > 1 ? parts[1] : string.Empty;
 
 			var queryParameters = HttpUtility.ParseQueryString(queryString);
-			var parameters = new Dictionary<string, object?>();
+			
 
 			foreach (string key in queryParameters)
 			{
@@ -475,7 +472,7 @@ namespace PlangWindowForms
 			memoryStream.Position = 0;
 			return memoryStream;
 		}
-		private void HandleResourcesRequests(CoreWebView2WebResourceRequestedEventArgs args)
+		private async Task HandleResourcesRequests(CoreWebView2WebResourceRequestedEventArgs args)
 		{
 			var resourceType = args.ResourceContext;
 			bool isMedia = resourceType == CoreWebView2WebResourceContext.Image || resourceType == CoreWebView2WebResourceContext.Media;
@@ -485,21 +482,53 @@ namespace PlangWindowForms
 			{
 				//isMedia = true;
 			}
-			if (!isMedia && args.Request.Uri.StartsWith("plang:"))
+
+			if (args.Request.Method.Equals("OPTIONS", StringComparison.OrdinalIgnoreCase))
 			{
-				(string goalName, Dictionary<string, object?>? param) = ParseUrl(args.Request.Uri);
+				var response = webView.CoreWebView2.Environment.CreateWebResourceResponse(
+					null, 200, "OK", "Access-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: POST, GET, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type");
+				args.Response = response;
+				return;
+			}
+
+
+			if (!isMedia && args.Request.Uri.StartsWith("https://goal/"))
+			{
+				(string goalName, Dictionary<string, object?>? param) = ParseUrl(args.Request.Uri, args.Request);
 				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
 				//engine.GetMemoryStack().GetMemoryStack().Clear();
 				//goalName = args.Request.Uri.ToString().Replace("plang:", "", StringComparison.OrdinalIgnoreCase);
-				var task =  pseudoRuntime.RunGoal(engine, engine.GetContext(), "", goalName, param);
-				task.Wait();
-				var goalResult = task.Result;
+				var wait =  pseudoRuntime.RunGoal(engine, engine.GetContext(), "", goalName, param).ConfigureAwait(false);
+				var goalResult = await wait;
 
-				var stream = ConvertStringToStream(goalResult.output.Data.ToString());
-				args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(stream, 200, "Ok", $"Content-Type: text/html");
-			} else if (args.Request.Uri.StartsWith("local:"))
+				if (goalResult.error != null)
+				{
+					ShowError(goalResult.error);
+					return;
+				}
+
+				string result = goalResult.output.Data.ToString();
+		
+				if (string.IsNullOrEmpty(result)) {
+					args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(null, 200, "Ok", $"Content-Type: text/html");
+					return;
+				}
+
+				using (var stream = ConvertStringToStream(result))
+				{
+					args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(stream, 200, "Ok", $"Content-Type: text/html");
+				}
+			}
+			else if (args.Request.Uri.Contains("https://local/temp.html"))
 			{
-				string fileName = args.Request.Uri.Replace("local:", "");
+				var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
+				args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(
+					stream, 200, "OK", "Content-Type: text/html");
+
+			}
+			else if (args.Request.Uri.Contains("https://local/"))
+					{
+				string fileName = args.Request.Uri.Replace("https://local/", "");
 
 				if (fileSystem.File.Exists(fileName))
 				{
@@ -524,7 +553,7 @@ namespace PlangWindowForms
 				{
 					return;
 				}
-					var url = ParseUrl(args.Request.Uri);
+				var url = ParseUrl(args.Request.Uri);
 				var absolutePath = Path.Join(fileSystem.RootDirectory, url.goalName);
 				if (!fileSystem.File.Exists(absolutePath))
 				{
@@ -539,7 +568,8 @@ namespace PlangWindowForms
 
 						args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(fs, 404, "Blocked", "");
 					}
-				} catch (Exception ex)
+				}
+				catch (Exception ex)
 				{
 					int i = 0;
 				}

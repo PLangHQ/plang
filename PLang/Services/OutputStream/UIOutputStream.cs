@@ -126,6 +126,7 @@ namespace PLang.Services.OutputStream
 		public async Task WriteToBuffer(object? obj, string type = "text", int statusCode = 200)
 		{
 			await Write(obj, type, statusCode);
+			Flush();
 		}
 
 

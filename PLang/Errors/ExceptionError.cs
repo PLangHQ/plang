@@ -15,6 +15,17 @@ namespace PLang.Errors
 	{
 
 		public static readonly string UnhandledError = "UnhandledError";
+		public ExceptionError(IError error)
+		{
+
+			this.StatusCode = error.StatusCode;
+			this.Key = error.Key;
+			this.Message = error.Message;
+			this.FixSuggestion = error.FixSuggestion;
+			this.HelpfulLinks = error.HelpfulLinks;
+			this.Goal = error.Goal;
+			this.Step = error.Step;
+		}
 		public ExceptionError(Exception ex, string? Message = null, Goal? Goal = null, GoalStep? Step = null, int StatusCode = 500, string Key = "UnhandledError", string? FixSuggestion = null, string? HelpfulLinks = null) { 
 		
 			var lowestException = ExceptionHelper.GetLowestException(ex);

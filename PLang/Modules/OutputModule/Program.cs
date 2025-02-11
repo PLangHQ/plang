@@ -71,7 +71,7 @@ namespace PLang.Modules.OutputModule
 
 
 		[Description("Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text")]
-		public async Task<IError?> Write(object content, bool writeToBuffer = false, string type = "text", int statusCode = 200)
+		public async Task<IError?> Write(object content, bool writeToBuffer = false, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
 			if (statusCode >= 400)
 			{

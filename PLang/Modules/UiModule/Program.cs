@@ -60,7 +60,7 @@ namespace PLang.Modules.UiModule
 		public async Task SetInputValue(string cssSelector, string value = "")
 		{
 			string escapedHtmlContent = EscapeTextForJavascript(value);
-			await ExecuteJavascript($"document.querySelector('{cssSelector}').value = {escapedHtmlContent}");
+			await ExecuteJavascript($"updateContent({escapedHtmlContent}, '{cssSelector}')");
 		}
 
 

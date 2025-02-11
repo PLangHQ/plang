@@ -1120,14 +1120,24 @@ namespace PLang.Runtime
 					if (token != null)
 					{
 						IEnumerable<JToken> tokens;
-
+						if (propertyDescription.Contains(" "))
+						{
+							propertyDescription = "['" + propertyDescription + "']";
+						}
 						if (token is JArray)
 						{
 							tokens = ((JArray)token).SelectTokens(propertyDescription);
 						}
 						else if (token is JObject)
 						{
-							tokens = ((JObject)token).SelectTokens(propertyDescription);
+							try
+							{
+								tokens = ((JObject)token).SelectTokens(propertyDescription);
+							} catch
+							{
+								tokens = [];
+
+							}
 						}
 						else
 						{
@@ -1199,7 +1209,13 @@ namespace PLang.Runtime
 			}
 			if (obj is IDictionary dict)
 			{
-				return JArray.FromObject(obj);
+				try
+				{
+					return JArray.FromObject(obj);
+				} catch
+				{
+					return JObject.FromObject(obj);
+				}
 			}
 			if (obj is char) return new JValue(obj.ToString());
 			return JObject.FromObject(obj);

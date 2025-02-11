@@ -61,6 +61,7 @@ namespace PLang.Modules.ConditionalModule
 - C# code MUST only contain the contition code and return bool, an external system will call goals(methods) that user defines in his intent.
 - initialize variables before using them in TryParse
 - Always convert object to correct type in code, e.g. if code requires the object to be string use Convert.ToString(obj), when object should be bool Convert.ToBoolean(obj), etc.
+- when checking if string is empty, check if it's null and do .ToString() on it and check if empty
 ## Rules ##
 
 ## Response information ##

@@ -97,8 +97,10 @@ namespace PLang.Modules.LoopModule
 				}
 
 			}
+			else if (obj is JToken jtoken && !jtoken.HasValues) { }
 			else if (obj is IEnumerable enumerables)
 			{
+
 				int idx = 1;
 				bool hasEntry = false;
 				foreach (var item in enumerables)

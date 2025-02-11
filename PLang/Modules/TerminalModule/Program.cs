@@ -1,11 +1,14 @@
 ﻿
 
 using Microsoft.Extensions.Logging;
+using NBitcoin;
 using PLang.Attributes;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
+using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -40,7 +43,7 @@ namespace PLang.Modules.TerminalModule
 			string? pathToWorkingDirInTerminal = null,
 			[HandlesVariable] string? dataOutputVariable = null, [HandlesVariable] string? errorDebugInfoOutputVariable = null,
 			[HandlesVariable] string? dataStreamDelta = null, [HandlesVariable] string? debugErrorStreamDelta = null,
-			bool hideTerminal = false
+			bool hideTerminal = false, string? keyValueListSeperator = null
 			)
 		{
 			if (string.IsNullOrWhiteSpace(pathToWorkingDirInTerminal))
@@ -110,7 +113,7 @@ namespace PLang.Modules.TerminalModule
 
 			// Start the process
 			Process process = new Process { StartInfo = startInfo };
-			
+
 			StringBuilder? dataOutput = new();
 			StringBuilder? errorOutput = new();
 
@@ -144,6 +147,7 @@ namespace PLang.Modules.TerminalModule
 				errorOutput.Append(e.Data + Environment.NewLine);
 
 				logger.LogTrace(e.Data);
+
 			};
 
 			process.Exited += (sender, e) =>
@@ -167,19 +171,73 @@ namespace PLang.Modules.TerminalModule
 			if (goalStep.WaitForExecution)
 			{
 				await process.WaitForExitAsync();
-			} else
+			}
+			else
 			{
 				KeepAlive(process, "Process");
 			}
 
-			if (!string.IsNullOrEmpty(dataOutputVariable))
+			if (!string.IsNullOrEmpty(dataOutputVariable) && dataOutput.Length > 0)
 			{
-				memoryStack.Put(dataOutputVariable, RemoveLastLine(dataOutput.ToString()));
+				Dictionary<string, object> keyValuePairs = new Dictionary<string, object>();
+				if (keyValueListSeperator != null)
+				{
+
+					string[] lines = dataOutput.ToString().Split(['\r', '\n']);
+					foreach (var line in lines)
+					{
+						if (line.Contains(keyValueListSeperator + " ") || line.Contains(keyValueListSeperator + "\t"))
+						{
+							var data = line.Split(keyValueListSeperator, StringSplitOptions.RemoveEmptyEntries);
+							if (data.Length > 1)
+							{
+								string key = data[0].Trim();
+								if (keyValuePairs.ContainsKey(key))
+								{
+									var objValue = keyValuePairs[key];
+									List<object> list = new List<object>(); ;
+									if (objValue is IList tmpList)
+									{
+										foreach (var item in tmpList)
+										{
+											list.Add(item);
+										}
+									} else
+									{
+										list.Add(objValue);
+									}
+									list.Add(string.Join(":", data.Skip(1)).Trim());
+									keyValuePairs.AddOrReplace(key, list);
+								}
+								else
+								{
+									keyValuePairs.Add(key, string.Join(":", data.Skip(1)).Trim());
+								}
+							}
+						}
+					}
+					if (keyValuePairs.Count > 0)
+					{
+						memoryStack.Put(dataOutputVariable, keyValuePairs);
+					}
+				}
+				
+				if (keyValuePairs.Count == 0)
+				{
+
+					memoryStack.Put(dataOutputVariable, RemoveLastLine(dataOutput.ToString()));
+				}
+				
 			}
 
 			if (!string.IsNullOrEmpty(errorDebugInfoOutputVariable))
 			{
 				memoryStack.Put(errorDebugInfoOutputVariable, errorOutput.ToString());
+			}
+			else if (errorOutput.Length > 0)
+			{
+				logger.LogError("No error variable defined so error is written to error log");
+				logger.LogError(errorOutput.ToString());
 			}
 
 			logger.LogTrace("Done with TerminalModule");

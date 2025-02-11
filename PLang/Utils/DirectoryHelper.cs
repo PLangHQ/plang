@@ -19,7 +19,7 @@
 
 			foreach (FileInfo file in dir.GetFiles())
 			{
-				string targetFilePath = System.IO.Path.Combine(destinationDir, file.Name);
+				string targetFilePath = System.IO.Path.Join(destinationDir, file.Name);
 				file.CopyTo(targetFilePath, true);
 			}
 
@@ -27,7 +27,7 @@
 			{
 				foreach (DirectoryInfo subdir in dirs)
 				{
-					string targetSubDirPath = System.IO.Path.Combine(destinationDir, subdir.Name);
+					string targetSubDirPath = System.IO.Path.Join(destinationDir, subdir.Name);
 					Copy(subdir.FullName, targetSubDirPath, copySubDirs);
 				}
 			}

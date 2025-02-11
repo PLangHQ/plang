@@ -64,8 +64,6 @@ namespace PLang.Building
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				AppContext.SetSwitch("Builder", true);
 
-				SetupBuildValidation();
-
 				var goalFiles = GoalHelper.GetGoalFilesToBuild(fileSystem, fileSystem.GoalsPath);
 
 				InitFolders();
@@ -102,8 +100,8 @@ namespace PLang.Building
 					}
 				}
 
-				goalFiles.AddRange(eventGoalFiles);
-				CleanGoalFiles(goalFiles);
+				
+				CleanGoalFiles();
 
 				eventError = await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.After, EventScope.EndOfApp, true);
 				if (eventError != null && !eventError.IgnoreError)
@@ -214,17 +212,15 @@ namespace PLang.Building
 			}
 		}
 
-		private void CleanGoalFiles(List<string> goalFiles)
+		private void CleanGoalFiles()
 		{
+			var goals = prParser.ForceLoadAllGoals();
 			var dirs = fileSystem.Directory.GetDirectories(".build", "", SearchOption.AllDirectories);
 
-			foreach (var goalFile in goalFiles)
+			foreach (var goal in goals)
 			{
-				var buildFolderRelativePath = fileSystem.Path.Join(".build", goalFile.Replace(fileSystem.RootDirectory, "")).Replace(".goal", "");
-				var buildFolderAbsolutePath = fileSystem.Path.Join(fileSystem.RootDirectory, buildFolderRelativePath);
-
-				dirs = dirs.Where(p => !p.Equals(buildFolderAbsolutePath, StringComparison.OrdinalIgnoreCase)).ToArray();
-				dirs = dirs.Where(p => !p.StartsWith(fileSystem.Path.Join(buildFolderAbsolutePath, fileSystem.Path.DirectorySeparatorChar.ToString()), StringComparison.OrdinalIgnoreCase)).ToArray();
+				dirs = dirs.Where(p => !p.Equals(goal.AbsolutePrFolderPath, StringComparison.OrdinalIgnoreCase)).ToArray();
+				dirs = dirs.Where(p => !goal.AbsolutePrFolderPath.StartsWith(p, StringComparison.OrdinalIgnoreCase)).ToArray();
 			}
 
 			foreach (var dir in dirs)
@@ -239,48 +235,8 @@ namespace PLang.Building
 			var prGoalFiles = prParser.ForceLoadAllGoals();
 			int i = 0;
 
-			/*
-
-			var prGoalFiles = prParser.ForceLoadAllGoals();
-			foreach (var dir in dirs)
-			{
-				var matchingGoal = prGoalFiles.FirstOrDefault(p => p.AbsolutePrFolderPath.ToLower().StartsWith(dir.ToLower()));
-				if (matchingGoal == null && fileSystem.Directory.Exists(dir))
-				{
-					fileSystem.Directory.Delete(dir, true);
-				}
-
-				string goalFolder = dir.Replace(fileSystem.BuildPath, "");
-				string goalFolderPath = Path.Join(fileSystem.RootDirectory, goalFolder);
-				string goalFileName = dir.Replace(fileSystem.BuildPath, "") + ".goal";
-				string goalFilePath = Path.Join(fileSystem.RootDirectory, goalFileName);
-
-				if (!fileSystem.File.Exists(goalFilePath) && !fileSystem.Directory.Exists(goalFolderPath))
-				{
-					fileSystem.Directory.Delete(dir, true);
-				}
-
-			}*/
 		}
 
-
-		public void SetupBuildValidation()
-		{
-			/*
-			var eventsPath = fileSystem.Path.Join(fileSystem.GoalsPath, "events", "external", "plang", "builder");
-
-			if (fileSystem.Directory.Exists(eventsPath)) return;
-
-			fileSystem.Directory.CreateDirectory(eventsPath);
-
-			using (MemoryStream ms = new MemoryStream(InternalApps.Builder))
-			using (ZipArchive archive = new ZipArchive(ms))
-			{
-				archive.ExtractToDirectory(fileSystem.GoalsPath, true);
-			}
-			return;
-			*/
-		}
 	}
 
 

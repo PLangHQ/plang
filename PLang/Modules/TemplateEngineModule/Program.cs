@@ -12,37 +12,50 @@ using static PLang.Modules.BaseBuilder;
 using System.Text;
 using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
+using PLang.Services.OutputStream;
+using System.ComponentModel;
 
 namespace PLang.Modules.TemplateEngineModule
 {
+	[Description("Render html (files) using template engine")]
 	public class Program : BaseProgram
 	{
 		private readonly IPLangFileSystem fileSystem;
+		private readonly IOutputStreamFactory outputStreamFactory;
 
-		public Program(IPLangFileSystem fileSystem)
+		public Program(IPLangFileSystem fileSystem, IOutputStreamFactory outputStreamFactory)
 		{
 			this.fileSystem = fileSystem;
+			this.outputStreamFactory = outputStreamFactory;
 		}
 
-		public async Task<(string?, IError?)> RenderFile(string path)
+		public async Task<(string?, IError?)> RenderFile(string path, bool? writeToOutputStream = null)
 		{
 			var fullPath = GetPath(path);
 			if (!fileSystem.File.Exists(fullPath))
 			{
-
 				return (null, new ProgramError($"File {path} could not be found. Full path to the file is {fullPath}", goalStep, this.function));
 			}
 			string content = fileSystem.File.ReadAllText(fullPath);
-			return await RenderContent(content, fullPath);
+			var result = await RenderContent(content, fullPath);
+
+			if (result.Error != null) return (result.Result, result.Error);
+
+			if (writeToOutputStream != null && !writeToOutputStream.Value) return result;
+
+			if (function.ReturnValues == null || function.ReturnValues.Count == 0)
+			{
+				await outputStreamFactory.CreateHandler().Write(result.Result);
+			}
+
+			return result;
 		}
 
-		public async Task<(string?, IError?)> RenderContent(string content, string fullPath) { 
+		private async Task<(string? Result, IError? Error)> RenderContent(string content, string fullPath)
+		{
 
 			var templateContext = new TemplateContext();
-			
-			
 			templateContext.MemberRenamer = member => member.Name;
-
 
 			var scriptObject = new ScriptObject();
 			scriptObject.Import("date_format", new Func<object, string, string>((input, format) =>
@@ -58,6 +71,16 @@ namespace PLang.Modules.TemplateEngineModule
 				return input?.ToString() ?? string.Empty;
 			}));
 
+			scriptObject.Import("render", new Func<string, Task<string>>(async (path) =>
+			{
+				var result = await RenderFile(path, false);
+				if (result.Item2 != null)
+				{
+					throw new ExceptionWrapper(result.Item2);
+				}
+				return result.Item1;
+			}));
+
 			// Push the custom function into the template context
 			templateContext.PushGlobal(scriptObject);
 
@@ -67,8 +90,9 @@ namespace PLang.Modules.TemplateEngineModule
 				var sv = ScriptVariable.Create(kvp.Key, ScriptVariableScope.Global);
 				templateContext.SetValue(sv, kvp.Value.Value);
 			}
-			
-			try { 
+
+			try
+			{
 				var parsed = Template.Parse(content);
 				var result = await parsed.RenderAsync(templateContext);
 

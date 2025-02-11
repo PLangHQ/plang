@@ -323,7 +323,7 @@ These are the rules with variables:
 						{
 							string fileName = fex.FileName ?? "";
 							if (fileName.Contains(",")) fileName = fileName.Substring(0, fileName.IndexOf(","));
-							return (null, new CompilerError($@"File {fileName} not found. You might need to put {fileName}.dll file into the .services folder.", "", step, ContinueBuild: false,
+							return (null, new CompilerError($@"File {fileName} not found. You might need to put {fileName}.dll file into the .services folder.", "", step,
 								Exception: fex,
 								FixSuggestion: $@"You need to download the library for {fileName}. 
 Check out Plang help documentation to assist you:

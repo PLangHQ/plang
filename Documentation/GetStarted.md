@@ -21,7 +21,7 @@ Visual Studio Code as your code editor with the Plang extension installed. For m
 ## 3. First plang app, "Hello plang world"
 
 
-Watch this helpful video tutorial: [Hello World in Plang](https://www.youtube.com/watch?v=iGW4btk34yQ)
+Watch this helpful video tutorial: [Hello World in Plang](https://youtu.be/tZ0RirJMIS4)
 
 
 

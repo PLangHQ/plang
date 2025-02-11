@@ -136,6 +136,8 @@ namespace PLang.Building.Parsers
 		}
 		private static readonly object _lock = new object();
 
+	
+
 		public async Task<List<Goal>> GoalFromGoalsFolder(string appName, IFileAccessHandler fileAccessHandler)
 		{
 			var path = AppContext.BaseDirectory;
@@ -338,5 +340,31 @@ namespace PLang.Building.Parsers
 			return goals;
 		}
 
+		public async Task<List<Goal>> LoadAppPath(string appName, IFileAccessHandler fileAccessHandler)
+		{
+			var path = fileSystem.GoalsPath;
+			var appPath = fileSystem.Path.Join(path, appName);
+			
+			var files = fileSystem.Directory.GetFiles(fileSystem.Path.Join(appPath, ".build"), ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
+
+			var goals = new List<Goal>();
+			foreach (var file in files)
+			{
+				var goal = ParsePrFile(file);
+				if (goal != null)
+				{
+					if (allGoals.FirstOrDefault(p => p.AbsolutePrFilePath == goal.AbsolutePrFilePath) == null)
+					{
+						allGoals.Add(goal);
+					}
+					if (goal.Visibility == Visibility.Public && publicGoals.FirstOrDefault(p => p.AbsolutePrFilePath == goal.AbsolutePrFilePath) == null)
+					{
+						publicGoals.Add(goal);
+					}
+				}
+			}
+
+			return allGoals;
+		}
 	}
 }
