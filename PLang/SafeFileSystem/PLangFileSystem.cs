@@ -78,10 +78,10 @@ namespace PLang.SafeFileSystem
 			}
 			else
 			{
-				this.SharedPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "plang");
+				this.SharedPath = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "plang");
 				if (string.IsNullOrEmpty(SharedPath) || SharedPath == "plang")
 				{
-					SharedPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "plang");
+					SharedPath = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "plang");
 					if (string.IsNullOrEmpty(SharedPath) || SharedPath == "plang")
 					{
 						SharedPath = AppDomain.CurrentDomain.BaseDirectory;
@@ -125,6 +125,9 @@ namespace PLang.SafeFileSystem
 				{
 					return true;
 				}
+			} else if (path.StartsWith("/"))
+			{
+				return true;
 			}
 
 			return false;
@@ -182,7 +185,6 @@ or in more natural language, e.g.
 Your answer:
 ");
 			}
-
 			return path;
 		}
 

@@ -22,7 +22,6 @@ namespace PLang.Services.LlmService
 	public class PLangLlmService : ILlmService
 	{
 		private readonly LlmCaching llmCaching;
-		private readonly IOutputSystemStreamFactory outputSystemStreamFactory;
 		private readonly IPLangSigningService signingService;
 		private readonly ILogger logger;
 		private readonly PLangAppContext context;
@@ -37,11 +36,10 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 
 		public IContentExtractor Extractor { get; set; }
 
-		public PLangLlmService(LlmCaching llmCaching, IOutputSystemStreamFactory outputSystemStreamFactory, IPLangSigningService signingService,
+		public PLangLlmService(LlmCaching llmCaching, IPLangSigningService signingService,
 			ILogger logger, PLangAppContext context, IPLangFileSystem fileSystem, MemoryStack memoryStack)
 		{
 			this.llmCaching = llmCaching;
-			this.outputSystemStreamFactory = outputSystemStreamFactory;
 			this.signingService = signingService;
 			this.logger = logger;
 			this.context = context;
@@ -307,8 +305,8 @@ What is name of payer?", GetCountry));
 				if (obj["url"] != null)
 				{
 					string dbLocation = Path.Join(fileSystem.SharedPath, appId);
-					await outputSystemStreamFactory.CreateHandler().Write(string.Format(BuyCreditInfo, obj["url"], dbLocation), "error", 402);
-					return (false, new ErrorHandled(new Error("ErrorHandled")));
+					//await outputSystemStreamFactory.CreateHandler().Write(string.Format(BuyCreditInfo, obj["url"], dbLocation), "error", 402);
+					return (false, new ExceptionError(new Error(string.Format(BuyCreditInfo, obj["url"], dbLocation), "PaymentRequired", StatusCode: 402)));
 				}
 				else
 				{

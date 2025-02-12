@@ -240,7 +240,7 @@ namespace PLangTests
 				Directory.CreateDirectory(dir);
 			}
 
-			string filePath = System.IO.Path.Combine(dir, caller + ".json");
+			string filePath = System.IO.Path.Join(dir, caller + ".json");
 
 			List<TestResponse> responses = new List<TestResponse>();
 			if (File.Exists(filePath))
@@ -282,7 +282,7 @@ namespace PLangTests
 			{
 				return null;
 			}
-			string filePath = System.IO.Path.Combine(dir, caller + ".json");
+			string filePath = System.IO.Path.Join(dir, caller + ".json");
 			if (!File.Exists(filePath)) return null;
 
 			var jsonFile = File.ReadAllText(filePath);
@@ -300,13 +300,13 @@ namespace PLangTests
 			{
 				string testPath = Environment.GetEnvironmentVariable("PlangTestPath");
 				if (string.IsNullOrEmpty(testPath)) throw new Exception("You must set the PlangTestPath environment variable. I should point to PlangTests folder. The PlangTests folder contains Modules folder");
-				return System.IO.Path.Combine(testPath, "Modules", moduleFolder, "responses");
+				return System.IO.Path.Join(testPath, "Modules", moduleFolder, "responses");
 			}
 			else
 			{
 				string derivedClassDirectory = System.IO.Path.GetDirectoryName(derivedClassPath);
 
-				string responsesDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(derivedClassDirectory, $"../../../Modules/{moduleFolder}/responses"));
+				string responsesDir = System.IO.Path.GetFullPath(System.IO.Path.Join(derivedClassDirectory, $"../../../Modules/{moduleFolder}/responses"));
 				return responsesDir;
 			}
 		}

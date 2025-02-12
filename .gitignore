@@ -15,3 +15,4 @@
 /.deploy/
 /publish/*.zip
 /PLang/Goals/output.txt
+/publish

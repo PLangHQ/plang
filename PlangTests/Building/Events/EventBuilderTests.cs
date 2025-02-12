@@ -158,7 +158,7 @@ namespace PLang.Building.Events.Tests
 			await eventBuilder.BuildEventsPr();
 
 			var buildPathFolder = Path.Join(fileSystem.BuildPath, "events");
-			var eventFile = fileSystem.File.ReadAllText(Path.Combine(buildPathFolder, "events", ISettings.GoalFileName));
+			var eventFile = fileSystem.File.ReadAllText(Path.Join(buildPathFolder, "events", ISettings.GoalFileName));
 
 			var goal = JsonConvert.DeserializeObject<Goal>(eventFile);
 

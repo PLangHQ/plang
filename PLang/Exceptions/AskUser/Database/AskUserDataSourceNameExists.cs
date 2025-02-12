@@ -1,4 +1,5 @@
-﻿using PLang.Errors.Handlers;
+﻿using PLang.Errors;
+using PLang.Errors.Handlers;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Services.LlmService;
@@ -31,9 +32,9 @@ namespace PLang.Exceptions.AskUser.Database
 		}
 
 		private record MethodResponse(string typeFullName, string dataSourceName, string dataSourceConnectionStringExample, string nugetCommand, string regexToExtractDatabaseNameFromConnectionString, bool keepHistoryEventSourcing, bool isDefault = false);
-		public override async Task InvokeCallback(object answer)
+		public override async Task<IError?> InvokeCallback(object answer)
 		{
-			if (Callback == null) return;
+			if (Callback == null) return null;
 
 			string assistant = @$"These are previously defined properties by the user, use them if not otherwise defined by user.
 ## previously defined ##
@@ -55,9 +56,11 @@ keepHistoryEventSourcing: {keepHistoryEventSourcing}
 
 			var llmRequest = new LlmRequest("AskUserDatabaseType", promptMessage);
 			(var result, var queryError) = await llmServiceFactory.CreateHandler().Query<MethodResponse>(llmRequest);
-			if (result == null) return;
+			
+			if (queryError != null) return queryError;
+			if (result == null) return null;
 
-			await Callback.Invoke(new object[] {
+			return await Callback.Invoke(new object[] {
 				 result.typeFullName, result.dataSourceName, result.nugetCommand, result.dataSourceConnectionStringExample,
 				result.regexToExtractDatabaseNameFromConnectionString, result.keepHistoryEventSourcing, result.isDefault});
 

@@ -1,4 +1,5 @@
-﻿using PLang.Errors.Handlers;
+﻿using PLang.Errors;
+using PLang.Errors.Handlers;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Services.LlmService;
@@ -33,7 +34,7 @@ namespace PLang.Exceptions.AskUser.Database
 		private record DatabaseTypeResponse(string typeFullName, string nugetCommand,
 				string regexToExtractDatabaseNameFromConnectionString, string dataSourceConnectionStringExample);
 
-		public override async Task InvokeCallback(object answer)
+		public override async Task<IError?> InvokeCallback(object answer)
 		{
 			var system = @$"Map user request
 
@@ -57,9 +58,9 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 			(var result, var queryError) = await llmServiceFactory.CreateHandler().Query<DatabaseTypeResponse>(llmRequest);
 
 			if (result == null) throw new Exception("Could not use LLM to format your answer");
-			if (Callback == null) return;
+			if (Callback == null) return null;
 
-			await Callback.Invoke([
+			return await Callback.Invoke([
 				 result.typeFullName,
 				this.dataSourceName,
 				result.nugetCommand,

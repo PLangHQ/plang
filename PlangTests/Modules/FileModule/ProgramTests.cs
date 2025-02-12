@@ -98,7 +98,7 @@ namespace PLangTests.Modules.FileModule
 		public async Task ReadExcel()
 		{
 			string path = "Book1.xlsx";
-			string fullPath = Path.Combine(fileSystem.RootDirectory, path);
+			string fullPath = Path.Join(fileSystem.RootDirectory, path);
 			FileStream stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 			byte[] fileBytes;
 			using (BinaryReader reader = new BinaryReader(stream))
@@ -164,7 +164,7 @@ namespace PLangTests.Modules.FileModule
 		public async Task ReadCsv()
 		{
 			string path = "Test5x2.csv";
-			string fullPath = Path.Combine(fileSystem.RootDirectory, path);
+			string fullPath = Path.Join(fileSystem.RootDirectory, path);
 
 			fileSystem.AddFile(fullPath, new System.IO.Abstractions.TestingHelpers.MockFileData(File.ReadAllText(fullPath)));
 
@@ -203,7 +203,7 @@ namespace PLangTests.Modules.FileModule
 		public async Task ReadExcel_1MillionRows()
 		{
 			string path = "Test1,000,000x10.xlsx";
-			string fullPath = Path.Combine(fileSystem.RootDirectory, path);
+			string fullPath = Path.Join(fileSystem.RootDirectory, path);
 			FileStream stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 			byte[] fileBytes;
 			using (BinaryReader reader = new BinaryReader(stream))

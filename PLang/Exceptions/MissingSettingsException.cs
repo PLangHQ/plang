@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using PLang.Errors;
 using PLang.Errors.Handlers;
 
 namespace PLang.Exceptions
@@ -22,13 +23,13 @@ namespace PLang.Exceptions
 			this.defaultValue = defaultValue;
 		}
 
-		public override async Task InvokeCallback(object value)
+		public override async Task<IError?> InvokeCallback(object value)
 		{
 			var task = Callback?.Invoke(new object[] { callingType, type, key, value });
-			if (task != null)
-			{
-				await task;
-			}
+			if (task == null) return null;
+			
+			return await task;
+			
 		}
 
 

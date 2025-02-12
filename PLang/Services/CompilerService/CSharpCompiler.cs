@@ -139,7 +139,7 @@ namespace PLang.Services.CompilerService
 				return (null, new CompilerError("Could not find class name in code", error, step));
 			}
 
-			string dllFilePath = Path.Combine(step.Goal.AbsolutePrFolderPath, step.PrFileName.Replace(".pr", ".dll"));
+			string dllFilePath = Path.Join(step.Goal.AbsolutePrFolderPath, step.PrFileName.Replace(".pr", ".dll"));
 			string dllFileName = Path.GetFileName(dllFilePath.AdjustPathToOs().RemoveExtension());
 			string pdbFilePath = dllFilePath.Replace(".dll", ".pdb");
 			string sourceCodePath = dllFileName + ".cs";
@@ -279,7 +279,7 @@ These are the rules with variables:
 				string dllName = assembly;
 				if (!dllName.Contains(".dll")) dllName += ".dll";
 
-				var assemblyPath = Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), dllName);
+				var assemblyPath = Path.Join(RuntimeEnvironment.GetRuntimeDirectory(), dllName);
 				if (File.Exists(assemblyPath))
 				{
 					compilation = compilation.AddReferences(MetadataReference.CreateFromFile(assemblyPath));

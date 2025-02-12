@@ -1,7 +1,7 @@
-Build Start:16:35:51 - (Information) - 
-- Event step before builder ends, call goal !/events/external/plang/Builder/CheckGoals already built - (Information) - 
-- Event step before each step, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug already built - (Information) - 
-- Event step before goal ends, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug already built - (Information) - 
+Build Start:14:04:06 - (Information) - 
+- Building event step before builder ends, call goal !/events/external/plang/Builder/CheckGoals - (Information) - 
+- Building event step before each step, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug - (Information) - 
+- Building event step before goal ends, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug - (Information) - 
 
 Start to build CheckGoals - \events\external\plang\Builder\CheckGoal.goal - (Information) - 
 - Step Log Information is already built - (Information) - 
@@ -41,17 +41,17 @@ Start to build SendDebug - \events\external\plang\Runtime\SendDebug.goal - (Info
 Done building goal SendDebug - (Information) - 
 
 Start to build InstallDependencies - \InstallDependencies.goal - (Information) - 
-- Step ReadFileIntoJson is already built - (Information) - 
-- Step Filter JSON for Libraries is already built - (Information) - 
-- Step FilterLibraries is already built - (Information) - 
-- Step CheckIfLibraryIsEmpty is already built - (Information) - 
-- Step EndWithError is already built - (Information) - 
-- Step DownloadFileIfNotExist is already built - (Information) - 
-- Step Unzip File is already built - (Information) - 
+- Step read_file_into_json is already built - (Information) - 
+- Step filter_json_property is already built - (Information) - 
+- Step filter_libraries_by_property is already built - (Information) - 
+- Step check_if_library_is_empty is already built - (Information) - 
+- Step end_with_error_library_not_found is already built - (Information) - 
+- Step download_file_if_not_exist is already built - (Information) - 
+- Step unzip_file_with_error_handling is already built - (Information) - 
 Done building goal InstallDependencies - (Information) - 
 Validating goals called - (Information) - 
 All goals being called exist - (Information) - 
 
 
 🎉 Build was succesfull! - (Warning) - 
-Build done - Time:,8 sec - started at 11.2.2025 16:35:51 - (Information) - 
+Build done - Time:,86 sec - started at 12.2.2025 14:04:07 - (Information) - 

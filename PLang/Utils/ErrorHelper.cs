@@ -213,6 +213,13 @@ namespace PLang.Utils
 {FormatLine(extraInfo)}
 ".TrimEnd();
 
+			if (error.Key == "PaymentRequired")
+			{
+				message = $@"
+🔴 ======== {error.Key} ========
+{reasonAndFix.Trim()}";
+			}
+
 			if (contentType == "json")
 			{
 				var obj = new JObject();

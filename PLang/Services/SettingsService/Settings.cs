@@ -37,7 +37,7 @@ namespace PLang.Services.SettingsService
             {
 
                 var buildPath = Path.Join(fileSystem.RootDirectory, ".build");
-                string infoFile = Path.Combine(buildPath!, "info.txt");
+                string infoFile = Path.Join(buildPath!, "info.txt");
                 string appId;
                 if (fileSystem.File.Exists(infoFile))
                 {

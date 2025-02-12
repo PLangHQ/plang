@@ -4,7 +4,7 @@ using PLang.Utils;
 
 namespace PLang.Models
 {
-	public class Setting
+	public partial class Setting
 	{
 		public Setting() { }
 		public Setting(string AppId, string ClassOwnerFullName, string ValueType, string Key, string Value, DateTime? Created = null, string SignatureData = null)

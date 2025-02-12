@@ -27,7 +27,7 @@ namespace PLangTests.Integration
 		public async Task TestListAndLoop()
 		{
 			string path = "Test100x10.xlsx";
-			string fullPath = Path.Combine(fileSystem.RootDirectory, path);
+			string fullPath = Path.Join(fileSystem.RootDirectory, path);
 			FileStream stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 			byte[] fileBytes;
 			using (BinaryReader reader = new BinaryReader(stream))

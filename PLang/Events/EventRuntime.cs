@@ -164,7 +164,7 @@ namespace PLang.Events
 		{
 			if (!fileSystem.Directory.Exists(buildPath))
 			{
-				return ([], new Error(".build folder does not exists. Run 'plang build' first."));
+				return ([], new Error($".build folder does not exists. Run 'plang build' first. Searching at {buildPath}"));
 			}
 
 			List<string> eventFiles = new();
@@ -265,6 +265,8 @@ namespace PLang.Events
 
 		public async Task<IError?> AppErrorEvents(PLangAppContext context, IError error)
 		{
+			if (runtimeEvents == null) return error;
+
 			var eventsToRun = runtimeEvents.Where(p => p.EventScope == EventScope.AppError).ToList();
 			if (eventsToRun.Count > 0)
 			{

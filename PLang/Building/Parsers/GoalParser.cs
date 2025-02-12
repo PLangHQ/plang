@@ -153,12 +153,12 @@ namespace PLang.Building.Parsers
 
 				if (i == 0)
 				{
-					prFileAbsolutePath = Path.Combine(GetBuildPathOfGoalFile(goalFileAbsolutePath), ISettings.GoalFileName);
+					prFileAbsolutePath = Path.Join(GetBuildPathOfGoalFile(goalFileAbsolutePath), ISettings.GoalFileName);
 					goal.Visibility = Visibility.Public;
 				}
 				else
 				{
-					prFileAbsolutePath = Path.Combine(GetBuildPathOfGoalFile(goalFileAbsolutePath), goals[i].GoalName, ISettings.GoalFileName);
+					prFileAbsolutePath = Path.Join(GetBuildPathOfGoalFile(goalFileAbsolutePath), goals[i].GoalName, ISettings.GoalFileName);
 					goal.Visibility = Visibility.Private;
 					
 				}
@@ -290,7 +290,7 @@ namespace PLang.Building.Parsers
 		{
 			var path = goalFilePath.Replace(".goal", "").Replace(fileSystem.GoalsPath, "");
 			if (path.StartsWith(Path.DirectorySeparatorChar)) path = path.Substring(1);
-			return Path.Combine(fileSystem.BuildPath, path);
+			return Path.Join(fileSystem.BuildPath, path);
 		}
 
 	}

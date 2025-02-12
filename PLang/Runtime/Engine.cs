@@ -143,7 +143,7 @@ namespace PLang.Runtime
 				}
 
 
-				error = await eventRuntime.RunStartEndEvents(context, EventType.After, EventScope.EndOfApp);
+				error = await eventRuntime.RunStartEndEvents(context, EventType.After, EventScope.StartOfApp);
 				if (error != null)
 				{
 					await HandleError(error);
@@ -154,6 +154,7 @@ namespace PLang.Runtime
 			}
 			catch (Exception ex)
 			{
+				logger.LogError(ex, "OnStart");
 				var error = new Error(ex.Message, Exception: ex);
 				await HandleError(error);
 
@@ -222,6 +223,8 @@ namespace PLang.Runtime
 		{
 			if (error is ErrorHandled) return;
 
+			logger.LogError(error.ToString());
+
 			var appErrorEvent = await eventRuntime.AppErrorEvents(context, error);
 			if (appErrorEvent != null)
 			{
@@ -244,7 +247,7 @@ namespace PLang.Runtime
 		private async Task<IError?> RunSetup()
 		{
 
-			string setupFolder = fileSystem.Path.Combine(fileSystem.BuildPath, "Setup");
+			string setupFolder = fileSystem.Path.Join(fileSystem.BuildPath, "Setup");
 			if (!fileSystem.Directory.Exists(setupFolder)) return null;
 
 			var files = fileSystem.Directory.GetFiles(setupFolder, ISettings.GoalFileName).ToList();

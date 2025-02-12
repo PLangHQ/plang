@@ -31,11 +31,14 @@ using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
 using PLang.Services.SigningService;
 using PLang.Utils;
+using System.CodeDom;
 using System.Data;
 using System.Net;
 using System.Reflection;
+using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using Websocket.Client.Logging;
 using static PLang.Modules.DbModule.ModuleSettings;
 
@@ -75,7 +78,8 @@ namespace PLang.Container
 			{
 				container.RegisterOutputStreamFactory(typeof(JsonOutputStream), true, new JsonOutputStream(httpContext));
 				container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
-			} else
+			}
+			else
 			{
 				container.RegisterOutputStreamFactory(typeof(TextOutputStream), true, new TextOutputStream(httpContext));
 				container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
@@ -410,70 +414,89 @@ namespace PLang.Container
 			{
 				if (AppContext.TryGetSwitch("InternalGoalRun", out bool isEnabled) && isEnabled) return null;
 
-				string assemblyPath = fileSystem.Path.Combine(fileSystem.RootDirectory, ".services", new AssemblyName(resolveArgs.Name).Name + ".dll");
-				if (fileSystem.File.Exists(assemblyPath))
+				if (resolveArgs.Name.Contains("PLangLibrary", StringComparison.OrdinalIgnoreCase))
 				{
-					return Assembly.LoadFile(assemblyPath);
+					var loadedAssembly = AppDomain.CurrentDomain.GetAssemblies()
+						.FirstOrDefault(a => a.GetName().Name.Contains("PLangLibrary", StringComparison.OrdinalIgnoreCase));
+					
+					if (loadedAssembly != null)
+					{
+						return loadedAssembly;
+					}
 				}
 
-				try
+
+				string[] moduleAndServiceFolders = [".services", ".modules"];
+				foreach (var folder in moduleAndServiceFolders)
 				{
-					string assemblyName = new AssemblyName(resolveArgs.Name).Name;
-					var baseDirectory = fileSystem.Path.Combine(fileSystem.RootDirectory, ".modules");
-					var files = fileSystem.Directory.GetFiles(baseDirectory, assemblyName + ".dll", SearchOption.AllDirectories);
-
-					if (files.Length > 0)
+					string assemblyPath = fileSystem.Path.Join(fileSystem.RootDirectory, folder, new AssemblyName(resolveArgs.Name).Name + ".dll");
+					if (fileSystem.File.Exists(assemblyPath))
 					{
-
-						var netVersionPattern = @"net(?<version>\d+(\.\d+)?)(coreapp)?";
-
-						// Parse and prioritize .NET versions in descending order (e.g., net8.0, net7.0, etc.)
-						var matchedAssembly = files
-							.Select(file => new { File = file, Match = Regex.Match(file, netVersionPattern) })
-							.Where(x => x.Match.Success)
-							.OrderByDescending(x => GetVersionPriority(x.Match.Groups["version"].Value))
-							.Select(x => x.File)
-							.FirstOrDefault();
-
-
-						return Assembly.LoadFile(matchedAssembly);
+						return Assembly.LoadFile(assemblyPath);
 					}
-					else
+
+					try
 					{
-						var depsFiles = fileSystem.Directory.GetFiles(baseDirectory, "*.deps.json", SearchOption.AllDirectories);
-						foreach (var dep in depsFiles)
+						string assemblyName = new AssemblyName(resolveArgs.Name).Name;
+						var baseDirectory = fileSystem.Path.Join(fileSystem.RootDirectory, folder);
+						if (!fileSystem.Directory.Exists(baseDirectory)) return null;
+
+						var files = fileSystem.Directory.GetFiles(baseDirectory, assemblyName + ".dll", SearchOption.AllDirectories);
+
+						if (files.Length > 0)
 						{
-							var content = fileSystem.File.ReadAllText(dep);
-							var json = JsonConvert.DeserializeObject(content) as JObject;
-							var libs = json.GetValue("libraries") as JObject;
-							if (libs == null) continue;
 
-							var dirPath = fileSystem.Path.GetDirectoryName(dep);
+							var netVersionPattern = @"net(?<version>\d+(\.\d+)?)(coreapp)?";
 
-							foreach (var prop in libs.Properties())
+							// Parse and prioritize .NET versions in descending order (e.g., net8.0, net7.0, etc.)
+							var matchedAssembly = files
+								.Select(file => new { File = file, Match = Regex.Match(file, netVersionPattern) })
+								.Where(x => x.Match.Success)
+								.OrderByDescending(x => GetVersionPriority(x.Match.Groups["version"].Value))
+								.Select(x => x.File)
+								.FirstOrDefault();
+
+							return Assembly.LoadFile(matchedAssembly);
+						}
+						else
+						{
+							var depsFiles = fileSystem.Directory.GetFiles(baseDirectory, "*.deps.json", SearchOption.AllDirectories);
+							
+							foreach (var dep in depsFiles)
 							{
-								if (prop.Name.StartsWith(assemblyName + "/"))
+								var content = fileSystem.File.ReadAllText(dep);
+								var json = JsonConvert.DeserializeObject(content) as JObject;
+								var libs = json.GetValue("libraries") as JObject;
+
+								if (libs == null) continue;
+
+								var dirPath = fileSystem.Path.GetDirectoryName(dep);
+
+								foreach (var prop in libs.Properties())
 								{
-									var name = prop.Name.Substring(0, prop.Name.IndexOf("/"));
+									if (prop.Name.StartsWith(assemblyName + "/"))
+									{
+										var name = prop.Name.Substring(0, prop.Name.IndexOf("/"));
 
-
-									return dependancyHelper.InstallDependancy(dirPath, dep, name);
+										return dependancyHelper.InstallDependancy(dirPath, dep, name);
+									}
 								}
-							}
 
-							var foundAssemblyName = FindAssemblyPackage(json, assemblyName + ".dll");
-							if (foundAssemblyName != null)
-							{
-								var assmebly = dependancyHelper.InstallDependancy(dirPath, dep, foundAssemblyName);
-								return assmebly;
+								var foundAssemblyName = FindAssemblyPackage(json, assemblyName + ".dll");
+								if (foundAssemblyName != null)
+								{
+									var assmebly = dependancyHelper.InstallDependancy(dirPath, dep, foundAssemblyName);
+									return assmebly;
+								}
+								int i = 0;
 							}
-							int i = 0;
 						}
 					}
-				} catch (Exception ex)
-				{
-					//logger.LogError(ex, ex.Message);
-					return null;
+					catch (Exception ex)
+					{
+						logger.LogError(ex, ex.Message);
+						return null;
+					}
 				}
 				return null;
 			};
@@ -648,41 +671,24 @@ namespace PLang.Container
 				return null;
 			}
 
-			string dllFilePath = fileSystem.Path.GetDirectoryName(fileSystem.Path.Combine(fileSystem.GoalsPath, ".services", injectorType));
-			string[] dllFiles = [dllFilePath];
-			if (!fileSystem.File.Exists(dllFilePath))
+			string dllFolderPath = fileSystem.Path.Join(fileSystem.GoalsPath, ".services", injectorType);
+			if (!fileSystem.Directory.Exists(dllFolderPath))
 			{
-				//var dirName = Path.GetDirectoryName(injectorType);
-				var moduleFolderPath = fileSystem.Path.Combine(fileSystem.GoalsPath, ".services", dllFilePath);
-				if (!fileSystem.Directory.Exists(moduleFolderPath))
-				{
-					var logger = container.GetInstance<ILogger>();
-					logger.LogWarning($"{injectorType} injection folder could not be found. Path {moduleFolderPath}");
-					return null;
-				}
-
-
-				dllFiles = fileSystem.Directory.GetFiles(moduleFolderPath, "*.dll", SearchOption.AllDirectories);
+				var logger = container.GetInstance<ILogger>();
+				logger.LogWarning($"{injectorType} injection folder could not be found. Path {dllFolderPath}");
+				return null;
 			}
 
+			var dllFiles = fileSystem.Directory.GetFiles(dllFolderPath, "*.dll", SearchOption.AllDirectories);
 
-			Type? type = null;
 			foreach (var dllFile in dllFiles)
 			{
 				Assembly assembly = Assembly.LoadFile(dllFile);
-				if (type == null)
-				{
-					type = assembly.GetTypes().FirstOrDefault(p => p.GetInterfaces().Contains(typeToFind));
-				}
-
+				var type = assembly.GetTypes().FirstOrDefault(p => p.GetInterfaces().Contains(typeToFind));
+				if (type != null) return type;
 			}
 
-			if (type != null)
-			{
-				return type;
-			}
-
-			throw new RuntimeException($"Cannot find {injectorType} in {dllFilePath}. Make sure that the class inherits from {typeToFind.Name} and the name of the dll is {injectorType}.dll");
+			throw new RuntimeException($"Cannot find {injectorType} in {dllFolderPath}. Make sure that the class inherits from {typeToFind.Name} and the name of the dll is {injectorType}.dll");
 		}
 
 		private static void RegisterType(IServiceContainer container, string injectorType, Type interfaceType, Type? implementationType, string reservedKeyword, bool isGlobalForApp, string pathToModule)

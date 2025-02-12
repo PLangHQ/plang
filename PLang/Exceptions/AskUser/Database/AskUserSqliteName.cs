@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.Sqlite;
+using PLang.Errors;
 using PLang.Errors.Handlers;
 using System;
 using System.Collections.Generic;
@@ -17,15 +18,15 @@ namespace PLang.Exceptions.AskUser.Database
 			this.rootPath = rootPath;
 		}
 
-		public override async Task InvokeCallback(object answer)
+		public override async Task<IError?> InvokeCallback(object answer)
 		{
-			if (Callback == null) return;
+			if (Callback == null) return null;
 
 			var dbName = answer.ToString()!.Replace(" ", "_").Replace(".sqlite", "");
 			string dbPath = "." + Path.DirectorySeparatorChar + ".db" + Path.DirectorySeparatorChar + dbName + ".sqlite";
 			string dbAbsolutePath = Path.Join(rootPath, dbPath);
 
-			await Callback.Invoke([
+			return await Callback.Invoke([
 				dbName.ToString(),
 				typeof(SqliteConnection).FullName!,
 				dbName.ToString() + ".sqlite",

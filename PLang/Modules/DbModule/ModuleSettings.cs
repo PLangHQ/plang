@@ -3,6 +3,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Errors;
+using PLang.Errors.AskUser;
 using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser.Database;
@@ -159,7 +160,7 @@ Connection string:",
 		}
 
 
-		private async Task SetDatabaseConnectionString(string dataSourceName, string typeFullName,
+		private async Task<IError?> SetDatabaseConnectionString(string dataSourceName, string typeFullName,
 					string regexToExtractDatabaseNameFromConnectionString, string databaseConnectionString,
 					bool keepHistory = true, bool isDefault = false)
 		{
@@ -199,7 +200,12 @@ Be concise"));
 
 				var llmRequest = new LlmRequest("SetDatabaseConnectionString", promptMessage);
 				(statement, var queryError) = await llmServiceFactory.CreateHandler().Query<SqlStatement>(llmRequest);
+				if (queryError != null)
+				{
+					return queryError;
+				}
 			}
+			
 			if (statement == null)
 			{
 				throw new BuilderException("Could not get select statement for tables, views and columns. Try again.");
@@ -218,6 +224,7 @@ Be concise"));
 				AppContext.SetData(ReservedKeywords.CurrentDataSource, dataSource);
 				context.AddOrReplace(ReservedKeywords.CurrentDataSource, dataSource);
 			}
+			return null;
 		}
 
 		private async Task<List<DataSource>> AddDataSourceToSettings(DataSource dataSource)

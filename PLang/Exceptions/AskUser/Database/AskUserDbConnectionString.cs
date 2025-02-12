@@ -1,4 +1,5 @@
-﻿using PLang.Errors.Handlers;
+﻿using PLang.Errors;
+using PLang.Errors.Handlers;
 
 namespace PLang.Exceptions.AskUser.Database
 {
@@ -24,11 +25,11 @@ namespace PLang.Exceptions.AskUser.Database
 
 		}
 
-		public override async Task InvokeCallback(object answer)
+		public override async Task<IError?> InvokeCallback(object answer)
 		{
-			if (Callback == null) return;
+			if (Callback == null) return null;
 
-			await Callback.Invoke([dataSourceName, typeFullName, regexToExtractDatabaseNameFromConnectionString, answer, keepHistory, isDefault]);
+			return await Callback.Invoke([dataSourceName, typeFullName, regexToExtractDatabaseNameFromConnectionString, answer, keepHistory, isDefault]);
 
 		}
 	}

@@ -43,7 +43,7 @@ namespace PLang.Modules.CodeModule
 				}
 
 				string dllName = goalStep.PrFileName.Replace(".pr", ".dll");
-				Assembly assembly = Assembly.LoadFile(Path.Combine(Goal.AbsolutePrFolderPath, dllName));
+				Assembly assembly = Assembly.LoadFile(Path.Join(Goal.AbsolutePrFolderPath, dllName));
 				
 				if (assembly == null)
 				{
@@ -56,7 +56,7 @@ namespace PLang.Modules.CodeModule
 				{
 					foreach (var serviceAssembly in answer.ServicesAssembly)
 					{
-						string assemblyPath = Path.Combine(Goal.AbsoluteAppStartupFolderPath, serviceAssembly).AdjustPathToOs();
+						string assemblyPath = Path.Join(Goal.AbsoluteAppStartupFolderPath, serviceAssembly).AdjustPathToOs();
 						if (fileSystem.File.Exists(assemblyPath))
 						{
 							serviceAssemblies.Add(Assembly.LoadFile(assemblyPath));

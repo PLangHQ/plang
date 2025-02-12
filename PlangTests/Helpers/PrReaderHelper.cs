@@ -18,7 +18,7 @@ namespace PLangTests.Helpers
 			var assemblyDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
 			// Combine with the relative path to the examples folder
-			var filePath = Path.Combine(assemblyDirectory, "PrFiles", fileName);
+			var filePath = Path.Join(assemblyDirectory, "PrFiles", fileName);
 
 			return File.ReadAllText(filePath);
 		}

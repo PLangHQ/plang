@@ -213,7 +213,7 @@ namespace PLang.Modules.WebserverModule
 								continue;
 							}
 
-							goal = prParser.GetGoal(Path.Combine(goalPath, ISettings.GoalFileName));
+							goal = prParser.GetGoal(Path.Join(goalPath, ISettings.GoalFileName));
 							if (goal == null)
 							{
 								await WriteNotfound(resp, $"Goal could not be loaded");

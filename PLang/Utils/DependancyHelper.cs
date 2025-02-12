@@ -32,7 +32,7 @@ namespace PLang.Utils
 			.ToList();
 			modules.AddRange(builderModules);
 
-			string modulesDirectory = fileSystem.Path.Combine(goalPath, ".modules");
+			string modulesDirectory = fileSystem.Path.Join(goalPath, ".modules");
 			if (!fileSystem.Directory.Exists(modulesDirectory)) return modules;
 			var dllFiles = fileSystem.Directory.GetFiles(modulesDirectory, "*.dll");
 			foreach (var dll in dllFiles)
@@ -84,7 +84,11 @@ namespace PLang.Utils
 
 		public Assembly? InstallDependancy(string? dirPath, string depsFilePath, string library)
 		{
-			if (AppContext.TryGetSwitch("InternalGoalRun", out bool isEnabled) && isEnabled) return null;
+			if (AppContext.TryGetSwitch("InternalGoalRun", out bool isEnabled) && isEnabled)
+			{
+				Console.WriteLine("InternalGoalRun - will stop");
+				return null;
+			}
 			
 			var parameters = new Dictionary<string, object?>();
 			parameters.Add("depsFile", depsFilePath);
@@ -92,7 +96,7 @@ namespace PLang.Utils
 			parameters.Add("libraryName", library);
 
 			logger.LogDebug($"Installing depency {library}, data is coming from {depsFilePath} and nuget package will be saved it to {dirPath}");
-
+			Console.WriteLine($"Installing depency {library}, data is coming from {depsFilePath} and nuget package will be saved it to {dirPath}");
 			var installerFolder = fileSystem.Path.Join(fileSystem.RootDirectory, "apps/Installer").AdjustPathToOs();
 			if (!fileSystem.Directory.Exists(installerFolder))
 			{

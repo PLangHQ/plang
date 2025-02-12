@@ -30,7 +30,7 @@
     "maxLength": 4000,
     "llmResponseType": "json",
     "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-    "model": "gpt-4o-2024-08-06",
+    "model": "gpt-4o",
     "promptMessage": [
       {
         "role": "system",
@@ -50,7 +50,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nCompressFile(String filePath, String saveToPath, Int32? compressionLevel = 0, Boolean? overwrite = False)  : void // compressionLevel: 0=Optimal, 1=Fastest, 2=No compression, 3=Smallest size(highest compression). \nCompressFiles(String[] filePaths, String saveToPath, Int32? compressionLevel = 0, Boolean? overwrite = False)  : void\nDecompressFile(String sourceArchiveFileName, String destinationDirectoryName, Boolean? overwrite = False)  : void\nCompressDirectory(String sourceDirectoryName, String destinationArchiveFileName, Int32? compressionLevel = 0, Boolean? includeBaseDirectory = True, Boolean? createDestinationDirectory = True, Boolean? overwriteDestinationFile = False)  : void\r\n## functions available ends ##\r\n## defined variables ##\r\npathToSave (type:object), library.path (type:object), \r\n## defined variables ##"
+            "text": "## functions available starts ##\r\nCompressFile(String filePath, String saveToPath, Int32? compressionLevel = 0, Boolean? overwrite = False)  : void // compressionLevel: 0=Optimal, 1=Fastest, 2=No compression, 3=Smallest size(highest compression). \nCompressFiles(String[] filePaths, String saveToPath, Int32? compressionLevel = 0, Boolean? overwrite = False)  : void\nDecompressFile(String sourceArchiveFileName, String destinationDirectoryName, Boolean? overwrite = False)  : void\nCompressDirectory(String sourceDirectoryName, String destinationArchiveFileName, Int32? compressionLevel = 0, Boolean? includeBaseDirectory = True, Boolean? createDestinationDirectory = True, Boolean? overwriteDestinationFile = False, String[]? excludePatterns)  : void\r\n## functions available ends ##\r\n## defined variables ##\r\npathToSave (type:object), library.path (type:object), \r\n## defined variables ##"
           }
         ]
       },
@@ -66,7 +66,7 @@
     ],
     "type": "PLang.Modules.GenericFunctionBuilder",
     "caching": true,
-    "RawResponse": null
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"DecompressFile\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"sourceArchiveFileName\",\n\t\t\t\"Value\": \"%pathToSave%/%library.path%.nupkg\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"destinationDirectoryName\",\n\t\t\t\"Value\": \"%pathToSave%/%library.path%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean\",\n\t\t\t\"Name\": \"overwrite\",\n\t\t\t\"Value\": true\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
   },
   "RunOnBuild": false
 }

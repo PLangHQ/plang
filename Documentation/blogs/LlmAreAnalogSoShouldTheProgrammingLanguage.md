@@ -61,7 +61,9 @@ This isn’t to say LLMs aren’t great at programming. They can assist, improve
 
 At [UT Messan](http://utmessan.is/) (Iceland’s largest IT conference), I did a quick demo showing how Plang works. I sketched out a UI, wrote a short description, and Plang generated an app.  
 
-You can check out the video—it’s about DIY apps. Apps you can build at home for yourself, your family, or your local community. In the demo, I created an app for my own community.  
+![Make your own app](https://i.ytimg.com/vi/zYhUsyOp4uw/hqdefault.jpg)
+
+You can check [out the video](https://youtu.be/zYhUsyOp4uw) — it’s about DIY apps. Apps you can build at home for yourself, your family, or your local community. In the demo, I created an app for my own community.  
 
 The GUI builder I used is still an early prototype. I built it the week before my talk because I knew it was possible and wanted to show Plang’s power visually—not just through command-line interactions.  
 

@@ -124,7 +124,7 @@ public class PdfToMarkdownConverter
 		var absoluteFolderPath = PathHelper.GetPath(imageHandling, fileSystem, goal);
 		fileSystem.Directory.CreateDirectory(absoluteFolderPath);
 
-		string imagePath = fileSystem.Path.Combine(absoluteFolderPath, $"img_{Guid.NewGuid()}.png");
+		string imagePath = fileSystem.Path.Join(absoluteFolderPath, $"img_{Guid.NewGuid()}.png");
 		File.WriteAllBytes(imagePath, image.RawBytes);
 		return imagePath;
 	}

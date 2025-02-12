@@ -7,6 +7,7 @@ using PLang.Errors.Builder;
 using PLang.Errors.Handlers;
 using PLang.Events;
 using PLang.Exceptions;
+using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Modules.DbModule;
@@ -39,11 +40,12 @@ namespace PLang.Building
 		private readonly IErrorHandlerFactory exceptionHandlerFactory;
 		private readonly PLangAppContext context;
 		private readonly ISettings settings;
+		private readonly IAskUserHandlerFactory askUserHandlerFactory;
 
 		public StepBuilder(Lazy<ILogger> logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 					IInstructionBuilder instructionBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
 					MemoryStack memoryStack, VariableHelper variableHelper, IErrorHandlerFactory exceptionHandlerFactory,
-					PLangAppContext context, ISettings settings)
+					PLangAppContext context, ISettings settings, IAskUserHandlerFactory askUserHandlerFactory)
 		{
 			this.fileSystem = fileSystem;
 			this.llmServiceFactory = llmServiceFactory;
@@ -56,6 +58,7 @@ namespace PLang.Building
 			this.exceptionHandlerFactory = exceptionHandlerFactory;
 			this.context = context;
 			this.settings = settings;
+			this.askUserHandlerFactory = askUserHandlerFactory;
 		}
 
 		public async Task<IBuilderError?> BuildStep(Goal goal, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
@@ -124,11 +127,8 @@ namespace PLang.Building
 
 				if (ex is PLang.Errors.Handlers.AskUserError mse)
 				{
-					Console.WriteLine(mse.Message);
-					var line = Console.ReadLine();
-
-					await mse.InvokeCallback(line);
-					return await BuildStep(goal, stepIndex, excludeModules, errorCount);
+					return await HandleAskUser(mse, goal, stepIndex, excludeModules, errorCount);
+					
 				}
 				else
 				{
@@ -147,6 +147,45 @@ namespace PLang.Building
 				}
 			}
 
+		}
+
+		private async Task<IBuilderError?> HandleAskUser(AskUserError mse, Goal goal, int stepIndex, List<string> excludeModules, int errorCount)
+		{
+			try
+			{
+				Console.WriteLine(mse.Message);
+				var line = Console.ReadLine();
+
+				var error = await mse.InvokeCallback(line);
+				if (error != null && error is PLang.Errors.AskUser.AskUserError aue)
+				{
+					error = await HandleAskUserError(aue);
+				}
+				if (error != null)
+				{
+					return new BuilderError(error);
+				}
+
+				return await BuildStep(goal, stepIndex, excludeModules, errorCount);
+			}
+			catch (AskUserError ex)
+			{
+				
+				return await HandleAskUser(ex, goal, stepIndex, excludeModules, errorCount);
+			}
+		}
+
+		private async Task<IBuilderError?> HandleAskUserError(Errors.AskUser.AskUserError aue)
+		{
+			(var isMseHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(aue);
+
+			if (handlerError is Errors.AskUser.AskUserError aue2)
+			{
+				return await HandleAskUserError(aue2);
+			}
+			if (handlerError is ExceptionError) return new BuilderError(handlerError, false);
+			if (handlerError != null) return new BuilderError(handlerError);
+			return null;
 		}
 
 		private void CheckForBuildRunner(Goal goal, GoalStep step, Instruction instruction)

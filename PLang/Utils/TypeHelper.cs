@@ -67,7 +67,7 @@ namespace PLang.Utils
 				types = executingAssembly.GetTypes().Where(t => t == type).ToList();
 			}
 
-			string modulesDirectory = Path.Combine(fileSystem.GoalsPath, ".modules");
+			string modulesDirectory = Path.Join(fileSystem.GoalsPath, ".modules");
 			if (fileSystem.Directory.Exists(modulesDirectory))
 			{
 				List<string> loaded = new();
@@ -101,7 +101,7 @@ namespace PLang.Utils
 				}
 			}
 
-			string servicesDirectory = Path.Combine(fileSystem.GoalsPath, ".services");
+			string servicesDirectory = Path.Join(fileSystem.GoalsPath, ".services");
 			if (fileSystem.Directory.Exists(servicesDirectory))
 			{
 				foreach (var dll in fileSystem.Directory.GetFiles(servicesDirectory, "*.dll", SearchOption.AllDirectories))

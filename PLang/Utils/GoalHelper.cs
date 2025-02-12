@@ -52,7 +52,7 @@ namespace PLang.Utils
 
 			// Order the files
 			var orderedFiles = filteredGoalFiles
-				.OrderBy(file => !file.ToLower().Contains(Path.Combine(goalPath, "events").ToLower()))  // "events" folder first
+				.OrderBy(file => !file.ToLower().Contains(Path.Join(goalPath, "events").ToLower()))  // "events" folder first
 				.ThenBy(file => Path.GetFileName(file).ToLower() != "setup.goal")    // "setup.goal" second
 				.ThenBy(file => Path.GetFileName(file).ToLower() != "start.goal")
 				.ToList();

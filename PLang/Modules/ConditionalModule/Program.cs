@@ -155,7 +155,7 @@ namespace PLang.Modules.ConditionalModule
 			try
 			{
 				string dllName = goalStep.PrFileName.Replace(".pr", ".dll");
-				Assembly? assembly = Assembly.LoadFile(Path.Combine(Goal.AbsolutePrFolderPath, dllName));
+				Assembly? assembly = Assembly.LoadFile(Path.Join(Goal.AbsolutePrFolderPath, dllName));
 				if (assembly == null)
 				{
 					return new StepError($"Could not find {dllName}. Stopping execution for step {goalStep.Text}", goalStep);
