@@ -86,6 +86,13 @@ namespace PLang.Modules.CodeModule
 
 			AppendToAssistantCommand($@"
 ## examples ##
+replace ""<strong>"" with """" from %html%, write to %html% => ExecutePlangCode(out string? html) {{
+    //validate input parameter 
+    html = html.Replace(""<strong>"", """");
+}}
+InputParameters: [""%html%""]
+OutParameters: [""%html%""]
+
 %list.Count%*50, write to %result% => ExecutePlangCode(long? listαCount, out long result) {{
     //validate input parameter 
     result = listαCount*50;

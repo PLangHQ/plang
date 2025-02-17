@@ -101,7 +101,9 @@ StepNumber & StepText reference a specific step that the user wants to bind to
 IncludePrivate defines if user wants to include private goals, he needs to specify this specifically to be true
 WaitForExecution: indicates if goal should by run and forget
 RunOnlyOnStartParameter: parameters at the startup of the application, it should start with --, for example --debug
-
+ErrorKey: is key of the error message (case insensitive)
+ErrorMessage: checks if error.Message contains a message  (case insensitive)
+ErrorStatusCode: matches the status code of the error message
 Map correct number to EventType and EventScope
 
 EventType {{ Before , After }}

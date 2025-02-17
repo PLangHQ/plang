@@ -29,7 +29,7 @@ using System.Web;
 namespace PLang.Modules.WebserverModule
 {
 	[Description("Start webserver, write to Body, Header, Cookie, send file to client")]
-	public class Program : BaseProgram
+	public class Program : BaseProgram, IDisposable
 	{
 		private readonly ILogger logger;
 		private readonly IEventRuntime eventRuntime;
@@ -42,6 +42,7 @@ namespace PLang.Modules.WebserverModule
 		private readonly IPLangSigningService signingService;
 		private readonly IPLangIdentityService identityService;
 		private readonly static List<WebserverInfo> listeners = new();
+		private bool disposed;
 
 		public Program(ILogger logger, IEventRuntime eventRuntime, IPLangFileSystem fileSystem
 			, ISettings settings, IOutputStreamFactory outputStreamFactory
@@ -90,6 +91,28 @@ namespace PLang.Modules.WebserverModule
 				webserverInfo.MaxContentLengthInBytes, webserverInfo.DefaultResponseContentEncoding, webserverInfo.SignedRequestRequired, webserverInfo.Routings);
 
 			return true;
+		}
+
+		public virtual void Dispose()
+		{
+			if (this.disposed)
+			{
+				return;
+			}
+			foreach (var listener in listeners)
+			{
+				listener.Listener.Close();
+
+			}
+			this.disposed = true;
+		}
+
+		protected virtual void ThrowIfDisposed()
+		{
+			if (this.disposed)
+			{
+				throw new ObjectDisposedException(this.GetType().FullName);
+			}
 		}
 
 		public record WebserverInfo(HttpListener Listener, string WebserverName, string Scheme, string Host, int Port,
@@ -350,6 +373,7 @@ Error:
 						{
 							context.Remove("IsHttpRequest");
 							resp.Close();
+							container.Dispose();
 						}
 					}
 				}
@@ -396,29 +420,31 @@ Error:
 			var requestedFile = httpContext.Request.Url?.LocalPath;
 			if (requestedFile == null) return;
 
-			var container = new ServiceContainer();
-			container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath, httpContext, "text/html");
-
-			requestedFile = requestedFile.Replace("/", Path.DirectorySeparatorChar.ToString()).Replace(@"\", Path.DirectorySeparatorChar.ToString());
-
-			var fileSystem = container.GetInstance<IPLangFileSystem>();
-			var filePath = Path.Join(fileSystem.GoalsPath!, requestedFile);
-			var fileExtension = Path.GetExtension(filePath);
-			var mimeType = GetMimeType(fileExtension);
-
-			if (mimeType != null && fileSystem.File.Exists(filePath))
+			using (var container = new ServiceContainer())
 			{
-				var buffer = fileSystem.File.ReadAllBytes(filePath);
-				httpContext.Response.ContentLength64 = buffer.Length;
+				container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath, httpContext, "text/html");
 
-				httpContext.Response.ContentType = mimeType;
-				httpContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
+				requestedFile = requestedFile.Replace("/", Path.DirectorySeparatorChar.ToString()).Replace(@"\", Path.DirectorySeparatorChar.ToString());
+
+				var fileSystem = container.GetInstance<IPLangFileSystem>();
+				var filePath = Path.Join(fileSystem.GoalsPath!, requestedFile);
+				var fileExtension = Path.GetExtension(filePath);
+				var mimeType = GetMimeType(fileExtension);
+
+				if (mimeType != null && fileSystem.File.Exists(filePath))
+				{
+					var buffer = fileSystem.File.ReadAllBytes(filePath);
+					httpContext.Response.ContentLength64 = buffer.Length;
+
+					httpContext.Response.ContentType = mimeType;
+					httpContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
+				}
+				else
+				{
+					httpContext.Response.StatusCode = (int)HttpStatusCode.NotFound;
+				}
+				httpContext.Response.OutputStream.Close();
 			}
-			else
-			{
-				httpContext.Response.StatusCode = (int)HttpStatusCode.NotFound;
-			}
-			httpContext.Response.OutputStream.Close();
 		}
 		private string GetMimeType(string extension)
 		{
@@ -891,6 +917,7 @@ Error:
 					}
 					messageStream.SetLength(0);
 				}
+				messageStream.Dispose();
 			});
 
 			return webSocketInfo;

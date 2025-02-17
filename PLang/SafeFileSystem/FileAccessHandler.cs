@@ -37,7 +37,7 @@ namespace PLang.SafeFileSystem
 
 		// using a proof of access should probably be the solution
 		// when getting access, sign the request with root
-		// the signature is then validated by root before giving access next time
+		// the signature is then validated by root before giving access next time 
 
 		public async Task<(bool, IError?)> ValidatePathResponse(string appName, string path, string? answer)
 		{
@@ -47,7 +47,7 @@ namespace PLang.SafeFileSystem
 			if (answer == "n" || answer == "no") return (true, null);
 			if (settings == null) return (false, new Error("Settings is not loaded", StatusCode: 500));
 
-			if (answer == "y" || answer == "yes" || answer == "ok")
+			if (answer == "y" || answer == "yes")
 			{
 				var expires = DateTime.UtcNow.AddSeconds(90);
 				AddFileAccess(appName, path, expires);
@@ -56,6 +56,15 @@ namespace PLang.SafeFileSystem
 				return (true, null);
 			}
 
+			if (answer == "a" || answer == "always")
+			{
+				var expires = DateTime.UtcNow.AddYears(100);
+				AddFileAccess(appName, path, expires);
+				 
+				logger.LogDebug($"{appName} has access to {path} until {expires}");
+				return (true, null);
+			}
+			 
 
 			var dateTimeStr = DateTimeOffset.UtcNow.ToString("G");
 

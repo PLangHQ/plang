@@ -14,6 +14,12 @@ SendDebug
     timeout 30 min
     on error 'No connection could', call WriteToConsole
     write to %!DebugReponse%
+- if %!DebugReponse.csharpDebugger% then
+    - log warning 'Starting C# debugger'
+    - [plang] start csharp debugger
+- if %!DebugReponse.prFileName% is not empty then
+    - log warning 'Running from step %!DebugReponse.prFileName%'
+    - [plang] run step %!DebugReponse.prFileName%
 
 WriteToConsole
 - logger warning 'Could not connect to IDE for debugging'

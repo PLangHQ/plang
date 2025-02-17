@@ -182,7 +182,7 @@ namespace PLang.Modules.CryptographicModule
 			}
 
 			var fileBytes = await File.ReadAllBytesAsync(absolutePath);
-			var hashAlgo = EncryptionHelper.GetCryptoStandard(hashAlgorithm, expectedHash);
+			using var hashAlgo = EncryptionHelper.GetCryptoStandard(hashAlgorithm, expectedHash);
 			var fileHashBytes = hashAlgo.ComputeHash(fileBytes);
 			string fileHash = "";
 			if (encoding == "hex")
@@ -213,8 +213,9 @@ namespace PLang.Modules.CryptographicModule
 			}
 
 			var fileBytes = await File.ReadAllBytesAsync(absolutePath);
-			var hashAlgo = EncryptionHelper.GetCryptoStandard(hashAlgorithm);
+			using var hashAlgo = EncryptionHelper.GetCryptoStandard(hashAlgorithm);
 			var fileHashBytes = hashAlgo.ComputeHash(fileBytes);
+			
 			string fileHash = "";
 			if (encoding == "hex")
 			{

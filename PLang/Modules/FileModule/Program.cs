@@ -160,11 +160,12 @@ namespace PLang.Modules.FileModule
 			return base64;
 		}
 
-		public async Task<(List<object>?, IError?)> ReadJsonLineFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false,
+		public async Task<(List<object>?, IError?)> ReadJsonLineFile(string path, bool throwErrorOnNotFound = false,
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? newLineSymbol = null)
 		{
 			newLineSymbol ??= Environment.NewLine;
-			var lines = (await ReadTextFile(path, returnValueIfFileNotExisting, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding, newLineSymbol) as string[]);
+			var lines = (await ReadTextFile(path, null, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding, newLineSymbol) as string[]);
+			if (lines == null && !throwErrorOnNotFound) return (null, null);
 			if (lines == null)
 			{
 				return (null, new ProgramError($"Could not split file on {newLineSymbol}", goalStep, function));
@@ -183,7 +184,8 @@ namespace PLang.Modules.FileModule
 			return (parsedObjects, null);
 		}
 
-		public async Task<object> ReadTextFile(string path, string returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false,
+		[Description("Reads a text file and write the content into a variable(return value)")]
+		public async Task<object?> ReadTextFile(string path, string? returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false,
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? splitOn = null)
 		{
 			var absolutePath = GetPath(path);
@@ -205,14 +207,14 @@ namespace PLang.Modules.FileModule
 					var content = await reader.ReadToEndAsync();
 					if (loadVariables && !string.IsNullOrEmpty(content))
 					{
-						content = variableHelper.LoadVariables(content, emptyVariableIfNotFound).ToString();
+						content = variableHelper.LoadVariables(content, emptyVariableIfNotFound)?.ToString();
 					}
 
 					if (content != null && splitOn != null)
 					{
-						if (splitOn == "\n" && content.Contains("\r"))
+						if (splitOn == "\n" || splitOn == "\r" || splitOn == "\r\n")
 						{
-							return content.Split("\r\n");
+							return content.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None);
 						}
 						return content.Split(splitOn);
 					}
@@ -875,13 +877,14 @@ namespace PLang.Modules.FileModule
 				{
 					watcher.Renamed += async (object sender, RenamedEventArgs e) =>
 					{
-						Timer? timer;
+						Timer? timer = null;
 						if (timers.TryGetValue(e.FullPath, out timer))
 						{
 							timer.Change(debounceTime, Timeout.Infinite);
 						}
 						else
 						{
+							timer?.Dispose();
 							timer = new Timer((state) =>
 							{
 								if (excludeFiles != null && excludeFiles.Contains(e.Name)) return;
@@ -896,6 +899,7 @@ namespace PLang.Modules.FileModule
 
 								var task = pseudoRuntime.RunGoal(engine, context, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall, parameters);
 								task.Wait();
+
 							}, e.FullPath, debounceTime, Timeout.Infinite);
 							timers.TryAdd(e.FullPath, timer);
 						}
@@ -984,7 +988,14 @@ namespace PLang.Modules.FileModule
 			var fileWatchers = context.Keys.Where(p => p.StartsWith("FileWatcher_"));
 			foreach (var key in fileWatchers)
 			{
-				((IFileSystemWatcher)context[key]).Dispose();
+				var watcher = (IFileSystemWatcher)context[key];
+				
+				watcher?.Dispose();
+			}
+
+			foreach (var key in timers)
+			{
+				key.Value.Dispose();
 			}
 		}
 	}

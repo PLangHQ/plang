@@ -98,7 +98,6 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 				}
 			}
 
-
 			var cachedLlmQuestion = llmCaching.GetCachedQuestion(appId, question);
 			if (!question.Reload && question.caching && cachedLlmQuestion != null && cachedLlmQuestion.RawResponse != null)
 			{
@@ -149,81 +148,90 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 			var httpClient = new HttpClient();
 			var httpMethod = new HttpMethod("POST");
 			var request = new HttpRequestMessage(httpMethod, url);
-			request.Headers.UserAgent.ParseAdd("plang llm v0.1");
-
-			string body = StringHelper.ConvertToString(parameters);
-			
-			logger.LogTrace("Body request to LLM:" + body);
-
-			request.Content = new StringContent(body, Encoding.GetEncoding("utf-8"), "application/json");
-			httpClient.Timeout = new TimeSpan(0, 5, 0);
-			await SignRequest(request);
-
-			var response = await httpClient.SendAsync(request);
-
-			string responseContent = await response.Content.ReadAsStringAsync();
-
-			if (string.IsNullOrWhiteSpace(responseContent))
-			{
-				return (null, new ServiceError("llm.plang.is appears to be down. Try again in few minutes. If it does not come back up soon, check out our Discord https://discord.gg/A8kYUymsDD for a chat", this.GetType()));
-			}
-			logger.LogTrace("LLM response:" + responseContent);
-
-			string? rawResponse = null;
 			try
 			{
-				rawResponse = JsonConvert.DeserializeObject(responseContent)?.ToString() ?? "";
-			}
-			catch (Exception ex)
-			{
-				throw new Exception($"Error parsing JSON response from LLM. The response was {responseContent}", ex);
-			}
+				request.Headers.UserAgent.ParseAdd("plang llm v0.1");
 
-			question.RawResponse = rawResponse;
-			if (isDebug)
-			{
-				context.AddOrReplace(ReservedKeywords.Llm, rawResponse);
-			}
+				string body = StringHelper.ConvertToString(parameters);
 
-			if (response.IsSuccessStatusCode)
-			{
-				ShowCosts(response);
+				logger.LogTrace("Body request to LLM:" + body);
 
-				var obj = Extractor.Extract(rawResponse, responseType);
-				if (obj == null)
-				{					
-					return (null, new ServiceError(rawResponse, this.GetType()));
-				}
-				if (question.caching)
+				request.Content = new StringContent(body, Encoding.GetEncoding("utf-8"), "application/json");
+				httpClient.Timeout = new TimeSpan(0, 5, 0);
+				await SignRequest(request);
+
+				string responseContent;
+				using (var response = await httpClient.SendAsync(request))
 				{
+					responseContent = await response.Content.ReadAsStringAsync();
 
-					llmCaching.SetCachedQuestion(appId, question);
-				}
-				return (obj, null);
-			}
 
-			if (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired)
-			{
-				var obj = JObject.Parse(rawResponse);
-				if (obj != null && obj["url"]?.ToString() != "")
-				{
-					string dbLocation = Path.Join(fileSystem.SharedPath, appId);
+					if (string.IsNullOrWhiteSpace(responseContent))
+					{
+						return (null, new ServiceError("llm.plang.is appears to be down. Try again in few minutes. If it does not come back up soon, check out our Discord https://discord.gg/A8kYUymsDD for a chat", this.GetType()));
+					}
+					logger.LogTrace("LLM response:" + responseContent);
 
-					return (null, new ServiceError(string.Format(BuyCreditInfo, obj["url"], dbLocation), GetType(), ContinueBuild: false));
-				}
-				else
-				{
-					AppContext.TryGetSwitch("Builder", out bool isBuilder);
-					string strIsBuilder = (isBuilder) ? " build" : "";
-					return (null, new AskUserError(@$"You need to purchase credits to use Plang LLM service. Lets do this now.
+					string? rawResponse = null;
+					try
+					{
+						rawResponse = JsonConvert.DeserializeObject(responseContent)?.ToString() ?? "";
+					}
+					catch (Exception ex)
+					{
+						throw new Exception($"Error parsing JSON response from LLM. The response was {responseContent}", ex);
+					}
+
+					question.RawResponse = rawResponse;
+					if (isDebug)
+					{
+						context.AddOrReplace(ReservedKeywords.Llm, rawResponse);
+					}
+
+					if (response.IsSuccessStatusCode)
+					{
+						ShowCosts(response);
+
+						var obj = Extractor.Extract(rawResponse, responseType);
+						if (obj == null)
+						{
+							return (null, new ServiceError(rawResponse, this.GetType()));
+						}
+						if (question.caching)
+						{
+
+							llmCaching.SetCachedQuestion(appId, question);
+						}
+						return (obj, null);
+					}
+
+					if (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired)
+					{
+						var obj = JObject.Parse(rawResponse);
+						if (obj != null && obj["url"]?.ToString() != "")
+						{
+							string dbLocation = Path.Join(fileSystem.SharedPath, appId);
+
+							return (null, new ServiceError(string.Format(BuyCreditInfo, obj["url"], dbLocation), GetType(), ContinueBuild: false));
+						}
+						else
+						{
+							AppContext.TryGetSwitch("Builder", out bool isBuilder);
+							string strIsBuilder = (isBuilder) ? " build" : "";
+							return (null, new AskUserError(@$"You need to purchase credits to use Plang LLM service. Lets do this now.
 (If you have OpenAI API key, you can run 'plang {strIsBuilder} --llmservice=openai')
 
 What is name of payer?", GetCountry));
+						}
+					}
+
+					return (null, new ServiceError(rawResponse, GetType()));
 				}
+			} finally
+			{
+				request.Dispose();
+				httpClient.Dispose();
 			}
-
-			return (null, new ServiceError(rawResponse, GetType()));
-
 
 		}
 
@@ -323,22 +331,28 @@ What is name of payer?", GetCountry));
 		{
 			var country = countryArray[0].ToString();
 			var requestUrl = url.Replace("api/Llm", "").TrimEnd('/');
-			var httpClient = new HttpClient();
-			var httpMethod = new HttpMethod("POST");
-			var request = new HttpRequestMessage(httpMethod, requestUrl + "/api/GetOrCreatePaymentLink");
-			request.Headers.UserAgent.ParseAdd("plang llm v0.1");
-			Dictionary<string, object?> parameters = new();
-			parameters.Add("name", nameOfPayer);
-			parameters.Add("country", country);
-			string body = StringHelper.ConvertToString(parameters);
+			using (var httpClient = new HttpClient())
+			{
+				var httpMethod = new HttpMethod("POST");
+				using (var request = new HttpRequestMessage(httpMethod, requestUrl + "/api/GetOrCreatePaymentLink"))
+				{
+					request.Headers.UserAgent.ParseAdd("plang llm v0.1");
+					Dictionary<string, object?> parameters = new();
+					parameters.Add("name", nameOfPayer);
+					parameters.Add("country", country);
+					string body = StringHelper.ConvertToString(parameters);
 
-			request.Content = new StringContent(body, Encoding.GetEncoding("utf-8"), "application/json");
-			httpClient.Timeout = new TimeSpan(0, 0, 30);
-			await SignRequest(request);
+					request.Content = new StringContent(body, Encoding.GetEncoding("utf-8"), "application/json");
+					httpClient.Timeout = new TimeSpan(0, 0, 30);
+					await SignRequest(request);
 
-			var response = await httpClient.SendAsync(request);
+					using (var response = await httpClient.SendAsync(request))
+					{
 
-			return await response.Content.ReadAsStringAsync();
+						return await response.Content.ReadAsStringAsync();
+					}
+				}
+			}
 		}
 
 		public async Task SignRequest(HttpRequestMessage request)
@@ -367,18 +381,23 @@ What is name of payer?", GetCountry));
 		public async Task<(object?, IError?)> GetBalance()
 		{
 			var requestUrl = url.Replace("api/Llm", "").TrimEnd('/');
-			var httpClient = new HttpClient();
-			var httpMethod = new HttpMethod("GET");
-			var request = new HttpRequestMessage(httpMethod, requestUrl + "/api/Balance.goal");
-			request.Headers.UserAgent.ParseAdd("plang llm v0.1");
+			using (var httpClient = new HttpClient())
+			{
+				var httpMethod = new HttpMethod("GET");
+				using (var request = new HttpRequestMessage(httpMethod, requestUrl + "/api/Balance.goal"))
+				{
+					request.Headers.UserAgent.ParseAdd("plang llm v0.1");
 
-			httpClient.Timeout = new TimeSpan(0, 0, 30);
-			await SignRequest(request);
+					httpClient.Timeout = new TimeSpan(0, 0, 30);
+					await SignRequest(request);
 
-			var response = await httpClient.SendAsync(request);
-
-			var content = await response.Content.ReadAsStringAsync();
-			return (content, null);
+					using (var response = await httpClient.SendAsync(request))
+					{
+						var content = await response.Content.ReadAsStringAsync();
+						return (content, null);
+					}
+				}
+			}
 		}
 	}
 }

@@ -10,13 +10,19 @@ namespace PLang.Services.OutputStream
 {
 	
 
-	public class ConsoleOutputStream : IOutputStream
+	public class ConsoleOutputStream : IOutputStream, IDisposable
 	{
+		Stream standardOutputStream;
+		Stream standardErrorStream;
+		private bool disposed;
+
 		public ConsoleOutputStream() {
 			Console.OutputEncoding = Encoding.UTF8;
+			standardOutputStream = Console.OpenStandardOutput();
+			standardErrorStream = Console.OpenStandardError();
 		}
-		public Stream Stream => Console.OpenStandardOutput();
-		public Stream ErrorStream => Console.OpenStandardError();
+		public Stream Stream => standardOutputStream;
+		public Stream ErrorStream => standardErrorStream;
 
 		public async Task<string> Ask(string text, string type = "text", int statusCode = 104, Dictionary<string, object>? parameters = null)
 		{
@@ -26,9 +32,6 @@ namespace PLang.Services.OutputStream
 			return line;
 		}
 
-		public void Dispose()
-		{			
-		}
 
 		public string Read()
 		{
@@ -63,6 +66,25 @@ namespace PLang.Services.OutputStream
 			}
 			Console.ResetColor();
 
+		}
+
+		public virtual void Dispose()
+		{
+			if (disposed)
+			{
+				return;
+			}
+			standardOutputStream.Dispose();
+			standardErrorStream.Dispose();
+			disposed = true;
+		}
+
+		protected virtual void ThrowIfDisposed()
+		{
+			if (disposed)
+			{
+				throw new ObjectDisposedException(GetType().FullName);
+			}
 		}
 
 		private bool IsRecord(object obj)

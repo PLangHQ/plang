@@ -20,6 +20,7 @@ namespace PLang.Utils
 			{
 				return path.Replace('\\', Path.DirectorySeparatorChar);
 			}
+
 		}
 
 		public static string RemoveExtension(this string path)

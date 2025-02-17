@@ -86,11 +86,13 @@ It’s still early, so if you decide to play around with it, expect some rough e
 
 ### Steps to get started:  
 
-1. **Install Plang** – Follow the [Get Started guide](https://github.com/PLangHQ/plang/blob/main/Documentation/GetStarted.md).  You need to buy some plang credits or use OpenAI API key.
+1. **Install Plang** – Follow the [Get Started guide](https://github.com/PLangHQ/plang/blob/main/Documentation/GetStarted.md).  You need to buy some plang credits or use OpenAI API key when using plang.
+
 2. **Clone the Builder repo** – Run:  
    ```sh
    git clone <repo_url>
    ```  
+   
 3. **Run Plang** – Open the command line in the Builder folder and type:  
    ```sh
    plang
@@ -100,8 +102,7 @@ Now, you should see the canvas appear, where you can draw, describe the app, and
 
 ## What’s Next  
 
-What’s Next for Builder
-The Builder is still a prototype—a teaser, really. Right now, you only get one shot at drawing and building. Once the app is generated, there's no way to go back, tweak the design, and rebuild without starting from scratch. That’s a big limitation.
+The Builder is still a prototype—a teaser, really. Right now, you only get one shot at drawing and building. Once the app is generated, there's no way to go back, tweak the design, and rebuild without starting from scratch. That’s a big limitation. 
 
 Ideally, you should be able to take the generated app, bring it back onto the canvas, refine the UI, add new descriptions, and build on top of what already exists. That’s the long-term vision.
 
@@ -111,7 +112,7 @@ My focus remains on core features of the language itself. The GUI builder isn’
 
 Plang itself still has a lot of work ahead. It’s a new way of thinking about programming—more flexible, more human-friendly, and designed to work well with LLMs.  
 
-If you're interested in experimenting with it or contributing, feel free to dive in. There’s plenty of room to shape what this analog-first programming language becomes.  
+If you're interested in experimenting with it or contributing, feel free to dive in. There’s plenty of room to shape what this  programming language becomes.  
 
 ## More Information
 

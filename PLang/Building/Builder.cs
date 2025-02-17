@@ -25,7 +25,7 @@ namespace PLang.Building
 {
 	public interface IBuilder
 	{
-		Task<IError?> Start(IServiceContainer container);
+		Task<IError?> Start(IServiceContainer container, string? absoluteGoalPath = null);
 	}
 	public class Builder : IBuilder
 	{
@@ -56,7 +56,7 @@ namespace PLang.Building
 		}
 
 
-		public async Task<IError?> Start(IServiceContainer container)
+		public async Task<IError?> Start(IServiceContainer container, string? absoluteGoalPath = null)
 		{
 			try
 			{
@@ -65,7 +65,10 @@ namespace PLang.Building
 				AppContext.SetSwitch("Builder", true);
 
 				var goalFiles = GoalHelper.GetGoalFilesToBuild(fileSystem, fileSystem.GoalsPath);
-
+				if (absoluteGoalPath != null)
+				{
+					goalFiles = goalFiles.Where(p => p.Equals(absoluteGoalPath)).ToList();
+				}
 				InitFolders();
 				logger.LogInformation("Build Start:" + DateTime.Now.ToLongTimeString());
 

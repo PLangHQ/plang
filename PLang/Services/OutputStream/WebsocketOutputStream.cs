@@ -5,10 +5,11 @@ using System.Net.WebSockets;
 
 namespace PLang.Services.OutputStream
 {
-	public class WebsocketOutputStream : IOutputStream
+	public class WebsocketOutputStream : IOutputStream, IDisposable
 	{
 		private readonly WebSocket webSocket;
 		private readonly IPLangSigningService signingService;
+		private bool disposed;
 
 		public WebsocketOutputStream(WebSocket webSocket, IPLangSigningService signingService)
 		{			
@@ -43,6 +44,26 @@ namespace PLang.Services.OutputStream
 		public async Task WriteToBuffer(object? obj, string type = "text", int statusCode = 200)
 		{
 			await Write(obj, type, statusCode);
+		}
+
+		public virtual void Dispose()
+		{
+			if (this.disposed)
+			{
+				return;
+			}
+			Stream.Dispose();
+			ErrorStream.Dispose();
+
+			this.disposed = true;
+		}
+
+		protected virtual void ThrowIfDisposed()
+		{
+			if (this.disposed)
+			{
+				throw new ObjectDisposedException(this.GetType().FullName);
+			}
 		}
 	}
 }

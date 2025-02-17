@@ -15,7 +15,7 @@ using System.Runtime.InteropServices;
 
 namespace PLang.Modules.PythonModule
 {
-    [Description("Runs python scripts. Parameters can be passed to the python process")]
+	[Description("Runs python scripts. Parameters can be passed to the python process")]
 	public class Program : BaseProgram
 	{
 		private readonly IPLangFileSystem fileSystem;
@@ -43,12 +43,12 @@ namespace PLang.Modules.PythonModule
 			string? stdOutVariableName = null, string? stdErrorVariableName = null)
 		{
 
-			
+
 
 			if (fileSystem.File.Exists("requirements.txt"))
 			{
 				await terminalProgram.RunTerminal("pip install -r requirements.txt");
-				
+
 			}
 
 
@@ -99,111 +99,123 @@ namespace PLang.Modules.PythonModule
 
 				using (Py.GIL())
 				{
-					dynamic sys = Py.Import("sys");
-					dynamic io = Py.Import("io");
-
-					sys.stdout = io.StringIO();
-					sys.stderr = io.StringIO();
-
-					try
+					using (dynamic sys = Py.Import("sys"))
 					{
-						dynamic pyModule = Py.Import("__main__");
-
-						pyModule.plangSign = new Func<string, string, string, string, Task<PyObject>>(async (input, method, url, contract) =>
+						using (dynamic io = Py.Import("io"))
 						{
-							var signatureData = signingService.Sign(input, method, url, contract);
-							PyDict pyResult = new PyDict();
-							foreach (var kv in signatureData)
+
+							sys.stdout = io.StringIO();
+							sys.stderr = io.StringIO();
+
+							try
 							{
-								pyResult[new PyString(kv.Key)] = new PyString(kv.Value.ToString());
-							}
-							return pyResult;
-						});
-
-						/*
-						 * TODO: Not happy with this solution. It is injecting code into the python script, that is bad design :(
-						 */
-
-						List<PyObject> args = new List<PyObject>();
-						args.Add(new PyString(fileName));
-						for (int i = 0; parameterValues != null && i < parameterValues.Length; i++)
-						{
-							if (parameterNames != null && useNamedArguments)
-							{
-								string paramName = (parameterNames[i].StartsWith("--")) ? parameterNames[i] : "--" + parameterNames[i];
-								args.Add(new PyString(paramName));
-							}
-							args.Add(new PyString(parameterValues[i]));
-						}
-
-						sys.argv = new PyList(args.ToArray());
-
-						string code = fileSystem.File.ReadAllText(fileName);
-						if (variablesToExtractFromPythonScript != null)
-						{
-							variablesToExtractFromPythonScript = variablesToExtractFromPythonScript.Select(p => p.Replace("%", "")).ToArray();
-							string pythonList = "['" + string.Join("', '", variablesToExtractFromPythonScript) + "']";
-
-							string appendedCode = $"\n\nimport __main__\n";
-							appendedCode += $"__main__.plang_export_variables_dict = {{k: v for k, v in globals().items() if k in {pythonList}}}";
-
-							code += appendedCode;
-						}
-						PythonEngine.Exec(code);
-
-						capturedStdout = sys.stdout.getvalue().ToString();
-						capturedStderr = sys.stderr.getvalue().ToString();
-
-						if (variablesToExtractFromPythonScript != null)
-						{
-							dynamic variablesDict = Py.Import("__main__").GetAttr("plang_export_variables_dict");
-
-							dynamic iterItems = variablesDict.items();
-
-							foreach (PyObject item in iterItems)
-							{
-								var key = item[0].ToString();
-
-								if (key != null && variablesToExtractFromPythonScript.FirstOrDefault(p => p == key) != null)
+								using (dynamic pyModule = Py.Import("__main__"))
 								{
-									var value = ConvertValue(item[1]);
-									memoryStack.Put(key, value);
+
+									pyModule.plangSign = new Func<string, string, string, string, Task<PyObject>>(async (input, method, url, contract) =>
+									{
+										var signatureData = signingService.Sign(input, method, url, contract);
+										PyDict pyResult = new PyDict();
+										foreach (var kv in signatureData)
+										{
+											pyResult[new PyString(kv.Key)] = new PyString(kv.Value.ToString());
+										}
+										return pyResult;
+									});
+
+									/*
+									 * TODO: Not happy with this solution. It is injecting code into the python script, that is bad design :(
+									 */
+
+									List<PyObject> args = new List<PyObject>();
+									args.Add(new PyString(fileName));
+									for (int i = 0; parameterValues != null && i < parameterValues.Length; i++)
+									{
+										if (parameterNames != null && useNamedArguments)
+										{
+											string paramName = (parameterNames[i].StartsWith("--")) ? parameterNames[i] : "--" + parameterNames[i];
+											args.Add(new PyString(paramName));
+										}
+										args.Add(new PyString(parameterValues[i]));
+									}
+
+									sys.argv = new PyList(args.ToArray());
+
+									string code = fileSystem.File.ReadAllText(fileName);
+									if (variablesToExtractFromPythonScript != null)
+									{
+										variablesToExtractFromPythonScript = variablesToExtractFromPythonScript.Select(p => p.Replace("%", "")).ToArray();
+										string pythonList = "['" + string.Join("', '", variablesToExtractFromPythonScript) + "']";
+
+										string appendedCode = $"\n\nimport __main__\n";
+										appendedCode += $"__main__.plang_export_variables_dict = {{k: v for k, v in globals().items() if k in {pythonList}}}";
+
+										code += appendedCode;
+									}
+									PythonEngine.Exec(code);
+
+									capturedStdout = sys.stdout.getvalue().ToString();
+									capturedStderr = sys.stderr.getvalue().ToString();
+
+									if (variablesToExtractFromPythonScript != null)
+									{
+										using (dynamic variablesDict = Py.Import("__main__").GetAttr("plang_export_variables_dict"))
+										{
+
+											dynamic iterItems = variablesDict.items();
+
+											foreach (PyObject item in iterItems)
+											{
+												var key = item[0].ToString();
+
+												if (key != null && variablesToExtractFromPythonScript.FirstOrDefault(p => p == key) != null)
+												{
+													var value = ConvertValue(item[1]);
+													memoryStack.Put(key, value);
+												}
+											}
+										}
+
+									}
 								}
+
+
 							}
+							catch (PythonException ex2)
+							{
 
-						}
-					}
-					catch (PythonException ex2)
-					{
+								capturedStdout = sys.stdout.getvalue().ToString();
+								capturedStderr = sys.stderr.getvalue().ToString();
 
-						capturedStdout = sys.stdout.getvalue().ToString();
-						capturedStderr = sys.stderr.getvalue().ToString();
+								if (stdOutVariableName == null)
+								{
+									logger.LogWarning(capturedStdout);
+								}
+								if (capturedStderr == null)
+								{
+									logger.LogWarning(capturedStderr);
+								}
 
-						if (stdOutVariableName == null)
-						{
-							logger.LogWarning(capturedStdout);
-						}
-						if (capturedStderr == null)
-						{
-							logger.LogWarning(capturedStderr);
-						}
+								var pe = new Exception(capturedStderr + " " + capturedStdout + "\n\n" + ex2.StackTrace, ex2);
+								throw pe;
+							}
+							finally
+							{
+								if (stdOutVariableName != null)
+								{
+									memoryStack.Put(stdOutVariableName, capturedStdout);
+								}
+								if (stdErrorVariableName != null)
+								{
+									memoryStack.Put(stdErrorVariableName, capturedStderr);
+								}
 
-						var pe = new Exception(capturedStderr + " " + capturedStdout + "\n\n" + ex2.StackTrace, ex2);
-						throw pe;
-					}
-					finally
-					{
-						if (stdOutVariableName != null)
-						{
-							memoryStack.Put(stdOutVariableName, capturedStdout);
-						}
-						if (stdErrorVariableName != null)
-						{
-							memoryStack.Put(stdErrorVariableName, capturedStderr);
-						}
+								sys.stdout = sys.__stdout__;
+								sys.stderr = sys.__stderr__;
 
-						sys.stdout = sys.__stdout__;
-						sys.stderr = sys.__stderr__;
+
+							}
+						}
 					}
 				}
 
@@ -218,7 +230,8 @@ namespace PLang.Modules.PythonModule
 				try
 				{
 					PythonEngine.Shutdown();
-				} catch (Exception ex)
+				}
+				catch (Exception ex)
 				{
 				}
 			}
@@ -229,25 +242,28 @@ namespace PLang.Modules.PythonModule
 
 		private object ConvertValue(PyObject pyObject)
 		{
-			dynamic pyType = pyObject.GetPythonType();
-			string typeName = pyType.__name__.ToString();
-
-			switch (typeName)
+			using (dynamic pyType = pyObject.GetPythonType())
 			{
-				case "int":
-					return pyObject.As<int>();
-				case "float":
-					return pyObject.As<double>();
-				case "str":
-					return pyObject.As<string>();
-				case "list":
-					return pyObject.As<List<object>>();
-				case "dict":
-					return pyObject.As<Dictionary<object, object>>();
-				default:
-					return pyObject.As<object>().ToString();
+				string typeName = pyType.__name__.ToString();
+
+				switch (typeName)
+				{
+					case "int":
+						return pyObject.As<int>();
+					case "float":
+						return pyObject.As<double>();
+					case "str":
+						return pyObject.As<string>();
+					case "list":
+						return pyObject.As<List<object>>();
+					case "dict":
+						return pyObject.As<Dictionary<object, object>>();
+					default:
+						return pyObject.As<object>().ToString();
+				}
 			}
 		}
+
 	}
 }
 

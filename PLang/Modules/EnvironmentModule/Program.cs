@@ -105,20 +105,11 @@ namespace PLang.Modules.EnvironmentModule
 		public async Task<IError?> OpenFileInDefaultApp(string filePath)
 		{
 			var absolutePath = GetPath(filePath);
-			var process = Process.Start(new ProcessStartInfo(absolutePath) { UseShellExecute = true });
+			using var process = Process.Start(new ProcessStartInfo(absolutePath) { UseShellExecute = true });
 			return null;
 		}
 
 
-		public async Task<IError?> RunStep(string prFileName)
-		{
-			var absolutePrFileName = fileSystem.Path.Join(fileSystem.GoalsPath, prFileName);
-
-			var startingEngine = engine.GetContext()[ReservedKeywords.StartingEngine] as IEngine;
-			if (startingEngine == null) startingEngine = engine;
-
-			return await startingEngine.RunFromStep(absolutePrFileName);
-		}
 
 		public async Task KeepAlive(string message = "App KeepAlive")
 		{

@@ -683,6 +683,7 @@ namespace PLang.Modules.BlockchainModule
 			context.Remove(CurrentAddressContextKey);
 			context.Remove(CurrentRpcServerContextKey);
 			context.Remove(CurrentWalletContextKey);
+			client?.Dispose();
 		}
 
 

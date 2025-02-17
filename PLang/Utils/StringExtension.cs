@@ -117,6 +117,8 @@ namespace PLang.Utils
 			}
 
 			byte[] signatureHash = hmac.ComputeHash(signatureBytes);
+			hmac.Dispose();
+
 			string signatureHex = String.Concat(Array.ConvertAll(signatureHash, x => x.ToString("x2")));
 			return signatureHex;
 		}

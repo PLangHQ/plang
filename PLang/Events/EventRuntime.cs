@@ -189,9 +189,6 @@ namespace PLang.Events
 									 .ToList());
 			}
 
-
-
-
 			if (rootEventFileExists)
 			{
 				eventFiles.Add(rootEventFilePath);
@@ -222,11 +219,11 @@ namespace PLang.Events
 
 		public async Task<IEventError?> RunStartEndEvents(PLangAppContext context, string eventType, string eventScope, bool isBuilder = false)
 		{
-			runtimeEvents = (isBuilder) ? await GetBuilderEvents() : await GetRuntimeEvents();
+			var events = (isBuilder) ? await GetBuilderEvents() : await GetRuntimeEvents();
 
-			if (runtimeEvents == null || context.ContainsKey(ReservedKeywords.IsEvent)) return null;
+			if (events == null || context.ContainsKey(ReservedKeywords.IsEvent)) return null;
 
-			List<EventBinding> eventsToRun = runtimeEvents.Where(p => p.EventScope == eventScope).ToList();
+			List<EventBinding> eventsToRun = events.Where(p => p.EventScope == eventScope).ToList();
 
 			for (var i = 0; i < eventsToRun.Count; i++)
 			{
@@ -411,12 +408,14 @@ namespace PLang.Events
 
 		public async Task<IEventError?> RunStepEvents(PLangAppContext context, string eventType, Goal goal, GoalStep step, bool isBuilder = false)
 		{
-			if (runtimeEvents == null || context.ContainsKey(ReservedKeywords.IsEvent))
+			var events = (isBuilder) ? await GetBuilderEvents() : await GetRuntimeEvents();
+
+			if (events == null || context.ContainsKey(ReservedKeywords.IsEvent))
 			{
 				return null;
 			}
 
-			var eventsToRun = runtimeEvents.Where(p => p.EventType == eventType && p.EventScope == EventScope.Step).ToList();
+			var eventsToRun = events.Where(p => p.EventType == eventType && p.EventScope == EventScope.Step).ToList();
 			for (var i = 0; i < eventsToRun.Count; i++)
 			{
 				var eve = eventsToRun[i];
@@ -436,14 +435,15 @@ namespace PLang.Events
 			}
 
 			List<EventBinding> eventsToRun = new();
-			//eventsToRun.AddRange(runtimeEvents.Where(p => p.EventType == EventType.Before && p.EventScope == EventScope.StepError).ToList());
+			eventsToRun.AddRange(runtimeEvents.Where(p => p.EventType == EventType.Before && p.EventScope == EventScope.StepError).ToList());
 
 			var errorHandler = StepHelper.GetErrorHandlerForStep(step.ErrorHandlers, error);
 			if (errorHandler != null)
 			{
 				if (errorHandler.GoalToCall != null && !string.IsNullOrEmpty(errorHandler.GoalToCall))
 				{
-					var eventBinding = new EventBinding(EventType.Before, EventScope.StepError, goal.RelativeGoalPath, errorHandler.GoalToCall, true, step.Number, step.Text, true, null, errorHandler.IgnoreError);
+					var eventBinding = new EventBinding(EventType.Before, EventScope.StepError, goal.RelativeGoalPath, errorHandler.GoalToCall, 
+						true, step.Number, step.Text, true, null, errorHandler.IgnoreError, errorHandler.Key, errorHandler.Message, errorHandler.StatusCode);
 					eventsToRun.Add(eventBinding);
 				}
 				else if (errorHandler.IgnoreError)
@@ -452,7 +452,7 @@ namespace PLang.Events
 				}
 			}
 
-			eventsToRun.AddRange(runtimeEvents.Where(p => p.EventScope == EventScope.StepError).ToList());
+			eventsToRun.AddRange(runtimeEvents.Where(p => p.EventType == EventType.After && p.EventScope == EventScope.StepError).ToList());
 
 			if (eventsToRun.Count == 0)
 			{
@@ -463,7 +463,7 @@ namespace PLang.Events
 			{
 				foreach (var eve in eventsToRun)
 				{
-					if (GoalHasBinding(goal, eve) && IsStepMatch(step, eve))
+					if (GoalHasBinding(goal, eve) && IsStepMatch(step, eve) && EventMatchesError(eve, error))
 					{
 						var eventError = await Run(context, eve, goal, step, error);
 						if (eventError != null) return eventError;
@@ -477,6 +477,16 @@ namespace PLang.Events
 			}
 
 			return error;
+		}
+
+		private bool EventMatchesError(EventBinding eve, IError error)
+		{
+			if (eve.ErrorKey != null && eve.ErrorKey.Equals(error.Key, StringComparison.OrdinalIgnoreCase)) return true;
+			if (eve.ErrorMessage != null && eve.ErrorMessage.Equals(error.Message, StringComparison.OrdinalIgnoreCase)) return true;
+			if (eve.StatusCode != null && eve.StatusCode == error.StatusCode) return true;
+			if (eve.ExceptionType != null && Type.GetType(eve.ExceptionType) == error.Exception?.GetType()) return true;
+
+			return (string.IsNullOrEmpty(eve.ErrorKey) && string.IsNullOrEmpty(eve.ErrorMessage) && string.IsNullOrEmpty(eve.ExceptionType) && eve.StatusCode == null);
 		}
 
 

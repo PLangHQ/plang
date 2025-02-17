@@ -9,12 +9,13 @@ using static PLang.Runtime.Startup.ModuleLoader;
 
 namespace PLang.Building.Parsers
 {
-	public class PrParser
+	public class PrParser : IDisposable
 	{
 		private readonly List<Goal> allGoals = new List<Goal>();
 		private readonly List<Goal> publicGoals = new List<Goal>();
 		private readonly Dictionary<string, Instruction> instructions = new Dictionary<string, Instruction>();
 		private readonly IPLangFileSystem fileSystem;
+		private bool disposed;
 
 		public PrParser(IPLangFileSystem fileSystem)
 		{
@@ -94,8 +95,35 @@ namespace PLang.Building.Parsers
 					goal.GoalSteps[i].Executed = setupOnceDictionary[goal.GoalSteps[i].RelativePrPath];
 				}*/
 				goal.GoalSteps[i].Goal = goal;
+				goal.GoalSteps[i].LlmRequest = null;
+				goal.GoalSteps[i].PrFile = null;
 			}
+
+			
+
 			return goal;
+		}
+
+		public virtual void Dispose()
+		{
+			if (this.disposed)
+			{
+				return;
+			}
+
+			allGoals.Clear();
+			publicGoals.Clear();
+			instructions.Clear();
+
+			this.disposed = true;
+		}
+
+		protected virtual void ThrowIfDisposed()
+		{
+			if (this.disposed)
+			{
+				throw new ObjectDisposedException(this.GetType().FullName);
+			}
 		}
 
 		private static void AdjustPathsToOS(Goal goal)

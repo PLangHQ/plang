@@ -43,7 +43,7 @@ namespace PLang.Runtime
 		public HttpListenerContext? HttpContext { get; set; }
 	}
 	public record Alive(Type Type, string Key);
-	public class Engine : IEngine
+	public class Engine : IEngine, IDisposable
 	{
 		private IServiceContainer container;
 
@@ -54,6 +54,8 @@ namespace PLang.Runtime
 		private IEventRuntime eventRuntime;
 		private ITypeHelper typeHelper;
 		private IAskUserHandlerFactory askUserHandlerFactory;
+		private bool disposed;
+
 		public IOutputStreamFactory OutputStreamFactory { get; private set; }
 		private IPLangAppsRepository appsRepository;
 		private IAppCache appCache;
@@ -187,10 +189,35 @@ namespace PLang.Runtime
 
 		private static CancellationTokenSource debounceTokenSource;
 		private static readonly object debounceLock = new object();
-		private IFileSystemWatcher fileWatcher;
+		private IFileSystemWatcher? fileWatcher = null;
+
+		public virtual void Dispose()
+		{
+			
+			if (this.disposed)
+			{
+				return;
+			}
+			fileWatcher?.Dispose();
+			memoryStack.Clear();
+			context.Clear();
+
+			this.disposed = true;
+		}
+
+		protected virtual void ThrowIfDisposed()
+		{
+			if (this.disposed)
+			{
+				throw new ObjectDisposedException(this.GetType().FullName);
+			}
+		}
+
 		private void WatchForRebuild()
 		{
 			string path = fileSystem.Path.Join(fileSystem.RootDirectory, ".build");
+			if (fileWatcher != null) fileWatcher?.Dispose();
+
 			fileWatcher = fileSystem.FileSystemWatcher.New(path, "*.pr");
 
 			fileWatcher.Changed += (object sender, FileSystemEventArgs e) =>
@@ -198,6 +225,7 @@ namespace PLang.Runtime
 				lock (debounceLock)
 				{
 					debounceTokenSource?.Cancel();
+					debounceTokenSource?.Dispose();
 					debounceTokenSource = new CancellationTokenSource();
 
 					// Call the debounced method with a delay
@@ -669,13 +697,13 @@ private async Task CacheGoal(Goal goal)
 
 			if (!fileSystem.File.Exists(goalStep.AbsolutePrFilePath))
 			{
-				return new Error($"Could not find pr file {goalStep.RelativePrPath}. Maybe try to build again?. This step is defined in Goal at {goal.RelativeGoalPath}. The location of it on drive should be {goalStep.AbsolutePrFilePath}.");
+				return new Error($"Could not find pr file {goalStep.RelativePrPath}. Maybe try to build again?. This step is defined in Goal at {goal.RelativeGoalPath}. The location of it on drive should be {goalStep.AbsolutePrFilePath}.", Key: "PrFileNotFound");
 			}
 
 			var instruction = prParser.ParseInstructionFile(goalStep);
 			if (instruction == null)
 			{
-				return new Error($"Module could not be loaded for {goalStep.RelativePrPath}");
+				return new Error($"Instruction file could not be loaded for {goalStep.RelativePrPath}", Key: "InstructionFileNotLoaded");
 			}
 
 			if (stepIndex < goal.GoalSteps.Count && !goal.GoalSteps[stepIndex].Execute)
@@ -687,7 +715,7 @@ private async Task CacheGoal(Goal goal)
 			Type? classType = typeHelper.GetRuntimeType(goalStep.ModuleType);
 			if (classType == null)
 			{
-				return new Error("Could not find module:" + goalStep.ModuleType);
+				return new Error("Could not find module:" + goalStep.ModuleType, Key: "ModuleNotFound");
 			}
 
 			context.AddOrReplace(ReservedKeywords.Goal, goal);
@@ -700,7 +728,7 @@ private async Task CacheGoal(Goal goal)
 				classInstance = container.GetInstance(classType) as BaseProgram;
 				if (classInstance == null)
 				{
-					return new Error($"Could not create instance of {classType}");
+					return new Error($"Could not create instance of {classType}", Key: "InstanceNotCreated");
 				}
 			} catch (MissingSettingsException mse)
 			{

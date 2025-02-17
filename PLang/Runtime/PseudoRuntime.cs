@@ -43,7 +43,7 @@ namespace PLang.Runtime
 			this.askUserHandlerFactory = askUserHandlerFactory;
 		}
 
-		public async Task<(IEngine engine, IError? error, IOutput? output)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCall goalName, 
+		public async Task<(IEngine engine, IError? error, IOutput? output)> RunGoal(IEngine engine, PLangAppContext context, string relativeAppPath, GoalToCall goalName, 
 			Dictionary<string, object?>? parameters, Goal? callingGoal = null, 
 			bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, 
 			int indent = 0, bool keepMemoryStackOnAsync = false)
@@ -59,7 +59,7 @@ namespace PLang.Runtime
 			Goal? goal = null;
 			ServiceContainer? container = null;
 
-			string absolutePathToGoal = fileSystem.Path.Join(fileSystem.RootDirectory, appPath, goalName).AdjustPathToOs();
+			string absolutePathToGoal = fileSystem.Path.Join(fileSystem.RootDirectory, relativeAppPath, goalName).AdjustPathToOs();
 			string goalToRun = goalName;
 			
 			if (CreateNewContainer(absolutePathToGoal))
@@ -89,10 +89,10 @@ namespace PLang.Runtime
 
 			if (goal == null)
 			{
-				var goalsAvailable = engine.GetGoalsAvailable(appPath, goalToRun);
+				var goalsAvailable = engine.GetGoalsAvailable(relativeAppPath, goalToRun);
 				if (goalsAvailable == null || goalsAvailable.Count == 0)
 				{
-					var error2 = new Error($"No goals available at {appPath} trying to run {goalToRun}");
+					var error2 = new Error($"No goals available at {relativeAppPath} trying to run {goalToRun}");
 					var output2 = new TextOutput("Error", "text/html", false, error2, "desktop");
 					return (engine, error2, output2);
 				}

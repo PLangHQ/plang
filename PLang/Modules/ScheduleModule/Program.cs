@@ -127,20 +127,27 @@ namespace PLang.Modules.ScheduleModule
 			if (outputStreamFactory.CreateHandler() is not UIOutputStream)
 			{
 				logger.LogDebug("Initiate new engine for scheduler");
-				var containerForScheduler = new ServiceContainer();
-				((ServiceContainer)containerForScheduler).RegisterForPLangConsole(fileSystem.GoalsPath, fileSystem.Path.DirectorySeparatorChar.ToString());
+				using (var containerForScheduler = new ServiceContainer())
+				{
+					containerForScheduler.RegisterForPLangConsole(fileSystem.GoalsPath, fileSystem.Path.DirectorySeparatorChar.ToString());
 
-				engine = containerForScheduler.GetInstance<IEngine>();
-				engine.Init(containerForScheduler);
-				settings = containerForScheduler.GetInstance<ISettings>();
-				prParser = containerForScheduler.GetInstance<PrParser>();
-				logger = containerForScheduler.GetInstance<ILogger>();
-				pseudoRuntime = containerForScheduler.GetInstance<IPseudoRuntime>();
-				fileSystem = containerForScheduler.GetInstance<IPLangFileSystem>();
+					engine = containerForScheduler.GetInstance<IEngine>();
+					engine.Init(containerForScheduler);
+					settings = containerForScheduler.GetInstance<ISettings>();
+					prParser = containerForScheduler.GetInstance<PrParser>();
+					logger = containerForScheduler.GetInstance<ILogger>();
+					pseudoRuntime = containerForScheduler.GetInstance<IPseudoRuntime>();
+					fileSystem = containerForScheduler.GetInstance<IPLangFileSystem>();
+
+					Start(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
+				}
 			}
+			else
+			{
 
-			
-			Start(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
+
+				Start(settings, engine, prParser, logger, pseudoRuntime, fileSystem);
+			}
 			
 		}
 

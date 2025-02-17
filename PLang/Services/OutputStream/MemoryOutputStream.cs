@@ -4,11 +4,21 @@ using System.Threading.Tasks;
 
 namespace PLang.Services.OutputStream
 {
-	public class MemoryOutputStream : MemoryStream, IOutputStream
+	public class MemoryOutputStream : MemoryStream, IOutputStream, IDisposable
 	{
+		MemoryStream errorStream;
+		public MemoryOutputStream()
+		{
+			errorStream = new MemoryStream();
+		}
 		public Stream Stream => this;
 
-		public Stream ErrorStream => new MemoryStream();
+		public Stream ErrorStream => errorStream;
+
+		public new void Dispose() {
+			base.Dispose();
+			errorStream.Dispose();
+		}
 
 		public Task<string> Ask(string text, string type = "text", int statusCode = 200, Dictionary<string, object>? parameters = null)
 		{

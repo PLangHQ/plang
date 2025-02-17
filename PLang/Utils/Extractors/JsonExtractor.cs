@@ -59,7 +59,7 @@ namespace PLang.Utils.Extractors
 				{
 
 					var newContent = FixMalformedJson(content);
-					var obj = JsonConvert.DeserializeObject(newContent, responseType);
+					var obj = JsonConvert.DeserializeObject(newContent, responseType, new JsonSerializerSettings() { });
 					if (obj != null) return obj;
 
 					throw new ParsingException($"Error parsing content to json. Content:\n\n{content}", ex);

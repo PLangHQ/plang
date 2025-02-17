@@ -114,7 +114,10 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 			{
 				fileSystem.Directory.CreateDirectory(dirPath);
 			}
-			File.Create(localPath).Close();
+			using (var fs = File.Create(localPath))
+			{
+				fs.Close();
+			}
 
 			if (localPath == "./.db/data.sqlite")
 			{
@@ -405,7 +408,7 @@ where the CreateDataSource would create the database and table
 
 				if (!fileSystem.File.Exists(filePath))
 				{
-					var stream = fileSystem.File.Create(filePath);
+					using var stream = fileSystem.File.Create(filePath);
 					stream.Close();
 				}
 			}

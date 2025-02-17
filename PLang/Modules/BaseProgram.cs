@@ -47,11 +47,11 @@ namespace PLang.Modules
 		private IFileAccessHandler fileAccessHandler;
 		private IAskUserHandlerFactory askUserHandlerFactory;
 		private ISettings settings;
-		public HttpListenerContext HttpListenerContext
+		public HttpListenerContext? HttpListenerContext
 		{
 			get
 			{
-				if (_listenerContext == null) throw new NullReferenceException("_listenerContext is null. It should not be null");
+				if (_listenerContext == null && context.ContainsKey(ReservedKeywords.IsHttpRequest)) throw new NullReferenceException("_listenerContext is null. It should not be null");
 
 				return _listenerContext;
 			}
@@ -92,6 +92,9 @@ namespace PLang.Modules
 			fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 		}
 
+		public IServiceContainer Container { get { return container; } }
+
+
 		public virtual async Task<IError?> Run()
 		{
 			var functions = instruction.GetFunctions();
@@ -105,7 +108,7 @@ namespace PLang.Modules
 
 		public async Task<IError?> RunFunction(GenericFunction function)
 		{
-			Dictionary<string, object?> parameterValues = null;
+			Dictionary<string, object?>? parameterValues = null;
 			this.function = function; // this is to give sub classes access to current function running.
 			try
 			{
@@ -347,19 +350,52 @@ namespace PLang.Modules
 
 		private async Task SetCachedItem(object? result)
 		{
-			if (result == null) return;
+			if (result == null || goalStep == null || goalStep.CacheHandler == null) return;
 			if (goalStep?.CacheHandler?.CacheKey == null || goalStep.CacheHandler?.TimeInMilliseconds == null) return;
 
 			long time = goalStep.CacheHandler?.TimeInMilliseconds ?? 0;
 			if (time == 0) return;
 
-			if (goalStep.CacheHandler?.CachingType == 0)
+			var cacheKey = variableHelper.LoadVariables(goalStep.CacheHandler?.CacheKey)?.ToString();
+			if (string.IsNullOrEmpty(cacheKey))
 			{
-				await appCache.Set(goalStep.CacheHandler?.CacheKey!, result, TimeSpan.FromMilliseconds((double)time));
+				cacheKey = goalStep.CacheHandler?.CacheKey;
+				if (string.IsNullOrEmpty(cacheKey)) return;
+			}
+
+			if (goalStep.CacheHandler?.Location == "disk")
+			{
+				string path;
+				if (cacheKey.AdjustPathToOs().Contains(fileSystem.Path.DirectorySeparatorChar))
+				{
+					path = fileSystem.Path.Join(fileSystem.GoalsPath, cacheKey + ".cache").AdjustPathToOs();
+				}
+				else
+				{
+					path = fileSystem.Path.Join(goal.AbsolutePrFolderPath, cacheKey + ".cache").AdjustPathToOs();
+				}
+
+				var dirName = fileSystem.Path.GetDirectoryName(path);
+				if (dirName != null && !fileSystem.Directory.Exists(dirName))
+				{
+					fileSystem.Directory.CreateDirectory(dirName);
+				}
+				if (fileSystem.File.Exists(path))
+				{
+					fileSystem.File.Delete(path);
+				}
+				fileSystem.File.WriteAllText(path, JsonConvert.SerializeObject(result));
 			}
 			else
 			{
-				await appCache.Set(goalStep.CacheHandler?.CacheKey!, result, DateTime.Now.AddMilliseconds((double)time));
+				if (goalStep.CacheHandler?.CachingType == 0)
+				{
+					await appCache.Set(cacheKey, result, TimeSpan.FromMilliseconds((double)time));
+				}
+				else
+				{
+					await appCache.Set(cacheKey, result, DateTime.Now.AddMilliseconds((double)time));
+				}
 			}
 		}
 
@@ -380,18 +416,58 @@ namespace PLang.Modules
 			}
 			else
 			{
-				var cacheKey = variableHelper.LoadVariables(goalStep.CacheHandler.CacheKey)?.ToString();
-				if (cacheKey == null) return false;
+				if (function.ReturnValues == null) return false;
 
-				var obj = await appCache.Get(cacheKey);
-				if (obj != null && function.ReturnValues != null && function.ReturnValues.Count > 0)
+				var cacheKey = variableHelper.LoadVariables(goalStep.CacheHandler?.CacheKey)?.ToString();
+				if (string.IsNullOrEmpty(cacheKey))
 				{
+					cacheKey = goalStep.CacheHandler?.CacheKey;
+					if (string.IsNullOrEmpty(cacheKey)) return false;
+				}
+
+				if (goalStep.CacheHandler?.Location == "disk")
+				{
+					string path;
+					if (cacheKey.AdjustPathToOs().Contains(fileSystem.Path.DirectorySeparatorChar))
+					{
+						path = fileSystem.Path.Join(fileSystem.GoalsPath, cacheKey + ".cache").AdjustPathToOs();
+					}
+					else
+					{
+						path = fileSystem.Path.Join(goal.AbsolutePrFolderPath, cacheKey + ".cache").AdjustPathToOs();
+					}
+
+					if (!fileSystem.File.Exists(path)) return false;
+
+					if (fileSystem.FileInfo.New(path).LastWriteTime < DateTime.Now.AddMilliseconds(-goalStep.CacheHandler.TimeInMilliseconds))
+					{
+						fileSystem.File.Delete(path);
+						return false;
+					}
+
+					var txt = fileSystem.File.ReadAllText(path);
+					var data = JsonConvert.DeserializeObject(txt);
+
 					foreach (var returnValue in function.ReturnValues)
 					{
 						logger.LogDebug($"Cache was hit for {goalStep.CacheHandler.CacheKey}");
-						memoryStack.Put(returnValue.VariableName, obj);
+						memoryStack.Put(returnValue.VariableName, data);
 					}
 					return true;
+
+				}
+				else
+				{
+					var obj = await appCache.Get(cacheKey);
+					if (obj != null && function.ReturnValues != null && function.ReturnValues.Count > 0)
+					{
+						foreach (var returnValue in function.ReturnValues)
+						{
+							logger.LogDebug($"Cache was hit for {goalStep.CacheHandler.CacheKey}");
+							memoryStack.Put(returnValue.VariableName, obj);
+						}
+						return true;
+					}
 				}
 			}
 
@@ -512,6 +588,13 @@ Be Concise";
 			}
 
 			return task.Result.error;
+		}
+
+		public T GetProgramModule<T>() where T : BaseProgram
+		{
+			var program = container.GetInstance<T>(typeof(T).FullName);
+			program.Init(container, goal, goalStep, instruction, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, HttpListenerContext);
+			return program;
 		}
 	}
 }

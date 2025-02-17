@@ -54,7 +54,7 @@ namespace PLang.Modules.ListDictionaryModule
 		}
 
 		[Description("Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToList")]
-		public async Task<List<object>> AddToList(object? value, List<object>? listInstance = null)
+		public async Task<List<object>> AddToList(object? value, List<object>? listInstance = null, bool uniqueValue = false)
 		{
 			if (value == null) return new();
 
@@ -65,17 +65,29 @@ namespace PLang.Modules.ListDictionaryModule
 				if (value.ToString().TrimStart().StartsWith("["))
 				{
 					List<dynamic> jsonList = JsonConvert.DeserializeObject<List<dynamic>>(value.ToString());
-					listInstance.AddRange(jsonList);
+					if (jsonList == null) return listInstance;
+
+					if (!uniqueValue || (uniqueValue && !listInstance.Contains(jsonList)))
+					{
+						listInstance.AddRange(jsonList);
+					}
 				}
 				else
 				{
+
 					var item = JsonConvert.DeserializeObject<dynamic>(value.ToString());
-					listInstance.Add(item);
+					if (!uniqueValue || (uniqueValue && !listInstance.Contains(item)))
+					{
+						listInstance.Add(item);
+					}
 				}
 			}
 			else
 			{
-				listInstance.Add(value);
+				if (!uniqueValue || (uniqueValue && !listInstance.Contains(value)))
+				{
+					listInstance.Add(value);
+				}
 			}
 			return listInstance;
 		}

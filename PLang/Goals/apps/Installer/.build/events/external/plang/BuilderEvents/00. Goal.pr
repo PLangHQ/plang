@@ -14,7 +14,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-02-12T14:10:35.5411651+00:00",
+      "Generated": "2025-02-17T11:38:59.7459776+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -28,7 +28,7 @@
         "EventType": "Before",
         "EventScope": "EndOfApp",
         "GoalToBindTo": {
-          "Value": "builder"
+          "Value": "*"
         },
         "GoalToCall": {
           "Value": "/events/external/plang/Builder/CheckGoals"
@@ -38,7 +38,11 @@
         "StepText": null,
         "WaitForExecution": true,
         "RunOnlyOnStartParameter": null,
-        "OnErrorContinueNextStep": false
+        "OnErrorContinueNextStep": false,
+        "ErrorKey": null,
+        "ErrorMessage": null,
+        "StatusCode": null,
+        "ExceptionType": null
       },
       "IsEvent": true,
       "Hash": null,

@@ -9,9 +9,10 @@ using System.Text;
 
 namespace PLang.Services.OutputStream
 {
-	public class UIOutputStream : IOutputStream
+	public class UIOutputStream : IOutputStream, IDisposable
 	{
 		private readonly IFileSystem fileSystem;
+		private bool disposed;
 
 		public MemoryStack? MemoryStack { get; internal set; }
 		public Goal? Goal { get; internal set; }
@@ -129,11 +130,24 @@ namespace PLang.Services.OutputStream
 			Flush();
 		}
 
+		public virtual void Dispose()
+		{
+			if (this.disposed)
+			{
+				return;
+			}
+			Stream.Dispose();
+			ErrorStream.Dispose();
+			this.disposed = true;
+		}
 
-
-
-
-
+		protected virtual void ThrowIfDisposed()
+		{
+			if (this.disposed)
+			{
+				throw new ObjectDisposedException(this.GetType().FullName);
+			}
+		}
 
 		long ReadLong(Stream stream)
 		{

@@ -17,6 +17,7 @@ using System.Data;
 using static PLang.Modules.DbModule.Builder;
 using static PLang.Modules.DbModule.ModuleSettings;
 using static PLang.Modules.DbModule.Program;
+using static PLang.Modules.UiModule.Builder;
 
 namespace PLang.Modules.DbModule
 {
@@ -82,74 +83,80 @@ DatabaseType: Define the database type. The .net library being used is {dataSour
 {typeHelper.GetMethodsAsString(typeof(Program))}
 ## functions available ends ##
 ");
-			var program = new Program(db, fileSystem, settings, llmServiceFactory, new DisableEventSourceRepository(), context, logger, typeHelper);
-			if (!string.IsNullOrEmpty(dataSource.SelectTablesAndViews))
+			using (var program = new Program(db, fileSystem, settings, llmServiceFactory, new DisableEventSourceRepository(), context, logger, typeHelper))
 			{
-
-				var result = await program.Select(dataSource.SelectTablesAndViews, new List<object>() { new ParameterInfo("Database", dataSource.DbName, "System.String") });
-
-				if (result.rows != null)
+				if (!string.IsNullOrEmpty(dataSource.SelectTablesAndViews))
 				{
-					AppendToAssistantCommand($@"## table & views in db start ##
+
+					var result = await program.Select(dataSource.SelectTablesAndViews, new List<object>() { new ParameterInfo("Database", dataSource.DbName, "System.String") });
+
+					if (result.rows != null)
+					{
+						AppendToAssistantCommand($@"## table & views in db start ##
 {JsonConvert.SerializeObject(result.rows)}
 ## table & view in db end ##");
+					}
 				}
-			}
 
-			(var instruction, buildError) = await base.Build<FunctionInfo>(goalStep);
-			if (buildError != null || instruction == null)
-			{
-				return (null, buildError ?? new StepBuilderError("Could not build Sql statement", goalStep));
-			}
-			var functionInfo = instruction.Action as FunctionInfo;
 
-			if (functionInfo.FunctionName == "Insert")
-			{
-				return await CreateInsert(goalStep, program, functionInfo, dataSource);
-			}
-			else if (functionInfo.FunctionName == "InsertAndSelectIdOfInsertedRow")
-			{
-				return await CreateInsertAndSelectIdOfInsertedRow(goalStep, program, functionInfo, dataSource);
-			}
-			else if (functionInfo.FunctionName == "Update")
-			{
-				return await CreateUpdate(goalStep, program, functionInfo, dataSource);
-			}
-			else if (functionInfo.FunctionName == "Delete")
-			{
-				return await CreateDelete(goalStep, program, functionInfo, dataSource);
-			}
-			else if (functionInfo.FunctionName == "CreateTable")
-			{
-				return await CreateTable(goalStep, program, functionInfo, dataSource);
-			}
-			else if (functionInfo.FunctionName == "Select" || functionInfo.FunctionName == "SelectOneRow")
-			{
-				return await CreateSelect(goalStep, program, functionInfo, dataSource);
-			}
+				(var instruction, buildError) = await base.Build<FunctionInfo>(goalStep);
+				if (buildError != null || instruction == null)
+				{
+					return (null, buildError ?? new StepBuilderError("Could not build Sql statement", goalStep));
+				}
+				var functionInfo = instruction.Action as FunctionInfo;
 
-			string setupCommand = "";
-			if (goalStep.Goal.GoalName == "Setup")
-			{
-				setupCommand = "Even if table, view or column exists in table, create the statement";
-			}
-			SetSystem($@"Generate the SQL statement from user command. 
+				if (functionInfo.FunctionName == "Insert")
+				{
+					return await CreateInsert(goalStep, program, functionInfo, dataSource);
+				}
+				if (functionInfo.FunctionName == "InsertOrUpdate" || functionInfo.FunctionName == "InsertOrUpdateAndSelectIdOfRow")
+				{
+					return await CreateInsertOrUpdate(goalStep, program, functionInfo, dataSource);
+				}
+				else if (functionInfo.FunctionName == "InsertAndSelectIdOfInsertedRow")
+				{
+					return await CreateInsertAndSelectIdOfInsertedRow(goalStep, program, functionInfo, dataSource);
+				}
+				else if (functionInfo.FunctionName == "Update")
+				{
+					return await CreateUpdate(goalStep, program, functionInfo, dataSource);
+				}
+				else if (functionInfo.FunctionName == "Delete")
+				{
+					return await CreateDelete(goalStep, program, functionInfo, dataSource);
+				}
+				else if (functionInfo.FunctionName == "CreateTable")
+				{
+					return await CreateTable(goalStep, program, functionInfo, dataSource);
+				}
+				else if (functionInfo.FunctionName == "Select" || functionInfo.FunctionName == "SelectOneRow")
+				{
+					return await CreateSelect(goalStep, program, functionInfo, dataSource);
+				}
+
+				string setupCommand = "";
+				if (goalStep.Goal.GoalName == "Setup")
+				{
+					setupCommand = "Even if table, view or column exists in table, create the statement";
+				}
+				SetSystem($@"Generate the SQL statement from user command. 
 The SQL statement MUST be a valid SQL statement for {functionInfo.DatabaseType}. 
 Make sure to use correct data types that match {functionInfo.DatabaseType}
 You MUST provide Parameters if SQL has @parameter.
 {setupCommand}
 ");
-			
 
-			SetAssistant($@"## functions available defined in csharp ##
+
+				SetAssistant($@"## functions available defined in csharp ##
 {typeHelper.GetMethodsAsString(typeof(Program))}
 ## functions available ends ##
 ");
 
-			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
+				await AppendTableInfo(dataSource, program, functionInfo.TableNames);
 
-			return await base.Build(goalStep);
-
+				return await base.Build(goalStep);
+			}
 		}
 
 		private async Task SetDataSourceName(GenericFunction gf)
@@ -258,7 +265,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 
 			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
 			return await base.Build(goalStep);
-			
+
 		}
 
 
@@ -394,7 +401,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 			string appendToSystem = "";
 			if (dataSource.KeepHistory)
 			{
-				appendToSystem = "SqlParameters @id MUST be type System.Int64. VariableNameOrValue=%id%";
+				appendToSystem = "SqlParameters @id MUST be type System.Int64. VariableNameOrValue=\"auto\"";
 			}
 			SetSystem(@$"Map user command to this c# function: 
 
@@ -439,14 +446,75 @@ ParameterInfo has the scheme: {""ParameterName"": string, ""VariableNameOrValue"
 			return await base.Build(goalStep);
 
 		}
+		private async Task<(Instruction?, IBuilderError?)> CreateInsertOrUpdate(GoalStep goalStep, Program program, FunctionInfo functionInfo, ModuleSettings.DataSource dataSource)
+		{
+			string eventSourcing = (dataSource.KeepHistory) ? "You MUST modify the user command by adding id to the sql statement and parameter %id%." : "";
+			string appendToSystem = "";
+			if (dataSource.KeepHistory)
+			{
+				appendToSystem = "SqlParameters @id MUST be type System.Int64. VariableNameOrValue is \"auto\"";
+			}
 
+			string functionDesc = "int InsertOrUpdate(String sql, List<object>()? SqlParameters = null) //return rows affected";
+			if (functionInfo.FunctionName == "InsertOrUpdateAndSelectIdOfRow")
+			{
+				functionDesc = "object InsertOrUpdateAndSelectIdOfRow(String sql, List<object>()? SqlParameters = null) //returns the primary key of the affected row";
+			}
+
+			SetSystem(@$"Map user command to this c# function: 
+
+## csharp function ##
+{functionDesc}
+## csharp function ##
+
+variable is defined with starting and ending %, e.g. %filePath%.
+SqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
+TypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.
+InsertOrUpdateAndSelectIdOfRow returns a value that should be written into %variable% defined by user.
+%Now% variable is type of DateTime. %Now% variable should be injected as SqlParameter 
+{appendToSystem}
+{eventSourcing}
+If table name is a variable, keep the variable in the sql statement
+You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
+You MUST provide SqlParameters if SQL has @parameter.
+integer/int should always be System.Int64. 
+");
+
+			if (functionInfo.DatabaseType.ToLower().Contains("sqlite"))
+			{
+				string selectIdRow = "";
+				if (functionInfo.FunctionName == "InsertOrUpdateAndSelectIdOfRow")
+				{
+					selectIdRow = " RETURNING id";
+				}
+
+				if (dataSource.KeepHistory)
+				{
+					SetAssistant($@"# examples for sqlite #
+""insert or update users, name=%name%(unqiue), %type%, write to %id%"" => sql: ""insert into users (id, name, type) values (@id, @name, @type) ON CONFLICT(name) DO UPDATE SET type = excluded.type {selectIdRow}""
+# examples #");
+
+				}
+				else
+				{
+					SetAssistant(@$"# examples #
+""insert into users, name=%name%(unqiue), %type%, write to %id%"" => sql: ""insert into users (name, type) values (@name, @type) ON CONFLICT(name) DO UPDATE SET type = excluded.type {selectIdRow}"",
+# examples #");
+				}
+			}
+
+			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
+
+			return await base.Build(goalStep);
+
+		}
 		private async Task<(Instruction?, IBuilderError?)> CreateInsertAndSelectIdOfInsertedRow(GoalStep goalStep, Program program, FunctionInfo functionInfo, ModuleSettings.DataSource dataSource)
 		{
 			string eventSourcing = (dataSource.KeepHistory) ? "You MUST modify the user command by adding id to the sql statement and parameter %id%." : "";
 			string appendToSystem = "";
 			if (dataSource.KeepHistory)
 			{
-				appendToSystem = "SqlParameters @id MUST be type System.Int64";
+				appendToSystem = "SqlParameters @id MUST be type System.Int64 VariableNameOrValue is \"auto\"";
 			}
 			SetSystem(@$"Map user command to this c# function: 
 

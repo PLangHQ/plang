@@ -1,34 +1,22 @@
-﻿using CsvHelper;
-using Jil;
-using LightInject;
+﻿using LightInject;
 using Microsoft.Extensions.Logging;
-using Nethereum.Contracts.QueryHandlers.MultiCall;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
-using PLang.Errors;
 using PLang.Errors.Builder;
-using PLang.Errors.Events;
 using PLang.Events;
-using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Services.LlmService;
-using PLang.Services.SettingsService;
 using PLang.Utils;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Reflection;
-using System.Runtime.Intrinsics.X86;
 using System.Text.RegularExpressions;
-using static PLang.Utils.VariableHelper;
-using System.Xml.Linq;
 
 namespace PLang.Building
 {
 
-    public interface IGoalBuilder
+	public interface IGoalBuilder
 	{
 		Task<IBuilderError?> BuildGoal(IServiceContainer container, string goalFileAbsolutePath, int errorCount = 0);
 		public List<IBuilderError> BuildErrors { get; init; }

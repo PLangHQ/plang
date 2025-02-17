@@ -88,30 +88,32 @@ namespace PLang.Services.OpenAi
 			try
 			{
 
-				var response = await httpClient.SendAsync(request);
-
-				string responseBody = await response.Content.ReadAsStringAsync();
-				if (!response.IsSuccessStatusCode)
+				using (var response = await httpClient.SendAsync(request))
 				{
-					return (null, new ServiceError(responseBody, this.GetType()));
-				}
 
-				var json = JsonConvert.DeserializeObject<dynamic>(responseBody);
-				if (json == null || json.choices == null || json.choices.Count == 0)
-				{
-					return (null, new ServiceError("Could not parse Llm response: " + responseBody, this.GetType(),
-						HelpfulLinks: "This error should not happen under normal circumstances, please report the issue https://github.com/PLangHQ/plang/issues"
-						));
-				}
+					string responseBody = await response.Content.ReadAsStringAsync();
+					if (!response.IsSuccessStatusCode)
+					{
+						return (null, new ServiceError(responseBody, this.GetType()));
+					}
 
-				question.RawResponse = json.choices[0].message.content.ToString();
+					var json = JsonConvert.DeserializeObject<dynamic>(responseBody);
+					if (json == null || json.choices == null || json.choices.Count == 0)
+					{
+						return (null, new ServiceError("Could not parse Llm response: " + responseBody, this.GetType(),
+							HelpfulLinks: "This error should not happen under normal circumstances, please report the issue https://github.com/PLangHQ/plang/issues"
+							));
+					}
 
-				var obj = Extractor.Extract(question.RawResponse, responseType);
-				if (question.caching)
-				{
-					llmCaching.SetCachedQuestion(appId, question);
+					question.RawResponse = json.choices[0].message.content.ToString();
+
+					var obj = Extractor.Extract(question.RawResponse, responseType);
+					if (question.caching)
+					{
+						llmCaching.SetCachedQuestion(appId, question);
+					}
+					return (obj, null);
 				}
-				return (obj, null);
 			}
 			catch (Exception ex)
 			{
@@ -130,6 +132,10 @@ I could not deserialize your response. This is the error. Please try to fix it.
 				}
 				return (null, new ServiceError(ex.Message, this.GetType(), Exception: ex));
 
+			} finally
+			{
+				request.Dispose();
+				httpClient.Dispose();
 			}
 		}
 

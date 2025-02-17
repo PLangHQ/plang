@@ -12,7 +12,7 @@
     <SignAssembly>False</SignAssembly>
     <FileVersion>$(Version)</FileVersion>
 		<AssemblyVersion>$(Version)</AssemblyVersion>
-
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
 		<Authors>Ingi Gauti Ragnarsson</Authors>
 		<Company>Plang</Company>
 		<PackageId>PlangLibrary</PackageId>
@@ -49,6 +49,10 @@
     <PackageReference Include="CsvHelper" Version="33.0.1" />
     <PackageReference Include="Dapper" Version="2.1.35" />
     <PackageReference Include="IdGen" Version="3.0.7" />
+    <PackageReference Include="IDisposableAnalyzers" Version="4.0.8">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Jil" Version="2.17.0" />
     <PackageReference Include="LightInject" Version="7.0.1" />
     <PackageReference Include="Markdig.Signed" Version="0.40.0" />
@@ -65,6 +69,7 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.1" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.3.0" />
     <PackageReference Include="Microsoft.Net.Http.Headers" Version="9.0.1" />
+    <PackageReference Include="Microsoft.Playwright" Version="1.50.0" />
     <PackageReference Include="MimeKit" Version="4.9.0" />
     <PackageReference Include="MiniExcel" Version="1.36.1" />
     <PackageReference Include="NCrontab.Signed" Version="3.3.3" />
@@ -130,9 +135,5 @@
     <Folder Include="Goals\modules\EnvironmentModule\llm\" />
     <Folder Include="Goals\modules\ui\runtime\" />
   </ItemGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="echo &quot;Building plang code&quot;&#xD;&#xA;&#xD;&#xA;cd &quot;$(ProjectDir)Goals&quot; &amp;&amp; plang build &gt; output.txt&#xD;&#xA;type output.txt&#xD;&#xA;&#xD;&#xA;cd &quot;$(ProjectDir)Goals/apps/Installer&quot; &amp;&amp; plang build &gt; output2.txt&#xD;&#xA;type output2.txt&#xD;&#xA;&#xD;&#xA;findstr /C:&quot;Failed to build&quot; output.txt&#xD;&#xA;&#xD;&#xA;set BuildError=%25errorlevel%25&#xD;&#xA;&#xD;&#xA;if %25BuildError%25 equ 0 (&#xD;&#xA;  exit 1&#xD;&#xA;)&#xD;&#xA;exit 0" />
-  </Target>
 
 </Project>

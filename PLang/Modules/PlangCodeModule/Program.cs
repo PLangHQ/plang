@@ -1,15 +1,19 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using LightInject;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
+using PLang.Building;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Errors;
 using PLang.Errors.Builder;
+using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Utils;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
@@ -22,12 +26,18 @@ namespace PLang.Modules.PlangCodeModule
 		private readonly ILogger logger;
 		private readonly IGoalParser goalParser;
 		private readonly IPLangFileSystem fileSystem;
+		private readonly IEngine engine;
+		private readonly IGoalBuilder goalBuilder;
+		private readonly PrParser prParser;
 
-		public Program(ILogger logger, IGoalParser goalParser, IPLangFileSystem fileSystem) : base()
+		public Program(ILogger logger, IGoalParser goalParser, IPLangFileSystem fileSystem, IEngine engine, IGoalBuilder goalBuilder, PrParser prParser) : base()
 		{
 			this.logger = logger;
 			this.goalParser = goalParser;
 			this.fileSystem = fileSystem;
+			this.engine = engine;
+			this.goalBuilder = goalBuilder;
+			this.prParser = prParser;
 		}
 
 		[Description("Get goals in file or folder. visiblity is either public|public_and_private|private")]
@@ -38,7 +48,9 @@ namespace PLang.Modules.PlangCodeModule
 			if (path.EndsWith(".goal"))
 			{
 				goals = goalParser.ParseGoalFile(path);
-			} else {
+			}
+			else
+			{
 				var files = fileSystem.Directory.GetFiles(path);
 				foreach (var file in files)
 				{
@@ -64,7 +76,7 @@ namespace PLang.Modules.PlangCodeModule
 
 					var property = goal.GetType().GetProperties().FirstOrDefault(p => p.Name.Equals(field, StringComparison.OrdinalIgnoreCase));
 					if (property != null)
-					{						
+					{
 						var value = property.GetValue(goal);
 						if (value != null)
 						{
@@ -75,7 +87,7 @@ namespace PLang.Modules.PlangCodeModule
 				}
 				array.Add(jObject);
 			}
-			
+
 
 			return array;
 		}
@@ -152,7 +164,7 @@ namespace PLang.Modules.PlangCodeModule
 			if (canBeAsync)
 			{
 				properties.Add("WaitForExecution", "{WaitForExecution:bool = true}");
-			} 
+			}
 			if (canBeCached)
 			{
 				properties.Add("CachingHandler", TypeHelper.GetJsonSchema(typeof(CachingHandler)));
@@ -161,7 +173,7 @@ namespace PLang.Modules.PlangCodeModule
 			{
 				properties.Add("ErrorHandler", TypeHelper.GetJsonSchema(typeof(ErrorHandler)));
 			}
-			
+
 			if (canBeCancelled)
 			{
 				properties.Add("CancellationHandler", TypeHelper.GetJsonSchema(typeof(CancellationHandler)));
@@ -206,6 +218,66 @@ namespace PLang.Modules.PlangCodeModule
 			return forceModuleType;
 		}
 
+		public async Task<IError?> RunStep(string prFileName)
+		{
+			if (string.IsNullOrEmpty(prFileName))
+			{
+				return new ProgramError($"prFileName is empty. I cannot run a step if I don't know what to run.", goalStep, function,
+					FixSuggestion: "Something has broke between the IDE sending the information and the runtime. Check if SendDebug.goal and the IDE is talking together correctly.");
+			}
+			var absolutePrFileName = fileSystem.Path.Join(fileSystem.GoalsPath, prFileName);
+			if (!fileSystem.File.Exists(absolutePrFileName))
+			{
+				return new ProgramError($"The file {prFileName} could not be found. I looked for it at {absolutePrFileName}", goalStep, function);
+			}
+			var startingEngine = engine.GetContext()[ReservedKeywords.StartingEngine] as IEngine;
+			if (startingEngine == null) startingEngine = engine;
+			engine.GetContext().Remove(ReservedKeywords.IsEvent);
+
+			var result = await startingEngine.RunFromStep(absolutePrFileName);
+			return result;
+		}
+		public async Task<(GoalStep?, IError?)> BuildPlangStep(GoalStep? step)
+		{
+			if (step == null)
+			{
+				return (null, new ProgramError("Step is not provided. I cannot continue to build a step that is not provided", goalStep, function));
+			}
+			if (fileSystem.File.Exists(step.AbsolutePrFilePath))
+			{
+				fileSystem.File.Delete(step.AbsolutePrFilePath);
+			}
+
+			var builder = Container.GetInstance<IBuilder>();
+			var error = await builder.Start(Container, step.Goal.AbsoluteGoalPath);
+
+			var goals = prParser.ForceLoadAllGoals();
+			var goal = goals.FirstOrDefault(p => p.AbsoluteGoalPath == step.Goal.AbsoluteGoalPath);
+			if (goal != null)
+			{
+				step = goal.GoalSteps.FirstOrDefault(p => p.Number == step.Number);
+			}
+
+			return (step, error);
+		}
+		public async Task<IError?> BuildPlangCode(Goal goal)
+		{
+			var builder = Container.GetInstance<IBuilder>();
+			var error = await builder.Start(Container, goal.AbsoluteGoalPath);
+
+			prParser.ForceLoadAllGoals();
+			return error;
+		}
+
+		public async Task StartCSharpDebugger()
+		{
+			if (Debugger.IsAttached) return;
+			
+			Debugger.Launch();
+			AppContext.SetSwitch(ReservedKeywords.CSharpDebug, true);
+			AppContext.SetSwitch(ReservedKeywords.DetailedError, true);
+
+		}
 	}
 }
 

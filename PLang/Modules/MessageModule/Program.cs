@@ -106,6 +106,8 @@ namespace PLang.Modules.MessageModule
 			context.AddOrReplace(CurrentAccountIdx, idx);
 		}
 
+		IDisposable? disconnectDisposable = null;
+		IDisposable? messageReceivedDisposable = null;
 		[Description("goalName should be prefixed by ! and be whole word with possible slash(/)")]
 		public async Task Listen(GoalToCall goalName, [HandlesVariable] string contentVariableName = "content",
 				[HandlesVariable] string senderVariableName = "sender",
@@ -129,11 +131,14 @@ namespace PLang.Modules.MessageModule
 
 			foreach (var c in client2.Clients)
 			{
-				c.Communicator.DisconnectionHappened.Subscribe(happened =>
+				disconnectDisposable?.Dispose();
+				disconnectDisposable = c.Communicator.DisconnectionHappened.Subscribe(happened =>
 				{
 					Send(c, listenFromDateTime);
 				});
-				c.Communicator.MessageReceived.Subscribe(async (ResponseMessage message) =>
+
+				messageReceivedDisposable?.Dispose();
+				messageReceivedDisposable = c.Communicator.MessageReceived.Subscribe(async (ResponseMessage message) =>
 				{
 					if (message.MessageType != System.Net.WebSockets.WebSocketMessageType.Text) return;
 					if (!message.Text.StartsWith("[\"EVENT\"")) return;
@@ -214,99 +219,100 @@ namespace PLang.Modules.MessageModule
 			var privateKey = GetPrivateKey(ev.RecipientPubkey);
 			if (privateKey == null) return null;
 
-			var container = new ServiceContainer();
-			container.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, askUserHandlerFactory, outputStreamFactory, outputSystemStreamFactory, errorHandlerFactory, errorSystemHandlerFactory);
-
-			var content = ev.DecryptContent(privateKey);
-			var hash = ev.CreatedAt.ToString().ComputeHash().Hash + content.ComputeHash().Hash + ev.Pubkey.ComputeHash().Hash;
-
-			var settings = container.GetInstance<ISettings>();
-			lock (_lock)
+			using (var container = new ServiceContainer())
 			{
-				//For preventing multiple calls on same message. I don't think this is the correct way, but only way I saw.
-				var hashOfLastMessage = settings.GetOrDefault(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_hash_" + publicKey, "");
-				if (hashOfLastMessage == hash)
+				container.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, askUserHandlerFactory, outputStreamFactory, outputSystemStreamFactory, errorHandlerFactory, errorSystemHandlerFactory);
+
+				var content = ev.DecryptContent(privateKey);
+				var hash = ev.CreatedAt.ToString().ComputeHash().Hash + content.ComputeHash().Hash + ev.Pubkey.ComputeHash().Hash;
+
+				var settings = container.GetInstance<ISettings>();
+				lock (_lock)
 				{
-					return null;
+					//For preventing multiple calls on same message. I don't think this is the correct way, but only way I saw.
+					var hashOfLastMessage = settings.GetOrDefault(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_hash_" + publicKey, "");
+					if (hashOfLastMessage == hash)
+					{
+						return null;
+					}
+
+					var memoryCache = System.Runtime.Caching.MemoryCache.Default;
+					if (memoryCache.Contains("NostrId_" + hash)) return null;
+					memoryCache.Add("NostrId_" + hash, true, DateTimeOffset.UtcNow.AddMinutes(5));
 				}
 
-				var memoryCache = System.Runtime.Caching.MemoryCache.Default;
-				if (memoryCache.Contains("NostrId_" + hash)) return null;
-				memoryCache.Add("NostrId_" + hash, true, DateTimeOffset.UtcNow.AddMinutes(5));
-			}
-
-			var parameters = new Dictionary<string, object?>();
-			if (JsonHelper.IsJson(content, out object? parsedObject))
-			{
-				parameters.Add(contentVariableName.Replace("%", ""), parsedObject);
-			}
-			else
-			{
-				parameters.Add(contentVariableName.Replace("%", ""), content);
-			}
-			parameters.Add(eventVariableName, ev);
-			parameters.Add(senderVariableName, ev.Pubkey);
-
-			var tags = ev.Tags;
-
-			if (ev.CreatedAt != null)
-			{
-				var dt = settings.GetOrDefault(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_" + publicKey, DateTimeOffset.MinValue);
-				if (ev.CreatedAt.Value < dt)
+				var parameters = new Dictionary<string, object?>();
+				if (JsonHelper.IsJson(content, out object? parsedObject))
 				{
-					return null;
+					parameters.Add(contentVariableName.Replace("%", ""), parsedObject);
+				}
+				else
+				{
+					parameters.Add(contentVariableName.Replace("%", ""), content);
+				}
+				parameters.Add(eventVariableName, ev);
+				parameters.Add(senderVariableName, ev.Pubkey);
+
+				var tags = ev.Tags;
+
+				if (ev.CreatedAt != null)
+				{
+					var dt = settings.GetOrDefault(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_" + publicKey, DateTimeOffset.MinValue);
+					if (ev.CreatedAt.Value < dt)
+					{
+						return null;
+					}
+
+					settings.Set<DateTimeOffset>(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_" + publicKey, new DateTimeOffset(ev.CreatedAt.Value));
+					settings.Set(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_hash_" + publicKey, hash);
+				}
+				Dictionary<string, object> validationKeyValues = new Dictionary<string, object>();
+				foreach (var tag in tags)
+				{
+					if (tag.AdditionalData.Length == 1)
+					{
+						validationKeyValues.Add(tag.TagIdentifier, tag.AdditionalData[0]);
+					}
 				}
 
-				settings.Set<DateTimeOffset>(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_" + publicKey, new DateTimeOffset(ev.CreatedAt.Value));
-				settings.Set(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_hash_" + publicKey, hash);
-			}
-			Dictionary<string, object> validationKeyValues = new Dictionary<string, object>();
-			foreach (var tag in tags)
-			{
-				if (tag.AdditionalData.Length == 1)
+				var identites = signingService.VerifySignature(content, "EncryptedDm", ev.Pubkey, validationKeyValues).Result;
+				parameters.AddOrReplace(identites);
+
+				engine = container.GetInstance<IEngine>();
+				engine.Init(container);
+
+				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
+				var task = pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName, parameters, goal);
+				if (task == null) return null;
+
+
+				try
 				{
-					validationKeyValues.Add(tag.TagIdentifier, tag.AdditionalData[0]);
+					await task;
 				}
-			}
+				catch { }
 
-			var identites = signingService.VerifySignature(content, "EncryptedDm", ev.Pubkey, validationKeyValues).Result;
-			parameters.AddOrReplace(identites);
+				var error = TaskHasError(task);
 
-			engine = container.GetInstance<IEngine>();
-			engine.Init(container);
-
-			var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
-			var task = pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName, parameters, goal);
-			if (task == null) return null;
-
-
-			try
-			{
-				await task;
-			}
-			catch { }
-
-			var error = TaskHasError(task);
-
-			if (error != null)
-			{
-				var handler = errorHandlerFactory.CreateHandler();
-				(var isHandled, var handlerError) = await handler.Handle(error);
-				if (!isHandled)
+				if (error != null)
 				{
-					await handler.ShowError(error, goalStep);
+					var handler = errorHandlerFactory.CreateHandler();
+					(var isHandled, var handlerError) = await handler.Handle(error);
+					if (!isHandled)
+					{
+						await handler.ShowError(error, goalStep);
+					}
+					error = ErrorHelper.GetMultipleError(error, handlerError);
 				}
-				error = ErrorHelper.GetMultipleError(error, handlerError);
+
+				var os = outputStreamFactory.CreateHandler();
+				if (os is UIOutputStream)
+				{
+					((UIOutputStream)os).Flush();
+				}
+				return error;
+
 			}
-
-			var os = outputStreamFactory.CreateHandler();
-			if (os is UIOutputStream)
-			{
-				((UIOutputStream)os).Flush();
-			}
-			return error;
-
-
 
 
 		}
@@ -378,6 +384,9 @@ namespace PLang.Modules.MessageModule
 		public void Dispose()
 		{
 			context.Remove(CurrentAccountIdx);
+
+			disconnectDisposable?.Dispose();
+			messageReceivedDisposable?.Dispose();
 		}
 
 		private NostrKey GetCurrentKey()

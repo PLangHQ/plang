@@ -11,13 +11,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 
 namespace PLang.Modules.TerminalModule
 {
 	[Description("Terminal/Console access to run external applications")]
-	public class Program : BaseProgram, IDisposable
+	public class Program : BaseProgram
 	{
 		private readonly ILogger logger;
 		private readonly ISettings settings;
@@ -48,7 +49,7 @@ namespace PLang.Modules.TerminalModule
 		{
 			if (string.IsNullOrWhiteSpace(pathToWorkingDirInTerminal))
 			{
-				pathToWorkingDirInTerminal = Goal.AbsoluteGoalFolderPath;
+				pathToWorkingDirInTerminal = (Goal != null) ? Goal.AbsoluteGoalFolderPath : fileSystem.GoalsPath;
 			}
 			else
 			{
@@ -86,7 +87,7 @@ namespace PLang.Modules.TerminalModule
 			// Determine the OS and set the appropriate command interpreter
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
-				if (command.Contains("|") || command.Contains(">"))
+				if (command.Contains(".ps") || command.Contains("|") || command.Contains(">"))
 				{
 					startInfo.FileName = "powershell.exe";
 				}
@@ -112,136 +113,138 @@ namespace PLang.Modules.TerminalModule
 			var dict = new ReturnDictionary<string, object?>();
 
 			// Start the process
-			Process process = new Process { StartInfo = startInfo };
-
-			StringBuilder? dataOutput = new();
-			StringBuilder? errorOutput = new();
-
-
-
-
-			process.OutputDataReceived += (sender, e) =>
+			using (Process process = new Process { StartInfo = startInfo })
 			{
-				//logger.LogInformation(e.Data);
-				if (string.IsNullOrWhiteSpace(e.Data)) return;
 
-				if (dataStreamDelta != null)
+				StringBuilder? dataOutput = new();
+				StringBuilder? errorOutput = new();
+
+
+
+
+				process.OutputDataReceived += (sender, e) =>
 				{
-					memoryStack.Put(dataStreamDelta, e.Data);
-				}
+					//logger.LogInformation(e.Data);
+					if (string.IsNullOrWhiteSpace(e.Data)) return;
 
-				dataOutput.Append(e.Data + Environment.NewLine);
-
-				logger.LogTrace(e.Data);
-			};
-
-
-			process.ErrorDataReceived += (sender, e) =>
-			{
-				if (string.IsNullOrWhiteSpace(e.Data)) return;
-
-				if (!string.IsNullOrEmpty(debugErrorStreamDelta))
-				{
-					memoryStack.Put(debugErrorStreamDelta, e.Data);
-				}
-				errorOutput.Append(e.Data + Environment.NewLine);
-
-				logger.LogTrace(e.Data);
-
-			};
-
-			process.Exited += (sender, e) =>
-			{
-				//logger.LogDebug($"Exited");
-			};
-
-			process.Start();
-
-			process.BeginOutputReadLine(); // Start asynchronous read of output
-			process.BeginErrorReadLine(); // Start asynchronous read of error
-
-			// Get the input stream
-			StreamWriter sw = process.StandardInput;
-
-			// Write the command to run the application with parameters
-
-			sw.WriteLine(command);
-
-			sw.Close(); // Close the input stream to signal completion
-			if (goalStep.WaitForExecution)
-			{
-				await process.WaitForExitAsync();
-			}
-			else
-			{
-				KeepAlive(process, "Process");
-			}
-
-			if (!string.IsNullOrEmpty(dataOutputVariable) && dataOutput.Length > 0)
-			{
-				Dictionary<string, object> keyValuePairs = new Dictionary<string, object>();
-				if (keyValueListSeperator != null)
-				{
-
-					string[] lines = dataOutput.ToString().Split(['\r', '\n']);
-					foreach (var line in lines)
+					if (dataStreamDelta != null)
 					{
-						if (line.Contains(keyValueListSeperator + " ") || line.Contains(keyValueListSeperator + "\t"))
+						memoryStack.Put(dataStreamDelta, e.Data);
+					}
+
+					dataOutput.Append(e.Data + Environment.NewLine);
+
+					logger.LogTrace(e.Data);
+				};
+
+
+				process.ErrorDataReceived += (sender, e) =>
+				{
+					if (string.IsNullOrWhiteSpace(e.Data)) return;
+
+					if (!string.IsNullOrEmpty(debugErrorStreamDelta))
+					{
+						memoryStack.Put(debugErrorStreamDelta, e.Data);
+					}
+					errorOutput.Append(e.Data + Environment.NewLine);
+
+					logger.LogTrace(e.Data);
+
+				};
+
+				process.Exited += (sender, e) =>
+				{
+					//logger.LogDebug($"Exited");
+				};
+
+				process.Start();
+				process.StartInfo.Environment["LANG"] = "en_US.UTF-8";
+				process.BeginOutputReadLine(); // Start asynchronous read of output
+				process.BeginErrorReadLine(); // Start asynchronous read of error
+
+				// Get the input stream
+				StreamWriter sw = process.StandardInput;
+
+				// Write the command to run the application with parameters
+
+				sw.WriteLine(command);
+
+				sw.Close(); // Close the input stream to signal completion
+				if (goalStep.WaitForExecution)
+				{
+					await process.WaitForExitAsync();
+				}
+				else
+				{
+					KeepAlive(process, "Process");
+				}
+
+				if (!string.IsNullOrEmpty(dataOutputVariable) && dataOutput.Length > 0)
+				{
+					Dictionary<string, object> keyValuePairs = new Dictionary<string, object>();
+					if (keyValueListSeperator != null)
+					{
+
+						string[] lines = dataOutput.ToString().Split(['\r', '\n']);
+						foreach (var line in lines)
 						{
-							var data = line.Split(keyValueListSeperator, StringSplitOptions.RemoveEmptyEntries);
-							if (data.Length > 1)
+							if (line.Contains(keyValueListSeperator + " ") || line.Contains(keyValueListSeperator + "\t"))
 							{
-								string key = data[0].Trim();
-								if (keyValuePairs.ContainsKey(key))
+								var data = line.Split(keyValueListSeperator, StringSplitOptions.RemoveEmptyEntries);
+								if (data.Length > 1)
 								{
-									var objValue = keyValuePairs[key];
-									List<object> list = new List<object>(); ;
-									if (objValue is IList tmpList)
+									string key = data[0].Trim();
+									if (keyValuePairs.ContainsKey(key))
 									{
-										foreach (var item in tmpList)
+										var objValue = keyValuePairs[key];
+										List<object> list = new List<object>(); ;
+										if (objValue is IList tmpList)
 										{
-											list.Add(item);
+											foreach (var item in tmpList)
+											{
+												list.Add(item);
+											}
 										}
-									} else
-									{
-										list.Add(objValue);
+										else
+										{
+											list.Add(objValue);
+										}
+										list.Add(string.Join(":", data.Skip(1)).Trim());
+										keyValuePairs.AddOrReplace(key, list);
 									}
-									list.Add(string.Join(":", data.Skip(1)).Trim());
-									keyValuePairs.AddOrReplace(key, list);
-								}
-								else
-								{
-									keyValuePairs.Add(key, string.Join(":", data.Skip(1)).Trim());
+									else
+									{
+										keyValuePairs.Add(key, string.Join(":", data.Skip(1)).Trim());
+									}
 								}
 							}
 						}
+						if (keyValuePairs.Count > 0)
+						{
+							memoryStack.Put(dataOutputVariable, keyValuePairs);
+						}
 					}
-					if (keyValuePairs.Count > 0)
+
+					if (keyValuePairs.Count == 0)
 					{
-						memoryStack.Put(dataOutputVariable, keyValuePairs);
+
+						memoryStack.Put(dataOutputVariable, RemoveLastLine(dataOutput.ToString()));
 					}
+
 				}
-				
-				if (keyValuePairs.Count == 0)
+
+				if (!string.IsNullOrEmpty(errorDebugInfoOutputVariable))
 				{
-
-					memoryStack.Put(dataOutputVariable, RemoveLastLine(dataOutput.ToString()));
+					memoryStack.Put(errorDebugInfoOutputVariable, errorOutput.ToString());
 				}
-				
-			}
+				else if (errorOutput.Length > 0)
+				{
+					logger.LogError("No error variable defined so error is written to error log");
+					logger.LogError(errorOutput.ToString());
+				}
 
-			if (!string.IsNullOrEmpty(errorDebugInfoOutputVariable))
-			{
-				memoryStack.Put(errorDebugInfoOutputVariable, errorOutput.ToString());
+				logger.LogTrace("Done with TerminalModule");
 			}
-			else if (errorOutput.Length > 0)
-			{
-				logger.LogError("No error variable defined so error is written to error log");
-				logger.LogError(errorOutput.ToString());
-			}
-
-			logger.LogTrace("Done with TerminalModule");
-
 
 		}
 
@@ -262,10 +265,6 @@ namespace PLang.Modules.TerminalModule
 			return string.Join(Environment.NewLine, lines, 0, lines.Length - 1);
 		}
 
-		public void Dispose()
-		{
-			throw new NotImplementedException();
-		}
 	}
 }
 

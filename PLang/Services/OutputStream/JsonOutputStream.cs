@@ -38,13 +38,13 @@ namespace PLang.Services.OutputStream
 				{
 					var url = parameters["url"];
 					parameters.Remove("url");
-					
+
 					var askObj = new
 					{
-						type= "ask",
+						type = "ask",
 						statusCode = statusCode,
 						url = url,
-						body = text, 
+						body = text,
 						parameters = parameters
 					};
 					/*
@@ -63,7 +63,6 @@ namespace PLang.Services.OutputStream
 
 		public void Dispose()
 		{
-			httpContext.Response.OutputStream.Close();
 			memoryStream.Dispose();
 		}
 
@@ -108,9 +107,9 @@ namespace PLang.Services.OutputStream
 			memoryStream.Write(buffer, 0, buffer.Length);
 			//httpContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
 
-			
+
 			return;
-			
+
 		}
 
 		public async Task WriteToBuffer(object? obj, string type, int httpStatusCode = 200)
@@ -124,7 +123,7 @@ namespace PLang.Services.OutputStream
 
 			byte[] buffer = Encoding.UTF8.GetBytes(content);
 			httpContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
-			
+
 
 		}
 	}

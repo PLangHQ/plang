@@ -47,32 +47,34 @@ namespace PLang
 		{
 			AppContext.SetSwitch("InternalGoalRun", true);
 			AppContext.SetSwitch("Runtime", true);
-			var container = new ServiceContainer();
-			container.RegisterForPLangConsole(Environment.CurrentDirectory, System.IO.Path.DirectorySeparatorChar.ToString());
-
-			var engine = container.GetInstance<IEngine>();
-			engine.Init(container);
-
-			if (parameters != null)
+			using (var container = new ServiceContainer())
 			{
-				foreach (var param in parameters)
+				container.RegisterForPLangConsole(Environment.CurrentDirectory, System.IO.Path.DirectorySeparatorChar.ToString());
+
+				var engine = container.GetInstance<IEngine>();
+				engine.Init(container);
+
+				if (parameters != null)
 				{
-					engine.GetMemoryStack().Put(param.Key, param.Value);
+					foreach (var param in parameters)
+					{
+						engine.GetMemoryStack().Put(param.Key, param.Value);
+					}
 				}
+				var prParser = container.GetInstance<PrParser>();
+				var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
+				var fileSystem = container.GetInstance<IPLangFileSystem>();
+
+				await prParser.GoalFromGoalsFolder(fileSystem.RootDirectory, fileAccessHandler);
+
+				var allGoals = prParser.GetAllGoals();
+				var goal = allGoals.FirstOrDefault(p => p.RelativeGoalPath.Equals(goalName.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
+				if (goal == null) return (engine, new Error($"Goal {goalName} could not be found"));
+
+				var error = await engine.RunGoal(goal);
+				AppContext.SetSwitch("InternalGoalRun", false);
+				return (engine, error);
 			}
-			var prParser = container.GetInstance<PrParser>();
-			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
-			var fileSystem = container.GetInstance<IPLangFileSystem>();
-
-			await prParser.GoalFromGoalsFolder(fileSystem.RootDirectory, fileAccessHandler);
-
-			var allGoals = prParser.GetAllGoals();
-			var goal = allGoals.FirstOrDefault(p => p.RelativeGoalPath.Equals(goalName.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
-			if (goal == null) return (engine, new Error($"Goal {goalName} could not be found"));
-
-			var error = await engine.RunGoal(goal);
-			AppContext.SetSwitch("InternalGoalRun", false);
-			return (engine, error);
 		}
 
 		public async Task Execute(string[] args, ExecuteType executeType)
@@ -202,25 +204,29 @@ namespace PLang
 			// Add event handlers.
 			watcher.Changed += async (object sender, FileSystemEventArgs e) =>
 			{
-				var container = new ServiceContainer();
-				container.RegisterForPLangConsole(Environment.CurrentDirectory, Environment.CurrentDirectory);
+				using (var container = new ServiceContainer())
+				{
+					container.RegisterForPLangConsole(Environment.CurrentDirectory, Environment.CurrentDirectory);
 
-				var pLanguage = new Executor(container);
-				await pLanguage.Build();
+					var pLanguage = new Executor(container);
+					await pLanguage.Build();
 
-				prParser.ForceLoadAllGoals();
+					prParser.ForceLoadAllGoals();
+				}
 			};
 
 
 			watcher.Renamed += async (object sender, RenamedEventArgs e) =>
 			{
-				var container = new ServiceContainer();
-				container.RegisterForPLangConsole(Environment.CurrentDirectory, Environment.CurrentDirectory);
+				using (var container = new ServiceContainer())
+				{
+					container.RegisterForPLangConsole(Environment.CurrentDirectory, Environment.CurrentDirectory);
 
-				var pLanguage = new Executor(container);
-				await pLanguage.Build();
+					var pLanguage = new Executor(container);
+					await pLanguage.Build();
 
-				prParser.ForceLoadAllGoals();
+					prParser.ForceLoadAllGoals();
+				}
 			}; ;
 
 			// Begin watching.

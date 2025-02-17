@@ -105,7 +105,9 @@ namespace PLang.Building.Model
 		public bool IsEvent { get; set; } = false;
 		public string Hash { get; set; }
 		public string BuilderVersion { get; set; }
-
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+		[System.Text.Json.Serialization.JsonIgnore]
 		public object? PrFile { get; set; }
 	}
 }

@@ -177,6 +177,7 @@ Do you accept that?
 You can answer
 - yes/y
 - no/n
+- always/a
 
 or in more natural language, e.g. 
 - yes for 30 days 

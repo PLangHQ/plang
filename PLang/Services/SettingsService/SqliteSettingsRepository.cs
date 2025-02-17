@@ -145,7 +145,9 @@ namespace PLang.Services.SettingsService
 						File.Delete(dbPath);
 					}
 				}
-				File.Create(dbPath).Close();
+				using (var fs = File.Create(dbPath)) { 
+					fs.Close();
+				}
 			}
 
 			using (IDbConnection connection = new SqliteConnection(datasource))

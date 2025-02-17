@@ -16,7 +16,7 @@ namespace PLang.Services.EventSourceService
 	{
 		public DataSource DataSource { get; set; }
 
-		public async Task<int> Add(IDbConnection dbConnection, string sql, DynamicParameters? parameters, IDbTransaction? transaction = null)
+		public async Task<long> Add(IDbConnection dbConnection, string sql, DynamicParameters? parameters, IDbTransaction? transaction = null, bool returnId = false)
 		{
 			return 0;
 		}
@@ -49,7 +49,7 @@ namespace PLang.Services.EventSourceService
 		public record EventData(string ConnectionString, string Sql, Dictionary<string, object>? Parameters);
 
 
-		public async Task<int> Add(IDbConnection dbConnection, string sql, DynamicParameters? parameters, IDbTransaction? transaction = null)
+		public async Task<long> Add(IDbConnection dbConnection, string sql, DynamicParameters? parameters, IDbTransaction? transaction = null, bool returnId = false)
 		{
 			var parameterValues = new Dictionary<string, object>();
 			if (parameters != null)
@@ -77,11 +77,19 @@ namespace PLang.Services.EventSourceService
 				while (!(await InsertIntoEvent(dbConnection, eventId, encryptedData, pkey, transaction)))
 				{
 					++eventId;
-				}			
-				
-				var result = await dbConnection.ExecuteAsync(sql, parameters, transaction);
+				}
+				if (returnId)
+				{
+					var result = await dbConnection.QuerySingleOrDefaultAsync<long>(sql, parameters, transaction);
 
-				return result;
+					return result;
+				}
+				else
+				{
+					var result = await dbConnection.ExecuteAsync(sql, parameters, transaction);
+
+					return result;
+				}
 
 			}
 			catch (Exception ex)

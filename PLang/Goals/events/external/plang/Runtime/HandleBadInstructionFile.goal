@@ -1,0 +1,7 @@
+HandleBadInstructionFile
+- ask user "The .pr file for '%!error.Step.Text%' is not valid, would you like to rebuild? (y|n)", options "y|n", write to %answer%
+- if %answer% = "y" then
+    - rebuild plang step %!error.Step%, write to %step%
+    - [plang] run step %step.RelativePrPath%
+- if %answer% == "n" then
+    - write out %!error.ToString()%

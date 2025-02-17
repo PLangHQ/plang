@@ -31,15 +31,16 @@ namespace PLang.Events
 
     }
 
-    // before each goal in api/* call !DoStuff
-    // before each step call !Debugger.SendInfo
-    // after Run.goal, call !AfterRun
-    public record EventBinding(string EventType, string EventScope, GoalToCall GoalToBindTo, GoalToCall GoalToCall,
+	// before each goal in api/* call !DoStuff
+	// before each step call !Debugger.SendInfo
+	// after Run.goal, call !AfterRun
+	public record EventBinding(string EventType, string EventScope, GoalToCall GoalToBindTo, GoalToCall GoalToCall,
         [property: DefaultValue("false")] bool IncludePrivate = false,
         int? StepNumber = null, string? StepText = null,
-        [property: DefaultValue("true")] bool WaitForExecution = true,
+		[property: DefaultValue("true")] bool WaitForExecution = true,
         [property: DefaultValue(null)] string[]? RunOnlyOnStartParameter = null,
-        bool OnErrorContinueNextStep = false);
+        bool OnErrorContinueNextStep = false,
+		string? ErrorKey = null, string? ErrorMessage = null, int? StatusCode = null, string? ExceptionType = null);
 
     //TODO: Need to create EventBuildBinding, the reason is that it should declare if step should continue to build code or not
     // if step or build event fails, the default behaviour is to build the next step. 

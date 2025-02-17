@@ -208,7 +208,7 @@ namespace PLang.Modules.DbModule
 					if (isInsert && parameterName == "id" && eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 					{
 						var id = p.VariableNameOrValue;
-						if (string.IsNullOrEmpty(p.VariableNameOrValue.ToString()))
+						if (id.ToString() == "auto" || string.IsNullOrEmpty(p.VariableNameOrValue.ToString()))
 						{
 							var generator = new IdGenerator(1);
 							id = generator.ElementAt(0);
@@ -412,7 +412,7 @@ namespace PLang.Modules.DbModule
 		}
 
 
-		public async Task<(int, IError?)> Execute(string sql, string? dataSourceName = null)
+		public async Task<(long, IError?)> Execute(string sql, string? dataSourceName = null)
 		{
 			try
 			{
@@ -421,7 +421,7 @@ namespace PLang.Modules.DbModule
 					await SetDataSourceName(dataSourceName);
 				}
 
-				int rowsAffected = 0;
+				long rowsAffected = 0;
 				var prepare = Prepare(sql, null);
 				if (prepare.error != null)
 				{
@@ -461,7 +461,7 @@ namespace PLang.Modules.DbModule
 			logger.LogWarning($"Had error running Setup ({goalStep.Text}) but will continue. Error message:{ex.Message}");
 		}
 
-		public async Task<(int, IError?)> CreateTable(string sql, string? dataSourceName = null)
+		public async Task<(long, IError?)> CreateTable(string sql, string? dataSourceName = null)
 		{
 
 			return await Execute(sql, dataSourceName);
@@ -516,8 +516,9 @@ namespace PLang.Modules.DbModule
 			{
 				return (new(), prep.error);
 			}
+			logger.LogDebug($"Sql: {prep.sql} - Parameters:{prep.param}");
 			var rows = (await prep.connection.QueryAsync<dynamic>(prep.sql, prep.param)).ToList();
-
+			logger.LogDebug($"Rows: {rows.Count}");
 			Done(prep.connection);
 
 			return (rows == null) ? (new(), null) : (rows, null);
@@ -534,7 +535,7 @@ namespace PLang.Modules.DbModule
 			return type.IsValueType && !type.IsPrimitive ? Activator.CreateInstance(type) : null;
 		}
 
-		public async Task<(int, IError?)> Update(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
+		public async Task<(long, IError?)> Update(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
 		{
 			if (!string.IsNullOrEmpty(dataSourceName))
 			{
@@ -545,7 +546,7 @@ namespace PLang.Modules.DbModule
 			{
 				return (0, prepare.error);
 			}
-			int result;
+			long result;
 			if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 			{
 				result = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
@@ -558,13 +559,13 @@ namespace PLang.Modules.DbModule
 			return (result, null);
 		}
 
-		public async Task<(int, IError?)> Delete(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
+		public async Task<(long, IError?)> Delete(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
 		{
 			if (!string.IsNullOrEmpty(dataSourceName))
 			{
 				await SetDataSourceName(dataSourceName);
 			}
-			int rowsAffected;
+			long rowsAffected;
 			var prepare = Prepare(sql, SqlParameters);
 			if (prepare.error != null)
 			{
@@ -582,14 +583,27 @@ namespace PLang.Modules.DbModule
 			return (rowsAffected, null);
 		}
 
+		[Description("Insert or update table(Upsert). Will return affected row count")]
+		public async Task<(long rowsAffected, IError? error)> InsertOrUpdate(string sql, List<object>? SqlParameters = null, string? dataSourceName = null) { 
+			return await Insert(sql, SqlParameters, dataSourceName);
+		}
+
+		[Description("Insert or update table(Upsert). Will return the primary key of the affected row")]
+		public async Task<(object? rowsAffected, IError? error)> InsertOrUpdateAndSelectIdOfRow(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
+		{
+			return await InsertAndSelectIdOfInsertedRow(sql, SqlParameters, dataSourceName);
+		}
+
+
+
 		[Description("Insert into table. Will return affected row count")]
-		public async Task<(int rowsAffected, IError? error)> Insert(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
+		public async Task<(long rowsAffected, IError? error)> Insert(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
 		{
 			if (!string.IsNullOrEmpty(dataSourceName))
 			{
 				await SetDataSourceName(dataSourceName);
 			}
-			int rowsAffected = 0;
+			long rowsAffected = 0;
 			var prepare = Prepare(sql, SqlParameters, true);
 			if (prepare.error != null)
 			{
@@ -630,6 +644,7 @@ namespace PLang.Modules.DbModule
 			{
 				await SetDataSourceName(dataSourceName);
 			}
+
 			var prepare = Prepare(sql, SqlParameters, true);
 			if (prepare.error != null)
 			{
@@ -644,8 +659,12 @@ namespace PLang.Modules.DbModule
 			}
 			else
 			{
-				await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
+				var id = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, returnId: true);
 				Done(prepare.connection);
+				if (id != 0)
+				{
+					return (id, null);
+				}
 
 				if (prepare.param.ParameterNames.Contains("id"))
 				{
@@ -704,7 +723,7 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("Insert a list(bulk) into database, return number of rows inserted. columnMapping maps which variable should match with a column. User will define that he is using bulk insert.")]
-		public async Task<(int, IError?)> InsertBulk(string tableName, List<object> itemsToInsert, [HandlesVariable] Dictionary<string, object>? columnMapping = null, bool ignoreContraintOnInsert = false)
+		public async Task<(long, IError?)> InsertBulk(string tableName, List<object> itemsToInsert, [HandlesVariable] Dictionary<string, object>? columnMapping = null, bool ignoreContraintOnInsert = false)
 		{
 			if (itemsToInsert.Count == 0) return (0, null);
 
@@ -738,7 +757,7 @@ namespace PLang.Modules.DbModule
 			string? sql = GetBulkSql(tableName, columnMapping, itemsToInsert, ignoreContraintOnInsert, dataSource);
 			if (sql == null) return (0, null);
 
-			int affectedRows = 0;
+			long affectedRows = 0;
 			var generator = new IdGenerator(1);
 			var id = generator.ElementAt(0);
 			IDbTransaction? transaction = context.ContainsKey(DbTransactionContextKey) ? context[DbTransactionContextKey] as IDbTransaction : null;

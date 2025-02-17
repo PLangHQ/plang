@@ -122,44 +122,48 @@ namespace PLang.Modules.HttpModule
 			using (var httpClient = httpClientFactory.CreateClient())
 			using (var fileStream = File.OpenRead(filePath))
 			{
-				var request = new HttpRequestMessage(new HttpMethod(httpMethod), requestUrl.ToString());
-
-				
-				if (requestHeaders != null)
+				using (var request = new HttpRequestMessage(new HttpMethod(httpMethod), requestUrl.ToString()))
 				{
-					foreach (var header in requestHeaders)
+
+
+					if (requestHeaders != null)
 					{
-						var value = variableHelper.LoadVariables(header.Value).ToString();
-						request.Headers.TryAddWithoutValidation(header.Key, value);
+						foreach (var header in requestHeaders)
+						{
+							var value = variableHelper.LoadVariables(header.Value).ToString();
+							request.Headers.TryAddWithoutValidation(header.Key, value);
+						}
 					}
-				}
-				request.Headers.UserAgent.ParseAdd("plang v0.1");
-				var content = new StreamContent(fileStream);
+					request.Headers.UserAgent.ParseAdd("plang v0.1");
+					var content = new StreamContent(fileStream);
 
-				content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-				if (contentHeaders != null)
-				{
-					foreach (var header in contentHeaders)
+					content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+					if (contentHeaders != null)
 					{
-						var value = variableHelper.LoadVariables(header.Value).ToString();
-						content.Headers.TryAddWithoutValidation(header.Key, value);
+						foreach (var header in contentHeaders)
+						{
+							var value = variableHelper.LoadVariables(header.Value).ToString();
+							content.Headers.TryAddWithoutValidation(header.Key, value);
+						}
 					}
-				}
 
-				request.Content = content;
-				var response = await httpClient.SendAsync(request);
+					request.Content = content;
+					using (var response = await httpClient.SendAsync(request))
+					{
 
-				if (response.IsSuccessStatusCode)
-				{
+						if (response.IsSuccessStatusCode)
+						{
 
-					string responseBody = await response.Content.ReadAsStringAsync();
-					return (responseBody, null);
-				}
-				else
-				{
-					
-					var errorDetails = await response.Content.ReadAsStringAsync();
-					return (null, new ProgramError(errorDetails, goalStep, function));
+							string responseBody = await response.Content.ReadAsStringAsync();
+							return (responseBody, null);
+						}
+						else
+						{
+
+							var errorDetails = await response.Content.ReadAsStringAsync();
+							return (null, new ProgramError(errorDetails, goalStep, function));
+						}
+					}
 				}
 			}
 		}
@@ -179,106 +183,110 @@ namespace PLang.Modules.HttpModule
 					return (null, new ProgramError("url cannot be empty", goalStep, function));
 				}
 
-				var request = new HttpRequestMessage(new HttpMethod(httpMethod), requestUrl.ToString());
+				using (var request = new HttpRequestMessage(new HttpMethod(httpMethod), requestUrl.ToString())) {
 
-				using (var content = new MultipartFormDataContent())
-				{
-					Stream? fileStream = null;
-					var properties = JObject.Parse(data.ToString()).Properties();
-					foreach (var property in properties)
+					using (var content = new MultipartFormDataContent())
 					{
-						if (property.Value == null) continue;
-
-						if (property.Value.ToString().StartsWith("@"))
+						Stream? fileStream = null;
+						var properties = JObject.Parse(data.ToString()).Properties();
+						foreach (var property in properties)
 						{
-							string fileName = property.Value.ToString().Substring(1);
-							string typeValue = null;
-							fileName = variableHelper.LoadVariables(fileName).ToString();
+							if (property.Value == null) continue;
 
-							if (fileName != null && fileName.Contains(";"))
+							if (property.Value.ToString().StartsWith("@"))
 							{
-								string type = fileName.Substring(fileName.IndexOf(";") + 1);
-								typeValue = type.Substring(type.IndexOf("=") + 1);
+								string fileName = property.Value.ToString().Substring(1);
+								string typeValue = null;
+								fileName = variableHelper.LoadVariables(fileName).ToString();
 
-								string newFileName = fileName.Substring(0, fileName.IndexOf(";"));
-								fileName = newFileName; //todo: some compile caching issue, fix, can be removed (I think)
-							}
-							if (!fileSystem.File.Exists(fileName))
-							{
-								if (IsBase64(fileName, out byte[]? bytes))
+								if (fileName != null && fileName.Contains(";"))
 								{
-									fileStream = new MemoryStream(bytes, 0, bytes.Length);
-									fileName = Guid.NewGuid().ToString();
+									string type = fileName.Substring(fileName.IndexOf(";") + 1);
+									typeValue = type.Substring(type.IndexOf("=") + 1);
+
+									string newFileName = fileName.Substring(0, fileName.IndexOf(";"));
+									fileName = newFileName; //todo: some compile caching issue, fix, can be removed (I think)
+								}
+								if (!fileSystem.File.Exists(fileName))
+								{
+									if (IsBase64(fileName, out byte[]? bytes))
+									{
+										fileStream = new MemoryStream(bytes, 0, bytes.Length);
+										fileName = Guid.NewGuid().ToString();
+									}
+									else
+									{
+										return (null, new ProgramError($"{fileName} could not be found", goalStep, function));
+									}
 								}
 								else
 								{
-									return (null, new ProgramError($"{fileName} could not be found", goalStep, function));
+
+									fileStream = fileSystem.FileStream.New(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 								}
+								var fileContent = new StreamContent(fileStream);
+								if (!string.IsNullOrEmpty(typeValue))
+								{
+									fileContent.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(typeValue);
+								}
+								else
+								{
+									var mediaTypeHeader = GetMimeTypeHeader(fileName);
+									fileContent.Headers.ContentType = mediaTypeHeader;
+								}
+								content.Add(fileContent, property.Name, Path.GetFileName(fileName));
+								fileStream?.Dispose();
 							}
 							else
 							{
-
-								fileStream = fileSystem.FileStream.New(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+								content.Add(new StringContent(property.Value.ToString()), property.Name);
 							}
-							var fileContent = new StreamContent(fileStream);
-							if (!string.IsNullOrEmpty(typeValue))
+
+						}
+						if (headers != null)
+						{
+							foreach (var header in headers)
 							{
-								fileContent.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(typeValue);
+								var value = variableHelper.LoadVariables(header.Value).ToString();
+								request.Headers.TryAddWithoutValidation(header.Key, value);
 							}
-							else
+						}
+						request.Headers.UserAgent.ParseAdd("plang v0.1");
+						if (!doNotSignRequest)
+						{
+							//await SignRequest(request);
+						}
+						//request.Content.Headers.ContentType = "multipart/form-data";
+						request.Content = content;
+						try
+						{
+							using (var response = await httpClient.SendAsync(request))
 							{
-								var mediaTypeHeader = GetMimeTypeHeader(fileName);
-								fileContent.Headers.ContentType = mediaTypeHeader;
+								string responseBody = await response.Content.ReadAsStringAsync();
+
+								if (response.Content.Headers.ContentType != null && response.Content.Headers.ContentType.MediaType == "application/json")
+								{
+									return (JsonConvert.DeserializeObject(responseBody), null);
+								}
+								else if (response.Content.Headers.ContentType != null && IsXml(response.Content.Headers.ContentType.MediaType))
+								{
+									// todo: here we convert any xml to json so user can use JSONPath to get the content. 
+									// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
+									XmlDocument xmlDoc = new XmlDocument();
+									xmlDoc.LoadXml(responseBody);
+
+									string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
+									return (JsonConvert.DeserializeObject(jsonString), null);
+
+								}
+								return (responseBody, null);
 							}
-							content.Add(fileContent, property.Name, Path.GetFileName(fileName));
 						}
-						else
+						finally
 						{
-							content.Add(new StringContent(property.Value.ToString()), property.Name);
+							if (fileStream != null) fileStream.Dispose();
+							if (httpClient != null) httpClient.Dispose();
 						}
-
-					}
-					if (headers != null)
-					{
-						foreach (var header in headers)
-						{
-							var value = variableHelper.LoadVariables(header.Value).ToString();
-							request.Headers.TryAddWithoutValidation(header.Key, value);
-						}
-					}
-					request.Headers.UserAgent.ParseAdd("plang v0.1");
-					if (!doNotSignRequest)
-					{
-						//await SignRequest(request);
-					}
-					//request.Content.Headers.ContentType = "multipart/form-data";
-					request.Content = content;
-					try
-					{
-						var response = await httpClient.SendAsync(request);
-						string responseBody = await response.Content.ReadAsStringAsync();
-
-						if (response.Content.Headers.ContentType != null && response.Content.Headers.ContentType.MediaType == "application/json")
-						{
-							return (JsonConvert.DeserializeObject(responseBody), null);
-						}
-						else if (response.Content.Headers.ContentType != null && IsXml(response.Content.Headers.ContentType.MediaType))
-						{
-							// todo: here we convert any xml to json so user can use JSONPath to get the content. 
-							// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
-							XmlDocument xmlDoc = new XmlDocument();
-							xmlDoc.LoadXml(responseBody);
-
-							string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
-							return (JsonConvert.DeserializeObject(jsonString), null);
-
-						}
-						return (responseBody, null);
-					}
-					finally
-					{
-						if (fileStream != null) fileStream.Dispose();
-						if (httpClient != null) httpClient.Dispose();
 					}
 				}
 
@@ -335,77 +343,80 @@ namespace PLang.Modules.HttpModule
 			using (var httpClient = httpClientFactory.CreateClient())
 			{
 				var httpMethod = new HttpMethod(method);
-				var request = new HttpRequestMessage(httpMethod, requestUrl.ToString());
-
-				if (headers != null)
+				using (var request = new HttpRequestMessage(httpMethod, requestUrl.ToString()))
 				{
-					foreach (var header in headers)
+
+					if (headers != null)
 					{
-						var value = variableHelper.LoadVariables(header.Value);
-						if (value != null)
+						foreach (var header in headers)
 						{
-							request.Headers.TryAddWithoutValidation(header.Key, value.ToString());
+							var value = variableHelper.LoadVariables(header.Value);
+							if (value != null)
+							{
+								request.Headers.TryAddWithoutValidation(header.Key, value.ToString());
+							}
 						}
 					}
-				}
-				request.Headers.UserAgent.ParseAdd("plang v0.1");
-				if (data != null)
-				{
-					string body = StringHelper.ConvertToString(data);
-					
-					request.Content = new StringContent(body, System.Text.Encoding.GetEncoding(encoding), contentType);
-				}
-				if (!doNotSignRequest)
-				{
-					await SignRequest(request);
-				}
-				httpClient.Timeout = new TimeSpan(0, 0, timeoutInSeconds);
-
-				var task = httpClient.SendAsync(request);
-				var response = await task;
-				if (!response.IsSuccessStatusCode)
-				{
-					string errorBody = await response.Content.ReadAsStringAsync();
-					if (string.IsNullOrEmpty(errorBody))
+					request.Headers.UserAgent.ParseAdd("plang v0.1");
+					if (data != null)
 					{
-						errorBody = $"{response.ReasonPhrase} ({(int) response.StatusCode})";
+						string body = StringHelper.ConvertToString(data);
+
+						request.Content = new StringContent(body, System.Text.Encoding.GetEncoding(encoding), contentType);
 					}
-					return (null, new ProgramError(errorBody, goalStep, function, StatusCode: (int) response.StatusCode));
-				}
-
-				var mediaType = response.Content.Headers.ContentType?.MediaType;
-				if (!IsTextResponse(mediaType))
-				{
-					var bytes = await response.Content.ReadAsByteArrayAsync();
-					return (bytes, null);
-				}
-
-				string responseBody = await response.Content.ReadAsStringAsync();
-				if (response.Content.Headers.ContentType?.MediaType == "application/json" && JsonHelper.IsJson(responseBody))
-				{
-					try
+					if (!doNotSignRequest)
 					{
-						return (JsonConvert.DeserializeObject(responseBody), null);
+						await SignRequest(request);
 					}
-					catch (Exception ex)
+					httpClient.Timeout = new TimeSpan(0, 0, timeoutInSeconds);
+
+					var task = httpClient.SendAsync(request);
+					using (var response = await task)
 					{
-						return (null, new ProgramError(ex.Message, goalStep, function));
+						if (!response.IsSuccessStatusCode)
+						{
+							string errorBody = await response.Content.ReadAsStringAsync();
+							if (string.IsNullOrEmpty(errorBody))
+							{
+								errorBody = $"{response.ReasonPhrase} ({(int)response.StatusCode})";
+							}
+							return (null, new ProgramError(errorBody, goalStep, function, StatusCode: (int)response.StatusCode));
+						}
+
+						var mediaType = response.Content.Headers.ContentType?.MediaType;
+						if (!IsTextResponse(mediaType))
+						{
+							var bytes = await response.Content.ReadAsByteArrayAsync();
+							return (bytes, null);
+						}
+
+						string responseBody = await response.Content.ReadAsStringAsync();
+						if (response.Content.Headers.ContentType?.MediaType == "application/json" && JsonHelper.IsJson(responseBody))
+						{
+							try
+							{
+								return (JsonConvert.DeserializeObject(responseBody), null);
+							}
+							catch (Exception ex)
+							{
+								return (null, new ProgramError(ex.Message, goalStep, function));
+							}
+						}
+						else if (IsXml(response.Content.Headers.ContentType?.MediaType))
+						{
+							// todo: here we convert any xml to json so user can use JSONPath to get the content. 
+							// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
+							XmlDocument xmlDoc = new XmlDocument();
+							xmlDoc.LoadXml(Regex.Replace(responseBody, "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
+
+							string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
+							return (JsonConvert.DeserializeObject(jsonString), null);
+
+						}
+
+						return (responseBody, null);
 					}
 				}
-				else if (IsXml(response.Content.Headers.ContentType?.MediaType))
-				{
-					// todo: here we convert any xml to json so user can use JSONPath to get the content. 
-					// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
-					XmlDocument xmlDoc = new XmlDocument();
-					xmlDoc.LoadXml(Regex.Replace(responseBody, "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
-
-					string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
-					return (JsonConvert.DeserializeObject(jsonString), null);
-
-				}
-
-				return (responseBody, null);
-
 			}
 		}
 

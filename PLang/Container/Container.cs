@@ -516,7 +516,7 @@ namespace PLang.Container
 			// Register these types with the DI container
 			foreach (var type in modulesFromCurrentAssembly)
 			{
-				container.Register(type);  // or register with a specific interface if needed
+				container.Register(type, type, serviceName: type.FullName);  // or register with a specific interface if needed
 			}
 			container.Register<BaseBuilder, BaseBuilder>();
 

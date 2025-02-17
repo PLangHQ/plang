@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Nethereum.JsonRpc.Client;
 using Newtonsoft.Json;
 using Nostr.Client.Client;
 using Nostr.Client.Communicator;
@@ -8,9 +9,10 @@ using Websocket.Client;
 
 namespace PLang.Modules.MessageModule
 {
-	public class NostrClientManager
+	public class NostrClientManager : IDisposable
 	{
 		private NostrMultiWebsocketClient _client = null;
+		private bool _disposed;
 
 		public NostrMultiWebsocketClient GetClient(List<string> relayUrls)
 		{
@@ -26,13 +28,32 @@ namespace PLang.Modules.MessageModule
 			var communicators = CreateCommunicators(relayUrls);
 			ILogger<NostrWebsocketClient> nostrLogger = new Services.LoggerService.Logger<NostrWebsocketClient>();
 			
+			_client?.Dispose();
 			_client = new NostrMultiWebsocketClient(nostrLogger, communicators.ToArray());
 			communicators.ForEach(x => x.Start());
 
 			return _client;
 
 		}
-	
+
+		public virtual void Dispose()
+		{
+			if (_disposed)
+			{
+				return;
+			}
+			_client.Dispose();
+			_disposed = true;
+		}
+
+		protected virtual void ThrowIfDisposed()
+		{
+			if (_disposed)
+			{
+				throw new ObjectDisposedException(GetType().FullName);
+			}
+		}
+
 		private List<NostrWebsocketCommunicator> CreateCommunicators(List<string> relays)
 		{
 			var communicators = new List<NostrWebsocketCommunicator>();

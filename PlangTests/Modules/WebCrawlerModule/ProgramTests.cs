@@ -14,7 +14,7 @@ namespace PLangTests.Modules.WebCrawlerModule
 		[TestMethod]
 		public async Task GetOpenBrowser()
 		{
-			var p = new Program(context, fileSystem, logger);
+			var p = new Program(context, fileSystem, logger, engine, pseudoRuntime);
 			await p.StartBrowser(headless: true);
 
 			await Task.Delay(1000);
@@ -24,7 +24,7 @@ namespace PLangTests.Modules.WebCrawlerModule
 		[TestMethod]
 		public async Task GetOpenHeadlessBrowser()
 		{
-			var p = new Program(context, fileSystem, logger);
+			var p = new Program(context, fileSystem, logger, engine, pseudoRuntime);
 			await p.StartBrowser(headless: true);
 
 			await Task.Delay(1000);
@@ -34,8 +34,8 @@ namespace PLangTests.Modules.WebCrawlerModule
 		[TestMethod]
 		public async Task GetOpenBrowserUseUserSession()
 		{
-			var p = new Program(context, fileSystem, logger);
-			await p.NavigateToUrl("https://example.org/", useUserSession : true, headless: true);
+			var p = new Program(context, fileSystem, logger, engine, pseudoRuntime);
+			await p.NavigateToUrl("https://example.org/", headless: true);
 
 			await Task.Delay(1000);
 

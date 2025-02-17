@@ -10,6 +10,7 @@ using PLang.Services.LlmService;
 using PLang.Utils;
 using PLang.Utils.Extractors;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using Websocket.Client.Logging;
 using static PLang.Modules.DbModule.Builder;
 using static PLang.Modules.DbModule.ModuleSettings;

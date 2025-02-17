@@ -1,0 +1,882 @@
+{
+  "GoalName": "HandleBadInstructionFile",
+  "Comment": null,
+  "Text": "HandleBadInstructionFile",
+  "GoalSteps": [
+    {
+      "Text": "ask user \"The .pr file for '%!error.Step.Text%' is not valid, would you like to rebuild? (y|n)\", options \"y|n\", write to %answer%",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.OutputModule",
+      "Name": "ask_user_for_rebuild",
+      "Description": "Prompt the user with the message 'The .pr file for '%!error.Step.Text%' is not valid, would you like to rebuild? (y|n)' and provide options 'y' or 'n'. Capture the user's response in the variable %answer%.",
+      "PrFileName": "01. ask_user_for_rebuild.pr",
+      "RelativePrPath": ".build\\events\\external\\plang\\Runtime\\HandleBadInstructionFile\\01. ask_user_for_rebuild.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2025-02-17T11:24:18.8430516+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 0,
+      "LineNumber": 2,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}",
+        "model": "gpt-4o",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set [\"N/A\"]\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step, lower case, use _ instead of /\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ValidateModule\", \"description\": \"Validates a variable, make sure it's not empty, follows a pattern, is a number, etc.. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangCodeModule\", \"description\": \"Compiles plang code, gets goals from .goal files, method descriptions and class scheme. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "ask user \"The .pr file for '%!error.Step.Text%' is not valid, would you like to rebuild? (y|n)\", options \"y|n\", write to %answer%"
+              }
+            ]
+          }
+        ],
+        "type": "StepInformationBuilder",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Prompt the user with the message 'The .pr file for '%!error.Step.Text%' is not valid, would you like to rebuild? (y|n)' and provide options 'y' or 'n'. Capture the user's response in the variable %answer%.\",\n\t\"Modules\": [\"PLang.Modules.OutputModule\"],\n\t\"StepName\": \"ask_user_for_rebuild\"\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": "739d2be4305d536a82f25d07a9bb341bfafb13e801d995f3bd96f055cd32410f",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "FunctionName": "Ask",
+          "Parameters": [
+            {
+              "Type": "String",
+              "Name": "text",
+              "Value": "The .pr file for '%!error.Step.Text%' is not valid, would you like to rebuild? (y|n)"
+            },
+            {
+              "Type": "String",
+              "Name": "regexPattern",
+              "Value": "^(y|n)$"
+            }
+          ],
+          "ReturnValues": [
+            {
+              "Type": "String",
+              "VariableName": "answer"
+            }
+          ]
+        },
+        "Text": "ask user \"The .pr file for '%!error.Step.Text%' is not valid, would you like to rebuild? (y|n)\", options \"y|n\", write to %answer%",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "json",
+          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+          "model": "gpt-4o",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+                },
+                {
+                  "type": "text",
+                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## functions available starts ##\r\nAsk(String text, String? type = \"text\", Int32? statusCode = 200, String? regexPattern, String? errorMessage, Dictionary`2<String, Object>? parameters)  : String  // Send response to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.. \nWriteToSystemOutput(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  : void  // Write to the system output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. \nWrite(Object content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200, Dictionary`2<String, Object>? paramaters)  : void  // Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text.\r\n## functions available ends ##\r\n## defined variables ##\r\n!error.Step.Text (type:object), answer (type:object), \r\n## defined variables ##"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "ask user \"The .pr file for '%!error.Step.Text%' is not valid, would you like to rebuild? (y|n)\", options \"y|n\", write to %answer%"
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.GenericFunctionBuilder",
+          "caching": true,
+          "RawResponse": "```json\n{\n\t\"FunctionName\": \"Ask\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"text\",\n\t\t\t\"Value\": \"The .pr file for '%!error.Step.Text%' is not valid, would you like to rebuild? (y|n)\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"regexPattern\",\n\t\t\t\"Value\": \"^(y|n)$\"\n\t\t}\n\t],\n\t\"ReturnValues\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"VariableName\": \"answer\"\n\t\t}\n\t]\n}\n```"
+        },
+        "RunOnBuild": false
+      }
+    },
+    {
+      "Text": "if %answer% = \"y\" then",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.ConditionalModule",
+      "Name": "check_answer_equals_y",
+      "Description": "Check if the variable %answer% is equal to the string 'y'.",
+      "PrFileName": "02. check_answer_equals_y.pr",
+      "RelativePrPath": ".build\\events\\external\\plang\\Runtime\\HandleBadInstructionFile\\02. check_answer_equals_y.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2025-02-17T11:24:20.1147477+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 1,
+      "LineNumber": 3,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}",
+        "model": "gpt-4o",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set [\"N/A\"]\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step, lower case, use _ instead of /\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ValidateModule\", \"description\": \"Validates a variable, make sure it's not empty, follows a pattern, is a number, etc.. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangCodeModule\", \"description\": \"Compiles plang code, gets goals from .goal files, method descriptions and class scheme. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "if %answer% = \"y\" then"
+              }
+            ]
+          }
+        ],
+        "type": "StepInformationBuilder",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Check if the variable %answer% is equal to the string 'y'.\",\n\t\"Modules\": [\"PLang.Modules.ConditionalModule\"],\n\t\"StepName\": \"check_answer_equals_y\"\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": "8a827ab3b0a1befaaa9164807e9b2e1670e394f18ea5d88d935f88f9bbdd54e0",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "Namespace": "PLangGeneratedCode",
+          "Name": "CheckAnswer",
+          "Code": "\nnamespace PLangGeneratedCode\n{\n    public static class CheckAnswer\n    {\n        public static bool ExecutePlangCode(string? answer)\n        {\n            return answer != null && answer.ToString() == \"y\";\n        }\n    }\n}\n",
+          "Using": null,
+          "InputParameters": [
+            {
+              "VariableName": "%answer%",
+              "ParameterName": "answer",
+              "ParameterType": "string?"
+            }
+          ],
+          "OutParameters": null,
+          "GoalToCallOnTrue": {
+            "Value": null
+          },
+          "GoalToCallOnFalse": {
+            "Value": null
+          },
+          "GoalToCallOnTrueParameters": null,
+          "GoalToCallOnFalseParameters": null,
+          "ServicesAssembly": []
+        },
+        "Text": "if %answer% = \"y\" then",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "csharp",
+          "scheme": "{\n\t\"GoalToCallOnTrue\": {\n\t\"Value\": string\n} = null,\n\t\"GoalToCallOnTrueParameters\"? : { String : Object, ... } = null,\n\t\"GoalToCallOnFalse\": {\n\t\"Value\": string\n} = null,\n\t\"GoalToCallOnFalseParameters\"? : { String : Object, ... } = null,\n\t\"Namespace\": string,\n\t\"Name\": string,\n\t\"Using\"?: string[] = null,\n\t\"Assemblies\"?: string[] = null,\n\t\"InputParameters\"?: string[] = null\n}",
+          "model": "gpt-4o",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Act as a senior C# developer, that converts the user intent into a valid C#(Version. 11) code. \r\n\r\n## Rules ##\r\n- Generate static class. The code generated should have 1 method with the static method named ExecutePlangCode and return bool. \r\n- A variable in user intent is defined by starting and ending %.\r\n- Variables defined in the user intent can be passed into the ExecutePlangCode function by value, but only if defined by user. \r\n- Variable names passed to ExecutePlangCode function MUST be unmodified from the user statement\r\n- The code will not be modified after you generate it.\r\n- ALWAYS use long or long? instead of int or int?\r\n- Use long.TryParse when validating if variable is long\r\n- Do not reference any DTO classes. Choose the type that seems to fit best when not defined by user input. Use dynamic? if complex object is needed.\r\n- Strings are defined with double quote (\")\r\n- Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. \r\n- ONLY IF PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into ExecutePlangCode method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.\r\n- When condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. ExecutePlangCode(dynamic? variable)\r\n- Replace the dot(.) in variables with the letter α e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α\r\n- Keep underscore in variables if defined by user, e.g.  if %user_id%(string) is null => ExecutePlangCode(string? user_id)\r\n- Consider top security measures when generating code and validate code\r\n- append @ sign for variable that match reserved keywords in C#\r\n- C# code MUST only contain the contition code and return bool, an external system will call goals(methods) that user defines in his intent.\r\n- initialize variables before using them in TryParse\r\n- Always convert object to correct type in code, e.g. if code requires the object to be string use Convert.ToString(obj), when object should be bool Convert.ToBoolean(obj), etc.\r\n- when checking if string is empty, check if it's null and do .ToString() on it and check if empty\r\n## Rules ##\r\n\r\n## Response information ##\r\n- Namespace: MUST be PLangGeneratedCode\r\n- Name: is name of class, it should represent the intent of what the code is doing. \r\n\r\n- Goals should be prefixed with !, e.g. Call !ValidateUser, Call !ConditionFalse\r\n- GoalToCallOnTrue or GoalToCallOnFalse is optional, if not defined by user, set as null\r\n- Goals can be called with parameters using GoalToCallOnTrueParameters and GoalToCallOnFalseParameters, e.g. Call !UpdateProduct id=%id%, call !FalseCall status='false'. Then id is parameter for True, and status for False\r\n- Using: must include namespaces that are needed to compile code.\r\n- InputParameters: InputParameters MUST match parameter count sent to ExecutePlangCode. Keep format as is defined by user, e.g. if %!error% then => Parameters would be [\"%!error%\"], if %items.count% > 0 and %isValid% then => Parameters would be [\"%list[0]%\", \"%isValid%\"]\r\n- Assemblies: dll to reference to compile using Roslyn\r\n## Response information ##\r\n"
+                },
+                {
+                  "type": "text",
+                  "text": "Only write the raw c# code and json scheme, no summary, no extra text to explain, be concise.\r\n\tYOU MUST implement all code needed and valid c# code. \r\n\tYou must return ```csharp for the code implementation and ```json scheme: {\n\t\"GoalToCallOnTrue\": {\n\t\"Value\": string\n} = null,\n\t\"GoalToCallOnTrueParameters\"? : { String : Object, ... } = null,\n\t\"GoalToCallOnFalse\": {\n\t\"Value\": string\n} = null,\n\t\"GoalToCallOnFalseParameters\"? : { String : Object, ... } = null,\n\t\"Namespace\": string,\n\t\"Name\": string,\n\t\"Using\"?: string[] = null,\n\t\"Assemblies\"?: string[] = null,\n\t\"InputParameters\"?: string[] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## defined variables ##\r\nanswer (type:String), \r\n## defined variables ##"
+                },
+                {
+                  "type": "text",
+                  "text": "## examples ##\r\n'if %isValid% is true then', this condition would return true if %isValid% is true. \r\n'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false.\r\n\r\n'if %data% (string) is null, call !CreateData, else !AppendData' => public static bool ExecutePlangCode(string? dataαuser_id) { return string.IsNullOrEmpty(userIdentity); }, GoalToCallOnTrue=CreateData, GoalToCallOnFalse=AppendData\r\n'if %exists% (bool) is null, call !CreateUser' => public static bool ExecutePlangCode(bool? dataαuser_id) { return exists == null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null\r\n'if %exists% (bool) is not null, call !CreateUser' => public static bool ExecutePlangCode(bool? dataαuser_id) { return exists != null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null\r\n'if %data.user_id% is empty, call !CreateUser' => public static bool ExecutePlangCode(dynamic? dataαuser_id) { return (dataαuser_id == null || (dataαuser_id is string str && string.IsNullOrEmpty(str))); } //if we dont know the type of %data.user_id%, , GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null\r\n'if !%isValid% then => public static bool ExecutePlangCode(bool? isValid) { return !isValid; }, GoalToCallOnTrue=null, GoalToCallOnFalse=null\r\n'if %first_name% is null, call !UpdateFirstName' => public static bool ExecutePlangCode(string? first_name) { return (first_name == null || string.IsNullOrEmpty(str)); }\r\n'if directory %path% exists, call DoStuff => public static bool ExecutePlangCode(string? path, IPlangFileSystem fileSystem) { return fileSystem.Directory.Exists(path); }\r\n'if file %path% exists, call DoStuff => public static bool ExecutePlangCode(string? path, IPlangFileSystem fileSystem) { return fileSystem.File.Exists(path); }\r\n## examples ##\r\n"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "if %answer% = \"y\" then"
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.ConditionalModule.Builder",
+          "caching": true,
+          "RawResponse": "```csharp\nnamespace PLangGeneratedCode\n{\n    public static class CheckAnswer\n    {\n        public static bool ExecutePlangCode(string? answer)\n        {\n            return answer != null && answer.ToString() == \"y\";\n        }\n    }\n}\n```\n```json\n{\n    \"GoalToCallOnTrue\": {\n        \"Value\": null\n    },\n    \"GoalToCallOnFalse\": {\n        \"Value\": null\n    },\n    \"Namespace\": \"PLangGeneratedCode\",\n    \"Name\": \"CheckAnswer\",\n    \"Using\": null,\n    \"Assemblies\": null,\n    \"InputParameters\": [\"%answer%\"]\n}\n```"
+        },
+        "RunOnBuild": false
+      }
+    },
+    {
+      "Text": "rebuild plang step %!error.Step%, write to %step%",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.PlangCodeModule",
+      "Name": "rebuild_plang_step",
+      "Description": "Rebuild the specified Plang step using the function !error.Step and write the result to the variable %step%.",
+      "PrFileName": "03. rebuild_plang_step.pr",
+      "RelativePrPath": ".build\\events\\external\\plang\\Runtime\\HandleBadInstructionFile\\03. rebuild_plang_step.pr",
+      "Indent": 4,
+      "Execute": false,
+      "RunOnce": false,
+      "Generated": "2025-02-17T11:24:20.1404408+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 2,
+      "LineNumber": 4,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}",
+        "model": "gpt-4o",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set [\"N/A\"]\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step, lower case, use _ instead of /\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ValidateModule\", \"description\": \"Validates a variable, make sure it's not empty, follows a pattern, is a number, etc.. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangCodeModule\", \"description\": \"Compiles plang code, gets goals from .goal files, method descriptions and class scheme. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "rebuild plang step %!error.Step%, write to %step%"
+              }
+            ]
+          }
+        ],
+        "type": "StepInformationBuilder",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Rebuild the specified Plang step using the function !error.Step and write the result to the variable %step%.\",\n\t\"Modules\": [\"PLang.Modules.PlangCodeModule\", \"PLang.Modules.LocalOrGlobalVariableModule\"],\n\t\"StepName\": \"rebuild_plang_step\"\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": "2f1455e9075329044affbea3176c0c1825af36b5b4ba91ab5016f371978ed516",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "FunctionName": "BuildPlangStep",
+          "Parameters": [
+            {
+              "Type": "GoalStep",
+              "Name": "step",
+              "Value": "%!error.Step%"
+            }
+          ],
+          "ReturnValues": [
+            {
+              "Type": "GoalStep",
+              "VariableName": "step"
+            }
+          ]
+        },
+        "Text": "rebuild plang step %!error.Step%, write to %step%",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "json",
+          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+          "model": "gpt-4o",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+                },
+                {
+                  "type": "text",
+                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## functions available starts ##\r\nGetGoals(String filePath, String? visiblity = \"public\", String[]? fields)  : void  // Get goals in file or folder. visiblity is either public|public_and_private|private. \nGetModules(String stepText, List`1<String> excludeModules)  : String \nGetMethods(String moduleName)  : String \nGetMethodDescription(String moduleName, String methodName)  : MethodDescription \nGetMethodMappingScheme()  : String \nGetStepProperties(String moduleName, String methodName)  : Dicionary<String, Object> \nRunStep(String prFileName)  : void \nBuildPlangStep(GoalStep step)  : GoalStep \nBuildPlangCode(Goal goal)  : void \nStartCSharpDebugger()  : void\r\n## functions available ends ##\r\n## defined variables ##\r\n!error.Step (type:object), step (type:object), \r\n## defined variables ##"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "rebuild plang step %!error.Step%, write to %step%"
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.GenericFunctionBuilder",
+          "caching": true,
+          "RawResponse": "```json\n{\n\t\"FunctionName\": \"BuildPlangStep\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"GoalStep\",\n\t\t\"Name\": \"step\",\n\t\t\"Value\": \"%!error.Step%\"\n\t}],\n\t\"ReturnValues\": [{\n\t\t\"Type\": \"GoalStep\",\n\t\t\"VariableName\": \"step\"\n\t}]\n}\n```"
+        },
+        "RunOnBuild": false
+      }
+    },
+    {
+      "Text": "[plang] run step %step.RelativePrPath%",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.PlangCodeModule",
+      "Name": "run_step",
+      "Description": "Execute the step located at the relative path specified by %step.RelativePrPath%.",
+      "PrFileName": "04. run_step.pr",
+      "RelativePrPath": ".build\\events\\external\\plang\\Runtime\\HandleBadInstructionFile\\04. run_step.pr",
+      "Indent": 4,
+      "Execute": false,
+      "RunOnce": false,
+      "Generated": "2025-02-17T11:24:20.1902368+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 3,
+      "LineNumber": 5,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}",
+        "model": "gpt-4o",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set [\"N/A\"]\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step, lower case, use _ instead of /\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\nPLang.Modules.PlangCodeModule\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "[plang] run step %step.RelativePrPath%"
+              }
+            ]
+          }
+        ],
+        "type": "StepInformationBuilder",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Execute the step located at the relative path specified by %step.RelativePrPath%.\",\n\t\"Modules\": [\"PLang.Modules.PlangCodeModule\"],\n\t\"StepName\": \"run_step\"\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": "58e4ef73c3767684e88fc0d94741d559a5639fd988937a21531bfcdb88449f9d",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "FunctionName": "RunStep",
+          "Parameters": [
+            {
+              "Type": "String",
+              "Name": "prFileName",
+              "Value": "%step.RelativePrPath%"
+            }
+          ],
+          "ReturnValues": null
+        },
+        "Text": "[plang] run step %step.RelativePrPath%",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "json",
+          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+          "model": "gpt-4o",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+                },
+                {
+                  "type": "text",
+                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## functions available starts ##\r\nGetGoals(String filePath, String? visiblity = \"public\", String[]? fields)  : void  // Get goals in file or folder. visiblity is either public|public_and_private|private. \nGetModules(String stepText, List`1<String> excludeModules)  : String \nGetMethods(String moduleName)  : String \nGetMethodDescription(String moduleName, String methodName)  : MethodDescription \nGetMethodMappingScheme()  : String \nGetStepProperties(String moduleName, String methodName)  : Dicionary<String, Object> \nRunStep(String prFileName)  : void \nBuildPlangStep(GoalStep step)  : GoalStep \nBuildPlangCode(Goal goal)  : void \nStartCSharpDebugger()  : void\r\n## functions available ends ##\r\n## defined variables ##\r\nstep.RelativePrPath (type:object), \r\n## defined variables ##"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "[plang] run step %step.RelativePrPath%"
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.GenericFunctionBuilder",
+          "caching": true,
+          "RawResponse": "```json\n{\n\t\"FunctionName\": \"RunStep\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"String\",\n\t\t\"Name\": \"prFileName\",\n\t\t\"Value\": \"%step.RelativePrPath%\"\n\t}]\n}\n```"
+        },
+        "RunOnBuild": false
+      }
+    },
+    {
+      "Text": "if %answer% == \"n\" then",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.ConditionalModule",
+      "Name": "check_answer_equals_n",
+      "Description": "Check if the variable %answer% is equal to the string 'n'.",
+      "PrFileName": "05. check_answer_equals_n.pr",
+      "RelativePrPath": ".build\\events\\external\\plang\\Runtime\\HandleBadInstructionFile\\05. check_answer_equals_n.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2025-02-17T11:24:20.4548506+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 4,
+      "LineNumber": 6,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}",
+        "model": "gpt-4o",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set [\"N/A\"]\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step, lower case, use _ instead of /\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ValidateModule\", \"description\": \"Validates a variable, make sure it's not empty, follows a pattern, is a number, etc.. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangCodeModule\", \"description\": \"Compiles plang code, gets goals from .goal files, method descriptions and class scheme. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "if %answer% == \"n\" then"
+              }
+            ]
+          }
+        ],
+        "type": "StepInformationBuilder",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Check if the variable %answer% is equal to the string 'n'.\",\n\t\"Modules\": [\"PLang.Modules.ConditionalModule\"],\n\t\"StepName\": \"check_answer_equals_n\"\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": "02cec4d9186bb2ff7e7dcb8bba9a1407654466b0f48a857c093513ac944bbc74",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "Namespace": "PLangGeneratedCode",
+          "Name": "CheckAnswerEqualsN",
+          "Code": "\nnamespace PLangGeneratedCode\n{\n    public static class CheckAnswerEqualsN\n    {\n        public static bool ExecutePlangCode(string? answer)\n        {\n            return answer != null && answer.ToString() == \"n\";\n        }\n    }\n}\n",
+          "Using": null,
+          "InputParameters": [
+            {
+              "VariableName": "%answer%",
+              "ParameterName": "answer",
+              "ParameterType": "string?"
+            }
+          ],
+          "OutParameters": null,
+          "GoalToCallOnTrue": null,
+          "GoalToCallOnFalse": null,
+          "GoalToCallOnTrueParameters": null,
+          "GoalToCallOnFalseParameters": null,
+          "ServicesAssembly": []
+        },
+        "Text": "if %answer% == \"n\" then",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "csharp",
+          "scheme": "{\n\t\"GoalToCallOnTrue\": {\n\t\"Value\": string\n} = null,\n\t\"GoalToCallOnTrueParameters\"? : { String : Object, ... } = null,\n\t\"GoalToCallOnFalse\": {\n\t\"Value\": string\n} = null,\n\t\"GoalToCallOnFalseParameters\"? : { String : Object, ... } = null,\n\t\"Namespace\": string,\n\t\"Name\": string,\n\t\"Using\"?: string[] = null,\n\t\"Assemblies\"?: string[] = null,\n\t\"InputParameters\"?: string[] = null\n}",
+          "model": "gpt-4o",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Act as a senior C# developer, that converts the user intent into a valid C#(Version. 11) code. \r\n\r\n## Rules ##\r\n- Generate static class. The code generated should have 1 method with the static method named ExecutePlangCode and return bool. \r\n- A variable in user intent is defined by starting and ending %.\r\n- Variables defined in the user intent can be passed into the ExecutePlangCode function by value, but only if defined by user. \r\n- Variable names passed to ExecutePlangCode function MUST be unmodified from the user statement\r\n- The code will not be modified after you generate it.\r\n- ALWAYS use long or long? instead of int or int?\r\n- Use long.TryParse when validating if variable is long\r\n- Do not reference any DTO classes. Choose the type that seems to fit best when not defined by user input. Use dynamic? if complex object is needed.\r\n- Strings are defined with double quote (\")\r\n- Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. \r\n- ONLY IF PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into ExecutePlangCode method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.\r\n- When condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. ExecutePlangCode(dynamic? variable)\r\n- Replace the dot(.) in variables with the letter α e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α\r\n- Keep underscore in variables if defined by user, e.g.  if %user_id%(string) is null => ExecutePlangCode(string? user_id)\r\n- Consider top security measures when generating code and validate code\r\n- append @ sign for variable that match reserved keywords in C#\r\n- C# code MUST only contain the contition code and return bool, an external system will call goals(methods) that user defines in his intent.\r\n- initialize variables before using them in TryParse\r\n- Always convert object to correct type in code, e.g. if code requires the object to be string use Convert.ToString(obj), when object should be bool Convert.ToBoolean(obj), etc.\r\n- when checking if string is empty, check if it's null and do .ToString() on it and check if empty\r\n## Rules ##\r\n\r\n## Response information ##\r\n- Namespace: MUST be PLangGeneratedCode\r\n- Name: is name of class, it should represent the intent of what the code is doing. \r\n- Name of class cannot be: check_answer_equals_y\n\r\n- Goals should be prefixed with !, e.g. Call !ValidateUser, Call !ConditionFalse\r\n- GoalToCallOnTrue or GoalToCallOnFalse is optional, if not defined by user, set as null\r\n- Goals can be called with parameters using GoalToCallOnTrueParameters and GoalToCallOnFalseParameters, e.g. Call !UpdateProduct id=%id%, call !FalseCall status='false'. Then id is parameter for True, and status for False\r\n- Using: must include namespaces that are needed to compile code.\r\n- InputParameters: InputParameters MUST match parameter count sent to ExecutePlangCode. Keep format as is defined by user, e.g. if %!error% then => Parameters would be [\"%!error%\"], if %items.count% > 0 and %isValid% then => Parameters would be [\"%list[0]%\", \"%isValid%\"]\r\n- Assemblies: dll to reference to compile using Roslyn\r\n## Response information ##\r\n"
+                },
+                {
+                  "type": "text",
+                  "text": "Only write the raw c# code and json scheme, no summary, no extra text to explain, be concise.\r\n\tYOU MUST implement all code needed and valid c# code. \r\n\tYou must return ```csharp for the code implementation and ```json scheme: {\n\t\"GoalToCallOnTrue\": {\n\t\"Value\": string\n} = null,\n\t\"GoalToCallOnTrueParameters\"? : { String : Object, ... } = null,\n\t\"GoalToCallOnFalse\": {\n\t\"Value\": string\n} = null,\n\t\"GoalToCallOnFalseParameters\"? : { String : Object, ... } = null,\n\t\"Namespace\": string,\n\t\"Name\": string,\n\t\"Using\"?: string[] = null,\n\t\"Assemblies\"?: string[] = null,\n\t\"InputParameters\"?: string[] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## defined variables ##\r\nanswer (type:String), \r\n## defined variables ##"
+                },
+                {
+                  "type": "text",
+                  "text": "## examples ##\r\n'if %isValid% is true then', this condition would return true if %isValid% is true. \r\n'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false.\r\n\r\n'if %data% (string) is null, call !CreateData, else !AppendData' => public static bool ExecutePlangCode(string? dataαuser_id) { return string.IsNullOrEmpty(userIdentity); }, GoalToCallOnTrue=CreateData, GoalToCallOnFalse=AppendData\r\n'if %exists% (bool) is null, call !CreateUser' => public static bool ExecutePlangCode(bool? dataαuser_id) { return exists == null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null\r\n'if %exists% (bool) is not null, call !CreateUser' => public static bool ExecutePlangCode(bool? dataαuser_id) { return exists != null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null\r\n'if %data.user_id% is empty, call !CreateUser' => public static bool ExecutePlangCode(dynamic? dataαuser_id) { return (dataαuser_id == null || (dataαuser_id is string str && string.IsNullOrEmpty(str))); } //if we dont know the type of %data.user_id%, , GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null\r\n'if !%isValid% then => public static bool ExecutePlangCode(bool? isValid) { return !isValid; }, GoalToCallOnTrue=null, GoalToCallOnFalse=null\r\n'if %first_name% is null, call !UpdateFirstName' => public static bool ExecutePlangCode(string? first_name) { return (first_name == null || string.IsNullOrEmpty(str)); }\r\n'if directory %path% exists, call DoStuff => public static bool ExecutePlangCode(string? path, IPlangFileSystem fileSystem) { return fileSystem.Directory.Exists(path); }\r\n'if file %path% exists, call DoStuff => public static bool ExecutePlangCode(string? path, IPlangFileSystem fileSystem) { return fileSystem.File.Exists(path); }\r\n## examples ##\r\n"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "if %answer% == \"n\" then"
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.ConditionalModule.Builder",
+          "caching": true,
+          "RawResponse": "```csharp\nnamespace PLangGeneratedCode\n{\n    public static class CheckAnswerEqualsN\n    {\n        public static bool ExecutePlangCode(string? answer)\n        {\n            return answer != null && answer.ToString() == \"n\";\n        }\n    }\n}\n```\n```json\n{\n    \"GoalToCallOnTrue\": null,\n    \"GoalToCallOnFalse\": null,\n    \"Namespace\": \"PLangGeneratedCode\",\n    \"Name\": \"CheckAnswerEqualsN\",\n    \"Using\": null,\n    \"Assemblies\": null,\n    \"InputParameters\": [\"%answer%\"]\n}\n```"
+        },
+        "RunOnBuild": false
+      }
+    },
+    {
+      "Text": "write out %!error.ToString()%",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.OutputModule",
+      "Name": "write_out_error_string",
+      "Description": "Output the string representation of the error object using its ToString() method.",
+      "PrFileName": "06. write_out_error_string.pr",
+      "RelativePrPath": ".build\\events\\external\\plang\\Runtime\\HandleBadInstructionFile\\06. write_out_error_string.pr",
+      "Indent": 4,
+      "Execute": false,
+      "RunOnce": false,
+      "Generated": "2025-02-17T11:24:20.5192546+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 5,
+      "LineNumber": 7,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}",
+        "model": "gpt-4o",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set [\"N/A\"]\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step, lower case, use _ instead of /\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ValidateModule\", \"description\": \"Validates a variable, make sure it's not empty, follows a pattern, is a number, etc.. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangCodeModule\", \"description\": \"Compiles plang code, gets goals from .goal files, method descriptions and class scheme. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "write out %!error.ToString()%"
+              }
+            ]
+          }
+        ],
+        "type": "StepInformationBuilder",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Output the string representation of the error object using its ToString() method.\",\n\t\"Modules\": [\"PLang.Modules.OutputModule\"],\n\t\"StepName\": \"write_out_error_string\"\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": "b20d385bec44f04f275f30ec8fe57ac35e7a61aa46a7765604b8f28b039d1614",
+      "BuilderVersion": null,
+      "PrFile": {
+        "Action": {
+          "FunctionName": "Write",
+          "Parameters": [
+            {
+              "Type": "Object",
+              "Name": "content",
+              "Value": "%!error.ToString()%"
+            },
+            {
+              "Type": "Boolean",
+              "Name": "writeToBuffer",
+              "Value": false
+            },
+            {
+              "Type": "String",
+              "Name": "type",
+              "Value": "text"
+            },
+            {
+              "Type": "Int32",
+              "Name": "statusCode",
+              "Value": 200
+            }
+          ],
+          "ReturnValues": null
+        },
+        "Text": "write out %!error.ToString()%",
+        "Reload": false,
+        "LlmRequest": {
+          "temperature": 0.0,
+          "top_p": 0.0,
+          "frequencyPenalty": 0.0,
+          "presencePenalty": 0.0,
+          "maxLength": 4000,
+          "llmResponseType": "json",
+          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+          "model": "gpt-4o",
+          "promptMessage": [
+            {
+              "role": "system",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+                },
+                {
+                  "type": "text",
+                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+                }
+              ]
+            },
+            {
+              "role": "assistant",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "## functions available starts ##\r\nAsk(String text, String? type = \"text\", Int32? statusCode = 200, String? regexPattern, String? errorMessage, Dictionary`2<String, Object>? parameters)  : String  // Send response to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.. \nWriteToSystemOutput(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  : void  // Write to the system output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. \nWrite(Object content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200, Dictionary`2<String, Object>? paramaters)  : void  // Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text.\r\n## functions available ends ##\r\n## defined variables ##\r\n!error.ToString() (type:object), \r\n## defined variables ##"
+                }
+              ]
+            },
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "write out %!error.ToString()%"
+                }
+              ]
+            }
+          ],
+          "type": "PLang.Modules.GenericFunctionBuilder",
+          "caching": true,
+          "RawResponse": "```json\n{\n\t\"FunctionName\": \"Write\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"Name\": \"content\",\n\t\t\t\"Value\": \"%!error.ToString()%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean\",\n\t\t\t\"Name\": \"writeToBuffer\",\n\t\t\t\"Value\": false\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"type\",\n\t\t\t\"Value\": \"text\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Int32\",\n\t\t\t\"Name\": \"statusCode\",\n\t\t\t\"Value\": 200\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
+        },
+        "RunOnBuild": false
+      }
+    }
+  ],
+  "SubGoals": [],
+  "Description": "The HandleBadInstructionFile goal prompts the user to decide whether to rebuild a .pr file that is invalid. It asks the user if they would like to rebuild the file associated with the error message '%!error.Step.Text%'. If the user responds with 'y', it triggers a rebuild of the specified step and runs the corresponding .pr file. If the user responds with 'n', it outputs the error message represented by '%!error.ToString()%'.",
+  "Visibility": 1,
+  "GoalFileName": "HandleBadInstructionFile.goal",
+  "RelativeGoalPath": "\\events\\external\\plang\\Runtime\\HandleBadInstructionFile.goal",
+  "RelativeGoalFolderPath": "\\events\\external\\plang\\Runtime",
+  "RelativePrPath": ".build\\events\\external\\plang\\Runtime\\HandleBadInstructionFile\\00. Goal.pr",
+  "RelativePrFolderPath": ".build\\events\\external\\plang\\Runtime\\HandleBadInstructionFile",
+  "BuilderVersion": "1.0.0.0",
+  "GoalInfo": null,
+  "Injections": [],
+  "Signature": null,
+  "Hash": "e4bd1801db3e3f1477f16d32a8f295d82a46c18f0e8691a34345975a6a7a5418",
+  "IncomingVariablesRequired": [
+    "!error.Step.Text",
+    "!error.Step",
+    "!error.ToString()",
+    "step.RelativePrPath"
+  ]
+}
