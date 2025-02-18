@@ -73,32 +73,36 @@ namespace PLang.Modules.WebCrawlerModule
 			var browser = await GetBrowserType(playwright, browserType, headless, profileName, kioskMode, argumentOptions, hideTestingMode);
 
 			browser.SetDefaultTimeout((timoutInSeconds ?? 30) * 1000);
-			if (onRequest != null)
+
+			browser.Request += async (object? sender, IRequest request) =>
 			{
-				browser.Request += async (object? sender, IRequest e) =>
+				context.AddOrReplace(RequestContextKey, request);
+				if (onRequest != null)
 				{
-					var result = await runtime.RunGoal(engine, context, "/", onRequest, new Dictionary<string, object?> { { "!sender", sender }, { "!Request", e } }, Goal);
+					var result = await runtime.RunGoal(engine, context, "/", onRequest, new Dictionary<string, object?> { { "!sender", sender }, { "!Request", request } }, Goal);
 					if (result.error != null)
 					{
 						throw new ExceptionWrapper(result.error);
 					}
-				};
-			}
-			
-			if (onResponse != null)
+				}
+			};
+
+			browser.Response += async (object? sender, IResponse e) =>
 			{
-				browser.Response += async (object? sender, IResponse e) =>
+				context.AddOrReplace(ResponseContextKey, e);
+				if (onResponse != null)
 				{
 					var result = await runtime.RunGoal(engine, context, "/", onResponse, new Dictionary<string, object?> { { "!sender", sender }, { "!Response", e } }, Goal);
 					if (result.error != null)
 					{
 						throw new ExceptionWrapper(result.error);
 					}
-				};
-			}
-			browser.RequestFailed += (object? sender, IRequest e) =>
+				}
+			};
+
+			browser.RequestFailed += (object? sender, IRequest request) =>
 			{
-				context.AddOrReplace(RequestContextKey, e);
+				context.AddOrReplace(RequestContextKey, request);
 			};
 
 			context.TryAdd(PlayWrightContextKey, playwright);
@@ -132,7 +136,7 @@ namespace PLang.Modules.WebCrawlerModule
 
 			logger.LogDebug("Key BrowserContextKey not existing. Starting browser");
 			browser = await StartBrowser(browserType, headless, userSessionPath, kioskMode, argumentOptions, timeoutInSeconds);
-			
+
 			//browser.
 			return browser;
 		}
@@ -265,9 +269,9 @@ namespace PLang.Modules.WebCrawlerModule
 		[Description("opens a page to a url. browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.")]
 		public async Task NavigateToUrl(string url, string browserType = "Chrome", bool headless = false,
 				string profileName = "", bool kioskMode = false, Dictionary<string, string>? argumentOptions = null,
-				int? timeoutInSecods = null, bool hideTestingMode = false, 
+				int? timeoutInSecods = null, bool hideTestingMode = false,
 				GoalToCall? onRequest = null, GoalToCall? onResponse = null, GoalToCall? onWebsocketReceived = null, GoalToCall? onWebsocketSent = null,
-				GoalToCall? onConsoleOutput = null, GoalToCall? onWorker = null, GoalToCall? onCrash = null, 
+				GoalToCall? onConsoleOutput = null, GoalToCall? onWorker = null, GoalToCall? onCrash = null,
 				GoalToCall? onDialog = null, GoalToCall? onLoad = null, GoalToCall? onDOMLoad = null, GoalToCall? onFileChooser = null,
 				GoalToCall? onIFrameLoad = null, GoalToCall? onDownload = null)
 		{
@@ -290,7 +294,7 @@ namespace PLang.Modules.WebCrawlerModule
 				 onConsoleOutput, onWorker, onCrash,
 				 onDialog, onLoad, onDOMLoad, onFileChooser,
 				 onIFrameLoad, onDownload);
-			
+
 		}
 
 		public async Task ScrollToBottom()
@@ -360,7 +364,7 @@ namespace PLang.Modules.WebCrawlerModule
 		{
 			return value.Replace("'", "\\'").Replace("\"", "\\\"");
 		}
-	
+
 		public async Task SetFocus(string? cssSelector = null, int? timoutInSeconds = null)
 		{
 			var page = await GetCurrentPage();
@@ -673,15 +677,23 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 
 		[Description("type is defines which type of header to get. type:response|request|null")]
-		public async Task<Dictionary<string, string>> GetHeaders(string? type = null)
+		public async Task<Dictionary<string, string>?> GetHeaders(string? type = null)
 		{
-			return null;
+			if (type == "request")
+			{
+				IRequest? request = context[RequestContextKey] as IRequest;
+				if (request == null) return null;
+
+				return request.Headers;
+			}
+
+			IResponse? response = context[ResponseContextKey] as IResponse;
+			if (response == null) return null;
+
+			return response.Headers;
+
 		}
 
-		private void Driver_Response(object? sender, IResponse e)
-		{
-			throw new NotImplementedException();
-		}
 
 		public async Task ListenToNetworkTraffic(string url, string oper)
 		{
@@ -855,9 +867,9 @@ namespace PLang.Modules.WebCrawlerModule
 					{
 						contextOptions.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
 					}
-					
+
 					browser = await chromium.NewContextAsync(contextOptions);
-					
+
 				}
 				catch (PlaywrightException pe)
 				{

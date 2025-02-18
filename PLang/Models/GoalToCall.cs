@@ -25,6 +25,6 @@ namespace PLang.Models
 		public static implicit operator GoalToCall(string? value) => new GoalToCall(value);
 
 		// Implicit conversion from GoalToCall to string
-		public static implicit operator string?(GoalToCall goalToCall) => goalToCall.Value;
+		public static implicit operator string?(GoalToCall? goalToCall) => goalToCall?.Value;
 	}
 }
