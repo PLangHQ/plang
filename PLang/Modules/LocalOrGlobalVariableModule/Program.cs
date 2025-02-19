@@ -2,7 +2,9 @@
 using Newtonsoft.Json.Linq;
 using Nostr.Client.Json;
 using PLang.Attributes;
+using PLang.Errors;
 using PLang.Interfaces;
+using PLang.Models;
 using System.Collections;
 using System.ComponentModel;
 using System.Text;
@@ -10,7 +12,7 @@ using System.Web;
 
 namespace PLang.Modules.LocalOrGlobalVariableModule
 {
-	[Description("Set & Get local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.")]
+	[Description("Set, Get & return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.")]
 	public class Program : BaseProgram
 	{
 		private readonly ISettings settings;
@@ -18,6 +20,18 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		public Program(ISettings settings) : base()
 		{
 			this.settings = settings;
+		}
+
+
+		public async Task<IError?> Return([HandlesVariable] string[] variables)
+		{
+			var returnDict = new ReturnDictionary<string, object?>();
+			foreach (var variable in variables)
+			{
+				returnDict.Add(variable, memoryStack.Get(variable));
+			}
+
+			return new Return(returnDict);
 		}
 
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]

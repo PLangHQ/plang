@@ -797,7 +797,7 @@ namespace PLang.Runtime
 
 				if (keyPlan.JsonPath != null && objectValue.Value is JObject jobj && !string.IsNullOrEmpty(value?.ToString()))
 				{
-					SetJsonValue(jobj, keyPlan.JsonPath, value.ToString());
+					SetJsonValue(jobj, keyPlan.JsonPath, value);
 				}
 
 				AddOrReplace(variables, keyPlan.VariableName, objectValue);
@@ -806,7 +806,7 @@ namespace PLang.Runtime
 
 		}
 
-		public static void SetJsonValue(JObject jObject, string jsonPath, JToken value)
+		public static void SetJsonValue(JObject jObject, string jsonPath, Object value)
 		{
 			// Remove the root ($) and split the path
 			var tokens = jsonPath.TrimStart('$', '.').Split('.');
@@ -818,7 +818,7 @@ namespace PLang.Runtime
 				if (i == tokens.Length - 1)
 				{
 					// If it's the last token, set the value
-					current[token] = value;
+					current[token] = JsonConvert.SerializeObject(value);
 				}
 				else
 				{

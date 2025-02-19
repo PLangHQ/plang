@@ -159,6 +159,24 @@ namespace PLang.Services.CompilerService
 			var parameters = method.ParameterList.Parameters.Where(p => p.Identifier.Text != "fileSystem").ToList();
 			var answerParameters = GetParameters(answer);
 
+			if (parameters.GroupBy(p => p.Identifier.Text).Where(p => p.Count() > 1).Count() > 0)
+			{
+				var parameterName = parameters.GroupBy(p => p.Identifier.Text).Where(p => p.Count() > 1).FirstOrDefault();
+
+				string error = @$"
+### Previous LLM generated code ###
+Json response:
+{JsonConvert.SerializeObject(answer)}
+
+C# code:
+{sourceCode}
+### Previous LLM generated code ###
+Parameter {parameterName.FirstOrDefault().Identifier.Text} is defined ExecutePlangCode twice, c# does not support this. You can define it just once as ref if needed
+					";
+
+				return (null, new CompilerError($"Parameter count not matching. Need to request new code from LLM.", error, step));
+			}
+
 			if (parameters.Count != answerParameters.Count)
 			{
 				string error = @$"

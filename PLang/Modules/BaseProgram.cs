@@ -238,7 +238,7 @@ namespace PLang.Modules
 					(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(settingsError);
 					if (isHandled) return await RunFunction(function);
 				}
-				var pe = new ProgramError(ex.Message, goalStep, function, parameterValues, "ProgramError", 500, Exception: ex);
+				var pe = new ProgramError(ex.Message, goalStep, function, parameterValues, Key: ex.GetType().FullName ?? "ProgramError", 500, Exception: ex);
 				
 				return pe;
 			}

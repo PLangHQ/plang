@@ -172,18 +172,21 @@ namespace PLang.Container
 			}
 
 
-			var runtimeContainer = new ServiceContainer();
-			var fileSystem2 = container.GetInstance<IPLangFileSystem>();
-			runtimeContainer.RegisterForPLang(fileSystem2.RootDirectory, fileSystem2.RelativeAppPath, container.GetInstance<IAskUserHandlerFactory>(),
-				container.GetInstance<IOutputStreamFactory>(), container.GetInstance<IOutputSystemStreamFactory>(),
-				container.GetInstance<IErrorHandlerFactory>(), container.GetInstance<IErrorSystemHandlerFactory>());
-			runtimeContainer.RegisterSingleton<IEventRuntime, EventRuntime>();
-			var eventRuntime = runtimeContainer.GetInstance<IEventRuntime>();
+			using (var runtimeContainer = new ServiceContainer())
+			{
 
-			container.RegisterSingleton<IEventRuntime>(factory => { return eventRuntime; });
+				var fileSystem2 = container.GetInstance<IPLangFileSystem>();
+				runtimeContainer.RegisterForPLang(fileSystem2.RootDirectory, fileSystem2.RelativeAppPath, container.GetInstance<IAskUserHandlerFactory>(),
+					container.GetInstance<IOutputStreamFactory>(), container.GetInstance<IOutputSystemStreamFactory>(),
+					container.GetInstance<IErrorHandlerFactory>(), container.GetInstance<IErrorSystemHandlerFactory>());
+				runtimeContainer.RegisterSingleton<IEventRuntime, EventRuntime>();
+				var eventRuntime = runtimeContainer.GetInstance<IEventRuntime>();
 
-			var engine = runtimeContainer.GetInstance<IEngine>();
-			engine.Init(runtimeContainer);
+				container.RegisterSingleton<IEventRuntime>(factory => { return eventRuntime; });
+
+				var engine = runtimeContainer.GetInstance<IEngine>();
+				engine.Init(runtimeContainer);
+			}
 
 		}
 

@@ -1,24 +1,16 @@
-﻿using IdGen;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Errors;
 using PLang.Errors.Runtime;
-using PLang.Exceptions;
 using PLang.Interfaces;
-using PLang.Runtime;
 using PLang.Services.CompilerService;
 using PLang.Utils;
 using System.ComponentModel;
-using System.Data;
 using System.Reflection;
-using System.Text.RegularExpressions;
-using static PLang.Runtime.Startup.ModuleLoader;
-using static PLang.Services.CompilerService.CSharpCompiler;
 
 namespace PLang.Modules.CodeModule
 {
-	[Description("Generate c# code from user description. Only use if no other module is found.")]
+	[Description("Generate c# code from user description. Only use if no other module is found or if [code] is defined.")]
 	public class Program : BaseProgram
 	{
 		private readonly IPLangFileSystem fileSystem;

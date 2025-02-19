@@ -82,7 +82,7 @@ If you want to see the entire process, check out this video where I go step by s
 
 ## How You Can Run It  
 
-It’s still early, so if you decide to play around with it, expect some rough edges. But the best part? The GUI builder itself is written in Plang, so you can tweak and improve it easily.  
+It’s still early, so if you decide to play around with it, expect some rough edges. But the best part? The [GUI builder](https://github.com/PLangApps/Builder) itself is written in Plang, so you can tweak and improve it easily.  
 
 ### Steps to get started:  
 
@@ -90,7 +90,7 @@ It’s still early, so if you decide to play around with it, expect some rough e
 
 2. **Clone the Builder repo** – Run:  
    ```sh
-   git clone <repo_url>
+   git clone https://github.com/PLangApps/Builder.git
    ```  
    
 3. **Run Plang** – Open the command line in the Builder folder and type:  

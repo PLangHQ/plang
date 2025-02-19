@@ -431,7 +431,7 @@ namespace PLang.Modules.WebCrawlerModule
 
 			if (cssSelector == null)
 			{
-				cssSelector = "body";
+				cssSelector = "html";
 			}
 
 			return cssSelector;
@@ -623,30 +623,17 @@ namespace PLang.Modules.WebCrawlerModule
 			return await e.GetAttributeAsync(attribute);
 
 		}
+		
 
-
-		public async Task<List<string>> ExtractContent(string? cssSelector = null, PlangWebElement? element = null, string outputFormat = "html")
+		public async Task<string> ExtractContent(string? cssSelector = null, PlangWebElement? element = null, string outputFormat = "html")
 		{
 			var page = await GetCurrentPage();
 
 			cssSelector = await GetCssSelector(cssSelector);
 			List<string> results = new List<string>();
 
-			IReadOnlyList<IElementHandle> elements;
-			if (element != null)
-			{
-				elements = await element.WebElement.QuerySelectorAllAsync(cssSelector);
-			}
-			else
-			{
-				elements = await page.QuerySelectorAllAsync(cssSelector);
-			}
+			string html = await page.InnerHTMLAsync(cssSelector);
 
-			foreach (var e in elements)
-			{
-				string text = (outputFormat == "text") ? await e.InnerTextAsync() : await e.InnerHTMLAsync();
-				results.Add(text);
-			}
 			if (outputFormat == "md")
 			{
 				var config = new ReverseMarkdown.Config
@@ -661,15 +648,11 @@ namespace PLang.Modules.WebCrawlerModule
 					SmartHrefHandling = true
 				};
 				var converter = new ReverseMarkdown.Converter(config);
-				for (int i = 0; i < results.Count; i++)
-				{
-					string ble = converter.Convert(results[i]);
-					results[i] = ble;
-				}
+				html = converter.Convert(html);
 			}
 
 			SetCssSelector(cssSelector);
-			return results;
+			return html;
 		}
 		public async Task SwitchTab(int tabIndex)
 		{
@@ -947,28 +930,35 @@ namespace PLang.Modules.WebCrawlerModule
 					}
 				};
 			}
-			if (onRequest != null)
+
+			page.Request += async (object? sender, IRequest e) =>
 			{
-				page.Request += async (object? sender, IRequest e) =>
+				context[RequestContextKey] = e;
+				if (onRequest != null)
 				{
 					var result = await runtime.RunGoal(engine, context, "/", onRequest, new Dictionary<string, object?> { { "!sender", sender }, { "!request", e } }, Goal);
 					if (result.error != null)
 					{
 						throw new ExceptionWrapper(result.error);
 					}
-				};
-			}
-			if (onResponse != null)
+				}
+			};
+
+
+			page.Response += async (object? sender, IResponse e) =>
 			{
-				page.Response += async (object? sender, IResponse e) =>
+				context[ResponseContextKey] = e;
+				if (onResponse != null)
 				{
-					var result = await runtime.RunGoal(engine, context, "/", onResponse, new Dictionary<string, object?> { { "!sender", sender }, { "!response", e } }, Goal);
+					var result = await runtime.RunGoal(engine, context, "/", onResponse, 
+						new Dictionary<string, object?> { { "!sender", sender }, { "!response", e } }, Goal, keepMemoryStackOnAsync: true);
 					if (result.error != null)
 					{
 						throw new ExceptionWrapper(result.error);
 					}
-				};
-			}
+				}
+			};
+
 			if (onWebsocketReceived != null || onWebsocketSent != null)
 			{
 				page.WebSocket += (object? sender, IWebSocket e) =>

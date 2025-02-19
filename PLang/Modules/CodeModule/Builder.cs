@@ -71,6 +71,7 @@ namespace PLang.Modules.CodeModule
 - When checking type and converting variables to type, use Convert.ChangeType method
 - When user defines assembly or using, include them in your answer
 - append @ sign for reserved variable in C#
+- when input and output variable is same only define it once
 ## Rules ##
 
 ## Response information ##
@@ -86,7 +87,7 @@ namespace PLang.Modules.CodeModule
 
 			AppendToAssistantCommand($@"
 ## examples ##
-replace ""<strong>"" with """" from %html%, write to %html% => ExecutePlangCode(out string? html) {{
+replace ""<strong>"" with """" from %html%, write to %html% => ExecutePlangCode(ref string? html) {{
     //validate input parameter 
     html = html.Replace(""<strong>"", """");
 }}

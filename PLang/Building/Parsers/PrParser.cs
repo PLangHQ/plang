@@ -338,7 +338,7 @@ namespace PLang.Building.Parsers
 			goal = goals.FirstOrDefault(p => goalNameOrPath.TrimStart(fileSystem.Path.DirectorySeparatorChar).Equals(fileSystem.Path.Join(p.RelativeGoalFolderPath, p.GoalName).TrimStart(fileSystem.Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase));
 			if (goal != null) return goal;
 
-
+		
 			var possibleGoals = goals.Where(p => p.RelativePrFolderPath.EndsWith(goalNameOrPath, StringComparison.OrdinalIgnoreCase)).ToList();
 			if (possibleGoals.Count == 1) return possibleGoals[0];
 			if (possibleGoals.Count > 1)

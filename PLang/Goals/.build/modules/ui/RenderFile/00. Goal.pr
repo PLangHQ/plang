@@ -71,79 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "2301072c61c39d94d08e53fdcb02bd3500f9332b4a06ac001e4c93334de3262f",
-      "BuilderVersion": null,
-      "PrFile": {
-        "Action": {
-          "FunctionName": "RunGoal",
-          "Parameters": [
-            {
-              "Type": "GoalToCall",
-              "Name": "goalName",
-              "Value": "GetDesign"
-            },
-            {
-              "Type": "Dictionary<String, Object>",
-              "Name": "parameters",
-              "Value": null
-            }
-          ],
-          "ReturnValues": null
-        },
-        "Text": "call goal GetDesign",
-        "Reload": false,
-        "LlmRequest": {
-          "temperature": 0.0,
-          "top_p": 0.0,
-          "frequencyPenalty": 0.0,
-          "presencePenalty": 0.0,
-          "maxLength": 4000,
-          "llmResponseType": "json",
-          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-          "model": "gpt-4o-2024-08-06",
-          "promptMessage": [
-            {
-              "role": "system",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-                },
-                {
-                  "type": "text",
-                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-                }
-              ]
-            },
-            {
-              "role": "assistant",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "## functions available starts ##\r\nRunGoal(GoalToCall goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForExecution = True, Int32? delayWhenNotWaitingInMilliseconds = 50, UInt32? waitForXMillisecondsBeforeRunningGoal = 0, Boolean? keepMemoryStackOnAsync = False)  : void  // If backward slash(\\) is used by user, change to forward slash(/).\r\n## functions available ends ##"
-                },
-                {
-                  "type": "text",
-                  "text": "\r\n== Examples starts ==\r\ncall !ParseText => ParseText is goalName, no parameters\r\ncall !Gmail/Search %query%, => Gmail/Search is goalName,  %query% is key and value in parameters\r\ncall Folder/Search q=%fileName% => Folder/Search is goalName, parameter key is q, and value is %fileName%\r\n== Examples ends ==\r\n"
-                }
-              ]
-            },
-            {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "call goal GetDesign"
-                }
-              ]
-            }
-          ],
-          "type": "PLang.Modules.CallGoalModule.Builder",
-          "caching": true,
-          "RawResponse": "```json\n{\n\t\"FunctionName\": \"RunGoal\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"GoalToCall\",\n\t\t\t\"Name\": \"goalName\",\n\t\t\t\"Value\": \"GetDesign\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Dictionary<String, Object>\",\n\t\t\t\"Name\": \"parameters\",\n\t\t\t\"Value\": null\n\t\t}\n\t]\n}\n```"
-        },
-        "RunOnBuild": false
-      }
+      "Hash": "4fafe8ef4cf852168eda5a40a0eab4bb6630d4ef8a8da6207b2bb5bf74dd1729",
+      "BuilderVersion": null
     },
     {
       "Text": "render template %design%, write to %html%",
@@ -213,80 +142,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "215703b328c7e1dfe9e595e3d9a6629723dabee9a2ae6ac1e5a3848fe18e3999",
-      "BuilderVersion": null,
-      "PrFile": {
-        "Action": {
-          "FunctionName": "RenderContent",
-          "Parameters": [
-            {
-              "Type": "String",
-              "Name": "content",
-              "Value": "%design%"
-            },
-            {
-              "Type": "String",
-              "Name": "fullPath",
-              "Value": ""
-            }
-          ],
-          "ReturnValues": [
-            {
-              "Type": "String",
-              "VariableName": "%html%"
-            }
-          ]
-        },
-        "Text": "render template %design%, write to %html%",
-        "Reload": false,
-        "LlmRequest": {
-          "temperature": 0.0,
-          "top_p": 0.0,
-          "frequencyPenalty": 0.0,
-          "presencePenalty": 0.0,
-          "maxLength": 4000,
-          "llmResponseType": "json",
-          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-          "model": "gpt-4o-2024-08-06",
-          "promptMessage": [
-            {
-              "role": "system",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-                },
-                {
-                  "type": "text",
-                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-                }
-              ]
-            },
-            {
-              "role": "assistant",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "## functions available starts ##\r\nRenderFile(String path)  : String \nRenderContent(String content, String fullPath)  : String\r\n## functions available ends ##\r\n## defined variables ##\r\ndesign (type:object), html (type:object), \r\n## defined variables ##"
-                }
-              ]
-            },
-            {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "render template %design%, write to %html%"
-                }
-              ]
-            }
-          ],
-          "type": "PLang.Modules.GenericFunctionBuilder",
-          "caching": true,
-          "RawResponse": "```json\n{\n\t\"FunctionName\": \"RenderContent\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"String\",\n\t\t\"Name\": \"content\",\n\t\t\"Value\": \"%design%\"\n\t}, {\n\t\t\"Type\": \"String\",\n\t\t\"Name\": \"fullPath\",\n\t\t\"Value\": \"\"\n\t}],\n\t\"ReturnValues\": [{\n\t\t\"Type\": \"String\",\n\t\t\"VariableName\": \"%html%\"\n\t}]\n}\n```"
-        },
-        "RunOnBuild": false
-      }
+      "Hash": "e1327b0971e13a2e827f4b9d763fd254415f63d5b578e58b4eee70f913437e42",
+      "BuilderVersion": null
     },
     {
       "Text": "call goal GetJavascript, write to %javascript%",
@@ -356,84 +213,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "1f7a516e47813454cf516f1fdf25901aa6387ed93f6a1fdddb8d65eeb07423d5",
-      "BuilderVersion": null,
-      "PrFile": {
-        "Action": {
-          "FunctionName": "RunGoal",
-          "Parameters": [
-            {
-              "Type": "GoalToCall",
-              "Name": "goalName",
-              "Value": "GetJavascript"
-            },
-            {
-              "Type": "Dictionary<String, Object>",
-              "Name": "parameters",
-              "Value": null
-            }
-          ],
-          "ReturnValues": [
-            {
-              "Type": "object",
-              "VariableName": "javascript"
-            }
-          ]
-        },
-        "Text": "call goal GetJavascript, write to %javascript%",
-        "Reload": false,
-        "LlmRequest": {
-          "temperature": 0.0,
-          "top_p": 0.0,
-          "frequencyPenalty": 0.0,
-          "presencePenalty": 0.0,
-          "maxLength": 4000,
-          "llmResponseType": "json",
-          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-          "model": "gpt-4o-2024-08-06",
-          "promptMessage": [
-            {
-              "role": "system",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-                },
-                {
-                  "type": "text",
-                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-                }
-              ]
-            },
-            {
-              "role": "assistant",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "## functions available starts ##\r\nRunGoal(GoalToCall goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForExecution = True, Int32? delayWhenNotWaitingInMilliseconds = 50, UInt32? waitForXMillisecondsBeforeRunningGoal = 0, Boolean? keepMemoryStackOnAsync = False)  : void  // If backward slash(\\) is used by user, change to forward slash(/).\r\n## functions available ends ##\r\n## defined variables ##\r\njavascript (type:object), \r\n## defined variables ##"
-                },
-                {
-                  "type": "text",
-                  "text": "\r\n== Examples starts ==\r\ncall !ParseText => ParseText is goalName, no parameters\r\ncall !Gmail/Search %query%, => Gmail/Search is goalName,  %query% is key and value in parameters\r\ncall Folder/Search q=%fileName% => Folder/Search is goalName, parameter key is q, and value is %fileName%\r\n== Examples ends ==\r\n"
-                }
-              ]
-            },
-            {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "call goal GetJavascript, write to %javascript%"
-                }
-              ]
-            }
-          ],
-          "type": "PLang.Modules.CallGoalModule.Builder",
-          "caching": true,
-          "RawResponse": "```json\n{\n\t\"FunctionName\": \"RunGoal\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"GoalToCall\",\n\t\t\t\"Name\": \"goalName\",\n\t\t\t\"Value\": \"GetJavascript\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Dictionary<String, Object>\",\n\t\t\t\"Name\": \"parameters\",\n\t\t\t\"Value\": null\n\t\t}\n\t],\n\t\"ReturnValues\": [{\n\t\t\"Type\": \"object\",\n\t\t\"VariableName\": \"javascript\"\n\t}]\n}\n```"
-        },
-        "RunOnBuild": false
-      }
+      "Hash": "00777948a653627f9feaf3c041962ea4a2c18048e9e0c1d496bfa22d25f0674d",
+      "BuilderVersion": null
     },
     {
       "Text": "call goal GetCss, write to %css%",
@@ -503,84 +284,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "f846e760af1b6e4b9b8ed327f56c471ce1e3362afbf348d53960a75ab6ffac9e",
-      "BuilderVersion": null,
-      "PrFile": {
-        "Action": {
-          "FunctionName": "RunGoal",
-          "Parameters": [
-            {
-              "Type": "GoalToCall",
-              "Name": "goalName",
-              "Value": "GetCss"
-            },
-            {
-              "Type": "Dictionary<String, Object>",
-              "Name": "parameters",
-              "Value": null
-            }
-          ],
-          "ReturnValues": [
-            {
-              "Type": "object",
-              "VariableName": "css"
-            }
-          ]
-        },
-        "Text": "call goal GetCss, write to %css%",
-        "Reload": false,
-        "LlmRequest": {
-          "temperature": 0.0,
-          "top_p": 0.0,
-          "frequencyPenalty": 0.0,
-          "presencePenalty": 0.0,
-          "maxLength": 4000,
-          "llmResponseType": "json",
-          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-          "model": "gpt-4o-2024-08-06",
-          "promptMessage": [
-            {
-              "role": "system",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-                },
-                {
-                  "type": "text",
-                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-                }
-              ]
-            },
-            {
-              "role": "assistant",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "## functions available starts ##\r\nRunGoal(GoalToCall goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForExecution = True, Int32? delayWhenNotWaitingInMilliseconds = 50, UInt32? waitForXMillisecondsBeforeRunningGoal = 0, Boolean? keepMemoryStackOnAsync = False)  : void  // If backward slash(\\) is used by user, change to forward slash(/).\r\n## functions available ends ##\r\n## defined variables ##\r\ncss (type:object), \r\n## defined variables ##"
-                },
-                {
-                  "type": "text",
-                  "text": "\r\n== Examples starts ==\r\ncall !ParseText => ParseText is goalName, no parameters\r\ncall !Gmail/Search %query%, => Gmail/Search is goalName,  %query% is key and value in parameters\r\ncall Folder/Search q=%fileName% => Folder/Search is goalName, parameter key is q, and value is %fileName%\r\n== Examples ends ==\r\n"
-                }
-              ]
-            },
-            {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "call goal GetCss, write to %css%"
-                }
-              ]
-            }
-          ],
-          "type": "PLang.Modules.CallGoalModule.Builder",
-          "caching": true,
-          "RawResponse": "```json\n{\n\t\"FunctionName\": \"RunGoal\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"GoalToCall\",\n\t\t\t\"Name\": \"goalName\",\n\t\t\t\"Value\": \"GetCss\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Dictionary<String, Object>\",\n\t\t\t\"Name\": \"parameters\",\n\t\t\t\"Value\": null\n\t\t}\n\t],\n\t\"ReturnValues\": [{\n\t\t\"Type\": \"object\",\n\t\t\"VariableName\": \"css\"\n\t}]\n}\n```"
-        },
-        "RunOnBuild": false
-      }
+      "Hash": "158172fd067ada78714c10c0624a8340158500b6f16307033a006cf9b0be7af5",
+      "BuilderVersion": null
     },
     {
       "Text": "write out %html%",
@@ -650,85 +355,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "c6007817f17f8faa042dbd9a7e6b1f57e2fabae7013c68387ab2d56562997f7f",
-      "BuilderVersion": null,
-      "PrFile": {
-        "Action": {
-          "FunctionName": "Write",
-          "Parameters": [
-            {
-              "Type": "Object",
-              "Name": "content",
-              "Value": "%html%"
-            },
-            {
-              "Type": "Boolean",
-              "Name": "writeToBuffer",
-              "Value": false
-            },
-            {
-              "Type": "String",
-              "Name": "type",
-              "Value": "text"
-            },
-            {
-              "Type": "Int32",
-              "Name": "statusCode",
-              "Value": 200
-            }
-          ],
-          "ReturnValues": null
-        },
-        "Text": "write out %html%",
-        "Reload": false,
-        "LlmRequest": {
-          "temperature": 0.0,
-          "top_p": 0.0,
-          "frequencyPenalty": 0.0,
-          "presencePenalty": 0.0,
-          "maxLength": 4000,
-          "llmResponseType": "json",
-          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-          "model": "gpt-4o-2024-08-06",
-          "promptMessage": [
-            {
-              "role": "system",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-                },
-                {
-                  "type": "text",
-                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-                }
-              ]
-            },
-            {
-              "role": "assistant",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "## functions available starts ##\r\nAsk(String text, String? type = \"text\", Int32? statusCode = 200, String? regexPattern, String? errorMessage)  : String  // Send response to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.. \nWriteToSystemOutput(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  : void  // Write to the system output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. \nWriteJson(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  : void  // Write to the json output. Make sure content is valid JSON format. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. \nWrite(Object? content, Boolean? writeToBuffer = False, String? type = \"text\", Int32? statusCode = 200)  : void  // Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text.\r\n## functions available ends ##\r\n## defined variables ##\r\nhtml (type:String), \r\n## defined variables ##"
-                }
-              ]
-            },
-            {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "write out %html%"
-                }
-              ]
-            }
-          ],
-          "type": "PLang.Modules.GenericFunctionBuilder",
-          "caching": true,
-          "RawResponse": "```json\n{\n\t\"FunctionName\": \"Write\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"Object\",\n\t\t\"Name\": \"content\",\n\t\t\"Value\": \"%html%\"\n\t}, {\n\t\t\"Type\": \"Boolean\",\n\t\t\"Name\": \"writeToBuffer\",\n\t\t\"Value\": false\n\t}, {\n\t\t\"Type\": \"String\",\n\t\t\"Name\": \"type\",\n\t\t\"Value\": \"text\"\n\t}, {\n\t\t\"Type\": \"Int32\",\n\t\t\"Name\": \"statusCode\",\n\t\t\"Value\": 200\n\t}],\n\t\"ReturnValues\": null\n}\n```"
-        },
-        "RunOnBuild": false
-      }
+      "Hash": "9d63af01ca3b27c0a0a3cf53dc104944d2d3463c864d94b81e26cdf22d4755a1",
+      "BuilderVersion": null
     }
   ],
   "SubGoals": [],
@@ -743,7 +371,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "02584762eb467d86095c7dc70e0953479bcb61e02aa587682134900d2a13073a",
+  "Hash": "d3d4e8f4f8233bce1469a5482986e136f79120de69e7f666412d1563cbe14c37",
   "IncomingVariablesRequired": [
     "design",
     "html",

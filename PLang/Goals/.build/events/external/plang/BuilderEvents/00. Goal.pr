@@ -9,12 +9,12 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": null,
-      "RelativePrPath": null,
+      "PrFileName": "Events.pr",
+      "RelativePrPath": ".build\\events\\external\\plang\\BuilderEvents\\Events.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-02-17T11:38:57.247567+00:00",
+      "Generated": "2025-02-18T22:45:23.7106928+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -46,8 +46,7 @@
       },
       "IsEvent": true,
       "Hash": null,
-      "BuilderVersion": null,
-      "PrFile": null
+      "BuilderVersion": null
     }
   ],
   "SubGoals": [],

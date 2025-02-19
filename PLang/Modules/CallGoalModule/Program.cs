@@ -76,7 +76,7 @@ namespace PLang.Modules.CallGoalModule
 
 
 		[Description("Call/Runs another goal. goalName can be prefixed with !. If backward slash(\\) is used by user, change to forward slash(/)")]
-		public async Task<IError?> RunGoal(GoalToCall goalName, Dictionary<string, object?>? parameters = null, bool waitForExecution = true, 
+		public async Task<(object?, IError?)> RunGoal(GoalToCall goalName, Dictionary<string, object?>? parameters = null, bool waitForExecution = true, 
 			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, bool keepMemoryStackOnAsync = false)
 		{
 			if (string.IsNullOrEmpty(goalName))
@@ -90,7 +90,12 @@ namespace PLang.Modules.CallGoalModule
 			var result = await pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName,
 					variableHelper.LoadVariables(parameters), Goal, 
 					waitForExecution, delayWhenNotWaitingInMilliseconds, waitForXMillisecondsBeforeRunningGoal, goalStep.Indent, keepMemoryStackOnAsync);
-			return result.error;
+
+			if (result.error is Return ret)
+			{
+				return (ret.Variables, null);
+			}
+			return (null, result.error);
 			
 		}
 

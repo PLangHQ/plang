@@ -500,6 +500,7 @@ Error:
 			}
 			foreach (var header in headers)
 			{
+				if (header.Value == null) continue;
 				HttpListenerContext.Response.AddHeader(header.Key, header.Value.ToString());
 			}
 		}

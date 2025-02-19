@@ -56,42 +56,10 @@ namespace PLang.Utils
 			});
 			if (method != null) return method;
 
-			throw new MissingMethodException($"Method {function.FunctionName} could not be found that matches with your statement. " + error);
-			//await HandleMethodNotFound(callingInstance, function);
-			return null;
+			throw new MethodNotFoundException($"Method {function.FunctionName} could not be found that matches with your statement. " + error);
 		}
 
 
-		private async Task HandleMethodNotFound(object callingInstance, GenericFunction function)
-		{
-			throw new MissingMethodException($"Method {function.FunctionName} could not be found that is defined in your instruction file.");
-
-			var methods = typeHelper.GetMethodsAsString(callingInstance.GetType(), function.FunctionName);
-			string system = @"Try to map user statement to methods that are available in my class, 
-variables are defined with starting and ending %
-
-Answer in same natural language as user statement. Do not use the method name directly in you answer.
-Your answer cannot be same as user statement.
-
-example of answer:
-{text:""read file.txt, write into %content%""}
-{text:""add %item% to list, write to %list%""}
-";
-			string assistant = @$"## methods available ##
-{methods}
-## methods available ##";
-			string user = goalStep.Text;
-
-			var promptMessage = new List<LlmMessage>();
-			promptMessage.Add(new LlmMessage("system", system));
-			promptMessage.Add(new LlmMessage("assistant", assistant));
-			promptMessage.Add(new LlmMessage("user", user));
-
-			var llmRequeset = new LlmRequest("HandleMethodNotFound", promptMessage);
-
-			(var response, var queryError) = await llmServiceFactory.CreateHandler().Query<MethodNotFoundResponse>(llmRequeset);
-			throw new MissingMethodException($"Method {function.FunctionName} could not be found that matches with your statement. Example of command could be: {response.Text}");
-		}
 		public record MethodNotFoundResponse(string Text);
 
 
@@ -314,7 +282,8 @@ example of answer:
 			bool variableValueIsArray = variableValue.ToString().StartsWith("[");
 			if (variableValue is string)
 			{
-				variableValue = JArray.Parse(variableValue.ToString());
+				variableValue = new JArray(variableValue);
+				variableValueIsArray = true;
 			}
 
 			int arrayLength = variableValueIsArray ? ((JArray)variableValue).Count : 1;

@@ -8,12 +8,32 @@ using PLang.Errors.Runtime;
 using System.Collections;
 using System.ComponentModel;
 using System.Linq.Dynamic.Core;
+using System.Text.RegularExpressions;
 
 namespace PLang.Modules.FilterModule
 {
 	[Description("Allow user to find text, filter, select, query from a variable and get specific item from that variable.")]
 	public class Program : BaseProgram
 	{
+		[Description("Parses an input that is wrapped with markdown code format and return text inside those code blocks")]
+		public async Task<object> ExtractMarkdownWrapping(string[] format, string input)
+		{
+			string pattern = @"```(\w+)?\s*([\s\S]*?)\s*```";
+			Regex regex = new Regex(pattern, RegexOptions.Multiline);
+
+			List<(string Language, string Code)> extractedBlocks = new List<(string, string)>();
+
+			foreach (Match match in regex.Matches(input))
+			{
+				string language = match.Groups[1].Success ? match.Groups[1].Value : "plaintext";
+				string code = match.Groups[2].Value;
+				extractedBlocks.Add((language, code));
+			}
+
+			return (extractedBlocks.Count == 1) ? extractedBlocks[0].Code : extractedBlocks;
+
+		}
+
 
 		[Description("matching: contains|startwith|endwith|equals. retrieveOneItem: first|last|number (retrieveOneItem can also be a number representing the index.)")]
 		public async Task<object?> FindTextInContent(string content, string textToFind, string matching = "contains", string? retrieveOneItem = null)
