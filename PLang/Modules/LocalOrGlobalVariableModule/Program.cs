@@ -5,6 +5,7 @@ using PLang.Attributes;
 using PLang.Errors;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Utils;
 using System.Collections;
 using System.ComponentModel;
 using System.Text;
@@ -12,7 +13,7 @@ using System.Web;
 
 namespace PLang.Modules.LocalOrGlobalVariableModule
 {
-	[Description("Set, Get & return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.")]
+	[Description("Set, Get & return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable. When making Dictionary<string, Tuple<`2> keyValues is key(string), value(object) and default value(object) => map to \"%key%\": { \"Item1\": \"%value%\",\"Item2\": \"%defaultValue\" }.")]
 	public class Program : BaseProgram
 	{
 		private readonly ISettings settings;
@@ -114,8 +115,10 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			return variableHelper.LoadVariables(content);
 		}
 		[Description(@"Set string variable. Developer might use single/double quote to indicate the string value, the wrapped quote should not be included in the value. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
-		public async Task SetStringVariable([HandlesVariable] string key, [HandlesVariable] string? value = null, bool urlDecode = false, bool htmlDecode = false, bool doNotLoadVariablesInValue = false)
+		public async Task SetStringVariable([HandlesVariable] string key, [HandlesVariable] string? value = null, bool urlDecode = false, bool htmlDecode = false, bool doNotLoadVariablesInValue = false, [HandlesVariable] string? defaultValue = null)
 		{
+			if (value == null) value = defaultValue;
+
 			if (urlDecode) value = HttpUtility.UrlDecode(value);
 			if (htmlDecode) value = HttpUtility.HtmlDecode(value);
 
@@ -124,8 +127,9 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		}
 
 		[Description(@"Set json variable.")]
-		public async Task SetJsonObjectVariable([HandlesVariable] string key, [HandlesVariable] object? value = null, bool doNotLoadVariablesInValue = false)
+		public async Task SetJsonObjectVariable([HandlesVariable] string key, [HandlesVariable] object? value = null, bool doNotLoadVariablesInValue = false, [HandlesVariable] object? defaultValue = null)
 		{
+			if (value == null) value = defaultValue;
 
 			object? content = (doNotLoadVariablesInValue) ? value : variableHelper.LoadVariables(value);
 			if (content == null)
@@ -148,7 +152,8 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 					var jobject = JArray.Parse(content.ToString());
 					memoryStack.Put(key, jobject);
 					return;
-				} else if (str.StartsWith("{"))
+				}
+				else if (str.StartsWith("{"))
 				{
 					JObject jobject = JObject.Parse(content.ToString());
 					memoryStack.Put(key, jobject);
@@ -159,44 +164,55 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 				var jobj = JsonConvert.DeserializeObject(str);
 
 				memoryStack.Put(key, jobj);
-			} catch
+			}
+			catch
 			{
 				var str = JsonConvert.SerializeObject(content.ToString());
 				var jobj = JsonConvert.DeserializeObject(str);
 
 				memoryStack.Put(key, jobj);
 			}
-			
+
+		}
+		[Description(@"Set default value of int/long variable. If value already exists it wont be set.")]
+		public async Task SetDefaultNumberVariable([HandlesVariable] string key, long? value = null, long? defaultValue = null)
+		{
+			var objectValue = memoryStack.GetObjectValue2(key, false);
+			if (objectValue.Initiated) return;
+
+			memoryStack.Put(key, value ?? defaultValue);
+
 		}
 
 		[Description(@"Set int/long variable.")]
-		public async Task SetNumberVariable([HandlesVariable] string key, long? value = null)
+		public async Task SetNumberVariable([HandlesVariable] string key, long? value = null, long? defaultValue = null)
 		{
-			memoryStack.Put(key, value);
+			memoryStack.Put(key, value ?? defaultValue);
 		}
 		[Description(@"Set double variable.")]
-		public async Task SetDoubleVariable([HandlesVariable] string key, double? value = null)
+		public async Task SetDoubleVariable([HandlesVariable] string key, double? value = null, double? defaultValue = null)
 		{
-			memoryStack.Put(key, value);
+			memoryStack.Put(key, value ?? defaultValue);
 		}
 		[Description(@"Set float variable.")]
-		public async Task SetFloatVariable([HandlesVariable] string key, float? value = null)
+		public async Task SetFloatVariable([HandlesVariable] string key, float? value = null, float? defaultValue = null)
 		{
-			memoryStack.Put(key, value);
+			memoryStack.Put(key, value ?? defaultValue);
 		}
 		[Description(@"Set bool variable.")]
-		public async Task SetBoolVariable([HandlesVariable] string key, bool? value = null)
+		public async Task SetBoolVariable([HandlesVariable] string key, bool? value = null, bool? defaultValue = null)
 		{
-			memoryStack.Put(key, value);
+			memoryStack.Put(key, value ?? defaultValue);
 		}
 
 		[Description(@"Set variable. Developer might use single/double quote to indicate the string value. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
-		public async Task SetVariable([HandlesVariable] string key, [HandlesVariable]  object? value = null, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
+		public async Task SetVariable([HandlesVariable] string key, [HandlesVariable] object? value = null, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null, [HandlesVariable] object? defaultValue = null)
 		{
-			object? content = (doNotLoadVariablesInValue) ? value : variableHelper.LoadVariables(value);
+			if (value == null) value = defaultValue;
+			object? content = (doNotLoadVariablesInValue) ? value : variableHelper.LoadVariables(value, true, defaultValue);
 
 			if (onlyIfValueIsNot?.ToString() == "null" && value == null) return;
-			if (onlyIfValueIsNot?.ToString() == "empty" && (value == null || IsEmpty(value))) return;
+			if (onlyIfValueIsNot?.ToString() == "empty" && (value == null || VariableHelper.IsEmpty(value))) return;
 			if (onlyIfValueIsNot != null && onlyIfValueIsNot == value) return;
 
 			if (key.Contains("%") && keyIsDynamic)
@@ -210,27 +226,13 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			memoryStack.Put(key, content);
 		}
 
-		private bool IsEmpty(object? value)
-		{
-			if (value == null) return true;
-			if (value is string str && string.IsNullOrWhiteSpace(str)) return true;
-			if (value is JToken token && (
-				   token.Type == JTokenType.Null || // JSON null
-				   (token.Type == JTokenType.Object && !token.HasValues) || 
-				   (token.Type == JTokenType.Array && !token.HasValues) || 
-				   (token.Type == JTokenType.String && string.IsNullOrEmpty(token.ToString())) || 
-				   (token.Type == JTokenType.Property && ((JProperty)token).Value == null))) return true;
-			if (value is IList list && list.Count == 0) return true;
-			if (value is IDictionary dict && dict.Count == 0) return true;
-			
-			return false;
-		}
+		
 
-		[Description(@"Set multiple variables. If value is json, make sure to format it as valid json, use double quote("") by escaping it. onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
-		public async Task SetVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
+		[Description(@"Set multiple variables with possible default values. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it. onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
+		public async Task SetVariables([HandlesVariableAttribute] Dictionary<string, Tuple<object?, object?>?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
 			foreach (var key in keyValues)
-			{				
+			{
 				await SetVariable(key.Key, key.Value, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot);
 			}
 		}
@@ -243,22 +245,25 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			}
 
 		}
-		[Description(@"Set default value on variables if not set. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
-		public async Task SetDefaultValueOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
+
+
+
+		[Description(@"Set default value on variables if not set, good for setting value if variable is empty. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
+		public async Task SetDefaultValueOnVariables([HandlesVariableAttribute] Dictionary<string, Tuple<object?, object?>> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
 			foreach (var key in keyValues)
 			{
 				var objectValue = memoryStack.GetObjectValue2(key.Key, false);
 				if (!objectValue.Initiated)
 				{
-					await SetVariable(key.Key, key.Value, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot);
+					await SetVariable(key.Key, key.Value.Item1, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot, key.Value.Item2);
 				}
 			}
 
 		}
 
 		[Description("Append to variable. valueLocation=postfix|prefix seperatorLocation=end|start")]
-		public async Task<object?> AppendToVariable([HandlesVariableAttribute] string key, [HandlesVariable] object? value = null, char seperator = '\n', 
+		public async Task<object?> AppendToVariable([HandlesVariableAttribute] string key, [HandlesVariable] object? value = null, char seperator = '\n',
 			string valueLocation = "postfix", string seperatorLocation = "end", bool shouldBeUnique = false, bool doNotLoadVariablesInValue = false)
 		{
 			if (value == null) return value;

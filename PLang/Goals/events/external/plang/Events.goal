@@ -1,7 +1,0 @@
-Events
-- before each step, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug
-- before goal ends, include private goals, call !/events/external/plang/Runtime/SendDebug, parameter --debug
-- on step error, exception type: PLang.Exceptions.InvalidInstructionFileException, call !/events/external/plang/Runtime/HandleBadInstructionFile
-- on step error, exception type: PLang.Exceptions.MethodNotFoundException, call !/events/external/plang/Runtime/HandleBadInstructionFile
-- on step error key:"PrFileNotFound", call PrFileNotFound
-- on step error, call DebugErrorInIde, only when args --debug

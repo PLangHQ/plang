@@ -89,11 +89,6 @@ namespace PLang
 			}
 
 			var debug = args.FirstOrDefault(p => p == "--debug") != null;
-			if (debug)
-			{
-				SetupDebug();
-			}
-
 			var test = args.FirstOrDefault(p => p == "--test") != null;
 			var watch = args.FirstOrDefault(p => p == "watch") != null;
 

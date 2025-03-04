@@ -40,7 +40,7 @@ namespace PLang.Events
 		[property: DefaultValue("true")] bool WaitForExecution = true,
         [property: DefaultValue(null)] string[]? RunOnlyOnStartParameter = null,
         bool OnErrorContinueNextStep = false,
-		string? ErrorKey = null, string? ErrorMessage = null, int? StatusCode = null, string? ExceptionType = null);
+		string? ErrorKey = null, string? ErrorMessage = null, int? StatusCode = null, string? ExceptionType = null, bool IsLocal = false);
 
     //TODO: Need to create EventBuildBinding, the reason is that it should declare if step should continue to build code or not
     // if step or build event fails, the default behaviour is to build the next step. 

@@ -25,6 +25,11 @@ namespace PLang.Building.Parsers
 
 		public virtual Goal? ParsePrFile(string absolutePrFilePath)
 		{
+			if (!absolutePrFilePath.Contains(".pr"))
+			{
+				throw new ArgumentException($"path ({absolutePrFilePath} does not contain .pr file");
+			}
+
 			var goal = JsonHelper.ParseFilePath<Goal>(fileSystem, absolutePrFilePath);
 			if (goal == null)
 			{
@@ -81,8 +86,9 @@ namespace PLang.Building.Parsers
 			goal.AbsolutePrFolderPath = fileSystem.Path.Join(appAbsoluteStartupPath, goal.RelativePrFolderPath);
 
 			AdjustPathsToOS(goal);
+			goal.IsOS = absolutePrFilePath.Contains(fileSystem.OsDirectory);
 
-			//var setupOnceDictionary = settings.GetOrDefault<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", new());
+			
 			for (int i = 0; i < goal.GoalSteps.Count; i++)
 			{
 				goal.GoalSteps[i].AbsolutePrFilePath = fileSystem.Path.Join(goal.AbsolutePrFolderPath, goal.GoalSteps[i].PrFileName).AdjustPathToOs();
@@ -90,16 +96,12 @@ namespace PLang.Building.Parsers
 				goal.GoalSteps[i].AppStartupPath = appAbsoluteStartupPath.AdjustPathToOs();
 				goal.GoalSteps[i].Number = i;
 				goal.GoalSteps[i].Index = i;
-				/*if (setupOnceDictionary != null && setupOnceDictionary.ContainsKey(goal.GoalSteps[i].RelativePrPath))
-				{
-					goal.GoalSteps[i].Executed = setupOnceDictionary[goal.GoalSteps[i].RelativePrPath];
-				}*/
+
+				//remove from memory uneeded data for runtime
 				goal.GoalSteps[i].Goal = goal;
 				goal.GoalSteps[i].LlmRequest = null;
 				goal.GoalSteps[i].PrFile = null;
 			}
-
-			
 
 			return goal;
 		}
@@ -195,14 +197,42 @@ namespace PLang.Building.Parsers
 
 		public List<Goal> LoadAllGoals(bool force = false)
 		{
+			var osGoals = LoadAllGoalsByPath(fileSystem.OsDirectory, force);
+			var appGoals = LoadAllGoalsByPath(fileSystem.RootDirectory, force);
+
+			for (int i = 0; i < osGoals.Count; i++)
+			{
+				var osGoal = osGoals[i];
+				if (appGoals.FirstOrDefault(p => p.RelativePrPath == osGoal.RelativePrPath) == null)
+				{
+					appGoals.Add(osGoal);
+				}
+			}
+			var pubGoals = appGoals.Where(p => p.Visibility == Visibility.Public).ToList();
+			// this reloads the whole app
+			lock (_lock)
+			{
+				allGoals.Clear();
+				allGoals.AddRange(appGoals);
+				publicGoals.Clear();
+				publicGoals.AddRange(pubGoals);
+			}
+
+
+			return appGoals;
+		}
+
+		public List<Goal> LoadAllGoalsByPath(string dir, bool force) { 
 			if (allGoals.Count > 0 && !force) return allGoals;
 
-			if (!fileSystem.Directory.Exists(fileSystem.Path.Join(fileSystem.RootDirectory, ".build")))
+			string buildDir = fileSystem.Path.Join(dir, ".build");
+			string appsDir = fileSystem.Path.Join(dir, "apps");
+			if (!fileSystem.Directory.Exists(buildDir))
 			{
 				return new List<Goal>();
 			}
 		
-			var files = fileSystem.Directory.GetFiles(fileSystem.Path.Join(fileSystem.RootDirectory, ".build"), ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
+			var files = fileSystem.Directory.GetFiles(buildDir, ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
 
 			files = files.Select(file => new
 			{
@@ -214,9 +244,10 @@ namespace PLang.Building.Parsers
 			}).OrderBy(file => file.Order)
 				.ThenBy(file => file.FileName) 
 				.Select(file => file.FileName).ToList();
-			if (fileSystem.Directory.Exists(fileSystem.Path.Join(fileSystem.RootDirectory, "apps")))
+
+			if (fileSystem.Directory.Exists(appsDir))
 			{
-				var unsortedFiles = fileSystem.Directory.GetFiles(fileSystem.Path.Join(fileSystem.RootDirectory, "apps"), ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
+				var unsortedFiles = fileSystem.Directory.GetFiles(appsDir, ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
 				unsortedFiles = unsortedFiles.Select(file => new
 				{
 					FileName = file,
@@ -240,18 +271,8 @@ namespace PLang.Building.Parsers
 					goals.Add(goal);
 				}
 			}
-			var pubGoals = goals.Where(p => p.Visibility == Visibility.Public).ToList();
-
-			// this reloads the whole app
-			lock (_lock)
-			{
-				allGoals.Clear();
-				allGoals.AddRange(goals);
-				publicGoals.Clear();
-				publicGoals.AddRange(pubGoals);
-			}
-
-			return allGoals;
+			
+			return goals;
 		}
 
 		public List<Goal> GetAllGoals()
@@ -283,6 +304,14 @@ namespace PLang.Building.Parsers
 
 		public Goal? GetGoalByAppAndGoalName(string appStartupPath, string goalNameOrPath, Goal? callingGoal = null)
 		{
+			if (string.IsNullOrEmpty(appStartupPath))
+			{
+				throw new ArgumentNullException(nameof(appStartupPath));
+			}
+			if (string.IsNullOrEmpty(goalNameOrPath))
+			{
+				throw new ArgumentNullException(nameof(goalNameOrPath));
+			}
 			/*
 			 * ProcessVideo - goal belonging to same appStartupPath, located in any folder, root first, then by alphabetical order of folders
 			 * ui/List - in ui folder, 
@@ -297,7 +326,7 @@ namespace PLang.Building.Parsers
 			}
 			goalNameOrPath = goalNameOrPath.AdjustPathToOs().Replace(".goal", "").Replace("!", "");
 
-			if (appStartupPath != fileSystem.RootDirectory)
+			if (appStartupPath != fileSystem.RootDirectory && !fileSystem.IsPathRooted(appStartupPath))
 			{
 				appStartupPath = appStartupPath.TrimEnd(fileSystem.Path.DirectorySeparatorChar);
 				if (!appStartupPath.StartsWith(fileSystem.Path.DirectorySeparatorChar.ToString()))

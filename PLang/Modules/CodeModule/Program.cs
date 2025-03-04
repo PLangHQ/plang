@@ -1,8 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Services.CompilerService;
 using PLang.Utils;
 using System.ComponentModel;
@@ -23,7 +25,7 @@ namespace PLang.Modules.CodeModule
 		}
 
 
-		public override async Task<IError?> Run()
+		public override async Task<(object?, IError?)> Run()
 		{
 			Implementation? answer = null;
 			try
@@ -31,7 +33,7 @@ namespace PLang.Modules.CodeModule
 				answer = JsonConvert.DeserializeObject<Implementation?>(instruction.Action.ToString()!);
 				if (answer == null)
 				{
-					return new StepError("Code implementation was empty", goalStep);
+					return (null, new StepError("Code implementation was empty", goalStep));
 				}
 
 				string dllName = goalStep.PrFileName.Replace(".pr", ".dll");
@@ -39,7 +41,7 @@ namespace PLang.Modules.CodeModule
 				
 				if (assembly == null)
 				{
-					return new StepError($"Could not find {dllName}. Stopping execution for step {goalStep.Text}", goalStep);
+					return (null, new StepError($"Could not find {dllName}. Stopping execution for step {goalStep.Text}", goalStep));
 				}
 
 				List<Assembly> serviceAssemblies = new();
@@ -69,13 +71,13 @@ namespace PLang.Modules.CodeModule
 				Type? type = assembly.GetType(answer.Namespace + "." + answer.Name);
 				if (type == null)
 				{
-					return new StepError($"Type could not be loaded for {answer.Name}. Stopping execution for step {goalStep.Text}", goalStep);
+					return (null, new StepError($"Type could not be loaded for {answer.Name}. Stopping execution for step {goalStep.Text}", goalStep));
 				}
 
 				MethodInfo? method = type.GetMethod("ExecutePlangCode");
 				if (method == null)
 				{
-					return new StepError($"Method could not be loaded for {answer.Name}. Stopping execution for step {goalStep.Text}", goalStep);
+					return (null, new StepError($"Method could not be loaded for {answer.Name}. Stopping execution for step {goalStep.Text}", goalStep));
 				}
 				var parameters = method.GetParameters();
 
@@ -90,13 +92,13 @@ namespace PLang.Modules.CodeModule
 						if (outType == null) continue;
 						if (answer.OutParameters == null)
 						{
-							return new ProgramError($"{parameters[i].Name} is not defined in code. Please rebuild step", goalStep, function, StatusCode: 500);
+							return (null, new ProgramError($"{parameters[i].Name} is not defined in code. Please rebuild step", goalStep, function, StatusCode: 500));
 						}
 
 						var outParameter = answer.OutParameters.FirstOrDefault(p => p.ParameterName == parameters[i].Name);
 						if (outParameter == null)
 						{
-							return new ProgramError($"{parameters[i].Name} could not be found in build code. Please rebuild step", goalStep, function, StatusCode: 500);
+							return (null, new ProgramError($"{parameters[i].Name} could not be found in build code. Please rebuild step", goalStep, function, StatusCode: 500));
 						}
 
 						var value = memoryStack.Get(outParameter.VariableName, parameters[i].ParameterType);
@@ -122,7 +124,7 @@ namespace PLang.Modules.CodeModule
 							var inParameter = answer.InputParameters.FirstOrDefault(p => p.ParameterName == parameters[i].Name);
 							if (inParameter == null)
 							{
-								return new ProgramError($"{parameters[i].Name} could not be found in build code. Please rebuild step", goalStep, function, StatusCode: 500);
+								return (null, new ProgramError($"{parameters[i].Name} could not be found in build code. Please rebuild step", goalStep, function, StatusCode: 500));
 							}
 							var value = memoryStack.Get(inParameter.VariableName, parameters[i].ParameterType);
 							parametersObject.Add(value);
@@ -132,22 +134,24 @@ namespace PLang.Modules.CodeModule
 				var args = parametersObject.ToArray();
 				logger.LogTrace("Parameters:{0}", args);
 				object? result = method.Invoke(null, args);
-
+				ReturnDictionary<string, object?> rd = new();
+				
 				for (int i = 0; i < parameters.Length; i++)
 				{
 					var parameterInfo = parameters[i];
 					if (parameterInfo.IsOut || parameterInfo.ParameterType.IsByRef)
 					{
 						memoryStack.Put(parameterInfo.Name!, args[i]);
+						rd.AddOrReplace(parameterInfo.Name!, args[i]);
 					}
 				}
-				return null;
+				return (rd, null);
 			}
 			catch (Exception ex)
 			{
 				var error = CodeExceptionHandler.GetError(ex, answer, goalStep);
 
-				return error;
+				return (null, error);
 			}
 
 		}

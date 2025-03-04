@@ -309,7 +309,7 @@ namespace PLangTests.Modules.FileModule
 			var paths = await p.GetFilePathsInDirectory(fileSystem.RootDirectory, "*.goal", new string[] { "test/test.goal" }, true);
 
 			Assert.IsFalse(paths.Contains("test.goal"));
-			Assert.IsTrue(paths.Length > 5);
+			Assert.IsTrue(paths.Count > 5);
 			int i = 0;
 		}
 

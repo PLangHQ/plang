@@ -9,7 +9,9 @@ namespace PLangTests.Mocks
 {
     public class PLangMockFileSystem : MockFileSystem, IPLangFileSystem
 	{
-		public PLangMockFileSystem() : base() { }
+		public PLangMockFileSystem() : base() { 
+			Id = Guid.NewGuid().ToString();
+		}
 		public string RootDirectory => Environment.CurrentDirectory;
 
 		public bool IsRootApp => true;
@@ -20,6 +22,10 @@ namespace PLangTests.Mocks
 		public string GoalsPath => RootDirectory;
 		public string BuildPath => Path.Join(RootDirectory, ".build");
 		public string DbPath => Path.Join(RootDirectory, ".db");
+
+		public string OsDirectory => throw new NotImplementedException();
+
+		public string Id { get;init; }
 
 		public string? ValidatePath(string? path)
 		{
@@ -46,6 +52,14 @@ namespace PLangTests.Mocks
 			
 		}
 
-		
+		public bool IsPathRooted(string? path)
+		{
+			throw new NotImplementedException();
+		}
+
+		public void AddFileAccess(FileAccessControl fileAccess)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

@@ -159,7 +159,11 @@ namespace PLang.Modules.FileModule
 
 			return base64;
 		}
-
+		public async Task<object?> ReadJson(string path, bool throwErrorOnNotFound = false,
+			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
+		{
+			return await ReadTextFile(path, null, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding);
+		}
 		public async Task<(List<object>?, IError?)> ReadJsonLineFile(string path, bool throwErrorOnNotFound = false,
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? newLineSymbol = null)
 		{
@@ -237,7 +241,7 @@ namespace PLang.Modules.FileModule
 				return null;
 			}
 			var fileStream = fileSystem.FileStream.New(absolutePath, FileMode.OpenOrCreate, FileAccess.Read);
-			context.Add("FileStream_" + absolutePath, fileStream);
+			context.AddOrReplace("FileStream_" + absolutePath, fileStream);
 			return fileStream;
 		}
 
@@ -556,24 +560,28 @@ namespace PLang.Modules.FileModule
 			return result;
 		}
 
-		public async Task<string[]> GetDirectoryPathsInDirectory(string directoryPath = "./", string searchPattern = "*",
+		public async Task<List<string>> GetDirectoryPathsInDirectory(string directoryPath = "./", string searchPattern = "*",
 			string[]? excludePatterns = null, bool includeSubfolders = false, bool useRelativePath = true)
 		{
 			var searchOption = (includeSubfolders) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 			var absoluteDirectoryPath = GetPath(directoryPath);
+			
+			if (!fileSystem.Directory.Exists(absoluteDirectoryPath)) return new();
+			
+			var allDirs = fileSystem.Directory.GetDirectories(absoluteDirectoryPath, "*", searchOption)
+				.Where(dir => dir.Contains(searchPattern.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase))
+				.ToList();
 
-			var files = fileSystem.Directory.GetDirectories(absoluteDirectoryPath, searchPattern, searchOption);
-
-			var paths = files.Select(path => (useRelativePath) ? path.Replace(fileSystem.RootDirectory, "") : path);
+			var paths = allDirs.Select(path => (useRelativePath) ? path.Replace(fileSystem.RootDirectory, "") : path);
 			if (excludePatterns != null)
 			{
 				paths = paths.Where(file => !excludePatterns.Any(pattern => Regex.IsMatch(file, pattern)));
 			}
 
-			return paths.ToArray();
+			return paths.ToList();
 		}
 
-		public async Task<string[]> GetFilePathsInDirectory(string directoryPath = "./", string searchPattern = "*",
+		public async Task<List<string>> GetFilePathsInDirectory(string directoryPath = "./", string searchPattern = "*",
 		string[]? excludePatterns = null, bool includeSubfolders = false, bool useRelativePath = true)
 		{
 			var searchOption = (includeSubfolders) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
@@ -587,7 +595,7 @@ namespace PLang.Modules.FileModule
 				paths = paths.Where(file => !excludePatterns.Any(pattern => Regex.IsMatch(file, pattern)));
 			}
 
-			return paths.ToArray();
+			return paths.ToList();
 		}
 
 		public async Task WriteBase64ToFile(string path, string base64, bool overwrite = false)
@@ -912,7 +920,7 @@ namespace PLang.Modules.FileModule
 				int counter = 0;
 				while (context.ContainsKey($"FileWatcher_{fileSearchPattern}_{goalToCall}_{counter}")) { counter++; };
 
-				context.Add($"FileWatcher_{fileSearchPattern}_{goalToCall}_{counter}", watcher);
+				context.AddOrReplace($"FileWatcher_{fileSearchPattern}_{goalToCall}_{counter}", watcher);
 				KeepAlive(this, $"FileWatcher [{fileSearchPattern}]");
 			}
 		}

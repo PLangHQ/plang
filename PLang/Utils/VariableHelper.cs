@@ -5,6 +5,7 @@ using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.SettingsService;
 using System.Collections;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -25,6 +26,22 @@ namespace PLang.Utils
 			this.memoryStack = memoryStack;
 		}
 
+		public static bool IsEmpty(object? value)
+		{
+			if (value == null) return true;
+			if (value is string str && string.IsNullOrWhiteSpace(str)) return true;
+			if (value is JToken token && (
+				   token.Type == JTokenType.Null || // JSON null
+				   (token.Type == JTokenType.Object && !token.HasValues) ||
+				   (token.Type == JTokenType.Array && !token.HasValues) ||
+				   (token.Type == JTokenType.String && string.IsNullOrEmpty(token.ToString())) ||
+				   (token.Type == JTokenType.Property && ((JProperty)token).Value == null))) return true;
+			if (value is IList list && list.Count == 0) return true;
+			if (value is IDictionary dict && dict.Count == 0) return true;
+
+			return false;
+		}
+
 		public Dictionary<string, object?> LoadVariables(Dictionary<string, object?>? items, bool emptyIfNotFound = true)
 		{
 			if (items == null) return new Dictionary<string, object?>();
@@ -38,7 +55,7 @@ namespace PLang.Utils
 
 
 
-		public object? LoadVariables(object? obj, bool emptyIfNotFound = true)
+		public object? LoadVariables(object? obj, bool emptyIfNotFound = true, object? defaultValue = null)
 		{
 			if (obj == null) return null;
 
@@ -55,7 +72,7 @@ namespace PLang.Utils
 				}
 				else
 				{
-					var value = memoryStack.Get(content);
+					var value = memoryStack.Get(content, false, defaultValue);
 					if (value != null)
 					{
 						if (value is JValue jValue) return jValue.Value;
@@ -76,7 +93,7 @@ namespace PLang.Utils
 				{
 					var jsonProperty = FindPropertyNameByValue(jobject, variable.OriginalKey);
 					if (jsonProperty == null) {
-						LoadVariableInTextValue(jobject, variable);
+						LoadVariableInTextValue(jobject, variable, defaultValue);
 						continue;
 					};
 
@@ -86,6 +103,9 @@ namespace PLang.Utils
 						if (value != null)
 						{
 							SetNestedPropertyValue(jobject, jsonProperty, value);
+						} else if (defaultValue != null && defaultValue is JToken jToken)
+						{
+							SetNestedPropertyValue(jobject, jsonProperty, jToken);
 						}
 					}
 					else if (jsonProperty.Contains("[") && jsonProperty.Contains("]"))
@@ -95,11 +115,24 @@ namespace PLang.Utils
 						{
 							if (messages[i].Type == JTokenType.String && messages[i].ToString() == variable.OriginalKey)
 							{
-								if (variable.Value is JToken token) { 
-									messages[i] = token;
+								if (variable.Value is JToken token) {
+									if (!IsEmpty(token))
+									{
+										messages[i] = token;
+									} else if (defaultValue is JToken defaultJValue)
+									{
+										messages[i] = defaultJValue.SelectToken(token.Path);
+									}
 								} else
 								{
-									messages[i] = JsonSerialize(variable.Value);
+									if (!IsEmpty(variable.Value))
+									{
+										messages[i] = JsonSerialize(variable.Value);
+									}
+									else if (defaultValue != null)
+									{
+										messages[i] = JsonSerialize(defaultValue);
+									}
 								}
 								break;
 							}
@@ -110,10 +143,26 @@ namespace PLang.Utils
 					{
 						if (jobject[jsonProperty] != null && IsVariable(jobject[jsonProperty].ToString()))
 						{
-							jobject[jsonProperty] = (variable.Value == null) ? "" : JsonSerialize(variable.Value);
+							if (IsEmpty(variable.Value) && defaultValue != null && defaultValue is JToken defaultJValue && jobject[jsonProperty] != null)
+							{
+								var value = defaultJValue.SelectToken(jobject[jsonProperty].Path) as JValue;
+								jobject[jsonProperty] = value;
+							}
+							else
+							{
+								jobject[jsonProperty] = (variable.Value == null) ? "" : JsonSerialize(variable.Value);
+							}
 						} else
 						{
-							jobject[jsonProperty] = jobject[jsonProperty].ToString().Replace(variable.OriginalKey, variable.Value.ToString());
+							if (IsEmpty(variable.Value) && defaultValue != null && defaultValue is JToken defaultJValue && jobject[jsonProperty] != null)
+							{
+								var token = defaultJValue.SelectToken(jobject[jsonProperty].Path) as JValue;
+								jobject[jsonProperty] = jobject[jsonProperty].ToString().Replace(variable.OriginalKey, token.ToString());
+							}
+							else
+							{
+								jobject[jsonProperty] = jobject[jsonProperty].ToString().Replace(variable.OriginalKey, variable.Value.ToString());
+							}
 						}
 					}
 
@@ -156,7 +205,7 @@ namespace PLang.Utils
 
 		}
 
-		private void LoadVariableInTextValue(JToken jobject, Variable variable)
+		private void LoadVariableInTextValue(JToken jobject, Variable variable, object? defaultValue = null)
 		{
 			var children = jobject.Children();
 			foreach (var child in children)
@@ -164,6 +213,14 @@ namespace PLang.Utils
 				if (child is JValue jValue)
 				{
 					jValue.Value = LoadVariables(jValue.Value);
+					if (IsEmpty(jValue.Value) && defaultValue is JObject defaultJObj)
+					{
+						var token = defaultJObj.SelectToken(jValue.Path);
+						if (token is JValue defaultJValue)
+						{
+							jValue.Value = defaultJValue;
+						}
+					}
 				}
 				else
 				{
@@ -223,7 +280,9 @@ namespace PLang.Utils
 				var options = new JsonSerializerOptions
 				{
 					Converters = { new ObjectValueConverter() },
-
+					ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve,
+					DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+					IgnoreReadOnlyProperties = true
 				};
 				// TODO: Not sure how to solve this ugly code. 
 
@@ -320,6 +379,7 @@ namespace PLang.Utils
 					writer.WritePropertyName("Value");
 					if (value.Value is Exception ex)
 					{
+						throw new Exception(ex.Message, ex);
 						System.Text.Json.JsonSerializer.Serialize(writer, ex.Message, options);
 					}
 					else
@@ -338,7 +398,7 @@ namespace PLang.Utils
 							{
 								e.ErrorContext.Handled = true;
 							}
-
+							throw;
 							value.Value = JsonConvert.SerializeObject(ex2, settings);
 						}
 					}
@@ -588,5 +648,6 @@ namespace PLang.Utils
 			return (list.Count > 0) ? list[0]  : null;
 
 		}
+
 	}
 }

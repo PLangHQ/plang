@@ -1,3 +1,0 @@
-is this valid scriban/html/js/css code you generated and forms with the wireframe? 
-When it is not valid correct the misstake and rewrite code, else null. 
- return in json scheme: {isValid:bool, html:string|null, css:string|null, javascript:string|null}

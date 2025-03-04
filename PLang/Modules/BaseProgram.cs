@@ -3,24 +3,24 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Container;
+using PLang.Errors;
+using PLang.Errors.AskUser;
+using PLang.Errors.Builder;
+using PLang.Errors.Methods;
+using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
+using PLang.SafeFileSystem;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Utils;
-using System.Diagnostics;
 using System.Net;
 using System.Reflection;
 using static PLang.Modules.BaseBuilder;
 using Instruction = PLang.Building.Model.Instruction;
-using PLang.Errors;
-using PLang.Errors.Runtime;
-using System;
-using PLang.SafeFileSystem;
-using PLang.Errors.AskUser;
 
 namespace PLang.Modules
 {
@@ -88,25 +88,30 @@ namespace PLang.Modules
 			variableHelper = new VariableHelper(context, memoryStack, settings);
 			this.typeHelper = typeHelper;
 			this.llmServiceFactory = llmServiceFactory;
-			methodHelper = new MethodHelper(goalStep, variableHelper, memoryStack, typeHelper, llmServiceFactory);
+			methodHelper = new MethodHelper(goalStep, variableHelper, typeHelper);
 			fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 		}
 
 		public IServiceContainer Container { get { return container; } }
 
 
-		public virtual async Task<IError?> Run()
+		public virtual async Task<(object? ReturnValue, IError? Error)> Run()
 		{
 			var functions = instruction.GetFunctions();
 			foreach (var function in functions)
 			{
-				var error = await RunFunction(function);
-				if (error != null) return error;
+				// no support for multiple functions, return on first
+				return await RunFunction(function);
 			}
-			return null;
+			return (null, new ProgramError("Nothing found to run", goalStep, function, FixSuggestion: "Try rebuilding your code"));
 		}
 
-		public async Task<IError?> RunFunction(GenericFunction function)
+		private T GetModule<T>() where T : BaseProgram
+		{
+			return (T) container.GetInstance(typeof(T));
+		}
+
+		public async Task<(object? ReturnValue, IError? Error)> RunFunction(GenericFunction function)
 		{
 			Dictionary<string, object?>? parameterValues = null;
 			this.function = function; // this is to give sub classes access to current function running.
@@ -115,17 +120,17 @@ namespace PLang.Modules
 				MethodInfo? method = await methodHelper.GetMethod(this, function);
 				if (method == null)
 				{
-					return new StepError($"Could not load method {function.FunctionName} to run", goalStep, "MethodNotFound", 500);
+					return (null, new StepError($"Could not load method {function.FunctionName} to run", goalStep, "MethodNotFound", 500));
 				}
 
 				logger.LogDebug("Method:{0}.{1}({2})", goalStep.ModuleType, method.Name, method.GetParameters());
 
 				//TODO: Should move this caching check up the call stack. code is doing to much work before returning cache
-				if (await LoadCached(method, function)) return null;
+				if (await LoadCached(method, function)) return (null, null);
 
 				if (method.ReturnType != typeof(Task) && method.ReturnType.BaseType != typeof(Task))
 				{
-					return new Error($"The method {method.Name} does not return Task. Method that are called must return Task");
+					return (new Error($"The method {method.Name} does not return Task. Method that are called must return Task"), null);
 				}
 
 				parameterValues = methodHelper.GetParameterValues(method, function);
@@ -135,11 +140,19 @@ namespace PLang.Modules
 				// This is for memoryStack event handler. Should find a better way
 				context.AddOrReplace(ReservedKeywords.Goal, goal);
 
-				var task = method.Invoke(this, parameterValues.Values.ToArray()) as Task;
+				Task? task = null;
+				try
+				{
+					task = method.Invoke(this, parameterValues.Values.ToArray()) as Task;
+				} catch (System.ArgumentException ex)
+				{
+					return (null, new InvalidParameterError(function.FunctionName, ex.Message, goalStep, FixSuggestion: "Likely build on older verion of plang. Rebuild code"));
+				}
+
 				if (task == null)
 				{
 					logger.LogWarning("Method called is not an async function. Make sure it is defined as 'public async Task' or 'public async Task<YourReturnType>'");
-					return null;
+					return (null, null);
 				}
 
 				if (goalStep.WaitForExecution)
@@ -150,7 +163,7 @@ namespace PLang.Modules
 					}
 					catch { }
 				}
-
+				
 				if (task.Status == TaskStatus.Faulted && task.Exception != null)
 				{
 					var ex = task.Exception.InnerException ?? task.Exception;
@@ -181,12 +194,12 @@ namespace PLang.Modules
 						//logger.LogDebug($"Calling Dispose for {this}");
 						//disposable.Dispose();
 					}
-					return pe;
+					return (null, pe);
 				}
 
 				if (!goalStep.WaitForExecution || method.ReturnType == typeof(Task))
 				{
-					return null;
+					return (null, null);
 				}
 
 				(object? result, var error) = GetValuesFromTask(task);
@@ -195,10 +208,10 @@ namespace PLang.Modules
 					if (error is AskUserError aue)
 					{
 						(var isHandled, var handlerError) = await HandleAskUser(aue);
-						
+
 						if (isHandled) return await RunFunction(function);
 
-						return ErrorHelper.GetMultipleError(error, handlerError);
+						return (result, ErrorHelper.GetMultipleError(error, handlerError));
 					}
 					if (error.Step == null)
 					{
@@ -213,13 +226,13 @@ namespace PLang.Modules
 					{
 						error.Goal = goal;
 					}
-					return error;
+					return (result, error);
 				}
 
 				SetReturnValue(function, result);
 
 				await SetCachedItem(result);
-				return null;
+				return (result, null);
 
 			}
 			catch (Exception ex)
@@ -239,8 +252,8 @@ namespace PLang.Modules
 					if (isHandled) return await RunFunction(function);
 				}
 				var pe = new ProgramError(ex.Message, goalStep, function, parameterValues, Key: ex.GetType().FullName ?? "ProgramError", 500, Exception: ex);
-				
-				return pe;
+
+				return (null, pe);
 			}
 		}
 
@@ -254,7 +267,7 @@ namespace PLang.Modules
 			return (isHandled, handlerError);
 		}
 
-		private async Task<IError?> HandleFileAccess(FileAccessException fa)
+		private async Task<(object?, IError?)> HandleFileAccess(FileAccessException fa)
 		{
 			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 			var askUserFileAccess = new AskUserFileAccess(fa.AppName, fa.Path, fa.Message, fileAccessHandler.ValidatePathResponse);
@@ -262,7 +275,7 @@ namespace PLang.Modules
 			(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(askUserFileAccess);
 			if (isHandled) return await RunFunction(function);
 
-			return ErrorHelper.GetMultipleError(askUserFileAccess, handlerError);
+			return (null, ErrorHelper.GetMultipleError(askUserFileAccess, handlerError));
 		}
 
 		private (object? returnValue, IError? error) GetValuesFromTask(Task task)

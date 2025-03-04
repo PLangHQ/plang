@@ -1,21 +1,17 @@
 ﻿using LightInject;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using NBitcoin;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Container;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
-using PLang.Services.SettingsService;
 using PLang.Utils;
 using Sprache;
-using System.IO.Abstractions;
 using System.Text.RegularExpressions;
 
 namespace PLang.Building.Parsers
 {
-    public interface IGoalParser
+	public interface IGoalParser
 	{
 		List<Goal> ParseGoalFile(string goalFileAbsolutePath);
 	}
@@ -51,6 +47,11 @@ namespace PLang.Building.Parsers
 								 Indent = indent.Count(),
 							 };
 
+			var multiLineComment = from open in Parse.String("/*").Token()
+								   from commentContent in Parse.CharExcept('*').Or(Parse.Char('*').Except(Parse.Char('/'))).Many().Text()
+								   from close in Parse.String("*/").Token()
+								   select commentContent.Trim();
+
 			var commentParser = from slash in Parse.Char('/')
 								from commentText in Parse.AnyChar.Except(Parse.LineEnd).Many().Text()
 								select commentText.Trim();
@@ -58,6 +59,9 @@ namespace PLang.Building.Parsers
 			var goalParser = from goalText in Parse.AnyChar.Except(Parse.LineEnd).Many().Text()
 							 from comment in Parse.LineEnd.Then(_ => commentParser).Optional()
 							 select new Goal { GoalName = goalText.Trim(), Comment = comment.GetOrDefault() };
+
+
+
 
 			var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
 
@@ -76,8 +80,21 @@ namespace PLang.Building.Parsers
 					whitespace = true;
 					continue;
 				}
-
-				if (line.TrimStart().StartsWith("/"))
+				if (line.TrimStart().StartsWith("/*"))
+				{
+					for (int b=i; b < lines.Length; b++)
+					{
+						uncertainComment += lines[b].Trim() + "\n";
+						if (lines[b].TrimEnd().EndsWith("*/"))
+						{
+							i = b;
+							break;
+						}
+					}
+					
+					continue;
+				}
+				else if (line.TrimStart().StartsWith("/"))
 				{
 					var comment = commentParser.Parse(line.Trim());
 					if (whitespace)
@@ -105,9 +122,18 @@ namespace PLang.Building.Parsers
 
 					step.Comment = uncertainComment ?? stepComment;
 					step.Execute = step.Indent == 0;
+					
+					
 					step.Goal = currentGoal;
-					step.LineNumber = (i+1);
+					step.LineNumber = (i + 1);
 					step.Number = stepNr++;
+
+					if (step.Indent % 4 != 0)
+					{
+						step.RelativeGoalPath = goalFileAbsolutePath.Replace(fileSystem.GoalsPath, "");
+						
+						throw new BuilderStepException($"Indentation of step {step.Text} is not correct. Indentation must be a multiple of 4", step);
+					}
 
 					currentGoal?.GoalSteps.Add(step);
 					stepComment = null;
@@ -122,7 +148,8 @@ namespace PLang.Building.Parsers
 					{
 						step.Text += '\n' + line;
 						continue;
-					} else
+					}
+					else
 					{
 						currentGoal.Text += ('\n' + line).TrimEnd();
 					}
@@ -144,7 +171,8 @@ namespace PLang.Building.Parsers
 				var goalWithSameName = goalsWithSameName.FirstOrDefault();
 				throw new BuilderException($"Goal '{goalWithSameName.GoalName}' is defined two times in {goalFileAbsolutePath}. Each goal must have unique name");
 			}
-
+			var basePrFolder = "";
+			var basePrGoalFolder = "";
 
 			for (int i = 0; i < goals.Count; i++)
 			{
@@ -160,7 +188,7 @@ namespace PLang.Building.Parsers
 				{
 					prFileAbsolutePath = Path.Join(GetBuildPathOfGoalFile(goalFileAbsolutePath), goals[i].GoalName, ISettings.GoalFileName);
 					goal.Visibility = Visibility.Private;
-					
+
 				}
 				goal.GoalFileName = Path.GetFileName(goalFileAbsolutePath);
 				goal.PrFileName = Path.GetFileName(prFileAbsolutePath);
@@ -178,6 +206,18 @@ namespace PLang.Building.Parsers
 				goal.AbsolutePrFolderPath = Path.GetDirectoryName(prFileAbsolutePath);
 				goal.RelativePrPath = Path.Join(".build", prFileAbsolutePath.Replace(fileSystem.BuildPath, ""));
 				goal.RelativePrFolderPath = Path.GetDirectoryName(goal.RelativePrPath);
+
+				//check if goal inside of goal is named same as base folder
+				if (i == 0)
+				{
+					basePrFolder = Path.GetDirectoryName(goal.RelativePrFolderPath);
+					basePrGoalFolder = goal.RelativePrFolderPath;
+				} else
+				{
+					if (Path.Join(basePrFolder, goal.GoalName) == basePrGoalFolder) {
+						throw new Exception($"The goal {goal.GoalName} is named the same the the goal file {goal.GoalFileName}. This is not allowed");
+					}
+				}
 				if (injections.Count > 0)
 				{
 					foreach (var injection in injections)
@@ -188,7 +228,7 @@ namespace PLang.Building.Parsers
 					}
 
 				}
-				
+
 				if (!fileSystem.File.Exists(prFileAbsolutePath)) continue;
 
 				var prevBuildGoal = JsonHelper.ParseFilePath<Goal>(fileSystem, prFileAbsolutePath);
@@ -212,7 +252,7 @@ namespace PLang.Building.Parsers
 						prevStep = prevBuildGoal.GoalSteps.FirstOrDefault(p => p.Text == goals[i].GoalSteps[b].Text);
 					}
 					goals[i].GoalSteps[b].Index = b;
-
+					goals[i].GoalSteps[b].RelativeGoalPath = goal.RelativeGoalPath;
 					if (prevStep != null)
 					{
 						goals[i].GoalSteps[b].Custom = prevStep.Custom;
@@ -248,7 +288,7 @@ namespace PLang.Building.Parsers
 						{
 							goals[i].GoalSteps[b].Executed = setupOnceDictionary[goals[i].GoalSteps[b].RelativePrPath];
 						}
-						
+
 						if (prevStep.Text.Trim() != goals[i].GoalSteps[b].Text.Trim())
 						{
 							goals[i].GoalSteps[b].PreviousText = prevStep.Text;

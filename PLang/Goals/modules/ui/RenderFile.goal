@@ -1,7 +1,0 @@
-/ - [ui] Make a chatbox, 'user.template', 
-RenderFile
-- call goal GetDesign
-- render template %design%, write to %html%
-- call goal GetJavascript, write to %javascript%
-- call goal GetCss, write to %css%
-- write out %html%

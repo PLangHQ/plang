@@ -29,7 +29,10 @@ namespace PLang.Runtime
 {
 	public interface IEngine
 	{
+		string Id { get; init; }
 		IOutputStreamFactory OutputStreamFactory { get; }
+		HttpListenerContext? HttpContext { get; set; }
+
 		void AddContext(string key, object value);
 		PLangAppContext GetContext();
 		MemoryStack GetMemoryStack();
@@ -39,12 +42,14 @@ namespace PLang.Runtime
 		Goal? GetGoal(string goalName, Goal? callingGoal = null);
 		List<Goal> GetGoalsAvailable(string appPath, string goalName);
 		Task<IError?> RunFromStep(string prFile);
-
-		public HttpListenerContext? HttpContext { get; set; }
+		Task<(object? ReturnValue, IError? Error)> ProcessPrFile(Goal goal, GoalStep goalStep, int stepIndex);
+		
 	}
 	public record Alive(Type Type, string Key);
 	public class Engine : IEngine, IDisposable
 	{
+		public string Id { get; init; }
+
 		private IServiceContainer container;
 
 		private IPLangFileSystem fileSystem;
@@ -66,12 +71,17 @@ namespace PLang.Runtime
 
 		public Engine()
 		{
-		}
+			Id = Guid.NewGuid().ToString();
+			AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+			{
+				Console.WriteLine($"Unhandled exception: {args.ExceptionObject}");
+			};
+		}		
 
 		public void Init(IServiceContainer container)
 		{
 			this.container = container;
-			 
+
 			this.context = container.GetInstance<PLangAppContext>();
 			this.fileSystem = container.GetInstance<IPLangFileSystem>();
 			this.identityService = container.GetInstance<IPLangIdentityService>();
@@ -79,7 +89,7 @@ namespace PLang.Runtime
 			this.settings = container.GetInstance<ISettings>();
 			this.eventRuntime = container.GetInstance<IEventRuntime>();
 			this.eventRuntime.SetContainer(container);
-			this.eventRuntime.Load();
+			this.eventRuntime.Load().Wait();
 
 			this.typeHelper = container.GetInstance<ITypeHelper>();
 			this.askUserHandlerFactory = container.GetInstance<IAskUserHandlerFactory>();
@@ -121,7 +131,7 @@ namespace PLang.Runtime
 					return;
 				}
 
-				var eventError = await eventRuntime.RunStartEndEvents(context, EventType.Before, EventScope.StartOfApp);
+				var eventError = await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.StartOfApp);
 				if (eventError != null)
 				{
 					await HandleError(eventError);
@@ -145,7 +155,7 @@ namespace PLang.Runtime
 				}
 
 
-				error = await eventRuntime.RunStartEndEvents(context, EventType.After, EventScope.StartOfApp);
+				error = await eventRuntime.RunStartEndEvents(EventType.After, EventScope.StartOfApp);
 				if (error != null)
 				{
 					await HandleError(error);
@@ -179,7 +189,7 @@ namespace PLang.Runtime
 					}
 				}
 
-				var error = await eventRuntime.RunStartEndEvents(context, EventType.Before, EventScope.EndOfApp);
+				var error = await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.EndOfApp);
 				if (error != null)
 				{
 					await HandleError(error);
@@ -193,14 +203,15 @@ namespace PLang.Runtime
 
 		public virtual void Dispose()
 		{
-			
+
 			if (this.disposed)
 			{
 				return;
 			}
 			fileWatcher?.Dispose();
-			memoryStack.Clear();
-			context.Clear();
+			memoryStack?.Clear();
+			context?.Clear();
+			//_debugSemaphore.Dispose();
 
 			this.disposed = true;
 		}
@@ -253,7 +264,7 @@ namespace PLang.Runtime
 
 			logger.LogError(error.ToString());
 
-			var appErrorEvent = await eventRuntime.AppErrorEvents(context, error);
+			var appErrorEvent = await eventRuntime.AppErrorEvents(error);
 			if (appErrorEvent != null)
 			{
 				var me = new MultipleError(error, "Critical");
@@ -267,7 +278,7 @@ namespace PLang.Runtime
 		{
 			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 			var askUserFileAccess = new AskUserFileAccess(fare.AppName, fare.Path, fare.Message, fileAccessHandler.ValidatePathResponse);
-			
+
 			return await askUserHandlerFactory.CreateHandler().Handle(askUserFileAccess);
 		}
 
@@ -348,7 +359,7 @@ namespace PLang.Runtime
 		private void ResetStepLogLevel(Goal goal)
 		{
 			if (goal.Comment == null && !goal.GoalName.Contains("[")) return;
-		
+
 			string comment = (goal.Comment ?? string.Empty).ToLower();
 			string goalName = goal.GoalName.ToLower();
 
@@ -364,10 +375,12 @@ namespace PLang.Runtime
 			return;
 		}
 
-		public async Task<IError?> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0) { 
-			
+		public async Task<IError?> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0)
+		{
+
+
 			if (waitForXMillisecondsBeforeRunningGoal > 0) await Task.Delay((int)waitForXMillisecondsBeforeRunningGoal);
-			
+
 			AppContext.SetSwitch("Runtime", true);
 			SetLogLevel(goal.Comment);
 
@@ -382,7 +395,7 @@ namespace PLang.Runtime
 
 				logger.LogDebug("Goal: " + goal.GoalName);
 
-				var eventError = await eventRuntime.RunGoalEvents(context, EventType.Before, goal);
+				var eventError = await eventRuntime.RunGoalEvents(EventType.Before, goal);
 				if (eventError != null) return eventError;
 
 				//if (await CachedGoal(goal)) return null;
@@ -390,7 +403,7 @@ namespace PLang.Runtime
 				if (stepError != null) return stepError;
 				//await CacheGoal(goal);
 
-				eventError = await eventRuntime.RunGoalEvents(context, EventType.After, goal);
+				eventError = await eventRuntime.RunGoalEvents(EventType.After, goal);
 				return eventError;
 
 			}
@@ -533,17 +546,15 @@ private async Task CacheGoal(Goal goal)
 		private async Task<IError?> HandleGoalError(IError error, Goal goal, int goalStepIndex)
 		{
 			if (error.Goal == null) error.Goal = goal;
-			if (error.Step == null && goal != null && goal.GoalSteps.Count > goalStepIndex-1) error.Step = goal.GoalSteps[goalStepIndex]; 
+			if (error.Step == null && goal != null && goal.GoalSteps.Count > goalStepIndex - 1 && goalStepIndex > -1) error.Step = goal.GoalSteps[goalStepIndex];
 			if (error is IErrorHandled || error is UserDefinedError) return error;
 
-			var eventError = await eventRuntime.RunGoalErrorEvents(context, goal, goalStepIndex, error);
+			var eventError = await eventRuntime.RunGoalErrorEvents(goal, goalStepIndex, error);
 			return eventError;
 		}
 
 		public async Task<IError?> RunFromStep(string prFile)
 		{
-			prParser.ForceLoadAllGoals();
-
 			var goalPath = fileSystem.Path.GetDirectoryName(prFile);
 			var goalFile = fileSystem.Path.Join(goalPath, ISettings.GoalFileName);
 
@@ -556,7 +567,7 @@ private async Task CacheGoal(Goal goal)
 
 		private async Task<IError?> RunStep(Goal goal, int goalStepIndex, int retryCount = 0)
 		{
-			
+
 			var step = goal.GoalSteps[goalStepIndex];
 			SetStepLogLevel(step);
 			try
@@ -564,38 +575,39 @@ private async Task CacheGoal(Goal goal)
 				if (HasExecuted(step)) return null;
 
 				IError? error = null;
-				
+
 				if (retryCount == 0)
 				{
 					// Only run event one time, even if step is tried multiple times
-					error = await eventRuntime.RunStepEvents(context, EventType.Before, goal, step);
+					error = await eventRuntime.RunStepEvents(EventType.Before, goal, step);
 					if (error != null) return error;
 				}
 
 				logger.LogDebug($"- {step.Text.Replace("\n", "").Replace("\r", "").MaxLength(80)}");
 
-				var prError = await ProcessPrFile(goal, step, goalStepIndex);
-				if (prError != null)
+				var result = await ProcessPrFile(goal, step, goalStepIndex);
+				if (result.Error != null)
 				{
-					var handleErrorResult = await HandleStepError(goal, step, goalStepIndex, prError, retryCount);
+					var handleErrorResult = await HandleStepError(goal, step, goalStepIndex, result.Error, retryCount);
 					if (handleErrorResult != null && handleErrorResult is not ErrorHandled) return handleErrorResult;
 				}
-				
+
 				if (retryCount == 0)
 				{
 					// Only run event one time, even if step is tried multiple times
-					error = await eventRuntime.RunStepEvents(context, EventType.After, goal, step);
+					error = await eventRuntime.RunStepEvents(EventType.After, goal, step);
 				}
 				return error;
 			}
 			catch (Exception stepException)
 			{
-				
+
 				var error = new ExceptionError(stepException, stepException.Message, goal, step);
 				var result = await HandleStepError(goal, step, goalStepIndex, error, retryCount);
 
 				return result;
-			} finally
+			}
+			finally
 			{
 				ResetStepLogLevel(goal);
 			}
@@ -603,7 +615,7 @@ private async Task CacheGoal(Goal goal)
 		}
 
 
-		private async Task<IError?> HandleStepError(Goal goal, GoalStep step, int goalStepIndex, IError error, int retryCount)
+		private async Task<IError?> HandleStepError(Goal goal, GoalStep step, int goalStepIndex, IError? error, int retryCount)
 		{
 			if (error is IErrorHandled || error is EndGoal || error is UserDefinedError) return error;
 
@@ -640,7 +652,7 @@ private async Task CacheGoal(Goal goal)
 			}
 
 			var eventRuntime = container.GetInstance<IEventRuntime>();
-			error = await eventRuntime.RunOnErrorStepEvents(context, error, goal, step);
+			error = await eventRuntime.RunOnErrorStepEvents(error, goal, step);
 			if (error != null)
 			{
 				if (errorHandler == null || errorHandler.RetryHandler == null ||
@@ -649,7 +661,7 @@ private async Task CacheGoal(Goal goal)
 					return error;
 				}
 			}
-			
+
 
 			if (ShouldRunRetry(errorHandler, false, retryCount))
 			{
@@ -688,34 +700,34 @@ private async Task CacheGoal(Goal goal)
 		}
 
 
-		public async Task<IError?> ProcessPrFile(Goal goal, GoalStep goalStep, int stepIndex)
+		public async Task<(object? ReturnValue, IError? Error)> ProcessPrFile(Goal goal, GoalStep goalStep, int stepIndex)
 		{
 			if (goalStep.RunOnce && HasExecuted(goalStep))
 			{
-				return null;
+				return (null, null);
 			}
 
 			if (!fileSystem.File.Exists(goalStep.AbsolutePrFilePath))
 			{
-				return new Error($"Could not find pr file {goalStep.RelativePrPath}. Maybe try to build again?. This step is defined in Goal at {goal.RelativeGoalPath}. The location of it on drive should be {goalStep.AbsolutePrFilePath}.", Key: "PrFileNotFound");
+				return (null, new Error($"Could not find pr file {goalStep.RelativePrPath}. Maybe try to build again?. This step is defined in Goal at {goal.RelativeGoalPath}. The location of it on drive should be {goalStep.AbsolutePrFilePath}.", Key: "PrFileNotFound"));
 			}
 
 			var instruction = prParser.ParseInstructionFile(goalStep);
 			if (instruction == null)
 			{
-				return new Error($"Instruction file could not be loaded for {goalStep.RelativePrPath}", Key: "InstructionFileNotLoaded");
+				return (null, new Error($"Instruction file could not be loaded for {goalStep.RelativePrPath}", Key: "InstructionFileNotLoaded"));
 			}
 
 			if (stepIndex < goal.GoalSteps.Count && !goal.GoalSteps[stepIndex].Execute)
 			{
 				logger.LogDebug($"Step is disabled: {goal.GoalSteps[stepIndex].Execute}");
-				return null;
+				return (null, null);
 			}
 
 			Type? classType = typeHelper.GetRuntimeType(goalStep.ModuleType);
 			if (classType == null)
 			{
-				return new Error("Could not find module:" + goalStep.ModuleType, Key: "ModuleNotFound");
+				return (null, new Error("Could not find module:" + goalStep.ModuleType, Key: "ModuleNotFound"));
 			}
 
 			context.AddOrReplace(ReservedKeywords.Goal, goal);
@@ -728,11 +740,12 @@ private async Task CacheGoal(Goal goal)
 				classInstance = container.GetInstance(classType) as BaseProgram;
 				if (classInstance == null)
 				{
-					return new Error($"Could not create instance of {classType}", Key: "InstanceNotCreated");
+					return (null, new Error($"Could not create instance of {classType}", Key: "InstanceNotCreated"));
 				}
-			} catch (MissingSettingsException mse)
+			}
+			catch (MissingSettingsException mse)
 			{
-				return await HandleMissingSettings(mse, goal, goalStep, stepIndex);				
+				return await HandleMissingSettings(mse, goal, goalStep, stepIndex);
 			}
 
 			var llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
@@ -751,10 +764,10 @@ private async Task CacheGoal(Goal goal)
 					var task = classInstance.Run();
 					await task;
 
-					var errors = task.Result;
-					if (errors != null)
+					var result = task.Result;
+					if (result.Error != null)
 					{
-						return errors;
+						return result;
 					}
 					if (goalStep.RunOnce)
 					{
@@ -764,7 +777,7 @@ private async Task CacheGoal(Goal goal)
 						dict.TryAdd(goalStep.RelativePrPath, DateTime.UtcNow);
 						settings.Set<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", dict);
 					}
-					return null;
+					return result;
 				}
 				catch (OperationCanceledException)
 				{
@@ -773,14 +786,14 @@ private async Task CacheGoal(Goal goal)
 						var engine = container.GetInstance<IEngine>();
 						var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
 						var parameters = context.GetReserverdKeywords();
-						await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalStep.CancellationHandler.GoalNameToCallAfterCancellation, parameters, goal);
-						return null;
+						var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalStep.CancellationHandler.GoalNameToCallAfterCancellation, parameters, goal);
+						return (null, result.error);
 					}
-					return new StepError("Step was cancelled because it ran for to long. To extend the timeout, include timeout in your step.", goalStep);
+					return (null, new StepError("Step was cancelled because it ran for to long. To extend the timeout, include timeout in your step.", goalStep));
 				}
 				catch (Exception ex)
 				{
-					return new StepError(ex.Message, goalStep, "StepException", 500, Exception: ex);
+					return (null, new StepError(ex.Message, goalStep, "StepException", 500, Exception: ex));
 				}
 				finally
 				{
@@ -793,7 +806,7 @@ private async Task CacheGoal(Goal goal)
 			}
 		}
 
-		private async Task<IError?> HandleMissingSettings(MissingSettingsException mse, Goal goal, GoalStep goalStep, int stepIndex)
+		private async Task<(object?, IError?)> HandleMissingSettings(MissingSettingsException mse, Goal goal, GoalStep goalStep, int stepIndex)
 		{
 			var settingsError = new Errors.AskUser.AskUserError(mse.Message, async (object[]? result) =>
 			{
@@ -809,7 +822,16 @@ private async Task CacheGoal(Goal goal)
 			{
 				return await ProcessPrFile(goal, goalStep, stepIndex);
 			}
-			return handlerError ?? new StepError(mse.Message, goalStep, Exception: mse);
+
+			if (handlerError != null)
+			{
+				return (null, handlerError);
+			}
+			else
+			{
+				return (null, new StepError(mse.Message, goalStep, Exception: mse));
+			}
+
 		}
 
 		private List<string> GetStartGoals(List<string> goalNames)
@@ -817,7 +839,7 @@ private async Task CacheGoal(Goal goal)
 			List<string> goalsToRun = new();
 			if (goalNames.Count > 0)
 			{
-				
+
 				var goalFiles = fileSystem.Directory.GetFiles(fileSystem.BuildPath, ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
 				foreach (var goalName in goalNames)
 				{
@@ -875,14 +897,10 @@ private async Task CacheGoal(Goal goal)
 
 		public Goal? GetGoal(string goalName, Goal? callingGoal)
 		{
-			goalName = goalName.AdjustPathToOs();
 			var goal = prParser.GetGoalByAppAndGoalName(fileSystem.RootDirectory, goalName, callingGoal);
-			if (goal == null && goalName.TrimStart(fileSystem.Path.DirectorySeparatorChar).StartsWith("apps"))
-			{
-				appsRepository.InstallApp(goalName);
-				goal = prParser.GetGoalByAppAndGoalName(fileSystem.RootDirectory, goalName);
-			}
-			return goal;
+			if (goal != null) return goal;
+
+			return prParser.GetGoalByAppAndGoalName(fileSystem.OsDirectory, goalName, callingGoal);
 		}
 
 

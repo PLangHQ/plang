@@ -60,7 +60,7 @@ namespace PLang.Building
 			var instruction = build.Instruction;
 			instruction.Text = step.Text;
 			var functions = instruction.GetFunctions();
-			var methodHelper = new MethodHelper(step, variableHelper, memoryStack, typeHelper, llmServiceFactory);
+			var methodHelper = new MethodHelper(step, variableHelper, typeHelper);
 			var invalidFunctionError = methodHelper.ValidateFunctions(functions, module, memoryStack);
 
 			if (invalidFunctionError != null)

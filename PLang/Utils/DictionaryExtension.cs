@@ -1,4 +1,6 @@
 ﻿
+using System.Collections.Concurrent;
+
 namespace PLang.Utils
 {
 	public static class DictionaryExtension
@@ -7,6 +9,7 @@ namespace PLang.Utils
 		public static void AddOrReplace<TKey, TValue>(this Dictionary<TKey, TValue?>? dict, TKey key, TValue? value)
 		{
 			if (dict is null) return;
+
 
 			try
 			{
@@ -18,7 +21,7 @@ namespace PLang.Utils
 					}
 					else
 					{
-						dict.Add(key, value);
+						dict.TryAdd(key, value);
 					}
 				}
 			} catch 

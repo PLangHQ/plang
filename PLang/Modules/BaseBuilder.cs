@@ -104,7 +104,7 @@ namespace PLang.Modules
 				var instruction = new Instruction(result);
 				instruction.LlmRequest = question;
 
-				var methodHelper = new MethodHelper(step, variableHelper, memoryStack, typeHelper, llmServiceFactory);
+				var methodHelper = new MethodHelper(step, variableHelper, typeHelper);
 				var invalidFunctions = methodHelper.ValidateFunctions(instruction.GetFunctions(), step.ModuleType, memoryStack);
 
 				if (invalidFunctions != null)

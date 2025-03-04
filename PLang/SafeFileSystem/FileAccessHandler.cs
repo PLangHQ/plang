@@ -14,6 +14,7 @@ namespace PLang.SafeFileSystem
 	public interface IFileAccessHandler
 	{
 		Task<(bool, IError?)> ValidatePathResponse(string appName, string path, string? answer);
+		void GiveAccess(string appName, string path);
 	}
 	public class FileAccessHandler : IFileAccessHandler
 	{
@@ -117,6 +118,13 @@ GiveAccess : yes|no|null"));
 			fileAccesses.Add(new FileAccessControl(appName, path, expires));
 			settings.SetList(typeof(PLangFileSystem), fileAccesses);
 			fileSystem.SetFileAccess(fileAccesses);
+		}
+
+		public void GiveAccess(string appName, string path)
+		{
+			path = path.AdjustPathToOs();
+
+			fileSystem.AddFileAccess(new FileAccessControl(appName, path, ProcessId: fileSystem.Id));
 		}
 	}
 }

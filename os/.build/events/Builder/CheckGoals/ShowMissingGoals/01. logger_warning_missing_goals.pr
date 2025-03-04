@@ -1,0 +1,72 @@
+{
+  "Action": {
+    "FunctionName": "Log",
+    "Parameters": [
+      {
+        "Type": "String",
+        "Name": "message",
+        "Value": "Some goal file(s) are calling goals that dont exist:\n%missingGoals%"
+      },
+      {
+        "Type": "String",
+        "Name": "loggerLevel",
+        "Value": "warning"
+      },
+      {
+        "Type": "Object[]",
+        "Name": "args",
+        "Value": null
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Text": "logger warning 'Some goal file(s) are calling goals that dont exist:\\n%missingGoals%'",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+    "model": "gpt-4o",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nLog(String message, String? loggerLevel = \"information\", Object[]? args)  : void // loggerLevel can be trace, debug, information, warning, error. args can be null if not defined.\r\n## functions available ends ##\r\n## defined variables ##\r\nmissingGoals (type:List`1), \r\n## defined variables ##"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "logger warning 'Some goal file(s) are calling goals that dont exist:\n%missingGoals%'"
+          }
+        ]
+      }
+    ],
+    "type": "PLang.Modules.GenericFunctionBuilder",
+    "caching": true,
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"Log\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"message\",\n\t\t\t\"Value\": \"Some goal file(s) are calling goals that dont exist:\\n%missingGoals%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"loggerLevel\",\n\t\t\t\"Value\": \"warning\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Object[]\",\n\t\t\t\"Name\": \"args\",\n\t\t\t\"Value\": null\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
+  },
+  "RunOnBuild": false
+}

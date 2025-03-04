@@ -19,7 +19,7 @@ using static PLang.Executor;
 
 namespace PLang.Modules.CallGoalModule
 {
-	[Description("Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff")]
+	[Description("Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff, set %formatted% = Format(%data%), %user% = GetUser %id%")]
 	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine, IPLangAppsRepository appsRepository, PrParser prParser, 
 		IPLangFileSystem fileSystem, IFileAccessHandler fileAccessHandler, IServiceContainerFactory serviceContainerFactory,
 		IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory,
@@ -76,21 +76,14 @@ namespace PLang.Modules.CallGoalModule
 
 
 		[Description("Call/Runs another goal. goalName can be prefixed with !. If backward slash(\\) is used by user, change to forward slash(/)")]
-		public async Task<(object?, IError?)> RunGoal(GoalToCall goalName, Dictionary<string, object?>? parameters = null, bool waitForExecution = true, 
-			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, bool keepMemoryStackOnAsync = false)
-		{
-			if (string.IsNullOrEmpty(goalName))
-			{
-				throw new RuntimeException($"Goal name is missing from step: {goalStep.Text}");
-			}
-
-			ValidateAppInstall(goalName);
-			
+		public async Task<(ReturnDictionary<string, object?>? Variables, IError? Error)> RunGoal(GoalToCall goalName, Dictionary<string, object?>? parameters = null, bool waitForExecution = true, 
+			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, bool keepMemoryStackOnAsync = false, bool isolated = false)
+		{		
 
 			var result = await pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName,
-					variableHelper.LoadVariables(parameters), Goal, 
-					waitForExecution, delayWhenNotWaitingInMilliseconds, waitForXMillisecondsBeforeRunningGoal, goalStep.Indent, keepMemoryStackOnAsync);
-
+					parameters, Goal, 
+					waitForExecution, delayWhenNotWaitingInMilliseconds, waitForXMillisecondsBeforeRunningGoal, goalStep.Indent, keepMemoryStackOnAsync, isolated);
+			
 			if (result.error is Return ret)
 			{
 				return (ret.Variables, null);

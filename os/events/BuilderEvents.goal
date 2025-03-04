@@ -1,0 +1,2 @@
+BuildEvents
+- before builder ends, call goal Builder/CheckGoals

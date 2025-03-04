@@ -137,7 +137,7 @@ namespace PLang.Building.Events.Tests
 			// load event runtime
 			await eventRuntime.Load();
 				
-			await eventRuntime.RunStartEndEvents(new(), EventType.Before, EventScope.StartOfApp);
+			await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.StartOfApp);
 				
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
 						@"\", new Models.GoalToCall("Process"), Arg.Any<Dictionary<string, object?>>());
@@ -166,7 +166,7 @@ namespace PLang.Building.Events.Tests
 			// load event runtime
 			await eventRuntime.Load();
 
-			await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.After, EventScope.StartOfApp);
+			await eventRuntime.RunStartEndEvents(EventType.After, EventScope.StartOfApp);
 
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
 						@"\", "!Process", Arg.Any<Dictionary<string, object?>>());
@@ -194,7 +194,7 @@ namespace PLang.Building.Events.Tests
 			// load event runtime
 			await eventRuntime.Load();
 
-			await eventRuntime.RunStartEndEvents(new(), EventType.Before, EventScope.AppError);
+			await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.AppError);
 
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
 						@"\", "!Process", Arg.Any<Dictionary<string, object?>>());
@@ -222,9 +222,9 @@ namespace PLang.Building.Events.Tests
 			// load event runtime
 			await eventRuntime.Load();
 
-			await eventRuntime.RunStartEndEvents(new(), EventType.Before, EventScope.EndOfApp);
+			await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.EndOfApp);
 			// test that both Before and After type works. When app ends there is no difference between Before and After
-			await eventRuntime.RunStartEndEvents(new(), EventType.After, EventScope.EndOfApp);
+			await eventRuntime.RunStartEndEvents(EventType.After, EventScope.EndOfApp);
 
 			await pseudoRuntime.Received(2).RunGoal(engine, Arg.Any<PLangAppContext>(),
 						@"\", "!Process", Arg.Any<Dictionary<string, object?>>());
@@ -252,7 +252,7 @@ namespace PLang.Building.Events.Tests
 			// load event runtime
 			await eventRuntime.Load();
 
-			await eventRuntime.RunStartEndEvents(new(), EventType.After, EventScope.AppError);
+			await eventRuntime.RunStartEndEvents(EventType.After, EventScope.AppError);
 
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
 						@"\", "!Process", Arg.Any<Dictionary<string, object?>>());
@@ -285,7 +285,7 @@ namespace PLang.Building.Events.Tests
 			foreach (var goal in goals)
 			{
 
-				await eventRuntime.RunGoalEvents(new(), EventType.Before, goal);
+				await eventRuntime.RunGoalEvents(EventType.Before, goal);
 
 				await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
 							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
@@ -318,7 +318,7 @@ namespace PLang.Building.Events.Tests
 			foreach (var goal in goals)
 			{
 
-				await eventRuntime.RunGoalEvents(new(), EventType.After, goal);
+				await eventRuntime.RunGoalEvents(EventType.After, goal);
 
 				await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
 							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
@@ -351,7 +351,7 @@ namespace PLang.Building.Events.Tests
 			{
 				foreach (var step in goal.GoalSteps)
 				{
-					await eventRuntime.RunStepEvents(new(), EventType.Before, goal, step);
+					await eventRuntime.RunStepEvents(EventType.Before, goal, step);
 				}
 				await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<PLangAppContext>(),
 							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
@@ -385,7 +385,7 @@ namespace PLang.Building.Events.Tests
 			{
 				foreach (var step in goal.GoalSteps)
 				{
-					await eventRuntime.RunStepEvents(new(), EventType.After, goal, step);
+					await eventRuntime.RunStepEvents(EventType.After, goal, step);
 				}
 				await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<PLangAppContext>(),
 							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
@@ -418,7 +418,7 @@ namespace PLang.Building.Events.Tests
 			var goals = prParser.GetAllGoals().Where(p => p.GoalFileName != "Events.goal").ToList();
 			foreach (var goal in goals)
 			{
-				await eventRuntime.RunGoalErrorEvents(new(), goal, 0, new Error("Test"));
+				await eventRuntime.RunGoalErrorEvents(goal, 0, new Error("Test"));
 				await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
 							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
 			}
@@ -451,7 +451,7 @@ namespace PLang.Building.Events.Tests
 			{
 				foreach (var step in goal.GoalSteps)
 				{
-					await eventRuntime.RunOnErrorStepEvents(new(), new Error("Test error"), goal, step);
+					await eventRuntime.RunOnErrorStepEvents(new Error("Test error"), goal, step);
 				}
 				await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<PLangAppContext>(),
 							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());

@@ -1,0 +1,12 @@
+RunTest
+- load plang step from %goalPath%, %stepPrFileName%, write to %step%
+- [plang] run step %step%, %parameters%, just this step, write to %result%
+- if %result% == %expectedValue% 
+    convert expectedValue to %expectedValueType%
+    (convert objects to json and do deep compare) then call Success, else Fail
+
+Success
+- write out "ok"
+
+Fail
+- write out "%result% does not match %expectedValue%"

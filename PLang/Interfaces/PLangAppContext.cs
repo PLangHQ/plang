@@ -1,8 +1,9 @@
 ﻿using PLang.Utils;
+using System.Collections.Concurrent;
 
 namespace PLang.Interfaces
 {
-	public class PLangAppContext : Dictionary<string, object?>
+	public class PLangAppContext : ConcurrentDictionary<string, object?>
 	{
 		public new object? this[string key]
 		{
@@ -20,13 +21,17 @@ namespace PLang.Interfaces
 		{
 			if (key == null || value == null) return;
 
-			if (ContainsKey(key))
+
+			this.AddOrUpdate(key, value, (str, obj1) =>
 			{
-				base[key] = value;
-			} else
-			{
-				Add(key, value);
-			}
+				return value;
+			});
+
+		}
+
+		public void Remove(string key)
+		{
+			this.Remove(key, out var _);
 		}
 
 		public T? GetOrDefault<T>(string key, T? defaultValue)
@@ -35,8 +40,9 @@ namespace PLang.Interfaces
 
 			if (ContainsKey(key))
 			{
-				return (T?) base[key];
-			} else
+				return (T?)base[key];
+			}
+			else
 			{
 				return defaultValue;
 			}
@@ -48,7 +54,8 @@ namespace PLang.Interfaces
 			{
 				key = key.Replace("%", "");
 				return this.FirstOrDefault(p => p.Key.ToLower() == key.ToLower()).Key != null;
-			} catch (Exception)
+			}
+			catch (Exception)
 			{
 				throw;
 			}

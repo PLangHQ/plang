@@ -26,5 +26,16 @@ namespace PLang.Models
 
 		// Implicit conversion from GoalToCall to string
 		public static implicit operator string?(GoalToCall? goalToCall) => goalToCall?.Value;
+
+		public override bool Equals(object? obj)
+		{
+			if (obj is GoalToCall other)
+			{
+				return string.Equals(Value, other.Value, StringComparison.OrdinalIgnoreCase);
+			}
+			return false;
+		}
+
+		public override int GetHashCode() => Value?.GetHashCode() ?? 0;
 	}
 }

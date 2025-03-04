@@ -25,7 +25,7 @@ namespace PLang.Modules.CallGoalModule.Tests
 			llmServiceFactory.CreateHandler().Returns(llmService);
 		
 
-			builder = new Builder();
+			builder = new Builder(goalParser, prParser);
 			builder.InitBaseBuilder("PLang.Modules.CallGoalModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
@@ -35,7 +35,7 @@ namespace PLang.Modules.CallGoalModule.Tests
 			var llmService = GetLlmService(stepText, caller, type);
 			if (llmService == null) return;
 
-			builder = new Builder();
+			builder = new Builder(goalParser, prParser);
 			builder.InitBaseBuilder("PLang.Modules.CallGoalModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 		public GoalStep GetStep(string text)

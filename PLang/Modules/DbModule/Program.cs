@@ -4,6 +4,8 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PLang.Attributes;
+using PLang.Building.Parsers;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
@@ -11,21 +13,14 @@ using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.EventSourceService;
 using PLang.Services.LlmService;
+using PLang.Services.SettingsService;
 using PLang.Utils;
 using System.Collections;
 using System.ComponentModel;
 using System.Data;
-using System.Globalization;
-using System.Text;
-using static Dapper.SqlMapper;
-using PLang.Errors;
-using PLang.Errors.Builder;
-using PLang.Errors.Runtime;
-using System.Collections;
-using Org.BouncyCastle.Crypto;
 using System.Dynamic;
-using PLang.Attributes;
-using System.Threading.Tasks.Dataflow;
+using System.Globalization;
+using static Dapper.SqlMapper;
 
 namespace PLang.Modules.DbModule
 {
@@ -65,6 +60,7 @@ namespace PLang.Modules.DbModule
 		[Description("localPath is location of the database on the drive for sqlite. localPath can be string with variables, default is null")]
 		public async Task CreateDataSource(string name = "data", string? localPath = null, string databaseType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
 		{
+			localPath = GetPath(localPath);
 			await moduleSettings.CreateDataSource(name, localPath, databaseType, setAsDefaultForApp, keepHistoryEventSourcing);
 		}
 
@@ -76,8 +72,6 @@ namespace PLang.Modules.DbModule
 			context[ReservedKeywords.CurrentDataSource] = dataSource;
 			return null;
 		}
-
-
 
 		public async Task BeginTransaction()
 		{
@@ -252,7 +246,7 @@ namespace PLang.Modules.DbModule
 							postfix = "%";
 						}
 						var variableValue = variableName; // variableHelper.LoadVariables(variableName);
-						(object? value, Error? error) = ConvertObjectToType(variableValue, p.TypeFullName, parameterName);
+						(object? value, Error? error) = ConvertObjectToType(variableValue, p.TypeFullName, parameterName, p.VariableNameOrValue);
 						if (error != null) multipleErrors.Add(error);
 
 						param.Add("@" + parameterName, prefix + value + postfix);
@@ -274,7 +268,7 @@ namespace PLang.Modules.DbModule
 						}
 
 
-						(object? value, Error? error) = ConvertObjectToType(prefix + variableName + postfix, p.TypeFullName, parameterName);
+						(object? value, Error? error) = ConvertObjectToType(prefix + variableName + postfix, p.TypeFullName, parameterName, p.VariableNameOrValue);
 						if (error != null)
 						{
 							if (parameterName == "id" && eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
@@ -295,7 +289,7 @@ namespace PLang.Modules.DbModule
 
 		}
 
-		private (object?, Error?) ConvertObjectToType(object obj, string typeFullName, string parameterName)
+		private (object?, Error?) ConvertObjectToType(object obj, string typeFullName, string parameterName, object variableNameOrValue)
 		{
 			// TODO: because of bad structure in building, can be removed when fix
 			if (typeFullName == "String") typeFullName = "System.String";
@@ -345,7 +339,23 @@ namespace PLang.Modules.DbModule
 			}
 			catch (Exception ex)
 			{
-				return (null, new Error($"Error converting {obj} to type {targetType} for parameter {parameterName}", "ConvertFailed", Exception: ex));
+				if (string.IsNullOrWhiteSpace(obj.ToString()) && (targetType == typeof(long) || targetType == typeof(double)))
+				{
+					var filterModule = GetProgramModule<FilterModule.Program>();
+					var task = filterModule.FilterOnPropertyAndValue(function, "ParameterName", "@" + parameterName, retrieveOneItem: "first", propertyToExtract: "parent");
+					task.Wait();
+					var parameter =  task.Result as JObject;
+					if (parameter != null)
+					{
+						return (0, new Error($"{parameter["VariableNameOrValue"]} is empty. Empty content cannot be inserted into the column {parameterName}", "ConvertFailed", Exception: ex));
+					}
+					else
+					{
+						return (0, new Error($"{parameterName} is empty. Empty content cannot be inserted into the column", "ConvertFailed", Exception: ex));
+					}
+				}
+
+				return (null, new Error($"Error converting '{obj}' to type {targetType} for parameter {parameterName}", "ConvertFailed", Exception: ex));
 
 			}
 

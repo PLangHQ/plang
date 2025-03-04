@@ -521,6 +521,16 @@ namespace PlangWindowForms
 			}
 			else if (args.Request.Uri.Contains("https://local/temp.html"))
 			{
+				content += @"
+(() => {
+    function callGoal(goalName, parameters, outputTarget, domOperation) {
+        console.log(goalName, parameters, outputTarget, domOperation);
+        window.chrome.webview.postMessage({ goalName, parameters, outputTarget, domOperation });
+    }
+    window.callGoal = callGoal;
+})();
+";
+
 				var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
 				args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(
 					stream, 200, "OK", "Content-Type: text/html");

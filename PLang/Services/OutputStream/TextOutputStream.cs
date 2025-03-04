@@ -42,7 +42,6 @@ namespace PLang.Services.OutputStream
 
 		public void Dispose()
 		{
-			httpContext.Response.OutputStream.Close();
 			memoryStream.Dispose();
 		}
 

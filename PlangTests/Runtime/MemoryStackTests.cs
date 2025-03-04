@@ -327,7 +327,7 @@ namespace PLang.Runtime.Tests
 		public void TestOnCreateVariable()
 		{
 			var context = new PLangAppContext();
-			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
+			context.AddOrReplace(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			stack.AddOnCreateEvent("item", "Test", "12", false);
@@ -341,7 +341,7 @@ namespace PLang.Runtime.Tests
 		public void TestOnChangeVariable()
 		{
 			var context = new PLangAppContext();
-			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
+			context.AddOrReplace(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			stack.AddOnChangeEvent("item", "Test", "12", false, false);
@@ -359,7 +359,7 @@ namespace PLang.Runtime.Tests
 		public void TestOnChangeVariable_NotifyWhenCreated()
 		{
 			var context = new PLangAppContext();
-			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
+			context.AddOrReplace(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			stack.AddOnChangeEvent("item", "Test", "12", new(), true);
@@ -378,7 +378,7 @@ namespace PLang.Runtime.Tests
 		public void TestOnRemoveVariable()
 		{
 			var context = new PLangAppContext();
-			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
+			context.AddOrReplace(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			stack.AddOnRemoveEvent("item", "Test", "12", new());
@@ -397,7 +397,7 @@ namespace PLang.Runtime.Tests
 		public void TestOnRemoveStaticVariable()
 		{
 			var context = new PLangAppContext();
-			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
+			context.AddOrReplace(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
 
 			FieldInfo fieldInfo = typeof(MemoryStack).GetField("staticVariables", BindingFlags.Static | BindingFlags.NonPublic);
@@ -423,7 +423,7 @@ namespace PLang.Runtime.Tests
 			fieldInfo.SetValue(null, new Dictionary<string, ObjectValue>());
 
 			var context = new PLangAppContext();
-			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
+			context.AddOrReplace(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 
@@ -445,7 +445,7 @@ namespace PLang.Runtime.Tests
 
 
 			var context = new PLangAppContext();
-			context.Add(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
+			context.AddOrReplace(ReservedKeywords.Goal, new Goal() { RelativeAppStartupFolderPath = Path.DirectorySeparatorChar.ToString() });
 			engine.GetContext().Returns(context);
 			var stack = new MemoryStack(pseudoRuntime, engine, settings, context);
 			stack.AddOnChangeEvent("item", "Test", "12", true, new());

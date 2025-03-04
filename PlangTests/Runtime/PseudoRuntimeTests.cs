@@ -51,7 +51,7 @@ namespace PLang.Runtime.Tests
 		public async Task RunGoalTest_InternalApp()
 		{
 			var context = new PLangAppContext();
-			context.Add("Test", 1);
+			context.AddOrReplace("Test", 1);
 			engine.GetGoal("GoalWith1Step.goal").Returns(new Goal());
 			await pseudoRuntime.RunGoal(engine, context, @"\", "GoalWith1Step.goal", new Dictionary<string, object?>());
 
@@ -81,12 +81,12 @@ namespace PLang.Runtime.Tests
 
 
 			
-			context.Add("Test", 1);
+			context.AddOrReplace("Test", 1);
 
 			engine.GetMemoryStack().Returns(new MemoryStack(pseudoRuntime, engine, settings, context));
 
-			var parameters = new PLangAppContext();
-			parameters.Add("Name", "Jim");
+			var parameters = new Dictionary<string, object?>();
+			parameters.AddOrReplace("Name", "Jim");
 
 			pseudoRuntime = new PseudoRuntime(containerFactory, fileSystem, outputStreamFactory, outputSystemStreamFactory, errorHandlerFactory, errorSystemHandlerFactory, askUserHandlerFactory);
 
@@ -102,7 +102,7 @@ namespace PLang.Runtime.Tests
 		public async Task RunGoalTest_GoalNotFound()
 		{	
 
-			(var e, var err, var output) = await pseudoRuntime.RunGoal(engine, new(), @"\", "UnknownGoal.goal", new Dictionary<string, object>());
+			(var e, var err, var output) = await pseudoRuntime.RunGoal(engine, new(), @"\", "UnknownGoal.goal", new Dictionary<string, object?>());
 			Assert.AreEqual("No goals available", err.Message);
 		}
 
@@ -113,32 +113,32 @@ namespace PLang.Runtime.Tests
 			var result = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoal);
 
 			Assert.AreEqual(Path.Join(fileSystem.RootDirectory, "apps", "GoalWith2Steps"), result.absolutePath);
-			Assert.AreEqual("GoalWith2Steps", result.goalName);
+			Assert.AreEqual("GoalWith2Steps", result.goalName.Value);
 
 			string absolutePathToGoalInService = Path.Join(fileSystem.RootDirectory, "", ".services/MyService/SendStuff");
 			var pathToService = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoalInService);
 
 			Assert.AreEqual(Path.Join(fileSystem.RootDirectory, ".services", "MyService"), pathToService.absolutePath);
-			Assert.AreEqual("SendStuff", pathToService.goalName);
+			Assert.AreEqual("SendStuff", pathToService.goalName.Value);
 
 			string absolutePathToGoalInModule = Path.Join(fileSystem.RootDirectory, "", ".modules/MyModule");
 			var pathToModule = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoalInModule);
 
 			Assert.AreEqual(Path.Join(fileSystem.RootDirectory, ".modules", "MyModule"), pathToModule.absolutePath);
-			Assert.AreEqual("Start", pathToModule.goalName);
+			Assert.AreEqual("Start", pathToModule.goalName.Value);
 
 
 			string absolutePathToGoalInModuleInApp = Path.Join(fileSystem.RootDirectory, "", ".modules/MyModule/apps/MyInternalApp/Start");
 			var pathToAppInModule = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoalInModuleInApp);
 
 			Assert.AreEqual(Path.Join(fileSystem.RootDirectory, ".modules/MyModule/apps/".AdjustPathToOs(), "MyInternalApp"), pathToAppInModule.absolutePath);
-			Assert.AreEqual("Start", pathToAppInModule.goalName);
+			Assert.AreEqual("Start", pathToAppInModule.goalName.Value);
 
 			string absolutePathToGoalInModuleInApp2 = Path.Join(fileSystem.RootDirectory, "", ".modules/MyModule/apps/MyInternalApp/DoStuff");
 			var pathToAppInModule2 = pseudoRuntime.GetAppAbsolutePath(absolutePathToGoalInModuleInApp2);
 
 			Assert.AreEqual(Path.Join(fileSystem.RootDirectory, ".modules/MyModule/apps/".AdjustPathToOs(), "MyInternalApp"), pathToAppInModule2.absolutePath);
-			Assert.AreEqual("DoStuff", pathToAppInModule2.goalName);
+			Assert.AreEqual("DoStuff", pathToAppInModule2.goalName.Value);
 		}
 
 
@@ -163,7 +163,7 @@ namespace PLang.Runtime.Tests
 
 
 			var context = new PLangAppContext();
-			context.Add("Test", 1);
+			context.AddOrReplace("Test", 1);
 			
 			var memoryStackMock = Substitute.For<MemoryStack>(pseudoRuntime, engine, settings, context);
 

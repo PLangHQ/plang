@@ -78,7 +78,7 @@ namespace PLang.Building
 				error = await eventRuntime.Load(true);
 				if (error != null) return error;
 
-				var eventError = await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.Before, EventScope.StartOfApp, true);
+				var eventError = await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.StartOfApp, true);
 				if (eventError != null)
 				{
 					if (!eventError.IgnoreError)
@@ -106,7 +106,7 @@ namespace PLang.Building
 				
 				CleanGoalFiles();
 
-				eventError = await eventRuntime.RunStartEndEvents(new PLangAppContext(), EventType.After, EventScope.EndOfApp, true);
+				eventError = await eventRuntime.RunStartEndEvents(EventType.After, EventScope.EndOfApp, true);
 				if (eventError != null && !eventError.IgnoreError)
 				{
 					return eventError;
@@ -150,8 +150,10 @@ namespace PLang.Building
 					if (isMseHandled) return await Start(container);
 				}
 
+				var step = (ex is BuilderStepException bse) ? bse.Step : null;
+				var goal = (ex is BuilderException be) ? be.Goal : null;
 
-				var error = new ExceptionError(ex);
+				var error = new ExceptionError(ex, ex.Message, goal ?? step?.Goal, step, Key: ex.GetType().FullName);
 				var handler = exceptionHandlerFactory.CreateHandler();
 				(var isHandled, var handleError) = await handler.Handle(error);
 				if (!isHandled)

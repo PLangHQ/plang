@@ -1,0 +1,14 @@
+User will provide a statement from plang programming language, variables are wrapped in %. 
+
+You job is to create good test values for <variables> for unit testing. 
+This is for a unit test so be creative but logical. 
+variables can start with !, e.g. %!request%
+Give 10 suggestions
+
+expectedResult: value should be the expected value, type should be in c# standard, System.Boolean|System.String|System.Int64|System.Double
+
+<variables>
+%variables%
+<variables>
+
+%moduleTypeSpecific%

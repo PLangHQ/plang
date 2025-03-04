@@ -1,6 +1,8 @@
-﻿using NBitcoin;
+﻿using Microsoft.IdentityModel.Tokens;
+using NBitcoin;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using NSec.Cryptography;
 using PLang.Building.Model;
 using PLang.Events;
 using PLang.Exceptions;
@@ -15,6 +17,7 @@ using System.Data;
 using System.Dynamic;
 using System.Globalization;
 using System.Reflection;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using static PLang.Utils.VariableHelper;
 
@@ -36,12 +39,15 @@ namespace PLang.Runtime
 		public int delayWhenNotWaitingInMilliseconds { get; set; } = delayWhenNotWaitingInMilliseconds;
 	};
 
+	
 	public class ObjectValue
 	{
 		private object? value;
+
+		public static ObjectValue Null { get { return new ObjectValue("", null, null, null, false); } }
 		public ObjectValue(string name, object? value, Type? type, ObjectValue? parent = null, bool Initiated = true)
 		{
-			Name = name;
+			Name = name.ToLower();
 			this.value = value;
 			Type = type;
 			this.Initiated = Initiated;
@@ -54,7 +60,7 @@ namespace PLang.Runtime
 		public string Name { get; set; }
 		public object? Value
 		{
-			get { return this.value;  }
+			get { return this.value; }
 			set
 			{
 				this.value = value;
@@ -166,7 +172,7 @@ namespace PLang.Runtime
 				return objectValue;
 			}
 		};
-		public record VariableExecutionPlan(string VariableName, ObjectValue ObjectValue, List<string> Calls, int Index = 0, string? JsonPath = null, MathPlan? MathPlan = null)
+		public record VariableExecutionPlan(string VariableName, ObjectValue ObjectValue, List<string> Calls, int Index = 0, string? JsonPath = null, MathPlan? MathPlan = null, object? Target = null)
 		{
 			public ObjectValue ObjectValue { get; set; } = ObjectValue;
 		};
@@ -177,14 +183,14 @@ namespace PLang.Runtime
 			if (variableName == null) return new ObjectValue("", null, null, null, initiate);
 
 			variableName = Clean(variableName).ToLower();
-			KeyValuePair<string, ObjectValue> variable;
+			KeyValuePair<string, ObjectValue?> variable;
 			if (staticVariable)
 			{
-				variable = staticVariables.FirstOrDefault(p => p.Key.ToLower() == variableName);
+				variable = staticVariables.FirstOrDefault(p => p.Key.Equals(variableName, StringComparison.OrdinalIgnoreCase));
 			}
 			else
 			{
-				variable = variables.FirstOrDefault(p => p.Key.ToLower() == variableName);
+				variable = variables.FirstOrDefault(p => p.Key.Equals(variableName, StringComparison.OrdinalIgnoreCase));
 			}
 
 			if (variable.Key != null)
@@ -217,7 +223,7 @@ namespace PLang.Runtime
 			if (!cleanKey.Contains(".") && !cleanKey.Contains("[")) return new VariableExecutionPlan(cleanKey, new ObjectValue(cleanKey, null, null, null, false), new List<string>(), MathPlan: mathPlan);
 
 			string[] keySplit = cleanKey.Split('.');
-			int index = 0;
+			int index = -1;
 			string dictKey = "";
 			string? jsonPath = null;
 			string variableName = keySplit[0].TrimStart('%').TrimEnd('%');
@@ -254,11 +260,15 @@ namespace PLang.Runtime
 						{
 							if (variables.TryGetValue(numberData, out var indexObjectValue))
 							{
-								index = (indexObjectValue.Value as int? ?? 0);
+								index = (indexObjectValue.Value as int? ?? -1);
 							}
 						}
 					}
 				}
+			}
+			else if (originalKey.Contains("[") && originalKey.Contains("]"))
+			{
+				(dictKey, index) = GetArrayValue(originalKey, variableName, staticVariable);
 			}
 
 			List<string> calls;
@@ -269,14 +279,14 @@ namespace PLang.Runtime
 				calls = GetCalls(keySplit, jsonPath);
 				return new VariableExecutionPlan(variableName, objectValue, calls, index, jsonPath, mathPlan);
 			}
-
+			object? targetObject = objectValue.Value;
 			var valueType = objectValue.Value.GetType();
-			if (index != 0 || dictKey != "")
+			if (index != -1 || dictKey != "")
 			{
-				objectValue = GetItemFromListOrDictionary(objectValue, index, dictKey, variableName);
+				targetObject = GetItemFromListOrDictionary(objectValue, index, dictKey, variableName).Value;
 			}
 
-			if (objectValue.Value is JToken jToken && keySplit.Length > 0)
+			if (targetObject is JToken jToken && keySplit.Length > 0)
 			{
 				string path = string.Join(".", keySplit.Skip(1));
 				if (!path.Contains("(") && !path.Contains(")"))
@@ -289,7 +299,7 @@ namespace PLang.Runtime
 				}
 			}
 
-			if (jsonPath == null && ((index == 0 && dictKey == "" && cleanKey.Contains("[") && cleanKey.Contains("]")) || (objectValue.Value is JObject || objectValue.Value is JArray)))
+			if (jsonPath == null && ((index == -1 && dictKey == "" && cleanKey.Contains("[") && cleanKey.Contains("]")) || (targetObject is JObject || targetObject is JArray)))
 			{
 				jsonPath = null;
 				if (keySplit.Length == 1 && keySplit[0].Contains("[") && keySplit[0].Contains("]"))
@@ -298,7 +308,7 @@ namespace PLang.Runtime
 				}
 				for (int i = 1; i < keySplit.Length; i++)
 				{
-					if (!keySplit[i].Contains("(") && !HasProperty(objectValue.Value, keySplit[i]))
+					if (!keySplit[i].Contains("(") && !HasProperty(targetObject, keySplit[i]))
 					{
 						if (jsonPath == null)
 						{
@@ -321,7 +331,43 @@ namespace PLang.Runtime
 			}
 			calls = GetCalls(keySplit, jsonPath);
 
-			return new VariableExecutionPlan(variableName, objectValue, calls, index, jsonPath, mathPlan);
+			return new VariableExecutionPlan(variableName, objectValue, calls, index, jsonPath, mathPlan, targetObject ?? objectValue.Value);
+		}
+
+		private (string, int) GetArrayValue(string originalKey, string variableName, bool staticVariable)
+		{
+			string key = originalKey.Trim('%');
+			string dictKey = "";
+			int index = -1;
+			var match = Regex.Match(key, @"\[(?<number>.*)\]");
+			if (match != null)
+			{
+				var numberData = match.Groups["number"].Value;
+				var objectValue = GetObjectValue(variableName, staticVariable);
+				if (objectValue.Initiated && objectValue.Value.GetType().Name.StartsWith("Dictionary"))
+				{
+
+					if (numberData.StartsWith("%") && numberData.EndsWith("%"))
+					{
+						dictKey = Get(numberData)?.ToString() ?? "";
+					}
+					else
+					{
+						dictKey = numberData.Replace("\"", "");
+					}
+				}
+				else
+				{
+					if (!int.TryParse(numberData, out index))
+					{
+						if (variables.TryGetValue(numberData, out var indexObjectValue))
+						{
+							index = (indexObjectValue.Value as int? ?? -1);
+						}
+					}
+				}
+			}
+			return (dictKey, index);
 		}
 
 		public MathPlan? GetMathPlan(string originalKey, string cleanKey)
@@ -430,7 +476,7 @@ namespace PLang.Runtime
 			{
 				if (list.Count >= index)
 				{
-					var item = list[index - 1];
+					var item = list[index];
 
 					objectValue = new ObjectValue(variableName, item, item.GetType(), objectValue);
 				}
@@ -450,6 +496,7 @@ namespace PLang.Runtime
 					}
 					else
 					{
+						return ObjectValue.Null;
 						throw new KeyNotFoundException($"Could not find {dictKey} in {variableName}");
 					}
 				}
@@ -469,12 +516,12 @@ namespace PLang.Runtime
 			return objectValue;
 		}
 
-		public object? Get(string? key, bool staticVariable = false)
+		public object? Get(string? key, bool staticVariable = false, object? defaultValue = null)
 		{
-			return GetObjectValue2(key, staticVariable).Value;
+			return GetObjectValue2(key, staticVariable, defaultValue).Value;
 		}
 
-		public ObjectValue GetObjectValue2(string? originalKey, bool staticVariable = false)
+		public ObjectValue GetObjectValue2(string? originalKey, bool staticVariable = false, object? defaultValueObject = null)
 		{
 			if (string.IsNullOrEmpty(originalKey)) return new ObjectValue("", null, typeof(Nullable), null, false);
 			string key = Clean(originalKey);
@@ -487,9 +534,13 @@ namespace PLang.Runtime
 
 			if (ReservedKeywords.IsReserved(key))
 			{
-				if (keyLower == ReservedKeywords.MemoryStack.ToLower())
+				if (keyLower.Equals(ReservedKeywords.MemoryStack, StringComparison.OrdinalIgnoreCase))
 				{
 					return new ObjectValue(key, this.GetMemoryStack(), typeof(Dictionary<string, ObjectValue>), null);
+				}
+				else if (keyLower.Equals(ReservedKeywords.GUID, StringComparison.OrdinalIgnoreCase))
+				{
+					return new ObjectValue(ReservedKeywords.GUID, Guid.NewGuid(), typeof(Guid), null);
 				}
 
 
@@ -509,7 +560,7 @@ namespace PLang.Runtime
 
 			var variables = (staticVariable) ? staticVariables : this.variables;
 			var varKey = variables.FirstOrDefault(p => p.Key.ToLower() == key.ToLower());
-			if (varKey.Key != null && varKey.Value.Initiated)
+			if (varKey.Key != null && varKey.Value != null && varKey.Value.Initiated)
 			{
 				return variables[varKey.Key];
 			}
@@ -638,6 +689,14 @@ namespace PLang.Runtime
 			Put(key, value, true);
 		}
 
+		public void Put(ObjectValue? value)
+		{
+			if (value == null) return;
+
+			AddOrReplace(this.variables, value.Name, value);
+
+		}
+
 		public void Put(string originalKey, object? value, bool staticVariable = false, bool initialize = true, bool convertToJson = true)
 		{
 			if (string.IsNullOrEmpty(originalKey)) return;
@@ -705,7 +764,7 @@ namespace PLang.Runtime
 				ObjectValue objectValue = keyPlan.ObjectValue;
 				foreach (var call in keyPlan.Calls)
 				{
-					object? obj = keyPlan.ObjectValue.Value;
+					object? obj = keyPlan.Target ?? objectValue.Value;
 					if (obj == null) obj = new { };
 
 					if (obj.GetType().Name.StartsWith("<>f__Anonymous"))
@@ -752,7 +811,14 @@ namespace PLang.Runtime
 					{
 						if (obj is JToken token)
 						{
-							token[call] = JToken.FromObject(value);
+							if (token is JProperty)
+							{
+								token.Parent[call] = JToken.FromObject(value);
+							}
+							else
+							{
+								token[call] = JToken.FromObject(value);
+							}
 							objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
 						}
 						else
@@ -773,7 +839,7 @@ namespace PLang.Runtime
 								var position = variables[idxName];
 								list[(int)position.Value] = value;
 								propInfo.SetValue(obj, list);
-								objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
+								//objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
 							}
 							else
 							{
@@ -781,21 +847,29 @@ namespace PLang.Runtime
 
 								if (propInfo == null)
 								{
-									throw new VariableDoesNotExistsException($"{call} does not exist on variable {keyPlan.VariableName}, there for I cannot set {key}");
+									if (obj is ExpandoObject eo && CollectionExtensions.TryAdd(eo, call, value))
+									{
+										// property added
+										continue;
+									}
+									else
+									{
+										throw new VariableDoesNotExistsException($"{call} does not exist on variable {keyPlan.VariableName}, there for I cannot set {key}");
+									}
 								}
 								if (value != null && value.GetType() != propInfo.PropertyType)
 								{
 									value = Convert.ChangeType(value, propInfo.PropertyType);
 								}
 								propInfo.SetValue(obj, value);
-								objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
+								//objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
 							}
 						}
 					}
 
 				}
 
-				if (keyPlan.JsonPath != null && objectValue.Value is JObject jobj && !string.IsNullOrEmpty(value?.ToString()))
+				if (keyPlan.JsonPath != null && keyPlan.Target is JObject jobj && !string.IsNullOrEmpty(value?.ToString()))
 				{
 					SetJsonValue(jobj, keyPlan.JsonPath, value);
 				}
@@ -818,7 +892,7 @@ namespace PLang.Runtime
 				if (i == tokens.Length - 1)
 				{
 					// If it's the last token, set the value
-					current[token] = JsonConvert.SerializeObject(value);
+					current[token] = JToken.FromObject(value);
 				}
 				else
 				{
@@ -832,10 +906,10 @@ namespace PLang.Runtime
 			}
 		}
 
-		private void AddOrReplace(Dictionary<string, ObjectValue> variables, string key, ObjectValue objectValue)
+		private void AddOrReplace(Dictionary<string, ObjectValue?> variables, string key, ObjectValue objectValue)
 		{
 			string eventType;
-			key = Clean(key);
+			key = Clean(key).ToLower();
 
 			if (variables.TryGetValue(key, out ObjectValue? prevValue) && prevValue != null && prevValue.Initiated)
 			{
@@ -1133,7 +1207,8 @@ namespace PLang.Runtime
 							try
 							{
 								tokens = ((JObject)token).SelectTokens(propertyDescription);
-							} catch
+							}
+							catch
 							{
 								tokens = [];
 
@@ -1212,12 +1287,13 @@ namespace PLang.Runtime
 				try
 				{
 					return JArray.FromObject(obj);
-				} catch
+				}
+				catch
 				{
 					return JObject.FromObject(obj);
 				}
 			}
-			if (obj is char) return new JValue(obj.ToString());
+			if (obj is char or string) return new JValue(obj.ToString());
 			return JObject.FromObject(obj);
 		}
 
@@ -1475,7 +1551,7 @@ namespace PLang.Runtime
 
 		public void Remove(string key)
 		{
-			key = Clean(key);
+			key = Clean(key).ToLower();
 			if (key.Contains("."))
 			{
 				throw new ArgumentException("When remove item from memory it cannot be a partial of the item. That means you cannot use dot(.)");
@@ -1490,7 +1566,7 @@ namespace PLang.Runtime
 
 		public void RemoveStatic(string key)
 		{
-			key = Clean(key);
+			key = Clean(key).ToLower();
 			if (key.Contains("."))
 			{
 				throw new ArgumentException("When remove item from memory it cannot be a partial of the item. That means you cannot use dot(.)");

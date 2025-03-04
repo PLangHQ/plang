@@ -10,6 +10,7 @@
     <FileVersion>$(Version)</FileVersion>
     <SignAssembly>False</SignAssembly>
 		<PublishSingleFile>false</PublishSingleFile>
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>

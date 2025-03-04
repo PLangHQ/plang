@@ -126,9 +126,9 @@ namespace PLang.Utils
 			}
 
 			string firstLine = $"";
-			if (step != null && step.Goal != null)
+			if (step != null)
 			{
-				firstLine = $@"📄 File: {step.Goal.RelativeGoalPath}:{step.LineNumber}
+				firstLine = $@"📄 File: {step.RelativeGoalPath}:{step.LineNumber}
 🔢 Line: {step.LineNumber}
 
 🔎 Error Details - Code snippet that the error occured:

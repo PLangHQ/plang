@@ -2,19 +2,13 @@
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Building.Model;
-using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Errors.Handlers;
 using PLang.Exceptions;
-using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
-using PLang.Services.LlmService;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Runtime.Caching;
 using System.Text.RegularExpressions;
 using System.Xml;
 using static PLang.Modules.BaseBuilder;
@@ -25,24 +19,19 @@ namespace PLang.Utils
 	{
 		private GoalStep goalStep;
 		private readonly VariableHelper variableHelper;
-		private readonly MemoryStack memoryStack;
 		private readonly ITypeHelper typeHelper;
-		private readonly ILlmServiceFactory llmServiceFactory;
 
-		public MethodHelper(GoalStep goalStep, VariableHelper variableHelper, MemoryStack memoryStack, ITypeHelper typeHelper, ILlmServiceFactory llmServiceFactory)
+		public MethodHelper(GoalStep goalStep, VariableHelper variableHelper, ITypeHelper typeHelper)
 		{
 			this.goalStep = goalStep;
 			this.variableHelper = variableHelper;
-			this.memoryStack = memoryStack;
 			this.typeHelper = typeHelper;
-			this.llmServiceFactory = llmServiceFactory;
 		}
 
 		public async Task<MethodInfo?> GetMethod(object callingInstance, GenericFunction function)
 		{
-			string cacheKey = callingInstance.GetType().FullName + "_" + function.FunctionName;
+			var methods =  callingInstance.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
 
-			var methods = callingInstance.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
 			string? error = null;
 			var method = methods.FirstOrDefault(p =>
 			{
@@ -224,7 +213,15 @@ namespace PLang.Utils
 
 					if (parameter.ParameterType.Name.StartsWith("Dictionary"))
 					{
-						SetDictionaryParameter(parameter, variableValue, handlesAttribute, parameterValues);
+						if (parameter.ParameterType.ToString().StartsWith("System.Collections.Generic.Dictionary`2[System.String,System.Tuple`2["))
+						{
+							SetDictionaryWithTupleParameter(parameter, variableValue, handlesAttribute, parameterValues);
+							
+						}
+						else
+						{
+							SetDictionaryParameter(parameter, variableValue, handlesAttribute, parameterValues);
+						}
 					}
 					else if (parameter.ParameterType.Name.StartsWith("List"))
 					{
@@ -254,6 +251,7 @@ namespace PLang.Utils
 			return parameterValues;
 		}
 
+
 		private void SetObjectParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
 		{
 			object? value = variableValue;
@@ -276,6 +274,8 @@ namespace PLang.Utils
 			}
 			parameterValues.Add(parameter.Name!, value);
 		}
+
+
 
 		private void SetArrayParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
 		{
@@ -375,7 +375,7 @@ namespace PLang.Utils
 			if (variableValue == null)
 			{
 				list = Activator.CreateInstance(parameter.ParameterType) as IList;
-				
+
 			}
 			else if (variableValue is JArray)
 			{
@@ -449,6 +449,67 @@ namespace PLang.Utils
 		private Dictionary<string, object?> MapJObject(JObject jObject)
 		{
 			return jObject.ToObject<Dictionary<string, object?>>();
+		}
+
+
+		private void SetDictionaryWithTupleParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
+		{
+			Dictionary<string, Tuple<object?, object?>?>? dict = null;
+			if (VariableHelper.IsVariable(variableValue))
+			{
+				var obj = variableHelper.LoadVariables(variableValue);
+				if (obj is JArray jArray)
+				{
+					foreach (JObject jobject in jArray)
+					{
+						dict = jobject.ToObject<Dictionary<string, Tuple<object?, object?>?>>();
+					}
+				}
+				else if (obj is JObject jObject)
+				{
+					dict = jObject.ToObject<Dictionary<string, Tuple<object?, object?>?>>();
+				}
+				else
+				{
+					dict = obj as Dictionary<string, Tuple<object?, object?>?>;
+				}
+			}
+			else
+			{
+				if (variableValue is JArray array)
+				{
+					throw new NotImplementedException("Need to implement this");
+				}
+				else if (variableValue is JObject jobject)
+				{
+					dict = jobject.ToObject<Dictionary<string, Tuple<object?, object?>?>>();
+				}
+				else if (JsonHelper.IsJson(variableValue, out object? obj))
+				{
+					if (obj is JArray array2)
+					{
+						throw new NotImplementedException("Need to implement this");
+					}
+					else if (obj is JObject jobj)
+					{
+						dict = jobj.ToObject<Dictionary<string, Tuple<object?, object?>?>>();
+					}
+				}
+			}
+			if (dict == null) dict = new();
+
+			if (handlesAttribute != null)
+			{
+				parameterValues.Add(parameter.Name, dict);
+				return;
+			}
+
+			foreach (var item in dict)
+			{
+				dict[item.Key] = new Tuple<object?, object?>(variableHelper.LoadVariables(item.Value?.Item1), variableHelper.LoadVariables(item.Value?.Item2));
+			}
+			parameterValues.Add(parameter.Name, dict);
+
 		}
 
 		private void SetDictionaryParameter(ParameterInfo parameter, object variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)

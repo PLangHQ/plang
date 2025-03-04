@@ -28,7 +28,7 @@ namespace PLang.Utils.Tests
 			goalStep = new GoalStep();
             goalStep.Text = "";
 
-            methodHelper = new MethodHelper(goalStep, variableHelper, memoryStack, typeHelper, llmServiceFactory);
+            methodHelper = new MethodHelper(goalStep, variableHelper, typeHelper);
 
 		}
 	

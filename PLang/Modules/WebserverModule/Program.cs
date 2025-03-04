@@ -99,11 +99,7 @@ namespace PLang.Modules.WebserverModule
 			{
 				return;
 			}
-			foreach (var listener in listeners)
-			{
-				listener.Listener.Close();
-
-			}
+			
 			this.disposed = true;
 		}
 
@@ -122,11 +118,11 @@ namespace PLang.Modules.WebserverModule
 		}
 
 
-		public record Routing(string Path, GoalToCall? GoalToCall = null, string? Method = null, string ContentType = "text/html",
+		public record Routing(string Path, GoalToCall? GoalToCall = null, string[]? Method = null, string ContentType = "text/html",
 									Dictionary<string, object?>? Parameters = null, long? MaxContentLength = null, string? DefaultResponseContentEncoding = null);
 
-
-		public async Task<IError?> AddRoute(string path, GoalToCall? goalToCall = null, string? method = null, string ContentType = "text/html",
+		[Description("When path is /api, overwite the default ContentType value to application/json unless defined by user")]
+		public async Task<IError?> AddRoute(string path, GoalToCall? goalToCall = null, string[]? method = null, string ContentType = "text/html",
 									Dictionary<string, object?>? Parameters = null, long? MaxContentLength = null, string? DefaultResponseContentEncoding = null,
 									string? webserverName = "default")
 		{
@@ -151,6 +147,8 @@ namespace PLang.Modules.WebserverModule
 			}
 
 			if (webserverInfo == null) webserverInfo = listeners[0];
+
+			if (method == null) method = ["GET"];
 
 			if (webserverInfo.Routings == null) webserverInfo.Routings = new();
 			webserverInfo.Routings.Add(new Routing(path, goalToCall, method, ContentType, Parameters, MaxContentLength, DefaultResponseContentEncoding));
@@ -193,7 +191,7 @@ namespace PLang.Modules.WebserverModule
 			logger.LogDebug($"Listening on {host}:{port}...");
 			Console.WriteLine($" - Listening on {host}:{port}...");
 
-			await eventRuntime.RunStartEndEvents(context, EventType.After, EventScope.StartOfApp);
+			await eventRuntime.RunStartEndEvents(EventType.After, EventScope.StartOfApp);
 			KeepAlive(listener, "Webserver");
 
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
@@ -272,7 +270,7 @@ namespace PLang.Modules.WebserverModule
 
 							if (!IsValidMethod(routing, request, goal))
 							{
-								await WriteError(resp, $"METHOD is not defined on goal");
+								await WriteError(resp, $"Http method '{request.HttpMethod}' is not allowed on goal {goal.GoalName}");
 								continue;
 							}
 
@@ -310,7 +308,7 @@ namespace PLang.Modules.WebserverModule
 
 							container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, Path.DirectorySeparatorChar.ToString(), httpContext, httpContext.Response.ContentType);
 							var context = container.GetInstance<PLangAppContext>();
-							context.Add(ReservedKeywords.IsHttpRequest, true);
+							context.AddOrReplace(ReservedKeywords.IsHttpRequest, true);
 
 							var engine = container.GetInstance<IEngine>();
 							engine.Init(container);
@@ -389,11 +387,17 @@ Error:
 
 		private bool IsValidMethod(Routing routing, HttpListenerRequest request, Goal goal)
 		{
-			if (routing.Method != null && routing.Method.Equals(request.HttpMethod, StringComparison.OrdinalIgnoreCase)) return true;
+			if (routing.Method == null) return false;
 
-			if (goal.GoalInfo?.GoalApiInfo != null && request.HttpMethod.Equals(goal.GoalInfo.GoalApiInfo?.Method, StringComparison.OrdinalIgnoreCase))
+			foreach (var method in routing.Method)
 			{
-				return true;
+
+				if (routing.Method != null && method.Equals(request.HttpMethod, StringComparison.OrdinalIgnoreCase)) return true;
+
+				if (goal.GoalInfo?.GoalApiInfo != null && request.HttpMethod.Equals(goal.GoalInfo.GoalApiInfo?.Method, StringComparison.OrdinalIgnoreCase))
+				{
+					return true;
+				}
 			}
 			return false;
 

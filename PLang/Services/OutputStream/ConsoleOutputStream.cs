@@ -26,7 +26,7 @@ namespace PLang.Services.OutputStream
 
 		public async Task<string> Ask(string text, string type = "text", int statusCode = 104, Dictionary<string, object>? parameters = null)
 		{
-			Console.WriteLine(text);
+			Console.WriteLine("[Ask] " + text);
 
 			string line = Console.ReadLine();
 			return line;
@@ -51,7 +51,7 @@ namespace PLang.Services.OutputStream
 			SetColor(statusCode);
 			if (!content.StartsWith(fullName))
 			{
-				if (IsRecord(obj))
+				if (IsRecordWithoutToString(obj))
 				{
 					Console.WriteLine(JsonConvert.SerializeObject(obj, Formatting.Indented));
 				}
@@ -87,10 +87,15 @@ namespace PLang.Services.OutputStream
 			}
 		}
 
-		private bool IsRecord(object obj)
+		private bool IsRecordWithoutToString(object obj)
 		{
 			var type = obj.GetType();
-			return type.GetMethod("PrintMembers", BindingFlags.Instance | BindingFlags.NonPublic) != null;
+			bool isRecord = type.GetMethod("PrintMembers", BindingFlags.Instance | BindingFlags.NonPublic) != null;
+
+			var toStringMethod = obj.GetType().GetMethods().Any(p => p.Name == "ToString" && p.DeclaringType != typeof(object) && p?.DeclaringType != typeof(ValueType));
+
+			if (toStringMethod) return false;
+			return isRecord;
 		}
 
 		public async Task WriteToBuffer(object? obj, string type, int statusCode = 200)

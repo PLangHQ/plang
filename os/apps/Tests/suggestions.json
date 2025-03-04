@@ -1,0 +1,192 @@
+﻿[
+  {
+    "testName": "TestWithSubdomain",
+    "testDescription": "Check if the URL contains a subdomain of the bug bounty website.",
+    "variables": [
+      {
+        "variableName": "%!repsonse.Url%",
+        "testValue": "https://subdomain.bugbounty.website"
+      },
+      {
+        "variableName": "%bugBounty.website%",
+        "testValue": "bugbounty.website"
+      }
+    ],
+    "expectedResult": {
+      "value": true,
+      "type": "System.Boolean"
+    },
+    "id": "013f9433-9b65-4114-8302-9c7a4217fecf"
+  },
+  {
+    "testName": "TestWithoutSubdomain",
+    "testDescription": "Check if the URL does not contain a subdomain of the bug bounty website.",
+    "variables": [
+      {
+        "variableName": "%!repsonse.Url%",
+        "testValue": "https://bugbounty.website"
+      },
+      {
+        "variableName": "%bugBounty.website%",
+        "testValue": "bugbounty.website"
+      }
+    ],
+    "expectedResult": {
+      "value": false,
+      "type": "System.Boolean"
+    },
+    "id": "d78e47cd-3930-4394-95c8-fcaa3703b17c"
+  },
+  {
+    "testName": "TestWithDifferentDomain",
+    "testDescription": "Check if the URL contains a subdomain of a different domain.",
+    "variables": [
+      {
+        "variableName": "%!repsonse.Url%",
+        "testValue": "https://subdomain.otherwebsite.com"
+      },
+      {
+        "variableName": "%bugBounty.website%",
+        "testValue": "bugbounty.website"
+      }
+    ],
+    "expectedResult": {
+      "value": false,
+      "type": "System.Boolean"
+    },
+    "id": "52ce1238-1e7b-431d-9096-45e2c19c3418"
+  },
+  {
+    "testName": "TestWithNullResponseUrl",
+    "testDescription": "Check if the response URL is null.",
+    "variables": [
+      {
+        "variableName": "%!repsonse.Url%",
+        "testValue": null
+      },
+      {
+        "variableName": "%bugBounty.website%",
+        "testValue": "bugbounty.website"
+      }
+    ],
+    "expectedResult": {
+      "value": false,
+      "type": "System.Boolean"
+    },
+    "id": "4f4c8b52-f615-481d-9637-512d96fa9378"
+  },
+  {
+    "testName": "TestWithNullBugBountyWebsite",
+    "testDescription": "Check if the bug bounty website is null.",
+    "variables": [
+      {
+        "variableName": "%!repsonse.Url%",
+        "testValue": "https://subdomain.bugbounty.website"
+      },
+      {
+        "variableName": "%bugBounty.website%",
+        "testValue": null
+      }
+    ],
+    "expectedResult": {
+      "value": false,
+      "type": "System.Boolean"
+    },
+    "id": "11ca66e9-4c6e-41e7-8b4c-d21814e5ece0"
+  },
+  {
+    "testName": "TestWithEmptyResponseUrl",
+    "testDescription": "Check if the response URL is an empty string.",
+    "variables": [
+      {
+        "variableName": "%!repsonse.Url%",
+        "testValue": ""
+      },
+      {
+        "variableName": "%bugBounty.website%",
+        "testValue": "bugbounty.website"
+      }
+    ],
+    "expectedResult": {
+      "value": false,
+      "type": "System.Boolean"
+    },
+    "id": "e3f1887d-bb29-4809-a0b8-289d62a1a2af"
+  },
+  {
+    "testName": "TestWithEmptyBugBountyWebsite",
+    "testDescription": "Check if the bug bounty website is an empty string.",
+    "variables": [
+      {
+        "variableName": "%!repsonse.Url%",
+        "testValue": "https://subdomain.bugbounty.website"
+      },
+      {
+        "variableName": "%bugBounty.website%",
+        "testValue": ""
+      }
+    ],
+    "expectedResult": {
+      "value": false,
+      "type": "System.Boolean"
+    },
+    "id": "a8447258-7787-40e6-85a9-c77389f332d2"
+  },
+  {
+    "testName": "TestWithSubdomainAndDifferentCase",
+    "testDescription": "Check if the URL contains a subdomain with different case.",
+    "variables": [
+      {
+        "variableName": "%!repsonse.Url%",
+        "testValue": "https://SubDomain.bugbounty.website"
+      },
+      {
+        "variableName": "%bugBounty.website%",
+        "testValue": "bugbounty.website"
+      }
+    ],
+    "expectedResult": {
+      "value": true,
+      "type": "System.Boolean"
+    },
+    "id": "99fe00bc-db3e-4930-9145-b45aec0cfaac"
+  },
+  {
+    "testName": "TestWithSubdomainAndPath",
+    "testDescription": "Check if the URL contains a subdomain with a path.",
+    "variables": [
+      {
+        "variableName": "%!repsonse.Url%",
+        "testValue": "https://subdomain.bugbounty.website/path/to/resource"
+      },
+      {
+        "variableName": "%bugBounty.website%",
+        "testValue": "bugbounty.website"
+      }
+    ],
+    "expectedResult": {
+      "value": true,
+      "type": "System.Boolean"
+    },
+    "id": "a3f30894-6a6d-4009-afb8-952f166ce6e5"
+  },
+  {
+    "testName": "TestWithSubdomainAndQuery",
+    "testDescription": "Check if the URL contains a subdomain with a query string.",
+    "variables": [
+      {
+        "variableName": "%!repsonse.Url%",
+        "testValue": "https://subdomain.bugbounty.website?query=1"
+      },
+      {
+        "variableName": "%bugBounty.website%",
+        "testValue": "bugbounty.website"
+      }
+    ],
+    "expectedResult": {
+      "value": true,
+      "type": "System.Boolean"
+    },
+    "id": "f417fc8f-1ad6-4f17-8a38-60f74f5e1caa"
+  }
+]

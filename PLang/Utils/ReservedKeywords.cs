@@ -19,7 +19,8 @@
 		public static readonly string MemoryStack = "!MemoryStack";
 		public static readonly string HttpContext = "!HttpContext";
 		public static readonly string IsHttpRequest = "!IsHttpRequest";
-		
+		public static readonly string GUID = "!GUID";
+
 		public static readonly string CurrentDataSource = "!CurrentDataSource";
 		public static readonly string Error = "!Error";
 		public static readonly string DetailedError = "!DetailedError";

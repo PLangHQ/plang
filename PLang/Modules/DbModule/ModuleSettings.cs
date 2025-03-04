@@ -2,6 +2,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Org.BouncyCastle.Asn1.X509.Qualified;
 using PLang.Errors;
 using PLang.Errors.AskUser;
 using PLang.Errors.Builder;
@@ -114,7 +115,7 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 			{
 				fileSystem.Directory.CreateDirectory(dirPath);
 			}
-			using (var fs = File.Create(localPath))
+			using (var fs = fileSystem.File.Create(localPath))
 			{
 				fs.Close();
 			}
@@ -129,6 +130,13 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 			return null;
 		}
 
+		private DataSource GetSqliteDataSource(string name, string path, bool history = true, bool isDefault = false)
+		{
+			var statement = new SqlStatement("SELECT name FROM sqlite_master WHERE type IN ('table', 'view');", "SELECT name, type, [notnull] as isNotNull, pk as isPrimaryKey FROM pragma_table_info(@TableName);");
+
+			var dataSource = new DataSource(name, typeof(SqliteConnection).FullName, path, "data", statement.SelectTablesAndViewsInMyDatabaseSqlStatement, statement.SelectColumnsFromTablesSqlStatement, history, isDefault);
+			return dataSource;
+		}
 		private record DatabaseTypeResponse(string typeFullName, string nugetCommand, string regexToExtractDatabaseNameFromConnectionString, string dataSourceConnectionStringExample);
 
 
@@ -280,7 +288,10 @@ Be concise"));
 				{
 					return (null, await GetDataSourceNotFoundError(dataSourceName));
 				}
-				//var dataSource = new DataSource("data", typeof(SqliteConnection).FullName, "Data Source=" + localDbPath, "sqlite", )
+
+				var ds = GetSqliteDataSource(dataSourceName, localDbPath);
+				context.AddOrReplace(ReservedKeywords.CurrentDataSource, ds);
+				return (ds, null);
 			}
 
 			var dataSources = await GetAllDataSources();

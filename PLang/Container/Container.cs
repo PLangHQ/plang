@@ -135,6 +135,8 @@ namespace PLang.Container
 			container.RegisterErrorHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler(container.GetInstance<IAskUserHandlerFactory>()));
 			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler(container.GetInstance<IAskUserHandlerFactory>()));
 
+			
+
 			RegisterEventRuntime(container, true);
 		}
 
@@ -142,7 +144,7 @@ namespace PLang.Container
 		{
 
 			container.Register<IServiceContainerFactory, ServiceContainerFactory>();
-			container.RegisterSingleton<PLangAppContext>();
+			container.RegisterSingleton<PLangAppContext>();			
 			container.RegisterSingleton<IPLangFileSystem>(factory =>
 			{
 				return new PLangFileSystem(absoluteAppStartupPath, relativeStartupAppPath, container.GetInstance<PLangAppContext>());
@@ -165,6 +167,12 @@ namespace PLang.Container
 
 		private static void RegisterEventRuntime(this ServiceContainer container, bool isBuilder = false)
 		{
+			var context = container.GetInstance<PLangAppContext>();
+			var fileSystem = container.GetInstance<IPLangFileSystem>();
+			var engine = container.GetInstance<IEngine>();
+			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
+			fileAccessHandler.GiveAccess(Environment.CurrentDirectory, fileSystem.Path.Join(AppContext.BaseDirectory, "os"));
+
 			if (!isBuilder)
 			{
 				container.RegisterSingleton<IEventRuntime, EventRuntime>();
@@ -175,17 +183,19 @@ namespace PLang.Container
 			using (var runtimeContainer = new ServiceContainer())
 			{
 
-				var fileSystem2 = container.GetInstance<IPLangFileSystem>();
-				runtimeContainer.RegisterForPLang(fileSystem2.RootDirectory, fileSystem2.RelativeAppPath, container.GetInstance<IAskUserHandlerFactory>(),
+				runtimeContainer.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, container.GetInstance<IAskUserHandlerFactory>(),
 					container.GetInstance<IOutputStreamFactory>(), container.GetInstance<IOutputSystemStreamFactory>(),
 					container.GetInstance<IErrorHandlerFactory>(), container.GetInstance<IErrorSystemHandlerFactory>());
 				runtimeContainer.RegisterSingleton<IEventRuntime, EventRuntime>();
+				
+				var fileAccessHandler2 = runtimeContainer.GetInstance<IFileAccessHandler>();				
+				fileAccessHandler2.GiveAccess(Environment.CurrentDirectory, fileSystem.Path.Join(AppContext.BaseDirectory, "os"));				
+
+				var engine2 = runtimeContainer.GetInstance<IEngine>(); 
+				engine2.Init(runtimeContainer);
+
 				var eventRuntime = runtimeContainer.GetInstance<IEventRuntime>();
-
 				container.RegisterSingleton<IEventRuntime>(factory => { return eventRuntime; });
-
-				var engine = runtimeContainer.GetInstance<IEngine>();
-				engine.Init(runtimeContainer);
 			}
 
 		}
@@ -578,7 +588,9 @@ namespace PLang.Container
 		private static void RegisterUserGlobalInjections(ServiceContainer container)
 		{
 			var prParser = container.GetInstance<PrParser>();
-			var goals = prParser.GetAllGoals();
+
+			var fileSystem = container.GetInstance<IPLangFileSystem>();
+			var goals = prParser.LoadAllGoalsByPath(fileSystem.GoalsPath, true);
 			var goalsWithInjections = goals.Where(p => p.Injections.FirstOrDefault(x => x.IsGlobal) != null);
 
 			foreach (var goal in goalsWithInjections)
@@ -673,16 +685,31 @@ namespace PLang.Container
 				logger.LogWarning($".services folder not found in {fileSystem.RootDirectory}. If you have modified injection you need to Delete the file Start/00. Goal.pr or events/00. Goal.pr. Will be fixed in future release.");
 				return null;
 			}
-
-			string dllFolderPath = fileSystem.Path.Join(fileSystem.GoalsPath, ".services", injectorType);
-			if (!fileSystem.Directory.Exists(dllFolderPath))
+			string[] dllFiles;
+			string extension = fileSystem.Path.GetExtension(injectorType);
+			if (!string.IsNullOrEmpty(injectorType))
 			{
-				var logger = container.GetInstance<ILogger>();
-				logger.LogWarning($"{injectorType} injection folder could not be found. Path {dllFolderPath}");
-				return null;
+				string dllFilePath = fileSystem.Path.Join(fileSystem.GoalsPath, ".services", injectorType);
+				if (!fileSystem.File.Exists(dllFilePath))
+				{
+					var logger = container.GetInstance<ILogger>();
+					logger.LogWarning($"{injectorType} injection folder could not be found. Path {dllFilePath}");
+					return null;
+				}
+				dllFiles = [dllFilePath];
 			}
+			else
+			{
+				string dllFolderPath = fileSystem.Path.Join(fileSystem.GoalsPath, ".services", injectorType);
+				if (!fileSystem.Directory.Exists(dllFolderPath))
+				{
+					var logger = container.GetInstance<ILogger>();
+					logger.LogWarning($"{injectorType} injection folder could not be found. Path {dllFolderPath}");
+					return null;
+				}
 
-			var dllFiles = fileSystem.Directory.GetFiles(dllFolderPath, "*.dll", SearchOption.AllDirectories);
+				dllFiles = fileSystem.Directory.GetFiles(dllFolderPath, "*.dll", SearchOption.AllDirectories);
+			}
 
 			foreach (var dllFile in dllFiles)
 			{
@@ -691,7 +718,7 @@ namespace PLang.Container
 				if (type != null) return type;
 			}
 
-			throw new RuntimeException($"Cannot find {injectorType} in {dllFolderPath}. Make sure that the class inherits from {typeToFind.Name} and the name of the dll is {injectorType}.dll");
+			throw new RuntimeException($"Cannot find {injectorType} in {string.Join(", ", dllFiles)}. Make sure that the class inherits from {typeToFind.Name} and the name of the dll is {injectorType}.dll");
 		}
 
 		private static void RegisterType(IServiceContainer container, string injectorType, Type interfaceType, Type? implementationType, string reservedKeyword, bool isGlobalForApp, string pathToModule)

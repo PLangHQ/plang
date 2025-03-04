@@ -56,6 +56,7 @@ namespace PLang.Modules.OutputModule
 		{
 			if (statusCode >= 400)
 			{
+				if (content == null) return new UserDefinedError("Content is null", goalStep, StatusCode: statusCode);
 				await outputSystemStreamFactory.CreateHandler().Write(content, type, statusCode);
 			}
 			if (writeToBuffer)
@@ -75,8 +76,9 @@ namespace PLang.Modules.OutputModule
 		{
 			if (statusCode >= 400)
 			{
+				if (content ==  null) return new UserDefinedError("Content is null", goalStep, StatusCode: statusCode);
 				//await outputStream.CreateHandler().Write(content, type, statusCode);
-				return new UserDefinedError(content.ToString(), goalStep, StatusCode: statusCode);
+				return new UserDefinedError(content?.ToString(), goalStep, StatusCode: statusCode);
 			}
 			if (writeToBuffer)
 			{

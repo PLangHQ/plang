@@ -10,6 +10,7 @@ using PLang.Interfaces;
 using PLang.Models;
 using PLang.Services.LlmService;
 using PLang.Utils;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -50,7 +51,8 @@ namespace PLang.Building
 		}
 		public async Task<IBuilderError?> BuildGoal(IServiceContainer container, string goalFileAbsolutePath, int errorCount = 0)
 		{
-			var goals = goalParser.ParseGoalFile(goalFileAbsolutePath);
+			List<Goal> goals = goalParser.ParseGoalFile(goalFileAbsolutePath);			
+
 			if (goals == null || goals.Count == 0)
 			{
 				return new BuilderError($"Could not determine goal on {Path.GetFileName(goalFileAbsolutePath)}.");

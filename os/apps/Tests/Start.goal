@@ -1,0 +1,11 @@
+Start
+- start webserver
+- add path /, call Question
+- add path /editor, call Editor
+
+Question
+- read file suggestions.json, write to %suggestions%
+- render /html/question.html
+
+Editor
+- render /html/editor.html

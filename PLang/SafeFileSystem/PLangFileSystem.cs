@@ -13,27 +13,31 @@ using Websocket.Client.Logging;
 namespace PLang.SafeFileSystem
 {
 
-	public record FileAccessControl(string appName, string path, DateTime? expires);
+	public record FileAccessControl(string appName, string path, DateTime? expires = null, string? ProcessId = null);
 
 
 	//[Serializable]
 	public sealed class PLangFileSystem : FileSystem, IPLangFileSystem
 	{
+		public string Id { get; init; }
+
 		private string rootPath;
 		List<FileAccessControl>? fileAccesses = null;
 		private readonly PLangAppContext context;
 
 		public bool IsRootApp { get; private set; }
 		public string RelativeAppPath { get; set; }
-
+		public string OsDirectory
+		{
+			get
+			{
+				return Path.Join(AppContext.BaseDirectory, "os");
+			}
+		}
 		public string RootDirectory
 		{
 			get
 			{
-				if (context.ContainsKey("!RootDirectory"))
-				{
-					this.RootDirectory = context["!RootDirectory"] as string ?? rootPath;
-				}
 				return rootPath;
 			}
 			set { rootPath = value; }
@@ -54,9 +58,10 @@ namespace PLang.SafeFileSystem
 		public PLangFileSystem(string appStartupPath, string relativeAppPath, PLangAppContext context)
 		{
 			this.context = context;
-			this.RootDirectory = appStartupPath.AdjustPathToOs();
+			this.rootPath = appStartupPath.AdjustPathToOs();
 			this.RelativeAppPath = relativeAppPath.AdjustPathToOs();
 			this.fileAccesses = new List<FileAccessControl>();
+			this.Id = Guid.NewGuid().ToString();
 
 			DriveInfo = new PLangDriveInfoFactory(this);
 			DirectoryInfo = new PLangDirectoryInfoFactory(this);
@@ -94,7 +99,7 @@ namespace PLang.SafeFileSystem
 			
 		}
 
-		// This is a security issue, here anybody can set what ever file access.
+		// TODO: This is a security issue, here anybody can set what ever file access.
 		// There is issue with stack overflow if ISettings is injected
 		// so some other solution needs to be found.
 		//
@@ -107,8 +112,20 @@ namespace PLang.SafeFileSystem
 		public void SetFileAccess(List<FileAccessControl> fileAccesses)
 		{
 			if (fileAccesses == null) return;
-
+			
+			var engineFileAccess = this.fileAccesses?.FirstOrDefault(p => p.ProcessId is not null);
 			this.fileAccesses = fileAccesses;
+			if (engineFileAccess != null)
+			{
+				this.fileAccesses.Add(engineFileAccess);
+			}
+		}
+
+		public void AddFileAccess(FileAccessControl fileAccess)
+		{
+			if (fileAccesses == null) this.fileAccesses = new();
+
+			this.fileAccesses.Add(fileAccess);
 		}
 
 		public bool IsPathRooted(string? path)
@@ -162,7 +179,8 @@ namespace PLang.SafeFileSystem
 
 				if (fileAccesses.Count > 0)
 				{
-					var hasAccess = fileAccesses.FirstOrDefault(p => p.appName.ToLower() == appName.ToLower() && path.ToLower().StartsWith(p.path.ToLower()) && p.expires > DateTime.UtcNow);
+					var hasAccess = fileAccesses.FirstOrDefault(p => p.appName.ToLower() == appName.ToLower() && path.ToLower().StartsWith(p.path.ToLower())
+						&& (p.expires > DateTime.UtcNow || p.ProcessId == Id));
 					if (hasAccess != null) return path;
 				}
 
@@ -186,6 +204,16 @@ or in more natural language, e.g.
 Your answer:
 ");
 			}
+
+			if (!IsPathRooted(path) && !System.IO.File.Exists(path) && !System.IO.Directory.Exists(path))
+			{
+				var osPath = Path.Join(AppContext.BaseDirectory, "os", path);
+				if (System.IO.File.Exists(path) || System.IO.Directory.Exists(path))
+				{
+					path = osPath;
+				}
+			}
+
 			return path;
 		}
 

@@ -109,5 +109,7 @@ namespace PLang.Building.Model
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
 		public object? PrFile { get; set; }
+
+		public string RelativeGoalPath { get; set; }
 	}
 }

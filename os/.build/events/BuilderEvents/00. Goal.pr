@@ -1,0 +1,67 @@
+{
+  "GoalName": "BuildEvents",
+  "Comment": null,
+  "Text": "BuildEvents",
+  "GoalSteps": [
+    {
+      "Text": "before builder ends, call goal Builder/CheckGoals",
+      "Comment": null,
+      "ModuleType": null,
+      "Name": null,
+      "Description": null,
+      "PrFileName": null,
+      "RelativePrPath": null,
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2025-03-04T16:43:43.7997027+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 0,
+      "LineNumber": 2,
+      "LlmRequest": null,
+      "EventBinding": {
+        "EventType": "Before",
+        "EventScope": "EndOfApp",
+        "GoalToBindTo": {
+          "Value": "Builder"
+        },
+        "GoalToCall": {
+          "Value": "Builder/CheckGoals"
+        },
+        "IncludePrivate": false,
+        "StepNumber": null,
+        "StepText": null,
+        "WaitForExecution": true,
+        "RunOnlyOnStartParameter": null,
+        "OnErrorContinueNextStep": false,
+        "ErrorKey": null,
+        "ErrorMessage": null,
+        "StatusCode": null,
+        "ExceptionType": null
+      },
+      "IsEvent": true,
+      "Hash": null,
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\events\\BuilderEvents.goal"
+    }
+  ],
+  "SubGoals": [],
+  "Description": null,
+  "Visibility": 1,
+  "GoalFileName": "BuilderEvents.goal",
+  "RelativeGoalPath": "\\events\\BuilderEvents.goal",
+  "RelativeGoalFolderPath": "\\events",
+  "RelativePrPath": ".build\\events\\BuilderEvents\\00. Goal.pr",
+  "RelativePrFolderPath": ".build\\events\\BuilderEvents",
+  "BuilderVersion": null,
+  "GoalInfo": null,
+  "Injections": [],
+  "Signature": null,
+  "Hash": null,
+  "IncomingVariablesRequired": null
+}

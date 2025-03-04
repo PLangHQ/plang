@@ -29,7 +29,8 @@ namespace PLang.Modules.TemplateEngineModule
 			this.outputStreamFactory = outputStreamFactory;
 		}
 
-		public async Task<(string?, IError?)> RenderFile(string path, bool? writeToOutputStream = null)
+		[Description("Render a file path either into a write into value or straight to the output stream when no return variable is defined. Set writeToOutputStream=true when no variable is defined to write into")]
+		public async Task<(string?, IError?)> RenderFile(string path, bool writeToOutputStream = false)
 		{
 			var fullPath = GetPath(path);
 			if (!fileSystem.File.Exists(fullPath))
@@ -41,7 +42,7 @@ namespace PLang.Modules.TemplateEngineModule
 
 			if (result.Error != null) return (result.Result, result.Error);
 
-			if (writeToOutputStream != null && !writeToOutputStream.Value) return result;
+			if (!writeToOutputStream) return result;
 
 			if (function.ReturnValues == null || function.ReturnValues.Count == 0)
 			{

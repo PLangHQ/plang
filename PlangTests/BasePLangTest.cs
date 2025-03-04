@@ -69,6 +69,7 @@ namespace PLangTests
 		protected ISettingsRepositoryFactory settingsRepositoryFactory;
 		protected IFileAccessHandler fileAccessHandler;
 		protected DependancyHelper dependancyHelper;
+		protected IGoalParser goalParser;
 		protected void Initialize()
 		{
 
@@ -200,6 +201,7 @@ namespace PLangTests
 			container.Register<EventBuilder>();
 
 			container.Register<IGoalParser, GoalParser>();
+			goalParser = container.GetInstance<IGoalParser>();
 
 			dependancyHelper = new DependancyHelper(fileSystem, logger, prParser);
 

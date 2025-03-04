@@ -107,13 +107,14 @@ namespace PLang.Building
 				(step, error) = await BuildStepProperties(goal, step, instruction, stepIndex, excludeModules, errorCount);
 				if (error != null) return error;
 
-				CheckForBuildRunner(goal, step, instruction);
+				//CheckForBuildRunner(goal, step, instruction);
 
 				//Set reload to false after Build Instruction
 				step.Reload = false;
 				step.Generated = DateTime.Now;
 				var assembly = Assembly.GetAssembly(this.GetType());
 				step.BuilderVersion = assembly.GetName().Version.ToString();
+				step.RelativeGoalPath = goal.RelativeGoalPath;
 
 				return await eventRuntime.RunBuildStepEvents(EventType.After, goal, step, stepIndex);
 			}
@@ -196,8 +197,8 @@ namespace PLang.Building
 			var gf = instruction.Action as GenericFunction;
 			if (gf == null) return;
 
-			var method = program.GetMethod(gf.FunctionName);
-			if (method == null) return;
+			var methods = program.GetMethods().Where(p => p.Name == gf.FunctionName);
+			if (methods.Any()) return;
 			/*
 			var attribute = method.GetCustomAttribute(typeof(BuildRunner));
 			if (attribute != null)
@@ -612,7 +613,7 @@ Be Concise
 				var datasources = settings.GetValues<DataSource>(typeof(PLang.Modules.DbModule.ModuleSettings)).ToList();
 				var datasource = datasources.FirstOrDefault(p => p.Name == dataSourceName);
 				var isDefaultForApp = ((bool?)gf.Parameters.FirstOrDefault(p => p.Name == "setAsDefaultForApp")?.Value) ?? false;
-
+				/*
 				if (datasource == null)
 				{
 					var keepHistoryEventSourcing = ((bool?)gf.Parameters.FirstOrDefault(p => p.Name == "keepHistoryEventSourcing")?.Value) ?? false;
@@ -629,7 +630,7 @@ Be Concise
 
 					datasources = settings.GetValues<DataSource>(typeof(PLang.Modules.DbModule.ModuleSettings)).ToList();
 					datasource = datasources.FirstOrDefault(p => p.Name == dataSourceName);
-				}
+				}*/
 
 
 				if ((gf.FunctionName == "CreateDataSource" && isDefaultForApp) || gf.FunctionName == "SetDataSourceName")

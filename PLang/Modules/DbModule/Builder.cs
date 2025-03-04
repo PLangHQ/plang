@@ -1,5 +1,6 @@
 ﻿using CsvHelper;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Building.Model;
@@ -59,7 +60,7 @@ namespace PLang.Modules.DbModule
 			var gf = buildInstruction.Action as GenericFunction;
 			if (gf != null && gf.FunctionName == "CreateDataSource")
 			{
-				await CreateDataSource(gf);
+				//await CreateDataSource(gf);
 				return (buildInstruction, null);
 			}
 			if (gf != null && gf.FunctionName == "SetDataSourceName")
@@ -182,8 +183,8 @@ You MUST provide Parameters if SQL has @parameter.
 			}
 
 			var supportedDbTypesAsString = moduleSettings.GetSupportedDbTypesAsString();
-			var dbTypeParam = gf.Parameters.FirstOrDefault(p => p.Name == "databaseType");
-			if (dbTypeParam == null || dbTypeParam.Value == null || string.IsNullOrEmpty(dbTypeParam.Value.ToString()))
+			var dbTypeParam = gf.Parameters.FirstOrDefault(p => p.Name == "databaseType")?.Value?.ToString();
+			if (string.IsNullOrEmpty(dbTypeParam?.ToString()))
 			{
 				var supportedDbTypes = moduleSettings.GetSupportedDbTypes();
 				if (supportedDbTypes.Count > 1)
@@ -192,15 +193,19 @@ You MUST provide Parameters if SQL has @parameter.
 These are the supported databases (you dont need to be precise)
 {supportedDbTypesAsString}
 ");
+				} else
+				{
+					dbTypeParam = "sqlite";
 				}
 			}
 			var setAsDefaultForApp = gf.Parameters.FirstOrDefault(p => p.Name == "setAsDefaultForApp");
 			var keepHistoryEventSourcing = gf.Parameters.FirstOrDefault(p => p.Name == "keepHistoryEventSourcing");
-
+			var path = gf.Parameters.FirstOrDefault(p => p.Name == "localPath")?.Value?.ToString();
+		
 			bool isDefault = (setAsDefaultForApp != null && setAsDefaultForApp.Value != null) ? (bool)setAsDefaultForApp.Value : false;
 			bool keepHistory = (keepHistoryEventSourcing != null && keepHistoryEventSourcing.Value != null) ? (bool)keepHistoryEventSourcing.Value : false;
 
-			await moduleSettings.CreateDataSource((string)dataSourceName.Value, null, (string)dbTypeParam.Value, isDefault, keepHistory);
+			//await moduleSettings.CreateDataSource((string)dataSourceName.Value, path, dbTypeParam, isDefault, keepHistory);
 		}
 
 
@@ -583,9 +588,9 @@ integer/int should always be System.Int64.
 				}
 				else
 				{
-					logger.LogWarning($@"Could not find information about table {tableName}. 
-I will not build this step. You need to run the setup file to create tables in database. This is the command: plang run Setup");
-					throw new BuilderException("You need to run: 'plang run Setup.goal' to create or modify your database before you continue with your build");
+					logger.LogWarning($@"Could not find information about table '{tableName}'. 
+I will not be able to validate the sql. To enable validation run the command: plang run Setup");
+					//throw new BuilderException("You need to run: 'plang run Setup.goal' to create or modify your database before you continue with your build");
 				}
 			}
 

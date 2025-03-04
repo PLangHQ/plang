@@ -1,0 +1,43 @@
+CreateStepTest
+- set default value %goalPath%="c:\Users\Ingi Gauti\source\repos\ingig\PrivatePlangApps\Adversary\.build\discovery\tools\BugBountyBasics\HandleHeaders\00. Goal.pr"
+    %stepPrFileName%="01. check_subdomain_in_url.pr"
+    %appPath% = "c:\Users\Ingi Gauti\source\repos\ingig\PrivatePlangApps\Adversary\"
+    %output% = "console"
+- load plang step from %goalPath%, %stepPrFileName%, write to %step%
+- [plang] get all variables from %step%, write to %variables%
+- write out "Auto create tests for: %step.Text%"
+- set %questionScheme% = "[{testName:string, testDescription:string, variables:[{variableName:string, testValue:object}], expectedResult:{value:object, type:string}]"
+- call goal "%step.ModuleType%.Specifics"
+    on error "not found", call NotSupported
+- file read llm/suggestTestValuesSystem.txt, load vars, "" for missing vars, write to %system%
+- [llm] system: %system%
+        user: %step.Text%
+        scheme: %questionScheme%
+        write to %suggestions%
+- foreach %suggestions%, call AddId
+- write %suggestions% to /suggestions.json, overwrite
+- if %output% == "console" then call ConsoleOutput, else FormatQuestionAsHtml
+- ask user %question%, write to %answer%
+- save %answer% to %appPat%/.tests/%step.RelativePath%/%stepPrFileName.Replace(".pr", ".test")%
+- write out "Result: %result%"
+
+ConsoleOutput
+- set %question% = %suggestions%
+
+PLang.Modules.ConditionalModule.Specifics
+- set %moduleTypeSpecific% = "This is a condition, give me true and false for expected results. The underlaying <csharp> code that will be executed is following. Use it to help with deciding on values
+
+    <csharp>
+    %step.PrFile.Action.Code%
+    <csharp>"
+
+FormatQuestionAsHtml
+- render html/question.html, write to %question%
+
+NotSupported
+- throw error "%step.ModuleType% is not yet supported"
+
+AddId
+- set var %suggestions[position].id% = %!GUID%
+
+

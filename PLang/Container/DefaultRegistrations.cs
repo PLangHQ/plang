@@ -3,10 +3,12 @@ using NBitcoin.Secp256k1;
 using PLang.Errors.Handlers;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
+using PLang.Modules.DbModule;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
 using PLang.Utils;
+using System.Data;
 
 namespace PLang.Container
 {
@@ -150,6 +152,22 @@ namespace PLang.Container
 		}
 
 
+		public static void RegisterDbRepositoryFactory(this ServiceContainer container, Type type, bool isDefault = false, IDbConnection? instance = null)
+		{
+			container.Register<IDbFactory>(factory =>
+			{
+				SetContext(container, type, ReservedKeywords.Inject_IDbConnection, isDefault);
+				return new DbFactory(container);
+			});
+
+			if (instance != null)
+			{
+				container.RegisterSingleton(factor =>
+				{
+					return instance;
+				}, instance.GetType().FullName);
+			}
+		}
 		private static void SetContext(IServiceContainer container, Type type, string serviceReservedKeyword, bool isDefault = false, bool setToContext = false)
 		{
 			var context = container.GetInstance<PLangAppContext>();

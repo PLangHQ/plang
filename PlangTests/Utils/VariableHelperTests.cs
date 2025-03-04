@@ -38,7 +38,7 @@ namespace PLang.Utils.Tests
 			memoryStack.Put("age", 12);
 			memoryStack.Put("userInfo", new { address = "Location 32", zip = 662 });
 
-			context.Add(ReservedKeywords.MemoryStack, memoryStack);
+			context.AddOrReplace(ReservedKeywords.MemoryStack, memoryStack);
 
 			var helper = new VariableHelper(context, memoryStack, settings);
 			var text = "Hello %name%, your age is %age%, and you live at %userInfo.address% and %userInfo.zip%, is this correct?";
@@ -92,7 +92,7 @@ namespace PLang.Utils.Tests
 			memoryStack.Put("text", "world");
 			memoryStack.Put("text2", "plang");
 
-			context.Add(ReservedKeywords.MemoryStack, memoryStack);
+			context.AddOrReplace(ReservedKeywords.MemoryStack, memoryStack);
 			var variableHelper = new VariableHelper(context, memoryStack, settings);
 
 			settings.Get<string>(typeof(Settings), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns("mega");
@@ -114,8 +114,8 @@ namespace PLang.Utils.Tests
 			memoryStack.Put("text", "world");
 			memoryStack.Put("text2", "plang");
 
-			context.Add(ReservedKeywords.Goal, new { GoalObject = true });
-			context.Add(ReservedKeywords.MemoryStack, memoryStack);
+			context.AddOrReplace(ReservedKeywords.Goal, new { GoalObject = true });
+			context.AddOrReplace(ReservedKeywords.MemoryStack, memoryStack);
 			var variableHelper = new VariableHelper(context, memoryStack, settings);
 
 

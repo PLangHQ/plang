@@ -1,0 +1,5 @@
+Start
+- start window, call RenderDesktop, 1400x900
+
+RenderDesktop
+- render "ui/desktop.html"

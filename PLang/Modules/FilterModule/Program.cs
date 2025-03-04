@@ -95,7 +95,7 @@ namespace PLang.Modules.FilterModule
 			{
 				var list = (IList)variableToExtractFrom;
 				if (retrieveOneItem == "first") return list[0];
-				if (retrieveOneItem == "first") return list[list.Count - 1];
+				if (retrieveOneItem == "last") return list[list.Count - 1];
 				return list[int.Parse(retrieveOneItem)];
 			}
 
@@ -204,12 +204,12 @@ valueToFilterBy: required, find a specific Value that is stored in the propertyT
 operatorOnPropertyToFilter can be following(sperated by |): <|>|equals|startswith|endswith|contains.
 retrieveOneItem: first|last|retrieveOneItem can also be a number representing the index.
 operatorOnPropertyToFilter: equals|startswith|endswith|contains
-propertyToExtract: by default it returns the element that matches the property, when propertyToExtract is specified it will find that property and return the object from that property.
+propertyToExtract: by default it returns the element that matches the property, can be defined as 'parent' or when propertyToExtract is specified it will find that property and return the object from that property.
 operatorToFilterOnValue: =|!= 
 operatorToFilterOnValueComparer: insensitive|case-sensitive
 <example>
-- filter %json% where property starts with ""%item%/"" and has ""John"" as value, write to %libraries% => variableToExtractFrom=""%json%"", 
-	propertyToFilterOn=""%item%/"", valueToFilterBy=""John"", operatorToFilterOnValue=""contains"", operatorOnPropertyToFilter=""startswith""
+- filter %json% where property starts with ""%item%/"" and has ""John"" as value, get parent object, write to %libraries% => variableToExtractFrom=""%json%"", 
+	propertyToFilterOn=""%item%/"", valueToFilterBy=""John"", operatorToFilterOnValue=""contains"", operatorOnPropertyToFilter=""startswith"", propertyToExtract=""parent""
 	operatorToFilterOnValueComparer=""insensitive""
 - filter %list% where property is ""Quantity"" and is larger then ""10"", give me first, write to %library% => variableToExtractFrom=""%list%"", 
 	propertyToFilterOn=""Quantity"", valueToFilterBy=""10"", operatorToFilterOnValue="">"", operatorOnPropertyToFilter=""=""
@@ -290,10 +290,10 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 
 
 			}
-			else if (variableToExtractFrom is IDictionary<string, object> dictionary)
+			else if (variableToExtractFrom is IDictionary dictionary)
 			{
-				var filteredDictionary = dictionary
-					.Where(entry => entry.Key.Equals(propertyToFilterOn, StringComparison.OrdinalIgnoreCase) &&
+				var filteredDictionary = dictionary.Cast<dynamic>()
+					.Where(entry => entry.Key.ToString().Equals(propertyToFilterOn, StringComparison.OrdinalIgnoreCase) &&
 									filterPredicate(entry.Value.ToString()))
 					.ToDictionary(entry => entry.Key, entry => entry.Value);
 
@@ -305,7 +305,8 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 			else
 			{
 				var json = JsonConvert.SerializeObject(variableToExtractFrom);
-				filteredList = GetFilteredJObject(json, propertyToFilterOn, operatorOnPropertyToFilter, filterPredicate, propertyToExtract);
+				var jsonObject = JsonConvert.DeserializeObject(json);
+				filteredList = GetFilteredJObject(jsonObject as JToken, propertyToFilterOn, operatorOnPropertyToFilter, filterPredicate, propertyToExtract);
 
 			}
 
@@ -355,7 +356,7 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 			object? value = prop.Value;
 			if (value is JValue jValue) value = jValue.Value;
 
-			if (propertyToFilterOnOperator == "=")
+			if (propertyToFilterOnOperator == "=" || propertyToFilterOnOperator == "equals")
 			{
 				if (prop.Name.Equals(propertyToFilterOn, StringComparison.OrdinalIgnoreCase) &&
 								(filterPredicate == null || filterPredicate(value)))
@@ -415,6 +416,9 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 
 		private object ParseParent(JToken prop, string propertyToExtract)
 		{
+			if (propertyToExtract == null) return prop;
+			if (propertyToExtract == "parent") return prop.Parent;
+
 			var path = prop.Parent.Path;
 			var propertyName = path;
 			if (propertyName.Contains("["))
@@ -428,6 +432,7 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 
 		private Func<object, bool> GetPredicate(string operatorToFilter, string valueToFilterBy, string operatorToFilterOnValueComparer)
 		{
+
 			var comparer = (operatorToFilterOnValueComparer == "insensitive") ? StringComparison.OrdinalIgnoreCase : StringComparison.InvariantCulture;
 			return operatorToFilter.ToLower() switch
 			{
@@ -440,7 +445,7 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 
 				"startwith" => new Func<object, bool>(v => v != null && v.ToString().StartsWith(valueToFilterBy, comparer)),
 				"endswith" => new Func<object, bool>(v => v != null && v.ToString().EndsWith(valueToFilterBy, comparer)), // Similar to contains
-				"=" => new Func<object, bool>(v =>
+				"equals" or	"=" => new Func<object, bool>(v =>
 				{
 					if (v == null && valueToFilterBy == null) return true;
 					if (v == null) return false;
@@ -448,6 +453,11 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 					if (v is string str)
 					{
 						return str != null && str.Equals(valueToFilterBy, comparer);
+					}
+
+					if (v is JToken token)
+					{
+						return token.ToString().Equals(valueToFilterBy.ToString(), comparer);
 					}
 
 					return v != null && v.Equals(valueToFilterBy);

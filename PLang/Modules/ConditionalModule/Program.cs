@@ -148,7 +148,7 @@ namespace PLang.Modules.ConditionalModule
 		}*/
 
 
-		public override async Task<IError?> Run()
+		public override async Task<(object?, IError?)> Run()
 		{
 
 			var answer = JsonConvert.DeserializeObject<Implementation>(instruction.Action.ToString());
@@ -158,17 +158,17 @@ namespace PLang.Modules.ConditionalModule
 				Assembly? assembly = Assembly.LoadFile(Path.Join(Goal.AbsolutePrFolderPath, dllName));
 				if (assembly == null)
 				{
-					return new StepError($"Could not find {dllName}. Stopping execution for step {goalStep.Text}", goalStep);
+					return (null, new StepError($"Could not find {dllName}. Stopping execution for step {goalStep.Text}", goalStep));
 				}
 				Type? type = assembly.GetType(answer.Namespace + "." + answer.Name);
 				if (type == null)
 				{
-					return new StepError($"Could not find type {answer.Name}. Stopping execution for step {goalStep.Text}", goalStep);
+					return (null, new StepError($"Could not find type {answer.Name}. Stopping execution for step {goalStep.Text}", goalStep));
 				}
 				MethodInfo? method = type.GetMethod("ExecutePlangCode");
 				if (method == null)
 				{
-					return new StepError($"Method 'ExecutePlangCode' could not be found in {answer.Name}. Stopping execution for step {goalStep.Text}", goalStep);
+					return (null, new StepError($"Method 'ExecutePlangCode' could not be found in {answer.Name}. Stopping execution for step {goalStep.Text}", goalStep));
 				}
 				var parameters = method.GetParameters();
 
@@ -200,13 +200,13 @@ namespace PLang.Modules.ConditionalModule
 				// The second parameter is an object array containing the arguments of the method.
 				bool result = (bool?)method.Invoke(null, parametersObject.ToArray()) ?? false;
 
-				return await ExecuteResult(result, answer.GoalToCallOnTrue, answer.GoalToCallOnTrueParameters, answer.GoalToCallOnFalse, answer.GoalToCallOnFalseParameters);
+				return (result, await ExecuteResult(result, answer.GoalToCallOnTrue, answer.GoalToCallOnTrueParameters, answer.GoalToCallOnFalse, answer.GoalToCallOnFalseParameters));
 
 			}
 			catch (Exception ex)
 			{
 				var error = CodeExceptionHandler.GetError(ex, answer, goalStep);
-				return error;
+				return (null, error);
 			}
 
 		}
@@ -236,7 +236,7 @@ namespace PLang.Modules.ConditionalModule
 				{
 					goalToCallOnFalse = variableHelper.LoadVariables(goalToCallOnFalse)?.ToString();
 				}
-				
+
 				if (goalToCallOnFalseParameters?.Count == 1 && VariableHelper.IsVariable(goalToCallOnFalseParameters.FirstOrDefault().Value))
 				{
 					var obj = variableHelper.LoadVariables(goalToCallOnFalseParameters.FirstOrDefault().Value);
@@ -264,21 +264,21 @@ namespace PLang.Modules.ConditionalModule
 				}
 			}
 
-			
-				var nextStep = goalStep.NextStep;
-				if (nextStep == null) return null;
 
-				bool isIndent = (goalStep.Indent + 4 == nextStep.Indent);
+			var nextStep = goalStep.NextStep;
+			if (nextStep == null) return null;
 
-				while (isIndent)
-				{
-					nextStep.Execute = result && (goalStep.Indent + 4 == nextStep.Indent);
+			bool isIndent = (goalStep.Indent + 4 == nextStep.Indent);
 
-					nextStep = nextStep.NextStep;
-					if (nextStep == null) break;
-					isIndent = (goalStep.Indent < nextStep.Indent);
-				}
-			
+			while (isIndent)
+			{
+				nextStep.Execute = result && (goalStep.Indent + 4 == nextStep.Indent);
+
+				nextStep = nextStep.NextStep;
+				if (nextStep == null) break;
+				isIndent = (goalStep.Indent < nextStep.Indent);
+			}
+
 			return null;
 		}
 	}

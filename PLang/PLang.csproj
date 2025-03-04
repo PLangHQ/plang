@@ -25,6 +25,7 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<IncludeSymbols>true</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 	</PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -38,7 +39,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Goals\.build\info.txt" />
 		<None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
@@ -46,7 +46,6 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-    <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
     <PackageReference Include="CsvHelper" Version="33.0.1" />
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="IdGen" Version="3.0.7" />
@@ -57,9 +56,10 @@
     <PackageReference Include="Jil" Version="2.17.0" />
     <PackageReference Include="LightInject" Version="7.0.1" />
     <PackageReference Include="Markdig.Signed" Version="0.40.0" />
+    <PackageReference Include="MessagePack" Version="3.1.3" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="9.0.2" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.2" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.12.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.13.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.2" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.2" />
@@ -67,7 +67,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.2" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.2" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.2" />
-    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.5.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.6.0" />
     <PackageReference Include="Microsoft.Net.Http.Headers" Version="9.0.2" />
     <PackageReference Include="Microsoft.Playwright" Version="1.50.0" />
     <PackageReference Include="MimeKit" Version="4.10.0" />
@@ -89,13 +89,11 @@
     <PackageReference Include="RazorEngineCore" Version="2024.4.1" />
     <PackageReference Include="ReverseMarkdown" Version="4.6.0" />
     <PackageReference Include="Scriban.Signed" Version="5.12.1" />
-    <PackageReference Include="Selenium.Support" Version="4.28.0" />
-    <PackageReference Include="Selenium.WebDriver" Version="4.28.0" />
-    <PackageReference Include="SeleniumExtras.WaitHelpers" Version="1.0.2" />
     <PackageReference Include="Sprache" Version="2.3.1" />
+    <PackageReference Include="SuperSimpleTcp" Version="3.0.17" />
     <PackageReference Include="System.CodeDom" Version="9.0.2" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.5.0" />
-    <PackageReference Include="System.IO.Abstractions" Version="21.3.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.6.0" />
+    <PackageReference Include="System.IO.Abstractions" Version="22.0.10" />
     <PackageReference Include="System.Linq.Dynamic.Core" Version="1.6.0.2" />
     <PackageReference Include="System.Management" Version="9.0.2" />
     <PackageReference Include="System.Net.Security" Version="4.3.2" />
@@ -125,15 +123,18 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-
-		<None Include="Goals\**\*" Exclude="**\.db\**\*.*">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Goals\modules\EnvironmentModule\llm\" />
-    <Folder Include="Goals\modules\ui\runtime\" />
+    <Compile Remove="Goals\**" />
+    <Compile Remove="Modules\NewFolder1\**" />
+    <Compile Remove="Modules\NewFolder\**" />
+    <EmbeddedResource Remove="Goals\**" />
+    <EmbeddedResource Remove="Modules\NewFolder1\**" />
+    <EmbeddedResource Remove="Modules\NewFolder\**" />
+    <None Remove="Goals\**" />
+    <None Remove="Modules\NewFolder1\**" />
+    <None Remove="Modules\NewFolder\**" />
   </ItemGroup>
 
 </Project>

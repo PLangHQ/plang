@@ -7,6 +7,7 @@ using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
+using PLang.Utils;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -26,6 +27,10 @@ namespace PLang.Modules.WebCrawlerModule
 
 		private readonly string RequestContextKey = "!RequestContextKey";
 		private readonly string ResponseContextKey = "!ResponseContextKey";
+		private readonly string ConsoleContextKey = "!ConsoleContextKey";
+		private readonly string FileChooserContextKey = "!FileChooserContextKey";
+		private readonly string DownloadContextKey = "!DownloadContextKey";
+
 
 
 
@@ -33,7 +38,7 @@ namespace PLang.Modules.WebCrawlerModule
 		private readonly string CurrentPageContextKey = "!PageContextKey";
 		private readonly string DialogContextKey = "!DialogContextKey";
 		private readonly string BrowserStartPropertiesContextKey = "!BrowserStartPropertiesContextKey";
-
+		private object locker = new object();
 		public Program(PLangAppContext context, IPLangFileSystem fileSystem, ILogger logger, IEngine engine, IPseudoRuntime runtime) : base()
 		{
 			this.context = context;
@@ -73,16 +78,19 @@ namespace PLang.Modules.WebCrawlerModule
 			var browser = await GetBrowserType(playwright, browserType, headless, profileName, kioskMode, argumentOptions, hideTestingMode);
 
 			browser.SetDefaultTimeout((timoutInSeconds ?? 30) * 1000);
+			var callGoal = GetProgramModule<CallGoalModule.Program>();
 
-			browser.Request += async (object? sender, IRequest request) =>
+			browser.Request += async (object? sender, IRequest e) =>
 			{
-				context.AddOrReplace(RequestContextKey, request);
+				context.AddOrReplace(RequestContextKey, e);
 				if (onRequest != null)
 				{
-					var result = await runtime.RunGoal(engine, context, "/", onRequest, new Dictionary<string, object?> { { "!sender", sender }, { "!Request", request } }, Goal);
-					if (result.error != null)
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!Request", e } };
+					var result = await callGoal.RunGoal(onResponse, parameters, isolated: true);
+
+					if (result.Error != null)
 					{
-						throw new ExceptionWrapper(result.error);
+						throw new ExceptionWrapper(result.Error);
 					}
 				}
 			};
@@ -92,10 +100,12 @@ namespace PLang.Modules.WebCrawlerModule
 				context.AddOrReplace(ResponseContextKey, e);
 				if (onResponse != null)
 				{
-					var result = await runtime.RunGoal(engine, context, "/", onResponse, new Dictionary<string, object?> { { "!sender", sender }, { "!Response", e } }, Goal);
-					if (result.error != null)
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!response", e } };
+					var result = await callGoal.RunGoal(onResponse, parameters, isolated: true);
+
+					if (result.Error != null)
 					{
-						throw new ExceptionWrapper(result.error);
+						throw new ExceptionWrapper(result.Error);
 					}
 				}
 			};
@@ -209,9 +219,8 @@ namespace PLang.Modules.WebCrawlerModule
 			await page.WaitForURLAsync(expectedUrl, new PageWaitForURLOptions() { Timeout = timeoutInSeconds * 1000 });
 		}
 
-		private async Task<IPage> GetCurrentPage(string? url = null, int idx = -1)
+		private async Task<IPage> GetCurrentPage(string? url = null, int idx = -1, IPage? page = null)
 		{
-			IPage? page = null;
 			if (url == null && idx == -1 && context.ContainsKey(CurrentPageContextKey))
 			{
 				page = context[CurrentPageContextKey] as IPage;
@@ -237,7 +246,9 @@ namespace PLang.Modules.WebCrawlerModule
 			if (idx == -1)
 			{
 				page = await browser.NewPageAsync();
+
 				if (url == null) url = "about:blank";
+				BindEventsToPage(page, url);
 				var response = await page.GotoAsync(url);
 			}
 			else
@@ -289,11 +300,20 @@ namespace PLang.Modules.WebCrawlerModule
 			{
 				await StartBrowser(browserType, headless, profileName, kioskMode, argumentOptions, timeoutInSecods, hideTestingMode);
 			}
-			var page = await GetCurrentPage(url);
-			BindEventsToPage(page, onRequest, onResponse, onWebsocketReceived, onWebsocketSent,
-				 onConsoleOutput, onWorker, onCrash,
-				 onDialog, onLoad, onDOMLoad, onFileChooser,
-				 onIFrameLoad, onDownload);
+
+
+			var page = context[CurrentPageContextKey] as IPage;
+			if (page == null)
+			{
+				var browser = await GetBrowser();
+				page = await browser.NewPageAsync();
+				BindEventsToPage(page, url, onRequest, onResponse, onWebsocketReceived, onWebsocketSent,
+					onConsoleOutput, onWorker, onCrash,
+					onDialog, onLoad, onDOMLoad, onFileChooser,
+					onIFrameLoad, onDownload);
+			}
+
+			page = await GetCurrentPage(url);
 
 		}
 
@@ -623,7 +643,7 @@ namespace PLang.Modules.WebCrawlerModule
 			return await e.GetAttributeAsync(attribute);
 
 		}
-		
+
 
 		public async Task<string> ExtractContent(string? cssSelector = null, PlangWebElement? element = null, string outputFormat = "html")
 		{
@@ -659,22 +679,40 @@ namespace PLang.Modules.WebCrawlerModule
 			await GetCurrentPage(null, tabIndex);
 		}
 
-		[Description("type is defines which type of header to get. type:response|request|null")]
-		public async Task<Dictionary<string, string>?> GetHeaders(string? type = null)
+		[Description("key of the header, find by value where operation (startwith|endwith|equals|contains), request object can be null, will use the pages request")]
+		public async Task<(Dictionary<string, string>?, IError?)> GetRequestHeaders(string? key = null, string keyOperator = "equals", string? value = null, string? valueOperator = "contains", IRequest? request = null)
 		{
-			if (type == "request")
+			Dictionary<string, string> headers;
+			if (request == null)
 			{
-				IRequest? request = context[RequestContextKey] as IRequest;
-				if (request == null) return null;
-
-				return request.Headers;
+				request = context[RequestContextKey] as IRequest;
 			}
 
-			IResponse? response = context[ResponseContextKey] as IResponse;
-			if (response == null) return null;
+			if (request == null)
+			{
+				return (null, new ProgramError("Could not find a request object. Have you loaded a page?", goalStep, function, FixSuggestion: "Call `- navigate to example.org` before getting headers"));
+			}
 
-			return response.Headers;
+			headers = request.Headers;
+			return (OperatorHelper.ApplyOperator(headers, key, keyOperator, value, valueOperator), null);
+		}
 
+		[Description("key of the header, find by value where operation (startwith|endwith|equals|contains), request object can be null, will use the pages request")]
+		public async Task<(Dictionary<string, string>?, IError?)> GetResponseHeaders(string? key = null, string keyOperator = "equals", string? value = null, string? valueOperator = "contains", IResponse? response = null)
+		{
+			Dictionary<string, string> headers;
+			if (response == null)
+			{
+				response = context[ResponseContextKey] as IResponse;
+			}
+
+			if (response == null)
+			{
+				return (null, new ProgramError("Could not find a response object. Have you loaded a page?", goalStep, function, FixSuggestion: "Call `- navigate to example.org` before getting headers"));
+			}
+
+			var dict = OperatorHelper.ApplyOperator(response.Headers, key, keyOperator, value, valueOperator);
+			return (dict, null);
 		}
 
 
@@ -917,29 +955,61 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 
 
-		private void BindEventsToPage(IPage page, GoalToCall? onRequest, GoalToCall? onResponse, GoalToCall? onWebsocketReceived, GoalToCall? onWebsocketSent, GoalToCall? onConsoleOutput, GoalToCall? onWorker, GoalToCall? onCrash, GoalToCall? onDialog, GoalToCall? onLoad, GoalToCall? onDOMLoad, GoalToCall? onFileChooser, GoalToCall? onIFrameLoad, GoalToCall? onDownload)
+		private bool IsUrlMatch(string pageUrl, string? eventUrl)
 		{
-			if (onConsoleOutput != null)
+			if (eventUrl == null) return false;
+
+			string cleanPageUrl = CleanUrl(pageUrl);
+			string cleanEventUrl = CleanUrl(eventUrl);
+
+			return (cleanPageUrl.Equals(cleanEventUrl, StringComparison.OrdinalIgnoreCase));
+		}
+
+		private string CleanUrl(string url)
+		{
+			return url.Replace("http://", "").Replace("https://", "").TrimEnd('/');
+		}
+
+		private void BindEventsToPage(IPage page, string pageUrl, GoalToCall? onRequest = null, GoalToCall? onResponse = null, GoalToCall? onWebsocketReceived = null, GoalToCall? onWebsocketSent = null,
+			GoalToCall? onConsoleOutput = null, GoalToCall? onWorker = null, GoalToCall? onCrash = null, GoalToCall? onDialog = null, GoalToCall? onLoad = null,
+			GoalToCall? onDOMLoad = null, GoalToCall? onFileChooser = null, GoalToCall? onIFrameLoad = null, GoalToCall? onDownload = null)
+		{
+			var callGoal = GetProgramModule<CallGoalModule.Program>();
+
+			page.Console += async (object? sender, IConsoleMessage e) =>
 			{
-				page.Console += async (object? sender, IConsoleMessage e) =>
+				if (IsUrlMatch(pageUrl, e.Page?.Url))
 				{
-					var result = await runtime.RunGoal(engine, context, "/", onConsoleOutput, new Dictionary<string, object?> { { "!sender", sender }, { "!console", e } }, Goal);
-					if (result.error != null)
+					context.AddOrReplace(ConsoleContextKey, e);
+				}
+				if (onConsoleOutput != null)
+				{
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!console", e } };					
+					var result = await callGoal.RunGoal(onConsoleOutput, parameters, isolated: true);
+
+					if (result.Error != null)
 					{
-						throw new ExceptionWrapper(result.error);
+						throw new ExceptionWrapper(result.Error);
 					}
-				};
-			}
+				}
+			};
+
 
 			page.Request += async (object? sender, IRequest e) =>
 			{
-				context[RequestContextKey] = e;
+				if (IsUrlMatch(pageUrl, e.Url))
+				{
+					context.AddOrReplace(RequestContextKey, e);
+				}
+
 				if (onRequest != null)
 				{
-					var result = await runtime.RunGoal(engine, context, "/", onRequest, new Dictionary<string, object?> { { "!sender", sender }, { "!request", e } }, Goal);
-					if (result.error != null)
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!request", e } };
+					var result = await callGoal.RunGoal(onRequest, parameters, isolated: true);
+
+					if (result.Error != null)
 					{
-						throw new ExceptionWrapper(result.error);
+						throw new ExceptionWrapper(result.Error);
 					}
 				}
 			};
@@ -947,14 +1017,24 @@ namespace PLang.Modules.WebCrawlerModule
 
 			page.Response += async (object? sender, IResponse e) =>
 			{
-				context[ResponseContextKey] = e;
-				if (onResponse != null)
+				if (IsUrlMatch(pageUrl, e.Url))
 				{
-					var result = await runtime.RunGoal(engine, context, "/", onResponse, 
-						new Dictionary<string, object?> { { "!sender", sender }, { "!response", e } }, Goal, keepMemoryStackOnAsync: true);
-					if (result.error != null)
+					context.AddOrReplace(ResponseContextKey, e);
+				}
+
+				if (onResponse != null)
+				{		
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!response", e } };
+					var result = await callGoal.RunGoal(onResponse, parameters, isolated: true);
+			
+					if (result.Error != null)
 					{
-						throw new ExceptionWrapper(result.error);
+						parameters = new Dictionary<string, object?> { { "!error", result.Error } };
+						result = await callGoal.RunGoal("/events/Runtime/OnStepError", parameters, isolated: true);
+						if (result.Error != null)
+						{
+							throw new ExceptionWrapper(result.Error);
+						}
 					}
 				}
 			};
@@ -967,10 +1047,11 @@ namespace PLang.Modules.WebCrawlerModule
 					{
 						e.FrameReceived += async (object? sender, IWebSocketFrame e) =>
 						{
-							var result = await runtime.RunGoal(engine, context, "/", onWebsocketReceived, new Dictionary<string, object?> { { "!sender", sender }, { "!websocket", e } }, Goal);
-							if (result.error != null)
+							var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!websocket", e } };
+							var result = await callGoal.RunGoal(onWebsocketReceived, parameters, isolated: true);
+							if (result.Error != null)
 							{
-								throw new ExceptionWrapper(result.error);
+								throw new ExceptionWrapper(result.Error);
 							}
 						};
 					}
@@ -978,10 +1059,12 @@ namespace PLang.Modules.WebCrawlerModule
 					{
 						e.FrameSent += async (object? sender, IWebSocketFrame e) =>
 						{
-							var result = await runtime.RunGoal(engine, context, "/", onWebsocketSent, new Dictionary<string, object?> { { "!sender", sender }, { "!websocket", e } }, Goal);
-							if (result.error != null)
+							var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!websocket", e } };
+							var result = await callGoal.RunGoal(onWebsocketSent, parameters, isolated: true);
+
+							if (result.Error != null)
 							{
-								throw new ExceptionWrapper(result.error);
+								throw new ExceptionWrapper(result.Error);
 							}
 						};
 					}
@@ -994,10 +1077,12 @@ namespace PLang.Modules.WebCrawlerModule
 			{
 				page.Worker += async (object? sender, IWorker e) =>
 				{
-					var result = await runtime.RunGoal(engine, context, "/", onWorker, new Dictionary<string, object?> { { "!sender", sender }, { "!worker", e } }, Goal);
-					if (result.error != null)
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!worker", e } };
+					var result = await callGoal.RunGoal(onWorker, parameters, isolated: true);
+
+					if (result.Error != null)
 					{
-						throw new ExceptionWrapper(result.error);
+						throw new ExceptionWrapper(result.Error);
 					}
 				};
 			}
@@ -1006,84 +1091,117 @@ namespace PLang.Modules.WebCrawlerModule
 			{
 				page.Crash += async (object? sender, IPage e) =>
 				{
-					var result = await runtime.RunGoal(engine, context, "/", onCrash, new Dictionary<string, object?> { { "!sender", sender }, { "!page", e } }, Goal);
-					if (result.error != null)
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!page", e } };
+					var result = await callGoal.RunGoal(onCrash, parameters, isolated: true);
+
+					if (result.Error != null)
 					{
-						throw new ExceptionWrapper(result.error);
+						throw new ExceptionWrapper(result.Error);
 					}
 				};
 			}
 
-			if (onDialog != null)
+
+			page.Dialog += async (object? sender, IDialog e) =>
 			{
-				page.Dialog += async (object? sender, IDialog e) =>
+				if (IsUrlMatch(pageUrl, e.Page?.Url))
 				{
-					var result = await runtime.RunGoal(engine, context, "/", onDialog, new Dictionary<string, object?> { { "!sender", sender }, { "!dialog", e } }, Goal);
-					if (result.error != null)
+					context.AddOrReplace(DialogContextKey, e);
+				}
+				if (onDialog != null)
+				{
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!dialog", e } };
+					var result = await callGoal.RunGoal(onDialog, parameters, isolated: true);
+
+					if (result.Error != null)
 					{
-						throw new ExceptionWrapper(result.error);
+						throw new ExceptionWrapper(result.Error);
 					}
-				};
-			}
+				}
+			};
+
 			if (onLoad != null)
 			{
 				page.Load += async (object? sender, IPage e) =>
 				{
-					var result = await runtime.RunGoal(engine, context, "/", onLoad, new Dictionary<string, object?> { { "!sender", sender }, { "!page", e } }, Goal);
-					if (result.error != null)
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!page", e } };
+					var result = await callGoal.RunGoal(onLoad, parameters, isolated: true);
+
+					if (result.Error != null)
 					{
-						throw new ExceptionWrapper(result.error);
+						throw new ExceptionWrapper(result.Error);
 					}
+
 				};
 			}
+
 			if (onDOMLoad != null)
 			{
 				page.DOMContentLoaded += async (object? sender, IPage e) =>
 				{
-					var result = await runtime.RunGoal(engine, context, "/", onDOMLoad, new Dictionary<string, object?> { { "!sender", sender }, { "!page", e } }, Goal);
-					if (result.error != null)
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!page", e } };
+					var result = await callGoal.RunGoal(onLoad, parameters, isolated: true);
+
+					if (result.Error != null)
 					{
-						throw new ExceptionWrapper(result.error);
+						throw new ExceptionWrapper(result.Error);
 					}
 				};
 			}
 
-			if (onFileChooser != null)
+
+			page.FileChooser += async (object? sender, IFileChooser e) =>
 			{
-				page.FileChooser += async (object? sender, IFileChooser e) =>
+
+				if (IsUrlMatch(pageUrl, e.Page.Url))
 				{
-					var result = await runtime.RunGoal(engine, context, "/", onFileChooser, new Dictionary<string, object?> { { "!sender", sender }, { "!filechooser", e } }, Goal);
-					if (result.error != null)
+					context.AddOrReplace(FileChooserContextKey, e);
+				}
+
+				if (onFileChooser != null)
+				{
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!filechooser", e } };
+					var result = await callGoal.RunGoal(onLoad, parameters, isolated: true);
+
+					if (result.Error != null)
 					{
-						throw new ExceptionWrapper(result.error);
+						throw new ExceptionWrapper(result.Error);
 					}
-				};
-			}
+				}
+			};
+
 			if (onIFrameLoad != null)
 			{
 				page.FrameNavigated += async (object? sender, IFrame e) =>
 				{
-					var result = await runtime.RunGoal(engine, context, "/", onIFrameLoad, new Dictionary<string, object?> { { "!sender", sender }, { "!iframe", e } }, Goal);
-					if (result.error != null)
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!iframe", e } };
+					var result = await callGoal.RunGoal(onIFrameLoad, parameters, isolated: true);
+
+					if (result.Error != null)
 					{
-						throw new ExceptionWrapper(result.error);
+						throw new ExceptionWrapper(result.Error);
 					}
 				};
 			}
 
-			if (onDownload != null)
+			page.Download += async (object? sender, IDownload e) =>
 			{
-				page.Download += async (object? sender, IDownload e) =>
+				if (IsUrlMatch(pageUrl, e.Page.Url))
 				{
+					context.AddOrReplace(DownloadContextKey, e);
+				}
+				if (onDownload != null)
+				{
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!download", e } };
+					var result = await callGoal.RunGoal(onDownload, parameters, isolated: true);
 
-					var result = await runtime.RunGoal(engine, context, "/", onDownload, new Dictionary<string, object?> { { "!sender", sender }, { "!Download", e } }, Goal);
-					if (result.error != null)
+					if (result.Error != null)
 					{
-						throw new ExceptionWrapper(result.error);
+						throw new ExceptionWrapper(result.Error);
 					}
-				};
-			}
-		}
+				}
+			};
 
+		}
 	}
 }

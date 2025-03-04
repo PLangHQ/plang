@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Unit Test</title>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/shoelace.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.0/cdn/themes/light.css">
+    <style>
+        /* Apply a max width and center the content */
+        body {
+            font-family: var(--sl-font-sans);
+            /* max-width: 900px;*/
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: var(--sl-color-neutral-100);
+            color: #000;
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--sl-color-neutral-0);
+            border-radius: var(--sl-border-radius-medium);
+            overflow: hidden;
+            box-shadow: var(--sl-shadow-x-large);
+        }
+
+        /* Table Headers */
+        th {
+            background-color: var(--sl-color-primary-600);
+            color: var(--sl-color-neutral-0);
+            text-align: left;
+            padding: 10px;
+        }
+
+        /* Table Cells */
+        td {
+            padding: 10px;
+            border-bottom: 1px solid var(--sl-color-neutral-300);
+            vertical-align: top;
+        }
+
+        .result {
+            vertical-align: middle;
+        }
+
+        td.vars {
+            text-align: right;
+            vertical-align: middle;
+        }
+
+        /* Inputs inside table cells */
+        sl-input,
+        sl-textarea,
+        sl-checkbox {
+            width: 100%;
+        }
+
+        /* Buttons */
+        sl-button {
+            margin-top: 1rem;
+        }
+
+        /* Improve spacing in the form */
+        sl-input,
+        sl-textarea {
+            margin-top: 0.5rem;
+        }
+
+        /* Style Checkboxes */
+        sl-checkbox::part(base) {
+            --sl-checkbox-size: 20px;
+        }
+
+        /* Add some padding around buttons */
+        sl-button {
+            --sl-spacing-medium: 10px;
+        }
+
+
+        .layout {
+            display: flex;
+            gap: 1rem;
+            height: 100vh;
+            padding: 1rem;
+        }
+
+        .sidebar {
+            width: 450px;
+            padding: 1rem;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .divider {
+            display: block;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 1rem;
+        }
+
+        .tests {
+            border-bottom: 0;
+        }
+
+
+        /* Responsive Table */
+        @media (max-width: 971px) {
+            body {
+                padding: 0.1rem;
+            }
+
+            table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .divider {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        function submitTests() {
+            const checkboxes = document.querySelectorAll('.test-checkbox');
+            let selectedTests = [];
+
+            checkboxes.forEach(checkbox => {
+                const test = JSON.parse(checkbox.dataset.test);
+                if (checkbox.checked && test.variables["!repsonse.Url"].trim() !== "" && test.variables["bugBounty.website"].trim() !== "") {
+                    selectedTests.push(test);
+                }
+            });
+
+            vscode.postMessage({
+                command: 'submit',
+                tests: selectedTests
+            });
+        }
+        
+        function runTests() {
+            const tests = document.querySelectorAll('.tests');
+            const results = document.querySelectorAll('.tests_result');
+            for (let i = 0; i < tests.length; i++) {
+                let test = tests[i];
+                let result = results[i];
+
+                let parameters = [];
+                let vars = test.querySelectorAll('.var');
+                vars.forEach(variable => {
+                    let obj = {
+                        [variable.dataset.name]: variable.value
+                    };
+                    parameters.push(obj)
+                });
+                var report = result.querySelector('.report')
+                report.innerHTML = '<sl-spinner></sl-spinner>';
+                console.log(parameters);
+                if (typeof(vscode) !== 'undefined') {
+                    var element = result.querySelector('.expectedValue')
+                    console.log('expectedValueType:', element.dataset.exptype);
+                    parameters.push('expectedValue=' + element.value);
+                    parameters.push('expectedValueType=' + element.dataset.exptype);
+
+                    let postMessageResult = vscode.postMessage({
+                        command: 'runTest',
+                        parameters: parameters, 
+                        id: test.id
+                    });
+
+                    console.log('postMessage:', postMessageResult);
+                    return;
+                } else {
+                    console.log('vscode is undefined')
+                }
+
+            }
+
+        }
+
+
+        window.addEventListener("message", (event) => {
+            const message = event.data;
+
+            if (message.command === 'testResult') {
+                console.log("Received response:", message);
+                var tests_result = document.getElementById('tests_result_' + message.result.id);
+                var report = tests_result.querySelector('.report');
+
+                console.log("tests_result", tests_result, " report:", report, (message.result.output.trim() == 'ok'));
+                if (message.result.output.trim() == 'ok') {
+                    report.innerHTML = "✅" + message.result.output;
+                } else {
+                    report.innerHTML = "❌" + message.result.output;
+                }   
+            }
+        });
+
+        function addTest() {
+            const tableBody = document.querySelector("#test-list tbody");
+            const row1 = document.createElement("tr");
+            const row2 = document.createElement("tr");
+
+            const test = {
+                testName: "",
+                testDescription: "",
+                variables: {},
+                expectedResult: false
+            };
+
+            row1.innerHTML = `
+                <td rowspan='2'><sl-checkbox class='test-checkbox' checked data-test='${JSON.stringify(test)}'></sl-checkbox></td>
+                <td>
+                    <sl-input placeholder='Test Name' label="Test Name" onchange='updateTest(this, "testName")'></sl-input>
+                    <sl-textarea resize="auto" label="Description" placeholder='Description' onchange='updateTest(this, "testDescription")'></sl-textarea>
+                </td>
+                <td>
+                    <table id='variable-table'>
+                        {{ for variable in suggestions[0].variables }}
+                        <tr>
+                            <td><span>{{ variable.name }}</span></td>
+                            <td><sl-input placeholder='Value' onchange='updateTest(this, "{{ variable.name }}")'></sl-input></td>
+                        </tr>
+                        {{ end }}
+                    </table>
+                </td>
+            `;
+
+            row2.innerHTML = `
+                <td colspan="2">
+                    <sl-input placeholder='Expected result' onchange='updateTest(this, "expectedResult")'></sl-input>
+                </td>
+            `;
+
+            tableBody.appendChild(row1);
+            tableBody.appendChild(row2);
+
+        }
+
+        function updateTest(element, key) {
+            const listItem = element.closest("li");
+            const checkbox = listItem.querySelector(".test-checkbox");
+            let test = JSON.parse(checkbox.dataset.test);
+
+            if (element.tagName.toLowerCase() === "sl-checkbox") {
+                test[key] = element.checked;
+            } else {
+                test[key] = element.value;
+            }
+
+            checkbox.dataset.test = JSON.stringify(test);
+        }
+        let vscode = null;
+        document.addEventListener("DOMContentLoaded", function () {
+            try {
+                vscode = acquireVsCodeApi();
+            } catch (e) {
+                console.error(e);
+            }
+            //runTests();
+        });
+
+    </script>
+
+
+
+    <div class="layout">
+        <!-- Left Column (Sidebar) -->
+        <sl-card class="sidebar">
+            <h2>Welcome to the Test Creator</h2>
+            <p>
+                Use this tool to create and manage tests. You can modify existing test cases or add new ones to ensure
+                thorough validation.
+            </p>
+            <strong>How It Works:</strong>
+            <ul>
+                <li>Review Existing Tests – Each test contains variable(s). You can edit these fields as needed.</li>
+                <li>Add New Tests – Click "Add New Entry" to create a new test case. Fields will be pre-filled, and you
+                    can adjust them as required.</li>
+                <li>Select Tests for Submission – Use the checkboxes to enable or disable test cases. Only selected
+                    tests will be submitted.</li>
+                <li>Submit Your Tests – Click "Submit" to send the selected tests for validation.</li>
+            </ul>
+            ✅ Ensure each test has valid input before submission. Invalid or empty test cases will be ignored.
+            <br />
+            🔧 Modify any test by clicking on its respective fields.
+
+            </p>
+        </sl-card>
+
+        <sl-divider vertical class="divider"></sl-divider> <!-- Shoelace Divider -->
+        <div class="main-content">
+            <!-- Right Column (Main Content) -->
+            <sl-card style="width: 100%;margin-bottom:1rem">
+                <strong>Tests for</strong>
+                <pre>
+    abc
+</pre>
+                <div>
+                    <sl-button variant="primary" onclick="runTests()">Run test</sl-button>                    
+                    <sl-button variant="primary" onclick="addTest()">Add New Test</sl-button><sl-button variant="success" onclick="submitTests()">Save</sl-button>
+                </div>
+            </sl-card>
+
+
+            <style>
+
+            </style>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name & Description</th>
+                        <th>Variables</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ for test in suggestions }}
+                    <tr class="tests" id="test_{{ test.id }}">
+                        <td>
+                            <sl-checkbox class="test-checkbox" checked data-test='{{ test }}'>Enabled</sl-checkbox>
+                            <sl-input placeholder='Test Name' label="Test Name" value='{{ test.testName }}'
+                                onchange='updateTest(this, "testName")'></sl-input>
+                            <sl-textarea resize="auto" label="Description" placeholder='Description'
+                                value='{{ test.testDescription }}'
+                                onchange='updateTest(this, "testDescription")'></sl-input>
+                        </td>
+                        <td>
+                            <table>
+                                {{ for variable in test.variables }}
+                                <tr>
+                                    <td>
+                                        <div>%{{ variable.variableName }}%</div>
+                                        <sl-input class="var" data-name="{{ variable.variableName }}"
+                                            placeholder='Value for {{ variable.variableName }}' value='{{ variable.testValue }}'
+                                            onchange='updateTest(this, "{{ variable.variableName }}")'></sl-input>
+                                    </td>
+                                </tr>
+                                {{ end }}
+                            </table>
+                        </td>
+                    </tr>
+                    <tr class="tests_result" id="tests_result_{{ test.id }}">
+                        <td>
+                            {{ if test.expectedResult.type =='System.Boolean'}}
+                            <sl-select class="expectedValue" data-exptype="{{ test.expectedResult.type }}" clearable value="{{ test.expectedResult.value | string.downcase }}" label="Expected result"
+                                onchange='updateTest(this, "bugBounty.website")'>
+                                <sl-option value="true">true</sl-option>
+                                <sl-option value="false">false</sl-option>
+                                <sl-option value="null">null</sl-option>
+                            </sl-select>
+                            {{ else if test.expectedResult.type =='json'}}
+                            <sl-textarea class="expectedValue" resize="auto" placeholder='Expected result' label="Expected result as JSON"
+                                value='{{ test.expectedResult.value }}'
+                                onchange='updateTest(this, "bugBounty.website")'></sl-textarea>
+                            {{ else }}
+                            <sl-input  class="expectedValue"placeholder='Expected result' label="Expected result"
+                                value='{{ test.expectedResult.value }}'
+                                onchange='updateTest(this, "bugBounty.website")'></sl-input>
+                            {{ end }}
+                        </td>
+                        <td>
+                            Test Results:
+                            <div class="report"></div>
+                        </td>
+                    </tr>
+                    {{ end }}
+            </table>
+
+        </div>
+    </div>

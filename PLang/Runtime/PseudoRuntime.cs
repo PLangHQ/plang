@@ -16,7 +16,8 @@ namespace PLang.Runtime
 	{
 		Task<(IEngine engine, IError? error, IOutput output)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCall goalName, 
 			Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true, 
-			long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0, bool keepMemoryStackOnAsync = false);
+			long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0, 
+			bool keepMemoryStackOnAsync = false, bool isolated = false	);
 	}
 
 	public class PseudoRuntime : IPseudoRuntime
@@ -46,10 +47,8 @@ namespace PLang.Runtime
 		public async Task<(IEngine engine, IError? error, IOutput? output)> RunGoal(IEngine engine, PLangAppContext context, string relativeAppPath, GoalToCall goalName, 
 			Dictionary<string, object?>? parameters, Goal? callingGoal = null, 
 			bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, 
-			int indent = 0, bool keepMemoryStackOnAsync = false)
+			int indent = 0, bool keepMemoryStackOnAsync = false, bool isolated = false)
 		{
-
-			
 
 			if (goalName == null || goalName.Value == null) {
 				var error = new Error($"Goal to call is empty. Calling goal is {callingGoal}");
@@ -58,19 +57,50 @@ namespace PLang.Runtime
 			}
 			Goal? goal = null;
 			ServiceContainer? container = null;
-
-			string absolutePathToGoal = fileSystem.Path.Join(fileSystem.RootDirectory, relativeAppPath, goalName).AdjustPathToOs();
-			string goalToRun = goalName;
-			
-			if (CreateNewContainer(absolutePathToGoal))
+			if (goalName.Value.StartsWith("/"))
 			{
-				var pathAndGoal = GetAppAbsolutePath(absolutePathToGoal);
+				relativeAppPath = "/";
+			} else
+			{
+				relativeAppPath = callingGoal?.RelativeGoalFolderPath ?? relativeAppPath;
+			}
+
+			string absolutePathToGoal = fileSystem.Path.Join(fileSystem.RootDirectory, relativeAppPath).AdjustPathToOs();
+			string goalToRun = fileSystem.Path.Join(relativeAppPath, goalName);
+			if (isolated)
+			{
+				container = serviceContainerFactory.CreateContainer(context, fileSystem.RootDirectory, "/", outputStreamFactory, outputSystemStreamFactory,
+					errorHandlerFactory, errorSystemHandlerFactory, askUserHandlerFactory);
+				var fileAccessHandler = container.GetInstance<PLang.SafeFileSystem.IFileAccessHandler>();
+				fileAccessHandler.GiveAccess(fileSystem.RootDirectory, fileSystem.OsDirectory);
+
+				var ms = engine.GetMemoryStack();
+
+				engine = container.GetInstance<IEngine>();
+				engine.Init(container);
+
+				if (context.ContainsKey(ReservedKeywords.IsEvent))
+				{
+					engine.GetContext().AddOrReplace(ReservedKeywords.IsEvent, true);
+				}
+				foreach (var item in ms.GetMemoryStack())
+				{
+					engine.GetMemoryStack().Put(item.Value);
+				}
+
+				goal = engine.GetGoal(goalToRun);
+			} else if (CreateNewContainer(absolutePathToGoal))
+			{
+				var pathAndGoal = GetAppAbsolutePath(absolutePathToGoal, goalName);
 				string absoluteAppStartupPath = pathAndGoal.absolutePath;
 				string relativeAppStartupPath = fileSystem.Path.DirectorySeparatorChar.ToString();
 				goalToRun = pathAndGoal.goalName;
 
 				container = serviceContainerFactory.CreateContainer(context, absoluteAppStartupPath, relativeAppStartupPath, outputStreamFactory, outputSystemStreamFactory, 
 					errorHandlerFactory, errorSystemHandlerFactory, askUserHandlerFactory);
+
+				var fileAccessHandler = container.GetInstance<PLang.SafeFileSystem.IFileAccessHandler>();
+				fileAccessHandler.GiveAccess(absolutePathToGoal, fileSystem.OsDirectory);
 
 				engine = container.GetInstance<IEngine>();
 				engine.Init(container);
@@ -109,19 +139,22 @@ namespace PLang.Runtime
 				var output3 = new TextOutput("Error", "text/html", false, error, "desktop");
 				return (engine, error, output3);
 			}
+
 			if (waitForExecution) 
 			{
 				goal.ParentGoal = callingGoal;
 
 			} else if (!keepMemoryStackOnAsync)
 			{
+				// todo: this does not look correct
+				throw new NotImplementedException("This looks strange, need to find example of usage, otherwise remove");
+
 				var newContext = new PLangAppContext();
 				foreach (var item in context)
 				{
-					newContext.Add(item.Key, item.Value);
+					newContext.AddOrReplace(item.Key, item.Value);
 				}
-				engine.GetContext().Clear();
-				engine.GetContext().AddOrReplace(newContext);
+				context = newContext;
 			}
 			
 			var memoryStack = engine.GetMemoryStack();
@@ -162,7 +195,7 @@ namespace PLang.Runtime
 
 		}
 
-		public (string absolutePath, string goalName) GetAppAbsolutePath(string absolutePathToGoal)
+		public (string absolutePath, GoalToCall goalName) GetAppAbsolutePath(string absolutePathToGoal, GoalToCall? goalName = null)
 		{
 			absolutePathToGoal = absolutePathToGoal.AdjustPathToOs();
 
@@ -172,7 +205,7 @@ namespace PLang.Runtime
 			dict.Add(".services", absolutePathToGoal.LastIndexOf(".services"));
 
 			var item = dict.OrderByDescending(p => p.Value).FirstOrDefault();
-			if (item.Value == -1) return (absolutePathToGoal, "");
+			if (item.Value == -1) return (absolutePathToGoal, goalName);
 
 			var idx = absolutePathToGoal.IndexOf(fileSystem.Path.DirectorySeparatorChar, item.Value + item.Key.Length + 1);
 			if (idx == -1)
@@ -193,7 +226,7 @@ namespace PLang.Runtime
 				absolutePathToApp = absolutePathToApp.TrimEnd(fileSystem.Path.DirectorySeparatorChar);
 			}
 
-			var goalName = absolutePathToGoal.Replace(absolutePathToApp, "").TrimStart(fileSystem.Path.DirectorySeparatorChar);
+			goalName = absolutePathToGoal.Replace(absolutePathToApp, "").TrimStart(fileSystem.Path.DirectorySeparatorChar);
 			if (string.IsNullOrEmpty(goalName)) goalName = "Start";
 
 			return (absolutePathToApp, goalName);

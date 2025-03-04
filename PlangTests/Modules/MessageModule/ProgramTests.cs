@@ -1,16 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Nethereum.JsonRpc.Client;
 using Nostr.Client.Client;
-using Nostr.Client.Requests;
-using Nostr.Client.Responses;
 using NSubstitute;
-using OpenQA.Selenium;
 using PLang.Modules.MessageModule;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PLangTests.Modules.MessageModule
 {

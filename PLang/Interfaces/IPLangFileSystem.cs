@@ -13,7 +13,11 @@ namespace PLang.Interfaces
 		public string GoalsPath { get; }
 		public string BuildPath { get; }
 		public string DbPath { get; }
+		string OsDirectory { get; }
+		string Id { get; init; }
 
+		void AddFileAccess(FileAccessControl fileAccess);
+		bool IsPathRooted(string? path);
 		void SetFileAccess(List<FileAccessControl> fileAccesses);
 		public string ValidatePath(string? path);
 	}
