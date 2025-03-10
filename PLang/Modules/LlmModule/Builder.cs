@@ -30,6 +30,20 @@ the json scheme from promptMessages without image is : {role:string, content:[{t
 the json scheme from promptMessages with image is : {role:string, content:[{type:string, image_url:{url:string}]} 
 
 ## examples ##
+system: %system%
+[
+	{
+        ""role"": ""system"",
+        ""content"": [
+            {
+                ""type"": ""text"",
+                ""text"": ""%system%""
+            }
+        ]
+    }
+]
+
+
 system: %system%, assistant: %assistant%, user: %user%
 
 promptMessages: 

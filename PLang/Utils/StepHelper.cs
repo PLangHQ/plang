@@ -11,9 +11,10 @@ namespace PLang.Utils
 	public class StepHelper
 	{
 
-		public static ErrorHandler? GetErrorHandlerForStep(List<ErrorHandler>? errorHandlers, IError error)
+		public static ErrorHandler? GetErrorHandlerForStep(List<ErrorHandler>? errorHandlers, IError? error)
 		{
 			if (errorHandlers == null) return null;
+			if (error == null) return null;
 
 			foreach (var errorHandler in errorHandlers)
 			{

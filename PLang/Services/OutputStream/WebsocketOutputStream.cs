@@ -22,14 +22,16 @@ namespace PLang.Services.OutputStream
 		public Stream Stream { get; private set; }
 		public Stream ErrorStream { get; private set; }
 
+		public string Output => "text";
+
 		public async Task<string> Ask(string text, string type = "text", int statusCode = 200, Dictionary<string, object>? parameters = null)
 		{
-			return "";
+			throw new NotImplementedException();
 		}
 
 		public string Read()
 		{
-			return "";
+			throw new NotImplementedException();
 		}
 
 		public async Task Write(object? obj, string type = "text", int statusCode = 200)

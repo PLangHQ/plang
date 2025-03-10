@@ -22,15 +22,18 @@ namespace PLang.Modules.ValidateModule
 		{
 		}
 
-		[Description("Check if variable is empty. Create error message fitting the intent of the validation")]
-		public async Task<IError?> IsNotEmpty([HandlesVariable] string[]? variables, string errorMessage, int statusCode = 400)
+		[Description("Check each %variable% if it is empty. Create error message fitting the intent of the validation. Extract all %variables% from this statement as a JSON array of strings, ensuring it is not wrapped as a single string.")]
+		public async Task<IError?> IsNotEmpty([HandlesVariable] List<string> variables, string errorMessage, int statusCode = 400)
 		{
-			if (variables == null) return null;
+			if (variables == null) { 
+				return new ProgramError("Variables are empty", goalStep, function, StatusCode: 500);
+			}
 
+			var multiError = new GroupedErrors("ValidateModule.IsNotEmpty");
 			foreach (var variable in variables)
 			{
 				var obj = memoryStack.GetObjectValue2(variable);
-				if (obj.Initiated && obj.Value != null && !VariableHelper.IsEmpty(obj.Value)) return null;
+				if (obj.Initiated && obj.Value != null && !VariableHelper.IsEmpty(obj.Value)) continue;
 
 				if (string.IsNullOrEmpty(errorMessage))
 				{
@@ -38,20 +41,20 @@ namespace PLang.Modules.ValidateModule
 				}
 				if (!obj.Initiated || obj.Value == null || (obj.Type == typeof(string) && string.IsNullOrWhiteSpace(obj.Value?.ToString())))
 				{
-					return new ProgramError(errorMessage, goalStep, function, StatusCode: statusCode);
+					multiError.Add(new ProgramError(variable, goalStep, function, StatusCode: statusCode));
 				}
 
 				if (obj.Value is IList list && list.Count == 0)
 				{
-					return new ProgramError(errorMessage, goalStep, function, StatusCode: statusCode);
+					multiError.Add(new ProgramError(variable, goalStep, function, StatusCode: statusCode));
 				}
 
 				if (obj.Value is IDictionary dict && dict.Count == 0)
 				{
-					return new ProgramError(errorMessage, goalStep, function, StatusCode: statusCode);
+					multiError.Add(new ProgramError(variable, goalStep, function, StatusCode: statusCode));
 				}
 			}
-			return null;
+			return (multiError.Count > 0) ? multiError : null;
 		}
 
 		[Description("Checks if variable contains a regex pattern. Create error message fitting the intent of the validation")]

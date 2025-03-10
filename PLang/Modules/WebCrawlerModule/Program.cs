@@ -247,9 +247,11 @@ namespace PLang.Modules.WebCrawlerModule
 			{
 				page = await browser.NewPageAsync();
 
-				if (url == null) url = "about:blank";
-				BindEventsToPage(page, url);
-				var response = await page.GotoAsync(url);
+				if (!string.IsNullOrEmpty(url))
+				{
+					BindEventsToPage(page, url);
+					var response = await page.GotoAsync(url);
+				}
 			}
 			else
 			{
@@ -280,7 +282,7 @@ namespace PLang.Modules.WebCrawlerModule
 		[Description("opens a page to a url. browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.")]
 		public async Task NavigateToUrl(string url, string browserType = "Chrome", bool headless = false,
 				string profileName = "", bool kioskMode = false, Dictionary<string, string>? argumentOptions = null,
-				int? timeoutInSecods = null, bool hideTestingMode = false,
+				int? timeoutInSecods = null, bool hideTestingMode = false, int pageIndex = 0,
 				GoalToCall? onRequest = null, GoalToCall? onResponse = null, GoalToCall? onWebsocketReceived = null, GoalToCall? onWebsocketSent = null,
 				GoalToCall? onConsoleOutput = null, GoalToCall? onWorker = null, GoalToCall? onCrash = null,
 				GoalToCall? onDialog = null, GoalToCall? onLoad = null, GoalToCall? onDOMLoad = null, GoalToCall? onFileChooser = null,
@@ -306,7 +308,14 @@ namespace PLang.Modules.WebCrawlerModule
 			if (page == null)
 			{
 				var browser = await GetBrowser();
-				page = await browser.NewPageAsync();
+				if (browser.Pages.Count > 0)
+				{
+					page = browser.Pages[pageIndex];
+				}
+				else
+				{
+					page = await browser.NewPageAsync();
+				}
 				BindEventsToPage(page, url, onRequest, onResponse, onWebsocketReceived, onWebsocketSent,
 					onConsoleOutput, onWorker, onCrash,
 					onDialog, onLoad, onDOMLoad, onFileChooser,

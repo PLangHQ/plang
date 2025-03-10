@@ -1,21 +1,16 @@
 {
   "Action": {
-    "FunctionName": "BuildPlangStep",
+    "FunctionName": "RunFromStep",
     "Parameters": [
       {
-        "Type": "GoalStep",
-        "Name": "step",
-        "Value": "%!error.Step%"
+        "Type": "String",
+        "Name": "prFileName",
+        "Value": "%step.RelativePrPath%"
       }
     ],
-    "ReturnValues": [
-      {
-        "Type": "GoalStep",
-        "VariableName": "step"
-      }
-    ]
+    "ReturnValues": null
   },
-  "Text": "rebuild plang step %!error.Step%, write to %step%",
+  "Text": "[plang] run step %step.RelativePrPath%",
   "Reload": false,
   "LlmRequest": {
     "temperature": 0.0,
@@ -45,7 +40,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nGetGoals(String filePath, String? visiblity = \"public\", String[]? fields)  : void  // Get goals in file or folder. visiblity is either public|public_and_private|private. \nGetModules(String stepText, List`1<String> excludeModules)  : String \nGetMethods(String moduleName)  : String \nGetMethodDescription(String moduleName, String methodName)  : MethodDescription \nGetMethodMappingScheme()  : String \nGetStepProperties(String moduleName, String methodName)  : Dicionary<String, Object> \nGetVariables(GoalStep step)  : List`1 \nGetStep(String goalPrPath, String stepPrFile)  : GoalStep \nRunStep(GoalStep step, Dictionary`2<String, Object>? parameters)  : Object \nRunFromStep(String prFileName)  : void \nBuildPlangStep(GoalStep step)  : GoalStep \nBuildPlangCode(Goal goal)  : void \nStartCSharpDebugger()  : void\r\n## functions available ends ##\r\n## defined variables ##\r\n!error.Step (type:object), step (type:object), \r\n## defined variables ##"
+            "text": "## functions available starts ##\r\nGetGoals(String filePath, String? visiblity = \"public\", String[]? fields)  : void  // Get goals in file or folder. visiblity is either public|public_and_private|private. \nGetModules(String stepText, List`1<String> excludeModules)  : String \nGetMethods(String moduleName)  : String \nGetMethodDescription(String moduleName, String methodName)  : MethodDescription \nGetMethodMappingScheme()  : String \nGetStepProperties(String moduleName, String methodName)  : Dicionary<String, Object> \nGetVariables(GoalStep step)  : List`1 \nGetSteps(String goalPath)  : List<GoalStep> \nGetStep(String goalPrPath, String stepPrFile)  : GoalStep \nRunStep(GoalStep step, Dictionary`2<String, Object>? parameters)  : Object \nRunFromStep(String prFileName)  : void \nBuildPlangStep(GoalStep step)  : GoalStep \nBuildPlangCode(Goal goal)  : void \nStartCSharpDebugger()  : void\r\n## functions available ends ##\r\n## defined variables ##\r\nstep.RelativePrPath (type:object), \r\n## defined variables ##"
           }
         ]
       },
@@ -54,14 +49,14 @@
         "content": [
           {
             "type": "text",
-            "text": "rebuild plang step %!error.Step%, write to %step%"
+            "text": "[plang] run step %step.RelativePrPath%"
           }
         ]
       }
     ],
     "type": "PLang.Modules.GenericFunctionBuilder",
     "caching": true,
-    "RawResponse": "```json\n{\n\t\"FunctionName\": \"BuildPlangStep\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"GoalStep\",\n\t\t\"Name\": \"step\",\n\t\t\"Value\": \"%!error.Step%\"\n\t}],\n\t\"ReturnValues\": [{\n\t\t\"Type\": \"GoalStep\",\n\t\t\"VariableName\": \"step\"\n\t}]\n}\n```"
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"RunFromStep\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"String\",\n\t\t\"Name\": \"prFileName\",\n\t\t\"Value\": \"%step.RelativePrPath%\"\n\t}]\n}\n```"
   },
   "RunOnBuild": false
 }

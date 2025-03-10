@@ -4,7 +4,7 @@
   "Text": "OnStepError",
   "GoalSteps": [
     {
-      "Text": "write out system error %!error%",
+      "Text": "write out system error \"%!error%\"",
       "Comment": null,
       "ModuleType": "PLang.Modules.OutputModule",
       "Name": "write_out_system_error",
@@ -14,7 +14,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-03-04T12:45:36.1464628+00:00",
+      "Generated": "2025-03-05T14:45:05.3768328+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -60,7 +60,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "write out system error %!error%"
+                "text": "write out system error \"%!error%\""
               }
             ]
           }
@@ -71,13 +71,13 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "3867bcfcd3c18848328fbbac41492fc48e3b617d4c6af228d8f96ba900484bd4",
+      "Hash": "211162ae585a42074527279cbca4a53dd551aa379be53d77f1cc33952ab101c4",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\OnStepError.goal"
     }
   ],
   "SubGoals": [],
-  "Description": "The OnStepError goal is designed to handle and log system errors. It captures the system error message and writes it out for further analysis or debugging. The goal requires a system error message to be provided, which will be stored in the variable \\%error\\%. This goal is typically called when an error occurs during the execution of a step in the program.",
+  "Description": "The OnStepError goal is designed to handle and log system errors. It takes a system error message as input and writes it out in a specified format. The error message should be provided as a string, which will be represented by the variable \\%error\\%. This goal is invoked when there is a need to report an error that has occurred during the execution of a step.",
   "Visibility": 1,
   "GoalFileName": "OnStepError.goal",
   "RelativeGoalPath": "\\events\\Runtime\\OnStepError.goal",
@@ -88,7 +88,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "7b6dc1d3381cd0c421e16bbd2b5c9944b9afc044b5381541c45951bb62611b59",
+  "Hash": "187230f3e2024eadf3ff687af163ae9121d7d9d938e847241c0ebb04d308b3a5",
   "IncomingVariablesRequired": [
     "error"
   ]

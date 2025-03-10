@@ -1,8 +1,4 @@
-﻿using LightInject;
-using PLang.Interfaces;
-using PLang.Utils;
-
-namespace PLang.Services.OutputStream
+﻿namespace PLang.Services.OutputStream
 {
 	public interface IOutputStreamFactory
 	{

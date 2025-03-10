@@ -1,0 +1,83 @@
+{
+  "Action": {
+    "FunctionName": "Insert",
+    "Parameters": [
+      {
+        "Type": "string",
+        "Name": "sql",
+        "Value": "insert into Setup (id, text, hash) values (@id, @text, @hash)"
+      },
+      {
+        "Type": "List<ParameterInfo>",
+        "Name": "SqlParameters",
+        "Value": [
+          {
+            "ParameterName": "id",
+            "VariableNameOrValue": "auto",
+            "TypeFullName": "System.Int64"
+          },
+          {
+            "ParameterName": "text",
+            "VariableNameOrValue": "%step.Text%",
+            "TypeFullName": "System.String"
+          },
+          {
+            "ParameterName": "hash",
+            "VariableNameOrValue": "%step.Hash%",
+            "TypeFullName": "System.String"
+          }
+        ]
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Text": "insert into Setup  text=%step.Text%, hash=%step.Hash%",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+    "model": "gpt-4o",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Map user command to this c# function: \r\n\r\n## csharp function ##\r\nInt32 Insert(String sql, List<object>()? SqlParameters = null)  //returns number of rows affected\r\n## csharp function ##\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%.\r\nSqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.\r\n%Now% variable is type of DateTime. %Now% variable should be injected as SqlParameter \r\nSqlParameters @id MUST be type System.Int64. VariableNameOrValue=\"auto\"\r\nYou MUST modify the user command by adding id to the sql statement and parameter %id%.\r\nIf table name is a variable, keep the variable in the sql statement\r\nMake sure sql statement matches columns provided for the table.\r\ninteger/int should always be System.Int64. \r\n\r\nYou MUST generate a valid sql statement for SQLite.\r\nYou MUST provide SqlParameters if SQL has @parameter.\r\n"
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "# examples #\r\n\"insert into users, name=%name%\" => sql: \"insert into users (id, name) values (@id, @name)\",  SqlParameters:[{ParameterName:id, VariableNameOrValue:\"auto\", TypeFullName:int64}, {ParameterName:name, VariableNameOrValue:%name%, TypeFullName:string}]\r\n\"insert into tableX, %phone%, write to %rows%\" => sql: \"insert into tableX (id, phone) values (\"auto\", @phone)\"\r\n\"insert into %table%, %phone%, write to %rows%\" => sql: \"insert into %table% (id, phone) values (\"auto\", @phone)\"\r\n\r\nParameterInfo has the scheme: {\"ParameterName\": string, \"VariableNameOrValue\": string, \"TypeFullName\": string}\r\n        },\r\n# examples #"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "insert into Setup  text=%step.Text%, hash=%step.Hash%"
+          }
+        ]
+      }
+    ],
+    "type": "PLang.Modules.DbModule.Builder",
+    "caching": true,
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"Insert\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"string\",\n\t\t\"Name\": \"sql\",\n\t\t\"Value\": \"insert into Setup (id, text, hash) values (@id, @text, @hash)\"\n\t}, {\n\t\t\"Type\": \"List<ParameterInfo>\",\n\t\t\"Name\": \"SqlParameters\",\n\t\t\"Value\": [{\n\t\t\t\"ParameterName\": \"id\",\n\t\t\t\"VariableNameOrValue\": \"auto\",\n\t\t\t\"TypeFullName\": \"System.Int64\"\n\t\t}, {\n\t\t\t\"ParameterName\": \"text\",\n\t\t\t\"VariableNameOrValue\": \"%step.Text%\",\n\t\t\t\"TypeFullName\": \"System.String\"\n\t\t}, {\n\t\t\t\"ParameterName\": \"hash\",\n\t\t\t\"VariableNameOrValue\": \"%step.Hash%\",\n\t\t\t\"TypeFullName\": \"System.String\"\n\t\t}]\n\t}]\n}\n```"
+  },
+  "RunOnBuild": false
+}

@@ -482,7 +482,20 @@ namespace PLang.Utils
 				}
 				else if (variableValue is JObject jobject)
 				{
-					dict = jobject.ToObject<Dictionary<string, Tuple<object?, object?>?>>();
+					try
+					{
+						dict = jobject.ToObject<Dictionary<string, Tuple<object?, object?>?>>();
+					} catch (Exception)
+					{
+						var itemWithList = jobject.ToObject<Dictionary<string, List<object?>?>>();
+						if (itemWithList == null) throw;
+
+						dict = new();
+						foreach (var item in itemWithList)
+						{
+							dict.Add(item.Key, new Tuple<object?, object?>(item.Value, null));
+						}
+					}
 				}
 				else if (JsonHelper.IsJson(variableValue, out object? obj))
 				{
@@ -532,6 +545,10 @@ namespace PLang.Utils
 				else
 				{
 					dict = obj as Dictionary<string, object?>;
+					if (dict == null && variableValue is string str) {
+						dict = new();
+						dict.Add(str.Replace("%", ""), obj);
+					}
 				}
 			}
 			else

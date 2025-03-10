@@ -1,4 +1,5 @@
-﻿using LightInject;
+﻿using IdGen;
+using LightInject;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Building.Model;
@@ -108,7 +109,7 @@ namespace PLang.Modules
 
 		private T GetModule<T>() where T : BaseProgram
 		{
-			return (T) container.GetInstance(typeof(T));
+			return (T)container.GetInstance(typeof(T));
 		}
 
 		public async Task<(object? ReturnValue, IError? Error)> RunFunction(GenericFunction function)
@@ -144,9 +145,23 @@ namespace PLang.Modules
 				try
 				{
 					task = method.Invoke(this, parameterValues.Values.ToArray()) as Task;
-				} catch (System.ArgumentException ex)
+				}
+				catch (System.ArgumentException ex)
 				{
-					return (null, new InvalidParameterError(function.FunctionName, ex.Message, goalStep, FixSuggestion: "Likely build on older verion of plang. Rebuild code"));
+					if (ex.Message.Contains("converted to type"))
+					{
+						string type = ex.Message.Substring(ex.Message.IndexOf("to type") + 9).Replace("'", "").TrimEnd('.');
+						var parameter = method.GetParameters().FirstOrDefault(p => p.ParameterType.FullName == type);
+						if (parameter != null)
+						{
+							var functionParameter = function.Parameters.FirstOrDefault(p => p.Name == parameter.Name);
+							if (functionParameter != null)
+							{
+								return (null, new InvalidParameterError(function.FunctionName, $"{functionParameter.Value} is not corrent value to call {function.FunctionName}. It should be type of {type}. Is the step loading {functionParameter.Value} correct?", goalStep, FixSuggestion: $"Check if the step that loads {functionParameter.Value} is correctly mapped."));
+							}
+						}
+					}
+					return (null, new InvalidParameterError(function.FunctionName, ex.Message, goalStep, FixSuggestion: "Step is likely built on an older verion of plang. Try to rebuild code"));
 				}
 
 				if (task == null)
@@ -163,7 +178,7 @@ namespace PLang.Modules
 					}
 					catch { }
 				}
-				
+
 				if (task.Status == TaskStatus.Faulted && task.Exception != null)
 				{
 					var ex = task.Exception.InnerException ?? task.Exception;
@@ -187,7 +202,7 @@ namespace PLang.Modules
 						if (isHandled) return await RunFunction(function);
 					}
 
-					var pe = new ProgramError(ex.Message, goalStep, function, parameterValues, Exception: ex);
+					var pe = new ProgramError(ex.Message, goalStep, function, parameterValues, Exception: ex, Key: ex.GetType().FullName ?? "ProgramError");
 
 					if (this is IDisposable disposable)
 					{
@@ -217,7 +232,7 @@ namespace PLang.Modules
 					{
 						error.Step = goalStep;
 					}
-					if (error is ProgramError pe)
+					if (error is ProgramError pe && pe.GenericFunction is null)
 					{
 						pe.GenericFunction = function;
 					}
@@ -340,16 +355,36 @@ namespace PLang.Modules
 			else if (result is IReturnDictionary || result.GetType().Name == "DapperRow")
 			{
 				var dict = (IDictionary<string, object>)result;
-				foreach (var returnValue in function.ReturnValues)
+				if (result is IReturnDictionary rd)
 				{
-					var key = dict.Keys.FirstOrDefault(p => p.Replace("%", "").ToLower() == returnValue.VariableName.Replace("%", "").ToLower());
-					if (key == null)
+					int idx = 0;
+					foreach (var key in dict.Keys)
 					{
-						memoryStack.Put(returnValue.VariableName, dict);
-						continue;
+						var variableName = function.ReturnValues.FirstOrDefault(p => p.VariableName == key.Replace("%", ""))?.VariableName;
+						if (variableName != null)
+						{
+							memoryStack.Put(variableName, dict[key]);
+						}
+						else if (idx < function.ReturnValues.Count)
+						{
+							memoryStack.Put(function.ReturnValues[idx].VariableName, dict[key]);
+						}
+						idx++;
 					}
+				}
+				else
+				{
+					foreach (var returnValue in function.ReturnValues)
+					{
+						var key = dict.Keys.FirstOrDefault(p => p.Replace("%", "").ToLower() == returnValue.VariableName.Replace("%", "").ToLower());
+						if (key == null)
+						{
+							memoryStack.Put(returnValue.VariableName, dict);
+							continue;
+						}
 
-					memoryStack.Put(returnValue.VariableName, dict[key]);
+						memoryStack.Put(returnValue.VariableName, dict[key]);
+					}
 				}
 			}
 			else

@@ -1,0 +1,2 @@
+OnAppError
+- write out system error "%!error%"

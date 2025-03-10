@@ -5,6 +5,7 @@ using PLang.Attributes;
 using PLang.Errors;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Runtime;
 using PLang.Utils;
 using System.Collections;
 using System.ComponentModel;
@@ -226,7 +227,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			memoryStack.Put(key, content);
 		}
 
-		
+
 
 		[Description(@"Set multiple variables with possible default values. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it. onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
 		public async Task SetVariables([HandlesVariableAttribute] Dictionary<string, Tuple<object?, object?>?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
@@ -249,20 +250,31 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 
 
 		[Description(@"Set default value on variables if not set, good for setting value if variable is empty. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
-		public async Task SetDefaultValueOnVariables([HandlesVariableAttribute] Dictionary<string, Tuple<object?, object?>> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
+		public async Task SetDefaultValueOnVariables([HandlesVariableAttribute] Dictionary<string, object?> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{
 			foreach (var key in keyValues)
 			{
 				var objectValue = memoryStack.GetObjectValue2(key.Key, false);
-				if (!objectValue.Initiated)
-				{
-					await SetVariable(key.Key, key.Value.Item1, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot, key.Value.Item2);
-				}
+				if (objectValue.Initiated) continue;
+
+				await SetVariable(key.Key, key.Value, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot);
 			}
 
 		}
 
-		[Description("Append to variable. valueLocation=postfix|prefix seperatorLocation=end|start")]
+		[Description(@"Set value on variables or a default value is value is empty. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
+		public async Task SetValueOnVariablesOrDefaultIfValueIsEmpty([HandlesVariableAttribute] Dictionary<string, Tuple<object?, object?>> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
+		{
+			foreach (var key in keyValues)
+			{
+				var objectValue = memoryStack.GetObjectValue2(key.Key, false);
+				object? value = !VariableHelper.IsEmpty(key.Value.Item1) ? key.Value.Item1 : key.Value.Item2;
+
+				await SetVariable(key.Key, value, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot);
+			}
+		}
+
+			[Description("Append to variable. valueLocation=postfix|prefix seperatorLocation=end|start")]
 		public async Task<object?> AppendToVariable([HandlesVariableAttribute] string key, [HandlesVariable] object? value = null, char seperator = '\n',
 			string valueLocation = "postfix", string seperatorLocation = "end", bool shouldBeUnique = false, bool doNotLoadVariablesInValue = false)
 		{

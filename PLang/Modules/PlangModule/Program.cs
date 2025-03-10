@@ -11,15 +11,17 @@ using PLang.Errors.Builder;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Runtime;
+using PLang.SafeFileSystem;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 namespace PLang.Modules.PlangModule
 {
-	[Description("Compiles plang code, gets goals from .goal files, method descriptions and class scheme. Run time for plang, can run goal and step(s) in plang")]
+	[Description("Compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime for plang, can run goal and step(s) in plang")]
 	public class Program : BaseProgram
 	{
 		private readonly ILogger logger;
@@ -28,8 +30,9 @@ namespace PLang.Modules.PlangModule
 		private readonly IEngine engine;
 		private readonly IGoalBuilder goalBuilder;
 		private readonly PrParser prParser;
+		private readonly IFileAccessHandler fileAccessHandler;
 
-		public Program(ILogger logger, IGoalParser goalParser, IPLangFileSystem fileSystem, IEngine engine, IGoalBuilder goalBuilder, PrParser prParser) : base()
+		public Program(ILogger logger, IGoalParser goalParser, IPLangFileSystem fileSystem, IEngine engine, IGoalBuilder goalBuilder, PrParser prParser, IFileAccessHandler fileAccessHandler) : base()
 		{
 			this.logger = logger;
 			this.goalParser = goalParser;
@@ -37,6 +40,7 @@ namespace PLang.Modules.PlangModule
 			this.engine = engine;
 			this.goalBuilder = goalBuilder;
 			this.prParser = prParser;
+			this.fileAccessHandler = fileAccessHandler;
 		}
 
 		[Description("Get goals in file or folder. visiblity is either public|public_and_private|private")]
@@ -287,11 +291,15 @@ namespace PLang.Modules.PlangModule
 
 			return (step, null);
 		}
+
+		[Description("Runs a plang step. No other step is executed")]
 		public async Task<(object?, IError?)> RunStep(GoalStep step, Dictionary<string, object?>? parameters = null)
 		{
 			var startingEngine = engine.GetContext()[ReservedKeywords.StartingEngine] as IEngine;
 			if (startingEngine == null) startingEngine = engine;
 			engine.GetContext().Remove(ReservedKeywords.IsEvent);
+
+			fileAccessHandler.GiveAccess(fileSystem.OsDirectory, fileSystem.GoalsPath);
 			if (parameters != null)
 			{
 				var ms = engine.GetMemoryStack();
@@ -303,14 +311,18 @@ namespace PLang.Modules.PlangModule
 			var result = await startingEngine.ProcessPrFile(step.Goal, step, step.Number);
 			return result;
 		}
+
+		[Description("Run from a specific step and the following steps")]
 		public async Task<IError?> RunFromStep(string prFileName)
 		{
 			if (string.IsNullOrEmpty(prFileName))
 			{
 				return new ProgramError($"prFileName is empty. I cannot run a step if I don't know what to run.", goalStep, function,
-					FixSuggestion: "Something has broke between the IDE sending the information and the runtime. Check if SendDebug.goal and the IDE is talking together correctly.");
+					FixSuggestion: "Something has broken between the IDE sending the information and the runtime. Check if SendDebug.goal and the IDE is talking together correctly.");
 			}
 			var absolutePrFileName = fileSystem.Path.Join(fileSystem.GoalsPath, prFileName);
+
+			fileAccessHandler.GiveAccess(fileSystem.OsDirectory, fileSystem.GoalsPath);
 			if (!fileSystem.File.Exists(absolutePrFileName))
 			{
 				return new ProgramError($"The file {prFileName} could not be found. I looked for it at {absolutePrFileName}", goalStep, function);
@@ -319,9 +331,12 @@ namespace PLang.Modules.PlangModule
 			if (startingEngine == null) startingEngine = engine;
 			engine.GetContext().Remove(ReservedKeywords.IsEvent);
 
+
 			var result = await startingEngine.RunFromStep(absolutePrFileName);
 			return result;
 		}
+
+		[Description("Builds(compiles) a step in plang code")]
 		public async Task<(GoalStep?, IError?)> BuildPlangStep(GoalStep? step)
 		{
 			if (step == null)
@@ -348,6 +363,8 @@ namespace PLang.Modules.PlangModule
 			}
 			return (step, error);
 		}
+
+		[Description("Builds(compiles) a goal in plang code")]
 		public async Task<IError?> BuildPlangCode(Goal goal)
 		{
 			var builder = Container.GetInstance<IBuilder>();

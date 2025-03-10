@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using MimeKit.IO.Filters;
+using Nethereum.Contracts.Standards.ENS.Registrar.ContractDefinition;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
@@ -43,7 +44,6 @@ namespace PLang.Runtime
 		List<Goal> GetGoalsAvailable(string appPath, string goalName);
 		Task<IError?> RunFromStep(string prFile);
 		Task<(object? ReturnValue, IError? Error)> ProcessPrFile(Goal goal, GoalStep goalStep, int stepIndex);
-		
 	}
 	public record Alive(Type Type, string Key);
 	public class Engine : IEngine, IDisposable
@@ -440,7 +440,6 @@ namespace PLang.Runtime
 				{
 					if (runStepError is MultipleError me)
 					{
-
 						var hasEndGoal = FindEndGoalError(me);
 						if (hasEndGoal != null) runStepError = hasEndGoal;
 					}
@@ -454,8 +453,8 @@ namespace PLang.Runtime
 						}
 						continue;
 					}
-					runStepError = await HandleGoalError(runStepError, goal, stepIndex);
-					if (runStepError != null) return (stepIndex, runStepError);
+					var errorInGoalErrorHandler = await HandleGoalError(runStepError, goal, stepIndex);
+					if (errorInGoalErrorHandler != null) return (stepIndex, errorInGoalErrorHandler);
 				}
 			}
 			return (stepIndex, null);
@@ -617,7 +616,7 @@ private async Task CacheGoal(Goal goal)
 
 		private async Task<IError?> HandleStepError(Goal goal, GoalStep step, int goalStepIndex, IError? error, int retryCount)
 		{
-			if (error is IErrorHandled || error is EndGoal || error is UserDefinedError) return error;
+			if (error == null || error is IErrorHandled || error is EndGoal || error is UserDefinedError) return error;
 
 			if (error is Errors.AskUser.AskUserError aue)
 			{
@@ -644,40 +643,52 @@ private async Task CacheGoal(Goal goal)
 			}
 
 			var errorHandler = StepHelper.GetErrorHandlerForStep(step.ErrorHandlers, error);
-			if (ShouldRunRetry(errorHandler, true, retryCount))
+			if (errorHandler == null) return error;
+			
+			if (HasRetriedToRetryLimit(errorHandler, retryCount)) return error;
+
+			if (ShouldRunRetry(errorHandler, true))
 			{
-				logger.LogDebug($"Error occurred - Before goal to call - Will retry in {errorHandler.RetryHandler.RetryDelayInMilliseconds}ms. Attempt nr. {retryCount} of {errorHandler.RetryHandler.RetryCount}\nError:{error}");
-				await Task.Delay((int)errorHandler.RetryHandler.RetryDelayInMilliseconds);
+				logger.LogDebug($"Error occurred - Before goal to call - Will retry in {errorHandler.RetryHandler?.RetryDelayInMilliseconds}ms. Attempt nr. {retryCount} of {errorHandler.RetryHandler?.RetryCount}\nError:{error}");
+				if (errorHandler.RetryHandler?.RetryDelayInMilliseconds != null && errorHandler.RetryHandler.RetryDelayInMilliseconds > 0)
+				{
+					await Task.Delay(errorHandler.RetryHandler.RetryDelayInMilliseconds.Value);
+				}
 				return await RunStep(goal, goalStepIndex, ++retryCount);
 			}
 
 			var eventRuntime = container.GetInstance<IEventRuntime>();
 			error = await eventRuntime.RunOnErrorStepEvents(error, goal, step);
 			if (error != null)
-			{
-				if (errorHandler == null || errorHandler.RetryHandler == null ||
-					errorHandler.RetryHandler.RetryCount <= retryCount)
-				{
-					return error;
-				}
+			{				
+				return error;				
 			}
 
 
-			if (ShouldRunRetry(errorHandler, false, retryCount))
+			if (ShouldRunRetry(errorHandler, false))
 			{
-				logger.LogDebug($"Error occurred - After goal to call - Will retry in {errorHandler.RetryHandler.RetryDelayInMilliseconds}ms. Attempt nr. {retryCount} of {errorHandler.RetryHandler.RetryCount}\nError:{error}");
-				await Task.Delay((int)errorHandler.RetryHandler.RetryDelayInMilliseconds);
+				logger.LogDebug($"Error occurred - After goal to call - Will retry in {errorHandler?.RetryHandler?.RetryDelayInMilliseconds}ms. Attempt nr. {retryCount} of {errorHandler?.RetryHandler?.RetryCount}\nError:{error}");
+				if (errorHandler?.RetryHandler?.RetryDelayInMilliseconds != null && errorHandler.RetryHandler.RetryDelayInMilliseconds > 0)
+				{
+					await Task.Delay(errorHandler.RetryHandler.RetryDelayInMilliseconds.Value);
+				}
 				return await RunStep(goal, goalStepIndex, ++retryCount);
 			}
 
 			return error;
 		}
 
-		private bool ShouldRunRetry(ErrorHandler? errorHandler, bool isBefore, int retryCount)
+		private bool HasRetriedToRetryLimit(ErrorHandler? errorHandler, int retryCount)
+		{
+			if (retryCount == 0) return false;
+			if (errorHandler == null || errorHandler.RetryHandler == null) return false;
+			return (errorHandler.RetryHandler.RetryCount <= retryCount);
+		}
+
+		private bool ShouldRunRetry(ErrorHandler? errorHandler, bool isBefore)
 		{
 			return (errorHandler != null && errorHandler.RunRetryBeforeCallingGoalToCall == isBefore &&
-					errorHandler.RetryHandler != null && errorHandler.RetryHandler.RetryCount > retryCount &&
-					errorHandler.RetryHandler.RetryDelayInMilliseconds != null);
+					errorHandler.RetryHandler != null);
 		}
 
 		private bool HasExecuted(GoalStep step)
@@ -909,5 +920,6 @@ private async Task CacheGoal(Goal goal)
 		{
 			return prParser.GetAllGoals();
 		}
+
 	}
 }

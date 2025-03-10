@@ -246,8 +246,9 @@ namespace PLang.Events
 			{
 				foreach (var eve in runtimeEvents)
 				{
-					var runError = await Run(eve, null, null, error);
-					if (runError != null) return runError;
+					if (!HasAppBinding(eve, error)) continue;
+					return await Run(eve, null, null, error);
+					//if (runError != null) return runError;
 				}
 			}
 			else
@@ -257,6 +258,17 @@ namespace PLang.Events
 			}
 			return null;
 
+		}
+
+		private bool HasAppBinding(EventBinding eve, IError error)
+		{
+			if (eve.ErrorKey != null && !eve.ErrorKey.Equals(error.Key, StringComparison.OrdinalIgnoreCase)) return false;
+			if (eve.ErrorMessage != null && !error.Message.Contains(eve.ErrorMessage, StringComparison.OrdinalIgnoreCase)) return false;	
+			if (eve.StatusCode != null && eve.StatusCode != error.StatusCode) return false;
+			if (eve.ExceptionType != null && !eve.ExceptionType.Equals(error.Exception?.GetType().FullName)) return false;
+			if (eve.GoalToBindTo == "*") return true;
+
+			return false;
 		}
 
 		private async Task<IError?> HandleGoalError(Goal goal, IError error, GoalStep? step, List<EventBinding> eventsToRun)
@@ -339,7 +351,7 @@ namespace PLang.Events
 
 				logger.LogDebug("Run event type {0} on scope {1}, binding to {2} calling {3}", eve.EventType.ToString(), eve.EventScope.ToString(), eve.GoalToBindTo, eve.GoalToCall);
 
-				var task = pseudoRuntime.RunGoal(engine, context, path, eve.GoalToCall, parameters, isolated:true);
+				var task = pseudoRuntime.RunGoal(engine, context, path, eve.GoalToCall, parameters, isolated: !eve.IsLocal);
 				if (eve.WaitForExecution)
 				{
 					await task;
@@ -456,7 +468,7 @@ namespace PLang.Events
 
 						if (eve.OnErrorContinueNextStep) return null;
 
-						return error;
+						return new ErrorHandled(error);
 					}
 
 				}

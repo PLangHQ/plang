@@ -66,6 +66,7 @@ namespace PLang.Container
 
 			container.RegisterForPLang(absoluteAppStartupPath, relativeAppStartupPath);
 			RegisterEventRuntime(container);
+			RegisterBaseVariables(container);
 		}
 
 		public static void RegisterForPLangWebserver(this ServiceContainer container, string appStartupPath, string relativeAppPath, HttpListenerContext httpContext, string contentType)
@@ -90,6 +91,7 @@ namespace PLang.Container
 			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler(container.GetInstance<IAskUserHandlerFactory>()));
 
 			RegisterEventRuntime(container);
+			RegisterBaseVariables(container);
 		}
 		public static void RegisterForPLangWindowApp(this ServiceContainer container, string appStartupPath, string relativeAppPath,
 			IAskUserDialog askUserDialog, IErrorDialog errorDialog, IForm iForm)
@@ -107,6 +109,7 @@ namespace PLang.Container
 			container.RegisterErrorSystemHandlerFactory(typeof(UiErrorHandler), true, new UiErrorHandler(errorDialog, container.GetInstance<IAskUserHandlerFactory>()));
 
 			RegisterEventRuntime(container);
+			RegisterBaseVariables(container);
 		}
 
 		public static void RegisterForPLangConsole(this ServiceContainer container, string appStartupPath, string relativeAppPath)
@@ -121,7 +124,11 @@ namespace PLang.Container
 			container.RegisterErrorHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler(container.GetInstance<IAskUserHandlerFactory>()));
 			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler(container.GetInstance<IAskUserHandlerFactory>()));
 			RegisterEventRuntime(container);
+
+			RegisterBaseVariables(container);
+			
 		}
+
 
 		public static void RegisterForPLangBuilderConsole(this ServiceContainer container, string appStartupPath, string relativeAppPath)
 		{
@@ -135,9 +142,8 @@ namespace PLang.Container
 			container.RegisterErrorHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler(container.GetInstance<IAskUserHandlerFactory>()));
 			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler(container.GetInstance<IAskUserHandlerFactory>()));
 
-			
-
 			RegisterEventRuntime(container, true);
+			RegisterBaseVariables(container);
 		}
 
 		private static void RegisterBaseForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeStartupAppPath)
@@ -198,6 +204,19 @@ namespace PLang.Container
 				container.RegisterSingleton<IEventRuntime>(factory => { return eventRuntime; });
 			}
 
+		}
+
+		private static void RegisterBaseVariables(ServiceContainer container)
+		{
+			var outputStreamFactory = container.GetInstance<IOutputStreamFactory>();
+			var outputStream = outputStreamFactory.CreateHandler();
+			var memoryStack = container.GetInstance<MemoryStack>();
+			memoryStack.Put("!plang.output", outputStream.Output);
+
+
+			var fileSystem = container.GetInstance<IPLangFileSystem>();
+			memoryStack.Put("!plang.osPath", fileSystem.OsDirectory);
+			memoryStack.Put("!plang.rootPath", fileSystem.RootDirectory);
 		}
 
 		private static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeStartupAppPath)

@@ -1,0 +1,529 @@
+{
+  "GoalName": "AskUserLlm",
+  "Comment": null,
+  "Text": "AskUserLlm",
+  "GoalSteps": [
+    {
+      "Text": "validate %developerInstructionForResult%, %text%, %options% is not empty",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.ValidateModule",
+      "Name": "validate_variables_not_empty",
+      "Description": "Ensure that the variables %developerInstructionForResult%, %text%, and %options% are not empty.",
+      "PrFileName": "01. validate_variables_not_empty.pr",
+      "RelativePrPath": ".build\\modules\\OutputModule\\AskUserLlm\\01. validate_variables_not_empty.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2025-03-07T13:43:50.976931+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 0,
+      "LineNumber": 2,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}",
+        "model": "gpt-4o",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set [\"N/A\"]\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step, lower case, use _ instead of /\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ValidateModule\", \"description\": \"Validates a variable, make sure it's not empty, follows a pattern, is a number, etc.. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.UdpModule\" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.SerializerModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangModule\", \"description\": \"Compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime for plang, can run goal and step(s) in plang. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Writes to the output stream. Ask user a question, either straight or with help of llm. output stream can be to the user(default), system, log, audit, metric. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set, Get & return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable. When making Dictionary<string, Tuple<`2> keyValues is key(string), value(object) and default value(object) => map to \"%key%\": { \"Item1\": \"%value%\",\"Item2\": \"%defaultValue\" }.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp). \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found or if [code] is defined.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff, set %formatted% = Format(%data%), %user% = GetUser %id%. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "validate %developerInstructionForResult%, %text%, %options% is not empty"
+              }
+            ]
+          }
+        ],
+        "type": "StepInformationBuilder",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Ensure that the variables %developerInstructionForResult%, %text%, and %options% are not empty.\",\n\t\"Modules\": [\"PLang.Modules.ValidateModule\"],\n\t\"StepName\": \"validate_variables_not_empty\"\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": "7f582026c2300710ad7b801c53ad5d0b92f9f1ab6822a5656235768f7046e55c",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\modules\\OutputModule\\AskUserLlm.goal"
+    },
+    {
+      "Text": "read file %!plang.osPath%/modules/OutputModule/llm/AskUserSystem.llm, load vars, write to %askSystem%",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.FileModule",
+      "Name": "read_file_and_write_to_variable",
+      "Description": "Read the file located at the path specified by the variable %!plang.osPath%/modules/OutputModule/llm/AskUserSystem.llm, load its contents into variables, and write the result to the variable %askSystem%.",
+      "PrFileName": "02. read_file_and_write_to_variable.pr",
+      "RelativePrPath": ".build\\modules\\OutputModule\\AskUserLlm\\02. read_file_and_write_to_variable.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2025-03-08T08:53:46.3502304+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 1,
+      "LineNumber": 3,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}",
+        "model": "gpt-4o",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set [\"N/A\"]\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step, lower case, use _ instead of /\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ValidateModule\", \"description\": \"Validates a variable, make sure it's not empty, follows a pattern, is a number, etc.. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.UdpModule\" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.SerializerModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangModule\", \"description\": \"Compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime for plang, can run goal and step(s) in plang. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Writes to the output stream. Ask user a question, either straight or with help of llm. output stream can be to the user(default), system, log, audit, metric. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set, Get & return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable. When making Dictionary<string, Tuple<`2> keyValues is key(string), value(object) and default value(object) => map to \"%key%\": { \"Item1\": \"%value%\",\"Item2\": \"%defaultValue\" }.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp). \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found or if [code] is defined.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff, set %formatted% = Format(%data%), %user% = GetUser %id%. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "read file %!plang.osPath%/modules/OutputModule/llm/AskUserSystem.llm, load vars, write to %askSystem%"
+              }
+            ]
+          }
+        ],
+        "type": "StepInformationBuilder",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Read the file located at the path specified by the variable %!plang.osPath%/modules/OutputModule/llm/AskUserSystem.llm, load its contents into variables, and write the result to the variable %askSystem%.\",\n\t\"Modules\": [\"PLang.Modules.FileModule\", \"PLang.Modules.LocalOrGlobalVariableModule\"],\n\t\"StepName\": \"read_file_and_write_to_variable\"\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": "0d5b30087f00104bccd0556c5198aa0cb63ef3bb074cc47da636ca9d7d9db536",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\modules\\OutputModule\\AskUserLlm.goal"
+    },
+    {
+      "Text": "[llm] system: %askSystem%\n    response type: %!plang.output%\n    write to %content%",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.LlmModule",
+      "Name": "generate_response_with_llm",
+      "Description": "Use a language model to process the input from %askSystem% and generate a response. The response should be formatted as %!plang.output% and then written to the variable %content%.",
+      "PrFileName": "03. generate_response_with_llm.pr",
+      "RelativePrPath": ".build\\modules\\OutputModule\\AskUserLlm\\03. generate_response_with_llm.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2025-03-07T13:44:29.3179779+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 2,
+      "LineNumber": 4,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}",
+        "model": "gpt-4o",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set [\"N/A\"]\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step, lower case, use _ instead of /\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\nPLang.Modules.LlmModule\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "[llm] system: %askSystem%\n    response type: %!plang.output%\n    write to %content%"
+              }
+            ]
+          }
+        ],
+        "type": "StepInformationBuilder",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Use a language model to process the input from %askSystem% and generate a response. The response should be formatted as %!plang.output% and then written to the variable %content%.\",\n\t\"Modules\": [\"PLang.Modules.LlmModule\"],\n\t\"StepName\": \"generate_response_with_llm\"\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": "8b061086e28680b0481877a13720751afec956786aa19052a56c10a2d93dbf82",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\modules\\OutputModule\\AskUserLlm.goal"
+    },
+    {
+      "Text": "ask user %content%, write to %answer%",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.OutputModule",
+      "Name": "ask_user_and_store_answer",
+      "Description": "Ask the user a question using the content in the %content% variable and store the user's response in the %answer% variable.",
+      "PrFileName": "04. ask_user_and_store_answer.pr",
+      "RelativePrPath": ".build\\modules\\OutputModule\\AskUserLlm\\04. ask_user_and_store_answer.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2025-03-07T13:44:37.253885+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 3,
+      "LineNumber": 7,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}",
+        "model": "gpt-4o",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set [\"N/A\"]\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step, lower case, use _ instead of /\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ValidateModule\", \"description\": \"Validates a variable, make sure it's not empty, follows a pattern, is a number, etc.. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.UdpModule\" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.SerializerModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangModule\", \"description\": \"Compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime for plang, can run goal and step(s) in plang. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Writes to the output stream. Ask user a question, either straight or with help of llm. output stream can be to the user(default), system, log, audit, metric. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set, Get & return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable. When making Dictionary<string, Tuple<`2> keyValues is key(string), value(object) and default value(object) => map to \"%key%\": { \"Item1\": \"%value%\",\"Item2\": \"%defaultValue\" }.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp). \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found or if [code] is defined.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff, set %formatted% = Format(%data%), %user% = GetUser %id%. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "ask user %content%, write to %answer%"
+              }
+            ]
+          }
+        ],
+        "type": "StepInformationBuilder",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Ask the user a question using the content in the %content% variable and store the user's response in the %answer% variable.\",\n\t\"Modules\": [\"PLang.Modules.OutputModule\"],\n\t\"StepName\": \"ask_user_and_store_answer\"\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": "96b064e1c8863fd8e3533b9b7531ad134013db7630e908590439c4569188b10a",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\modules\\OutputModule\\AskUserLlm.goal"
+    },
+    {
+      "Text": "read file %!plang.osPath%/modules/OutputModule/llm/AnswerUserSystem.llm, load vars, write to %answerSystem%",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.FileModule",
+      "Name": "read_file_and_write_to_variable",
+      "Description": "Read the file located at the path specified by the variable %!plang.osPath%/modules/OutputModule/llm/AnswerUserSystem.llm, load its contents into variables, and write the result to the variable %answerSystem%.",
+      "PrFileName": "05. read_file_and_write_to_variable.pr",
+      "RelativePrPath": ".build\\modules\\OutputModule\\AskUserLlm\\05. read_file_and_write_to_variable.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2025-03-08T09:14:12.0663395+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 4,
+      "LineNumber": 8,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}",
+        "model": "gpt-4o",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set [\"N/A\"]\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step, lower case, use _ instead of /\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ValidateModule\", \"description\": \"Validates a variable, make sure it's not empty, follows a pattern, is a number, etc.. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.UdpModule\" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.SerializerModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangModule\", \"description\": \"Compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime for plang, can run goal and step(s) in plang. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Writes to the output stream. Ask user a question, either straight or with help of llm. output stream can be to the user(default), system, log, audit, metric. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set, Get & return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable. When making Dictionary<string, Tuple<`2> keyValues is key(string), value(object) and default value(object) => map to \"%key%\": { \"Item1\": \"%value%\",\"Item2\": \"%defaultValue\" }.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp). \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found or if [code] is defined.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff, set %formatted% = Format(%data%), %user% = GetUser %id%. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "read file %!plang.osPath%/modules/OutputModule/llm/AnswerUserSystem.llm, load vars, write to %answerSystem%"
+              }
+            ]
+          }
+        ],
+        "type": "StepInformationBuilder",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Read the file located at the path specified by the variable %!plang.osPath%/modules/OutputModule/llm/AnswerUserSystem.llm, load its contents into variables, and write the result to the variable %answerSystem%.\",\n\t\"Modules\": [\"PLang.Modules.FileModule\", \"PLang.Modules.LocalOrGlobalVariableModule\"],\n\t\"StepName\": \"read_file_and_write_to_variable\"\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": "9f0ecc6d78527a4cded7ab2eea9aa46350f6ebe5dc81150c2c9298ade5a8920f",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\modules\\OutputModule\\AskUserLlm.goal"
+    },
+    {
+      "Text": "[llm]  system: %answerSystem%\n    user: %answer%\n    continue from last: true\n    scheme:{result:object|null}",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.LlmModule",
+      "Name": "process_conversation_with_llm",
+      "Description": "Use a language model to process a conversation between the system and the user, where the system's input is %answerSystem% and the user's input is %answer%. Continue the conversation from the last point and expect the result in the form of an object or null.",
+      "PrFileName": "06. process_conversation_with_llm.pr",
+      "RelativePrPath": ".build\\modules\\OutputModule\\AskUserLlm\\06. process_conversation_with_llm.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2025-03-07T13:44:37.4223674+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 5,
+      "LineNumber": 9,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}",
+        "model": "gpt-4o",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set [\"N/A\"]\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step, lower case, use _ instead of /\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\nPLang.Modules.LlmModule\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "[llm]  system: %answerSystem%\n    user: %answer%\n    continue from last: true\n    scheme:{result:object|null}"
+              }
+            ]
+          }
+        ],
+        "type": "StepInformationBuilder",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Use a language model to process a conversation between the system and the user, where the system's input is %answerSystem% and the user's input is %answer%. Continue the conversation from the last point and expect the result in the form of an object or null.\",\n\t\"Modules\": [\"PLang.Modules.LlmModule\"],\n\t\"StepName\": \"process_conversation_with_llm\"\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": "8a8ca1b4e4601d83fc6b01822b3c438b957fb631073b8f366ec5a751e5fd8b05",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\modules\\OutputModule\\AskUserLlm.goal"
+    },
+    {
+      "Text": "return %result%",
+      "Comment": null,
+      "ModuleType": "PLang.Modules.LocalOrGlobalVariableModule",
+      "Name": "return_variable",
+      "Description": "Return the value stored in the variable %result% to the caller or output stream.",
+      "PrFileName": "07. return_variable.pr",
+      "RelativePrPath": ".build\\modules\\OutputModule\\AskUserLlm\\07. return_variable.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2025-03-07T13:44:37.4882247+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 6,
+      "LineNumber": 13,
+      "LlmRequest": {
+        "temperature": 0.0,
+        "top_p": 0.0,
+        "frequencyPenalty": 0.0,
+        "presencePenalty": 0.0,
+        "maxLength": 4000,
+        "llmResponseType": "json",
+        "scheme": "{\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}",
+        "model": "gpt-4o",
+        "promptMessage": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "You are provided with a statement from the user. \r\nThis statement is a step in a Function. \r\n\r\nYou MUST determine which module can be used to solve the statement.\r\nYou MUST choose from available modules provided by the assistant to determine which module. If you cannot choose module, set [\"N/A\"]\r\n\r\nvariable is defined with starting and ending %, e.g. %filePath%\r\n! defines a call to a function\r\n\r\nModules: Name of module. Suggest 1-3 modules that could be used to solve the step.\r\nStepName: Short name for step, lower case, use _ instead of /\r\nStepDescription: Rewrite the step as you understand it, make it detailed\r\nRead the description of each module, then determine which module to use.\r\nMake sure to return valid JSON, escape double quote if needed\r\n\r\nBe Concise\r\n"
+              },
+              {
+                "type": "text",
+                "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"StepDescription\": string,\n\t\"Modules\": string[],\n\t\"StepName\": string\n}"
+              }
+            ]
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ValidateModule\", \"description\": \"Validates a variable, make sure it's not empty, follows a pattern, is a number, etc.. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.UdpModule\" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.SerializerModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangModule\", \"description\": \"Compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime for plang, can run goal and step(s) in plang. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Writes to the output stream. Ask user a question, either straight or with help of llm. output stream can be to the user(default), system, log, audit, metric. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set, Get & return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable. When making Dictionary<string, Tuple<`2> keyValues is key(string), value(object) and default value(object) => map to \"%key%\": { \"Item1\": \"%value%\",\"Item2\": \"%defaultValue\" }.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp). \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found or if [code] is defined.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff, set %formatted% = Format(%data%), %user% = GetUser %id%. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "return %result%"
+              }
+            ]
+          }
+        ],
+        "type": "StepInformationBuilder",
+        "caching": true,
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Return the value stored in the variable %result% to the caller or output stream.\",\n\t\"Modules\": [\"PLang.Modules.LocalOrGlobalVariableModule\"],\n\t\"StepName\": \"return_variable\"\n}\n```"
+      },
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": "3a5b14594b543f93fa504806029c0cb5cf70882a90f245d73c720d7f64b5d4fb",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\modules\\OutputModule\\AskUserLlm.goal"
+    }
+  ],
+  "SubGoals": [],
+  "Description": "The AskUserLlm goal is designed to interact with a user by validating input instructions, reading and processing files related to user interaction, and returning a result based on user input. It first checks that the variables \\%developerInstructionForResult\\%, \\%text\\%, and \\%options\\% are not empty. It then reads a system file to prepare a prompt for the user, asks the user for input, and processes the response using another system file. Finally, it returns the result of the interaction.",
+  "Visibility": 1,
+  "GoalFileName": "AskUserLlm.goal",
+  "RelativeGoalPath": "\\modules\\OutputModule\\AskUserLlm.goal",
+  "RelativeGoalFolderPath": "\\modules\\OutputModule",
+  "RelativePrPath": ".build\\modules\\OutputModule\\AskUserLlm\\00. Goal.pr",
+  "RelativePrFolderPath": ".build\\modules\\OutputModule\\AskUserLlm",
+  "BuilderVersion": "1.0.0.0",
+  "GoalInfo": null,
+  "Injections": [],
+  "Signature": null,
+  "Hash": "605db9d9492fab288cf6d08c6d19088b75c15d464e702a40f03294e4b01b9de8",
+  "IncomingVariablesRequired": [
+    "developerInstructionForResult",
+    "text",
+    "options"
+  ]
+}

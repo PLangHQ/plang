@@ -61,5 +61,10 @@ namespace PLangTests.Mocks
 		{
 			throw new NotImplementedException();
 		}
+
+		public void SetRootDirectory(string path)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

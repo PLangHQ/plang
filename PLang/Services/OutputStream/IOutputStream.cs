@@ -6,6 +6,7 @@ namespace PLang.Services.OutputStream
 	{
 		public Stream Stream { get; }
 		public Stream ErrorStream { get; }
+		public string Output { get; }
 		public Task Write(object? obj, string type = "text", int statusCode = 200);
         public Task WriteToBuffer(object? obj, string type = "text", int statusCode = 200);
         public string Read();

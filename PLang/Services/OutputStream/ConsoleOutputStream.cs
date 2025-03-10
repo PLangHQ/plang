@@ -18,19 +18,22 @@ namespace PLang.Services.OutputStream
 
 		public ConsoleOutputStream() {
 			Console.OutputEncoding = Encoding.UTF8;
+			Console.InputEncoding = Encoding.UTF8;
 			standardOutputStream = Console.OpenStandardOutput();
 			standardErrorStream = Console.OpenStandardError();
 		}
 		public Stream Stream => standardOutputStream;
 		public Stream ErrorStream => standardErrorStream;
 
-		public async Task<string> Ask(string text, string type = "text", int statusCode = 104, Dictionary<string, object>? parameters = null)
+		public string Output { get => "text"; }
+
+		public async Task<string> Ask(string text, string type = "text", int statusCode = 202, Dictionary<string, object>? parameters = null)
 		{
 			Console.WriteLine("[Ask] " + text);
-
+		
 			string line = Console.ReadLine();
 			return line;
-		}
+		}		
 
 
 		public string Read()

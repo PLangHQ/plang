@@ -42,6 +42,7 @@ namespace PLang.SafeFileSystem
 			}
 			set { rootPath = value; }
 		}
+
 		public string SharedPath { get; private set; }
 		public string GoalsPath { get; private set; }
 		public string BuildPath { get; private set; }

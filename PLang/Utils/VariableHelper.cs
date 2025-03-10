@@ -19,11 +19,20 @@ namespace PLang.Utils
 		private readonly PLangAppContext context;
 		private readonly ISettings settings;
 		private readonly MemoryStack memoryStack;
+		private JsonSerializerOptions jsonSerializerOptions;
 		public VariableHelper(PLangAppContext context, MemoryStack memoryStack, ISettings settings)
 		{
 			this.context = context;
 			this.settings = settings;
 			this.memoryStack = memoryStack;
+
+			jsonSerializerOptions = new JsonSerializerOptions
+			{
+				Converters = { new ObjectValueConverter() },
+				ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles, //.Preserve,
+				//DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+				IgnoreReadOnlyProperties = true
+			};
 		}
 
 		public static bool IsEmpty(object? value)
@@ -277,13 +286,7 @@ namespace PLang.Utils
 			try
 			{
 
-				var options = new JsonSerializerOptions
-				{
-					Converters = { new ObjectValueConverter() },
-					ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve,
-					DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
-					IgnoreReadOnlyProperties = true
-				};
+				
 				// TODO: Not sure how to solve this ugly code. 
 
 				// doing this bad code, because Newtonsoft give stackoverflow on objects
@@ -296,11 +299,6 @@ namespace PLang.Utils
 					return JsonConvert.SerializeObject(message);
 				}
 				string json;
-				var settings = new JsonSerializerSettings
-				{
-					Error = HandleSerializationError
-				};
-
 				
 				if (obj is System.Collections.IList list)
 				{
@@ -315,7 +313,7 @@ namespace PLang.Utils
 				}
 				else
 				{
-					json = System.Text.Json.JsonSerializer.Serialize(obj, options);
+					json = System.Text.Json.JsonSerializer.Serialize(obj, jsonSerializerOptions);
 				}
 				return JToken.Parse(json);
 			}

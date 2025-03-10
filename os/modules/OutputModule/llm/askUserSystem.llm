@@ -1,0 +1,15 @@
+User is being asked a <question> that he should answer
+
+<question>
+%text%
+<question>
+
+Your job is to format the <question> with the following <options> so he can answer the <question>. 
+
+
+<options>
+%options%
+<options>
+
+Write out a <question> with the <options> so user understands question and what options he has
+For lists, number out the items, dont show the id

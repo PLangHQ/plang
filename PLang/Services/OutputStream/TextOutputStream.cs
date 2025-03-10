@@ -21,6 +21,8 @@ namespace PLang.Services.OutputStream
 		public Stream Stream { get { return this.memoryStream; } }
 		public Stream ErrorStream { get { return this.memoryStream; } }
 
+		public string Output => "text";
+
 		public async Task<string> Ask(string text, string type, int statusCode = 400, Dictionary<string, object>? parameters = null)
 		{
 			httpContext.Response.SendChunked = true;

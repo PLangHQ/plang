@@ -24,7 +24,7 @@ using static Dapper.SqlMapper;
 
 namespace PLang.Modules.DbModule
 {
-	[Description("Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources")]
+	[Description("Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp)")]
 	public class Program : BaseProgram, IDisposable
 	{
 		public static string DbConnectionContextKey = "DbConnection";
@@ -58,19 +58,35 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("localPath is location of the database on the drive for sqlite. localPath can be string with variables, default is null")]
-		public async Task CreateDataSource(string name = "data", string? localPath = null, string databaseType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
+		public async Task CreateDataSource(string name = "data", [HandlesVariable] string? localPath = null, string databaseType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
 		{
-			localPath = GetPath(localPath);
+			localPath = variableHelper.LoadVariables(localPath)?.ToString();
+
 			await moduleSettings.CreateDataSource(name, localPath, databaseType, setAsDefaultForApp, keepHistoryEventSourcing);
 		}
 
-		public async Task<IError?> SetDataSourceName(string name, string? localPath = null)
+		public async Task<IError?> SetDataSourceName(string? name = null, string? localPath = null)
 		{
-			(var dataSource, var error) = await moduleSettings.GetDataSource(name, localPath);
+			(var dataSource, var error) = await moduleSettings.GetDataSource(name, localPath, goalStep);
 			if (error != null) return error;
 
 			context[ReservedKeywords.CurrentDataSource] = dataSource;
 			return null;
+		}
+
+		[Description("Create Isolated data pattern (IDP) for the system.")]
+		public async Task<(ReturnDictionary<string, object?>? Variables, IError? Error)> CreateIsolatedDataPattern(string id, string setupGoalFile, string? name = null, bool keepHistory = true, bool defaultForApp = false)
+		{
+			var parameters = new Dictionary<string, object?>();
+			parameters.Add("id", id);
+			parameters.Add("setupGoalFile", setupGoalFile);
+			parameters.Add("name", !string.IsNullOrEmpty(name) ? name : id);
+			parameters.Add("keepHistory", keepHistory);
+			parameters.Add("defaultForApp", defaultForApp);
+
+			var callModule = GetProgramModule<CallGoalModule.Program>();
+			var result = await callModule.RunGoal("/modules/DbModule/CreateIsolatedDataPattern", parameters, isolated: true);
+			return result;
 		}
 
 		public async Task BeginTransaction()

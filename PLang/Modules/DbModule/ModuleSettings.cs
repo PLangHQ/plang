@@ -3,6 +3,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1.X509.Qualified;
+using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.AskUser;
 using PLang.Errors.Builder;
@@ -41,7 +42,7 @@ namespace PLang.Modules.DbModule
 		}
 
 
-		public record DataSource(string Name, string TypeFullName, string ConnectionString, string DbName, string SelectTablesAndViews, string SelectColumns, bool KeepHistory = true, bool IsDefault = false)
+		public record DataSource(string Name, string TypeFullName, string ConnectionString, string DbName, string SelectTablesAndViews, string SelectColumns, bool KeepHistory = true, bool IsDefault = false, string? LocalPath = null)
 		{
 			public bool IsDefault { get; set; } = IsDefault;
 		}
@@ -49,13 +50,15 @@ namespace PLang.Modules.DbModule
 
 		public async Task<IError?> CreateDataSource(string dataSourceName = "data", string? localPath = null, string dbType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
 		{
-			var listOfDbSupported = GetSupportedDbTypes();
-			if (dbType == "sqlite")
+			if (dbType == "sqlite" || dbType == typeof(SqliteConnection).FullName)
 			{
-				if (localPath == null) localPath = "./.db/" + dataSourceName + ".sqlite";
+				if (string.IsNullOrEmpty(localPath)) localPath = "./.db/" + dataSourceName + ".sqlite";
+				if (localPath.StartsWith("/")) localPath = "." + localPath;
+
 				return await CreateSqliteDataSource(dataSourceName, localPath, setAsDefaultForApp, keepHistoryEventSourcing);
 			}
 
+			var listOfDbSupported = GetSupportedDbTypes();
 			var dataSources = await GetAllDataSources();
 			var dataSource = dataSources.FirstOrDefault(p => p.Name.ToLower() == dataSourceName.ToLower());
 			if (dataSource != null) {
@@ -96,44 +99,49 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 
 		private async Task<IError?> CreateSqliteDataSource(string dataSourceName, string localPath, bool setAsDefaultForApp, bool keepHistoryEventSourcing)
 		{
+			
+
 			string fileName = Path.GetFileName(localPath);
 			if (string.IsNullOrEmpty(fileName))
 			{
 				return new Error($"You need to define the path with a file name", 
-					FixSuggestion: $"When you create the datasource include the path, e.g. '- create datasource name: {dataSourceName}, path: '/%Identity%/.db/data.sqlite'");
+					FixSuggestion: $"When you create the datasource include the path, e.g. '- create datasource name: {dataSourceName}, path: '/.db/%Identity%/data.sqlite'");
 			}
 			if (fileSystem.File.Exists(localPath)) return null;
 
+			localPath = localPath.Replace(fileSystem.RootDirectory, "");
 			string dataSourcePath = $"Data Source={localPath};";
 			AppContext.TryGetSwitch(ReservedKeywords.Test, out bool inMemory);
 			if (inMemory)
 			{
 				dataSourcePath = "Data Source=InMemoryDataDb;Mode=Memory;Cache=Shared;";
 			}
-			string dirPath = Path.GetDirectoryName(localPath);
+			string dirPath = Path.GetDirectoryName(localPath) ?? "/.db/";
 			if (!fileSystem.Directory.Exists(dirPath))
 			{
 				fileSystem.Directory.CreateDirectory(dirPath);
 			}
+
+			
 			using (var fs = fileSystem.File.Create(localPath))
 			{
 				fs.Close();
 			}
 
-			if (localPath == "./.db/data.sqlite")
-			{
-				var statement = new SqlStatement("SELECT name FROM sqlite_master WHERE type IN ('table', 'view');", "SELECT name, type, [notnull] as isNotNull, pk as isPrimaryKey FROM pragma_table_info(@TableName);");
-
-				var dataSource = new DataSource(dataSourceName, typeof(SqliteConnection).FullName, dataSourcePath, "data", statement.SelectTablesAndViewsInMyDatabaseSqlStatement, statement.SelectColumnsFromTablesSqlStatement, keepHistoryEventSourcing, setAsDefaultForApp);
-				await AddDataSourceToSettings(dataSource);
-			}
+			
+			var dataSource = GetSqliteDataSource(dataSourceName, dataSourcePath, keepHistoryEventSourcing, setAsDefaultForApp);
+			await AddDataSourceToSettings(dataSource);
+			
 			return null;
 		}
 
 		private DataSource GetSqliteDataSource(string name, string path, bool history = true, bool isDefault = false)
 		{
 			var statement = new SqlStatement("SELECT name FROM sqlite_master WHERE type IN ('table', 'view');", "SELECT name, type, [notnull] as isNotNull, pk as isPrimaryKey FROM pragma_table_info(@TableName);");
-
+			if (!path.Contains("Data Source"))
+			{
+				path = $"Data Source={path}";
+			}
 			var dataSource = new DataSource(name, typeof(SqliteConnection).FullName, path, "data", statement.SelectTablesAndViewsInMyDatabaseSqlStatement, statement.SelectColumnsFromTablesSqlStatement, history, isDefault);
 			return dataSource;
 		}
@@ -240,6 +248,7 @@ Be concise"));
 
 		private async Task<List<DataSource>> AddDataSourceToSettings(DataSource dataSource)
 		{
+			// todo: This needs to move to its own table, Datasource table, to expensive to load all datasources using json when thousands of datasources are avialable
 			var dataSources = await GetAllDataSources();
 			if (dataSources.Count == 0)
 			{
@@ -280,60 +289,54 @@ Be concise"));
 			return settings.GetValues<DataSource>(this.GetType()).ToList();
 		}
 
-		public async Task<(DataSource?, IError?)> GetDataSource(string dataSourceName, string? localDbPath = null)
+		public async Task<(DataSource?, IError?)> GetDataSource(string? dataSourceName = null, string? localDbPath = null, GoalStep? step = null)
 		{
-			if (localDbPath != null && localDbPath != defaultLocalDbPath)
-			{
-				if (!fileSystem.File.Exists(localDbPath))
-				{
-					return (null, await GetDataSourceNotFoundError(dataSourceName));
-				}
-
-				var ds = GetSqliteDataSource(dataSourceName, localDbPath);
-				context.AddOrReplace(ReservedKeywords.CurrentDataSource, ds);
-				return (ds, null);
-			}
-
 			var dataSources = await GetAllDataSources();
-			var dataSource = dataSources.FirstOrDefault(p => p.Name == dataSourceName);
-			if (dataSourceName == "data" && localDbPath == defaultLocalDbPath)
+			DataSource? dataSource = null;
+			if (localDbPath != null)
+			{		
+				if (localDbPath.StartsWith("/")) localDbPath = "." + localDbPath;
+				dataSource = dataSources.FirstOrDefault(p => p.ConnectionString.TrimEnd(';').EndsWith("=" + localDbPath));
+			}
+			else
 			{
-				await CreateDataSource();
-				dataSources = await GetAllDataSources();
 				dataSource = dataSources.FirstOrDefault(p => p.Name == dataSourceName);
 			}
 
-			if (dataSource == null) return (null, await GetDataSourceNotFoundError(dataSourceName));
-
-			context.AddOrReplace(ReservedKeywords.CurrentDataSource, dataSource);
+			if (dataSource == null)
+			{
+				return (null, await GetDataSourceNotFoundError(dataSourceName, localDbPath, step));
+			}
+			
 			return (dataSource, null);
 		}
 
-		public async Task<Error> GetDataSourceNotFoundError(string dataSourceName)
+		public async Task<Error> GetDataSourceNotFoundError(string? dataSourceName, string? localDbPath, GoalStep? step)
 		{
 			var dataSources = await GetAllDataSources();
 			logger.LogDebug("Datasources: {0}", JsonConvert.SerializeObject(dataSources));
-			logger.LogDebug("All Settings: {0}", JsonConvert.SerializeObject(settings.GetAllSettings()));
-			
-			return new Error($"Datasource {dataSourceName} does not exists", Key: "DataSourceNotFound",
-						FixSuggestion: $@"create a step that create a new Data source, e.g.
-- create datasource 'my/custom/path/data.sqlite'
+			string path = (!string.IsNullOrEmpty(localDbPath)) ? $" (path:{localDbPath})" : "";
+			string stepExample = (step != null) ? step.Text : "set datasource name:myCustomDb";
+
+			return new Error($"Datasource {dataSourceName}{path} does not exists", Key: "DataSourceNotFound",
+						FixSuggestion: $@"create a step that creates a new Data source, e.g.
+- create datasource, name: myCustomDb, path '/.db/my_custom_data.sqlite'
 
 or you can catch this error and create it on this error
 
-- set datasource 'my/custom/path/data.sqlite', 
-	on error key=DataSourceNotFound, call CreateDataSource, continue to next step
+- {stepExample}, 
+	on error key=DataSourceNotFound, call CreateDataSource and retry
 
-where the CreateDataSource would create the database and table
+where the goal CreateDataSource would create the database and table
 ", HelpfulLinks: "https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.DbModule.md");
 		}
 
 		public async Task<DataSource> GetCurrentDataSource()
 		{
-			if (context.ContainsKey(ReservedKeywords.CurrentDataSource + "_string"))
+			if (context.ContainsKey(ReservedKeywords.CurrentDataSource + "_name"))
 			{
-				string name = context[ReservedKeywords.CurrentDataSource + "_string"].ToString();
-				(var ds, _) = await GetDataSource(name);
+				string name = context[ReservedKeywords.CurrentDataSource + "_name"].ToString();
+				(var ds, _) = await GetDataSource(name, null, null);
 
 				if (ds != null) return ds;
 			}
@@ -347,7 +350,7 @@ where the CreateDataSource would create the database and table
 			var dataSources = await GetAllDataSources();
 			if (dataSources.Count == 0)
 			{
-				string name = context.ContainsKey(ReservedKeywords.CurrentDataSource + "_string") ? context[ReservedKeywords.CurrentDataSource + "_string"].ToString() : "data";
+				string name = context.ContainsKey(ReservedKeywords.CurrentDataSource + "_name") ? context[ReservedKeywords.CurrentDataSource + "_name"].ToString() : "data";
 				await CreateDataSource(name);
 				dataSources = await GetAllDataSources();
 			}

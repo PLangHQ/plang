@@ -23,7 +23,7 @@ namespace PLang.Utils
 			startOfPath = (pathWithDirSep.Length > 2) ? pathWithDirSep.Substring(0, 2) : pathWithDirSep;
 			if (startOfPath == (Path.DirectorySeparatorChar.ToString() + Path.DirectorySeparatorChar.ToString()))
 			{
-				var absolutePath = Path.Join(Path.GetPathRoot(fileSystem.GoalsPath), pathWithDirSep);
+				var absolutePath = Path.Join(Path.GetPathRoot(fileSystem.RootDirectory), pathWithDirSep);
 				return Path.GetFullPath(absolutePath);
 			}
 
@@ -36,18 +36,18 @@ namespace PLang.Utils
 
 			if (pathWithDirSep.StartsWith(Path.DirectorySeparatorChar.ToString()))
 			{
-				pathWithDirSep = Path.Join(fileSystem.GoalsPath, pathWithDirSep);
+				pathWithDirSep = Path.Join(fileSystem.RootDirectory, pathWithDirSep);
 				return Path.GetFullPath(pathWithDirSep);
 			}
 			else
 			{
-				if (goal != null && goal.AbsoluteGoalFolderPath.StartsWith(fileSystem.GoalsPath))
+				if (goal != null && goal.AbsoluteGoalFolderPath.StartsWith(fileSystem.RootDirectory))
 				{
 					pathWithDirSep = Path.Join(goal.AbsoluteGoalFolderPath, pathWithDirSep);
 				}
 				else
 				{
-					pathWithDirSep = Path.Join(fileSystem.GoalsPath, pathWithDirSep);
+					pathWithDirSep = Path.Join(fileSystem.RootDirectory, pathWithDirSep);
 				}
 				pathWithDirSep = Path.GetFullPath(pathWithDirSep);
 			}

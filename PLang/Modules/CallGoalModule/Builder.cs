@@ -1,4 +1,5 @@
-﻿using PLang.Building.Model;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Errors;
 using PLang.Errors.Builder;
@@ -44,6 +45,10 @@ set %data% = ParseDocument(%document%) => ParseDocument is goalName, parameter i
 			if (gf != null && gf.Parameters.Count > 0)
 			{
 				var goalName = gf.Parameters[0].Value?.ToString();
+				if (goalName != null && goalName.Contains("%"))
+				{
+					return build;
+				}
 				if (string.IsNullOrEmpty(goalName))
 				{
 					return (null, new BuilderError("Goal name is empty", "GoalNotDefined"));

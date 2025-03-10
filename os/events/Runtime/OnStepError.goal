@@ -1,2 +1,2 @@
 OnStepError
-- write out system error %!error%
+- write out system error "%!error%"

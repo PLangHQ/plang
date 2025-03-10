@@ -43,7 +43,7 @@ namespace PLang.Utils
 				}
 				else
 				{
-					text += $"{tab}{lines[i].Trim()}{Environment.NewLine}";
+					text += $"{tab}{lines[i]}{Environment.NewLine}";
 				}
 			}
 			return text.TrimEnd();
@@ -116,13 +116,13 @@ namespace PLang.Utils
 			if (error.FixSuggestion != null)
 			{
 				fixSuggestions = $@"🛠️  Fix Suggestions:
-{FormatLine(error.FixSuggestion, "-", true)}";
+{FormatLine(error.FixSuggestion, null, true)}";
 			}
 			string? helpfulLinks = null;
 			if (error.HelpfulLinks != null)
 			{
 				helpfulLinks += $@"🔗 Helpful Links:
-{FormatLine(error.HelpfulLinks, "-", true)}";
+{FormatLine(error.HelpfulLinks, null, true)}";
 			}
 
 			string firstLine = $"";
@@ -130,6 +130,7 @@ namespace PLang.Utils
 			{
 				firstLine = $@"📄 File: {step.RelativeGoalPath}:{step.LineNumber}
 🔢 Line: {step.LineNumber}
+🧩 Key:  {error.Key}
 
 🔎 Error Details - Code snippet that the error occured:
 {FormatLine(step.Text.MaxLength(160), indent: true)}

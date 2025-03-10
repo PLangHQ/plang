@@ -15,6 +15,8 @@ namespace PLang.Services.OutputStream
 
 		public Stream ErrorStream => errorStream;
 
+		public string Output => "text";
+
 		public new void Dispose() {
 			base.Dispose();
 			errorStream.Dispose();

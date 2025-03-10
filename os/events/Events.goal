@@ -6,5 +6,4 @@ Events
 - on step error, key:"InvalidParameter", call Runtime/HandleBadInstructionFile
 - on step error key:"PrFileNotFound", call Runtime/PrFileNotFound
 - on step error, call Runtime/DebugErrorInIde, only when args --debug
-- on step error, call Runtime/OnStepError
-- on goal error, call Runtime/OnGoalError
+- on app error, call Runtime/OnAppError

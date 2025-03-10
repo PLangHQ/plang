@@ -67,6 +67,8 @@ namespace PLang.Runtime
 
 			string absolutePathToGoal = fileSystem.Path.Join(fileSystem.RootDirectory, relativeAppPath).AdjustPathToOs();
 			string goalToRun = fileSystem.Path.Join(relativeAppPath, goalName);
+			if (goalToRun.StartsWith("//")) goalToRun = goalToRun.Substring(1);
+
 			if (isolated)
 			{
 				container = serviceContainerFactory.CreateContainer(context, fileSystem.RootDirectory, "/", outputStreamFactory, outputSystemStreamFactory,
@@ -79,16 +81,18 @@ namespace PLang.Runtime
 				engine = container.GetInstance<IEngine>();
 				engine.Init(container);
 
-				if (context.ContainsKey(ReservedKeywords.IsEvent))
-				{
-					engine.GetContext().AddOrReplace(ReservedKeywords.IsEvent, true);
-				}
+				
 				foreach (var item in ms.GetMemoryStack())
 				{
 					engine.GetMemoryStack().Put(item.Value);
 				}
+				foreach (var item in context)
+				{
+					engine.GetContext().AddOrReplace(item.Key, item.Value);
+				}
 
 				goal = engine.GetGoal(goalToRun);
+
 			} else if (CreateNewContainer(absolutePathToGoal))
 			{
 				var pathAndGoal = GetAppAbsolutePath(absolutePathToGoal, goalName);

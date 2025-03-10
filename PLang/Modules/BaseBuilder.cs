@@ -252,6 +252,7 @@ Your job is:
 
 Variable is defined with starting and ending %, e.g. %filePath%. 
 %Variable% MUST be wrapped in quotes("") in json response, e.g. {{ ""name"":""%name%"" }}
+null is used to represent no value, e.g. {{ ""name"": null }}
 Variables should not be changed, they can include dot(.) and parentheses()
 Keep \n, \r, \t that are submitted to you for string variables
 Parameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==

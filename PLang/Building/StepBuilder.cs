@@ -405,11 +405,12 @@ Builder will continue on other steps but not this one: ({step.Text}).
 	- Retry can happend before or after GoalToCall is executed depending on user intent
 
 	Examples: 
+		on error key: DataSourceNotFound, call CreateDataSource and retry => { IgnoreError = false, Key = ""DataSourceNotFound"", GoalToCall = ""CreateDataSource"", RetryHandler = { RetryCount = 1 } }
 		on error continue to next step => { IgnoreError = true, GoalToCall = null, RetryHandler = null } 
 		on error call HandleError => { IgnoreError = false, GoalToCall = ""HandleError"", RetryHandler = null }
 		on error retry 3 times over 3 seconds, call HandleError => { IgnoreError = false, GoalToCall = ""HandleError"", RunRetryBeforeCallingGoalToCall = true, RetryHandler = { RetryCount = 3, RetryDelayInMilliseconds = 1000 } }
 		on error call HandleError, retry 3 times over 3 seconds => { IgnoreError = false, GoalToCall = ""HandleError"", RunRetryBeforeCallingGoalToCall = false, RetryHandler = { RetryCount = 3, RetryDelayInMilliseconds = 1000 } }
-		on error message 'timeout' ignore error => {[{ IgnoreError = true, Mesage = ""timeout"", RetryHandler = null }], CachingHandler = null}
+		on error message 'timeout' ignore error => { IgnoreError = true, RetryHandler = null }
 ";
 			}
 
@@ -612,7 +613,7 @@ Be Concise
 				var dataSourceName = parameter.Value.ToString() ?? "data";
 				var datasources = settings.GetValues<DataSource>(typeof(PLang.Modules.DbModule.ModuleSettings)).ToList();
 				var datasource = datasources.FirstOrDefault(p => p.Name == dataSourceName);
-				var isDefaultForApp = ((bool?)gf.Parameters.FirstOrDefault(p => p.Name == "setAsDefaultForApp")?.Value) ?? false;
+				var isDefaultForApp = ((gf.Parameters.FirstOrDefault(p => p.Name == "setAsDefaultForApp")?.Value) as bool?) ?? false;
 				/*
 				if (datasource == null)
 				{

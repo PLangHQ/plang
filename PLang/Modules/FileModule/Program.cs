@@ -189,7 +189,7 @@ namespace PLang.Modules.FileModule
 		}
 
 		[Description("Reads a text file and write the content into a variable(return value)")]
-		public async Task<object?> ReadTextFile(string path, string? returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = false,
+		public async Task<object?> ReadTextFile(string path, string? returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = true,
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? splitOn = null)
 		{
 			var absolutePath = GetPath(path);

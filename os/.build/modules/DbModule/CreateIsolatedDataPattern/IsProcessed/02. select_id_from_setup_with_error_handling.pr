@@ -1,0 +1,78 @@
+{
+  "Action": {
+    "FunctionName": "SelectOneRow",
+    "Parameters": [
+      {
+        "Type": "string",
+        "Name": "sql",
+        "Value": "SELECT id as setupId FROM Setup WHERE hash=@hash"
+      },
+      {
+        "Type": "List<object>",
+        "Name": "SqlParameters",
+        "Value": [
+          {
+            "ParameterName": "hash",
+            "VariableNameOrValue": "%step.Hash%",
+            "TypeFullName": "System.String"
+          }
+        ]
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "System.Int64",
+        "VariableName": "setupId"
+      }
+    ]
+  },
+  "Text": "select id as setupId from Setup where hash=%step.Hash%, return 1\n    on error 'no such table', call CreateSetup and retry",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+    "model": "gpt-4o",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Map user command to either of these c# functions: \r\n\r\n## csharp function ##\r\nobject? SelectOneRow(String sql, List<object>()? SqlParameters = null)\r\n## csharp function ##\r\n\r\n## Rules ##\r\nSelectOneRow function is used when user defines to select only one row or when filtering by %id%\r\nVariable is defined with starting and ending %, e.g. %filePath%.\r\n\\% is escape from start of variable, would be used in LIKE statements, then VariableNameOrValue should keep the escaped character, e.g. the user input \\%%title%\\%, should map to VariableNameOrValue=\\%%title%\\%\r\nSqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName). SqlParameters @id MUST be type System.Int64\r\nTypeFullName is Full name of the type in c#, System.String, System.Double, etc.\r\n%Now% variable is type of DateTime. %Now% variable should be injected as SqlParameter \r\nReturnValue rules: \r\n- If user does not define 'write to ..' statement then Columns being returned with type if defined by user.\r\n- integer/int should always be System.Int64. \r\n\r\nIf table name is a variable, keep the variable in the sql statement\r\nYou MUST generate a valid sql statement for SQLite.\r\nYou MUST provide SqlParameters if SQL has @parameter.\r\n## Rules ##\r\n"
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "# examples #\r\n- select everything from tableX, write to %table% => sql: SELECT * FROM tableX, ReturnValue: %table%\r\n- select from tableB where id=%id%, into %table% => sql: SELECT * FROM tableB WHERE id=@id, ReturnValue: %table%, SqlParameters:[{ParameterName:id, VariableNameOrValue:%id%, TypeFullName:int64}],\r\n- select * from %table% WHERE %name% and value_id=%valueId%, write to %result% => sql: SELECT * FROM %table% WHERE name=@name and value_id=@valueId, ReturnValue: %result%, SqlParameters:[{ParameterName:name, VariableNameOrValue:%name%, TypeFullName:string}, {ParameterName:valueId, VariableNameOrValue:%valueId%, TypeFullName:int}] \r\n- select id, name from users, write to %user% => then ReturnValue is %user% object\r\n- select id, name from users => then ReturnValue is %id%, %name% objects\r\n- select * from addresses WHERE address like %address%% => sql SELECT * from addresses WHERE address LIKE @address, SqlParameters:[{\"ParameterName\":\"address\", \"VariableNameOrValue\":\"%address%%\", \"TypeFullName\":\"int64\"}]\r\n# examples #\r\n# ParameterInfo scheme #\r\n{\"ParameterName\" : string, \"VariableNameOrValue\" : object, \"TypeFullName\" : string, }\r\n# ParameterInfo scheme #\r\n"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "select id as setupId from Setup where hash=%step.Hash%, return 1\n    on error 'no such table', call CreateSetup and retry"
+          }
+        ]
+      }
+    ],
+    "type": "PLang.Modules.DbModule.Builder",
+    "caching": true,
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"SelectOneRow\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"string\",\n\t\t\t\"Name\": \"sql\",\n\t\t\t\"Value\": \"SELECT id as setupId FROM Setup WHERE hash=@hash\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"List<object>\",\n\t\t\t\"Name\": \"SqlParameters\",\n\t\t\t\"Value\": [\n\t\t\t\t{\n\t\t\t\t\t\"ParameterName\": \"hash\",\n\t\t\t\t\t\"VariableNameOrValue\": \"%step.Hash%\",\n\t\t\t\t\t\"TypeFullName\": \"System.String\"\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t],\n\t\"ReturnValues\": [\n\t\t{\n\t\t\t\"Type\": \"System.Int64\",\n\t\t\t\"VariableName\": \"setupId\"\n\t\t}\n\t]\n}\n```"
+  },
+  "RunOnBuild": false
+}
