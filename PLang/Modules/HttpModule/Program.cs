@@ -9,6 +9,7 @@ using PLang.Interfaces;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO.Abstractions;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -330,6 +331,7 @@ namespace PLang.Modules.HttpModule
 		public async Task<(object?, IError?)> Request(string url, string method, object? data = null, bool doNotSignRequest = false,
 			Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
+			
 			var requestUrl = variableHelper.LoadVariables(url);
 			if (requestUrl == null)
 			{
@@ -339,7 +341,7 @@ namespace PLang.Modules.HttpModule
 			{
 				requestUrl = "https://" + requestUrl;
 			}
-
+			
 			using (var httpClient = httpClientFactory.CreateClient())
 			{
 				var httpMethod = new HttpMethod(method);
@@ -364,57 +366,66 @@ namespace PLang.Modules.HttpModule
 
 						request.Content = new StringContent(body, System.Text.Encoding.GetEncoding(encoding), contentType);
 					}
+					
 					if (!doNotSignRequest)
 					{
 						await SignRequest(request);
 					}
+					
 					httpClient.Timeout = new TimeSpan(0, 0, timeoutInSeconds);
-
+					
 					var task = httpClient.SendAsync(request);
-					using (var response = await task)
+					try
 					{
-						if (!response.IsSuccessStatusCode)
+						using (var response = await task)
 						{
-							string errorBody = await response.Content.ReadAsStringAsync();
-							if (string.IsNullOrEmpty(errorBody))
+							if (!response.IsSuccessStatusCode)
 							{
-								errorBody = $"{response.ReasonPhrase} ({(int)response.StatusCode})";
+								string errorBody = await response.Content.ReadAsStringAsync();
+								if (string.IsNullOrEmpty(errorBody))
+								{
+									errorBody = $"{response.ReasonPhrase} ({(int)response.StatusCode})";
+								}
+								return (null, new ProgramError(errorBody, goalStep, function, StatusCode: (int)response.StatusCode));
 							}
-							return (null, new ProgramError(errorBody, goalStep, function, StatusCode: (int)response.StatusCode));
-						}
 
-						var mediaType = response.Content.Headers.ContentType?.MediaType;
-						if (!IsTextResponse(mediaType))
-						{
-							var bytes = await response.Content.ReadAsByteArrayAsync();
-							return (bytes, null);
-						}
-
-						string responseBody = await response.Content.ReadAsStringAsync();
-						if (response.Content.Headers.ContentType?.MediaType == "application/json" && JsonHelper.IsJson(responseBody))
-						{
-							try
+							var mediaType = response.Content.Headers.ContentType?.MediaType;
+							if (!IsTextResponse(mediaType))
 							{
-								return (JsonConvert.DeserializeObject(responseBody), null);
+								var bytes = await response.Content.ReadAsByteArrayAsync();
+								return (bytes, null);
 							}
-							catch (Exception ex)
+
+							string responseBody = await response.Content.ReadAsStringAsync();
+							if (response.Content.Headers.ContentType?.MediaType == "application/json" && JsonHelper.IsJson(responseBody))
 							{
-								return (null, new ProgramError(ex.Message, goalStep, function));
+								try
+								{
+									return (JsonConvert.DeserializeObject(responseBody), null);
+								}
+								catch (Exception ex)
+								{
+									return (null, new ProgramError(ex.Message, goalStep, function));
+								}
 							}
+							else if (IsXml(response.Content.Headers.ContentType?.MediaType))
+							{
+								// todo: here we convert any xml to json so user can use JSONPath to get the content. 
+								// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
+								XmlDocument xmlDoc = new XmlDocument();
+								xmlDoc.LoadXml(Regex.Replace(responseBody, "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
+
+								string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
+								return (JsonConvert.DeserializeObject(jsonString), null);
+
+							}
+
+							return (responseBody, null);
 						}
-						else if (IsXml(response.Content.Headers.ContentType?.MediaType))
-						{
-							// todo: here we convert any xml to json so user can use JSONPath to get the content. 
-							// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
-							XmlDocument xmlDoc = new XmlDocument();
-							xmlDoc.LoadXml(Regex.Replace(responseBody, "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
-
-							string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
-							return (JsonConvert.DeserializeObject(jsonString), null);
-
-						}
-
-						return (responseBody, null);
+					} catch (System.Net.Http.HttpRequestException ex)
+					{
+						int statusCode = (int?) ex.StatusCode ?? 503;
+						return (null, new ProgramError(ex.Message, goalStep, function, StatusCode: statusCode));
 					}
 				}
 			}

@@ -23,6 +23,7 @@ using System.Linq.Dynamic.Core;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
+using System.Xml.Linq;
 
 
 namespace PLang.Modules.FileModule
@@ -35,16 +36,17 @@ namespace PLang.Modules.FileModule
 		private readonly ILogger logger;
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
+		private readonly IFileAccessHandler fileAccessHandler;
 
 		public Program(IPLangFileSystem fileSystem, ISettings settings,
-			ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine) : base()
+			ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine, IFileAccessHandler fileAccessHandler) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
 			this.logger = logger;
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
-
+			this.fileAccessHandler = fileAccessHandler;
 			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 		}
 
@@ -71,6 +73,11 @@ namespace PLang.Modules.FileModule
 			return fileSystem.RootDirectory;
 		}
 		*/
+
+		public async Task GiveAccess(string path)
+		{
+			fileAccessHandler.GiveAccess(fileSystem.RootDirectory, path);
+		}
 
 		public async Task<IError?> WaitForFile(string filePath, int timeoutInMilliseconds = 30 * 1000, bool waitForAccess = false)
 		{
@@ -159,16 +166,18 @@ namespace PLang.Modules.FileModule
 
 			return base64;
 		}
-		public async Task<object?> ReadJson(string path, bool throwErrorOnNotFound = false,
+		public async Task<(object?, IError?)> ReadJson(string path, bool throwErrorOnNotFound = true,
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8")
 		{
 			return await ReadTextFile(path, null, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding);
 		}
-		public async Task<(List<object>?, IError?)> ReadJsonLineFile(string path, bool throwErrorOnNotFound = false,
+		public async Task<(List<object>?, IError?)> ReadJsonLineFile(string path, bool throwErrorOnNotFound = true,
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? newLineSymbol = null)
 		{
 			newLineSymbol ??= Environment.NewLine;
-			var lines = (await ReadTextFile(path, null, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding, newLineSymbol) as string[]);
+			var result = await ReadTextFile(path, null, throwErrorOnNotFound, loadVariables, emptyVariableIfNotFound, encoding, newLineSymbol);
+			var lines = result.Item1 as string[];
+
 			if (lines == null && !throwErrorOnNotFound) return (null, null);
 			if (lines == null)
 			{
@@ -189,7 +198,7 @@ namespace PLang.Modules.FileModule
 		}
 
 		[Description("Reads a text file and write the content into a variable(return value)")]
-		public async Task<object?> ReadTextFile(string path, string? returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = true,
+		public async Task<(object?, IError?)> ReadTextFile(string path, string? returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = true,
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? splitOn = null)
 		{
 			var absolutePath = GetPath(path);
@@ -198,10 +207,9 @@ namespace PLang.Modules.FileModule
 			{
 				if (throwErrorOnNotFound)
 				{
-					throw new FileNotFoundException($"{absolutePath} cannot be found");
+					return (null, new ProgramError($"{absolutePath} cannot be found", goalStep, function, Key: "FileNotFound"));
 				}
-				logger.LogWarning($"!Warning! File {absolutePath} not found");
-				return returnValueIfFileNotExisting;
+				return (returnValueIfFileNotExisting, null);
 			}
 
 			using (var stream = fileSystem.FileStream.New(absolutePath, FileMode.Open, FileAccess.Read, FileShare.Read))
@@ -218,11 +226,11 @@ namespace PLang.Modules.FileModule
 					{
 						if (splitOn == "\n" || splitOn == "\r" || splitOn == "\r\n")
 						{
-							return content.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None);
+							return (content.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.None), null);
 						}
-						return content.Split(splitOn);
+						return (content.Split(splitOn), null);
 					}
-					return content ?? "";
+					return (content ?? returnValueIfFileNotExisting, null);
 
 				}
 			}

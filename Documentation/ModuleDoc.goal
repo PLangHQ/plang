@@ -1,0 +1,32 @@
+Modules
+- validate %ModuleName% is not empty
+    on error call AskForModuleName and retry
+- get all Program.cs files in ../Plang/Modules/%ModuleName%, include sub dirs, write to %files%
+- foreach %files%, call !GenerateModuleDocumentation file=%item%
+
+AskForModuleName
+- ask "What Module?", write to %ModuleName%
+- if folder ../Plang/Modules/%ModuleName% exists then 
+    - end goal
+- call goal AskForModuleName
+
+GenerateModuleDocumentation
+- read file 'template/modules/GenerateModuleDocumentation/system.txt', into %system%, load variables
+- [plang] get csharp code for %file%, into %listOfMethods%
+- foreach %listOfMethods% call GenerateDocForMethod item=%method%
+
+GenerateDocForMethod
+- read llm/methodDocSystem.txt, write to %system%
+- write out 'Asking for: %method.Name%'
+- [llm] system: %system%
+    user:%method%
+    scheme: {
+        "title":string,
+        "simple":{"description":string, "example":string}
+        "advanced": {"description":string, "example":string}
+        "error_handling": {"description":string, "example":string}
+        "cache_handling": {"description":string, "example":string}
+        "docs":string
+        }
+    write to %doc%
+- write %doc% to /json/%ModuleName%/%method.Name%.json

@@ -1,6 +1,7 @@
 ﻿using Jil;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.SettingsService;
@@ -159,7 +160,7 @@ namespace PLang.Utils
 							}
 							else
 							{
-								jobject[jsonProperty] = (variable.Value == null) ? "" : JsonSerialize(variable.Value);
+								jobject[jsonProperty] = (variable.Value == null) ? null : JsonSerialize(variable.Value);
 							}
 						} else
 						{
@@ -540,7 +541,7 @@ namespace PLang.Utils
 
 				if (!emptyIfNotFound && variableValue == null)
 				{
-					throw new Exception($"Variable {variable} not found");
+					throw new VariableDoesNotExistsException($"Variable {variable} not found");
 				}
 				var content2 = content;
 				if (false && JsonHelper.IsJson(content) && variableValue != null && variableValue.GetType() != typeof(string) && !variableValue.GetType().IsPrimitive)
@@ -581,7 +582,7 @@ namespace PLang.Utils
 		public static bool IsVariable(object? variable)
 		{
 			if (variable == null || string.IsNullOrEmpty(variable.ToString())) return false;
-			return Regex.IsMatch(variable.ToString()!, @"^%[\p{L}\p{N}#+-\[\]_\.\+\(\)\*\<\>\!\s]*%$");
+			return Regex.IsMatch(variable.ToString()!, @"^%[\p{L}\p{N}#+-\[\]_\.\+\(\)\*\<\>\!\s\""]*%$");
 		}
 
 		public static bool IsSetting(string variableName)

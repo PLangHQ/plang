@@ -31,7 +31,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -65,12 +65,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "31eb940dcd80d92fd8bda03e717f507e8b75ce391728e44fe32e9c231c926d94",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "call !LoadVars",
@@ -100,7 +103,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -134,12 +137,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "b2a9258e1bfbf7e5d51438aa083105baa21b8f4a206f6514150d4850294c3217",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "call !GeneratePlangExamples",
@@ -169,7 +175,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -203,12 +209,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "ec4a39a25e6e5a752f5b97a7caf46142cb9eeabac49564866ada1d750e340053",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "write out '- doing basic'",
@@ -238,7 +247,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -272,12 +281,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "cd7c4e10179b5a2032a8a413d030db875b024332ffd6d9cbf07bbdd74f5a61b7",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "call !GenerateDocForBasic",
@@ -307,7 +319,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -341,12 +353,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "ceb643b8c1dfdf025d8e6d40c8f11a2ac62a4f624a65498fb563ee6aeab56684",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "write out '- doing adv'",
@@ -376,7 +391,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -410,12 +425,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "e6849adcaac07cc25c63bdb511bfe5818b454c38f883e3a9bd748b4bd0a22033",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "call !GenerateDocForAdvanced",
@@ -445,7 +463,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -479,12 +497,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "372a8120b8fc573dc5196f2149bbf7a9617a2002a171cbc8cc310a29960d58c8",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     }
   ],
   "SubGoals": [],
@@ -495,11 +516,11 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\CreateDocs\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\CreateDocs",
-  "BuilderVersion": "0.1.15.1",
+  "BuilderVersion": "1.0.0.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "50d70b663ba43d45e479b97ca8fa82fc3a8733c16cc641bcbbb130da22ac8d02",
+  "Hash": "8713240a95491126dac3d40d501a1f73ea77d411cd349d810e4183aafbcaa0ab",
   "IncomingVariablesRequired": [
     "module.moduleName"
   ]

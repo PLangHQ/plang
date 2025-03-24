@@ -6,7 +6,7 @@ Publish
 - get file paths of .zip in ./, write to %zipFiles%
 - foreach %zipFiles% call !RemoveFile
 - [code] create string list for 'linux-x64', 'win-x64', 'linux-arm64', 'osx-x64', 'osx-arm64', write to %platforms%
-- foreach %platforms%, call BuildPlatform %platform%=item
+- foreach %platforms%, call BuildPlatform item=%platform%
 
 BuildPlatform
 - write out 'Publish %platform%'

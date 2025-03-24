@@ -128,13 +128,10 @@
   <ItemGroup>
     <Compile Remove="Goals\**" />
     <Compile Remove="Modules\NewFolder1\**" />
-    <Compile Remove="Modules\NewFolder\**" />
     <EmbeddedResource Remove="Goals\**" />
     <EmbeddedResource Remove="Modules\NewFolder1\**" />
-    <EmbeddedResource Remove="Modules\NewFolder\**" />
     <None Remove="Goals\**" />
     <None Remove="Modules\NewFolder1\**" />
-    <None Remove="Modules\NewFolder\**" />
   </ItemGroup>
 
 </Project>

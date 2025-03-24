@@ -71,8 +71,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "de4a2561df9e2b32a9ee0860fbec8707a725905f1ec86f02b2f34a04459b0ece",
-      "BuilderVersion": null
+      "Hash": "9df15c258b496100abda22ed57ca886544d79843540327f9376bfd4116b3b402",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\events\\external\\plang\\builder\\events\\CheckGoals.goal"
     },
     {
       "Text": "set string var %goalToCall% = %stepPr.Action.Parameters[1].Value.ToString().Replace(\"!\", \"\")%",
@@ -142,8 +143,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "64b668cfd2451839477049110af87db8bae974c6927dc1eec136ab6a2d1320f9",
-      "BuilderVersion": null
+      "Hash": "939e1b711431c9e6941a70924c999db1c243ff2e4c137b3e2009151c11c9bbf6",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\events\\external\\plang\\builder\\events\\CheckGoals.goal"
     },
     {
       "Text": "if %goalToCall% != \"String\" then",
@@ -213,8 +215,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "e99998675bb0fda740086f8ed7ddf3e127d66b711a968c47df89d16b97fc4dbf",
-      "BuilderVersion": null
+      "Hash": "f2fc98f393cf0fc132ff2a133db12e506732f0686263cd24a785f795665c9f3a",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\events\\external\\plang\\builder\\events\\CheckGoals.goal"
     },
     {
       "Text": "search in /.build/ for all dirs with name '%goalToCall%' , write to %dirs%",
@@ -284,8 +287,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "d56ee6a2f91a1e37bdda7df76e6e91243902808967f9acd983c91f96b3c3d903",
-      "BuilderVersion": null
+      "Hash": "aca8df685818b206b120ca2f1d1e501c07d89298eb63cbbf20306e6cbb420386",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\events\\external\\plang\\builder\\events\\CheckGoals.goal"
     },
     {
       "Text": "create list %missingGoals% = []",
@@ -355,8 +359,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "90a6f56ea69cb58a5c58096470555cd3b976e3b1e78dbb9656d681bb30d04633",
-      "BuilderVersion": null
+      "Hash": "cecd92111c05fd144fab716d04a0b91ab7e200e0304d6dcc4775751243437c2f",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\events\\external\\plang\\builder\\events\\CheckGoals.goal"
     },
     {
       "Text": "if %dirs.Length% == 0 then",
@@ -426,8 +431,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "bb6b8cfdca38230565b16c55b3f847139816c15629591d84d6351270a78e12ef",
-      "BuilderVersion": null
+      "Hash": "ed3515ac0c8235f8356658a76dea50537d2ad71be027e03a766e55255124ac1f",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\events\\external\\plang\\builder\\events\\CheckGoals.goal"
     },
     {
       "Text": "append to %missingGoals% = '%goal.GoalName% - %step.Text% - Missing goal: %goalToCall%'",
@@ -497,8 +503,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "94cc4d7de4c5a08b35537eec9f6cbcfec0c57c8ed6cb454e3a1594376a491368",
-      "BuilderVersion": null
+      "Hash": "bff535c06b45a8210ef7a98c654d752af91792d12e1ffa84e38779dbe50f0987",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\events\\external\\plang\\builder\\events\\CheckGoals.goal"
     }
   ],
   "SubGoals": [],
@@ -509,11 +516,11 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\builder\\events",
   "RelativePrPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals\\CheckCallingGoal\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals\\CheckCallingGoal",
-  "BuilderVersion": "0.15.5.0",
+  "BuilderVersion": "1.0.0.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "94e3b2ab8338268adf5200abe6276ae4ab1b9b9091a408ead51eaa6b4cb1dd36",
+  "Hash": "d7cc5ce74d397117ab4947a00dc362e5911fba3759336c7c60202ec137f15077",
   "IncomingVariablesRequired": [
     "step.RelativePrPath",
     "goal.GoalName",

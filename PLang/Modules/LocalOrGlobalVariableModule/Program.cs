@@ -318,9 +318,12 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		}
 
 
-		public async Task RemoveVariable([HandlesVariableAttribute] string key)
+		public async Task RemoveVariables([HandlesVariableAttribute] string[] keys)
 		{
-			memoryStack.Remove(key);
+			foreach (var key in keys)
+			{
+				memoryStack.Remove(key);
+			}
 		}
 
 

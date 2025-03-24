@@ -688,6 +688,12 @@ namespace PLang.Modules.WebCrawlerModule
 			await GetCurrentPage(null, tabIndex);
 		}
 
+		public async Task AddDefaultRequestHeader(Dictionary<string, object> headers)
+		{
+			var browser = await GetBrowser();
+			await browser.SetExtraHTTPHeadersAsync(headers.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString()!));
+		}
+
 		[Description("key of the header, find by value where operation (startwith|endwith|equals|contains), request object can be null, will use the pages request")]
 		public async Task<(Dictionary<string, string>?, IError?)> GetRequestHeaders(string? key = null, string keyOperator = "equals", string? value = null, string? valueOperator = "contains", IRequest? request = null)
 		{

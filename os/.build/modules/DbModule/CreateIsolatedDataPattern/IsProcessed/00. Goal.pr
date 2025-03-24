@@ -458,8 +458,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "6e6b54760fe55f33f5356264b0ab0a31d62fe03c67db0c9531a5bb2544ac5a28",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "fca2d5c6e28ba79a8c28b3387394bc6dfdd71d57e690aab125ba28145023a4bb",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\DbModule\\CreateIsolatedDataPattern.goal"
     },
     {
@@ -547,7 +547,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "9cdb4f50cf986d77e19bad8abe34512032b12433a1056dee837082b0c7af6195",
+  "Hash": "de6e1e7dd3aae69360aa458ab65a8e62e61a6188f126c7403affa7ea5745b53c",
   "IncomingVariablesRequired": [
     "name",
     "step.Hash",

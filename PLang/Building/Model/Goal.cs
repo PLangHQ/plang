@@ -122,7 +122,11 @@ namespace PLang.Building.Model
 
 		[System.Text.Json.Serialization.JsonIgnore]
 		public bool IsOS { get; set; }
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
 
+		[System.Text.Json.Serialization.JsonIgnore]
+		public int CurrentStepIndex { get; set; }
 		public string GetGoalAsString()
 		{
 			string goal = "";

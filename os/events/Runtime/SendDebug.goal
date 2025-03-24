@@ -1,17 +1,25 @@
 SendDebug
 - set default value %plang.debugPort% = 60877
 - post http://localhost:%plang.debugPort%/ 
+    data: { "line":"%!CallingStep.LineNumber%", "AbsolutePath":"%!CallingGoal.AbsoluteGoalPath%" }
+    timeout 30 min
+    write to %!DebugReponse%
+- if %!DebugReponse.continue%, call SendDebugInfo
+
+SendDebugInfo
+- post http://localhost:%plang.debugPort%/ 
     data: {
-        "!Goal":"%!Goal%", 
-        "!Step":"%!Step%",
+        "!Goal":"%!CallingGoal%", 
+        "!Step":"%!CallingStep%",
         "!Event":"%!Event%",
         "!IsHttpRequest":"%!IsHttpRequest%",
         "!StepIndex": %!StepIndex%,
         "!Instruction": "%!Instruction%",
         "!MemoryStack":"%!memorystack%",
-        "AbsolutePath":"%!Goal.AbsoluteGoalPath%",        
+        "AbsolutePath":"%!CallingGoal.AbsoluteGoalPath%",        
         "!Error":"%!error%",
         }
+    dont sign
     timeout 30 min
     on error 'No connection could', call WriteToConsole
     on error, call WriteOutError

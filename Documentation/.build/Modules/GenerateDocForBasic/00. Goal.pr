@@ -31,7 +31,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -65,12 +65,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "409ca7412790c470b70980090449b1640351b5f6c2d5e59d1b274901b518e051",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "read file 'template/modules/GenerateDocForBasic/user.txt', into %user%, load variables",
@@ -100,7 +103,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -134,12 +137,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "eaf4edc561eb51ba4016032def2ffc490097b63fa43d5b9fa67dfe722bc35ffd",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "read 'template/modules/GenerateDocForBasic/system.txt', into %system%, load variables",
@@ -169,7 +175,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -203,12 +209,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "a364265dba7679c84357c44c78367cf024d84ae02997d6a8ce32dce8986973ec",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "[llm]: system: %system%\n        user: %user%\n        write to %documentation%",
@@ -228,7 +237,8 @@
       "CacheHandler": {
         "TimeInMilliseconds": 50,
         "CacheKey": null,
-        "CachingType": 0
+        "CachingType": 0,
+        "Location": null
       },
       "CancellationHandler": null,
       "Custom": {},
@@ -242,7 +252,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -276,12 +286,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "92f5639ea3e3210309a9c788685b9b913b82f59a088c841632efdf1aad1e1ce1",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "[code] replace \"[PlangCodeExamples]\" in %documentation% with %plangExamplesDescription%, write to %documentationOut%(string)",
@@ -311,7 +324,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -345,12 +358,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "04260b25b3e13c13187cc46e497309dc340cd201c59e567f8375e30a5f0d8e9f",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "write %documentationOut% to /output/modules/%module.namespace%.md, overwrite",
@@ -380,7 +396,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -414,12 +430,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "2183a1ba803654769bbcdb16d55dda9842d892639c47bbe8de8fb6d344130079",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     }
   ],
   "SubGoals": [],
@@ -430,11 +449,11 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\GenerateDocForBasic\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\GenerateDocForBasic",
-  "BuilderVersion": "0.1.15.1",
+  "BuilderVersion": "1.0.0.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "cb5e3c57539c10c4a09c61cfe0c4356e0da9bd5faac09183bd5bac4fe837cac8",
+  "Hash": "d1825d5e6a91bcd0f5c1e4c8203d38b81d6074fa2af3d2e9186f96d0a4ef4406",
   "IncomingVariablesRequired": [
     "ModuleName",
     "plangExamplesDescription",

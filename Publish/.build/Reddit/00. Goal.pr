@@ -71,89 +71,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "7450e4fd4c03177af0f89ca761b0a65efedef6ee1ed9ebfb3bc4223320e1dfb5",
+      "Hash": "19296c96d84125afd8aba7737a8fd5086d112129a5addcc2624d24f63f482a7c",
       "BuilderVersion": null,
-      "PrFile": {
-        "Action": {
-          "FunctionName": "NavigateToUrl",
-          "Parameters": [
-            {
-              "Type": "String",
-              "Name": "url",
-              "Value": "https://www.reddit.com/r/plang/submit/"
-            },
-            {
-              "Type": "Boolean",
-              "Name": "useUserSession",
-              "Value": true
-            },
-            {
-              "Type": "Boolean",
-              "Name": "hideTestingMode",
-              "Value": true
-            },
-            {
-              "Type": "Nullable`1<Int32>",
-              "Name": "timeoutInSecods",
-              "Value": 5
-            }
-          ],
-          "ReturnValues": null
-        },
-        "Text": "navigate to https://www.reddit.com/r/plang/submit/, use profile, hide bot, timeout 5 sec",
-        "Reload": false,
-        "LlmRequest": {
-          "temperature": 0.0,
-          "top_p": 0.0,
-          "frequencyPenalty": 0.0,
-          "presencePenalty": 0.0,
-          "maxLength": 4000,
-          "llmResponseType": "json",
-          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-          "model": "gpt-4o",
-          "promptMessage": [
-            {
-              "role": "system",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-                },
-                {
-                  "type": "text",
-                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-                }
-              ]
-            },
-            {
-              "role": "assistant",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "## functions available starts ##\r\nStartBrowser(String? browserType = \"Chrome\", Boolean? headless = False, Boolean? useUserSession = False, String? userSessionPath, Boolean? incognito = False, Boolean? kioskMode = False, Dictionary`2<String, String>? argumentOptions, Nullable`1<Int32>? timoutInSeconds = 30, Boolean? hideTestingMode = False)  : void // browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.. \nGetElement(String? cssSelector)  : PlangWebElement \nCloseBrowser()  : void\nNavigateToUrl(String url, String? browserType = \"Chrome\", Boolean? headless = False, Boolean? useUserSession = False, String? userSessionPath, Boolean? incognito = False, Boolean? kioskMode = False, Dictionary`2<String, String>? argumentOptions, String? browserConsoleOutputVariableName, Nullable`1<Int32>? timeoutInSecods, Boolean? hideTestingMode = False)  : void // browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.. \nScrollToBottom()  : void\nScrollToElementByCssSelector(String cssSelector)  : void\nScrollToElement(PlangWebElement element)  : void\nGetElementByText(String text, String? operatorOnText = \"equals\", Nullable`1<Int32>? timeoutInSeconds, String? cssSelector)  : PlangWebElement  // operatorOnText can be equals|contains|startswith|endswith. \nWaitForElementToDissapear(Object elementOrCssSelector, Int32 timeoutInSeconds)  : void\nWaitForElementToAppear(String cssSelector, Int32? timeoutInSeconds = 30, Boolean? waitForElementToChange = False)  : void\nSetTimeout(Nullable`1<Int32>? timoutInSeconds)  : void\nSetFocus(String? cssSelector, Nullable`1<Int32>? timoutInSeconds)  : void\nClickOnElement(PlangWebElement element)  : void\nClick(String cssSelector, Int32? elementAtToClick = 0, Boolean? clickAllMatchingElements = False, Nullable`1<Int32>? timeoutInSeconds, String? shadowDomCssSelector)  : void\nAcceptAlert()  : String \nSendKey(String value, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void // Writes a text to an element. \nSetTextOnElement(String text, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds, Boolean? clearElementFirst = False, String? shadowDomCssSelector)  : void // set the text of an element other than input by cssSelector. \nInput(String value, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds, String? shadowDomCssSelector)  : void // set the value of an input by cssSelector. \nSelectByValue(String value, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void // select an option by its value in select input by cssSelector. \nSelectByText(String text, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void // select an option by its text in select input by cssSelector. \nSubmit(String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void\nGetElements(String? cssSelector, String? shadowDomCssSelector)  : List`1 \nGetElementsInsideElement(String elementName, IWebElement element)  : List<PlangWebElement> \nSerializeElements(List`1<List`1> elementsArray)  : List`1 \nFindElementAndExtractAttribute(String attribute, String? cssSelector, PlangWebElement? element)  : String \nExtractContent(Boolean? clearHtml = True, String? cssSelector, PlangWebElement? element)  : List`1 \nSwitchTab(Int32 tabIndex)  : void\nWait(Int32? milliseconds = 1000)  : void\nTakeScreenshotOfWebsite(String saveToPath, Boolean? overwrite = False)  : void\r\n## functions available ends ##"
-                },
-                {
-                  "type": "text",
-                  "text": "Make sure to convert html tags into correct css selector format"
-                }
-              ]
-            },
-            {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "navigate to https://www.reddit.com/r/plang/submit/, use profile, hide bot, timeout 5 sec"
-                }
-              ]
-            }
-          ],
-          "type": "PLang.Modules.WebCrawlerModule.Builder",
-          "caching": true,
-          "RawResponse": "```json\n{\n\t\"FunctionName\": \"NavigateToUrl\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"url\",\n\t\t\t\"Value\": \"https://www.reddit.com/r/plang/submit/\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean\",\n\t\t\t\"Name\": \"useUserSession\",\n\t\t\t\"Value\": true\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean\",\n\t\t\t\"Name\": \"hideTestingMode\",\n\t\t\t\"Value\": true\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Nullable`1<Int32>\",\n\t\t\t\"Name\": \"timeoutInSecods\",\n\t\t\t\"Value\": 5\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
-        },
-        "RunOnBuild": false
-      }
+      "RelativeGoalPath": "\\Reddit.goal"
     },
     {
       "Text": "[webc] write %post% to element, \"faceplate-textarea-input\"",
@@ -223,79 +143,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "68bcdc3df1f800cff4d0e03c6a227832c2f1b56c0691492739297deb6917141e",
+      "Hash": "1f071c58df896dc6286f29a383929856a905a3876106ca09afe3cd9eb079cf9c",
       "BuilderVersion": null,
-      "PrFile": {
-        "Action": {
-          "FunctionName": "SetTextOnElement",
-          "Parameters": [
-            {
-              "Type": "String",
-              "Name": "text",
-              "Value": "%post%"
-            },
-            {
-              "Type": "String",
-              "Name": "cssSelector",
-              "Value": "faceplate-textarea-input"
-            }
-          ],
-          "ReturnValues": null
-        },
-        "Text": "[webc] write %post% to element, \"faceplate-textarea-input\"",
-        "Reload": false,
-        "LlmRequest": {
-          "temperature": 0.0,
-          "top_p": 0.0,
-          "frequencyPenalty": 0.0,
-          "presencePenalty": 0.0,
-          "maxLength": 4000,
-          "llmResponseType": "json",
-          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-          "model": "gpt-4o",
-          "promptMessage": [
-            {
-              "role": "system",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-                },
-                {
-                  "type": "text",
-                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-                }
-              ]
-            },
-            {
-              "role": "assistant",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "## functions available starts ##\r\nStartBrowser(String? browserType = \"Chrome\", Boolean? headless = False, Boolean? useUserSession = False, String? userSessionPath, Boolean? incognito = False, Boolean? kioskMode = False, Dictionary`2<String, String>? argumentOptions, Nullable`1<Int32>? timoutInSeconds = 30, Boolean? hideTestingMode = False)  : void // browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.. \nGetElement(String? cssSelector)  : PlangWebElement \nCloseBrowser()  : void\nNavigateToUrl(String url, String? browserType = \"Chrome\", Boolean? headless = False, Boolean? useUserSession = False, String? userSessionPath, Boolean? incognito = False, Boolean? kioskMode = False, Dictionary`2<String, String>? argumentOptions, String? browserConsoleOutputVariableName, Nullable`1<Int32>? timeoutInSecods, Boolean? hideTestingMode = False)  : void // browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.. \nScrollToBottom()  : void\nScrollToElementByCssSelector(String cssSelector)  : void\nScrollToElement(PlangWebElement element)  : void\nGetElementByText(String text, String? operatorOnText = \"equals\", Nullable`1<Int32>? timeoutInSeconds, String? cssSelector)  : PlangWebElement  // operatorOnText can be equals|contains|startswith|endswith. \nWaitForElementToDissapear(Object elementOrCssSelector, Int32 timeoutInSeconds)  : void\nWaitForElementToAppear(String cssSelector, Int32? timeoutInSeconds = 30, Boolean? waitForElementToChange = False)  : void\nSetTimeout(Nullable`1<Int32>? timoutInSeconds)  : void\nSetFocus(String? cssSelector, Nullable`1<Int32>? timoutInSeconds)  : void\nClickOnElement(PlangWebElement element)  : void\nClick(String cssSelector, Int32? elementAtToClick = 0, Boolean? clickAllMatchingElements = False, Nullable`1<Int32>? timeoutInSeconds)  : void\nAcceptAlert()  : String \nSendKey(String value, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void // Writes a text to an element. \nSetTextOnElement(String text, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds, Boolean? clearElementFirst = True)  : void // set the text of an element other than input by cssSelector. \nInput(String value, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void // set the value of an input by cssSelector. \nSelectByValue(String value, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void // select an option by its value in select input by cssSelector. \nSelectByText(String text, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void // select an option by its text in select input by cssSelector. \nSubmit(String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void\nGetElements(String? cssSelector)  : List`1 \nGetElementsInsideElement(String elementName, IWebElement element)  : List<PlangWebElement> \nSerializeElements(List`1<List`1> elementsArray)  : List`1 \nFindElementAndExtractAttribute(String attribute, String? cssSelector, PlangWebElement? element)  : String \nExtractContent(Boolean? clearHtml = True, String? cssSelector, PlangWebElement? element)  : List`1 \nSwitchTab(Int32 tabIndex)  : void\nWait(Int32? milliseconds = 1000)  : void\nTakeScreenshotOfWebsite(String saveToPath, Boolean? overwrite = False)  : void\r\n## functions available ends ##\r\n## defined variables ##\r\npost (type:object), \r\n## defined variables ##"
-                },
-                {
-                  "type": "text",
-                  "text": "Make sure to convert html tags into correct css selector format"
-                }
-              ]
-            },
-            {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "[webc] write %post% to element, \"faceplate-textarea-input\""
-                }
-              ]
-            }
-          ],
-          "type": "PLang.Modules.WebCrawlerModule.Builder",
-          "caching": true,
-          "RawResponse": "```json\n{\n\t\"FunctionName\": \"SetTextOnElement\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"text\",\n\t\t\t\"Value\": \"%post%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"cssSelector\",\n\t\t\t\"Value\": \"faceplate-textarea-input\"\n\t\t}\n\t]\n}\n```"
-        },
-        "RunOnBuild": false
-      }
+      "RelativeGoalPath": "\\Reddit.goal"
     },
     {
       "Text": "[webc] write \"Hello\" to element, div[slot=\"rte\"]",
@@ -365,79 +215,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "936e6fcb7f490b88e63d9b6c374608c48a1cf26724a7155c5a09e812f066ea82",
+      "Hash": "f1d6d72069ff0874df5c1a51bf2ed501d8f778ec83cd3259e2aa109873739358",
       "BuilderVersion": null,
-      "PrFile": {
-        "Action": {
-          "FunctionName": "SetTextOnElement",
-          "Parameters": [
-            {
-              "Type": "String",
-              "Name": "text",
-              "Value": "Hello"
-            },
-            {
-              "Type": "String",
-              "Name": "cssSelector",
-              "Value": "div[slot=\"rte\"]"
-            }
-          ],
-          "ReturnValues": null
-        },
-        "Text": "[webc] write \"Hello\" to element, div[slot=\"rte\"]",
-        "Reload": false,
-        "LlmRequest": {
-          "temperature": 0.0,
-          "top_p": 0.0,
-          "frequencyPenalty": 0.0,
-          "presencePenalty": 0.0,
-          "maxLength": 4000,
-          "llmResponseType": "json",
-          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-          "model": "gpt-4o",
-          "promptMessage": [
-            {
-              "role": "system",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-                },
-                {
-                  "type": "text",
-                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-                }
-              ]
-            },
-            {
-              "role": "assistant",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "## functions available starts ##\r\nStartBrowser(String? browserType = \"Chrome\", Boolean? headless = False, Boolean? useUserSession = False, String? userSessionPath, Boolean? incognito = False, Boolean? kioskMode = False, Dictionary`2<String, String>? argumentOptions, Nullable`1<Int32>? timoutInSeconds = 30, Boolean? hideTestingMode = False)  : void // browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.. \nGetElement(String? cssSelector)  : PlangWebElement \nCloseBrowser()  : void\nNavigateToUrl(String url, String? browserType = \"Chrome\", Boolean? headless = False, Boolean? useUserSession = False, String? userSessionPath, Boolean? incognito = False, Boolean? kioskMode = False, Dictionary`2<String, String>? argumentOptions, String? browserConsoleOutputVariableName, Nullable`1<Int32>? timeoutInSecods, Boolean? hideTestingMode = False)  : void // browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.. \nScrollToBottom()  : void\nScrollToElementByCssSelector(String cssSelector)  : void\nScrollToElement(PlangWebElement element)  : void\nGetElementByText(String text, String? operatorOnText = \"equals\", Nullable`1<Int32>? timeoutInSeconds, String? cssSelector)  : PlangWebElement  // operatorOnText can be equals|contains|startswith|endswith. \nWaitForElementToDissapear(Object elementOrCssSelector, Int32 timeoutInSeconds)  : void\nWaitForElementToAppear(String cssSelector, Int32? timeoutInSeconds = 30, Boolean? waitForElementToChange = False)  : void\nSetTimeout(Nullable`1<Int32>? timoutInSeconds)  : void\nSetFocus(String? cssSelector, Nullable`1<Int32>? timoutInSeconds)  : void\nClickOnElement(PlangWebElement element)  : void\nClick(String cssSelector, Int32? elementAtToClick = 0, Boolean? clickAllMatchingElements = False, Nullable`1<Int32>? timeoutInSeconds, String? shadowDomCssSelector)  : void\nAcceptAlert()  : String \nSendKey(String value, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void // Writes a text to an element. \nSetTextOnElement(String text, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds, Boolean? clearElementFirst = False, String? shadowDomCssSelector)  : void // set the text of an element other than input by cssSelector. \nInput(String value, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds, String? shadowDomCssSelector)  : void // set the value of an input by cssSelector. \nSelectByValue(String value, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void // select an option by its value in select input by cssSelector. \nSelectByText(String text, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void // select an option by its text in select input by cssSelector. \nSubmit(String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void\nGetElements(String? cssSelector, String? shadowDomCssSelector)  : List`1 \nGetElementsInsideElement(String elementName, IWebElement element)  : List<PlangWebElement> \nSerializeElements(List`1<List`1> elementsArray)  : List`1 \nFindElementAndExtractAttribute(String attribute, String? cssSelector, PlangWebElement? element)  : String \nExtractContent(Boolean? clearHtml = True, String? cssSelector, PlangWebElement? element)  : List`1 \nSwitchTab(Int32 tabIndex)  : void\nWait(Int32? milliseconds = 1000)  : void\nTakeScreenshotOfWebsite(String saveToPath, Boolean? overwrite = False)  : void\r\n## functions available ends ##"
-                },
-                {
-                  "type": "text",
-                  "text": "Make sure to convert html tags into correct css selector format"
-                }
-              ]
-            },
-            {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "[webc] write \"Hello\" to element, div[slot=\"rte\"]"
-                }
-              ]
-            }
-          ],
-          "type": "PLang.Modules.WebCrawlerModule.Builder",
-          "caching": true,
-          "RawResponse": "```json\n{\n\t\"FunctionName\": \"SetTextOnElement\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"text\",\n\t\t\t\"Value\": \"Hello\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"cssSelector\",\n\t\t\t\"Value\": \"div[slot=\\\"rte\\\"]\"\n\t\t}\n\t]\n}\n```"
-        },
-        "RunOnBuild": false
-      }
+      "RelativeGoalPath": "\\Reddit.goal"
     },
     {
       "Text": "[webc] click on id=\"submit-post-button\"",
@@ -507,89 +287,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "98490beb20dca180181116ee6141d7a286b98e699fc017dd3137f323c023333e",
+      "Hash": "1304616b74edae30697d2d14d94d80a821584060a5a92628d8227e474c117206",
       "BuilderVersion": null,
-      "PrFile": {
-        "Action": {
-          "FunctionName": "Click",
-          "Parameters": [
-            {
-              "Type": "String",
-              "Name": "cssSelector",
-              "Value": "#submit-post-button"
-            },
-            {
-              "Type": "Int32?",
-              "Name": "elementAtToClick",
-              "Value": 0
-            },
-            {
-              "Type": "Boolean?",
-              "Name": "clickAllMatchingElements",
-              "Value": false
-            },
-            {
-              "Type": "Nullable`1<Int32>?",
-              "Name": "timeoutInSeconds",
-              "Value": null
-            }
-          ],
-          "ReturnValues": null
-        },
-        "Text": "[webc] click on id=\"submit-post-button\"",
-        "Reload": false,
-        "LlmRequest": {
-          "temperature": 0.0,
-          "top_p": 0.0,
-          "frequencyPenalty": 0.0,
-          "presencePenalty": 0.0,
-          "maxLength": 4000,
-          "llmResponseType": "json",
-          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-          "model": "gpt-4o",
-          "promptMessage": [
-            {
-              "role": "system",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-                },
-                {
-                  "type": "text",
-                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-                }
-              ]
-            },
-            {
-              "role": "assistant",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "## functions available starts ##\r\nStartBrowser(String? browserType = \"Chrome\", Boolean? headless = False, Boolean? useUserSession = False, String? userSessionPath, Boolean? incognito = False, Boolean? kioskMode = False, Dictionary`2<String, String>? argumentOptions, Nullable`1<Int32>? timoutInSeconds = 30, Boolean? hideTestingMode = False)  : void // browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.. \nGetElement(String? cssSelector)  : PlangWebElement \nCloseBrowser()  : void\nNavigateToUrl(String url, String? browserType = \"Chrome\", Boolean? headless = False, Boolean? useUserSession = False, String? userSessionPath, Boolean? incognito = False, Boolean? kioskMode = False, Dictionary`2<String, String>? argumentOptions, String? browserConsoleOutputVariableName, Nullable`1<Int32>? timeoutInSecods, Boolean? hideTestingMode = False)  : void // browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.. \nScrollToBottom()  : void\nScrollToElementByCssSelector(String cssSelector)  : void\nScrollToElement(PlangWebElement element)  : void\nGetElementByText(String text, String? operatorOnText = \"equals\", Nullable`1<Int32>? timeoutInSeconds, String? cssSelector)  : PlangWebElement  // operatorOnText can be equals|contains|startswith|endswith. \nWaitForElementToDissapear(Object elementOrCssSelector, Int32 timeoutInSeconds)  : void\nWaitForElementToAppear(String cssSelector, Int32? timeoutInSeconds = 30, Boolean? waitForElementToChange = False)  : void\nSetTimeout(Nullable`1<Int32>? timoutInSeconds)  : void\nSetFocus(String? cssSelector, Nullable`1<Int32>? timoutInSeconds)  : void\nClickOnElement(PlangWebElement element)  : void\nClick(String cssSelector, Int32? elementAtToClick = 0, Boolean? clickAllMatchingElements = False, Nullable`1<Int32>? timeoutInSeconds)  : void\nAcceptAlert()  : String \nSendKey(String value, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void // Writes a text to an element. \nSetTextOnElement(String text, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds, Boolean? clearElementFirst = False)  : void // set the text of an element other than input by cssSelector. \nInput(String value, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void // set the value of an input by cssSelector. \nSelectByValue(String value, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void // select an option by its value in select input by cssSelector. \nSelectByText(String text, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void // select an option by its text in select input by cssSelector. \nSubmit(String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void\nGetElements(String? cssSelector)  : List`1 \nGetElementsInsideElement(String elementName, IWebElement element)  : List<PlangWebElement> \nSerializeElements(List`1<List`1> elementsArray)  : List`1 \nFindElementAndExtractAttribute(String attribute, String? cssSelector, PlangWebElement? element)  : String \nExtractContent(Boolean? clearHtml = True, String? cssSelector, PlangWebElement? element)  : List`1 \nSwitchTab(Int32 tabIndex)  : void\nWait(Int32? milliseconds = 1000)  : void\nTakeScreenshotOfWebsite(String saveToPath, Boolean? overwrite = False)  : void\r\n## functions available ends ##"
-                },
-                {
-                  "type": "text",
-                  "text": "Make sure to convert html tags into correct css selector format"
-                }
-              ]
-            },
-            {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "[webc] click on id=\"submit-post-button\""
-                }
-              ]
-            }
-          ],
-          "type": "PLang.Modules.WebCrawlerModule.Builder",
-          "caching": true,
-          "RawResponse": "```json\n{\n\t\"FunctionName\": \"Click\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"cssSelector\",\n\t\t\t\"Value\": \"#submit-post-button\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Int32?\",\n\t\t\t\"Name\": \"elementAtToClick\",\n\t\t\t\"Value\": 0\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean?\",\n\t\t\t\"Name\": \"clickAllMatchingElements\",\n\t\t\t\"Value\": false\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Nullable`1<Int32>?\",\n\t\t\t\"Name\": \"timeoutInSeconds\",\n\t\t\t\"Value\": null\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
-        },
-        "RunOnBuild": false
-      }
+      "RelativeGoalPath": "\\Reddit.goal"
     },
     {
       "Text": "wait 3 sec",
@@ -659,70 +359,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "f22d9d21ae285725fc7e74dd563456502a6360264cb412a08e29578201da8bef",
+      "Hash": "0a95d1edd7b9aad4157e1ccfbf70ff11d9b369c593e8f46a95252ea2b6cd0462",
       "BuilderVersion": null,
-      "PrFile": {
-        "Action": {
-          "FunctionName": "Sleep",
-          "Parameters": [
-            {
-              "Type": "Int32",
-              "Name": "sleepTimeInMilliseconds",
-              "Value": 3000
-            }
-          ],
-          "ReturnValues": null
-        },
-        "Text": "wait 3 sec",
-        "Reload": false,
-        "LlmRequest": {
-          "temperature": 0.0,
-          "top_p": 0.0,
-          "frequencyPenalty": 0.0,
-          "presencePenalty": 0.0,
-          "maxLength": 4000,
-          "llmResponseType": "json",
-          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-          "model": "gpt-4o",
-          "promptMessage": [
-            {
-              "role": "system",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-                },
-                {
-                  "type": "text",
-                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-                }
-              ]
-            },
-            {
-              "role": "assistant",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "## functions available starts ##\r\nSleep(Int32 sleepTimeInMilliseconds)  : void // WaitForExecution is always true when calling Sleep. \nSchedule(String cronCommand, GoalToCall goalName, Dictionary`2<String, Object>? parameters, Nullable`1<DateTime>? nextRun)  : void // Use numerical representation for cronCommand, e.g. 0 11 * * 1. goalName is the goal that should be called, it should be prefixed by ! and be whole word with possible slash(/).. \nStartScheduler()  : void\r\n## functions available ends ##"
-                }
-              ]
-            },
-            {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "wait 3 sec"
-                }
-              ]
-            }
-          ],
-          "type": "PLang.Modules.GenericFunctionBuilder",
-          "caching": true,
-          "RawResponse": "```json\n{\n\t\"FunctionName\": \"Sleep\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"Int32\",\n\t\t\"Name\": \"sleepTimeInMilliseconds\",\n\t\t\"Value\": 3000\n\t}]\n}\n```"
-        },
-        "RunOnBuild": false
-      }
+      "RelativeGoalPath": "\\Reddit.goal"
     },
     {
       "Text": "[webc] click mod-action-button[aria-label=\"Approve content\"], located in shadow dom shreddit-mod-inline-actions",
@@ -792,79 +431,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "b9c22e179df94fe2dccc802d8df27d11a41a3e5fb8dc771ca1927c547115462c",
+      "Hash": "5eba17d6115b5fa7f93cfa585b45cb2377341dbf8008b14ed422b7ff3370b97c",
       "BuilderVersion": null,
-      "PrFile": {
-        "Action": {
-          "FunctionName": "Click",
-          "Parameters": [
-            {
-              "Type": "String",
-              "Name": "cssSelector",
-              "Value": "mod-action-button[aria-label=\"Approve content\"]"
-            },
-            {
-              "Type": "String",
-              "Name": "shadowDomCssSelector",
-              "Value": "shreddit-mod-inline-actions"
-            }
-          ],
-          "ReturnValues": null
-        },
-        "Text": "[webc] click mod-action-button[aria-label=\"Approve content\"], located in shadow dom shreddit-mod-inline-actions",
-        "Reload": false,
-        "LlmRequest": {
-          "temperature": 0.0,
-          "top_p": 0.0,
-          "frequencyPenalty": 0.0,
-          "presencePenalty": 0.0,
-          "maxLength": 4000,
-          "llmResponseType": "json",
-          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-          "model": "gpt-4o",
-          "promptMessage": [
-            {
-              "role": "system",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-                },
-                {
-                  "type": "text",
-                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-                }
-              ]
-            },
-            {
-              "role": "assistant",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "## functions available starts ##\r\nStartBrowser(String? browserType = \"Chrome\", Boolean? headless = False, Boolean? useUserSession = False, String? userSessionPath, Boolean? incognito = False, Boolean? kioskMode = False, Dictionary`2<String, String>? argumentOptions, Nullable`1<Int32>? timoutInSeconds = 30, Boolean? hideTestingMode = False)  : void // browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.. \nGetElement(String? cssSelector)  : PlangWebElement \nCloseBrowser()  : void\nNavigateToUrl(String url, String? browserType = \"Chrome\", Boolean? headless = False, Boolean? useUserSession = False, String? userSessionPath, Boolean? incognito = False, Boolean? kioskMode = False, Dictionary`2<String, String>? argumentOptions, String? browserConsoleOutputVariableName, Nullable`1<Int32>? timeoutInSecods, Boolean? hideTestingMode = False)  : void // browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.. \nScrollToBottom()  : void\nScrollToElementByCssSelector(String cssSelector)  : void\nScrollToElement(PlangWebElement element)  : void\nGetElementByText(String text, String? operatorOnText = \"equals\", Nullable`1<Int32>? timeoutInSeconds, String? cssSelector)  : PlangWebElement  // operatorOnText can be equals|contains|startswith|endswith. \nWaitForElementToDissapear(Object elementOrCssSelector, Int32 timeoutInSeconds)  : void\nWaitForElementToAppear(String cssSelector, Int32? timeoutInSeconds = 30, Boolean? waitForElementToChange = False)  : void\nSetTimeout(Nullable`1<Int32>? timoutInSeconds)  : void\nSetFocus(String? cssSelector, Nullable`1<Int32>? timoutInSeconds)  : void\nClickOnElement(PlangWebElement element)  : void\nClick(String cssSelector, Int32? elementAtToClick = 0, Boolean? clickAllMatchingElements = False, Nullable`1<Int32>? timeoutInSeconds, String? shadowDomCssSelector)  : void\nAcceptAlert()  : String \nSendKey(String value, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void // Writes a text to an element. \nSetTextOnElement(String text, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds, Boolean? clearElementFirst = False, String? shadowDomCssSelector)  : void // set the text of an element other than input by cssSelector. \nInput(String value, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds, String? shadowDomCssSelector)  : void // set the value of an input by cssSelector. \nSelectByValue(String value, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void // select an option by its value in select input by cssSelector. \nSelectByText(String text, String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void // select an option by its text in select input by cssSelector. \nSubmit(String? cssSelector, Nullable`1<Int32>? timeoutInSeconds)  : void\nGetElements(String? cssSelector, String? shadowDomCssSelector)  : List`1 \nGetElementsInsideElement(String elementName, IWebElement element)  : List<PlangWebElement> \nSerializeElements(List`1<List`1> elementsArray)  : List`1 \nFindElementAndExtractAttribute(String attribute, String? cssSelector, PlangWebElement? element)  : String \nExtractContent(Boolean? clearHtml = True, String? cssSelector, PlangWebElement? element)  : List`1 \nSwitchTab(Int32 tabIndex)  : void\nWait(Int32? milliseconds = 1000)  : void\nTakeScreenshotOfWebsite(String saveToPath, Boolean? overwrite = False)  : void\r\n## functions available ends ##"
-                },
-                {
-                  "type": "text",
-                  "text": "Make sure to convert html tags into correct css selector format"
-                }
-              ]
-            },
-            {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "[webc] click mod-action-button[aria-label=\"Approve content\"], located in shadow dom shreddit-mod-inline-actions"
-                }
-              ]
-            }
-          ],
-          "type": "PLang.Modules.WebCrawlerModule.Builder",
-          "caching": true,
-          "RawResponse": "```json\n{\n\t\"FunctionName\": \"Click\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"cssSelector\",\n\t\t\t\"Value\": \"mod-action-button[aria-label=\\\"Approve content\\\"]\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"shadowDomCssSelector\",\n\t\t\t\"Value\": \"shreddit-mod-inline-actions\"\n\t\t}\n\t]\n}\n```"
-        },
-        "RunOnBuild": false
-      }
+      "RelativeGoalPath": "\\Reddit.goal"
     }
   ],
   "SubGoals": [],
@@ -879,7 +448,7 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "ba5e450b143a33b06ebba37c32d872da803df18badd11073d3b8fdcc3ca393d7",
+  "Hash": "ce3c067af4f0d891efccc09d79480a626147f962e97cfb6a427778c1e7fdbb4d",
   "IncomingVariablesRequired": [
     "post"
   ]

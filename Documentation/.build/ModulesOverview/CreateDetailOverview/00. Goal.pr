@@ -31,7 +31,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -65,12 +65,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "bdd35999eddbf1f0f472f8020a6a806d999f82c82fbd18cbb45f22e42dc9cf32",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\ModulesOverview.goal"
     },
     {
       "Text": "foreach %moduleFiles% call !CreateDetail item=%file%",
@@ -100,7 +103,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -134,12 +137,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "89a4ab4b4de796485b0384356af192fea9f477309005d9b92a397b26a08af02f",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\ModulesOverview.goal"
     }
   ],
   "SubGoals": [],
@@ -150,10 +156,10 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ModulesOverview\\CreateDetailOverview\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ModulesOverview\\CreateDetailOverview",
-  "BuilderVersion": "0.1.15.1",
+  "BuilderVersion": "1.0.0.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "5d0f62780547cbbc1aeaf9090408a93f59ab39553842775ef5a2bebfdb5e4245",
+  "Hash": "df91c8805b4c30ec6af36c84b2aba37b552034f5a7392d10dd8f5ad4ad8cee35",
   "IncomingVariablesRequired": null
 }

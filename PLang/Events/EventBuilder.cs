@@ -33,9 +33,10 @@ namespace PLang.Events
         private readonly IGoalParser goalParser;
         private readonly MemoryStack memoryStack;
         private readonly PrParser prParser;
+		private readonly ITypeHelper typeHelper;
 
-        public EventBuilder(ILogger logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
-            ISettings settings, IGoalParser goalParser, MemoryStack memoryStack, PrParser prParser)
+		public EventBuilder(ILogger logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
+            ISettings settings, IGoalParser goalParser, MemoryStack memoryStack, PrParser prParser, ITypeHelper typeHelper)
         {
             this.fileSystem = fileSystem;
             this.llmServiceFactory = llmServiceFactory;
@@ -44,14 +45,15 @@ namespace PLang.Events
             this.goalParser = goalParser;
             this.memoryStack = memoryStack;
             this.prParser = prParser;
-        }
+			this.typeHelper = typeHelper;
+		}
 
         public virtual async Task<(List<string>, IError?)> BuildEventsPr()
         {
             (var goalFiles, var error) = GetEventGoalFiles();
             if (error != null) return (goalFiles, error);
 
-            logger.LogDebug($"Building {goalFiles.Count} event file(s)");
+            logger.LogInformation($"Building {goalFiles.Count} event file(s)");
             var validGoalFiles = new List<string>();
             foreach (var filePath in goalFiles)
             {
@@ -105,9 +107,10 @@ ErrorKey: is key of the error message (case insensitive)
 ErrorMessage: checks if error.Message contains a message  (case insensitive)
 ErrorStatusCode: matches the status code of the error message
 Map correct number to EventType and EventScope
+Include OS goals must be defined by user when set to true
 
 EventType {{ Before , After }}
-EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError, StepError }}
+EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError, StepError, Module }}
 
 "));
                  
@@ -120,6 +123,31 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError,
                     {
                        return ([], new BuilderEventError($"Could not build an events from step {step.Text} in {filePath}. LLM didn't give any response. Try to rewriting the event.", eventBinding, Step: step, Goal: step.Goal));
                     }
+
+					if (eventBinding.EventScope == EventScope.Module)
+					{
+						var modules = typeHelper.GetModulesAsString();
+						promptMessage = new();
+						promptMessage.Add(new LlmMessage("system", $@"Which module from <modules> does the user want to bind to?\n<modules>\n{modules}\n</modules>"));
+						promptMessage.Add(new LlmMessage("user", step.Text));
+						llmRequest = new LlmRequest("ModuleEvents", promptMessage);
+						llmRequest.scheme = "{module:string}";
+						(var module, queryError) = await llmServiceFactory.CreateHandler().Query<string>(llmRequest);
+
+						var type = typeHelper.GetRuntimeType(module);
+						var methods = typeHelper.GetMethodNamesAsString(type);
+
+
+						promptMessage = new();
+						promptMessage.Add(new LlmMessage("system", $@"Which <methods> does the user want to bind to?\n<methods>\n{methods}\n</methods>"));
+						promptMessage.Add(new LlmMessage("user", step.Text));
+						llmRequest = new LlmRequest("ModuleEvents", promptMessage);
+						llmRequest.scheme = "{methods:string[]}";
+						(var methodsToBind, queryError) = await llmServiceFactory.CreateHandler().Query<string[]>(llmRequest);
+
+						int s = 0;
+
+					}
 
 
                     if (eventBinding.GoalToCall == eventBinding.GoalToBindTo)

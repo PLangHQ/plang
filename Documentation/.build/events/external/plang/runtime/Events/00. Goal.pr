@@ -9,8 +9,8 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\external\\plang\\runtime\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
@@ -40,11 +40,19 @@
         "RunOnlyOnStartParameter": [
           "--debug"
         ],
-        "OnErrorContinueNextStep": false
+        "OnErrorContinueNextStep": false,
+        "ErrorKey": null,
+        "ErrorMessage": null,
+        "StatusCode": null,
+        "ExceptionType": null,
+        "IsLocal": false,
+        "IncludeOsGoals": false,
+        "Id": "Before_Step_*_SendDebug_True___True_--debug_False_____False"
       },
       "IsEvent": true,
       "Hash": null,
-      "BuilderVersion": null
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\events\\external\\plang\\runtime\\Events.goal"
     },
     {
       "Text": "before goal ends, include private goals, call !SendDebug, args='--debug'",
@@ -52,8 +60,8 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\external\\plang\\runtime\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
@@ -83,11 +91,19 @@
         "RunOnlyOnStartParameter": [
           "--debug"
         ],
-        "OnErrorContinueNextStep": false
+        "OnErrorContinueNextStep": false,
+        "ErrorKey": null,
+        "ErrorMessage": null,
+        "StatusCode": null,
+        "ExceptionType": null,
+        "IsLocal": false,
+        "IncludeOsGoals": false,
+        "Id": "Before_EndOfApp_*_SendDebug_True___True_--debug_False_____False"
       },
       "IsEvent": true,
       "Hash": null,
-      "BuilderVersion": null
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\events\\external\\plang\\runtime\\Events.goal"
     }
   ],
   "SubGoals": [],

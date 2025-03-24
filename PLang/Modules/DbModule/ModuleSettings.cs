@@ -138,11 +138,18 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 		private DataSource GetSqliteDataSource(string name, string path, bool history = true, bool isDefault = false)
 		{
 			var statement = new SqlStatement("SELECT name FROM sqlite_master WHERE type IN ('table', 'view');", "SELECT name, type, [notnull] as isNotNull, pk as isPrimaryKey FROM pragma_table_info(@TableName);");
+			string dataSourcePath;
 			if (!path.Contains("Data Source"))
 			{
-				path = $"Data Source={path}";
+				dataSourcePath = $"Data Source={path}";
+			} else
+			{
+				dataSourcePath = path;
+				path = path.Replace("Data Source=", "").TrimEnd(';');
 			}
-			var dataSource = new DataSource(name, typeof(SqliteConnection).FullName, path, "data", statement.SelectTablesAndViewsInMyDatabaseSqlStatement, statement.SelectColumnsFromTablesSqlStatement, history, isDefault);
+			var dataSource = new DataSource(name, typeof(SqliteConnection).FullName, dataSourcePath, "data", 
+				statement.SelectTablesAndViewsInMyDatabaseSqlStatement, statement.SelectColumnsFromTablesSqlStatement, 
+				history, isDefault, path);
 			return dataSource;
 		}
 		private record DatabaseTypeResponse(string typeFullName, string nugetCommand, string regexToExtractDatabaseNameFromConnectionString, string dataSourceConnectionStringExample);
@@ -306,6 +313,14 @@ Be concise"));
 			if (dataSource == null)
 			{
 				return (null, await GetDataSourceNotFoundError(dataSourceName, localDbPath, step));
+			}
+
+			if (!string.IsNullOrEmpty(dataSource.LocalPath))
+			{
+				if (!fileSystem.File.Exists(dataSource.LocalPath))
+				{
+					return (null, await GetDataSourceNotFoundError(dataSourceName, localDbPath, step));
+				}
 			}
 			
 			return (dataSource, null);

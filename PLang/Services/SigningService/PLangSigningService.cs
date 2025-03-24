@@ -9,6 +9,7 @@ using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Services.IdentityService;
 using PLang.Utils;
+using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using static Dapper.SqlMapper;
@@ -75,7 +76,6 @@ namespace PLang.Services.SigningService
 		{
 			identityService.UseSharedIdentity(appId);
 			var identity = identityService.GetCurrentIdentityWithPrivateKey();
-
 			var seed = Convert.FromBase64String(identity.Value!.ToString()!);
 			var result = SignInternal(seed, content, method, url, contract, expires);
 			identityService.UseSharedIdentity(null);

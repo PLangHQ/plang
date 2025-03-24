@@ -31,7 +31,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -65,12 +65,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "bbd621d4b3e7c051eff30b47a5715074d05fdeecfc51409d7a6d1cfc5d890ac9",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\ModulesOverview.goal"
     },
     {
       "Text": "read file template/modules/Overview/simple_overview.txt, into %system_simple%, load vars",
@@ -100,7 +103,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -134,12 +137,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "865636dbebd94de16b815fd9bc4cec4abeddac80b6290bc5622cc93ce655ba4d",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\ModulesOverview.goal"
     },
     {
       "Text": "[llm] system:%system_simple%\n        user: %file.Content%\n        respond in .md\n        write to %doc_simple%",
@@ -169,7 +175,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\n\t\"StepName\": string,\n\t\"StepDescription\": string,\n\t\"Modules\": string[]\n}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -203,12 +209,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": "```json\n{\n\t\"StepName\": \"Process and Write Content\",\n\t\"StepDescription\": \"Use the LLM to process the content from the variable %file.Content% and generate a response in Markdown format. Then, write the generated Markdown content to the variable %doc_simple%.\",\n\t\"Modules\": [\"PLang.Modules.LlmModule\"]\n}\n```"
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "e850c6933f115879f48aff212157329dd171e881d3c312cc7a29175e39013558",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\ModulesOverview.goal"
     },
     {
       "Text": "write %doc_simple% to output/modules_simple/%moduleName%.md",
@@ -238,7 +247,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -272,12 +281,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "020566faf78ca59c37a5482a72825908db66c04feec58d9f59b031c159898426",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\ModulesOverview.goal"
     }
   ],
   "SubGoals": [],
@@ -288,11 +300,11 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\ModulesOverview\\CreateSimple\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\ModulesOverview\\CreateSimple",
-  "BuilderVersion": "0.1.15.1",
+  "BuilderVersion": "1.0.0.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "61f04c6e73076d9698eecce32f37d2dfdab52280c39e5994c286f1fbf2d92a74",
+  "Hash": "c22861acfec5ef6022535fb304c9582dc3210046857f942945ea573b3d1e7702",
   "IncomingVariablesRequired": [
     "file.Path",
     "file.Content"

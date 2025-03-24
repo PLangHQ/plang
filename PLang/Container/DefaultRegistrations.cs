@@ -5,6 +5,7 @@ using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Modules.DbModule;
 using PLang.Runtime;
+using PLang.Services.DbService;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Services.SettingsService;
@@ -140,6 +141,17 @@ namespace PLang.Container
 			}
 		}
 
+		public static void RegisterDbFactory(this ServiceContainer container, Type type, bool isDefault = false)
+		{
+			container.Register<IDbServiceFactory>(factory =>
+			{
+				SetContext(container, type, ReservedKeywords.Inject_IDbConnection, isDefault);
+				return new DbServiceFactory(container);
+			});
+
+		}
+
+
 		public static void RegisterSettingsRepositoryFactory(this ServiceContainer container, Type type, bool isDefault = false, ISettingsRepository? instance = null)
 		{
 			container.Register<ISettingsRepositoryFactory>(factory =>
@@ -158,22 +170,6 @@ namespace PLang.Container
 		}
 
 
-		public static void RegisterDbRepositoryFactory(this ServiceContainer container, Type type, bool isDefault = false, IDbConnection? instance = null)
-		{
-			container.Register<IDbFactory>(factory =>
-			{
-				SetContext(container, type, ReservedKeywords.Inject_IDbConnection, isDefault);
-				return new DbFactory(container);
-			});
-
-			if (instance != null)
-			{
-				container.RegisterSingleton(factor =>
-				{
-					return instance;
-				}, instance.GetType().FullName);
-			}
-		}
 		private static void SetContext(IServiceContainer container, Type type, string serviceReservedKeyword, bool isDefault = false, bool setToContext = false)
 		{
 			var context = container.GetInstance<PLangAppContext>();

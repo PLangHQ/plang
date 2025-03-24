@@ -1,23 +1,17 @@
 ﻿using LightInject;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Errors.Events;
-using PLang.Errors.Handlers;
 using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
-using PLang.SafeFileSystem;
 using PLang.Utils;
-using RazorEngineCore;
-using System.IO;
-using System.Reflection;
+using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 
 namespace PLang.Events
@@ -40,35 +34,30 @@ namespace PLang.Events
 		Task<IError?> RunGoalErrorEvents(Goal goal, int goalStepIndex, IError error);
 		Task<IError?> AppErrorEvents(IError error);
 		void SetContainer(IServiceContainer container);
+		void SetActiveEvents(ConcurrentDictionary<string, string> activeEvents);
+		ConcurrentDictionary<string, string> GetActiveEvents();
+		Task<IError?> LoadBuilder(MemoryStack memoryStack);
 	}
 	public class EventRuntime : IEventRuntime
 	{
 		private readonly IPLangFileSystem fileSystem;
-		private readonly ISettings settings;
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly PrParser prParser;
 		private readonly IEngine engine;
-		private readonly IErrorHandlerFactory errorHandlerFactory;
-		private readonly IErrorSystemHandlerFactory errorSystemHandlerFactory;
 		private readonly ILogger logger;
-		private readonly IFileAccessHandler fileAccessHandler;
 		private List<EventBinding>? runtimeEvents = null;
-		private List<EventBinding>? bulderEvents = null;
+		private List<EventBinding>? builderEvents = null;
 		private IServiceContainer? container;
-
-		public EventRuntime(IPLangFileSystem fileSystem, ISettings settings, IPseudoRuntime pseudoRuntime,
-			PrParser prParser, IEngine engine, IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory,
-			ILogger logger, IFileAccessHandler fileAccessHandler)
+		private ConcurrentDictionary<string, string> ActiveEvents;
+		public EventRuntime(IPLangFileSystem fileSystem, IPseudoRuntime pseudoRuntime,
+			PrParser prParser, IEngine engine,  ILogger logger)
 		{
 			this.fileSystem = fileSystem;
-			this.settings = settings;
 			this.pseudoRuntime = pseudoRuntime;
 			this.prParser = prParser;
 			this.engine = engine;
-			this.errorHandlerFactory = errorHandlerFactory;
-			this.errorSystemHandlerFactory = errorSystemHandlerFactory;
 			this.logger = logger;
-			this.fileAccessHandler = fileAccessHandler;
+			this.ActiveEvents = new();
 		}
 
 		public void SetContainer(IServiceContainer container)
@@ -76,13 +65,23 @@ namespace PLang.Events
 			this.container = container;
 		}
 
+		public void SetActiveEvents(ConcurrentDictionary<string, string> activeEvents)
+		{
+			this.ActiveEvents = activeEvents;
+		}
+
+		public ConcurrentDictionary<string, string> GetActiveEvents()
+		{
+			return this.ActiveEvents;
+		}
+
 		public async Task<List<EventBinding>> GetBuilderEvents()
 		{
-			if (bulderEvents == null)
+			if (builderEvents == null)
 			{
 				throw new BuilderException("Events are null. GetBuilderEvents() cannot be called before Load");
 			}
-			return bulderEvents!;
+			return builderEvents!;
 		}
 
 		public async Task<List<EventBinding>> GetRuntimeEvents()
@@ -92,6 +91,17 @@ namespace PLang.Events
 				throw new RuntimeException("Events are null. GetRuntimeEvents() cannot be called before Load");
 			}
 			return runtimeEvents!;
+		}
+
+		public async Task<IError?> LoadBuilder(MemoryStack memoryStack)
+		{
+			var result = await Load(true);
+			foreach (var item in memoryStack.GetMemoryStack())
+			{
+				engine.GetMemoryStack().Put(item.Value);
+			}
+			
+			return result;
 		}
 		public async Task<IError?> Load(bool builder = false)
 		{
@@ -137,7 +147,7 @@ namespace PLang.Events
 			// todo: wtf Ingi?
 			if (builder)
 			{
-				bulderEvents = events;
+				builderEvents = events;
 			}
 			else
 			{
@@ -198,17 +208,24 @@ namespace PLang.Events
 			var events = (isBuilder) ? await GetBuilderEvents() : await GetRuntimeEvents();
 			var context = engine.GetContext();
 
-			if (events == null || context.ContainsKey(ReservedKeywords.IsEvent)) return null;
+			if (events == null)
+			{
+				return null;
+			}
 
 			List<EventBinding> eventsToRun = events.Where(p => p.EventScope == eventScope).ToList();
 
 			for (var i = 0; i < eventsToRun.Count; i++)
 			{
 				var eve = eventsToRun[i];
+				if (ActiveEvents.ContainsKey(eve.Id)) continue;
+
 				var parameters = new Dictionary<string, object?>();
 				parameters.Add(ReservedKeywords.Event, eve);
 				context.AddOrReplace(ReservedKeywords.IsEvent, true);
+				parameters.Add("!plang.EventUniqueId", Guid.NewGuid().ToString());
 
+				ActiveEvents.TryAdd(eve.Id, eve.GoalToCall);
 				logger.LogDebug("Run event type {0} on scope {1}, binding to {2} calling {3}", eventType, eventScope, eve.GoalToBindTo, eve.GoalToCall);
 				var task = pseudoRuntime.RunGoal(engine, context, "events", eve.GoalToCall, parameters);
 				if (eve.WaitForExecution)
@@ -216,6 +233,7 @@ namespace PLang.Events
 					await task;
 				}
 				(_, var error, var output) = task.Result;
+				ActiveEvents.Remove(eve.Id, out _);
 
 				context.Remove(ReservedKeywords.IsEvent);
 				if (context.TryGetValue(ReservedKeywords.MemoryStack, out var obj0) && obj0 != null)
@@ -225,6 +243,8 @@ namespace PLang.Events
 				}
 
 				if (error == null) continue;
+				if (error is RuntimeEventError ree) return ree;
+				if (error is BuilderEventError bee) return bee;
 
 				if (isBuilder)
 				{
@@ -280,6 +300,7 @@ namespace PLang.Events
 			for (var i = 0; i < eventsToRun.Count; i++)
 			{
 				var eve = eventsToRun[i];
+				if (ActiveEvents.ContainsKey(eve.Id)) continue;
 				if (!GoalHasBinding(goal, eve)) continue;
 
 				var errorRun = await Run(eve, goal, step, error);
@@ -306,12 +327,17 @@ namespace PLang.Events
 		public async Task<IEventError?> RunGoalEvents(string eventType, Goal goal, bool isBuilder = false)
 		{
 			var context = engine.GetContext();
-
-			if (runtimeEvents == null || context.ContainsKey(ReservedKeywords.IsEvent)) return null;
-			var eventsToRun = runtimeEvents.Where(p => p.EventType == eventType && p.EventScope == EventScope.Goal).ToList();
+			
+			var events = (isBuilder) ? builderEvents : runtimeEvents;
+			if (events == null)
+			{
+				return null;
+			}
+			var eventsToRun = events.Where(p => p.EventType == eventType && p.EventScope == EventScope.Goal).ToList();
 			for (var i = 0; i < eventsToRun.Count; i++)
 			{
 				var eve = eventsToRun[i];
+				if (ActiveEvents.ContainsKey(eve.Id)) continue;
 				if (!GoalHasBinding(goal, eve)) continue;
 
 				var error = await Run(eve, goal, isBuilder: isBuilder);
@@ -323,7 +349,10 @@ namespace PLang.Events
 		public async Task<IError?> RunGoalErrorEvents(Goal goal, int goalStepIndex, IError error)
 		{
 			var context = engine.GetContext();
-			if (runtimeEvents == null || context.ContainsKey(ReservedKeywords.IsEvent)) return error;
+			if (runtimeEvents == null)
+			{
+				return error;
+			}
 
 
 			var step = (goalStepIndex != -1 && goalStepIndex < goal.GoalSteps.Count) ? goal.GoalSteps[goalStepIndex] : null;
@@ -338,24 +367,33 @@ namespace PLang.Events
 			var context = engine.GetContext();
 			try
 			{
+				context.TryGetValue(ReservedKeywords.CallingGoal, out object? prevCallingGoal);
+				context.TryGetValue(ReservedKeywords.CallingStep, out object? prevCallingStep);
+
+
 				var parameters = new Dictionary<string, object?>();
 				parameters.Add(ReservedKeywords.Event, eve);
-				parameters.Add(ReservedKeywords.Goal, callingGoal);
-				parameters.Add(ReservedKeywords.Error, error);
+				parameters.Add(ReservedKeywords.CallingGoal, callingGoal);
+				if (error != null) parameters.Add(ReservedKeywords.Error, error);
+				if (error is ErrorHandled) parameters.Add(ReservedKeywords.Error, error);
+				parameters.Add("!plang.EventUniqueId", Guid.NewGuid().ToString());
 
-				
 				context.TryAdd(ReservedKeywords.IsEvent, true);
 
-				if (step != null) parameters.Add(ReservedKeywords.Step, step);
+				if (step != null) parameters.Add(ReservedKeywords.CallingStep, step);
 				string path = (eve.IsLocal) ? callingGoal?.RelativeGoalFolderPath : "/events";
 
 				logger.LogDebug("Run event type {0} on scope {1}, binding to {2} calling {3}", eve.EventType.ToString(), eve.EventScope.ToString(), eve.GoalToBindTo, eve.GoalToCall);
-
+				ActiveEvents.TryAdd(eve.Id, eve.GoalToCall);
 				var task = pseudoRuntime.RunGoal(engine, context, path, eve.GoalToCall, parameters, isolated: !eve.IsLocal);
 				if (eve.WaitForExecution)
 				{
 					await task;
 				}
+				ActiveEvents.Remove(eve.Id, out _);
+
+				context.AddOrReplace(ReservedKeywords.CallingGoal, prevCallingGoal);
+				context.AddOrReplace(ReservedKeywords.CallingStep, prevCallingStep);
 
 				if (task.Exception != null)
 				{
@@ -407,7 +445,7 @@ namespace PLang.Events
 			var events = (isBuilder) ? await GetBuilderEvents() : await GetRuntimeEvents();
 
 			var context = engine.GetContext();
-			if (events == null || context.ContainsKey(ReservedKeywords.IsEvent))
+			if (events == null)
 			{
 				return null;
 			}
@@ -416,6 +454,7 @@ namespace PLang.Events
 			for (var i = 0; i < eventsToRun.Count; i++)
 			{
 				var eve = eventsToRun[i];
+				if (ActiveEvents.ContainsKey(eve.Id)) continue;
 				if (GoalHasBinding(goal, eve) && IsStepMatch(step, eve))
 				{
 					return await Run(eve, goal, step, isBuilder: isBuilder);
@@ -426,7 +465,10 @@ namespace PLang.Events
 		public async Task<IError?> RunOnErrorStepEvents(IError error, Goal goal, GoalStep step)
 		{
 			var context = engine.GetContext();
-			if (runtimeEvents == null || context.ContainsKey(ReservedKeywords.IsEvent)) return error;
+			if (runtimeEvents == null)
+			{
+				return error;
+			}
 			if (error is EndGoal)
 			{
 				return error;
@@ -442,6 +484,7 @@ namespace PLang.Events
 				{
 					var eventBinding = new EventBinding(EventType.Before, EventScope.StepError, goal.RelativeGoalPath, errorHandler.GoalToCall,
 						true, step.Number, step.Text, true, null, errorHandler.IgnoreError, errorHandler.Key, errorHandler.Message, errorHandler.StatusCode, IsLocal: true);
+					
 					eventsToRun.Add(eventBinding);
 				}
 				else if (errorHandler.IgnoreError)
@@ -461,6 +504,7 @@ namespace PLang.Events
 			{
 				foreach (var eve in eventsToRun)
 				{
+					if (ActiveEvents.ContainsKey(eve.Id)) continue;
 					if (GoalHasBinding(goal, eve) && IsStepMatch(step, eve) && EventMatchesError(eve, error))
 					{
 						var eventError = await Run(eve, goal, step, error);
@@ -500,6 +544,7 @@ namespace PLang.Events
 			{
 				return true;
 			}
+			if (step.Goal.IsOS && !eventBinding.IncludeOsGoals) return false;
 
 			if (eventBinding.StepText != null && step.Text.ToLower().Contains(eventBinding.StepText.ToLower()))
 			{
@@ -524,6 +569,7 @@ namespace PLang.Events
 		public bool GoalHasBinding(Goal goal, EventBinding eventBinding)
 		{
 			if (goal.Visibility == Visibility.Private && !eventBinding.IncludePrivate || eventBinding.GoalToBindTo == null) return false;
+			if (!eventBinding.IsLocal && goal.IsOS && !eventBinding.IncludeOsGoals) return false;
 
 			string goalToBindTo = eventBinding.GoalToBindTo.ToString().ToLower().Replace("!", "");
 

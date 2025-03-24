@@ -10,6 +10,7 @@ using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
+using PLang.Services.DbService;
 using PLang.Services.EventSourceService;
 using PLang.Services.LlmService;
 using PLang.Utils;
@@ -25,7 +26,7 @@ namespace PLang.Modules.DbModule
 	public class Builder : BaseBuilder
 	{
 		private readonly IPLangFileSystem fileSystem;
-		private readonly IDbConnection db;
+		private readonly IDbServiceFactory dbFactory;
 		private readonly ISettings settings;
 		private readonly PLangAppContext context;
 		private readonly ILlmServiceFactory llmServiceFactory;
@@ -35,11 +36,11 @@ namespace PLang.Modules.DbModule
 		private readonly VariableHelper variableHelper;
 		private ModuleSettings moduleSettings;
 
-		public Builder(IPLangFileSystem fileSystem, IDbConnection db, ISettings settings, PLangAppContext context,
+		public Builder(IPLangFileSystem fileSystem, IDbServiceFactory dbFactory, ISettings settings, PLangAppContext context,
 			ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper, ILogger logger, MemoryStack memoryStack, VariableHelper variableHelper) : base()
 		{
 			this.fileSystem = fileSystem;
-			this.db = db;
+			this.dbFactory = dbFactory;
 			this.settings = settings;
 			this.context = context;
 			this.llmServiceFactory = llmServiceFactory;
@@ -84,7 +85,7 @@ DatabaseType: Define the database type. The .net library being used is {dataSour
 {typeHelper.GetMethodsAsString(typeof(Program))}
 ## functions available ends ##
 ");
-			using (var program = new Program(db, fileSystem, settings, llmServiceFactory, new DisableEventSourceRepository(), context, logger, typeHelper))
+			using (var program = new Program(dbFactory, fileSystem, settings, llmServiceFactory, new DisableEventSourceRepository(), context, logger, typeHelper))
 			{
 				if (!string.IsNullOrEmpty(dataSource.SelectTablesAndViews))
 				{
@@ -510,7 +511,10 @@ integer/int should always be System.Int64.
 
 			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
 
-			return await base.Build(goalStep);
+			var result = await base.Build(goalStep);
+			result.Instruction.Metadata.AddOrReplace("TableNames", functionInfo.TableNames);
+			
+			return result;
 
 		}
 		private async Task<(Instruction?, IBuilderError?)> CreateInsertAndSelectIdOfInsertedRow(GoalStep goalStep, Program program, FunctionInfo functionInfo, ModuleSettings.DataSource dataSource)
@@ -579,9 +583,8 @@ integer/int should always be System.Int64.
 				if (tableName == null || tableName.StartsWith("pragma_table_info")) continue;
 
 				string selectColumns = await moduleSettings.FormatSelectColumnsStatement(tableName);
-				var result = await program.Select(selectColumns);
-				var columnInfo = result.rows;
-				if (columnInfo != null && ((dynamic)columnInfo).Count > 0)
+				var columnInfo = await GetColumnInfo(selectColumns, program);
+				if (columnInfo != null)
 				{
 					AppendToSystemCommand($"Table name is: {tableName}. Fix sql if it includes type.");
 					AppendToAssistantCommand($"### {tableName} columns ###\n{JsonConvert.SerializeObject(columnInfo)}\n### {tableName} columns ###");
@@ -596,6 +599,24 @@ I will not be able to validate the sql. To enable validation run the command: pl
 
 
 		}
+
+		public async Task<object?> GetColumnInfo(string selectColumns, Program program)
+		{
+			var dataSources = await moduleSettings.GetAllDataSources();
+			foreach (var dataSource in dataSources)
+			{
+				var result = await program.Select(selectColumns, dataSourceName: dataSource.Name);
+				var columnInfo = result.rows;
+				if (columnInfo != null && ((dynamic)columnInfo).Count > 0)
+				{
+					return columnInfo;
+				}
+			}
+			return null;
+			
+			
+		}
+
 	}
 }
 

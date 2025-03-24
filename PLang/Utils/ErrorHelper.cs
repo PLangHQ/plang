@@ -57,7 +57,7 @@ namespace PLang.Utils
 			}
 			if (error is RuntimeEventError rve && rve.InitialError != null)
 			{
-				error = rve.InitialError;
+				//error = rve.InitialError;
 			}
 
 
@@ -139,6 +139,10 @@ namespace PLang.Utils
 				{
 					errorSource = $@"📦 Error Source:
 	- The error occurred in the module: `{step.ModuleType}`";
+					if (genericFunction != null)
+					{
+						errorSource += $".`{genericFunction.FunctionName}`";
+					}
 				}
 
 			}
@@ -147,6 +151,21 @@ namespace PLang.Utils
 				firstLine = $@"📄 File: {goal.RelativeGoalPath}";
 			}
 
+			string? callStack = null;
+			if (goal?.ParentGoal != null)
+			{
+				var parentGoal = goal;
+				while (parentGoal != null)
+				{
+					if (callStack != null) callStack += "\n\t";
+
+					var currentStep = parentGoal.GoalSteps[parentGoal.CurrentStepIndex];
+
+					callStack += $"{parentGoal.GoalName} - {parentGoal.RelativeGoalPath}:{currentStep.LineNumber}";
+					parentGoal = parentGoal.ParentGoal;
+				}
+				callStack = "\n🛝  Call stack:\n\t" + callStack;
+			}
 
 			if (genericFunction != null)
 			{
@@ -211,6 +230,7 @@ namespace PLang.Utils
 🚫 Reason: {reasonAndFix}
 
 {errorSource}
+{callStack}
 {FormatLine(extraInfo)}
 ".TrimEnd();
 
@@ -232,6 +252,10 @@ namespace PLang.Utils
 					obj.Add("ReturnValues", JsonConvert.SerializeObject(genericFunction.ReturnValues));
 				}
 
+				if (callStack != null)
+				{
+					obj.Add("CallStack", callStack);
+				}
 				if (exception != null)
 				{
 					obj.Add("Exception", exception.ToString());

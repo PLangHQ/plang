@@ -22,7 +22,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 27,
+      "LineNumber": 35,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -71,7 +71,7 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "88330f21ba0ea29bc53f08ed27d457a5a7a97fa1017c38bff80ee09095464ace",
+      "Hash": "eccac0bf23f2cb1bbeae16a52ea579159097b2252d1da82638454a89d2d80a93",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal"
     }
@@ -88,6 +88,6 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "6d2183eed829a46be2373794abdd71976ee8153b440cd82807367cd7a6321b77",
+  "Hash": "b34d8f82cdbf759f39625005c81a0bb6a81ef903e5e1eccfcc7d0f6f2d8a46a2",
   "IncomingVariablesRequired": null
 }

@@ -806,6 +806,29 @@ namespace PLang.Runtime
 						}
 						row[column] = value;
 						objectValue = new ObjectValue(objectValue.Name, obj, obj.GetType(), null, initialize);
+					} else if (obj is IDictionary dict)
+					{
+						bool keyFound = false;
+						if (dict.Contains(call))
+						{
+							dict[call] = value;
+						}
+						else
+						{
+							foreach (object keyItem in dict.Keys)
+							{
+								if (keyItem is string strKey && string.Equals(strKey, call, StringComparison.OrdinalIgnoreCase))
+								{
+									dict[call] = value;
+									keyFound = true;
+									break;
+								}
+							}
+							if (!keyFound)
+							{
+								dict.Add(call, value);
+							}
+						}
 					}
 					else
 					{
@@ -910,7 +933,10 @@ namespace PLang.Runtime
 		{
 			string eventType;
 			key = Clean(key).ToLower();
-
+			if (key.Contains("!goal") || key.Contains("!step") || key.Contains("!event"))
+			{
+				throw new Exception("Here");
+			}
 			if (variables.TryGetValue(key, out ObjectValue? prevValue) && prevValue != null && prevValue.Initiated)
 			{
 				eventType = VariableEventType.OnChange;
@@ -932,7 +958,10 @@ namespace PLang.Runtime
 		private void CallEvent(string eventType, ObjectValue objectValue)
 		{
 			var context = engine.GetContext();
-			if (context != null && context.ContainsKey(ReservedKeywords.IsEvent)) return;
+			if (context != null && context.ContainsKey(ReservedKeywords.IsEvent))
+			{
+				return;
+			}
 
 			var events = objectValue.Events.Where(p => p.EventType == eventType);
 			foreach (var eve in events)
@@ -1293,7 +1322,7 @@ namespace PLang.Runtime
 					return JObject.FromObject(obj);
 				}
 			}
-			if (obj is char or string) return new JValue(obj.ToString());
+			if (obj is char or string or float or int or decimal or double) return new JValue(obj.ToString());
 			return JObject.FromObject(obj);
 		}
 

@@ -11,5 +11,12 @@ Your job is to format the <question> with the following <options> so he can answ
 %options%
 <options>
 
+Follow <developerInstructionForResult> for formatting and results
+
+<developerInstructionForResult>
+%developerInstructionForResult%
+<developerInstructionForResult>
+
+
 Write out a <question> with the <options> so user understands question and what options he has
 For lists, number out the items, dont show the id

@@ -20,6 +20,7 @@ using PLang.Errors.Builder;
 using System.Reactive.Concurrency;
 using PLang.Errors.AskUser;
 using PLang.SafeFileSystem;
+using PLang.Building.Model;
 
 namespace PLang.Building
 {
@@ -75,7 +76,7 @@ namespace PLang.Building
 				(var eventGoalFiles, var error) = await eventBuilder.BuildEventsPr();
 				if (error != null) return error;
 
-				error = await eventRuntime.Load(true);
+				error = await eventRuntime.LoadBuilder(container.GetInstance<MemoryStack>());
 				if (error != null) return error;
 
 				var eventError = await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.StartOfApp, true);
@@ -220,24 +221,42 @@ namespace PLang.Building
 		private void CleanGoalFiles()
 		{
 			var goals = prParser.ForceLoadAllGoals();
-			var dirs = fileSystem.Directory.GetDirectories(".build", "", SearchOption.AllDirectories);
 
+			List<Goal> goalsToRemove = new List<Goal>();
 			foreach (var goal in goals)
 			{
-				dirs = dirs.Where(p => !p.Equals(goal.AbsolutePrFolderPath, StringComparison.OrdinalIgnoreCase)).ToArray();
-				dirs = dirs.Where(p => !goal.AbsolutePrFolderPath.StartsWith(p, StringComparison.OrdinalIgnoreCase)).ToArray();
-			}
-
-			foreach (var dir in dirs)
-			{
-				var folderPath = fileSystem.Path.Join(fileSystem.RootDirectory, dir.Replace(fileSystem.BuildPath, ""));
-				if (!fileSystem.Directory.Exists(folderPath) && fileSystem.Directory.Exists(dir))
+				if (!fileSystem.File.Exists(goal.AbsoluteGoalPath))
 				{
-					fileSystem.Directory.Delete(dir, true);
+					goalsToRemove.Add(goal);	
 				}
 			}
 
-			var prGoalFiles = prParser.ForceLoadAllGoals();
+			foreach (var goal in goalsToRemove)
+			{
+				if (fileSystem.Directory.Exists(goal.AbsolutePrFolderPath))
+				{
+					fileSystem.Directory.Delete(goal.AbsolutePrFolderPath, true);
+				}
+			}
+				/*
+				 * var dirs = fileSystem.Directory.GetDirectories(".build", "", SearchOption.AllDirectories);
+
+				foreach (var goal in goals)
+				{
+					dirs = dirs.Where(p => !p.Equals(goal.AbsolutePrFolderPath, StringComparison.OrdinalIgnoreCase)).ToArray();
+					dirs = dirs.Where(p => !goal.AbsolutePrFolderPath.StartsWith(p, StringComparison.OrdinalIgnoreCase)).ToArray();
+				}
+
+				foreach (var dir in dirs)
+				{
+					var folderPath = fileSystem.Path.Join(fileSystem.RootDirectory, dir.Replace(fileSystem.BuildPath, ""));
+					if (!fileSystem.Directory.Exists(folderPath) && fileSystem.Directory.Exists(dir))
+					{
+						fileSystem.Directory.Delete(dir, true);
+					}
+				}
+				*/
+				var prGoalFiles = prParser.ForceLoadAllGoals();
 			int i = 0;
 
 		}

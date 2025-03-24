@@ -31,7 +31,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -65,12 +65,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "12672ea687328d0fa92ef541aeafd6fddd795aa3bddb514cdaa250535820fc29",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "read file '/template/modules/plangRules.txt', into %plangRules%, empty if file not found",
@@ -100,7 +103,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -134,12 +137,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "4b333d624674fa02f26c141b02b9813d7739d9d1db1599a26163025343621049",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "set variable %SourceCode%, 'Progam.cs is the runtime code, can be found at https://github.com/PLangHQ/plang/tree/main/PLang/Modules/%module.namespace%/Program.cs'",
@@ -169,7 +175,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -203,12 +209,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "c36cf08604fc244984ab04daf68f894a0f1389909db2375f01057c69302912ef",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "if ../PLang/Modules/%module.moduleName%Module/Builder.cs exists, then",
@@ -238,7 +247,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -272,12 +281,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "92da1987952e8ebdd754c7454221cb545275baaa648b5de4e90a0e7176baf03b",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "append to variable %SourceCode%, 'Builder.cs is for building of step, can be found at https://github.com/PLangHQ/plang/tree/main/PLang/Modules/%module.namespace%/Builder.cs'",
@@ -307,7 +319,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -341,12 +353,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "55f437940ca8c7e067d7f0c4118a0f26eef779eba0f56f632fb272a15de3c9e2",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "if ../PLang/Modules/%module.moduleName%Module/ModuleSettings.cs exists, then",
@@ -376,7 +391,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -410,12 +425,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "af22c9c90df9fbd4230dc1dab1e44569ae8ac090c1387027f57206a101c0c5b0",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "append to variable %SourceCode%, new line seperator, 'ModuleSettings.cs is settings for the module, can be found at https://github.com/PLangHQ/plang/tree/main/PLang/Modules/%module.namespace%/ModuleSettings.cs'",
@@ -445,7 +463,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -479,12 +497,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "a5f34e247a5f33ad9fc1aa912bf55983cf16c4b7149dfd59e9d3eabc6333f41d",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     }
   ],
   "SubGoals": [],
@@ -495,11 +516,11 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\LoadVars\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\LoadVars",
-  "BuilderVersion": "0.1.15.1",
+  "BuilderVersion": "1.0.0.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "35b0fefec11f74c305086e6d6673073f35c7ca36ed01454c429cb2d44e9742ad",
+  "Hash": "b59bdda7c491cda747816ca1e97aa65546f5cb10be0a60d21ab679b69e66f607",
   "IncomingVariablesRequired": [
     "module.moduleName",
     "module.namespace"

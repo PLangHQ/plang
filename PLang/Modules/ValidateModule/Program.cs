@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using static PLang.Utils.VariableHelper;
 
 namespace PLang.Modules.ValidateModule
 {
@@ -23,35 +24,53 @@ namespace PLang.Modules.ValidateModule
 		}
 
 		[Description("Check each %variable% if it is empty. Create error message fitting the intent of the validation. Extract all %variables% from this statement as a JSON array of strings, ensuring it is not wrapped as a single string.")]
-		public async Task<IError?> IsNotEmpty([HandlesVariable] List<string> variables, string errorMessage, int statusCode = 400)
+		public async Task<IError?> IsNotEmpty([HandlesVariable] List<object> variables, string errorMessage, int statusCode = 400)
 		{
+			if (string.IsNullOrEmpty(errorMessage)) errorMessage = "Variables are empty";
 			if (variables == null) { 
-				return new ProgramError("Variables are empty", goalStep, function, StatusCode: 500);
+				return new ProgramError(errorMessage, goalStep, function, StatusCode: 500);
 			}
-
+			if (variables.Count == 0)
+			{
+				return new ProgramError(errorMessage, goalStep, function, StatusCode: 500);
+			}
+			
 			var multiError = new GroupedErrors("ValidateModule.IsNotEmpty");
+			
 			foreach (var variable in variables)
 			{
-				var obj = memoryStack.GetObjectValue2(variable);
-				if (obj.Initiated && obj.Value != null && !VariableHelper.IsEmpty(obj.Value)) continue;
+				object? obj;
+				if (variable is string variableName && VariableHelper.IsVariable(variableName))
+				{
+					var objectValue = memoryStack.GetObjectValue2(variableName);
+					if (objectValue.Initiated && objectValue.Value != null && !VariableHelper.IsEmpty(objectValue.Value)) continue;
 
-				if (string.IsNullOrEmpty(errorMessage))
+					if (!objectValue.Initiated || objectValue.Value == null || (objectValue.Type == typeof(string) && string.IsNullOrWhiteSpace(objectValue.Value?.ToString())))
+					{
+						multiError.Add(new ProgramError(variableName, goalStep, function, StatusCode: statusCode));
+					}
+					obj = objectValue.Value;
+				} else
 				{
-					errorMessage = $"{variable} is empty. It must be set";
-				}
-				if (!obj.Initiated || obj.Value == null || (obj.Type == typeof(string) && string.IsNullOrWhiteSpace(obj.Value?.ToString())))
-				{
-					multiError.Add(new ProgramError(variable, goalStep, function, StatusCode: statusCode));
-				}
-
-				if (obj.Value is IList list && list.Count == 0)
-				{
-					multiError.Add(new ProgramError(variable, goalStep, function, StatusCode: statusCode));
+					obj = variable;
 				}
 
-				if (obj.Value is IDictionary dict && dict.Count == 0)
+				if (obj == null)
 				{
-					multiError.Add(new ProgramError(variable, goalStep, function, StatusCode: statusCode));
+					multiError.Add(new ProgramError(variable.ToString(), goalStep, function, StatusCode: statusCode));
+					continue;
+				}
+
+				if (obj is IList list && list.Count == 0)
+				{
+					multiError.Add(new ProgramError(variable.ToString(), goalStep, function, StatusCode: statusCode));
+					continue;
+				}
+
+				if (obj is IDictionary dict && dict.Count == 0)
+				{
+					multiError.Add(new ProgramError(variable.ToString(), goalStep, function, StatusCode: statusCode));
+					continue;
 				}
 			}
 			return (multiError.Count > 0) ? multiError : null;

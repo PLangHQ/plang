@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using PLang.Errors;
 using PLang.Errors.Methods;
 using PLang.Errors.Runtime;
+using PLang.Utils;
 using System.Collections;
 using System.ComponentModel;
 using System.Linq.Dynamic.Core;
@@ -459,8 +460,9 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 					{
 						return token.ToString().Equals(valueToFilterBy.ToString(), comparer);
 					}
+					var obj = TypeHelper.ConvertToType(valueToFilterBy, v.GetType());
 
-					return v != null && v.Equals(valueToFilterBy);
+					return v != null && v.Equals(obj);
 				}),
 				"!=" => new Func<object, bool>(v => v != null && !v.Equals(valueToFilterBy)),
 				">" => new Func<object, bool>(v => v != null && double.TryParse(v.ToString(), out var result) && result > double.Parse(valueToFilterBy)),

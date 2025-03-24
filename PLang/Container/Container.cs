@@ -22,6 +22,7 @@ using PLang.SafeFileSystem;
 using PLang.Services.AppsRepository;
 using PLang.Services.ArchiveService;
 using PLang.Services.CachingService;
+using PLang.Services.DbService;
 using PLang.Services.EncryptionService;
 using PLang.Services.EventSourceService;
 using PLang.Services.IdentityService;
@@ -225,6 +226,12 @@ namespace PLang.Container
 			container.RegisterSingleton<IFileAccessHandler, FileAccessHandler>();
 
 			container.RegisterSingleton<IEngine, Engine>();
+			/*
+			container.RegisterSingleton<EnginePool>(factory =>
+			{
+				return new EnginePool(10, () => container.GetInstance<IEngine>(), container);
+			});*/
+			
 			container.RegisterSingleton<ISettings, Settings>();
 			container.RegisterSingleton<IBuilder, Building.Builder>();
 			container.RegisterSingleton<ITypeHelper, TypeHelper>();
@@ -337,6 +344,15 @@ namespace PLang.Container
 
 			container.Register<IDbConnection, SqliteConnection>(typeof(SqliteConnection).FullName);
 			container.Register<IDbConnection, DbConnectionUndefined>(typeof(DbConnectionUndefined).FullName);
+			
+			container.Register(factory =>
+			{
+				var type = GetImplementation(context, ReservedKeywords.Inject_IDbConnection, typeof(SqliteConnection));
+				return factory.GetInstance<IDbConnection>(type);
+			});
+			container.RegisterDbFactory(typeof(SqliteConnection), true);
+
+
 			container.Register(factory =>
 			{
 				var context = container.GetInstance<PLangAppContext>();
@@ -381,8 +397,6 @@ namespace PLang.Container
 				var context = container.GetInstance<PLangAppContext>();
 				var fileSystem = container.GetInstance<IPLangFileSystem>();
 				var settings = container.GetInstance<ISettings>();
-				string dbType = GetImplementation(context, ReservedKeywords.Inject_IDbConnection);
-				var dbConnection = factory.GetInstance<IDbConnection>(dbType);
 				var logger = container.GetInstance<ILogger>();
 				var llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
 				var typeHelper = container.GetInstance<ITypeHelper>();

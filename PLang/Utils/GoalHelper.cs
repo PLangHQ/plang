@@ -93,5 +93,18 @@ namespace PLang.Utils
 
 			return goalPath;
 		}
+
+
+		public static string GetSpaceByParent(Goal goal)
+		{
+			int i = 0;
+			var parent = goal.ParentGoal;
+			while (parent != null)
+			{
+				parent = parent.ParentGoal;
+				i++;
+			}
+			return new string(' ', i);
+		}
 	}
 }

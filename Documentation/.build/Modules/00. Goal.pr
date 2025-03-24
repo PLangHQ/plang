@@ -31,7 +31,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -65,12 +65,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "7dc212041877e4b784de96477a6ae37a0bed68834a08fd12b1ffffef17ce1e82",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "foreach %files%, call !GenerateModuleDocumentation file=%item%",
@@ -100,7 +103,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -134,12 +137,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "447c413066a6807a7e8b012fee0581b6cbf2a9618a2f95fc24f47442f749ef61",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     }
   ],
   "SubGoals": [
@@ -159,11 +165,11 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules",
-  "BuilderVersion": "0.1.15.1",
+  "BuilderVersion": "1.0.0.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "8d8a450691500d7ee1fac535c2afebc143174ecfb7c8999adbe7cda7ca4237cf",
+  "Hash": "d27effa888176118558480a8f289ae4651be490827766140515aa81941ded9ea",
   "IncomingVariablesRequired": [
     "ModuleName"
   ]

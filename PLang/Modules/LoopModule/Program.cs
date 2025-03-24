@@ -1,15 +1,19 @@
 ﻿
 
 using IdGen;
+using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Utilities;
 using PLang.Attributes;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Models;
 using PLang.Runtime;
 using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq.Dynamic.Core;
 
 namespace PLang.Modules.LoopModule
 {
@@ -41,8 +45,9 @@ namespace PLang.Modules.LoopModule
 			return name;
 		}
 
-		[Description("Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called. Predefined variables are %list%, %item%, %position%, %listCount%, use can overwrite those using parameters")]
-		public async Task<IError?> RunLoop([HandlesVariableAttribute] string variableToLoopThrough, GoalToCall goalNameToCall, [HandlesVariableAttribute] Dictionary<string, object?>? parameters = null)
+		[Description("Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called. Predefined variables are %list%, %item%, %position%, %listCount%, use can overwrite those using parameters. cpuUsage is percentage of cpu cores available, 80% => 0.8")]
+		public async Task<IError?> RunLoop([HandlesVariableAttribute] string variableToLoopThrough, GoalToCall goalNameToCall, [HandlesVariableAttribute] Dictionary<string, object?>? parameters = null,
+			 int threadCount = 1, double cpuUsage = 0, bool failFast = true)
 		{
 			if (parameters == null) parameters = new();
 
@@ -55,6 +60,17 @@ namespace PLang.Modules.LoopModule
 			var prevList = memoryStack.Get("list");
 			var prevListCount = memoryStack.Get("listCount");
 			var prevPosition = memoryStack.Get("position");
+
+			int effectiveThreads = 1;
+
+			var groupedErrors = new GroupedErrors("LoopErrors");
+			if (cpuUsage > 0 || threadCount > 1)
+			{
+				int cores = Environment.ProcessorCount;
+				effectiveThreads = threadCount > 0 ? threadCount : (int)(cores * cpuUsage);
+				effectiveThreads = Math.Max(effectiveThreads, 1);
+			}
+
 
 
 			var obj = memoryStack.Get(variableToLoopThrough);
@@ -69,7 +85,7 @@ namespace PLang.Modules.LoopModule
 				l.Add(obj);
 				obj = l;
 			}
-
+			/*
 			if (obj is IList list)
 			{
 				if (list == null || list.Count == 0)
@@ -80,6 +96,7 @@ namespace PLang.Modules.LoopModule
 
 				for (int i = 0; i < list.Count; i++)
 				{
+
 					var goalParameters = new Dictionary<string, object?>();
 					goalParameters.Add(listName.ToString()!, list);
 					goalParameters.Add(listCountName, list.Count);
@@ -94,57 +111,118 @@ namespace PLang.Modules.LoopModule
 
 					var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalNameToCall, goalParameters, Goal);
 					if (result.error != null) return result.error;
+
 				}
 
 			}
-			else if (obj is JToken jtoken && !jtoken.HasValues) { }
+			else*/
+
+			if (obj is JToken jtoken && !jtoken.HasValues)
+			{
+				throw new NotImplementedException();
+			}
 			else if (obj is IEnumerable enumerables)
 			{
-
-				int idx = 1;
-				bool hasEntry = false;
-				foreach (var item in enumerables)
-				{
-					hasEntry = true;
-					var goalParameters = new Dictionary<string, object?>();
-					goalParameters.Add(listName.ToString()!, enumerables);
-					goalParameters.Add(itemName.ToString()!, item);
-					goalParameters.Add(positionName.ToString()!, idx++);
-					goalParameters.Add(listCountName, -1);
-					var missingEntries = parameters.Where(p => !goalParameters.ContainsKey(p.Key));
-					foreach (var entry in missingEntries)
-					{
-						goalParameters.Add(entry.Key, entry.Value);
-					}
-
-					var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalNameToCall, goalParameters, Goal);
-					if (result.error != null) return result.error;
-				}
-
+				bool hasEntry = enumerables.AsQueryable().Any();
 				if (!hasEntry && (obj is JValue || obj is JObject))
 				{
-					List<object> objs = new();
-					var goalParameters = new Dictionary<string, object?>();
-					goalParameters.Add(listName.ToString()!, objs);
-					goalParameters.Add(itemName.ToString()!, obj);
-					goalParameters.Add(positionName.ToString()!, 0);
-					goalParameters.Add(listCountName, -1);
-					var missingEntries = parameters.Where(p => !goalParameters.ContainsKey(p.Key));
-					foreach (var entry in missingEntries)
-					{
-						goalParameters.Add(entry.Key, entry.Value);
-					}
+					var list = new List<object>();
+					list.Add(obj);
+					enumerables = list;
+					hasEntry = true;
+				}
 
-					var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalNameToCall, goalParameters, Goal);
-					if (result.error != null) return result.error;
+				int idx = 1;
+				if (effectiveThreads == 1)
+				{
+					foreach (var item in enumerables)
+					{
+						var goalParameters = new Dictionary<string, object?>();
+						goalParameters.Add(listName.ToString()!, enumerables);
+						goalParameters.Add(itemName.ToString()!, item);
+						goalParameters.Add(positionName.ToString()!, idx++);
+						goalParameters.Add(listCountName, -1);
+						var missingEntries = parameters.Where(p => !goalParameters.ContainsKey(p.Key));
+						foreach (var entry in missingEntries)
+						{
+							goalParameters.Add(entry.Key, entry.Value);
+						}
+
+						var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalNameToCall, goalParameters, Goal);
+						if (result.error != null) return result.error;
+					}
+				}
+				else
+				{
+
+					using var semaphore = new SemaphoreSlim(effectiveThreads);
+					using var cts = new CancellationTokenSource();
+
+					CancellationToken token = cts?.Token ?? CancellationToken.None;
+
+					var tasks = enumerables.Cast<object>().Select(async item =>
+					{
+						await semaphore.WaitAsync(token);
+						try
+						{
+
+							var goalParameters = new Dictionary<string, object?>();
+							goalParameters.Add(listName.ToString()!, enumerables);
+							goalParameters.Add(itemName.ToString()!, item);
+							goalParameters.Add(positionName.ToString()!, idx++);
+							goalParameters.Add(listCountName, -1);
+							var missingEntries = parameters.Where(p => !goalParameters.ContainsKey(p.Key));
+							foreach (var entry in missingEntries)
+							{
+								goalParameters.Add(entry.Key, entry.Value);
+							}
+
+							var task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalNameToCall, goalParameters, Goal);
+							var result = await task;
+							if (result.error != null)
+							{
+								if (failFast)
+								{
+									cts?.Cancel();
+									return result.error;
+								} else
+								{
+									groupedErrors.Add(result.error);
+								}
+							}
+
+						}
+						finally
+						{
+							semaphore.Release();
+						}
+						return null;
+					});
+
+					try
+					{
+						var results = await Task.WhenAll(tasks);
+						var result = results.FirstOrDefault(e => e != null);
+						return result;
+					}
+					catch (OperationCanceledException)
+					{
+						var result = tasks.FirstOrDefault(t => t.IsCompletedSuccessfully && t.Result != null)?.Result;
+						return result;
+					}
 				}
 			}
-
+			
 
 			memoryStack.Put("item", prevItem);
 			memoryStack.Put("list", prevList);
 			memoryStack.Put("listCount", prevListCount);
 			memoryStack.Put("position", prevPosition);
+
+			if (groupedErrors.Count > 0)
+			{
+				return groupedErrors;
+			}
 
 			return null;
 

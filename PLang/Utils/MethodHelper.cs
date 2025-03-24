@@ -418,6 +418,15 @@ namespace PLang.Utils
 				parameterValues.Add(parameter.Name, list);
 				return;
 			}
+			if (list.GetType() == parameter.ParameterType)
+			{
+				for (int i=0;i<list.Count;i++)
+				{
+					list[i] = variableHelper.LoadVariables(list[i]);
+				}
+				parameterValues.Add(parameter.Name, list);
+				return;
+			}
 
 			var instanceList = Activator.CreateInstance(parameter.ParameterType);
 			var addMethod = instanceList.GetType().GetMethod("Add");
@@ -425,6 +434,8 @@ namespace PLang.Utils
 			for (int i = 0; list != null && i < list.Count; i++)
 			{
 				object? obj = variableHelper.LoadVariables(list[i]);
+				
+
 				if (obj != null && parameter.ParameterType.GenericTypeArguments[0] == typeof(string))
 				{
 					addMethod.Invoke(instanceList, new object[] { obj.ToString() });
@@ -533,10 +544,7 @@ namespace PLang.Utils
 				var obj = variableHelper.LoadVariables(variableValue);
 				if (obj is JArray jArray)
 				{
-					foreach (JObject jobject in jArray)
-					{
-						dict = jobject.ToDictionary();
-					}
+					dict = MapJArray(jArray);
 				}
 				else if (obj is JObject jObject)
 				{

@@ -31,7 +31,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -65,12 +65,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "449e28c3c17604fb597ca45054799b8b68e8c6d2c0f2623f10e49562e6252b29",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "get all *.goal files from ../Tests/%module.moduleName%/, write to %testFiles%",
@@ -100,7 +103,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -134,12 +137,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "78307809624b0f4a4b6cba87057f0400f2ede240095bedfd5e81e3ba09951dd7",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "[var] set %plangExamples% to null",
@@ -169,7 +175,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -203,12 +209,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "2fe764d14c4d074c1fb368802bcfdd1ae3712e6b4651a68c488c17ab981f1dd3",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "foreach %testFiles%, call !MergeFilesIntoOneVar path=%item%",
@@ -238,7 +247,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -272,12 +281,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "3ec3ba4308c72698753c865e87788bb005337f534dd2966fbd6dad397757dc1a",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "read 'template/modules/GeneratePlangExamples/system.txt', into %system%, load variables",
@@ -307,7 +319,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -341,12 +353,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "611d302072e16c6403d18e11be2a7eb13b65016bcbdd07d466350de24377ab3f",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "read 'template/modules/GeneratePlangExamples/user.txt', into %user%, load variables",
@@ -376,7 +391,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -410,12 +425,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "d4fc3556f33d9ef8e3694a7c485ff62e6fe080eed14d99538f88c9cd0c9036ad",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     },
     {
       "Text": "[llm]: system:%system%\n        user: %user%\n        write to %plangExamplesDescription%",
@@ -435,7 +453,8 @@
       "CacheHandler": {
         "TimeInMilliseconds": 50,
         "CacheKey": null,
-        "CachingType": 0
+        "CachingType": 0,
+        "Location": null
       },
       "CancellationHandler": null,
       "Custom": {},
@@ -449,7 +468,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -483,12 +502,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "8256280ce763b61d172920e37226276909dc2f5b89019c29d8e74b57c2d0a2fc",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Modules.goal"
     }
   ],
   "SubGoals": [],
@@ -499,11 +521,11 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Modules\\GeneratePlangExamples\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Modules\\GeneratePlangExamples",
-  "BuilderVersion": "0.1.15.1",
+  "BuilderVersion": "1.0.0.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "d7d6a9bcb3988cfa10e647ea57f15796bbd771ab1b358904dc728cfd70cf965a",
+  "Hash": "1594479f7f3b5159787cb99cd897e97d82dc25489032f6098a7eb56bf418f434",
   "IncomingVariablesRequired": [
     "ModuleName",
     "module.moduleName"

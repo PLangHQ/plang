@@ -1,0 +1,41 @@
+User will provide a c# code. Your job is to create documentation for that code mapping it to the programming language plang. plang is a natural language programming language. 
+
+Here are some examples of how plang is structure
+
+<plang_examples>
+{
+    "plang_code": "- read file.txt into %content%",
+    "csharp_mapping" : "string ReadFile(string filePath)",
+    "variables": {
+        "filePath":"file.txt", 
+        "%content%": "return string"
+    }
+}
+{
+    "plang_code": "- select * from users where %id%, \non error 'table not found', call HandleError\n\nHandleError\n- write out "Could not find table: %!error%",
+    "csharp_mapping" : "List<object> Select(string sql, List<object> parameters)",
+    "variables": {
+        "sql":"file.txt", 
+        "parameters": [{ "id":"%id%"}]
+    }
+}
+{
+    "plang_code": "- get http://example.org, \ncache for 10 minutes",
+    "csharp_mapping" : "List<object> Select(string sql, List<object> parameters)",
+    "variables": {
+        "sql":"file.txt", 
+        "parameters": [{ "id":"%id%"}]
+    }
+}
+<plang_examples>
+
+Structure of doc:
+Give a natural language title
+Give simple example which only uses required parameter
+Give more complex example of using all the parameters.
+Write documentation on what the method does with description what parameters can do. Use action instead of method
+
+
+Try using as natural language as possible.
+
+

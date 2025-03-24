@@ -20,7 +20,7 @@ namespace PLang.Utils
 			{
 				if (!context.TryGetValue(key + "_Default", out serviceName) || serviceName == null)
 				{
-					throw new Exception("Could not find output stream to load");
+					throw new Exception($"Could not find service for {key} to load");
 				}				
 			}
 			return serviceName!.ToString()!;

@@ -1,5 +1,6 @@
 ﻿using LightInject;
 using PLang.Building;
+using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Errors;
@@ -106,7 +107,7 @@ namespace PLang
 			if (executeType == ExecuteType.Builder)
 			{
 				AppContext.SetSwitch(ReservedKeywords.DetailedError, true);
-				await Build();
+				await Build(args);
 				if (watch)
 				{
 					WatchFolder(fileSystem.GoalsPath, "*.goal");
@@ -140,6 +141,8 @@ namespace PLang
 			if (sharedPath != null)
 			{
 				AppContext.SetData("sharedPath", sharedPath);
+				var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
+				fileAccessHandler.GiveAccess(Environment.CurrentDirectory, fileSystem.Path.Join(AppContext.BaseDirectory, "os"));
 			}
 
 			// This is only for development of plang as it is hardcoded to point to http://localhost:10000
@@ -204,7 +207,7 @@ namespace PLang
 					container.RegisterForPLangConsole(Environment.CurrentDirectory, Environment.CurrentDirectory);
 
 					var pLanguage = new Executor(container);
-					await pLanguage.Build();
+					await pLanguage.Build(null);
 
 					prParser.ForceLoadAllGoals();
 				}
@@ -218,7 +221,7 @@ namespace PLang
 					container.RegisterForPLangConsole(Environment.CurrentDirectory, Environment.CurrentDirectory);
 
 					var pLanguage = new Executor(container);
-					await pLanguage.Build();
+					await pLanguage.Build(null);
 
 					prParser.ForceLoadAllGoals();
 				}
@@ -229,12 +232,17 @@ namespace PLang
 
 		}
 
-		public async Task Build()
+		public async Task Build(string[]? args)
 		{
 			var factory = container.GetInstance<IErrorHandlerFactory>();
 			var handler = factory.CreateHandler();
 			try
 			{
+				this.engine = container.GetInstance<IEngine>();
+				container.GetInstance<MemoryStack>().Clear();
+				this.engine.Init(container);
+
+				LoadArgsToMemoryStack(args, new());
 
 				this.builder = container.GetInstance<IBuilder>();
 				var error = await builder.Start(container);
@@ -272,6 +280,14 @@ namespace PLang
 			this.engine.Init(container);
 
 			var goalsToRun = new List<string>();
+			LoadArgsToMemoryStack(args, goalsToRun);
+
+			await engine.Run(goalsToRun);
+			return engine;
+		}
+
+		private void LoadArgsToMemoryStack(string[]? args, List<string> goalsToRun)
+		{
 			for (int i = 0; args != null && i < args.Length; i++)
 			{
 				if (args[i].StartsWith("--")) continue;
@@ -289,12 +305,7 @@ namespace PLang
 					goalsToRun.Add(args[i].Trim());
 				}
 			}
-
-			await engine.Run(goalsToRun);
-			return engine;
 		}
-
-
 	}
 
 }

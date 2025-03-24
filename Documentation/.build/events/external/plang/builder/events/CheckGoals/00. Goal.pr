@@ -71,8 +71,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "84f33823629c27453b86ad1b7c5cb46314675b9985b60b7079e049a57a0cad78",
-      "BuilderVersion": null
+      "Hash": "066117c81e66010a5d9fb9eedc4276cb88ad54ac44fb725958a2d6ae652ee97c",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\events\\external\\plang\\builder\\events\\CheckGoals.goal"
     },
     {
       "Text": "get content of all '00. Goal.pr' files, in ../, include subfolder, write into %goalFiles%",
@@ -142,8 +143,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "3f6a64e3579410731c901ec26c833e461fce04b4a318e3e9b385ababfa46dcd1",
-      "BuilderVersion": null
+      "Hash": "65066cbddd207b7497501f546582513283f326b9b385ea4a58f728e7cb3b36ce",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\events\\external\\plang\\builder\\events\\CheckGoals.goal"
     },
     {
       "Text": "go throug %goalFiles%, call !CheckGoal item=%goal%",
@@ -213,8 +215,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "59e45b9295812607b7509328f4e47c66051763864962eb65d1921caeca696306",
-      "BuilderVersion": null
+      "Hash": "19db8e9302657dc92f6e5b56575ab00ec6d0fde7cb930ae7ec0ee073b98aa057",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\events\\external\\plang\\builder\\events\\CheckGoals.goal"
     },
     {
       "Text": "if %missingGoals% is not empty then, call ShowMissingGoals, else ShowAllValid",
@@ -284,8 +287,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "e53bd924133f384ef4ccc7e8ca974d4f320757c562a630c39046fb374bf59dd6",
-      "BuilderVersion": null
+      "Hash": "215b6ca0f75dd78bbf957cd8b050c746791b08d58377f5b4fa0cfb77985ff5c6",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\events\\external\\plang\\builder\\events\\CheckGoals.goal"
     }
   ],
   "SubGoals": [
@@ -302,10 +306,10 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\builder\\events",
   "RelativePrPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\builder\\events\\CheckGoals",
-  "BuilderVersion": "0.15.5.0",
+  "BuilderVersion": "1.0.0.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "2482998aef88d2c193b9ace87ed4ff565a54acb2fbe8854624695591ecdd4f93",
+  "Hash": "dadf42e9e4deadc5a709cfaed85068ec660af6f303cb9835e39d483d9247cd87",
   "IncomingVariablesRequired": null
 }

@@ -23,6 +23,7 @@ namespace PLang.Modules.CallGoalModule
 			AppendToSystemCommand("Goals in current file is provided");
 			AppendToAssistantCommand($@"
 == Examples starts ==
+call goal /Start => /Start is goalName that is rooted, no parameter.
 call !ParseText => ParseText is goalName, no parameters
 call !Gmail/Search %query%, => Gmail/Search is goalName,  %query% is key and value in parameters
 call Folder/Search q=%fileName% => Folder/Search is goalName, parameter key is q, and value is %fileName%

@@ -11,6 +11,7 @@ using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
+using PLang.Services.DbService;
 using PLang.Services.EventSourceService;
 using PLang.Services.LlmService;
 using PLang.Services.SettingsService;
@@ -34,7 +35,7 @@ namespace PLang.Modules.DbModule
 		private record DbConnectionSupported(string Key, string Name, Type Type);
 
 		private ModuleSettings moduleSettings;
-		private readonly IDbConnection dbConnection;
+		private readonly IDbServiceFactory dbFactory;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ISettings settings;
 		private readonly ILlmServiceFactory llmServiceFactory;
@@ -42,10 +43,10 @@ namespace PLang.Modules.DbModule
 		private readonly ILogger logger;
 		private readonly ITypeHelper typeHelper;
 
-		public Program(IDbConnection dbConnection, IPLangFileSystem fileSystem, ISettings settings, ILlmServiceFactory llmServiceFactory, 
+		public Program(IDbServiceFactory dbFactory, IPLangFileSystem fileSystem, ISettings settings, ILlmServiceFactory llmServiceFactory, 
 			IEventSourceRepository eventSourceRepository, PLangAppContext context, ILogger logger, ITypeHelper typeHelper) : base()
 		{
-			this.dbConnection = dbConnection;
+			this.dbFactory = dbFactory;
 			this.fileSystem = fileSystem;
 			this.settings = settings;
 			this.llmServiceFactory = llmServiceFactory;
@@ -91,6 +92,7 @@ namespace PLang.Modules.DbModule
 
 		public async Task BeginTransaction()
 		{
+			var dbConnection = dbFactory.CreateHandler();
 			if (dbConnection.State != ConnectionState.Open) dbConnection.Open();
 			var transaction = dbConnection.BeginTransaction();
 			context.AddOrReplace(DbConnectionContextKey, dbConnection);
@@ -130,6 +132,7 @@ namespace PLang.Modules.DbModule
 
 		public async Task<IError?> LoadExtension(string fileName, string? procName = null)
 		{
+			var dbConnection = dbFactory.CreateHandler();
 			if (dbConnection is not SqliteConnection)
 			{
 				return new Error("Loading extension only works for Sqlite", "NotSupported");
@@ -183,7 +186,9 @@ namespace PLang.Modules.DbModule
 
 		private (IDbConnection connection, DynamicParameters param, string sql, IError? error) Prepare(string sql, List<object>? Parameters = null, bool isInsert = false)
 		{
-			IDbConnection connection = context.ContainsKey(DbConnectionContextKey) ? context[DbConnectionContextKey] as IDbConnection : dbConnection;
+			IDbConnection? connection = context.ContainsKey(DbConnectionContextKey) ? context[DbConnectionContextKey] as IDbConnection : null;
+			if (connection == null) connection = dbFactory.CreateHandler();
+
 			var multipleErrors = new GroupedErrors("SqlParameters");
 			var param = new DynamicParameters();
 			if (Parameters != null)
@@ -363,11 +368,11 @@ namespace PLang.Modules.DbModule
 					var parameter =  task.Result as JObject;
 					if (parameter != null)
 					{
-						return (0, new Error($"{parameter["VariableNameOrValue"]} is empty. Empty content cannot be inserted into the column {parameterName}", "ConvertFailed", Exception: ex));
+						return (0, new Error($"{parameter["VariableNameOrValue"]} is empty. Empty content cannot be used for the column {parameterName}. It must contains some value", "ConvertFailed", Exception: ex));
 					}
 					else
 					{
-						return (0, new Error($"{parameterName} is empty. Empty content cannot be inserted into the column", "ConvertFailed", Exception: ex));
+						return (0, new Error($"{parameterName} is empty. Empty content cannot be used, it must contains some value", "ConvertFailed", Exception: ex));
 					}
 				}
 
@@ -432,7 +437,8 @@ namespace PLang.Modules.DbModule
 		public async Task<(int, IError?)> InsertEventSourceData(long id, string data, string keyHash)
 		{
 			var transaction = context[DbTransactionContextKey] as IDbTransaction;
-			IDbConnection connection = context.ContainsKey(DbConnectionContextKey) ? context[DbConnectionContextKey] as IDbConnection : dbConnection;
+			IDbConnection? connection = context.ContainsKey(DbConnectionContextKey) ? context[DbConnectionContextKey] as IDbConnection : null;
+			if (connection == null) connection = dbFactory.CreateHandler();
 
 			return await eventSourceRepository.AddEventSourceData(connection, id, data, keyHash, transaction);
 		}

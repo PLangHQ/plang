@@ -83,11 +83,19 @@
         "StepText": null,
         "WaitForExecution": true,
         "RunOnlyOnStartParameter": null,
-        "OnErrorContinueNextStep": false
+        "OnErrorContinueNextStep": false,
+        "ErrorKey": null,
+        "ErrorMessage": null,
+        "StatusCode": null,
+        "ExceptionType": null,
+        "IsLocal": false,
+        "IncludeOsGoals": false,
+        "Id": "Before_EndOfApp_*_CheckGoals_False___True__False_____False"
       },
       "IsEvent": true,
-      "Hash": "1a8d59ac4cd8a7afc4172ca1ea00b3a00aa86bb48fddcaec7c460d2d7325ce7a",
-      "BuilderVersion": "0.15.5.0"
+      "Hash": "5b0acc59cccb3c9482eaa6f75812b313f23de319a55e67e5c7d714487e881f15",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\events\\external\\plang\\builder\\events\\BuildEvents.goal"
     }
   ],
   "SubGoals": [],
@@ -98,10 +106,10 @@
   "RelativeGoalFolderPath": "\\events\\external\\plang\\builder\\events",
   "RelativePrPath": ".build\\events\\external\\plang\\builder\\events\\BuildEvents\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\events\\external\\plang\\builder\\events\\BuildEvents",
-  "BuilderVersion": "0.15.5.0",
+  "BuilderVersion": "1.0.0.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "66a84ddd1518c06c0c87cb6629c70c86e1c07fb55e6bd35cceee8cd910a2b34e",
+  "Hash": "e777f181b8a55a3174d1ccc1033e70cc526cf8bf040be27579d91df1b3426691",
   "IncomingVariablesRequired": null
 }

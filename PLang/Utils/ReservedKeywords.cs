@@ -10,7 +10,9 @@
 		public static readonly string CSharpDebug = "!CSharpDebug";
 		public static readonly string Test = "!Test";
 		public static readonly string Goal = "!Goal";
+		public static readonly string CallingGoal = "!CallingGoal";
 		public static readonly string Step = "!Step";
+		public static readonly string CallingStep = "!CallingStep";
 		public static readonly string StepIndex = "!StepIndex";
 		public static readonly string StrictBuild = "!StrictBuild";
 		public static readonly string Instruction = "!Instruction";

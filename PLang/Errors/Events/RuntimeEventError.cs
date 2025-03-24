@@ -39,8 +39,12 @@ namespace PLang.Errors.Events
 					str += Environment.NewLine + " Could not determine goal to call on the event";
 				}
 			}
-
-			return ErrorHelper.ToFormat(contentType, InitialError ?? this, extraInfo: str);
+			IError error = this;
+			while (error is RuntimeEventError ree &&  ree.InitialError != null)
+			{
+				error = ree.InitialError;
+			}
+			return ErrorHelper.ToFormat(contentType, error, extraInfo: str);
 
         }
     }

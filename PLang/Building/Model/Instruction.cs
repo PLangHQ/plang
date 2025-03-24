@@ -10,10 +10,12 @@ namespace PLang.Building.Model
 
 	public record Instruction(object Action)
 	{
+		
 		public string? Text { get; set; }
 		public bool Reload { get; set; }
 		public LlmRequest LlmRequest { get; set; }
 		public bool RunOnBuild { get; set; }
+		public Dictionary<string, object> Metadata { get; set; } = new();
 		public GenericFunction[] GetFunctions()
 		{
 			try

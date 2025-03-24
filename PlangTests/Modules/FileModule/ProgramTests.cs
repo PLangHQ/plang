@@ -11,7 +11,7 @@ namespace PLangTests.Modules.FileModule
 		public void Init()
 		{
 			base.Initialize();
-			p = new Program(fileSystem, settings, logger, pseudoRuntime, engine);
+			p = new Program(fileSystem, settings, logger, pseudoRuntime, engine, fileAccessHandler);
 			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, null);
 		}
 
@@ -36,7 +36,7 @@ namespace PLangTests.Modules.FileModule
 			var text = "Hello PLang World";
 			fileSystem.AddFile(path, new System.IO.Abstractions.TestingHelpers.MockFileData(text));
 
-			var txt = await p.ReadTextFile(path);
+			var txt = (await p.ReadTextFile(path)).Item1;
 			Assert.AreEqual(text, txt);
 		}
 		

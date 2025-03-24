@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 
 namespace PLang.Modules.OutputModule
 {
-	[Description("Writes to the output stream. Ask user a question, either straight or with help of llm. output stream can be to the user(default), system, log, audit, metric")]
+	[Description("Writes to the output stream. Ask user a question, with LLM or without, either straight or with help of llm. output stream can be to the user(default), system, log, audit, metric")]
 	public class Program : BaseProgram, IDisposable
 	{
 		private readonly IOutputStreamFactory outputStreamFactory;
@@ -23,26 +23,33 @@ namespace PLang.Modules.OutputModule
 			this.outputSystemStreamFactory = outputSystemStreamFactory;
 		}
 
-		[Description("Uses llm to construct a question to user and to format the answer")]
+		[Description("Send to user and waits for answer. Uses llm to construct a question to user and to format the answer. Developer defines specifically to use llm")]
 		public async Task<(ReturnDictionary<string, object?>?, IError?)> AskUserUsingLlm(string text, string type = "text", int statusCode = 202, 
-			string? developerInstructionForResult = "give me the object that matches, e.g. { \"id\": 123, \"name\": \"example\"}", [HandlesVariable] Dictionary<string, object?>? options = null)
+			string? developerInstructionForResult = "give me the object that matches, e.g. { \"id\": 123, \"name\": \"example\"}", 
+			[HandlesVariable] Dictionary<string, object?>? options = null, string? scheme = null)
 		{
 			var callGoalModule = GetProgramModule<CallGoalModule.Program>();
-			var param = new Dictionary<string, object?> { { "type", type }, { "statusCode", statusCode }, { "text", text }, { "developerInstructionForResult", developerInstructionForResult } };
+			var param = new Dictionary<string, object?> { 
+				{ "type", type }, { "statusCode", statusCode }, { "text", text }, 
+				{ "developerInstructionForResult", developerInstructionForResult }, {"scheme", scheme } };
 			if (options != null)
 			{
 				string json = "";
 				foreach (var option in options)
 				{
-					json += option.Key + "\n" + JsonConvert.SerializeObject(option.Value);
+					json += $"<{option.Key}>\n{JsonConvert.SerializeObject(variableHelper.LoadVariables(option.Value))}\n<{option.Key}>\n";
 				}
 				param.Add("options", json);
 			}
 			
 			return await callGoalModule.RunGoal("/modules/OutputModule/AskUserLlm", param, isolated: true);
 		}
-
-		[Description("Send response to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. regexPattern can contain %variable%. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.")]
+		[Description("Send to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. regexPattern can contain %variable%. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.")]
+		public async Task<(string?, IError?)> AskUser(string text, string type = "text", int statusCode = 202, string? regexPattern = null, string? errorMessage = null, Dictionary<string, object>? parameters = null)
+		{
+			return await Ask(text, type, statusCode, regexPattern, errorMessage, parameters);
+		}
+		[Description("Send to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. regexPattern can contain %variable%. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.")]
 		public async Task<(string?, IError?)> Ask(string text, string type = "text", int statusCode = 202, string? regexPattern = null, string? errorMessage = null, Dictionary<string, object>? parameters = null)
 		{
 			var outputStream = outputStreamFactory.CreateHandler();

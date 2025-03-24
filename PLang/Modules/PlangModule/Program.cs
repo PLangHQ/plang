@@ -1,4 +1,6 @@
 ﻿using LightInject;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -44,10 +46,10 @@ namespace PLang.Modules.PlangModule
 		}
 
 		[Description("Get goals in file or folder. visiblity is either public|public_and_private|private")]
-		public async Task<object> GetGoals(string filePath, string visiblity = "public", string[]? fields = null)
+		public async Task<object> GetGoals(string fileOrFolderPath, string visiblity = "public", string[]? fields = null)
 		{
 			List<Goal> goals = new List<Goal>();
-			string path = GetPath(filePath);
+			string path = GetPath(fileOrFolderPath);
 			if (path.EndsWith(".goal"))
 			{
 				goals = goalParser.ParseGoalFile(path);
@@ -382,6 +384,76 @@ namespace PLang.Modules.PlangModule
 			AppContext.SetSwitch(ReservedKeywords.CSharpDebug, true);
 			AppContext.SetSwitch(ReservedKeywords.DetailedError, true);
 
+		}
+
+
+		public class MethodInfoDto
+		{
+			public string Name { get; set; }
+			public string Description { get; set; }
+			public string ReturnType { get; set; }
+			public List<(string Type, string Name)> Parameters { get; set; }
+			public string Code { get; set; }
+		}
+
+		public static List<MethodInfoDto> GetCSharpCode(string filePath)
+		{
+			var code = File.ReadAllText(filePath);
+			var tree = CSharpSyntaxTree.ParseText(code);
+			var root = tree.GetRoot();
+			var methods = new List<MethodInfoDto>();
+
+			var methodNodes = root.DescendantNodes().OfType<MethodDeclarationSyntax>();
+			foreach (var method in methodNodes)
+			{
+				var description = method.AttributeLists
+					.SelectMany(a => a.Attributes)
+					.FirstOrDefault(a => a.Name.ToString().Contains("Description"));
+
+				var descValue = description?.ArgumentList?.Arguments.FirstOrDefault()?.ToString().Trim('"') ?? string.Empty;
+
+				var parameters = method.ParameterList.Parameters
+					.Select(p => (p.Type?.ToString() ?? "var", p.Identifier.Text))
+					.ToList();
+
+				var returnType = method.ReturnType.ToString();
+
+				methods.Add(new MethodInfoDto
+				{
+					Name = method.Identifier.Text,
+					Description = descValue,
+					ReturnType = NormalizeReturnType(method.ReturnType),
+					Parameters = parameters,
+					Code = method.ToFullString()
+				});
+			}
+			return methods;
+		}
+
+		private static string NormalizeReturnType(TypeSyntax returnTypeSyntax)
+		{
+			var returnType = returnTypeSyntax.ToString();
+
+			if (returnType.StartsWith("Task<"))
+			{
+				var taskInnerType = returnType.Substring(5, returnType.Length - 6).Trim();
+				return $"Task<{SimplifyTuple(taskInnerType)}>";
+			}
+			else if (returnType == "Task")
+			{
+				return "Task";
+			}
+
+			return returnType;
+		}
+
+		private static string SimplifyTuple(string type)
+		{
+			if (type.StartsWith("(") && type.EndsWith(")"))
+			{
+				return type;
+			}
+			return type;
 		}
 	}
 }

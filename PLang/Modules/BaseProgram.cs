@@ -18,6 +18,7 @@ using PLang.SafeFileSystem;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Utils;
+using System.Diagnostics;
 using System.Net;
 using System.Reflection;
 using static PLang.Modules.BaseBuilder;
@@ -114,6 +115,7 @@ namespace PLang.Modules
 
 		public async Task<(object? ReturnValue, IError? Error)> RunFunction(GenericFunction function)
 		{
+			
 			Dictionary<string, object?>? parameterValues = null;
 			this.function = function; // this is to give sub classes access to current function running.
 			try
@@ -123,7 +125,7 @@ namespace PLang.Modules
 				{
 					return (null, new StepError($"Could not load method {function.FunctionName} to run", goalStep, "MethodNotFound", 500));
 				}
-
+				
 				logger.LogDebug("Method:{0}.{1}({2})", goalStep.ModuleType, method.Name, method.GetParameters());
 
 				//TODO: Should move this caching check up the call stack. code is doing to much work before returning cache
@@ -136,7 +138,6 @@ namespace PLang.Modules
 
 				parameterValues = methodHelper.GetParameterValues(method, function);
 				logger.LogTrace("Parameters:{0}", parameterValues);
-
 
 				// This is for memoryStack event handler. Should find a better way
 				context.AddOrReplace(ReservedKeywords.Goal, goal);
@@ -178,7 +179,10 @@ namespace PLang.Modules
 					}
 					catch { }
 				}
-
+				if (task.Status == TaskStatus.Canceled)
+				{
+					return (null, new CancelledError(goal, goalStep, function));
+				}
 				if (task.Status == TaskStatus.Faulted && task.Exception != null)
 				{
 					var ex = task.Exception.InnerException ?? task.Exception;
@@ -323,13 +327,20 @@ namespace PLang.Modules
 
 			else if (fields.Count() > 1)
 			{
-				var resultProperty = taskType.GetProperty("Result");
-				var result = (dynamic)resultProperty.GetValue(task);
+				try
+				{
+					var resultProperty = taskType.GetProperty("Result");
+					var result = (dynamic)resultProperty.GetValue(task);
 
-				//var item1 = result.GetType().GetProperties()[0].GetValue(result);
-				//var item2 = result.GetType().GetProperties()[1].GetValue(result);
+					//var item1 = result.GetType().GetProperties()[0].GetValue(result);
+					//var item2 = result.GetType().GetProperties()[1].GetValue(result);
 
-				return (result.Item1, result.Item2 as IError);
+					return (result.Item1, result.Item2 as IError);
+				}
+				catch (TargetInvocationException ex)
+				{
+					return (null, new ExceptionError(ex.InnerException ?? ex));
+				}
 			}
 			else
 			{
@@ -414,13 +425,13 @@ namespace PLang.Modules
 			if (goalStep.CacheHandler?.Location == "disk")
 			{
 				string path;
-				if (cacheKey.AdjustPathToOs().Contains(fileSystem.Path.DirectorySeparatorChar))
+				if (cacheKey.AdjustPathToOs().StartsWith(fileSystem.Path.DirectorySeparatorChar))
 				{
-					path = fileSystem.Path.Join(fileSystem.GoalsPath, cacheKey + ".cache").AdjustPathToOs();
+					path = fileSystem.Path.Join(fileSystem.GoalsPath, cacheKey).AdjustPathToOs();
 				}
 				else
 				{
-					path = fileSystem.Path.Join(goal.AbsolutePrFolderPath, cacheKey + ".cache").AdjustPathToOs();
+					path = fileSystem.Path.Join(goal.AbsolutePrFolderPath, cacheKey).AdjustPathToOs();
 				}
 
 				var dirName = fileSystem.Path.GetDirectoryName(path);
@@ -476,13 +487,13 @@ namespace PLang.Modules
 				if (goalStep.CacheHandler?.Location == "disk")
 				{
 					string path;
-					if (cacheKey.AdjustPathToOs().Contains(fileSystem.Path.DirectorySeparatorChar))
+					if (cacheKey.AdjustPathToOs().StartsWith(fileSystem.Path.DirectorySeparatorChar))
 					{
-						path = fileSystem.Path.Join(fileSystem.GoalsPath, cacheKey + ".cache").AdjustPathToOs();
+						path = fileSystem.Path.Join(fileSystem.GoalsPath, cacheKey).AdjustPathToOs();
 					}
 					else
 					{
-						path = fileSystem.Path.Join(goal.AbsolutePrFolderPath, cacheKey + ".cache").AdjustPathToOs();
+						path = fileSystem.Path.Join(goal.AbsolutePrFolderPath, cacheKey).AdjustPathToOs();
 					}
 
 					if (!fileSystem.File.Exists(path)) return false;

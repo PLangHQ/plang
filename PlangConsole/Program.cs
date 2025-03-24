@@ -29,7 +29,6 @@ if (runtime)
 
 	var context = container.GetInstance<PLangAppContext>();
 
-	
 	var fileAccessHandler = container.GetInstance<PLang.SafeFileSystem.IFileAccessHandler>();
 	fileAccessHandler.GiveAccess(Environment.CurrentDirectory, Path.Join(AppContext.BaseDirectory, "os"));
 

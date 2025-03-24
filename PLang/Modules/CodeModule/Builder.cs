@@ -72,6 +72,7 @@ namespace PLang.Modules.CodeModule
 - When user defines assembly or using, include them in your answer
 - append @ sign for reserved variable in C#
 - when input and output variable is same only define it once
+- on error in step is handled by external system, DO NOT generate code for it
 ## Rules ##
 
 ## Response information ##

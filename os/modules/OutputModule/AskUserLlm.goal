@@ -2,14 +2,17 @@ AskUserLlm
 - validate %developerInstructionForResult%, %text%, %options% is not empty
 - read file %!plang.osPath%/modules/OutputModule/llm/AskUserSystem.llm, load vars, write to %askSystem%
 - [llm] system: %askSystem%
+    continue from last: false
     response type: %!plang.output%
     write to %content%
 - ask user %content%, write to %answer%
 - read file %!plang.osPath%/modules/OutputModule/llm/AnswerUserSystem.llm, load vars, write to %answerSystem%
+- set default value %scheme% = "{result:object|null}"
 - [llm]  system: %answerSystem%
     user: %answer%
     continue from last: true
-    scheme:{result:object|null}
+    scheme:%scheme% 
+    write to %result%
 - return %result%
     
 /*

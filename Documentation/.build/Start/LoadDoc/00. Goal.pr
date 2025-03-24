@@ -31,7 +31,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[]}",
-        "type": "StepInformationBuilder",
+        "model": "gpt-4o-2024-08-06",
         "promptMessage": [
           {
             "role": "system",
@@ -65,12 +65,15 @@
             ]
           }
         ],
-        "model": "gpt-4o-2024-08-06",
+        "type": "StepInformationBuilder",
         "caching": true,
         "RawResponse": null
       },
       "EventBinding": null,
-      "IsEvent": false
+      "IsEvent": false,
+      "Hash": "f0625829f725754a6313c83631085fe2b11062e7ffd7d4e1ced89d08028da595",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Start.goal"
     }
   ],
   "SubGoals": [],
@@ -81,11 +84,11 @@
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Start\\LoadDoc\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Start\\LoadDoc",
-  "BuilderVersion": "0.1.15.1",
+  "BuilderVersion": "1.0.0.0",
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "88d57a85a62584502bdbbb1f0e23cab2bafdb0a0c61364c5853adba4d23549e9",
+  "Hash": "cefb3f1d1d2df76d1cd6911e8c2f5071d583190867a8deedb06ee198e51c146b",
   "IncomingVariablesRequired": [
     "doc"
   ]

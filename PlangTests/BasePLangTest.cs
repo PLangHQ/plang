@@ -9,10 +9,12 @@ using PLang.Events;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Modules.DbModule;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Services.AppsRepository;
 using PLang.Services.CachingService;
+using PLang.Services.DbService;
 using PLang.Services.LlmService;
 using PLang.Services.OpenAi;
 using PLang.Services.OutputStream;
@@ -33,9 +35,11 @@ namespace PLangTests
 		protected MockLogger logger;
 		protected PLangMockFileSystem fileSystem;
 		protected ILlmService llmService;
+		protected IDbServiceFactory dbFactory;
 		protected ILlmServiceFactory llmServiceFactory;
 		protected IPseudoRuntime pseudoRuntime;
 		protected IEngine engine;
+		protected EnginePool enginePool;
 		protected ISettingsRepository settingsRepository;
 		protected ISettings settings;
 		protected IEventRuntime eventRuntime;
@@ -92,12 +96,12 @@ namespace PLangTests
 			fileSystem = new PLangMockFileSystem();
 			fileSystem.AddFile(System.IO.Path.Join(Environment.CurrentDirectory, ".build", "info.txt"), Guid.NewGuid().ToString());
 
-
+			dbFactory = Substitute.For<IDbServiceFactory>();
 			container.RegisterInstance<IPLangFileSystem>(fileSystem);
 			container.RegisterInstance<IServiceContainer>(container);
 			this.settingsRepository = new SqliteSettingsRepository(fileSystem, context, logger);
 			container.RegisterInstance<ISettingsRepository>(settingsRepository);
-
+			enginePool = new EnginePool(10, () => container.GetInstance<IEngine>(), container);
 			fileAccessHandler = Substitute.For<IFileAccessHandler>();
 			settingsRepositoryFactory = Substitute.For<ISettingsRepositoryFactory>();
 			settingsRepositoryFactory.CreateHandler().Returns(settingsRepository);

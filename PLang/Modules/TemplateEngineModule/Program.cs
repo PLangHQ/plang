@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
 using PLang.Services.OutputStream;
 using System.ComponentModel;
+using Newtonsoft.Json;
 
 namespace PLang.Modules.TemplateEngineModule
 {
@@ -58,7 +59,7 @@ namespace PLang.Modules.TemplateEngineModule
 			var templateContext = new TemplateContext();
 			templateContext.MemberRenamer = member => member.Name;
 
-			var scriptObject = new ScriptObject();
+			var scriptObject = new ScriptObject(StringComparer.OrdinalIgnoreCase);
 			scriptObject.Import("date_format", new Func<object, string, string>((input, format) =>
 			{
 				if (input is DateTime dateTime)
@@ -70,6 +71,11 @@ namespace PLang.Modules.TemplateEngineModule
 					return parsedDate.ToString(format);
 				}
 				return input?.ToString() ?? string.Empty;
+			}));
+
+			scriptObject.Import("json", new Func<object, bool, string>((input, indent) =>
+			{
+				return JsonConvert.SerializeObject(input, (indent) ? Formatting.Indented : Formatting.None);
 			}));
 
 			scriptObject.Import("render", new Func<string, Task<string>>(async (path) =>
