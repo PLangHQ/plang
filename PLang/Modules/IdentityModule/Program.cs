@@ -75,9 +75,9 @@ namespace PLang.Modules.IdentityModule
 		}
 
 		[Description("Sign a content with specific method, url and contract. Returns key value object that contains the values to validate the signature")]
-		public async Task<Dictionary<string, object>> Sign(string content, string method, string url, string contract = "C0")
+		public async Task<Dictionary<string, object>> Sign(object body, string[] contracts = null, int expiresInSeconds = 60 * 5, Dictionary<string, object>? headers = null)
 		{
-			return signingService.Sign(method, url, contract);
+			return signingService.Sign(body, contracts, expiresInSeconds, headers);
 		}
 
 		public async Task<bool> VerifySignature2(string text, string? publicKey = null)

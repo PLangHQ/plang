@@ -31,6 +31,7 @@ namespace PLang.Services.SigningService
 		Task<string> GetPublicKey();
 		Dictionary<string, object> Sign(byte[] seed, string content, string method, string url, string contract = "C0");
 		Dictionary<string, object> Sign(string? content, string method, string url, string contract = "C0", string? appId = null);
+		Dictionary<string, object> Sign(object content, string[] contract = null, int expiresInSeconds = 300, Dictionary<string, object>? headers = null);
 		Dictionary<string, object> SignWithTimeout(byte[] seed, string content, string method, string url, DateTimeOffset expires, string contract = "C0");
 		Dictionary<string, object> SignWithTimeout(string content, string method, string url, DateTimeOffset expires, string contract = "C0", string? appId = null);
 		Task<Dictionary<string, object?>> VerifySignature(string body, string method, string url, Dictionary<string, object> validationKeyValues);
@@ -65,6 +66,14 @@ namespace PLang.Services.SigningService
 		{
 			return SignInternal(seed, content, method, url, contract, null);
 		}
+
+
+		public Dictionary<string, object> Sign(object content, string[] contract = null, int expiresInSeconds = 60 * 5, Dictionary<string, object>? headers = null)
+		{
+			//return SignInternal(seed, content, method, url, contract, null);
+			return null;
+		}
+
 
 		public async Task<string> GetPublicKey()
 		{
