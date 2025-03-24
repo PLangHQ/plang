@@ -126,6 +126,7 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError,
 
 					if (eventBinding.EventScope == EventScope.Module)
 					{
+						/*
 						var modules = typeHelper.GetModulesAsString();
 						promptMessage = new();
 						promptMessage.Add(new LlmMessage("system", $@"Which module from <modules> does the user want to bind to?\n<modules>\n{modules}\n</modules>"));
@@ -144,7 +145,7 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError,
 						llmRequest = new LlmRequest("ModuleEvents", promptMessage);
 						llmRequest.scheme = "{methods:string[]}";
 						(var methodsToBind, queryError) = await llmServiceFactory.CreateHandler().Query<string[]>(llmRequest);
-
+						*/
 						int s = 0;
 
 					}
