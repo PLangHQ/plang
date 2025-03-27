@@ -9,6 +9,7 @@ using PLang.Events;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Modules;
 using PLang.Modules.DbModule;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
@@ -23,6 +24,7 @@ using PLang.Services.SigningService;
 using PLang.Utils;
 using PLangTests.Mocks;
 using System.Data;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using static PLang.Modules.BaseBuilder;
 
@@ -74,10 +76,19 @@ namespace PLangTests
 		protected IFileAccessHandler fileAccessHandler;
 		protected DependancyHelper dependancyHelper;
 		protected IGoalParser goalParser;
+
+
+		protected PLang.Modules.SerializerModule.Program serializer;
+		protected PLang.Modules.CryptographicModule.Program crypto;
+		protected PLang.Modules.IdentityModule.Program identity;
+
 		protected void Initialize()
 		{
 
 			container = CreateServiceContainer();
+
+			serializer = container.GetInstance<PLang.Modules.SerializerModule.Program>();
+			crypto = container.GetInstance<PLang.Modules.CryptographicModule.Program>();
 
 		}
 
@@ -101,7 +112,6 @@ namespace PLangTests
 			container.RegisterInstance<IServiceContainer>(container);
 			this.settingsRepository = new SqliteSettingsRepository(fileSystem, context, logger);
 			container.RegisterInstance<ISettingsRepository>(settingsRepository);
-			enginePool = new EnginePool(10, () => container.GetInstance<IEngine>(), container);
 			fileAccessHandler = Substitute.For<IFileAccessHandler>();
 			settingsRepositoryFactory = Substitute.For<ISettingsRepositoryFactory>();
 			settingsRepositoryFactory.CreateHandler().Returns(settingsRepository);
@@ -228,7 +238,43 @@ namespace PLangTests
 			container.RegisterInstance(variableHelper);
 
 			container.RegisterInstance(prParser);
+
+			RegisterModules(container);
+
 			return container;
+		}
+
+
+		private static void RegisterModules(IServiceContainer container)
+		{
+
+			var currentAssembly = Assembly.GetAssembly(typeof(PLang.Modules.FileModule.Program));
+
+			// Scan the current assembly for types that inherit from BaseBuilder
+			var modulesFromCurrentAssembly = currentAssembly.GetTypes()
+																.Where(t => !t.IsAbstract && !t.IsInterface &&
+																(typeof(BaseBuilder).IsAssignableFrom(t) || typeof(BaseProgram).IsAssignableFrom(t)))
+																.ToList();
+
+			// Register these types with the DI container
+			foreach (var type in modulesFromCurrentAssembly)
+			{
+				container.Register(type, type, serviceName: type.FullName);  // or register with a specific interface if needed
+			}
+			container.Register<BaseBuilder, BaseBuilder>();
+
+			var fileSystem = container.GetInstance<IPLangFileSystem>();
+			if (fileSystem.Directory.Exists(".modules"))
+			{
+				var dependancyHelper = container.GetInstance<DependancyHelper>();
+				var modules = dependancyHelper.LoadModules(typeof(BaseProgram), fileSystem.GoalsPath);
+				foreach (var module in modules)
+				{
+					container.Register(module);
+				}
+
+			}
+
 		}
 
 		public record TestResponse(string stepText, string response, DateTimeOffset? created = null);

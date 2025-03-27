@@ -222,13 +222,17 @@ namespace PLang.Modules.DbModule
 					}
 					if (isInsert && parameterName == "id" && eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 					{
-						var id = p.VariableNameOrValue;
-						if (id.ToString() == "auto" || string.IsNullOrEmpty(p.VariableNameOrValue.ToString()))
+						var id = p.VariableNameOrValue.ToString();
+						if (id == "auto" || string.IsNullOrEmpty(id))
 						{
 							var generator = new IdGenerator(1);
-							id = generator.ElementAt(0);
+							var newId = generator.ElementAt(0);
+							param.Add("@" + parameterName, newId, DbType.Int64);
 						}
-						param.Add("@" + parameterName, id, DbType.Int64);
+						else
+						{
+							param.Add("@" + parameterName, id, DbType.Int64);
+						}
 					}
 					else if (p.VariableNameOrValue == null)
 					{

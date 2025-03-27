@@ -11,6 +11,8 @@ using PLang.Utils;
 using System.ComponentModel;
 using static PLang.Errors.AskUser.AskUserPrivateKeyExport;
 using PLang.Utils.Extractors;
+using PLang.Models;
+using Identity = PLang.Interfaces.Identity;
 
 namespace PLang.Modules.IdentityModule
 {
@@ -74,28 +76,22 @@ namespace PLang.Modules.IdentityModule
 			identityService.UseSharedIdentity(null);
 		}
 
-		[Description("Sign a content with specific method, url and contract. Returns key value object that contains the values to validate the signature")]
-		public async Task<Dictionary<string, object>> Sign(object body, string[] contracts = null, int expiresInSeconds = 60 * 5, Dictionary<string, object>? headers = null)
+		[Description("Sign a content with specific headers and contracts. Returns signature object that contains the values to validate the signature")]
+		public async Task<Signature> Sign(object? body, List<string>? contracts = null, int expiresInSeconds = 60 * 5, Dictionary<string, object>? headers = null)
 		{
-			return signingService.Sign(body, contracts, expiresInSeconds, headers);
+			return await signingService.Sign(body, contracts, expiresInSeconds, headers);
 		}
 
-		public async Task<bool> VerifySignature2(string text, string? publicKey = null)
-		{
-			var jsonExtractor = new JsonExtractor();
-			var obj = jsonExtractor.Extract<dynamic>(text);
-			var message = signingService.VerifySignature("", "", "", obj);
-			if (publicKey != null)
-			{
-				return message["X-Signature-Public-Key"] == publicKey;
-			}
-			return true;
-		}
 
 		[Description("validationKeyValues should have these keys: X-Signature, X-Signature-Created(type is long, unix time), X-Signature-Nonce, X-Signature-Public-Key, X-Signature-Contract=\"CO\". Return dictionary with Identity and IdentityNotHashed")]
-		public async Task<Dictionary<string, object?>?> VerifySignature(string content, string method, string url, Dictionary<string, object> validationKeyValues)
+		public async Task<(Signature?, IError?)> VerifySignature(Dictionary<string, object?>? signature = null)
 		{
-			return await signingService.VerifySignature(content, method, url, validationKeyValues);
+			if (signature == null)
+			{
+				return (null, new ProgramError("Signature is missing", goalStep, function));
+			}
+
+			return await signingService.VerifySignature(signature);
 		}
 
 		public async Task<(string?, IError?)> GetPrivateKey()

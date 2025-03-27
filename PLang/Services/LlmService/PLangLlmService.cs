@@ -9,6 +9,7 @@ using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Modules.IdentityModule;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Services.SigningService;
@@ -22,11 +23,12 @@ namespace PLang.Services.LlmService
 	public class PLangLlmService : ILlmService
 	{
 		private readonly LlmCaching llmCaching;
-		private readonly IPLangSigningService signingService;
+		private readonly Program signer;
 		private readonly ILogger logger;
 		private readonly PLangAppContext context;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly MemoryStack memoryStack;
+		private readonly Modules.HttpModule.Program http;
 		private string url = "https://llm.plang.is/api/Llm";
 		private string? modelOverwrite = null;
 		private readonly string appId = "206bb559-8c41-4c4a-b0b7-283ef73dc8ce";
@@ -36,15 +38,16 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 
 		public IContentExtractor Extractor { get; set; }
 
-		public PLangLlmService(LlmCaching llmCaching, IPLangSigningService signingService,
-			ILogger logger, PLangAppContext context, IPLangFileSystem fileSystem, MemoryStack memoryStack)
+		public PLangLlmService(LlmCaching llmCaching, Modules.IdentityModule.Program signer,
+			ILogger logger, PLangAppContext context, IPLangFileSystem fileSystem, MemoryStack memoryStack, Modules.HttpModule.Program http)
 		{
 			this.llmCaching = llmCaching;
-			this.signingService = signingService;
+			this.signer = signer;
 			this.logger = logger;
 			this.context = context;
 			this.fileSystem = fileSystem;
 			this.memoryStack = memoryStack;
+			this.http = http;
 			this.Extractor = new JsonExtractor();
 
 			//Only for development of plang
@@ -109,18 +112,18 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 					}
 					logger.LogTrace("Using cached response from LLM:" + cachedLlmQuestion.RawResponse);
 
-					var result = Extractor.Extract(cachedLlmQuestion.RawResponse, responseType);
-					if (result != null && !string.IsNullOrEmpty(result.ToString()))
+					var result2 = Extractor.Extract(cachedLlmQuestion.RawResponse, responseType);
+					if (result2 != null && !string.IsNullOrEmpty(result2.ToString()))
 					{
 						question.RawResponse = cachedLlmQuestion.RawResponse;
-						return (result, null);
+						return (result2, null);
 					}
 
 				}
 				catch { }
 			}
 
-			
+
 
 			Dictionary<string, object?> parameters = new();
 			parameters.Add("messages", question.promptMessage);
@@ -145,103 +148,83 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 			{
 				parameters.Add("buildVersion", assembly.GetName().Version?.ToString());
 			}
-			var httpClient = new HttpClient();
-			var httpMethod = new HttpMethod("POST");
-			var request = new HttpRequestMessage(httpMethod, url);
+
+			var result = await http.Post(url, parameters);
+
+			string responseContent = result.Data.ToString();
+
+
+			if (string.IsNullOrWhiteSpace(responseContent))
+			{
+				return (null, new ServiceError("llm.plang.is appears to be down. Try again in few minutes. If it does not come back up soon, check out our Discord https://discord.gg/A8kYUymsDD for a chat", this.GetType()));
+			}
+			logger.LogTrace("LLM response:" + responseContent);
+
+			string? rawResponse = null;
 			try
 			{
-				request.Headers.UserAgent.ParseAdd("plang llm v0.1");
+				rawResponse = JsonConvert.DeserializeObject(responseContent)?.ToString() ?? "";
+			}
+			catch (Exception ex)
+			{
+				throw new Exception($"Error parsing JSON response from LLM. The response was {responseContent}", ex);
+			}
 
-				string body = StringHelper.ConvertToString(parameters);
+			question.RawResponse = rawResponse;
+			if (isDebug)
+			{
+				context.AddOrReplace(ReservedKeywords.Llm, rawResponse);
+			}
 
-				logger.LogTrace("Body request to LLM:" + body);
+			if (result.Response is HttpResponse hr) 
+			{
+				ShowCosts(hr);
 
-				request.Content = new StringContent(body, Encoding.GetEncoding("utf-8"), "application/json");
-				httpClient.Timeout = new TimeSpan(0, 5, 0);
-				await SignRequest(request);
-
-				string responseContent;
-				using (var response = await httpClient.SendAsync(request))
+				var obj = Extractor.Extract(rawResponse, responseType);
+				if (obj == null)
 				{
-					responseContent = await response.Content.ReadAsStringAsync();
+					return (null, new ServiceError(rawResponse, this.GetType()));
+				}
+				if (question.caching)
+				{
 
+					llmCaching.SetCachedQuestion(appId, question);
+				}
+				return (obj, null);
+			}
 
-					if (string.IsNullOrWhiteSpace(responseContent))
-					{
-						return (null, new ServiceError("llm.plang.is appears to be down. Try again in few minutes. If it does not come back up soon, check out our Discord https://discord.gg/A8kYUymsDD for a chat", this.GetType()));
-					}
-					logger.LogTrace("LLM response:" + responseContent);
+			if (result.Response?.StatusCode == (int) System.Net.HttpStatusCode.PaymentRequired)
+			{
+				var obj = JObject.Parse(rawResponse);
+				if (obj != null && obj["url"]?.ToString() != "")
+				{
+					string dbLocation = Path.Join(fileSystem.SharedPath, appId);
 
-					string? rawResponse = null;
-					try
-					{
-						rawResponse = JsonConvert.DeserializeObject(responseContent)?.ToString() ?? "";
-					}
-					catch (Exception ex)
-					{
-						throw new Exception($"Error parsing JSON response from LLM. The response was {responseContent}", ex);
-					}
-
-					question.RawResponse = rawResponse;
-					if (isDebug)
-					{
-						context.AddOrReplace(ReservedKeywords.Llm, rawResponse);
-					}
-
-					if (response.IsSuccessStatusCode)
-					{
-						ShowCosts(response);
-
-						var obj = Extractor.Extract(rawResponse, responseType);
-						if (obj == null)
-						{
-							return (null, new ServiceError(rawResponse, this.GetType()));
-						}
-						if (question.caching)
-						{
-
-							llmCaching.SetCachedQuestion(appId, question);
-						}
-						return (obj, null);
-					}
-
-					if (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired)
-					{
-						var obj = JObject.Parse(rawResponse);
-						if (obj != null && obj["url"]?.ToString() != "")
-						{
-							string dbLocation = Path.Join(fileSystem.SharedPath, appId);
-
-							return (null, new ServiceError(string.Format(BuyCreditInfo, obj["url"], dbLocation), GetType(), ContinueBuild: false));
-						}
-						else
-						{
-							AppContext.TryGetSwitch("Builder", out bool isBuilder);
-							string strIsBuilder = (isBuilder) ? " build" : "";
-							return (null, new AskUserError(@$"You need to purchase credits to use Plang LLM service. Lets do this now.
+					return (null, new ServiceError(string.Format(BuyCreditInfo, obj["url"], dbLocation), GetType(), ContinueBuild: false));
+				}
+				else
+				{
+					AppContext.TryGetSwitch("Builder", out bool isBuilder);
+					string strIsBuilder = (isBuilder) ? " build" : "";
+					return (null, new AskUserError(@$"You need to purchase credits to use Plang LLM service. Lets do this now.
 (If you have OpenAI API key, you can run 'plang {strIsBuilder} --llmservice=openai')
 
 What is name of payer?", GetCountry));
-						}
-					}
-
-					return (null, new ServiceError(rawResponse, GetType()));
 				}
-			} finally
-			{
-				request.Dispose();
-				httpClient.Dispose();
 			}
+
+			return (null, new ServiceError(rawResponse, GetType()));
+
 
 		}
 
 
-		private void ShowCosts(HttpResponseMessage response)
+		private void ShowCosts(HttpResponse response)
 		{
 			string? costWarning = "";
-			if (response.Headers.Contains("X-User-Balance"))
+			if (response.Headers.ContainsKey("X-User-Balance"))
 			{
-				string strBalance = response.Headers.GetValues("X-User-Balance").FirstOrDefault();
+				string strBalance = response.Headers["X-User-Balance"].ToString();
 				if (strBalance != null && long.TryParse(strBalance, out long balance))
 				{
 					costWarning += "$" + (((double)balance) / 1000000).ToString("N2");
@@ -250,9 +233,9 @@ What is name of payer?", GetCountry));
 
 
 			}
-			if (response.Headers.Contains("X-User-Used"))
+			if (response.Headers.ContainsKey("X-User-Used"))
 			{
-				string strUsed = response.Headers.GetValues("X-User-Used").FirstOrDefault();
+				string strUsed = response.Headers["X-User-Used"].ToString();
 				if (strUsed != null && long.TryParse(strUsed, out long used))
 				{
 					costWarning += " - used now $" + (((double)used) / 1000000).ToString("N6");
@@ -260,9 +243,9 @@ What is name of payer?", GetCountry));
 				}
 			}
 
-			if (response.Headers.Contains("X-User-PaymentUrl"))
+			if (response.Headers.ContainsKey("X-User-PaymentUrl"))
 			{
-				string strUrl = response.Headers.GetValues("X-User-PaymentUrl").FirstOrDefault();
+				string strUrl = response.Headers["X-User-PaymentUrl"].ToString();
 				if (!string.IsNullOrEmpty(strUrl))
 				{
 					costWarning += $" - add to balance: {strUrl}";
@@ -359,7 +342,7 @@ What is name of payer?", GetCountry));
 		{
 			string method = request.Method.Method;
 			string url = request.RequestUri?.PathAndQuery ?? "/";
-			string contract = "C0";
+
 			string? body = null;
 			if (request.Content != null)
 			{
@@ -369,12 +352,11 @@ What is name of payer?", GetCountry));
 				}
 			}
 
-			var signature = signingService.Sign(body, method, url, contract, appId);
+			var result = await signer.Sign(body, ["C0"], 60 * 5, new Dictionary<string, object> { { "url", url }, { "method", method } });
+			var json = JsonConvert.SerializeObject(result);
+			var base64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
+			request.Headers.TryAddWithoutValidation("X-Signature", base64);
 
-			foreach (var item in signature)
-			{
-				request.Headers.TryAddWithoutValidation(item.Key, item.Value.ToString());
-			}
 		}
 
 

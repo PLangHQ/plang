@@ -736,27 +736,22 @@ Error:
 
 		public async Task VerifySignature(HttpListenerRequest request, string body, MemoryStack memoryStack)
 		{
-			if (request.Headers.Get("X-Signature") == null ||
-				request.Headers.Get("X-Signature-Created") == null ||
-				request.Headers.Get("X-Signature-Nonce") == null ||
-				request.Headers.Get("X-Signature-Public-Key") == null ||
-				request.Headers.Get("X-Signature-Contract") == null
-				) return;
-
-			var validationHeaders = new Dictionary<string, object>();
-			validationHeaders.Add("X-Signature", request.Headers.Get("X-Signature")!);
-			validationHeaders.Add("X-Signature-Created", request.Headers.Get("X-Signature-Created")!);
-			validationHeaders.Add("X-Signature-Nonce", request.Headers.Get("X-Signature-Nonce")!);
-			validationHeaders.Add("X-Signature-Public-Key", request.Headers.Get("X-Signature-Public-Key")!);
-			validationHeaders.Add("X-Signature-Contract", request.Headers.Get("X-Signature-Contract") ?? "C0");
+		
+			string? signatureAsBase64 = request.Headers.Get("X-Signature");
+			if (string.IsNullOrWhiteSpace(signatureAsBase64))
+			{
+				return;
+			}
+			string? signatureAsJson = Encoding.UTF8.GetString(Convert.FromBase64String(signatureAsBase64));
+			var signature = JsonConvert.DeserializeObject<Dictionary<string, object?>>(signatureAsJson);
 
 			var url = request.Url?.PathAndQuery ?? "";
 
-			var identies = await signingService.VerifySignature(body, request.HttpMethod, url, validationHeaders);
-			if (identies == null) return;
-			foreach (var identity in identies)
+			var verifiedSignature = await signingService.VerifySignature(signature);			
+			if (verifiedSignature.Signature != null)
 			{
-				memoryStack.Put(identity.Key, identity.Value);
+				context.AddOrReplace(ReservedKeywords.Signature, verifiedSignature);
+				memoryStack.Put(ReservedKeywords.Identity, verifiedSignature.Signature.Identity);
 			}
 		}
 
@@ -834,18 +829,18 @@ Error:
 
 			string url = webSocketInfo.Url;
 			string method = "Websocket";
-			string contract = "C0";
-
-			var obj = new WebSocketData(goalToCall, url, method, contract);
+			string[] contracts = ["C0"];
+			/*
+			var obj = new WebSocketData(goalToCall, url, method, null);
 			obj.Parameters = parameters;
 
-			var signatureData = signingService.Sign(JsonConvert.SerializeObject(obj), method, url, contract);
+			var signatureData = signingService.Sign(JsonConvert.SerializeObject(obj), contract);
 			obj.SignatureData = signatureData;
 
 			byte[] message = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj));
 
 			await webSocketInfo.ClientWebSocket.SendAsync(new ArraySegment<byte>(message), WebSocketMessageType.Text, true, CancellationToken.None);
-
+			*/
 		}
 		public async Task<WebSocketInfo> StartWebSocketConnection(string url, GoalToCall goalToCall, string webSocketName = "default", string contentRecievedVariableName = "%content%")
 		{
@@ -913,10 +908,14 @@ Error:
 						}
 
 						var signatureData = websocketData.SignatureData;
-						var identity = await signingService.VerifySignature(JsonConvert.SerializeObject(websocketData), websocketData.Method, websocketData.Url, signatureData);
-
+						var verifiedSignature = await signingService.VerifySignature(signatureData);
+						// todo: missing verifiedSignature.Error check
+						if (verifiedSignature.Signature == null)
+						{
+							continue;
+						}	
 						websocketData.SignatureData = null;
-						websocketData.Parameters.AddOrReplace(identity);
+						websocketData.Parameters.AddOrReplace(ReservedKeywords.Identity, verifiedSignature.Signature.Identity);
 
 						await pseudoRuntime.RunGoal(engine, context, fileSystem.RootDirectory, websocketData.GoalToCall, websocketData.Parameters);
 					}

@@ -6,6 +6,7 @@ using PLang.Models;
 using PLang.Utils;
 using PLangTests;
 using System.Xml.Linq;
+using Identity = PLang.Interfaces.Identity;
 
 namespace PLang.Services.IdentityService.Tests
 {

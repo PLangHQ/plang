@@ -275,8 +275,8 @@ namespace PLang.Modules.MessageModule
 					}
 				}
 
-				var identites = signingService.VerifySignature(content, "EncryptedDm", ev.Pubkey, validationKeyValues).Result;
-				parameters.AddOrReplace(identites);
+				var identites = signingService.VerifySignature(validationKeyValues).Result;
+				parameters.AddOrReplace(ReservedKeywords.Signature, identites.Signature);
 
 				engine = container.GetInstance<IEngine>();
 				engine.Init(container);
@@ -353,12 +353,14 @@ namespace PLang.Modules.MessageModule
 
 			content = variableHelper.LoadVariables(content).ToString();
 
-			var signedContent = signingService.SignWithTimeout(content, "EncryptedDm", currentKey.HexPublicKey, DateTimeOffset.UtcNow.AddYears(100));
+			var headers = new Dictionary<string, object>();
+			headers.Add("hex-public-key", currentKey.HexPublicKey);
+			var signedContent = await signingService.Sign(content, headers: headers);
 			List<NostrEventTag> tags = new List<NostrEventTag>();
-			foreach (var item in signedContent)
-			{
-				tags.Add(new NostrEventTag(item.Key, item.Value.ToString()));
-			}
+			
+			string signatureAsJson = JsonConvert.SerializeObject(signedContent);
+			tags.Add(new NostrEventTag("X-Signature", signatureAsJson));
+
 
 			// Todo: Just noticed that tags are not ecrypted. Signature is therefor visible and gives information that shouldn't be public. 
 			// Need to find a way to encrypt the tags. 

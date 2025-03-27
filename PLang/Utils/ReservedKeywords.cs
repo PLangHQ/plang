@@ -49,6 +49,7 @@
 		public static readonly string OutputTarget = "!OutputTarget";
 		public static readonly string DefaultTargetElement = "!TargetElement";
 		internal static string StartingEngine = "!StartingEngine";
+		internal static string Signature = "!Signature";
 		private static List<string> keywords = new List<string>();
 		public static List<string> Keywords
 		{
@@ -60,7 +61,6 @@
 			}
 		}
 
-		
 
 		public static bool IsReserved(string key)
 		{

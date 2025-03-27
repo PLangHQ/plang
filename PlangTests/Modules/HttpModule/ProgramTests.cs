@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Nethereum.Model;
 using NSubstitute;
 using PLang.Modules.HttpModule;
 using System.Net;
@@ -59,7 +60,7 @@ namespace PLangTests.Modules.HttpModule
 		{
 			base.Initialize();
 			
-			p = new Program(fileSystem, signingService, httpClientFactory);
+			p = new Program(fileSystem, signingService, httpClientFactory, identity, serializer);
 
 			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, null);
 		}
@@ -76,7 +77,7 @@ namespace PLangTests.Modules.HttpModule
 			string encoding = "utf-8";
 			string contentType = "application/json";
 
-			signingService.Sign(Arg.Any<string>(), Arg.Any<string>(), "/", "C0").Returns(new Dictionary<string, object>());
+			signingService.Sign(Arg.Any<string>()).Returns(new PLang.Models.Signature());
 			httpClientFactory.CreateClient().Returns(new HttpClient(new TestHttpMessageHandler(url, data, doNotSignRequest, headers, encoding, contentType)));
 
 			var result = await p.Post(url, data, doNotSignRequest, headers, encoding, contentType);

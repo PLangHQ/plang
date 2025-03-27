@@ -95,7 +95,7 @@ namespace PLang.Modules.WebCrawlerModule
 				}
 			};
 
-			browser.Response += async (object? sender, IResponse e) =>
+			browser.Response += async (object? sender, Microsoft.Playwright.IResponse e) =>
 			{
 				context.AddOrReplace(ResponseContextKey, e);
 				if (onResponse != null)
@@ -324,6 +324,37 @@ namespace PLang.Modules.WebCrawlerModule
 
 			page = await GetCurrentPage(url);
 
+		}
+
+		public async Task<object> ExtractClassesToList(string[] cssSelectors, string fromCssSelector)
+		{
+			var page = await GetCurrentPage();
+			var elements = await page.QuerySelectorAllAsync(fromCssSelector);
+			List<string> classes = new List<string>();
+			foreach (var element in elements)
+			{
+				foreach (var cssSelector in cssSelectors)
+				{
+					var classList = await element.EvaluateAsync<string[]>($@"
+const rows = document.querySelectorAll(%fromCssSelector%);
+const cssSelectors = %cssSelectors%;
+const result = Array.from(rows).map(tr => {{
+    const obj = {{}};
+    cssSelectors.forEach(({{ key, selector }}) => {{
+        obj[key] = tr.querySelector(selector)?.textContent?.trim() || '';
+        obj['html'] = tr.querySelector(selector)?.innerHTML?.trim() || '';
+        obj['outerHtml'] = tr.querySelector(selector)?.innerHTML?.trim() || '';
+    }});
+    return obj;
+}}).filter(obj => Object.values(obj).some(val => val)); 
+return result;");
+					if (classList != null)
+					{
+						classes.AddRange(classList);
+					}
+				}
+			}
+			return classes;
 		}
 
 		public async Task ScrollToBottom()
@@ -713,12 +744,12 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 
 		[Description("key of the header, find by value where operation (startwith|endwith|equals|contains), request object can be null, will use the pages request")]
-		public async Task<(Dictionary<string, string>?, IError?)> GetResponseHeaders(string? key = null, string keyOperator = "equals", string? value = null, string? valueOperator = "contains", IResponse? response = null)
+		public async Task<(Dictionary<string, string>?, IError?)> GetResponseHeaders(string? key = null, string keyOperator = "equals", string? value = null, string? valueOperator = "contains", Microsoft.Playwright.IResponse? response = null)
 		{
 			Dictionary<string, string> headers;
 			if (response == null)
 			{
-				response = context[ResponseContextKey] as IResponse;
+				response = context[ResponseContextKey] as Microsoft.Playwright.IResponse;
 			}
 
 			if (response == null)
@@ -1030,7 +1061,7 @@ namespace PLang.Modules.WebCrawlerModule
 			};
 
 
-			page.Response += async (object? sender, IResponse e) =>
+			page.Response += async (object? sender, Microsoft.Playwright.IResponse e) =>
 			{
 				if (IsUrlMatch(pageUrl, e.Url))
 				{

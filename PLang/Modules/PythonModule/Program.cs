@@ -111,7 +111,7 @@ namespace PLang.Modules.PythonModule
 							{
 								using (dynamic pyModule = Py.Import("__main__"))
 								{
-
+									/*
 									pyModule.plangSign = new Func<string, string, string, string, Task<PyObject>>(async (input, method, url, contract) =>
 									{
 										var signatureData = signingService.Sign(input, method, url, contract);
@@ -122,7 +122,7 @@ namespace PLang.Modules.PythonModule
 										}
 										return pyResult;
 									});
-
+									*/
 									/*
 									 * TODO: Not happy with this solution. It is injecting code into the python script, that is bad design :(
 									 */

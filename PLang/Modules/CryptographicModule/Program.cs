@@ -1,5 +1,6 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using Nethereum.ABI;
+using Nethereum.Util;
 using PLang.Errors;
 using PLang.Errors.AskUser;
 using PLang.Errors.Runtime;
@@ -305,6 +306,22 @@ namespace PLang.Modules.CryptographicModule
 			var bearerToken = new JwtSecurityTokenHandler().WriteToken(token);
 
 			return bearerToken;
+		}
+
+		public async Task<object> Hash(byte[]? bytes, bool asString = false, string type = "Keccak256")
+		{
+			var keccak = new Sha3Keccack();
+
+			byte[] hashBytes = keccak.CalculateHash(bytes);
+			if (!asString) return hashBytes;
+
+			StringBuilder hashStringBuilder = new StringBuilder();
+			foreach (byte b in hashBytes)
+			{
+				hashStringBuilder.Append(b.ToString("x2"));
+			}
+
+			return hashStringBuilder.ToString();
 		}
 	}
 }

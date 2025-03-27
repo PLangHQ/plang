@@ -9,18 +9,16 @@ namespace PLang.Modules.SerializerModule
 {
 	public class Program : BaseProgram
 	{
-		private readonly IAppCache appCache;
 		/*
 		 * Need to inject ISerializer
 		 * Switch out Newtonsoft, but this needs to be done in MemoryStack
 		 * */
-		public Program(IAppCache appCache)
+		public Program()
 		{
-			this.appCache = appCache;
 		}
 
 		[Description("serializer(message_pack|json). User can also define his own")]
-		public async Task<byte[]?> Serialize(object data, string serializer = "message_pack")
+		public async Task<byte[]?> Serialize(object data, string serializer = "json")
 		{
 			if (serializer == "json")
 			{
@@ -32,7 +30,7 @@ namespace PLang.Modules.SerializerModule
 			return writer.WrittenSpan.ToArray(); //I should be return ReadOnlySpan<byte>
 		}
 
-		public async Task<object?> Deserialize(byte[] data, string serializer = "message_pack")
+		public async Task<object?> Deserialize(byte[] data, string serializer = "json")
 		{
 			if (serializer == "json")
 			{
