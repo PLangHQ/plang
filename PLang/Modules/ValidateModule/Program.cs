@@ -6,6 +6,7 @@ using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.Services.SettingsService;
 using PLang.Utils;
+using ReverseMarkdown.Converters;
 using System.Collections;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -27,16 +28,17 @@ namespace PLang.Modules.ValidateModule
 		public async Task<IError?> IsNotEmpty([HandlesVariable] List<object> variables, string errorMessage, int statusCode = 400)
 		{
 			if (string.IsNullOrEmpty(errorMessage)) errorMessage = "Variables are empty";
-			if (variables == null) { 
+			if (variables == null)
+			{
 				return new ProgramError(errorMessage, goalStep, function, StatusCode: 500);
 			}
 			if (variables.Count == 0)
 			{
 				return new ProgramError(errorMessage, goalStep, function, StatusCode: 500);
 			}
-			
+
 			var multiError = new GroupedErrors("ValidateModule.IsNotEmpty");
-			
+
 			foreach (var variable in variables)
 			{
 				object? obj;
@@ -50,7 +52,8 @@ namespace PLang.Modules.ValidateModule
 						multiError.Add(new ProgramError(variableName, goalStep, function, StatusCode: statusCode));
 					}
 					obj = objectValue.Value;
-				} else
+				}
+				else
 				{
 					obj = variable;
 				}
@@ -96,9 +99,49 @@ namespace PLang.Modules.ValidateModule
 					return new ProgramError(errorMessage, goalStep, function, StatusCode: statusCode);
 				}
 			}
-			
+
+			return null;
+		}
+		[Description("Checks if variable is a valid 2 letter country code")]
+		public async Task<IError?> IsValid2LetterCountryCode([HandlesVariable] string[]? variables, string pattern, string errorMessage, int statusCode = 400)
+		{
+			var multiError = new GroupedErrors("ValidateModule.IsValid2LetterCountryCode");
+
+			foreach (var variable in variables)
+			{
+				var code = variableHelper.LoadVariables(variable)?.ToString()?.Trim();
+
+				if (string.IsNullOrWhiteSpace(code) || code.Length != 2)
+				{
+					multiError.Add(new ProgramError($"{code} is not 2 letters"));
+				}
+				else
+				{
+
+					try
+					{
+						var region = new RegionInfo(code.ToUpperInvariant());
+
+					}
+					catch (Exception ex)
+					{
+						{
+							multiError.Add(new ProgramError($"{code} could not be assigned to country", Exception: ex));
+						}
+					}
+				}
+
+
+			}
+			if (multiError.Count > 0) return multiError;
 			return null;
 		}
 
+
+		[Description("Validates if contract is valid. Uses properties on the contract from signatureProperties as signatures to validate against. propertiesToMatch specifies properties that should be used on the validation, when null all poperties are used except signatureProperties")]
+		public async Task<IError?> ValidateContract(object contract, List<string> signatureProperties, List<string>? propertiesToMatch = null)
+		{
+			return new ProgramError("Not implemented");
+		}
 	}
 }

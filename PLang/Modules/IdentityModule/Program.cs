@@ -13,6 +13,7 @@ using static PLang.Errors.AskUser.AskUserPrivateKeyExport;
 using PLang.Utils.Extractors;
 using PLang.Models;
 using Identity = PLang.Interfaces.Identity;
+using System.Collections;
 
 namespace PLang.Modules.IdentityModule
 {
@@ -38,7 +39,7 @@ namespace PLang.Modules.IdentityModule
 			return identityService.GetCurrentIdentity();
 		}
 		[Description("Get an identity by name or identification")]
-		public async Task<Identity> GetIdentity(string nameOrIdentity) 
+		public async Task<Identity> GetIdentity(string nameOrIdentity)
 		{
 			return identityService.GetIdentity(nameOrIdentity);
 		}
@@ -84,14 +85,30 @@ namespace PLang.Modules.IdentityModule
 
 
 		[Description("validationKeyValues should have these keys: X-Signature, X-Signature-Created(type is long, unix time), X-Signature-Nonce, X-Signature-Public-Key, X-Signature-Contract=\"CO\". Return dictionary with Identity and IdentityNotHashed")]
-		public async Task<(Signature?, IError?)> VerifySignature(Dictionary<string, object?>? signature = null)
+		public async Task<(Signature?, IError?)> VerifySignature(object? signatureFromUser = null, Dictionary<string, object?>? headers = null, object? body = null, List<string>? contracts = null)
 		{
-			if (signature == null)
+			if (signatureFromUser == null)
 			{
-				return (null, new ProgramError("Signature is missing", goalStep, function));
+				return (null, new ProgramError("Signature is missing"));
+			}
+			Signature? signature = null;
+			if (signatureFromUser is IDictionary)
+			{
+				var result = SignatureCreator.Cast(signatureFromUser as Dictionary<string, object?>);
+				if (result.Error != null) return (null, result.Error);
+				signature = result.Signature!;
+			}
+			else if (signatureFromUser is Signature)
+			{
+				signature = signatureFromUser as Signature;
 			}
 
-			return await signingService.VerifySignature(signature);
+			if (signature == null)
+			{
+				return (null, new ProgramError("Signature from you could not be converted to proper Signature"));
+			}	
+
+			return await signingService.VerifySignature(signature, headers, body, contracts);
 		}
 
 		public async Task<(string?, IError?)> GetPrivateKey()

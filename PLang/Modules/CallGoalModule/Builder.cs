@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Errors;
@@ -54,9 +55,8 @@ set %data% = ParseDocument(%document%) => ParseDocument is goalName, parameter i
 				{
 					return (null, new BuilderError("Goal name is empty", "GoalNotDefined"));
 				}
-
-				prParser.ForceLoadAllGoals();
-				var goalsFound = prParser.GetAllGoals().Where(p => p.RelativePrFolderPath.Contains(goalName.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase)).ToList();
+				var allGoals = goalParser.GetAllGoals();		
+				var goalsFound = allGoals.Where(p => p.RelativePrFolderPath.Contains(goalName.Replace("!", "").AdjustPathToOs(), StringComparison.OrdinalIgnoreCase)).ToList();
 				if (goalsFound.Count == 0)
 				{
 					return (null, new BuilderError($"Could not find {goalName}", "GoalNotFound"));

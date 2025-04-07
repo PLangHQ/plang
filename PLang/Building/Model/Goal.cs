@@ -140,9 +140,8 @@ namespace PLang.Building.Model
 			return goal;
 		}
 
-		public string[] IncomingVariablesRequired { get; set; }
-
-
+		public string[]? IncomingVariablesRequired { get; set; }
+		public string? DataSourceName { get; set; }
 	}
 
 

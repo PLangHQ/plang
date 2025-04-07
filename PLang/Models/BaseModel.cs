@@ -15,8 +15,6 @@ namespace PLang.Models
 		{
 		}
 
-		public string Type { get; set; }
-		public Dictionary<string, object?> Headers { get; set; }
 		
 
 	}

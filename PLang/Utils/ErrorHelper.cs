@@ -227,10 +227,12 @@ namespace PLang.Utils
 🔴 ======== {error.Key} ========
 {firstLine.TrimEnd()}
 
+{callStack}
+
 🚫 Reason: {reasonAndFix}
 
 {errorSource}
-{callStack}
+
 {FormatLine(extraInfo)}
 ".TrimEnd();
 

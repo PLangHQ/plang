@@ -21,6 +21,8 @@ using System.Reactive.Concurrency;
 using PLang.Errors.AskUser;
 using PLang.SafeFileSystem;
 using PLang.Building.Model;
+using PLang.Modules.DbModule;
+using Microsoft.Data.Sqlite;
 
 namespace PLang.Building
 {
@@ -116,7 +118,7 @@ namespace PLang.Building
 				{
 					logger.LogWarning(eventError.ToFormat().ToString());
 				}
-
+				CleanUp();
 				ShowBuilderErrors(goalFiles, stopwatch);
 
 				
@@ -173,6 +175,16 @@ namespace PLang.Building
 
 			}
 			return null;
+		}
+
+		private void CleanUp()
+		{
+			object? obj = AppContext.GetData("AnchorMemoryDb");
+			if (obj != null && obj is SqliteConnection connection)
+			{
+				connection.Close();
+				connection.Dispose();
+			}
 		}
 
 		private void ShowBuilderErrors(List<string> goalFiles, Stopwatch stopwatch)

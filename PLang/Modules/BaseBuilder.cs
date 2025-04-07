@@ -1,6 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using LightInject;
+using Microsoft.Extensions.Logging;
 using PLang.Building.Model;
-using PLang.Errors;
+using PLang.Container;
 using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Interfaces;
@@ -9,19 +10,13 @@ using PLang.Runtime;
 using PLang.Services.LlmService;
 using PLang.Utils;
 using PLang.Utils.Extractors;
-using System.Runtime.InteropServices;
-using System.Text.Json;
-using Websocket.Client.Logging;
-using static PLang.Modules.DbModule.Builder;
-using static PLang.Modules.DbModule.ModuleSettings;
-using static System.Net.Mime.MediaTypeNames;
 using Instruction = PLang.Building.Model.Instruction;
 
 namespace PLang.Modules
 {
 
 
-    public abstract class BaseBuilder : IBaseBuilder
+	public abstract class BaseBuilder : IBaseBuilder
 	{
 
 		private string? system;
@@ -37,6 +32,8 @@ namespace PLang.Modules
 		private PLangAppContext context;
 		private VariableHelper variableHelper;
 		private IContentExtractor contentExtractor;
+
+
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		protected BaseBuilder()
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -53,6 +50,7 @@ namespace PLang.Modules
 			this.context = context;
 			this.variableHelper = variableHelper;
 			this.logger = logger;
+
 
 			appendedSystemCommand = new List<string>();
 			appendedAssistantCommand = new List<string>();
@@ -325,9 +323,6 @@ ReturnValue rules
 			}
 			return vars;
 		}
-
-
-
 
 	}
 

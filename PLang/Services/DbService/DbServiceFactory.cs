@@ -20,9 +20,11 @@ namespace PLang.Services.DbService
 
 	public class DbServiceFactory : BaseFactory, IDbServiceFactory
 	{
+		private readonly bool isBuilder;
 
-		public DbServiceFactory(ServiceContainer container) : base(container)
+		public DbServiceFactory(ServiceContainer container, bool isBuilder = false) : base(container)
 		{
+			this.isBuilder = isBuilder;
 		}
 
 		public IDbConnection CreateHandler()
@@ -34,7 +36,18 @@ namespace PLang.Services.DbService
 			var dataSource = context[ReservedKeywords.CurrentDataSource] as DataSource;
 			if (dataSource != null)
 			{
-				connection.ConnectionString = dataSource.ConnectionString;
+				if (dataSource.ConnectionString.Contains("%") && isBuilder)
+				{
+					connection.ConnectionString = $"Data Source={dataSource.Name};Mode=Memory;Cache=Shared;";
+				}
+				else if (dataSource.ConnectionString.Contains("%"))
+				{
+					var variableHelper = container.GetInstance<VariableHelper>();
+					connection.ConnectionString = variableHelper.LoadVariables(dataSource.ConnectionString).ToString();
+				} else
+				{
+					connection.ConnectionString = dataSource.ConnectionString;
+				}
 			} else
 			{
 				connection.ConnectionString = "./.db/data.sqlite";

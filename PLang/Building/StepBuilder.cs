@@ -10,11 +10,13 @@ using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Modules;
 using PLang.Modules.DbModule;
 using PLang.Runtime;
 using PLang.Services.CompilerService;
 using PLang.Services.LlmService;
 using PLang.Utils;
+using System.ComponentModel;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
@@ -77,7 +79,7 @@ namespace PLang.Building
 
 			try
 			{
-				if (StepHasBeenBuild(step, stepIndex, excludeModules)) return null;
+				if (await StepHasBeenBuild(step, stepIndex, excludeModules)) return null;
 
 				var error = await eventRuntime.RunBuildStepEvents(EventType.Before, goal, step, stepIndex);
 				if (error != null) return error;
@@ -129,7 +131,7 @@ namespace PLang.Building
 				if (ex is PLang.Errors.Handlers.AskUserError mse)
 				{
 					return await HandleAskUser(mse, goal, stepIndex, excludeModules, errorCount);
-					
+
 				}
 				else
 				{
@@ -171,7 +173,7 @@ namespace PLang.Building
 			}
 			catch (AskUserError ex)
 			{
-				
+
 				return await HandleAskUser(ex, goal, stepIndex, excludeModules, errorCount);
 			}
 		}
@@ -210,7 +212,7 @@ namespace PLang.Building
 
 		}
 
-		private bool StepHasBeenBuild(GoalStep step, int stepIndex, List<string> excludeModules)
+		private async Task<bool> StepHasBeenBuild(GoalStep step, int stepIndex, List<string> excludeModules)
 		{
 			AppContext.TryGetSwitch(ReservedKeywords.StrictBuild, out bool isStrict);
 			if (isStrict && step.Number != stepIndex) return false;
@@ -230,11 +232,12 @@ namespace PLang.Building
 			string? action = instruction?.Action?.ToString();
 			if (action == null) return false;
 
+
+			var gf = JsonConvert.DeserializeObject<GenericFunction>(action);
 			// lets load the return value into memoryStack
 			if (action.Contains("ReturnValues"))
 			{
-				var gf = JsonConvert.DeserializeObject<GenericFunction>(action);
-				LoadVariablesIntoMemoryStack(gf, memoryStack, context, settings);
+				await LoadVariablesIntoMemoryStack(gf, memoryStack, context, settings);
 			}
 			else if (action.Contains("OutParameterDefinition"))
 			{
@@ -251,6 +254,8 @@ namespace PLang.Building
 					}
 				}
 			}
+
+			await this.instructionBuilder.RunBuilderMethod(step.ModuleType, gf);
 
 			logger.Value.LogInformation($"- Step {step.Name} is already built");
 			return true;
@@ -281,7 +286,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			llmQuestion.Reload = false;
 
 			(var stepInformation, var llmError) = await llmServiceFactory.CreateHandler().Query<StepInformation>(llmQuestion);
-			if (llmError != null) return (step, llmError as IBuilderError);
+			if (llmError != null) return (step, new BuilderError(llmError, false));
 
 			if (stepInformation == null)
 			{
@@ -291,7 +296,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 
 			if (stepInformation.Modules == null)
 			{
-				return (step, new StepBuilderError($"LLM response looks to be invalid as modules is null. This is not normal behaviour.", step, 
+				return (step, new StepBuilderError($"LLM response looks to be invalid as modules is null. This is not normal behaviour.", step,
 					FixSuggestion: "Run with trace logger enabled to view the raw output of LLM. `plang build --logger=trace`", ContinueBuild: false, StatusCode: 500));
 			}
 
@@ -311,10 +316,12 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			step.RelativePrPath = Path.Join(goal.RelativePrFolderPath, step.PrFileName);
 			step.LlmRequest = llmQuestion;
 			step.Number = stepIndex;
-			step.RunOnce = (goal.GoalFileName.Equals("Setup.goal", StringComparison.OrdinalIgnoreCase));
+			step.RunOnce = GoalHelper.IsSetup(goal);
 			return (step, null);
 
 		}
+
+
 
 		private string GetPrFileName(int stepIndex, string stepName)
 		{
@@ -352,7 +359,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			LlmRequest llmQuestion = GetBuildStepPropertiesQuestion(goal, step, instruction);
 
 			logger.Value.LogInformation($"- Building properties for {step.Text}");
-			
+
 			(var stepProperties, var llmError) = await llmServiceFactory.CreateHandler().Query<StepProperties>(llmQuestion);
 			if (llmError != null) return (step, llmError as IBuilderError);
 
@@ -559,9 +566,9 @@ Be Concise
 			return llmRequest;
 		}
 
-		public void LoadVariablesIntoMemoryStack(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
+		public async Task<IBuilderError?> LoadVariablesIntoMemoryStack(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
 		{
-			if (gf == null) return;
+			if (gf == null) return null;
 
 			if (gf.ReturnValues != null && gf.ReturnValues.Count > 0)
 			{
@@ -571,13 +578,13 @@ Be Concise
 				}
 			}
 
-			LoadParameters(gf, memoryStack, context, settings);
+			return await LoadParameters(gf, memoryStack, context, settings);
 		}
-		private void LoadParameters(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
+		private async Task<IBuilderError?> LoadParameters(GenericFunction? gf, MemoryStack memoryStack, PLangAppContext context, ISettings settings)
 		{
 			// todo: hack for now, should be able to load dynamically variables that are being set at build time
 			// might have to structure the build
-			if (gf == null || gf.Parameters == null || gf.Parameters.Count == 0) return;
+			if (gf == null || gf.Parameters == null || gf.Parameters.Count == 0) return null;
 
 			foreach (var parameter in gf.Parameters)
 			{
@@ -593,9 +600,9 @@ Be Concise
 			if (gf.FunctionName == "RunGoal")
 			{
 				var json = gf.Parameters.FirstOrDefault(p => p.Name == "parameters")?.Value;
-				if (json == null || !JsonHelper.IsJson(json)) return;
+				if (json == null || !JsonHelper.IsJson(json)) return null;
 				var parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(json.ToString());
-				if (parameters == null) return;
+				if (parameters == null) return null;
 
 				foreach (var parameter in parameters)
 				{
@@ -607,41 +614,19 @@ Be Concise
 			// todo: also bad implementation, builder for module should handle this part
 			if (gf.FunctionName == "CreateDataSource" || gf.FunctionName == "SetDataSourceName")
 			{
-				var parameter = gf.Parameters.FirstOrDefault(p => p.Name == "name");
-				if (parameter == null) return;
+				var nameParam = gf.Parameters.FirstOrDefault(p => p.Name == "name");
 
-				var dataSourceName = parameter.Value.ToString() ?? "data";
-				var datasources = settings.GetValues<DataSource>(typeof(PLang.Modules.DbModule.ModuleSettings)).ToList();
-				var datasource = datasources.FirstOrDefault(p => p.Name == dataSourceName);
-				var isDefaultForApp = ((gf.Parameters.FirstOrDefault(p => p.Name == "setAsDefaultForApp")?.Value) as bool?) ?? false;
-				/*
-				if (datasource == null)
-				{
-					var keepHistoryEventSourcing = ((bool?)gf.Parameters.FirstOrDefault(p => p.Name == "keepHistoryEventSourcing")?.Value) ?? false;
-					var databaseType = gf.Parameters.FirstOrDefault(p => p.Name == "databaseType")?.Value?.ToString() ?? "sqlite";
-					var localPath = "";
-					if (databaseType == "sqlite")
-					{
-						localPath = gf.Parameters.FirstOrDefault(p => p.Name == "localPath")?.Value?.ToString();
-						if (string.IsNullOrEmpty(localPath)) localPath = "./.db/data.sqlite";
-					}
+				var ms = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger.Value, typeHelper);
+				var datasource = await ms.GetDataSource(nameParam?.Value?.ToString());
+				if (datasource.Error != null) return new BuilderError(datasource.Error);
 
-					var moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger.Value, typeHelper);
-					moduleSettings.CreateDataSource(dataSourceName, localPath, databaseType, isDefaultForApp, keepHistoryEventSourcing).Wait();
-
-					datasources = settings.GetValues<DataSource>(typeof(PLang.Modules.DbModule.ModuleSettings)).ToList();
-					datasource = datasources.FirstOrDefault(p => p.Name == dataSourceName);
-				}*/
-
-
-				if ((gf.FunctionName == "CreateDataSource" && isDefaultForApp) || gf.FunctionName == "SetDataSourceName")
+				if ((gf.FunctionName == "CreateDataSource" && datasource.DataSource.IsDefault) || gf.FunctionName == "SetDataSourceName")
 				{
 					context.AddOrReplace(ReservedKeywords.CurrentDataSource, datasource);
 				}
 			}
 
-
-
+			return null;
 		}
 
 		protected string GetVariablesInStep(GoalStep step)

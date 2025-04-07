@@ -20,8 +20,10 @@ namespace PLang.Modules.HttpModule
 {
 	[Description("Make Http request")]
 	public class Program(IPLangFileSystem fileSystem, IPLangSigningService signingService, IHttpClientFactory httpClientFactory,
-		PLang.Modules.IdentityModule.Program identity, Modules.SerializerModule.Program serializer) : BaseProgram()
+		PLang.Modules.IdentityModule.Program identity, Modules.SerializerModule.Program serializer, VariableHelper variableHelper) : BaseProgram()
 	{
+		private new readonly VariableHelper variableHelper = variableHelper;
+
 		public async Task<(string Path, HttpResponse? Response, IError? Error)> DownloadFile(string url, string pathToSaveTo,
 			bool overwriteFile = false,
 			Dictionary<string, object>? headers = null, bool createPathToSaveTo = true, bool doNotDownloadIfFileExists = false)
@@ -39,7 +41,7 @@ namespace PLang.Modules.HttpModule
 				{
 					foreach (var header in headers)
 					{
-						var value = variableHelper.LoadVariables(header.Value);
+						var value = this.variableHelper.LoadVariables(header.Value);
 						if (value != null)
 						{
 							client.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, value.ToString());
@@ -117,7 +119,7 @@ namespace PLang.Modules.HttpModule
 			Dictionary<string, object>? requestHeaders = null, Dictionary<string, object>? contentHeaders = null,
 			string encoding = "utf-8", int timeoutInSeconds = 30)
 		{
-			var requestUrl = variableHelper.LoadVariables(url);
+			var requestUrl = this.variableHelper.LoadVariables(url);
 			if (requestUrl == null)
 			{
 				return (null, null, new ProgramError("url cannot be empty", goalStep, function));
@@ -135,7 +137,7 @@ namespace PLang.Modules.HttpModule
 					{
 						foreach (var header in requestHeaders)
 						{
-							var value = variableHelper.LoadVariables(header.Value).ToString();
+							var value = this.variableHelper.LoadVariables(header.Value).ToString();
 							request.Headers.TryAddWithoutValidation(header.Key, value);
 						}
 					}
@@ -147,7 +149,7 @@ namespace PLang.Modules.HttpModule
 					{
 						foreach (var header in contentHeaders)
 						{
-							var value = variableHelper.LoadVariables(header.Value).ToString();
+							var value = this.variableHelper.LoadVariables(header.Value).ToString();
 							content.Headers.TryAddWithoutValidation(header.Key, value);
 						}
 					}
@@ -184,7 +186,7 @@ namespace PLang.Modules.HttpModule
 			{
 				httpClient.Timeout = new TimeSpan(0, 0, timeoutInSeconds);
 
-				var requestUrl = variableHelper.LoadVariables(url);
+				var requestUrl = this.variableHelper.LoadVariables(url);
 				if (requestUrl == null)
 				{
 					return (null, null, new ProgramError("url cannot be empty", goalStep, function));
@@ -205,7 +207,7 @@ namespace PLang.Modules.HttpModule
 							{
 								string fileName = property.Value.ToString().Substring(1);
 								string typeValue = null;
-								fileName = variableHelper.LoadVariables(fileName).ToString();
+								fileName = this.variableHelper.LoadVariables(fileName).ToString();
 
 								if (fileName != null && fileName.Contains(";"))
 								{
@@ -255,7 +257,7 @@ namespace PLang.Modules.HttpModule
 						{
 							foreach (var header in headers)
 							{
-								var value = variableHelper.LoadVariables(header.Value).ToString();
+								var value = this.variableHelper.LoadVariables(header.Value).ToString();
 								request.Headers.TryAddWithoutValidation(header.Key, value);
 							}
 						}
@@ -343,7 +345,7 @@ namespace PLang.Modules.HttpModule
 			Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 
-			var requestUrl = variableHelper.LoadVariables(url);
+			var requestUrl = this.variableHelper.LoadVariables(url);
 			if (requestUrl == null)
 			{
 				return (null, null, new ProgramError("url cannot be empty", goalStep, function));
@@ -363,7 +365,7 @@ namespace PLang.Modules.HttpModule
 					{
 						foreach (var header in headers)
 						{
-							var value = variableHelper.LoadVariables(header.Value);
+							var value = this.variableHelper.LoadVariables(header.Value);
 							if (value != null)
 							{
 								request.Headers.TryAddWithoutValidation(header.Key, value.ToString());

@@ -747,7 +747,7 @@ Error:
 
 			var url = request.Url?.PathAndQuery ?? "";
 
-			var verifiedSignature = await signingService.VerifySignature(signature);			
+			var verifiedSignature = await signingService.VerifyDictionarySignature(signature);			
 			if (verifiedSignature.Signature != null)
 			{
 				context.AddOrReplace(ReservedKeywords.Signature, verifiedSignature);
@@ -815,9 +815,12 @@ Error:
 		public record WebSocketData(GoalToCall GoalToCall, string Url, string Method, string Contract)
 		{
 			public Dictionary<string, object?> Parameters = new();
-			public Dictionary<string, object>? SignatureData = null;
+			public Signature? Signature = null;
 		};
-
+		public async Task SendToWebSocket(object data, Dictionary<string, object?>? headers = null, string webSocketName = "default")
+		{
+			throw new NotImplementedException();
+		}
 
 		public async Task SendToWebSocket(GoalToCall goalToCall, Dictionary<string, object?>? parameters = null, string webSocketName = "default")
 		{
@@ -830,17 +833,17 @@ Error:
 			string url = webSocketInfo.Url;
 			string method = "Websocket";
 			string[] contracts = ["C0"];
-			/*
+			
 			var obj = new WebSocketData(goalToCall, url, method, null);
 			obj.Parameters = parameters;
 
-			var signatureData = signingService.Sign(JsonConvert.SerializeObject(obj), contract);
-			obj.SignatureData = signatureData;
+			var signature = await signingService.Sign(obj);
+			obj.Signature = signature;
 
 			byte[] message = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj));
 
 			await webSocketInfo.ClientWebSocket.SendAsync(new ArraySegment<byte>(message), WebSocketMessageType.Text, true, CancellationToken.None);
-			*/
+			
 		}
 		public async Task<WebSocketInfo> StartWebSocketConnection(string url, GoalToCall goalToCall, string webSocketName = "default", string contentRecievedVariableName = "%content%")
 		{
@@ -907,14 +910,14 @@ Error:
 							continue;
 						}
 
-						var signatureData = websocketData.SignatureData;
-						var verifiedSignature = await signingService.VerifySignature(signatureData);
+						var signature = websocketData.Signature;
+						var verifiedSignature = await signingService.VerifySignature(signature);
 						// todo: missing verifiedSignature.Error check
 						if (verifiedSignature.Signature == null)
 						{
 							continue;
 						}	
-						websocketData.SignatureData = null;
+
 						websocketData.Parameters.AddOrReplace(ReservedKeywords.Identity, verifiedSignature.Signature.Identity);
 
 						await pseudoRuntime.RunGoal(engine, context, fileSystem.RootDirectory, websocketData.GoalToCall, websocketData.Parameters);

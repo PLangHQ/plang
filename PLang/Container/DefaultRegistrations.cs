@@ -145,8 +145,9 @@ namespace PLang.Container
 		{
 			container.Register<IDbServiceFactory>(factory =>
 			{
+				if (AppContext.TryGetSwitch("Builder", out bool isBuilder) && isBuilder) ;
 				SetContext(container, type, ReservedKeywords.Inject_IDbConnection, isDefault);
-				return new DbServiceFactory(container);
+				return new DbServiceFactory(container, isBuilder);
 			});
 
 		}

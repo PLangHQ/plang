@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
+using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Events;
 using PLang.Interfaces;
@@ -13,6 +14,7 @@ using PLang.Utils;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using static PLang.Modules.DbModule.ModuleSettings;
 
 namespace PLang.Building
 {
@@ -33,10 +35,13 @@ namespace PLang.Building
 		private readonly IEventRuntime eventRuntime;
 		private readonly ITypeHelper typeHelper;
 		private readonly PrParser prParser;
+		private readonly ISettings settings;
+		private readonly PLangAppContext context;
 		private readonly IStepBuilder stepBuilder;
 		public List<IBuilderError> BuildErrors { get; init; }
 		public GoalBuilder(ILogger logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
-				IGoalParser goalParser, IStepBuilder stepBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper, PrParser prParser)
+				IGoalParser goalParser, IStepBuilder stepBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
+				PrParser prParser, ISettings settings, PLangAppContext context)
 		{
 
 			this.fileSystem = fileSystem;
@@ -47,11 +52,13 @@ namespace PLang.Building
 			this.eventRuntime = eventRuntime;
 			this.typeHelper = typeHelper;
 			this.prParser = prParser;
+			this.settings = settings;
+			this.context = context;
 			BuildErrors = new();
 		}
 		public async Task<IBuilderError?> BuildGoal(IServiceContainer container, string goalFileAbsolutePath, int errorCount = 0)
 		{
-			List<Goal> goals = goalParser.ParseGoalFile(goalFileAbsolutePath);			
+			List<Goal> goals = goalParser.ParseGoalFile(goalFileAbsolutePath);
 
 			if (goals == null || goals.Count == 0)
 			{
@@ -63,7 +70,7 @@ namespace PLang.Building
 				var goal = goals[b];
 				logger.LogInformation($"\nStart to build {goal.GoalName} - {goal.RelativeGoalPath}");
 
-				// if this api, check for http method. Also give description.					
+				// Generate description and other properties for goal			
 				(goal, var error) = await LoadMethodAndDescription(goal);
 				if (error != null) return error;
 
@@ -71,7 +78,8 @@ namespace PLang.Building
 				if (buildEventError != null && !buildEventError.ContinueBuild)
 				{
 					return buildEventError;
-				} else if (buildEventError != null)
+				}
+				else if (buildEventError != null)
 				{
 					logger.LogWarning(buildEventError.ToFormat().ToString());
 				}
@@ -111,6 +119,10 @@ namespace PLang.Building
 					logger.LogWarning(buildEventError.ToFormat().ToString());
 				}
 
+				if (!string.IsNullOrEmpty(goal.DataSourceName))
+				{
+					context.Remove(ReservedKeywords.CurrentDataSource);
+				}
 				WriteToGoalPrFile(goal);
 				logger.LogInformation($"Done building goal {goal.GoalName}");
 			}
@@ -121,9 +133,9 @@ namespace PLang.Building
 		{
 			foreach (var injection in goal.Injections)
 			{
-				
+
 				RegisterForPLangUserInjections(container, injection.Type, injection.Path, injection.IsGlobal, injection.EnvironmentVariable, injection.EnvironmentVariableValue);
-				
+
 			}
 		}
 
@@ -161,7 +173,7 @@ namespace PLang.Building
 
 			}
 
-			
+
 		}
 
 		private void RegisterForPLangUserInjections(IServiceContainer container, string type, string path, bool isGlobal, string? environmentVariable = null, string? environmentVariableValue = null)
@@ -182,11 +194,11 @@ namespace PLang.Building
 			goal.BuilderVersion = assembly.GetName().Version.ToString();
 			goal.Hash = "";
 			goal.Hash = JsonConvert.SerializeObject(goal).ComputeHash().Hash;
-			
+
 			fileSystem.File.WriteAllText(goal.AbsolutePrFilePath, JsonConvert.SerializeObject(goal, Formatting.Indented));
 		}
 
-		private async Task<(Goal, IBuilderError?)> LoadMethodAndDescription(Goal goal)
+		private async Task<(Goal?, IBuilderError?)> LoadMethodAndDescription(Goal goal)
 		{
 			Goal? oldGoal = null;
 			if (fileSystem.File.Exists(goal.AbsolutePrFilePath))
@@ -199,7 +211,8 @@ namespace PLang.Building
 			}
 			var isWebApiMethod = GoalNameContainsMethod(goal) || goal.RelativeGoalFolderPath.Contains(Path.DirectorySeparatorChar + "api");
 
-			if (!isWebApiMethod && !goal.Text.Contains(" ")) {
+			if (!isWebApiMethod)
+			{
 				return await CreateDescriptionForGoal(goal, oldGoal);
 			}
 			if (goal.GoalInfo == null || goal.GoalInfo.GoalApiInfo == null || goal.Text == null || goal.Text != oldGoal?.Text)
@@ -224,15 +237,33 @@ GoalApiIfo:
 					goal.GoalInfo = result;
 				}
 
-			} 
+			}
 			return (goal, null);
 		}
 
 		public record GoalDescription(string Description, string[]? IncomingVariablesRequired = null);
+		public record GoalSetupDescription(string Description, string[]? IncomingVariablesRequired = null, string? DataSourceName = null) : GoalDescription(Description, IncomingVariablesRequired);
 
 		private async Task<(Goal, IBuilderError?)> CreateDescriptionForGoal(Goal goal, Goal? oldGoal)
 		{
-			if (!string.IsNullOrEmpty(goal.Description) && goal.GetGoalAsString() == oldGoal?.GetGoalAsString()) return (goal, null);
+			if (!string.IsNullOrEmpty(goal.Description) && goal.GetGoalAsString() == oldGoal?.GetGoalAsString())
+			{
+				if (GoalHelper.IsSetup(goal))
+				{
+					if (string.IsNullOrEmpty(goal.DataSourceName))
+					{
+						return (goal, new GoalBuilderError("Datasource name on setup file is empty. Delete the .pr file and rebuild", goal, ContinueBuild: false));
+					}
+
+					var dataSourceResult = await GetOrCreateDataSource(goal.DataSourceName);
+					if (dataSourceResult.Error != null) return (goal, new BuilderError(dataSourceResult.Error));
+
+					context.AddOrReplace(ReservedKeywords.CurrentDataSource, dataSourceResult.DataSource);
+
+				}
+
+				return (goal, null);
+			}
 
 			var promptMessage = new List<LlmMessage>();
 			promptMessage.Add(new LlmMessage("system", $@"
@@ -246,24 +277,58 @@ Comments start with /
 Steps start with dash(-). 
 %Variable% is defined with starting and ending %.
 When writing %variable% in description, escape the variable with \, e.g. \%variable\%
-Analyze the goal and list out variables that are required to be sent to this goal to make it work
+Analyze the goal and list out variables that are required to be sent to this goal to make it work, IncomingVariablesRequired
 Step that writes into a variable are creating that variable
 Describe conditions that are affected by variables, describe what value of variable should be to call goal or perform some steps
 [llm] or step starting with system: and contains scheme:, will create variables from that scheme automatically, e.g. scheme: {{ name:string }} will create %name% variable
 Be concise
 "));
+			Type responseType = typeof(GoalDescription);
+			if (GoalHelper.IsSetup(goal))
+			{
+				promptMessage.Add(new LlmMessage("system", "datasource name might be defined with the title of the goal, e.g. Setup - name:/user/%id% => DataSourceName:/user/%id%. this is clearly defined by user. null when not defined"));
+				responseType = typeof(GoalSetupDescription);
+			}
+
 			promptMessage.Add(new LlmMessage("user", goal.GetGoalAsString()));
 			var llmRequest = new LlmRequest("GoalDescription", promptMessage, "gpt-4o-mini");
 
-			(var result, var queryError) = await llmServiceFactory.CreateHandler().Query<GoalDescription>(llmRequest);
-			if (queryError != null) return (goal, queryError as IBuilderError);
+			(var result, var queryError) = await llmServiceFactory.CreateHandler().Query(llmRequest, responseType);
+			if (queryError != null) return (goal, new GoalBuilderError(queryError, goal));
 
-			if (result != null)
+			if (result == null)
 			{
-				goal.Description = result.Description;
-				goal.IncomingVariablesRequired = result.IncomingVariablesRequired;
+				return (goal, new GoalBuilderError("Could not create description for goal", goal));
 			}
+			var goalDescription = result as GoalDescription;
+
+			if (result is GoalSetupDescription setupResult)
+			{
+				if (goal.GoalName.Equals("setup", StringComparison.OrdinalIgnoreCase))
+				{
+					setupResult = setupResult with { DataSourceName = "data" };
+				}
+				var createdDataSourceResult = await GetOrCreateDataSource(setupResult.DataSourceName);
+				if (createdDataSourceResult.Error != null) return (goal, new GoalBuilderError(createdDataSourceResult.Error, goal));
+
+				goal.DataSourceName = createdDataSourceResult.DataSource?.Name;
+				context.AddOrReplace(ReservedKeywords.CurrentDataSource, createdDataSourceResult.DataSource);
+			}
+			goal.Description = goalDescription.Description;
+			goal.IncomingVariablesRequired = goalDescription.IncomingVariablesRequired;
+
 			return (goal, null);
+		}
+
+		public async Task<(DataSource? DataSource, IError? Error)> GetOrCreateDataSource(string? name)
+		{
+			if (string.IsNullOrEmpty(name)) return (null, null);
+
+			var dbSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger, typeHelper);
+			var dataSourceResult = await dbSettings.GetDataSource(name);
+			if (dataSourceResult.DataSource != null) return dataSourceResult;
+
+			return await dbSettings.CreateDataSource(name);
 		}
 
 		private void RemoveUnusedPrFiles(Goal goal)
@@ -284,7 +349,8 @@ Be concise
 			var dirs = fileSystem.Directory.GetDirectories(goal.AbsolutePrFolderPath);
 			foreach (var dir in dirs)
 			{
-				foreach (var subGoal in goal.SubGoals) {
+				foreach (var subGoal in goal.SubGoals)
+				{
 
 					dirs = dirs.Where(p => !p.StartsWith(Path.Join(goal.AbsolutePrFolderPath, subGoal))).ToArray();
 				}

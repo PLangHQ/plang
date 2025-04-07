@@ -1,5 +1,19 @@
 Start
-- start window, call RenderDesktop, 1400x900
+- if %user% is empty then
+    - ask "Whats up?", write to %user%
+- get apps available, write to %apps%
+- read file system.llm, write to %system%
+- [llm] system: %system%
+        user: %user%
+        scheme: {apps:string[]}
+- get first item from %apps%, write to %app%
+- get public goals, "GoalName", "Description", "Params" for /apps/%apps%, write to %publicGoals%
+- read file goalsToCall.llm, load vars, write to %goalsToCallSystem%
+- [llm] system: %goalsToCallSystem%
+        user: %publicGoals%
+        scheme: {goals:[{name:string, params:object[]}]}
+- call apps/%app%/%goals[0].name% %goals[0].params%
+    on ask call AskMe
 
-RenderDesktop
-- render "ui/desktop.html"
+AskMe
+- write out %item%

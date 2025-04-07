@@ -8,6 +8,7 @@ using PLang.Modules;
 using PLang.Runtime;
 using PLang.Services.LlmService;
 using PLang.Utils;
+using System.Reflection;
 
 
 namespace PLang.Building
@@ -15,6 +16,7 @@ namespace PLang.Building
 	public interface IInstructionBuilder
 	{
 		Task<(Model.Instruction?, IBuilderError?)> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep goalStep, string module, int stepNr, List<string>? excludeModules = null, int errorCount = 0);
+		Task RunBuilderMethod(string module, BaseBuilder.GenericFunction gf);
 	}
 
 	public class InstructionBuilder : IInstructionBuilder
@@ -70,7 +72,8 @@ namespace PLang.Building
 
 			foreach (var function in functions)
 			{
-				stepBuilder.LoadVariablesIntoMemoryStack(function, memoryStack, context, settings);
+				var error = await stepBuilder.LoadVariablesIntoMemoryStack(function, memoryStack, context, settings);
+				if (error != null) return (null, error);
 			}
 
 
@@ -121,6 +124,31 @@ Builder will continue on other steps but not this one ({step.Text}).
 				fileSystem.Directory.CreateDirectory(step.Goal.AbsolutePrFolderPath);
 			}
 			fileSystem.File.WriteAllText(step.AbsolutePrFilePath, JsonConvert.SerializeObject(instructions, Formatting.Indented));
+		}
+
+
+		public async Task RunBuilderMethod(string module, BaseBuilder.GenericFunction gf)
+		{
+			var builder = typeHelper.GetBuilderType(module);
+			if (builder != null && gf != null)
+			{
+				var method = builder.GetMethod("Builder" + gf.FunctionName);
+				if (method != null)
+				{
+					var classInstance = builderFactory.Create(module);
+					classInstance.InitBaseBuilder(module, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+					var method2 = classInstance.GetType().GetMethod("Builder" + gf.FunctionName);
+					if (method2 != null)
+					{
+						var result = method2.Invoke(classInstance, [gf]);
+						if (result is Task task)
+						{
+							await task;
+						}
+					}
+				}
+			}
+			
 		}
 	}
 

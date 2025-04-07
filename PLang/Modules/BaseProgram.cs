@@ -87,7 +87,7 @@ namespace PLang.Modules
 			this.goalStep = step;
 			this.instruction = instruction;
 
-			variableHelper = new VariableHelper(context, memoryStack, settings);
+			variableHelper = container.GetInstance<VariableHelper>();
 			this.typeHelper = typeHelper;
 			this.llmServiceFactory = llmServiceFactory;
 			methodHelper = new MethodHelper(goalStep, variableHelper, typeHelper);
@@ -111,6 +111,12 @@ namespace PLang.Modules
 		private T GetModule<T>() where T : BaseProgram
 		{
 			return (T)container.GetInstance(typeof(T));
+		}
+
+		public void SetStep(GoalStep step)
+		{
+			this.goalStep = step;
+			this.goal = step.Goal;
 		}
 
 		public async Task<(object? ReturnValue, IError? Error)> RunFunction(GenericFunction function)

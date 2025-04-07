@@ -7,8 +7,10 @@ namespace PLang.Utils
 {
 	public class GoalHelper
 	{
-		public static bool IsSetup(GoalStep step)
+		public static bool IsSetup(GoalStep? step)
 		{
+			if (step == null) return false;
+
 			return IsSetup(step.Goal.AbsoluteAppStartupFolderPath, step.RelativePrPath);
 		}
 		public static bool IsSetup(string rootDirectory, string fileName)
@@ -17,6 +19,7 @@ namespace PLang.Utils
 			if (fileName.ToLower() == Path.Join(rootDirectory, "setup.goal").ToLower()) return true;
 			if (fileName.ToLower().StartsWith(Path.Join(rootDirectory, "setup"))) return true;
 			if (fileName.ToLower().StartsWith(Path.Join(".build", "setup"))) return true;
+
 			return false;
 		}
 
@@ -52,8 +55,9 @@ namespace PLang.Utils
 
 			// Order the files
 			var orderedFiles = filteredGoalFiles
-				.OrderBy(file => !file.ToLower().Contains(Path.Join(goalPath, "events").ToLower()))  // "events" folder first
-				.ThenBy(file => Path.GetFileName(file).ToLower() != "setup.goal")    // "setup.goal" second
+				.OrderBy(file => !file.Contains(Path.Join(goalPath, "events"), StringComparison.OrdinalIgnoreCase))  // "events" folder first
+				.ThenBy(file => Path.GetFileName(file).ToLower() != "setup.goal") // "setup.goal" second
+				.ThenBy(file => !file.Contains(Path.Join(goalPath, "setup", Path.DirectorySeparatorChar.ToString()), StringComparison.OrdinalIgnoreCase))   
 				.ThenBy(file => Path.GetFileName(file).ToLower() != "start.goal")
 				.ToList();
 
@@ -105,6 +109,12 @@ namespace PLang.Utils
 				i++;
 			}
 			return new string(' ', i);
+		}
+
+
+		public static bool IsSetup(Goal goal)
+		{
+			return (goal.GoalFileName.Equals("Setup.goal", StringComparison.OrdinalIgnoreCase)) || (goal.RelativeGoalFolderPath.Equals(Path.Join(Path.DirectorySeparatorChar.ToString(), "setup"), StringComparison.OrdinalIgnoreCase));
 		}
 	}
 }

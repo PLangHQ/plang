@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Nostr.Client.Client;
 using PLang.Building;
+using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Errors.Handlers;
 using PLang.Events;
@@ -375,7 +376,7 @@ namespace PLang.Container
 				var supportedTypes = moduleSettings.GetSupportedDbTypes();
 				if (supportedTypes.Count == 1)
 				{
-					moduleSettings.CreateDataSource("data", "./db/data.sqlite", "sqlite", true, true).Wait();
+					moduleSettings.CreateDataSource("data", "sqlite", true, true).Wait();
 					dbConnection = GetDbConnection(factory, context);
 					if (dbConnection != null) return dbConnection;
 				}
@@ -562,7 +563,20 @@ namespace PLang.Container
 			// Register these types with the DI container
 			foreach (var type in modulesFromCurrentAssembly)
 			{
-				container.Register(type, type, serviceName: type.FullName);  // or register with a specific interface if needed
+				container.Register(type);
+				container.Register(type, type, serviceName: type.FullName); 
+				container.Register(type, factory =>
+				{
+					var instance = Activator.CreateInstance(type) as BaseProgram;
+					var context = container.GetInstance<PLangAppContext>();
+
+					instance.Init(container, context["!Goal"] as Goal, context["!Step"] as GoalStep, context["!Instruction"] as Building.Model.Instruction, 
+						container.GetInstance<MemoryStack>(), container.GetInstance<ILogger>(), context, container.GetInstance<ITypeHelper>(), 
+						container.GetInstance<ILlmServiceFactory>(), container.GetInstance<ISettings>(), container.GetInstance<IAppCache>(), null);	
+					return instance;
+				}, serviceName: type.FullName + "Factory");
+
+
 			}
 			container.Register<BaseBuilder, BaseBuilder>();
 
@@ -573,7 +587,11 @@ namespace PLang.Container
 				var modules = dependancyHelper.LoadModules(typeof(BaseProgram), fileSystem.GoalsPath);
 				foreach (var module in modules)
 				{
-					container.Register(module);
+					container.Register(module, factory =>
+					{
+						var instance = Activator.CreateInstance(module, container);
+						return instance;
+					}, serviceName: module.FullName);
 				}
 
 			}

@@ -23,7 +23,9 @@ using System.Xml.Linq;
 
 namespace PLang.Modules.PlangModule
 {
-	[Description("Compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime for plang, can run goal and step(s) in plang")]
+	[Description(@"<description>
+get apps available, compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime Engine for plang, can run goal and step(s) in plang
+<description>")]
 	public class Program : BaseProgram
 	{
 		private readonly ILogger logger;

@@ -48,6 +48,7 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 			this.fileSystem = fileSystem;
 			this.memoryStack = memoryStack;
 			this.http = http;
+			
 			this.Extractor = new JsonExtractor();
 
 			//Only for development of plang
@@ -150,8 +151,9 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 			}
 
 			var result = await http.Post(url, parameters);
+			if (result.Error != null) return (result.Data, result.Error);
 
-			string responseContent = result.Data.ToString();
+			string? responseContent = result.Data?.ToString();
 
 
 			if (string.IsNullOrWhiteSpace(responseContent))

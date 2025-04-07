@@ -39,12 +39,8 @@ namespace PLang.Utils
 				signature.Headers = (Dictionary<string, object?>)dict["headers"];
 			}
 
-			var identityData = GetByKey("identity", dict);
-
-			var identity = JsonConvert.DeserializeObject<Identity>(JsonConvert.SerializeObject(identityData));
-			signature.Identity = identity;
-			identity.Signature = signature;
-
+			var identity = GetByKey("identity", dict);
+			signature.Identity = identity.ToString();
 
 			var result = GetExpiresInMs(dict);
 			if (result.Error != null)

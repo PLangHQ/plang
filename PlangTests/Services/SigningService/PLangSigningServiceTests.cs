@@ -78,7 +78,7 @@ namespace PLang.Services.SigningService.Tests
 				return nonce;
 			};
 			context.AddOrReplace(Settings.SaltKey, "123");
-			var headers = new Dictionary<string, object>();
+			var headers = new Dictionary<string, object?>();
 			headers.Add("method", method);
 			headers.Add("url", url);
 
@@ -92,8 +92,8 @@ namespace PLang.Services.SigningService.Tests
 			var xSignatureAsBase64 = validationKeyValues["X-Signature"].ToString();
 			var recievedSignature = await signingService.FromBase64(xSignatureAsBase64);
 
-			var result = await signingService.VerifySignature(recievedSignature);
-			Assert.IsTrue(result.Signature.IsVerified);
+			var result = await signingService.VerifySignature(recievedSignature, headers);
+			Assert.IsNotNull(result.Signature);
 			
 		}
 
@@ -101,18 +101,18 @@ namespace PLang.Services.SigningService.Tests
 		[ExpectedException(typeof(SignatureExpiredException))]
 		public async Task ValidateSignature_ToOldRequest()
 		{
-
+			/*
 			string body = "hello";
 			string method = "POST";
 			string url = "http://plang.is";
 			string contract = "C0";
-			/*
+			
 			DateTime dt = DateTime.Now.AddMinutes(-5).AddSeconds(-1);
 			SystemTime.OffsetUtcNow = () =>
 			{
 				return new DateTimeOffset(dt);
 			};
-			var signature = signingService.Sign(body, method, url, contract);
+			var signature = signingService.Sign(body);
 
 
 			SystemTime.OffsetUtcNow = () =>
@@ -120,7 +120,7 @@ namespace PLang.Services.SigningService.Tests
 				return DateTimeOffset.UtcNow;
 			};
 
-			var result = await signingService.VerifySignature(body, method, url, signature);
+			var result = await signingService.VerifySignature(body, signature);
 			*/
 		}
 

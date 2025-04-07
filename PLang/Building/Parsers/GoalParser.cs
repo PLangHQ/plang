@@ -13,6 +13,7 @@ namespace PLang.Building.Parsers
 {
 	public interface IGoalParser
 	{
+		List<Goal> GetAllGoals();
 		List<Goal> ParseGoalFile(string goalFileAbsolutePath);
 	}
 
@@ -29,6 +30,16 @@ namespace PLang.Building.Parsers
 			this.settings = settings;
 		}
 
+		public List<Goal> GetAllGoals()
+		{
+			List<Goal> goals = new List<Goal>();
+			var files = fileSystem.Directory.GetFiles(fileSystem.GoalsPath, "*.goal", SearchOption.AllDirectories);
+			foreach (var file in files)
+			{
+				goals.AddRange(ParseGoalFile(file));
+			}
+			return goals;
+		}
 
 		public List<Goal> ParseGoalFile(string goalFileAbsolutePath)
 		{
@@ -236,6 +247,8 @@ namespace PLang.Building.Parsers
 
 				goal.Description = prevBuildGoal.Description;
 				goal.IncomingVariablesRequired = prevBuildGoal.IncomingVariablesRequired;
+				goal.DataSourceName = prevBuildGoal.DataSourceName;
+
 				foreach (var injection in prevBuildGoal.Injections)
 				{
 					if (goal.Injections.FirstOrDefault(p => p.Type == injection.Type && p.Path == injection.Path) == null)

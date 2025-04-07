@@ -10,7 +10,11 @@ using System.ComponentModel;
 
 namespace PLang.Modules.ListDictionaryModule
 {
-	[Description("Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global")]
+	[Description(@"<description>
+get first|last|random|position| item from list or dictionary.
+Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global
+<description>
+")]
 	public class Program : BaseProgram
 	{
 
@@ -90,6 +94,35 @@ namespace PLang.Modules.ListDictionaryModule
 				}
 			}
 			return listInstance;
+		}
+
+		public async Task<object?> GetItem(string @operator = "first", List<object>? listInstance = null, List<string>? sortColumns = null, List<string>? sortOperator = null)
+		{
+			if (listInstance == null || listInstance.Count == 0) return null;
+
+			if (sortColumns != null && sortColumns.Count > 0)
+			{
+				throw new NotImplementedException();
+			}
+			object? obj = null;
+			switch (@operator)
+			{
+				case "first":
+					obj = listInstance[0];
+					break;
+				case "last":
+					obj = listInstance[listInstance.Count - 1];
+					break;
+				case "random":
+					obj = listInstance[new Random().Next(0, listInstance.Count)];
+					break;
+				case "position":
+					obj = listInstance[memoryStack.Get<int>("position")];
+					break;
+			}
+			return obj;
+
+
 		}
 
 		[Description("Gets an item from a list by position")]

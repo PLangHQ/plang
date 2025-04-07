@@ -267,17 +267,22 @@ namespace PLang.Modules.MessageModule
 					settings.Set(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_hash_" + publicKey, hash);
 				}
 				Dictionary<string, object> validationKeyValues = new Dictionary<string, object>();
-				foreach (var tag in tags)
+				Signature? signature = null;
+				if (tags != null)
 				{
-					if (tag.AdditionalData.Length == 1)
+					var signatureData = tags.FirstOrDefault(p => p.TagIdentifier.Equals("X-Signature"))?.AdditionalData.FirstOrDefault(p => p != null);
+					if (signatureData != null)
 					{
-						validationKeyValues.Add(tag.TagIdentifier, tag.AdditionalData[0]);
+						signature = JsonConvert.DeserializeObject<Signature>(signatureData.ToString());
 					}
 				}
 
-				var identites = signingService.VerifySignature(validationKeyValues).Result;
-				parameters.AddOrReplace(ReservedKeywords.Signature, identites.Signature);
+				if (signature != null)
+				{
+					var identites = signingService.VerifySignature(signature).Result;
+					parameters.AddOrReplace(ReservedKeywords.Signature, identites.Signature);
 
+				}
 				engine = container.GetInstance<IEngine>();
 				engine.Init(container);
 

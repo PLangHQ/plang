@@ -59,16 +59,14 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("localPath is location of the database on the drive for sqlite. localPath can be string with variables, default is null")]
-		public async Task CreateDataSource(string name = "data", [HandlesVariable] string? localPath = null, string databaseType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
+		public async Task CreateDataSource([HandlesVariable] string name = "data", string databaseType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
 		{
-			localPath = variableHelper.LoadVariables(localPath)?.ToString();
-
-			await moduleSettings.CreateDataSource(name, localPath, databaseType, setAsDefaultForApp, keepHistoryEventSourcing);
+			await moduleSettings.CreateDataSource(name, databaseType, setAsDefaultForApp, keepHistoryEventSourcing);
 		}
 
-		public async Task<IError?> SetDataSourceName(string? name = null, string? localPath = null)
+		public async Task<IError?> SetDataSourceName(string? name = null)
 		{
-			(var dataSource, var error) = await moduleSettings.GetDataSource(name, localPath, goalStep);
+			(var dataSource, var error) = await moduleSettings.GetDataSource(name, goalStep);
 			if (error != null) return error;
 
 			context[ReservedKeywords.CurrentDataSource] = dataSource;
@@ -308,6 +306,20 @@ namespace PLang.Modules.DbModule
 				}
 			}
 			if (connection != null && connection.State != ConnectionState.Open) connection.Open();
+			if (connection is SqliteConnection sqliteConnection)
+			{
+				if (sqliteConnection.ConnectionString.Contains("Memory"))
+				{
+					object? obj = AppContext.GetData("AnchorMemoryDb");
+					if (obj == null)
+					{
+						var anchorConnection = dbFactory.CreateHandler();
+						anchorConnection.Open();
+
+						AppContext.SetData("AnchorMemoryDb", anchorConnection);
+					}
+				}
+			}
 
 			var errorToReturn = (multipleErrors.Errors.Count == 0) ? null : multipleErrors;
 			return (connection, param, sql, errorToReturn);

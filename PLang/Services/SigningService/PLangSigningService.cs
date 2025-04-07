@@ -1,25 +1,14 @@
-﻿using BCrypt.Net;
-using Microsoft.IdentityModel.Tokens;
-using NBitcoin.Secp256k1;
-using Nethereum.Signer;
-using Nethereum.Util;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NSec.Cryptography;
+using Org.BouncyCastle.Asn1.Cms;
 using PLang.Errors;
 using PLang.Errors.Runtime;
-using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Modules.SerializerModule;
-using PLang.Services.IdentityService;
 using PLang.Utils;
-using System;
-using System.Diagnostics;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Text.Json.Nodes;
-using static Dapper.SqlMapper;
-using Identity = PLang.Interfaces.Identity;
 
 namespace PLang.Services.SigningService
 {
@@ -36,10 +25,10 @@ namespace PLang.Services.SigningService
 	{
 		Task<string> GetPublicKey();
 
-		Task<Signature> Sign(object? content, List<string>? contracts = null, int? expiresInSeconds = null, Dictionary<string, object>? headers = null);
+		Task<Signature> Sign(object? body, List<string>? contracts = null, int? expiresInSeconds = null, Dictionary<string, object>? headers = null);
 
-		Task<(Signature? Signature, IError? Error)> VerifySignature(Dictionary<string, object?> signature);
-		Task<(Signature? Signature, IError? Error)> VerifySignature(Signature signature);
+		Task<(Signature? Signature, IError? Error)> VerifyDictionarySignature(Dictionary<string, object?> signature, Dictionary<string, object?>? headers = null, object? body = null, List<string>? contracts = null);
+		Task<(Signature? Signature, IError? Error)> VerifySignature(Signature signature, Dictionary<string, object?>? headers = null, object? body = null, List<string>? contracts = null);
 
 	}
 
@@ -63,30 +52,9 @@ namespace PLang.Services.SigningService
 			this.serialier = serialier;
 			this.hasher = hasher;
 		}
-		/*
-		public Dictionary<string, object> SignWithTimeout(string? content, DateTimeOffset expires, string contract = "C0", Dictionary<string, object>? headers = null)
-		{
-			return SignInternal(content, contract, expires);
-		}
-		public Dictionary<string, object> SignWithTimeout(byte[] seed, string content, string method, string url, DateTimeOffset expires, string contract = "C0")
-		{
-			return SignInternal(seed, content, method, url, contract, expires);
-		}
 
-
-		public Dictionary<string, object> Sign(string? content, string method, string url, string contract = "C0", string? appId = null)
+		public async Task<Signature?> Sign(object? body, List<string>? contracts = null, int? expiresInSeconds = null, Dictionary<string, object?>? headers = null)
 		{
-			return SignInternal(content, method, url, contract, null, appId);
-		}
-		public Dictionary<string, object> Sign(byte[] seed, string content, string method, string url, string contract = "C0")
-		{
-			return SignInternal(seed, content, method, url, contract, null);
-		}
-		*/
-
-		public async Task<Signature> Sign(object? content, List<string>? contracts = null, int? expiresInSeconds = null, Dictionary<string, object>? headers = null)
-		{
-
 			var identity = identityService.GetCurrentIdentityWithPrivateKey();
 			var seed = Convert.FromBase64String(identity.Value!.ToString()!);
 
@@ -96,12 +64,8 @@ namespace PLang.Services.SigningService
 				expires = DateTimeOffset.Now.AddSeconds(expiresInSeconds.Value);
 			}
 
-			var result = await SignInternal(seed, content, headers, contracts, expires);
-			var identityObj = new Models.Identity(identity.Value!.ToString()!, identity.Name);
-			identityObj.Signature = result;
-
-			result.Identity = identityObj;
-
+			var result = await SignInternal(seed, body, headers, contracts, expires);
+			
 			return result;
 		}
 
@@ -122,21 +86,13 @@ namespace PLang.Services.SigningService
 			return identity.Value!.ToString()!;
 		}
 
-		private async Task<Signature?> SignInternal(string? content, List<string>? contracts = null, DateTimeOffset? expires = null, Dictionary<string, object?>? headers = null)
-		{
-			var identity = identityService.GetCurrentIdentityWithPrivateKey();
-			var seed = Convert.FromBase64String(identity.Value!.ToString()!);
-			var result = await SignInternal(seed, content, headers, contracts, expires);
-			identityService.UseSharedIdentity(null);
-			return result;
-		}
 		private Key LoadKeyFromBase64(byte[] privateKeyBytes)
 		{
 			var algorithm = SignatureAlgorithm.Ed25519;
 			return Key.Import(algorithm, privateKeyBytes, KeyBlobFormat.RawPrivateKey);
 		}
 
-		private async Task<Signature?> SignInternal(byte[] seed, object? content = null, Dictionary<string, object?>? headers = null, List<string>? contracts = null, DateTimeOffset? expires = null)
+		private async Task<Signature?> SignInternal(byte[] seed, object? body = null, Dictionary<string, object?>? headers = null, List<string>? contracts = null, DateTimeOffset? expires = null)
 		{
 			// TODO: signing a message should trigger a AskUserException. 
 			// this would then ask the user if he want to sign the message
@@ -144,25 +100,24 @@ namespace PLang.Services.SigningService
 			DateTimeOffset created = SystemTime.OffsetUtcNow();
 			string nonce = SystemNonce.New();
 
-			var signature = await CreateSignatureData(created, nonce, headers, contracts, expires);
+			var signature = await CreateSignatureData(body, created, nonce, headers, contracts, expires);
 
 			var key = LoadKeyFromBase64(seed);
 
 			string publicKeyBase64 = Convert.ToBase64String(key.Export(KeyBlobFormat.RawPublicKey));
-			signature.Identity = new PLang.Models.Identity(publicKeyBase64, publicKeyBase64);
+			signature.Identity = publicKeyBase64;
 
 			var algorithm = SignatureAlgorithm.Ed25519;
 			var bytesToSign = await serialier.Serialize(signature);
 
 			var value = algorithm.Sign(key, bytesToSign);
 			signature.SignedData = Convert.ToBase64String(value);
-			signature.IsVerified = true;
 			return signature;
 
 
 		}
 
-		private async Task<Signature> CreateSignatureData(DateTimeOffset created, string nonce, Dictionary<string, object?>? headers = null,
+		private async Task<Signature> CreateSignatureData(object? body, DateTimeOffset created, string nonce, Dictionary<string, object?>? headers = null,
 			List<string>? contracts = null, DateTimeOffset? expires = null, string type = "Ed25519")
 		{
 			var signature = new Signature()
@@ -176,6 +131,10 @@ namespace PLang.Services.SigningService
 			{
 				signature.Headers = headers;
 			}
+			if (body != null)
+			{
+				signature.Body = JsonConvert.SerializeObject(body);
+			}
 
 			if (expires != null)
 			{
@@ -184,25 +143,32 @@ namespace PLang.Services.SigningService
 
 			return signature;
 		}
-
+		/*
 		public async Task<(Signature? Signature, IError? Error)> VerifySignature(Signature signature)
 		{
 			return await VerifySignature(appCache, signature);
 		}
+		*/
 
-		public async Task<(Signature? Signature, IError? Error)> VerifySignature(Dictionary<string, object> signatureAsDictionary)
+		public async Task<(Signature? Signature, IError? Error)> VerifyDictionarySignature(Dictionary<string, object?>? signatureAsDictionary, 
+			Dictionary<string, object?>? headers = null, object? body = null, List<string>? contracts = null)
 		{
+			if (signatureAsDictionary == null)
+			{
+				return (null, new ServiceError("Signature data is missing", GetType(), SignatureInvalid));
+			}
+
 			var (signature, error) = SignatureCreator.Cast(signatureAsDictionary);
 			if (error != null) return (null, error);
 
-			return await VerifySignature(appCache, signature);
+			return await VerifySignature(signature, headers, body, contracts);
 		}
 
 
 		/*
 		 * Return Identity(string) if signature is valid, else null  
 		 */
-		public async Task<(Signature?, IError?)> VerifySignature(IAppCache appCache, Signature receivedSignature)
+		public async Task<(Signature? Signature, IError? Error)> VerifySignature(Signature receivedSignature, Dictionary<string, object?>? headers = null, object? body = null, List<string>? contracts = null)
 		{
 
 			if (receivedSignature.Created.Ticks == 0)
@@ -218,8 +184,6 @@ namespace PLang.Services.SigningService
 
 
 			var expires = receivedSignature.ExpiresInMs;
-			DateTimeOffset? expiresInMs = null;
-
 			if (expires < SystemTime.OffsetUtcNow())
 			{
 				return (null, new ServiceError($"Signature expired at {expires}", GetType(), SignatureInvalid));
@@ -230,6 +194,20 @@ namespace PLang.Services.SigningService
 				return (null, new ServiceError("The signature is to old.", GetType(), SignatureInvalid));
 			}
 
+			if (contracts != null)
+			{
+
+				if (receivedSignature.Contracts.FirstOrDefault(p => contracts.FirstOrDefault(x => x == p) != null) == null)
+				{
+
+					return (null, new ServiceError("Contract is invalid", GetType(), SignatureInvalid,
+						FixSuggestion: @$"You sent contracts {string.Join(',', receivedSignature.Contracts)} but I expected contracts {string.Join(',', contracts)}"));
+				} else
+				{
+					receivedSignature.Contracts = contracts;
+				}
+			}
+
 			string cacheKey = string.Format(VerifySignatureCacheKey, receivedSignature.Nonce);
 			var usedNonce = await appCache.Get(cacheKey);
 			if (usedNonce != null)
@@ -238,21 +216,20 @@ namespace PLang.Services.SigningService
 			}
 			await appCache.Set(cacheKey, true, DateTimeOffset.Now.AddMinutes(5).AddSeconds(5));
 
-			var identifier = expectedIdentity.ToString();
-			var name = expectedIdentity?.Name ?? identifier;
+			receivedSignature.Headers = headers;
+			receivedSignature.Body = (body != null && body is not JValue) ? JsonConvert.SerializeObject(body) : body?.ToString();
+			
 
-			var expectedSignature = await CreateSignatureData(receivedSignature.Created, receivedSignature.Nonce, receivedSignature.Headers, receivedSignature.Contracts, receivedSignature.ExpiresInMs);
-			expectedSignature.Identity = null;
-			receivedSignature.Identity = null;
+			var signedData = receivedSignature.SignedData;
 			receivedSignature.SignedData = null;
 
-			var (algorithm, publicKey) = GetPublicKey(receivedSignature.Type, expectedIdentity);
+			var (algorithm, publicKey) = GetPublicKey(receivedSignature.Type, receivedSignature.Identity.ToString());
 
-			receivedSignature.IsVerified = algorithm.Verify(publicKey, ConvertSignatureToSpan(expectedSignature), ConvertSignatureToSpan(receivedSignature));
+			bool isValid = algorithm.Verify(publicKey, ConvertSignatureObjectToSpan(receivedSignature), ConvertSignedDataToSpan(signedData));
 
-			if (receivedSignature.IsVerified)
+			if (isValid)
 			{
-				receivedSignature.Identity = new Models.Identity(identifier, name);
+				receivedSignature.SignedData = signedData;
 				context.AddOrReplace(ReservedKeywords.Identity, receivedSignature.Identity);
 				return (receivedSignature, null);
 			}
@@ -263,7 +240,7 @@ namespace PLang.Services.SigningService
 			}
 		}
 
-		private(SignatureAlgorithm algorithm, NSec.Cryptography.PublicKey publicKey) GetPublicKey(string type, Models.Identity expectedIdentity)
+		private(SignatureAlgorithm algorithm, NSec.Cryptography.PublicKey publicKey) GetPublicKey(string type, string identifier)
 		{
 			if (type != "Ed25519")
 			{
@@ -271,12 +248,16 @@ namespace PLang.Services.SigningService
 			}
 
 			var algorithm = SignatureAlgorithm.Ed25519;
-			byte[] publicKeyBytes = Convert.FromBase64String(expectedIdentity.ToString());
+			byte[] publicKeyBytes = Convert.FromBase64String(identifier);
 			var publicKey = NSec.Cryptography.PublicKey.Import(algorithm, publicKeyBytes, KeyBlobFormat.RawPublicKey);
 			return (algorithm, publicKey);
 		}
-
-		static ReadOnlySpan<byte> ConvertSignatureToSpan(Signature signature)
+		static ReadOnlySpan<byte> ConvertSignedDataToSpan(string data)
+		{
+			byte[] signatureBytes = Convert.FromBase64String(data);
+			return new ReadOnlySpan<byte>(signatureBytes);
+		}
+		static ReadOnlySpan<byte> ConvertSignatureObjectToSpan(Signature signature)
 		{
 			byte[] signatureBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(signature));
 			return new ReadOnlySpan<byte>(signatureBytes);

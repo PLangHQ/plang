@@ -1,33 +1,23 @@
-﻿using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
-using PLang.Services.SigningService;
-using PLang.Utils;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 
 namespace PLang.Services.SettingsService
 {
 
-    public class Settings : ISettings
+	public class Settings : ISettings
     {
         private readonly ISettingsRepositoryFactory settingsRepositoryFactory;
         private readonly IPLangFileSystem fileSystem;
-        private readonly ILogger logger;
-        private readonly PLangAppContext context;
-        private readonly IPLangIdentityService identityService;
-        private readonly IPLangSigningService signingService;
 
-        public Settings(ISettingsRepositoryFactory settingsRepositoryFactory, IPLangFileSystem fileSystem, ILogger logger, PLangAppContext context, IPLangIdentityService identityService, IPLangSigningService signingService)
+
+        public Settings(ISettingsRepositoryFactory settingsRepositoryFactory, IPLangFileSystem fileSystem)
         {
             this.settingsRepositoryFactory = settingsRepositoryFactory;
             this.fileSystem = fileSystem;
-            this.logger = logger;
-            this.context = context;
-            this.identityService = identityService;
-            this.signingService = signingService;
         }
 
 
