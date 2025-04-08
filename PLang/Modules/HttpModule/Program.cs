@@ -535,7 +535,7 @@ namespace PLang.Modules.HttpModule
 			var signature = await identity.Sign(bodyHash, contracts: contracts.ToList(), headers: headers);
 			var json = JsonConvert.SerializeObject(signature);
 			var base64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
-			Console.WriteLine(json);
+			
 			request.Headers.TryAddWithoutValidation("X-Signature", base64);
 
 		}
