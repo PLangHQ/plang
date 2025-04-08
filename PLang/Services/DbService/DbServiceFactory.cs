@@ -1,4 +1,5 @@
 ﻿using LightInject;
+using Microsoft.Data.Sqlite;
 using PLang.Interfaces;
 using PLang.Utils;
 using System;
@@ -22,19 +23,24 @@ namespace PLang.Services.DbService
 	{
 		private readonly bool isBuilder;
 
-		public DbServiceFactory(ServiceContainer container, bool isBuilder = false) : base(container)
+		public DbServiceFactory(IServiceContainer container, bool isBuilder = false) : base(container)
 		{
 			this.isBuilder = isBuilder;
 		}
 
 		public IDbConnection CreateHandler()
 		{
-			var serviceName = GetServiceName(ReservedKeywords.Inject_IDbConnection);
-			var connection = container.GetInstance<IDbConnection>(serviceName);
-
 			var context = container.GetInstance<PLangAppContext>();
 			var dataSource = context[ReservedKeywords.CurrentDataSource] as DataSource;
-			if (dataSource != null)
+			if (dataSource == null) throw new Exception("Could not find datasource in context");
+
+			var connection = container.GetInstance<IDbConnection>(dataSource.TypeFullName);
+
+			if (dataSource.TypeFullName != typeof(SqliteConnection).ToString())
+			{
+				connection.ConnectionString = dataSource.ConnectionString;
+			}
+			else
 			{
 				if (dataSource.ConnectionString.Contains("%") && isBuilder)
 				{
@@ -44,14 +50,13 @@ namespace PLang.Services.DbService
 				{
 					var variableHelper = container.GetInstance<VariableHelper>();
 					connection.ConnectionString = variableHelper.LoadVariables(dataSource.ConnectionString).ToString();
-				} else
+				}
+				else
 				{
 					connection.ConnectionString = dataSource.ConnectionString;
 				}
-			} else
-			{
-				connection.ConnectionString = "./.db/data.sqlite";
 			}
+
 
 			return connection;
 		}

@@ -160,9 +160,10 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "133b4cc2ae35d78fa978e7242c60d1f5832290feb46bd740776dcdb201e5e9e0",
+  "Hash": "d8cf52c4a45e11f51e163bff96573edee4ff84d68d2fe7bce1dea23247e4466a",
   "IncomingVariablesRequired": [
     "file.Content",
     "parameter"
-  ]
+  ],
+  "DataSourceName": null
 }

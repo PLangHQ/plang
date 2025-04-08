@@ -1,0 +1,88 @@
+{
+  "Action": {
+    "FunctionName": "SetVariable",
+    "Parameters": [
+      {
+        "Type": "String",
+        "Name": "key",
+        "Value": "%contract.services%"
+      },
+      {
+        "Type": "Object",
+        "Name": "value",
+        "Value": "blockchain"
+      },
+      {
+        "Type": "Boolean",
+        "Name": "doNotLoadVariablesInValue",
+        "Value": false
+      },
+      {
+        "Type": "Boolean",
+        "Name": "keyIsDynamic",
+        "Value": false
+      },
+      {
+        "Type": "Object",
+        "Name": "onlyIfValueIsNot",
+        "Value": null
+      },
+      {
+        "Type": "Object",
+        "Name": "defaultValue",
+        "Value": null
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Text": "set %contract.services% = \"blockchain\"",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+    "model": "gpt-4o",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nReturn(String[] variables)  : void \nOnCreateVariablesListener(String[] keys, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnChangeVariablesListener(String[] keys, String goalName, Boolean? notifyWhenCreated = True, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnRemoveVariablesListener(String[] keys, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnCreateVariableListener(String key, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnChangeVariableListener(String key, String goalName, Boolean? notifyWhenCreated = True, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnRemoveVariableListener(String key, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnCreateStaticVariableListener(String key, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnChangeStaticVariableListener(String key, String goalName, Boolean? notifyWhenCreated = True, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void // goalName should be prefix with !, it can whole word only but can contain dot(.). \nOnRemoveStaticVariableListener(String key, String goalName, Dictionary`2<String, Object>? parameters, Boolean? waitForResponse = True, Int32? delayWhenNotWaitingInMilliseconds = 50)  : void // goalName should be prefix with !, it can whole word only but can contain dot(.). \nGetEnvironmentVariable(String key)  : String \nLoadVariables(String key)  : void \nSetStringVariable(String key, String? value, Boolean? urlDecode = False, Boolean? htmlDecode = False, Boolean? doNotLoadVariablesInValue = False, String? defaultValue)  : void // Set string variable. Developer might use single/double quote to indicate the string value, the wrapped quote should not be included in the value. If value is json, make sure to format it as valid json, use double quote(\") by escaping it. \nSetJsonObjectVariable(String key, Object? value, Boolean? doNotLoadVariablesInValue = False, Object? defaultValue)  : void // Set json variable.. \nSetDefaultNumberVariable(String key, Nullable`1<Int64>? value, Nullable`1<Int64>? defaultValue)  : void // Set default value of int/long variable. If value already exists it wont be set.. \nSetNumberVariable(String key, Nullable`1<Int64>? value, Nullable`1<Int64>? defaultValue)  : void // Set int/long variable.. \nSetDoubleVariable(String key, Nullable`1<Double>? value, Nullable`1<Double>? defaultValue)  : void // Set double variable.. \nSetFloatVariable(String key, Nullable`1<Single>? value, Nullable`1<Single>? defaultValue)  : void // Set float variable.. \nSetBoolVariable(String key, Nullable`1<Boolean>? value, Nullable`1<Boolean>? defaultValue)  : void // Set bool variable.. \nSetVariable(String key, Object? value, Boolean? doNotLoadVariablesInValue = False, Boolean? keyIsDynamic = False, Object? onlyIfValueIsNot, Object? defaultValue)  : void // Set variable. Developer might use single/double quote to indicate the string value. If value is json, make sure to format it as valid json, use double quote(\") by escaping it. \nSetVariables(Dictionary`2<String, Tuple`2> keyValues, Boolean? doNotLoadVariablesInValue = False, Boolean? keyIsDynamic = False, Object? onlyIfValueIsNot)  : void // Set multiple variables with possible default values. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote(\") by escaping it. onlyIfValueIsSet can be define by user, null|\"null\"|\"empty\" or value a user defines. Be carefull, there is difference between null and \"null\", to be \"null\" is must be defined by user.. \nSetValuesOnVariables(Dictionary`2<String, Object> keyValues, Boolean? doNotLoadVariablesInValue = False, Boolean? keyIsDynamic = False, Object? onlyIfValueIsNot)  : void // Set value on variables. If value is json, make sure to format it as valid json, use double quote(\") by escaping it.  onlyIfValueIsSet can be define by user, null|\"null\"|\"empty\" or value a user defines. Be carefull, there is difference between null and \"null\", to be \"null\" is must be defined by user.. \nSetDefaultValueOnVariables(Dictionary`2<String, Object> keyValues, Boolean? doNotLoadVariablesInValue = False, Boolean? keyIsDynamic = False, Object? onlyIfValueIsNot)  : void // Set default value on variables if not set, good for setting value if variable is empty. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote(\") by escaping it.  onlyIfValueIsSet can be define by user, null|\"null\"|\"empty\" or value a user defines. Be carefull, there is difference between null and \"null\", to be \"null\" is must be defined by user.. \nSetValueOnVariablesOrDefaultIfValueIsEmpty(Dictionary`2<String, Tuple`2> keyValues, Boolean? doNotLoadVariablesInValue = False, Boolean? keyIsDynamic = False, Object? onlyIfValueIsNot)  : void // Set value on variables or a default value is value is empty. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote(\") by escaping it.  onlyIfValueIsSet can be define by user, null|\"null\"|\"empty\" or value a user defines. Be carefull, there is difference between null and \"null\", to be \"null\" is must be defined by user.. \nAppendToVariable(String key, Object? value, Char? seperator = \n, String? valueLocation = \"postfix\", String? seperatorLocation = \"end\", Boolean? shouldBeUnique = False, Boolean? doNotLoadVariablesInValue = False)  : void  // Append to variable. valueLocation=postfix|prefix seperatorLocation=end|start. \nGetVariable(String key)  : void \nRemoveVariables(String[] keys)  : void\nSetStaticVariable(String key, Object value)  : void\nGetStaticVariable(String key)  : void \nRemoveStaticVariable(String key)  : void\nSetSettingValue(String key, Object value)  : void // Sets a value to %Settings.XXXX% variable. \nSetDefaultSettingValue(String key, Object value)  : void // Sets a value to %Settings.XXXX% variable but only if it is not set before. \nConvertToBase64(String key)  : String\r\n## functions available ends ##\r\n## defined variables ##\r\ncontract.services (type:object), \r\n## defined variables ##"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "set %contract.services% = \"blockchain\""
+          }
+        ]
+      }
+    ],
+    "type": "PLang.Modules.GenericFunctionBuilder",
+    "caching": true,
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"SetVariable\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"key\",\n\t\t\t\"Value\": \"%contract.services%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"Name\": \"value\",\n\t\t\t\"Value\": \"blockchain\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean\",\n\t\t\t\"Name\": \"doNotLoadVariablesInValue\",\n\t\t\t\"Value\": false\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean\",\n\t\t\t\"Name\": \"keyIsDynamic\",\n\t\t\t\"Value\": false\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"Name\": \"onlyIfValueIsNot\",\n\t\t\t\"Value\": null\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"Name\": \"defaultValue\",\n\t\t\t\"Value\": null\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
+  },
+  "RunOnBuild": false,
+  "Metadata": {}
+}

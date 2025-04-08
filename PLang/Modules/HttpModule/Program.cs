@@ -530,11 +530,12 @@ namespace PLang.Modules.HttpModule
 			var headers = new Dictionary<string, object>();
 			headers.Add("url", url);
 			headers.Add("method", method);
+			string bodyHash = body.ComputeHash("keccak256").Hash;
 
-			var signature = await identity.Sign(body, contracts: contracts.ToList(), headers: headers);
+			var signature = await identity.Sign(bodyHash, contracts: contracts.ToList(), headers: headers);
 			var json = JsonConvert.SerializeObject(signature);
 			var base64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
-
+			Console.WriteLine(json);
 			request.Headers.TryAddWithoutValidation("X-Signature", base64);
 
 		}

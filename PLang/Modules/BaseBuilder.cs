@@ -1,5 +1,7 @@
-﻿using LightInject;
+﻿using Jil;
+using LightInject;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Container;
 using PLang.Errors.Builder;
@@ -322,6 +324,30 @@ ReturnValue rules
 				}
 			}
 			return vars;
+		}
+
+
+		protected string? GetParameterValueAsString(GenericFunction gf, string parameterName)
+		{
+			return gf.Parameters.FirstOrDefault(p => p.Name == parameterName)?.Value?.ToString();
+		}
+		protected Dictionary<string, object>? GetParameterValueAsDictionary(GenericFunction gf, string parameterName)
+		{
+			var parameterValue = gf.Parameters.FirstOrDefault(p => p.Name == parameterName)?.Value?.ToString();
+			if (parameterValue == null) return null;
+
+			if (JsonHelper.IsJson(parameterValue))
+			{
+				var parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(parameterValue);
+				return parameters;
+			}
+			var dict = new Dictionary<string, object>();
+			dict.Add(parameterName, parameterValue);
+			return dict;
+		}
+		protected bool? GetParameterValueAsBool(GenericFunction gf, string parameterName)
+		{
+			return (bool?)gf.Parameters.FirstOrDefault(p => p.Name == parameterName)?.Value;
 		}
 
 	}

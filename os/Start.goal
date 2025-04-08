@@ -12,7 +12,7 @@ Start
 - [llm] system: %goalsToCallSystem%
         user: %publicGoals%
         scheme: {goals:[{name:string, params:object[]}]}
-- call apps/%app%/%goals[0].name% %goals[0].params%
+- call /apps/%app%/%goals[0].name% %goals[0].params%
     on ask call AskMe
 
 AskMe

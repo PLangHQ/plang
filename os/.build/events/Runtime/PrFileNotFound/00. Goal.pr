@@ -607,12 +607,13 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "37613a4700dc488405a62a83a15140f220728e4cf07c59cb3c4d9064f5a96ed6",
+  "Hash": "0356c4fd3209d93b53ad28432074c303d2f8727e914cd27c2d8c8cbf6110a1bd",
   "IncomingVariablesRequired": [
     "%error.Step.PrFileName%",
     "%error.Goal.Goal%",
     "%error.Goal.GoalName%",
     "%error.Step.RelativePrPath%",
     "%error%"
-  ]
+  ],
+  "DataSourceName": null
 }

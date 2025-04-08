@@ -1,0 +1,4 @@
+ConfirmContract
+- set %contract.services% = "payment.plang.io"
+- sign contract %contract%, "client", write to %signedContract%
+- return %signContract%

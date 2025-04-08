@@ -1,0 +1,7 @@
+Start
+- get https://blockchain.plang.io/hello, write to %hello%
+- write out %hello%
+- get https://blockchain.plang.io/address, %address%, %symbols%, write to %result%
+- get https://blockchain.plang.io/symbols, %symbols%, write to %result%
+- get https://blockchain.plang.io/transactions, %address%, filter:xxx, write to %result%
+- write out %result%

@@ -1,0 +1,9 @@
+Charge
+- validate %contract%, "service"
+- filter "services" from %contract%, write to %services%
+- ask user llm, "What payment service would you like to use?", %services%, write to %service%
+- ask user llm "Do you want to confirm this contract?", %contract%, "y|n", write to %confirm%
+- if %confirm% == "y", call /services/%service%/ConfirmContract, else call CancelContract
+
+CancelContract
+- write out error(400), "Contract not confirmed"

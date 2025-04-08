@@ -553,6 +553,18 @@ namespace PLang.Container
 		{
 
 			var currentAssembly = Assembly.GetExecutingAssembly();
+			var moduleSettingsFromCurrentAssembly = currentAssembly.GetTypes()
+																			.Where(t => !t.IsAbstract && !t.IsInterface &&
+																			(typeof(IModuleSettings).IsAssignableFrom(t)))
+																			.ToList();
+
+			// Register these types with the DI container
+			foreach (var type in moduleSettingsFromCurrentAssembly)
+			{
+				container.Register(type);
+				container.Register(type, type, serviceName: type.FullName);
+			}
+
 
 			// Scan the current assembly for types that inherit from BaseBuilder
 			var modulesFromCurrentAssembly = currentAssembly.GetTypes()
@@ -738,7 +750,7 @@ namespace PLang.Container
 			}
 			string[] dllFiles;
 			string extension = fileSystem.Path.GetExtension(injectorType);
-			if (!string.IsNullOrEmpty(injectorType))
+			if (!string.IsNullOrEmpty(injectorType) && !string.IsNullOrEmpty(extension))
 			{
 				string dllFilePath = fileSystem.Path.Join(fileSystem.GoalsPath, ".services", injectorType);
 				if (!fileSystem.File.Exists(dllFilePath))

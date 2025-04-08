@@ -36,6 +36,7 @@ namespace PLang.Building.Parsers
 			var files = fileSystem.Directory.GetFiles(fileSystem.GoalsPath, "*.goal", SearchOption.AllDirectories);
 			foreach (var file in files)
 			{
+				if (file.Contains(Path.DirectorySeparatorChar + ".")) continue;
 				goals.AddRange(ParseGoalFile(file));
 			}
 			return goals;

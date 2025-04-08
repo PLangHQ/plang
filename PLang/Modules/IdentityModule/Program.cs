@@ -14,6 +14,7 @@ using PLang.Utils.Extractors;
 using PLang.Models;
 using Identity = PLang.Interfaces.Identity;
 using System.Collections;
+using System.Text.Json;
 
 namespace PLang.Modules.IdentityModule
 {
@@ -85,14 +86,17 @@ namespace PLang.Modules.IdentityModule
 
 
 		[Description("validationKeyValues should have these keys: X-Signature, X-Signature-Created(type is long, unix time), X-Signature-Nonce, X-Signature-Public-Key, X-Signature-Contract=\"CO\". Return dictionary with Identity and IdentityNotHashed")]
-		public async Task<(Signature?, IError?)> VerifySignature(object? signatureFromUser = null, Dictionary<string, object?>? headers = null, object? body = null, List<string>? contracts = null)
+		public async Task<(Signature? Signature, IError? Error)> VerifySignature(object? signatureFromUser = null, Dictionary<string, object?>? headers = null, object? body = null, List<string>? contracts = null)
 		{
 			if (signatureFromUser == null)
 			{
 				return (null, new ProgramError("Signature is missing"));
 			}
 			Signature? signature = null;
-			if (signatureFromUser is IDictionary)
+			if (signatureFromUser is string str)
+			{
+				signature = JsonSerializer.Deserialize<Signature>(str);
+			} else if (signatureFromUser is IDictionary)
 			{
 				var result = SignatureCreator.Cast(signatureFromUser as Dictionary<string, object?>);
 				if (result.Error != null) return (null, result.Error);
@@ -105,7 +109,7 @@ namespace PLang.Modules.IdentityModule
 
 			if (signature == null)
 			{
-				return (null, new ProgramError("Signature from you could not be converted to proper Signature"));
+				return (null, new ProgramError("Signature could not be converted to proper Signature"));
 			}	
 
 			return await signingService.VerifySignature(signature, headers, body, contracts);

@@ -38,7 +38,7 @@ namespace PLang.Modules.DbModule
 		private ModuleSettings moduleSettings;
 
 		public Builder(IPLangFileSystem fileSystem, IDbServiceFactory dbFactory, ISettings settings, PLangAppContext context,
-			ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper, ILogger logger, MemoryStack memoryStack, VariableHelper variableHelper) : base()
+			ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper, ILogger logger, MemoryStack memoryStack, VariableHelper variableHelper, ModuleSettings moduleSettings) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.dbFactory = dbFactory;
@@ -49,6 +49,7 @@ namespace PLang.Modules.DbModule
 			this.logger = logger;
 			this.memoryStack = memoryStack;
 			this.variableHelper = variableHelper;
+			this.moduleSettings = moduleSettings;
 		}
 
 		public record FunctionInfo(string DatabaseType, string FunctionName, string[]? TableNames = null);
@@ -59,23 +60,13 @@ namespace PLang.Modules.DbModule
 			(var buildInstruction, var buildError) = await base.Build(goalStep);
 			if (buildError != null) return (null, buildError);
 
-			var gf = buildInstruction.Action as GenericFunction;
-			if (gf != null && gf.FunctionName == "CreateDataSource")
+			var gf = buildInstruction?.Action as GenericFunction;
+			if (gf != null && (gf.FunctionName == "CreateDataSource" || gf.FunctionName == "SetDataSourceName"))
 			{
-				//await CreateDataSource(gf);
 				return (buildInstruction, null);
 			}
-			if (gf != null && gf.FunctionName == "SetDataSourceName")
-			{
-				await SetDataSourceName(gf);
-				return (buildInstruction, null);
-			}
+
 			var dataSource = await moduleSettings.GetCurrentDataSource();
-			if (dataSource.LocalPath != null && dataSource.LocalPath.Contains("%"))
-			{
-				var db = dbFactory.CreateHandler();
-				int i = 0;
-			}
 
 			SetSystem(@$"Parse user intent.
 
@@ -94,8 +85,8 @@ DatabaseType: Define the database type. The .net library being used is {dataSour
 
 			if (!string.IsNullOrEmpty(dataSource.SelectTablesAndViews))
 			{
-
-				var result = await program.Select(dataSource.SelectTablesAndViews, null, dataSource.Name);
+				var selectTablesAndViews = dataSource.SelectTablesAndViews.Replace("@Database", $"'{dataSource.DbName}'");
+				var result = await program.Select(selectTablesAndViews, null, dataSource.Name);
 
 				if (result.rows != null && result.rows.Count > 0)
 				{
@@ -166,57 +157,6 @@ You MUST provide Parameters if SQL has @parameter.
 
 		}
 
-		private async Task<IBuilderError?> SetDataSourceName(GenericFunction gf)
-		{
-			var nameParameter = gf.Parameters.FirstOrDefault(p => p.Name == "name");
-			
-			DataSource? dataSource = null;
-			if (nameParameter?.Value == null)
-			{
-				return new BuilderError("Name for the data source is missing. Please define it. Example: \"- Create sqlite data source 'myDatabase'\"");
-		
-			}
-			var dataSourceResult = await moduleSettings.GetDataSource(nameParameter.Value.ToString());
-			if (dataSourceResult.Error != null) return new BuilderError(dataSourceResult.Error);
-
-			context.AddOrReplace(ReservedKeywords.CurrentDataSource, dataSource);
-			return null; 
-		}
-
-		private async Task CreateDataSource(GenericFunction gf)
-		{
-			var dataSourceName = gf.Parameters.FirstOrDefault(p => p.Name == "name");
-			if (dataSourceName == null || dataSourceName.Value == null || string.IsNullOrEmpty(dataSourceName.Value.ToString()))
-			{
-				throw new BuilderStepException("Name for the data source is missing. Please define it. Example: \"- Create sqlite data source 'myDatabase'\"");
-			}
-
-			var supportedDbTypesAsString = moduleSettings.GetSupportedDbTypesAsString();
-			var dbTypeParam = gf.Parameters.FirstOrDefault(p => p.Name == "databaseType")?.Value?.ToString();
-			if (string.IsNullOrEmpty(dbTypeParam?.ToString()))
-			{
-				var supportedDbTypes = moduleSettings.GetSupportedDbTypes();
-				if (supportedDbTypes.Count > 1)
-				{
-					throw new BuilderStepException(@$"Database type is missing. Add the database type into your step, Example: ""- Create postgres data source 'myDatabase'"". 
-These are the supported databases (you dont need to be precise)
-{supportedDbTypesAsString}
-");
-				}
-				else
-				{
-					dbTypeParam = "sqlite";
-				}
-			}
-			var setAsDefaultForApp = gf.Parameters.FirstOrDefault(p => p.Name == "setAsDefaultForApp");
-			var keepHistoryEventSourcing = gf.Parameters.FirstOrDefault(p => p.Name == "keepHistoryEventSourcing");
-			var path = gf.Parameters.FirstOrDefault(p => p.Name == "localPath")?.Value?.ToString();
-
-			bool isDefault = (setAsDefaultForApp != null && setAsDefaultForApp.Value != null) ? (bool)setAsDefaultForApp.Value : false;
-			bool keepHistory = (keepHistoryEventSourcing != null && keepHistoryEventSourcing.Value != null) ? (bool)keepHistoryEventSourcing.Value : false;
-
-			//await moduleSettings.CreateDataSource((string)dataSourceName.Value, path, dbTypeParam, isDefault, keepHistory);
-		}
 
 
 		private async Task<(Instruction?, IBuilderError?)> CreateSelect(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
@@ -628,6 +568,61 @@ I will not be able to validate the sql. To enable validation run the command: pl
 
 			using var program = new Program(dbFactory, fileSystem, settings, llmServiceFactory, new DisableEventSourceRepository(), context, logger, typeHelper);
 			await program.CreateTable(gf.Parameters.FirstOrDefault().Value.ToString());
+		}
+
+		public async Task<IBuilderError?> BuilderSetDataSourceName(GenericFunction gf)
+		{
+			var name = GetParameterValueAsString(gf, "name");
+			if (name == null) return new BuilderError("Could not find 'name' property in instructions");
+
+			var result = await moduleSettings.GetDataSource(name);
+			if (result.Error != null) return new BuilderError(result.Error);
+
+			context.AddOrReplace(ReservedKeywords.CurrentDataSource, result.DataSource);
+			
+			return null;
+		}
+
+		
+		public async Task<IBuilderError?> BuilderCreateDataSource(GenericFunction gf)
+		{
+			var dataSourceName = GetParameterValueAsString(gf, "name");
+			if (string.IsNullOrEmpty(dataSourceName))
+			{
+				return new BuilderError("Name for the data source is missing. Please define it. Example: \"- Create sqlite data source 'myDatabase'\"");
+			}
+
+			var supportedDbTypesAsString = moduleSettings.GetSupportedDbTypesAsString();
+			var dbTypeParam = GetParameterValueAsString(gf, "databaseType");
+			if (string.IsNullOrEmpty(dbTypeParam?.ToString()))
+			{
+				var supportedDbTypes = moduleSettings.GetSupportedDbTypes();
+				if (supportedDbTypes.Count > 1)
+				{
+					throw new BuilderStepException(@$"Database type is missing. Add the database type into your step, Example: ""- Create postgres data source 'myDatabase'"". 
+These are the supported databases (you dont need to be precise)
+{supportedDbTypesAsString}
+");
+				}
+				else
+				{
+					dbTypeParam = "sqlite";
+				}
+			}
+			var setAsDefaultForApp = GetParameterValueAsBool(gf, "setAsDefaultForApp") ?? false;
+			var keepHistoryEventSourcing = GetParameterValueAsBool(gf, "keepHistoryEventSourcing") ?? false;
+			
+			await moduleSettings.CreateDataSource(dataSourceName, dbTypeParam, setAsDefaultForApp, keepHistoryEventSourcing);
+
+			var result = await moduleSettings.GetDataSource(dataSourceName);
+			if (result.Error != null) return new BuilderError(result.Error);
+
+			if (result.DataSource != null && result.DataSource.IsDefault)
+			{
+				context.AddOrReplace(ReservedKeywords.CurrentDataSource, result.DataSource);
+			}
+			return null;
+			
 		}
 
 	}

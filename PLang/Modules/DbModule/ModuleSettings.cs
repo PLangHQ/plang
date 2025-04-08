@@ -164,7 +164,7 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 			{
 				dataSourceName = dataSourceName?.Replace(match.Value, $"%variable{count}%");
 				dataSourcePath = dataSourcePath?.Replace(match.Value, $"%variable{count}%");
-				
+
 				count++;
 			}
 
@@ -174,7 +174,7 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 		private DataSource GetSqliteDataSource(string name, string dataSourceUri, string localPath, bool history = true, bool isDefault = false)
 		{
 			var statement = new SqlStatement("SELECT name FROM sqlite_master WHERE type IN ('table', 'view');", "SELECT name, type, [notnull] as isNotNull, pk as isPrimaryKey FROM pragma_table_info(@TableName);");
-			
+
 			var dataSource = new DataSource(name, typeof(SqliteConnection).FullName, dataSourceUri, "data",
 				statement.SelectTablesAndViewsInMyDatabaseSqlStatement, statement.SelectColumnsFromTablesSqlStatement,
 				history, isDefault, localPath);
@@ -324,7 +324,11 @@ Be concise"));
 		{
 			return settings.GetValues<DataSource>(this.GetType()).ToList();
 		}
-
+		public async Task<(DataSource? DataSource, IError? Error)> GetDefaultDataSource(GoalStep? step = null)
+		{
+			var dataSources = await GetAllDataSources();
+			return (dataSources.FirstOrDefault(p => p.IsDefault), null);
+		}
 		public async Task<(DataSource? DataSource, IError? Error)> GetDataSource(string name, GoalStep? step = null)
 		{
 
@@ -337,16 +341,20 @@ Be concise"));
 				name = name.TrimStart('/');
 			}
 			var dataSources = await GetAllDataSources();
-			if (name.Contains("%")) { 
+			if (name.Contains("%"))
+			{
 				(name, _) = GetNameAndPathByVariable(name, null);
 			}
 
-			var dataSource = dataSources.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));			
+			var dataSource = dataSources.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 
 			if (dataSource == null)
 			{
 				return (null, await GetDataSourceNotFoundError(name, step));
 			}
+
+			if (dataSource.TypeFullName != typeof(SqliteConnection).FullName) return (dataSource, null);
+
 
 			AppContext.TryGetSwitch("Builder", out bool isBuilder);
 			if (isBuilder)
@@ -354,19 +362,13 @@ Be concise"));
 				dataSource = dataSource with { ConnectionString = $"Data Source={dataSource.Name};Mode=Memory;Cache=Shared;" };
 			}
 
-			if (!string.IsNullOrEmpty(dataSource.LocalPath))
+			if (!string.IsNullOrEmpty(dataSource.LocalPath)
+					&& !dataSource.LocalPath.Contains("%")
+					&& !fileSystem.File.Exists(dataSource.LocalPath))
 			{
-				if (!dataSource.LocalPath.Contains("%"))
-				{
-					if (!fileSystem.File.Exists(dataSource.LocalPath))
-					{
-						return (null, await GetDataSourceNotFoundError(name, step));
-					}
-					return (dataSource, null);
-				}
-
-				
+				return (null, await GetDataSourceNotFoundError(name, step));
 			}
+
 
 			return (dataSource, null);
 		}
@@ -381,7 +383,8 @@ Be concise"));
 			if (dataSources.Count > 0)
 			{
 				existingDatasources = "These are the available datasources:\n" + string.Join("\n", dataSources.Select(p => $"\t- Name:{p.Name} - Path:{p.LocalPath}"));
-			} else
+			}
+			else
 			{
 				existingDatasources = "No datasources available";
 			}

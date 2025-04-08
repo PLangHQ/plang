@@ -83,25 +83,6 @@ namespace PLang.Runtime
 					 */
 					initialEngine = engine;
 					engine = await initialEngine.EnginePool.RentAsync();
-					/*
-					if (engine == null)
-					{
-
-						container = serviceContainerFactory.CreateContainer(context, fileSystem.RootDirectory, "/", outputStreamFactory, outputSystemStreamFactory,
-							errorHandlerFactory, errorSystemHandlerFactory, askUserHandlerFactory);
-						var fileAccessHandler = container.GetInstance<PLang.SafeFileSystem.IFileAccessHandler>();
-						fileAccessHandler.GiveAccess(fileSystem.RootDirectory, fileSystem.OsDirectory);
-
-						engine = container.GetInstance<IEngine>();
-						engine.Init(container);
-
-						AppContext.SetData("EngineCached", engine);
-					}
-					else
-					{
-						engine.GetMemoryStack().Clear();
-						engine.ClearContext();
-					}*/
 
 
 					foreach (var item in ms.GetMemoryStack())

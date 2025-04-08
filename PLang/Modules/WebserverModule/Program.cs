@@ -39,15 +39,14 @@ namespace PLang.Modules.WebserverModule
 		private readonly PrParser prParser;
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
-		private readonly IPLangSigningService signingService;
-		private readonly IPLangIdentityService identityService;
+		private readonly IdentityModule.Program identity;
 		private readonly static List<WebserverInfo> listeners = new();
 		private bool disposed;
 
 		public Program(ILogger logger, IEventRuntime eventRuntime, IPLangFileSystem fileSystem
 			, ISettings settings, IOutputStreamFactory outputStreamFactory
 			, PrParser prParser,
-			IPseudoRuntime pseudoRuntime, IEngine engine, IPLangSigningService signingService, IPLangIdentityService identityService) : base()
+			IPseudoRuntime pseudoRuntime, IEngine engine, IdentityModule.Program identity) : base()
 		{
 			this.logger = logger;
 			this.eventRuntime = eventRuntime;
@@ -57,8 +56,7 @@ namespace PLang.Modules.WebserverModule
 			this.prParser = prParser;
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
-			this.signingService = signingService;
-			this.identityService = identityService;
+			this.identity = identity;
 		}
 
 		public async Task<WebserverInfo?> ShutdownWebserver(string webserverName)
@@ -129,7 +127,7 @@ namespace PLang.Modules.WebserverModule
 			WebserverInfo? webserverInfo = null;
 			if (webserverName != null)
 			{
-				webserverInfo = listeners.FirstOrDefault(p => p.WebserverName == webserverName);
+				webserverInfo = (listeners.Count == 1) ? listeners[0] : listeners.FirstOrDefault(p => p.WebserverName == webserverName);
 				if (webserverInfo == null)
 				{
 					return new ProgramError($"Could not find {webserverName} webserver. Are you defining the correct name?", goalStep, function);
@@ -171,15 +169,8 @@ namespace PLang.Modules.WebserverModule
 				throw new RuntimeException($"Port {port} is already in use. Select different port to run on, e.g.\n-Start webserver, port 4687");
 			}
 
-			if (routings == null)
-			{
-				routings = new List<Routing>();
-				routings.Add(new Routing("/api/.*", "", ContentType: "application/json"));
-			}
-
 			var listener = new HttpListener();
-
-			listener.Prefixes.Add(scheme + "://" + host + ":" + port + "/");
+			listener.Prefixes.Add(scheme + "://" + host + ":" + port + "/");			
 			listener.Start();
 
 			var assembly = Assembly.GetAssembly(this.GetType());
@@ -203,6 +194,7 @@ namespace PLang.Modules.WebserverModule
 					{
 
 						var httpContext = listener.GetContext();
+						var routings = webserverInfo.Routings;
 
 						var request = httpContext.Request;
 						var resp = httpContext.Response;
@@ -602,12 +594,12 @@ Error:
 		}
 
 
-		private (string, Routing?) GetGoalPath(List<Routing> routings, HttpListenerRequest request)
+		private (string?, Routing?) GetGoalPath(List<Routing>? routings, HttpListenerRequest request)
 		{
-			if (request == null || request.Url == null) return ("", null);
+			if (request == null || request.Url == null || routings == null) return (null, null);
 			foreach (var route in routings)
 			{
-				if (Regex.IsMatch(request.Url.LocalPath, "^" + route.Path + "$"))
+				if (Regex.IsMatch(request.Url.LocalPath, "^" + route.Path + "$", RegexOptions.IgnoreCase))
 				{
 					return (GetGoalBuildDirPath(route, request), route);
 				}
@@ -665,7 +657,8 @@ Error:
 			{
 				body = await reader.ReadToEndAsync();
 			}
-			await VerifySignature(request, body, memoryStack);
+			var error = await VerifySignature(request, body, memoryStack);
+			if (error != null) return error;
 
 			var nvc = request.QueryString;
 			if (contentType.StartsWith("application/json") && !string.IsNullOrEmpty(body))
@@ -734,25 +727,32 @@ Error:
 
 		}
 
-		public async Task VerifySignature(HttpListenerRequest request, string body, MemoryStack memoryStack)
+		public async Task<IError?> VerifySignature(HttpListenerRequest request, string body, MemoryStack memoryStack)
 		{
 		
 			string? signatureAsBase64 = request.Headers.Get("X-Signature");
 			if (string.IsNullOrWhiteSpace(signatureAsBase64))
 			{
-				return;
-			}
+				return null;
+			}			
+
 			string? signatureAsJson = Encoding.UTF8.GetString(Convert.FromBase64String(signatureAsBase64));
-			var signature = JsonConvert.DeserializeObject<Dictionary<string, object?>>(signatureAsJson);
 
-			var url = request.Url?.PathAndQuery ?? "";
+			var headers = new Dictionary<string, object?>();
 
-			var verifiedSignature = await signingService.VerifyDictionarySignature(signature);			
-			if (verifiedSignature.Signature != null)
+			headers.Add("url", request.Url?.PathAndQuery);
+			headers.Add("method", request.HttpMethod);
+			string bodyHash = body.ComputeHash("keccak256").Hash;
+			var result = await identity.VerifySignature(signatureAsJson, headers, bodyHash, null);
+			if (result.Error != null) return result.Error;
+
+			var signature = result.Signature;	
+			if (signature != null)
 			{
-				context.AddOrReplace(ReservedKeywords.Signature, verifiedSignature);
-				memoryStack.Put(ReservedKeywords.Identity, verifiedSignature.Signature.Identity);
+				context.AddOrReplace(ReservedKeywords.Signature, signature);
+				memoryStack.Put(ReservedKeywords.Identity, signature.Identity);
 			}
+			return null;
 		}
 
 		private async Task ProcessWebsocketRequest(HttpListenerContext httpContext)
@@ -837,7 +837,7 @@ Error:
 			var obj = new WebSocketData(goalToCall, url, method, null);
 			obj.Parameters = parameters;
 
-			var signature = await signingService.Sign(obj);
+			var signature = await identity.Sign(obj);
 			obj.Signature = signature;
 
 			byte[] message = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj));
@@ -911,7 +911,7 @@ Error:
 						}
 
 						var signature = websocketData.Signature;
-						var verifiedSignature = await signingService.VerifySignature(signature);
+						var verifiedSignature = await identity.VerifySignature(signature);
 						// todo: missing verifiedSignature.Error check
 						if (verifiedSignature.Signature == null)
 						{

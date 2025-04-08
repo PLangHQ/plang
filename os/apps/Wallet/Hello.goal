@@ -1,0 +1,16 @@
+Hello
+- get all public goals, properties: "GoalName", "Description", write to %goals%
+- [llm] system: "Format this nicely for %!output%"
+        user: %goals%
+        scheme: {formatted_goals:string}
+- write out %formatted_goals%
+
+
+/*
+- get https://blockchain.plang.io/wallet, %address%
+    cache for 10 minutes, key: "wallet_%address%"
+    write to %wallet%
+- group by "symbol" in %wallet%, write to %symbols%
+- group by "chains" in %symbols%, write to %chains%
+- sum up "total_usd" as TotalUsd in %symbols%, write to %symbols%
+*/

@@ -248,21 +248,8 @@ GoalApiIfo:
 		{
 			if (!string.IsNullOrEmpty(goal.Description) && goal.GetGoalAsString() == oldGoal?.GetGoalAsString())
 			{
-				if (GoalHelper.IsSetup(goal))
-				{
-					if (string.IsNullOrEmpty(goal.DataSourceName))
-					{
-						return (goal, new GoalBuilderError("Datasource name on setup file is empty. Delete the .pr file and rebuild", goal, ContinueBuild: false));
-					}
-
-					var dataSourceResult = await GetOrCreateDataSource(goal.DataSourceName);
-					if (dataSourceResult.Error != null) return (goal, new BuilderError(dataSourceResult.Error));
-
-					context.AddOrReplace(ReservedKeywords.CurrentDataSource, dataSourceResult.DataSource);
-
-				}
-
-				return (goal, null);
+				var error = await PrepareSetup(goal);
+				return (goal, error);
 			}
 
 			var promptMessage = new List<LlmMessage>();
@@ -296,23 +283,22 @@ Be concise
 			(var result, var queryError) = await llmServiceFactory.CreateHandler().Query(llmRequest, responseType);
 			if (queryError != null) return (goal, new GoalBuilderError(queryError, goal));
 
-			if (result == null)
+			var goalDescription = result as GoalDescription;
+			if (goalDescription == null)
 			{
 				return (goal, new GoalBuilderError("Could not create description for goal", goal));
 			}
-			var goalDescription = result as GoalDescription;
 
 			if (result is GoalSetupDescription setupResult)
 			{
-				if (goal.GoalName.Equals("setup", StringComparison.OrdinalIgnoreCase))
+				if (!goal.GoalName.Equals("setup", StringComparison.OrdinalIgnoreCase))
 				{
-					setupResult = setupResult with { DataSourceName = "data" };
-				}
-				var createdDataSourceResult = await GetOrCreateDataSource(setupResult.DataSourceName);
-				if (createdDataSourceResult.Error != null) return (goal, new GoalBuilderError(createdDataSourceResult.Error, goal));
+					var createdDataSourceResult = await GetOrCreateDataSource(setupResult.DataSourceName);
+					if (createdDataSourceResult.Error != null) return (goal, new GoalBuilderError(createdDataSourceResult.Error, goal));
 
-				goal.DataSourceName = createdDataSourceResult.DataSource?.Name;
-				context.AddOrReplace(ReservedKeywords.CurrentDataSource, createdDataSourceResult.DataSource);
+					goal.DataSourceName = createdDataSourceResult.DataSource?.Name;
+					context.AddOrReplace(ReservedKeywords.CurrentDataSource, createdDataSourceResult.DataSource);
+				}
 			}
 			goal.Description = goalDescription.Description;
 			goal.IncomingVariablesRequired = goalDescription.IncomingVariablesRequired;
@@ -320,11 +306,34 @@ Be concise
 			return (goal, null);
 		}
 
+		private async Task<IBuilderError?> PrepareSetup(Goal goal)
+		{
+			if (!GoalHelper.IsSetup(goal)) return null;
+
+			if (string.IsNullOrEmpty(goal.DataSourceName))
+			{
+				if (!goal.GoalName.Equals("setup", StringComparison.OrdinalIgnoreCase))
+				{
+					return new GoalBuilderError("Datasource name on setup file is empty. Delete the .pr file and rebuild", goal, ContinueBuild: false);
+				}
+			}
+
+			var dataSourceResult = await GetOrCreateDataSource(goal.DataSourceName);
+			if (dataSourceResult.Error != null) return new GoalBuilderError(dataSourceResult.Error, goal);
+
+			context.AddOrReplace(ReservedKeywords.CurrentDataSource, dataSourceResult.DataSource);
+			return null;
+		}
+
 		public async Task<(DataSource? DataSource, IError? Error)> GetOrCreateDataSource(string? name)
 		{
-			if (string.IsNullOrEmpty(name)) return (null, null);
 
 			var dbSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger, typeHelper);
+			if (string.IsNullOrEmpty(name))
+			{
+				return await dbSettings.GetDefaultDataSource();
+			}
+
 			var dataSourceResult = await dbSettings.GetDataSource(name);
 			if (dataSourceResult.DataSource != null) return dataSourceResult;
 

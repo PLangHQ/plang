@@ -1,0 +1,4 @@
+ConfirmContract
+- set %contract.services% = "blockchain"
+- sign blockchain transfer %contract.amount%, write to %signedContract%
+- return %signedContract%

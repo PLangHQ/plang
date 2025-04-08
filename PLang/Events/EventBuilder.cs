@@ -98,7 +98,7 @@ User will provide event binding, you will be provided with c# model to map the c
 EventType is required, Error defaults to 'After' EventType if not defined by user.
 EventScope defines at what stage the event should run, it can be on goal, step, start of app, end of app, etc. See EventScope definition below.
 GoalToBindTo is required. This can a specific Goal or more generic, such as bind to all goals in specific folder. When undefined set as *. Convert to matching pattern(regex) for folder matching. e.g. input value could be /api, if bind to goal is api/*, it should match
-GoalToCall is required. This should be a specific goal, should start with !. Example: !AppName/GoalName.  
+GoalToCall is required. This should be a specific goal, keep path as user defines  
 StepNumber & StepText reference a specific step that the user wants to bind to
 IncludePrivate defines if user wants to include private goals, he needs to specify this specifically to be true
 WaitForExecution: indicates if goal should by run and forget

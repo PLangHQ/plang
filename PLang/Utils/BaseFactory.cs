@@ -16,14 +16,10 @@ namespace PLang.Utils
 		{
 			var context = container.GetInstance<PLangAppContext>();
 
-			if (!context.TryGetValue(key, out object? serviceName) || serviceName == null)
-			{
-				if (!context.TryGetValue(key + "_Default", out serviceName) || serviceName == null)
-				{
-					throw new Exception($"Could not find service for {key} to load");
-				}				
-			}
-			return serviceName!.ToString()!;
+			if (context.TryGetValue(key, out object? serviceName) && serviceName != null) return serviceName.ToString()!;
+			if (context.TryGetValue(key + "_Default", out serviceName) && serviceName != null) return serviceName.ToString()!;
+
+			throw new Exception($"Could not find service for {key} to load");
 		}
 	}
 }

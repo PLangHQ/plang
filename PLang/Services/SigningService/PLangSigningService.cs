@@ -222,7 +222,7 @@ namespace PLang.Services.SigningService
 
 			var signedData = receivedSignature.SignedData;
 			receivedSignature.SignedData = null;
-
+			Console.WriteLine(JsonConvert.SerializeObject(receivedSignature));
 			var (algorithm, publicKey) = GetPublicKey(receivedSignature.Type, receivedSignature.Identity.ToString());
 
 			bool isValid = algorithm.Verify(publicKey, ConvertSignatureObjectToSpan(receivedSignature), ConvertSignedDataToSpan(signedData));

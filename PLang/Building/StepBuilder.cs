@@ -282,7 +282,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 
 			LlmRequest llmQuestion = GetBuildStepInformationQuestion(goal, step, excludeModules);
 
-			logger.Value.LogInformation($"- Find module for {step.Text}");
+			logger.Value.LogInformation($"- Find module for {step.Text.Trim(['\n', '\r', '\t']).MaxLength(80)}");
 			llmQuestion.Reload = false;
 
 			(var stepInformation, var llmError) = await llmServiceFactory.CreateHandler().Query<StepInformation>(llmQuestion);
@@ -599,18 +599,10 @@ Be Concise
 			// handle any custom loading into memoryStack
 			if (gf.FunctionName == "RunGoal")
 			{
-				var json = gf.Parameters.FirstOrDefault(p => p.Name == "parameters")?.Value;
-				if (json == null || !JsonHelper.IsJson(json)) return null;
-				var parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(json.ToString());
-				if (parameters == null) return null;
-
-				foreach (var parameter in parameters)
-				{
-					memoryStack.PutForBuilder(parameter.Key, parameter.Value);
-				}
+				
 			}
 
-
+/*
 			// todo: also bad implementation, builder for module should handle this part
 			if (gf.FunctionName == "CreateDataSource" || gf.FunctionName == "SetDataSourceName")
 			{
@@ -624,7 +616,7 @@ Be Concise
 				{
 					context.AddOrReplace(ReservedKeywords.CurrentDataSource, datasource);
 				}
-			}
+			}*/
 
 			return null;
 		}
