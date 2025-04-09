@@ -1,8 +1,10 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Data.Sqlite;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Nostr.Client.Json;
 using PLang.Attributes;
 using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
@@ -11,6 +13,7 @@ using System.Collections;
 using System.ComponentModel;
 using System.Text;
 using System.Web;
+using static PLang.Modules.DbModule.Program;
 
 namespace PLang.Modules.LocalOrGlobalVariableModule
 {
@@ -18,12 +21,57 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 	public class Program : BaseProgram
 	{
 		private readonly ISettings settings;
+		private readonly DbModule.Program db;
 
-		public Program(ISettings settings) : base()
+		public Program(ISettings settings, DbModule.Program db) : base()
 		{
 			this.settings = settings;
+			this.db = db;
 		}
 
+		public async Task Load([HandlesVariable] List<string> variables)
+		{
+			foreach (var variable in variables)
+			{
+				List<object> parameters = new List<object>();
+				parameters.Add(new ParameterInfo("variable", variable, "System.String"));
+				var result = await db.Select("SELECT * FROM __Variables__ WHERE variable=@variable", parameters);
+				if (result.rows.Count == 1)
+				{
+					memoryStack.Put(variable, result.rows[0]);
+				} else if (result.rows.Count > 1)
+				{
+					memoryStack.Put(variable, result.rows);
+				}
+			}			
+		}
+
+		public async Task<IError?> Store([HandlesVariable] List<string> variables)
+		{
+			foreach (var variable in variables)
+			{
+				List<object> parameters = new List<object>();
+				parameters.Add(new ParameterInfo("variable", variable, "System.String"));
+				parameters.Add(new ParameterInfo("value", variableHelper.LoadVariables(variable), "System.String"));
+				var datasource = await db.GetDataSource();
+				if (datasource.TypeFullName != typeof(SqliteConnection).FullName)
+				{
+					return new ProgramError("Only sqlite is supported");
+				}
+
+				var result = await db.Select("INSERT INTO __Variables__ (variable, value) VALUES (@variable, @value) ON CONFLICT(variable) DO UPDATE SET value = excluded.value;", parameters);
+				if (result.error != null)
+				{
+					if (result.error.Message.Contains("table exists"))
+					{
+						await db.Execute("CREATE TABLE __Variables__ (\r\n    variable TEXT PRIMARY KEY,\r\n    value TEXT,\r\n    created DATETIME DEFAULT CURRENT_TIMESTAMP,\r\n    updated DATETIME DEFAULT CURRENT_TIMESTAMP\r\n);");
+						return await Store(variables);
+					}
+					return result.error;
+				}
+			}
+			return null;
+		}
 
 		public async Task<IError?> Return([HandlesVariable] string[] variables)
 		{

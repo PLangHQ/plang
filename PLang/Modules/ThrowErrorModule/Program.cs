@@ -1,12 +1,15 @@
-﻿using PLang.Attributes;
+﻿using NBitcoin.Protocol;
+using Newtonsoft.Json;
+using PLang.Attributes;
 using PLang.Errors;
 using PLang.Errors.Runtime;
+using PLang.Models;
 using PLang.Services.OutputStream;
 using System.ComponentModel;
 
 namespace PLang.Modules.ThrowErrorModule
 {
-	[Description("Allows user to throw error. Allows user to return out of goal or stop(end) running goal.")]
+	[Description("Allows user to throw error. Allows user to return out of goal or stop(end) running goal. Create payment request(status code 402)")]
 	public class Program : BaseProgram
 	{
 		private readonly IOutputStreamFactory outputStreamFactory;
@@ -38,6 +41,14 @@ namespace PLang.Modules.ThrowErrorModule
 		public async Task EndApp()
 		{
 			Environment.Exit(0);
+		}
+
+		[Description("Create payment request(402)")]
+		public async Task<(Signature?, IError)> CreatePaymentRequest(string name, string description, string error, Dictionary<string, object> services)
+		{
+			var obj = new { name, description, error, services };
+			return (null, new UserDefinedError(JsonConvert.SerializeObject(obj), goalStep, "Payment Required", 402));
+
 		}
 
 	}

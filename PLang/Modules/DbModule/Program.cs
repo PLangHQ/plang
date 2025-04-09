@@ -22,6 +22,7 @@ using System.Data;
 using System.Dynamic;
 using System.Globalization;
 using static Dapper.SqlMapper;
+using static PLang.Modules.DbModule.ModuleSettings;
 
 namespace PLang.Modules.DbModule
 {
@@ -62,6 +63,12 @@ namespace PLang.Modules.DbModule
 		public async Task CreateDataSource([HandlesVariable] string name = "data", string databaseType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
 		{
 			await moduleSettings.CreateDataSource(name, databaseType, setAsDefaultForApp, keepHistoryEventSourcing);
+		}
+
+		[Description("gets the current datasource")]
+		public async Task<DataSource> GetDataSource()
+		{
+			return await moduleSettings.GetCurrentDataSource();
 		}
 
 		public async Task<IError?> SetDataSourceName(string? name = null)
@@ -180,7 +187,7 @@ namespace PLang.Modules.DbModule
 			await EndTransaction();
 		}
 
-		public record ParameterInfo(string ParameterName, object VariableNameOrValue, string TypeFullName);
+		public record ParameterInfo(string ParameterName, object? VariableNameOrValue, string TypeFullName);
 
 		private (IDbConnection connection, DynamicParameters param, string sql, IError? error) Prepare(string sql, List<object>? Parameters = null, bool isInsert = false)
 		{
@@ -194,21 +201,24 @@ namespace PLang.Modules.DbModule
 				foreach (var parameter in Parameters)
 				{
 					var p = parameter as ParameterInfo;
-					if (parameter is JObject)
+					if (p == null)
 					{
-						if (((JObject)parameter).GetValue("Type") != null)
+						if (parameter is JObject)
 						{
-							var obj = (JObject)parameter;
-							p = new ParameterInfo(obj.GetValue("Name").ToString(), obj.GetValue("Value"), obj.GetValue("Type").ToString());
+							if (((JObject)parameter).GetValue("Type") != null)
+							{
+								var obj = (JObject)parameter;
+								p = new ParameterInfo(obj.GetValue("Name").ToString(), obj.GetValue("Value"), obj.GetValue("Type").ToString());
+							}
+							else
+							{
+								p = ((JObject)parameter).ToObject<ParameterInfo>();
+							}
 						}
-						else
+						else if (parameter is string && JsonHelper.IsJson(parameter))
 						{
-							p = ((JObject)parameter).ToObject<ParameterInfo>();
+							p = JsonConvert.DeserializeObject<ParameterInfo>(parameter.ToString());
 						}
-					}
-					else if (parameter is string && JsonHelper.IsJson(parameter))
-					{
-						p = JsonConvert.DeserializeObject<ParameterInfo>(parameter.ToString());
 					}
 
 					var parameterName = p.ParameterName.Replace("@", "");

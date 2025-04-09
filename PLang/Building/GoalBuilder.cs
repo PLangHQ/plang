@@ -230,7 +230,7 @@ GoalApiIfo:
 				var llmRequest = new LlmRequest("GoalApiInfo", promptMessage, "gpt-4o-mini");
 
 				(var result, var queryError) = await llmServiceFactory.CreateHandler().Query<GoalInfo>(llmRequest);
-				if (queryError != null) return (goal, queryError as IBuilderError);
+				if (queryError != null) return (goal, new BuilderError(queryError, false));
 
 				if (result != null)
 				{

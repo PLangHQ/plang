@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Crypto.Tls;
 using PLang.Attributes;
 using PLang.Errors;
 using PLang.Errors.Runtime;
@@ -189,6 +190,50 @@ Add, update, delete and retrieve list or dictionary. It can be stored as local l
 				return dictionaryInstance[key];
 			}
 			return null;
+		}
+
+
+		[Description("Merges two objects or lists according to primary key")]
+		public async Task<object?> MergeLists(object list1, object list2, string key)
+		{
+			
+
+			if (list1 is JArray jArray1 && list2 is JArray jArray2)
+			{
+				JArray mainArray;
+				JArray secondaryArray;
+				if (jArray1.Count >= jArray2.Count)
+				{
+					mainArray = jArray1;
+					secondaryArray = jArray2;
+				} else
+				{
+					mainArray = jArray2;
+					secondaryArray = jArray1;
+				}
+
+				for (int i=0;i<mainArray.Count;i++)
+				{
+					var id = mainArray[i][key];
+					for (int b=0;b<secondaryArray.Count;b++)
+					{
+						if (secondaryArray[b][key] != null && secondaryArray[b][key].ToString().Equals(id.ToString(), StringComparison.OrdinalIgnoreCase))
+						{
+							JObject jObj1 = mainArray[i] as JObject;
+							JObject jObj2 = secondaryArray[b] as JObject;
+							jObj1.Merge(jObj2, new JsonMergeSettings
+							{
+								MergeArrayHandling = MergeArrayHandling.Replace
+							});
+						}
+					}
+				}
+				return mainArray;
+
+
+			}
+			throw new NotImplementedException();
+			
 		}
 	}
 }

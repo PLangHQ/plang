@@ -822,8 +822,8 @@ namespace PLang.Modules.FileModule
 		private ConcurrentDictionary<string, Timer> timers = new ConcurrentDictionary<string, Timer>();
 
 		[Description("debounceTime is the time in ms that is waited until action is executed to prevent multiple execution for same file. At least one listenFor variable needs to be true")]
-		public async Task ListenToFileChange(string[] fileSearchPatterns, GoalToCall goalToCall,
-			string[]? excludeFiles = null,
+		public async Task ListenToFileChange(List<string> fileSearchPatterns, GoalToCall goalToCall,
+			List<string>? excludeFiles = null,
 			bool includeSubdirectories = false, long debounceTime = 150,
 			bool listenForFileChange = false,
 			bool listenForFileCreated = false,
@@ -934,7 +934,7 @@ namespace PLang.Modules.FileModule
 		}
 
 		private void AddEventToTimer(object sender, FileSystemEventArgs e, long debounceTime,
-			string goalToCall, string[]? excludeFiles,
+			string goalToCall, List<string>? excludeFiles,
 			string absoluteFilePathVariableName, string fileNameVariableName,
 			string changeTypeVariableName, string senderVariableName
 
@@ -958,7 +958,7 @@ namespace PLang.Modules.FileModule
 		}
 
 		private static readonly object _lock = new object();
-		private void WatcherCallGoal(object sender, FileSystemEventArgs e, GoalToCall goalToCall, string[]? excludeFiles,
+		private void WatcherCallGoal(object sender, FileSystemEventArgs e, GoalToCall goalToCall, List<string>? excludeFiles,
 			string absoluteFilePathVariableName, string fileNameVariableName,
 			string changeTypeVariableName, string senderVariableName)
 		{

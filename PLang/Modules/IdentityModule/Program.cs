@@ -78,14 +78,37 @@ namespace PLang.Modules.IdentityModule
 			identityService.UseSharedIdentity(null);
 		}
 
+		[Description("Sign a object to a specific property on that object. Returns signature object that contains the values to validate the signature")]
+		public async Task<(object?, IError?)> SignIntoProperty(object body, string property)
+		{
+			if (body == null)
+			{
+				return (null, new ProgramError("Variable to sign is empty"));
+			}
+
+			var signature = await signingService.Sign(body);
+			if (body is IDictionary dict)
+			{
+				dict.Add(property, signature);
+				return (dict, null);
+			}
+
+			return (null, new ProgramError($"Not supported body type {body.GetType()}"));
+		}
+
 		[Description("Sign a content with specific headers and contracts. Returns signature object that contains the values to validate the signature")]
-		public async Task<Signature> Sign(object? body, List<string>? contracts = null, int expiresInSeconds = 60 * 5, Dictionary<string, object>? headers = null)
+		public async Task<Signature> Sign(object? body, List<string>? contracts = null, int? expiresInSeconds = null, Dictionary<string, object>? headers = null)
 		{
 			return await signingService.Sign(body, contracts, expiresInSeconds, headers);
 		}
 
+		[Description("Validate a signature on specific properties")]
+		public async Task<(Signature? Signature, IError? Error)> VerifySignatureOnProperties(object? signatureFromUser, List<string> properties)
+		{
+			return (null, new ProgramError("Not supported"));
+		}
 
-		[Description("validationKeyValues should have these keys: X-Signature, X-Signature-Created(type is long, unix time), X-Signature-Nonce, X-Signature-Public-Key, X-Signature-Contract=\"CO\". Return dictionary with Identity and IdentityNotHashed")]
+		[Description("Validate a signature. Return the signature when valid, gives error when invalid")]
 		public async Task<(Signature? Signature, IError? Error)> VerifySignature(object? signatureFromUser = null, Dictionary<string, object?>? headers = null, object? body = null, List<string>? contracts = null)
 		{
 			if (signatureFromUser == null)
