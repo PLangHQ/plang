@@ -99,6 +99,7 @@ EventType is required, Error defaults to 'After' EventType if not defined by use
 EventScope defines at what stage the event should run, it can be on goal, step, start of app, end of app, etc. See EventScope definition below.
 GoalToBindTo is required. This can a specific Goal or more generic, such as bind to all goals in specific folder. When undefined set as *. Convert to matching pattern(regex) for folder matching. e.g. input value could be /api, if bind to goal is api/*, it should match
 GoalToCall is required. This should be a specific goal, keep path as user defines  
+GoalToCallParameters parameters that user wants to sent to goal
 StepNumber & StepText reference a specific step that the user wants to bind to
 IncludePrivate defines if user wants to include private goals, he needs to specify this specifically to be true
 WaitForExecution: indicates if goal should by run and forget
@@ -110,7 +111,7 @@ Map correct number to EventType and EventScope
 Include OS goals must be defined by user when set to true
 
 EventType {{ Before , After }}
-EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError, StepError, Module }}
+EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, Module, GoalError, StepError, ModuleError }}
 
 "));
                  
@@ -195,7 +196,7 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, GoalError,
 			if (eventBinding.EventScope == "StartOfApp" || eventBinding.EventScope == "EndOfApp"
 				 || eventBinding.EventScope == "AppError" || eventBinding.EventScope == "RunningApp")
             {
-                eventBinding = new EventBinding(eventBinding.EventType, eventBinding.EventScope, null, eventBinding.GoalToCall, eventBinding.IncludePrivate, eventBinding.StepNumber, eventBinding.StepText, eventBinding.WaitForExecution, eventBinding.RunOnlyOnStartParameter, eventBinding.OnErrorContinueNextStep);
+                eventBinding = new EventBinding(eventBinding.EventType, eventBinding.EventScope, null, eventBinding.GoalToCall, eventBinding.GoalToCallParameters, eventBinding.IncludePrivate, eventBinding.StepNumber, eventBinding.StepText, eventBinding.WaitForExecution, eventBinding.RunOnlyOnStartParameter, eventBinding.OnErrorContinueNextStep);
 
             }
             return null;

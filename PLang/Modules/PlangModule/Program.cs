@@ -324,6 +324,7 @@ get apps available, compiles plang code, gets goals and steps from .goal files, 
 				return new ProgramError($"prFileName is empty. I cannot run a step if I don't know what to run.", goalStep, function,
 					FixSuggestion: "Something has broken between the IDE sending the information and the runtime. Check if SendDebug.goal and the IDE is talking together correctly.");
 			}
+
 			var absolutePrFileName = fileSystem.Path.Join(fileSystem.GoalsPath, prFileName);
 
 			fileAccessHandler.GiveAccess(fileSystem.OsDirectory, fileSystem.GoalsPath);

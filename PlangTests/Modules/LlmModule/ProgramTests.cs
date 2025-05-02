@@ -35,7 +35,7 @@ namespace PLangTests.Modules.LlmModule
 			});
 			llmServiceFactory.CreateHandler().Returns(llmService);
 			p = new Program(llmServiceFactory, identityService, settings, logger, context);
-			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, null);
+			p.Init(container, null, null, null, null);
 		}
 
 		[TestMethod]

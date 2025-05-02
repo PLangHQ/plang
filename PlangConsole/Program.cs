@@ -18,6 +18,8 @@ if (builder)
 
 	var pLanguage = new Executor(container);
 	pLanguage.Execute(args, ExecuteType.Builder).GetAwaiter().GetResult();
+
+	container.Dispose();
 }
 
 if (runtime)
@@ -34,6 +36,8 @@ if (runtime)
 
 	var pLanguage = new Executor(container);
 	pLanguage.Execute(args, ExecuteType.Runtime).GetAwaiter().GetResult();
+
+	container.Dispose();
 }
 
 

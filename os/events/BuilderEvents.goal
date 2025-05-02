@@ -1,3 +1,6 @@
 BuildEvents
 - before builder ends, call goal Builder/CheckGoals
-- on error status 402, call /apps/Wallet/PaymentRequest request=%!error%
+- on module error status 402, include private,  call /apps/Wallet/PaymentRequest  contract=%!error.Contract%, callback=%!error.Callback%
+
+
+

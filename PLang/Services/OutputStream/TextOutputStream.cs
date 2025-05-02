@@ -5,6 +5,7 @@ using PLang.Utils;
 using System;
 using System.Net;
 using System.Text;
+using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
 {
@@ -23,10 +24,9 @@ namespace PLang.Services.OutputStream
 
 		public string Output => "text";
 
-		public async Task<string> Ask(string text, string type, int statusCode = 400, Dictionary<string, object>? parameters = null)
+		public async Task<string> Ask(string text, string type, int statusCode = 400, Dictionary<string, object>? parameters = null, Callback? callback = null)
 		{
-			httpContext.Response.SendChunked = true;
-			httpContext.Response.StatusCode = 400;
+			throw new NotImplementedException();
 
 			using (var writer = new StreamWriter(httpContext.Response.OutputStream, httpContext.Response.ContentEncoding ?? Encoding.UTF8))
 			{

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using NBitcoin.Protocol;
 using PLang.Building.Parsers;
 using PLang.Interfaces;
 using PLang.SafeFileSystem;
@@ -113,7 +114,7 @@ namespace PLang.Utils
 			}
 			try
 			{
-				(var engine, var error) = Executor.RunGoal("/apps/Installer/InstallDependencies.goal", parameters).GetAwaiter().GetResult();
+				(var engine, var vars, var error) = Executor.RunGoal("/apps/Installer/InstallDependencies.goal", parameters).GetAwaiter().GetResult();
 				if (error != null)
 				{
 					throw new Exception(error.ToString());

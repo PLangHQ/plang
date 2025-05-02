@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using NBitcoin;
 using Newtonsoft.Json;
 using PLang.Building.Model;
+using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Errors;
 using PLang.Errors.Builder;
@@ -35,10 +36,11 @@ namespace PLang.Modules.DbModule
 		private readonly ILogger logger;
 		private readonly MemoryStack memoryStack;
 		private readonly VariableHelper variableHelper;
-		private ModuleSettings moduleSettings;
+		private ModuleSettings dbSettings;
+		private readonly PrParser prParser;
 
 		public Builder(IPLangFileSystem fileSystem, IDbServiceFactory dbFactory, ISettings settings, PLangAppContext context,
-			ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper, ILogger logger, MemoryStack memoryStack, VariableHelper variableHelper, ModuleSettings moduleSettings) : base()
+			ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper, ILogger logger, MemoryStack memoryStack, VariableHelper variableHelper, ModuleSettings dbSettings, PrParser prParser) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.dbFactory = dbFactory;
@@ -49,14 +51,14 @@ namespace PLang.Modules.DbModule
 			this.logger = logger;
 			this.memoryStack = memoryStack;
 			this.variableHelper = variableHelper;
-			this.moduleSettings = moduleSettings;
+			this.dbSettings = dbSettings;
+			this.prParser = prParser;
 		}
 
 		public record FunctionInfo(string DatabaseType, string FunctionName, string[]? TableNames = null);
 		public record DbGenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValue = null, string? Warning = null) : GenericFunction(FunctionName, Parameters, ReturnValue);
 		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep goalStep)
 		{
-			moduleSettings = new ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger, typeHelper);
 			(var buildInstruction, var buildError) = await base.Build(goalStep);
 			if (buildError != null) return (null, buildError);
 
@@ -66,22 +68,39 @@ namespace PLang.Modules.DbModule
 				return (buildInstruction, null);
 			}
 
-			var dataSource = await moduleSettings.GetCurrentDataSource();
 
+			var (dataSource, error) = await GetDataSource(gf, goalStep);
+			if (error != null) return (null, new StepBuilderError(error, goalStep));
+			if (dataSource == null) return (null, new StepBuilderError("Datasource could not be found. This should not happen. You might need to remove datasource in system.sqlite", goalStep));
+
+			if (goalStep.Goal.IsSetup)
+			{
+				if (!string.IsNullOrWhiteSpace(goalStep.Goal.DataSourceName) && !goalStep.Goal.DataSourceName.Equals(dataSource?.Name, StringComparison.OrdinalIgnoreCase))
+				{
+					return (null, new StepBuilderError($"Setup file already has datasource name {goalStep.Goal.DataSourceName} but trying to set {dataSource.Name}", goalStep));
+				}
+
+				goalStep.Goal.DataSourceName = dataSource.Name;
+			}
 			SetSystem(@$"Parse user intent.
 
 variable is defined with starting and ending %, e.g. %filePath%
 
-FunctionName: Select the correct function from list of available functions based on user intent
+FunctionName: Select the correct function from list of available functions based on user intent.
 TableNames: Table names in sql statement, leave variables as is
 DatabaseType: Define the database type. The .net library being used is {dataSource.TypeFullName}, determine the database type from the library");
 
 
+			(var methodDescs, error) = typeHelper.GetMethodDescriptions(typeof(Program));
+			var methodJson = JsonConvert.SerializeObject(methodDescs, new JsonSerializerSettings
+			{
+				NullValueHandling = NullValueHandling.Ignore
+			});
 			SetAssistant($@"## functions available defined in csharp ##
-{typeHelper.GetMethodsAsString(typeof(Program))}
+{methodJson}
 ## functions available ends ##
 ");
-			using var program = new Program(dbFactory, fileSystem, settings, llmServiceFactory, new DisableEventSourceRepository(), context, logger, typeHelper);
+			using var program = new Program(dbFactory, fileSystem, settings, llmServiceFactory, new DisableEventSourceRepository(), context, logger, typeHelper, dbSettings, prParser, null);
 
 			if (!string.IsNullOrEmpty(dataSource.SelectTablesAndViews))
 			{
@@ -157,7 +176,32 @@ You MUST provide Parameters if SQL has @parameter.
 
 		}
 
+		private async Task<(DataSource? DataSource, IError? Error)> GetDataSource(GenericFunction? gf, GoalStep step)
+		{
+			if (gf != null)
+			{
+				var dataSourceName = GeneralFunctionHelper.GetParameterValueAsString(gf, "dataSourceName");
+				if (!string.IsNullOrEmpty(dataSourceName))
+				{
+					if (step.Goal.IsSetup)
+					{
+						return (null, new StepBuilderError("Datasource in step not supported in a setup file", step));
+					}
 
+					return await dbSettings.GetDataSource(dataSourceName);
+				}
+			}
+
+			if (context.ContainsKey(ReservedKeywords.CurrentDataSource))
+			{
+				return ((DataSource)context[ReservedKeywords.CurrentDataSource], null);
+			}
+
+			return await dbSettings.GetDefaultDataSource();
+
+
+
+		}
 
 		private async Task<(Instruction?, IBuilderError?)> CreateSelect(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
 		{
@@ -172,11 +216,11 @@ You MUST provide Parameters if SQL has @parameter.
 
 			string returnValueDesc = @"- If user defines variable to write into, e.g. 'write to %result%' or 'into %result%' then ReturnValue=%result%, 
 - Select function always writes to one variable";
-			string functionDesc = "List<object> Select(String sql, List<object>()? SqlParameters = null) // always writes to one object";
+			string functionDesc = "List<object> Select(String sql, List<object>()? SqlParameters = null, string? dataSourceName = null) // always writes to one object";
 			string functionHelp = $"Select function return multiple rows so user MUST define 'write to %variable%' and returns 1 value, a List<object>";
 			if (functionInfo.FunctionName == "SelectOneRow")
 			{
-				functionDesc = "object? SelectOneRow(String sql, List<object>()? SqlParameters = null)";
+				functionDesc = "object? SelectOneRow(String sql, List<object>()? SqlParameters = null, string? dataSourceName = null)";
 				returnValueDesc = "- If user does not define 'write to ..' statement then Columns being returned with type if defined by user.";
 				functionHelp = $"SelectOneRow function is used when user defines to select only one row {appendToSelectOneRow}";
 			}
@@ -219,7 +263,10 @@ You MUST provide SqlParameters if SQL has @parameter.
 
 
 			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
-			return await base.Build(goalStep);
+			var result = await base.Build(goalStep);
+			result.Instruction?.Metadata.AddOrReplace("TableNames", functionInfo.TableNames);
+
+			return result;
 
 		}
 
@@ -239,7 +286,7 @@ The id should be datatype long/bigint/.. which fits {functionInfo.DatabaseType}.
 			SetSystem(@$"Map user command to this c# function: 
 
 ## csharp function ##
-void CreateTable(String sql)  
+void CreateTable(String sql, string? dataSourceName = null)  
 ## csharp function ##
 
 If table name is a variable, keep the variable in the sql statement
@@ -248,14 +295,12 @@ You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
 {keepHistoryCommand}
 ");
 			SetAssistant("");
-			var build = await base.Build(goalStep);
-			if (dataSource.ConnectionString.Contains(";Mode=Memory;") && build.Instruction != null)
-			{
-				var gf = build.Instruction.GetFunctions()[0];
-				program.SetStep(goalStep);
-				await program.CreateTable(gf.Parameters.FirstOrDefault().Value.ToString(), dataSource.Name);
-			}
-			return build;
+		
+			var result = await base.Build(goalStep);
+			result.Instruction?.Metadata.AddOrReplace("TableNames", functionInfo.TableNames);
+
+			return result;
+		
 		}
 
 		private async Task<(Instruction?, IBuilderError?)> CreateDelete(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
@@ -269,7 +314,7 @@ You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
 			SetSystem(@$"Map user command to this c# function: 
 
 ## csharp function ##
-Int32 Delete(String sql, List<object>()? SqlParameters = null)
+Int32 Delete(String sql, List<object>()? SqlParameters = null, string? dataSourceName = null)
 ## csharp function ##
 
 Variable is defined with starting and ending %, e.g. %filePath%.
@@ -290,6 +335,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 # examples #");
 
 			return await BuildCustomStatementsWithWarning(goalStep, dataSource, program, functionInfo);
+			
 		}
 		private async Task<(Instruction?, IBuilderError?)> CreateUpdate(GoalStep goalStep, Program program, FunctionInfo functionInfo, DataSource dataSource)
 		{
@@ -304,7 +350,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 3. Return a valid JSON: 
 
 ## csharp function ##
-Int32 Update(String sql, List<object>()? SqlParameters = null)
+Int32 Update(String sql, List<object>()? SqlParameters = null, string? dataSourceName = null)
 ## csharp function ##
 
 variable is defined with starting and ending %, e.g. %filePath%. Do not remove %
@@ -329,9 +375,9 @@ You MUST provide SqlParameters if SQL has @parameter.
 # examples #");
 
 
-			var instruction = await BuildCustomStatementsWithWarning(goalStep, dataSource, program, functionInfo);
-
-			return instruction;
+			var result = await BuildCustomStatementsWithWarning(goalStep, dataSource, program, functionInfo);
+			
+			return result;
 
 
 		}
@@ -349,6 +395,8 @@ You MUST provide SqlParameters if SQL has @parameter.
 			{
 				logger.LogWarning(gf.Warning);
 			}
+			instruction.Metadata.AddOrReplace("TableNames", functionInfo.TableNames);
+
 			return (instruction, null);
 		}
 
@@ -363,7 +411,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 			SetSystem(@$"Map user command to this c# function: 
 
 ## csharp function ##
-Int32 Insert(String sql, List<object>()? SqlParameters = null)  //returns number of rows affected
+Int32 Insert(String sql, List<object>()? SqlParameters = null, string? dataSourceName = null)  //returns number of rows affected
 ## csharp function ##
 
 variable is defined with starting and ending %, e.g. %filePath%.
@@ -400,7 +448,10 @@ ParameterInfo has the scheme: {""ParameterName"": string, ""VariableNameOrValue"
 			}
 			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
 
-			return await base.Build(goalStep);
+			var result = await base.Build(goalStep);
+			result.Instruction?.Metadata.AddOrReplace("TableNames", functionInfo.TableNames);
+
+			return result;
 
 		}
 		private async Task<(Instruction?, IBuilderError?)> CreateInsertOrUpdate(GoalStep goalStep, Program program, FunctionInfo functionInfo, ModuleSettings.DataSource dataSource)
@@ -412,10 +463,10 @@ ParameterInfo has the scheme: {""ParameterName"": string, ""VariableNameOrValue"
 				appendToSystem = "SqlParameters @id MUST be type System.Int64. VariableNameOrValue is \"auto\"";
 			}
 
-			string functionDesc = "int InsertOrUpdate(String sql, List<object>()? SqlParameters = null) //return rows affected";
+			string functionDesc = "int InsertOrUpdate(String sql, List<object>()? SqlParameters = null, string? dataSourceName = null) //return rows affected";
 			if (functionInfo.FunctionName == "InsertOrUpdateAndSelectIdOfRow")
 			{
-				functionDesc = "object InsertOrUpdateAndSelectIdOfRow(String sql, List<object>()? SqlParameters = null) //returns the primary key of the affected row";
+				functionDesc = "object InsertOrUpdateAndSelectIdOfRow(String sql, List<object>()? SqlParameters = null, string? dataSourceName = null) //returns the primary key of the affected row";
 			}
 
 			SetSystem(@$"Map user command to this c# function: 
@@ -463,7 +514,7 @@ integer/int should always be System.Int64.
 			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
 
 			var result = await base.Build(goalStep);
-			result.Instruction.Metadata.AddOrReplace("TableNames", functionInfo.TableNames);
+			result.Instruction?.Metadata.AddOrReplace("TableNames", functionInfo.TableNames);
 
 			return result;
 
@@ -479,7 +530,7 @@ integer/int should always be System.Int64.
 			SetSystem(@$"Map user command to this c# function: 
 
 ## csharp function ##
-Object InsertAndSelectIdOfInsertedRow(String sql, List<object>()? SqlParameters = null)
+Object InsertAndSelectIdOfInsertedRow(String sql, List<object>()? SqlParameters = null, string? dataSourceName = null)
 ## csharp function ##
 
 variable is defined with starting and ending %, e.g. %filePath%.
@@ -511,7 +562,10 @@ integer/int should always be System.Int64.
 
 			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
 
-			return await base.Build(goalStep);
+			var result = await base.Build(goalStep);
+			result.Instruction?.Metadata.AddOrReplace("TableNames", functionInfo.TableNames);
+
+			return result;
 		}
 
 		private async Task AppendTableInfo(DataSource dataSource, Program program, string[]? tableNames)
@@ -533,7 +587,7 @@ integer/int should always be System.Int64.
 				}
 				if (tableName == null || tableName.StartsWith("pragma_table_info")) continue;
 
-				string selectColumns = await moduleSettings.FormatSelectColumnsStatement(tableName);
+				string selectColumns = await dbSettings.FormatSelectColumnsStatement(tableName);
 				var columnInfo = await GetColumnInfo(selectColumns, program, dataSource);
 				if (columnInfo != null)
 				{
@@ -563,66 +617,59 @@ I will not be able to validate the sql. To enable validation run the command: pl
 			return null;
 		}
 
-		public async Task BuilderCreateTable(GenericFunction gf)
+		public async Task<IBuilderError?> BuilderCreateTable(GenericFunction gf, GoalStep step)
 		{
+			var sql = GeneralFunctionHelper.GetParameterValueAsString(gf, "sql");
+			if (string.IsNullOrEmpty(sql)) return new BuilderError("sql is empty, cannot create table");
 
-			using var program = new Program(dbFactory, fileSystem, settings, llmServiceFactory, new DisableEventSourceRepository(), context, logger, typeHelper);
-			await program.CreateTable(gf.Parameters.FirstOrDefault().Value.ToString());
-		}
+			var (dataSource, error) = await GetDataSource(gf, step);
+			if (error != null) return new BuilderError(error);
 
-		public async Task<IBuilderError?> BuilderSetDataSourceName(GenericFunction gf)
-		{
-			var name = GetParameterValueAsString(gf, "name");
-			if (name == null) return new BuilderError("Could not find 'name' property in instructions");
-
-			var result = await moduleSettings.GetDataSource(name);
-			if (result.Error != null) return new BuilderError(result.Error);
-
-			context.AddOrReplace(ReservedKeywords.CurrentDataSource, result.DataSource);
-			
+			using var program = new Program(dbFactory, fileSystem, settings, llmServiceFactory, new DisableEventSourceRepository(), context, logger, typeHelper, dbSettings, prParser, null);
+			program.SetStep(step);
+			(_, error) = await program.CreateTable(sql, dataSource.Name);
+			if (error != null) return new BuilderError(error);
 			return null;
 		}
 
-		
-		public async Task<IBuilderError?> BuilderCreateDataSource(GenericFunction gf)
+		public async Task<IBuilderError?> BuilderSetDataSourceName(GenericFunction gf, GoalStep step)
 		{
-			var dataSourceName = GetParameterValueAsString(gf, "name");
+			var name = GeneralFunctionHelper.GetParameterValueAsString(gf, "name");
+			if (name == null) return new BuilderError("Could not find 'name' property in instructions");
+
+			var result = await dbSettings.GetDataSource(name);
+			if (result.Error != null) return new BuilderError(result.Error);
+
+			context.AddOrReplace(ReservedKeywords.CurrentDataSource, result.DataSource);
+
+			return null;
+		}
+
+
+		public async Task<IBuilderError?> BuilderCreateDataSource(GenericFunction gf, GoalStep step)
+		{
+			var dataSourceName = GeneralFunctionHelper.GetParameterValueAsString(gf, "name");
 			if (string.IsNullOrEmpty(dataSourceName))
 			{
 				return new BuilderError("Name for the data source is missing. Please define it. Example: \"- Create sqlite data source 'myDatabase'\"");
 			}
 
-			var supportedDbTypesAsString = moduleSettings.GetSupportedDbTypesAsString();
-			var dbTypeParam = GetParameterValueAsString(gf, "databaseType");
-			if (string.IsNullOrEmpty(dbTypeParam?.ToString()))
-			{
-				var supportedDbTypes = moduleSettings.GetSupportedDbTypes();
-				if (supportedDbTypes.Count > 1)
-				{
-					throw new BuilderStepException(@$"Database type is missing. Add the database type into your step, Example: ""- Create postgres data source 'myDatabase'"". 
-These are the supported databases (you dont need to be precise)
-{supportedDbTypesAsString}
-");
-				}
-				else
-				{
-					dbTypeParam = "sqlite";
-				}
-			}
-			var setAsDefaultForApp = GetParameterValueAsBool(gf, "setAsDefaultForApp") ?? false;
-			var keepHistoryEventSourcing = GetParameterValueAsBool(gf, "keepHistoryEventSourcing") ?? false;
-			
-			await moduleSettings.CreateDataSource(dataSourceName, dbTypeParam, setAsDefaultForApp, keepHistoryEventSourcing);
+			var dbTypeParam = GeneralFunctionHelper.GetParameterValueAsString(gf, "databaseType");
+			if (string.IsNullOrEmpty(dbTypeParam)) dbTypeParam = "sqlite";
+			var setAsDefaultForApp = GeneralFunctionHelper.GetParameterValueAsBool(gf, "setAsDefaultForApp") ?? false;
+			var keepHistoryEventSourcing = GeneralFunctionHelper.GetParameterValueAsBool(gf, "keepHistoryEventSourcing") ?? false;
 
-			var result = await moduleSettings.GetDataSource(dataSourceName);
-			if (result.Error != null) return new BuilderError(result.Error);
+			var (datasource, error) = await dbSettings.CreateDataSource(dataSourceName, dbTypeParam, setAsDefaultForApp, keepHistoryEventSourcing);
+			if (datasource == null && error != null) return new BuilderError(error, false);
 
-			if (result.DataSource != null && result.DataSource.IsDefault)
+			step.Goal.DataSourceName = datasource.Name;
+			step.RunOnce = GoalHelper.RunOnce(step.Goal);
+			if (GoalHelper.IsSetup(step) || datasource.IsDefault)
 			{
-				context.AddOrReplace(ReservedKeywords.CurrentDataSource, result.DataSource);
+				context.AddOrReplace(ReservedKeywords.CurrentDataSource, datasource);
 			}
 			return null;
-			
+
 		}
 
 	}

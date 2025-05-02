@@ -1,0 +1,73 @@
+{
+  "Action": {
+    "FunctionName": "Throw",
+    "Parameters": [
+      {
+        "Type": "Object",
+        "Name": "message",
+        "Value": "Cancelled signing"
+      },
+      {
+        "Type": "String?",
+        "Name": "type",
+        "Value": "error"
+      },
+      {
+        "Type": "Int32?",
+        "Name": "statusCode",
+        "Value": 400
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Text": "throw \"Cancelled signing\"",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+    "model": "gpt-4.1-mini",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\nThrow(Object message, String? type = \"error\", Int32? statusCode = 400)  : void  // When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc. type can be error|critical. statusCode(like http status code) should be defined by user.. \nEndGoalExecution(String? message, Int32? levels = 0)  : void  // When user intends the execution of the goal to stop without giving a error response. This is equal to doing return in a function. Depth is how far up the stack it should end, previous goal is 1. \nEndApp()  : void // Shutdown the application. \nCreatePaymentRequest(String name, String description, String error, Dictionary`2<String, Object> services)  : Signature  // Create payment request(402).\r\n## functions available ends ##"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "throw \"Cancelled signing\""
+          }
+        ]
+      }
+    ],
+    "type": "PLang.Modules.GenericFunctionBuilder",
+    "caching": true,
+    "RawResponse": "{\n\t\"FunctionName\": \"Throw\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"Object\",\n\t\t\"Name\": \"message\",\n\t\t\"Value\": \"Cancelled signing\"\n\t}, {\n\t\t\"Type\": \"String?\",\n\t\t\"Name\": \"type\",\n\t\t\"Value\": \"error\"\n\t}, {\n\t\t\"Type\": \"Int32?\",\n\t\t\"Name\": \"statusCode\",\n\t\t\"Value\": 400\n\t}],\n\t\"ReturnValues\": null\n}"
+  },
+  "RunOnBuild": false,
+  "Metadata": {}
+}

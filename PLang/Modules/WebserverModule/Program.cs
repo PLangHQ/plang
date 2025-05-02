@@ -8,6 +8,7 @@ using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Errors;
 using PLang.Errors.Handlers;
+using PLang.Errors.Interfaces;
 using PLang.Errors.Runtime;
 using PLang.Events;
 using PLang.Exceptions;
@@ -25,6 +26,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
+using static PLang.Utils.StepHelper;
 
 namespace PLang.Modules.WebserverModule
 {
@@ -39,14 +41,14 @@ namespace PLang.Modules.WebserverModule
 		private readonly PrParser prParser;
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
-		private readonly IdentityModule.Program identity;
+		private readonly ProgramFactory programFactory;
 		private readonly static List<WebserverInfo> listeners = new();
 		private bool disposed;
 
 		public Program(ILogger logger, IEventRuntime eventRuntime, IPLangFileSystem fileSystem
 			, ISettings settings, IOutputStreamFactory outputStreamFactory
 			, PrParser prParser,
-			IPseudoRuntime pseudoRuntime, IEngine engine, IdentityModule.Program identity) : base()
+			IPseudoRuntime pseudoRuntime, IEngine engine, Modules.ProgramFactory programFactory) : base()
 		{
 			this.logger = logger;
 			this.eventRuntime = eventRuntime;
@@ -56,7 +58,7 @@ namespace PLang.Modules.WebserverModule
 			this.prParser = prParser;
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
-			this.identity = identity;
+			this.programFactory = programFactory;
 		}
 
 		public async Task<WebserverInfo?> ShutdownWebserver(string webserverName)
@@ -97,7 +99,7 @@ namespace PLang.Modules.WebserverModule
 			{
 				return;
 			}
-			
+
 			this.disposed = true;
 		}
 
@@ -170,7 +172,7 @@ namespace PLang.Modules.WebserverModule
 			}
 
 			var listener = new HttpListener();
-			listener.Prefixes.Add(scheme + "://" + host + ":" + port + "/");			
+			listener.Prefixes.Add(scheme + "://" + host + ":" + port + "/");
 			listener.Start();
 
 			var assembly = Assembly.GetAssembly(this.GetType());
@@ -266,8 +268,12 @@ namespace PLang.Modules.WebserverModule
 								continue;
 							}
 
+							string encodyName = Encoding.GetEncoding(defaultResponseContentEncoding).BodyName;
+
 							httpContext.Response.ContentEncoding = Encoding.GetEncoding(defaultResponseContentEncoding);
-							httpContext.Response.ContentType = routing.ContentType;
+							httpContext.Response.ContentType = $"{routing.ContentType}; charset={encodyName}";
+							httpContext.Response.Headers["Content-Type"] = $"{routing.ContentType}; charset={encodyName}"; 
+
 							httpContext.Response.SendChunked = true;
 							httpContext.Response.AddHeader("X-Goal-Hash", goal.Hash);
 							httpContext.Response.AddHeader("X-Goal-Signature", goal.Signature);
@@ -275,11 +281,14 @@ namespace PLang.Modules.WebserverModule
 							{
 								if (goal.GoalInfo.GoalApiInfo.ContentEncoding != null)
 								{
-									httpContext.Response.ContentEncoding = Encoding.GetEncoding(defaultResponseContentEncoding);
+									var encoding = Encoding.GetEncoding(goal.GoalInfo.GoalApiInfo.ContentEncoding);
+									httpContext.Response.ContentEncoding = encoding;
+									encodyName = encoding.BodyName;
 								}
 								if (goal.GoalInfo.GoalApiInfo.ContentType != null)
 								{
-									httpContext.Response.ContentType = goal.GoalInfo.GoalApiInfo.ContentType;
+									httpContext.Response.ContentType = $"{goal.GoalInfo.GoalApiInfo.ContentType}; charset={encodyName}";
+									httpContext.Response.Headers["Content-Type"] = $"{goal.GoalInfo.GoalApiInfo.ContentType}; charset={encodyName}";
 								}
 
 								if (goal.GoalInfo.GoalApiInfo.NoCacheOrNoStore != null)
@@ -310,6 +319,27 @@ namespace PLang.Modules.WebserverModule
 							var requestMemoryStack = engine.GetMemoryStack();
 							var identityService = container.GetInstance<IPLangIdentityService>();
 							var error = await ParseRequest(httpContext, identityService, request.HttpMethod, requestMemoryStack);
+							 
+							List<CallbackInfo>? callbackInfos = null;
+							if (request.Headers["!callback"] != null)
+							{
+								var callbackResult = await CallbackHelper.GetCallbackInfos(request.Headers["!callback"], programFactory);
+								if (callbackResult.Error != null)
+								{
+									await ShowError(container, callbackResult.Error);
+									continue;
+								}
+								callbackInfos = callbackResult.CallbackInfos;
+
+								var keys = request.Headers.AllKeys.Where(p => p.StartsWith("!"));
+								foreach (var key in keys)
+								{
+									if (key != null && !context.ContainsKey(key))
+									{
+										context.AddOrReplace(key, request.Headers[key]);
+									}
+								}
+							}
 
 							if (error != null)
 							{
@@ -318,7 +348,7 @@ namespace PLang.Modules.WebserverModule
 								continue;
 							}
 
-							error = await engine.RunGoal(goal);
+							(var vars, error) = await engine.RunGoal(goal, 0, callbackInfos);
 							if (error != null && error is not IErrorHandled)
 							{
 								await ShowError(container, error);
@@ -397,7 +427,7 @@ Error:
 
 		private async Task ShowError(ServiceContainer container, IError error)
 		{
-			if (error is UserDefinedError)
+			if (error is IUserDefinedError)
 			{
 				var errorHandlerFactory = container.GetInstance<IErrorHandlerFactory>();
 				var handler = errorHandlerFactory.CreateHandler();
@@ -729,12 +759,12 @@ Error:
 
 		public async Task<IError?> VerifySignature(HttpListenerRequest request, string body, MemoryStack memoryStack)
 		{
-		
+
 			string? signatureAsBase64 = request.Headers.Get("X-Signature");
 			if (string.IsNullOrWhiteSpace(signatureAsBase64))
 			{
 				return null;
-			}			
+			}
 
 			string? signatureAsJson = Encoding.UTF8.GetString(Convert.FromBase64String(signatureAsBase64));
 
@@ -742,11 +772,11 @@ Error:
 
 			headers.Add("url", request.Url?.PathAndQuery);
 			headers.Add("method", request.HttpMethod);
-			string bodyHash = body.ComputeHash("keccak256").Hash;
-			var result = await identity.VerifySignature(signatureAsJson, headers, bodyHash, null);
+
+			var result = await programFactory.GetProgram<Modules.IdentityModule.Program>().VerifySignature(signatureAsJson, headers, body, null);
 			if (result.Error != null) return result.Error;
 
-			var signature = result.Signature;	
+			var signature = result.Signature;
 			if (signature != null)
 			{
 				context.AddOrReplace(ReservedKeywords.Signature, signature);
@@ -833,17 +863,17 @@ Error:
 			string url = webSocketInfo.Url;
 			string method = "Websocket";
 			string[] contracts = ["C0"];
-			
+
 			var obj = new WebSocketData(goalToCall, url, method, null);
 			obj.Parameters = parameters;
 
-			var signature = await identity.Sign(obj);
+			var signature = await programFactory.GetProgram<Modules.IdentityModule.Program>().Sign(obj);
 			obj.Signature = signature;
 
 			byte[] message = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj));
 
 			await webSocketInfo.ClientWebSocket.SendAsync(new ArraySegment<byte>(message), WebSocketMessageType.Text, true, CancellationToken.None);
-			
+
 		}
 		public async Task<WebSocketInfo> StartWebSocketConnection(string url, GoalToCall goalToCall, string webSocketName = "default", string contentRecievedVariableName = "%content%")
 		{
@@ -911,12 +941,12 @@ Error:
 						}
 
 						var signature = websocketData.Signature;
-						var verifiedSignature = await identity.VerifySignature(signature);
+						var verifiedSignature = await programFactory.GetProgram<Modules.IdentityModule.Program>().VerifySignature(signature);
 						// todo: missing verifiedSignature.Error check
 						if (verifiedSignature.Signature == null)
 						{
 							continue;
-						}	
+						}
 
 						websocketData.Parameters.AddOrReplace(ReservedKeywords.Identity, verifiedSignature.Signature.Identity);
 

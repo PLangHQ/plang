@@ -1,21 +1,19 @@
 CreateIsolatedDataPattern
 - validate %id%, %setupGoalFile% is not empty
 - set default value %keepHistory% = true, %defaultForApp% = false, %name% = %id%
-- create db "%name%_system", "/.db/%id%/system.sqlite", %keepHistory%
 - create db "%name%", "/.db/%id%/data.sqlite", %keepHistory%, %defaultForApp%
 - get all plang steps in "%setupGoalFile%", write to %steps%
 - foreach %steps%, call IsProcessed item=%step%
 
 IsProcessed
-- set datasource "%name%_system"
-- select id as setupId from Setup where hash=%step.Hash%, return 1
+- set datasource "%name%"
+- select id as setupId from __variables__ where key="Setup_%step.Hash%", return 1
     on error 'no such table', call CreateSetup and retry
 - if %setupId% is empty then
     - set current db "%name%"
     - run plang %step%
         on error message 'already exists', ignore error
-    - set current db "%name%_system"
-    - insert into Setup  text=%step.Text%, hash=%step.Hash%
+    - insert into __variables__ key="Setup_%step.Hash%", text=%step.Text%
 
 CreateSetup
-- create table Setup, columns: text(string), hash(string, unique, indexed), created(datetime, now)
+- create table __variables__, columns: key(string, unique, indexed), text(string), created(datetime, now), expires(datetime)

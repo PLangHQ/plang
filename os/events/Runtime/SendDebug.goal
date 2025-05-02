@@ -9,14 +9,14 @@ SendDebug
 SendDebugInfo
 - post http://localhost:%plang.debugPort%/ 
     data: {
+        "!MemoryStack":"%!memorystack%",
+        "!Context": "%!context%"
+        "AbsolutePath":"%!CallingGoal.AbsoluteGoalPath%", 
         "!Goal":"%!CallingGoal%", 
         "!Step":"%!CallingStep%",
         "!Event":"%!Event%",
         "!IsHttpRequest":"%!IsHttpRequest%",
         "!StepIndex": %!StepIndex%,
-        "!Instruction": "%!Instruction%",
-        "!MemoryStack":"%!memorystack%",
-        "AbsolutePath":"%!CallingGoal.AbsoluteGoalPath%",        
         "!Error":"%!error%",
         }
     dont sign

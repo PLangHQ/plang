@@ -32,6 +32,8 @@ namespace PLang.Building.Model
 	{
 		Private = 0, Public = 1
 	}
+
+
 	public class Goal
 	{
 		public Goal()
@@ -140,8 +142,9 @@ namespace PLang.Building.Model
 			return goal;
 		}
 
-		public string[]? IncomingVariablesRequired { get; set; }
+		public Dictionary<string, string>? IncomingVariablesRequired { get; set; }
 		public string? DataSourceName { get; set; }
+		public bool IsSetup { get; set; }
 	}
 
 

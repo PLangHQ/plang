@@ -23,6 +23,7 @@ using PLang.SafeFileSystem;
 using PLang.Building.Model;
 using PLang.Modules.DbModule;
 using Microsoft.Data.Sqlite;
+using System.Data;
 
 namespace PLang.Building
 {
@@ -63,7 +64,6 @@ namespace PLang.Building
 		{
 			try
 			{
-
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				AppContext.SetSwitch("Builder", true);
 
@@ -75,22 +75,16 @@ namespace PLang.Building
 				InitFolders();
 				logger.LogInformation("Build Start:" + DateTime.Now.ToLongTimeString());
 
-				(var eventGoalFiles, var error) = await eventBuilder.BuildEventsPr();
+				var (_, error) = await eventBuilder.BuildEventsPr();
 				if (error != null) return error;
 
-				error = await eventRuntime.LoadBuilder(container.GetInstance<MemoryStack>());
+				error = eventRuntime.Load(true);
 				if (error != null) return error;
 
-				var eventError = await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.StartOfApp, true);
+				var (_, eventError) = await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.StartOfApp, true);
 				if (eventError != null)
 				{
-					if (!eventError.IgnoreError)
-					{
-						return eventError;
-					} else
-					{
-						logger.LogError(eventError.ToString());
-					}
+					return eventError;
 				}
 
 				foreach (string file in goalFiles)
@@ -106,23 +100,20 @@ namespace PLang.Building
 					}
 				}
 
-				
+
 				CleanGoalFiles();
 
-				eventError = await eventRuntime.RunStartEndEvents(EventType.After, EventScope.EndOfApp, true);
-				if (eventError != null && !eventError.IgnoreError)
+				(_, eventError) = await eventRuntime.RunStartEndEvents(EventType.After, EventScope.EndOfApp, true);
+				if (eventError != null)
 				{
 					return eventError;
 				}
-				else if (eventError != null)
-				{
-					logger.LogWarning(eventError.ToFormat().ToString());
-				}
+
 				CleanUp();
 				ShowBuilderErrors(goalFiles, stopwatch);
 
-				
-				
+
+
 
 			}
 			catch (Exception ex)
@@ -179,12 +170,13 @@ namespace PLang.Building
 
 		private void CleanUp()
 		{
-			object? obj = AppContext.GetData("AnchorMemoryDb");
-			if (obj != null && obj is SqliteConnection connection)
+			var anchors = AppContext.GetData("AnchorMemoryDb") as Dictionary<string, IDbConnection>;
+			foreach (var anchor in anchors ?? [])
 			{
-				connection.Close();
-				connection.Dispose();
+				anchor.Value.Close();
+				anchor.Value.Dispose();
 			}
+
 		}
 
 		private void ShowBuilderErrors(List<string> goalFiles, Stopwatch stopwatch)
@@ -198,8 +190,9 @@ namespace PLang.Building
 
 				logger.LogError($"\n\n❌ Failed to build {goalBuilder.BuildErrors.Count} steps");
 
-			} else
-			{				
+			}
+			else
+			{
 				logger.LogWarning($"\n\n🎉 Build was succesfull!");
 			}
 
@@ -239,7 +232,7 @@ namespace PLang.Building
 			{
 				if (!fileSystem.File.Exists(goal.AbsoluteGoalPath))
 				{
-					goalsToRemove.Add(goal);	
+					goalsToRemove.Add(goal);
 				}
 			}
 
@@ -250,25 +243,25 @@ namespace PLang.Building
 					fileSystem.Directory.Delete(goal.AbsolutePrFolderPath, true);
 				}
 			}
-				/*
-				 * var dirs = fileSystem.Directory.GetDirectories(".build", "", SearchOption.AllDirectories);
+			/*
+			 * var dirs = fileSystem.Directory.GetDirectories(".build", "", SearchOption.AllDirectories);
 
-				foreach (var goal in goals)
-				{
-					dirs = dirs.Where(p => !p.Equals(goal.AbsolutePrFolderPath, StringComparison.OrdinalIgnoreCase)).ToArray();
-					dirs = dirs.Where(p => !goal.AbsolutePrFolderPath.StartsWith(p, StringComparison.OrdinalIgnoreCase)).ToArray();
-				}
+			foreach (var goal in goals)
+			{
+				dirs = dirs.Where(p => !p.Equals(goal.AbsolutePrFolderPath, StringComparison.OrdinalIgnoreCase)).ToArray();
+				dirs = dirs.Where(p => !goal.AbsolutePrFolderPath.StartsWith(p, StringComparison.OrdinalIgnoreCase)).ToArray();
+			}
 
-				foreach (var dir in dirs)
+			foreach (var dir in dirs)
+			{
+				var folderPath = fileSystem.Path.Join(fileSystem.RootDirectory, dir.Replace(fileSystem.BuildPath, ""));
+				if (!fileSystem.Directory.Exists(folderPath) && fileSystem.Directory.Exists(dir))
 				{
-					var folderPath = fileSystem.Path.Join(fileSystem.RootDirectory, dir.Replace(fileSystem.BuildPath, ""));
-					if (!fileSystem.Directory.Exists(folderPath) && fileSystem.Directory.Exists(dir))
-					{
-						fileSystem.Directory.Delete(dir, true);
-					}
+					fileSystem.Directory.Delete(dir, true);
 				}
-				*/
-				var prGoalFiles = prParser.ForceLoadAllGoals();
+			}
+			*/
+			var prGoalFiles = prParser.ForceLoadAllGoals();
 			int i = 0;
 
 		}

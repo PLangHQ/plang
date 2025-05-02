@@ -8,6 +8,8 @@ namespace PLang.Errors.AskUser
 
         public bool ContinueBuild => false;
 
+		public bool Retry => false;
+
 		public override async Task<(bool, IError?)> InvokeCallback(object[]? value)
         {
             return await Callback.Invoke(value);

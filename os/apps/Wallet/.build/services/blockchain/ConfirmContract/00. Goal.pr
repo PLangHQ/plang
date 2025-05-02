@@ -232,11 +232,12 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "12ec8c658a6af69bc7a9a59d87171dba1877879c96a2cc029640a3ffa956fc63",
+  "Hash": "c4fb9f4519cd3d6f7d1036dd955300e347026454b1f47bac95bcec5071e98f4d",
   "IncomingVariablesRequired": [
     "contract.services",
     "contract.amount",
     "signedContract"
   ],
-  "DataSourceName": null
+  "DataSourceName": null,
+  "IsSetup": false
 }

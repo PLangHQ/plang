@@ -1,6 +1,7 @@
 ﻿using IdGen;
 using LightInject;
 using Microsoft.Extensions.Logging;
+using Nethereum.Contracts.QueryHandlers.MultiCall;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Container;
@@ -21,12 +22,12 @@ using PLang.Utils;
 using System.Diagnostics;
 using System.Net;
 using System.Reflection;
+using System.Security.Cryptography;
 using static PLang.Modules.BaseBuilder;
 using Instruction = PLang.Building.Model.Instruction;
 
 namespace PLang.Modules
 {
-
 	public abstract class BaseProgram
 	{
 		private HttpListenerContext? _listenerContext = null;
@@ -49,6 +50,7 @@ namespace PLang.Modules
 		private IFileAccessHandler fileAccessHandler;
 		private IAskUserHandlerFactory askUserHandlerFactory;
 		private ISettings settings;
+		protected bool IsBuilder { get; } = false;
 		public HttpListenerContext? HttpListenerContext
 		{
 			get
@@ -64,19 +66,18 @@ namespace PLang.Modules
 		public BaseProgram()
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		{
+			AppContext.TryGetSwitch("Builder", out bool isBuilder);
+			IsBuilder = isBuilder;
 		}
 
-		public void Init(IServiceContainer container, Goal goal, GoalStep step,
-			Instruction instruction, MemoryStack memoryStack, ILogger logger,
-			PLangAppContext context, ITypeHelper typeHelper, ILlmServiceFactory llmServiceFactory, ISettings settings,
-			IAppCache appCache, HttpListenerContext? httpListenerContext)
+		public void Init(IServiceContainer container, Goal goal, GoalStep step, Instruction instruction, HttpListenerContext? httpListenerContext)
 		{
 			this.container = container;
 
-			this.logger = logger;
-			this.memoryStack = memoryStack;
-			this.context = context;
-			this.appCache = appCache;
+			this.logger = container.GetInstance<ILogger>();
+			this.memoryStack = container.GetInstance<MemoryStack>();
+			this.context = container.GetInstance<PLangAppContext>();
+			this.appCache = container.GetInstance<IAppCache>();
 			this.outputStreamFactory = container.GetInstance<IOutputStreamFactory>();
 			this.fileSystem = container.GetInstance<IPLangFileSystem>();
 			this.askUserHandlerFactory = container.GetInstance<IAskUserHandlerFactory>();
@@ -88,8 +89,8 @@ namespace PLang.Modules
 			this.instruction = instruction;
 
 			variableHelper = container.GetInstance<VariableHelper>();
-			this.typeHelper = typeHelper;
-			this.llmServiceFactory = llmServiceFactory;
+			this.typeHelper = container.GetInstance<ITypeHelper>();
+			this.llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
 			methodHelper = new MethodHelper(goalStep, variableHelper, typeHelper);
 			fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 		}
@@ -121,7 +122,7 @@ namespace PLang.Modules
 
 		public async Task<(object? ReturnValue, IError? Error)> RunFunction(GenericFunction function)
 		{
-			
+
 			Dictionary<string, object?>? parameterValues = null;
 			this.function = function; // this is to give sub classes access to current function running.
 			try
@@ -131,7 +132,7 @@ namespace PLang.Modules
 				{
 					return (null, new StepError($"Could not load method {function.FunctionName} to run", goalStep, "MethodNotFound", 500));
 				}
-				
+
 				logger.LogDebug("Method:{0}.{1}({2})", goalStep.ModuleType, method.Name, method.GetParameters());
 
 				//TODO: Should move this caching check up the call stack. code is doing to much work before returning cache
@@ -227,7 +228,8 @@ namespace PLang.Modules
 					return (null, null);
 				}
 
-				(object? result, var error) = GetValuesFromTask(task);
+				(object? result, var error, var properties) = GetValuesFromTask(task);
+
 				if (error != null)
 				{
 					if (error is AskUserError aue)
@@ -254,7 +256,7 @@ namespace PLang.Modules
 					return (result, error);
 				}
 
-				SetReturnValue(function, result);
+				SetReturnValue(function, result, properties);
 
 				await SetCachedItem(result);
 				return (result, null);
@@ -303,61 +305,127 @@ namespace PLang.Modules
 			return (null, ErrorHelper.GetMultipleError(askUserFileAccess, handlerError));
 		}
 
-		private (object? returnValue, IError? error) GetValuesFromTask(Task task)
+		private (object? returnValue, IError? error, IProperties? Properties) GetValuesFromTask(Task task)
 		{
 
 			Type taskType = task.GetType();
 			var returnArguments = taskType.GetGenericArguments().FirstOrDefault();
-			if (returnArguments == null) return (null, null);
+			if (returnArguments == null) return (null, null, null);
+			/*
+
 
 			if (returnArguments == typeof(IError))
 			{
 				var resultTask = task as Task<IError?>;
-				return (null, resultTask?.Result);
+				return (null, resultTask?.Result, null);
 			}
 
 			if (!returnArguments.FullName!.StartsWith("System.ValueTuple"))
 			{
 				var resultProperty = taskType.GetProperty("Result");
-				return (resultProperty.GetValue(task), null);
+				return (resultProperty.GetValue(task), null, null);
+
+			}*/
+
+			object? value = null;
+			IError? error = null;
+			IProperties? properties = null;
+
+			var resultProperty = taskType.GetProperty("Result");
+			if (resultProperty == null)
+			{
+				throw new Exception("This should not happen trying to get Result");
+			}
+			var rawResult = resultProperty.GetValue(task);
+			if (rawResult == null)
+			{
+				return (null, null, null);
+			}
+			var result = (dynamic?) rawResult;
+			if (!result?.GetType().ToString().Contains("ValueTuple"))
+			{
+				if (returnArguments is IError)
+				{
+					error = result as IError;
+				}
+				else if (returnArguments is IProperties)
+				{
+					properties = result as IProperties;
+				}
+				else
+				{
+					if (result is Return @return)
+					{
+						value = @return.Variables;
+					}
+					else
+					{
+						value = result;
+					}
+				}
 
 			}
+			else
+			{
 
-			var fields = returnArguments.GetFields();
+				var fields = returnArguments.GetFields();
+				foreach (var field in fields)
+				{
+					var fieldValue = field.GetValue(result);
+					if (field.FieldType == typeof(IError))
+					{
+						error = fieldValue as IError;
+					}
+					else if (field.FieldType == typeof(IProperties))
+					{
+						properties = fieldValue as IProperties;
+					}
+					else
+					{
+						value = fieldValue;
+					}
+
+				}
+			}
+			return (value, error, properties);
+
+			/*
 			if (fields[0] == typeof(IError))
 			{
 				// It's a Task<Error?>
 				var resultTask = task as Task<IError?>;
-				return (null, resultTask?.Result);
+				return (null, resultTask?.Result, null);
 			}
-
 			else if (fields.Count() > 1)
 			{
 				try
 				{
 					var resultProperty = taskType.GetProperty("Result");
-					var result = (dynamic)resultProperty.GetValue(task);
+					
+					var result = (dynamic?)resultProperty.GetValue(task);
+					
 
-					//var item1 = result.GetType().GetProperties()[0].GetValue(result);
-					//var item2 = result.GetType().GetProperties()[1].GetValue(result);
-
-					return (result.Item1, result.Item2 as IError);
+					
+					if (fields.Count() == 3)
+					{
+						return (result.Item1, result.Item2 as IError, result.Item3 as IProperties);
+					}
+					return (result.Item1, result.Item2 as IError, null);
 				}
 				catch (TargetInvocationException ex)
 				{
-					return (null, new ExceptionError(ex.InnerException ?? ex));
+					return (null, new ExceptionError(ex.InnerException ?? ex), null);
 				}
 			}
 			else
 			{
 				var resultTask = task as Task<object?>;
-				return (resultTask, null);
-			}
+				return (resultTask, null, null);
+			}*/
 
-			return (null, new Error("Could not extract return value or error"));
 		}
 
-		private void SetReturnValue(GenericFunction function, object? result)
+		private void SetReturnValue(GenericFunction function, object? result, IProperties properties)
 		{
 			if (function.ReturnValues == null || function.ReturnValues.Count == 0) return;
 
@@ -366,7 +434,7 @@ namespace PLang.Modules
 			{
 				foreach (var returnValue in function.ReturnValues)
 				{
-					memoryStack.Put(returnValue.VariableName, null);
+					memoryStack.Put(returnValue.VariableName, null, properties: properties);
 				}
 			}
 			else if (result is IReturnDictionary || result.GetType().Name == "DapperRow")
@@ -380,11 +448,11 @@ namespace PLang.Modules
 						var variableName = function.ReturnValues.FirstOrDefault(p => p.VariableName == key.Replace("%", ""))?.VariableName;
 						if (variableName != null)
 						{
-							memoryStack.Put(variableName, dict[key]);
+							memoryStack.Put(variableName, dict[key], properties: properties);
 						}
 						else if (idx < function.ReturnValues.Count)
 						{
-							memoryStack.Put(function.ReturnValues[idx].VariableName, dict[key]);
+							memoryStack.Put(function.ReturnValues[idx].VariableName, dict[key], properties: properties);
 						}
 						idx++;
 					}
@@ -396,11 +464,11 @@ namespace PLang.Modules
 						var key = dict.Keys.FirstOrDefault(p => p.Replace("%", "").ToLower() == returnValue.VariableName.Replace("%", "").ToLower());
 						if (key == null)
 						{
-							memoryStack.Put(returnValue.VariableName, dict);
+							memoryStack.Put(returnValue.VariableName, dict, properties: properties);
 							continue;
 						}
 
-						memoryStack.Put(returnValue.VariableName, dict[key]);
+						memoryStack.Put(returnValue.VariableName, dict[key], properties: properties);
 					}
 				}
 			}
@@ -408,7 +476,7 @@ namespace PLang.Modules
 			{
 				foreach (var returnValue in function.ReturnValues)
 				{
-					memoryStack.Put(returnValue.VariableName, result);
+					memoryStack.Put(returnValue.VariableName, result, properties: properties);
 				}
 			}
 		}
@@ -643,7 +711,7 @@ Be Concise";
 		}
 
 
-		public IError? TaskHasError(Task<(IEngine, IError? error, IOutput output)> task)
+		public IError? TaskHasError(Task<(IEngine, object? Variables, IError? error, IOutput output)> task)
 		{
 
 			if (task.Exception != null)
@@ -658,7 +726,7 @@ Be Concise";
 		public T GetProgramModule<T>() where T : BaseProgram
 		{
 			var program = container.GetInstance<T>(typeof(T).FullName);
-			program.Init(container, goal, goalStep, instruction, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, HttpListenerContext);
+			program.Init(container, goal, goalStep, instruction, HttpListenerContext);
 			return program;
 		}
 	}

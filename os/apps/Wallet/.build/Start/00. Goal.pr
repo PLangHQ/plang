@@ -448,10 +448,11 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "1b4a23fad11b365ec9974c30759ce87ce989212284beef7364ef2a319fed7f36",
+  "Hash": "9fc8735f1f1fd5e0ea618ac000426cbc039a1f954e0efcd25dc8b45cd2f5f534",
   "IncomingVariablesRequired": [
     "address",
     "symbols"
   ],
-  "DataSourceName": null
+  "DataSourceName": null,
+  "IsSetup": false
 }

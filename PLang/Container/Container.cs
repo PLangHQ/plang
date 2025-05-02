@@ -1,4 +1,5 @@
-﻿using LightInject;
+﻿using Castle.DynamicProxy;
+using LightInject;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Nethereum.JsonRpc.WebSocketClient;
@@ -11,13 +12,16 @@ using Nostr.Client.Client;
 using PLang.Building;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
+using PLang.Errors;
 using PLang.Errors.Handlers;
 using PLang.Events;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Modules;
+using PLang.Modules.IdentityModule;
 using PLang.Modules.MessageModule;
+using PLang.Modules.SerializerModule;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Services.AppsRepository;
@@ -87,9 +91,12 @@ namespace PLang.Container
 				container.RegisterOutputStreamFactory(typeof(TextOutputStream), true, new TextOutputStream(httpContext));
 				container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
 			}
-
+			
 			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler(container.GetInstance<IOutputSystemStreamFactory>()));
-			container.RegisterErrorHandlerFactory(typeof(HttpErrorHandler), true, new HttpErrorHandler(httpContext, container.GetInstance<IAskUserHandlerFactory>(), container.GetInstance<ILogger>()));
+
+			var httpErrorHandler = new HttpErrorHandler(httpContext, container.GetInstance<IAskUserHandlerFactory>(), container.GetInstance<ILogger>(), new PLang.Modules.ProgramFactory(container));
+			container.RegisterErrorHandlerFactory(typeof(HttpErrorHandler), true, httpErrorHandler);
+
 			container.RegisterErrorSystemHandlerFactory(typeof(ConsoleErrorHandler), true, new ConsoleErrorHandler(container.GetInstance<IAskUserHandlerFactory>()));
 
 			RegisterEventRuntime(container);
@@ -166,7 +173,7 @@ namespace PLang.Container
 				var type = GetImplementation(context, ReservedKeywords.Inject_Logger, typeof(Logger));
 				return factory.GetInstance<ILogger>(type);
 			});
-
+		
 			container.RegisterSingleton<DependancyHelper>();
 			container.RegisterSingleton<PrParser>();
 
@@ -178,8 +185,6 @@ namespace PLang.Container
 			var context = container.GetInstance<PLangAppContext>();
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			var engine = container.GetInstance<IEngine>();
-			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
-			fileAccessHandler.GiveAccess(Environment.CurrentDirectory, fileSystem.Path.Join(AppContext.BaseDirectory, "os"));
 
 			if (!isBuilder)
 			{
@@ -197,10 +202,10 @@ namespace PLang.Container
 				runtimeContainer.RegisterSingleton<IEventRuntime, EventRuntime>();
 				
 				var fileAccessHandler2 = runtimeContainer.GetInstance<IFileAccessHandler>();				
-				fileAccessHandler2.GiveAccess(Environment.CurrentDirectory, fileSystem.Path.Join(AppContext.BaseDirectory, "os"));				
+				fileAccessHandler2.GiveAccess(Environment.CurrentDirectory, fileSystem.OsDirectory);				
 
 				var engine2 = runtimeContainer.GetInstance<IEngine>(); 
-				engine2.Init(runtimeContainer);
+				engine2.Init(runtimeContainer, container.GetInstance<PLangAppContext>());
 
 				var eventRuntime = runtimeContainer.GetInstance<IEventRuntime>();
 				container.RegisterSingleton<IEventRuntime>(factory => { return eventRuntime; });
@@ -210,21 +215,33 @@ namespace PLang.Container
 
 		private static void RegisterBaseVariables(ServiceContainer container)
 		{
+			container.RegisterSingleton<IInterceptor, ErrorHandlingInterceptor>();
+			container.RegisterSingleton<ProgramFactory>(factory =>
+			{
+				return new ProgramFactory(container);
+			});
+
+
 			var outputStreamFactory = container.GetInstance<IOutputStreamFactory>();
 			var outputStream = outputStreamFactory.CreateHandler();
-			var memoryStack = container.GetInstance<MemoryStack>();
-			memoryStack.Put("!plang.output", outputStream.Output);
+			var context = container.GetInstance<PLangAppContext>();
+			context.AddOrReplace("!plang.output", outputStream.Output);
 
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
-			memoryStack.Put("!plang.osPath", fileSystem.OsDirectory);
-			memoryStack.Put("!plang.rootPath", fileSystem.RootDirectory);
+			context.AddOrReplace("!plang.osPath", fileSystem.OsDirectory);
+			context.AddOrReplace("!plang.rootPath", fileSystem.RootDirectory);
+
+
+			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
+			fileAccessHandler.GiveAccess(fileSystem.RootDirectory, fileSystem.OsDirectory);
 		}
 
 		private static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeStartupAppPath)
 		{
 			container.RegisterSingleton<MemoryStack>();
 			container.RegisterSingleton<IFileAccessHandler, FileAccessHandler>();
+			
 
 			container.RegisterSingleton<IEngine, Engine>();
 			/*
@@ -368,7 +385,7 @@ namespace PLang.Container
 				if (dbConnection != null) return dbConnection;
 
 				dbConnection = factory.GetInstance<IDbConnection>(typeof(DbConnectionUndefined).FullName);
-				var moduleSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger, typeHelper);
+				var moduleSettings = container.GetInstance<Modules.DbModule.ModuleSettings>();
 
 				dbConnection = moduleSettings.GetDefaultDbConnection(factory).Result;
 				if (dbConnection != null) return dbConnection;
@@ -402,7 +419,7 @@ namespace PLang.Container
 				var llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
 				var typeHelper = container.GetInstance<ITypeHelper>();
 
-				var moduleSettings = new Modules.DbModule.ModuleSettings(fileSystem, settings, context, llmServiceFactory, logger, typeHelper);
+				var moduleSettings = container.GetInstance<Modules.DbModule.ModuleSettings>();
 				var dataSources = moduleSettings.GetAllDataSources().Result;
 				if (dataSources.Count == 0)
 				{
@@ -432,6 +449,7 @@ namespace PLang.Container
 
 			container.RegisterEncryptionFactory(typeof(Encryption), true, new Encryption(settings));
 			fileSystem.SetFileAccess(settings.GetValues<FileAccessControl>(typeof(PLangFileSystem)));
+
 		}
 
 		private static string GetImplementation(PLangAppContext context, string reservedKeyword, Type? defaultType = null)
@@ -441,14 +459,14 @@ namespace PLang.Container
 				return value.ToString()!;
 			}
 
-			object? obj = AppContext.GetData(reservedKeyword);
+			context.TryGetValue(reservedKeyword, out object? obj);
 			if (obj != null)
 			{
 				return obj.ToString()!;
 			}
 			if (defaultType != null)
 			{
-				AppContext.SetData(reservedKeyword, defaultType.FullName);
+				context.AddOrReplace(reservedKeyword, defaultType.FullName);
 				return defaultType.FullName!;
 			}
 
@@ -564,7 +582,20 @@ namespace PLang.Container
 				container.Register(type);
 				container.Register(type, type, serviceName: type.FullName);
 			}
+			var factoriesFromCurrentAssembly = currentAssembly.GetTypes()
+																			.Where(t => !t.IsAbstract && !t.IsInterface &&
+																			(typeof(BaseFactory).IsAssignableFrom(t)))
+																			.ToList();
 
+			// Register these types with the DI container
+			foreach (var type in factoriesFromCurrentAssembly)
+			{
+				container.Register(type, factory =>
+				{
+					var instance = Activator.CreateInstance(type, [container]) as BaseFactory;
+					return instance;
+				});
+			}
 
 			// Scan the current assembly for types that inherit from BaseBuilder
 			var modulesFromCurrentAssembly = currentAssembly.GetTypes()
@@ -576,17 +607,15 @@ namespace PLang.Container
 			foreach (var type in modulesFromCurrentAssembly)
 			{
 				container.Register(type);
-				container.Register(type, type, serviceName: type.FullName); 
-				container.Register(type, factory =>
+				//container.Register(type, type, serviceName: type.FullName); 
+				/*container.Register(type, factory =>
 				{
 					var instance = Activator.CreateInstance(type) as BaseProgram;
 					var context = container.GetInstance<PLangAppContext>();
 
-					instance.Init(container, context["!Goal"] as Goal, context["!Step"] as GoalStep, context["!Instruction"] as Building.Model.Instruction, 
-						container.GetInstance<MemoryStack>(), container.GetInstance<ILogger>(), context, container.GetInstance<ITypeHelper>(), 
-						container.GetInstance<ILlmServiceFactory>(), container.GetInstance<ISettings>(), container.GetInstance<IAppCache>(), null);	
+					instance.Init(container, context["!Goal"] as Goal, context["!Step"] as GoalStep, context["!Instruction"] as Building.Model.Instruction, null);	
 					return instance;
-				}, serviceName: type.FullName + "Factory");
+				}, serviceName: type.FullName + "Factory");*/
 
 
 			}
@@ -809,7 +838,6 @@ namespace PLang.Container
 			{
 				context.AddOrReplace(reservedKeyword, implementationType.FullName);
 				injectedTypes.AddOrReplace(interfaceType, new InjectedType(injectorType, interfaceType, implementationType));
-				AppContext.SetData(reservedKeyword, implementationType.FullName);
 			}
 		}
 
@@ -819,11 +847,7 @@ namespace PLang.Container
 			DataSource? dataSource = null;
 			if (context.TryGetValue(ReservedKeywords.CurrentDataSource, out object? obj) && obj != null)
 			{
-				dataSource = (DataSource)obj;
-			}
-			else if ((obj = AppContext.GetData(ReservedKeywords.CurrentDataSource)) != null)
-			{
-				dataSource = (DataSource)obj;
+				dataSource = obj as DataSource;
 			}
 
 			if (dataSource == null) return null;

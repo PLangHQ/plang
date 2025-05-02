@@ -59,7 +59,7 @@ Add, update, delete and retrieve list or dictionary. It can be stored as local l
 		}
 
 		[Description("Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToList")]
-		public async Task<List<object>> AddToList(object? value, List<object>? listInstance = null, bool uniqueValue = false)
+		public async Task<List<object>> AddToList(object? value, List<object>? listInstance = null, bool uniqueValue = false, bool caseSensitive = false)
 		{
 			if (value == null) return new();
 
@@ -72,7 +72,7 @@ Add, update, delete and retrieve list or dictionary. It can be stored as local l
 					List<dynamic> jsonList = JsonConvert.DeserializeObject<List<dynamic>>(value.ToString());
 					if (jsonList == null) return listInstance;
 
-					if (!uniqueValue || (uniqueValue && !listInstance.Contains(jsonList)))
+					if (!uniqueValue || (uniqueValue && !ContainsItemInListInstance(listInstance, jsonList, caseSensitive)))
 					{
 						listInstance.AddRange(jsonList);
 					}
@@ -81,7 +81,7 @@ Add, update, delete and retrieve list or dictionary. It can be stored as local l
 				{
 
 					var item = JsonConvert.DeserializeObject<dynamic>(value.ToString());
-					if (!uniqueValue || (uniqueValue && !listInstance.Contains(item)))
+					if (!uniqueValue || (uniqueValue && !ContainsItemInListInstance(listInstance, item, caseSensitive)))
 					{
 						listInstance.Add(item);
 					}
@@ -89,12 +89,19 @@ Add, update, delete and retrieve list or dictionary. It can be stored as local l
 			}
 			else
 			{
-				if (!uniqueValue || (uniqueValue && !listInstance.Contains(value)))
+				if (!uniqueValue || (uniqueValue && !ContainsItemInListInstance(listInstance, value, caseSensitive)))
 				{
 					listInstance.Add(value);
 				}
 			}
 			return listInstance;
+		}
+
+		private bool ContainsItemInListInstance(List<object?> listInstance, object value, bool caseSensitive)
+		{
+			if (caseSensitive) return listInstance.Contains(value);
+			var item = listInstance.FirstOrDefault(p => p != null && p.ToString().Equals(value.ToString(), StringComparison.OrdinalIgnoreCase));
+			return item != null;
 		}
 
 		public async Task<object?> GetItem(string @operator = "first", List<object>? listInstance = null, List<string>? sortColumns = null, List<string>? sortOperator = null)

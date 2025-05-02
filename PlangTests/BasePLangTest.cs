@@ -62,6 +62,7 @@ namespace PLangTests
 		protected IOutputStream outputSystemStream;
 		protected IOutputStreamFactory outputStreamFactory;
 		protected IOutputSystemStreamFactory outputSystemStreamFactory;
+		protected ProgramFactory programFactory;
 		protected IAppCache appCache;
 		protected IPLangIdentityService identityService;
 		protected IPLangSigningService signingService;

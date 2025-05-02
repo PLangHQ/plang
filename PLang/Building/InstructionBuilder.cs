@@ -15,8 +15,8 @@ namespace PLang.Building
 {
 	public interface IInstructionBuilder
 	{
-		Task<(Model.Instruction?, IBuilderError?)> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep goalStep, string module, int stepNr, List<string>? excludeModules = null, int errorCount = 0);
-		Task RunBuilderMethod(string module, BaseBuilder.GenericFunction gf);
+		Task<(Model.Instruction?, IBuilderError?)> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep goalStep, string module, int stepNr, List<string>? excludeModules = null, int executionCounter = 0, string? errorMessage = null);
+		Task<IBuilderError?> RunBuilderMethod(GoalStep goalStep, BaseBuilder.GenericFunction gf);
 	}
 
 	public class InstructionBuilder : IInstructionBuilder
@@ -46,16 +46,26 @@ namespace PLang.Building
 			this.settings = settings;
 		}
 
-		public async Task<(Model.Instruction?, IBuilderError?)> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep step, string module, int stepIndex, List<string>? excludeModules = null, int errorCount = 0)
+		public async Task<(Model.Instruction?, IBuilderError?)> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep step, string module, int stepIndex, List<string>? excludeModules = null, int executionCounter = 0, string? errorMessage = null)
 		{
+			executionCounter++;
+
 			var classInstance = builderFactory.Create(module);
 			classInstance.InitBaseBuilder(module, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 			logger.LogInformation($"- Build using {module}");
-
+			if (errorMessage != null)
+			{
+				classInstance.AppendToSystemCommand($"Previous LLM request caused following <error>, try to fix it.\n<error>{errorMessage}<error>");
+			}
 			var build = await classInstance.Build(step);
 			if (build.BuilderError != null || build.Instruction == null || build.Instruction.Action == null)
 			{
+				if (build.BuilderError != null && build.BuilderError.Retry && executionCounter < 3)
+				{ 
+					logger.LogWarning($"- Error building step, will try again. Error: {build.BuilderError.Message}");
+					return await BuildInstruction(stepBuilder, goal, step, module, stepIndex, excludeModules, executionCounter, build.BuilderError.ToString());
+				}
 				return (null, (build.BuilderError ?? new InstructionBuilderError($"Could not map {step.Text} to function. Refine your text", step)));
 			}
 
@@ -67,7 +77,7 @@ namespace PLang.Building
 
 			if (invalidFunctionError != null)
 			{
-				return await Retry(stepBuilder, invalidFunctionError, module, goal, step, stepIndex, excludeModules, errorCount);
+				return await Retry(stepBuilder, invalidFunctionError, module, goal, step, stepIndex, excludeModules, executionCounter);
 			}
 
 			foreach (var function in functions)
@@ -75,7 +85,8 @@ namespace PLang.Building
 				var error = await stepBuilder.LoadVariablesIntoMemoryStack(function, memoryStack, context, settings);
 				if (error != null) return (null, error);
 			}
-
+			var builderError = await RunBuilderMethod(step, functions[0]);
+			if (builderError != null) return (instruction, builderError);
 
 			// since the no invalid function, we can save the instruction file
 			WriteInstructionFile(step, instruction);
@@ -127,28 +138,36 @@ Builder will continue on other steps but not this one ({step.Text}).
 		}
 
 
-		public async Task RunBuilderMethod(string module, BaseBuilder.GenericFunction gf)
+		public async Task<IBuilderError?> RunBuilderMethod(GoalStep goalStep, BaseBuilder.GenericFunction gf)
 		{
-			var builder = typeHelper.GetBuilderType(module);
-			if (builder != null && gf != null)
+			var builder = typeHelper.GetBuilderType(goalStep.ModuleType);
+			if (builder == null || gf == null) return null;
+
+			var method = builder.GetMethod("Builder" + gf.FunctionName);
+			if (method == null) return null;
+
+			var classInstance = builderFactory.Create(goalStep.ModuleType);
+			classInstance.InitBaseBuilder(goalStep.ModuleType, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+
+			var method2 = classInstance.GetType().GetMethod("Builder" + gf.FunctionName);
+			if (method2 == null) return null;
+
+			var result = method2.Invoke(classInstance, [gf, goalStep]);
+			if (result is not Task task) return null;
+
+			await task;
+
+			Type taskType = task.GetType();
+			var returnArguments = taskType.GetGenericArguments().FirstOrDefault();
+			if (returnArguments == null) return null;
+
+			if (returnArguments == typeof(IBuilderError))
 			{
-				var method = builder.GetMethod("Builder" + gf.FunctionName);
-				if (method != null)
-				{
-					var classInstance = builderFactory.Create(module);
-					classInstance.InitBaseBuilder(module, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
-					var method2 = classInstance.GetType().GetMethod("Builder" + gf.FunctionName);
-					if (method2 != null)
-					{
-						var result = method2.Invoke(classInstance, [gf]);
-						if (result is Task task)
-						{
-							await task;
-						}
-					}
-				}
+				var resultTask = task as Task<IBuilderError?>;
+				return resultTask?.Result;
 			}
-			
+
+			return null;
 		}
 	}
 

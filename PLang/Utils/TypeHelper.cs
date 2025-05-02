@@ -9,6 +9,7 @@ using PLang.Modules;
 using System.Data;
 using System.Numerics;
 using System.Reflection;
+using Websocket.Client.Logging;
 
 namespace PLang.Utils
 {
@@ -24,7 +25,7 @@ namespace PLang.Utils
 		Type? GetRuntimeType(string? module);
 		string GetMethodNamesAsString(Type type, string? methodName = null);
 		List<Type> GetTypesByType(Type type);
-		List<MethodDescription> GetMethodDescriptions(Type type, string? methodName = null);
+		(List<MethodDescription>?, IBuilderError?) GetMethodDescriptions(Type type, string? methodName = null);
 	}
 
 	public class TypeHelper : ITypeHelper
@@ -131,38 +132,37 @@ namespace PLang.Utils
 			return types;
 		}
 
-		public List<MethodDescription> GetMethodDescriptions(Type? type, string? methodName = null)
+		public (List<MethodDescription>?, IBuilderError?) GetMethodDescriptions(Type? type, string? methodName = null)
 		{
-			if (type == null) return new();
 
-			var methods = type.GetMethods().Where(p => p.DeclaringType.Name == "Program");
+			if (type == null) return (new(), new BuilderError("Type is null"));
+
+			var methods = type.GetMethods().Where(p => p.DeclaringType?.Name == "Program");
 			if (methodName != null)
 			{
 				methods = type.GetMethods().Where(p => p.Name == methodName);
 			}
 			List<MethodDescription> methodDescs = new();
+			GroupedBuildErrors errors = new GroupedBuildErrors();
 
 			foreach (var method in methods)
 			{
-
-				var strMethod = "";
-				if (method.Module.Name != type.Module.Name) continue;
-				if (method.Name == "Run" || method.Name == "Dispose" || method.IsSpecialName) continue;
-
-				var md = new MethodDescription();
-				md.MethodName = method.Name;
-
-				strMethod += method.Name;
-				var descriptions = method.CustomAttributes.Where(p => p.AttributeType.Name == "DescriptionAttribute");
-				foreach (var desc in descriptions)
+				if (!method.ReturnType.Name.Contains("Task"))
 				{
-					md.Description += desc.ConstructorArguments.FirstOrDefault().Value + ". ";
-
+					continue;
 				}
-				methodDescs.Add(md);
+
+				var (desc, error) = TypeHelper.GetMethodDescription(type, method.Name);
+				if (error != null) errors.Add(error);
+
+				if (desc != null)
+				{
+					methodDescs.Add(desc);
+				}
+
 			}
 
-			return methodDescs;
+			return (methodDescs, (errors.Count > 0) ? errors : null);
 		}
 
 		public string GetMethodNamesAsString(Type type, string? methodName = null)
@@ -642,18 +642,45 @@ namespace PLang.Utils
 
 		private static string GetTypeToUse(Type type)
 		{
-			var typeToUse = "void";
+
+			Type? typeToUse;
 			if (type.GenericTypeArguments[0].GenericTypeArguments.Length > 0)
 			{
-				var tmp = type.GenericTypeArguments[0].GenericTypeArguments
+				typeToUse = type.GenericTypeArguments[0].GenericTypeArguments
 						.FirstOrDefault(p => !typeof(IError).IsAssignableFrom(p));
-				typeToUse = tmp?.FullName;
+
 			}
 			else
 			{
-				typeToUse = type.GenericTypeArguments.FirstOrDefault(p => !typeof(IError).IsAssignableFrom(p))?.FullName;
+				typeToUse = type.GenericTypeArguments.FirstOrDefault(p => !typeof(IError).IsAssignableFrom(p));
 			}
-			return typeToUse ?? "void";
+
+			if (typeToUse == null) return "void";
+
+			var typeToUseString = "void";
+			if (typeToUse.Name.Contains("`"))
+			{
+				string className = typeToUse.Name.Substring(0, typeToUse.Name.IndexOf("`")) + "<";
+				var types = typeToUse.GetGenericArguments();
+				for (int b = 0; b < types.Length; b++)
+				{
+					if (b != 0) className += ",";
+					className += types[b].Name;
+				}
+				typeToUseString = className + ">";
+			}
+			else
+			{
+				typeToUseString = typeToUse?.FullName;
+			}
+
+			if (typeToUseString != null && typeToUseString.Contains("Version="))
+			{
+				throw new Exception("Should not happend, FullName with version.");
+			}
+
+
+			return typeToUseString ?? "void";
 		}
 
 		public static object? GetParameterInfoDefaultValue(ParameterInfo parameterInfo)
@@ -691,11 +718,11 @@ namespace PLang.Utils
 				{
 					return (null, new BuilderError($"Parameter '{parameterInfo.Name}' has no name."));
 				}
-
+				/*
 				if (parameterInfo.ParameterType == typeof(List<object>))
 				{
 					return (null, new BuilderError($"Parameter '{parameterInfo.Name}' is List<object>. It cannot be a unclear object, it must be a defined class"));
-				}
+				}*/
 
 				object? defaultValue = GetParameterInfoDefaultValue(parameterInfo);
 
@@ -892,6 +919,10 @@ namespace PLang.Utils
 
 		private static bool IsConsideredPrimitive(Type type)
 		{
+			if (type.IsArray)
+			{
+				return true;
+			}
 
 			return type.IsPrimitive ||
 				   type == typeof(string) ||

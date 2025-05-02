@@ -118,10 +118,50 @@ namespace PLang.Modules.CryptographicModule
 
 			return input.ComputeHmacSha256(secretKey, hashSize);
 		}
-
-		[Description("Used for hashing. hashAlgorithm: keccak256 | sha256 | bcrypt")]
-		public async Task<(string Hash, IError? Error)> HashInput(string input, bool useSalt = true, string? salt = null, string hashAlgorithm = "keccak256")
+		[Description("Hash input, useSalt = true for passwords. Salt is provided by language when use does not provide. hashAlgorithm: keccak256 | sha256 | bcrypt")]
+		public async Task<(object?, IError?)> HashPassword(object? variable, bool returnAsString = false, bool useSalt = true, string? salt = null, string type = "keccak256")
 		{
+			return await Hash(variable, returnAsString, useSalt, salt, type);
+		}
+		
+		[Description("Hash input. Salt is provided by language when user does not provide. hashAlgorithm: keccak256 | sha256 | bcrypt")]
+		public async Task<(object?, IError?)> Hash(object? variable, bool returnAsString = false, bool? useSalt = null, string? salt = null, string type = "keccak256")
+		{
+			if (variable is string)
+			{
+				return await HashInput(variable, useSalt ?? false, salt, type);
+			}
+
+			if (type == "keccak256")
+			{
+				throw new NotImplementedException($"{type} is not implemented.");
+			}
+
+			var keccak = new Sha3Keccack();
+			byte[]? bytes = variable as byte[];
+			if (bytes == null)
+			{
+				bytes = Encoding.UTF8.GetBytes(variable.ToString());
+			}
+
+
+			byte[] hashBytes = keccak.CalculateHash(bytes);
+			if (!returnAsString) return (hashBytes, null);
+
+			StringBuilder hashStringBuilder = new StringBuilder();
+			foreach (byte b in hashBytes)
+			{
+				hashStringBuilder.Append(b.ToString("x2"));
+			}
+
+			return (hashStringBuilder.ToString(), null);
+		}
+
+		[Description("Hash input with salt, such as password. hashAlgorithm: keccak256 | sha256 | bcrypt")]
+		public async Task<(string Hash, IError? Error)> HashInput(object variable, bool useSalt = true, string? salt = null, string hashAlgorithm = "keccak256")
+		{
+			string input = variable.ToString();
+
 			if (hashAlgorithm == "bcrypt")
 			{
 				if (salt == null)
@@ -205,7 +245,7 @@ namespace PLang.Modules.CryptographicModule
 
 		}
 
-		public async Task<(string?, IError?)> GetHashOfFile(string filePath, string hashAlgorithm = "sha256", string encoding = "base64")
+		public async Task<(string? Hash, IError? Error)> GetHashOfFile(string filePath, string hashAlgorithm = "sha256", string encoding = "base64")
 		{
 			var absolutePath = GetPath(filePath);
 			if (!fileSystem.File.Exists(absolutePath))
@@ -308,20 +348,5 @@ namespace PLang.Modules.CryptographicModule
 			return bearerToken;
 		}
 
-		public async Task<object> Hash(byte[]? bytes, bool asString = false, string type = "Keccak256")
-		{
-			var keccak = new Sha3Keccack();
-
-			byte[] hashBytes = keccak.CalculateHash(bytes);
-			if (!asString) return hashBytes;
-
-			StringBuilder hashStringBuilder = new StringBuilder();
-			foreach (byte b in hashBytes)
-			{
-				hashStringBuilder.Append(b.ToString("x2"));
-			}
-
-			return hashStringBuilder.ToString();
-		}
 	}
 }

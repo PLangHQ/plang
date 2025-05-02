@@ -4,6 +4,7 @@
 	{
 		public static readonly string Identity = "Identity";
 		public static readonly string MyIdentity = "MyIdentity";
+		public static readonly string ServiceIdentity = "ServiceIdentity";
 
 		public static readonly string ParametersAtAppStart = "!ArgsAtAppStart";
 		public static readonly string Debug = "!Debug";
@@ -16,6 +17,7 @@
 		public static readonly string StepIndex = "!StepIndex";
 		public static readonly string StrictBuild = "!StrictBuild";
 		public static readonly string Instruction = "!Instruction";
+		public static readonly string CallingInstruction = "!CallingInstruction";
 		public static readonly string Event = "!Event";
 		public static readonly string IsEvent = "!IsEvent";
 		public static readonly string MemoryStack = "!MemoryStack";

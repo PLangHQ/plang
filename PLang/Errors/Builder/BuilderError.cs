@@ -18,21 +18,24 @@ namespace PLang.Errors.Builder
 		}
 
 		public BuilderError(string Message, string Key = "Builder", int StatusCode = 400, bool ContinueBuild = true,
-			Exception? Exception = null, string? FixSuggestion = null, string? HelpfulLinks = null) :
+			Exception? Exception = null, string? FixSuggestion = null, string? HelpfulLinks = null, bool Retry = false) :
 				base(Message, Key, StatusCode, Exception, FixSuggestion, HelpfulLinks)
 		{
 			this.ContinueBuild = ContinueBuild;
+			this.Retry = Retry;
 		}
 
 		public bool ContinueBuild { get; init; }
+
+		public bool Retry {get;init;}
 
 		public override object ToFormat(string contentType = "text")
 		{
 			return ErrorHelper.ToFormat(contentType, this);
 		}
-		public override string ToString()
+		public override string ToString() 
 		{
-			return base.ToString();
+			return ErrorHelper.ToFormat("text", this).ToString();
 		}
 	}
 }

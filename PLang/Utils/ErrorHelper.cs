@@ -4,7 +4,9 @@ using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Errors.Events;
+using PLang.Errors.Interfaces;
 using PLang.Errors.Runtime;
+using PLang.Models.Formats;
 using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Utils
@@ -53,7 +55,24 @@ namespace PLang.Utils
 			AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool detailedError);
 			if (error is MultipleError me)
 			{
-				if (me.Errors.Count == 0) error = me.InitialError;
+				List<object> errors = new List<object>();	
+				foreach (var e in me.Errors)
+				{
+					errors.Add(e.ToFormat(contentType));
+				}
+
+				if (contentType == "text")
+				{
+					string str = "";
+					foreach (var e in errors)
+					{
+						str += e;
+					}
+					return str;
+				}
+				return errors;
+
+				
 			}
 			if (error is RuntimeEventError rve && rve.InitialError != null)
 			{
@@ -61,8 +80,14 @@ namespace PLang.Utils
 			}
 
 
-			if (error is UserDefinedError && contentType == "json")
+			if (error is IUserDefinedError && contentType == "json")
 			{
+				JsonRpcError jsonRpcError = new()
+				{
+					Code = error.StatusCode,
+					Message = error.Message//, Data = data
+				};
+
 				if (JsonHelper.IsJson(error.Message))
 				{
 					return error.Message;

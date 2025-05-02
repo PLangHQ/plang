@@ -15,6 +15,8 @@ using PLang.Models;
 using Identity = PLang.Interfaces.Identity;
 using System.Collections;
 using System.Text.Json;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace PLang.Modules.IdentityModule
 {
@@ -91,9 +93,14 @@ namespace PLang.Modules.IdentityModule
 			{
 				dict.Add(property, signature);
 				return (dict, null);
+			} else
+			{
+				var obj = JObject.FromObject(body);
+				obj.Add(property, JToken.FromObject(signature));
+				return (obj, null);	
 			}
 
-			return (null, new ProgramError($"Not supported body type {body.GetType()}"));
+				return (null, new ProgramError($"Not supported body type {body.GetType()}"));
 		}
 
 		[Description("Sign a content with specific headers and contracts. Returns signature object that contains the values to validate the signature")]
@@ -115,19 +122,15 @@ namespace PLang.Modules.IdentityModule
 			{
 				return (null, new ProgramError("Signature is missing"));
 			}
-			Signature? signature = null;
-			if (signatureFromUser is string str)
+			Signature? signature = signatureFromUser as Signature;
+			if (signature == null && signatureFromUser is string str)
 			{
-				signature = JsonSerializer.Deserialize<Signature>(str);
-			} else if (signatureFromUser is IDictionary)
+				signature = JsonConvert.DeserializeObject<Signature>(str);
+			} else if (signature == null && signatureFromUser is IDictionary)
 			{
 				var result = SignatureCreator.Cast(signatureFromUser as Dictionary<string, object?>);
 				if (result.Error != null) return (null, result.Error);
 				signature = result.Signature!;
-			}
-			else if (signatureFromUser is Signature)
-			{
-				signature = signatureFromUser as Signature;
 			}
 
 			if (signature == null)

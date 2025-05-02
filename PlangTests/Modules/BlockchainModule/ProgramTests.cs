@@ -54,7 +54,7 @@ namespace PLangTests.Modules.BlockchainModule
 				settings.GetValues<Wallet>(typeof(ModuleSettings)).Returns(wallets);
 			}
 			p = new Program(settings, llmServiceFactory, pseudoRuntime, engine, logger, context);
-			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, null);
+			p.Init(container, null, null, null, null);
 		}
 
 		[TestMethod()]

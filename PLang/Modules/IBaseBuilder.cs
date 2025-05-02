@@ -19,5 +19,6 @@ namespace PLang.Modules
 		LlmRequest GetLlmRequest(GoalStep step, Type responseType, string? errorMessage = null);
 		void InitBaseBuilder(string module, IPLangFileSystem fileSystem, ILlmServiceFactory llmService, ITypeHelper typeHelper,
 			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ILogger logger);
+		void SetStep(GoalStep step);
 	}
 }

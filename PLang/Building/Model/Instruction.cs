@@ -15,7 +15,7 @@ namespace PLang.Building.Model
 		public bool Reload { get; set; }
 		public LlmRequest LlmRequest { get; set; }
 		public bool RunOnBuild { get; set; }
-		public Dictionary<string, object> Metadata { get; set; } = new();
+		public Dictionary<string, object?> Metadata { get; set; } = new();
 		public GenericFunction[] GetFunctions()
 		{
 			try

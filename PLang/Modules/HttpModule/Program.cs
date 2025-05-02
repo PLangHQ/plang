@@ -1,30 +1,27 @@
-﻿using MimeKit;
-using NBitcoin.Protocol;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Errors;
 using PLang.Errors.Runtime;
+using PLang.Errors.Types;
 using PLang.Interfaces;
 using PLang.Models;
-using PLang.Services.SigningService;
+using PLang.Models.Formats;
 using PLang.Utils;
 using System.ComponentModel;
-using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
-using static Dapper.SqlMapper;
 
 namespace PLang.Modules.HttpModule
 {
 	[Description("Make Http request")]
-	public class Program(IPLangFileSystem fileSystem, IPLangSigningService signingService, IHttpClientFactory httpClientFactory,
-		PLang.Modules.IdentityModule.Program identity, Modules.SerializerModule.Program serializer, VariableHelper variableHelper) : BaseProgram()
+	public class Program(IPLangFileSystem fileSystem, IHttpClientFactory httpClientFactory,
+		Modules.ProgramFactory programFactory, VariableHelper variableHelper) : BaseProgram()
 	{
 		private new readonly VariableHelper variableHelper = variableHelper;
 
-		public async Task<(string Path, HttpResponse? Response, IError? Error)> DownloadFile(string url, string pathToSaveTo,
+		public async Task<(string Path, IError? Error, IProperties? Properties)> DownloadFile(string url, string pathToSaveTo,
 			bool overwriteFile = false,
 			Dictionary<string, object>? headers = null, bool createPathToSaveTo = true, bool doNotDownloadIfFileExists = false)
 		{
@@ -62,7 +59,7 @@ namespace PLang.Modules.HttpModule
 						else
 						{
 							var responseObj = GetHttpResponse(response);
-							return (absoluteSaveTo, responseObj, new ProgramError($"File already exists at that location", goalStep, function));
+							return (absoluteSaveTo, new ProgramError($"File already exists at that location", goalStep, function), responseObj);
 						}
 					}
 					if (createPathToSaveTo)
@@ -81,48 +78,48 @@ namespace PLang.Modules.HttpModule
 					}
 
 					var resObj = GetHttpResponse(response);
-					return (absoluteSaveTo, resObj, null);
+					return (absoluteSaveTo, null, resObj);
 				}
 			}
 		}
-		public async Task<(object? Data, HttpResponse? Response, IError? Error)> Post(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<(object? Data, IError? Error, IProperties Properties)> Post(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "POST", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
-		public async Task<(object? Data, HttpResponse? Response, IError? Error)> Patch(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<(object? Data, IError? Error, IProperties Properties)> Patch(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "PATCH", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
-		public async Task<(object? Data, HttpResponse? Response, IError? Error)> Get(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<(object? Data, IError? Error, IProperties Properties)> Get(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "GET", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
-		public async Task<(object? Data, HttpResponse? Response, IError? Error)> Option(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<(object? Data, IError? Error, IProperties Properties)> Option(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "OPTION", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
-		public async Task<(object? Data, HttpResponse? Response, IError? Error)> Head(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<(object? Data, IError? Error, IProperties Properties)> Head(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "HEAD", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
-		public async Task<(object? Data, HttpResponse? Response, IError? Error)> Put(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<(object? Data, IError? Error, IProperties Properties)> Put(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "PUT", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
-		public async Task<(object? Data, HttpResponse? Response, IError? Error)> Delete(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<(object? Data, IError? Error, IProperties Properties)> Delete(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "DELETE", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
 
 		[Description("Send binary file to server. Make sure to set correct headers on correct header variable, requestHeaders or contentHeader")]
-		public async Task<(object? Data, HttpResponse? Response, IError? Error)> SendBinaryOfFile(string url, string filePath, string httpMethod = "POST",
+		public async Task<(object? Data, IError? Error, IProperties Properties)> SendBinaryOfFile(string url, string filePath, string httpMethod = "POST",
 			Dictionary<string, object>? requestHeaders = null, Dictionary<string, object>? contentHeaders = null,
 			string encoding = "utf-8", int timeoutInSeconds = 30)
 		{
 			var requestUrl = this.variableHelper.LoadVariables(url);
 			if (requestUrl == null)
 			{
-				return (null, null, new ProgramError("url cannot be empty", goalStep, function));
+				return (null, new ProgramError("url cannot be empty", goalStep, function), null);
 			}
 
 
@@ -163,14 +160,14 @@ namespace PLang.Modules.HttpModule
 
 							string responseBody = await response.Content.ReadAsStringAsync();
 							var responseObj = GetHttpResponse(response);
-							return (responseBody, responseObj, null);
+							return (responseBody, null, responseObj);
 						}
 						else
 						{
 
 							var errorDetails = await response.Content.ReadAsStringAsync();
 							var responseObj = GetHttpResponse(response);
-							return (null, responseObj, new ProgramError(errorDetails, goalStep, function));
+							return (null, new ProgramError(errorDetails, goalStep, function), responseObj);
 						}
 					}
 				}
@@ -178,7 +175,7 @@ namespace PLang.Modules.HttpModule
 		}
 
 		[Description("Post a FileStream to url. When a variable is defined with @ sign, it defines that it should be a FileStream. data may contain something like file=@%fileName%;type=%fileType%, then keep as one value for the file parameter. The function will parse the file and type")]
-		public async Task<(object? Data, HttpResponse? Response, IError? Error)> PostMultipartFormData(string url, object data, string httpMethod = "POST",
+		public async Task<(object? Data, IError? Error, IProperties? Properties)> PostMultipartFormData(string url, object data, string httpMethod = "POST",
 			bool doNotSignRequest = false, Dictionary<string, object>? headers = null,
 			string encoding = "utf-8", int timeoutInSeconds = 30)
 		{
@@ -189,7 +186,7 @@ namespace PLang.Modules.HttpModule
 				var requestUrl = this.variableHelper.LoadVariables(url);
 				if (requestUrl == null)
 				{
-					return (null, null, new ProgramError("url cannot be empty", goalStep, function));
+					return (null, new ProgramError("url cannot be empty", goalStep, function), null);
 				}
 
 				using (var request = new HttpRequestMessage(new HttpMethod(httpMethod), requestUrl.ToString()))
@@ -226,7 +223,7 @@ namespace PLang.Modules.HttpModule
 									}
 									else
 									{
-										return (null, null, new ProgramError($"{fileName} could not be found", goalStep, function));
+										return (null, new ProgramError($"{fileName} could not be found", goalStep, function), null);
 									}
 								}
 								else
@@ -277,7 +274,7 @@ namespace PLang.Modules.HttpModule
 								if (response.Content.Headers.ContentType != null && response.Content.Headers.ContentType.MediaType == "application/json")
 								{
 									var responseObj = GetHttpResponse(response);
-									return (JsonConvert.DeserializeObject(responseBody), responseObj, null);
+									return (JsonConvert.DeserializeObject(responseBody), null, responseObj);
 								}
 								else if (response.Content.Headers.ContentType != null && IsXml(response.Content.Headers.ContentType.MediaType))
 								{
@@ -288,12 +285,12 @@ namespace PLang.Modules.HttpModule
 
 									string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
 									var responseObj = GetHttpResponse(response);
-									return (JsonConvert.DeserializeObject(jsonString), responseObj, null);
+									return (JsonConvert.DeserializeObject(jsonString), null, responseObj);
 
 								}
 
 								var resObj = GetHttpResponse(response);
-								return (responseBody, resObj, null);
+								return (responseBody, null, resObj);
 							}
 						}
 						finally
@@ -341,115 +338,171 @@ namespace PLang.Modules.HttpModule
 			return (mediaType.Contains("application/xml") || mediaType.Contains("text/xml") || mediaType.Contains("application/rss+xml"));
 		}
 
-		public async Task<(object? Data, HttpResponse? Response, IError? Error)> Request(string url, string method, object? data = null, bool doNotSignRequest = false,
+		public virtual async Task<(object? Data, IError? Error, IProperties Properties)> Request(string url, string method, object? data = null, bool doNotSignRequest = false,
 			Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 
 			var requestUrl = this.variableHelper.LoadVariables(url);
 			if (requestUrl == null)
 			{
-				return (null, null, new ProgramError("url cannot be empty", goalStep, function));
+				return (null, new ProgramError("url cannot be empty", goalStep, function), null);
 			}
 			if (!requestUrl.ToString().ToLower().StartsWith("http"))
 			{
 				requestUrl = "https://" + requestUrl;
 			}
 
-			using (var httpClient = httpClientFactory.CreateClient())
+			using var httpClient = httpClientFactory.CreateClient();
+			var httpMethod = new HttpMethod(method);
+			using var request = new HttpRequestMessage(httpMethod, requestUrl.ToString());
+
+			if (headers != null)
 			{
-				var httpMethod = new HttpMethod(method);
-				using (var request = new HttpRequestMessage(httpMethod, requestUrl.ToString()))
+				foreach (var header in headers)
 				{
-
-					if (headers != null)
+					var value = this.variableHelper.LoadVariables(header.Value);
+					if (value != null)
 					{
-						foreach (var header in headers)
-						{
-							var value = this.variableHelper.LoadVariables(header.Value);
-							if (value != null)
-							{
-								request.Headers.TryAddWithoutValidation(header.Key, value.ToString());
-							}
-						}
-					}
-					request.Headers.UserAgent.ParseAdd("plang v0.1");
-					if (data != null)
-					{
-						string body = StringHelper.ConvertToString(data);
-
-						request.Content = new StringContent(body, System.Text.Encoding.GetEncoding(encoding), contentType);
-					}
-
-					if (!doNotSignRequest)
-					{
-						await SignRequest(request);
-					}
-
-					httpClient.Timeout = new TimeSpan(0, 0, timeoutInSeconds);
-					HttpResponse? newResponse = null;
-
-					var task = httpClient.SendAsync(request);
-					try
-					{
-						using (var response = await task)
-						{
-							if (!response.IsSuccessStatusCode)
-							{
-								string errorBody = await response.Content.ReadAsStringAsync();
-								if (string.IsNullOrEmpty(errorBody))
-								{
-									errorBody = $"{response.ReasonPhrase} ({(int)response.StatusCode})";
-								}
-								newResponse = GetHttpResponse(response);
-								return (null, newResponse, new ProgramError(errorBody, goalStep, function, StatusCode: (int)response.StatusCode));
-							}
-
-							var mediaType = response.Content.Headers.ContentType?.MediaType;
-							if (!IsTextResponse(mediaType))
-							{
-								var bytes = await response.Content.ReadAsByteArrayAsync();
-								newResponse = GetHttpResponse(response);
-								return (bytes, newResponse, null);
-							}
-
-							string responseBody = await response.Content.ReadAsStringAsync();
-							if (response.Content.Headers.ContentType?.MediaType == "application/json" && JsonHelper.IsJson(responseBody))
-							{
-								newResponse = GetHttpResponse(response);
-								try
-								{
-									return (JsonConvert.DeserializeObject(responseBody), newResponse, null);
-								}
-								catch (Exception ex)
-								{
-									return (null, newResponse, new ProgramError(ex.Message, goalStep, function));
-								}
-							}
-							else if (IsXml(response.Content.Headers.ContentType?.MediaType))
-							{
-								// todo: here we convert any xml to json so user can use JSONPath to get the content. 
-								// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
-								XmlDocument xmlDoc = new XmlDocument();
-								xmlDoc.LoadXml(Regex.Replace(responseBody, "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
-
-								string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
-								newResponse = GetHttpResponse(response);
-								return (JsonConvert.DeserializeObject(jsonString), newResponse, null);
-
-							}
-							newResponse = GetHttpResponse(response);
-
-							return (responseBody, newResponse, null);
-						}
-					}
-					catch (System.Net.Http.HttpRequestException ex)
-					{
-						int statusCode = (int?)ex.StatusCode ?? 503;
-						return (null, newResponse, new ProgramError(ex.Message, goalStep, function, StatusCode: statusCode));
+						request.Headers.TryAddWithoutValidation(header.Key, value.ToString());
 					}
 				}
 			}
+			if (context.ContainsKey("!callback"))
+			{
+				request.Headers.TryAddWithoutValidation("!callback", JsonConvert.SerializeObject(context["!callback"]));
+			}
+			if (context.ContainsKey("!contract"))
+			{
+				request.Headers.TryAddWithoutValidation("!contract", JsonConvert.SerializeObject(context["!contract"]));
+			}
+
+			request.Headers.UserAgent.ParseAdd("plang v0.1");
+			if (data != null)
+			{
+				string body = StringHelper.ConvertToString(data);
+
+				request.Content = new StringContent(body, System.Text.Encoding.GetEncoding(encoding), contentType);
+			}
+
+			if (!doNotSignRequest)
+			{
+				await SignRequest(request);
+			}
+
+			httpClient.Timeout = new TimeSpan(0, 0, timeoutInSeconds);
+			IProperties? properties = null;
+
+			var task = httpClient.SendAsync(request);
+			try
+			{
+
+				using var response = await task;
+
+				var mediaType = response.Content.Headers.ContentType?.MediaType;
+				if (!response.IsSuccessStatusCode)
+				{
+					string str = await response.Content.ReadAsStringAsync();
+
+
+					var obj = await programFactory.GetProgram<SerializerModule.Program>().Deserialize(response.Content.ReadAsStream(), mediaType ?? contentType);
+					if (obj == null) return (null, new ProgramError("Could not deserialize response from server"), GetHttpResponse(response));
+
+
+					var signatureJson = obj.FirstOrDefault(p => p.Key.Equals("signature", StringComparison.OrdinalIgnoreCase));
+					if (signatureJson.Key != null)
+					{
+						var signature = await programFactory.GetProgram<IdentityModule.Program>().VerifySignature(signatureJson.Value.ToString());
+						if (signature.Error != null) return (obj.ToString(), signature.Error, GetHttpResponse(response));
+
+						if (signature.Signature != null)
+						{
+							context.AddOrReplace(ReservedKeywords.Signature, signature.Signature);
+							context.AddOrReplace(ReservedKeywords.ServiceIdentity, signature.Signature.Identity);
+						}
+					}
+					var responseJson = obj.FirstOrDefault(p => p.Key.Equals("response", StringComparison.OrdinalIgnoreCase));
+					if (responseJson.Key != null)
+					{
+						var jsonRpc = JsonConvert.DeserializeObject<JsonRpcErrorResponse>(responseJson.Value.ToString());
+						if (jsonRpc != null && jsonRpc.Error != null)
+						{
+							return (obj.ToString(), await GetError(jsonRpc.Error), GetHttpResponse(response));
+						}
+					}
+
+					string errorBody = obj.ToString();
+					if (string.IsNullOrEmpty(errorBody))
+					{
+						errorBody = $"{response.ReasonPhrase} ({(int)response.StatusCode})";
+					}
+					properties = GetHttpResponse(response);
+					return (null, new ProgramError(errorBody, goalStep, function, StatusCode: (int)response.StatusCode), properties);
+				}
+
+				if (!IsTextResponse(mediaType))
+				{
+					var bytes = await response.Content.ReadAsByteArrayAsync();
+					properties = GetHttpResponse(response);
+					return (bytes, null, properties);
+				}
+
+				string responseBody = await response.Content.ReadAsStringAsync();
+				if (response.Content.Headers.ContentType?.MediaType == "application/json" && JsonHelper.IsJson(responseBody))
+				{
+					properties = GetHttpResponse(response);
+					try
+					{
+						return (JsonConvert.DeserializeObject(responseBody), null, properties);
+					}
+					catch (Exception ex)
+					{
+						return (null, new ProgramError(ex.Message, goalStep, function), properties);
+					}
+				}
+				else if (IsXml(response.Content.Headers.ContentType?.MediaType))
+				{
+					// todo: here we convert any xml to json so user can use JSONPath to get the content. 
+					// better/faster would be to return the xml object, then when user wants to use json path, it uses xpath.
+					XmlDocument xmlDoc = new XmlDocument();
+					xmlDoc.LoadXml(Regex.Replace(responseBody, "<\\?xml.*?\\?>", "", RegexOptions.IgnoreCase));
+
+					string jsonString = JsonConvert.SerializeXmlNode(xmlDoc, Newtonsoft.Json.Formatting.Indented, true);
+					properties = GetHttpResponse(response);
+					return (JsonConvert.DeserializeObject(jsonString), null, properties);
+
+				}
+				properties = GetHttpResponse(response);
+
+				return (responseBody, null, properties);
+
+			}
+			catch (System.Net.Http.HttpRequestException ex)
+			{
+				int statusCode = (int?)ex.StatusCode ?? 503;
+				return (null, new ProgramError(ex.Message, goalStep, function, StatusCode: statusCode), properties);
+			}
+			catch (Exception ex)
+			{
+				return (null, new ProgramError(ex.Message, goalStep, function, Exception: ex), null);
+			}
+
+
 		}
+
+		private async Task<IError?> GetError(JsonRpcError error)
+		{
+			if (error.Code == 402)
+			{
+				var paymentRequest = JsonConvert.DeserializeObject<PaymentRequest>(error.Data.ToString());
+
+				return new PaymentRequestError(goalStep, paymentRequest.contract, error.Message, Callback: paymentRequest.Callback);
+			}
+
+			var param = new Dictionary<string, object?>();
+			param.Add("data", error.Data);
+			return new ProgramError(error.Message, goalStep, function, param, "HttpError");
+		}
+
 		private static Dictionary<string, object?> GetHeadersObject(HttpHeaders headers)
 		{
 
@@ -477,7 +530,7 @@ namespace PLang.Modules.HttpModule
 			}
 			return headerDict;
 		}
-		private static HttpResponse GetHttpResponse(HttpResponseMessage response)
+		private static IProperties GetHttpResponse(HttpResponseMessage response)
 		{
 			var httpResponse = new HttpResponse()
 			{
@@ -489,7 +542,9 @@ namespace PLang.Modules.HttpModule
 			httpResponse.Headers = GetHeadersObject(response.Headers);
 			httpResponse.ContentHeaders = GetHeadersObject(response.Content.Headers);
 
-			return httpResponse;
+			Properties properties = new();
+			properties.Add("Response", httpResponse);
+			return properties;
 		}
 
 		private bool IsTextResponse(string? mediaType)
@@ -530,12 +585,12 @@ namespace PLang.Modules.HttpModule
 			var headers = new Dictionary<string, object>();
 			headers.Add("url", url);
 			headers.Add("method", method);
-			string bodyHash = body.ComputeHash("keccak256").Hash;
 
-			var signature = await identity.Sign(bodyHash, contracts: contracts.ToList(), headers: headers);
+			var identity = programFactory.GetProgram<Modules.IdentityModule.Program>();
+			var signature = await identity.Sign(body, contracts: contracts.ToList(), headers: headers);
 			var json = JsonConvert.SerializeObject(signature);
 			var base64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
-			
+
 			request.Headers.TryAddWithoutValidation("X-Signature", base64);
 
 		}

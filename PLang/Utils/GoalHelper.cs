@@ -55,9 +55,9 @@ namespace PLang.Utils
 
 			// Order the files
 			var orderedFiles = filteredGoalFiles
-				.OrderBy(file => !file.Contains(Path.Join(goalPath, "events"), StringComparison.OrdinalIgnoreCase))  // "events" folder first
-				.ThenBy(file => Path.GetFileName(file).ToLower() != "setup.goal") // "setup.goal" second
-				.ThenBy(file => !file.Contains(Path.Join(goalPath, "setup", Path.DirectorySeparatorChar.ToString()), StringComparison.OrdinalIgnoreCase))   
+				.OrderBy(file => Path.GetFileName(file).ToLower() != "setup.goal") // "setup.goal" second
+				.ThenBy(file => !file.Contains(Path.Join(goalPath, "setup", Path.DirectorySeparatorChar.ToString()), StringComparison.OrdinalIgnoreCase))
+				.ThenBy(file => !file.Contains(Path.Join(goalPath, "events"), StringComparison.OrdinalIgnoreCase))  // "events" folder first
 				.ThenBy(file => Path.GetFileName(file).ToLower() != "start.goal")
 				.ToList();
 
@@ -114,7 +114,14 @@ namespace PLang.Utils
 
 		public static bool IsSetup(Goal goal)
 		{
-			return (goal.GoalFileName.Equals("Setup.goal", StringComparison.OrdinalIgnoreCase)) || (goal.RelativeGoalFolderPath.Equals(Path.Join(Path.DirectorySeparatorChar.ToString(), "setup"), StringComparison.OrdinalIgnoreCase));
+			var result = (goal.GoalFileName.Equals("Setup.goal", StringComparison.OrdinalIgnoreCase)) || (goal.RelativeGoalFolderPath.Equals(Path.Join(Path.DirectorySeparatorChar.ToString(), "setup"), StringComparison.OrdinalIgnoreCase));
+			return result;
+		}
+
+		public static bool RunOnce(Goal goal)
+		{
+			if (goal.DataSourceName != null && goal.DataSourceName.Contains("%")) return false;
+			return IsSetup(goal);			
 		}
 	}
 }

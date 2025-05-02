@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
 {
@@ -22,7 +23,7 @@ namespace PLang.Services.OutputStream
 
 		public string Output => "text";
 
-		public Task<string> Ask(string text, string type = "ask", int statusCode = 104, Dictionary<string, object>? parameters = null)
+		public Task<string> Ask(string text, string type = "ask", int statusCode = 104, Dictionary<string, object>? parameters = null, Callback? callback = null)
 		{
 			throw new NotImplementedException();
 		}

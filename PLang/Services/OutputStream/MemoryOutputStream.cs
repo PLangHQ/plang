@@ -1,6 +1,7 @@
 ﻿
 using System.Text;
 using System.Threading.Tasks;
+using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
 {
@@ -22,9 +23,9 @@ namespace PLang.Services.OutputStream
 			errorStream.Dispose();
 		}
 
-		public Task<string> Ask(string text, string type = "text", int statusCode = 200, Dictionary<string, object>? parameters = null)
+		public Task<string> Ask(string text, string type = "text", int statusCode = 200, Dictionary<string, object>? parameters = null, Callback? callback = null)
 		{
-			return null;
+			throw new NotImplementedException();
 		}
 
 		public string Read()

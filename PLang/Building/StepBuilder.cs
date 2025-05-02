@@ -10,17 +10,13 @@ using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
-using PLang.Modules;
-using PLang.Modules.DbModule;
 using PLang.Runtime;
 using PLang.Services.CompilerService;
 using PLang.Services.LlmService;
 using PLang.Utils;
-using System.ComponentModel;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
-using static PLang.Modules.DbModule.ModuleSettings;
 
 namespace PLang.Building
 {
@@ -79,9 +75,11 @@ namespace PLang.Building
 
 			try
 			{
-				if (await StepHasBeenBuild(step, stepIndex, excludeModules)) return null;
+				var hasBeenBuild = await StepHasBeenBuild(step, stepIndex, excludeModules);
+				if (hasBeenBuild.Error != null) return hasBeenBuild.Error;
+				if (hasBeenBuild.IsBuilt) return null;
 
-				var error = await eventRuntime.RunBuildStepEvents(EventType.Before, goal, step, stepIndex);
+				var (vars, error) = await eventRuntime.RunBuildStepEvents(EventType.Before, goal, step, stepIndex);
 				if (error != null) return error;
 
 				// build info about step, name, description and module type
@@ -93,6 +91,7 @@ namespace PLang.Building
 				(var instruction, error) = await instructionBuilder.BuildInstruction(this, goal, step, step.ModuleType, stepIndex, excludeModules, errorCount);
 				if (error != null)
 				{
+					
 					if (error is InvalidModuleError ime)
 					{
 						excludeModules.Add(ime.ModuleType);
@@ -118,7 +117,8 @@ namespace PLang.Building
 				step.BuilderVersion = assembly.GetName().Version.ToString();
 				step.RelativeGoalPath = goal.RelativeGoalPath;
 
-				return await eventRuntime.RunBuildStepEvents(EventType.After, goal, step, stepIndex);
+				var result = await eventRuntime.RunBuildStepEvents(EventType.After, goal, step, stepIndex);
+				return result.Error;
 			}
 			catch (Exception ex)
 			{
@@ -212,25 +212,25 @@ namespace PLang.Building
 
 		}
 
-		private async Task<bool> StepHasBeenBuild(GoalStep step, int stepIndex, List<string> excludeModules)
+		private async Task<(bool IsBuilt, IBuilderError? Error)> StepHasBeenBuild(GoalStep step, int stepIndex, List<string> excludeModules)
 		{
 			AppContext.TryGetSwitch(ReservedKeywords.StrictBuild, out bool isStrict);
-			if (isStrict && step.Number != stepIndex) return false;
-			if (step.PrFileName == null || excludeModules.Count > 0) return false;
-			if (!step.PrFileName.StartsWith((stepIndex + 1).ToString().PadLeft(2, '0'))) return false;
+			if (isStrict && step.Number != stepIndex) return (false, null);
+			if (step.PrFileName == null || excludeModules.Count > 0) return (false, null);
+			if (!step.PrFileName.StartsWith((stepIndex + 1).ToString().PadLeft(2, '0'))) return (false, null);
 
 			if (!fileSystem.File.Exists(step.AbsolutePrFilePath))
 			{
-				return false;
+				return (false, null);
 			}
 			var instruction = JsonHelper.ParseFilePath<Model.Instruction>(fileSystem, step.AbsolutePrFilePath);
-			if (instruction == null) return false;
+			if (instruction == null) return (false, null);
 
 			step.Reload = (step.Reload || instruction.Reload && step.Text != instruction?.Text);
-			if (step.Reload) return step.Reload;
+			if (step.Reload) return (step.Reload, null);
 
 			string? action = instruction?.Action?.ToString();
-			if (action == null) return false;
+			if (action == null) return (false, null);
 
 
 			var gf = JsonConvert.DeserializeObject<GenericFunction>(action);
@@ -241,7 +241,7 @@ namespace PLang.Building
 			}
 			else if (action.Contains("OutParameterDefinition"))
 			{
-				return false;
+				return (false, null);
 			}
 			else if (action.Contains("OutParameters"))
 			{
@@ -255,10 +255,11 @@ namespace PLang.Building
 				}
 			}
 
-			await this.instructionBuilder.RunBuilderMethod(step.ModuleType, gf);
+			var error = await this.instructionBuilder.RunBuilderMethod(step, gf);
+			if (error != null) return (false, error);
 
 			logger.Value.LogInformation($"- Step {step.Name} is already built");
-			return true;
+			return (true, null);
 		}
 
 		private async Task<(GoalStep, IBuilderError?)> BuildStepInformation(Goal goal, GoalStep step, int stepIndex, List<string>? excludeModules, int errorCount)
@@ -316,7 +317,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			step.RelativePrPath = Path.Join(goal.RelativePrFolderPath, step.PrFileName);
 			step.LlmRequest = llmQuestion;
 			step.Number = stepIndex;
-			step.RunOnce = GoalHelper.IsSetup(goal);
+			step.RunOnce = GoalHelper.RunOnce(goal);
 			return (step, null);
 
 		}
@@ -361,7 +362,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			logger.Value.LogInformation($"- Building properties for {step.Text}");
 
 			(var stepProperties, var llmError) = await llmServiceFactory.CreateHandler().Query<StepProperties>(llmQuestion);
-			if (llmError != null) return (step, llmError as IBuilderError);
+			if (llmError != null) return (step, new BuilderError(llmError, false));
 
 			if (stepProperties == null)
 			{
@@ -445,7 +446,7 @@ The user statement is a step of executable code.
 LoggerLevel: default null
 
 Take into account that another service will execute the user intent before error handling and cache handler, following is the instruction for that service. 
-You might not need to map the error handling or cache handler if this service is handling the user intent
+You might not need to map the error handling or cache handler if this service is handling them in the service instruction
 === service instruction ==
 {JsonConvert.SerializeObject(instruction.Action)}
 === service instruction ==

@@ -1,0 +1,27 @@
+{{ contract.name }} wants to be able to charge your payment.plang.io account
+Service Description:
+    *{{ contract.description }}*
+
+Do you agree?
+
+    1. {{ contract.name }} wants to be able to charge your payment.plang.io account
+{{ if service.type == 'manytimes' }}
+    2. {{ contract.name }} will be able to charge multiple times
+    {{ if service.limits.size > 0 }}
+    3. These are the limits on the {{ contract.name }} for charging your account
+        {{ for limit in service.limits }}
+            {{ limit.duration }} => €{{ limit.amount }}
+        {{ end }}
+    {{ end }}
+    
+{{ else }}
+    2. {{ contract.name }} will be able charge one time
+    {{ if service.limits.size > 0 }}
+    3. These are the limits on the {{ contract.name }} for charging your account
+        {{ for limit in service.limits }}
+            {{ limit.duration }} => €{{ limit.amount }}
+        {{ end }}
+    {{ end }}
+{{ end }}
+
+Answer y or n.

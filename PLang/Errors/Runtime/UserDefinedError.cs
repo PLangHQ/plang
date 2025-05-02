@@ -1,12 +1,13 @@
 ﻿using PLang.Building.Model;
 using PLang.Errors.Events;
+using PLang.Errors.Interfaces;
 using PLang.Events;
 
 namespace PLang.Errors.Runtime
 {
 	public record UserDefinedError(string Message, GoalStep Step, string Key = "UserDefinedError", int StatusCode = 400,
 			Exception? Exception = null, string? FixSuggestion = null, string? HelpfulLinks = null)
-			: StepError(Message, Step, Key, StatusCode, Exception, FixSuggestion, HelpfulLinks), IEventError
+			: StepError(Message, Step, Key, StatusCode, Exception, FixSuggestion, HelpfulLinks), IUserDefinedError, IEventError
 	{
 		public bool IgnoreError => false;
 

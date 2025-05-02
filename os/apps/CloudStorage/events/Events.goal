@@ -1,0 +1,2 @@
+Events
+- on goal error "didn't find section in config", call NotConfigured

@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
+using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Interfaces;
@@ -17,6 +18,8 @@ using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using System.Text;
 using System.Text.RegularExpressions;
+using static PLang.Modules.CodeModule.Builder;
+using static PLang.Runtime.Startup.ModuleLoader;
 
 namespace PLang.Services.CompilerService
 {
@@ -364,7 +367,7 @@ Search for {fileName} - https://www.nuget.org/packages?q={fileName}"));
 
 			}
 			//tree = tree.WithFilePath(dllFilePath.Replace(".dll", ".cs"));
-			
+
 
 			if (!fileSystem.Directory.Exists(step.Goal.AbsolutePrFolderPath))
 			{
@@ -407,7 +410,7 @@ long {variableName} = 0;
 <example>
 ";
 						}
-						
+
 					}
 					error += "\nFix the error and generate the C# code again. Make sure to reference all assemblies needed.";
 
@@ -476,7 +479,7 @@ long {variableName} = 0;
 							parameters.Add(parameter);
 						}
 					}
-					
+
 				}
 			}
 			else
@@ -537,6 +540,121 @@ long {variableName} = 0;
 				return "[" + match.Groups[1].Value + "]";
 			}
 			return match.Value;
+		}
+
+		internal async Task<IBuilderError?> BuildFile(FileCodeImplementationResponse file, GoalStep step, MemoryStack memoryStack)
+		{
+			var tree = CSharpSyntaxTree.ParseText(file.SourceCode);
+		
+
+			var coreLibPath = typeof(object).Assembly.Location;
+
+			// Initial list of references - START with the core library
+			var refs = new List<MetadataReference>
+			{
+				MetadataReference.CreateFromFile(coreLibPath)
+			};
+
+			// OPTIONALLY: Add references from the current AppDomain if needed for other dependencies
+			// Be cautious, as this might pull in unexpected references.
+			var list = AppDomain.CurrentDomain.GetAssemblies()
+						  .Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location) && a.Location != coreLibPath) // Avoid duplicates
+						  .Select(a => MetadataReference.CreateFromFile(a.Location))
+						  .Cast<MetadataReference>();
+			refs.AddRange(list);
+
+			var defaultUsings = new[]
+		{
+			"System",
+			"System.Collections.Generic",
+			"System.Linq",
+			"System.Text",
+			"System.Text.RegularExpressions",
+			"System.Threading.Tasks"
+		};
+			var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithUsings(defaultUsings);
+			/*
+			var compilation = CSharpCompilation.Create(
+				assemblyName: Path.GetFileNameWithoutExtension(file.FileName),
+				syntaxTrees: new[] { tree },
+				references: refs,
+				options: options
+			);*/
+
+
+
+			var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+					.WithOptimizationLevel(OptimizationLevel.Debug)
+					.WithPlatform(Platform.AnyCpu).WithUsings(defaultUsings);
+			var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(file.FileName), options: compilationOptions)
+				.AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
+			List<string> servicesAssembly = new();
+			compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(SafeFileSystem.PLangFileSystem).Assembly.Location));
+			compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(System.IO.Abstractions.IDirectory).Assembly.Location));
+
+			compilation = compilation.AddSyntaxTrees(tree);
+
+
+			foreach (var assembly in Assemblies)
+			{
+				if (assembly.ToLower() == "plang.safefilesystem") continue;
+
+				string dllName = assembly;
+				if (!dllName.Contains(".dll")) dllName += ".dll";
+
+				var assemblyPath = Path.Join(RuntimeEnvironment.GetRuntimeDirectory(), dllName);
+				if (File.Exists(assemblyPath))
+				{
+					compilation = compilation.AddReferences(MetadataReference.CreateFromFile(assemblyPath));
+				}
+				else
+				{
+					int i = 0;
+				}
+			}
+
+			var model = compilation.GetSemanticModel(tree);
+			var diagnostics = model.GetDiagnostics().Where(d => d.Id == "CS0246"); // CS0246: The type or namespace name could not be found
+
+			foreach (var diagnostic in diagnostics)
+			{
+				var missingAssemblyName = diagnostic.GetMessage().Split('\'')[1];
+				var resolvedReference = TryResolveReference(defaultUsings, missingAssemblyName);
+
+				if (resolvedReference != null)
+				{
+					compilation = compilation.AddReferences(resolvedReference);
+				}
+			}
+
+			string dllFile = file.FileName.Replace(".cs", ".dll");
+			if (fileSystem.File.Exists(dllFile))
+			{
+				fileSystem.File.Delete(dllFile);
+			}
+			
+
+			using var filestream = fileSystem.FileStream.New(dllFile, FileMode.CreateNew);
+			var result = compilation.Emit(filestream);
+			filestream.Close();
+
+			if (!result.Success)
+			{
+
+				var errors = result.Diagnostics
+								   .Where(d => d.Severity == DiagnosticSeverity.Error)
+								   .Select(d => d.ToString());
+				if (errors.Count() > 0)
+				{
+					fileSystem.File.Delete(dllFile);
+					string errorTxt = string.Join("\n", errors);
+					return new CompilerError(
+						$"Compilation failed:\n{errorTxt}\nSource:\n{file.SourceCode}", "", step
+					);
+				}
+			}
+
+			return null;
 		}
 	}
 }

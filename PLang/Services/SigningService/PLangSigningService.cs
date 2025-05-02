@@ -8,6 +8,7 @@ using PLang.Interfaces;
 using PLang.Models;
 using PLang.Modules.SerializerModule;
 using PLang.Utils;
+using Sprache;
 using System.Text;
 
 namespace PLang.Services.SigningService
@@ -41,7 +42,8 @@ namespace PLang.Services.SigningService
 		private readonly Modules.CryptographicModule.Program hasher;
 		private readonly string SignatureInvalid = "SignatureInvalid";
 		private readonly string VerifySignatureCacheKey = "VerifySignature_{0}";
-		public PLangSigningService(IAppCache appCache, IPLangIdentityService identityService, PLangAppContext context, Modules.SerializerModule.Program serialier, Modules.CryptographicModule.Program hasher)
+		public PLangSigningService(IAppCache appCache, IPLangIdentityService identityService, PLangAppContext context, 
+			Modules.SerializerModule.Program serialier, Modules.CryptographicModule.Program hasher)
 		{
 			{
 				this.appCache = appCache;
@@ -65,7 +67,7 @@ namespace PLang.Services.SigningService
 			}
 
 			var result = await SignInternal(seed, body, headers, contracts, expires);
-			
+
 			return result;
 		}
 
@@ -112,6 +114,8 @@ namespace PLang.Services.SigningService
 
 			var value = algorithm.Sign(key, bytesToSign);
 			signature.SignedData = Convert.ToBase64String(value);
+
+			
 			return signature;
 
 
@@ -133,7 +137,8 @@ namespace PLang.Services.SigningService
 			}
 			if (body != null)
 			{
-				signature.Body = JsonConvert.SerializeObject(body);
+				var bytes = await serialier.Serialize(body, "json");
+				signature.Body = await hasher.Hash(bytes, true, type:"Keccak256");
 			}
 
 			if (expires != null)
@@ -150,7 +155,7 @@ namespace PLang.Services.SigningService
 		}
 		*/
 
-		public async Task<(Signature? Signature, IError? Error)> VerifyDictionarySignature(Dictionary<string, object?>? signatureAsDictionary, 
+		public async Task<(Signature? Signature, IError? Error)> VerifyDictionarySignature(Dictionary<string, object?>? signatureAsDictionary,
 			Dictionary<string, object?>? headers = null, object? body = null, List<string>? contracts = null)
 		{
 			if (signatureAsDictionary == null)
@@ -170,7 +175,6 @@ namespace PLang.Services.SigningService
 		 */
 		public async Task<(Signature? Signature, IError? Error)> VerifySignature(Signature receivedSignature, Dictionary<string, object?>? headers = null, object? body = null, List<string>? contracts = null)
 		{
-
 			if (receivedSignature.Created.Ticks == 0)
 			{
 				return (null, new ServiceError("created is invalid. Should be unix time in ms from 1970.", GetType(), SignatureInvalid));
@@ -196,15 +200,11 @@ namespace PLang.Services.SigningService
 
 			if (contracts != null)
 			{
-
 				if (receivedSignature.Contracts.FirstOrDefault(p => contracts.FirstOrDefault(x => x == p) != null) == null)
 				{
 
 					return (null, new ServiceError("Contract is invalid", GetType(), SignatureInvalid,
 						FixSuggestion: @$"You sent contracts {string.Join(',', receivedSignature.Contracts)} but I expected contracts {string.Join(',', contracts)}"));
-				} else
-				{
-					receivedSignature.Contracts = contracts;
 				}
 			}
 
@@ -216,9 +216,37 @@ namespace PLang.Services.SigningService
 			}
 			await appCache.Set(cacheKey, true, DateTimeOffset.Now.AddMinutes(5).AddSeconds(5));
 
-			receivedSignature.Headers = headers;
-			receivedSignature.Body = (body != null && body is not JValue) ? JsonConvert.SerializeObject(body) : body?.ToString();
-			
+			if (headers != null && headers.Count > 0)
+			{
+				if (receivedSignature.Headers == null || receivedSignature.Headers.Count == 0) return (null, new ServiceError($"No headers is not provided in received signature", GetType(), "InvalidSignature"));
+
+				foreach (var header in headers)
+				{
+					if (!receivedSignature.Headers.ContainsKey(header.Key))
+					{
+						return (null, new ServiceError($"Header '{header.Key}' not in received signature", GetType(), "InvalidSignature"));
+					}
+
+					string? value = receivedSignature.Headers[header.Key]?.ToString();
+					if (value == null || !value.Equals(header.Value))
+					{
+						return (null, new ServiceError($"Header '{header.Key}' does not match in value to received signature", GetType(), "InvalidSignatureHeader"));
+					}
+				}
+
+			}
+			if (body != null && receivedSignature.Body != null)
+			{
+				var bytes = await serialier.Serialize(body, "json");
+				var hash = await hasher.Hash(bytes, true, type: "Keccak256");
+
+				string? value = receivedSignature.Body?.ToString();
+				if (value == null || !value.Equals(hash))
+				{
+					return (null, new ServiceError($"Body does not match in value to received signature", GetType(), "InvalidSignatureBody"));
+				}
+			}
+
 
 			var signedData = receivedSignature.SignedData;
 			receivedSignature.SignedData = null;
@@ -230,17 +258,14 @@ namespace PLang.Services.SigningService
 			if (isValid)
 			{
 				receivedSignature.SignedData = signedData;
-				context.AddOrReplace(ReservedKeywords.Identity, receivedSignature.Identity);
 				return (receivedSignature, null);
 			}
-			else
-			{
-				context.AddOrReplace(ReservedKeywords.Identity, null);
-				return (null, null);
-			}
+
+			return (null, new ServiceError("Signature is invalid", GetType(), "InvalidSignature"));
+			
 		}
 
-		private(SignatureAlgorithm algorithm, NSec.Cryptography.PublicKey publicKey) GetPublicKey(string type, string identifier)
+		private (SignatureAlgorithm algorithm, NSec.Cryptography.PublicKey publicKey) GetPublicKey(string type, string identifier)
 		{
 			if (type != "Ed25519")
 			{

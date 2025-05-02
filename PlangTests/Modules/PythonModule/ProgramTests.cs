@@ -19,8 +19,8 @@ namespace PLangTests.Modules.PythonModule
 		public void Init()
 		{
 			base.Initialize();
-			terminalProgram = new PLang.Modules.TerminalModule.Program(logger, settings, outputStreamFactory, fileSystem);
-			terminalProgram.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, null);
+			terminalProgram = new PLang.Modules.TerminalModule.Program(logger, settings, outputStreamFactory, fileSystem, programFactory, engine);
+			terminalProgram.Init(container, null, null, null, null);
 
 		}
 
@@ -40,7 +40,7 @@ namespace PLangTests.Modules.PythonModule
 
 			
 			var p = new Program(fileSystem, logger, settings, outputStream, signingService, terminalProgram);
-			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, null);
+			p.Init(container, null, null, null, null);
 			string[] vars = new string[] { "result" };
 			 await p.RunPythonScript("main.py", variablesToExtractFromPythonScript: vars,
 				stdOutVariableName : "stdOut", stdErrorVariableName: "stdError");
@@ -62,7 +62,7 @@ namespace PLangTests.Modules.PythonModule
 
 			var outputStream = NSubstitute.Substitute.For<IOutputStreamFactory>();
 			var p = new Program(fileSystem, logger, settings, outputStream, signingService, terminalProgram);
-			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, null);
+			p.Init(container, null, null, null, null);
 
 			string[] vars = new string[] { "result" };
 			await p.RunPythonScript("main_params.py", variablesToExtractFromPythonScript: vars,

@@ -1,2 +1,20 @@
 PaymentRequest
-- write out %request%
+- write out "Contract: %contract%"
+- if %contract.services.Count% > 1 then, ChoosePaymentService, else CallService service=%contract.services[0]%
+
+ChoosePaymentService
+- render "template/chooseService.html", write to %question%
+- ask user, %question%, required, must be number 1-%contract.services.Count%, write %answer%
+- set %index% = %answer-1%
+- call goal CallService service=%contract.services[index]%
+
+CallService
+- write out "SErvice: %service.name%"
+- call goal /services/%service.name%/ConfirmContract
+    on error 'not found' call ServiceNotFound
+    write to %signedContract%
+- return contract=%signedContract%
+
+ServiceNotFound
+- write out "Could not find service requested: %service.name%"
+- throw %!error%

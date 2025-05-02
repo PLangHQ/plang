@@ -1,11 +1,14 @@
 ﻿using MimeKit;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PLang.Building.Model;
 using PLang.Errors;
+using PLang.Modules;
 using PLang.Utils;
 using System;
 using System.Net;
 using System.Text;
+using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
 {
@@ -25,8 +28,9 @@ namespace PLang.Services.OutputStream
 
 		public string Output => "json";
 
-		public async Task<string> Ask(string text, string type, int statusCode = 200, Dictionary<string, object>? parameters = null)
+		public async Task<string> Ask(string text, string type, int statusCode = 200, Dictionary<string, object>? parameters = null, Callback? callback = null)
 		{
+			
 			httpContext.Response.SendChunked = true;
 			httpContext.Response.StatusCode = statusCode;
 			if (parameters == null || !parameters.ContainsKey("url"))
@@ -44,17 +48,13 @@ namespace PLang.Services.OutputStream
 					var askObj = new
 					{
 						type = "ask",
-						statusCode = statusCode,
-						url = url,
+						statusCode,
+						url,
 						body = text,
-						parameters = parameters
+						parameters,
+						callback
 					};
-					/*
-					string content = text.ToString();
-					if (!JsonHelper.IsJson(content))
-					{
-						content = JsonConvert.SerializeObject(content);
-					}*/
+
 
 					await writer.WriteAsync(JsonConvert.SerializeObject(askObj));
 				}

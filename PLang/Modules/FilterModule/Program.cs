@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis.CSharp;
+﻿using HtmlAgilityPack;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -10,6 +11,7 @@ using System.Collections;
 using System.ComponentModel;
 using System.Linq.Dynamic.Core;
 using System.Text.RegularExpressions;
+using Fizzler.Systems.HtmlAgilityPack;
 
 namespace PLang.Modules.FilterModule
 {
@@ -470,5 +472,55 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 				_ => throw new ArgumentException($"Unsupported operator: {operatorToFilter}")
 			};
 		}
+
+		[Description("Retrieve element(s) from html by a css selector, retrieveOneItem: first|last|number (retrieveOneItem can also be a number representing the index.) ")]
+		public async Task<object?> ExtractByCssSelector(string html, string cssSelector, string? retrieveOneItem = null)
+		{
+			var doc = new HtmlDocument();
+			doc.LoadHtml(html);
+			
+			var nodes = doc.DocumentNode.QuerySelectorAll(cssSelector);
+
+			if (!string.IsNullOrEmpty(retrieveOneItem))
+			{
+				if (retrieveOneItem == "first") return MapHtmlNode(nodes.FirstOrDefault());
+				if (retrieveOneItem == "last") return MapHtmlNode(nodes.LastOrDefault());
+				if (int.TryParse(retrieveOneItem, out int idx)) return nodes.ElementAtOrDefault(idx);
+			}
+
+			List<HtmlNode> returnNodes = new();
+			foreach (var node in nodes)
+			{
+				var mappedNode = MapHtmlNode(node);
+				if (mappedNode != null) returnNodes.Add(mappedNode);
+			}
+
+			return returnNodes;
+		}
+
+		public async Task<object?> ExtractFromXPath(string html, string xpath)
+		{
+			var doc = new HtmlDocument();
+			doc.LoadHtml(html);
+
+			var node = doc.DocumentNode.SelectSingleNode(xpath);
+			return MapHtmlNode(node);
+		}
+		public record HtmlNode(string Name, string? InnerText, Dictionary<string, string> Attributes)
+		{
+			public override string ToString()
+			{
+				return InnerText;
+			}
+		}
+
+		private static HtmlNode? MapHtmlNode(HtmlAgilityPack.HtmlNode? node)
+		{
+			if (node == null) return null;
+
+			var attributes = node.Attributes.ToDictionary(a => a.Name, a => a.Value);
+			return new HtmlNode(node.Name, node.InnerText?.Trim(), attributes);
+		}
+
 	}
 }

@@ -15,6 +15,7 @@ namespace PLang.Errors
 	{
 
 		public static readonly string UnhandledError = "UnhandledError";
+		public bool Retry => false;
 		public ExceptionError(IError error)
 		{
 
@@ -52,6 +53,12 @@ namespace PLang.Errors
 		public bool ContinueBuild => false;
 		public Goal? Goal { get; set; }
 		public GoalStep? Step { get; set; }
+
+		public object AsData()
+		{
+			throw new NotImplementedException();
+		}
+
 		public object ToFormat(string contentType = "text")
 		{
 			return ErrorHelper.ToFormat(contentType, this);

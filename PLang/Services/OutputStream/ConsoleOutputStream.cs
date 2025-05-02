@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
 {
@@ -27,7 +28,7 @@ namespace PLang.Services.OutputStream
 
 		public string Output { get => "text"; }
 
-		public async Task<string> Ask(string text, string type = "text", int statusCode = 202, Dictionary<string, object>? parameters = null)
+		public async Task<string> Ask(string text, string type = "text", int statusCode = 202, Dictionary<string, object>? parameters = null, Callback? callback = null)
 		{
 			Console.WriteLine("[Ask] " + text);
 		

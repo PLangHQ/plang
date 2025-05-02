@@ -28,14 +28,15 @@ namespace PLang.Events
 
 		public const string AppError = "AppError";
         public const string GoalError = "GoalError";
-        public const string StepError = "StepError";
+		public const string StepError = "StepError";
+		public const string ModuleError = "ModuleError";
 
-    }
+	}
 
 	// before each goal in api/* call !DoStuff
 	// before each step call !Debugger.SendInfo
 	// after Run.goal, call !AfterRun
-	public record EventBinding(string EventType, string EventScope, GoalToCall GoalToBindTo, GoalToCall GoalToCall,
+	public record EventBinding(string EventType, string EventScope, GoalToCall GoalToBindTo, GoalToCall GoalToCall, Dictionary<string, object?>? GoalToCallParameters = null,
         [property: DefaultValue("false")] bool IncludePrivate = false,
         int? StepNumber = null, string? StepText = null,
 		[property: DefaultValue("true")] bool WaitForExecution = true,

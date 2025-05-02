@@ -1,11 +1,15 @@
 ﻿using NBitcoin.Protocol;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Errors;
 using PLang.Errors.Runtime;
+using PLang.Errors.Types;
 using PLang.Models;
 using PLang.Services.OutputStream;
+using PLang.Utils;
 using System.ComponentModel;
+using System.Diagnostics.Contracts;
 
 namespace PLang.Modules.ThrowErrorModule
 {
@@ -13,10 +17,12 @@ namespace PLang.Modules.ThrowErrorModule
 	public class Program : BaseProgram
 	{
 		private readonly IOutputStreamFactory outputStreamFactory;
+		private readonly ProgramFactory programFactory;
 
-		public Program(IOutputStreamFactory outputStreamFactory)
+		public Program(IOutputStreamFactory outputStreamFactory, ProgramFactory programFactory)
 		{
 			this.outputStreamFactory = outputStreamFactory;
+			this.programFactory = programFactory;
 		}
 
 		[Description("When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc. type can be error|critical. statusCode(like http status code) should be defined by user.")]
@@ -28,7 +34,7 @@ namespace PLang.Modules.ThrowErrorModule
 			return new UserDefinedError(message.ToString(), goalStep, type, statusCode);
 		}
 
-		
+
 		[Description("When user intends the execution of the goal to stop without giving a error response. This is equal to doing return in a function. Depth is how far up the stack it should end, previous goal is 1")]
 		[MethodSettings(CanBeAsync = false, CanHaveErrorHandling = false, CanBeCached = false)]
 		public async Task<IError?> EndGoalExecution(string? message = null, int levels = 0)
@@ -44,12 +50,27 @@ namespace PLang.Modules.ThrowErrorModule
 		}
 
 		[Description("Create payment request(402)")]
-		public async Task<(Signature?, IError)> CreatePaymentRequest(string name, string description, string error, Dictionary<string, object> services)
+		public async Task<(PaymentContract?, IError?)> CreatePaymentRequest(string name, string description, string error, List<Dictionary<string, object>> services)
 		{
-			var obj = new { name, description, error, services };
-			return (null, new UserDefinedError(JsonConvert.SerializeObject(obj), goalStep, "Payment Required", 402));
+			if (context.ContainsKey("!contract"))
+			{
+				var strContract = context["!contract"]?.ToString();
+				if (!string.IsNullOrEmpty(strContract))
+				{
+					var paymentContract = JObject.Parse(strContract).ToObject<PaymentContract>();
+					return (paymentContract, null);
+				}
+			}
+
+			var callback = await StepHelper.GetCallback(goalStep, programFactory);
+
+			var obj = new PaymentContract(name, description, error, services);
+			
+			var paymentRequest = new PaymentRequest(obj, callback);
+			return (null, new PaymentRequestError(goalStep, obj, description, Callback: callback));
 
 		}
 
 	}
+
 }

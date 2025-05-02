@@ -22,6 +22,7 @@ namespace PLang.Modules.WebCrawlerModule
 		private readonly ILogger logger;
 		private readonly IEngine engine;
 		private readonly IPseudoRuntime runtime;
+		private readonly ProgramFactory programFactory;
 		private readonly string PlayWrightContextKey = "!PlayWrightContextKey";
 		private readonly string BrowserContextKey = "!BrowserContextKey";
 
@@ -39,13 +40,14 @@ namespace PLang.Modules.WebCrawlerModule
 		private readonly string DialogContextKey = "!DialogContextKey";
 		private readonly string BrowserStartPropertiesContextKey = "!BrowserStartPropertiesContextKey";
 		private object locker = new object();
-		public Program(PLangAppContext context, IPLangFileSystem fileSystem, ILogger logger, IEngine engine, IPseudoRuntime runtime) : base()
+		public Program(PLangAppContext context, IPLangFileSystem fileSystem, ILogger logger, IEngine engine, IPseudoRuntime runtime, ProgramFactory programFactory) : base()
 		{
 			this.context = context;
 			this.fileSystem = fileSystem;
 			this.logger = logger;
 			this.engine = engine;
 			this.runtime = runtime;
+			this.programFactory = programFactory;
 		}
 
 		private string GetChromeUserDataDir()
@@ -71,22 +73,23 @@ namespace PLang.Modules.WebCrawlerModule
 
 		[Description("browserType=Chrome|Edge|Firefox|Safari. hideTestingMode tries to disguise that it is a bot.")]
 		public async Task<IBrowserContext> StartBrowser(string browserType = "Chrome", bool headless = false, string profileName = "",
-			bool kioskMode = false, Dictionary<string, string>? argumentOptions = null, int? timoutInSeconds = 30, bool hideTestingMode = false,
+			bool kioskMode = false, Dictionary<string, object>? argumentOptions = null, int? timoutInSeconds = 30, bool hideTestingMode = false,
 			GoalToCall? onRequest = null, GoalToCall? onResponse = null)
 		{
 			var playwright = await Playwright.CreateAsync();
 			var browser = await GetBrowserType(playwright, browserType, headless, profileName, kioskMode, argumentOptions, hideTestingMode);
 
 			browser.SetDefaultTimeout((timoutInSeconds ?? 30) * 1000);
-			var callGoal = GetProgramModule<CallGoalModule.Program>();
+			var callGoal = programFactory.GetProgram<CallGoalModule.Program>();
 
 			browser.Request += async (object? sender, IRequest e) =>
 			{
 				context.AddOrReplace(RequestContextKey, e);
 				if (onRequest != null)
 				{
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!Request", e } };
-					var result = await callGoal.RunGoal(onResponse, parameters, isolated: true);
+					
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!Request", WebCrawlerHelper.GetRequest(e) } };
+					var result = await callGoal.RunGoal(onRequest, parameters, isolated: true);
 
 					if (result.Error != null)
 					{
@@ -100,7 +103,7 @@ namespace PLang.Modules.WebCrawlerModule
 				context.AddOrReplace(ResponseContextKey, e);
 				if (onResponse != null)
 				{
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!response", e } };
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!response", await WebCrawlerHelper.GetResponse(e) } };
 					var result = await callGoal.RunGoal(onResponse, parameters, isolated: true);
 
 					if (result.Error != null)
@@ -122,7 +125,7 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 
 		private async Task<IBrowserContext> GetBrowserType(IPlaywright playwright, string browserType, bool headless,
-			string profileName, bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode)
+			string profileName, bool kioskMode, Dictionary<string, object>? argumentOptions, bool hideTestingMode)
 		{
 			switch (browserType)
 			{
@@ -139,7 +142,7 @@ namespace PLang.Modules.WebCrawlerModule
 
 
 		private async Task<IBrowserContext> GetBrowser(string browserType = "Chrome", bool headless = false, bool useUserSession = false, string userSessionPath = "",
-			bool incognito = false, bool kioskMode = false, Dictionary<string, string>? argumentOptions = null, int? timeoutInSeconds = null)
+			bool incognito = false, bool kioskMode = false, Dictionary<string, object>? argumentOptions = null, int? timeoutInSeconds = null)
 		{
 			var browser = context[BrowserContextKey] as IBrowserContext;
 			if (browser != null) return browser;
@@ -281,10 +284,10 @@ namespace PLang.Modules.WebCrawlerModule
 
 		[Description("opens a page to a url. browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.")]
 		public async Task NavigateToUrl(string url, string browserType = "Chrome", bool headless = false,
-				string profileName = "", bool kioskMode = false, Dictionary<string, string>? argumentOptions = null,
+				string profileName = "", bool kioskMode = false, Dictionary<string, object>? argumentOptions = null,
 				int? timeoutInSecods = null, bool hideTestingMode = false, int pageIndex = 0,
 				GoalToCall? onRequest = null, GoalToCall? onResponse = null, GoalToCall? onWebsocketReceived = null, GoalToCall? onWebsocketSent = null,
-				GoalToCall? onConsoleOutput = null, GoalToCall? onWorker = null, GoalToCall? onCrash = null,
+				GoalToCall? onConsoleOutput = null, GoalToCall? onWorker = null,
 				GoalToCall? onDialog = null, GoalToCall? onLoad = null, GoalToCall? onDOMLoad = null, GoalToCall? onFileChooser = null,
 				GoalToCall? onIFrameLoad = null, GoalToCall? onDownload = null)
 		{
@@ -317,7 +320,7 @@ namespace PLang.Modules.WebCrawlerModule
 					page = await browser.NewPageAsync();
 				}
 				BindEventsToPage(page, url, onRequest, onResponse, onWebsocketReceived, onWebsocketSent,
-					onConsoleOutput, onWorker, onCrash,
+					onConsoleOutput, onWorker,
 					onDialog, onLoad, onDOMLoad, onFileChooser,
 					onIFrameLoad, onDownload);
 			}
@@ -489,7 +492,7 @@ return result;");
 				cssSelector = context["prevCssSelector"]?.ToString();
 			}
 
-			if (cssSelector == null)
+			if (string.IsNullOrEmpty(cssSelector))
 			{
 				cssSelector = "html";
 			}
@@ -684,7 +687,7 @@ return result;");
 
 		}
 
-
+		[Description("outputFormat=html|md")]
 		public async Task<string> ExtractContent(string? cssSelector = null, PlangWebElement? element = null, string outputFormat = "html")
 		{
 			var page = await GetCurrentPage();
@@ -694,6 +697,7 @@ return result;");
 
 			string html = await page.InnerHTMLAsync(cssSelector);
 
+			outputFormat = outputFormat.TrimStart('.');
 			if (outputFormat == "md")
 			{
 				var config = new ReverseMarkdown.Config
@@ -852,7 +856,7 @@ return result;");
 
 			throw new InvalidOperationException("Profile info not found in Local State file.");
 		}
-		private BrowserTypeLaunchOptions GetChromeIcognitoOptions(bool headless, bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode)
+		private BrowserTypeLaunchOptions GetChromeIcognitoOptions(bool headless, bool kioskMode, Dictionary<string, object>? argumentOptions, bool hideTestingMode)
 		{
 			BrowserTypeLaunchOptions options = new BrowserTypeLaunchOptions();
 			options.Headless = headless;
@@ -882,7 +886,7 @@ return result;");
 			return options;
 		}
 
-		private BrowserTypeLaunchPersistentContextOptions GetChromeOptions(bool headless, bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode)
+		private BrowserTypeLaunchPersistentContextOptions GetChromeOptions(bool headless, bool kioskMode, Dictionary<string, object>? argumentOptions, bool hideTestingMode)
 		{
 			var options = new BrowserTypeLaunchPersistentContextOptions();
 			options.Headless = headless;
@@ -904,7 +908,7 @@ return result;");
 			return options;
 		}
 		private async Task<IBrowserContext> GetChromeDriver(IPlaywright playwright, bool headless, string profileName,
-			bool kioskMode, Dictionary<string, string>? argumentOptions, bool hideTestingMode, int errorCount = 0)
+			bool kioskMode, Dictionary<string, object>? argumentOptions, bool hideTestingMode, int errorCount = 0)
 		{
 			string? userProfile = null;
 
@@ -942,7 +946,7 @@ return result;");
 				{
 					if (errorCount < 2 && pe.Message.Contains("Executable doesn't exist"))
 					{
-						var program = GetProgramModule<PLang.Modules.TerminalModule.Program>();
+						var program = programFactory.GetProgram<PLang.Modules.TerminalModule.Program>();
 						await program.RunTerminal("playwright.ps1", ["install"], pathToWorkingDirInTerminal: AppContext.BaseDirectory);
 
 						return await GetChromeDriver(playwright, headless, profileName, kioskMode, argumentOptions, hideTestingMode, ++errorCount);
@@ -978,7 +982,7 @@ return result;");
 				{
 					if (pe.Message.Contains("Executable doesn't exist"))
 					{
-						var program = GetProgramModule<PLang.Modules.TerminalModule.Program>();
+						var program = programFactory.GetProgram<PLang.Modules.TerminalModule.Program>();
 						await program.RunTerminal("playwright.ps1", ["instal"]);
 
 						return await GetChromeDriver(playwright, headless, profileName, kioskMode, argumentOptions, hideTestingMode);
@@ -1017,10 +1021,10 @@ return result;");
 		}
 
 		private void BindEventsToPage(IPage page, string pageUrl, GoalToCall? onRequest = null, GoalToCall? onResponse = null, GoalToCall? onWebsocketReceived = null, GoalToCall? onWebsocketSent = null,
-			GoalToCall? onConsoleOutput = null, GoalToCall? onWorker = null, GoalToCall? onCrash = null, GoalToCall? onDialog = null, GoalToCall? onLoad = null,
+			GoalToCall? onConsoleOutput = null, GoalToCall? onWorker = null, GoalToCall? onDialog = null, GoalToCall? onLoad = null,
 			GoalToCall? onDOMLoad = null, GoalToCall? onFileChooser = null, GoalToCall? onIFrameLoad = null, GoalToCall? onDownload = null)
 		{
-			var callGoal = GetProgramModule<CallGoalModule.Program>();
+			var callGoal = programFactory.GetProgram<CallGoalModule.Program>();
 
 			page.Console += async (object? sender, IConsoleMessage e) =>
 			{
@@ -1050,7 +1054,7 @@ return result;");
 
 				if (onRequest != null)
 				{
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!request", e } };
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!request", WebCrawlerHelper.GetRequest(e) } };
 					var result = await callGoal.RunGoal(onRequest, parameters, isolated: true);
 
 					if (result.Error != null)
@@ -1070,7 +1074,7 @@ return result;");
 
 				if (onResponse != null)
 				{		
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!response", e } };
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!response", await WebCrawlerHelper.GetResponse(e) } };
 					var result = await callGoal.RunGoal(onResponse, parameters, isolated: true);
 			
 					if (result.Error != null)
@@ -1132,20 +1136,7 @@ return result;");
 					}
 				};
 			}
-
-			if (onCrash != null)
-			{
-				page.Crash += async (object? sender, IPage e) =>
-				{
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!page", e } };
-					var result = await callGoal.RunGoal(onCrash, parameters, isolated: true);
-
-					if (result.Error != null)
-					{
-						throw new ExceptionWrapper(result.Error);
-					}
-				};
-			}
+			
 
 
 			page.Dialog += async (object? sender, IDialog e) =>

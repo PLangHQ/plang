@@ -54,6 +54,11 @@ namespace PLang.Errors
 			return ToFormat().ToString();
 		}
 
+		public object AsData()
+		{
+			throw new NotImplementedException();
+		}
+
 		public List<IError> Errors { get { return errors; } }
 
 
@@ -79,12 +84,13 @@ namespace PLang.Errors
 		}
 		public GoalStep? Step { get; set; } = InitialError.Step;
 		public Goal? Goal { get; set; } = InitialError.Step?.Goal;
-		public void Add(IError error)
+		public MultipleError Add(IError error)
 		{
 			if (error != InitialError)
 			{
 				errors.Add(error);
 			}
+			return this;
 		}
 
 		public object ToFormat(string contentType = "text")
@@ -111,6 +117,11 @@ namespace PLang.Errors
 		public override string ToString()
 		{
 			return ToFormat().ToString();
+		}
+
+		public object AsData()
+		{
+			throw new NotImplementedException();
 		}
 
 		public List<IError> Errors { get { return errors; } }

@@ -11,8 +11,8 @@ namespace PLangTests.Modules.FileModule
 		public void Init()
 		{
 			base.Initialize();
-			p = new Program(fileSystem, settings, logger, pseudoRuntime, engine, fileAccessHandler);
-			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, appCache, null);
+			p = new Program(fileSystem, settings, logger, pseudoRuntime, engine, fileAccessHandler, errorSystemHandlerFactory);
+			p.Init(container, null, null, null, null);
 		}
 
 		[TestMethod]

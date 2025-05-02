@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Errors;
+using PLang.Errors.Builder;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Models;
@@ -9,10 +11,11 @@ using PLang.Services.CompilerService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Reflection;
+using static PLang.Modules.CodeModule.Builder;
 
 namespace PLang.Modules.CodeModule
 {
-	[Description("Generate c# code from user description. Only use if no other module is found or if [code] is defined.")]
+	[Description("Generate or Run existing c# code from user description. Only use if no other module is found or if [code] is defined.")]
 	public class Program : BaseProgram
 	{
 		private readonly IPLangFileSystem fileSystem;
@@ -30,6 +33,12 @@ namespace PLang.Modules.CodeModule
 			Implementation? answer = null;
 			try
 			{
+				var jobj = instruction.Action as JObject;
+				if (jobj != null && jobj.Property("FileName") != null)
+				{
+					return RunFileCode(jobj);
+				}
+
 				answer = JsonConvert.DeserializeObject<Implementation?>(instruction.Action.ToString()!);
 				if (answer == null)
 				{
@@ -156,6 +165,40 @@ namespace PLang.Modules.CodeModule
 
 		}
 
+		private (object?, IError?) RunFileCode(JObject jobj)
+		{
+			var fileCode = jobj.ToObject<FileCodeImplementationResponse>();
+			if (fileCode == null) return (null, new BuilderError("Could not map the instruction file"));
+
+			var dllPath = GetPath(fileCode.FileName.Replace(".cs", ".dll"));
+			var assembly = Assembly.LoadFrom(dllPath);
+
+			var typeName = $"{fileCode.Namespace}.{fileCode.ClassName}".TrimStart('.'); // Replace with actual class name including namespace
+			var methodName = fileCode.MethodName; // Replace with actual method name
+
+			var type = assembly.GetType(typeName);
+			var method = type.GetMethod(methodName);
+
+			var instance = Activator.CreateInstance(type);
+
+			List<object?> parameters = [];
+			foreach (var param in fileCode.InputParameters)
+			{
+				parameters.Add(variableHelper.LoadVariables(param.Value));
+			}
+
+			try
+			{
+				var result = method.Invoke(instance, parameters.ToArray());
+
+				return (result, null);
+
+			} catch (Exception ex)
+			{
+				return (null, new ExceptionError(ex));
+			}
+
+		}
 	}
 
 }

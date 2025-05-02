@@ -4,17 +4,17 @@
   "Text": "Events",
   "GoalSteps": [
     {
-      "Text": "before each step, include private goals, call Runtime/SendDebug, parameter --debug",
+      "Text": "before each step, include private goals, call Runtime/SendDebug, start parameter --debug",
       "Comment": null,
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-04-07T19:42:36.2801309+00:00",
+      "Generated": "2025-05-02T15:59:31.2088016+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -33,6 +33,7 @@
         "GoalToCall": {
           "Value": "Runtime/SendDebug"
         },
+        "GoalToCallParameters": null,
         "IncludePrivate": true,
         "StepNumber": null,
         "StepText": null,
@@ -55,17 +56,17 @@
       "RelativeGoalPath": "\\events\\Events.goal"
     },
     {
-      "Text": "before goal ends, include private goals, call Runtime/SendDebug, parameter --debug",
+      "Text": "before goal ends, include private goals, call Runtime/SendDebug, start parameter --debug",
       "Comment": null,
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-04-07T19:42:37.5558269+00:00",
+      "Generated": "2025-05-02T15:59:31.2481269+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -77,13 +78,14 @@
       "LlmRequest": null,
       "EventBinding": {
         "EventType": "Before",
-        "EventScope": "Goal",
+        "EventScope": "EndOfApp",
         "GoalToBindTo": {
           "Value": "*"
         },
         "GoalToCall": {
           "Value": "Runtime/SendDebug"
         },
+        "GoalToCallParameters": null,
         "IncludePrivate": true,
         "StepNumber": null,
         "StepText": null,
@@ -98,7 +100,7 @@
         "ExceptionType": null,
         "IsLocal": false,
         "IncludeOsGoals": false,
-        "Id": "Before_Goal_*_Runtime/SendDebug_True___True_--debug_False_____False"
+        "Id": "Before_EndOfApp_*_Runtime/SendDebug_True___True_--debug_False_____False"
       },
       "IsEvent": true,
       "Hash": null,
@@ -116,7 +118,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-04-07T19:42:39.7572687+00:00",
+      "Generated": "2025-05-02T16:03:28.5093505+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -135,6 +137,7 @@
         "GoalToCall": {
           "Value": "Runtime/HandleBadInstructionFile"
         },
+        "GoalToCallParameters": null,
         "IncludePrivate": false,
         "StepNumber": null,
         "StepText": null,
@@ -165,7 +168,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-04-07T19:42:41.9598653+00:00",
+      "Generated": "2025-05-02T16:03:28.5665534+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -184,6 +187,7 @@
         "GoalToCall": {
           "Value": "Runtime/HandleBadInstructionFile"
         },
+        "GoalToCallParameters": null,
         "IncludePrivate": false,
         "StepNumber": null,
         "StepText": null,
@@ -214,7 +218,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-04-07T19:42:44.0222219+00:00",
+      "Generated": "2025-05-02T16:03:28.5794562+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -233,6 +237,7 @@
         "GoalToCall": {
           "Value": "Runtime/HandleBadInstructionFile"
         },
+        "GoalToCallParameters": null,
         "IncludePrivate": false,
         "StepNumber": null,
         "StepText": null,
@@ -263,7 +268,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-04-07T19:42:45.6423379+00:00",
+      "Generated": "2025-05-02T16:03:28.5955127+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -282,6 +287,7 @@
         "GoalToCall": {
           "Value": "Runtime/PrFileNotFound"
         },
+        "GoalToCallParameters": null,
         "IncludePrivate": false,
         "StepNumber": null,
         "StepText": null,
@@ -302,17 +308,17 @@
       "RelativeGoalPath": "\\events\\Events.goal"
     },
     {
-      "Text": "on step error, call Runtime/DebugErrorInIde, only when args --debug",
+      "Text": "on step error, call Runtime/DebugErrorInIde, start args --debug",
       "Comment": null,
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-04-07T19:42:47.6945648+00:00",
+      "Generated": "2025-05-02T15:59:31.2823859+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -331,6 +337,7 @@
         "GoalToCall": {
           "Value": "Runtime/DebugErrorInIde"
         },
+        "GoalToCallParameters": null,
         "IncludePrivate": false,
         "StepNumber": null,
         "StepText": null,
@@ -353,17 +360,17 @@
       "RelativeGoalPath": "\\events\\Events.goal"
     },
     {
-      "Text": "on step error status 402, call /apps/Wallet/PaymentRequest request=%!error%",
+      "Text": "on module error status 402, include private, call /apps/Wallet/PaymentRequest contract=%!error.Contract%",
       "Comment": null,
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-04-07T19:42:49.8081785+00:00",
+      "Generated": "2025-05-02T15:59:31.3585235+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -375,14 +382,17 @@
       "LlmRequest": null,
       "EventBinding": {
         "EventType": "After",
-        "EventScope": "StepError",
+        "EventScope": "ModuleError",
         "GoalToBindTo": {
           "Value": "*"
         },
         "GoalToCall": {
           "Value": "/apps/Wallet/PaymentRequest"
         },
-        "IncludePrivate": false,
+        "GoalToCallParameters": {
+          "contract": "%!error.Contract%"
+        },
+        "IncludePrivate": true,
         "StepNumber": null,
         "StepText": null,
         "WaitForExecution": true,
@@ -394,7 +404,7 @@
         "ExceptionType": null,
         "IsLocal": false,
         "IncludeOsGoals": false,
-        "Id": "After_StepError_*_/apps/Wallet/PaymentRequest_False___True__False___402__False"
+        "Id": "After_ModuleError_*_/apps/Wallet/PaymentRequest_True___True__False___402__False"
       },
       "IsEvent": true,
       "Hash": null,
@@ -412,7 +422,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-04-07T19:42:51.1935069+00:00",
+      "Generated": "2025-05-02T16:03:28.6289251+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -431,6 +441,7 @@
         "GoalToCall": {
           "Value": "Runtime/OnAppError"
         },
+        "GoalToCallParameters": null,
         "IncludePrivate": false,
         "StepNumber": null,
         "StepText": null,
@@ -465,5 +476,6 @@
   "Signature": null,
   "Hash": null,
   "IncomingVariablesRequired": null,
-  "DataSourceName": null
+  "DataSourceName": null,
+  "IsSetup": false
 }

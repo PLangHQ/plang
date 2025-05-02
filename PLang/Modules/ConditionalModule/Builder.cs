@@ -63,15 +63,17 @@ namespace PLang.Modules.ConditionalModule
 - Always convert object to type before doing return.
 - Always convert object to correct type in code, e.g. if code requires the object to be string use Convert.ToString(obj), when object should be bool Convert.ToBoolean(obj), etc.
 - when checking if string is empty, check if it's null and do .ToString() on it and check if empty
+- GoalToCallOnTrueParameters and GoalToCallOnFalseParameters should not be in c# code
+- Variable with ! reference variables stored in context, e.g. %!request%.
 ## Rules ##
 
 ## Response information ##
 - Namespace: MUST be PLangGeneratedCode
 - Name: is name of class, it should represent the intent of what the code is doing. 
 {dllName}
-- Goals should be prefixed with !, e.g. Call !ValidateUser, Call !ConditionFalse
 - GoalToCallOnTrue or GoalToCallOnFalse is optional, if not defined by user, set as null
-- Goals can be called with parameters using GoalToCallOnTrueParameters and GoalToCallOnFalseParameters, e.g. Call !UpdateProduct id=%id%, call !FalseCall status='false'. Then id is parameter for True, and status for False
+- GoalToCallOnTrue and GoalToCallOnFalse MUST not be in c# code
+- Goals can be called with parameters using GoalToCallOnTrueParameters and GoalToCallOnFalseParameters, e.g. if %isValid% then, call UpdateProduct id=%id%, call FalseCall status='false'. Then id is parameter for True, and status for False
 - Using: must include namespaces that are needed to compile code.
 - InputParameters: InputParameters MUST match parameter count sent to ExecutePlangCode. Keep format as is defined by user, e.g. if %!error% then => Parameters would be [""%!error%""], if %items.count% > 0 and %isValid% then => Parameters would be [""%list[0]%"", ""%isValid%""]
 - Assemblies: dll to reference to compile using Roslyn
@@ -80,15 +82,16 @@ namespace PLang.Modules.ConditionalModule
 			AppendToAssistantCommand(@"## examples ##
 'if %isValid% is true then', this condition would return true if %isValid% is true. 
 'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false.
-
-'if %data% (string) is null, call !CreateData, else !AppendData' => public static bool ExecutePlangCode(string? dataαuser_id) { return string.IsNullOrEmpty(userIdentity); }, GoalToCallOnTrue=CreateData, GoalToCallOnFalse=AppendData
-'if %exists% (bool) is null, call !CreateUser' => public static bool ExecutePlangCode(bool? dataαuser_id) { return exists == null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null
-'if %exists% (bool) is not null, call !CreateUser' => public static bool ExecutePlangCode(bool? dataαuser_id) { return exists != null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null
-'if %data.user_id% is empty, call !CreateUser' => public static bool ExecutePlangCode(dynamic? dataαuser_id) { return (dataαuser_id == null || (dataαuser_id is string str && string.IsNullOrEmpty(str))); } //if we dont know the type of %data.user_id%, , GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null
+'if %data.user% is not empty, then call ProcessUser user=%data.user%', => public static bool ExecutePlangCode(object? dataαuuser) { return (dataαuuser == null || string.IsNullOrEmpty(dataαuuser.ToString()); }, GoalToCallOnTrue=ProcessUser, GoalToCallOnTrueParameters={user:%data.user%}
+'if %data% (string) is null, call CreateData, else AppendData' => public static bool ExecutePlangCode(string? dataαuser_id) { return string.IsNullOrEmpty(userIdentity); }, GoalToCallOnTrue=CreateData, GoalToCallOnFalse=AppendData
+'if %exists% (bool) is null, call CreateUser' => public static bool ExecutePlangCode(bool? dataαuser_id) { return exists == null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null
+'if %exists% (bool) is not null, call CreateUser' => public static bool ExecutePlangCode(bool? dataαuser_id) { return exists != null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null
+'if %data.user_id% is empty, call CreateUser, else UpdateUser user=%data%' => public static bool ExecutePlangCode(dynamic? dataαuser_id) { return (dataαuser_id == null || (dataαuser_id is string str && string.IsNullOrEmpty(str))); } //if we dont know the type of %data.user_id%, , GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=UpdateUser, GoalToCallOnFalseParameters={user:%data%}
 'if !%isValid% then => public static bool ExecutePlangCode(bool? isValid) { return !isValid; }, GoalToCallOnTrue=null, GoalToCallOnFalse=null
-'if %first_name% is null, call !UpdateFirstName' => public static bool ExecutePlangCode(string? first_name) { return (first_name == null || string.IsNullOrEmpty(str)); }
+'if %first_name% is null, call UpdateFirstName' => public static bool ExecutePlangCode(string? first_name) { return (first_name == null || string.IsNullOrEmpty(str)); }
 'if directory %path% exists, call DoStuff => public static bool ExecutePlangCode(string? path, IPlangFileSystem fileSystem) { return fileSystem.Directory.Exists(path); }
 'if file %path% exists, call DoStuff => public static bool ExecutePlangCode(string? path, IPlangFileSystem fileSystem) { return fileSystem.File.Exists(path); }
+'if %!response.IsHtml% then call ParseHtml => public static bool ExecutePlangCode(bool? isHtml) { return isHtml; }
 ## examples ##
 ");
 			if (error != null)

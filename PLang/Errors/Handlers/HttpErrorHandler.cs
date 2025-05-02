@@ -2,10 +2,11 @@
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Exceptions.AskUser;
-using PLang.Interfaces;
+using PLang.Models.Formats;
+using PLang.Modules;
+using PLang.Modules.SerializerModule;
 using PLang.Utils;
 using System.Net;
-using System.Text;
 
 namespace PLang.Errors.Handlers
 {
@@ -13,16 +14,20 @@ namespace PLang.Errors.Handlers
 	{
 		private readonly HttpListenerContext httpListenerContext;
 		private readonly ILogger logger;
+		private readonly ProgramFactory programFactory;
 
-		public HttpErrorHandler(HttpListenerContext httpListenerContext, IAskUserHandlerFactory askUserHandlerFactory, ILogger logger) : base(askUserHandlerFactory)
+		public HttpErrorHandler(HttpListenerContext httpListenerContext, IAskUserHandlerFactory askUserHandlerFactory, ILogger logger, ProgramFactory programFactory) : base(askUserHandlerFactory)
 		{
 			this.httpListenerContext = httpListenerContext;
 			this.logger = logger;
+			this.programFactory = programFactory;
 		}
 		public async Task<(bool, IError?)> Handle(IError error)
 		{
 			return await base.Handle(error);
 		}
+
+
 		public async Task ShowError(IError error, GoalStep? step)
 		{
 			try
@@ -30,13 +35,37 @@ namespace PLang.Errors.Handlers
 				var resp = httpListenerContext.Response;
 				resp.StatusCode = error.StatusCode;
 				resp.StatusDescription = error.Key;
-				
-				using (var writer = new StreamWriter(resp.OutputStream, resp.ContentEncoding ?? Encoding.UTF8))
+
+
+				var identity = programFactory.GetProgram<Modules.IdentityModule.Program>();
+				/*var plangResponse = new PlangResponse()
 				{
-					var str = error.ToFormat("json").ToString();
-					await writer.WriteAsync(str);
-					await writer.FlushAsync();
-				}
+					Data = error.AsData(),
+					Headers = null,
+					Callback = await StepHelper.Callback(error.Step, programFactory)
+				};*/
+
+				var jsonError = new JsonRpcError()
+				{
+					Code = error.StatusCode,
+					Message = error.Message,
+					Data = error.AsData()
+				};
+
+				JsonRpcErrorResponse jsonRpc = new()
+				{
+					Error = jsonError,
+				};
+
+				Payload payload = new Payload()
+				{
+					Response = jsonRpc,
+					Signature = await identity.Sign(jsonRpc)
+				};
+
+				var result = JsonConvert.SerializeObject(payload);
+				var result2 = System.Text.Json.JsonSerializer.Serialize(payload);
+				await programFactory.GetProgram<Modules.SerializerModule.Program>().Serialize(payload, stream: resp.OutputStream);
 			}
 			catch (ObjectDisposedException)
 			{

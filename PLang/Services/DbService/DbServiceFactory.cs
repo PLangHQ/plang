@@ -42,7 +42,7 @@ namespace PLang.Services.DbService
 			}
 			else
 			{
-				if (dataSource.ConnectionString.Contains("%") && isBuilder)
+				if (isBuilder)
 				{
 					connection.ConnectionString = $"Data Source={dataSource.Name};Mode=Memory;Cache=Shared;";
 				}

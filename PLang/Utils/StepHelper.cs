@@ -1,10 +1,13 @@
-﻿using PLang.Building.Model;
+﻿using Nethereum.Contracts.Standards.ENS.OffchainResolver.ContractDefinition;
+using PLang.Building.Model;
 using PLang.Errors;
+using PLang.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static PLang.Errors.Handlers.HttpErrorHandler;
 
 namespace PLang.Utils
 {
@@ -41,6 +44,33 @@ namespace PLang.Utils
 				}
 			}
 			return null;
+		}
+
+		public record Callback(Stack<CallbackInfo> CallbackInfos, Signature Signature);
+		public record CallbackInfo(string GoalName, string GoalHash, int StepIndex);
+		public static async Task<Callback?> GetCallback(GoalStep? step, Modules.ProgramFactory programFactory)
+		{
+			if (step == null) return null;
+
+			
+			var callbackInfos = new Stack<CallbackInfo>();
+			var goal = step.Goal;
+			string method = goal.GoalName ?? "Request";
+
+			callbackInfos.Push(new CallbackInfo(goal.GoalName, goal.Hash, goal.CurrentStepIndex));
+
+			if (goal.ParentGoal != null)
+			{
+				var parentGoal = goal.ParentGoal;
+				while (parentGoal != null)
+				{
+					callbackInfos.Push(new CallbackInfo(parentGoal.GoalName, parentGoal.Hash, parentGoal.CurrentStepIndex));
+					parentGoal = parentGoal.ParentGoal;
+				}
+			}
+
+			var signed = await programFactory.GetProgram<Modules.IdentityModule.Program>().Sign(callbackInfos);
+			return new Callback(callbackInfos, signed);
 		}
 	}
 }

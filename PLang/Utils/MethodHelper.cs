@@ -145,8 +145,15 @@ namespace PLang.Utils
 					continue;
 				}
 
+				if (parameter != null && parameter.Type == CleanAssemblyInfo(parameterTypeName)) {
+					continue;
+				}
+				
+				if (methodParameter.IsOptional) continue;
+
 				if (parameters.FirstOrDefault(p => p.Type.ToLower().StartsWith(parameterType)) == null && parameters.FirstOrDefault(p => p.Type.ToLower() == parameterTypeName!.ToLower()) == null)
 				{
+					
 					// temp thing, should be removed
 					if (parameterTypeName == "PLang.Models.GoalToCall")
 					{
@@ -164,6 +171,14 @@ namespace PLang.Utils
 				}
 			}
 			return error;
+		}
+
+		private string CleanAssemblyInfo(string parameterTypeName)
+		{
+			if (!parameterTypeName.Contains("`")) return parameterTypeName;
+
+			var newParamType = parameterTypeName.Substring(0, parameterTypeName.IndexOf(','));
+			return newParamType.Replace("[[", "[") + "]";
 		}
 
 		public Dictionary<string, object?> GetParameterValues(MethodInfo method, GenericFunction function)
@@ -582,6 +597,11 @@ namespace PLang.Utils
 				}
 			}
 			if (dict == null) dict = new();
+
+			if (parameter.ParameterType != null)
+			{
+				int i = 0;
+			}
 
 			if (handlesAttribute != null)
 			{

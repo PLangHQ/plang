@@ -1,13 +1,17 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Errors;
 using PLang.Errors.Runtime;
+using PLang.Errors.Types;
 using PLang.Exceptions;
 using PLang.Models;
 using PLang.Services.OutputStream;
+using PLang.Utils;
 using System.ComponentModel;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using static PLang.Utils.StepHelper;
 
 namespace PLang.Modules.OutputModule
 {
@@ -16,21 +20,23 @@ namespace PLang.Modules.OutputModule
 	{
 		private readonly IOutputStreamFactory outputStreamFactory;
 		private readonly IOutputSystemStreamFactory outputSystemStreamFactory;
+		private readonly ProgramFactory programFactory;
 
-		public Program(IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory) : base()
+		public Program(IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory, ProgramFactory programFactory) : base()
 		{
 			this.outputStreamFactory = outputStreamFactory;
 			this.outputSystemStreamFactory = outputSystemStreamFactory;
+			this.programFactory = programFactory;
 		}
 
 		[Description("Send to user and waits for answer. Uses llm to construct a question to user and to format the answer. Developer defines specifically to use llm")]
-		public async Task<(ReturnDictionary<string, object?>?, IError?)> AskUserUsingLlm(string text, string type = "text", int statusCode = 202, 
-			string? developerInstructionForResult = "give me the object that matches, e.g. { \"id\": 123, \"name\": \"example\"}", 
+		public async Task<(object?, IError?)> AskUserUsingLlm(string text, string type = "text", int statusCode = 202,
+			string? developerInstructionForResult = "give me the object that matches, e.g. { \"id\": 123, \"name\": \"example\"}",
 			[HandlesVariable] Dictionary<string, object?>? options = null, string? scheme = null)
 		{
-			var callGoalModule = GetProgramModule<CallGoalModule.Program>();
-			var param = new Dictionary<string, object?> { 
-				{ "type", type }, { "statusCode", statusCode }, { "text", text }, 
+			var callGoalModule = programFactory.GetProgram<CallGoalModule.Program>();
+			var param = new Dictionary<string, object?> {
+				{ "type", type }, { "statusCode", statusCode }, { "text", text },
 				{ "developerInstructionForResult", developerInstructionForResult }, {"scheme", scheme } };
 			if (options != null)
 			{
@@ -41,7 +47,7 @@ namespace PLang.Modules.OutputModule
 				}
 				param.Add("options", json);
 			}
-			
+
 			return await callGoalModule.RunGoal("/modules/OutputModule/AskUserLlm", param, isolated: true);
 		}
 		[Description("Send to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. regexPattern can contain %variable%. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.")]
@@ -52,9 +58,20 @@ namespace PLang.Modules.OutputModule
 		[Description("Send to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. regexPattern can contain %variable%. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.")]
 		public async Task<(string?, IError?)> Ask(string text, string type = "text", int statusCode = 202, string? regexPattern = null, string? errorMessage = null, Dictionary<string, object>? parameters = null)
 		{
-			var outputStream = outputStreamFactory.CreateHandler();
-			var result = await outputStream.Ask(text, type, statusCode, parameters);
-			if (outputStream is JsonOutputStream) return (null, new EndGoal(goalStep, ""));
+			string? result;
+			if (context.ContainsKey("!answer"))
+			{
+				result = context["!answer"]?.ToString() ?? "";
+			}
+			else
+			{
+				var outputStream = outputStreamFactory.CreateHandler();
+
+				var callback = await StepHelper.GetCallback(goalStep, programFactory);
+				result = await outputStream.Ask(text, type, statusCode, parameters, callback);
+
+				if (result == null || outputStream is JsonOutputStream) return (null, new EndGoal(goalStep, ""));
+			}
 
 			// escape any variable that user inputs
 			result = result.Replace("%", @"\%");
@@ -66,6 +83,7 @@ namespace PLang.Modules.OutputModule
 				{
 					text = errorMessage + "\n\n" + text;
 				}
+				context.Remove("!answer");
 				return await Ask(text, type, statusCode, regexPattern, errorMessage, parameters);
 			}
 			return (result, null);

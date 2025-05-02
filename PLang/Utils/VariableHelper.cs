@@ -71,7 +71,7 @@ namespace PLang.Utils
 
 			string? content = obj.ToString();
 			if (content == null) return null;
-
+			
 			if (IsVariable(content))
 			{
 				if (content.StartsWith("%Settings."))
@@ -250,6 +250,7 @@ namespace PLang.Utils
 
 			if (value is IDictionary || value is IList) return true;
 			if (strValue.Equals(fullName)) return true;
+			if (!IsRecordWithoutToString(value)) return true;
 
 			return false;
 		}
@@ -265,6 +266,18 @@ namespace PLang.Utils
 
 			return isCompilerGenerated && hasCloneMethod && hasEqualityContract;
 		}
+
+		private bool IsRecordWithoutToString(object obj)
+		{
+			var type = obj.GetType();
+			bool isRecord = type.GetMethod("PrintMembers", BindingFlags.Instance | BindingFlags.NonPublic) != null;
+			if (!isRecord) return false;
+			var toStringMethod = obj.GetType().GetMethods().Any(p => p.Name == "ToString" && p.DeclaringType != typeof(object) && p?.DeclaringType != typeof(ValueType) 
+				&& p?.CustomAttributes.FirstOrDefault(p => p.AttributeType == typeof(CompilerGeneratedAttribute)) == null);
+
+			return toStringMethod;
+		}
+
 
 		public JToken JsonSerialize(object? obj)
 		{
@@ -314,7 +327,14 @@ namespace PLang.Utils
 				}
 				else
 				{
-					json = System.Text.Json.JsonSerializer.Serialize(obj, jsonSerializerOptions);
+					try
+					{
+						json = JsonConvert.SerializeObject(obj);
+					}
+					catch
+					{
+						json = System.Text.Json.JsonSerializer.Serialize(obj, jsonSerializerOptions);
+					}
 				}
 				return JToken.Parse(json);
 			}
@@ -511,7 +531,6 @@ namespace PLang.Utils
 		public record Variable(string OriginalKey, string Key, object? Value);
 
 
-		//%method%%urlPath%%salt%%timestamp%%Settings.RapydApiKey%%Settings.RapydSecretApiKey%%body.ToString().Replace("{}", "").ClearWhitespace()%
 		internal List<Variable> GetVariables(string content, bool emptyIfNotFound = true)
 		{
 			List<Variable> variables = new List<Variable>();
@@ -526,7 +545,7 @@ namespace PLang.Utils
 			foreach (Match match in matches)
 			{
 				var variable = match.Value;
-				if (variables.FirstOrDefault(p => p.Key.ToLower() == variable.ToLower()) != null)
+				if (variables.FirstOrDefault(p => p.Key.Equals(variable, StringComparison.OrdinalIgnoreCase)) != null)
 				{
 					continue;
 				}
@@ -576,13 +595,16 @@ namespace PLang.Utils
 		}
 		public static bool ContainsVariable(object? variable)
 		{
-			if (variable == null || string.IsNullOrEmpty(variable.ToString())) return false;
-			return Regex.IsMatch(variable.ToString()!, @"%[\p{L}\p{N}#+-\[\]_\.\+\(\)\*\<\>\!\s]*%");
+			if (variable is not string str) return false;
+			if (variable == null || string.IsNullOrEmpty(str)) return false;
+			return Regex.IsMatch(str, @"%[\p{L}\p{N}#+-\[\]_\.\+\(\)\*\<\>\!\s]*%");
 		}
 		public static bool IsVariable(object? variable)
 		{
-			if (variable == null || string.IsNullOrEmpty(variable.ToString())) return false;
-			return Regex.IsMatch(variable.ToString()!, @"^%[\p{L}\p{N}#+-\[\]_\.\+\(\)\*\<\>\!\s\""]*%$");
+			if (variable is not string str) return false;
+
+			if (str == null || string.IsNullOrEmpty(str)) return false;
+			return Regex.IsMatch(str, @"^%[\p{L}\p{N}#+-\[\]_\.\+\(\)\*\<\>\!\s\""]*%$");
 		}
 
 		public static bool IsSetting(string variableName)

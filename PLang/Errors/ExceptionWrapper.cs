@@ -11,6 +11,7 @@ namespace PLang.Errors
 {
 	public class ExceptionWrapper : Exception, IError, IBuilderError
 	{
+		public bool Retry => false;
 		public ExceptionWrapper(IError error) : base(error.Message)
 		{
 
@@ -35,6 +36,12 @@ namespace PLang.Errors
 		public bool ContinueBuild => false;
 		public Goal? Goal { get; set; }
 		public GoalStep? Step { get; set; }
+
+		public object AsData()
+		{
+			throw new NotImplementedException();
+		}
+
 		public object ToFormat(string contentType = "text")
 		{
 			return ErrorHelper.ToFormat(contentType, this);

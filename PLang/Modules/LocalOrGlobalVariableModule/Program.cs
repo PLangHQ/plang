@@ -11,60 +11,115 @@ using PLang.Runtime;
 using PLang.Utils;
 using System.Collections;
 using System.ComponentModel;
+using System.Dynamic;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Web;
 using static PLang.Modules.DbModule.Program;
 
 namespace PLang.Modules.LocalOrGlobalVariableModule
 {
-	[Description("Set, Get & return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable. When making Dictionary<string, Tuple<`2> keyValues is key(string), value(object) and default value(object) => map to \"%key%\": { \"Item1\": \"%value%\",\"Item2\": \"%defaultValue\" }.")]
+	[Description("Set, Get & Return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.")]
 	public class Program : BaseProgram
 	{
 		private readonly ISettings settings;
-		private readonly DbModule.Program db;
+		private readonly ProgramFactory programFactory;
+		private new readonly VariableHelper variableHelper;
 
-		public Program(ISettings settings, DbModule.Program db) : base()
+		public Program(ISettings settings, ProgramFactory programFactory, VariableHelper variableHelper) : base()
 		{
 			this.settings = settings;
-			this.db = db;
+			this.programFactory = programFactory;
+			this.variableHelper = variableHelper;
 		}
 
-		public async Task Load([HandlesVariable] List<string> variables)
+		public async Task<(object?, IError?)> Load([HandlesVariable] List<string> variables)
 		{
+			var db = programFactory.GetProgram<DbModule.Program>();
+
+			List<object?> objects = new();
 			foreach (var variable in variables)
 			{
 				List<object> parameters = new List<object>();
 				parameters.Add(new ParameterInfo("variable", variable, "System.String"));
-				var result = await db.Select("SELECT * FROM __Variables__ WHERE variable=@variable", parameters);
-				if (result.rows.Count == 1)
+				try
 				{
-					memoryStack.Put(variable, result.rows[0]);
-				} else if (result.rows.Count > 1)
-				{
-					memoryStack.Put(variable, result.rows);
+					var result = await db.Select("SELECT * FROM __Variables__ WHERE variable=@variable", parameters);
+					if (result.rows.Count == 0) continue;
+
+					dynamic row = result.rows[0];
+					if (row == null) continue;
+
+					var json = row.value?.ToString();
+					if (json == null) continue;
+
+					var value = JsonConvert.DeserializeObject(json);
+
+					if (function?.ReturnValues?.Count == 0)
+					{
+						memoryStack.Put(variable, value);
+					}
+					else
+					{
+						objects.Add(value);
+					}
 				}
-			}			
+				catch (Exception ex)
+				{
+					if (ex.Message.Contains("no such table"))
+					{
+						return (null, null);
+					}
+					throw;
+				}
+
+			}
+			if (objects.Count == 1)
+			{
+				return (objects[0], null);
+			}
+			return (objects, null);
+		}
+
+		private async Task<(long, IError? Error)> CreateVariablesTable(DbModule.Program db)
+		{
+			return await db.Execute(@"CREATE TABLE __Variables__ (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    variable TEXT NOT NULL UNIQUE,
+    value TEXT,
+    created DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires DATETIME
+);");
+
 		}
 
 		public async Task<IError?> Store([HandlesVariable] List<string> variables)
 		{
+			var db = programFactory.GetProgram<DbModule.Program>();
+			var datasource = await db.GetDataSource();
+			if (datasource.TypeFullName != typeof(SqliteConnection).FullName)
+			{
+				return new ProgramError("Only sqlite is supported");
+			}
+
 			foreach (var variable in variables)
 			{
+				var value = variableHelper.LoadVariables(variable);
+				if (value == null) continue;
+
 				List<object> parameters = new List<object>();
 				parameters.Add(new ParameterInfo("variable", variable, "System.String"));
-				parameters.Add(new ParameterInfo("value", variableHelper.LoadVariables(variable), "System.String"));
-				var datasource = await db.GetDataSource();
-				if (datasource.TypeFullName != typeof(SqliteConnection).FullName)
-				{
-					return new ProgramError("Only sqlite is supported");
-				}
+				parameters.Add(new ParameterInfo("value", JsonConvert.SerializeObject(value), "System.String"));
 
 				var result = await db.Select("INSERT INTO __Variables__ (variable, value) VALUES (@variable, @value) ON CONFLICT(variable) DO UPDATE SET value = excluded.value;", parameters);
 				if (result.error != null)
 				{
-					if (result.error.Message.Contains("table exists"))
+					if (result.error.Message.Contains("no such table"))
 					{
-						await db.Execute("CREATE TABLE __Variables__ (\r\n    variable TEXT PRIMARY KEY,\r\n    value TEXT,\r\n    created DATETIME DEFAULT CURRENT_TIMESTAMP,\r\n    updated DATETIME DEFAULT CURRENT_TIMESTAMP\r\n);");
+						var createTableResult = await CreateVariablesTable(db);
+						if (createTableResult.Error != null) return createTableResult.Error;
+
 						return await Store(variables);
 					}
 					return result.error;
@@ -73,12 +128,21 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			return null;
 		}
 
-		public async Task<IError?> Return([HandlesVariable] string[] variables)
+		[Description("One or more variables to return. Variable can contain !, e.g. !callback=%callback%. When key is undefined, it is same as value, e.g. return %name% => then variables dictionary has key and value as name=%name%")]
+		public async Task<IError?> Return([HandlesVariable] Dictionary<string, object> variables)
 		{
 			var returnDict = new ReturnDictionary<string, object?>();
 			foreach (var variable in variables)
 			{
-				returnDict.Add(variable, memoryStack.Get(variable));
+				var value = variableHelper.LoadVariables(variable.Value);
+				if (variable.Key.StartsWith("!"))
+				{
+					context.AddOrReplace(variable.Key, value);
+				}
+				else
+				{
+					returnDict.Add(variable.Key, value);
+				}
 			}
 
 			return new Return(returnDict);
@@ -282,7 +346,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		{
 			foreach (var key in keyValues)
 			{
-				await SetVariable(key.Key, key.Value, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot);
+				await SetVariable(key.Key, key.Value?.Item1 ?? key.Value?.Item2, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot);
 			}
 		}
 		[Description(@"Set value on variables. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
@@ -322,9 +386,9 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			}
 		}
 
-			[Description("Append to variable. valueLocation=postfix|prefix seperatorLocation=end|start")]
+		[Description("Append to variable. valueLocation=postfix|prefix seperatorLocation=end|start")]
 		public async Task<object?> AppendToVariable([HandlesVariableAttribute] string key, [HandlesVariable] object? value = null, char seperator = '\n',
-			string valueLocation = "postfix", string seperatorLocation = "end", bool shouldBeUnique = false, bool doNotLoadVariablesInValue = false)
+		string valueLocation = "postfix", string seperatorLocation = "end", bool shouldBeUnique = false, bool doNotLoadVariablesInValue = false)
 		{
 			if (value == null) return value;
 

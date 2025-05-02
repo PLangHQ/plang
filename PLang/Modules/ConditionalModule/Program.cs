@@ -213,7 +213,7 @@ namespace PLang.Modules.ConditionalModule
 
 		private async Task<IError?> ExecuteResult(bool result, GoalToCall? goalToCallOnTrue, Dictionary<string, object?>? goalToCallOnTrueParameters, GoalToCall? goalToCallOnFalse, Dictionary<string, object?>? goalToCallOnFalseParameters)
 		{
-			Task<(IEngine, IError? error, IOutput output)>? task = null;
+			Task<(IEngine, object? Variables, IError? error, IOutput? output)>? task = null;
 			if (result && goalToCallOnTrue != null && goalToCallOnTrue.Value != null)
 			{
 				if (VariableHelper.IsVariable(goalToCallOnTrue))
@@ -236,7 +236,7 @@ namespace PLang.Modules.ConditionalModule
 				{
 					goalToCallOnFalse = variableHelper.LoadVariables(goalToCallOnFalse)?.ToString();
 				}
-
+				/*
 				if (goalToCallOnFalseParameters?.Count == 1 && VariableHelper.IsVariable(goalToCallOnFalseParameters.FirstOrDefault().Value))
 				{
 					var obj = variableHelper.LoadVariables(goalToCallOnFalseParameters.FirstOrDefault().Value);
@@ -244,7 +244,7 @@ namespace PLang.Modules.ConditionalModule
 					{
 						goalToCallOnFalseParameters = jObject.ToDictionary();
 					}
-				}
+				}*/
 				task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCallOnFalse, goalToCallOnFalseParameters, goal);
 			}
 

@@ -11,12 +11,13 @@ using PLang.SafeFileSystem;
 using PLang.Services.OutputStream;
 using PLang.Utils;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace PLang.Runtime
 {
 	public interface IPseudoRuntime
 	{
-		Task<(IEngine engine, IError? error, IOutput output)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCall goalName,
+		Task<(IEngine engine, object? Variables, IError? error, IOutput? output)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCall goalName,
 			Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true,
 			long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0,
 			bool keepMemoryStackOnAsync = false, bool isolated = false);
@@ -24,41 +25,27 @@ namespace PLang.Runtime
 
 	public class PseudoRuntime : IPseudoRuntime
 	{
-		private readonly IServiceContainerFactory serviceContainerFactory;
 		private readonly IPLangFileSystem fileSystem;
-		private readonly IOutputStreamFactory outputStreamFactory;
-		private readonly IOutputSystemStreamFactory outputSystemStreamFactory;
-		private readonly IErrorHandlerFactory errorHandlerFactory;
-		private readonly IErrorSystemHandlerFactory errorSystemHandlerFactory;
-		private readonly IAskUserHandlerFactory askUserHandlerFactory;
 
-		public PseudoRuntime(IServiceContainerFactory serviceContainerFactory, IPLangFileSystem fileSystem,
-			IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory,
-			IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory,
-			IAskUserHandlerFactory askUserHandlerFactory)
+		public PseudoRuntime(IPLangFileSystem fileSystem)
 		{
-			this.serviceContainerFactory = serviceContainerFactory;
 			this.fileSystem = fileSystem;
-			this.outputStreamFactory = outputStreamFactory;
-			this.outputSystemStreamFactory = outputSystemStreamFactory;
-			this.errorHandlerFactory = errorHandlerFactory;
-			this.errorSystemHandlerFactory = errorSystemHandlerFactory;
-			this.askUserHandlerFactory = askUserHandlerFactory;
 		}
-		IEngine? initialEngine = null;
-		public async Task<(IEngine engine, IError? error, IOutput? output)> RunGoal(IEngine engine, PLangAppContext context, string relativeAppPath, GoalToCall goalName,
+
+		public async Task<(IEngine engine, object? Variables, IError? error, IOutput? output)> RunGoal(IEngine engine, PLangAppContext context, string relativeAppPath, GoalToCall goalName,
 			Dictionary<string, object?>? parameters, Goal? callingGoal = null,
 			bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0,
 			int indent = 0, bool keepMemoryStackOnAsync = false, bool isolated = false)
 		{
 			try
 			{
+
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				if (goalName == null || goalName.Value == null)
 				{
 					var error = new Error($"Goal to call is empty. Calling goal is {callingGoal}");
 					var output2 = new TextOutput("Error", "text/html", false, error, "desktop");
-					return (engine, error, output2);
+					return (engine, null, error, output2);
 				}
 				Goal? goal = null;
 				ServiceContainer? container = null;
@@ -75,14 +62,14 @@ namespace PLang.Runtime
 				string goalToRun = fileSystem.Path.Join(relativeAppPath, goalName);
 				if (goalToRun.StartsWith("//")) goalToRun = goalToRun.Substring(1);
 
-				if (isolated)
+				if (isolated || !waitForExecution || CreateNewContainer(absolutePathToGoal))
 				{
 					var ms = engine.GetMemoryStack();
 					var activeEvents = engine.GetEventRuntime().GetActiveEvents();
 					/* todo: this needs to be looked at
 					 */
-					initialEngine = engine;
-					engine = await initialEngine.EnginePool.RentAsync();
+
+					engine = await engine.GetEnginePool(absolutePathToGoal, null).RentAsync();
 
 
 					foreach (var item in ms.GetMemoryStack())
@@ -98,31 +85,6 @@ namespace PLang.Runtime
 					goal = engine.GetGoal(goalToRun);
 
 				}
-				else if (CreateNewContainer(absolutePathToGoal))
-				{
-					var pathAndGoal = GetAppAbsolutePath(absolutePathToGoal, goalName);
-					string absoluteAppStartupPath = pathAndGoal.absolutePath;
-					string relativeAppStartupPath = fileSystem.Path.DirectorySeparatorChar.ToString();
-					goalToRun = pathAndGoal.goalName;
-
-					var activeEvents = engine.GetEventRuntime().GetActiveEvents();
-					container = serviceContainerFactory.CreateContainer(context, absoluteAppStartupPath, relativeAppStartupPath, outputStreamFactory, outputSystemStreamFactory,
-						errorHandlerFactory, errorSystemHandlerFactory, askUserHandlerFactory);
-
-					var fileAccessHandler = container.GetInstance<PLang.SafeFileSystem.IFileAccessHandler>();
-					fileAccessHandler.GiveAccess(absolutePathToGoal, fileSystem.OsDirectory);
-
-					engine = container.GetInstance<IEngine>();
-					engine.Init(container);
-
-					if (context.ContainsKey(ReservedKeywords.IsEvent))
-					{
-						engine.GetContext().AddOrReplace(ReservedKeywords.IsEvent, true);
-					}
-					engine.GetEventRuntime().SetActiveEvents(activeEvents);
-
-					goal = engine.GetGoal(goalToRun);
-				}
 				else
 				{
 					goal = engine.GetGoal(goalToRun, callingGoal);
@@ -136,7 +98,7 @@ namespace PLang.Runtime
 					{
 						var error2 = new Error($"No goals available at {relativeAppPath} trying to run {goalToRun}");
 						var output2 = new TextOutput("Error", "text/html", false, error2, "desktop");
-						return (engine, error2, output2);
+						return (engine, null, error2, output2);
 					}
 
 					var goals = string.Join('\n', goalsAvailable.OrderBy(p => p.GoalName).Select(p => $" - {p.GoalName} -> Path:{p.RelativeGoalPath}"));
@@ -149,25 +111,13 @@ namespace PLang.Runtime
 
 					var error = new GoalError($"WARNING! - Goal '{goalName}' at {fileSystem.RootDirectory} was not found.", callingGoal, "GoalNotFound", 500, FixSuggestion: strGoalsAvailable);
 					var output3 = new TextOutput("Error", "text/html", false, error, "desktop");
-					return (engine, error, output3);
+					return (engine, null, error, output3);
 				}
 
 				if (waitForExecution)
 				{
 					goal.ParentGoal = callingGoal;
 
-				}
-				else if (!keepMemoryStackOnAsync)
-				{
-					// todo: this does not look correct
-					throw new NotImplementedException("This looks strange, need to find example of usage, otherwise remove");
-
-					var newContext = new PLangAppContext();
-					foreach (var item in context)
-					{
-						newContext.AddOrReplace(item.Key, item.Value);
-					}
-					context = newContext;
 				}
 
 				var memoryStack = engine.GetMemoryStack();
@@ -196,12 +146,38 @@ namespace PLang.Runtime
 				}
 				var prevIndent = context.GetOrDefault(ReservedKeywords.ParentGoalIndent, 0);
 				context.AddOrReplace(ReservedKeywords.ParentGoalIndent, (prevIndent + indent));
-				/*
-				string space = GoalHelper.GetSpaceByParent(goal);
-				Console.WriteLine($"{space}  Elapsed: {stopwatch.Elapsed} - (iso:{isolated})");
-				*/
-				var task = engine.RunGoal(goal, waitForXMillisecondsBeforeRunningGoal);
-				await task.ConfigureAwait(waitForExecution);
+
+				Task<(object? Variables, IError? Error)> task;
+				if (waitForExecution)
+				{
+					task = engine.RunGoal(goal, waitForXMillisecondsBeforeRunningGoal);
+					await task.ConfigureAwait(waitForExecution);
+				}
+				else
+				{
+					task = Task.Run(async () =>
+					{
+						var stuff = await engine.RunGoal(goal, waitForXMillisecondsBeforeRunningGoal);
+						return stuff;
+					});
+
+					var alives = AppContext.GetData("KeepAlive") as List<Alive>;
+					if (alives == null) alives = new List<Alive>();
+
+					var aliveType = alives.FirstOrDefault(p => p.Type == task.GetType() && p.Key == "WaitForExecution");
+					if (aliveType == null)
+					{
+						aliveType = new Alive(task.GetType(), "WaitForExecution", [new EngineWait(task, engine)]);
+						alives.Add(aliveType);
+
+						AppContext.SetData("KeepAlive", alives);
+					}
+					else
+					{
+						aliveType.Instances!.Add(new EngineWait(task, engine));
+					}
+
+				}
 
 				if (container != null)
 				{
@@ -213,22 +189,31 @@ namespace PLang.Runtime
 				{
 					var error3 = new Error(task.Exception.Message, Exception: task.Exception);
 					var output3 = new TextOutput("Error", "text/html", false, error3, "desktop");
-					return (engine, error3, output3);
+					return (engine, task.Result.Variables, error3, output3);
 				}
-
-				return (engine, task.Result, new TextOutput("", "text/html", false, null, "desktop"));
-			} catch (Exception ex)
-			{
-				return (engine, new ExceptionError(ex), null);
-			} finally
-			{
-				if (isolated && initialEngine != null)
+				if (waitForExecution)
 				{
-					initialEngine.EnginePool.Return(engine);
+					return (engine, task.Result.Variables, task.Result.Error, new TextOutput("", "text/html", false, null, "desktop"));
+				}
+				else
+				{
+					return (engine, new(), null, new TextOutput("", "text/html", false, null, "desktop"));
+				}
+			}
+			catch (Exception ex)
+			{
+				return (engine, null, new ExceptionError(ex), null);
+			}
+			finally
+			{
+
+				if (engine.ParentEngine != null)
+				{
+					//engine.ParentEngine.GetEnginePool(engine.Path).Return(engine);
 				}
 			}
 		}
-
+		public record EngineWait(Task task, IEngine engine);
 		public (string absolutePath, GoalToCall goalName) GetAppAbsolutePath(string absolutePathToGoal, GoalToCall? goalName = null)
 		{
 			absolutePathToGoal = absolutePathToGoal.AdjustPathToOs();

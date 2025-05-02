@@ -2,6 +2,7 @@
 using PLang.Services.SigningService;
 using PLang.Utils;
 using System.Net.WebSockets;
+using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
 {
@@ -24,7 +25,7 @@ namespace PLang.Services.OutputStream
 
 		public string Output => "text";
 
-		public async Task<string> Ask(string text, string type = "text", int statusCode = 200, Dictionary<string, object>? parameters = null)
+		public async Task<string> Ask(string text, string type = "text", int statusCode = 200, Dictionary<string, object>? parameters = null, Callback? callback = null)
 		{
 			throw new NotImplementedException();
 		}

@@ -11,7 +11,7 @@ namespace PLang.Models
 		public DateTimeOffset? ExpiresInMs { get; set; }
 		public string Nonce { get; set; } = Guid.NewGuid().ToString();
 		public string? SignedData { get; set; }
-		public string? Body { get; set; }
+		public object? Body { get; set; }
 		public DateTimeOffset Created { get; set; } = SystemTime.OffsetUtcNow();
 		public List<string> Contracts { get; set; }
 		public string Type { get; set; } = "Ed25519";

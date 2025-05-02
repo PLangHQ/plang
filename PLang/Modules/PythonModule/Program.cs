@@ -16,7 +16,7 @@ using System.Runtime.InteropServices;
 namespace PLang.Modules.PythonModule
 {
 	[Description("Runs python scripts. Parameters can be passed to the python process")]
-	public class Program : BaseProgram
+	public class Program : BaseProgram, IDisposable
 	{
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ILogger logger;
@@ -24,6 +24,8 @@ namespace PLang.Modules.PythonModule
 		private readonly IOutputStreamFactory outputStream;
 		private readonly IPLangSigningService signingService;
 		private readonly TerminalModule.Program terminalProgram;
+
+		private bool disposed;
 
 		public Program(IPLangFileSystem fileSystem, ILogger logger, ISettings settings, IOutputStreamFactory outputStream, IPLangSigningService signingService, TerminalModule.Program terminalProgram) : base()
 		{
@@ -40,17 +42,14 @@ namespace PLang.Modules.PythonModule
 			string[]? parameterValues = null, string[]? parameterNames = null,
 			[HandlesVariable] string[]? variablesToExtractFromPythonScript = null,
 			bool useNamedArguments = false, string? pythonPath = null,
-			string? stdOutVariableName = null, string? stdErrorVariableName = null)
+			[HandlesVariable] string? stdOutVariableName = null, [HandlesVariable] string? stdErrorVariableName = null)
 		{
-
-
 
 			if (fileSystem.File.Exists("requirements.txt"))
 			{
 				await terminalProgram.RunTerminal("pip install -r requirements.txt");
 
 			}
-
 
 			try
 			{
@@ -64,16 +63,19 @@ namespace PLang.Modules.PythonModule
 					// Set the Python DLL based on the OS
 					if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 					{
-						var localPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-						var pythonRootDir = Path.Join(localPath, "\\Programs\\Python\\");
-						if (fileSystem.Directory.Exists(pythonRootDir))
+						if (Python.Runtime.Runtime.PythonDLL == null)
 						{
-							var pythonDirs = fileSystem.Directory.GetDirectories(Path.Join(pythonRootDir)).ToList().OrderBy(p => p).ToList();
-							if (pythonDirs.Count > 0)
+							var localPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+							var pythonRootDir = Path.Join(localPath, "\\Programs\\Python\\");
+							if (fileSystem.Directory.Exists(pythonRootDir))
 							{
-								Python.Runtime.Runtime.PythonDLL = Path.Join(pythonDirs[0], Path.GetFileName(pythonDirs[0]).ToLower() + ".dll");
-							}
+								var pythonDirs = fileSystem.Directory.GetDirectories(Path.Join(pythonRootDir)).ToList().OrderBy(p => p).ToList();
+								if (pythonDirs.Count > 0)
+								{
+									Python.Runtime.Runtime.PythonDLL = Path.Join(pythonDirs[0], Path.GetFileName(pythonDirs[0]).ToLower() + ".dll");
+								}
 
+							}
 						}
 					}
 					else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -91,132 +93,126 @@ namespace PLang.Modules.PythonModule
 						logger.LogWarning("Unsupported OS platform.");
 					}
 				}
-
-
-				PythonEngine.Initialize();
+				InitPython();
 
 				string capturedStdout = "", capturedStderr = "";
 
-				using (Py.GIL())
+				var mainThreadState = Python.Runtime.PythonEngine.BeginAllowThreads();
+
+				using var gil = Py.GIL();
+
+				using dynamic sys = Py.Import("sys");
+				using dynamic io = Py.Import("io");
+
+				sys.stdout = io.StringIO();
+				sys.stderr = io.StringIO();
+				try
 				{
-					using (dynamic sys = Py.Import("sys"))
+					using dynamic pyModule = Py.Import("__main__");
+
+
+					List<PyObject> args = new List<PyObject>();
+					args.Add(new PyString(fileName));
+					for (int i = 0; parameterValues != null && i < parameterValues.Length; i++)
 					{
-						using (dynamic io = Py.Import("io"))
+						if (parameterNames != null && useNamedArguments)
 						{
+							string paramName = (parameterNames[i].StartsWith("--")) ? parameterNames[i] : "--" + parameterNames[i];
+							args.Add(new PyString(paramName));
+						}
+						args.Add(new PyString(parameterValues[i]));
+					}
 
-							sys.stdout = io.StringIO();
-							sys.stderr = io.StringIO();
+					sys.argv = new PyList(args.ToArray());
 
-							try
+					string code = fileSystem.File.ReadAllText(fileName);
+					if (variablesToExtractFromPythonScript != null)
+					{
+						variablesToExtractFromPythonScript = variablesToExtractFromPythonScript.Select(p => p.Replace("%", "")).ToArray();
+						string pythonList = "['" + string.Join("', '", variablesToExtractFromPythonScript) + "']";
+
+						string appendedCode = $"\n\nimport __main__\n";
+						appendedCode += $"__main__.result = result\n__main__.plang_export_variables_dict = {{k: v for k, v in globals().items() if k in {pythonList}}}";
+
+						code += appendedCode;
+					}
+
+					PythonEngine.Exec(code);
+
+					capturedStdout = sys.stdout.getvalue().ToString();
+					capturedStderr = sys.stderr.getvalue().ToString();
+
+					if (variablesToExtractFromPythonScript != null)
+					{
+						using var __main__ = Py.Import("__main__");
+						dynamic variablesDict = __main__.GetAttr("plang_export_variables_dict");
+						dynamic result = __main__.GetAttr("result");
+						if (string.IsNullOrEmpty(capturedStdout))
+						{
+							capturedStdout = ConvertValue(result);
+						}
+						dynamic iterItems = variablesDict.items();
+
+						foreach (PyObject item in iterItems)
+						{
+							var key = item[0].ToString();
+
+							if (key != null && variablesToExtractFromPythonScript.FirstOrDefault(p => p == key) != null)
 							{
-								using (dynamic pyModule = Py.Import("__main__"))
-								{
-									/*
-									pyModule.plangSign = new Func<string, string, string, string, Task<PyObject>>(async (input, method, url, contract) =>
-									{
-										var signatureData = signingService.Sign(input, method, url, contract);
-										PyDict pyResult = new PyDict();
-										foreach (var kv in signatureData)
-										{
-											pyResult[new PyString(kv.Key)] = new PyString(kv.Value.ToString());
-										}
-										return pyResult;
-									});
-									*/
-									/*
-									 * TODO: Not happy with this solution. It is injecting code into the python script, that is bad design :(
-									 */
-
-									List<PyObject> args = new List<PyObject>();
-									args.Add(new PyString(fileName));
-									for (int i = 0; parameterValues != null && i < parameterValues.Length; i++)
-									{
-										if (parameterNames != null && useNamedArguments)
-										{
-											string paramName = (parameterNames[i].StartsWith("--")) ? parameterNames[i] : "--" + parameterNames[i];
-											args.Add(new PyString(paramName));
-										}
-										args.Add(new PyString(parameterValues[i]));
-									}
-
-									sys.argv = new PyList(args.ToArray());
-
-									string code = fileSystem.File.ReadAllText(fileName);
-									if (variablesToExtractFromPythonScript != null)
-									{
-										variablesToExtractFromPythonScript = variablesToExtractFromPythonScript.Select(p => p.Replace("%", "")).ToArray();
-										string pythonList = "['" + string.Join("', '", variablesToExtractFromPythonScript) + "']";
-
-										string appendedCode = $"\n\nimport __main__\n";
-										appendedCode += $"__main__.plang_export_variables_dict = {{k: v for k, v in globals().items() if k in {pythonList}}}";
-
-										code += appendedCode;
-									}
-									PythonEngine.Exec(code);
-
-									capturedStdout = sys.stdout.getvalue().ToString();
-									capturedStderr = sys.stderr.getvalue().ToString();
-
-									if (variablesToExtractFromPythonScript != null)
-									{
-										using (dynamic variablesDict = Py.Import("__main__").GetAttr("plang_export_variables_dict"))
-										{
-
-											dynamic iterItems = variablesDict.items();
-
-											foreach (PyObject item in iterItems)
-											{
-												var key = item[0].ToString();
-
-												if (key != null && variablesToExtractFromPythonScript.FirstOrDefault(p => p == key) != null)
-												{
-													var value = ConvertValue(item[1]);
-													memoryStack.Put(key, value);
-												}
-											}
-										}
-
-									}
-								}
-
-
-							}
-							catch (PythonException ex2)
-							{
-
-								capturedStdout = sys.stdout.getvalue().ToString();
-								capturedStderr = sys.stderr.getvalue().ToString();
-
-								if (stdOutVariableName == null)
-								{
-									logger.LogWarning(capturedStdout);
-								}
-								if (capturedStderr == null)
-								{
-									logger.LogWarning(capturedStderr);
-								}
-
-								var pe = new Exception(capturedStderr + " " + capturedStdout + "\n\n" + ex2.StackTrace, ex2);
-								throw pe;
-							}
-							finally
-							{
-								if (stdOutVariableName != null)
-								{
-									memoryStack.Put(stdOutVariableName, capturedStdout);
-								}
-								if (stdErrorVariableName != null)
-								{
-									memoryStack.Put(stdErrorVariableName, capturedStderr);
-								}
-
-								sys.stdout = sys.__stdout__;
-								sys.stderr = sys.__stderr__;
-
-
+								var value = ConvertValue(item[1]);
+								memoryStack.Put(key, value);
 							}
 						}
+
+
 					}
+
+				}
+				catch (PythonException ex2)
+				{
+
+					capturedStdout = sys.stdout.getvalue().ToString();
+					capturedStderr = sys.stderr.getvalue().ToString();
+
+					if (stdOutVariableName == null)
+					{
+						logger.LogWarning(capturedStdout);
+					}
+					if (capturedStderr == null)
+					{
+						logger.LogWarning(capturedStderr);
+					}
+
+					var pe = new Exception(capturedStderr + " " + capturedStdout + "\n\n" + ex2.StackTrace, ex2);
+					throw pe;
+				}
+				finally
+				{
+
+					try
+					{
+						if (stdOutVariableName != null)
+						{
+							memoryStack.Put(stdOutVariableName, capturedStdout);
+						}
+						if (stdErrorVariableName != null)
+						{
+							memoryStack.Put(stdErrorVariableName, capturedStderr);
+						}
+
+						sys.stdout = sys.__stdout__;
+						sys.stderr = sys.__stderr__;
+					}
+					finally
+					{
+
+						gil.Dispose();
+
+						PythonEngine.EndAllowThreads(mainThreadState);
+
+
+					}
+
 				}
 
 			}
@@ -224,19 +220,41 @@ namespace PLang.Modules.PythonModule
 			{
 				throw;
 			}
-			finally
+
+
+		}
+
+		public virtual void Dispose()
+		{
+			if (this.disposed)
 			{
-				// Shutdown the Python engine when done
+				return;
+			}
+			if (PythonEngine.IsInitialized)
+			{
 				try
 				{
 					PythonEngine.Shutdown();
 				}
-				catch (Exception ex)
-				{
-				}
+				catch { }
 			}
+			this.disposed = true;
+		}
 
+		protected virtual void ThrowIfDisposed()
+		{
+			if (this.disposed)
+			{
+				throw new ObjectDisposedException(this.GetType().FullName);
+			}
+		}
 
+		private void InitPython()
+		{
+			if (!PythonEngine.IsInitialized)
+			{
+				PythonEngine.Initialize();
+			}
 
 		}
 

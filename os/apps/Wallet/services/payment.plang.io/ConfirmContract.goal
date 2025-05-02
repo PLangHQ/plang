@@ -1,4 +1,11 @@
 ConfirmContract
-- set %contract.services% = "payment.plang.io"
-- sign contract %contract%, "client", write to %signedContract%
-- return %signContract%
+- render template %!plang.output%.html, write to %question%
+- ask user %question%, "y|n", write to %answer%
+- if %answer% is "y" then, call SignContract, else CancelSignature
+
+SignContract
+- sign contract %contract%, sign to property "client", write to %signedContract%
+- return contract=%signedContract%
+
+CancelSignature
+- throw "Cancelled signing"

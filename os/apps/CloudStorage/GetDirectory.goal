@@ -1,0 +1,5 @@
+GetDirectory
+- terminal rclone  
+    parameters: lsjson, %cloud%:%cloudPath%
+    write to %dirs%
+- return %dirs%

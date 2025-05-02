@@ -46,5 +46,10 @@ namespace PLang.Errors
 		{
 			return ErrorHelper.ToFormat("text", this).ToString();
 		}
+
+		public object AsData()
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

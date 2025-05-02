@@ -31,6 +31,11 @@ namespace PLang.Errors
 
 		public Exception? Exception => null;
 
+		public object AsData()
+		{
+			return this;
+		}
+
 		public object ToFormat(string contentType = "text")
 		{
 			return String.Empty;

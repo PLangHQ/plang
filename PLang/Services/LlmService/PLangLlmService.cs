@@ -9,6 +9,7 @@ using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Modules;
 using PLang.Modules.IdentityModule;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
@@ -28,7 +29,7 @@ namespace PLang.Services.LlmService
 		private readonly PLangAppContext context;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly MemoryStack memoryStack;
-		private readonly Modules.HttpModule.Program http;
+		private readonly ProgramFactory programFactory;
 		private string url = "https://llm.plang.is/api/Llm";
 		private string? modelOverwrite = null;
 		private readonly string appId = "206bb559-8c41-4c4a-b0b7-283ef73dc8ce";
@@ -39,7 +40,7 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 		public IContentExtractor Extractor { get; set; }
 
 		public PLangLlmService(LlmCaching llmCaching, Modules.IdentityModule.Program signer,
-			ILogger logger, PLangAppContext context, IPLangFileSystem fileSystem, MemoryStack memoryStack, Modules.HttpModule.Program http)
+			ILogger logger, PLangAppContext context, IPLangFileSystem fileSystem, MemoryStack memoryStack, ProgramFactory programFactory)
 		{
 			this.llmCaching = llmCaching;
 			this.signer = signer;
@@ -47,7 +48,7 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 			this.context = context;
 			this.fileSystem = fileSystem;
 			this.memoryStack = memoryStack;
-			this.http = http;
+			this.programFactory = programFactory;
 			
 			this.Extractor = new JsonExtractor();
 
@@ -150,6 +151,7 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 				parameters.Add("buildVersion", assembly.GetName().Version?.ToString());
 			}
 
+			var http = programFactory.GetProgram<Modules.HttpModule.Program>();
 			var result = await http.Post(url, parameters);
 			if (result.Error != null) return (result.Data, result.Error);
 
@@ -177,9 +179,11 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 			{
 				context.AddOrReplace(ReservedKeywords.Llm, rawResponse);
 			}
-
-			if (result.Response is HttpResponse hr) 
+			HttpResponse? hr = null;
+			if (result.Properties is IDictionary<string, object?> properties && properties.TryGetValue("Response", out object? resp)) 
 			{
+				hr = resp as HttpResponse;
+
 				ShowCosts(hr);
 
 				var obj = Extractor.Extract(rawResponse, responseType);
@@ -195,7 +199,7 @@ The answer was:{result.Item1}", GetType(), "LlmService"));
 				return (obj, null);
 			}
 
-			if (result.Response?.StatusCode == (int) System.Net.HttpStatusCode.PaymentRequired)
+			if (hr != null && hr.StatusCode == (int) System.Net.HttpStatusCode.PaymentRequired)
 			{
 				var obj = JObject.Parse(rawResponse);
 				if (obj != null && obj["url"]?.ToString() != "")

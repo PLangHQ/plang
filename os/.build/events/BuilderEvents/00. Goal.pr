@@ -14,7 +14,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-04-07T19:38:49.5976302+00:00",
+      "Generated": "2025-05-02T15:59:31.1327513+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -28,11 +28,12 @@
         "EventType": "Before",
         "EventScope": "EndOfApp",
         "GoalToBindTo": {
-          "Value": "builder"
+          "Value": "*"
         },
         "GoalToCall": {
           "Value": "Builder/CheckGoals"
         },
+        "GoalToCallParameters": null,
         "IncludePrivate": false,
         "StepNumber": null,
         "StepText": null,
@@ -45,7 +46,60 @@
         "ExceptionType": null,
         "IsLocal": false,
         "IncludeOsGoals": false,
-        "Id": "Before_EndOfApp_builder_Builder/CheckGoals_False___True__False_____False"
+        "Id": "Before_EndOfApp_*_Builder/CheckGoals_False___True__False_____False"
+      },
+      "IsEvent": true,
+      "Hash": null,
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\events\\BuilderEvents.goal"
+    },
+    {
+      "Text": "on module error status 402, include private,  call /apps/Wallet/PaymentRequest  contract=%!error.Contract%, callback=%!error.Callback%",
+      "Comment": null,
+      "ModuleType": null,
+      "Name": null,
+      "Description": null,
+      "PrFileName": "Events.pr",
+      "RelativePrPath": ".build\\events\\BuilderEvents\\Events.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2025-05-02T16:03:28.4644431+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Custom": {},
+      "Number": 1,
+      "LineNumber": 3,
+      "LlmRequest": null,
+      "EventBinding": {
+        "EventType": "After",
+        "EventScope": "ModuleError",
+        "GoalToBindTo": {
+          "Value": "*"
+        },
+        "GoalToCall": {
+          "Value": "/apps/Wallet/PaymentRequest"
+        },
+        "GoalToCallParameters": {
+          "contract": "%!error.Contract%",
+          "callback": "%!error.Callback%"
+        },
+        "IncludePrivate": true,
+        "StepNumber": null,
+        "StepText": null,
+        "WaitForExecution": true,
+        "RunOnlyOnStartParameter": null,
+        "OnErrorContinueNextStep": false,
+        "ErrorKey": null,
+        "ErrorMessage": null,
+        "StatusCode": 402,
+        "ExceptionType": null,
+        "IsLocal": false,
+        "IncludeOsGoals": false,
+        "Id": "After_ModuleError_*_/apps/Wallet/PaymentRequest_True___True__False___402__False"
       },
       "IsEvent": true,
       "Hash": null,
@@ -67,5 +121,6 @@
   "Signature": null,
   "Hash": null,
   "IncomingVariablesRequired": null,
-  "DataSourceName": null
+  "DataSourceName": null,
+  "IsSetup": false
 }

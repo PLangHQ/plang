@@ -16,9 +16,10 @@ namespace PLang.Errors
 		public Goal? Goal { get; set; }
 		public Exception? Exception { get; }
 		public object ToFormat(string contentType = "text");
+		public object AsData();
 	}
 	public record Error(string Message, string Key = "GeneralError", int StatusCode = 400, Exception? Exception = null,
-		string? FixSuggestion = null, string? HelpfulLinks = null) : IError
+		string? FixSuggestion = null, string? HelpfulLinks = null, object? Data = null) : IError
 	{
 		public virtual GoalStep? Step { get; set; }
 		public virtual Goal? Goal { get; set; }
@@ -33,6 +34,10 @@ namespace PLang.Errors
 		public override string? ToString()
 		{
 			return ErrorHelper.ToFormat("text", this).ToString();
+		}
+		public virtual object AsData()
+		{
+			return this;
 		}
 	}
 

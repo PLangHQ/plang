@@ -16,6 +16,11 @@ namespace PLang.Errors.Events
 
 		public bool IgnoreError => false;
 
+		public object AsData()
+		{
+			throw new NotImplementedException();
+		}
+
 		public object ToFormat(string contentType = "text")
 		{
 			return InitialError.ToFormat(contentType);

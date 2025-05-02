@@ -13,6 +13,7 @@ namespace PLang.Errors.Events
 		string? FixSuggestion = null, string? HelpfulLinks = null) : Error(Message, Key, Exception: Exception, FixSuggestion: FixSuggestion, HelpfulLinks: HelpfulLinks), IEventError, IBuilderError
 	{
 		public bool IgnoreError => true;
+		public bool Retry => false;
 		public override string ToString()
 		{
 			return (InitialError ?? this).ToFormat().ToString();

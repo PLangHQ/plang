@@ -3,6 +3,8 @@
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using PLang.Attributes;
+using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
@@ -24,14 +26,18 @@ namespace PLang.Modules.TerminalModule
 		private readonly ISettings settings;
 		private readonly IOutputStreamFactory outputStreamFactory;
 		private readonly IPLangFileSystem fileSystem;
+		private readonly ProgramFactory programFactory;
+		private readonly IEngine engine;
 		public static readonly string DefaultOutputVariable = "__Terminal_Output__";
 		public static readonly string DefaultErrorOutputVariable = "__Terminal_Error_Output__";
-		public Program(ILogger logger, ISettings settings, IOutputStreamFactory outputStreamFactory, IPLangFileSystem fileSystem) : base()
+		public Program(ILogger logger, ISettings settings, IOutputStreamFactory outputStreamFactory, IPLangFileSystem fileSystem, ProgramFactory programFactory, IEngine engine) : base()
 		{
 			this.logger = logger;
 			this.settings = settings;
 			this.outputStreamFactory = outputStreamFactory;
 			this.fileSystem = fileSystem;
+			this.programFactory = programFactory;
+			this.engine = engine;
 		}
 
 		public async Task Read(string? variableName)
@@ -40,23 +46,50 @@ namespace PLang.Modules.TerminalModule
 			memoryStack.Put(variableName, result);
 		}
 
-		public async Task RunTerminal(string appExecutableName, List<string>? parameters = null,
+		[Description("Run a executable. Parameters string should not be escaped.")]
+		public async Task<(object?, IError?, IProperties?)> RunTerminal(string appExecutableName, List<string>? parameters = null,
 			string? pathToWorkingDirInTerminal = null,
-			[HandlesVariable] string? dataOutputVariable = null, [HandlesVariable] string? errorDebugInfoOutputVariable = null,
-			[HandlesVariable] string? dataStreamDelta = null, [HandlesVariable] string? debugErrorStreamDelta = null,
-			bool hideTerminal = false, string? keyValueListSeperator = null
+			GoalToCall? onDataCallGoal = null, GoalToCall? onErrorCallGoal = null,
+			bool hideTerminal = false
 			)
 		{
 			if (string.IsNullOrWhiteSpace(pathToWorkingDirInTerminal))
 			{
-				pathToWorkingDirInTerminal = (Goal != null) ? Goal.AbsoluteGoalFolderPath : fileSystem.GoalsPath;
+				if (Goal != null && Goal.IsOS && engine.CallingStep != null)
+				{
+					pathToWorkingDirInTerminal = engine.CallingStep.Goal.AbsoluteGoalFolderPath;
+				}
+				else
+				{
+					pathToWorkingDirInTerminal = (Goal != null) ? Goal.AbsoluteGoalFolderPath : fileSystem.GoalsPath;
+				}
 			}
 			else
 			{
 				pathToWorkingDirInTerminal = GetPath(pathToWorkingDirInTerminal);
 			}
+
+			var fileNameWithPath = GetPath(appExecutableName);
+
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && string.IsNullOrEmpty(Path.GetExtension(appExecutableName)))
+			{
+				appExecutableName = appExecutableName + ".exe";
+			}
+
+			if (!fileSystem.File.Exists(fileNameWithPath))
+			{
+				fileNameWithPath = GetPath(Path.Join("/bin", appExecutableName));
+				if (!fileSystem.File.Exists(fileNameWithPath))
+				{
+					// executeable file not found so it must be in PATH, use just name
+					fileNameWithPath = appExecutableName;
+				}
+			}
+
+			Properties properties = new();
 			ProcessStartInfo startInfo = new ProcessStartInfo
 			{
+				FileName = fileNameWithPath,
 				RedirectStandardInput = true,
 				RedirectStandardOutput = true,
 				RedirectStandardError = true,
@@ -65,6 +98,8 @@ namespace PLang.Modules.TerminalModule
 				WorkingDirectory = pathToWorkingDirInTerminal,
 
 			};
+
+
 			string command = appExecutableName;
 			if (parameters != null)
 			{
@@ -72,18 +107,17 @@ namespace PLang.Modules.TerminalModule
 				{
 					if (parameter == null) continue;
 
-					if (parameter.Contains(" ") && !parameter.Contains("\""))
-					{
-						command += " \"" + parameter + "\"";
-					}
-					else
-					{
-						command += " " + parameter;
-					}
+					startInfo.ArgumentList.Add(parameter);
 				}
 			}
 
+			startInfo.StandardInputEncoding = Encoding.UTF8;
+			startInfo.StandardOutputEncoding = Encoding.UTF8;
+			startInfo.StandardErrorEncoding = Encoding.UTF8;
 
+			Console.OutputEncoding = Encoding.UTF8;
+			Console.InputEncoding = Encoding.UTF8;
+			/*
 			// Determine the OS and set the appropriate command interpreter
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			{
@@ -107,153 +141,112 @@ namespace PLang.Modules.TerminalModule
 			else
 			{
 				logger.LogError("Unsupported OS");
-				return;
-			}
-
-			var dict = new ReturnDictionary<string, object?>();
+				return (null, new ProgramError("Unsupported OS", goalStep, function), properties);
+			}*/
 
 			// Start the process
-			using (Process process = new Process { StartInfo = startInfo })
+			using Process process = new Process { StartInfo = startInfo };
+
+			properties.Add("Process", process);
+			properties.Add("StartInfo", startInfo);
+
+			StringBuilder? dataOutput = new();
+			StringBuilder? errorOutput = new();
+
+			CallGoalModule.Program? caller = null;
+			if (!string.IsNullOrEmpty(onDataCallGoal) || !string.IsNullOrEmpty(onErrorCallGoal))
 			{
-
-				StringBuilder? dataOutput = new();
-				StringBuilder? errorOutput = new();
-
-
-
-
-				process.OutputDataReceived += (sender, e) =>
-				{
-					//logger.LogInformation(e.Data);
-					if (string.IsNullOrWhiteSpace(e.Data)) return;
-
-					if (dataStreamDelta != null)
-					{
-						memoryStack.Put(dataStreamDelta, e.Data);
-					}
-
-					dataOutput.Append(e.Data + Environment.NewLine);
-
-					logger.LogTrace(e.Data);
-				};
-
-
-				process.ErrorDataReceived += (sender, e) =>
-				{
-					if (string.IsNullOrWhiteSpace(e.Data)) return;
-
-					if (!string.IsNullOrEmpty(debugErrorStreamDelta))
-					{
-						memoryStack.Put(debugErrorStreamDelta, e.Data);
-					}
-					errorOutput.Append(e.Data + Environment.NewLine);
-
-					logger.LogTrace(e.Data);
-
-				};
-
-				process.Exited += (sender, e) =>
-				{
-					//logger.LogDebug($"Exited");
-				};
-
-				process.Start();
-				process.StartInfo.Environment["LANG"] = "en_US.UTF-8";
-				process.BeginOutputReadLine(); // Start asynchronous read of output
-				process.BeginErrorReadLine(); // Start asynchronous read of error
-
-				// Get the input stream
-				StreamWriter sw = process.StandardInput;
-
-				// Write the command to run the application with parameters
-
-				sw.WriteLine(command);
-
-				sw.Close(); // Close the input stream to signal completion
-				if (goalStep.WaitForExecution)
-				{
-					await process.WaitForExitAsync();
-				}
-				else
-				{
-					KeepAlive(process, "Process");
-				}
-
-				if (!string.IsNullOrEmpty(dataOutputVariable) && dataOutput.Length > 0)
-				{
-					Dictionary<string, object> keyValuePairs = new Dictionary<string, object>();
-					if (keyValueListSeperator != null)
-					{
-
-						string[] lines = dataOutput.ToString().Split(['\r', '\n']);
-						foreach (var line in lines)
-						{
-							if (line.Contains(keyValueListSeperator + " ") || line.Contains(keyValueListSeperator + "\t"))
-							{
-								var data = line.Split(keyValueListSeperator, StringSplitOptions.RemoveEmptyEntries);
-								if (data.Length > 1)
-								{
-									string key = data[0].Trim();
-									if (keyValuePairs.ContainsKey(key))
-									{
-										var objValue = keyValuePairs[key];
-										List<object> list = new List<object>(); ;
-										if (objValue is IList tmpList)
-										{
-											foreach (var item in tmpList)
-											{
-												list.Add(item);
-											}
-										}
-										else
-										{
-											list.Add(objValue);
-										}
-										list.Add(string.Join(":", data.Skip(1)).Trim());
-										keyValuePairs.AddOrReplace(key, list);
-									}
-									else
-									{
-										keyValuePairs.Add(key, string.Join(":", data.Skip(1)).Trim());
-									}
-								}
-							}
-						}
-						if (keyValuePairs.Count > 0)
-						{
-							memoryStack.Put(dataOutputVariable, keyValuePairs);
-						}
-					}
-
-					if (keyValuePairs.Count == 0)
-					{
-
-						memoryStack.Put(dataOutputVariable, RemoveLastLine(dataOutput.ToString()));
-					}
-
-				}
-
-				if (!string.IsNullOrEmpty(errorDebugInfoOutputVariable))
-				{
-					memoryStack.Put(errorDebugInfoOutputVariable, errorOutput.ToString());
-				}
-				else if (errorOutput.Length > 0)
-				{
-					logger.LogError("No error variable defined so error is written to error log");
-					logger.LogError(errorOutput.ToString());
-				}
-
-				logger.LogTrace("Done with TerminalModule");
+				caller = programFactory.GetProgram<CallGoalModule.Program>();
 			}
 
+			lineCounter = 0;
+			process.OutputDataReceived += async (sender, e) =>
+			{
+				//logger.LogInformation(e.Data);
+				if (string.IsNullOrWhiteSpace(e.Data)) return;
+
+				if (!string.IsNullOrEmpty(onDataCallGoal) && caller != null)
+				{
+					var dict = new Dictionary<string, object?>();
+					dict.Add("data", e.Data);
+					await caller.RunGoal(onDataCallGoal, dict);
+				}
+
+				dataOutput.Append(e.Data + Environment.NewLine);
+
+				logger.LogTrace(e.Data);
+			};
+
+
+			process.ErrorDataReceived += async (sender, e) =>
+			{
+				if (string.IsNullOrWhiteSpace(e.Data)) return;
+
+				if (!string.IsNullOrEmpty(onErrorCallGoal) && caller != null)
+				{
+					var dict = new Dictionary<string, object?>();
+					dict.Add("error", e.Data);
+					await caller.RunGoal(onErrorCallGoal, dict);
+				}
+				errorOutput.Append(e.Data + Environment.NewLine);
+
+				logger.LogTrace(e.Data);
+
+			};
+
+			process.Exited += (sender, e) =>
+			{
+				//logger.LogDebug($"Exited");
+			};
+
+			process.Start();
+
+			process.BeginOutputReadLine(); // Start asynchronous read of output
+			process.BeginErrorReadLine(); // Start asynchronous read of error
+
+			// Get the input stream
+			StreamWriter sw = process.StandardInput;
+
+			// Write the command to run the application with parameters
+
+			//sw.WriteLine(command);
+
+			sw.Close(); // Close the input stream to signal completion
+			if (goalStep.WaitForExecution)
+			{
+				await process.WaitForExitAsync();
+			}
+			else
+			{
+				KeepAlive(process, "Process");
+			}
+
+			IError? error = null;
+			if (errorOutput.Length > 0)
+			{
+				command = appExecutableName = string.Join(" ", startInfo.ArgumentList);
+				error = new ProgramError($"Command: {command}\n{errorOutput}", goalStep, function);
+			}
+			logger.LogTrace("Done with TerminalModule");
+
+			return (dataOutput, error, properties);
 		}
 
-		string? RemoveLastLine(string? input)
+		int lineCounter = 0;
+		private bool IsFirst3Lines()
 		{
+			return (++lineCounter <= 3);
+		}
+
+		string? RemoveLastLine(StringBuilder? input)
+		{
+			// Only remove the last line on Windows, not sure how it is on Linux and Macos
+			if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return input.ToString();
+
 			if (input == null) return null;
-			input = input.Trim();
+			//input = input.Trim();
 			// Split the string using Environment.NewLine
-			string[] lines = input.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+			string[] lines = input.ToString().TrimEnd().Split(new[] { Environment.NewLine }, StringSplitOptions.None);
 
 			// If there's only one line or no lines, return an empty string
 			if (lines.Length <= 1)

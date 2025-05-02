@@ -378,9 +378,10 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "4bc668dcd98ec115da2a580500369b6accba56844cf187c22cfe93cb4fe7ae70",
+  "Hash": "2b3205ac19b05c15ddd1798d7b437f48120ec6d31f611a72d0e2f5b98ffcc144",
   "IncomingVariablesRequired": [
     "contract"
   ],
-  "DataSourceName": null
+  "DataSourceName": null,
+  "IsSetup": false
 }

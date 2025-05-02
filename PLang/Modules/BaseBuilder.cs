@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Container;
+using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Interfaces;
@@ -34,6 +35,7 @@ namespace PLang.Modules
 		private PLangAppContext context;
 		private VariableHelper variableHelper;
 		private IContentExtractor contentExtractor;
+		protected GoalStep GoalStep;
 
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -58,6 +60,10 @@ namespace PLang.Modules
 			appendedAssistantCommand = new List<string>();
 		}
 
+		public void SetStep(GoalStep step)
+		{
+			this.GoalStep = step;
+		}
 
 		public void SetContentExtractor(IContentExtractor contentExtractor)
 		{
@@ -201,18 +207,23 @@ Make sure to use the information in <error> to return valid JSON response"
 				systemContent.Add(new LlmContent(append));
 			}
 			promptMessage.Add(new LlmMessage("system", systemContent));
-
+			
+			var assistantContent = new List<LlmContent>();
 			if (string.IsNullOrEmpty(assistant))
 			{
-				assistant = GetDefaultAssistantText(step);
+				(assistant, var error) = GetDefaultAssistantText(step);
+				if (error != null) throw new ExceptionWrapper(error);
 			}
-			var assistantContent = new List<LlmContent>();
+
 			assistantContent.Add(new LlmContent(assistant));
 			foreach (var append in appendedAssistantCommand)
 			{
 				assistantContent.Add(new LlmContent(append));
 			}
-			promptMessage.Add(new LlmMessage("assistant", assistantContent));
+			if (assistantContent.Count > 0)
+			{
+				promptMessage.Add(new LlmMessage("assistant", assistantContent));
+			}
 			if (errorMessage != null)
 			{
 				promptMessage.Add(new LlmMessage("assistant", errorMessage));
@@ -255,12 +266,12 @@ Variable is defined with starting and ending %, e.g. %filePath%.
 null is used to represent no value, e.g. {{ ""name"": null }}
 Variables should not be changed, they can include dot(.) and parentheses()
 Keep \n, \r, \t that are submitted to you for string variables
-Parameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==
-
-== QuoteExample ==
+Parameter.Value that is type String MUST be without escaping quotes. See <Example>
+Error handling is process by another step, if you see 'on error...' you can ignore it
+<Example>
 get url ""http://example.org"" => Value: ""http://example.org""
 write out 'Hello world' => Value: ""Hello world""
-== QuoteExample ==
+<Example>
 
 If there is some api key, settings, config replace it with %Settings.Get(""settingName"", ""defaultValue"", ""Explain"")% 
 - settingName would be the api key, config key, 
@@ -281,18 +292,23 @@ ReturnValue rules
 ".Trim();
 		}
 
-		private string GetDefaultAssistantText(GoalStep step)
+		private (string, IBuilderError?) GetDefaultAssistantText(GoalStep step)
 		{
 			var programType = typeHelper.GetRuntimeType(module);
 			var variables = GetVariablesInStep(step).Replace("%", "");
-			var methods = typeHelper.GetMethodsAsString(programType);
+			var (methods, error) = typeHelper.GetMethodDescriptions(programType);
+			if (error != null) return (null, error);
 
 			string assistant = "";
-			if (!string.IsNullOrEmpty(methods))
+			if (methods?.Count > 0)
 			{
+				var json = JsonConvert.SerializeObject(methods, new JsonSerializerSettings
+				{
+					NullValueHandling = NullValueHandling.Ignore
+				});
 				assistant = $@"
 ## functions available starts ##
-{methods.Trim()}
+{json}
 ## functions available ends ##";
 			}
 
@@ -303,7 +319,7 @@ ReturnValue rules
 {variables}
 ## defined variables ##";
 			}
-			return assistant.Trim();
+			return (assistant.Trim(), null);
 		}
 
 		protected string GetVariablesInStep(GoalStep step)
@@ -327,28 +343,6 @@ ReturnValue rules
 		}
 
 
-		protected string? GetParameterValueAsString(GenericFunction gf, string parameterName)
-		{
-			return gf.Parameters.FirstOrDefault(p => p.Name == parameterName)?.Value?.ToString();
-		}
-		protected Dictionary<string, object>? GetParameterValueAsDictionary(GenericFunction gf, string parameterName)
-		{
-			var parameterValue = gf.Parameters.FirstOrDefault(p => p.Name == parameterName)?.Value?.ToString();
-			if (parameterValue == null) return null;
-
-			if (JsonHelper.IsJson(parameterValue))
-			{
-				var parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(parameterValue);
-				return parameters;
-			}
-			var dict = new Dictionary<string, object>();
-			dict.Add(parameterName, parameterValue);
-			return dict;
-		}
-		protected bool? GetParameterValueAsBool(GenericFunction gf, string parameterName)
-		{
-			return (bool?)gf.Parameters.FirstOrDefault(p => p.Name == parameterName)?.Value;
-		}
 
 	}
 

@@ -6,6 +6,7 @@ using RazorEngineCore;
 using System.IO;
 using System.IO.Abstractions;
 using System.Text;
+using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
 {
@@ -35,7 +36,7 @@ namespace PLang.Services.OutputStream
 			sb = new StringBuilder();
 		}
 
-		public async Task<string> Ask(string text, string type = "ask", int statusCode = 104, Dictionary<string, object>? parameters = null)
+		public async Task<string> Ask(string text, string type = "ask", int statusCode = 104, Dictionary<string, object>? parameters = null, Callback? callback = null)
 		{
 			return "";
 			//throw new NotImplementedException();

@@ -1,95 +1,93 @@
-﻿using LightInject;
-using PLang.Building.Model;
-using PLang.Building.Parsers;
-using PLang.Container;
+﻿using PLang.Building.Parsers;
 using PLang.Errors;
-using PLang.Errors.Handlers;
 using PLang.Errors.Runtime;
-using PLang.Exceptions;
-using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Services.AppsRepository;
-using PLang.Services.OutputStream;
 using PLang.Utils;
 using System.ComponentModel;
-using static PLang.Executor;
 
 namespace PLang.Modules.CallGoalModule
 {
 	[Description("Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff, set %formatted% = Format(%data%), %user% = GetUser %id%")]
-	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine, IPLangAppsRepository appsRepository, PrParser prParser, 
-		IPLangFileSystem fileSystem, IFileAccessHandler fileAccessHandler, IServiceContainerFactory serviceContainerFactory,
-		IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory,
-			IErrorHandlerFactory errorHandlerFactory, IErrorSystemHandlerFactory errorSystemHandlerFactory,
-			IAskUserHandlerFactory askUserHandlerFactory
-		) : BaseProgram()
+	public class Program(IPseudoRuntime pseudoRuntime, IEngine engine, IPLangAppsRepository appsRepository, PrParser prParser,
+		IPLangFileSystem fileSystem, IFileAccessHandler fileAccessHandler, VariableHelper variableHelper) : BaseProgram()
 	{
 
 		[Description("Call/Runs another app. app can be located in another directory, then path points the way. goalName is default \"Start\" when it cannot be mapped")]
-		public async Task<IError?> RunApp(string appName, string? path = null, GoalToCall? goalName = null, Dictionary<string, object?>? parameters = null, bool waitForExecution = true,
+		public async Task<(object? Variables, IError? Error)> RunApp(string? appName = null, GoalToCall? goalName = null, Dictionary<string, object?>? parameters = null, bool waitForExecution = true,
 			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, bool keepMemoryStackOnAsync = false)
 		{
 			if (string.IsNullOrEmpty(appName))
 			{
-				return new ProgramError($"App name is missing from step: {goalStep.Text}", goalStep, function);
+				return (null, new ProgramError($"App name is missing from step: {goalStep.Text}", goalStep, function));
 			}
 
-			if (!fileSystem.Directory.Exists(fileSystem.Path.Join(path, appName))) {
-				return new ProgramError($"App name is could not be found at: {fileSystem.Path.Join(path, appName)}", goalStep, function);
-			}
-			if (string.IsNullOrEmpty(goalName?.ToString())) goalName = new GoalToCall("Start");
+			var (goals, error) = await prParser.LoadAppPath(appName, fileAccessHandler);
+			if (error != null) return (null, error);
 
-			await prParser.LoadAppPath(appName, fileAccessHandler);
+			var goal = goals!.FirstOrDefault(p => p.GoalName == goalName);
 
-			string absoluteAppPath = fileSystem.Path.GetFullPath(fileSystem.Path.Join(fileSystem.RootDirectory, path, appName, "/").AdjustPathToOs());
-			var goals = prParser.GetAllGoals().Where(p => p.AbsoluteAppStartupFolderPath == absoluteAppPath);
-			var goalToCall = goals.FirstOrDefault(p => p.GoalName == goalName);
-			
-			if (goalToCall == null)
+			if (goal == null)
 			{
-				return new ProgramError($"Could not find goal {goalName} in app: {fileSystem.Path.Join(path, appName)}", goalStep, function);
+				return (null, new ProgramError($"Could not find goal {goalName} in {appName}", goalStep, function));
 			}
-			
-			var container = serviceContainerFactory.CreateContainer(context, absoluteAppPath, "./", outputStreamFactory, outputSystemStreamFactory,
-			errorHandlerFactory, errorSystemHandlerFactory, askUserHandlerFactory);
 
-			var engine = container.GetInstance<IEngine>();
-			engine.Init(container);
+			IEngine newEngine = await engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath, goalStep).RentAsync();
 
-			var ms = engine.GetMemoryStack();
-			if (parameters != null)
+			try
 			{
-				foreach (var parameter in parameters)
+				if (parameters != null)
 				{
-					ms.Put(parameter.Key, parameter.Value);
+					foreach (var item in parameters)
+					{
+						if (item.Key.StartsWith("!"))
+						{
+							newEngine.GetContext().AddOrReplace(item.Key, this.variableHelper.LoadVariables(item.Value));
+						}
+						else
+						{
+							newEngine.GetMemoryStack().Put(item.Key, item.Value);
+						}
+					}
 				}
+
+
+				(var vars, error) = await newEngine.RunGoal(goal);
+
+				return (vars, error);
+
 			}
+			catch (Exception ex)
+			{
+				throw;
+			}
+			finally
+			{
+				engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath, goalStep).Return(newEngine);
 
-			var task = engine.RunGoal(goalToCall, waitForXMillisecondsBeforeRunningGoal);
-			await task.ConfigureAwait(waitForExecution);
-
-			return task.Result;
+			}
 		}
 
 
 		[Description("Call/Runs another goal. goalName can be prefixed with !. If backward slash(\\) is used by user, change to forward slash(/)")]
-		public async Task<(ReturnDictionary<string, object?>? Variables, IError? Error)> RunGoal(GoalToCall goalName, Dictionary<string, object?>? parameters = null, bool waitForExecution = true, 
+		public async Task<(object? Return, IError? Error)> RunGoal(GoalToCall goalName, Dictionary<string, object?>? parameters = null, bool waitForExecution = true,
 			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, bool keepMemoryStackOnAsync = false, bool isolated = false)
-		{		
+		{
+			string path = (goal != null) ? goal.RelativeAppStartupFolderPath : "/";
+			int indent = (goalStep == null) ? 0 : goalStep.Indent;
 
-			var result = await pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName,
-					parameters, Goal, 
-					waitForExecution, delayWhenNotWaitingInMilliseconds, waitForXMillisecondsBeforeRunningGoal, goalStep.Indent, keepMemoryStackOnAsync, isolated);
+			var result = await pseudoRuntime.RunGoal(engine, engine.GetContext(), path, goalName, parameters, goal,
+					waitForExecution, delayWhenNotWaitingInMilliseconds, waitForXMillisecondsBeforeRunningGoal, indent, keepMemoryStackOnAsync, isolated);
 			
 			if (result.error is Return ret)
 			{
 				return (ret.Variables, null);
 			}
 			return (null, result.error);
-			
+
 		}
 
 

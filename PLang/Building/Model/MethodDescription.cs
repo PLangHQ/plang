@@ -6,7 +6,7 @@ public class MethodDescription
 {
 	public string? Description { get; set; }
 	public string MethodName { get; set; }
-	public List<IPropertyDescription> Parameters { get; set; }
+	public List<IPropertyDescription>? Parameters { get; set; }
 	public ReturnValue ReturnValue { get; set; }
 }
 
@@ -32,7 +32,7 @@ public class ComplexDescription : IPropertyDescription
 	public string Name { get; set; }
 	public string Description { get; set; }
 	public object? DefaultValue { get; set; }
-	public List<IPropertyDescription> TypeProperties { get; set; }
+	public List<IPropertyDescription>? TypeProperties { get; set; }
 }
 
 public class EnumDescription : IPropertyDescription

@@ -32,7 +32,7 @@ namespace PLangTests.Modules.MessageModule
 
 			p = new Program(settings, logger, pseudoRuntime, engine, llmServiceFactory, nostrClient, signingService, outputStreamFactory, 
 				outputSystemStreamFactory, errorHandlerFactory, errorSystemHandlerFactory, askUserHandlerFactory, fileSystem);
-			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, llmServiceFactory, settings, null, null);
+			p.Init(container, null, null, null, null);
 		}
 
 		[TestMethod]	
@@ -66,7 +66,7 @@ namespace PLangTests.Modules.MessageModule
 
 			p = new Program(settings, logger, pseudoRuntime, engine, llmServiceFactory, null, signingService, outputStreamFactory, 
 				outputSystemStreamFactory, errorHandlerFactory, errorSystemHandlerFactory, askUserHandlerFactory, fileSystem);
-			p.Init(container, null, null, null, memoryStack, logger, context, typeHelper, null, settings, null, null);
+			p.Init(container, null, null, null, null);
 
 
 			await p.SetCurrentAccount("Main");

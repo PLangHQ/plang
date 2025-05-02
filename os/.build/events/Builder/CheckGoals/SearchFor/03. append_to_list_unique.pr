@@ -3,27 +3,27 @@
     "FunctionName": "AddToList",
     "Parameters": [
       {
-        "Type": "Object",
+        "Type": "System.Object",
         "Name": "value",
         "Value": "%file.Path% - Missing goal: %item.Value%"
       },
       {
-        "Type": "List`1<Object>",
+        "Type": "System.Collections.Generic.List`1[System.Object]",
         "Name": "listInstance",
         "Value": "%missingGoals%"
       },
       {
-        "Type": "Boolean",
+        "Type": "System.Boolean",
         "Name": "uniqueValue",
         "Value": true
+      },
+      {
+        "Type": "System.Boolean",
+        "Name": "caseSensitive",
+        "Value": false
       }
     ],
-    "ReturnValues": [
-      {
-        "Type": "List`1",
-        "VariableName": "missingGoals"
-      }
-    ]
+    "ReturnValues": null
   },
   "Text": "append to %missingGoals% list, unique = '%file.Path% - Missing goal: %item.Value%'",
   "Reload": false,
@@ -42,7 +42,7 @@
         "content": [
           {
             "type": "text",
-            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
           },
           {
             "type": "text",
@@ -55,7 +55,7 @@
         "content": [
           {
             "type": "text",
-            "text": "## functions available starts ##\r\nClearList(List`1<Object> listInstance)  : void\nClearDictionary(Dictionary`2<String, Object> dictionary)  : void\nDeleteFromList(Object item, List`1<Object> listInstance)  : Boolean \nDeleteKeyFromDictionary(String key, Dictionary`2<String, Object> dictionary)  : Boolean \nAddItemsToList(List`1<Object> value, List`1<Object>? listInstance)  : List`1  // Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddItemsToList. \nAddToList(Object value, List`1<Object>? listInstance, Boolean? uniqueValue = False)  : List`1  // Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToList. \nGetFromList(Int32 position, List`1<Object>? listInstance)  : void  // Gets an item from a list by position. \nAddItemsToDictionary(String key, Dictionary`2<String, Object> value, Dictionary`2<String, Object>? dictionaryInstance, Boolean? updateIfExists = True)  : Dictionary`2  // Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddItemsToDictionary. \nAddToDictionary(String key, Object value, Dictionary`2<String, Object>? dictionaryInstance, Boolean? updateIfExists = True)  : Dicionary<String, Object>  // Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToDictionary. \nGetFromDictionary(String key, Dictionary`2<String, Object>? dictionaryInstance)  : void  // Gets an object from dictionary. ReturnValue should always be used with GetFromDictionary.\r\n## functions available ends ##\r\n## defined variables ##\r\nmissingGoals (type:object), file.Path (type:object), item.Value (type:object), \r\n## defined variables ##"
+            "text": "## functions available starts ##\r\n[{\"MethodName\":\"ClearList\",\"Parameters\":[{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\"}]},{\"MethodName\":\"ClearDictionary\",\"Parameters\":[{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"dictionary\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]}]},{\"MethodName\":\"DeleteFromList\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"item\"},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\"}],\"ReturnValue\":{\"Type\":\"System.Boolean\"}},{\"MethodName\":\"DeleteKeyFromDictionary\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"dictionary\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]}],\"ReturnValue\":{\"Type\":\"System.Boolean\"}},{\"Description\":\"Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddItemsToList\",\"MethodName\":\"AddItemsToList\",\"Parameters\":[{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"value\"},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\"}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToList\",\"MethodName\":\"AddToList\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"value\"},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\"},{\"Type\":\"System.Boolean\",\"Name\":\"uniqueValue\",\"DefaultValue\":false},{\"Type\":\"System.Boolean\",\"Name\":\"caseSensitive\",\"DefaultValue\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"GetItem\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"operator\",\"DefaultValue\":\"first\"},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\"},{\"Type\":\"List<string>\",\"Name\":\"sortColumns\"},{\"Type\":\"List<string>\",\"Name\":\"sortOperator\"}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Gets an item from a list by position\",\"MethodName\":\"GetFromList\",\"Parameters\":[{\"Type\":\"System.Int32\",\"Name\":\"position\"},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\"}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddItemsToDictionary\",\"MethodName\":\"AddItemsToDictionary\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"value\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"dictionaryInstance\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]},{\"Type\":\"System.Boolean\",\"Name\":\"updateIfExists\",\"DefaultValue\":true}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"Description\":\"Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToDictionary\",\"MethodName\":\"AddToDictionary\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\"},{\"Type\":\"System.Object\",\"Name\":\"value\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"dictionaryInstance\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]},{\"Type\":\"System.Boolean\",\"Name\":\"updateIfExists\",\"DefaultValue\":true}],\"ReturnValue\":{\"Type\":\"Dictionary<String,Object>\"}},{\"Description\":\"Gets an object from dictionary. ReturnValue should always be used with GetFromDictionary\",\"MethodName\":\"GetFromDictionary\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"dictionaryInstance\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Merges two objects or lists according to primary key\",\"MethodName\":\"MergeLists\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"list1\"},{\"Type\":\"System.Object\",\"Name\":\"list2\"},{\"Type\":\"System.String\",\"Name\":\"key\"}],\"ReturnValue\":{\"Type\":\"System.Object\"}}]\r\n## functions available ends ##\r\n## defined variables ##\r\nmissingGoals (type:object), file.Path (type:object), item.Value (type:object), \r\n## defined variables ##"
           }
         ]
       },
@@ -71,7 +71,8 @@
     ],
     "type": "PLang.Modules.GenericFunctionBuilder",
     "caching": true,
-    "RawResponse": "```json\n{\n\t\"FunctionName\": \"AddToList\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"Name\": \"value\",\n\t\t\t\"Value\": \"%file.Path% - Missing goal: %item.Value%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"List`1<Object>\",\n\t\t\t\"Name\": \"listInstance\",\n\t\t\t\"Value\": \"%missingGoals%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean\",\n\t\t\t\"Name\": \"uniqueValue\",\n\t\t\t\"Value\": true\n\t\t}\n\t],\n\t\"ReturnValues\": [{\n\t\t\"Type\": \"List`1\",\n\t\t\"VariableName\": \"missingGoals\"\n\t}]\n}\n```"
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"AddToList\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"System.Object\",\n\t\t\t\"Name\": \"value\",\n\t\t\t\"Value\": \"%file.Path% - Missing goal: %item.Value%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"System.Collections.Generic.List`1[System.Object]\",\n\t\t\t\"Name\": \"listInstance\",\n\t\t\t\"Value\": \"%missingGoals%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"System.Boolean\",\n\t\t\t\"Name\": \"uniqueValue\",\n\t\t\t\"Value\": true\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"System.Boolean\",\n\t\t\t\"Name\": \"caseSensitive\",\n\t\t\t\"Value\": false\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
   },
-  "RunOnBuild": false
+  "RunOnBuild": false,
+  "Metadata": {}
 }

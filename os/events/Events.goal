@@ -1,10 +1,10 @@
 Events
-- before each step, include private goals, call Runtime/SendDebug, parameter --debug
-- before goal ends, include private goals, call Runtime/SendDebug, parameter --debug
+- before each step, include private goals, call Runtime/SendDebug, start parameter --debug
+- before goal ends, include private goals, call Runtime/SendDebug, start parameter --debug
 - on step error, exception type: PLang.Exceptions.InvalidInstructionFileException, call Runtime/HandleBadInstructionFile
 - on step error, exception type: PLang.Exceptions.MethodNotFoundException, call Runtime/HandleBadInstructionFile
 - on step error, key:"InvalidParameter", call Runtime/HandleBadInstructionFile
 - on step error key:"PrFileNotFound", call Runtime/PrFileNotFound
-- on step error, call Runtime/DebugErrorInIde, only when args --debug
-- on step error status 402, call /apps/Wallet/PaymentRequest request=%!error%
+- on step error, call Runtime/DebugErrorInIde, start args --debug
+- on module error status 402, include private, call /apps/Wallet/PaymentRequest contract=%!error.Contract%
 - on app error, call Runtime/OnAppError

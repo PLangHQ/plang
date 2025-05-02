@@ -6,6 +6,7 @@ using PLang.Container;
 using PLang.Errors;
 using PLang.Errors.Handlers;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Resources;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
@@ -44,7 +45,7 @@ namespace PLang
 			Builder = 1
 		}
 
-		public async static Task<(IEngine Engine, IError? Error)> RunGoal(string goalName, Dictionary<string, object?>? parameters = null)
+		public async static Task<(IEngine Engine, object? Variables, IError? Error)> RunGoal(string goalName, Dictionary<string, object?>? parameters = null)
 		{
 			AppContext.SetSwitch("InternalGoalRun", true);
 			AppContext.SetSwitch("Runtime", true);
@@ -70,11 +71,11 @@ namespace PLang
 
 				var allGoals = prParser.GetAllGoals();
 				var goal = allGoals.FirstOrDefault(p => p.RelativeGoalPath.Equals(goalName.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase));
-				if (goal == null) return (engine, new Error($"Goal {goalName} could not be found"));
+				if (goal == null) return (engine, null, new Error($"Goal {goalName} could not be found"));
 
-				var error = await engine.RunGoal(goal);
+				var (vars, error) = await engine.RunGoal(goal);
 				AppContext.SetSwitch("InternalGoalRun", false);
-				return (engine, error);
+				return (engine, vars, error);
 			}
 		}
 
@@ -120,7 +121,7 @@ namespace PLang
 			{
 				WatchFolder(fileSystem.GoalsPath, "*.goal");
 			}
-			await Run(debug, test, args);
+			using var engine = await Run(debug, test, args);
 
 
 		}

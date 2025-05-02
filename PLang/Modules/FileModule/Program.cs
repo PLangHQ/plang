@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Errors;
+using PLang.Errors.Handlers;
 using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
@@ -37,9 +38,10 @@ namespace PLang.Modules.FileModule
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
 		private readonly IFileAccessHandler fileAccessHandler;
+		private readonly IErrorSystemHandlerFactory errorSystemHandlerFactory;
 
 		public Program(IPLangFileSystem fileSystem, ISettings settings,
-			ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine, IFileAccessHandler fileAccessHandler) : base()
+			ILogger logger, IPseudoRuntime pseudoRuntime, IEngine engine, IFileAccessHandler fileAccessHandler, IErrorSystemHandlerFactory errorSystemHandlerFactory) : base()
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
@@ -47,6 +49,7 @@ namespace PLang.Modules.FileModule
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
 			this.fileAccessHandler = fileAccessHandler;
+			this.errorSystemHandlerFactory = errorSystemHandlerFactory;
 			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 		}
 
@@ -198,7 +201,7 @@ namespace PLang.Modules.FileModule
 		}
 
 		[Description("Reads a text file and write the content into a variable(return value)")]
-		public async Task<(object?, IError?)> ReadTextFile(string path, string? returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = true,
+		public async Task<(object? Content, IError? Error)> ReadTextFile(string path, string? returnValueIfFileNotExisting = "", bool throwErrorOnNotFound = true,
 			bool loadVariables = false, bool emptyVariableIfNotFound = false, string encoding = "utf-8", string? splitOn = null)
 		{
 			var absolutePath = GetPath(path);
@@ -254,15 +257,15 @@ namespace PLang.Modules.FileModule
 		}
 
 		[Description("sheetsToVariable is name of sheet that should load into variable. Sheet1=%products% will load Sheet1 into %product% variable, Sheet2-A4=%categories%, will load data from A4 into %categories%")]
-		public async Task ReadExcelFile(string path, bool useHeaderRow = true, [HandlesVariable] Dictionary<string, object>? sheetsToVariable = null, int headerStartsInRow = 1)
+		public async Task<object?> ReadExcelFile(string path, bool useHeaderRow = true, [HandlesVariable] Dictionary<string, object>? sheetsToVariable = null, int headerStartsInRow = 1)
 		{
 			var absolutePath = GetPath(path);
 			if (!fileSystem.File.Exists(absolutePath))
 			{
 				logger.LogWarning($"{absolutePath} does not exist");
-				return;
+				return null;
 			}
-
+			ReturnDictionary<string, object?> returnValues = new();
 			List<string> sheetNames = MiniExcel.GetSheetNames(absolutePath);
 			if (sheetsToVariable == null || sheetsToVariable.Count == 0)
 			{
@@ -293,7 +296,6 @@ namespace PLang.Modules.FileModule
 				sheetsToVariable = dict;
 			}
 
-			int idx = 0;
 			foreach (var sheetToVariable in sheetsToVariable)
 			{
 				string sheetName = ExtractSheetName(sheetToVariable.Key);
@@ -308,10 +310,10 @@ namespace PLang.Modules.FileModule
 
 				var sheetData = await (await MiniExcel.QueryAsync(absolutePath, useHeaderRow: useHeaderRow, startCell: startCell, sheetName: sheetName)).ToDynamicListAsync();
 
-				memoryStack.Put(sheetToVariable.Value.ToString(), sheetData);
+				returnValues.AddOrReplace(sheetToVariable.Value.ToString()!, sheetData);
 
 			}
-
+			return returnValues;
 		}
 
 		public async Task WriteExcelFile(string path, object variableToWriteToExcel, string sheetName = "Sheet1",
@@ -948,9 +950,9 @@ namespace PLang.Modules.FileModule
 			}
 			else
 			{
-				timer = new Timer((state) =>
+				timer = new Timer(async (state) =>
 				{
-					WatcherCallGoal(sender, e, goalToCall, excludeFiles,
+					await WatcherCallGoal(sender, e, goalToCall, excludeFiles,
 						absoluteFilePathVariableName, fileNameVariableName, changeTypeVariableName, senderVariableName);
 				}, e.FullPath, debounceTime, Timeout.Infinite);
 				timers.TryAdd(e.FullPath, timer);
@@ -958,7 +960,7 @@ namespace PLang.Modules.FileModule
 		}
 
 		private static readonly object _lock = new object();
-		private void WatcherCallGoal(object sender, FileSystemEventArgs e, GoalToCall goalToCall, List<string>? excludeFiles,
+		private async Task WatcherCallGoal(object sender, FileSystemEventArgs e, GoalToCall goalToCall, List<string>? excludeFiles,
 			string absoluteFilePathVariableName, string fileNameVariableName,
 			string changeTypeVariableName, string senderVariableName)
 		{
@@ -976,6 +978,19 @@ namespace PLang.Modules.FileModule
 				{
 					var task = pseudoRuntime.RunGoal(engine, context, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall, parameters);
 					task.Wait();
+
+					var (engine2, vars, error, output) = task.Result;
+					if (error != null)
+					{
+						var errorTask = errorSystemHandlerFactory.CreateHandler().Handle(error);
+						errorTask.Wait();
+
+						var result = errorTask.Result;
+						if (result.Item2 != null)
+						{
+							Console.WriteLine(error.ToString());
+						}
+					}
 				}
 				catch (Exception ex)
 				{

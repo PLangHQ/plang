@@ -112,7 +112,7 @@ namespace PLang.SafeFileSystem
 
 		public void SetFileAccess(List<FileAccessControl> fileAccesses)
 		{
-			if (fileAccesses == null) return;
+			if (fileAccesses == null || fileAccesses.Count == 0) return;
 			
 			var engineFileAccess = this.fileAccesses?.FirstOrDefault(p => p.ProcessId is not null);
 			this.fileAccesses = fileAccesses;

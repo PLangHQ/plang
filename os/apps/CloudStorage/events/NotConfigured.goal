@@ -1,0 +1,3 @@
+NotConfigured
+- write out "rclone is not configured. Start by configurating it. Open your terminal and run %!plang.osPath%/apps/CloudStorage/bin/rclone config"
+- write out %!error%

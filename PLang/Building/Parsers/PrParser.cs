@@ -1,10 +1,13 @@
-﻿using PLang.Building.Model;
+﻿using Microsoft.IdentityModel.Tokens;
+using PLang.Building.Model;
+using PLang.Errors;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Utils;
 using System.Text.RegularExpressions;
+using UglyToad.PdfPig.DocumentLayoutAnalysis.Export;
 using static PLang.Runtime.Startup.ModuleLoader;
 
 namespace PLang.Building.Parsers
@@ -397,31 +400,53 @@ namespace PLang.Building.Parsers
 			return goals;
 		}
 
-		public async Task<List<Goal>> LoadAppPath(string appName, IFileAccessHandler fileAccessHandler)
+		public async Task<(List<Goal>? Goals, IError? Error)> LoadAppPath(string appName, IFileAccessHandler fileAccessHandler)
 		{
 			var path = fileSystem.GoalsPath;
-			var appPath = fileSystem.Path.Join(path, appName);
-			
-			var files = fileSystem.Directory.GetFiles(fileSystem.Path.Join(appPath, ".build"), ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
+			var appPath = fileSystem.Path.Join(path, appName, ".build");
 
+			List<string>? files = new();
+
+			if (fileSystem.Directory.Exists(appPath)) {
+				files = fileSystem.Directory.GetFiles(fileSystem.Path.Join(appPath, ".build"), ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
+			}
+
+			if (files.Count == 0)
+			{
+				appPath = fileSystem.Path.Join(fileSystem.OsDirectory, appName, ".build");
+				if (fileSystem.Directory.Exists(appPath))
+				{
+					files = fileSystem.Directory.GetFiles(appPath, ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
+				}
+			}
 			var goals = new List<Goal>();
 			foreach (var file in files)
 			{
 				var goal = ParsePrFile(file);
 				if (goal != null)
 				{
-					if (allGoals.FirstOrDefault(p => p.AbsolutePrFilePath == goal.AbsolutePrFilePath) == null)
-					{
-						allGoals.Add(goal);
-					}
-					if (goal.Visibility == Visibility.Public && publicGoals.FirstOrDefault(p => p.AbsolutePrFilePath == goal.AbsolutePrFilePath) == null)
-					{
-						publicGoals.Add(goal);
-					}
+					goals.Add(goal);
 				}
 			}
+			if (goals.Count == 0) return (null, new Error($"App '{appName}' could not be found", "AppNotFound"));
+			return (goals, null);
+		}
 
-			return allGoals;
+
+		public List<Instruction> GetInstructions(List<GoalStep> steps, string? functionName = null)
+		{
+			var instructions = new List<Instruction>();
+			foreach (var step in steps)
+			{
+				var instruction = ParseInstructionFile(step);
+				if (instruction == null) continue;
+				if (functionName != null && instruction.GetFunctions().FirstOrDefault(p => p.FunctionName == functionName) == null) continue;
+
+				instructions.Add(instruction);
+			}
+
+			return instructions;
+
 		}
 	}
 }
