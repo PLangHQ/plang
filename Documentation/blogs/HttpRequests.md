@@ -35,5 +35,7 @@ It should print out the content of the response.
 
 You can do the save for any other http request, POST, DELETE, OPTION, HEAD, PATCH
 
+## Challenge 
+Here is a challenge for you, can you retrieve https://jsonplaceholder.typicode.com/posts and [loop through](https://github.com/PLangHQ/plang/blob/main/Documentation/Loops.md) all the posts?
 
 
