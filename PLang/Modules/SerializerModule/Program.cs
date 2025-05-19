@@ -2,13 +2,17 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Modules.IdentityModule;
 using System.Buffers;
 using System.ComponentModel;
+using System.Net.Security;
 using System.Text;
 using System.Text.Json;
+using System.Xml;
+using System.Xml.Serialization;
 
 namespace PLang.Modules.SerializerModule
 {
@@ -51,25 +55,30 @@ namespace PLang.Modules.SerializerModule
 			MessagePackSerializer.Serialize(writer, data);
 			return writer.WrittenSpan.ToArray(); //I should be return ReadOnlySpan<byte>
 		}
-		public async Task<Dictionary<string, object>?> Deserialize(Stream stream, string serializer = "json")
+		public async Task<(object? Object, IError? Error)> Deserialize(Stream stream, string? serializer = "json")
 		{
+			if (stream.Length == 0) return (null, null);
+			if (serializer == null) return (null, new ProgramError("Serializer not defined", goalStep, function, Key: "SerializerNotDefined"));
+
 			if (serializer.Contains("json"))
 			{
 
-
-				var dict = await System.Text.Json.JsonSerializer.DeserializeAsync<Dictionary<string, object>>(stream);
-				if (dict == null) return null;
-				/*
-				if (dict.ContainsKey("Signature"))
+				try
 				{
-					string strSig = dict["Signature"].ToString();
-					var signature = JsonConvert.DeserializeObject<Signature>(strSig);
-					var (sig, error) = await programFactory.GetProgram<Modules.IdentityModule.Program>().VerifySignature(signature);
-					if (error != null) throw new ExceptionWrapper(error);
-				}*/
-				return dict;
+					var dict = await System.Text.Json.JsonSerializer.DeserializeAsync<Dictionary<string, object>>(stream);
+					if (dict == null) return (null, null);
+
+					return (dict, null);
+				} catch (Exception ex) { 
+					return (null, new ProgramError("Error deserializing json. Is it json?", goalStep, function, Exception: ex));
+				}
+			} else if (serializer.Contains("xml")) {
+				var doc = new XmlDocument();
+				doc.Load(stream);
+				// Work with DOM-style API
+				return (doc.InnerXml, null);
 			}
-			throw new NotImplementedException();
+				return (null, new ProgramError($"serializer {serializer} is not supported", goalStep, function, Key: "SerializerNotSupported"));
 
 		}
 		public async Task<object?> Deserialize(byte[] data, string serializer = "json")

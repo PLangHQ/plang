@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Modules;
+using PLang.Runtime;
+using System;
 using System.IO.Abstractions;
 using System.Runtime.Serialization;
 using static PLang.Modules.BaseBuilder;
@@ -111,6 +113,12 @@ namespace PLang.Building.Model
 		//Signature should be used when goal is deployed
 		//this allows for validating the publisher and that code has not changed.
 		public string Signature { get; set; }
+		
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public bool HasChanged { get; set; }
+		public string FileHash { get; set; }
 		public string Hash { get; set; }
 
 		[Newtonsoft.Json.JsonIgnore]
@@ -145,8 +153,103 @@ namespace PLang.Building.Model
 		public Dictionary<string, string>? IncomingVariablesRequired { get; set; }
 		public string? DataSourceName { get; set; }
 		public bool IsSetup { get; set; }
+
+
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+		[System.Text.Json.Serialization.JsonIgnore]
+		List<GoalVariable> Variables = new();
+		public void AddVariable<T>(T? value, Func<Task>? func = null, string? variableName = null)
+		{
+			if (value == null) return;
+
+			if (variableName == null) variableName = typeof(T).Name;
+			
+			var variableIdx = Variables.FindIndex(p => p.VariableName.Equals(variableName, StringComparison.OrdinalIgnoreCase));
+			if (variableIdx == -1)
+			{
+				Variables.Add(new GoalVariable(variableName, value) {  DisposeFunc = func });
+			} else
+			{
+				Variables[variableIdx] = new GoalVariable(variableName, value) {  DisposeFunc = func };
+			}
+		}
+		public void AddVariable(GoalVariable goalVariable)
+		{
+			var variableIdx = Variables.FindIndex(p => p.VariableName.Equals(goalVariable.VariableName, StringComparison.OrdinalIgnoreCase));
+			if (variableIdx == -1)
+			{
+				Variables.Add(goalVariable);
+			}
+			else
+			{
+				Variables[variableIdx] = goalVariable;
+			}
+			
+		}
+
+		public List<GoalVariable> GetVariables()
+		{
+			return Variables;
+		}
+		public T? GetVariable<T>(string? variableName = null)
+		{
+			if (variableName == null) variableName = typeof(T).Name;
+
+			var variable = Variables.FirstOrDefault(p => p.VariableName == variableName);
+			if (variable != null) return (T?)variable?.Value;
+
+			if (ParentGoal == null) return default;
+
+			T? value = ParentGoal.GetVariable<T>(variableName);
+			return value;
+		}
+		public void RemoveVariable<T>(string? variableName = null)
+		{
+			if (variableName == null) variableName = typeof(T).Name;
+			RemoveVariable(variableName);
+		}
+		public void RemoveVariable(string? variableName = null)
+		{
+			var goalVariable = Variables.FirstOrDefault(p => p.VariableName == variableName);
+			if (goalVariable == null) return;
+
+			if (goalVariable.DisposeFunc != null) goalVariable.DisposeFunc();
+			Variables.Remove(goalVariable);
+
+		}
+
+		public async Task DisposeVariables(MemoryStack memoryStack)
+		{
+			for (int i = Variables.Count - 1; i >= 0; i--)
+			{
+				var variable = Variables[i];
+				if (ParentGoal != null && memoryStack.ContainsObject(variable))
+				{
+					ParentGoal.AddVariable(variable);
+					continue;
+				}
+
+				if (variable.DisposeFunc != null)
+				{
+					try
+					{
+						await variable.DisposeFunc();
+					}
+					catch (Exception ex)
+					{
+						Console.WriteLine("Exception on Dispose:" + ex);
+					}
+				}
+			}
+			Variables.Clear();
+		}
 	}
 
-
+	public record GoalVariable(string VariableName, object Value)
+	{
+		[JsonIgnore]
+		public Func<Task>? DisposeFunc { get; init; }
+	};
 
 }

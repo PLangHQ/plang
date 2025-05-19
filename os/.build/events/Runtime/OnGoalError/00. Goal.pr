@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "ad45cfbfff10b4816ea00072f6e9a71f8630123dcd7c54a0205cdfc35b84a284",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "def9f75b1ce4ade7cf6973f82c9061c98469158ad1dc31dd2dd12d9f98ff93b9",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\OnGoalError.goal"
     }
   ],
@@ -88,7 +88,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "a0f870eb615eb66442b67f938f8557a646297a659c51daa9a37f2da4ac00c6ae",
+  "FileHash": "c0646a8a5030395e66c6f0258f1d0e6433bef8e7dc0c362a2ec03405ce8bea5f",
+  "Hash": "b162f487231985396d21f438624f6d3f80a4be7b0d16aa4cde0c287f4adb9074",
   "IncomingVariablesRequired": {
     "error": "The error message that needs to be written out, typically a string describing the system error."
   },

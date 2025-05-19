@@ -36,6 +36,7 @@ namespace PLang.Runtime
 	public interface IEngine : IDisposable
 	{
 		string Id { get; init; }
+		public string Name { get; set; }
 		IOutputStreamFactory OutputStreamFactory { get; }
 		HttpListenerContext? HttpContext { get; set; }
 		void SetParentEngine(IEngine engine);
@@ -62,6 +63,7 @@ namespace PLang.Runtime
 	public class Engine : IEngine, IDisposable
 	{
 		public string Id { get; init; }
+		public string Name { get; set; }
 		public string Path { get { return fileSystem.RootDirectory; } }
 		private bool disposed;
 
@@ -90,7 +92,10 @@ namespace PLang.Runtime
 			this._parentEngine = engine;
 		}
 
-		ConcurrentDictionary<string, EnginePool> enginePools = new();
+		// todo: very wrong, I think engine pool should be initated in container
+		// and engine should be assigned from there.
+		// making enginePools static could have bad behaviour. Hack for now, lets see.
+		static ConcurrentDictionary<string, EnginePool> enginePools = new();
 
 		public EnginePool GetEnginePool(string rootPath, GoalStep? callingStep)
 		{
@@ -104,6 +109,7 @@ namespace PLang.Runtime
 
 			pool = new EnginePool(2, () =>
 			{
+
 				using var serviceContainer = new ServiceContainer();
 				serviceContainer.RegisterForPLang(rootPath, rootPath, container.GetInstance<IAskUserHandlerFactory>(),
 									container.GetInstance<IOutputStreamFactory>(), container.GetInstance<IOutputSystemStreamFactory>(),
@@ -399,7 +405,7 @@ namespace PLang.Runtime
 
 		private async Task HandleError(IError error)
 		{
-			if (error is ErrorHandled) return;
+			if (error is IErrorHandled) return;
 
 			logger.LogError(error.ToString());
 
@@ -550,7 +556,7 @@ namespace PLang.Runtime
 
 				//if (await CachedGoal(goal)) return null;
 				(var returnValues, stepIndex, var stepError) = await RunSteps(goal, 0, callbackInfos);
-				if (stepError != null) return (null, stepError);
+				if (stepError != null && stepError is not IErrorHandled) return (returnValues, stepError);
 				//await CacheGoal(goal);
 
 				result = await eventRuntime.RunGoalEvents(EventType.After, goal);
@@ -586,6 +592,8 @@ namespace PLang.Runtime
 		private async Task<(object? ReturnValue, int StepIndex, IError? Error)> RunSteps(Goal goal, int stepIndex = 0, List<CallbackInfo>? callbackInfos = null)
 		{
 			object? returnValues = null;
+			IError? error = null;
+
 			for (; stepIndex < goal.GoalSteps.Count; stepIndex++)
 			{
 				if (callbackInfos != null)
@@ -596,7 +604,7 @@ namespace PLang.Runtime
 						continue;
 					}
 				}
-				(returnValues, var error) = await RunStep(goal, stepIndex);
+				(returnValues, error) = await RunStep(goal, stepIndex);
 				if (error != null)
 				{
 					if (error is MultipleError me)
@@ -608,18 +616,22 @@ namespace PLang.Runtime
 					{
 						logger.LogDebug($"Exiting goal because of end goal: {endGoal}");
 						stepIndex = goal.GoalSteps.Count;
-						if (endGoal.Levels-- > 0)
+						if (GoalHelper.IsPartOfCallStack(goal, endGoal) && endGoal.Levels > 0)
 						{
+							endGoal.Levels--;
 							return (returnValues, stepIndex, endGoal);
 						}
 						continue;
 					}
 					var errorInGoalErrorHandler = await HandleGoalError(error, goal, stepIndex);
 					if (errorInGoalErrorHandler.Error != null) return (returnValues, stepIndex, errorInGoalErrorHandler.Error);
+					if (errorInGoalErrorHandler.Error is IErrorHandled) error = null;
 				}
 			}
-			return (returnValues, stepIndex, null);
+			return (returnValues, stepIndex, error);
 		}
+
+		
 
 		private IError? FindEndGoalError(MultipleError me)
 		{
@@ -754,8 +766,8 @@ private async Task CacheGoal(Goal goal)
 				}
 				if (result.Error != null)
 				{
-					var handleErrorResult = await HandleStepError(goal, step, goalStepIndex, result.Error, retryCount);
-					if (handleErrorResult.Error != null && handleErrorResult.Error is not ErrorHandled) return handleErrorResult;
+					result = await HandleStepError(goal, step, goalStepIndex, result.Error, retryCount);
+					if (result.Error != null && result.Error is not IErrorHandled) return result;
 				}
 
 				if (retryCount == 0)
@@ -764,7 +776,7 @@ private async Task CacheGoal(Goal goal)
 					var stepEventResult = await eventRuntime.RunStepEvents(EventType.After, goal, step);
 					if (stepEventResult.Error != null) return stepEventResult;
 				}
-				return (result.ReturnValue, null);
+				return result;
 			}
 			catch (Exception stepException)
 			{
@@ -828,11 +840,11 @@ private async Task CacheGoal(Goal goal)
 
 			var eventRuntime = container.GetInstance<IEventRuntime>();
 			var stepErrorResult = await eventRuntime.RunOnErrorStepEvents(error, goal, step);
-			if (stepErrorResult.Error != null && stepErrorResult.Error is not ErrorHandled)
+			if (stepErrorResult.Error != null && stepErrorResult.Error is not IErrorHandled)
 			{
 				return (null, stepErrorResult.Error);
 			}
-
+			if (stepErrorResult.Error is IErrorHandled) error = null;
 
 			if (ShouldRunRetry(errorHandler, false))
 			{

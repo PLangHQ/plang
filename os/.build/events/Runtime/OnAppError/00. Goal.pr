@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "52f186b214d126837cd029d7df314df00f19aaee4e6fbf3b4dfb8fec10f576bc",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "f9390de120b54e6293a21dc9d76205ab1f41c960ee36dbcca8f79a8cf6a7b496",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\OnAppError.goal"
     }
   ],
@@ -88,7 +88,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "e0d6fd1b9e95ece9cc31e767095fb77261c99a63dc0042b8c03eca5da8a836ae",
+  "FileHash": "2e09f13970d0dc80dd0184a60d3203aefb5d202722a08eeb3ee1fa9ed4210c3e",
+  "Hash": "ca07c07329fd0604a91412ec559277a37f166a853bf6246b40ffae707aea002d",
   "IncomingVariablesRequired": {
     "error": "The error message that needs to be written out, typically provided when an error occurs in the application."
   },

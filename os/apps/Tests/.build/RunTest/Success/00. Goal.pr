@@ -71,8 +71,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "9ce5312a9203543daab6d515ce829e73c2361c28979006add11789367e6371b5",
-      "BuilderVersion": null
+      "Hash": "5c1052d74c8506a2af98786dc4a5ece92456b0765f9077166d562615100a1a09",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\RunTest.goal"
     }
   ],
   "SubGoals": [],
@@ -87,6 +88,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "04b0216e518280e1e329839c4c100a94e77f4324659d125513d7db6307944082",
-  "IncomingVariablesRequired": null
+  "Hash": "786fec32a5f55218f16b50bdba605b36a83389348c1aa3bf28196186e6156a1a",
+  "IncomingVariablesRequired": null,
+  "DataSourceName": null,
+  "IsSetup": false
 }

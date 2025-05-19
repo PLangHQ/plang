@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Models;
 using PLang.Modules;
@@ -16,7 +17,7 @@ namespace PLang.Utils
 	{
 
 
-		public static async Task<(List<CallbackInfo>? CallbackInfos, IError? Error)> GetCallbackInfos(string? callbackInfos, ProgramFactory programFactory)
+		public static async Task<(List<CallbackInfo>? CallbackInfos, IError? Error)> GetCallbackInfos(Modules.IdentityModule.Program identity, string? callbackInfos)
 		{
 			if (string.IsNullOrEmpty(callbackInfos)) return (null, null);
 
@@ -30,7 +31,7 @@ namespace PLang.Utils
 			Signature? signature = obj["Signature"]?.ToObject<Signature>();
 			if (signature == null) return (null, new Error("Signature not validate format", Data: obj["Signature"]));
 
-			var identity = programFactory.GetProgram<Modules.IdentityModule.Program>();
+			
 			var identityKey = await identity.GetMyIdentity();
 
 			if (signature.Identity == null || !signature.Identity.Equals(identityKey.Identifier))

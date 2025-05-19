@@ -48,8 +48,6 @@ namespace PLang.Building
 
 		public async Task<(Model.Instruction?, IBuilderError?)> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep step, string module, int stepIndex, List<string>? excludeModules = null, int executionCounter = 0, string? errorMessage = null)
 		{
-			executionCounter++;
-
 			var classInstance = builderFactory.Create(module);
 			classInstance.InitBaseBuilder(module, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
@@ -64,7 +62,7 @@ namespace PLang.Building
 				if (build.BuilderError != null && build.BuilderError.Retry && executionCounter < 3)
 				{ 
 					logger.LogWarning($"- Error building step, will try again. Error: {build.BuilderError.Message}");
-					return await BuildInstruction(stepBuilder, goal, step, module, stepIndex, excludeModules, executionCounter, build.BuilderError.ToString());
+					return await BuildInstruction(stepBuilder, goal, step, module, stepIndex, excludeModules, ++executionCounter, build.BuilderError.ToString());
 				}
 				return (null, (build.BuilderError ?? new InstructionBuilderError($"Could not map {step.Text} to function. Refine your text", step)));
 			}
@@ -73,6 +71,7 @@ namespace PLang.Building
 			instruction.Text = step.Text;
 			var functions = instruction.GetFunctions();
 			var methodHelper = new MethodHelper(step, variableHelper, typeHelper);
+			
 			var invalidFunctionError = methodHelper.ValidateFunctions(functions, module, memoryStack);
 
 			if (invalidFunctionError != null)

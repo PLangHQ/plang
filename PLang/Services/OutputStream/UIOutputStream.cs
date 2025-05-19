@@ -80,14 +80,14 @@ namespace PLang.Services.OutputStream
 			return "";
 		}
 
-		public async Task Write(object? obj, string type = "text", int statusCode = 200)
+		public async Task Write(object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
-			await Write(obj, type, statusCode, -1);
+			await Write(obj, type, statusCode, -1, paramaters);
 		}
 
 
 
-		public async Task Write(object? obj, string type = "text", int statusCode = 200, int stepNr = -1)
+		public async Task Write(object? obj, string type = "text", int statusCode = 200, int stepNr = -1, Dictionary<string, object?>? paramaters = null)
 		{
 			if (obj == null) return;
 			if (statusCode == 200)
@@ -130,7 +130,7 @@ namespace PLang.Services.OutputStream
 
 		public async Task WriteToBuffer(object? obj, string type = "text", int statusCode = 200)
 		{
-			await Write(obj, type, statusCode);
+			await Write(obj, type, statusCode, []);
 			Flush();
 		}
 

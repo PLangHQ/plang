@@ -5,7 +5,7 @@ namespace PLang.Modules.WebCrawlerModule
 {
 	public class WebCrawlerHelper
 	{
-		public static async Task<Response> GetResponse(IResponse response)
+		public static async Task<Response?> GetResponse(IResponse response)
 		{
 			string? content = null;
 			if (!IsEmptyContent(response))
@@ -19,19 +19,38 @@ namespace PLang.Modules.WebCrawlerModule
 				{
 				}
 			}
-			var headers = await response.AllHeadersAsync();
-			var parentUrl = response.Frame.Url;
-			var serverAddress = await response.ServerAddrAsync();
-			var securityDetails = await response.SecurityDetailsAsync();
+
+			var headers = response.Headers;
 			
+
+			var parentUrl = response.Frame.Url;
+			string? serverIp = null;
+			int? serverPort = null;
+			ResponseSecurityDetailsResult? securityDetails = null;
+			try
+			{
+				var serverAddress = await response.ServerAddrAsync();
+				securityDetails = await response.SecurityDetailsAsync();
+
+				serverIp = serverAddress?.IpAddress;
+				serverPort = serverAddress?.Port;
+			} catch (Exception ex)
+			{
+				int i = 0;
+				Console.WriteLine($"Connection disconnected {response.Url}");
+
+				if (ex.Message.Contains("Connection disposed")) return null;
+			}
+
 			return new Response(response.Status, response.StatusText, response.Url, response.Ok, headers, response.FromServiceWorker, parentUrl)
 			{
-				ServerIp = serverAddress?.IpAddress,
-				ServerPort = serverAddress?.Port,
+				ServerIp = serverIp,
+				ServerPort = serverPort,
 				SecurityDetails = securityDetails,
 				Content = content
 
 			};
+
 		}
 
 		private static bool IsEmptyContent(IResponse response)
@@ -43,7 +62,7 @@ namespace PLang.Modules.WebCrawlerModule
 		{
 			return new Request(request.Failure, request.Url, request.Method, request.RedirectedFrom?.Url, request.Headers, request.IsNavigationRequest, request.RedirectedTo?.Url, request.ResourceType, request.PostData)
 			{
-				
+
 			};
 		}
 	}

@@ -641,7 +641,7 @@ Be Concise
 		{
 			var modules = typeHelper.GetRuntimeModules();
 			List<string> forceModuleType = new List<string>();
-			var match = Regex.Match(step.Text, @"\[[\w]+\]", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+			var match = Regex.Match(step.Text.Trim(), @"^\[[\w]+\]", RegexOptions.IgnoreCase | RegexOptions.Multiline);
 			if (match.Success)
 			{
 				var matchValue = match.Value.ToLower().Replace("[", "").Replace("]", "");

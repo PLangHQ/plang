@@ -42,8 +42,7 @@ namespace PLang.Utils.Extractors
 
 		public new object? Extract(string? content, Type responseType)
 		{
-			if (content == null) return null;
-			if (responseType == typeof(string)) return content;
+			if (string.IsNullOrEmpty(content)) return content;
 
 			try
 			{
@@ -53,6 +52,9 @@ namespace PLang.Utils.Extractors
 					{
 						content = ExtractByType(content, "json").ToString()!;
 					}
+
+					if (responseType == typeof(string)) return content;
+
 					return JsonConvert.DeserializeObject(content, responseType) ?? "";
 				}
 				catch (Exception ex)

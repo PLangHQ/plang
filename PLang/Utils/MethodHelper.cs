@@ -111,12 +111,15 @@ namespace PLang.Utils
 		public string? IsParameterMatch(MethodInfo p, List<Parameter> parameters)
 		{
 			string? error = null;
+			var variablesInStep = variableHelper.GetVariables(goalStep.Text);
+
 			foreach (var methodParameter in p.GetParameters())
 			{
 				var parameterType = methodParameter.ParameterType.Name.ToLower();
 				if (parameterType.Contains("`")) parameterType = parameterType.Substring(0, parameterType.IndexOf("`"));
 
 				var parameter = parameters.FirstOrDefault(x => x.Name == methodParameter.Name);
+				
 				if (parameter == null && parameterType != "nullable" && !methodParameter.HasDefaultValue && !methodParameter.IsOptional)
 				{
 					error += $"{methodParameter.Name} ({parameterType}) is missing from parameters. {methodParameter.Name} is a required parameter\n";
@@ -129,8 +132,12 @@ namespace PLang.Utils
 				if (parameter != null && parameter.Value != null && parameterType == "string" && parameter.Value.ToString().StartsWith("\"") && parameter.Value.ToString().EndsWith("\""))
 				{
 					error += $"{methodParameter.Name} is string, the property Value cannot start and end with quote(\").";
-				}
+				}			
 
+				if (parameter != null && VariableHelper.IsVariable(parameter.Value) && !variablesInStep.Any(p => p.OriginalKey.ToString().Equals(parameter.Value?.ToString(), StringComparison.OrdinalIgnoreCase)))
+				{
+					error += $"{parameter.Value} could not be found in step. User is not defining {parameter.Value} as variable.";
+				}
 				if (parameterType == "nullable" && methodParameter.ParameterType.GenericTypeArguments.Length > 0)
 				{
 					parameterType = methodParameter.ParameterType.GenericTypeArguments[0].Name.ToLower();
@@ -568,6 +575,14 @@ namespace PLang.Utils
 				else
 				{
 					dict = obj as Dictionary<string, object?>;
+					if (dict == null && obj is string strJson && JsonHelper.LookAsJsonScheme(strJson))
+					{
+						try
+						{
+							dict = JObject.Parse(strJson).ToDictionary();
+						}
+						catch { }
+					}
 					if (dict == null && variableValue is string str) {
 						dict = new();
 						dict.Add(str.Replace("%", ""), obj);
@@ -682,6 +697,16 @@ namespace PLang.Utils
 
 			try
 			{
+				if (value is JToken token)
+				{
+					var jsonSerializer = new JsonSerializer()
+					{
+						NullValueHandling = NullValueHandling.Ignore,
+						DefaultValueHandling = DefaultValueHandling.Populate,
+					};
+					return token.ToObject(targetType, jsonSerializer);
+				}
+
 				return Convert.ChangeType(value, targetType);
 			}
 			catch (Exception ex)

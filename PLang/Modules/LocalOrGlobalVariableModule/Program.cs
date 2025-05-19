@@ -19,7 +19,7 @@ using static PLang.Modules.DbModule.Program;
 
 namespace PLang.Modules.LocalOrGlobalVariableModule
 {
-	[Description("Set, Get & Return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.")]
+	[Description("Set, Get & Return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable. Trim variable for llm")]
 	public class Program : BaseProgram
 	{
 		private readonly ISettings settings;
@@ -35,7 +35,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 
 		public async Task<(object?, IError?)> Load([HandlesVariable] List<string> variables)
 		{
-			var db = programFactory.GetProgram<DbModule.Program>();
+			var db = programFactory.GetProgram<DbModule.Program>(goalStep);
 
 			List<object?> objects = new();
 			foreach (var variable in variables)
@@ -96,7 +96,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 
 		public async Task<IError?> Store([HandlesVariable] List<string> variables)
 		{
-			var db = programFactory.GetProgram<DbModule.Program>();
+			var db = programFactory.GetProgram<DbModule.Program>(goalStep);
 			var datasource = await db.GetDataSource();
 			if (datasource.TypeFullName != typeof(SqliteConnection).FullName)
 			{
@@ -143,6 +143,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 				{
 					returnDict.Add(variable.Key, value);
 				}
+				memoryStack.Remove(variable.Value.ToString());
 			}
 
 			return new Return(returnDict);
@@ -478,6 +479,112 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		public async Task<string> ConvertToBase64([HandlesVariableAttribute] string key)
 		{
 			return Convert.ToBase64String(Encoding.UTF8.GetBytes(memoryStack.Get(key).ToString()));
+		}
+
+
+
+		public async Task<string?> TrimForLlm(object? obj, int valueLimit = 30, string? groupOn = null, 
+			int samplesPerGroup = 5, int listLimit = 50, int totalCharsLimit = 2000, bool formatJson = false)
+		{
+			if (obj == null) return null;
+
+			JToken? json = obj as JToken;
+			if (json == null)
+			{
+				try
+				{
+					json = JToken.FromObject(obj);
+				}
+				catch
+				{
+					return null;
+				}
+			}
+
+
+			var resultList = new List<JObject>();
+			var totalChars = 0;
+			var formatting = (formatJson) ? Formatting.Indented : Formatting.None;
+
+			if (json is JArray arr && !string.IsNullOrWhiteSpace(groupOn))
+			{
+				var groups = arr
+					.OfType<JObject>()
+					.Where(x => x.Properties().Any(p => string.Equals(p.Name, groupOn, StringComparison.OrdinalIgnoreCase)))
+					.GroupBy(x =>
+						x.Properties()
+						 .FirstOrDefault(p => string.Equals(p.Name, groupOn, StringComparison.OrdinalIgnoreCase))?
+						 .Value.ToString().Trim().ToLowerInvariant()
+					);
+
+				foreach (var group in groups)
+				{
+					foreach (var item in group.Take(samplesPerGroup))
+					{
+						var trimmed = TrimObject(item);
+						var jsonStr = trimmed.ToString(Formatting.None);
+						totalChars += Encoding.UTF8.GetByteCount(jsonStr);
+						if (totalChars > totalCharsLimit)
+							break;
+
+						resultList.Add(trimmed);
+					}
+
+					if (totalChars > totalCharsLimit)
+						break;
+				}
+
+				return JsonConvert.SerializeObject(resultList, formatting);
+			}
+
+			// fallback to old logic if not a group
+			if (json is JArray flatArr)
+			{
+				foreach (var item in flatArr)
+				{
+					if (item is JObject objItem)
+					{
+						var trimmed = TrimObject(objItem);
+						totalChars += Encoding.UTF8.GetByteCount(trimmed.ToString(formatting));
+						if (totalChars > totalCharsLimit) break;
+						resultList.Add(trimmed);
+					}
+				}
+
+				return JsonConvert.SerializeObject(resultList, formatting);
+			}
+
+			if (json is JObject singleObj)
+			{
+				var trimmed = TrimObject(singleObj);
+				var jsonStr = trimmed.ToString(formatting);
+				return jsonStr.Length > totalCharsLimit ? jsonStr.Substring(0, totalCharsLimit) + "..." : jsonStr;
+			}
+
+			return json.ToString(formatting);
+		}
+
+		private JObject TrimObject(JObject input)
+		{
+			var trimmed = new JObject();
+
+			foreach (var prop in input.Properties())
+			{
+				var value = prop.Value;
+
+				if (value.Type is JTokenType.String or JTokenType.Object or JTokenType.Array)
+				{
+					string strVal = value.ToString();
+					trimmed[prop.Name] = strVal.Length > 100 ? strVal.Substring(0, 100) + "..." : strVal;
+				}
+
+				else
+				{
+					trimmed[prop.Name] = value;
+				}
+			}
+
+			return trimmed;
 		}
 	}
 

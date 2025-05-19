@@ -42,7 +42,7 @@ namespace PLang.Services.OutputStream
 			return Console.ReadLine() ?? "";
 		}
 
-		public async Task Write(object? obj, string type = "text", int statusCode = 200)
+		public async Task Write(object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
 			if (obj == null) return;
 
@@ -53,6 +53,11 @@ namespace PLang.Services.OutputStream
 				fullName = fullName.Substring(0, fullName.IndexOf("["));
 			}
 			SetColor(statusCode);
+			if (paramaters != null && paramaters.TryGetValue("Position", out object? value))
+			{
+				Console.SetCursorPosition(0, Console.CursorTop - (int) value);
+			}
+
 			if (!content.StartsWith(fullName))
 			{
 				if (IsRecordWithoutToString(obj))

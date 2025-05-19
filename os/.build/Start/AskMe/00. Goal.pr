@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "3422a2660f2de775eaeffc94234c7f11a7f786eeaceed35f9d6f19b8d49151bd",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "f9cd7cc8d414095cc669c39c93bad3328c6c59883e3551423768689886e34db6",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\Start.goal"
     }
   ],
@@ -88,7 +88,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "8964bae3812113eef37fb000635d4148ba781f9524e68dc1d988bf343556ab9c",
+  "FileHash": "8e5bff24d104b06135071ac45536820098afa2ae79f7995a928d429c7c48c769",
+  "Hash": "09607e17b5860e32fdc11a560b5d8e442bdb3a321bc024e3dbd4ed4b38338718",
   "IncomingVariablesRequired": {
     "item": "The item that needs to be written out."
   },

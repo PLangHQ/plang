@@ -16,13 +16,13 @@
       "RunOnce": false,
       "Generated": "2025-05-02T16:07:31.1369699+00:00",
       "WaitForExecution": true,
-      "LoggerLevel": "error",
+      "LoggerLevel": null,
       "ErrorHandlers": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
       "Number": 0,
-      "LineNumber": 38,
+      "LineNumber": 39,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "11e64bc4e0e13db8fd8a180a2c1913fedfcb129f7901b7ee616139d5160ee8ce",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "e7d02c8e0b0c59c3946c2c1e75f27a5f3a8df0931969f03d03edcf183730b51a",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal"
     }
   ],
@@ -88,7 +88,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "3f31e9c974b99fc58e5c76326fc739042fbd96e130789f7ee3e11f65fb39f140",
+  "FileHash": "8bab2e0d60c27011d5135e41bf7a895fb84bbca92e1b5c3edb299e458a1406e8",
+  "Hash": "9fb2e327d235c0a67a153d8bc1b4ac597aac5d9872ceb95fa467644263f028a5",
   "IncomingVariablesRequired": {
     "%error%": "The error message that needs to be logged."
   },

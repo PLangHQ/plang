@@ -69,7 +69,7 @@ namespace PLang.Utils
 				}
 			}
 
-			var signed = await programFactory.GetProgram<Modules.IdentityModule.Program>().Sign(callbackInfos);
+			var signed = await programFactory.GetProgram<Modules.IdentityModule.Program>(step).Sign(callbackInfos);
 			return new Callback(callbackInfos, signed);
 		}
 	}

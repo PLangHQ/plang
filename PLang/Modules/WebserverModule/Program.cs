@@ -323,7 +323,8 @@ namespace PLang.Modules.WebserverModule
 							List<CallbackInfo>? callbackInfos = null;
 							if (request.Headers["!callback"] != null)
 							{
-								var callbackResult = await CallbackHelper.GetCallbackInfos(request.Headers["!callback"], programFactory);
+								var identity = programFactory.GetProgram<Modules.IdentityModule.Program>(goalStep);
+								var callbackResult = await CallbackHelper.GetCallbackInfos(identity, request.Headers["!callback"]);
 								if (callbackResult.Error != null)
 								{
 									await ShowError(container, callbackResult.Error);
@@ -773,7 +774,7 @@ Error:
 			headers.Add("url", request.Url?.PathAndQuery);
 			headers.Add("method", request.HttpMethod);
 
-			var result = await programFactory.GetProgram<Modules.IdentityModule.Program>().VerifySignature(signatureAsJson, headers, body, null);
+			var result = await programFactory.GetProgram<Modules.IdentityModule.Program>(goalStep).VerifySignature(signatureAsJson, headers, body, null);
 			if (result.Error != null) return result.Error;
 
 			var signature = result.Signature;
@@ -867,7 +868,7 @@ Error:
 			var obj = new WebSocketData(goalToCall, url, method, null);
 			obj.Parameters = parameters;
 
-			var signature = await programFactory.GetProgram<Modules.IdentityModule.Program>().Sign(obj);
+			var signature = await programFactory.GetProgram<Modules.IdentityModule.Program>(goalStep).Sign(obj);
 			obj.Signature = signature;
 
 			byte[] message = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj));
@@ -941,7 +942,7 @@ Error:
 						}
 
 						var signature = websocketData.Signature;
-						var verifiedSignature = await programFactory.GetProgram<Modules.IdentityModule.Program>().VerifySignature(signature);
+						var verifiedSignature = await programFactory.GetProgram<Modules.IdentityModule.Program>(goalStep).VerifySignature(signature);
 						// todo: missing verifiedSignature.Error check
 						if (verifiedSignature.Signature == null)
 						{

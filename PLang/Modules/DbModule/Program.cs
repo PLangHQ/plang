@@ -19,6 +19,7 @@ using PLang.Utils;
 using System.Collections;
 using System.ComponentModel;
 using System.Data;
+using System.Data.Common;
 using System.Dynamic;
 using System.Globalization;
 using System.IO.Abstractions;
@@ -31,8 +32,8 @@ namespace PLang.Modules.DbModule
 	[Description("Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp)")]
 	public class Program : BaseProgram, IDisposable
 	{
-		public static string DbConnectionContextKey = "DbConnection";
-		public static string DbTransactionContextKey = "DbTransaction";
+		//public static string DbConnectionContextKey = "DbConnection";
+		//public static string DbTransactionContextKey = "DbTransaction";
 		public static string CurrentDataSourceKey = "PLang.Modules.DbModule.CurrentDataSourceKey";
 
 		private record DbConnectionSupported(string Key, string Name, Type Type);
@@ -90,7 +91,7 @@ namespace PLang.Modules.DbModule
 			return (datasource, null);
 		}
 
-	
+
 
 		[Description("gets the current datasource")]
 		public async Task<DataSource> GetDataSource()
@@ -98,7 +99,7 @@ namespace PLang.Modules.DbModule
 			return await dbSettings.GetCurrentDataSource();
 		}
 
-		public async Task<IError?> SetDataSourceName([HandlesVariable] string? name = null)
+		public async Task<IError?> SetDataSourceName([HandlesVariable] string? name = null, bool setForGoal = true)
 		{
 			if (string.IsNullOrEmpty(name)) return new ProgramError("Name of the datasource cannot be empty");
 
@@ -121,14 +122,17 @@ namespace PLang.Modules.DbModule
 				if (error != null) return error;
 
 			}
-			context[ReservedKeywords.CurrentDataSource] = dataSource;
+			if (setForGoal || !context.ContainsKey(ReservedKeywords.CurrentDataSource))
+			{
+				context[ReservedKeywords.CurrentDataSource] = dataSource;
+			}
 			return null;
 		}
 
 		private async Task<(DataSource?, IError?)> GetRuntimeDataSource(DataSource datasource, List<Variable> variables)
 		{
 			var parameters = new Dictionary<string, object?>();
-			
+
 			var dataSourceVariables = variableHelper.GetVariables(datasource.Name);
 			string localPath = datasource.LocalPath;
 			string connectionString = datasource.ConnectionString;
@@ -173,11 +177,11 @@ namespace PLang.Modules.DbModule
 			if (goal != null)
 			{
 				var storedKey = "%__stepsExecuted__%";
-				
+
 				context.AddOrReplace(ReservedKeywords.CurrentDataSource, runtimeDataSource);
 
-				var plangRuntime = programFactory.GetProgram<PlangModule.Program>();
-				var varsRuntime = programFactory.GetProgram<LocalOrGlobalVariableModule.Program>();
+				var plangRuntime = programFactory.GetProgram<PlangModule.Program>(goalStep);
+				var varsRuntime = programFactory.GetProgram<LocalOrGlobalVariableModule.Program>(goalStep);
 				var (value, error) = await varsRuntime.Load([storedKey]);
 				if (error != null) return (null, error);
 
@@ -193,7 +197,8 @@ namespace PLang.Modules.DbModule
 					if (error != null)
 					{
 						groupedErrors.Add(error);
-					} else
+					}
+					else
 					{
 						stepExecuted.AddOrReplace(step.Hash, DateTime.UtcNow);
 					}
@@ -241,39 +246,45 @@ namespace PLang.Modules.DbModule
 			var dbConnection = dbFactory.CreateHandler();
 			if (dbConnection.State != ConnectionState.Open) dbConnection.Open();
 			var transaction = dbConnection.BeginTransaction();
-			context.AddOrReplace(DbConnectionContextKey, dbConnection);
-			context.AddOrReplace(DbTransactionContextKey, transaction);
+
+			AddVariable(transaction, () =>
+			{
+				transaction.Dispose();
+				return Task.CompletedTask;
+			});
+
+			AddVariable(dbConnection, () =>
+			{
+				dbConnection.Dispose();
+				return Task.CompletedTask;
+			});
+			
 
 		}
 
 		public async Task EndTransaction()
 		{
-			if (context.TryGetValue(DbTransactionContextKey, out object? transaction) && transaction != null)
-			{
-				((IDbTransaction)transaction).Commit();
-				context.Remove(DbTransactionContextKey);
-			}
+			var dbConnection = GetVariable<IDbConnection>();
+			var transaction = GetVariable<IDbTransaction>();
 
-			if (context.TryGetValue(DbConnectionContextKey, out object? connection) && connection != null)
-			{
-				((IDbConnection)connection).Close();
-				context.Remove(DbConnectionContextKey);
-			}
+			if (transaction != null) transaction.Commit();
+			if (dbConnection != null) dbConnection.Close();
+
+			RemoveVariable<IDbTransaction>();
+			RemoveVariable<IDbConnection>();
 		}
 
 		public async Task Rollback()
 		{
-			if (context.TryGetValue(DbTransactionContextKey, out object? transaction) && transaction != null)
-			{
-				((IDbTransaction)transaction).Rollback();
-				context.Remove(DbTransactionContextKey);
-			}
+			var dbConnection = GetVariable<IDbConnection>();
+			var transaction = GetVariable<IDbTransaction>();
 
-			if (context.TryGetValue(DbConnectionContextKey, out object? connection) && connection != null)
-			{
-				((IDbConnection)connection).Close();
-				context.Remove(DbConnectionContextKey);
-			}
+			if (transaction != null) transaction.Rollback();
+			if (dbConnection != null) dbConnection.Close();
+
+			RemoveVariable<IDbTransaction>();
+			RemoveVariable<IDbConnection>();
+
 		}
 
 		public async Task<IError?> LoadExtension(string fileName, string? procName = null)
@@ -333,8 +344,10 @@ namespace PLang.Modules.DbModule
 
 		private (IDbConnection connection, DynamicParameters param, string sql, IError? error) Prepare(string sql, List<object>? Parameters = null, bool isInsert = false)
 		{
-			IDbConnection? connection = context.ContainsKey(DbConnectionContextKey) ? context[DbConnectionContextKey] as IDbConnection : null;
+			IDbConnection? connection = GetVariable<IDbConnection>();
 			if (connection == null) connection = dbFactory.CreateHandler();
+
+			goal?.AddVariable(connection.ConnectionString, variableName: "ConnectionString");
 
 			var multipleErrors = new GroupedErrors("SqlParameters");
 			var param = new DynamicParameters();
@@ -375,7 +388,7 @@ namespace PLang.Modules.DbModule
 						var id = p.VariableNameOrValue.ToString();
 						if (id == "auto" || string.IsNullOrEmpty(id))
 						{
-							var generator = new IdGenerator(1);
+							var generator = new IdGenerator(new Random().Next(0, 1023));
 							var newId = generator.ElementAt(0);
 							param.Add("@" + parameterName, newId, DbType.Int64);
 						}
@@ -462,7 +475,7 @@ namespace PLang.Modules.DbModule
 			{
 				if (sqliteConnection.ConnectionString.Contains("Memory"))
 				{
-					var anchors = AppContext.GetData("AnchorMemoryDb") as Dictionary<string, IDbConnection> ?? new();					
+					var anchors = AppContext.GetData("AnchorMemoryDb") as Dictionary<string, IDbConnection> ?? new();
 					if (!anchors.ContainsKey(sqliteConnection.ConnectionString))
 					{
 						var anchorConnection = dbFactory.CreateHandler();
@@ -597,7 +610,8 @@ namespace PLang.Modules.DbModule
 
 		private void Done(IDbConnection connection)
 		{
-			if (!context.ContainsKey(DbConnectionContextKey) && connection != null)
+			var transaction = GetVariable<IDbTransaction>();
+			if (transaction == null && connection != null)
 			{
 				connection.Close();
 			}
@@ -605,8 +619,8 @@ namespace PLang.Modules.DbModule
 
 		public async Task<(int, IError?)> InsertEventSourceData(long id, string data, string keyHash)
 		{
-			var transaction = context[DbTransactionContextKey] as IDbTransaction;
-			IDbConnection? connection = context.ContainsKey(DbConnectionContextKey) ? context[DbConnectionContextKey] as IDbConnection : null;
+			var transaction = GetVariable<IDbTransaction>();
+			IDbConnection? connection = GetVariable<IDbConnection>();
 			if (connection == null) connection = dbFactory.CreateHandler();
 
 			return await eventSourceRepository.AddEventSourceData(connection, id, data, keyHash, transaction);
@@ -619,7 +633,7 @@ namespace PLang.Modules.DbModule
 			{
 				if (!string.IsNullOrEmpty(dataSourceName))
 				{
-					var error = await SetDataSourceName(dataSourceName);
+					var error = await SetDataSourceName(dataSourceName, false);
 					if (error != null) return (0, error);
 				}
 
@@ -630,7 +644,7 @@ namespace PLang.Modules.DbModule
 					return (0, prepare.error);
 				}
 
-				var transaction = context[DbTransactionContextKey] as IDbTransaction;
+				var transaction = GetVariable<IDbTransaction>();
 				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 				{
 					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, null);
@@ -670,12 +684,14 @@ namespace PLang.Modules.DbModule
 			return await Execute(sql, dataSourceName);
 
 		}
-
+		
+		[Description("When select should return 1 row (limit 1)")]
 		public async Task<(object?, IError? errors)> SelectOneRow(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
 		{
 			if (!string.IsNullOrEmpty(dataSourceName))
 			{
-				await SetDataSourceName(dataSourceName);
+				var error = await SetDataSourceName(dataSourceName, false);
+				if (error != null) return (0, error);
 			}
 
 			var result = await Select(sql, SqlParameters);
@@ -713,7 +729,8 @@ namespace PLang.Modules.DbModule
 			{
 				if (!string.IsNullOrEmpty(dataSourceName))
 				{
-					await SetDataSourceName(dataSourceName);
+					var error = await SetDataSourceName(dataSourceName, false);
+					if (error != null) return (new(), error);
 				}
 
 				var prep = Prepare(sql, SqlParameters);
@@ -727,7 +744,8 @@ namespace PLang.Modules.DbModule
 				Done(prep.connection);
 
 				return (rows == null) ? (new(), null) : (rows, null);
-			} catch (Exception ex)
+			}
+			catch (Exception ex)
 			{
 				return (new(), new ExceptionError(ex));
 			}
@@ -748,7 +766,8 @@ namespace PLang.Modules.DbModule
 		{
 			if (!string.IsNullOrEmpty(dataSourceName))
 			{
-				await SetDataSourceName(dataSourceName);
+				var error = await SetDataSourceName(dataSourceName, false);
+				if (error != null) return (0, error);
 			}
 			var prepare = Prepare(sql, SqlParameters);
 			if (prepare.error != null)
@@ -772,7 +791,8 @@ namespace PLang.Modules.DbModule
 		{
 			if (!string.IsNullOrEmpty(dataSourceName))
 			{
-				await SetDataSourceName(dataSourceName);
+				var error = await SetDataSourceName(dataSourceName, false);
+				if (error != null) return (0, error);
 			}
 			long rowsAffected;
 			var prepare = Prepare(sql, SqlParameters);
@@ -811,7 +831,8 @@ namespace PLang.Modules.DbModule
 		{
 			if (!string.IsNullOrEmpty(dataSourceName))
 			{
-				await SetDataSourceName(dataSourceName);
+				var error = await SetDataSourceName(dataSourceName, false);
+				if (error != null) return (0, error);
 			}
 			long rowsAffected = 0;
 			var prepare = Prepare(sql, SqlParameters, true);
@@ -852,7 +873,8 @@ namespace PLang.Modules.DbModule
 		{
 			if (!string.IsNullOrEmpty(dataSourceName))
 			{
-				await SetDataSourceName(dataSourceName);
+				var error = await SetDataSourceName(dataSourceName, false);
+				if (error != null) return (null, error);
 			}
 
 			var prepare = Prepare(sql, SqlParameters, true);
@@ -971,7 +993,7 @@ namespace PLang.Modules.DbModule
 			long affectedRows = 0;
 			var generator = new IdGenerator(1);
 			var id = generator.ElementAt(0);
-			IDbTransaction? transaction = context.ContainsKey(DbTransactionContextKey) ? context[DbTransactionContextKey] as IDbTransaction : null;
+			IDbTransaction? transaction = GetVariable<IDbTransaction>();
 			if (transaction == null)
 			{
 				await BeginTransaction();

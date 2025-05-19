@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "17b283c18d2b08a97dfc1b484ce0f1d76916ae485d05b54d957f46498914142f",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "dcd7997bc27f2986c0427c0e731b14cb67865a893f11f137b711e09bf1afb457",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\OutputModule\\AskUserLlm.goal"
     },
     {
@@ -143,22 +143,22 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "074248280b9426b936281c3fe74cfa7638b3c83373354ab4533f60c8a7b00968",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "cb411a97908ee174088487faf1abd22a05c03288e9994305478bfa0d7e9d4043",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\OutputModule\\AskUserLlm.goal"
     },
     {
-      "Text": "[llm] system: %askSystem%\n    continue from last: false\n    response type: %!plang.output%\n    write to %content%",
+      "Text": "[llm] system: %askSystem%\n    continue from last: false\n    model: \"gpt-4o\"\n    response type: %!plang.output%\n    write to %content%",
       "Comment": null,
       "ModuleType": "PLang.Modules.LlmModule",
-      "Name": "process_llm_input",
-      "Description": "Use the LLM module to process the %askSystem% input, starting fresh without continuing from the last interaction, and store the response in the %content% variable.",
-      "PrFileName": "03. process_llm_input.pr",
-      "RelativePrPath": ".build\\modules\\OutputModule\\AskUserLlm\\03. process_llm_input.pr",
+      "Name": "process_llm_request",
+      "Description": "Use the LLM module to process the %askSystem% input using the GPT-4o model, ensuring the response is not a continuation from the last interaction. The response should be of type %!plang.output% and written to the %content% variable.",
+      "PrFileName": "03. process_llm_request.pr",
+      "RelativePrPath": ".build\\modules\\OutputModule\\AskUserLlm\\03. process_llm_request.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-05-02T16:10:10.9904808+00:00",
+      "Generated": "2025-05-03T10:14:54.0121522+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -204,19 +204,19 @@
             "content": [
               {
                 "type": "text",
-                "text": "[llm] system: %askSystem%\n    continue from last: false\n    response type: %!plang.output%\n    write to %content%"
+                "text": "[llm] system: %askSystem%\n    continue from last: false\n    model: \"gpt-4o\"\n    response type: %!plang.output%\n    write to %content%"
               }
             ]
           }
         ],
         "type": "StepInformationBuilder",
         "caching": true,
-        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Use the LLM module to process the %askSystem% input, starting fresh without continuing from the last interaction, and store the response in the %content% variable.\",\n\t\"Modules\": [\"PLang.Modules.LlmModule\"],\n\t\"StepName\": \"process_llm_input\"\n}\n```"
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Use the LLM module to process the %askSystem% input using the GPT-4o model, ensuring the response is not a continuation from the last interaction. The response should be of type %!plang.output% and written to the %content% variable.\",\n\t\"Modules\": [\"PLang.Modules.LlmModule\"],\n\t\"StepName\": \"process_llm_request\"\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "5570e85c4ac47df23de112e34822e66102933ec549f5b040dcce9f276d1ed37d",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "c441c440cdea96191ef681f1bef78a2adf91aaf2395b33e6282cee3bfc2473df",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\OutputModule\\AskUserLlm.goal"
     },
     {
@@ -238,7 +238,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 3,
-      "LineNumber": 8,
+      "LineNumber": 9,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -287,8 +287,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "19493da33ccbb04e5a21fc21d3cee381cb0a30256ab8a95424a9e7bb2048abda",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "413e5c34f35699784a05c8419f6290d4a4aa75a8c14781f26e408abbf1fbe56f",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\OutputModule\\AskUserLlm.goal"
     },
     {
@@ -310,7 +310,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 4,
-      "LineNumber": 9,
+      "LineNumber": 10,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -359,8 +359,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "98b1aeb16c8474d2247a5b0c37e7eea61c006390315ec98c3630637c1ee24845",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "aa1b411dde8369b076c0ac1cbde43f12db226e6702b573ac9a1f955ee9b0b489",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\OutputModule\\AskUserLlm.goal"
     },
     {
@@ -382,7 +382,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 5,
-      "LineNumber": 10,
+      "LineNumber": 11,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -431,8 +431,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "14e1308b0e8276099d1867341f38ba1b26f4a15ceb633ca56fb44f098f900b5f",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "17623119bc2e902407a710ed5332fb1b6f6fd1bf0072de946e92c9d8ddfab479",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\OutputModule\\AskUserLlm.goal"
     },
     {
@@ -454,7 +454,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 6,
-      "LineNumber": 11,
+      "LineNumber": 12,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -503,8 +503,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "60c6ff960e4f12f899bed90ba690ccf3ef27f256fdf555010c10a11fb95317fd",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "bff5b5f68fa654ed66ae4b59bdf56d9df968b4f031baf2c1c96f4af720ef17bb",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\OutputModule\\AskUserLlm.goal"
     },
     {
@@ -526,7 +526,7 @@
       "CancellationHandler": null,
       "Custom": {},
       "Number": 7,
-      "LineNumber": 16,
+      "LineNumber": 17,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -575,13 +575,13 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "00674471ebe6a6657c3d3d09918772c07ff24bd272cab61b82417606501d025f",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "e40942ea8dfc3f32d411b907dabcee14b160d53112813109a353a000fa87cf59",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\OutputModule\\AskUserLlm.goal"
     }
   ],
   "SubGoals": [],
-  "Description": "The AskUserLlm goal is designed to interact with a user by validating input instructions, reading and loading system configurations, and processing user responses through a series of steps. It ensures that the necessary inputs are provided, utilizes predefined systems for asking and answering, and returns a structured result based on user interaction.",
+  "Description": "The AskUserLlm goal is designed to interact with a user by validating input instructions, reading and processing files related to user queries, and utilizing a language model to generate responses. It ensures that the necessary inputs are provided, loads configurations from specified files, and manages the flow of information between the user and the system. The goal ultimately returns a result based on the user's input and the model's output.",
   "Visibility": 1,
   "GoalFileName": "AskUserLlm.goal",
   "RelativeGoalPath": "\\modules\\OutputModule\\AskUserLlm.goal",
@@ -592,17 +592,12 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "0e0bc37b0dfa834a5506756fc22a31795313d0e550c6356b6f36010ebeb300a6",
+  "FileHash": "2b925653b0125b44587be47f59f0712d8c98c90efefc5fb3bfe37fea1f1fcf38",
+  "Hash": "3b58697a3aad5cf0b8337dcb653a4d15edec97dae7cd27e14a96c25550bbde4b",
   "IncomingVariablesRequired": {
     "developerInstructionForResult": "Instructions provided by the developer that guide the expected outcome.",
-    "text": "The text content that will be processed or presented to the user.",
-    "options": "Additional options that may influence the interaction or response.",
-    "askSystem": "The system configuration for asking the user, loaded from a specified file.",
-    "content": "The content that will be presented to the user for their input.",
-    "answer": "The user's response to the content presented.",
-    "answerSystem": "The system configuration for processing the user's answer, loaded from a specified file.",
-    "scheme": "A predefined structure that defines the expected format of the result.",
-    "result": "The final output that is returned after processing the user's answer."
+    "text": "The text input that is to be processed or queried.",
+    "options": "Additional options that may influence the processing of the input."
   },
   "DataSourceName": null,
   "IsSetup": false

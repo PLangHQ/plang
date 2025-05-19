@@ -60,6 +60,7 @@ namespace PLang.Events
                 var goals = goalParser.ParseGoalFile(filePath);
                 var goal = goals.FirstOrDefault();
 
+
                 if (goal == null)
                 {
                     logger.LogWarning($"No Events goal found for {filePath}");

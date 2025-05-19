@@ -71,12 +71,13 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "ce878ffdbad503b49c77e50feb3fd27c06418507970e9b27da254dfff9886ee8",
-      "BuilderVersion": null
+      "Hash": "cfe2e4bc15127602d78ffa68d600bbe9b4567645914bd603a6280c0926d7d1b9",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\CreateStepTest.goal"
     }
   ],
   "SubGoals": [],
-  "Description": null,
+  "Description": "The ConsoleOutput goal sets the variable \\%question\\% to the value of \\%suggestions\\%. This allows the program to output or utilize the suggestions provided as a question.",
   "Visibility": 0,
   "GoalFileName": "CreateStepTest.goal",
   "RelativeGoalPath": "\\CreateStepTest.goal",
@@ -98,6 +99,10 @@
   },
   "Injections": [],
   "Signature": null,
-  "Hash": "2b205d89a6764238f756a34fdbda8870234ad25ee3574fed433e1f8ac81e89f2",
-  "IncomingVariablesRequired": null
+  "Hash": "c63d759803a42ae4360b9bccf32311c550891375b4d51919d5f25432bdc1e16c",
+  "IncomingVariablesRequired": {
+    "%suggestions%": "A collection of suggestions that will be assigned to the question variable."
+  },
+  "DataSourceName": null,
+  "IsSetup": false
 }

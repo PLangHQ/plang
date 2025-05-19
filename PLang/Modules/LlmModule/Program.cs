@@ -106,10 +106,10 @@ namespace PLang.Modules.LlmModule
 		[Description("Retrieves all previous messages")]
 		public async Task<List<LlmMessage>?> GetPreviousMessages()
 		{
-			return context.GetOrDefault<List<LlmMessage>>(PreviousConversationKey, new());
+			return goal.GetVariable<List<LlmMessage>>(PreviousConversationKey) ?? new();
 		}
 
-		public async Task<(IReturnDictionary?, IError?)> AskLlm(
+		public async Task<(object?, IError?)> AskLlm(
 			[HandlesVariable] List<LlmMessage> promptMessages,
 			string? scheme = null,
 			string model = "gpt-4o-mini",
@@ -119,8 +119,7 @@ namespace PLang.Modules.LlmModule
 			double presencePenalty = 0.0,
 			int maxLength = 4000,
 			bool cacheResponse = true,
-			string? llmResponseType = null, 
-			string loggerLevel = "trace", 
+			string? llmResponseType = null,
 			bool continuePrevConversation = false
 			)
 		{
@@ -134,19 +133,19 @@ namespace PLang.Modules.LlmModule
 
 			if (continuePrevConversation)
 			{
-				var prevMessages = context.GetOrDefault<List<LlmMessage>>(PreviousConversationKey, new());
+				var prevMessages = goal.GetVariable<List<LlmMessage>>(PreviousConversationKey) ?? new();
 				if (prevMessages != null)
 				{
 					promptMessages.InsertRange(0, prevMessages);
 				}
 				if (scheme == null)
 				{
-					scheme = context.GetOrDefault<string>(PreviousConversationSchemeKey, null);
+					scheme = goal.GetVariable<string>(PreviousConversationSchemeKey) ?? null;
 				}
 			} else
 			{
-				context.Remove(PreviousConversationKey);
-				context.Remove(PreviousConversationSchemeKey);
+				goal.RemoveVariable(PreviousConversationKey);
+				goal.RemoveVariable(PreviousConversationSchemeKey);
 			}
 
 			for (int i =0;i<promptMessages.Count;i++)
@@ -204,13 +203,13 @@ namespace PLang.Modules.LlmModule
 			IError? error = null;
 			try
 			{
-				(var response, var queryError) = await llmServiceFactory.CreateHandler().Query<object?>(llmQuestion);
+				(var response, var queryError) = await llmServiceFactory.CreateHandler().Query(llmQuestion, typeof(object));
 
 				if (queryError != null) return (null, queryError);
 
 				promptMessages.Add(new LlmMessage("assistant", llmQuestion.RawResponse));
-				context.AddOrReplace(PreviousConversationKey, promptMessages);
-				context.AddOrReplace(PreviousConversationSchemeKey, scheme);
+				goal.AddVariable(promptMessages, variableName: PreviousConversationKey);
+				goal.AddVariable(scheme, variableName: PreviousConversationSchemeKey);
 
 				if (function == null || function.ReturnValues == null || function.ReturnValues.Count == 0)
 				{
@@ -240,6 +239,9 @@ namespace PLang.Modules.LlmModule
 						returnDict.AddOrReplace(returnValue.VariableName, response);
 					}
 					return (returnDict, null);
+				} else
+				{
+					return (response, null);
 				}
 				
 			}
@@ -248,7 +250,7 @@ namespace PLang.Modules.LlmModule
 				error = new ProgramError(ex.Message, goalStep, function);
 			} finally {
 				LogLevel logLevel = LogLevel.Trace;
-				Enum.TryParse(loggerLevel, true, out logLevel);
+				Enum.TryParse(goalStep.LoggerLevel, true, out logLevel);
 
 				logger.Log(logLevel, "Llm question - prompt:{0}", JsonConvert.SerializeObject(llmQuestion.promptMessage));
 				logger.Log(logLevel, "Llm question - response:{0}", llmQuestion.RawResponse);

@@ -1,5 +1,6 @@
 ﻿using MiniExcelLibs.Utils;
 using PLang.Building.Model;
+using PLang.Errors;
 using PLang.Exceptions;
 using PLang.Interfaces;
 
@@ -21,48 +22,6 @@ namespace PLang.Utils
 			if (fileName.ToLower().StartsWith(Path.Join(".build", "setup"))) return true;
 
 			return false;
-		}
-
-		public static List<string> GetGoalFilesToBuild(IPLangFileSystem fileSystem, string goalPath)
-		{
-			string[] anyFile = fileSystem.Directory.GetFiles(goalPath, "*.goal", SearchOption.AllDirectories);
-			if (anyFile.Length == 0)
-			{
-				throw new BuilderException($"No goal files found in directory. Are you in the correct directory? I am running from {goalPath}");
-			}
-			var goalFiles = fileSystem.Directory.GetFiles(goalPath, "*.goal", SearchOption.AllDirectories).ToList();
-			return Remove_SystemFolder(goalPath, goalFiles);
-		}
-
-
-		private static List<string> Remove_SystemFolder(string goalPath, List<string> goalFiles)
-		{
-
-
-			string[] dirsToExclude = new string[] { "apps", ".modules", ".services", ".build", ".deploy", ".db" };
-			string[] filesToExclude = new string[] { "Events.goal", "BuilderEvents.goal" };
-
-
-			// Filter out excluded directories and files first to simplify subsequent operations
-			var filteredGoalFiles = goalFiles.Where(goalFile =>
-			{
-				var relativePath = goalFile.Replace(goalPath, "").TrimStart(Path.DirectorySeparatorChar);
-				var baseFolderName = Path.GetDirectoryName(relativePath).Split(Path.DirectorySeparatorChar).FirstOrDefault();
-				var fileName = Path.GetFileName(goalFile).ToLower();
-
-				return !baseFolderName.StartsWith(".") && !dirsToExclude.Contains(baseFolderName, StringComparer.OrdinalIgnoreCase) && !filesToExclude.Contains(fileName, StringComparer.OrdinalIgnoreCase);
-			}).ToList();
-
-			// Order the files
-			var orderedFiles = filteredGoalFiles
-				.OrderBy(file => Path.GetFileName(file).ToLower() != "setup.goal") // "setup.goal" second
-				.ThenBy(file => !file.Contains(Path.Join(goalPath, "setup", Path.DirectorySeparatorChar.ToString()), StringComparison.OrdinalIgnoreCase))
-				.ThenBy(file => !file.Contains(Path.Join(goalPath, "events"), StringComparison.OrdinalIgnoreCase))  // "events" folder first
-				.ThenBy(file => Path.GetFileName(file).ToLower() != "start.goal")
-				.ToList();
-
-
-			return orderedFiles;
 		}
 
 
@@ -122,6 +81,23 @@ namespace PLang.Utils
 		{
 			if (goal.DataSourceName != null && goal.DataSourceName.Contains("%")) return false;
 			return IsSetup(goal);			
+		}
+
+
+		public static bool IsPartOfCallStack(Goal goal, EndGoal endGoal)
+		{
+			if (endGoal.Step == null) return false;
+
+			if (goal.RelativePrPath.Equals(endGoal.Step.Goal.RelativePrPath)) return true;
+
+			var parentGoal = endGoal.Step.Goal.ParentGoal;
+			while (parentGoal != null)
+			{
+				if (goal.RelativePrPath.Equals(parentGoal.RelativePrPath)) return true;
+				parentGoal = parentGoal.ParentGoal;
+			}
+			return false;
+
 		}
 	}
 }

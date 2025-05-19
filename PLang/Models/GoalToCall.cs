@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PLang.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,8 +13,14 @@ namespace PLang.Models
 
 		public GoalToCall(string? value)
 		{
+			
 			if (!string.IsNullOrWhiteSpace(value))
 			{
+				if (value.Contains("\\"))
+				{
+					value = value.Replace("\\", "/");
+				}
+
 				Value = value.Replace("!", "");
 			}
 			

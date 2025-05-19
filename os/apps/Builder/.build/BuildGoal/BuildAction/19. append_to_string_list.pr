@@ -1,0 +1,83 @@
+{
+  "Action": {
+    "FunctionName": "AddToList",
+    "Parameters": [
+      {
+        "Type": "System.Object",
+        "Name": "value",
+        "Value": "%selectedModule.moduleName%"
+      },
+      {
+        "Type": "System.Collections.Generic.List`1[System.Object]",
+        "Name": "listInstance",
+        "Value": "%excludedModules%"
+      },
+      {
+        "Type": "System.Boolean",
+        "Name": "uniqueValue",
+        "Value": false
+      },
+      {
+        "Type": "System.Boolean",
+        "Name": "caseSensitive",
+        "Value": false
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "System.Object",
+        "VariableName": "excludedModules"
+      }
+    ]
+  },
+  "Text": "append to string list %excludedModules% = %selectedModule.moduleName%",
+  "Reload": false,
+  "LlmRequest": {
+    "temperature": 0.0,
+    "top_p": 0.0,
+    "frequencyPenalty": 0.0,
+    "presencePenalty": 0.0,
+    "maxLength": 4000,
+    "llmResponseType": "json",
+    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+    "model": "gpt-4o",
+    "promptMessage": [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+          },
+          {
+            "type": "text",
+            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "## functions available starts ##\r\n[{\"MethodName\":\"ClearList\",\"Parameters\":[{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\"}]},{\"MethodName\":\"ClearDictionary\",\"Parameters\":[{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"dictionary\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]}]},{\"MethodName\":\"DeleteFromList\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"item\"},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\"}],\"ReturnValue\":{\"Type\":\"System.Boolean\"}},{\"MethodName\":\"DeleteKeyFromDictionary\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"dictionary\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]}],\"ReturnValue\":{\"Type\":\"System.Boolean\"}},{\"Description\":\"Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddItemsToList\",\"MethodName\":\"AddItemsToList\",\"Parameters\":[{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"value\"},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\"}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToList\",\"MethodName\":\"AddToList\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"value\"},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\"},{\"Type\":\"System.Boolean\",\"Name\":\"uniqueValue\",\"DefaultValue\":false},{\"Type\":\"System.Boolean\",\"Name\":\"caseSensitive\",\"DefaultValue\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"GetItem\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"operator\",\"DefaultValue\":\"first\"},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\"},{\"Type\":\"List<string>\",\"Name\":\"sortColumns\"},{\"Type\":\"List<string>\",\"Name\":\"sortOperator\"}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Gets an item from a list by position\",\"MethodName\":\"GetFromList\",\"Parameters\":[{\"Type\":\"System.Int32\",\"Name\":\"position\"},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\"}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddItemsToDictionary\",\"MethodName\":\"AddItemsToDictionary\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"value\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"dictionaryInstance\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]},{\"Type\":\"System.Boolean\",\"Name\":\"updateIfExists\",\"DefaultValue\":true}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"Description\":\"Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToDictionary\",\"MethodName\":\"AddToDictionary\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\"},{\"Type\":\"System.Object\",\"Name\":\"value\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"dictionaryInstance\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]},{\"Type\":\"System.Boolean\",\"Name\":\"updateIfExists\",\"DefaultValue\":true}],\"ReturnValue\":{\"Type\":\"Dictionary<String,Object>\"}},{\"Description\":\"Gets an object from dictionary. ReturnValue should always be used with GetFromDictionary\",\"MethodName\":\"GetFromDictionary\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"dictionaryInstance\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Merges two objects or lists according to primary key\",\"MethodName\":\"MergeLists\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"list1\"},{\"Type\":\"System.Object\",\"Name\":\"list2\"},{\"Type\":\"System.String\",\"Name\":\"key\"}],\"ReturnValue\":{\"Type\":\"System.Object\"}}]\r\n## functions available ends ##\r\n## defined variables ##\r\nexcludedModules (type:object), selectedModule.moduleName (type:object), \r\n## defined variables ##"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "append to string list %excludedModules% = %selectedModule.moduleName%"
+          }
+        ]
+      }
+    ],
+    "type": "PLang.Modules.GenericFunctionBuilder",
+    "caching": true,
+    "RawResponse": "```json\n{\n\t\"FunctionName\": \"AddToList\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"System.Object\",\n\t\t\t\"Name\": \"value\",\n\t\t\t\"Value\": \"%selectedModule.moduleName%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"System.Collections.Generic.List`1[System.Object]\",\n\t\t\t\"Name\": \"listInstance\",\n\t\t\t\"Value\": \"%excludedModules%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"System.Boolean\",\n\t\t\t\"Name\": \"uniqueValue\",\n\t\t\t\"Value\": false\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"System.Boolean\",\n\t\t\t\"Name\": \"caseSensitive\",\n\t\t\t\"Value\": false\n\t\t}\n\t],\n\t\"ReturnValues\": [\n\t\t{\n\t\t\t\"Type\": \"System.Object\",\n\t\t\t\"VariableName\": \"excludedModules\"\n\t\t}\n\t]\n}\n```"
+  },
+  "RunOnBuild": false,
+  "Metadata": {}
+}

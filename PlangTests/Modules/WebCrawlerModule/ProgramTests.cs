@@ -19,7 +19,7 @@ namespace PLangTests.Modules.WebCrawlerModule
 
 			await Task.Delay(1000);
 
-			p.Dispose();
+			
 		}
 		[TestMethod]
 		public async Task GetOpenHeadlessBrowser()
@@ -29,7 +29,6 @@ namespace PLangTests.Modules.WebCrawlerModule
 
 			await Task.Delay(1000);
 
-			p.Dispose();
 		}
 		[TestMethod]
 		public async Task GetOpenBrowserUseUserSession()
@@ -39,7 +38,6 @@ namespace PLangTests.Modules.WebCrawlerModule
 
 			await Task.Delay(1000);
 
-			p.Dispose();
 		}
 	}
 }

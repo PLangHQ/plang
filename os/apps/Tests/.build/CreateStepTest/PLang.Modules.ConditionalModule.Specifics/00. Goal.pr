@@ -71,8 +71,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "a8fa599a0ff0289265a60ad46849815dfbf52442509b17816a813727d0b988bd",
-      "BuilderVersion": null
+      "Hash": "1fcbb041340c81a3cb3e78c621d6194e40ea4cdfd93e5965935b4600fa91c21d",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\CreateStepTest.goal"
     }
   ],
   "SubGoals": [],
@@ -87,6 +88,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "abd9b91050a8ad3c9222cb8ebecd521e4033d14dcdeee672464da6f627533092",
-  "IncomingVariablesRequired": null
+  "Hash": "25a985ae57af2cc208a1471853b98dfafb331209f354cd017e0aaa8e67cec2d6",
+  "IncomingVariablesRequired": null,
+  "DataSourceName": null,
+  "IsSetup": false
 }

@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "58bb0a7f36c5c9bf8f443f6e9ace720df27e8727c3f67b87800b847a5271ee8e",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "4dca0bb988e921d899bd770443814f00b742a98cd14400fc5859ccc7750cec68",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\DbModule\\CreateIsolatedDataPattern.goal"
     },
     {
@@ -143,8 +143,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "a469a4a3ea4fbe05201cf792ba604b1024089abf812fdcfcd8df22469b06bfd7",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "9303ab3e3e153c17bee564a42730357071acc2f2fd1b267aca3566832d29a8e6",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\DbModule\\CreateIsolatedDataPattern.goal"
     },
     {
@@ -215,8 +215,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "5779ad6526042bd8021bfc1d5f8b02da3b31739e6a35441848df48edd912ebdc",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "4dbf2eef3bc26a368fa04268e2f79530cf25cfde4a1e2bbb0a9f78d38d604315",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\DbModule\\CreateIsolatedDataPattern.goal"
     },
     {
@@ -287,8 +287,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "827468542b9cee97abaa8b81c4bac9cedf5ecdac7abec828147bd2598813af06",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "990ef20a125b7611f6856d5d2bc98b564f9e24cb7f533bfd875e1c25c28e9518",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\DbModule\\CreateIsolatedDataPattern.goal"
     },
     {
@@ -359,8 +359,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "933bc3f2332159c3e075775d92cbce3f5457e0b49baf907c1d62a62200a32bee",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "92e56b665c8d1e7873dfd7425b39436ce92d5ac74a45235226ac6aef38d0ded3",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\DbModule\\CreateIsolatedDataPattern.goal"
     }
   ],
@@ -379,7 +379,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "b2737749afe9b07a4b27e8f9c42016dfbf6379cd79dfaf9a8fb4381e846cdf85",
+  "FileHash": "8c02a444f4d691137fe38e80b83cff27bf686cd6fb71e2f49b6d00ae66b34352",
+  "Hash": "cfd07ad4407ec3b1cf9adf72105580b835a688ae77d2e998f30aad307da44a10",
   "IncomingVariablesRequired": {
     "%id%": "A unique identifier for the data pattern, must not be empty.",
     "%setupGoalFile%": "The file path to the setup goal, must not be empty."

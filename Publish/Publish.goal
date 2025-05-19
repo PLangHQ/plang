@@ -2,7 +2,9 @@ Publish
 - write out "Starting at %Now%"
 - read "version.txt", into %version%
 - write out 'Building project - Version:%version%'
+- listen to %buildVar%, call ConsoleOutPut
 - dotnet build Plang.sln -c Release -p:Version=%version%,  working dir ../
+    stream data: %buildVar%
 - get file paths of .zip in ./, write to %zipFiles%
 - foreach %zipFiles% call !RemoveFile
 - [code] create string list for 'linux-x64', 'win-x64', 'linux-arm64', 'osx-x64', 'osx-arm64', write to %platforms%
@@ -12,9 +14,11 @@ BuildPlatform
 - write out 'Publish %platform%'
 - delete folder "plang"
 - dotnet publish PlangConsole/PLangConsole.csproj -c Release -r %platform% --self-contained true -o ./publish/plang -p:Version=%version%
+    stream data: %buildVar%
     working dir ../
 - if %platform% == 'win-x64' then
     - dotnet publish PlangWindowForms/PLangWindowForms.csproj -c Release -r win-x64 --self-contained true -o ./publish/plang -p:Version=%version%
+    stream data: %buildVar%
     working dir ../   
 - write out 'Compress plang folder'   
 - compress folder 'plang', dont include base, to 'plang-%platform%.zip', overwrite
@@ -23,3 +27,6 @@ BuildPlatform
 
 RemoveFile
 - delete file %item%
+
+ConsoleOutPut
+- write out "%data%", param: "Position": -1

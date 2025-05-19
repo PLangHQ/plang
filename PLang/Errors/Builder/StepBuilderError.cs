@@ -7,7 +7,7 @@ namespace PLang.Errors.Builder
 	{
 		public StepBuilderError(string Message, GoalStep Step, string Key = "StepBuilder", int StatusCode = 400,
 										bool ContinueBuild = true, Exception? ex = null, string? FixSuggestion = null, 
-										string? HelpfulLinks = null, bool Retry = false)
+										string? HelpfulLinks = null, bool Retry = true)
 										: base(Message, Step.Goal, Key, StatusCode, ContinueBuild, ex, FixSuggestion, HelpfulLinks, Retry)
 		{
 			this.Step = Step;

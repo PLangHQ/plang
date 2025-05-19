@@ -1,6 +1,7 @@
 {
   "GoalName": "ShowQuote",
   "Comment": null,
+  "Text": "ShowQuote",
   "GoalSteps": [
     {
       "Text": "write out 'Quote: %item%\\n-------'",
@@ -13,10 +14,10 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2024-02-13T11:54:18.0801564+01:00",
+      "Generated": "2024-02-13T10:54:18.0801564+00:00",
       "WaitForExecution": true,
-      "ErrorHandler": null,
-      "RetryHandler": null,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
       "CacheHandler": null,
       "CancellationHandler": null,
       "Custom": {},
@@ -30,7 +31,7 @@
         "maxLength": 4000,
         "llmResponseType": "json",
         "scheme": "{\"StepName\": string,\n\"StepDescription\": string,\n\"Modules\": string[],\n\"WaitForExecution\": boolean = True,\n\"CachingHandler\"?: {\"TimeInMilliseconds\": int64,\n\"CacheKey\": string,\n\"CachingType\": int32} = null,\n\"ErrorHandler\"?: {\"IgnoreErrors\": boolean,\n\"OnExceptionContainingTextCallGoal\"? : { String : String, ... },\n\"ContinueToNextStep\": boolean} = null,\n\"RetryHandler\"?: {\"RetryCount\": int32 = 3,\n\"RetryDelayInMilliseconds\": int32 = 50} = null}",
-        "type": "StepBuilder",
+        "model": "gpt-4",
         "promptMessage": [
           {
             "role": "system",
@@ -64,22 +65,34 @@
             ]
           }
         ],
-        "model": "gpt-4",
+        "type": "StepBuilder",
         "caching": true,
         "RawResponse": "{\r\n  \"StepName\": \"WriteOutQuote\",\r\n  \"StepDescription\": \"Write out the string 'Quote: ' followed by the value of the variable %item% and then a newline and a line of dashes.\",\r\n  \"Modules\": [\r\n    \"PLang.Modules.OutputModule\"\r\n  ],\r\n  \"WaitForExecution\": true\r\n}"
-      }
+      },
+      "EventBinding": null,
+      "IsEvent": false,
+      "Hash": "b7a33211dcacf5e62c4032dc3a03aacd4f1aa3f036ec5e1e3627bc022fb60c23",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Webbrowser.goal"
     }
   ],
-  "Description": null,
+  "SubGoals": [],
+  "Description": "The ShowQuote goal is designed to display a quote by writing it out in a formatted string. It takes an item variable, which represents the quote to be displayed, and formats it with a label 'Quote:' followed by the quote itself and a line of dashes for separation.",
   "Visibility": 0,
   "GoalFileName": "Webbrowser.goal",
   "RelativeGoalPath": "\\Webbrowser.goal",
   "RelativeGoalFolderPath": "\\",
   "RelativePrPath": ".build\\Webbrowser\\ShowQuote\\00. Goal.pr",
   "RelativePrFolderPath": ".build\\Webbrowser\\ShowQuote",
-  "BuilderVersion": "0.1.0.0",
-  "GoalApiInfo": null,
+  "BuilderVersion": "1.0.0.0",
+  "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "38659a53bf97eba47efc8a8a4c07fd32a60815e74d67abca138f31ca019139fe"
+  "FileHash": "a26bf52df4fdf4e59a04cd69afd804fea0d98e4ea531512b1711852d2b61ec10",
+  "Hash": "55e05a2fc3accceb941f9576e5b0a990fdc4383fd5a24370c6b439f901922c70",
+  "IncomingVariablesRequired": {
+    "item": "The quote that needs to be displayed."
+  },
+  "DataSourceName": null,
+  "IsSetup": false
 }

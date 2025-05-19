@@ -37,7 +37,7 @@ namespace PLang.Errors.Handlers
 				resp.StatusDescription = error.Key;
 
 
-				var identity = programFactory.GetProgram<Modules.IdentityModule.Program>();
+				var identity = programFactory.GetProgram<Modules.IdentityModule.Program>(step);
 				/*var plangResponse = new PlangResponse()
 				{
 					Data = error.AsData(),
@@ -65,7 +65,7 @@ namespace PLang.Errors.Handlers
 
 				var result = JsonConvert.SerializeObject(payload);
 				var result2 = System.Text.Json.JsonSerializer.Serialize(payload);
-				await programFactory.GetProgram<Modules.SerializerModule.Program>().Serialize(payload, stream: resp.OutputStream);
+				await programFactory.GetProgram<Modules.SerializerModule.Program>(step).Serialize(payload, stream: resp.OutputStream);
 			}
 			catch (ObjectDisposedException)
 			{

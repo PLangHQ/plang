@@ -9,19 +9,25 @@ namespace PLang.Utils
 	public class OperatorHelper
 	{
 
-		public static Dictionary<string, string>? ApplyOperator(Dictionary<string, string>? dict, string? key = null, string? keyOperator = "equals", string? value = null, string? valueOperator = "contains")
+		public static Dictionary<string, string>? ApplyOperator(Dictionary<string, string>? dict, string[]? keys = null, string? keyOperator = "equals", string? value = null, string? valueOperator = "contains")
 		{
 			if (dict == null) return null;
 
 			var dict1 = dict.Where(p =>
 			{
 				bool returnValue = true;
-				if (key != null && value != null)
+				if (keys != null && value != null)
 				{
-					returnValue = Operator(p.Key, key, keyOperator) && Operator(p.Value.ToString(), value, valueOperator);
+					var key = keys.FirstOrDefault(a => a.Equals(p.Key, StringComparison.OrdinalIgnoreCase));
+					if (key == null) return false; 
+					
+					returnValue = Operator(p.Key, key, keyOperator) && Operator(p.Value.ToString(), value, valueOperator);					
 				}
-				else if (key != null)
+				else if (keys != null)
 				{
+					var key = keys.FirstOrDefault(a => a.Equals(p.Key, StringComparison.OrdinalIgnoreCase));
+					if (key == null) return false;
+
 					returnValue = Operator(p.Key, key, keyOperator);
 				}
 				else if (value != null)

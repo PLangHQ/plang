@@ -264,7 +264,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 
 			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
 			var result = await base.Build(goalStep);
-			result.Instruction?.Metadata.AddOrReplace("TableNames", functionInfo.TableNames);
+			result.Instruction?.Properties.AddOrReplace("TableNames", functionInfo.TableNames);
 
 			return result;
 
@@ -297,7 +297,7 @@ You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
 			SetAssistant("");
 		
 			var result = await base.Build(goalStep);
-			result.Instruction?.Metadata.AddOrReplace("TableNames", functionInfo.TableNames);
+			result.Instruction?.Properties.AddOrReplace("TableNames", functionInfo.TableNames);
 
 			return result;
 		
@@ -395,7 +395,7 @@ You MUST provide SqlParameters if SQL has @parameter.
 			{
 				logger.LogWarning(gf.Warning);
 			}
-			instruction.Metadata.AddOrReplace("TableNames", functionInfo.TableNames);
+			instruction.Properties.AddOrReplace("TableNames", functionInfo.TableNames);
 
 			return (instruction, null);
 		}
@@ -449,7 +449,7 @@ ParameterInfo has the scheme: {""ParameterName"": string, ""VariableNameOrValue"
 			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
 
 			var result = await base.Build(goalStep);
-			result.Instruction?.Metadata.AddOrReplace("TableNames", functionInfo.TableNames);
+			result.Instruction?.Properties.AddOrReplace("TableNames", functionInfo.TableNames);
 
 			return result;
 
@@ -463,10 +463,10 @@ ParameterInfo has the scheme: {""ParameterName"": string, ""VariableNameOrValue"
 				appendToSystem = "SqlParameters @id MUST be type System.Int64. VariableNameOrValue is \"auto\"";
 			}
 
-			string functionDesc = "int InsertOrUpdate(String sql, List<object>()? SqlParameters = null, string? dataSourceName = null) //return rows affected";
+			string functionDesc = "int InsertOrUpdate(String sql, List<ParameterInfo>()? SqlParameters = null, string? dataSourceName = null) //return rows affected";
 			if (functionInfo.FunctionName == "InsertOrUpdateAndSelectIdOfRow")
 			{
-				functionDesc = "object InsertOrUpdateAndSelectIdOfRow(String sql, List<object>()? SqlParameters = null, string? dataSourceName = null) //returns the primary key of the affected row";
+				functionDesc = "object InsertOrUpdateAndSelectIdOfRow(String sql, List<ParameterInfo>()? SqlParameters = null, string? dataSourceName = null) //returns the primary key of the affected row";
 			}
 
 			SetSystem(@$"Map user command to this c# function: 
@@ -475,9 +475,11 @@ ParameterInfo has the scheme: {""ParameterName"": string, ""VariableNameOrValue"
 {functionDesc}
 ## csharp function ##
 
-variable is defined with starting and ending %, e.g. %filePath%.
+variable is defined with starting and ending %, e.g. %filePath%. 
+%variables% MUST be kept as is.
 SqlParameters is List of ParameterInfo(string ParameterName, string VariableNameOrValue, string TypeFullName)
 TypeFullName is Full name of the type in c#, System.String, System.Double, System.DateTime, System.Int64, etc.
+Do not escape string("" or ') when dealing with string for VariableNameOrValue
 InsertOrUpdateAndSelectIdOfRow returns a value that should be written into %variable% defined by user.
 %Now% variable is type of DateTime. %Now% variable should be injected as SqlParameter 
 {appendToSystem}
@@ -485,6 +487,7 @@ InsertOrUpdateAndSelectIdOfRow returns a value that should be written into %vari
 If table name is a variable, keep the variable in the sql statement
 You MUST generate a valid sql statement for {functionInfo.DatabaseType}.
 You MUST provide SqlParameters if SQL has @parameter.
+Use the table index information to handle ignores on conflicts
 integer/int should always be System.Int64. 
 ");
 
@@ -499,14 +502,18 @@ integer/int should always be System.Int64.
 				if (dataSource.KeepHistory)
 				{
 					SetAssistant($@"# examples for sqlite #
-""insert or update users, name=%name%(unqiue), %type%, write to %id%"" => sql: ""insert into users (id, name, type) values (@id, @name, @type) ON CONFLICT(name) DO UPDATE SET type = excluded.type {selectIdRow}""
+""insert or update users, name=%name%(unqiue), %type%, write to %id%"" => 
+	sql: ""insert into users (id, name, type) values (@id, @name, @type) ON CONFLICT(name) DO UPDATE SET type = excluded.type {selectIdRow}""
+	Keep variables as is, e.g. VariableNameOrValue=%name%, VariableNameOrValue=%type%, VariableNameOrValue=%id%
 # examples #");
 
 				}
 				else
 				{
 					SetAssistant(@$"# examples #
-""insert into users, name=%name%(unqiue), %type%, write to %id%"" => sql: ""insert into users (name, type) values (@name, @type) ON CONFLICT(name) DO UPDATE SET type = excluded.type {selectIdRow}"",
+""insert into users, name=%name%(unqiue), %type%, write to %id%""
+	sql: ""insert into users (name, type) values (@name, @type) ON CONFLICT(name) DO UPDATE SET type = excluded.type {selectIdRow}""
+	Keep variables as is, e.g. VariableNameOrValue=%name%, VariableNameOrValue=%type%, VariableNameOrValue=%id%
 # examples #");
 				}
 			}
@@ -514,8 +521,12 @@ integer/int should always be System.Int64.
 			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
 
 			var result = await base.Build(goalStep);
-			result.Instruction?.Metadata.AddOrReplace("TableNames", functionInfo.TableNames);
-
+			result.Instruction?.Properties.AddOrReplace("TableNames", functionInfo.TableNames);
+			/*
+			 * todo: we should validate that sql parameter and sqlparameters contains equals amount of
+			 * variables as step. llm sometimes removes the % from variables. if it does not match it should
+			 * give error and try again.
+			 * */
 			return result;
 
 		}
@@ -563,7 +574,7 @@ integer/int should always be System.Int64.
 			await AppendTableInfo(dataSource, program, functionInfo.TableNames);
 
 			var result = await base.Build(goalStep);
-			result.Instruction?.Metadata.AddOrReplace("TableNames", functionInfo.TableNames);
+			result.Instruction?.Properties.AddOrReplace("TableNames", functionInfo.TableNames);
 
 			return result;
 		}
@@ -593,6 +604,27 @@ integer/int should always be System.Int64.
 				{
 					AppendToSystemCommand($"Table name is: {tableName}. Fix sql if it includes type.");
 					AppendToAssistantCommand($"### {tableName} columns ###\n{JsonConvert.SerializeObject(columnInfo)}\n### {tableName} columns ###");
+
+					if (typeof(SqliteConnection).FullName == dataSource.TypeFullName)
+					{
+						string indexInformation = string.Empty;
+						var indexes = await program.Select($"SELECT name, [unique], [partial] FROM pragma_index_list('{tableName}') WHERE origin = 'u';");
+						foreach (dynamic index in indexes.rows)
+						{
+							var columns = await program.Select($"SELECT group_concat(name) as columns FROM pragma_index_info('{index.name}')");
+							if (columns.rows.Count > 0)
+							{
+								dynamic row = columns.rows[0];
+								indexInformation += @$"- index name:{index.name} - is unique:{index.unique} - is partial:{index.partial} - columns:{row.columns}\n";
+							}
+						}
+
+						if (indexInformation != string.Empty)
+						{
+							indexInformation = $"### Index information for {tableName} ###\n{indexInformation}\n### Index information for {tableName} ###";
+							AppendToAssistantCommand(indexInformation);
+						}
+					}
 				}
 				else
 				{
@@ -620,25 +652,27 @@ I will not be able to validate the sql. To enable validation run the command: pl
 		public async Task<IBuilderError?> BuilderCreateTable(GenericFunction gf, GoalStep step)
 		{
 			var sql = GeneralFunctionHelper.GetParameterValueAsString(gf, "sql");
-			if (string.IsNullOrEmpty(sql)) return new BuilderError("sql is empty, cannot create table");
+			if (string.IsNullOrEmpty(sql)) return new StepBuilderError("sql is empty, cannot create table", step);
 
 			var (dataSource, error) = await GetDataSource(gf, step);
-			if (error != null) return new BuilderError(error);
+			if (error != null) return new StepBuilderError(error, step);
 
 			using var program = new Program(dbFactory, fileSystem, settings, llmServiceFactory, new DisableEventSourceRepository(), context, logger, typeHelper, dbSettings, prParser, null);
 			program.SetStep(step);
+			error = await program.SetDataSourceName(dataSource.Name);
+			if (error != null) return new StepBuilderError(error, step);
 			(_, error) = await program.CreateTable(sql, dataSource.Name);
-			if (error != null) return new BuilderError(error);
+			if (error != null) return new StepBuilderError(error, step);
 			return null;
 		}
 
 		public async Task<IBuilderError?> BuilderSetDataSourceName(GenericFunction gf, GoalStep step)
 		{
 			var name = GeneralFunctionHelper.GetParameterValueAsString(gf, "name");
-			if (name == null) return new BuilderError("Could not find 'name' property in instructions");
+			if (name == null) return new StepBuilderError("Could not find 'name' property in instructions", step);
 
 			var result = await dbSettings.GetDataSource(name);
-			if (result.Error != null) return new BuilderError(result.Error);
+			if (result.Error != null) return new StepBuilderError(result.Error, step);
 
 			context.AddOrReplace(ReservedKeywords.CurrentDataSource, result.DataSource);
 
@@ -651,7 +685,7 @@ I will not be able to validate the sql. To enable validation run the command: pl
 			var dataSourceName = GeneralFunctionHelper.GetParameterValueAsString(gf, "name");
 			if (string.IsNullOrEmpty(dataSourceName))
 			{
-				return new BuilderError("Name for the data source is missing. Please define it. Example: \"- Create sqlite data source 'myDatabase'\"");
+				return new StepBuilderError("Name for the data source is missing. Please define it. Example: \"- Create sqlite data source 'myDatabase'\"", step);
 			}
 
 			var dbTypeParam = GeneralFunctionHelper.GetParameterValueAsString(gf, "databaseType");
@@ -660,7 +694,7 @@ I will not be able to validate the sql. To enable validation run the command: pl
 			var keepHistoryEventSourcing = GeneralFunctionHelper.GetParameterValueAsBool(gf, "keepHistoryEventSourcing") ?? false;
 
 			var (datasource, error) = await dbSettings.CreateDataSource(dataSourceName, dbTypeParam, setAsDefaultForApp, keepHistoryEventSourcing);
-			if (datasource == null && error != null) return new BuilderError(error, false);
+			if (datasource == null && error != null) return new StepBuilderError(error, step, false);
 
 			step.Goal.DataSourceName = datasource.Name;
 			step.RunOnce = GoalHelper.RunOnce(step.Goal);

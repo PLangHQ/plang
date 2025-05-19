@@ -8,6 +8,7 @@ using Org.BouncyCastle.Utilities;
 using PLang.Attributes;
 using PLang.Errors;
 using PLang.Errors.Runtime;
+using PLang.Exceptions;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
@@ -119,7 +120,7 @@ namespace PLang.Modules.LoopModule
 						}
 
 						var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalNameToCall, goalParameters, Goal);
-						if (result.error != null) return result.error;
+						if (result.error != null && result.error is not IErrorHandled) return result.error;
 					}
 				}
 				else
@@ -150,11 +151,11 @@ namespace PLang.Modules.LoopModule
 							Task<(IEngine engine, object? Variables, IError? error, IOutput? output)> task;
 							if (goalToCallBeforeItemIsProcessed != null)
 							{
-								task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCallBeforeItemIsProcessed, goalParameters, Goal);
+								task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCallBeforeItemIsProcessed, goalParameters, Goal, isolated: true);
 								await task;
 							}
 
-							task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalNameToCall, goalParameters, Goal);
+							task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalNameToCall, goalParameters, Goal, isolated: true);
 							var result = await task;
 							if (result.error != null)
 							{
@@ -170,7 +171,7 @@ namespace PLang.Modules.LoopModule
 
 							if (goalToCallAfterItemIsProcessed != null)
 							{
-								task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCallAfterItemIsProcessed, goalParameters, Goal);
+								task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCallAfterItemIsProcessed, goalParameters, Goal, isolated: true);
 								await task;
 							}
 

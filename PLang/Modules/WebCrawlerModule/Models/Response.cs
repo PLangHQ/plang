@@ -6,13 +6,13 @@ namespace PLang.Modules.WebCrawlerModule.Models
 {
 
 
-	public record Response(int Status, string StatusText, string Url, bool Ok, Dictionary<string, string> Headers,
+	public record Response(int StatusCode, string StatusText, string Url, bool Ok, Dictionary<string, string>? Headers,
 		bool FromServiceWorker, string ParentUrl)
 	{
 		public bool IsJavascript => Url.EndsWith(".js") || ContentType.Contains("javascript");
 		public bool IsCss => Url.EndsWith(".css") || ContentType.Contains("text/css");
 		public bool IsHtml => Url.EndsWith(".html") || ContentType.Contains("text/html");
-		public bool IsJson => ContentType.Contains("application/json");
+		public bool IsJson => ContentType.Contains("application/json") || Url.EndsWith(".json");
 		public bool IsImage => ContentType.StartsWith("image/");
 		public bool IsVideo => ContentType.StartsWith("video/");
 		public bool IsPdf => ContentType.StartsWith("/pdf");

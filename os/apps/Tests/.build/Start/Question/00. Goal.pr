@@ -71,8 +71,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "f8bf884d280b47017b1ec992a43726d63d47ab6b39deb2e5ce50d9d5fff562f0",
-      "BuilderVersion": null
+      "Hash": "e70bdc4db421793309c51f00d277456ebcc7e95738f6eba58186381b05ec19c2",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Start.goal"
     },
     {
       "Text": "render /html/question.html",
@@ -142,8 +143,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "54ca449a6b7cb12f1b26ac64334c5193176619aca2f5993a007de2a0ccb99940",
-      "BuilderVersion": null
+      "Hash": "15662ba4442a534294cddd9812310fa5554419b85bfd61274b6e2658a2e67e89",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Start.goal"
     }
   ],
   "SubGoals": [],
@@ -158,6 +160,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "f90d6353aebde38fc9571de952a6fe6130e5359c82ca544d5f25075c19a0e830",
-  "IncomingVariablesRequired": null
+  "Hash": "35d04af61059be3b3d4aa362d4ffd9edf603e51dc92ecaf8b7abc3b14f2de926",
+  "IncomingVariablesRequired": null,
+  "DataSourceName": null,
+  "IsSetup": false
 }

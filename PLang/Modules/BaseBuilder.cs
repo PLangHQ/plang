@@ -278,7 +278,7 @@ If there is some api key, settings, config replace it with %Settings.Get(""setti
 - defaultValue for settings is the usual value given, make it """" if no value can be default
 - Explain is an explanation about the setting that novice user can understand.
 
-
+Dictionary<T1, T2> value is {{key: value, ... }}
 
 JSON scheme information
 FunctionName: Name of the function to use from list of functions, if no function matches set as ""N/A""

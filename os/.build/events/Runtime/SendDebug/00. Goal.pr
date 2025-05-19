@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "d30a018741732c57898bd2a0806d7c0ec971bc2c749561b61480b36292405869",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "ef5792775333d5d603bd602906b4bfd83c5229fe7b6cf50f4a12704527a9aa10",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal"
     },
     {
@@ -143,8 +143,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "72b5930b96f637a59a4a79ef220baa82610e14da7407eac53dbc08c03a9d81d4",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "5ac75fc37f3c44a727c3f758157e6c6611a852bd68f9fb654b6eb1d217477f61",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal"
     },
     {
@@ -215,8 +215,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "72973ce56bf249ef8a47de0a6079544a57dd16202ef3a1720e0969eabcb3afa1",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "686e248e003773c97b79b34b6d9609d42c987cae2026ec3c7f510b680fd4e3a0",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal"
     }
   ],
@@ -236,7 +236,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "c4f16f598c18001051c0a49d6a004c7b4645f6f77e21790c137882f8dab6a5a0",
+  "FileHash": "8bab2e0d60c27011d5135e41bf7a895fb84bbca92e1b5c3edb299e458a1406e8",
+  "Hash": "791fd08ea4a2d2652cffe36dcacc89e4ffd9fdaf8d713101d7f9e24e5938febc",
   "IncomingVariablesRequired": {
     "plang.debugPort": "The port number used for debugging, default is set to 60877.",
     "CallingStep.LineNumber": "The line number of the calling step that needs to be sent in the debug data.",

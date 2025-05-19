@@ -12,6 +12,7 @@ using PLang.Services.OutputStream;
 using PLang.Utils;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Runtime
 {
@@ -37,17 +38,20 @@ namespace PLang.Runtime
 			bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0,
 			int indent = 0, bool keepMemoryStackOnAsync = false, bool isolated = false)
 		{
+
+			bool isNewEngine = false;
+			Goal? goal = null;
 			try
 			{
-
+				IError? error;
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				if (goalName == null || goalName.Value == null)
 				{
-					var error = new Error($"Goal to call is empty. Calling goal is {callingGoal}");
+					error = new Error($"Goal to call is empty. Calling goal is {callingGoal}");
 					var output2 = new TextOutput("Error", "text/html", false, error, "desktop");
 					return (engine, null, error, output2);
 				}
-				Goal? goal = null;
+				
 				ServiceContainer? container = null;
 				if (goalName.Value.StartsWith("/"))
 				{
@@ -62,15 +66,17 @@ namespace PLang.Runtime
 				string goalToRun = fileSystem.Path.Join(relativeAppPath, goalName);
 				if (goalToRun.StartsWith("//")) goalToRun = goalToRun.Substring(1);
 
+				
 				if (isolated || !waitForExecution || CreateNewContainer(absolutePathToGoal))
 				{
 					var ms = engine.GetMemoryStack();
 					var activeEvents = engine.GetEventRuntime().GetActiveEvents();
 					/* todo: this needs to be looked at
 					 */
+					var engineRootPath = (relativeAppPath.Contains("/apps/")) ? absolutePathToGoal : fileSystem.RootDirectory;
 
-					engine = await engine.GetEnginePool(absolutePathToGoal, null).RentAsync();
-
+					engine = await engine.GetEnginePool(engineRootPath, null).RentAsync(engineRootPath);
+					isNewEngine = true;
 
 					foreach (var item in ms.GetMemoryStack())
 					{
@@ -109,7 +115,7 @@ namespace PLang.Runtime
 
 					}
 
-					var error = new GoalError($"WARNING! - Goal '{goalName}' at {fileSystem.RootDirectory} was not found.", callingGoal, "GoalNotFound", 500, FixSuggestion: strGoalsAvailable);
+					error = new GoalError($"WARNING! - Goal '{goalName}' at {fileSystem.RootDirectory} was not found.", callingGoal, "GoalNotFound", 500, FixSuggestion: strGoalsAvailable);
 					var output3 = new TextOutput("Error", "text/html", false, error, "desktop");
 					return (engine, null, error, output3);
 				}
@@ -151,7 +157,11 @@ namespace PLang.Runtime
 				if (waitForExecution)
 				{
 					task = engine.RunGoal(goal, waitForXMillisecondsBeforeRunningGoal);
-					await task.ConfigureAwait(waitForExecution);
+					try
+					{
+						await task;
+					}
+					catch { }
 				}
 				else
 				{
@@ -178,11 +188,18 @@ namespace PLang.Runtime
 					}
 
 				}
-
-				if (container != null)
+				
+				error = task.Result.Error;
+				if (error is EndGoal endGoal)
 				{
-					container.Dispose();
+					/*
+					if (GoalHelper.IsPartOfCallStack(goal, endGoal) && endGoal.Levels == 1)
+					{
+						error = null;
+					}*/
+
 				}
+
 				context.AddOrReplace(ReservedKeywords.ParentGoalIndent, prevIndent);
 				//Console.WriteLine($"{space}  Elapsed After Run: {stopwatch.Elapsed}  - {goalToRun}");
 				if (task.IsFaulted && task.Exception != null)
@@ -193,7 +210,7 @@ namespace PLang.Runtime
 				}
 				if (waitForExecution)
 				{
-					return (engine, task.Result.Variables, task.Result.Error, new TextOutput("", "text/html", false, null, "desktop"));
+					return (engine, task.Result.Variables, error, new TextOutput("", "text/html", false, null, "desktop"));
 				}
 				else
 				{
@@ -206,10 +223,13 @@ namespace PLang.Runtime
 			}
 			finally
 			{
-
-				if (engine.ParentEngine != null)
+				if (goal != null)
 				{
-					//engine.ParentEngine.GetEnginePool(engine.Path).Return(engine);
+					await goal.DisposeVariables(engine.GetMemoryStack());
+				}
+				if (isNewEngine)
+				{
+					engine.GetEnginePool(engine.Path, null).Return(engine);
 				}
 			}
 		}

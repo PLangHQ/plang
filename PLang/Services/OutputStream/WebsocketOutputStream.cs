@@ -35,7 +35,7 @@ namespace PLang.Services.OutputStream
 			throw new NotImplementedException();
 		}
 
-		public async Task Write(object? obj, string type = "text", int statusCode = 200)
+		public async Task Write(object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
 			if (obj == null) { return; }
 

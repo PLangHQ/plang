@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "a92e98eaee5603b99f0f7a4fca3d03640f3a362a832b5de4cffae9c459e69206",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "368eb66b6a14de6db1d7461980b9d1b34d866ad32d2cd7062d0be8d841fba679",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\HandleBadInstructionFile.goal"
     },
     {
@@ -143,8 +143,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "e92ff5fc9a3c5a7009675ca02a66763b4f5fc1a4bf0ce27014ec09d2026987fa",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "6e4ae90061d8ad0edbe521fa7cf3ca4ff6fa995323618d546a87d4c8ff7482c5",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\HandleBadInstructionFile.goal"
     },
     {
@@ -215,8 +215,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "cc9a50e759f85d0a895238a6953dfcfb4d2fbd63bbc4285b5fd5defbe275e399",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "89cf5c77d63bb35cb3fae153ed14894bfa6ff57a4bdad337cfe188bbb2fdfd1e",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\HandleBadInstructionFile.goal"
     },
     {
@@ -287,8 +287,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "c8e6619932426a14a7d30b38810bce661cd47edf7cc25db93814e254cae819d2",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "9c597a74d6d1a29793f1899c6f87e8fe127b517fbab703239f4cfefbd5c43ea4",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\HandleBadInstructionFile.goal"
     },
     {
@@ -359,8 +359,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "7051c4d10b78898630204332d230dd059c2849917dd15351343d086807a50867",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "3935b71fe6b6853b21152c3aca22ee17e90723973b0290f1e704e39f28945598",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\HandleBadInstructionFile.goal"
     },
     {
@@ -431,8 +431,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "f1dc3a2a96b346a8456f56237252d389fa62c96ede19bcc879349ffdd2534d99",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "ec75075574d281c32830657d860fb0b7bafedc82696ce72c5a536dd7d9d37aad",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\HandleBadInstructionFile.goal"
     },
     {
@@ -503,8 +503,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "c103d1d599443bb99c0d1c1fe8c05eee63fefbe725582429139a61ea52bb37c5",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "e377af9bef681af9c73ef369d5ac4cb18f1226a60ccafe1898eb9b64190b6777",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\HandleBadInstructionFile.goal"
     }
   ],
@@ -520,7 +520,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "45543ac9fdf0107fe4b99d0270bedb9906a262c96d5ab8389c2a9b8bf9765fc7",
+  "FileHash": "b1c8f3c80e9e577e64a2d3e4f5c5f88bfaff0efa4d7268f273ea8962717df3e9",
+  "Hash": "55b1db062e25a35bf1eedd10314147c76c14338ad0aac104a82b7db874314eae",
   "IncomingVariablesRequired": {
     "!error": "An object containing error details, including the step information and a string representation of the error.",
     "answer": "A string variable to capture the user's response to the rebuild prompt."

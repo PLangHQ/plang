@@ -1,4 +1,5 @@
-﻿using PLang.Exceptions;
+﻿using Castle.Core.Logging;
+using PLang.Exceptions;
 using System;
 using System.Diagnostics;
 
@@ -31,6 +32,11 @@ namespace PLang.Utils
 			if (detailerror)
 			{
 				AppContext.SetSwitch(ReservedKeywords.DetailedError, true);
+			}
+			var loggerLovel = args.FirstOrDefault(p => p.StartsWith("--logger"));
+			if (loggerLovel != null)
+			{
+				AppContext.SetData("--logger", loggerLovel.Replace("--logger=", ""));
 			}
 			bool builder = false;
 			bool runtime = false;

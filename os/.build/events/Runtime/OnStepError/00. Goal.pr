@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "ed18b12fb15030bebc29d752276750ccd590fb2c41746a2fcaf50e7acdb1235d",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "da40610b82091f24ca4e932e367af2e48285a59cf042b49a725005c068dd64b1",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\OnStepError.goal"
     }
   ],
@@ -88,7 +88,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "a2a8bd8e63f605baf8b2197a2ce49a5b26746c756972c7ec56bfd2f0f4fffc6c",
+  "FileHash": "ff07ece5c835c3630e8b6e799d50b08a360ad8f860e0802431e7c1aa0c576453",
+  "Hash": "0cee7b6a921a1f352e57294e1a5757195dbf9a6064044ad2a54b6b737e621a6d",
   "IncomingVariablesRequired": {
     "error": "The error message that needs to be logged, which is a string."
   },

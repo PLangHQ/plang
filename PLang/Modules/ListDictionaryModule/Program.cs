@@ -58,7 +58,7 @@ Add, update, delete and retrieve list or dictionary. It can be stored as local l
 			return listInstance;
 		}
 
-		[Description("Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToList")]
+		[Description("Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue MUST always be defined, it MUST be the listInstance %variable%")]
 		public async Task<List<object>> AddToList(object? value, List<object>? listInstance = null, bool uniqueValue = false, bool caseSensitive = false)
 		{
 			if (value == null) return new();
@@ -83,7 +83,17 @@ Add, update, delete and retrieve list or dictionary. It can be stored as local l
 					var item = JsonConvert.DeserializeObject<dynamic>(value.ToString());
 					if (!uniqueValue || (uniqueValue && !ContainsItemInListInstance(listInstance, item, caseSensitive)))
 					{
-						listInstance.Add(item);
+						if (item is IList list)
+						{
+							if (list.Count > 0)
+							{
+								listInstance.AddRange(list);
+							}
+						}
+						else
+						{
+							listInstance.Add(item);
+						}
 					}
 				}
 			}
@@ -91,7 +101,17 @@ Add, update, delete and retrieve list or dictionary. It can be stored as local l
 			{
 				if (!uniqueValue || (uniqueValue && !ContainsItemInListInstance(listInstance, value, caseSensitive)))
 				{
-					listInstance.Add(value);
+					if (value is IList list)
+					{
+						if (list.Count > 0)
+						{
+							listInstance.AddRange(value);
+						}
+					}
+					else
+					{
+						listInstance.Add(value);
+					}
 				}
 			}
 			return listInstance;

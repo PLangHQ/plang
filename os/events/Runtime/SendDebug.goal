@@ -18,6 +18,7 @@ SendDebugInfo
         "!IsHttpRequest":"%!IsHttpRequest%",
         "!StepIndex": %!StepIndex%,
         "!Error":"%!error%",
+        "!GoalVariables":"%!CallingGoal.GetVariables()%"
         }
     dont sign
     timeout 30 min

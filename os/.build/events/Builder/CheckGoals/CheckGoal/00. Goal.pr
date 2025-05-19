@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "9ae7f52e9ed0e57fcd788ef901fd0131383842840191f654be5f74df98c23c11",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "4f84daadadc927dbfc3140ba95309610fff80aefe985348526a876734f4c8d6d",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Builder\\CheckGoals.goal"
     }
   ],
@@ -88,7 +88,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "d45b32f44a1130797d96515dab1b7ef283e440d490201016a374837e9691a76b",
+  "FileHash": "1882906d7230e723da62824ca5c438debf65444e016d4e33e40cd7c667297abf",
+  "Hash": "200ca2664f11727fa4931d6bee06458120a824366cc48660e8ac1447d84a2744",
   "IncomingVariablesRequired": {
     "parameter.Value": "The value to be checked for the presence of the '%' character."
   },

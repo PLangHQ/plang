@@ -25,7 +25,7 @@ namespace PLang.Modules.LlmModule.Tests
 
 			LoadOpenAI();
 
-			builder = new Builder();
+			builder = new Builder(programFactory);
 			builder.InitBaseBuilder("PLang.Modules.LlmModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
@@ -36,7 +36,7 @@ namespace PLang.Modules.LlmModule.Tests
 			var llmService = GetLlmService(stepText, caller, type);
 			if (llmService == null) return;
 
-			builder = new Builder();
+			builder = new Builder(programFactory);
 			builder.InitBaseBuilder("PLang.Modules.LlmModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 		public GoalStep GetStep(string text)

@@ -1,0 +1,16 @@
+Websocket
+- connect to "wss://ws.postman-echo.com/raw", name="postman", 
+    headers:
+        Hello=1
+    on message = call ProcessMessage
+    on connect = call Connected
+    on close = call Closed
+    on error call OnError
+    , write to %connection%
+- send ws "discord" message { data: "ble" }
+- close ws "discord"
+
+
+ProcessMessage
+- write out %data%
+

@@ -34,7 +34,7 @@ namespace PLang.Modules.OutputModule
 			string? developerInstructionForResult = "give me the object that matches, e.g. { \"id\": 123, \"name\": \"example\"}",
 			[HandlesVariable] Dictionary<string, object?>? options = null, string? scheme = null)
 		{
-			var callGoalModule = programFactory.GetProgram<CallGoalModule.Program>();
+			var callGoalModule = programFactory.GetProgram<CallGoalModule.Program>(goalStep);
 			var param = new Dictionary<string, object?> {
 				{ "type", type }, { "statusCode", statusCode }, { "text", text },
 				{ "developerInstructionForResult", developerInstructionForResult }, {"scheme", scheme } };
@@ -131,7 +131,7 @@ namespace PLang.Modules.OutputModule
 			}
 			else
 			{
-				await outputStreamFactory.CreateHandler().Write(content, type, statusCode);
+				await outputStreamFactory.CreateHandler().Write(content, type, statusCode, paramaters);
 			}
 			return null;
 		}

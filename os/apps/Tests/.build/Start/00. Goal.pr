@@ -71,8 +71,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "7221f3a4b428163d23975365c7f53291bd50603eb6537332c56fd76641641474",
-      "BuilderVersion": null
+      "Hash": "a4ffb2db2deed651ffdb34efe1ec9357e2aecfeceaaa378216df1787d69adf78",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Start.goal"
     },
     {
       "Text": "add path /, call Question",
@@ -142,8 +143,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "ddf51c4cf4e5314797afaeb14f3f932cc01b967f3153cdeef72ec393fd29f675",
-      "BuilderVersion": null
+      "Hash": "db4e85d6c4da38637dc143062bcd4d7f7bb5d163385b468693d99eeef609fe6c",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Start.goal"
     },
     {
       "Text": "add path /editor, call Editor",
@@ -213,8 +215,9 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "474568c08dd05a030f15dca0e270a7c7bbeba91855d11aeeb68174582ae7f852",
-      "BuilderVersion": null
+      "Hash": "56c5347b8097029cfebbbadadf6530eea4d84d16c8d27920eb4ca3122b825dfc",
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\Start.goal"
     }
   ],
   "SubGoals": [
@@ -232,6 +235,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "f7defd35c258d02fbcb062346dcb35c92f75283129ae26cbaee21b3b7332b0a0",
-  "IncomingVariablesRequired": null
+  "Hash": "d8d860c312333b3beddd37e1b04e7b8fe22e3e3b504b041d1a89e00b333ec072",
+  "IncomingVariablesRequired": null,
+  "DataSourceName": null,
+  "IsSetup": false
 }

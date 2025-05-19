@@ -1,29 +1,18 @@
 ﻿using LightInject;
 using Microsoft.Extensions.Logging;
+using PLang.Building.Model;
 using PLang.Building.Parsers;
-using PLang.Container;
+using PLang.Errors;
+using PLang.Errors.AskUser;
 using PLang.Errors.Handlers;
 using PLang.Events;
 using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
-using PLang.Resources;
-using PLang.Runtime;
-using PLang.Services.OutputStream;
-using PLang.Utils;
-using System.Diagnostics;
-using System.IO.Compression;
-using PLang.Errors;
-using PLang.Errors.Runtime;
-using System.ComponentModel;
-using PLang.Errors.Builder;
-using System.Reactive.Concurrency;
-using PLang.Errors.AskUser;
 using PLang.SafeFileSystem;
-using PLang.Building.Model;
-using PLang.Modules.DbModule;
-using Microsoft.Data.Sqlite;
+using PLang.Utils;
 using System.Data;
+using System.Diagnostics;
 
 namespace PLang.Building
 {
@@ -42,10 +31,12 @@ namespace PLang.Building
 		private readonly PrParser prParser;
 		private readonly IErrorHandlerFactory exceptionHandlerFactory;
 		private readonly IAskUserHandlerFactory askUserHandlerFactory;
+		private readonly IGoalParser goalParser;
 
 		public Builder(ILogger logger, IPLangFileSystem fileSystem, ISettings settings, IGoalBuilder goalBuilder,
 			IEventBuilder eventBuilder, IEventRuntime eventRuntime,
-			PrParser prParser, IErrorHandlerFactory exceptionHandlerFactory, IAskUserHandlerFactory askUserHandlerFactory)
+			PrParser prParser, IErrorHandlerFactory exceptionHandlerFactory, IAskUserHandlerFactory askUserHandlerFactory, 
+			IGoalParser goalParser)
 		{
 
 			this.fileSystem = fileSystem;
@@ -57,6 +48,7 @@ namespace PLang.Building
 			this.prParser = prParser;
 			this.exceptionHandlerFactory = exceptionHandlerFactory;
 			this.askUserHandlerFactory = askUserHandlerFactory;
+			this.goalParser = goalParser;
 		}
 
 
@@ -67,18 +59,34 @@ namespace PLang.Building
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				AppContext.SetSwitch("Builder", true);
 
-				var goalFiles = GoalHelper.GetGoalFilesToBuild(fileSystem, fileSystem.GoalsPath);
-				if (absoluteGoalPath != null)
-				{
-					goalFiles = goalFiles.Where(p => p.Equals(absoluteGoalPath)).ToList();
-				}
+				var goals = goalParser.GetGoalFilesToBuild(fileSystem, fileSystem.GoalsPath);
+				
 				InitFolders();
 				logger.LogInformation("Build Start:" + DateTime.Now.ToLongTimeString());
 
-				var (_, error) = await eventBuilder.BuildEventsPr();
+				var error = eventRuntime.Load(true);
 				if (error != null) return error;
 
-				error = eventRuntime.Load(true);
+				var setupGoals = goals.Where(p => p.IsSetup);
+				foreach (var setupGoal in setupGoals)
+				{
+					var goalError = await goalBuilder.BuildGoal(container, setupGoal);
+					if (goalError != null && !goalError.ContinueBuild)
+					{
+						return goalError;
+					}
+					else if (goalError != null)
+					{
+						logger.LogWarning(goalError.ToFormat().ToString());
+					}
+				}
+
+				if (absoluteGoalPath != null)
+				{
+					goals = goals.Where(p => p.Equals(absoluteGoalPath)).ToList();
+				}
+
+				(_, error) = await eventBuilder.BuildEventsPr();
 				if (error != null) return error;
 
 				var (_, eventError) = await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.StartOfApp, true);
@@ -86,10 +94,11 @@ namespace PLang.Building
 				{
 					return eventError;
 				}
-
-				foreach (string file in goalFiles)
+				
+				goals = goals.Where(p => !p.IsSetup).ToList();
+				foreach (var goal in goals)
 				{
-					var goalError = await goalBuilder.BuildGoal(container, file);
+					var goalError = await goalBuilder.BuildGoal(container, goal);
 					if (goalError != null && !goalError.ContinueBuild)
 					{
 						return goalError;
@@ -110,7 +119,7 @@ namespace PLang.Building
 				}
 
 				CleanUp();
-				ShowBuilderErrors(goalFiles, stopwatch);
+				ShowBuilderErrors(goals, stopwatch);
 
 
 
@@ -179,7 +188,7 @@ namespace PLang.Building
 
 		}
 
-		private void ShowBuilderErrors(List<string> goalFiles, Stopwatch stopwatch)
+		private void ShowBuilderErrors(List<Goal> goals, Stopwatch stopwatch)
 		{
 			if (goalBuilder.BuildErrors.Count > 0)
 			{
@@ -196,7 +205,7 @@ namespace PLang.Building
 				logger.LogWarning($"\n\n🎉 Build was succesfull!");
 			}
 
-			if (goalFiles.Count == 0)
+			if (goals.Count == 0)
 			{
 				logger.LogInformation($"No goal files changed since last build - Time:{stopwatch.Elapsed.TotalSeconds.ToString("#,##.##")} sec - at {DateTime.Now}");
 			}

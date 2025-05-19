@@ -46,10 +46,10 @@ namespace PLang.Modules.TerminalModule
 			memoryStack.Put(variableName, result);
 		}
 
-		[Description("Run a executable. Parameters string should not be escaped.")]
+		[Description("Run a executable. Parameters string should not be escaped. onDataStreamVariable and onErrorStreamVariable need to be defined by the user, this is not same as returning a variable (write to %variable%)")]
 		public async Task<(object?, IError?, IProperties?)> RunTerminal(string appExecutableName, List<string>? parameters = null,
 			string? pathToWorkingDirInTerminal = null,
-			GoalToCall? onDataCallGoal = null, GoalToCall? onErrorCallGoal = null,
+			[HandlesVariable] string? onDataStreamVariable = null, [HandlesVariable] string? onErrorStreamVariable = null,
 			bool hideTerminal = false
 			)
 		{
@@ -145,7 +145,12 @@ namespace PLang.Modules.TerminalModule
 			}*/
 
 			// Start the process
-			using Process process = new Process { StartInfo = startInfo };
+			Process process = new Process { StartInfo = startInfo };
+			goal.AddVariable(process, () =>
+			{
+				process.Dispose();
+				return Task.CompletedTask;
+			});
 
 			properties.Add("Process", process);
 			properties.Add("StartInfo", startInfo);
@@ -153,23 +158,14 @@ namespace PLang.Modules.TerminalModule
 			StringBuilder? dataOutput = new();
 			StringBuilder? errorOutput = new();
 
-			CallGoalModule.Program? caller = null;
-			if (!string.IsNullOrEmpty(onDataCallGoal) || !string.IsNullOrEmpty(onErrorCallGoal))
-			{
-				caller = programFactory.GetProgram<CallGoalModule.Program>();
-			}
-
-			lineCounter = 0;
 			process.OutputDataReceived += async (sender, e) =>
 			{
 				//logger.LogInformation(e.Data);
 				if (string.IsNullOrWhiteSpace(e.Data)) return;
 
-				if (!string.IsNullOrEmpty(onDataCallGoal) && caller != null)
+				if (!string.IsNullOrEmpty(onDataStreamVariable))
 				{
-					var dict = new Dictionary<string, object?>();
-					dict.Add("data", e.Data);
-					await caller.RunGoal(onDataCallGoal, dict);
+					memoryStack.Put(onDataStreamVariable, e.Data);
 				}
 
 				dataOutput.Append(e.Data + Environment.NewLine);
@@ -182,11 +178,9 @@ namespace PLang.Modules.TerminalModule
 			{
 				if (string.IsNullOrWhiteSpace(e.Data)) return;
 
-				if (!string.IsNullOrEmpty(onErrorCallGoal) && caller != null)
+				if (!string.IsNullOrEmpty(onErrorStreamVariable))
 				{
-					var dict = new Dictionary<string, object?>();
-					dict.Add("error", e.Data);
-					await caller.RunGoal(onErrorCallGoal, dict);
+					memoryStack.Put(onErrorStreamVariable, e.Data);
 				}
 				errorOutput.Append(e.Data + Environment.NewLine);
 
@@ -229,34 +223,9 @@ namespace PLang.Modules.TerminalModule
 			}
 			logger.LogTrace("Done with TerminalModule");
 
-			return (dataOutput, error, properties);
+			return (dataOutput.ToString(), error, properties);
 		}
 
-		int lineCounter = 0;
-		private bool IsFirst3Lines()
-		{
-			return (++lineCounter <= 3);
-		}
-
-		string? RemoveLastLine(StringBuilder? input)
-		{
-			// Only remove the last line on Windows, not sure how it is on Linux and Macos
-			if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return input.ToString();
-
-			if (input == null) return null;
-			//input = input.Trim();
-			// Split the string using Environment.NewLine
-			string[] lines = input.ToString().TrimEnd().Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-
-			// If there's only one line or no lines, return an empty string
-			if (lines.Length <= 1)
-			{
-				return string.Empty;
-			}
-
-			// Join the array back into a single string, excluding the last element
-			return string.Join(Environment.NewLine, lines, 0, lines.Length - 1);
-		}
 
 	}
 }

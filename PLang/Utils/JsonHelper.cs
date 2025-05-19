@@ -7,6 +7,9 @@ using LightInject;
 using System.IO.Abstractions;
 using PLang.Interfaces;
 using System.Text.Json;
+using Newtonsoft.Json.Linq;
+using NJsonSchema;
+using PLang.Errors;
 
 namespace PLang.Utils
 {
@@ -41,6 +44,8 @@ namespace PLang.Utils
 			parsedObject = null;
 
 			if (obj == null) return false;
+			if (obj.GetType().Name.StartsWith("<>f__Anonymous") || obj.GetType().Name.Equals("DapperRow")) return false;
+
 			string content = obj.ToString()!;
 
 			content = content.Trim();
@@ -91,6 +96,20 @@ namespace PLang.Utils
 			catch (Exception ex)
 			{
 				return default;
+			}
+		}
+
+
+		public static async Task<(bool IsValid, IError? Error)> ValidateSchemaAsync(string schemaJson)
+		{
+			try
+			{
+				var schema = await JsonSchema.FromJsonAsync(schemaJson);
+				return (true, null);
+			}
+			catch (Exception ex)
+			{
+				return (false, new ExceptionError(ex));
 			}
 		}
 

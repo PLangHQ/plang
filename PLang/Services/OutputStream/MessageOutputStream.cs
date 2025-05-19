@@ -33,7 +33,7 @@ namespace PLang.Services.OutputStream
 			throw new NotImplementedException();
 		}
 
-		public Task Write(object? obj, string type = "text", int statusCode = 200)
+		public Task Write(object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
 			throw new NotImplementedException();
 		}

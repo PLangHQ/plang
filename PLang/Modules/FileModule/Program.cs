@@ -570,17 +570,19 @@ namespace PLang.Modules.FileModule
 			return result;
 		}
 
-		public async Task<List<string>> GetDirectoryPathsInDirectory(string directoryPath = "./", string searchPattern = "*",
+		public async Task<List<string>> GetDirectoryPathsInDirectory(string directoryPath = "./", string? regexSearchPattern = null,
 			string[]? excludePatterns = null, bool includeSubfolders = false, bool useRelativePath = true)
 		{
 			var searchOption = (includeSubfolders) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 			var absoluteDirectoryPath = GetPath(directoryPath);
 			
 			if (!fileSystem.Directory.Exists(absoluteDirectoryPath)) return new();
-			
-			var allDirs = fileSystem.Directory.GetDirectories(absoluteDirectoryPath, "*", searchOption)
-				.Where(dir => dir.Contains(searchPattern.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase))
-				.ToList();
+
+			var allDirs = fileSystem.Directory.GetDirectories(absoluteDirectoryPath, "*", searchOption);
+			if (!string.IsNullOrWhiteSpace(regexSearchPattern))
+			{
+				allDirs = allDirs.Where(dir => Regex.IsMatch(dir, regexSearchPattern)).ToArray();
+			}
 
 			var paths = allDirs.Select(path => (useRelativePath) ? path.Replace(fileSystem.RootDirectory, "") : path);
 			if (excludePatterns != null)

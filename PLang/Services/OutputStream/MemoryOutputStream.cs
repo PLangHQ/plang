@@ -33,7 +33,7 @@ namespace PLang.Services.OutputStream
 			return this.Read();
 		}
 
-		public async Task Write(object? obj, string type = "text", int statusCode = 200)
+		public async Task Write(object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
 			if (obj == null) return;
 			var bytes = Encoding.Default.GetBytes(obj.ToString());

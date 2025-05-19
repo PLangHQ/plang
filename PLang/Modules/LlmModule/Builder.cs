@@ -3,13 +3,19 @@ using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Models;
 using PLang.Utils;
+using PLang.Utils.Extractors;
 using static PLang.Services.LlmService.PLangLlmService;
 
 namespace PLang.Modules.LlmModule
 {
 	public class Builder : BaseBuilder
 	{
-		public Builder() : base() { }
+		private readonly ProgramFactory programFactory;
+
+		public Builder(ProgramFactory programFactory) : base()
+		{
+			this.programFactory = programFactory;
+		}
 
 		public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step)
 		{
@@ -20,7 +26,8 @@ namespace PLang.Modules.LlmModule
 		{
 			AppendToSystemCommand(@"The following user request is for constructing a message to LLM engine
 
-llmResponseType can be null, text, json, markdown or html. default is null. If scheme is defined then use json, unless user defines otherwise
+llmResponseType can be null, text, json, markdown or html. default is null. 
+When user defines a scheme then use json for llmResponseType, unless user defines otherwise
 
 promptMessages contains the system, assistant and user messages. assistant or user message is required.
 Determine what part is system, assistant and user properties. If you cannot map it, the whole user request should be on user role
@@ -164,7 +171,30 @@ or url
 					error = $"\nLLM gave empty responseType in last request. Please make sure that you give responseType. If non is defined set it as text";
 					return await Build(step, error, ++errorCount);
 				}
+				if (!VariableHelper.IsVariable(scheme.Value) && responseType == "json")
+				{
+					List<LlmMessage> messages = new();
+					messages.Add(new LlmMessage("system", "Make the user input into a valid json scheme. ONLY give me scheme, DO not explaing. DO not wrap it"));
+					messages.Add(new LlmMessage("user", scheme.Value.ToString()));
 
+					var llm = programFactory.GetProgram<LlmModule.Program>(step);
+					var result = await llm.AskLlm(messages, llmResponseType: "text", model: "gpt-4o");
+					var validScheme = result.Item1.ToString() ?? "";
+					if (validScheme.Contains("```json"))
+					{
+						JsonExtractor jsonExtractor = new JsonExtractor();
+						validScheme = jsonExtractor.Extract<string>(validScheme);
+					}
+
+
+					var validateResult = await JsonHelper.ValidateSchemaAsync(validScheme);
+					if (validateResult.Error != null) return (instruction, new BuilderError(validateResult.Error));
+
+					var schemeIdx = genericFunction.Parameters.FindIndex(p => p.Name == "scheme");
+
+					genericFunction.Parameters[schemeIdx] = scheme with { Value = result.Item1 };
+
+				}
 				if (scheme != null && scheme.Value != null && !VariableHelper.IsVariable(scheme.Value) && responseType == "json" && !JsonHelper.LookAsJsonScheme(scheme.Value.ToString()))
 				{
 					if (errorCount < 2)

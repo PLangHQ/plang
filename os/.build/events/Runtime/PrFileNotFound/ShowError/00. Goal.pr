@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "4f1cd4a24bf87f038998f602d5a56a707a5ed5d3a6e5892035e0ebf72e209d92",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "ab68b4b818c643e081a0ee469e3dec993a7ded7df444ab5bfca0af2bee534b9e",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\PrFileNotFound.goal"
     }
   ],
@@ -88,7 +88,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "29c2d2abf33822bcb9a8a2239fdab58a03316a6154954257b92abf74c0767ae5",
+  "FileHash": "d48247a983dd49d85c38913985958ea515c73dad22a3f51729fed1ec84ff7c92",
+  "Hash": "6f38ad45b0692517be6a128961b317d67ff87acab1f822a7bba02db27eea6589",
   "IncomingVariablesRequired": {
     "error": "The error message that needs to be displayed."
   },

@@ -3,6 +3,7 @@ AskUserLlm
 - read file %!plang.osPath%/modules/OutputModule/llm/AskUserSystem.llm, load vars, write to %askSystem%
 - [llm] system: %askSystem%
     continue from last: false
+    model: "gpt-4o"
     response type: %!plang.output%
     write to %content%
 - ask user %content%, write to %answer%

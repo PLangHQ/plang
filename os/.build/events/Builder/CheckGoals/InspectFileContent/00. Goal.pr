@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "a0ac2ffb4c8255e502cb4d4355fca5065f3f26096a602465df80c5bb08c3d359",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "c35adaf59ef32c31b9a3ee574b4e831013e2afa5337547c86c57fc26e80553f8",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Builder\\CheckGoals.goal"
     },
     {
@@ -143,8 +143,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "2f82846a0e58d92ac8f103da6b8d3ae53d797da8ddbe6da54858ccc58046a4e6",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "549d9bc676ad07fff288cb938aafb1a9e3878e9470ee2cf3ac8a48f9d06803a7",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Builder\\CheckGoals.goal"
     }
   ],
@@ -160,7 +160,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "04aa3272b19ccefe7fecdec801e3c31ce07368bab45c88439891058440300056",
+  "FileHash": "1882906d7230e723da62824ca5c438debf65444e016d4e33e40cd7c667297abf",
+  "Hash": "8753ed8e0c0a769b1478d4b2cedd4d8a09a8a4ba37c2ce8aa367b2917704050b",
   "IncomingVariablesRequired": {
     "file": "An object representing the file whose content is to be inspected."
   },

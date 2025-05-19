@@ -1,24 +1,60 @@
-﻿using PLang.Errors;
-using PLang.Interfaces;
-using PLang.Runtime;
-using PLang.Services.SettingsService;
-using System.ComponentModel;
-using ReverseMarkdown;
-using System.Diagnostics;
-using System.Collections.Generic;
+﻿using Markdig;
+using PLang.Errors;
 using PLang.Errors.Runtime;
-using static UglyToad.PdfPig.Core.PdfSubpath;
 using PLang.Utils;
+using ReverseMarkdown;
+using System.ComponentModel;
 
 namespace PLang.Modules.ConvertModule
 {
-	[Description("Convert object from one to another")]
+	[Description("Convert object from one to another. html => md, md => html, string => keyvalue list")]
 	public class Program : BaseProgram
 	{
 
 		public Program()
 		{
 		}
+
+		public async Task<string?> ConvertMdToHtml(string content, bool useAdvancedExtension = true, List<string>? markdownPipelineExtensions = null)
+		{
+			if (string.IsNullOrWhiteSpace(content)) return null;
+
+			var builder = new MarkdownPipelineBuilder();
+
+			if (markdownPipelineExtensions != null && markdownPipelineExtensions.Count > 0)
+			{
+				foreach (var ext in markdownPipelineExtensions)
+				{
+					switch (ext.ToLowerInvariant())
+					{
+						case "abbreviations": builder.UseAbbreviations(); break;
+						case "definitionlists": builder.UseDefinitionLists(); break;
+						case "footnotes": builder.UseFootnotes(); break;
+						case "citations": builder.UseCitations(); break;
+						case "customcontainers": builder.UseCustomContainers(); break;
+						case "genericattributes": builder.UseGenericAttributes(); break;
+						case "gridtables": builder.UseGridTables(); break;
+						case "pipetables": builder.UsePipeTables(); break;
+						case "emphasisextras": builder.UseEmphasisExtras(); break;
+						case "autoidentifiers": builder.UseAutoIdentifiers(); break;
+						case "tasklists": builder.UseTaskLists(); break;
+						case "medialinks": builder.UseMediaLinks(); break;
+						case "listextras": builder.UseListExtras(); break;
+						case "figures": builder.UseFigures(); break;
+						case "softlinebreakashardlinebreak": builder.UseSoftlineBreakAsHardlineBreak(); break;
+						default: throw new ArgumentException($"Unknown extension '{ext}'");
+					}
+				}
+			}
+			
+			if (useAdvancedExtension) { 
+				builder.UseAdvancedExtensions();
+			}
+
+			var pipeline = builder.Build();
+			return Markdown.ToHtml(content, pipeline);
+		}
+
 
 		[Description("unknownTags=(Bypass|Drop|PassThrough|Raise")]
 		public async Task<string?> ConvertToMd(object? content, string unknownTags = "Bypass", bool githubFlavored = true, bool removeComments = true, 

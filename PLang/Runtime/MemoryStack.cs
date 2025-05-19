@@ -727,9 +727,10 @@ namespace PLang.Runtime
 				return;
 			}
 
-			string strValue = value.ToString()!.Trim();
-			if (convertToJson && !value.GetType().Name.StartsWith("<>f__Anonymous") && JsonHelper.IsJson(strValue))
+			
+			if (convertToJson && JsonHelper.IsJson(value))
 			{
+				string strValue = value.ToString()!.Trim();
 				if (strValue.StartsWith("["))
 				{
 					value = JArray.Parse(strValue);
@@ -739,9 +740,10 @@ namespace PLang.Runtime
 					value = JObject.Parse(strValue);
 				}
 			}
-			if (VariableHelper.IsVariable(strValue))
+
+			if (value is string str && VariableHelper.IsVariable(str))
 			{
-				var plan = GetVariableExecutionPlan(originalKey, strValue, staticVariable);
+				var plan = GetVariableExecutionPlan(originalKey, str, staticVariable);
 				ObjectValue variableValue = plan.ObjectValue;
 				foreach (var call in plan.Calls)
 				{
@@ -1727,6 +1729,13 @@ namespace PLang.Runtime
 			staticVariables.Clear();
 		}
 
-
+		internal bool ContainsObject(GoalVariable goalVariable)
+		{
+			foreach (var variable in variables)
+			{
+				if (variable.Value?.Value == goalVariable.Value) return true;
+			}
+			return false;
+		}
 	}
 }

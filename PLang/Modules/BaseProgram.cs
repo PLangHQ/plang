@@ -311,15 +311,18 @@ namespace PLang.Modules
 			Type taskType = task.GetType();
 			var returnArguments = taskType.GetGenericArguments().FirstOrDefault();
 			if (returnArguments == null) return (null, null, null);
-			/*
-
 
 			if (returnArguments == typeof(IError))
 			{
 				var resultTask = task as Task<IError?>;
 				return (null, resultTask?.Result, null);
 			}
-
+			if (returnArguments == typeof(IProperties))
+			{
+				var resultTask = task as Task<IProperties?>;
+				return (null, null, resultTask?.Result);
+			}
+			/*
 			if (!returnArguments.FullName!.StartsWith("System.ValueTuple"))
 			{
 				var resultProperty = taskType.GetProperty("Result");
@@ -336,12 +339,17 @@ namespace PLang.Modules
 			{
 				throw new Exception("This should not happen trying to get Result");
 			}
+
+
 			var rawResult = resultProperty.GetValue(task);
 			if (rawResult == null)
 			{
 				return (null, null, null);
 			}
-			var result = (dynamic?) rawResult;
+			if (rawResult is IError resultError) return (null, resultError, null);
+			if (rawResult is IProperties resultProperties) return (null, null, resultProperties);
+
+			var result = (dynamic?)rawResult;
 			if (!result?.GetType().ToString().Contains("ValueTuple"))
 			{
 				if (returnArguments is IError)
@@ -369,6 +377,8 @@ namespace PLang.Modules
 			{
 
 				var fields = returnArguments.GetFields();
+				if (fields.Length == 0) throw new Exception("This should not happen, fields is 0 length from Task<,,>");
+
 				foreach (var field in fields)
 				{
 					var fieldValue = field.GetValue(result);
@@ -728,6 +738,24 @@ Be Concise";
 			var program = container.GetInstance<T>(typeof(T).FullName);
 			program.Init(container, goal, goalStep, instruction, HttpListenerContext);
 			return program;
+		}
+
+		public T? GetVariable<T>(string? variableName = null) where T : class
+		{
+			if (goal == null) return null;
+			return goal.GetVariable<T>(variableName);
+		}
+
+		public void RemoveVariable<T>(string? variableName = null) where T : class
+		{
+			if (goal == null) return;
+
+			goal.RemoveVariable<T>(variableName);
+		}
+
+		public void AddVariable<T>(T? value, Func<Task>? func = null, string? variableName = null) {
+			if (goal == null) return;	
+			goal.AddVariable<T>(value, func, variableName);
 		}
 	}
 }

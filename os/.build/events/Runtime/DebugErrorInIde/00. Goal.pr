@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "b97e298362f3e0f04fab4d66ec5196c1b9f60d7767419f88b987586a7e8b028a",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "96e314106ac99fcff5d71f7d909601aeeebf6640207ee0c7e4f1c7d4e42bb3ea",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\DebugErrorInIde.goal"
     },
     {
@@ -143,8 +143,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "fd15f5ba43d8b4397447f4703292229bc4a17639bef23ad9ab22625726862abf",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "a44f66ea68bd653ff66f0c24300749cd7f215ad300eaa5cdea00605ea5d9e83e",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\DebugErrorInIde.goal"
     }
   ],
@@ -160,7 +160,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "a46a7060d0cd18995935a20e6b40b1ec94fcb739f422cf60ab23cad7b1ffb00e",
+  "FileHash": "19eda2090055e93a6cd7d36e1e57175373364c70a0ad723427fd7c5f46c387e5",
+  "Hash": "8b98f6819d8315a81f58087a38a5d162a6c2ad81c7085f7282d57834f75c6a2e",
   "IncomingVariablesRequired": {
     "!error": "An error object that contains information about the error that occurred."
   },

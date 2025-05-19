@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "695703bf217e533b547a6056de720d5b0b422a784e28d70c0cd25d86d48525e0",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "98f2e3d999ccd7c4f3dfe8bddff053a8785e63005e178ee5fdef203313254bd6",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\DbModule\\CreateIsolatedDataPattern.goal"
     },
     {
@@ -159,8 +159,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "8437da9b1bd5807d912cd45eb3b04048b91a71ee81984db6cefe1b60a1068a71",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "4f80e4f1e28be6bb27bcc31ad3705027a53ae24b1a439adab1d822e5a82371fc",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\DbModule\\CreateIsolatedDataPattern.goal"
     },
     {
@@ -231,8 +231,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "71d71f62e715228181cd341caafe7d6ae0d94c08c2a625221e0713f8c6cbb91b",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "1010ec518c1cf388334222dbf409910bfed22cf6eb24d5ebc34030adbc795869",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\DbModule\\CreateIsolatedDataPattern.goal"
     },
     {
@@ -303,8 +303,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "318255d5b6af3780a142f780e6ed9e8b987c1e134a25f0e64d9e6a810df93bef",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "34415d79d7a9571f32c73be37bbba58c362be1b3b7311f8fa6faa848f123b674",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\DbModule\\CreateIsolatedDataPattern.goal"
     },
     {
@@ -386,8 +386,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "43ea9901b294d068fbd7717a946bfef6090f9a8724aefe29be8663ca69174e04",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "d4ac7d8db5e6ff56d5140d40220a14270bc95e6042efacebd22acae6b712e8cd",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\DbModule\\CreateIsolatedDataPattern.goal"
     },
     {
@@ -458,8 +458,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "b677e90733d35fa9704f56358fd2842444a0adb54b4db6aa178fc8f28462e7cc",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "134e6dd8d6c431cea0bd7cc9d167a7a926e7107c36a3269e9042ec72457c6895",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\modules\\DbModule\\CreateIsolatedDataPattern.goal"
     }
   ],
@@ -475,7 +475,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "d5cd1f3a92454da4ca0699baac2531ec5eaed9902ef526ba5a30440071a9302b",
+  "FileHash": "8c02a444f4d691137fe38e80b83cff27bf686cd6fb71e2f49b6d00ae66b34352",
+  "Hash": "4905e08e9b32afa0e6299b99c24e351289e9ecd853f66f0832e23012cdf1ab66",
   "IncomingVariablesRequired": {
     "name": "The name of the data source to be set.",
     "step": "The step object containing the hash and text to be processed."

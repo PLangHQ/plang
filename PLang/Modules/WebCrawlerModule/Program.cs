@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using Newtonsoft.Json.Linq;
 using PLang.Errors;
@@ -6,6 +7,7 @@ using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Modules.WebCrawlerModule.Models;
 using PLang.Runtime;
 using PLang.Utils;
 using System.ComponentModel;
@@ -15,7 +17,7 @@ using System.Text.RegularExpressions;
 namespace PLang.Modules.WebCrawlerModule
 {
 	[Description("Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content")]
-	public class Program : BaseProgram, IDisposable
+	public class Program : BaseProgram
 	{
 
 		private readonly IPLangFileSystem fileSystem;
@@ -23,9 +25,7 @@ namespace PLang.Modules.WebCrawlerModule
 		private readonly IEngine engine;
 		private readonly IPseudoRuntime runtime;
 		private readonly ProgramFactory programFactory;
-		private readonly string PlayWrightContextKey = "!PlayWrightContextKey";
-		private readonly string BrowserContextKey = "!BrowserContextKey";
-
+		/*
 		private readonly string RequestContextKey = "!RequestContextKey";
 		private readonly string ResponseContextKey = "!ResponseContextKey";
 		private readonly string ConsoleContextKey = "!ConsoleContextKey";
@@ -39,6 +39,7 @@ namespace PLang.Modules.WebCrawlerModule
 		private readonly string CurrentPageContextKey = "!PageContextKey";
 		private readonly string DialogContextKey = "!DialogContextKey";
 		private readonly string BrowserStartPropertiesContextKey = "!BrowserStartPropertiesContextKey";
+		*/
 		private object locker = new object();
 		public Program(PLangAppContext context, IPLangFileSystem fileSystem, ILogger logger, IEngine engine, IPseudoRuntime runtime, ProgramFactory programFactory) : base()
 		{
@@ -76,51 +77,24 @@ namespace PLang.Modules.WebCrawlerModule
 			bool kioskMode = false, Dictionary<string, object>? argumentOptions = null, int? timoutInSeconds = 30, bool hideTestingMode = false,
 			GoalToCall? onRequest = null, GoalToCall? onResponse = null)
 		{
-			var playwright = await Playwright.CreateAsync();
-			var browser = await GetBrowserType(playwright, browserType, headless, profileName, kioskMode, argumentOptions, hideTestingMode);
+			var playwright = Goal.GetVariable<IPlaywright>();
+			if (playwright == null)
+			{
+				playwright = await Playwright.CreateAsync();
+				Goal.AddVariable(playwright, () => { playwright.Dispose(); return Task.CompletedTask; });
+			}
+
+			var browser = Goal.GetVariable<IBrowserContext>();
+			if (browser != null)
+			{
+				return browser;
+			}
+
+			browser = await GetBrowserType(playwright, browserType, headless, profileName, kioskMode, argumentOptions, hideTestingMode);
+			Goal.AddVariable(browser, async () => { await browser.DisposeAsync(); });
 
 			browser.SetDefaultTimeout((timoutInSeconds ?? 30) * 1000);
-			var callGoal = programFactory.GetProgram<CallGoalModule.Program>();
-
-			browser.Request += async (object? sender, IRequest e) =>
-			{
-				context.AddOrReplace(RequestContextKey, e);
-				if (onRequest != null)
-				{
-					
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!Request", WebCrawlerHelper.GetRequest(e) } };
-					var result = await callGoal.RunGoal(onRequest, parameters, isolated: true);
-
-					if (result.Error != null)
-					{
-						throw new ExceptionWrapper(result.Error);
-					}
-				}
-			};
-
-			browser.Response += async (object? sender, Microsoft.Playwright.IResponse e) =>
-			{
-				context.AddOrReplace(ResponseContextKey, e);
-				if (onResponse != null)
-				{
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!response", await WebCrawlerHelper.GetResponse(e) } };
-					var result = await callGoal.RunGoal(onResponse, parameters, isolated: true);
-
-					if (result.Error != null)
-					{
-						throw new ExceptionWrapper(result.Error);
-					}
-				}
-			};
-
-			browser.RequestFailed += (object? sender, IRequest request) =>
-			{
-				context.AddOrReplace(RequestContextKey, request);
-			};
-
-			context.TryAdd(PlayWrightContextKey, playwright);
-			context.TryAdd(BrowserContextKey, browser);
-
+			
 			return browser;
 		}
 
@@ -144,7 +118,7 @@ namespace PLang.Modules.WebCrawlerModule
 		private async Task<IBrowserContext> GetBrowser(string browserType = "Chrome", bool headless = false, bool useUserSession = false, string userSessionPath = "",
 			bool incognito = false, bool kioskMode = false, Dictionary<string, object>? argumentOptions = null, int? timeoutInSeconds = null)
 		{
-			var browser = context[BrowserContextKey] as IBrowserContext;
+			var browser = goal.GetVariable<IBrowserContext>();
 			if (browser != null) return browser;
 
 			logger.LogDebug("Key BrowserContextKey not existing. Starting browser");
@@ -180,41 +154,16 @@ namespace PLang.Modules.WebCrawlerModule
 
 		public async Task CloseBrowser()
 		{
+			var browser = goal.GetVariable<IBrowserContext>();
+			if (browser != null)
+			{
+				await browser.CloseAsync();
+			}
 
-			if (context.ContainsKey(BrowserContextKey))
-			{
-				var browser = context[BrowserContextKey] as IBrowserContext;
-				if (browser != null)
-				{
-					try
-					{
-						await browser.CloseAsync();
-					}
-					catch { }
-				}
-			}
-			if (context.ContainsKey(BrowserContextKey))
-			{
-				var playwright = context[PlayWrightContextKey] as IPlaywright;
-				if (playwright != null)
-				{
-					try
-					{
-						playwright.Dispose();
-					}
-					catch { }
-				}
-			}
-			context.Remove(PlayWrightContextKey);
-			context.Remove(BrowserContextKey);
-			context.Remove(PageContextKeyIndex);
-			context.Remove(CurrentPageContextKey);
+			goal.RemoveVariable<IBrowserContext>();
+			goal.RemoveVariable<IPlaywright>();
 		}
 
-		public void Dispose()
-		{
-			CloseBrowser().Wait();
-		}
 
 		public async Task WaitForUrl(string expectedUrl, int timeoutInSeconds)
 		{
@@ -222,20 +171,14 @@ namespace PLang.Modules.WebCrawlerModule
 			await page.WaitForURLAsync(expectedUrl, new PageWaitForURLOptions() { Timeout = timeoutInSeconds * 1000 });
 		}
 
-		private async Task<IPage> GetCurrentPage(string? url = null, int idx = -1, IPage? page = null)
+		private async Task<IPage> GetCurrentPage(string? url = null, int idx = -1, IPage? page = null, int? timeoutInSeconds = null)
 		{
-			if (url == null && idx == -1 && context.ContainsKey(CurrentPageContextKey))
+			if (idx == -1)
 			{
-				page = context[CurrentPageContextKey] as IPage;
-				if (page != null) return page;
+				idx = goal.GetVariable<int?>("pageIndex") ?? 0;
 			}
 
-			if (idx == -1 && context.ContainsKey(PageContextKeyIndex))
-			{
-				idx = context[PageContextKeyIndex] as int? ?? -1;
-			}
-
-			var browser = await GetBrowser();
+				var browser = await GetBrowser();
 			if (idx > browser.Pages.Count - 1)
 			{
 				idx = browser.Pages.Count - 1;
@@ -245,15 +188,30 @@ namespace PLang.Modules.WebCrawlerModule
 				idx = 0;
 			}
 
+			var pageGotoOptions = new PageGotoOptions();
+			pageGotoOptions.WaitUntil = WaitUntilState.DOMContentLoaded;
+			if (timeoutInSeconds != null)
+			{
+				pageGotoOptions.Timeout = timeoutInSeconds.Value * 1000;
+			}
 
 			if (idx == -1)
 			{
 				page = await browser.NewPageAsync();
 
+				
+
 				if (!string.IsNullOrEmpty(url))
 				{
 					BindEventsToPage(page, url);
-					var response = await page.GotoAsync(url);
+					var response = await page.GotoAsync(url, pageGotoOptions);
+					Goal.AddVariable(response);
+
+					if (response != null)
+					{
+						var wrappedResponse = await WebCrawlerHelper.GetResponse(response);
+						memoryStack.Put(goal.GoalName + ".response", wrappedResponse);
+					}
 				}
 			}
 			else
@@ -261,23 +219,24 @@ namespace PLang.Modules.WebCrawlerModule
 				page = browser.Pages[idx];
 				if (url != null)
 				{
-					await page.GotoAsync(url);
+					var response = await page.GotoAsync(url, pageGotoOptions);
+					Goal.AddVariable(response);
+					if (response != null)
+					{
+						var wrappedResponse = await WebCrawlerHelper.GetResponse(response);
+						memoryStack.Put(goal.GoalName + ".response", wrappedResponse);
+					}
 				}
 			}
 			page.Dialog += async (object? sender, IDialog e) =>
 			{
-				List<IDialog> dialogs;
-				if (context.ContainsKey(DialogContextKey))
-				{
-					dialogs = context[DialogContextKey] as List<IDialog> ?? new();
-				}
-				else
-				{
-					dialogs = new List<IDialog>();
-				}
+				List<IDialog> dialogs = goal.GetVariable<List<IDialog>>() ?? new();				
 				dialogs.Add(e);
+				goal.AddVariable(dialogs);
 			};
-			context.AddOrReplace(PageContextKeyIndex, idx);
+
+			goal.AddVariable(idx, variableName: "pageIndex");
+
 			return page;
 		}
 
@@ -295,34 +254,39 @@ namespace PLang.Modules.WebCrawlerModule
 			{
 				throw new RuntimeException("url cannot be empty");
 			}
-
+			this.engine.Name = url;
 
 			if (!url.StartsWith("http"))
 			{
 				url = "https://" + url;
 			}
-			if (!context.ContainsKey(PlayWrightContextKey))
-			{
-				await StartBrowser(browserType, headless, profileName, kioskMode, argumentOptions, timeoutInSecods, hideTestingMode);
-			}
 
+			var browser = await StartBrowser(browserType, headless, profileName, kioskMode, argumentOptions, timeoutInSecods, hideTestingMode);
 
-			var page = context[CurrentPageContextKey] as IPage;
-			if (page == null)
+			IPage page;
+			if (browser.Pages.Count == 0)
 			{
-				var browser = await GetBrowser();
-				if (browser.Pages.Count > 0)
-				{
-					page = browser.Pages[pageIndex];
-				}
-				else
-				{
-					page = await browser.NewPageAsync();
-				}
+				page = await browser.NewPageAsync();
 				BindEventsToPage(page, url, onRequest, onResponse, onWebsocketReceived, onWebsocketSent,
 					onConsoleOutput, onWorker,
 					onDialog, onLoad, onDOMLoad, onFileChooser,
 					onIFrameLoad, onDownload);
+			}
+			else
+			{
+				if (pageIndex > browser.Pages.Count - 1)
+				{
+					page = await browser.NewPageAsync();
+					pageIndex = browser.Pages.Count - 1;
+					BindEventsToPage(page, url, onRequest, onResponse, onWebsocketReceived, onWebsocketSent,
+						onConsoleOutput, onWorker,
+						onDialog, onLoad, onDOMLoad, onFileChooser,
+						onIFrameLoad, onDownload);
+				}
+				else
+				{
+					page = browser.Pages[pageIndex];
+				}
 			}
 
 			page = await GetCurrentPage(url);
@@ -465,19 +429,18 @@ return result;");
 		public async Task<string?> AcceptAlert()
 		{
 			var page = await GetCurrentPage();
-			List<IDialog>? dialogs = null;
-			if (context.ContainsKey(DialogContextKey))
-			{
-				dialogs = context[DialogContextKey] as List<IDialog>;
-			}
-			if (dialogs == null) return null;
+			List<IDialog>? dialogs = goal.GetVariable<List<IDialog>>() ?? new();
+			if (dialogs.Count == 0) return null;
 
 			string message = "";
 			foreach (var dialog in dialogs)
 			{
 				message = dialog.Message;
 				await dialog.AcceptAsync();
+				dialogs.Remove(dialog);
 			}
+
+			goal.RemoveVariable<List<IDialog>>();
 			return message;
 		}
 
@@ -617,54 +580,6 @@ return result;");
 
 			return (await GetPlangWebElements(elements), null);
 		}
-		/*
-		public async Task<List<dynamic>> SerializeElements(List<List<PlangWebElement>> elementsArray)
-		{
-			List<dynamic> list = new List<dynamic>();
-			foreach (var elements in elementsArray)
-			{
-
-
-				var driver = await GetDriver();
-				foreach (var element in elements)
-				{
-
-					string tagName = element.TagName;
-
-					Dictionary<string, string> attributes = GetAllAttributes(driver, element);
-
-					if (tagName == "form")
-					{
-						var inputs = element.WebElement.FindElements(By.XPath(".//input"));
-						var serializedInputs = await SerializeElements([GetPlangWebElements(inputs)]);
-						var serializableElement = new
-						{
-							TagName = tagName,
-							Attributes = attributes,
-							Text = element.Text,
-							Inputs = serializedInputs
-						};
-						list.Add(serializableElement);
-					}
-					else
-					{
-						var serializableElement = new
-						{
-							TagName = tagName,
-							Attributes = attributes,
-							Text = element.Text
-						};
-						list.Add(serializableElement);
-					}
-
-
-
-				}
-			}
-			int i = 0;
-			return list;
-		}*/
-
 
 		public async Task<string?> FindElementAndExtractAttribute(string attribute, string? cssSelector = null, PlangWebElement? element = null)
 		{
@@ -687,19 +602,48 @@ return result;");
 
 		}
 
-		[Description("outputFormat=html|md")]
-		public async Task<string> ExtractContent(string? cssSelector = null, PlangWebElement? element = null, string outputFormat = "html")
+		[Description("When cssSelector is null, all html is retrieved from page. outputFormat=html|md")]
+		public async Task<(string?, IError?)> ExtractContent(string? cssSelector = null, PlangWebElement? element = null, string outputFormat = "html")
 		{
 			var page = await GetCurrentPage();
 
-			cssSelector = await GetCssSelector(cssSelector);
-			List<string> results = new List<string>();
-
-			string html = await page.InnerHTMLAsync(cssSelector);
-
+			string html;
+			if (string.IsNullOrWhiteSpace(cssSelector))
+			{
+				html = await page.ContentAsync();
+			}
+			else
+			{
+				cssSelector = await GetCssSelector(cssSelector);
+				var selectorElement = await page.QuerySelectorAsync(cssSelector);
+				if (selectorElement == null)
+				{
+					return (null, new ProgramError($"{cssSelector} could not be found on page", Key: "CssSelectorNotFound"));
+				}
+				html = await selectorElement.InnerHTMLAsync();
+			}
+			
 			outputFormat = outputFormat.TrimStart('.');
 			if (outputFormat == "md")
 			{
+				var htmlDoc = new HtmlDocument();
+				htmlDoc.LoadHtml(html);
+				foreach (var node in htmlDoc.DocumentNode.DescendantsAndSelf())
+				{
+					if (node.NodeType == HtmlNodeType.Element)
+					{
+						HtmlNode prev = node.PreviousSibling;
+						HtmlNode next = node.NextSibling;
+
+						if (prev != null && prev.NodeType == HtmlNodeType.Text && node.NodeType == HtmlNodeType.Element)
+							prev.InnerHtml = prev.InnerHtml.TrimEnd() + " ";
+
+						if (next != null && next.NodeType == HtmlNodeType.Text)
+							next.InnerHtml = " " + next.InnerHtml.TrimStart();
+					}
+				}
+
+
 				var config = new ReverseMarkdown.Config
 				{
 					// Include the unknown tag completely in the result (default as well)
@@ -709,18 +653,25 @@ return result;");
 					// will ignore all comments
 					RemoveComments = true,
 					// remove markdown output for links where appropriate
-					SmartHrefHandling = true
+					SmartHrefHandling = true,
 				};
 				var converter = new ReverseMarkdown.Converter(config);
-				html = converter.Convert(html);
+				html = converter.Convert(htmlDoc.DocumentNode.OuterHtml);
 			}
 
 			SetCssSelector(cssSelector);
-			return html;
+			return (html, null);
 		}
 		public async Task SwitchTab(int tabIndex)
 		{
 			await GetCurrentPage(null, tabIndex);
+		}
+
+
+		public async Task<Uri> GetUriFromPage(int? tabIndex = null)
+		{
+			var page = await GetCurrentPage(idx: tabIndex ?? -1);
+			return new Uri(page.Url);
 		}
 
 		public async Task AddDefaultRequestHeader(Dictionary<string, object> headers)
@@ -729,14 +680,11 @@ return result;");
 			await browser.SetExtraHTTPHeadersAsync(headers.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString()!));
 		}
 
-		[Description("key of the header, find by value where operation (startwith|endwith|equals|contains), request object can be null, will use the pages request")]
-		public async Task<(Dictionary<string, string>?, IError?)> GetRequestHeaders(string? key = null, string keyOperator = "equals", string? value = null, string? valueOperator = "contains", IRequest? request = null)
+		[Description("keys of the header, find by value where operation (startwith|endwith|equals|contains), request object can be null, will use the pages request")]
+		public async Task<(Dictionary<string, string>?, IError?)> GetRequestHeaders(string[]? keys = null, string keyOperator = "equals", string? value = null, string? valueOperator = "contains")
 		{
 			Dictionary<string, string> headers;
-			if (request == null)
-			{
-				request = context[RequestContextKey] as IRequest;
-			}
+			var request = Goal.GetVariable<Microsoft.Playwright.IRequest>();
 
 			if (request == null)
 			{
@@ -744,24 +692,21 @@ return result;");
 			}
 
 			headers = request.Headers;
-			return (OperatorHelper.ApplyOperator(headers, key, keyOperator, value, valueOperator), null);
+			return (OperatorHelper.ApplyOperator(headers, keys, keyOperator, value, valueOperator), null);
 		}
 
 		[Description("key of the header, find by value where operation (startwith|endwith|equals|contains), request object can be null, will use the pages request")]
-		public async Task<(Dictionary<string, string>?, IError?)> GetResponseHeaders(string? key = null, string keyOperator = "equals", string? value = null, string? valueOperator = "contains", Microsoft.Playwright.IResponse? response = null)
+		public async Task<(Dictionary<string, string>?, IError?)> GetResponseHeaders(string[]? keys = null, string keyOperator = "equals", string? value = null, string? valueOperator = "contains")
 		{
 			Dictionary<string, string> headers;
-			if (response == null)
-			{
-				response = context[ResponseContextKey] as Microsoft.Playwright.IResponse;
-			}
+			var response = Goal.GetVariable<Microsoft.Playwright.IResponse>();
 
 			if (response == null)
 			{
 				return (null, new ProgramError("Could not find a response object. Have you loaded a page?", goalStep, function, FixSuggestion: "Call `- navigate to example.org` before getting headers"));
 			}
 
-			var dict = OperatorHelper.ApplyOperator(response.Headers, key, keyOperator, value, valueOperator);
+			var dict = OperatorHelper.ApplyOperator(response.Headers, keys, keyOperator, value, valueOperator);
 			return (dict, null);
 		}
 
@@ -886,7 +831,29 @@ return result;");
 			return options;
 		}
 
-		private BrowserTypeLaunchPersistentContextOptions GetChromeOptions(bool headless, bool kioskMode, Dictionary<string, object>? argumentOptions, bool hideTestingMode)
+		private BrowserTypeLaunchOptions GetChromeOptions(bool headless, bool kioskMode, Dictionary<string, object>? argumentOptions, bool hideTestingMode)
+		{
+			var options = new BrowserTypeLaunchOptions();
+			options.Headless = headless;
+
+			List<string> args = new();
+
+			if (kioskMode)
+			{
+				args.Add("kios");
+			}
+			if (argumentOptions != null)
+			{
+				foreach (var argument in argumentOptions)
+				{
+					args.Add(argument.Key + "=" + argument.Value);
+				}
+			}
+			options.Args = args.ToArray();
+			return options;
+		}
+		
+		private BrowserTypeLaunchPersistentContextOptions GetChromeOptionsPersistent(bool headless, bool kioskMode, Dictionary<string, object>? argumentOptions, bool hideTestingMode)
 		{
 			var options = new BrowserTypeLaunchPersistentContextOptions();
 			options.Headless = headless;
@@ -946,7 +913,7 @@ return result;");
 				{
 					if (errorCount < 2 && pe.Message.Contains("Executable doesn't exist"))
 					{
-						var program = programFactory.GetProgram<PLang.Modules.TerminalModule.Program>();
+						var program = programFactory.GetProgram<PLang.Modules.TerminalModule.Program>(goalStep);
 						await program.RunTerminal("playwright.ps1", ["install"], pathToWorkingDirInTerminal: AppContext.BaseDirectory);
 
 						return await GetChromeDriver(playwright, headless, profileName, kioskMode, argumentOptions, hideTestingMode, ++errorCount);
@@ -958,31 +925,44 @@ return result;");
 			{
 				try
 				{
-					var options = GetChromeOptions(headless, kioskMode, argumentOptions, hideTestingMode);
+					var options = GetChromeOptionsPersistent(headless, kioskMode, argumentOptions, hideTestingMode);
 					if (hideTestingMode && !argHasUserAgent)
 					{
-						options.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
+						//options.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
 					}
+					var tempProfileFolder = GetPath("/.chrome");
+					var profileTemp = Path.Join(tempProfileFolder, userProfile);
+
 
 					var path = GetChromeUserDataDir();
+					var profileDir = Path.Join(path, userProfile);
+					CopyDirectory(profileDir, profileTemp);
+					
+
 					options.Channel = "chrome";
-					//options.Args = options.Args!.Append(@$"user-data-dir={path}");
-					options.Args = options.Args!.Append($"--profile-directory={userProfile}");
+					//options.Args = options.Args!.Append($"--user-data-dir={path}");
+					options.Args = options.Args!.Append($"--profile-directory={userProfile}");					
+
 					if (hideTestingMode)
 					{
 						options.Args = options.Args!.Append($"--disable-blink-features=AutomationControlled");
 						options.Args = options.Args!.Append($"--disable-blink-features");
 						options.Args = options.Args!.Append($"--disable-infobars");
 					}
+					if (hideTestingMode && !argHasUserAgent)
+					{
+						options.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
+					}
 
-					browser = await playwright.Chromium.LaunchPersistentContextAsync(path, options);
+
+					browser = await playwright.Chromium.LaunchPersistentContextAsync(tempProfileFolder, options);				
 
 				}
 				catch (PlaywrightException pe)
 				{
 					if (pe.Message.Contains("Executable doesn't exist"))
 					{
-						var program = programFactory.GetProgram<PLang.Modules.TerminalModule.Program>();
+						var program = programFactory.GetProgram<PLang.Modules.TerminalModule.Program>(goalStep);
 						await program.RunTerminal("playwright.ps1", ["instal"]);
 
 						return await GetChromeDriver(playwright, headless, profileName, kioskMode, argumentOptions, hideTestingMode);
@@ -999,12 +979,31 @@ return result;");
 			}
 			browser.Close += async (object? sender, IBrowserContext e) =>
 			{
-				await CloseBrowser();
+				//await CloseBrowser();
+				int i = 0;
 			};
 			return browser;
 		}
 
+		private void CopyDirectory(string sourceDir, string targetDir)
+		{
+			var source = new DirectoryInfo(sourceDir);
+			if (!source.Exists)
+				throw new DirectoryNotFoundException($"Source directory does not exist: {sourceDir}");
 
+			fileSystem.Directory.CreateDirectory(targetDir);
+
+			foreach (var file in source.GetFiles("*", SearchOption.AllDirectories))
+			{
+				var relativePath = Path.GetRelativePath(source.FullName, file.FullName);
+				var destFile = Path.Combine(targetDir, relativePath);
+				fileSystem.Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
+				if (!fileSystem.File.Exists(destFile))
+				{
+					file.CopyTo(destFile, false);
+				}
+			}
+		}
 		private bool IsUrlMatch(string pageUrl, string? eventUrl)
 		{
 			if (eventUrl == null) return false;
@@ -1024,17 +1023,17 @@ return result;");
 			GoalToCall? onConsoleOutput = null, GoalToCall? onWorker = null, GoalToCall? onDialog = null, GoalToCall? onLoad = null,
 			GoalToCall? onDOMLoad = null, GoalToCall? onFileChooser = null, GoalToCall? onIFrameLoad = null, GoalToCall? onDownload = null)
 		{
-			var callGoal = programFactory.GetProgram<CallGoalModule.Program>();
+			var callGoal = programFactory.GetProgram<CallGoalModule.Program>(goalStep);
 
 			page.Console += async (object? sender, IConsoleMessage e) =>
 			{
 				if (IsUrlMatch(pageUrl, e.Page?.Url))
 				{
-					context.AddOrReplace(ConsoleContextKey, e);
+					goal.AddVariable<IConsoleMessage>(e);
 				}
 				if (onConsoleOutput != null)
 				{
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!console", e } };					
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!console", e } };
 					var result = await callGoal.RunGoal(onConsoleOutput, parameters, isolated: true);
 
 					if (result.Error != null)
@@ -1049,7 +1048,7 @@ return result;");
 			{
 				if (IsUrlMatch(pageUrl, e.Url))
 				{
-					context.AddOrReplace(RequestContextKey, e);
+					Goal.AddVariable(e);
 				}
 
 				if (onRequest != null)
@@ -1069,25 +1068,25 @@ return result;");
 			{
 				if (IsUrlMatch(pageUrl, e.Url))
 				{
-					context.AddOrReplace(ResponseContextKey, e);
+					Goal.AddVariable(e);
 				}
 
 				if (onResponse != null)
-				{		
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!response", await WebCrawlerHelper.GetResponse(e) } };
+				{
+					var response = await WebCrawlerHelper.GetResponse(e);
+					if (response == null) return;
+
+					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!response", response } };
 					var result = await callGoal.RunGoal(onResponse, parameters, isolated: true);
-			
+
 					if (result.Error != null)
 					{
-						parameters = new Dictionary<string, object?> { { "!error", result.Error } };
-						result = await callGoal.RunGoal("/events/Runtime/OnStepError", parameters, isolated: true);
-						if (result.Error != null)
-						{
-							throw new ExceptionWrapper(result.Error);
-						}
+						throw new ExceptionWrapper(result.Error);
 					}
 				}
 			};
+
+
 
 			if (onWebsocketReceived != null || onWebsocketSent != null)
 			{
@@ -1136,14 +1135,16 @@ return result;");
 					}
 				};
 			}
-			
+
 
 
 			page.Dialog += async (object? sender, IDialog e) =>
 			{
 				if (IsUrlMatch(pageUrl, e.Page?.Url))
 				{
-					context.AddOrReplace(DialogContextKey, e);
+					var dialogs = goal.GetVariable<List<IDialog>>() ?? new();
+					dialogs.Add(e);
+					goal.AddVariable<IDialog>(e);
 				}
 				if (onDialog != null)
 				{
@@ -1192,7 +1193,7 @@ return result;");
 
 				if (IsUrlMatch(pageUrl, e.Page.Url))
 				{
-					context.AddOrReplace(FileChooserContextKey, e);
+					goal.AddVariable(e);
 				}
 
 				if (onFileChooser != null)
@@ -1225,7 +1226,7 @@ return result;");
 			{
 				if (IsUrlMatch(pageUrl, e.Page.Url))
 				{
-					context.AddOrReplace(DownloadContextKey, e);
+					goal.AddVariable(e);
 				}
 				if (onDownload != null)
 				{

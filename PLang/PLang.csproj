@@ -40,8 +40,12 @@
 
   <ItemGroup>
 		<None Include="README.md" Pack="true" PackagePath="\" />
-  </ItemGroup>
 
+		<None Update=".playwright/**">
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+			<ExcludeFromPublish>true</ExcludeFromPublish>
+		</None>
+  </ItemGroup>
 
 
   <ItemGroup>
@@ -50,6 +54,7 @@
     <PackageReference Include="CsvHelper" Version="33.0.1" />
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Fizzler.Systems.HtmlAgilityPack" Version="1.2.1" />
+    <PackageReference Include="HtmlSanitizer" Version="9.0.884" />
     <PackageReference Include="IdGen" Version="3.0.7" />
     <PackageReference Include="IDisposableAnalyzers" Version="4.0.8">
       <PrivateAssets>all</PrivateAssets>
@@ -83,6 +88,7 @@
     <PackageReference Include="Nethereum.RPC.Reactive" Version="4.29.0" />
     <PackageReference Include="Nethereum.Signer" Version="4.29.0" />
     <PackageReference Include="Nethereum.Util.Rest" Version="4.29.0" />
+    <PackageReference Include="NJsonSchema" Version="11.3.2" />
     <PackageReference Include="Nostr.Client" Version="2.0.0" />
     <PackageReference Include="NSec.Cryptography" Version="24.4.0" />
     <PackageReference Include="OpenAI" Version="2.1.0" />

@@ -58,7 +58,7 @@ namespace PLang.Modules.CodeModule
 		}
 		public async Task<(Instruction? Instruction, IBuilderError? Error)> PrepareStep(GoalStep step)
 		{
-			var file = programFactory.GetProgram<FileModule.Program>();
+			var file = programFactory.GetProgram<FileModule.Program>(step);
 			var files = await file.GetFilePathsInDirectory(step.Goal.RelativeGoalFolderPath, "*.cs", includeSubfolders: true);
 
 			SetSystem(@$"I would like you to make a decision, either you should generate code from the user description or use a <prepared> .cs file
@@ -179,7 +179,7 @@ when <output_parameters> parameter is 'System.String', then Outputs: {{ ""System
 This would map the user statement to the parameter 'content' of the code and have a string return value
 <example>
 ");
-			var hasher = programFactory.GetProgram<CryptographicModule.Program>();
+			var hasher = programFactory.GetProgram<CryptographicModule.Program>(step);
 			var hashResult = await hasher.GetHashOfFile(fileToUse.FileName);
 			if (hashResult.Error != null) return (null, new BuilderError(hashResult.Error));
 

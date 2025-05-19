@@ -15,6 +15,7 @@ namespace PLang.Building.Parsers
 	{
 		List<Goal> GetAllApps();
 		List<Goal> GetAllGoals();
+		List<Goal> GetGoalFilesToBuild(IPLangFileSystem fileSystem, string goalsPath);
 		List<Goal> ParseGoalFile(string goalFileAbsolutePath, bool isOS = false);
 	}
 
@@ -51,7 +52,8 @@ namespace PLang.Building.Parsers
 			var rootPath = fileSystem.GoalsPath;
 			var rootBuildPath = fileSystem.BuildPath;
 			var appName = "";
-			if (isOS) {
+			if (isOS)
+			{
 				rootPath = fileSystem.OsDirectory;
 				rootBuildPath = fileSystem.Path.Join(fileSystem.OsDirectory, ".build");
 			}
@@ -60,7 +62,7 @@ namespace PLang.Building.Parsers
 			if (isOS && goalFileAbsolutePath.Contains(appPath))
 			{
 				var replacedPath = (isOS) ? fileSystem.OsDirectory : fileSystem.RootDirectory;
-				
+
 				if (!replacedPath.Contains(appPath))
 				{
 					replacedPath = Path.Join(replacedPath, appPath);
@@ -126,7 +128,7 @@ namespace PLang.Building.Parsers
 				}
 				if (line.TrimStart().StartsWith("/*"))
 				{
-					for (int b=i; b < lines.Length; b++)
+					for (int b = i; b < lines.Length; b++)
 					{
 						uncertainComment += lines[b].Trim() + "\n";
 						if (lines[b].TrimEnd().EndsWith("*/"))
@@ -135,7 +137,7 @@ namespace PLang.Building.Parsers
 							break;
 						}
 					}
-					
+
 					continue;
 				}
 				else if (line.TrimStart().StartsWith("/"))
@@ -166,8 +168,8 @@ namespace PLang.Building.Parsers
 
 					step.Comment = uncertainComment ?? stepComment;
 					step.Execute = step.Indent == 0;
-					
-					
+
+
 					step.Goal = currentGoal;
 					step.LineNumber = (i + 1);
 					step.Number = stepNr++;
@@ -175,7 +177,7 @@ namespace PLang.Building.Parsers
 					if (step.Indent % 4 != 0)
 					{
 						step.RelativeGoalPath = goalFileAbsolutePath.Replace(rootPath, "");
-						
+
 						throw new BuilderStepException($"Indentation of step {step.Text} is not correct. Indentation must be a multiple of 4", step);
 					}
 
@@ -239,7 +241,7 @@ namespace PLang.Building.Parsers
 
 				goal.GoalFileName = Path.GetFileName(goalFileAbsolutePath);
 				goal.PrFileName = Path.GetFileName(prFileAbsolutePath);
-
+				goal.FileHash = content.ComputeHash().Hash;
 				goal.AbsoluteGoalPath = goalFileAbsolutePath;
 				goal.AbsoluteGoalFolderPath = Path.GetDirectoryName(goalFileAbsolutePath);
 				goal.RelativeGoalPath = goalFileAbsolutePath.Replace(rootPath, "");
@@ -259,9 +261,11 @@ namespace PLang.Building.Parsers
 				{
 					basePrFolder = Path.GetDirectoryName(goal.RelativePrFolderPath);
 					basePrGoalFolder = goal.RelativePrFolderPath;
-				} else
+				}
+				else
 				{
-					if (Path.Join(basePrFolder, goal.GoalName) == basePrGoalFolder) {
+					if (Path.Join(basePrFolder, goal.GoalName) == basePrGoalFolder)
+					{
 						throw new Exception($"The goal {goal.GoalName} is named the same the the goal file {goal.GoalFileName}. This is not allowed");
 					}
 				}
@@ -287,7 +291,7 @@ namespace PLang.Building.Parsers
 				goal.IncomingVariablesRequired = prevBuildGoal.IncomingVariablesRequired;
 				goal.DataSourceName = prevBuildGoal.DataSourceName;
 				goal.IsOS = isOS;
-
+				goal.HasChanged = prevBuildGoal.FileHash != goal.FileHash;
 				foreach (var injection in prevBuildGoal.Injections)
 				{
 					if (goal.Injections.FirstOrDefault(p => p.Type == injection.Type && p.Path == injection.Path) == null)
@@ -410,7 +414,7 @@ namespace PLang.Building.Parsers
 				{
 					if (file.Contains(Path.DirectorySeparatorChar + ".")) continue;
 					var goals = ParseGoalFile(file, true);
-					
+
 
 					apps.AddRange(goals);
 				}
@@ -420,6 +424,54 @@ namespace PLang.Building.Parsers
 			return apps;
 		}
 
+		public List<Goal> GetGoalFilesToBuild(IPLangFileSystem fileSystem, string goalsPath)
+		{
+
+			string[] anyFile = fileSystem.Directory.GetFiles(goalsPath, "*.goal", SearchOption.AllDirectories);
+			if (anyFile.Length == 0)
+			{
+				throw new BuilderException($"No goal files found in directory. Are you in the correct directory? I am running from {goalsPath}");
+			}
+			var goalFiles = fileSystem.Directory.GetFiles(goalsPath, "*.goal", SearchOption.AllDirectories).ToList();
+			var files = Remove_SystemFolder(goalsPath, goalFiles);
+			List<Goal> goals = new();
+			foreach (var file in files)
+			{
+				goals.AddRange(ParseGoalFile(file));
+			}
+			return goals;
+
+		}
+
+		private static List<string> Remove_SystemFolder(string goalPath, List<string> goalFiles)
+		{
+
+
+			string[] dirsToExclude = new string[] { "apps", ".modules", ".services", ".build", ".deploy", ".db" };
+			string[] filesToExclude = new string[] { "Events.goal", "BuilderEvents.goal" };
+
+
+			// Filter out excluded directories and files first to simplify subsequent operations
+			var filteredGoalFiles = goalFiles.Where(goalFile =>
+			{
+				var relativePath = goalFile.Replace(goalPath, "").TrimStart(Path.DirectorySeparatorChar);
+				var baseFolderName = Path.GetDirectoryName(relativePath).Split(Path.DirectorySeparatorChar).FirstOrDefault();
+				var fileName = Path.GetFileName(goalFile).ToLower();
+
+				return !baseFolderName.StartsWith(".") && !dirsToExclude.Contains(baseFolderName, StringComparer.OrdinalIgnoreCase) && !filesToExclude.Contains(fileName, StringComparer.OrdinalIgnoreCase);
+			}).ToList();
+
+			// Order the files
+			var orderedFiles = filteredGoalFiles
+				.OrderBy(file => Path.GetFileName(file).ToLower() != "setup.goal") // "setup.goal" second
+				.ThenBy(file => !file.Contains(Path.Join(goalPath, "setup", Path.DirectorySeparatorChar.ToString()), StringComparison.OrdinalIgnoreCase))
+				.ThenBy(file => !file.Contains(Path.Join(goalPath, "events"), StringComparison.OrdinalIgnoreCase))  // "events" folder first
+				.ThenBy(file => Path.GetFileName(file).ToLower() != "start.goal")
+				.ToList();
+
+
+			return orderedFiles;
+		}
 	}
 
 }

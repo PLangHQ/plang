@@ -49,7 +49,7 @@ namespace PLang.Modules.ConditionalModule
 - The code will not be modified after you generate it.
 - ALWAYS use long or long? instead of int or int?
 - Use long.TryParse when validating if variable is long
-- Do not reference any DTO classes. Choose the type that seems to fit best when not defined by user input. Use dynamic? if complex object is needed.
+- Do not reference any DTO classes. Choose the type that seems to fit best when not defined by user input. Use dynamic? if complex object is needed unless user defines type.
 - Strings are defined with double quote ("")
 - Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. 
 - ONLY IF PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into ExecutePlangCode method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.
@@ -82,7 +82,7 @@ namespace PLang.Modules.ConditionalModule
 			AppendToAssistantCommand(@"## examples ##
 'if %isValid% is true then', this condition would return true if %isValid% is true. 
 'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false.
-'if %data.user% is not empty, then call ProcessUser user=%data.user%', => public static bool ExecutePlangCode(object? dataαuuser) { return (dataαuuser == null || string.IsNullOrEmpty(dataαuuser.ToString()); }, GoalToCallOnTrue=ProcessUser, GoalToCallOnTrueParameters={user:%data.user%}
+'if %data.user%(object) is not empty, then call ProcessUser user=%data.user%', => public static bool ExecutePlangCode(object? dataαuuser) { return (dataαuuser == null || string.IsNullOrEmpty(dataαuuser?.ToString()); }, GoalToCallOnTrue=ProcessUser, GoalToCallOnTrueParameters={user:%data.user%}
 'if %data% (string) is null, call CreateData, else AppendData' => public static bool ExecutePlangCode(string? dataαuser_id) { return string.IsNullOrEmpty(userIdentity); }, GoalToCallOnTrue=CreateData, GoalToCallOnFalse=AppendData
 'if %exists% (bool) is null, call CreateUser' => public static bool ExecutePlangCode(bool? dataαuser_id) { return exists == null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null
 'if %exists% (bool) is not null, call CreateUser' => public static bool ExecutePlangCode(bool? dataαuser_id) { return exists != null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null

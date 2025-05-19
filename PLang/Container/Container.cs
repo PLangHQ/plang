@@ -242,7 +242,6 @@ namespace PLang.Container
 			container.RegisterSingleton<MemoryStack>();
 			container.RegisterSingleton<IFileAccessHandler, FileAccessHandler>();
 			
-
 			container.RegisterSingleton<IEngine, Engine>();
 			/*
 			container.RegisterSingleton<EnginePool>(factory =>

@@ -797,7 +797,7 @@
     }
   ],
   "SubGoals": [],
-  "Description": null,
+  "Description": "The Nuget goal automates the process of reading a version number from a file, packaging a library and its tests, and pushing them to the NuGet repository. It checks for existing versions to avoid overwriting published packages and logs warnings if a version is already published.",
   "Visibility": 1,
   "GoalFileName": "Nuget.goal",
   "RelativeGoalPath": "\\Nuget.goal",
@@ -819,6 +819,10 @@
   },
   "Injections": [],
   "Signature": null,
-  "Hash": "029f7e5731de56835dc0aca5f11ef8f9d26a0b805db7b76626f71e478fb03aec",
-  "IncomingVariablesRequired": null
+  "Hash": "ea26f238eee6902b6ca56a6c26117d8f24e4e05db4b1bc83eb803c5032832046",
+  "IncomingVariablesRequired": {
+    "Settings.NugetApiKey": "The API key required to authenticate with the NuGet repository."
+  },
+  "DataSourceName": null,
+  "IsSetup": false
 }

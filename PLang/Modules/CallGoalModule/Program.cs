@@ -35,7 +35,7 @@ namespace PLang.Modules.CallGoalModule
 				return (null, new ProgramError($"Could not find goal {goalName} in {appName}", goalStep, function));
 			}
 
-			IEngine newEngine = await engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath, goalStep).RentAsync();
+			IEngine newEngine = await engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath, goalStep).RentAsync(appName + "_" + goalName);
 
 			try
 			{
@@ -86,7 +86,7 @@ namespace PLang.Modules.CallGoalModule
 			{
 				return (ret.Variables, null);
 			}
-			return (null, result.error);
+			return (result.Variables, result.error);
 
 		}
 

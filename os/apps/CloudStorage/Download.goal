@@ -1,7 +1,0 @@
-Download
-- set default value of %localPath% = "./"
-- validate %cloud%, %cloudPath% is not empty
-- terminal rclone  
-    parameters: copy, %cloud%:%cloudPath%, %localPath%
-    write to %output%
-- return %output%

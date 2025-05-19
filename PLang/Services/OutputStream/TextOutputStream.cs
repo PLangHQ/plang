@@ -73,7 +73,7 @@ namespace PLang.Services.OutputStream
 
 
 		}
-		public async Task Write(object? obj, string type, int httpStatusCode = 200)
+		public async Task Write(object? obj, string type, int httpStatusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
 			httpContext.Response.StatusCode = httpStatusCode;
 			httpContext.Response.StatusDescription = type;

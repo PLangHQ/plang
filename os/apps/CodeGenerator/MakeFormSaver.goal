@@ -1,7 +1,0 @@
-MakeFormSaver
-- call module "/ui/GetDesign", write to %design%
-- read llm/MakeFormSaverSystem.txt, write %system%
-- [llm] system: %system%
-    user: %user%
-    {plangCode: string, fileName:string}
-- write %plangCode% to %path%/%fileName%

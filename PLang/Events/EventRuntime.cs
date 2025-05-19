@@ -304,7 +304,24 @@ namespace PLang.Events
 				hasHandled = true;
 				if (result.Variables != null) return (result.Variables, null);
 			}
+
 			return (hasHandled) ? (Variables, new ErrorHandled(error)) : (Variables, error);
+		}
+
+		private void ShowLogError(Goal? goal, GoalStep? step, IError error)
+		{
+			// when running in --debug or --csdebug mode write out to log an error happened
+			string stepText = "";
+			if (step != null)
+			{
+				stepText = $" at {step.Text.ReplaceLineEndings("").MaxLength(20, "...")}:{step.LineNumber}";
+			}
+			string goalText = "Error";
+			if (goal != null)
+			{
+				goalText = $"Goal {goal.GoalFileName} had error";
+			}
+			logger.LogError($"[Error] - {goalText}{stepText} - {error.Message.ReplaceLineEndings("").MaxLength(40, "...")}");
 		}
 
 		public async Task<(object? Variables, IBuilderError? Error)> RunBuildGoalEvents(string eventType, Goal goal)
@@ -367,13 +384,17 @@ namespace PLang.Events
 				context.TryGetValue(ReservedKeywords.CallingGoal, out object? prevCallingGoal);
 				context.TryGetValue(ReservedKeywords.CallingStep, out object? prevCallingStep);
 				context.TryGetValue(ReservedKeywords.CallingInstruction, out object? prevCallingInstruction);
-
+				
+				if (error != null && AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool isDetailedError))
+				{
+					ShowLogError(step?.Goal, step, error);
+				}
 
 				var parameters = new Dictionary<string, object?>();
 				parameters.Add(ReservedKeywords.Event, eve);
 				parameters.Add(ReservedKeywords.CallingGoal, callingGoal);
 				if (error != null) parameters.Add(ReservedKeywords.Error, error);
-				if (error is ErrorHandled) parameters.Add(ReservedKeywords.Error, error);
+				if (error is IErrorHandled) parameters.Add(ReservedKeywords.Error, error);
 				parameters.Add("!plang.EventUniqueId", Guid.NewGuid().ToString());
 
 				context.TryAdd(ReservedKeywords.IsEvent, true);
@@ -418,7 +439,7 @@ namespace PLang.Events
 
 				context.AddOrReplace(ReservedKeywords.CallingGoal, prevCallingGoal);
 				context.AddOrReplace(ReservedKeywords.CallingStep, prevCallingStep);
-
+				
 				if (task.Exception != null)
 				{
 					var exception = task.Exception.InnerException ?? task.Exception;
@@ -504,7 +525,8 @@ namespace PLang.Events
 				if (ActiveEvents.ContainsKey(eve.Id)) continue;
 				if (GoalHasBinding(goal, eve) && IsStepMatch(step, eve))
 				{
-					return await Run(eve, goal, step, isBuilder: isBuilder);
+					var (variables, error) = await Run(eve, goal, step, isBuilder: isBuilder);
+					if (error != null && error is not IErrorHandled) return (variables, error);
 				}
 			}
 			return (null, null);
@@ -536,7 +558,11 @@ namespace PLang.Events
 				}
 				else if (errorHandler.IgnoreError)
 				{
-					return (null, null);
+					if (AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool isDetailedError))
+					{
+						ShowLogError(goal, step, error);
+					}
+					return (null, new ErrorHandled(error));
 				}
 			}
 
@@ -566,7 +592,7 @@ namespace PLang.Events
 				}
 			}
 
-			return (null, error);
+			return (null, new ErrorHandled(error));
 		}
 
 
@@ -623,12 +649,13 @@ namespace PLang.Events
 		 */
 		public bool IsStepMatch(GoalStep step, EventBinding eventBinding)
 		{
+			if (step.Goal.IsOS && !eventBinding.IncludeOsGoals) return false;
 			if (eventBinding.StepNumber == null && eventBinding.StepText == null) return true;
 			if (eventBinding.StepNumber != null && step.Number == eventBinding.StepNumber)
 			{
 				return true;
 			}
-			if (step.Goal.IsOS && !eventBinding.IncludeOsGoals) return false;
+			
 
 			if (eventBinding.StepText != null && step.Text.ToLower().Contains(eventBinding.StepText.ToLower()))
 			{
@@ -653,10 +680,10 @@ namespace PLang.Events
 		public bool GoalHasBinding(Goal goal, EventBinding eventBinding)
 		{
 			if (goal.Visibility == Visibility.Private && !eventBinding.IncludePrivate || eventBinding.GoalToBindTo == null) return false;
-			if (!eventBinding.IsLocal && goal.IsOS && !eventBinding.IncludeOsGoals) return false;
+			if (goal.IsOS && !eventBinding.IncludeOsGoals) return false;
 
 			string goalToBindTo = eventBinding.GoalToBindTo.ToString().ToLower().Replace("!", "");
-
+			if (goal.GoalName == eventBinding.GoalToCall) return false;
 			// GoalToBindTo = Hello
 			if (!goalToBindTo.Contains(".") && !goalToBindTo.Contains("*") && !goalToBindTo.Contains("/") && !goalToBindTo.Contains(@"\") && !goalToBindTo.Contains(":"))
 			{
@@ -670,7 +697,7 @@ namespace PLang.Events
 			// GoalToBindTo = Hello.goal
 			if (goalToBindTo.Contains(".") && fileSystem.Path.GetExtension(goalToBindTo) == ".goal")
 			{
-				return goal.GoalFileName.ToLower() == goalToBindTo || goal.RelativeGoalPath.ToLower() == goalToBindTo;
+				return goal.GoalFileName.ToLower() == goalToBindTo || goal.RelativeGoalPath.Equals(goalToBindTo.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase);
 			}
 
 			if (goalToBindTo.Contains("*"))

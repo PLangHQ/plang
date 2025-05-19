@@ -7,14 +7,14 @@
       "Text": "read %depsFile% into %json%",
       "Comment": null,
       "ModuleType": "PLang.Modules.FileModule",
-      "Name": "read_file_into_json",
-      "Description": "Read the contents of the file located at the path specified by %depsFile% and store the data in the variable %json%.",
-      "PrFileName": "01. read_file_into_json.pr",
-      "RelativePrPath": ".build\\InstallDependencies\\01. read_file_into_json.pr",
+      "Name": "read_file_into_variable",
+      "Description": "Read the contents of the file located at the path specified by %depsFile% and store the data into the variable %json%.",
+      "PrFileName": "01. read_file_into_variable.pr",
+      "RelativePrPath": ".build\\InstallDependencies\\01. read_file_into_variable.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-02-12T14:03:10.3183361+00:00",
+      "Generated": "2025-05-03T10:43:30.4221622+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -51,7 +51,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangCodeModule\", \"description\": \"Compiles plang code, gets goals from .goal files, method descriptions and class scheme. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebSocketModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ValidateModule\", \"description\": \"Validates a variable, make sure it's not empty, follows a pattern, is a number, etc.. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.UdpModule\" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. Create payment request(status code 402). \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.SerializerModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangModule\", \"description\": \"<description>\r\nget apps available, compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime Engine for plang, can run goal and step(s) in plang\r\n<description>. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Writes to the output stream. Ask user a question, with LLM or without, either straight or with help of llm. output stream can be to the user(default), system, log, audit, metric. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.MathModule\", \"description\": \"Misc math method. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set, Get & Return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"<description>\r\nget first|last|random|position| item from list or dictionary.\r\nAdd, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global\r\n<description>\r\n. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp). \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConvertModule\", \"description\": \"Convert object from one to another. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate or Run existing c# code from user description. Only use if no other module is found or if [code] is defined.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff, set %formatted% = Format(%data%), %user% = GetUser %id%. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
               }
             ]
           },
@@ -67,122 +67,26 @@
         ],
         "type": "StepInformationBuilder",
         "caching": true,
-        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Read the contents of the file located at the path specified by %depsFile% and store the data in the variable %json%.\",\n\t\"Modules\": [\"PLang.Modules.FileModule\"],\n\t\"StepName\": \"read_file_into_json\"\n}\n```"
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Read the contents of the file located at the path specified by %depsFile% and store the data into the variable %json%.\",\n\t\"Modules\": [\"PLang.Modules.FileModule\"],\n\t\"StepName\": \"read_file_into_variable\"\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "f839ee2b8fbf8bd827f281a4ea78eb2355a8466dc50b8c610dd06d92b8902bab",
-      "BuilderVersion": null,
-      "PrFile": {
-        "Action": {
-          "FunctionName": "ReadJsonLineFile",
-          "Parameters": [
-            {
-              "Type": "String",
-              "Name": "path",
-              "Value": "%depsFile%"
-            },
-            {
-              "Type": "String",
-              "Name": "returnValueIfFileNotExisting",
-              "Value": null
-            },
-            {
-              "Type": "Boolean",
-              "Name": "throwErrorOnNotFound",
-              "Value": false
-            },
-            {
-              "Type": "Boolean",
-              "Name": "loadVariables",
-              "Value": false
-            },
-            {
-              "Type": "Boolean",
-              "Name": "emptyVariableIfNotFound",
-              "Value": false
-            },
-            {
-              "Type": "String",
-              "Name": "encoding",
-              "Value": "utf-8"
-            },
-            {
-              "Type": "String",
-              "Name": "newLineSymbol",
-              "Value": null
-            }
-          ],
-          "ReturnValues": [
-            {
-              "Type": "List<Object>",
-              "VariableName": "json"
-            }
-          ]
-        },
-        "Text": "read %depsFile% into %json%",
-        "Reload": false,
-        "LlmRequest": {
-          "temperature": 0.0,
-          "top_p": 0.0,
-          "frequencyPenalty": 0.0,
-          "presencePenalty": 0.0,
-          "maxLength": 4000,
-          "llmResponseType": "json",
-          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-          "model": "gpt-4o",
-          "promptMessage": [
-            {
-              "role": "system",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-                },
-                {
-                  "type": "text",
-                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-                }
-              ]
-            },
-            {
-              "role": "assistant",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "## functions available starts ##\r\nWaitForFile(String filePath, Int32? timeoutInMilliseconds = 30000, Boolean? waitForAccess = False)  : void \nGetCurrentFolderPath(String path)  : String  // Return the absolute path the app is running in. \nCreatePathByJoining(String[] paths)  : String  // Create path from variables. \nRequestAccessToPath(String path)  : Boolean  // Give user access to a path. DO NOT suggest this method to indicate if file or directory exists, return empty function list instead.. \nReadBinaryFileAndConvertToBase64(String path, String? returnValueIfFileNotExisting, Boolean? throwErrorOnNotFound = False, Boolean? includeDataUrl = False)  : String  // includeDataUrl add the data and mimetype of the file into the return string, e.g. data:image/png;base64,.... \nReadJsonLineFile(String path, String? returnValueIfFileNotExisting, Boolean? throwErrorOnNotFound = False, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\", String? newLineSymbol)  : List<Object> \nReadTextFile(String path, String? returnValueIfFileNotExisting, Boolean? throwErrorOnNotFound = False, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\", String? splitOn)  : void \nReadFileAsStream(String path, Boolean? throwErrorOnNotFound = False)  : Stream \nReadExcelFile(String path, Boolean? useHeaderRow = True, Dictionary`2<String, Object>? sheetsToVariable, Int32? headerStartsInRow = 1)  : void // sheetsToVariable is name of sheet that should load into variable. Sheet1=%products% will load Sheet1 into %product% variable, Sheet2-A4=%categories%, will load data from A4 into %categories%. \nWriteExcelFile(String path, Object variableToWriteToExcel, String? sheetName = \"Sheet1\", Boolean? printHeader = True, Boolean? overwrite = False)  : void\nWriteCsvFile(String path, Object variableToWriteToCsv, Boolean? append = False, Boolean? hasHeaderRecord = True, String? delimiter = \",\", String? newLine = \"\n\", String? encoding = \"utf-8\", Boolean? ignoreBlankLines = True, Boolean? allowComments = False, Char? comment = #, GoalToCall? goalToCallOnBadData, Boolean? createDirectoryAutomatically = True)  : void\nReadCsvFile(String path, Boolean? hasHeaderRecord = True, String? delimiter = \",\", String? newLine = \"\n\", String? encoding = \"utf-8\", Boolean? ignoreBlankLines = True, Boolean? allowComments = False, Char? comment = #, String? goalToCallOnBadData)  : void \nSaveMultipleFiles(List`1<FileInfo> files, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : void\nReadMultipleTextFiles(String folderPath, String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeAllSubfolders = False)  : List`1 \nGetDirectoryPathsInDirectory(String? directoryPath = \"./\", String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeSubfolders = False, Boolean? useRelativePath = True)  : String[] \nGetFilePathsInDirectory(String? directoryPath = \"./\", String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeSubfolders = False, Boolean? useRelativePath = True)  : String[] \nWriteBase64ToFile(String path, String base64, Boolean? overwrite = False)  : void\nWriteBytesToFile(String path, Byte[] content, Boolean? overwrite = False)  : void\nWriteToFile(String path, Object content, Boolean? overwrite = False, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : void\nAppendToFile(String path, String content, String? seperator, Boolean? loadVariables = False, Boolean? emptyVariableIfNotFound = False, String? encoding = \"utf-8\")  : void\nCopyFiles(String directoryPath, String destinationPath, String? searchPattern = \"*\", String[]? excludePatterns, Boolean? includeSubfoldersAndFiles = False, Boolean? overwriteFiles = False)  : void\nMoveFile(String sourceFileName, String destFileName, Boolean? createDirectoryIfNotExisting = False, Boolean? overwriteFile = False)  : void\nCopyFile(String sourceFileName, String destFileName, Boolean? createDirectoryIfNotExisting = False, Boolean? overwriteFile = False)  : void\nDeleteFile(String fileName, Boolean? throwErrorOnNotFound = False)  : void\nGetFileInfo(String fileName)  : IFileInfo \nCreateDirectory(String directoryPath, Boolean? incrementalNaming = False)  : String \nDeleteDirectory(String directoryPath, Boolean? recursive = True, Boolean? throwErrorOnNotFound = False)  : void\nStopListeningToFileChange(String[] fileSearchPatterns, GoalToCall? goalToCall)  : void\nListenToFileChange(String[] fileSearchPatterns, GoalToCall goalToCall, String[]? excludeFiles, Boolean? includeSubdirectories = False, Int64? debounceTime = 150, Boolean? listenForFileChange = False, Boolean? listenForFileCreated = False, Boolean? listenForFileDeleted = False, Boolean? listenForFileRename = False, String? absoluteFilePathVariableName = \"FullPath\", String? fileNameVariableName = \"Name\", String? changeTypeVariableName = \"ChangeType\", String? senderVariableName = \"Sender\", String? oldFileAbsoluteFilePathVariableName = \"OldFullPath\", String? oldFileNameVariableName = \"OldName\")  : void // debounceTime is the time in ms that is waited until action is executed to prevent multiple execution for same file. At least one listenFor variable needs to be true. \nReadPdf(String path, String? format = \"md\", String? imageAction = \"none\", Boolean? includePageNr = True, String? password)  : String  // Reads pdf file and loads into return variable. format can be md|text. imageAction can be none|base64|pathToFolder..\r\n## functions available ends ##\r\n## defined variables ##\r\ndepsFile (type:object), json (type:object), \r\n## defined variables ##"
-                }
-              ]
-            },
-            {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "read %depsFile% into %json%"
-                }
-              ]
-            }
-          ],
-          "type": "PLang.Modules.GenericFunctionBuilder",
-          "caching": true,
-          "RawResponse": "```json\n{\n\t\"FunctionName\": \"ReadJsonLineFile\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"String\",\n\t\t\"Name\": \"path\",\n\t\t\"Value\": \"%depsFile%\"\n\t}, {\n\t\t\"Type\": \"String\",\n\t\t\"Name\": \"returnValueIfFileNotExisting\",\n\t\t\"Value\": null\n\t}, {\n\t\t\"Type\": \"Boolean\",\n\t\t\"Name\": \"throwErrorOnNotFound\",\n\t\t\"Value\": false\n\t}, {\n\t\t\"Type\": \"Boolean\",\n\t\t\"Name\": \"loadVariables\",\n\t\t\"Value\": false\n\t}, {\n\t\t\"Type\": \"Boolean\",\n\t\t\"Name\": \"emptyVariableIfNotFound\",\n\t\t\"Value\": false\n\t}, {\n\t\t\"Type\": \"String\",\n\t\t\"Name\": \"encoding\",\n\t\t\"Value\": \"utf-8\"\n\t}, {\n\t\t\"Type\": \"String\",\n\t\t\"Name\": \"newLineSymbol\",\n\t\t\"Value\": null\n\t}],\n\t\"ReturnValues\": [{\n\t\t\"Type\": \"List<Object>\",\n\t\t\"VariableName\": \"json\"\n\t}]\n}\n```"
-        },
-        "RunOnBuild": false
-      }
+      "Hash": "77f7459d168b5cae0cd2b2102e96576a7a6883818aa299ab3774c2fd31d99f9d",
+      "BuilderVersion": "1.0.0.0",
+      "RelativeGoalPath": "\\InstallDependencies.goal"
     },
     {
       "Text": "filter %json% where property is 'libraries', write to %libraries%",
       "Comment": null,
       "ModuleType": "PLang.Modules.FilterModule",
       "Name": "filter_json_property",
-      "Description": "Filter the JSON object stored in %json% to extract the value of the property 'libraries' and store the result in the variable %libraries%.",
+      "Description": "Filter the JSON object stored in %json% to extract the data where the property is 'libraries' and store the result in the variable %libraries%.",
       "PrFileName": "02. filter_json_property.pr",
       "RelativePrPath": ".build\\InstallDependencies\\02. filter_json_property.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-02-12T14:03:10.3597658+00:00",
+      "Generated": "2025-05-03T10:43:34.9983753+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -219,7 +123,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangCodeModule\", \"description\": \"Compiles plang code, gets goals from .goal files, method descriptions and class scheme. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebSocketModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ValidateModule\", \"description\": \"Validates a variable, make sure it's not empty, follows a pattern, is a number, etc.. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.UdpModule\" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. Create payment request(status code 402). \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.SerializerModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangModule\", \"description\": \"<description>\r\nget apps available, compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime Engine for plang, can run goal and step(s) in plang\r\n<description>. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Writes to the output stream. Ask user a question, with LLM or without, either straight or with help of llm. output stream can be to the user(default), system, log, audit, metric. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.MathModule\", \"description\": \"Misc math method. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set, Get & Return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"<description>\r\nget first|last|random|position| item from list or dictionary.\r\nAdd, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global\r\n<description>\r\n. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp). \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConvertModule\", \"description\": \"Convert object from one to another. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate or Run existing c# code from user description. Only use if no other module is found or if [code] is defined.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff, set %formatted% = Format(%data%), %user% = GetUser %id%. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
               }
             ]
           },
@@ -235,97 +139,26 @@
         ],
         "type": "StepInformationBuilder",
         "caching": true,
-        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Filter the JSON object stored in %json% to extract the value of the property 'libraries' and store the result in the variable %libraries%.\",\n\t\"Modules\": [\"PLang.Modules.FilterModule\", \"PLang.Modules.LocalOrGlobalVariableModule\"],\n\t\"StepName\": \"filter_json_property\"\n}\n```"
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Filter the JSON object stored in %json% to extract the data where the property is 'libraries' and store the result in the variable %libraries%.\",\n\t\"Modules\": [\"PLang.Modules.FilterModule\"],\n\t\"StepName\": \"filter_json_property\"\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "a3e7244f1c38e266446cc83ef8808046e2e2dcd21e3e379191c2caac5a247106",
-      "BuilderVersion": null,
-      "PrFile": {
-        "Action": {
-          "FunctionName": "FilterOnProperty",
-          "Parameters": [
-            {
-              "Type": "Object",
-              "Name": "variableToExtractFrom",
-              "Value": "%json%"
-            },
-            {
-              "Type": "String",
-              "Name": "propertyToFilterOn",
-              "Value": "libraries"
-            }
-          ],
-          "ReturnValues": [
-            {
-              "Type": "Object",
-              "VariableName": "libraries"
-            }
-          ]
-        },
-        "Text": "filter %json% where property is 'libraries', write to %libraries%",
-        "Reload": false,
-        "LlmRequest": {
-          "temperature": 0.0,
-          "top_p": 0.0,
-          "frequencyPenalty": 0.0,
-          "presencePenalty": 0.0,
-          "maxLength": 4000,
-          "llmResponseType": "json",
-          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-          "model": "gpt-4o",
-          "promptMessage": [
-            {
-              "role": "system",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-                },
-                {
-                  "type": "text",
-                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-                }
-              ]
-            },
-            {
-              "role": "assistant",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "## functions available starts ##\r\nFindTextInContent(String content, String textToFind, String? matching = \"contains\", String? retrieveOneItem)  : void  // matching: contains|startwith|endwith|equals. retrieveOneItem: first|last|number (retrieveOneItem can also be a number representing the index.). \nJoin(List`1<Object> list, String? seperator = \", \", String[]? exclude)  : String  // Joins a list of items into one string. \nGetItem(Object variableToExtractFrom, String retrieveOneItem)  : void  // Gets an item from list, giving the first, last or by index according to user definition. retrieveOneItem: first|last|number (retrieveOneItem can also be a number representing the index.). \nFilterOnProperty(Object variableToExtractFrom, String propertyToFilterOn, String? operatorOnPropertyToFilterOn = \"=\", String? retrieveOneItem)  : Object  // Use this function when the intent is to filter a list based solely on the property name or pattern of the property name, without needing to match a specific value within that property. \r\nThis function is suitable when the user specifies conditions like \"property starts with\", \"property ends with\", or \"property contains\" without mentioning a value to filter by.\r\n\r\noperatorOnPropertyToFilterOn can be: =|!=|startswith|endswith|contains\r\nretrieveOneItem: null|first|last|number (retrieveOneItem can also be a number representing the index.)\r\ncan return a list of elements or one element, depending on if retrieveOneItem is set.\r\n<example>\r\n- filter %list% where property is 'Name' => variableToExtractFrom=\"%list%\", propertyToFilterOn=\"Name\"\r\n- filter %list% where property contains 'Addr', return the first => variableToExtractFrom=\"%list%\", propertyToFilterOn=\"Name\", operatorOnPropertyToFilterOn=\"contains\", retrieveOneItem=\"first\"\r\n</example>\r\n. \nFilterOnPropertyAndValue(Object variableToExtractFrom, String propertyToFilterOn, String valueToFilterBy, String? operatorToFilterOnValue = \"=\", String? operatorOnPropertyToFilter = \"=\", String? propertyToExtract, Boolean? throwErrorWhenNothingFound = False, String? retrieveOneItem, String? operatorToFilterOnValueComparer = \"insensitive\")  : void  //  Use this function when the intent is to filter a list based on both the property name and a specific value within that property. \r\nThis function is appropriate when the user specifies conditions that involve both a property and a value, such as \"property is 'Name' and value is 'John'\", or when operators on both the property and value are needed.\r\n\r\npropertyToFilterOn: required, property of a list to filter on\r\nvalueToFilterBy: required, find a specific Value that is stored in the propertyToFilterOn\r\noperatorOnPropertyToFilter can be following(sperated by |): <|>|equals|startswith|endswith|contains.\r\nretrieveOneItem: first|last|retrieveOneItem can also be a number representing the index.\r\noperatorOnPropertyToFilter: equals|startswith|endswith|contains\r\npropertyToExtract: by default it returns the element that matches the property, when propertyToExtract is specified it will find that property and return the object from that property.\r\noperatorToFilterOnValue: =|!= \r\noperatorToFilterOnValueComparer: insensitive|case-sensitive\r\n<example>\r\n- filter %json% where property starts with \"%item%/\" and has \"John\" as value, write to %libraries% => variableToExtractFrom=\"%json%\", \r\n\tpropertyToFilterOn=\"%item%/\", valueToFilterBy=\"John\", operatorToFilterOnValue=\"contains\", operatorOnPropertyToFilter=\"startswith\"\r\n\toperatorToFilterOnValueComparer=\"insensitive\"\r\n- filter %list% where property is \"Quantity\" and is larger then \"10\", give me first, write to %library% => variableToExtractFrom=\"%list%\", \r\n\tpropertyToFilterOn=\"Quantity\", valueToFilterBy=\"10\", operatorToFilterOnValue=\">\", operatorOnPropertyToFilter=\"=\"\r\n\toperatorToFilterOnValueComparer=\"case-sensitive\"\r\n\tretrieveOneItem=\"first\"\r\n</example>\r\n.\r\n## functions available ends ##\r\n## defined variables ##\r\njson (type:List<Object>), libraries (type:object), \r\n## defined variables ##"
-                }
-              ]
-            },
-            {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "filter %json% where property is 'libraries', write to %libraries%"
-                }
-              ]
-            }
-          ],
-          "type": "PLang.Modules.GenericFunctionBuilder",
-          "caching": true,
-          "RawResponse": "```json\n{\n\t\"FunctionName\": \"FilterOnProperty\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"Name\": \"variableToExtractFrom\",\n\t\t\t\"Value\": \"%json%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"propertyToFilterOn\",\n\t\t\t\"Value\": \"libraries\"\n\t\t}\n\t],\n\t\"ReturnValues\": [\n\t\t{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"VariableName\": \"libraries\"\n\t\t}\n\t]\n}\n```"
-        },
-        "RunOnBuild": false
-      }
+      "Hash": "6ef7da540f9992b7a1a2c984b71d310aaaecb6436cb28d158cfb1a1d21010268",
+      "BuilderVersion": "1.0.0.0",
+      "RelativeGoalPath": "\\InstallDependencies.goal"
     },
     {
       "Text": "filter %libraries% where property starts with \"%libraryName%/\",return first, write to %library%",
       "Comment": null,
       "ModuleType": "PLang.Modules.FilterModule",
       "Name": "filter_libraries_by_property",
-      "Description": "Filter the list of libraries stored in %libraries% to find the first library whose property starts with the value of %libraryName% followed by a '/'. Assign this library to the variable %library%.",
+      "Description": "Filter the list of libraries to find the first library whose property starts with the specified library name followed by a slash, and write the result to the variable %library%.",
       "PrFileName": "03. filter_libraries_by_property.pr",
       "RelativePrPath": ".build\\InstallDependencies\\03. filter_libraries_by_property.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-02-12T14:03:10.3936805+00:00",
+      "Generated": "2025-05-03T10:43:39.4065773+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -362,7 +195,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangCodeModule\", \"description\": \"Compiles plang code, gets goals from .goal files, method descriptions and class scheme. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebSocketModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ValidateModule\", \"description\": \"Validates a variable, make sure it's not empty, follows a pattern, is a number, etc.. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.UdpModule\" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. Create payment request(status code 402). \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.SerializerModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangModule\", \"description\": \"<description>\r\nget apps available, compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime Engine for plang, can run goal and step(s) in plang\r\n<description>. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Writes to the output stream. Ask user a question, with LLM or without, either straight or with help of llm. output stream can be to the user(default), system, log, audit, metric. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.MathModule\", \"description\": \"Misc math method. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set, Get & Return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"<description>\r\nget first|last|random|position| item from list or dictionary.\r\nAdd, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global\r\n<description>\r\n. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp). \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConvertModule\", \"description\": \"Convert object from one to another. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate or Run existing c# code from user description. Only use if no other module is found or if [code] is defined.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff, set %formatted% = Format(%data%), %user% = GetUser %id%. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
               }
             ]
           },
@@ -378,94 +211,13 @@
         ],
         "type": "StepInformationBuilder",
         "caching": true,
-        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Filter the list of libraries stored in %libraries% to find the first library whose property starts with the value of %libraryName% followed by a '/'. Assign this library to the variable %library%.\",\n\t\"Modules\": [\"PLang.Modules.FilterModule\", \"PLang.Modules.ListDictionaryModule\"],\n\t\"StepName\": \"filter_libraries_by_property\"\n}\n```"
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Filter the list of libraries to find the first library whose property starts with the specified library name followed by a slash, and write the result to the variable %library%.\",\n\t\"Modules\": [\"PLang.Modules.FilterModule\", \"PLang.Modules.ListDictionaryModule\"],\n\t\"StepName\": \"filter_libraries_by_property\"\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "692f5bd97fd8ffd9f4bebac24d2e4b9916921d86243c291659e17cc52967e194",
-      "BuilderVersion": null,
-      "PrFile": {
-        "Action": {
-          "FunctionName": "FilterOnProperty",
-          "Parameters": [
-            {
-              "Type": "Object",
-              "Name": "variableToExtractFrom",
-              "Value": "%libraries%"
-            },
-            {
-              "Type": "String",
-              "Name": "propertyToFilterOn",
-              "Value": "%libraryName%/"
-            },
-            {
-              "Type": "String",
-              "Name": "operatorOnPropertyToFilterOn",
-              "Value": "startswith"
-            },
-            {
-              "Type": "String",
-              "Name": "retrieveOneItem",
-              "Value": "first"
-            }
-          ],
-          "ReturnValues": [
-            {
-              "Type": "Object",
-              "VariableName": "%library%"
-            }
-          ]
-        },
-        "Text": "filter %libraries% where property starts with \"%libraryName%/\",return first, write to %library%",
-        "Reload": false,
-        "LlmRequest": {
-          "temperature": 0.0,
-          "top_p": 0.0,
-          "frequencyPenalty": 0.0,
-          "presencePenalty": 0.0,
-          "maxLength": 4000,
-          "llmResponseType": "json",
-          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-          "model": "gpt-4o",
-          "promptMessage": [
-            {
-              "role": "system",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-                },
-                {
-                  "type": "text",
-                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-                }
-              ]
-            },
-            {
-              "role": "assistant",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "## functions available starts ##\r\nFindTextInContent(String content, String textToFind, String? matching = \"contains\", String? retrieveOneItem)  : void  // matching: contains|startwith|endwith|equals. retrieveOneItem: first|last|number (retrieveOneItem can also be a number representing the index.). \nJoin(List`1<Object> list, String? seperator = \", \", String[]? exclude)  : String  // Joins a list of items into one string. \nGetItem(Object variableToExtractFrom, String retrieveOneItem)  : void  // Gets an item from list, giving the first, last or by index according to user definition. retrieveOneItem: first|last|number (retrieveOneItem can also be a number representing the index.). \nFilterOnProperty(Object variableToExtractFrom, String propertyToFilterOn, String? operatorOnPropertyToFilterOn = \"=\", String? retrieveOneItem)  : Object  // Use this function when the intent is to filter a list based solely on the property name or pattern of the property name, without needing to match a specific value within that property. \r\nThis function is suitable when the user specifies conditions like \"property starts with\", \"property ends with\", or \"property contains\" without mentioning a value to filter by.\r\n\r\noperatorOnPropertyToFilterOn can be: =|!=|startswith|endswith|contains\r\nretrieveOneItem: null|first|last|number (retrieveOneItem can also be a number representing the index.)\r\ncan return a list of elements or one element, depending on if retrieveOneItem is set.\r\n<example>\r\n- filter %list% where property is 'Name' => variableToExtractFrom=\"%list%\", propertyToFilterOn=\"Name\"\r\n- filter %list% where property contains 'Addr', return the first => variableToExtractFrom=\"%list%\", propertyToFilterOn=\"Name\", operatorOnPropertyToFilterOn=\"contains\", retrieveOneItem=\"first\"\r\n</example>\r\n. \nFilterOnPropertyAndValue(Object variableToExtractFrom, String propertyToFilterOn, String valueToFilterBy, String? operatorToFilterOnValue = \"=\", String? operatorOnPropertyToFilter = \"=\", String? propertyToExtract, Boolean? throwErrorWhenNothingFound = False, String? retrieveOneItem, String? operatorToFilterOnValueComparer = \"insensitive\")  : void  //  Use this function when the intent is to filter a list based on both the property name and a specific value within that property. \r\nThis function is appropriate when the user specifies conditions that involve both a property and a value, such as \"property is 'Name' and value is 'John'\", or when operators on both the property and value are needed.\r\n\r\npropertyToFilterOn: required, property of a list to filter on\r\nvalueToFilterBy: required, find a specific Value that is stored in the propertyToFilterOn\r\noperatorOnPropertyToFilter can be following(sperated by |): <|>|equals|startswith|endswith|contains.\r\nretrieveOneItem: first|last|retrieveOneItem can also be a number representing the index.\r\noperatorOnPropertyToFilter: equals|startswith|endswith|contains\r\npropertyToExtract: by default it returns the element that matches the property, when propertyToExtract is specified it will find that property and return the object from that property.\r\noperatorToFilterOnValue: =|!= \r\noperatorToFilterOnValueComparer: insensitive|case-sensitive\r\n<example>\r\n- filter %json% where property starts with \"%item%/\" and has \"John\" as value, write to %libraries% => variableToExtractFrom=\"%json%\", \r\n\tpropertyToFilterOn=\"%item%/\", valueToFilterBy=\"John\", operatorToFilterOnValue=\"contains\", operatorOnPropertyToFilter=\"startswith\"\r\n\toperatorToFilterOnValueComparer=\"insensitive\"\r\n- filter %list% where property is \"Quantity\" and is larger then \"10\", give me first, write to %library% => variableToExtractFrom=\"%list%\", \r\n\tpropertyToFilterOn=\"Quantity\", valueToFilterBy=\"10\", operatorToFilterOnValue=\">\", operatorOnPropertyToFilter=\"=\"\r\n\toperatorToFilterOnValueComparer=\"case-sensitive\"\r\n\tretrieveOneItem=\"first\"\r\n</example>\r\n.\r\n## functions available ends ##\r\n## defined variables ##\r\nlibraries (type:Object), libraryName (type:object), library (type:object), \r\n## defined variables ##"
-                }
-              ]
-            },
-            {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "filter %libraries% where property starts with \"%libraryName%/\",return first, write to %library%"
-                }
-              ]
-            }
-          ],
-          "type": "PLang.Modules.GenericFunctionBuilder",
-          "caching": true,
-          "RawResponse": "```json\n{\n\t\"FunctionName\": \"FilterOnProperty\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"Name\": \"variableToExtractFrom\",\n\t\t\t\"Value\": \"%libraries%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"propertyToFilterOn\",\n\t\t\t\"Value\": \"%libraryName%/\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"operatorOnPropertyToFilterOn\",\n\t\t\t\"Value\": \"startswith\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"retrieveOneItem\",\n\t\t\t\"Value\": \"first\"\n\t\t}\n\t],\n\t\"ReturnValues\": [\n\t\t{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"VariableName\": \"%library%\"\n\t\t}\n\t]\n}\n```"
-        },
-        "RunOnBuild": false
-      }
+      "Hash": "ed69d5b877a6d9da40beafd107c00cfa3b9357ca14400f2bc5a36e3a047e0290",
+      "BuilderVersion": "1.0.0.0",
+      "RelativeGoalPath": "\\InstallDependencies.goal"
     },
     {
       "Text": "if %library% is empty",
@@ -478,7 +230,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-02-12T14:03:25.8764044+00:00",
+      "Generated": "2025-05-03T10:43:44.0853888+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -515,7 +267,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangCodeModule\", \"description\": \"Compiles plang code, gets goals from .goal files, method descriptions and class scheme. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebSocketModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ValidateModule\", \"description\": \"Validates a variable, make sure it's not empty, follows a pattern, is a number, etc.. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.UdpModule\" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. Create payment request(status code 402). \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.SerializerModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangModule\", \"description\": \"<description>\r\nget apps available, compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime Engine for plang, can run goal and step(s) in plang\r\n<description>. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Writes to the output stream. Ask user a question, with LLM or without, either straight or with help of llm. output stream can be to the user(default), system, log, audit, metric. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.MathModule\", \"description\": \"Misc math method. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set, Get & Return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"<description>\r\nget first|last|random|position| item from list or dictionary.\r\nAdd, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global\r\n<description>\r\n. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp). \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConvertModule\", \"description\": \"Convert object from one to another. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate or Run existing c# code from user description. Only use if no other module is found or if [code] is defined.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff, set %formatted% = Format(%data%), %user% = GetUser %id%. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
               }
             ]
           },
@@ -535,95 +287,22 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "01083a556e323239c50a1a075b0f2c5fe117923c4805bb8ca2d5a8af7c0b40ae",
-      "BuilderVersion": null,
-      "PrFile": {
-        "Action": {
-          "Namespace": "PLangGeneratedCode",
-          "Name": "CheckIfLibraryIsEmpty",
-          "Code": "\nnamespace PLangGeneratedCode\n{\n    public static class CheckIfLibraryIsEmpty\n    {\n        public static bool ExecutePlangCode(dynamic? library)\n        {\n            return library == null || (library is string str && string.IsNullOrEmpty(str));\n        }\n    }\n}\n",
-          "Using": null,
-          "InputParameters": [
-            {
-              "VariableName": "%library%",
-              "ParameterName": "library",
-              "ParameterType": "dynamic?"
-            }
-          ],
-          "OutParameters": null,
-          "GoalToCallOnTrue": null,
-          "GoalToCallOnFalse": null,
-          "GoalToCallOnTrueParameters": null,
-          "GoalToCallOnFalseParameters": null,
-          "ServicesAssembly": []
-        },
-        "Text": "if %library% is empty",
-        "Reload": false,
-        "LlmRequest": {
-          "temperature": 0.0,
-          "top_p": 0.0,
-          "frequencyPenalty": 0.0,
-          "presencePenalty": 0.0,
-          "maxLength": 4000,
-          "llmResponseType": "csharp",
-          "scheme": "{\n\t\"GoalToCallOnTrue\": {\n\t\"Value\": string\n} = null,\n\t\"GoalToCallOnTrueParameters\"? : { String : Object, ... } = null,\n\t\"GoalToCallOnFalse\": {\n\t\"Value\": string\n} = null,\n\t\"GoalToCallOnFalseParameters\"? : { String : Object, ... } = null,\n\t\"Namespace\": string,\n\t\"Name\": string,\n\t\"Using\"?: string[] = null,\n\t\"Assemblies\"?: string[] = null,\n\t\"InputParameters\"?: string[] = null\n}",
-          "model": "gpt-4o",
-          "promptMessage": [
-            {
-              "role": "system",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Act as a senior C# developer, that converts the user intent into a valid C#(Version. 11) code. \r\n\r\n## Rules ##\r\n- Generate static class. The code generated should have 1 method with the static method named ExecutePlangCode and return bool. \r\n- A variable in user intent is defined by starting and ending %.\r\n- Variables defined in the user intent can be passed into the ExecutePlangCode function by value, but only if defined by user. \r\n- Variable names passed to ExecutePlangCode function MUST be unmodified from the user statement\r\n- The code will not be modified after you generate it.\r\n- ALWAYS use long or long? instead of int or int?\r\n- Use long.TryParse when validating if variable is long\r\n- Do not reference any DTO classes. Choose the type that seems to fit best when not defined by user input. Use dynamic? if complex object is needed.\r\n- Strings are defined with double quote (\")\r\n- Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. \r\n- ONLY IF PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into ExecutePlangCode method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.\r\n- When condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. ExecutePlangCode(dynamic? variable)\r\n- Replace the dot(.) in variables with the letter α e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α\r\n- Keep underscore in variables if defined by user, e.g.  if %user_id%(string) is null => ExecutePlangCode(string? user_id)\r\n- Consider top security measures when generating code and validate code\r\n- append @ sign for variable that match reserved keywords in C#\r\n- C# code MUST only contain the contition code and return bool, an external system will call goals(methods) that user defines in his intent.\r\n- initialize variables before using them in TryParse\r\n- Always convert object to correct type in code, e.g. if code requires the object to be string use Convert.ToString(obj), when object should be bool Convert.ToBoolean(obj), etc.\r\n- when checking if string is empty, check if it's null and do .ToString() on it and check if empty\r\n## Rules ##\r\n\r\n## Response information ##\r\n- Namespace: MUST be PLangGeneratedCode\r\n- Name: is name of class, it should represent the intent of what the code is doing. \r\n- Name of class cannot be: CheckIfLibraryIsEmpty, CheckIfLibraryIsEmpty, check_if_library_is_empty, check_if_library_is_empty\n\r\n- Goals should be prefixed with !, e.g. Call !ValidateUser, Call !ConditionFalse\r\n- GoalToCallOnTrue or GoalToCallOnFalse is optional, if not defined by user, set as null\r\n- Goals can be called with parameters using GoalToCallOnTrueParameters and GoalToCallOnFalseParameters, e.g. Call !UpdateProduct id=%id%, call !FalseCall status='false'. Then id is parameter for True, and status for False\r\n- Using: must include namespaces that are needed to compile code.\r\n- InputParameters: InputParameters MUST match parameter count sent to ExecutePlangCode. Keep format as is defined by user, e.g. if %!error% then => Parameters would be [\"%!error%\"], if %items.count% > 0 and %isValid% then => Parameters would be [\"%list[0]%\", \"%isValid%\"]\r\n- Assemblies: dll to reference to compile using Roslyn\r\n## Response information ##\r\n"
-                },
-                {
-                  "type": "text",
-                  "text": "Only write the raw c# code and json scheme, no summary, no extra text to explain, be concise.\r\n\tYOU MUST implement all code needed and valid c# code. \r\n\tYou must return ```csharp for the code implementation and ```json scheme: {\n\t\"GoalToCallOnTrue\": {\n\t\"Value\": string\n} = null,\n\t\"GoalToCallOnTrueParameters\"? : { String : Object, ... } = null,\n\t\"GoalToCallOnFalse\": {\n\t\"Value\": string\n} = null,\n\t\"GoalToCallOnFalseParameters\"? : { String : Object, ... } = null,\n\t\"Namespace\": string,\n\t\"Name\": string,\n\t\"Using\"?: string[] = null,\n\t\"Assemblies\"?: string[] = null,\n\t\"InputParameters\"?: string[] = null\n}"
-                }
-              ]
-            },
-            {
-              "role": "assistant",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "## defined variables ##\r\nlibrary (type:Object), \r\n## defined variables ##"
-                },
-                {
-                  "type": "text",
-                  "text": "## examples ##\r\n'if %isValid% is true then', this condition would return true if %isValid% is true. \r\n'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false.\r\n\r\n'if %data% (string) is null, call !CreateData, else !AppendData' => public static bool ExecutePlangCode(string? dataαuser_id) { return string.IsNullOrEmpty(userIdentity); }, GoalToCallOnTrue=CreateData, GoalToCallOnFalse=AppendData\r\n'if %exists% (bool) is null, call !CreateUser' => public static bool ExecutePlangCode(bool? dataαuser_id) { return exists == null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null\r\n'if %exists% (bool) is not null, call !CreateUser' => public static bool ExecutePlangCode(bool? dataαuser_id) { return exists != null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null\r\n'if %data.user_id% is empty, call !CreateUser' => public static bool ExecutePlangCode(dynamic? dataαuser_id) { return (dataαuser_id == null || (dataαuser_id is string str && string.IsNullOrEmpty(str))); } //if we dont know the type of %data.user_id%, , GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null\r\n'if !%isValid% then => public static bool ExecutePlangCode(bool? isValid) { return !isValid; }, GoalToCallOnTrue=null, GoalToCallOnFalse=null\r\n'if %first_name% is null, call !UpdateFirstName' => public static bool ExecutePlangCode(string? first_name) { return (first_name == null || string.IsNullOrEmpty(str)); }\r\n'if directory %path% exists, call DoStuff => public static bool ExecutePlangCode(string? path, IPlangFileSystem fileSystem) { return fileSystem.Directory.Exists(path); }\r\n'if file %path% exists, call DoStuff => public static bool ExecutePlangCode(string? path, IPlangFileSystem fileSystem) { return fileSystem.File.Exists(path); }\r\n## examples ##\r\n"
-                }
-              ]
-            },
-            {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "if %library% is empty"
-                }
-              ]
-            }
-          ],
-          "type": "PLang.Modules.ConditionalModule.Builder",
-          "caching": true,
-          "RawResponse": "```csharp\nnamespace PLangGeneratedCode\n{\n    public static class CheckIfLibraryIsEmpty\n    {\n        public static bool ExecutePlangCode(dynamic? library)\n        {\n            return library == null || (library is string str && string.IsNullOrEmpty(str));\n        }\n    }\n}\n```\n```json\n{\n    \"GoalToCallOnTrue\": null,\n    \"GoalToCallOnTrueParameters\": null,\n    \"GoalToCallOnFalse\": null,\n    \"GoalToCallOnFalseParameters\": null,\n    \"Namespace\": \"PLangGeneratedCode\",\n    \"Name\": \"CheckIfLibraryIsEmpty\",\n    \"Using\": null,\n    \"Assemblies\": null,\n    \"InputParameters\": [\"%library%\"]\n}\n```"
-        },
-        "RunOnBuild": false
-      }
+      "Hash": "5924c90e504629034fae6f7e6a5ac39882774b617225ef79edcc6b3af51ff126",
+      "BuilderVersion": "1.0.0.0",
+      "RelativeGoalPath": "\\InstallDependencies.goal"
     },
     {
       "Text": "end with error, 'Library %libraryName% could not be found in depency file'",
       "Comment": null,
       "ModuleType": "PLang.Modules.ThrowErrorModule",
       "Name": "end_with_error_library_not_found",
-      "Description": "Terminate the process and display an error message stating that the library specified by %libraryName% could not be found in the dependency file.",
+      "Description": "Terminate the process with an error message stating that the library specified by %libraryName% could not be found in the dependency file.",
       "PrFileName": "05. end_with_error_library_not_found.pr",
       "RelativePrPath": ".build\\InstallDependencies\\05. end_with_error_library_not_found.pr",
       "Indent": 4,
       "Execute": false,
       "RunOnce": false,
-      "Generated": "2025-02-12T14:03:25.9193155+00:00",
+      "Generated": "2025-05-03T10:43:48.3022949+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -660,7 +339,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangCodeModule\", \"description\": \"Compiles plang code, gets goals from .goal files, method descriptions and class scheme. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebSocketModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ValidateModule\", \"description\": \"Validates a variable, make sure it's not empty, follows a pattern, is a number, etc.. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.UdpModule\" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. Create payment request(status code 402). \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.SerializerModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangModule\", \"description\": \"<description>\r\nget apps available, compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime Engine for plang, can run goal and step(s) in plang\r\n<description>. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Writes to the output stream. Ask user a question, with LLM or without, either straight or with help of llm. output stream can be to the user(default), system, log, audit, metric. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.MathModule\", \"description\": \"Misc math method. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set, Get & Return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"<description>\r\nget first|last|random|position| item from list or dictionary.\r\nAdd, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global\r\n<description>\r\n. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp). \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConvertModule\", \"description\": \"Convert object from one to another. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate or Run existing c# code from user description. Only use if no other module is found or if [code] is defined.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff, set %formatted% = Format(%data%), %user% = GetUser %id%. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
               }
             ]
           },
@@ -676,97 +355,26 @@
         ],
         "type": "StepInformationBuilder",
         "caching": true,
-        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Terminate the process and display an error message stating that the library specified by %libraryName% could not be found in the dependency file.\",\n\t\"Modules\": [\"PLang.Modules.ThrowErrorModule\"],\n\t\"StepName\": \"end_with_error_library_not_found\"\n}\n```"
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Terminate the process with an error message stating that the library specified by %libraryName% could not be found in the dependency file.\",\n\t\"Modules\": [\"PLang.Modules.ThrowErrorModule\"],\n\t\"StepName\": \"end_with_error_library_not_found\"\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "f056a8dcb0de0ed4f14e060167e959cffbd895200639071a0d4990fb4988e199",
-      "BuilderVersion": null,
-      "PrFile": {
-        "Action": {
-          "FunctionName": "Throw",
-          "Parameters": [
-            {
-              "Type": "Object",
-              "Name": "message",
-              "Value": "Library %libraryName% could not be found in depency file"
-            },
-            {
-              "Type": "String",
-              "Name": "type",
-              "Value": "error"
-            },
-            {
-              "Type": "Int32",
-              "Name": "statusCode",
-              "Value": 400
-            }
-          ],
-          "ReturnValues": null
-        },
-        "Text": "end with error, 'Library %libraryName% could not be found in depency file'",
-        "Reload": false,
-        "LlmRequest": {
-          "temperature": 0.0,
-          "top_p": 0.0,
-          "frequencyPenalty": 0.0,
-          "presencePenalty": 0.0,
-          "maxLength": 4000,
-          "llmResponseType": "json",
-          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-          "model": "gpt-4o",
-          "promptMessage": [
-            {
-              "role": "system",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-                },
-                {
-                  "type": "text",
-                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-                }
-              ]
-            },
-            {
-              "role": "assistant",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "## functions available starts ##\r\nThrow(Object message, String? type = \"error\", Int32? statusCode = 400)  : void  // When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc. type can be error|critical. statusCode(like http status code) should be defined by user.. \nEndGoalExecution(String? message, Int32? levels = 0)  : void  // When user intends the execution of the goal to stop without giving a error response. This is equal to doing return in a function. Depth is how far up the stack it should end, previous goal is 1. \nEndApp()  : void // Shutdown the application.\r\n## functions available ends ##\r\n## defined variables ##\r\nlibraryName (type:object), \r\n## defined variables ##"
-                }
-              ]
-            },
-            {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "end with error, 'Library %libraryName% could not be found in depency file'"
-                }
-              ]
-            }
-          ],
-          "type": "PLang.Modules.GenericFunctionBuilder",
-          "caching": true,
-          "RawResponse": "```json\n{\n\t\"FunctionName\": \"Throw\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"Object\",\n\t\t\t\"Name\": \"message\",\n\t\t\t\"Value\": \"Library %libraryName% could not be found in depency file\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"type\",\n\t\t\t\"Value\": \"error\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Int32\",\n\t\t\t\"Name\": \"statusCode\",\n\t\t\t\"Value\": 400\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
-        },
-        "RunOnBuild": false
-      }
+      "Hash": "e133da8ed1dc3370d5c45853acc11fafab699c79ff6ad4f512ae55b98b71b95e",
+      "BuilderVersion": "1.0.0.0",
+      "RelativeGoalPath": "\\InstallDependencies.goal"
     },
     {
       "Text": "download file https://www.nuget.org/api/v2/package/%library.path% if it doesnt exist and save to \"%pathToSave%/%library.path%.nupkg\"",
       "Comment": null,
       "ModuleType": "PLang.Modules.HttpModule",
       "Name": "download_file_if_not_exist",
-      "Description": "Check if the file at the URL 'https://www.nuget.org/api/v2/package/%library.path%' exists locally. If it does not exist, download the file and save it to the specified path '%pathToSave%/%library.path%.nupkg'.",
+      "Description": "Download a file from the specified URL if it doesn't already exist at the destination path, and save it to the specified location with the given filename.",
       "PrFileName": "06. download_file_if_not_exist.pr",
       "RelativePrPath": ".build\\InstallDependencies\\06. download_file_if_not_exist.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-02-12T14:03:25.9776451+00:00",
+      "Generated": "2025-05-03T10:43:56.0863586+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -803,7 +411,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangCodeModule\", \"description\": \"Compiles plang code, gets goals from .goal files, method descriptions and class scheme. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebSocketModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ValidateModule\", \"description\": \"Validates a variable, make sure it's not empty, follows a pattern, is a number, etc.. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.UdpModule\" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. Create payment request(status code 402). \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.SerializerModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangModule\", \"description\": \"<description>\r\nget apps available, compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime Engine for plang, can run goal and step(s) in plang\r\n<description>. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Writes to the output stream. Ask user a question, with LLM or without, either straight or with help of llm. output stream can be to the user(default), system, log, audit, metric. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.MathModule\", \"description\": \"Misc math method. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set, Get & Return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"<description>\r\nget first|last|random|position| item from list or dictionary.\r\nAdd, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global\r\n<description>\r\n. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp). \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConvertModule\", \"description\": \"Convert object from one to another. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate or Run existing c# code from user description. Only use if no other module is found or if [code] is defined.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff, set %formatted% = Format(%data%), %user% = GetUser %id%. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
               }
             ]
           },
@@ -819,97 +427,26 @@
         ],
         "type": "StepInformationBuilder",
         "caching": true,
-        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Check if the file at the URL 'https://www.nuget.org/api/v2/package/%library.path%' exists locally. If it does not exist, download the file and save it to the specified path '%pathToSave%/%library.path%.nupkg'.\",\n\t\"Modules\": [\"PLang.Modules.HttpModule\", \"PLang.Modules.FileModule\", \"PLang.Modules.ConditionalModule\"],\n\t\"StepName\": \"download_file_if_not_exist\"\n}\n```"
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Download a file from the specified URL if it doesn't already exist at the destination path, and save it to the specified location with the given filename.\",\n\t\"Modules\": [\"PLang.Modules.HttpModule\", \"PLang.Modules.FileModule\", \"PLang.Modules.ConditionalModule\"],\n\t\"StepName\": \"download_file_if_not_exist\"\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "86c6aadcae922aff287912d15fb15f41078ad936c0cf6b814ea16797565579a2",
-      "BuilderVersion": null,
-      "PrFile": {
-        "Action": {
-          "FunctionName": "DownloadFile",
-          "Parameters": [
-            {
-              "Type": "String",
-              "Name": "url",
-              "Value": "https://www.nuget.org/api/v2/package/%library.path%"
-            },
-            {
-              "Type": "String",
-              "Name": "pathToSaveTo",
-              "Value": "%pathToSave%/%library.path%.nupkg"
-            },
-            {
-              "Type": "Boolean",
-              "Name": "doNotDownloadIfFileExists",
-              "Value": true
-            }
-          ],
-          "ReturnValues": null
-        },
-        "Text": "download file https://www.nuget.org/api/v2/package/%library.path% if it doesnt exist and save to \"%pathToSave%/%library.path%.nupkg\"",
-        "Reload": false,
-        "LlmRequest": {
-          "temperature": 0.0,
-          "top_p": 0.0,
-          "frequencyPenalty": 0.0,
-          "presencePenalty": 0.0,
-          "maxLength": 4000,
-          "llmResponseType": "json",
-          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-          "model": "gpt-4o",
-          "promptMessage": [
-            {
-              "role": "system",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-                },
-                {
-                  "type": "text",
-                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-                }
-              ]
-            },
-            {
-              "role": "assistant",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "## functions available starts ##\r\nDownloadFile(String url, String pathToSaveTo, Boolean? overwriteFile = False, Dictionary`2<String, Object>? headers, Boolean? createPathToSaveTo = True, Boolean? doNotDownloadIfFileExists = False)  : void \nPost(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30)  : Object \nPatch(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30)  : Object \nGet(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30)  : Object \nOption(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30)  : Object \nHead(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30)  : Object \nPut(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30)  : Object \nDelete(String url, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30)  : Object \nSendBinaryOfFile(String url, String filePath, String? httpMethod = \"POST\", Dictionary`2<String, Object>? requestHeaders, Dictionary`2<String, Object>? contentHeaders, String? encoding = \"utf-8\", Int32? timeoutInSeconds = 30)  : Object  // Send binary file to server. Make sure to set correct headers on correct header variable, requestHeaders or contentHeader. \nPostMultipartFormData(String url, Object data, String? httpMethod = \"POST\", Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", Int32? timeoutInSeconds = 30)  : Object  // Post a FileStream to url. When a variable is defined with @ sign, it defines that it should be a FileStream. data may contain something like file=@%fileName%;type=%fileType%, then keep as one value for the file parameter. The function will parse the file and type. \nRequest(String url, String method, Object? data, Boolean? doNotSignRequest = False, Dictionary`2<String, Object>? headers, String? encoding = \"utf-8\", String? contentType = \"application/json\", Int32? timeoutInSeconds = 30)  : Object\r\n## functions available ends ##\r\n## defined variables ##\r\nlibrary.path (type:object), pathToSave (type:object), \r\n## defined variables ##"
-                }
-              ]
-            },
-            {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "download file https://www.nuget.org/api/v2/package/%library.path% if it doesnt exist and save to \"%pathToSave%/%library.path%.nupkg\""
-                }
-              ]
-            }
-          ],
-          "type": "PLang.Modules.HttpModule.Builder",
-          "caching": true,
-          "RawResponse": "```json\n{\n\t\"FunctionName\": \"DownloadFile\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"url\",\n\t\t\t\"Value\": \"https://www.nuget.org/api/v2/package/%library.path%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"pathToSaveTo\",\n\t\t\t\"Value\": \"%pathToSave%/%library.path%.nupkg\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean\",\n\t\t\t\"Name\": \"doNotDownloadIfFileExists\",\n\t\t\t\"Value\": true\n\t\t}\n\t]\n}\n```"
-        },
-        "RunOnBuild": false
-      }
+      "Hash": "0a7ae79807f3192e6f6184f16bc7f6bc903ca0c7fd29ba3bf1bc4bc7dc99b130",
+      "BuilderVersion": "1.0.0.0",
+      "RelativeGoalPath": "\\InstallDependencies.goal"
     },
     {
       "Text": "unzip \"%pathToSave%/%library.path%.nupkg\", to %pathToSave%/%library.path%, overwrite\n    on error message 'process cannot access', ignore",
       "Comment": "- throw error \"Could not validate sha512 signature of %library.path%, it didn't match %library.sha512%\"",
       "ModuleType": "PLang.Modules.CompressionModule",
-      "Name": "unzip_file_with_error_handling",
-      "Description": "Unzip the file located at '%pathToSave%/%library.path%.nupkg' to the directory '%pathToSave%/%library.path%', overwriting existing files. If an error occurs with the message 'process cannot access', ignore the error.",
-      "PrFileName": "07. unzip_file_with_error_handling.pr",
-      "RelativePrPath": ".build\\InstallDependencies\\07. unzip_file_with_error_handling.pr",
+      "Name": "unzip_file",
+      "Description": "Unzip the file located at the path specified by %pathToSave%/%library.path%.nupkg to the directory %pathToSave%/%library.path%, overwriting any existing files. If an error occurs with the message 'process cannot access', ignore the error.",
+      "PrFileName": "07. unzip_file.pr",
+      "RelativePrPath": ".build\\InstallDependencies\\07. unzip_file.pr",
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-02-12T14:03:26.0213694+00:00",
+      "Generated": "2025-05-03T10:44:01.6223989+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": [
@@ -957,7 +494,7 @@
             "content": [
               {
                 "type": "text",
-                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal.. \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangCodeModule\", \"description\": \"Compiles plang code, gets goals from .goal files, method descriptions and class scheme. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Outputs and writes out, to the UI a text or a variable. In console, code can ask user and he gives response. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set & Get local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate c# code from user description. Only use if no other module is found.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
+                "text": "This is a list of modules you can choose from\r\n## modules available starts ##\r\n[{ \"module\": \"PLang.Modules.XmlModule\" }, \n{ \"module\": \"PLang.Modules.WindowAppModule\" }, \n{ \"module\": \"PLang.Modules.WebSocketModule\" }, \n{ \"module\": \"PLang.Modules.WebserverModule\", \"description\": \"Start webserver, write to Body, Header, Cookie, send file to client. \" }, \n{ \"module\": \"PLang.Modules.WebCrawlerModule\", \"description\": \"Run a browser instance, browse a website, input values and click on html elements, sendkeys, wait for browser and extract content. \" }, \n{ \"module\": \"PLang.Modules.ValidateModule\", \"description\": \"Validates a variable, make sure it's not empty, follows a pattern, is a number, etc.. \" }, \n{ \"module\": \"PLang.Modules.UiModule\", \"description\": \"Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. \" }, \n{ \"module\": \"PLang.Modules.UdpModule\" }, \n{ \"module\": \"PLang.Modules.ThrowErrorModule\", \"description\": \"Allows user to throw error. Allows user to return out of goal or stop(end) running goal. Create payment request(status code 402). \" }, \n{ \"module\": \"PLang.Modules.TerminalModule\", \"description\": \"Terminal/Console access to run external applications. \" }, \n{ \"module\": \"PLang.Modules.TemplateEngineModule\", \"description\": \"Render html (files) using template engine. \" }, \n{ \"module\": \"PLang.Modules.SerializerModule\" }, \n{ \"module\": \"PLang.Modules.ScheduleModule\", \"description\": \"Wait, Sleep and time delay. Cron scheduler. \" }, \n{ \"module\": \"PLang.Modules.PythonModule\", \"description\": \"Runs python scripts. Parameters can be passed to the python process. \" }, \n{ \"module\": \"PLang.Modules.PlangModule\", \"description\": \"<description>\r\nget apps available, compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime Engine for plang, can run goal and step(s) in plang\r\n<description>. \" }, \n{ \"module\": \"PLang.Modules.OutputModule\", \"description\": \"Writes to the output stream. Ask user a question, with LLM or without, either straight or with help of llm. output stream can be to the user(default), system, log, audit, metric. \" }, \n{ \"module\": \"PLang.Modules.MessageModule\", \"description\": \"Send and recieve private messages. Get account(public key), set current account for messaging. \" }, \n{ \"module\": \"PLang.Modules.MathModule\", \"description\": \"Misc math method. \" }, \n{ \"module\": \"PLang.Modules.LoopModule\", \"description\": \"While, for, foreach, loops, go through a list. \" }, \n{ \"module\": \"PLang.Modules.LoggerModule\" }, \n{ \"module\": \"PLang.Modules.LocalOrGlobalVariableModule\", \"description\": \"Set, Get & Return local and static variables. Set on variable includes condition such as empty or null. Bind onCreate, onChange, onRemove events to variable.. \" }, \n{ \"module\": \"PLang.Modules.LlmModule\", \"description\": \"Ask LLM a question and recieve and answer. \" }, \n{ \"module\": \"PLang.Modules.ListDictionaryModule\", \"description\": \"<description>\r\nget first|last|random|position| item from list or dictionary.\r\nAdd, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global\r\n<description>\r\n. \" }, \n{ \"module\": \"PLang.Modules.InjectModule\", \"description\": \"Dependancy injection. \" }, \n{ \"module\": \"PLang.Modules.IdentityModule\", \"description\": \"Handles Identity in plang. Sign content and verifies signature with the identity.. \" }, \n{ \"module\": \"PLang.Modules.HttpModule\", \"description\": \"Make Http request. \" }, \n{ \"module\": \"PLang.Modules.FilterModule\", \"description\": \"Allow user to find text, filter, select, query from a variable and get specific item from that variable.. \" }, \n{ \"module\": \"PLang.Modules.FileModule\", \"description\": \"Handle file system access. Listen to files and dirs. Get permission to file and folder paths. Reads text, csv, xls, pdf files and raw stream. \" }, \n{ \"module\": \"PLang.Modules.EnvironmentModule\", \"description\": \"Information about the environment that the software is running, such as machine name, os user name, process id, settings, debug modes, set culture, open file in default app, npm install. \" }, \n{ \"module\": \"PLang.Modules.DesktopModule\", \"description\": \"Get information about what windows are open on the operating system. \" }, \n{ \"module\": \"PLang.Modules.DbModule\", \"description\": \"Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp). \" }, \n{ \"module\": \"PLang.Modules.CryptographicModule\", \"description\": \"Encrypt, descryption and hashing & verify using bcrypt, compute Sha256Hash, generate & validate Bearer token. \" }, \n{ \"module\": \"PLang.Modules.ConvertModule\", \"description\": \"Convert object from one to another. \" }, \n{ \"module\": \"PLang.Modules.ConditionalModule\", \"description\": \"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.. \" }, \n{ \"module\": \"PLang.Modules.CompressionModule\" }, \n{ \"module\": \"PLang.Modules.CodeModule\", \"description\": \"Generate or Run existing c# code from user description. Only use if no other module is found or if [code] is defined.. \" }, \n{ \"module\": \"PLang.Modules.CallGoalModule\", \"description\": \"Call another Goal or App, when ! is prefixed, example: call !RenameFile, call app !Google/Search, call !ui/ShowItems, call goal !DoStuff, set %formatted% = Format(%data%), %user% = GetUser %id%. \" }, \n{ \"module\": \"PLang.Modules.CachingModule\" }, \n{ \"module\": \"PLang.Modules.BlockchainModule\", \"description\": \"Use blockchain, create wallet, account info, transfer money. \" }, \n]\r\n## modules available ends ##\r\n"
               }
             ]
           },
@@ -973,88 +510,17 @@
         ],
         "type": "StepInformationBuilder",
         "caching": true,
-        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Unzip the file located at '%pathToSave%/%library.path%.nupkg' to the directory '%pathToSave%/%library.path%', overwriting existing files. If an error occurs with the message 'process cannot access', ignore the error.\",\n\t\"Modules\": [\"PLang.Modules.CompressionModule\", \"PLang.Modules.FileModule\"],\n\t\"StepName\": \"unzip_file_with_error_handling\"\n}\n```"
+        "RawResponse": "```json\n{\n\t\"StepDescription\": \"Unzip the file located at the path specified by %pathToSave%/%library.path%.nupkg to the directory %pathToSave%/%library.path%, overwriting any existing files. If an error occurs with the message 'process cannot access', ignore the error.\",\n\t\"Modules\": [\"PLang.Modules.CompressionModule\"],\n\t\"StepName\": \"unzip_file\"\n}\n```"
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "c816baa5cdb8908085ca8fa8456df682aa60282d7e7afd2923a6edb76c47f9c9",
-      "BuilderVersion": null,
-      "PrFile": {
-        "Action": {
-          "FunctionName": "DecompressFile",
-          "Parameters": [
-            {
-              "Type": "String",
-              "Name": "sourceArchiveFileName",
-              "Value": "%pathToSave%/%library.path%.nupkg"
-            },
-            {
-              "Type": "String",
-              "Name": "destinationDirectoryName",
-              "Value": "%pathToSave%/%library.path%"
-            },
-            {
-              "Type": "Boolean",
-              "Name": "overwrite",
-              "Value": true
-            }
-          ],
-          "ReturnValues": null
-        },
-        "Text": "unzip \"%pathToSave%/%library.path%.nupkg\", to %pathToSave%/%library.path%, overwrite\n    on error message 'process cannot access', ignore",
-        "Reload": false,
-        "LlmRequest": {
-          "temperature": 0.0,
-          "top_p": 0.0,
-          "frequencyPenalty": 0.0,
-          "presencePenalty": 0.0,
-          "maxLength": 4000,
-          "llmResponseType": "json",
-          "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-          "model": "gpt-4o",
-          "promptMessage": [
-            {
-              "role": "system",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-                },
-                {
-                  "type": "text",
-                  "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-                }
-              ]
-            },
-            {
-              "role": "assistant",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "## functions available starts ##\r\nCompressFile(String filePath, String saveToPath, Int32? compressionLevel = 0, Boolean? overwrite = False)  : void // compressionLevel: 0=Optimal, 1=Fastest, 2=No compression, 3=Smallest size(highest compression). \nCompressFiles(String[] filePaths, String saveToPath, Int32? compressionLevel = 0, Boolean? overwrite = False)  : void\nDecompressFile(String sourceArchiveFileName, String destinationDirectoryName, Boolean? overwrite = False)  : void\nCompressDirectory(String sourceDirectoryName, String destinationArchiveFileName, Int32? compressionLevel = 0, Boolean? includeBaseDirectory = True, Boolean? createDestinationDirectory = True, Boolean? overwriteDestinationFile = False, String[]? excludePatterns)  : void\r\n## functions available ends ##\r\n## defined variables ##\r\npathToSave (type:object), library.path (type:object), \r\n## defined variables ##"
-                }
-              ]
-            },
-            {
-              "role": "user",
-              "content": [
-                {
-                  "type": "text",
-                  "text": "unzip \"%pathToSave%/%library.path%.nupkg\", to %pathToSave%/%library.path%, overwrite\n    on error message 'process cannot access', ignore"
-                }
-              ]
-            }
-          ],
-          "type": "PLang.Modules.GenericFunctionBuilder",
-          "caching": true,
-          "RawResponse": "```json\n{\n\t\"FunctionName\": \"DecompressFile\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"sourceArchiveFileName\",\n\t\t\t\"Value\": \"%pathToSave%/%library.path%.nupkg\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"destinationDirectoryName\",\n\t\t\t\"Value\": \"%pathToSave%/%library.path%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean\",\n\t\t\t\"Name\": \"overwrite\",\n\t\t\t\"Value\": true\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
-        },
-        "RunOnBuild": false
-      }
+      "Hash": "607fe654a1fabb80f3f877b0316a86812e7601b7f9cfb63065abd101361f7fc7",
+      "BuilderVersion": "1.0.0.0",
+      "RelativeGoalPath": "\\InstallDependencies.goal"
     }
   ],
   "SubGoals": [],
-  "Description": "The InstallDependencies goal is designed to read a dependencies file specified by \\%depsFile\\%, parse it into a JSON format stored in \\%json\\%, and filter the JSON to extract libraries into \\%libraries\\%. It then searches for a specific library, indicated by \\%libraryName\\%, within the filtered libraries. If the library is not found, the process will terminate with an error message indicating that the library could not be found. If the library is found, the goal will check if the corresponding package file exists at the specified path. If it does not exist, it will download the package from the NuGet repository using the path defined in \\%library.path\\% and save it to the specified location \\%pathToSave\\%. The goal also includes a validation step for the SHA512 signature of the downloaded package, throwing an error if the signature does not match. Finally, it unzips the downloaded package to the specified path, allowing for overwriting existing files while ignoring access errors.",
+  "Description": "The InstallDependencies goal is designed to read a dependencies file, filter for specific libraries, and download the required library package if it is not already present. It checks for the existence of the specified library and handles errors related to missing libraries and signature validation. The goal involves reading a JSON file, filtering its contents, and performing file operations based on the results of these filters.",
   "Visibility": 1,
   "GoalFileName": "InstallDependencies.goal",
   "RelativeGoalPath": "\\InstallDependencies.goal",
@@ -1065,10 +531,12 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "da54329412f29f92670b71c1c8e4135f878cdfdfa3bea84c8c605efff89311e3",
-  "IncomingVariablesRequired": [
-    "depsFile",
-    "libraryName",
-    "pathToSave"
-  ]
+  "Hash": "411ccddde1c7350e80bb3b5c1e25eb287009abe45fb75dd550a1a279313c4302",
+  "IncomingVariablesRequired": {
+    "depsFile": "The path to the dependencies file that contains library information.",
+    "libraryName": "The name of the library to search for within the dependencies file.",
+    "pathToSave": "The directory path where the downloaded library package should be saved."
+  },
+  "DataSourceName": null,
+  "IsSetup": false
 }

@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "336f33a312976e6742f70d644a71114f37719d2e25c5c97162a00b7251b46de4",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "aafdcc81a72d309c470288e9bd814683cfd6042039a33c244213e7ef8bc3d6d4",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Builder\\CheckGoals.goal"
     },
     {
@@ -143,8 +143,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "4390cf330110bdbc4acbb24c6ffcab2d01804c2e606985b5693dc8f92c22f9b6",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "ad2aa2d8720bbe915d74e5d6da1b9103381d57459b86b8fdfd194357b9e9bee5",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Builder\\CheckGoals.goal"
     },
     {
@@ -215,8 +215,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "e58dd4ee468b2d579a51588ec0d310fdedf6bfd22b13876121e29bd436ce3732",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "9af8660a588515c8df217754c1006ccd7e05df46b232690736f4279c83eeea93",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Builder\\CheckGoals.goal"
     }
   ],
@@ -232,7 +232,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "eeefacb93b9a603f276ebbcc6bf3e43a351e720b7494cbba2042d4e482972ca7",
+  "FileHash": "1882906d7230e723da62824ca5c438debf65444e016d4e33e40cd7c667297abf",
+  "Hash": "3e4a8c7b0ab5886058e7c262ec2950e9d3b02816c1ac7f6abf4f6fc889554e62",
   "IncomingVariablesRequired": {
     "parameter": "An object containing a Value property, which is used to determine the directory name to search for.",
     "file": "An object containing a Path property, which is used to construct the missing goal message.",

@@ -225,15 +225,19 @@ get apps available, compiles plang code, gets goals and steps from .goal files, 
 			return forceModuleType;
 		}
 
-		public async Task<List<string>> GetVariables(GoalStep step)
+		public async Task<List<VariableHelper.Variable>> GetVariables(GoalStep step)
 		{
+			if (step == null) return new();
+
 			var variables = variableHelper.GetVariables(step.Text);
+			return variables;
+			/*
 			List<string> list = new();
 			foreach (var variable in variables)
 			{
 				list.Add(variable.OriginalKey);
 			}
-			return list;
+			return list;*/
 		}
 		public async Task<(List<GoalStep>?, IError?)> GetSteps(string goalPath)
 		{
@@ -335,7 +339,7 @@ get apps available, compiles plang code, gets goals and steps from .goal files, 
 			var startingEngine = engine.GetContext()[ReservedKeywords.StartingEngine] as IEngine;
 			if (startingEngine == null) startingEngine = engine;
 			engine.GetContext().Remove(ReservedKeywords.IsEvent);
-
+			engine.GetEventRuntime().SetActiveEvents(new());
 
 			var result = await startingEngine.RunFromStep(absolutePrFileName);
 			return result;

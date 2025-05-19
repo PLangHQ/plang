@@ -50,6 +50,7 @@ namespace PLang.Modules.ValidateModule
 					if (!objectValue.Initiated || objectValue.Value == null || (objectValue.Type == typeof(string) && string.IsNullOrWhiteSpace(objectValue.Value?.ToString())))
 					{
 						multiError.Add(new ProgramError(variableName, goalStep, function, StatusCode: statusCode));
+						continue;
 					}
 					obj = objectValue.Value;
 				}

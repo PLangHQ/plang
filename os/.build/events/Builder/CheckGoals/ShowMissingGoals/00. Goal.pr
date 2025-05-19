@@ -16,7 +16,7 @@
       "RunOnce": false,
       "Generated": "2025-05-02T16:04:29.6932431+00:00",
       "WaitForExecution": true,
-      "LoggerLevel": "warning",
+      "LoggerLevel": null,
       "ErrorHandlers": null,
       "CacheHandler": null,
       "CancellationHandler": null,
@@ -71,8 +71,8 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "74b99d62f8b6746de92831618a930abb32f7dae4282a5ed0153e510e4c63fbea",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "f9297cf0b9b0d09d442f8a9905282cd99e8f535fa1bb281def282c3f2b2e5186",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Builder\\CheckGoals.goal"
     }
   ],
@@ -88,7 +88,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "Hash": "a2fc9c6a33abf635c3b9d43391a6fd47e74f01a81eff182654efcfcb893829f9",
+  "FileHash": "1882906d7230e723da62824ca5c438debf65444e016d4e33e40cd7c667297abf",
+  "Hash": "2b6afc221f29e5f4156c9f72cedbf8cb2fa8cecbde0f344533c457197834a551",
   "IncomingVariablesRequired": {
     "missingGoals": "A string that contains the names of the goals that are missing."
   },

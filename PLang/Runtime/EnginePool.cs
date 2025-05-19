@@ -4,6 +4,7 @@ using PLang.Interfaces;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -27,43 +28,36 @@ namespace PLang.Runtime
 
 			_factory = factory ?? throw new ArgumentNullException(nameof(factory));
 			_maxSize = maxSize;
-			_semaphore = new SemaphoreSlim(initialSize, maxSize);
+			_semaphore = new SemaphoreSlim(maxSize, maxSize);
 			
 			for (int i = 0; i < initialSize; i++)
 			{
 				var engine = _factory();
 				
 				_pool.Add(engine);
-				Interlocked.Increment(ref _currentCount);
+				//Interlocked.Increment(ref _currentCount);
 			}
 		}
 
-		public async Task<IEngine> RentAsync()
+		public async Task<IEngine> RentAsync(string name)
 		{
-			if (_semaphore.CurrentCount > 0)
+			if (_pool.TryTake(out var engine))
 			{
-				await _semaphore.WaitAsync();
-
-				if (_pool.TryTake(out var engine))
-					return engine;
-			}
-			// Create a new instance only if we haven't reached maxSize
-			if (Interlocked.Increment(ref _currentCount) <= _maxSize) {
-				var newEngine = _factory();
-				_pool.Add(newEngine);
-				return newEngine;
+				engine.Name = name;
+				return engine;
 			}
 
-			// If maxSize reached, decrement and wait for an available engine
-			Interlocked.Decrement(ref _currentCount);
-			return await RentAsync(); 
+			var newEngine = _factory();
+			newEngine.Name = name;
+			return newEngine;
 		}
 
 		public void Return(IEngine engine)
 		{
-			engine.Dispose();
 			_pool.Add(engine);
-			_semaphore.Release();
+
+		//	_semaphore.Release();
+			//Interlocked.Decrement(ref _currentCount);
 		}
 
 		public virtual void Dispose()

@@ -12,6 +12,11 @@ using System.ComponentModel;
 using System.Linq.Dynamic.Core;
 using System.Text.RegularExpressions;
 using Fizzler.Systems.HtmlAgilityPack;
+using Ganss.Xss;
+using PLang.Building.Model;
+using Sprache;
+using System.Collections.Generic;
+using System.Text;
 
 namespace PLang.Modules.FilterModule
 {
@@ -19,8 +24,10 @@ namespace PLang.Modules.FilterModule
 	public class Program : BaseProgram
 	{
 		[Description("Parses an input that is wrapped with markdown code format and return text inside those code blocks")]
-		public async Task<object> ExtractMarkdownWrapping(string[] format, string input)
+		public async Task<object?> ExtractMarkdownWrapping(string input, string[]? format = null)
 		{
+			if (string.IsNullOrEmpty(input)) return null;
+
 			string pattern = @"```(\w+)?\s*([\s\S]*?)\s*```";
 			Regex regex = new Regex(pattern, RegexOptions.Multiline);
 
@@ -33,14 +40,38 @@ namespace PLang.Modules.FilterModule
 				extractedBlocks.Add((language, code));
 			}
 
+			if (format != null) {
+				extractedBlocks = extractedBlocks.Where(p => format.Contains(p.Code)).ToList();
+			}
+			
+
 			return (extractedBlocks.Count == 1) ? extractedBlocks[0].Code : extractedBlocks;
 
+		}
+
+		[Description("Extracts all html element matches elementName, e.g. if user want to extract link, elementNames=[\"a\"]")]
+		public async Task<List<HtmlNode>?> ExtractElementsFromHtml(string html, List<string> elementNames)
+		{
+			if (string.IsNullOrEmpty(html)) return null;
+
+			HtmlDocument document = new();
+			document.LoadHtml(html);
+
+			List<HtmlNode> htmlElements = new();
+			foreach (var elementName in elementNames)
+			{
+				var elements = document.DocumentNode.Descendants(elementName);
+				htmlElements.AddRange(MapHtmlNodes(elements));
+			}
+			return htmlElements;
 		}
 
 
 		[Description("matching: contains|startwith|endwith|equals. retrieveOneItem: first|last|number (retrieveOneItem can also be a number representing the index.)")]
 		public async Task<object?> FindTextInContent(string content, string textToFind, string matching = "contains", string? retrieveOneItem = null)
 		{
+			if (string.IsNullOrEmpty(content)) return null;
+
 			string[] lines = content.Split(new char[] { '\r', '\n' });
 			IEnumerable<string> matchedLines = null;
 			
@@ -476,6 +507,8 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 		[Description("Retrieve element(s) from html by a css selector, retrieveOneItem: first|last|number (retrieveOneItem can also be a number representing the index.) ")]
 		public async Task<object?> ExtractByCssSelector(string html, string cssSelector, string? retrieveOneItem = null)
 		{
+			if (string.IsNullOrEmpty(html)) return null;
+
 			var doc = new HtmlDocument();
 			doc.LoadHtml(html);
 			
@@ -500,27 +533,53 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 
 		public async Task<object?> ExtractFromXPath(string html, string xpath)
 		{
+			if (string.IsNullOrEmpty(html)) return null;
+
 			var doc = new HtmlDocument();
 			doc.LoadHtml(html);
 
 			var node = doc.DocumentNode.SelectSingleNode(xpath);
 			return MapHtmlNode(node);
 		}
-		public record HtmlNode(string Name, string? InnerText, Dictionary<string, string> Attributes)
+
+
+		public record HtmlNode(string Name, string OuterHtml, string? InnerText, Dictionary<string, string> Attributes)
 		{
+			[JsonIgnore]
+			public Goal Goal { get; set; }
 			public override string ToString()
 			{
-				return InnerText;
+				HtmlSanitizerOptions options = Goal.GetVariable<HtmlSanitizerOptions>() ?? new();
+				var sanitizer = new HtmlSanitizer(options);
+				return sanitizer.Sanitize(OuterHtml);
 			}
-		}
 
-		private static HtmlNode? MapHtmlNode(HtmlAgilityPack.HtmlNode? node)
+			public (string?, IError?) this[string key] => Attributes.TryGetValue(key, out var value) ? (value, null) : (null, new ProgramError($"{key} not found", Key: "AttibuteNotFound"));
+		}
+		private List<HtmlNode> MapHtmlNodes(IEnumerable<HtmlAgilityPack.HtmlNode> nodes)
+		{
+			List<HtmlNode> htmlNodes = new();
+			foreach (var node in nodes)
+			{
+				var mappedNode = MapHtmlNode(node);
+				if (mappedNode == null) continue;
+
+				htmlNodes.Add(mappedNode);
+			}
+			return htmlNodes;
+		}
+		private HtmlNode? MapHtmlNode(HtmlAgilityPack.HtmlNode? node)
 		{
 			if (node == null) return null;
 
 			var attributes = node.Attributes.ToDictionary(a => a.Name, a => a.Value);
-			return new HtmlNode(node.Name, node.InnerText?.Trim(), attributes);
+			return new HtmlNode(node.Name, node.OuterHtml, node.InnerText?.Trim(), attributes)
+			{
+				Goal = goal
+			};
 		}
+
+
 
 	}
 }

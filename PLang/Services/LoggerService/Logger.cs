@@ -9,20 +9,6 @@ namespace PLang.Services.LoggerService
 		{
 			LogLevel? logLevelByUser = LogLevel.Warning;
 
-			if (AppContext.TryGetSwitch("Builder", out bool isEnabled) && isEnabled)
-			{
-				logLevelByUser = LogLevel.Information;
-			}
-			if (AppContext.GetData("StepLogLevelByUser") != null)
-			{
-				logLevelByUser = (LogLevel?)AppContext.GetData("StepLogLevelByUser");
-			}
-			if (AppContext.GetData("GoalLogLevelByUser") != null)
-			{
-				logLevelByUser = (LogLevel?)AppContext.GetData("GoalLogLevelByUser");
-
-			}
-
 			string? loggerLevel = AppContext.GetData("--logger") as string;
 			if (loggerLevel != null)
 			{
@@ -38,7 +24,11 @@ namespace PLang.Services.LoggerService
 					AppContext.SetData("--logger", null);
 					Console.WriteLine($"Could not set logger level to {loggerLevel}. You can set: Debug, Information, Warning, Error, Trace");
 				}
+			}
 
+			if (loggerLevel == null && AppContext.TryGetSwitch("Builder", out bool isEnabled) && isEnabled)
+			{
+				logLevelByUser = LogLevel.Information;
 			}
 
 			if (logLevel < logLevelByUser)

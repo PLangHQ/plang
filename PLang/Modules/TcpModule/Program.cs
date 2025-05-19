@@ -1,7 +1,7 @@
 ﻿
 /*
  * 
- * This is the way!
+ * This is the way! Should be QUIC instead of TCP
  * 
 
 OnAppStart
@@ -19,6 +19,8 @@ HandleMessage
 
 ReadFile
 - read file %file%, stream to output
+
+ExecuteSql
 - execute select %sql%, %parameters%, stream to output
 
 Client

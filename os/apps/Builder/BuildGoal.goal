@@ -66,8 +66,8 @@ BuildAction
         Generated: %Now%
     }
 - [code] incriment %position% + 1, pad left with 0, max 2 numbers, add period,
-    append %selectedModule.prFileName%, e.g. "01. %selectedModule.prFileName%"
-    write to %fileName%
+    write to %position%
+- set %selectedModule.prFileName% = "%position% %selectedModule.prFileName%"
 - create path %goal.RelativePrFolderPath%, %fileName%, write to %relativePrFileName%
 /- set %goal.GoalSteps[position].PrFileName% = %prFileName%
 /    %goal.GoalSteps[position].RelativePrFileName% = %relativePrFileName%
