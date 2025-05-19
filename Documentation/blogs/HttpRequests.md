@@ -33,11 +33,7 @@ plang exec Get
 
 It should print out the content of the response.
 
-```bash
-
-```
-
-## POST request
+You can do the save for any other http request, POST, DELETE, OPTION, HEAD, PATCH
 
 
 
