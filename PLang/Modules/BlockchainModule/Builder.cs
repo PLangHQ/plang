@@ -24,7 +24,7 @@ namespace PLang.Modules.BlockchainModule
 			this.llmServiceFactory = llmServiceFactory;
 		}
 
-		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step)
+		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, IBuilderError? previousBuildError = null)
 		{
 			
 			var moduleSettings = new ModuleSettings(settings, llmServiceFactory);
@@ -38,10 +38,10 @@ namespace PLang.Modules.BlockchainModule
 # wallet addresses #
 {JsonConvert.SerializeObject(wallets)}
 # wallet addresses #");
-			(var instruction, var buildError) = await base.Build(step);
+			(var instruction, var buildError) = await base.Build(step, previousBuildError);
 			if (buildError != null) return (null, buildError);
 
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 			var abi = gf.Parameters.FirstOrDefault(p => p.Name.ToLower() == "abi");
 			if (abi != null && abi.Value.ToString().Contains("\"inputs\"")) {
 				var obj = JsonConvert.DeserializeObject<Dictionary<string, object>>(abi.Value.ToString());
@@ -57,19 +57,19 @@ namespace PLang.Modules.BlockchainModule
 				}
 			}
 
-			if (gf.FunctionName == "SetCurrentWallet")
+			if (gf.Name == "SetCurrentWallet")
 			{
 				var wallet = wallets.FirstOrDefault(p => p.Name.ToLower() == gf.Parameters[0].Value.ToString().ToLower());
 				context.AddOrReplace(Program.CurrentWalletContextKey, wallet);
 			}
 
-			if (gf.FunctionName == "SetCurrentRpcServer")
+			if (gf.Name == "SetCurrentRpcServer")
 			{
 				var currentRpcServer = rpcServers.FirstOrDefault(p => p.Name.ToLower() == gf.Parameters[0].Value.ToString().ToLower() || p.Url.ToLower() == gf.Parameters[0].Value.ToString().ToLower());
 				context.AddOrReplace(Program.CurrentRpcServerContextKey, currentRpcServer);
 			}
 
-			if (gf.FunctionName == "SetCurrentAddress")
+			if (gf.Name == "SetCurrentAddress")
 			{
 				foreach (var wallet in wallets)
 				{

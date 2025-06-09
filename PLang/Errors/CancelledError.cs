@@ -13,9 +13,9 @@ namespace PLang.Errors
 	{
 		private Goal goal;
 		private GoalStep step;
-		private readonly GenericFunction function;
+		private readonly IGenericFunction function;
 
-		public CancelledError(Goal goal, GoalStep step, GenericFunction function)
+		public CancelledError(Goal goal, GoalStep step, IGenericFunction function)
 		{
 			this.goal = goal;
 			this.step = step;
@@ -33,9 +33,12 @@ namespace PLang.Errors
 
 		public GoalStep? Step { get => step; set { step = value; } }
 		public Goal? Goal { get => goal; set { goal = value; } }
-		public GenericFunction? GenericFunction { get => function; }
+		public IGenericFunction? Function { get => function; }
 
 		public Exception? Exception => null;
+
+		public DateTime CreatedUtc { get; init; } = DateTime.UtcNow;
+		public List<IError>? ErrorChain { get; set; }
 
 		public object ToFormat(string contentType = "text")
 		{

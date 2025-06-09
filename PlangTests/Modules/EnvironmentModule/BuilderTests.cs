@@ -22,7 +22,7 @@ namespace PLang.Modules.EnvironmentModule.Tests
 			LoadOpenAI();
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.EnvironmentModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -32,30 +32,23 @@ namespace PLang.Modules.EnvironmentModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.EnvironmentModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
-		public GoalStep GetStep(string text)
-		{
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
-			step.ModuleType = "PLang.Modules.EnvironmentModule";
-			return step;
-		}
-
+		
 		[DataTestMethod]
 		[DataRow("set language to icelandic")]
 		public async Task SetCultureLanguageCode_Test(string text)
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("SetCultureLanguageCode", gf.FunctionName);
+			Assert.AreEqual("SetCultureLanguageCode", gf.Name);
 			Assert.AreEqual("code", gf.Parameters[0].Name);
 			Assert.AreEqual("is-IS", gf.Parameters[0].Value);
 		}
@@ -66,14 +59,14 @@ namespace PLang.Modules.EnvironmentModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("SetCultureUILanguageCode", gf.FunctionName);
+			Assert.AreEqual("SetCultureUILanguageCode", gf.Name);
 			Assert.AreEqual("code", gf.Parameters[0].Name);
 			Assert.AreEqual("en-GB", gf.Parameters[0].Value);
 		}

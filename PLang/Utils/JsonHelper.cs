@@ -10,6 +10,7 @@ using System.Text.Json;
 using Newtonsoft.Json.Linq;
 using NJsonSchema;
 using PLang.Errors;
+using PLang.Modules.DbModule;
 
 namespace PLang.Utils
 {
@@ -44,7 +45,8 @@ namespace PLang.Utils
 			parsedObject = null;
 
 			if (obj == null) return false;
-			if (obj.GetType().Name.StartsWith("<>f__Anonymous") || obj.GetType().Name.Equals("DapperRow")) return false;
+			if (obj is Table || obj is Row) return false;
+			if (obj.GetType().Name.StartsWith("<>f__Anonymous")) return false;
 
 			string content = obj.ToString()!;
 

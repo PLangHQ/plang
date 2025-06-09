@@ -3,6 +3,7 @@ using LightInject;
 using Microsoft.Extensions.Logging;
 using Nethereum.Contracts.QueryHandlers.MultiCall;
 using Newtonsoft.Json;
+using Org.BouncyCastle.Asn1.Cmp;
 using PLang.Building.Model;
 using PLang.Container;
 using PLang.Errors;
@@ -14,6 +15,7 @@ using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Modules.DbModule;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Services.LlmService;
@@ -22,6 +24,7 @@ using PLang.Utils;
 using System.Diagnostics;
 using System.Net;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Security.Cryptography;
 using static PLang.Modules.BaseBuilder;
 using Instruction = PLang.Building.Model.Instruction;
@@ -39,7 +42,7 @@ namespace PLang.Modules
 		protected PLangAppContext context;
 		protected VariableHelper variableHelper;
 		protected ITypeHelper typeHelper;
-		protected GenericFunction function;
+		protected IGenericFunction function;
 		private ILlmServiceFactory llmServiceFactory;
 		private ILogger logger;
 		private IServiceContainer container;
@@ -87,6 +90,7 @@ namespace PLang.Modules
 			this.goal = goal;
 			this.goalStep = step;
 			this.instruction = instruction;
+			this.memoryStack.Goal = goal;
 
 			variableHelper = container.GetInstance<VariableHelper>();
 			this.typeHelper = container.GetInstance<ITypeHelper>();
@@ -100,13 +104,10 @@ namespace PLang.Modules
 
 		public virtual async Task<(object? ReturnValue, IError? Error)> Run()
 		{
-			var functions = instruction.GetFunctions();
-			foreach (var function in functions)
-			{
+			
 				// no support for multiple functions, return on first
-				return await RunFunction(function);
-			}
-			return (null, new ProgramError("Nothing found to run", goalStep, function, FixSuggestion: "Try rebuilding your code"));
+			return await RunFunction(instruction.Function);
+			
 		}
 
 		private T GetModule<T>() where T : BaseProgram
@@ -119,8 +120,11 @@ namespace PLang.Modules
 			this.goalStep = step;
 			this.goal = step.Goal;
 		}
-
-		public async Task<(object? ReturnValue, IError? Error)> RunFunction(GenericFunction function)
+		public void SetGoal(Goal goal)
+		{
+			this.goal = goal;
+		}
+		public async Task<(object? ReturnValue, IError? Error)> RunFunction(IGenericFunction function)
 		{
 
 			Dictionary<string, object?>? parameterValues = null;
@@ -130,7 +134,7 @@ namespace PLang.Modules
 				MethodInfo? method = await methodHelper.GetMethod(this, function);
 				if (method == null)
 				{
-					return (null, new StepError($"Could not load method {function.FunctionName} to run", goalStep, "MethodNotFound", 500));
+					return (null, new StepError($"Could not load method {function.Name} to run", goalStep, "MethodNotFound", 500));
 				}
 
 				logger.LogDebug("Method:{0}.{1}({2})", goalStep.ModuleType, method.Name, method.GetParameters());
@@ -165,11 +169,11 @@ namespace PLang.Modules
 							var functionParameter = function.Parameters.FirstOrDefault(p => p.Name == parameter.Name);
 							if (functionParameter != null)
 							{
-								return (null, new InvalidParameterError(function.FunctionName, $"{functionParameter.Value} is not corrent value to call {function.FunctionName}. It should be type of {type}. Is the step loading {functionParameter.Value} correct?", goalStep, FixSuggestion: $"Check if the step that loads {functionParameter.Value} is correctly mapped."));
+								return (null, new InvalidParameterError(function.Name, $"{functionParameter.Value} is not corrent value to call {function.Name}. It should be type of {type}. Is the step loading {functionParameter.Value} correct?", goalStep, FixSuggestion: $"Check if the step that loads {functionParameter.Value} is correctly mapped."));
 							}
 						}
 					}
-					return (null, new InvalidParameterError(function.FunctionName, ex.Message, goalStep, FixSuggestion: "Step is likely built on an older verion of plang. Try to rebuild code"));
+					return (null, new InvalidParameterError(function.Name, ex.Message, goalStep, FixSuggestion: "Step is likely built on an older verion of plang. Try to rebuild code"));
 				}
 
 				if (task == null)
@@ -229,37 +233,16 @@ namespace PLang.Modules
 				}
 
 				(object? result, var error, var properties) = GetValuesFromTask(task);
-
-				if (error != null)
-				{
-					if (error is AskUserError aue)
-					{
-						(var isHandled, var handlerError) = await HandleAskUser(aue);
-
-						if (isHandled) return await RunFunction(function);
-
-						return (result, ErrorHelper.GetMultipleError(error, handlerError));
-					}
-					if (error.Step == null)
-					{
-						error.Step = goalStep;
-					}
-					if (error is ProgramError pe && pe.GenericFunction is null)
-					{
-						pe.GenericFunction = function;
-					}
-
-					if (error.Goal == null)
-					{
-						error.Goal = goal;
-					}
-					return (result, error);
-				}
+				(result, error) = await HandleError(result, error);
 
 				SetReturnValue(function, result, properties);
+				
+				if (error == null)
+				{
+					await SetCachedItem(result);
+				}
 
-				await SetCachedItem(result);
-				return (result, null);
+				return (result, error);
 
 			}
 			catch (Exception ex)
@@ -284,6 +267,35 @@ namespace PLang.Modules
 			}
 		}
 
+		private async Task<(object? ReturnValue, IError? error)> HandleError(object? result, IError? error)
+		{
+			if (error == null) return (result, null);
+
+			if (error.Goal == null) error.Goal = goal;
+			if (error.Step == null)	error.Step = goalStep;
+			if (error is ProgramError pe && pe.GenericFunction is null)	pe.GenericFunction = function;
+			
+			if (error is AskUserError aue)
+			{
+				(var isHandled, var handlerError) = await HandleAskUser(aue);
+
+				if (isHandled) return await RunFunction(function);
+
+				return (result, ErrorHelper.GetMultipleError(error, handlerError));
+			}
+			if (function.ReturnValues != null) {
+				var errorReturnValue = function.ReturnValues.FirstOrDefault(p => p.VariableName.Replace("%", "").Equals("!error"));
+				if (errorReturnValue != null)
+				{
+					result = error;
+					error = null;
+				}
+			}
+
+			return (result, error);
+
+		}
+
 		private async Task<(bool, IError?)> HandleAskUser(AskUserError aue)
 		{
 			(var isHandled, var handlerError) = await askUserHandlerFactory.CreateHandler().Handle(aue);
@@ -305,7 +317,7 @@ namespace PLang.Modules
 			return (null, ErrorHelper.GetMultipleError(askUserFileAccess, handlerError));
 		}
 
-		private (object? returnValue, IError? error, IProperties? Properties) GetValuesFromTask(Task task)
+		private (object? returnValue, IError? error, Properties? Properties) GetValuesFromTask(Task task)
 		{
 
 			Type taskType = task.GetType();
@@ -317,22 +329,15 @@ namespace PLang.Modules
 				var resultTask = task as Task<IError?>;
 				return (null, resultTask?.Result, null);
 			}
-			if (returnArguments == typeof(IProperties))
+			if (returnArguments == typeof(Properties))
 			{
-				var resultTask = task as Task<IProperties?>;
+				var resultTask = task as Task<Properties?>;
 				return (null, null, resultTask?.Result);
 			}
-			/*
-			if (!returnArguments.FullName!.StartsWith("System.ValueTuple"))
-			{
-				var resultProperty = taskType.GetProperty("Result");
-				return (resultProperty.GetValue(task), null, null);
-
-			}*/
 
 			object? value = null;
 			IError? error = null;
-			IProperties? properties = null;
+			Properties? properties = null;
 
 			var resultProperty = taskType.GetProperty("Result");
 			if (resultProperty == null)
@@ -347,7 +352,7 @@ namespace PLang.Modules
 				return (null, null, null);
 			}
 			if (rawResult is IError resultError) return (null, resultError, null);
-			if (rawResult is IProperties resultProperties) return (null, null, resultProperties);
+			if (rawResult is Properties resultProperties) return (null, null, resultProperties);
 
 			var result = (dynamic?)rawResult;
 			if (!result?.GetType().ToString().Contains("ValueTuple"))
@@ -356,9 +361,9 @@ namespace PLang.Modules
 				{
 					error = result as IError;
 				}
-				else if (returnArguments is IProperties)
+				else if (returnArguments is Properties)
 				{
-					properties = result as IProperties;
+					properties = result as Properties;
 				}
 				else
 				{
@@ -386,9 +391,9 @@ namespace PLang.Modules
 					{
 						error = fieldValue as IError;
 					}
-					else if (field.FieldType == typeof(IProperties))
+					else if (field.FieldType == typeof(Properties))
 					{
-						properties = fieldValue as IProperties;
+						properties = fieldValue as Properties;
 					}
 					else
 					{
@@ -398,95 +403,94 @@ namespace PLang.Modules
 				}
 			}
 			return (value, error, properties);
-
-			/*
-			if (fields[0] == typeof(IError))
-			{
-				// It's a Task<Error?>
-				var resultTask = task as Task<IError?>;
-				return (null, resultTask?.Result, null);
-			}
-			else if (fields.Count() > 1)
-			{
-				try
-				{
-					var resultProperty = taskType.GetProperty("Result");
-					
-					var result = (dynamic?)resultProperty.GetValue(task);
-					
-
-					
-					if (fields.Count() == 3)
-					{
-						return (result.Item1, result.Item2 as IError, result.Item3 as IProperties);
-					}
-					return (result.Item1, result.Item2 as IError, null);
-				}
-				catch (TargetInvocationException ex)
-				{
-					return (null, new ExceptionError(ex.InnerException ?? ex), null);
-				}
-			}
-			else
-			{
-				var resultTask = task as Task<object?>;
-				return (resultTask, null, null);
-			}*/
-
 		}
 
-		private void SetReturnValue(GenericFunction function, object? result, IProperties properties)
+		private void SetReturnValue(IGenericFunction function, object? result, Properties? properties)
 		{
-			if (function.ReturnValues == null || function.ReturnValues.Count == 0) return;
-
+			//if (function.ReturnValues == null || function.ReturnValues.Count == 0) return;
+			var returnValues = function.ReturnValues ?? new();
 
 			if (result == null)
 			{
-				foreach (var returnValue in function.ReturnValues)
+				foreach (var returnValue in returnValues)
 				{
-					memoryStack.Put(returnValue.VariableName, null, properties: properties);
+					memoryStack.Put(returnValue.VariableName, null, properties: properties, goalStep: goalStep);
 				}
 			}
-			else if (result is IReturnDictionary || result.GetType().Name == "DapperRow")
+			else if (result is List<ObjectValue> objectValues)
 			{
-				var dict = (IDictionary<string, object>)result;
-				if (result is IReturnDictionary rd)
+				if (returnValues.Count == 0)
 				{
-					int idx = 0;
-					foreach (var key in dict.Keys)
+					foreach (var objectValue in objectValues)
 					{
-						var variableName = function.ReturnValues.FirstOrDefault(p => p.VariableName == key.Replace("%", ""))?.VariableName;
-						if (variableName != null)
-						{
-							memoryStack.Put(variableName, dict[key], properties: properties);
-						}
-						else if (idx < function.ReturnValues.Count)
-						{
-							memoryStack.Put(function.ReturnValues[idx].VariableName, dict[key], properties: properties);
-						}
-						idx++;
+						if (properties != null) objectValue.Properties = properties;
+						memoryStack.Put(objectValue, goalStep);
 					}
 				}
 				else
 				{
-					foreach (var returnValue in function.ReturnValues)
+					if (returnValues.Count == 1 && objectValues.Count == 1)
 					{
-						var key = dict.Keys.FirstOrDefault(p => p.Replace("%", "").ToLower() == returnValue.VariableName.Replace("%", "").ToLower());
-						if (key == null)
+						var objectValue = objectValues[0];
+						if (properties != null) objectValue.Properties = properties;
+						memoryStack.Put(objectValue, goalStep);
+					}
+					else
+					{
+						foreach (var returnValue in returnValues)
 						{
-							memoryStack.Put(returnValue.VariableName, dict, properties: properties);
-							continue;
+							var objectValue = new ObjectValue(returnValue.VariableName, objectValues);
+							memoryStack.Put(objectValue, goalStep);
 						}
-
-						memoryStack.Put(returnValue.VariableName, dict[key], properties: properties);
 					}
 				}
 			}
+			else if (result is ObjectValue objectValue)
+			{
+				if (returnValues.Count == 0)
+				{
+					if (properties != null) objectValue.Properties = properties;
+					memoryStack.Put(objectValue, goalStep);
+				}
+				else
+				{
+					foreach (var returnValue in returnValues)
+					{
+						objectValue.Name = returnValue.VariableName;
+						memoryStack.Put(objectValue, goalStep);
+					}
+
+				}
+			}
+			else if (result is Table table)
+			{
+				var dict = (IDictionary<string, object>)result;
+
+				if (returnValues.Count == 1)
+				{
+					memoryStack.Put(returnValues[0].VariableName, table, properties: properties, goalStep: goalStep);
+				}
+				else
+				{
+					foreach (var returnValue in returnValues)
+					{
+						var key = table.ColumnNames.FirstOrDefault(p => p.Replace("%", "").ToLower() == returnValue.VariableName.Replace("%", "").ToLower());
+						if (key == null)
+						{
+							memoryStack.Put(returnValue.VariableName, table, properties: properties, goalStep: goalStep);
+							continue;
+						}
+
+						memoryStack.Put(returnValue.VariableName, table[0][key], properties: properties, goalStep: goalStep);
+					}
+				}
+
+			}
 			else
 			{
-				foreach (var returnValue in function.ReturnValues)
+				foreach (var returnValue in returnValues)
 				{
-					memoryStack.Put(returnValue.VariableName, result, properties: properties);
+					memoryStack.Put(returnValue.VariableName, result, properties: properties, goalStep: goalStep);
 				}
 			}
 		}
@@ -542,7 +546,7 @@ namespace PLang.Modules
 			}
 		}
 
-		private async Task<bool> LoadCached(MethodInfo method, GenericFunction function)
+		private async Task<bool> LoadCached(MethodInfo method, IGenericFunction function)
 		{
 			if (goalStep?.CacheHandler == null || goalStep.CacheHandler?.CacheKey == null) return false;
 
@@ -594,7 +598,7 @@ namespace PLang.Modules
 					foreach (var returnValue in function.ReturnValues)
 					{
 						logger.LogDebug($"Cache was hit for {goalStep.CacheHandler.CacheKey}");
-						memoryStack.Put(returnValue.VariableName, data);
+						memoryStack.Put(returnValue.VariableName, data, goalStep: goalStep);
 					}
 					return true;
 
@@ -607,7 +611,7 @@ namespace PLang.Modules
 						foreach (var returnValue in function.ReturnValues)
 						{
 							logger.LogDebug($"Cache was hit for {goalStep.CacheHandler.CacheKey}");
-							memoryStack.Put(returnValue.VariableName, obj);
+							memoryStack.Put(returnValue.VariableName, obj, goalStep: goalStep);
 						}
 						return true;
 					}
@@ -663,7 +667,7 @@ namespace PLang.Modules
 		}
 
 
-		protected string GetPath(string path)
+		protected string GetPath(string? path)
 		{
 			return PathHelper.GetPath(path, fileSystem, this.Goal);
 		}
@@ -697,7 +701,7 @@ Be Concise";
 {step.Text}
 ## plang source code ##
 ## function info ##
-{typeHelper.GetMethodsAsString(this.GetType(), function.FunctionName)}
+{typeHelper.GetMethodsAsString(this.GetType(), function.Name)}
 ## function info ##
 " + additionalAssistant.info;
 
@@ -735,27 +739,54 @@ Be Concise";
 
 		public T GetProgramModule<T>() where T : BaseProgram
 		{
-			var program = container.GetInstance<T>(typeof(T).FullName);
+			var program = container.GetInstance<T>();
 			program.Init(container, goal, goalStep, instruction, HttpListenerContext);
 			return program;
 		}
-
+		/*
 		public T? GetVariable<T>(string? variableName = null) where T : class
 		{
+			if (goalStep != null)
+			{
+				var obj = goalStep.GetVariable<T>(variableName);
+				if (obj != null) return obj;
+			}
+
 			if (goal == null) return null;
 			return goal.GetVariable<T>(variableName);
 		}
 
+		public List<T>? GetVariables<T>()
+		{
+			if (goalStep != null)
+			{
+				var list = goalStep.GetVariables().Where(p => p.GetType() == typeof(T)).Select(p => (T)p.Value).ToList();
+				if (list != null && list.Count > 0) return list;
+			}
+			return goal.GetVariables().Where(p => p.GetType() == typeof(T)).Select(p => (T) p.Value).ToList();
+		}
+
 		public void RemoveVariable<T>(string? variableName = null) where T : class
 		{
-			if (goal == null) return;
+			if (goalStep.RemoveVariable<T>(variableName)) return;
 
 			goal.RemoveVariable<T>(variableName);
+			
+		}
+
+		public void RemoveVariables<T>()
+		{
+			var variables = goal.GetVariables().Where(p => p.GetType() == typeof(T));
+			foreach (var variable in variables)
+			{
+				goal.RemoveVariable(variable.VariableName);
+			}
+
 		}
 
 		public void AddVariable<T>(T? value, Func<Task>? func = null, string? variableName = null) {
 			if (goal == null) return;	
 			goal.AddVariable<T>(value, func, variableName);
-		}
+		}*/
 	}
 }

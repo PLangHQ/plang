@@ -21,7 +21,7 @@ namespace PLang.Modules.HttpModule
 	{
 		private new readonly VariableHelper variableHelper = variableHelper;
 
-		public async Task<(string Path, IError? Error, IProperties? Properties)> DownloadFile(string url, string pathToSaveTo,
+		public async Task<(string Path, IError? Error, Properties? Properties)> DownloadFile(string url, string pathToSaveTo,
 			bool overwriteFile = false,
 			Dictionary<string, object>? headers = null, bool createPathToSaveTo = true, bool doNotDownloadIfFileExists = false)
 		{
@@ -82,37 +82,37 @@ namespace PLang.Modules.HttpModule
 				}
 			}
 		}
-		public async Task<(object? Data, IError? Error, IProperties Properties)> Post(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<(object? Data, IError? Error, Properties Properties)> Post(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "POST", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
-		public async Task<(object? Data, IError? Error, IProperties Properties)> Patch(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<(object? Data, IError? Error, Properties Properties)> Patch(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "PATCH", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
-		public async Task<(object? Data, IError? Error, IProperties Properties)> Get(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<(object? Data, IError? Error, Properties Properties)> Get(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "GET", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
-		public async Task<(object? Data, IError? Error, IProperties Properties)> Option(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<(object? Data, IError? Error, Properties Properties)> Option(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "OPTION", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
-		public async Task<(object? Data, IError? Error, IProperties Properties)> Head(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<(object? Data, IError? Error, Properties Properties)> Head(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "HEAD", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
-		public async Task<(object? Data, IError? Error, IProperties Properties)> Put(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<(object? Data, IError? Error, Properties Properties)> Put(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "PUT", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
-		public async Task<(object? Data, IError? Error, IProperties Properties)> Delete(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
+		public async Task<(object? Data, IError? Error, Properties Properties)> Delete(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 			return await Request(url, "DELETE", data, doNotSignRequest, headers, encoding, contentType, timeoutInSeconds);
 		}
 
 		[Description("Send binary file to server. Make sure to set correct headers on correct header variable, requestHeaders or contentHeader")]
-		public async Task<(object? Data, IError? Error, IProperties Properties)> SendBinaryOfFile(string url, string filePath, string httpMethod = "POST",
+		public async Task<(object? Data, IError? Error, Properties Properties)> SendBinaryOfFile(string url, string filePath, string httpMethod = "POST",
 			Dictionary<string, object>? requestHeaders = null, Dictionary<string, object>? contentHeaders = null,
 			string encoding = "utf-8", int timeoutInSeconds = 30)
 		{
@@ -175,7 +175,7 @@ namespace PLang.Modules.HttpModule
 		}
 
 		[Description("Post a FileStream to url. When a variable is defined with @ sign, it defines that it should be a FileStream. data may contain something like file=@%fileName%;type=%fileType%, then keep as one value for the file parameter. The function will parse the file and type")]
-		public async Task<(object? Data, IError? Error, IProperties? Properties)> PostMultipartFormData(string url, object data, string httpMethod = "POST",
+		public async Task<(object? Data, IError? Error, Properties? Properties)> PostMultipartFormData(string url, object data, string httpMethod = "POST",
 			bool doNotSignRequest = false, Dictionary<string, object>? headers = null,
 			string encoding = "utf-8", int timeoutInSeconds = 30)
 		{
@@ -338,7 +338,7 @@ namespace PLang.Modules.HttpModule
 			return (mediaType.Contains("application/xml") || mediaType.Contains("text/xml") || mediaType.Contains("application/rss+xml"));
 		}
 
-		public virtual async Task<(object? Data, IError? Error, IProperties Properties)> Request(string url, string method, object? data = null, bool doNotSignRequest = false,
+		public virtual async Task<(object? Data, IError? Error, Properties Properties)> Request(string url, string method, object? data = null, bool doNotSignRequest = false,
 			Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{
 
@@ -390,7 +390,7 @@ namespace PLang.Modules.HttpModule
 			}
 
 			httpClient.Timeout = new TimeSpan(0, 0, timeoutInSeconds);
-			IProperties? properties = null;
+			Properties? properties = null;
 
 			var task = httpClient.SendAsync(request);
 			try
@@ -539,7 +539,7 @@ namespace PLang.Modules.HttpModule
 			}
 			return headerDict;
 		}
-		private static IProperties GetHttpResponse(HttpResponseMessage response)
+		private static Properties GetHttpResponse(HttpResponseMessage response)
 		{
 			var httpResponse = new HttpResponse()
 			{
@@ -552,7 +552,7 @@ namespace PLang.Modules.HttpModule
 			httpResponse.ContentHeaders = GetHeadersObject(response.Content.Headers);
 
 			Properties properties = new();
-			properties.Add("Response", httpResponse);
+			properties.Add(new Runtime.ObjectValue("Response", httpResponse));
 			return properties;
 		}
 

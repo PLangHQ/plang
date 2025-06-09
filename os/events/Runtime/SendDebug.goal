@@ -3,34 +3,34 @@ SendDebug
 - post http://localhost:%plang.debugPort%/ 
     data: { "line":"%!CallingStep.LineNumber%", "AbsolutePath":"%!CallingGoal.AbsoluteGoalPath%" }
     timeout 30 min
-    write to %!DebugReponse%
-- if %!DebugReponse.continue%, call SendDebugInfo
+    write to %!DebugResponse%
+- if %!DebugResponse.continue%, call SendDebugInfo
 
 SendDebugInfo
 - post http://localhost:%plang.debugPort%/ 
     data: {
         "!MemoryStack":"%!memorystack%",
         "!Context": "%!context%"
-        "AbsolutePath":"%!CallingGoal.AbsoluteGoalPath%", 
-        "!Goal":"%!CallingGoal%", 
-        "!Step":"%!CallingStep%",
+        "AbsolutePath":"%!Event.Goal.AbsoluteGoalPath%", 
+        "!Goal":"%!Event.Goal%", 
+        "!Step":"%!Event.GoalStep%",
         "!Event":"%!Event%",
         "!IsHttpRequest":"%!IsHttpRequest%",
         "!StepIndex": %!StepIndex%,
         "!Error":"%!error%",
-        "!GoalVariables":"%!CallingGoal.GetVariables()%"
+        "!GoalVariables":"%!Event.Goal.GetVariables()%"
         }
     dont sign
     timeout 30 min
     on error 'No connection could', call WriteToConsole
     on error, call WriteOutError
-    write to %!DebugReponse%
-- if %!DebugReponse.csharpDebugger% then
+    write to %!DebugResponse%
+- if %!DebugResponse.csharpDebugger% then
     - log warning 'Starting C# debugger'
     - [plang] start csharp debugger
-- if %!DebugReponse.prFileName% is not empty then
-    - log warning 'Running from step %!DebugReponse.prFileName%'
-    - [plang] run from step %!DebugReponse.prFileName%
+- if %!DebugResponse.prFileName% is not empty then
+    - log warning 'Running from step %!DebugResponse.prFileName%'
+    - [plang] run from step %!DebugResponse.prFileName%
 
 WriteToConsole
 - logger warning 'Could not connect to IDE for debugging'

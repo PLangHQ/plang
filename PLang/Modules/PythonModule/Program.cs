@@ -160,7 +160,7 @@ namespace PLang.Modules.PythonModule
 							if (key != null && variablesToExtractFromPythonScript.FirstOrDefault(p => p == key) != null)
 							{
 								var value = ConvertValue(item[1]);
-								memoryStack.Put(key, value);
+								memoryStack.Put(key, value, goalStep: goalStep);
 							}
 						}
 
@@ -193,11 +193,11 @@ namespace PLang.Modules.PythonModule
 					{
 						if (stdOutVariableName != null)
 						{
-							memoryStack.Put(stdOutVariableName, capturedStdout);
+							memoryStack.Put(stdOutVariableName, capturedStdout, goalStep: goalStep);
 						}
 						if (stdErrorVariableName != null)
 						{
-							memoryStack.Put(stdErrorVariableName, capturedStderr);
+							memoryStack.Put(stdErrorVariableName, capturedStderr, goalStep: goalStep);
 						}
 
 						sys.stdout = sys.__stdout__;

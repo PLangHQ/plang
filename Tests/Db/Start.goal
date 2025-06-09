@@ -5,13 +5,15 @@ Start
 - select * from items, write to %items%
 - write out %items%
 - begin transaction
-- Insert into tasks, %description%, %due_date%
+- Insert into tasks, %description%, %due_date%, write to %id%
+- select * from tasks where %id%, write %task%
 - Insert into tasks, description='This is a desc', due_date=%Now+10days%, write to %id%
 - select * from tasks, write to %tasks%
 - go through %tasks%, call !PrintOut
 - update tasks, set description='Updated first task' where id=%tasks[1].id%
 - update tasks set description='Hello PLang world'  where id=%id%
 - select * from tasks, write to %tasks%
+- select * from tasks where %id%, return 1, %task%
 - go through %tasks%, call !PrintOut
 - delete from  table tasks
 - end transaction

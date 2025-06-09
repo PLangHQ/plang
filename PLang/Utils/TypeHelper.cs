@@ -10,6 +10,7 @@ using System.Data;
 using System.Numerics;
 using System.Reflection;
 using Websocket.Client.Logging;
+using static PLang.Modules.DbModule.Program;
 
 namespace PLang.Utils
 {
@@ -26,6 +27,7 @@ namespace PLang.Utils
 		string GetMethodNamesAsString(Type type, string? methodName = null);
 		List<Type> GetTypesByType(Type type);
 		(List<MethodDescription>?, IBuilderError?) GetMethodDescriptions(Type type, string? methodName = null);
+		Task Run(string @namespace, string @class, string method, Dictionary<string, object?> parameters);
 	}
 
 	public class TypeHelper : ITypeHelper
@@ -297,7 +299,7 @@ namespace PLang.Utils
 			return string.Join("", methodDescs);
 		}
 
-		public string GetModulesAsString(List<string>? excludedModules = null)
+		public string GetModulesAsString(List<string> excludedModules)
 		{
 			string strModules = "[";
 			foreach (var module in runtimeModules)
@@ -363,7 +365,7 @@ namespace PLang.Utils
 		{
 			ConstructorInfo constructor = type.GetConstructors().First();
 			var json = "{";
-			foreach (ParameterInfo parameter in constructor.GetParameters())
+			foreach (var parameter in constructor.GetParameters())
 			{
 				string value = "";
 				if (parameter.HasDefaultValue)
@@ -387,7 +389,7 @@ namespace PLang.Utils
 		}
 
 
-		public static string GetJsonSchema(Type type)
+		public static string GetJsonSchema(Type type, bool ignoreInstructed = true)
 		{
 			var json = (type.IsArray || type == typeof(List<>)) ? "[\n" : "{\n";
 
@@ -397,6 +399,8 @@ namespace PLang.Utils
 			foreach (var prop in type.GetProperties())
 			{
 				if (prop.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "JsonIgnoreAttribute") != null) continue;
+				if (ignoreInstructed && prop.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "IgnoreWhenInstructedAttribute") != null) continue;
+				if (prop.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "LlmIgnoreAttribute") != null) continue;
 
 				var propName = "\t\"" + prop.Name + "\"";
 				if (prop.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "NullableAttribute") != null)
@@ -492,6 +496,12 @@ namespace PLang.Utils
 			if (!module.EndsWith(".Builder")) module += ".Builder";
 			return builderModules.FirstOrDefault(p => p.FullName == module);
 		}
+		public async Task Run(string @namespace, string @class, string method, Dictionary<string, object?>? Parameters)
+		{
+			
+			//InvokeMethoed(GetProgramInstance(), @namespace, @class, method, Parameters);
+		}
+
 
 		public Type? GetRuntimeType(string? module)
 		{
@@ -683,7 +693,7 @@ namespace PLang.Utils
 			return typeToUseString ?? "void";
 		}
 
-		public static object? GetParameterInfoDefaultValue(ParameterInfo parameterInfo)
+		public static object? GetParameterInfoDefaultValue(System.Reflection.ParameterInfo parameterInfo)
 		{
 			if (parameterInfo.HasDefaultValue) return parameterInfo.DefaultValue;
 
@@ -706,13 +716,15 @@ namespace PLang.Utils
 			return null;
 		}
 
-		private static (List<IPropertyDescription>? ParameterDescriptions, IBuilderError? Error) GetParameterDescriptions(ParameterInfo[] parameters)
+		private static (List<IPropertyDescription>? ParameterDescriptions, IBuilderError? Error) GetParameterDescriptions(System.Reflection.ParameterInfo[] parameters)
 		{
 			List<IPropertyDescription> parametersDescriptions = new();
 			foreach (var parameterInfo in parameters)
 			{
 				if (parameterInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "JsonIgnoreAttribute") !=
 					null) continue;
+				if (parameterInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "IgnoreWhenInstructedAttribute") != null) continue;
+				if (parameterInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "LlmIgnoreAttribute") != null) continue;
 
 				if (string.IsNullOrWhiteSpace(parameterInfo.Name))
 				{
@@ -725,7 +737,8 @@ namespace PLang.Utils
 				}*/
 
 				object? defaultValue = GetParameterInfoDefaultValue(parameterInfo);
-
+				
+				bool isRequired = parameterInfo.GetCustomAttribute(typeof(System.Runtime.InteropServices.OptionalAttribute)) == null;
 				IPropertyDescription pd;
 				if (IsConsideredPrimitive(parameterInfo.ParameterType))
 				{
@@ -733,7 +746,8 @@ namespace PLang.Utils
 					{
 						Type = parameterInfo.ParameterType.ToString(),
 						Name = parameterInfo.Name,
-						DefaultValue = defaultValue
+						DefaultValue = defaultValue,
+						IsRequired = isRequired
 					};
 				}
 				else if (parameterInfo.ParameterType.IsEnum)
@@ -745,7 +759,8 @@ namespace PLang.Utils
 						Type = parameterInfo.ParameterType.ToString(),
 						Name = parameterInfo.Name,
 						AvailableValues = string.Join("|", enums),
-						DefaultValue = defaultEnum
+						DefaultValue = defaultEnum,
+						IsRequired = isRequired
 					};
 				}
 				else
@@ -772,7 +787,8 @@ namespace PLang.Utils
 					{
 						Type = parameterInfo.ParameterType.ToString(),
 						Name = parameterInfo.Name,
-						TypeProperties = GetPropertyInfos(item.GetProperties(), instance)
+						TypeProperties = GetPropertyInfos(item.GetProperties(), instance, item),
+						IsRequired = isRequired
 					};
 				}
 
@@ -814,8 +830,13 @@ namespace PLang.Utils
 			return (parametersDescriptions, null);
 		}
 
-		private static List<IPropertyDescription>? GetPropertyInfos(PropertyInfo[] properties, object? instance)
+		private static List<IPropertyDescription>? GetPropertyInfos(PropertyInfo[] properties, object? instance, Type item, int depth = 0)
 		{
+			if (depth == 10)
+			{
+				return null;
+			}
+
 			List<IPropertyDescription> parameterDescriptions = new();
 			foreach (var propertyInfo in properties)
 			{
@@ -823,13 +844,15 @@ namespace PLang.Utils
 
 				if (!propertyInfo.CanWrite || propertyInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "JsonIgnoreAttribute") !=
 					null) continue;
+				if (propertyInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "IgnoreWhenInstructedAttribute") != null) continue;
+				if (propertyInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "LlmIgnoreAttribute") != null) continue;
 
 				var propertyType = propertyInfo.PropertyType;
 				if (propertyInfo.PropertyType.Name.StartsWith("Nullable`1"))
 				{
 					propertyType = propertyInfo.PropertyType.GenericTypeArguments[0];
 				}
-
+				bool isRequired = propertyInfo.GetCustomAttribute(typeof(System.Runtime.InteropServices.OptionalAttribute)) == null;
 				object? defaultValue = null;
 				if (instance != null)
 				{
@@ -850,7 +873,8 @@ namespace PLang.Utils
 					{
 						Type = propertyInfo.PropertyType.ToString(),
 						Name = propertyInfo.Name,
-						DefaultValue = defaultValue
+						DefaultValue = defaultValue,
+						IsRequired = isRequired
 					};
 				}
 				else if (propertyType.IsEnum)
@@ -862,7 +886,8 @@ namespace PLang.Utils
 						Type = propertyInfo.PropertyType.ToString(),
 						Name = propertyInfo.Name,
 						AvailableValues = string.Join("|", enums),
-						DefaultValue = defaultEnum
+						DefaultValue = defaultEnum,
+						IsRequired = isRequired
 					};
 				}
 				else
@@ -877,13 +902,26 @@ namespace PLang.Utils
 							instance2 = Activator.CreateInstance(propertyType);
 						}
 					}
-
-					pd = new ComplexDescription()
+					if (item == propertyType)
 					{
-						Type = propertyType.ToString(),
-						Name = propertyInfo.Name,
-						TypeProperties = GetPropertyInfos(propertyType.GetProperties(), instance2)
-					};
+						pd = new ComplexDescription()
+						{
+							Type = propertyType.ToString(),
+							Name = propertyInfo.Name,
+							TypeProperties = [],
+							IsRequired = isRequired
+						};
+					}
+					else
+					{
+						pd = new ComplexDescription()
+						{
+							Type = propertyType.ToString(),
+							Name = propertyInfo.Name,
+							TypeProperties = GetPropertyInfos(propertyType.GetProperties(), instance2, item, ++depth),
+							IsRequired = isRequired
+						};
+					}
 				}
 
 				if (propertyInfo.CustomAttributes.FirstOrDefault(p =>
@@ -917,7 +955,7 @@ namespace PLang.Utils
 			return (parameterDescriptions.Count > 0) ? parameterDescriptions : null;
 		}
 
-		private static bool IsConsideredPrimitive(Type type)
+		public static bool IsConsideredPrimitive(Type type)
 		{
 			if (type.IsArray)
 			{
@@ -932,7 +970,8 @@ namespace PLang.Utils
 				   type == typeof(Uri) ||
 				   type == typeof(decimal) ||
 				   type == typeof(BigInteger) ||
-				   type == typeof(Version);
+				   type == typeof(Version) ||
+				   type == typeof(JToken);
 		}
 
 		public static (string?, IBuilderError?) GetMethodAsJson(Type type, string methodName)
@@ -950,6 +989,8 @@ namespace PLang.Utils
 				//var defaultValue = Activator.CreateInstance();
 				if (prop.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "JsonIgnoreAttribute") !=
 					null) continue;
+				if (prop.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "IgnoreWhenInstructedAttribute") != null) continue;
+				if (prop.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "LlmIgnoreAttribute") != null) continue;
 
 				json += $@"{{""Type"": ""{prop.ParameterType.ToString()}""\n""Name""";
 				var propName = "\t\"" + prop.Name + "\"";

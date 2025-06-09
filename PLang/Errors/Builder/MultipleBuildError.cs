@@ -3,16 +3,20 @@ using PLang.Utils;
 
 namespace PLang.Errors.Builder
 {
-	public record GroupedBuildErrors(string Key = "GroupedBuildErrors", bool ContinueBuild = true, int StatusCode = 400, string? FixSuggestion = null, string? HelpfulLinks = null) : GroupedErrors(Key, StatusCode, FixSuggestion, HelpfulLinks), IBuilderError
+	public record GroupedBuildErrors(string Key = "GroupedBuildErrors", bool ContinueBuild = true, int StatusCode = 400, 
+		string? FixSuggestion = null, string? HelpfulLinks = null) : GroupedErrors(Key, StatusCode, FixSuggestion, HelpfulLinks), IBuilderError
 	{
-		public bool Retry => false;
+		public bool Retry => true;
+		public string? LlmBuilderHelp { get; set; }
 		public new object ToFormat(string contentType = "text")
 		{
 			if (contentType == "text")
 			{
 				string str = String.Empty;
-				foreach (var error in errors)
+				foreach (var error in ErrorChain)
 				{
+					if (error.Step == null && Step != null) error.Step = Step;
+					if (error.Goal == null && Step != null) error.Goal = Step.Goal;
 					str += error.ToFormat() + Environment.NewLine;
 				}
 				return str;
@@ -25,8 +29,11 @@ namespace PLang.Errors.Builder
 		public override string ToString()
 		{
 			string str = String.Empty;
-			foreach (var error in errors)
+			foreach (var error in ErrorChain)
 			{
+				if (error.Step == null && Step != null) error.Step = Step;
+				if (error.Goal == null && Step != null) error.Goal = Step.Goal;
+				
 				str += error.ToFormat() + Environment.NewLine;
 			}
 			return str;
@@ -38,12 +45,14 @@ namespace PLang.Errors.Builder
 	{
 		public new IBuilderError InitialError {  get { return InitialError; } }
 		public bool Retry => false;
+
+		public string? LlmBuilderHelp { get; set; }
 		public new object ToFormat(string contentType = "text")
 		{
 			if (contentType == "text")
 			{
 				string str = String.Empty;
-				foreach (var error in errors)
+				foreach (var error in ErrorChain)
 				{
 					str += error.ToFormat() + Environment.NewLine;
 				}
@@ -56,7 +65,7 @@ namespace PLang.Errors.Builder
 		public override string ToString()
 		{
 			string str = String.Empty;
-			foreach (var error in errors)
+			foreach (var error in ErrorChain)
 			{
 				str += error.ToFormat() + Environment.NewLine;
 			}

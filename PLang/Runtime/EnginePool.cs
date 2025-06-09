@@ -1,9 +1,12 @@
 ﻿using LightInject;
+using PLang.Building.Model;
 using PLang.Container;
 using PLang.Interfaces;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -28,6 +31,7 @@ namespace PLang.Runtime
 
 			_factory = factory ?? throw new ArgumentNullException(nameof(factory));
 			_maxSize = maxSize;
+			//todo: dont really understand this SemaphoreSlim, seems to work
 			_semaphore = new SemaphoreSlim(maxSize, maxSize);
 			
 			for (int i = 0; i < initialSize; i++)
@@ -39,25 +43,44 @@ namespace PLang.Runtime
 			}
 		}
 
-		public async Task<IEngine> RentAsync(string name)
+		public async Task<IEngine> RentAsync(IEngine parentEngine, GoalStep? callingStep, string name)
 		{
 			if (_pool.TryTake(out var engine))
 			{
-				engine.Name = name;
-				return engine;
+				return SetProperties(engine, parentEngine, callingStep, name);
 			}
 
 			var newEngine = _factory();
-			newEngine.Name = name;
-			return newEngine;
+			return SetProperties(newEngine, parentEngine, callingStep, name);
+		}
+
+		private IEngine SetProperties(IEngine engine, IEngine parentEngine, GoalStep? callingStep, string name)
+		{
+			engine.Name = name;
+			engine.SetParentEngine(parentEngine);
+			if (callingStep != null) 
+				engine.SetCallingStep(callingStep);
+
+			engine.GetContext().Clear();
+			foreach (var item in parentEngine.GetContext())
+			{
+				engine.GetContext().AddOrReplace(item.Key, item.Value);
+			}
+
+			engine.GetMemoryStack().Clear();
+			foreach (var item in parentEngine.GetMemoryStack().GetMemoryStack())
+			{
+				engine.GetMemoryStack().Put(item.Value, callingStep);
+			}
+						
+			return engine;
 		}
 
 		public void Return(IEngine engine)
 		{
-			_pool.Add(engine);
+			engine.Return();
 
-		//	_semaphore.Release();
-			//Interlocked.Decrement(ref _currentCount);
+			_pool.Add(engine);
 		}
 
 		public virtual void Dispose()

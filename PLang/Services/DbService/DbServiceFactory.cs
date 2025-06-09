@@ -1,5 +1,6 @@
 ﻿using LightInject;
 using Microsoft.Data.Sqlite;
+using PLang.Building.Model;
 using PLang.Interfaces;
 using PLang.Utils;
 using System;
@@ -16,7 +17,7 @@ namespace PLang.Services.DbService
 {
 	public interface IDbServiceFactory
 	{
-		IDbConnection CreateHandler();
+		IDbConnection CreateHandler(GoalStep goalStep);
 	}
 
 	public class DbServiceFactory : BaseFactory, IDbServiceFactory
@@ -28,10 +29,10 @@ namespace PLang.Services.DbService
 			this.isBuilder = isBuilder;
 		}
 
-		public IDbConnection CreateHandler()
+		public IDbConnection CreateHandler(GoalStep goalStep)
 		{
-			var context = container.GetInstance<PLangAppContext>();
-			var dataSource = context[ReservedKeywords.CurrentDataSource] as DataSource;
+			var dataSource = goalStep.GetVariable<DataSource>();
+
 			if (dataSource == null) throw new Exception("Could not find datasource in context");
 
 			var connection = container.GetInstance<IDbConnection>(dataSource.TypeFullName);
@@ -44,7 +45,7 @@ namespace PLang.Services.DbService
 			{
 				if (isBuilder)
 				{
-					connection.ConnectionString = $"Data Source={dataSource.Name};Mode=Memory;Cache=Shared;";
+					connection.ConnectionString = $"Data Source={dataSource.Name};Mode=Memory;Cache=Shared;Default Timeout=3600";
 				}
 				else if (dataSource.ConnectionString.Contains("%"))
 				{

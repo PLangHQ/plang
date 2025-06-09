@@ -55,7 +55,7 @@ namespace PLang.Modules.BlockchainModule.Tests
 			//typeHelper = new TypeHelper(fileSystem, settings);
 
 			builder = new Builder(settings, context, llmServiceFactory);
-			builder.InitBaseBuilder("PLang.Modules.BlockchainModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(GetStep("- "), fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 			
 		}
@@ -68,12 +68,11 @@ namespace PLang.Modules.BlockchainModule.Tests
 			var moduleSettings = new ModuleSettings(settings, llmServiceFactory);
 
 			builder = new Builder(settings, context, llmServiceFactory);
-			builder.InitBaseBuilder("PLang.Modules.BlockchainModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
 		public GoalStep GetStep(string text)
 		{
-			var step = new Building.Model.GoalStep();
 			step.Text = text;
 			step.ModuleType = "PLang.Modules.BlockchainModule";
 			return step;
@@ -85,13 +84,13 @@ namespace PLang.Modules.BlockchainModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
-			Assert.AreEqual("GetRpcServers", gf.FunctionName);
+			Store(text, instruction.LlmRequest[0].RawResponse);
+			Assert.AreEqual("GetRpcServers", gf.Name);
 			AssertVar.AreEqual("%servers%", gf.ReturnValues[0].VariableName);
 		}
 
@@ -101,14 +100,14 @@ namespace PLang.Modules.BlockchainModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text,instruction.LlmRequest.RawResponse);
+			Store(text,instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("SetCurrentRpcServer", gf.FunctionName);
+			Assert.AreEqual("SetCurrentRpcServer", gf.Name);
 			Assert.AreEqual("Mumbai - Polygon testnet", gf.Parameters[0].Value);
 			Assert.AreEqual("nameOrUrl", gf.Parameters[0].Name);
 			
@@ -126,14 +125,14 @@ namespace PLang.Modules.BlockchainModule.Tests
 			
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text,instruction.LlmRequest.RawResponse);
+			Store(text,instruction.LlmRequest[0].RawResponse);
 			//Assert.AreEqual("1", instruction.LlmQuestion.RawResponse);
-			Assert.AreEqual("CallFunction", gf.FunctionName);
+			Assert.AreEqual("CallFunction", gf.Name);
 			Assert.AreEqual("contractAddressOrSymbol", gf.Parameters[0].Name);
 			Assert.AreEqual("0x326C977E6efc84E512bB9C30f76E30c160eD06FB", gf.Parameters[0].Value);
 			Assert.AreEqual("abi", gf.Parameters[1].Name);
@@ -151,13 +150,13 @@ namespace PLang.Modules.BlockchainModule.Tests
 		public async Task GetCurrentRpcServer_Test(string text)
 		{
 			SetupResponse(text);
-			var step = GetStep(text);
+			LoadStep(text);
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("GetCurrentRpcServer", gf.FunctionName);
+			Assert.AreEqual("GetCurrentRpcServer", gf.Name);
 			AssertVar.AreEqual("rpcServer", gf.ReturnValues[0].VariableName);
 		}
 
@@ -168,13 +167,13 @@ namespace PLang.Modules.BlockchainModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
-			Store(text, instruction.LlmRequest.RawResponse);
+			var gf = instruction.Function as GenericFunction;
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("GetWallets", gf.FunctionName);
+			Assert.AreEqual("GetWallets", gf.Name);
 			AssertVar.AreEqual("wallets", gf.ReturnValues[0].VariableName);
 
 		}
@@ -191,13 +190,13 @@ namespace PLang.Modules.BlockchainModule.Tests
 
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
-			Store(text, instruction.LlmRequest.RawResponse);
+			var gf = instruction.Function as GenericFunction;
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("SetCurrentWallet", gf.FunctionName);
+			Assert.AreEqual("SetCurrentWallet", gf.Name);
 			Assert.AreEqual("walletName", gf.Parameters[0].Name);
 			Assert.AreEqual("My business wallet", gf.Parameters[0].Value);
 
@@ -216,13 +215,13 @@ namespace PLang.Modules.BlockchainModule.Tests
 
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
-			Store(text, instruction.LlmRequest.RawResponse);
+			var gf = instruction.Function as GenericFunction;
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("GetOrCreateWallet", gf.FunctionName);
+			Assert.AreEqual("GetOrCreateWallet", gf.Name);
 			AssertVar.AreEqual("wallet", gf.ReturnValues[0].VariableName);
 
 		}
@@ -239,13 +238,13 @@ namespace PLang.Modules.BlockchainModule.Tests
 
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
-			Store(text, instruction.LlmRequest.RawResponse);
+			var gf = instruction.Function as GenericFunction;
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("SetCurrentAddress", gf.FunctionName);
+			Assert.AreEqual("SetCurrentAddress", gf.Name);
 			Assert.AreEqual("address", gf.Parameters[0].Name);
 			Assert.AreEqual("0xeC146d8c6D51d547D09548A9D9B4451AeC3df285", gf.Parameters[0].Value);
 		}
@@ -262,14 +261,14 @@ namespace PLang.Modules.BlockchainModule.Tests
 
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("GetNativeBalanceOfAddressInWei", gf.FunctionName);
+			Assert.AreEqual("GetNativeBalanceOfAddressInWei", gf.Name);
 			Assert.AreEqual("address", gf.Parameters[0].Name);
 			Assert.AreEqual("0x1234", gf.Parameters[0].Value);
 			Assert.AreEqual("balance", gf.ReturnValues[0].VariableName);
@@ -283,14 +282,14 @@ namespace PLang.Modules.BlockchainModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse); 
+			Store(text, instruction.LlmRequest[0].RawResponse); 
 			
-			Assert.AreEqual("GetNativeBalanceOfAddressToDecimalPoint", gf.FunctionName);
+			Assert.AreEqual("GetNativeBalanceOfAddressToDecimalPoint", gf.Name);
 			Assert.AreEqual("address", gf.Parameters[0].Name);
 			Assert.AreEqual("0x1234", gf.Parameters[0].Value);
 			if (text.Contains("decimal count is 8"))
@@ -309,14 +308,14 @@ namespace PLang.Modules.BlockchainModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("GetDecimal", gf.FunctionName);
+			Assert.AreEqual("GetDecimal", gf.Name);
 			Assert.AreEqual("contractAddress", gf.Parameters[0].Name);
 			Assert.AreEqual("0x1234", gf.Parameters[0].Value);
 			Assert.AreEqual("decimal", gf.ReturnValues[0].VariableName);
@@ -331,13 +330,13 @@ namespace PLang.Modules.BlockchainModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("Transfer", gf.FunctionName);
+			Assert.AreEqual("Transfer", gf.Name);
 			Assert.AreEqual("to", gf.Parameters[0].Name);
 			Assert.AreEqual("0x123", gf.Parameters[0].Value);
 			Assert.AreEqual("etherAmount", gf.Parameters[1].Name);
@@ -352,14 +351,14 @@ namespace PLang.Modules.BlockchainModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("TransferFromSmartContract", gf.FunctionName);
+			Assert.AreEqual("TransferFromSmartContract", gf.Name);
 			Assert.AreEqual("contractAddressOrSymbol", gf.Parameters[0].Name);
 			Assert.AreEqual("USDC", gf.Parameters[0].Value);
 			Assert.AreEqual("from", gf.Parameters[1].Name);
@@ -379,14 +378,14 @@ namespace PLang.Modules.BlockchainModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("SendTransaction", gf.FunctionName);
+			Assert.AreEqual("SendTransaction", gf.Name);
 			Assert.AreEqual("contractAddress", gf.Parameters[0].Name);
 			Assert.AreEqual("0x123555", gf.Parameters[0].Value);
 			Assert.AreEqual("abi", gf.Parameters[1].Name);

@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
@@ -15,85 +16,57 @@ namespace PLang.Modules.CallGoalModule
 		private readonly IGoalParser goalParser;
 		private readonly PrParser prParser;
 		private readonly MemoryStack memoryStack;
+		private readonly ILogger logger;
 
-		public Builder(IGoalParser goalParser, PrParser prParser, MemoryStack memoryStack)
+		public Builder(IGoalParser goalParser, PrParser prParser, MemoryStack memoryStack, ILogger logger)
 		{
 			this.goalParser = goalParser;
 			this.prParser = prParser;
 			this.memoryStack = memoryStack;
+			this.logger = logger;
 		}
 
-		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step)
+		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, IBuilderError? previousBuildError = null)
 		{
-			AppendToSystemCommand(@"Match the one of the <goals_in_file>, <goals> or <apps> depending on user intent. In that order
+			AppendToSystemCommand(@"
+Only choose RunApp if user specifically defines it as app
+
 Use <examples> to understand user input
 
 <examples>
-call goal /Start => /Start is goalName that is rooted, no parameter.
-call ParseText => ParseText is goalName, no parameters
-call Gmail/Search %query%, => Gmail/Search is goalName,  %query% is key and value in parameters
-call Folder/Search q=%fileName% => Folder/Search is goalName, parameter key is q, and value is %fileName%
-call goal EvaluteScore %user%, write to %score% => EvaluteScore is goalName, parameter is user, return value is %score%
-set %data% = ParseDocument(%document%) => ParseDocument is goalName, parameter is %document%, %data% is the return value
-%user% = GetUser %id% => GetUser is goalName, parameter is %id%, return value is %user%
+call goal /Start => function name:RunGoal  goalName:/Start, that is rooted, no parameter.
+call ParseText => function name:RunGoal, goalName: ParseText, no parameters
+run Folder/Search q=%fileName% => function: RunGoal, goalName:Folder/Search,, parameter key is q, and value is %fileName%
+execute goal EvaluteScore %user%, write to %score% => function: RunGoal, goalName:EvaluteScore, parameter is user=%user%, return value is %score%
+set %data% = ParseDocument(%document%) => function: RunGoal, goalName:ParseDocument, parameter is %document%, %data% is the return value
+%user% = GetUser %id% => function: RunGoal, goalName:GetUser, parameter is %id%, return value is %user%
+
+call app Gmail/Search %query% => function name:RunApp, appName:Gmail, goalName:/Search , %query% is key and value in parameters
+call app /Builder/DbModule %content%, write to %result% => function name:RunApp, appName:Builder, goalName:/DbModule , %query% is key and value in parameters, return value %result%
 <examples>
-");
-			string goalsInFile = "";
-			var goals = goalParser.ParseGoalFile(step.Goal.AbsoluteGoalPath).Where(p => p.RelativePrFolderPath != step.Goal.RelativePrFolderPath).ToList();
-			if (goals.Count > 0)
+""");
+			
+			var build = await base.Build(step, previousBuildError);
+			return build;
+		}
+
+		private static List<Goal>? allGoals = null;
+
+		public async Task<(Instruction?, IBuilderError?)> BuilderRunApp(GoalStep step, Instruction instruction, GenericFunction gf)
+		{
+			var appName = GenericFunctionHelper.GetParameterValueAsString(gf, "appName", "");			
+			var goalName = GenericFunctionHelper.GetParameterValueAsString(gf, "goalName", "Start");
+
+			if (goalName.Contains("%") || appName.Contains("%")) return (instruction, null);
+
+			var app = goalParser.GetAllApps().Where(p => p.AppName == appName);
+			var goal = app.FirstOrDefault(p => p.GoalName == goalName);
+			if (goal == null)
 			{
-				goalsInFile = JsonConvert.SerializeObject(goals.Select(g => new { g.GoalName, g.RelativePrFolderPath, g.Description }));
+				return (null, new StepBuilderError($"Could not find {appName}/{goalName}", step, "GoalNotFound"));
 			}
 
-			AppendToAssistantCommand($"<goals_in_file>\n{goalsInFile}\n<goals_in_file>");
-			/*
-			string goalsInApp = "";
-			goals = goalParser.GetAllGoals().OrderBy(p => !p.IsOS && p.Visibility == Visibility.Public).ToList();
-			if (goals.Count > 0)
-			{
-				goalsInApp = JsonConvert.SerializeObject(goals.Select(g => new { g.GoalName, g.RelativePrFolderPath, g.Description }));
-			}
-			AppendToAssistantCommand($"<goals>\n{goalsInApp}\n<goals>");
-			*/
-			string appsStr = "";
-			var apps = goalParser.GetAllApps().OrderBy(p => p.Visibility == Visibility.Public).ToList();
-			if (apps.Count > 0)
-			{
-				var groupedApps = apps.GroupBy(p => p.AbsoluteAppStartupFolderPath);
-				List<object> appsToSerialize = new();
-				foreach (var groupedApp in groupedApps)
-				{
-					var firstGoal = groupedApp.FirstOrDefault(p => p.GoalName == "Start") ?? groupedApp.FirstOrDefault();
-					var subGoals = groupedApp.Select(p => new { p.GoalName, p.RelativePrFolderPath });
-					var app = new
-					{
-						AppName = firstGoal.AppName,
-						firstGoal.Description,
-						SubGoals = subGoals
-					};
-					appsToSerialize.Add(app);
-				}
-				appsStr = JsonConvert.SerializeObject(appsToSerialize);
-			}
-			AppendToAssistantCommand($"<apps>\n{appsStr}\n<apps>");
-
-
-			var build = await base.Build(step);
-			if (build.BuilderError != null) return build;
-
-			var gf = build.Instruction?.Action as GenericFunction;
-			if (gf != null && gf.FunctionName.Equals("RunApp"))
-			{
-				var appName = gf.Parameters[0].Value?.ToString();
-				var app = goalParser.GetAllApps().Where(p => p.AppName == appName);
-				var goalName = gf.Parameters[1].Value?.ToString();
-				var goal = app.FirstOrDefault(p => p.GoalName == goalName);
-				if (goal == null)
-				{
-					return (null, new StepBuilderError($"Could not find {appName}/{goalName}", step, "GoalNotFound"));
-				}
-
-				SetSystem(@$"Map the user statement. 
+			SetSystem(@$"Map the user statement. 
 You are provided with a <function>, you should adjust the parameters in the <function> according to <parameters>. 
 Read the user statement, use your best guess to match <parameters> and modify <function> and return back
 
@@ -105,54 +78,56 @@ The parameters provided in <function> might not be correct, these are the legal 
 <parameters>
 
 ");
-				SetAssistant(@$"
+			SetAssistant(@$"
 
 <function>
 {JsonConvert.SerializeObject(gf)}
 <function>
 ");
-				build = await base.Build(step);
-				
-
-			} else	if (gf != null && gf.Parameters.Count > 0)
-			{
-				var goalName = gf.Parameters[0].Value?.ToString();
-				if (goalName != null && goalName.Contains("%"))
-				{
-					return build;
-				}
-				if (string.IsNullOrEmpty(goalName))
-				{
-					return (null, new StepBuilderError("Goal name is empty", step, "GoalNotDefined", Retry: true));
-				}
-
-				if (allGoals == null)
-				{
-					allGoals = goalParser.GetAllGoals();
-				}
-				var goalsFound = allGoals.Where(p => p.RelativePrFolderPath.Contains(goalName.Replace("!", "").AdjustPathToOs(), StringComparison.OrdinalIgnoreCase)).ToList();
-				if (goalsFound.Count == 0)
-				{
-					return (null, new StepBuilderError($"Could not find {goalName}", step, "GoalNotFound"));
-				}
-			}
+			var build = await base.Build(step);
 			return build;
-
 		}
-
-		private static List<Goal>? allGoals = null;
-
-		public async Task BuilderRunGoal(GenericFunction gf, GoalStep step)
+		public async Task<(Instruction?, IBuilderError?)> BuilderRunGoal(GoalStep step, Instruction instruction, GenericFunction gf)
 		{
+			if (gf.Parameters == null || gf.Parameters.Count == 0)
+			{
+				return (null, new StepBuilderError("Goal name is empty", step, "GoalNotDefined", Retry: true));
+			}
 
-			var parameters = GeneralFunctionHelper.GetParameterValueAsDictionary(gf, "parameters");
-			if (parameters == null) return;
+
+			var goalName = gf.Parameters[0].Value?.ToString();
+			if (goalName != null && goalName.Contains("%"))
+			{
+				return (instruction, null);
+			}
+			if (string.IsNullOrEmpty(goalName))
+			{
+				return (null, new StepBuilderError("Goal name is empty", step, "GoalNotDefined", Retry: true));
+			}
+
+			if (allGoals == null)
+			{
+				allGoals = goalParser.GetAllGoals();
+			}
+			var goalsFound = allGoals.Where(p => p.RelativePrFolderPath.Contains(goalName.Replace("!", "").AdjustPathToOs(), StringComparison.OrdinalIgnoreCase)).ToList();
+			if (goalsFound.Count == 0)
+			{
+				return (null, new StepBuilderError($"Could not find {goalName}", step, "GoalNotFound"));
+			} else if (goalsFound.Count > 1)
+			{
+				logger.LogWarning($"Found {goalsFound.Count} goals containing {goalName}, must be improved");
+			}
+
+
+				var parameters = GenericFunctionHelper.GetParameterValueAsDictionary(gf, "parameters");
+			if (parameters == null) return (instruction, null);
 
 			foreach (var parameter in parameters)
 			{
 				memoryStack.PutForBuilder(parameter.Key, parameter.Value);
 			}
 
+			return (instruction, null);
 		}
 
 	}

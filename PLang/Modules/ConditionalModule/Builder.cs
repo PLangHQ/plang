@@ -24,13 +24,38 @@ namespace PLang.Modules.ConditionalModule
 			this.logger = logger;
 		}
 
-		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step)
+		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, IBuilderError? previousBuildError = null)
 		{
 			return await Build(step, null);
 		}
 
 		private async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, CompilerError? error = null, int errorCount = 0)
+		{	
+
+			var result = await PrepareStep(step);
+			if (result.Error != null) return result;
+
+			var gf = result.Instruction.Function as GenericFunction;
+			if (!ShouldMakeCode(gf.Name)) return result;
+
+			return await MakeCode(step, error, errorCount);
+
+		}
+
+		private bool ShouldMakeCode(string functionName)
 		{
+			return (string.IsNullOrWhiteSpace(functionName) || functionName.Equals("n/a", StringComparison.OrdinalIgnoreCase)
+				|| functionName == "RunInlineCode");
+		}
+
+		public async Task<(Instruction? Instruction, IBuilderError? Error)> PrepareStep(GoalStep step)
+		{
+			AppendToSystemCommand("");
+			return await base.Build(step);
+		}
+
+		public async Task<(Instruction?, IBuilderError?)> MakeCode(GoalStep step, CompilerError? error = null, int errorCount = 0) {
+
 			if (errorCount++ > 3)
 			{
 				return (null, error ?? new StepBuilderError("Could not compile code for this step", step));
@@ -106,16 +131,28 @@ namespace PLang.Modules.ConditionalModule
 			//go back to default extractor
 			base.SetContentExtractor(new JsonExtractor());
 
-			var answer = (ImplementationResponse)codeInstruction.Action;
-			(var implementation, var compilerError) = await compiler.BuildCode(answer, step, memoryStack);
+			var answer = (ConditionImplementationResponse)codeInstruction.Function;
+			(var implementation, var compilerError) = await compiler.BuildCode<ConditionImplementationResponse>(answer, step, memoryStack);
 			if (compilerError != null)
 			{
 				logger.LogWarning($"- Error compiling code - will ask LLM again ({errorCount} of 3 attempts) - Error:{compilerError}");
 				return await Build(step, compilerError, errorCount);
 			}
+			List<Parameter> parameters = new List<Parameter>();
+			parameters.Add(new Parameter(implementation.GetType().FullName, "implementation", implementation));
 
-			var newInstruction = new Instruction(implementation!);
-			newInstruction.LlmRequest = codeInstruction.LlmRequest;
+			List<ReturnValue> returnValues = new List<ReturnValue>();
+			if (implementation.ReturnValues != null)
+			{
+				foreach (var rv in implementation.ReturnValues)
+				{
+					returnValues.Add(new ReturnValue(rv.Type, rv.VariableName));
+				}
+			}
+
+			var gf = new GenericFunction("No explaination", "RunInlineCode", parameters, returnValues);
+
+			var newInstruction = InstructionCreator.Create(gf, step, codeInstruction.LlmRequest);
 			return (newInstruction, null);
 
 

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using NSubstitute;
+using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
 using PLang.Errors.Handlers;
@@ -83,6 +84,7 @@ namespace PLangTests
 		protected PLang.Modules.CryptographicModule.Program crypto;
 		protected PLang.Modules.IdentityModule.Program identity;
 
+		protected GoalStep step;
 		protected void Initialize()
 		{
 
@@ -91,8 +93,15 @@ namespace PLangTests
 			serializer = container.GetInstance<PLang.Modules.SerializerModule.Program>();
 			crypto = container.GetInstance<PLang.Modules.CryptographicModule.Program>();
 
-		}
 
+			step = new PLang.Building.Model.GoalStep();
+			
+		}
+		public void LoadStep(string text)
+		{
+			step.Text = text;
+			step.ModuleType = this.GetType().FullName;
+		}
 		protected void LoadOpenAI()
 		{
 			settings.Get(typeof(OpenAiService), "Global_AIServiceKey", Arg.Any<string>(), Arg.Any<string>()).Returns(Environment.GetEnvironmentVariable("OpenAIKey"));
@@ -110,8 +119,12 @@ namespace PLangTests
 
 			dbFactory = Substitute.For<IDbServiceFactory>();
 			container.RegisterInstance<IPLangFileSystem>(fileSystem);
-			container.RegisterInstance<IServiceContainer>(container);
-			this.settingsRepository = new SqliteSettingsRepository(fileSystem, context, logger);
+			container.RegisterInstance<IServiceContainer>(container); 
+			container.RegisterSingleton<IPLangFileSystemFactory>(factory =>
+			{
+				return new PlangFileSystemFactory(container);
+			});
+			this.settingsRepository = new SqliteSettingsRepository(container.GetInstance<IPLangFileSystemFactory>(), context, logger);
 			container.RegisterInstance<ISettingsRepository>(settingsRepository);
 			fileAccessHandler = Substitute.For<IFileAccessHandler>();
 			settingsRepositoryFactory = Substitute.For<ISettingsRepositoryFactory>();
@@ -235,7 +248,7 @@ namespace PLangTests
 			llmCaching = new LlmCaching(fileSystem, settings);
 			container.RegisterInstance(llmCaching);
 
-			variableHelper = new VariableHelper(context, memoryStack, settings);
+			variableHelper = new VariableHelper(memoryStack, settings);
 			container.RegisterInstance(variableHelper);
 
 			container.RegisterInstance(prParser);

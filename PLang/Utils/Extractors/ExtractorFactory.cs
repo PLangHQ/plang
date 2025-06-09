@@ -1,5 +1,6 @@
 ﻿using PLang.Models;
 using PLang.Modules.UiModule;
+using PLang.Services.CompilerService;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,7 +29,7 @@ namespace PLang.Utils.Extractors
 				question.llmResponseType = "html";
 				extractor = new HtmlExtractor();
 			}
-			else if (question.llmResponseType == "csharp")
+			else if (question.llmResponseType == "csharp" || responseType.BaseType == typeof(ImplementationResponse))
 			{
 				extractor = new CSharpExtractor();
 			}

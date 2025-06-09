@@ -18,23 +18,13 @@ namespace PLang.Modules.UiModule
 			this.typeHelper = typeHelper;
 		}
 
-		public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step)
-		{
-			return await Build(step, null, 0);
-		}
+
 
 		public record FunctionName(string Name);
-
-		public async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, IError? error = null, int errorCount = 0)
+		public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, IBuilderError? previousBuildError = null)
 		{
-			if (errorCount > 3)
-			{
-				return (null, new BuilderError($"Tried {errorCount} times. Could not get LLM to build valid code. Try to rephrase your step {step.Text}"));
-			}
 
-			if (error == null)
-			{
-				SetSystem(@"Your job is: 
+			SetSystem(@"Your job is: 
 1. Parse user intent
 2. Map the intent to one of C# function available provided to you
 3. Return a valid JSON
@@ -52,24 +42,24 @@ If there is some api key, settings, config replace it with %Settings.Get(""setti
 The user is build or manipulating user interface written in html. His intent will reflect that
 Response with only the function name you would choose");
 
-				string methods = typeHelper.GetMethodNamesAsString(typeof(Program));
-				SetAssistant($"### function available ###\n{methods}### function available ###");
+			string methods = typeHelper.GetMethodNamesAsString(typeof(Program));
+			SetAssistant($"### function available ###\n{methods}### function available ###");
 
-				var buildFunctionName = await base.Build<FunctionName>(step);
+			var buildFunctionName = await base.Build<FunctionName>(step);
 
-				var functionName = buildFunctionName.Instruction.Action as FunctionName;
+			var functionName = buildFunctionName.Instruction.Function as FunctionName;
 
 
-				if (buildFunctionName.BuilderError != null) return (null, buildFunctionName.BuilderError);
+			if (buildFunctionName.BuilderError != null) return (null, buildFunctionName.BuilderError);
 
-				if (functionName.Name != "RenderHtml")
-				{
-					var buildFunction = await base.Build(step);
+			if (functionName.Name != "RenderHtml")
+			{
+				var buildFunction = await base.Build(step);
 
-					if (buildFunction.BuilderError != null) return (null, buildFunction.BuilderError);
-					return buildFunction;
-				}
+				if (buildFunction.BuilderError != null) return (null, buildFunction.BuilderError);
+				return buildFunction;
 			}
+
 
 
 			var nextStep = step.NextStep;
@@ -225,32 +215,25 @@ stick to user intent and DO NOT assume elements not described, for example DO NO
 {variables}
 ### variables available ###");
 
-			if (error != null)
-			{
+			
+			
 
-				AppendToSystemCommand($@"This is my attempt nr {errorCount + 1} in I ask you about this. There was an error in code you generated.
-{error.Message}
-
-Please correct this.
-");
-			}
-
-			var build = await base.Build<UiResponse>(step);
+			var build = await base.Build<UiResponse>(step, previousBuildError);
 			if (build.BuilderError != null || build.Instruction == null)
 			{
 				return (null, build.BuilderError ?? new StepBuilderError("Could not build step", step));
 			}
 
 			List<string> missingChildren = new();
-			var uiResponse = build.Instruction.Action as UiResponse;
+			var uiResponse = build.Instruction.Function as UiResponse;
 
 			if (!string.IsNullOrEmpty(uiResponse.html) && !uiResponse.html.Contains("<"))
 			{
-				errorCount++;
-				error = new Error($"You didn't response with valid html. Your previous response was: {uiResponse.html}");
+				
+				var error = new BuilderError($"You didn't response with valid html. Your previous response was: {uiResponse.html}");
 
 				logger.LogWarning("Html didn't contain child elements, asking LLM again");
-				return await Build(step, error, errorCount);
+				return await Build(step, error);
 			}
 
 			for (var i = 0; i < subElements.Count; i++)
@@ -269,11 +252,10 @@ Please correct this.
 
 			if (missingChildren.Count > 0)
 			{
-				errorCount++;
-				error = new Error($"There is missing {{{{ ChildElementN }}}} in your response, there should be {missingChildren.Count} child elements. Your previous response was: {uiResponse.html}");
+				var error = new BuilderError($"There is missing {{{{ ChildElementN }}}} in your response, there should be {missingChildren.Count} child elements. Your previous response was: {uiResponse.html}");
 
 				logger.LogWarning("Html didn't contain child elements, asking LLM again");
-				return await Build(step, error, errorCount);
+				return await Build(step, error);
 			}
 
 
@@ -284,11 +266,10 @@ Please correct this.
 			if (uiResponse.css != null) parameters.Add(new Parameter("string", "css", uiResponse.css));
 			if (uiResponse.javascript != null) parameters.Add(new Parameter("string", "javascript", uiResponse.javascript));
 
-			var gf = new GenericFunction("RenderHtml", parameters, null);
+			var gf = new GenericFunction("", "RenderHtml", parameters, null);
 
 
-			var instruction = new Instruction(gf);
-			instruction.LlmRequest = build.Instruction.LlmRequest;
+			var instruction = InstructionCreator.Create(gf, step, build.Instruction.LlmRequest);
 			return (instruction, null);
 		}
 

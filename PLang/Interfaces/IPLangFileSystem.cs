@@ -17,6 +17,7 @@ namespace PLang.Interfaces
 		string Id { get; init; }
 
 		void AddFileAccess(FileAccessControl fileAccess);
+		void ClearFileAccess();
 		bool IsPathRooted(string? path);
 		void SetFileAccess(List<FileAccessControl> fileAccesses);
 		public string ValidatePath(string? path);

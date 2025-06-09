@@ -15,6 +15,7 @@ using PLang.Modules.CallGoalModule;
 using PLang.Runtime;
 using PLang.Utils;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using static PLang.Utils.VariableHelper;
@@ -100,7 +101,7 @@ namespace PLang.Events
 			return runtimeEvents!;
 		}
 
-		
+
 		public IError? Load(bool isBuilder = false)
 		{
 			var events = new List<EventBinding>();
@@ -131,7 +132,7 @@ namespace PLang.Events
 					if (eventBinding != null) continue;
 
 					var binding = step.EventBinding with { IsLocal = !eventFile.StartsWith(fileSystem.Path.Join(fileSystem.OsDirectory, ".build")) };
-					events.Add(binding);					
+					events.Add(binding);
 				}
 
 				if (container != null && goal.Injections != null)
@@ -216,7 +217,7 @@ namespace PLang.Events
 
 				var parameters = new Dictionary<string, object?>();
 				parameters.Add(ReservedKeywords.Event, eve);
-				context.AddOrReplace(ReservedKeywords.IsEvent, true);
+				parameters.Add(ReservedKeywords.IsEvent, true);
 				parameters.Add("!plang.EventUniqueId", Guid.NewGuid().ToString());
 
 				ActiveEvents.TryAdd(eve.Id, eve.GoalToCall);
@@ -229,13 +230,6 @@ namespace PLang.Events
 				}
 				var result = task.Result;
 				ActiveEvents.Remove(eve.Id, out _);
-
-				context.Remove(ReservedKeywords.IsEvent);
-				if (context.TryGetValue(ReservedKeywords.MemoryStack, out var obj0) && obj0 != null)
-				{
-					var memoryStack = (MemoryStack)obj0;
-					memoryStack.Remove(ReservedKeywords.Event);
-				}
 
 				if (result.Error == null) continue;
 				if (result.Error is RuntimeEventError ree) return result;
@@ -259,7 +253,7 @@ namespace PLang.Events
 			var eventsToRun = runtimeEvents.Where(p => p.EventScope == EventScope.AppError).ToList();
 			if (eventsToRun.Count > 0)
 			{
-				foreach (var eve in runtimeEvents)
+				foreach (var eve in eventsToRun)
 				{
 					if (!HasAppBinding(eve, error)) continue;
 					var result = await Run(eve, null, null, error);
@@ -278,7 +272,7 @@ namespace PLang.Events
 		private bool HasAppBinding(EventBinding eve, IError error)
 		{
 			if (eve.ErrorKey != null && !eve.ErrorKey.Equals(error.Key, StringComparison.OrdinalIgnoreCase)) return false;
-			if (eve.ErrorMessage != null && !error.Message.Contains(eve.ErrorMessage, StringComparison.OrdinalIgnoreCase)) return false;	
+			if (eve.ErrorMessage != null && !error.Message.Contains(eve.ErrorMessage, StringComparison.OrdinalIgnoreCase)) return false;
 			if (eve.StatusCode != null && eve.StatusCode != error.StatusCode) return false;
 			if (eve.ExceptionType != null && !eve.ExceptionType.Equals(error.Exception?.GetType().FullName)) return false;
 			if (eve.GoalToBindTo == "*") return true;
@@ -292,13 +286,13 @@ namespace PLang.Events
 
 			bool hasHandled = false;
 
-			ReturnDictionary<string, object?>? Variables = new();
+			List<ObjectValue?>? Variables = new();
 			for (var i = 0; i < eventsToRun.Count; i++)
 			{
 				var eve = eventsToRun[i];
 				if (ActiveEvents.ContainsKey(eve.Id)) continue;
 				if (!GoalHasBinding(goal, eve) || !HasAppBinding(eve, error)) continue;
-				 
+
 				var result = await Run(eve, goal, step, error);
 				if (result.Error != null) return (result.Variables, new MultipleError(error).Add(result.Error));
 				hasHandled = true;
@@ -349,7 +343,7 @@ namespace PLang.Events
 				return (null, null);
 			}
 			var eventsToRun = events.Where(p => p.EventType == eventType && p.EventScope == EventScope.Goal).ToList();
-			ReturnDictionary<string, object?> Variables = new();
+			List<ObjectValue> Variables = new();
 			for (var i = 0; i < eventsToRun.Count; i++)
 			{
 				var eve = eventsToRun[i];
@@ -376,128 +370,6 @@ namespace PLang.Events
 
 		}
 
-		private async Task<(object? Variables, IError? Error)> Run(EventBinding eve, Goal? callingGoal = null, GoalStep? step = null, IError? error = null, bool isBuilder = false)
-		{
-
-			try
-			{
-				context.TryGetValue(ReservedKeywords.CallingGoal, out object? prevCallingGoal);
-				context.TryGetValue(ReservedKeywords.CallingStep, out object? prevCallingStep);
-				context.TryGetValue(ReservedKeywords.CallingInstruction, out object? prevCallingInstruction);
-				
-				if (error != null && AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool isDetailedError))
-				{
-					ShowLogError(step?.Goal, step, error);
-				}
-
-				var parameters = new Dictionary<string, object?>();
-				parameters.Add(ReservedKeywords.Event, eve);
-				parameters.Add(ReservedKeywords.CallingGoal, callingGoal);
-				if (error != null) parameters.Add(ReservedKeywords.Error, error);
-				if (error is IErrorHandled) parameters.Add(ReservedKeywords.Error, error);
-				parameters.Add("!plang.EventUniqueId", Guid.NewGuid().ToString());
-
-				context.TryAdd(ReservedKeywords.IsEvent, true);
-
-				if (step != null) parameters.Add(ReservedKeywords.CallingStep, step);
-
-				string path = (eve.IsLocal) ? callingGoal?.RelativeGoalFolderPath : "/events";
-
-				logger.LogDebug("Run event type {0} on scope {1}, binding to {2} calling {3}", eve.EventType.ToString(), eve.EventScope.ToString(), eve.GoalToBindTo, eve.GoalToCall);
-				ActiveEvents.TryAdd(eve.Id, eve.GoalToCall);
-				Task<(object? Variables, IError? Error)> task;
-				string goalName = eve.GoalToCall.ToString() ?? "";
-				if (string.IsNullOrEmpty(goalName))
-				{
-					return (null, new RuntimeEventError("Goal name is empty", eve, callingGoal, step));
-				}
-				if (eve.GoalToCallParameters != null)
-				{
-					foreach (var goalParameter in eve.GoalToCallParameters)
-					{
-						parameters.AddOrReplace(goalParameter.Key, goalParameter.Value);
-					}
-				}
-
-				if (eve.GoalToCall.ToString().StartsWith("apps/") || eve.GoalToCall.ToString().StartsWith("/apps/"))
-				{
-					task = caller.RunApp("/", eve.GoalToCall, parameters);
-				}
-				else
-				{
-					task = caller.RunGoal(eve.GoalToCall, parameters, isolated: !eve.IsLocal);
-				}
-				if (eve.WaitForExecution)
-				{
-					try
-					{
-						await task;
-					}
-					catch { }
-				}
-				ActiveEvents.Remove(eve.Id, out _);
-
-				context.AddOrReplace(ReservedKeywords.CallingGoal, prevCallingGoal);
-				context.AddOrReplace(ReservedKeywords.CallingStep, prevCallingStep);
-				
-				if (task.Exception != null)
-				{
-					var exception = task.Exception.InnerException ?? task.Exception;
-					if (isBuilder)
-					{
-						return (null, new BuilderEventError(exception.Message, eve, callingGoal, step, Exception: exception));
-					}
-					return (null, new RuntimeEventError(exception.Message, eve, callingGoal, step, Exception: exception));
-				}
-
-				var result = task.Result;
-
-
-				object? Variables = null;
-				if (result.Variables != null)
-				{
-					Variables = result.Variables;
-					/*
-					foreach (var parameter in result.Variables)
-					{
-						memoryStack.Put(parameter.Key, parameter.Value);
-					}*/
-				} else if (result.Error is Return r)
-				{
-					Variables = r.Variables;
-				}
-
-				if (result.Error is null or IErrorHandled or IUserDefinedError) return (Variables, result.Error);
-				/*if (result.Error is IErrorHandled eh) return (result.Variables, eh);
-				if (result.Error is IUserDefinedError ude)
-				{
-					return (null, (IEventError)ude);
-				}*/
-
-				if (isBuilder)
-				{
-					return (Variables, new BuilderEventError(result.Error.Message, eve, callingGoal, step, InitialError: result.Error));
-				}
-				return (Variables, new RuntimeEventError(result.Error.Message, eve, callingGoal, step, InitialError: result.Error));
-			}
-			catch (Exception ex)
-			{
-				throw;
-			}
-			finally
-			{
-				context.Remove(ReservedKeywords.IsEvent);
-				if (context.TryGetValue(ReservedKeywords.MemoryStack, out var obj0) && obj0 != null)
-				{
-					var memoryStack = (MemoryStack)obj0;
-					memoryStack.Remove(ReservedKeywords.Event);
-					memoryStack.Remove(ReservedKeywords.Goal);
-					memoryStack.Remove(ReservedKeywords.Step);
-				}
-			}
-
-
-		}
 		public async Task<(object? Variables, IBuilderError? Error)> RunBuildStepEvents(string eventType, Goal goal, GoalStep step, int stepIdx)
 		{
 			context.AddOrReplace(ReservedKeywords.Goal, goal);
@@ -552,8 +424,8 @@ namespace PLang.Events
 				if (errorHandler.GoalToCall != null && !string.IsNullOrEmpty(errorHandler.GoalToCall))
 				{
 					var eventBinding = new EventBinding(EventType.Before, EventScope.StepError, goal.RelativeGoalPath, errorHandler.GoalToCall, errorHandler.GoalToCallParameters,
-						true, step.Number, step.Text, true, null, errorHandler.IgnoreError, errorHandler.Key, errorHandler.Message, errorHandler.StatusCode, IsLocal: true);
-					
+						true, step.Number, step.Text, true, null, errorHandler.IgnoreError, errorHandler.Key, errorHandler.Message, errorHandler.StatusCode, IsLocal: true, IsOnStep: true);
+
 					eventsToRun.Add(eventBinding);
 				}
 				else if (errorHandler.IgnoreError)
@@ -592,7 +464,7 @@ namespace PLang.Events
 				}
 			}
 
-			return (null, new ErrorHandled(error));
+			return (null, error);
 		}
 
 
@@ -626,10 +498,137 @@ namespace PLang.Events
 				}
 
 			}
-			
+
 
 			return (null, error);
 		}
+
+		private async Task<(object? Variables, IError? Error)> Run(EventBinding eve, Goal? callingGoal = null, GoalStep? callingStep = null, IError? error = null, bool isBuilder = false)
+		{
+
+			try
+			{
+				eve.Stopwatch = Stopwatch.StartNew();
+				if (error != null && AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool isDetailedError))
+				{
+					ShowLogError(callingStep?.Goal, callingStep, error);
+				}
+
+				string goalName = eve.GoalToCall.ToString() ?? "";
+				if (string.IsNullOrEmpty(goalName))
+				{
+					return (null, new RuntimeEventError("Goal name is empty", eve, callingGoal, callingStep));
+				}
+
+				var parameters = new Dictionary<string, object?>();
+				eve.Goal = callingGoal;
+				eve.GoalStep = callingStep;
+
+				parameters.Add(ReservedKeywords.Event, eve);
+				parameters.Add(ReservedKeywords.IsEvent, true);
+				parameters.Add(ReservedKeywords.Error, error);
+
+				string goalToCallPath;				
+				if (eve.IsOnStep) {
+					goalToCallPath = Path.Join(callingGoal?.RelativeGoalFolderPath ?? "", eve.GoalToCall);
+				} else if (eve.GoalToCall.ToString().StartsWith("/"))
+				{
+					goalToCallPath = eve.GoalToCall;
+				} else
+				{
+					goalToCallPath = Path.Join("/events", eve.GoalToCall);
+				}
+
+				logger.LogDebug("Run event type {0} on scope {1}, binding to {2} calling {3}", eve.EventType.ToString(), eve.EventScope.ToString(), eve.GoalToBindTo, eve.GoalToCall);
+
+				if (eve.GoalToCallParameters != null)
+				{
+					foreach (var goalParameter in eve.GoalToCallParameters)
+					{
+						parameters.AddOrReplace(goalParameter.Key, goalParameter.Value);
+					}
+				}
+
+				ActiveEvents.TryAdd(eve.Id, eve.GoalToCall);
+
+				if (callingStep != null) caller.SetStep(callingStep);
+				if (callingGoal != null) caller.SetGoal(callingGoal);
+
+				Task<(object? Variables, IError? Error)> task;
+				if (eve.GoalToCall.ToString().StartsWith("apps/") || eve.GoalToCall.ToString().StartsWith("/apps/"))
+				{
+					task = caller.RunApp("/", eve.GoalToCall, parameters);
+				}
+				else
+				{
+					task = caller.RunGoal(goalToCallPath, parameters, isolated: !eve.IsLocal);
+				}
+
+				if (eve.WaitForExecution)
+				{
+					try
+					{
+						await task;
+					}
+					catch { }
+				}
+				ActiveEvents.Remove(eve.Id, out _);
+
+
+				if (task.Exception != null)
+				{
+					var exception = task.Exception.InnerException ?? task.Exception;
+					if (isBuilder)
+					{
+						return (null, new BuilderEventError(exception.Message, eve, callingGoal, callingStep, Exception: exception));
+					}
+					return (null, new RuntimeEventError(exception.Message, eve, callingGoal, callingStep, Exception: exception));
+				}
+
+				var result = task.Result;
+
+
+				object? Variables = null;
+				if (result.Variables != null)
+				{
+					Variables = result.Variables;
+					/*
+					foreach (var parameter in result.Variables)
+					{
+						memoryStack.Put(parameter.Key, parameter.Value);
+					}*/
+				}
+				else if (result.Error is Return r)
+				{
+					Variables = r.Variables;
+				}
+
+				if (result.Error is null or IErrorHandled or IUserDefinedError) return (Variables, result.Error);
+				/*if (result.Error is IErrorHandled eh) return (result.Variables, eh);
+				if (result.Error is IUserDefinedError ude)
+				{
+					return (null, (IEventError)ude);
+				}*/
+
+				if (isBuilder)
+				{
+					return (Variables, new BuilderEventError(result.Error.Message, eve, callingGoal, callingStep, InitialError: result.Error));
+				}
+				return (Variables, new RuntimeEventError(result.Error.Message, eve, callingGoal, callingStep, InitialError: result.Error));
+			}
+			catch (Exception ex)
+			{
+				throw;
+			}
+			finally
+			{
+				eve.Stopwatch.Stop();
+			}
+
+
+		}
+
+
 
 		private bool EventMatchesError(EventBinding eve, IError error)
 		{
@@ -649,13 +648,13 @@ namespace PLang.Events
 		 */
 		public bool IsStepMatch(GoalStep step, EventBinding eventBinding)
 		{
-			if (step.Goal.IsOS && !eventBinding.IncludeOsGoals) return false;
+			if (!eventBinding.IsLocal && step.Goal.IsOS && !eventBinding.IncludeOsGoals) return false;
 			if (eventBinding.StepNumber == null && eventBinding.StepText == null) return true;
 			if (eventBinding.StepNumber != null && step.Number == eventBinding.StepNumber)
 			{
 				return true;
 			}
-			
+
 
 			if (eventBinding.StepText != null && step.Text.ToLower().Contains(eventBinding.StepText.ToLower()))
 			{
@@ -679,11 +678,15 @@ namespace PLang.Events
 		 */
 		public bool GoalHasBinding(Goal goal, EventBinding eventBinding)
 		{
-			if (goal.Visibility == Visibility.Private && !eventBinding.IncludePrivate || eventBinding.GoalToBindTo == null) return false;
-			if (goal.IsOS && !eventBinding.IncludeOsGoals) return false;
+			if (!eventBinding.IsLocal)
+			{
+				if (goal.Visibility == Visibility.Private && !eventBinding.IncludePrivate || eventBinding.GoalToBindTo == null) return false;
+				if (goal.IsOS && !eventBinding.IncludeOsGoals) return false;
+			}
+
+			if (goal.GoalName == eventBinding.GoalToCall) return false;
 
 			string goalToBindTo = eventBinding.GoalToBindTo.ToString().ToLower().Replace("!", "");
-			if (goal.GoalName == eventBinding.GoalToCall) return false;
 			// GoalToBindTo = Hello
 			if (!goalToBindTo.Contains(".") && !goalToBindTo.Contains("*") && !goalToBindTo.Contains("/") && !goalToBindTo.Contains(@"\") && !goalToBindTo.Contains(":"))
 			{
@@ -697,7 +700,8 @@ namespace PLang.Events
 			// GoalToBindTo = Hello.goal
 			if (goalToBindTo.Contains(".") && fileSystem.Path.GetExtension(goalToBindTo) == ".goal")
 			{
-				return goal.GoalFileName.ToLower() == goalToBindTo || goal.RelativeGoalPath.Equals(goalToBindTo.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase);
+				var result = goal.GoalFileName.ToLower() == goalToBindTo || goal.RelativeGoalPath.Equals(goalToBindTo.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase);
+				return result;
 			}
 
 			if (goalToBindTo.Contains("*"))
@@ -751,7 +755,7 @@ namespace PLang.Events
 
 		}
 
-		
+
 	}
 
 }

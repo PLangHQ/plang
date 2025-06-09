@@ -26,7 +26,7 @@ namespace PLang.Modules.LlmModule.Tests
 			LoadOpenAI();
 
 			builder = new Builder(programFactory);
-			builder.InitBaseBuilder("PLang.Modules.LlmModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -37,16 +37,9 @@ namespace PLang.Modules.LlmModule.Tests
 			if (llmService == null) return;
 
 			builder = new Builder(programFactory);
-			builder.InitBaseBuilder("PLang.Modules.LlmModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
-		public GoalStep GetStep(string text)
-		{
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
-			step.ModuleType = "PLang.Modules.LlmModule";
-			return step;
-		}
-
+	
 
 		[DataTestMethod]
 		[DataRow("system: determine sentiment of user input. \nuser:This is awesome, scheme: {sentiment:negative|neutral|positive}")]
@@ -54,14 +47,14 @@ namespace PLang.Modules.LlmModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("AskLlm", gf.FunctionName);
+			Assert.AreEqual("AskLlm", gf.Name);
 			Assert.AreEqual("promptMessages", gf.Parameters[0].Name);
 			Assert.AreEqual("scheme", gf.Parameters[1].Name);
 			Assert.AreEqual("{sentiment:negative|neutral|positive}", gf.Parameters[1].Value);
@@ -75,14 +68,14 @@ namespace PLang.Modules.LlmModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("AskLlm", gf.FunctionName);
+			Assert.AreEqual("AskLlm", gf.Name);
 			Assert.AreEqual("promptMessages", gf.Parameters[0].Name);
 			Assert.AreEqual("scheme", gf.Parameters[1].Name);
 			Assert.AreEqual("firstName", gf.ReturnValues[0].VariableName);

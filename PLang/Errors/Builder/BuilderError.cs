@@ -1,4 +1,4 @@
-﻿using NBitcoin.Protocol;
+﻿
 using PLang.Building.Model;
 using PLang.Utils;
 
@@ -15,6 +15,10 @@ namespace PLang.Errors.Builder
 			{
 				this.ContinueBuild = be.ContinueBuild;
 			}
+			if (error.ErrorChain != null && error.ErrorChain.Count > 0)
+			{
+				this.ErrorChain.AddRange(error.ErrorChain);
+			}
 		}
 
 		public BuilderError(string Message, string Key = "Builder", int StatusCode = 400, bool ContinueBuild = true,
@@ -28,7 +32,7 @@ namespace PLang.Errors.Builder
 		public bool ContinueBuild { get; init; }
 
 		public bool Retry {get;init;}
-
+		public string? LlmBuilderHelp { get; set; }
 		public override object ToFormat(string contentType = "text")
 		{
 			return ErrorHelper.ToFormat(contentType, this);

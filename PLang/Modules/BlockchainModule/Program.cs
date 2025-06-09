@@ -152,7 +152,7 @@ namespace PLang.Modules.BlockchainModule
 
 			subscription.GetSubscribeResponseAsObservable().Subscribe(id =>
 			{
-				memoryStack.Put(subscriptIdVariableName, id);
+				memoryStack.Put(subscriptIdVariableName, id, goalStep: goalStep);
 			});
 
 			subscription.GetSubscriptionDataResponsesAsObservable().Subscribe(async log =>
@@ -261,7 +261,7 @@ namespace PLang.Modules.BlockchainModule
 
 			var subscription = new EthNewBlockHeadersObservableSubscription(client);
 			subscription.GetSubscribeResponseAsObservable().Subscribe(subscriptionId =>
-				memoryStack.Put(subcriptionId, subscriptionId));
+				memoryStack.Put(subcriptionId, subscriptionId, goalStep: goalStep));
 
 			DateTime? lastBlockNotification = null;
 			double secondsSinceLastBlock = 0;

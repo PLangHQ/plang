@@ -51,7 +51,7 @@ namespace PLang.Services.LlmService
 
 		public string GetStringToHash(LlmRequest question)
 		{
-			return question.type + JsonConvert.SerializeObject(question.promptMessage).ComputeHash().Hash + question.model + question.maxLength + question.top_p + question.frequencyPenalty + question.presencePenalty + question.temperature;
+			return question.type + JsonConvert.SerializeObject(question.promptMessage).ComputeHash().Hash + question.model + question.maxLength + question.top_p + question.frequencyPenalty + question.presencePenalty + question.temperature + question.scheme;
 		}
 
 		public LlmRequest? GetCachedQuestion(string appId, LlmRequest question)

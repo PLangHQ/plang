@@ -27,7 +27,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
 			LoadOpenAI();
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.LocalOrGlobalVariableModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -38,16 +38,9 @@ namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.LocalOrGlobalVariableModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
-		public GoalStep GetStep(string text)
-		{
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
-			step.ModuleType = "PLang.Modules.LocalOrGlobalVariableModule";
-			return step;
-		}
 
 		[DataTestMethod]
 		[DataRow("set 'name' as %name%")]
@@ -55,14 +48,14 @@ namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);		
+			LoadStep(text);		
 			 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("SetVariable", gf.FunctionName);
+			Assert.AreEqual("SetVariable", gf.Name);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("name", gf.Parameters[0].Value);
 			Assert.AreEqual("value", gf.Parameters[1].Name);
@@ -79,14 +72,14 @@ namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
 
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("SetStaticVariable", gf.FunctionName);
+			Assert.AreEqual("SetStaticVariable", gf.Name);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("name", gf.Parameters[0].Value);
 			Assert.AreEqual("value", gf.Parameters[1].Name);
@@ -101,14 +94,14 @@ namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("GetVariable", gf.FunctionName);
+			Assert.AreEqual("GetVariable", gf.Name);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("name", gf.Parameters[0].Value);
 			Assert.AreEqual("name", gf.ReturnValues[0].VariableName);
@@ -122,14 +115,14 @@ namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("GetStaticVariable", gf.FunctionName);
+			Assert.AreEqual("GetStaticVariable", gf.Name);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("name", gf.Parameters[0].Value);
 			Assert.AreEqual("name", gf.ReturnValues[0].VariableName);
@@ -142,14 +135,14 @@ namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("RemoveVariable", gf.FunctionName);
+			Assert.AreEqual("RemoveVariable", gf.Name);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("name", gf.Parameters[0].Value);
 
@@ -161,14 +154,14 @@ namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("RemoveStaticVariable", gf.FunctionName);
+			Assert.AreEqual("RemoveStaticVariable", gf.Name);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("name", gf.Parameters[0].Value);
 
@@ -180,14 +173,14 @@ namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("OnCreateVariableListener", gf.FunctionName);
+			Assert.AreEqual("OnCreateVariableListener", gf.Name);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("name", gf.Parameters[0].Value);
 			Assert.AreEqual("goalName", gf.Parameters[1].Name);
@@ -206,14 +199,14 @@ namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("OnChangeVariableListener", gf.FunctionName);
+			Assert.AreEqual("OnChangeVariableListener", gf.Name);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("name", gf.Parameters[0].Value);
 			Assert.AreEqual("goalName", gf.Parameters[1].Name);
@@ -232,14 +225,14 @@ namespace PLang.Modules.LocalOrGlobalVariableModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("OnRemoveVariableListener", gf.FunctionName);
+			Assert.AreEqual("OnRemoveVariableListener", gf.Name);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("name", gf.Parameters[0].Value);
 			Assert.AreEqual("goalName", gf.Parameters[1].Name);

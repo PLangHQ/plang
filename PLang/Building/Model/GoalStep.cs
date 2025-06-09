@@ -1,19 +1,24 @@
 ﻿using PLang.Attributes;
+using PLang.Errors;
 using PLang.Events;
+using PLang.Interfaces;
 using PLang.Models;
+using System.Diagnostics;
 using System.Runtime.Serialization;
+using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Building.Model
 {
 
-	public class GoalStep
+	public class GoalStep : VariableContainer
 	{
 		public GoalStep()
 		{
-			Custom = new Dictionary<string, object>();
+			
 		}
 
 		public string Text { get; set; }
+
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
@@ -23,47 +28,57 @@ namespace PLang.Building.Model
 		public string Name { get; set; }
 		public string? Description { get; set; }
 		public string PrFileName { get; set; }
+		
+		[LlmIgnore]
 		public string RelativePrPath { get; set; }
 
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
 		public string AbsolutePrFilePath { get; set; }
+
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
-
 		[System.Text.Json.Serialization.JsonIgnore]
 		public string AppStartupPath { get; set; }
 
+		[LlmIgnore]
 		public int Indent { get; set; }
+		
+		[LlmIgnore]
 		public bool Execute { get; set; }
+
+		[LlmIgnore]
 		public bool RunOnce { get; set; }
+		
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
-
 		[System.Text.Json.Serialization.JsonIgnore]
 		public DateTime? Executed { get; set; }
+
+		[LlmIgnore]
 		public DateTime Generated { get; set; }
 
 		[DefaultValue("true")]
 		public bool WaitForExecution { get; set; } = true;
 		public string? LoggerLevel { get; set; }
 		public List<ErrorHandler>? ErrorHandlers { get; set; }
+		public bool Retry { get; set; }
 		public CachingHandler? CacheHandler { get; set; }
 		public CancellationHandler? CancellationHandler { get; set; }
+		
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
-
 		[System.Text.Json.Serialization.JsonIgnore]
 		public string? PreviousText { get; set; }
+
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
-
 		[System.Text.Json.Serialization.JsonIgnore]
 		public bool Reload { get; set; }
+
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
-
 		[System.Text.Json.Serialization.JsonIgnore]
 		public GoalStep? NextStep
 		{
@@ -79,12 +94,30 @@ namespace PLang.Building.Model
 				}
 			}
 		}
+
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public GoalStep? PreviousStep {
+			get
+			{
+				if (Index - 1 >= 0)
+				{
+					return Goal.GoalSteps[Index - 1];
+				}
+				else
+				{
+					return null;
+				}
+			}
+		}
+
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
 		public Goal Goal { get; set; }
 
-		public Dictionary<string, object> Custom { get; set; } = new Dictionary<string, object>();
+		[LlmIgnore]
 		public int Number
 		{
 			get;
@@ -99,12 +132,25 @@ namespace PLang.Building.Model
 			get;
 			set;
 		}
+
+		[LlmIgnore]
 		public int LineNumber { get; set; }
+
+		[LlmIgnore]
 		public LlmRequest LlmRequest { get; set; }
+
+		[LlmIgnore]
 		public EventBinding? EventBinding { get; set; } = null;
+
+		[LlmIgnore]
 		public bool IsEvent { get; set; } = false;
+		
+		[LlmIgnore]
 		public string Hash { get; set; }
+
+		[LlmIgnore]
 		public string BuilderVersion { get; set; }
+
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
@@ -115,6 +161,31 @@ namespace PLang.Building.Model
 		[System.Text.Json.Serialization.JsonIgnore]
 		public Instruction? Instruction { get; set; }
 
+		[LlmIgnore]
 		public string RelativeGoalPath { get; set; }
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public bool IsValid { get; set; } = false;
+		protected override Goal? GetParent()
+		{
+			return Goal;
+		}
+
+
+		[IgnoreWhenInstructed]
+		public Stopwatch Stopwatch { get; set; }
+
+		public string UserIntent { get; internal set; }
+
+		public (IGenericFunction? Function, IError? Error) GetFunction(IPLangFileSystem fileSystem)
+		{
+			var result = InstructionCreator.Create(AbsolutePrFilePath, fileSystem);
+			if (result.Error != null) return (null,  result.Error);
+
+			Instruction = result.Instruction!;
+
+			return (result.Instruction!.Function, null);
+		}
 	}
 }

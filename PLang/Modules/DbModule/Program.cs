@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using IdGen;
+using Markdig.Extensions.TaskLists;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -8,6 +9,7 @@ using PLang.Attributes;
 using PLang.Building.Parsers;
 using PLang.Errors;
 using PLang.Errors.Runtime;
+using PLang.Events;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Runtime;
@@ -16,6 +18,7 @@ using PLang.Services.EventSourceService;
 using PLang.Services.LlmService;
 using PLang.Services.SettingsService;
 using PLang.Utils;
+using ReverseMarkdown.Converters;
 using System.Collections;
 using System.ComponentModel;
 using System.Data;
@@ -23,6 +26,7 @@ using System.Data.Common;
 using System.Dynamic;
 using System.Globalization;
 using System.IO.Abstractions;
+using System.Threading.Tasks;
 using static Dapper.SqlMapper;
 using static PLang.Modules.DbModule.ModuleSettings;
 using static PLang.Utils.VariableHelper;
@@ -30,7 +34,7 @@ using static PLang.Utils.VariableHelper;
 namespace PLang.Modules.DbModule
 {
 	[Description("Database access, select, insert, update, delete and execute raw sql. Handles transactions. Sets and create datasources. Isolated data pattern (idp)")]
-	public class Program : BaseProgram, IDisposable
+	public class Program : BaseProgram, IDisposable, IAsyncConstructor
 	{
 		//public static string DbConnectionContextKey = "DbConnection";
 		//public static string DbTransactionContextKey = "DbTransaction";
@@ -66,230 +70,223 @@ namespace PLang.Modules.DbModule
 			this.programFactory = programFactory;
 		}
 
-		[Description("Create a datasource to a database")]
-		public async Task<(DataSource?, IError?)> CreateDataSource([HandlesVariable] string name = "data", string databaseType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
+		public async Task<IError?> AsyncConstructor()
 		{
-			var variables = variableHelper.GetVariables(name);
-			if (variables.FirstOrDefault(p => p.Value == null) != null) return (null, null);
-
-			var (datasource, error) = await dbSettings.CreateDataSource(name, databaseType, setAsDefaultForApp, keepHistoryEventSourcing);
-			if (datasource == null && error != null) return (datasource, error);
-
-			if (GoalHelper.IsSetup(goal))
+			(DataSource? DataSource, IError? Error) result;
+			if (instruction.Properties.TryGetValue("DataSource", out var name) && !string.IsNullOrWhiteSpace(name.ToString()))
 			{
-				if (name.Contains("%"))
-				{
-					var runtimeDataSource = await GetRuntimeDataSource(datasource, variables);
-					context[ReservedKeywords.CurrentDataSource] = runtimeDataSource;
-				}
-				else
-				{
-					context[ReservedKeywords.CurrentDataSource] = datasource;
-				}
+				result = await dbSettings.GetDataSource(name.ToString(), goalStep);
+			}
+			else
+			{
+				result = await dbSettings.GetCurrentDataSource(goalStep);
 			}
 
+			if (result.Error != null) return result.Error;
+
+			goalStep.AddVariable<DataSource>(result.DataSource);
+
+			return null;
+		}
+
+
+		[Description("Create a datasource to a database")]
+		public async Task<(DataSource?, IError?)> CreateDataSource([HandlesVariable] string name = "data", string databaseType = "sqlite",
+			bool? setAsDefaultForApp = null, bool? keepHistoryEventSourcing = null)
+		{
+			if (!goal.IsSetup) return (null, new ProgramError("Create data source can only be in a setup file",
+				FixSuggestion: $"Create setup.goal file or a goal file in a setup folder. Only one create data source can be in each setup file"));
+
+			var (datasource, error) = await dbSettings.CreateDataSource(name, databaseType, setAsDefaultForApp ?? false, keepHistoryEventSourcing ?? false);
+			if (datasource == null) return (datasource, error);
+
+			if (datasource.Name.Contains("%"))
+			{
+				var variables = variableHelper.GetVariables(name);
+				var emptyVariables = variables.Where(p => p.IsEmpty);
+				if (emptyVariables.Any())
+				{
+					string emptyVars = string.Join(", ", emptyVariables.Select(p => p.Name).ToArray());
+					return (null, new ProgramError($"Could not load all variables. {emptyVars} is empty."));
+				}
+
+				(datasource, error) = await GetRuntimeDataSource(datasource, variables);
+				if (error != null) return (datasource, error);
+			}
+
+			goal.AddVariable(datasource);
 			return (datasource, null);
 		}
 
+		[Description("gets all databases that have been created")]
+		public async Task<List<DataSource>> GetDataSources()
+		{
+			return await dbSettings.GetAllDataSources();
+		}
 
 
 		[Description("gets the current datasource")]
-		public async Task<DataSource> GetDataSource()
+		public async Task<DataSource?> GetDataSource()
 		{
-			return await dbSettings.GetCurrentDataSource();
+			return goal.GetVariable<DataSource>();
 		}
 
-		public async Task<IError?> SetDataSourceName([HandlesVariable] string? name = null, bool setForGoal = true)
+		public async Task<(DataSource? DataSource, IError? Error)> SetDataSourceName([HandlesVariable] string? name = null)
 		{
-			if (string.IsNullOrEmpty(name)) return new ProgramError("Name of the datasource cannot be empty");
-
-			(var dataSource, var error) = await dbSettings.GetDataSource(name, goalStep);
-			if (error != null)
+			return await SetInternalDataSourceName(name, true);
+		}
+		private async Task<(DataSource? DataSource, IError? Error)> SetInternalDataSourceName([HandlesVariable] string? name = null, bool setForGoal = false)
+		{
+			if (string.IsNullOrWhiteSpace(name) && goalStep.Instruction != null)
 			{
-				if (error.Key == "DataSourceNotFound" && (goalStep.Goal.IsSetup || name.Contains("%")))
+				if (goalStep.Instruction.Properties.TryGetValue("DataSource", out object? value) && value != null)
 				{
-					var datasources = await dbSettings.GetAllDataSources();
-					await dbSettings.CreateDataSource(name, "sqlite", datasources.Count == 0, datasources.Count == 0);
-					return await SetDataSourceName(name);
+					name = value.ToString();
 				}
-				return error;
+
+			}
+
+			DataSource? dataSource = null;
+			if (string.IsNullOrEmpty(name))
+			{
+				dataSource = goalStep.GetVariable<DataSource>();
+			}
+
+			if (dataSource == null && string.IsNullOrEmpty(name)) return (null, new ProgramError("Name of the datasource cannot be empty"));
+
+			if (dataSource == null)
+			{
+				(dataSource, var error) = await dbSettings.GetDataSource(name, goalStep);
+				if (error != null) return (dataSource, error);
 			}
 
 			if (!IsBuilder && name.Contains("%"))
 			{
 				var variables = variableHelper.GetVariables(name);
-				(dataSource, error) = await GetRuntimeDataSource(dataSource, variables);
-				if (error != null) return error;
+				(dataSource, var error) = await GetRuntimeDataSource(dataSource, variables);
+				if (error != null) return (dataSource, error);
+			}
+			else if (IsBuilder)
+			{
 
 			}
-			if (setForGoal || !context.ContainsKey(ReservedKeywords.CurrentDataSource))
+
+			if (dataSource == null) return (null, new ProgramError($"Could not find data source named: {name}"));
+
+
+			if (setForGoal)
 			{
-				context[ReservedKeywords.CurrentDataSource] = dataSource;
+				goal.AddVariable(dataSource);
+				var @event = goal.GetVariable<EventBinding>(ReservedKeywords.Event);
+				if (@event != null && @event.Goal != null)
+				{
+					@event.Goal.AddVariable(dataSource);
+				}
 			}
-			return null;
+			else
+			{
+				goalStep.AddVariable(dataSource);
+			}
+
+			return (dataSource, null);
 		}
 
-		private async Task<(DataSource?, IError?)> GetRuntimeDataSource(DataSource datasource, List<Variable> variables)
+
+		public async Task<IError?> BeginTransaction(string? name = null)
 		{
-			var parameters = new Dictionary<string, object?>();
+			(name, var error) = GetNameForConnection(name);
+			if (error != null) return error;
 
-			var dataSourceVariables = variableHelper.GetVariables(datasource.Name);
-			string localPath = datasource.LocalPath;
-			string connectionString = datasource.ConnectionString;
-
-			for (int i = 0; i < variables.Count; i++)
-			{
-				if (variables[i].Value == null || string.IsNullOrEmpty(variables[i].Value?.ToString()))
-				{
-					return (null, new StepError($"Variable {variables[i].OriginalKey} has not been set.", goalStep, "UndefinedVariable"));
-				}
-
-				parameters.Add($"%variable{i}%", variables[i].Value);
-
-				localPath = localPath.Replace($"%variable{i}%", variables[i].Value.ToString());
-				connectionString = connectionString.Replace($"%variable{i}%", variables[i].Value.ToString());
-			}
-
-			string dirPath = Path.GetDirectoryName(localPath);
-			if (!fileSystem.Directory.Exists(dirPath))
-			{
-				fileSystem.Directory.CreateDirectory(dirPath);
-			}
-
-			if (!fileSystem.File.Exists(localPath))
-			{
-				using (var fs = fileSystem.File.Create(localPath))
-				{
-					fs.Close();
-				}
-			}
-
-			var runtimeDataSource = datasource with { LocalPath = localPath, ConnectionString = connectionString };
-			if (memoryStack.Contains("GetRuntimeDataSource"))
-			{
-				return (runtimeDataSource, null);
-			}
-
-
-			parameters.Add("GetRuntimeDataSource", true);
-
-			var goal = prParser.GetAllGoals().FirstOrDefault(p => p.DataSourceName != null && p.DataSourceName.Equals(datasource.Name));
-			if (goal != null)
-			{
-				var storedKey = "%__stepsExecuted__%";
-
-				context.AddOrReplace(ReservedKeywords.CurrentDataSource, runtimeDataSource);
-
-				var plangRuntime = programFactory.GetProgram<PlangModule.Program>(goalStep);
-				var varsRuntime = programFactory.GetProgram<LocalOrGlobalVariableModule.Program>(goalStep);
-				var (value, error) = await varsRuntime.Load([storedKey]);
-				if (error != null) return (null, error);
-
-				bool hasExecuted = false;
-				GroupedErrors groupedErrors = new();
-				var stepExecuted = (value as JObject)?.ToObject<Dictionary<string, DateTime>>() ?? new();
-				foreach (var step in goal.GoalSteps)
-				{
-					if (stepExecuted.ContainsKey(step.Hash)) continue;
-
-					hasExecuted = true;
-					(var result, error) = await plangRuntime.RunStep(step, parameters);
-					if (error != null)
-					{
-						groupedErrors.Add(error);
-					}
-					else
-					{
-						stepExecuted.AddOrReplace(step.Hash, DateTime.UtcNow);
-					}
-				}
-				if (!hasExecuted) return (runtimeDataSource, null);
-
-
-				object? tmp = null;
-				if (memoryStack.Contains(storedKey))
-				{
-					tmp = memoryStack.Get(storedKey);
-				}
-
-				memoryStack.Put(storedKey, stepExecuted);
-				error = await varsRuntime.Store([storedKey]);
-				memoryStack.Remove(storedKey);
-
-				if (tmp != null)
-				{
-					memoryStack.Put(storedKey, tmp);
-				}
-				if (error != null) return (null, error);
-			}
-
-			return (runtimeDataSource, null);
-		}
-
-		[Description("Create Isolated data pattern (IDP) for the system.")]
-		public async Task<(object? Variables, IError? Error)> CreateIsolatedDataPattern(string id, string setupGoalFile, string? name = null, bool keepHistory = true, bool defaultForApp = false)
-		{
-			var parameters = new Dictionary<string, object?>();
-			parameters.Add("id", id);
-			parameters.Add("setupGoalFile", setupGoalFile);
-			parameters.Add("name", !string.IsNullOrEmpty(name) ? name : id);
-			parameters.Add("keepHistory", keepHistory);
-			parameters.Add("defaultForApp", defaultForApp);
-
-			var callModule = GetProgramModule<CallGoalModule.Program>();
-			var result = await callModule.RunGoal("/modules/DbModule/CreateIsolatedDataPattern", parameters, isolated: true);
-			return result;
-		}
-
-		public async Task BeginTransaction()
-		{
-			var dbConnection = dbFactory.CreateHandler();
+			var dbConnection = dbFactory.CreateHandler(goalStep);
 			if (dbConnection.State != ConnectionState.Open) dbConnection.Open();
 			var transaction = dbConnection.BeginTransaction();
 
-			AddVariable(transaction, () =>
+			goal.AddVariable(transaction, () =>
 			{
 				transaction.Dispose();
 				return Task.CompletedTask;
-			});
+			}, variableName: name);
 
-			AddVariable(dbConnection, () =>
+			goal.AddVariable(dbConnection, () =>
 			{
 				dbConnection.Dispose();
 				return Task.CompletedTask;
-			});
-			
+			}, variableName: name);
 
+			return null;
 		}
 
-		public async Task EndTransaction()
+		private (string? Name, IError? Error) GetNameForConnection(string? name = null)
 		{
-			var dbConnection = GetVariable<IDbConnection>();
-			var transaction = GetVariable<IDbTransaction>();
+			if (!string.IsNullOrEmpty(name)) return (name, null);
+
+			if (goal == null) return (null, new ProgramError("No goal loaded", Key: "NoGoal"));
+
+			var dataSource = goalStep.GetVariable<DataSource>();
+			if (dataSource == null) return (null, new ProgramError("No datasource to create transaction on", Key: "NoDataSource"));
+
+			return (dataSource.Name, null);
+		}
+
+		public async Task<IError?> EndTransaction(string? name = null)
+		{
+			(name, var error) = GetNameForConnection(name);
+			if (error != null) return error;
+
+			var dbConnection = goal.GetVariable<IDbConnection>(name);
+			var transaction = goal.GetVariable<IDbTransaction>(name);
 
 			if (transaction != null) transaction.Commit();
 			if (dbConnection != null) dbConnection.Close();
 
-			RemoveVariable<IDbTransaction>();
-			RemoveVariable<IDbConnection>();
+			goal.RemoveVariable<IDbTransaction>(name);
+			goal.RemoveVariable<IDbConnection>(name);
+
+			return null;
 		}
 
-		public async Task Rollback()
+		public async Task<IError?> Rollback(string? name = null, bool rollbackAllTranscations = true)
 		{
-			var dbConnection = GetVariable<IDbConnection>();
-			var transaction = GetVariable<IDbTransaction>();
+			if (rollbackAllTranscations)
+			{
+
+				var connections = goal.GetVariables<IDbConnection>();
+				var transactions = goal.GetVariables<IDbTransaction>();
+
+				foreach (var trans in transactions)
+				{
+					if (trans != null) trans.Rollback();
+				}
+
+				foreach (var connection in connections)
+				{
+					if (connection != null) connection.Close();
+				}
+
+				goal.RemoveVariables<IDbTransaction>();
+				goal.RemoveVariables<IDbConnection>();
+
+				return null;
+			}
+
+			(name, var error) = GetNameForConnection(name);
+			if (error != null) return error;
+
+			var dbConnection = goal.GetVariable<IDbConnection>(name);
+			var transaction = goal.GetVariable<IDbTransaction>(name);
 
 			if (transaction != null) transaction.Rollback();
 			if (dbConnection != null) dbConnection.Close();
 
-			RemoveVariable<IDbTransaction>();
-			RemoveVariable<IDbConnection>();
+			goal.RemoveVariable<IDbTransaction>(name);
+			goal.RemoveVariable<IDbConnection>(name);
 
+			return null;
 		}
 
 		public async Task<IError?> LoadExtension(string fileName, string? procName = null)
 		{
-			var dbConnection = dbFactory.CreateHandler();
+			var dbConnection = dbFactory.CreateHandler(goalStep);
 			if (dbConnection is not SqliteConnection)
 			{
 				return new Error("Loading extension only works for Sqlite", "NotSupported");
@@ -306,33 +303,76 @@ namespace PLang.Modules.DbModule
 
 		}
 
-		[Description("Returns tables and views in database with the columns description")]
-		public async Task<(Dictionary<string, object>?, IError?)> GetDatabaseStructure(string[]? tables = null, string? dataSourceName = null)
+		[Description("Return list of tables and views in a datasource")]
+		public async Task<(List<string>? Scheme, IError? Error)> GetDbScheme([HandlesVariable] string? dataSourceName = null)
 		{
-			var dataSource = await dbSettings.GetCurrentDataSource();
+			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
+			if (error != null) return (null, error);
+
 			var result = await Select(dataSource.SelectTablesAndViews);
-			if (result.error != null)
+			if (result.Error != null)
 			{
-				return (null, result.error);
+				return (null, result.Error);
 			}
-			var dict = new Dictionary<string, object>();
-			foreach (var item in result.rows)
+
+			if (result.Table!.Count == 0)
 			{
-				var tbl = (dynamic)item;
+				return (null, new ProgramError($"No tables exists in {dataSource.Name}", Key: "NoTables"));
+			}
+
+			var list = new List<string>();
+			foreach (var item in result.Table)
+			{
+				list.Add(item["name"].ToString());
+			}
+			return (list, null);
+		}
+
+		public record TableInfo(string Name, List<ColumnInfo> Columns);
+		public record ColumnInfo(string Information);
+		[Description("Returns tables and views in database with the columns description")]
+		public async Task<(List<TableInfo>? TablesAndColumns, IError? Error)> GetDatabaseStructure(List<string>? tables = null, [HandlesVariable] string? dataSourceName = null)
+		{
+			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
+			if (error != null) return (null, error);
+
+			var result = await Select(dataSource.SelectTablesAndViews, dataSourceName: dataSource.Name);
+			if (result.Error != null)
+			{
+				return (null, result.Error);
+			}
+
+			if (result.Table.Count == 0)
+			{
+				return (null, new ProgramError($"No tables exists in {dataSource.Name}", Key: "NoTables"));
+			}
+
+			List<TableInfo> tableInfos = new();
+
+			foreach (var row in result.Table)
+			{
 
 				if (tables != null)
 				{
-					if (tables.FirstOrDefault(p => p.Equals(tbl.name, StringComparison.OrdinalIgnoreCase)) == null)
+					if (tables.FirstOrDefault(p => p.Equals(row.Get<string>("name"), StringComparison.OrdinalIgnoreCase)) == null)
 					{
 						continue;
 					}
 				}
-				var sql = await dbSettings.FormatSelectColumnsStatement(tbl.name);
-				var columns = await Select(sql);
-				dict.Add(tbl.name, columns);
+				var sql = await dbSettings.FormatSelectColumnsStatement(dataSource, row.Get<string>("name"));
+
+				var selectResult = await Select(sql, dataSourceName: dataSourceName);
+				if (selectResult.Error != null) return (null, selectResult.Error);
+
+				List<ColumnInfo> columns = new();
+				foreach (var column in selectResult.Table)
+				{
+					columns.Add(new ColumnInfo(JsonConvert.SerializeObject(column)));
+				}
+				tableInfos.Add(new TableInfo(row.Get<string>("name"), columns));
 
 			}
-			return (dict, null);
+			return (tableInfos, null);
 		}
 
 		public async void Dispose()
@@ -342,300 +382,67 @@ namespace PLang.Modules.DbModule
 
 		public record ParameterInfo(string ParameterName, object? VariableNameOrValue, string TypeFullName);
 
-		private (IDbConnection connection, DynamicParameters param, string sql, IError? error) Prepare(string sql, List<object>? Parameters = null, bool isInsert = false)
+
+		private (IDbConnection? connection, DynamicParameters? param, string sql, IError? error) Prepare(string sql, List<ParameterInfo>? Parameters = null, bool isInsert = false)
 		{
-			IDbConnection? connection = GetVariable<IDbConnection>();
-			if (connection == null) connection = dbFactory.CreateHandler();
+			var dataSource = goalStep.GetVariable<DataSource>();
+			IDbConnection? connection = goal.GetVariable<IDbConnection>(dataSource.Name) ?? dbFactory.CreateHandler(goalStep);
 
-			goal?.AddVariable(connection.ConnectionString, variableName: "ConnectionString");
+			var paramResult = GetDynamicParameters(sql, isInsert, Parameters);
+			if (paramResult.Error != null) return (null, null, sql, paramResult.Error);
 
-			var multipleErrors = new GroupedErrors("SqlParameters");
-			var param = new DynamicParameters();
-			if (Parameters != null)
-			{
-				foreach (var parameter in Parameters)
-				{
-					var p = parameter as ParameterInfo;
-					if (p == null)
-					{
-						if (parameter is JObject)
-						{
-							if (((JObject)parameter).GetValue("Type") != null)
-							{
-								var obj = (JObject)parameter;
-								p = new ParameterInfo(obj.GetValue("Name").ToString(), obj.GetValue("Value"), obj.GetValue("Type").ToString());
-							}
-							else
-							{
-								p = ((JObject)parameter).ToObject<ParameterInfo>();
-							}
-						}
-						else if (parameter is string && JsonHelper.IsJson(parameter))
-						{
-							p = JsonConvert.DeserializeObject<ParameterInfo>(parameter.ToString());
-						}
-					}
-
-					var parameterName = p.ParameterName.Replace("@", "");
-					if (parameterName.Contains("."))
-					{
-						var oldParameterName = parameterName;
-						parameterName = parameterName.Replace(".", "");
-						sql = sql.Replace(oldParameterName, parameterName);
-					}
-					if (isInsert && parameterName == "id" && eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
-					{
-						var id = p.VariableNameOrValue.ToString();
-						if (id == "auto" || string.IsNullOrEmpty(id))
-						{
-							var generator = new IdGenerator(new Random().Next(0, 1023));
-							var newId = generator.ElementAt(0);
-							param.Add("@" + parameterName, newId, DbType.Int64);
-						}
-						else
-						{
-							param.Add("@" + parameterName, id, DbType.Int64);
-						}
-					}
-					else if (p.VariableNameOrValue == null)
-					{
-						param.Add("@" + parameterName, null);
-					}
-					/*
-					else if (p.VariableNameOrValue is JArray)
-					{
-						var jarray = (JArray)p.VariableNameOrValue;
-						StringBuilder placeholders = new StringBuilder();
-						for (int i = 0; i < jarray.Count; i++)
-						{
-							placeholders.Append($"@category{i}");
-							if (i < jarray.Count - 1)
-							{
-								placeholders.Append(", ");
-							}
-							param.Add($"@category{i}", ConvertObjectToType(jarray[i], p.TypeFullName, parameterName));
-						}
-						sql = sql.Replace(p.ParameterName.ToString(), placeholders.ToString());
-
-					}*/
-					else if (VariableHelper.ContainsVariable(p.VariableNameOrValue))
-					{
-						var variableName = p.VariableNameOrValue.ToString();
-						string prefix = "";
-						string postfix = "";
-						if (variableName.ToString().StartsWith("\\%"))
-						{
-							variableName = variableName.Substring(2);
-							prefix = "%";
-						}
-						if (variableName.ToString().EndsWith("\\%"))
-						{
-							variableName = variableName.TrimEnd('%').TrimEnd('\\');
-							postfix = "%";
-						}
-						var variableValue = variableName; // variableHelper.LoadVariables(variableName);
-						(object? value, Error? error) = ConvertObjectToType(variableValue, p.TypeFullName, parameterName, p.VariableNameOrValue);
-						if (error != null) multipleErrors.Add(error);
-
-						param.Add("@" + parameterName, prefix + value + postfix);
-					}
-					else
-					{
-						string prefix = "";
-						string postfix = "";
-						var variableName = p.VariableNameOrValue;
-						if (variableName.ToString().StartsWith("\\%"))
-						{
-							variableName = variableName.ToString().Substring(2);
-							prefix = "%";
-						}
-						if (variableName.ToString().EndsWith("\\%"))
-						{
-							variableName = variableName.ToString().TrimEnd('%').TrimEnd('\\');
-							postfix = "%";
-						}
-
-
-						(object? value, Error? error) = ConvertObjectToType(prefix + variableName + postfix, p.TypeFullName, parameterName, p.VariableNameOrValue);
-						if (error != null)
-						{
-							if (parameterName == "id" && eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
-							{
-								var dataSource = dbSettings.GetCurrentDataSource().Result;
-								multipleErrors.Add(new ProgramError($"Parameter @id is empty. Are you on the right data source? Current data source is {dataSource.Name}", goalStep, function));
-							}
-							multipleErrors.Add(error);
-						}
-						param.Add("@" + parameterName, value);
-					}
-				}
-			}
 			if (connection != null && connection.State != ConnectionState.Open) connection.Open();
 			if (connection is SqliteConnection sqliteConnection)
 			{
-				if (sqliteConnection.ConnectionString.Contains("Memory"))
+				if (sqliteConnection.ConnectionString.Contains("Memory;"))
 				{
-					var anchors = AppContext.GetData("AnchorMemoryDb") as Dictionary<string, IDbConnection> ?? new();
-					if (!anchors.ContainsKey(sqliteConnection.ConnectionString))
+					var anchors = context.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb", new()) ?? new();
+					if (!anchors.ContainsKey(dataSource.Name))
 					{
-						var anchorConnection = dbFactory.CreateHandler();
+						var anchorConnection = dbFactory.CreateHandler(goalStep);
 						anchorConnection.Open();
-						anchors.Add(sqliteConnection.ConnectionString, anchorConnection);
+						anchors.Add(dataSource.Name, anchorConnection);
 
-						AppContext.SetData("AnchorMemoryDb", anchors);
+						context.AddOrReplace("AnchorMemoryDb", anchors);
 					}
+
+
 				}
 			}
 
-			var errorToReturn = (multipleErrors.Errors.Count == 0) ? null : multipleErrors;
-			return (connection, param, sql, errorToReturn);
+			return (connection, paramResult.DynamicParameters, sql, paramResult.Error);
 
 		}
 
-		private (object?, Error?) ConvertObjectToType(object obj, string typeFullName, string parameterName, object variableNameOrValue)
-		{
-			// TODO: because of bad structure in building, can be removed when fix
-			if (typeFullName == "String") typeFullName = "System.String";
-
-			Type? targetType = Type.GetType(typeFullName);
-			if (targetType == null)
-			{
-				typeFullName = ConvertFromColumnTypeToCSharpType(typeFullName);
-				targetType = Type.GetType(typeFullName);
-			}
-			try
-			{
-				if (targetType == null)
-				{
-					return (null, new Error($"Could not find {typeFullName} for parameter {parameterName}", "TypeNotFound"));
-				}
-
-				var parseMethod = targetType.GetMethod("Parse", new[] { typeof(string) });
-				if (parseMethod != null)
-				{
-					try
-					{
-						string value = FormatType(obj.ToString(), targetType);
-						return (parseMethod.Invoke(null, [value]), null);
-					}
-					catch { }
-				}
-
-				if (targetType == typeof(string) && (obj is JObject || obj is JArray || obj is JProperty || obj is JValue))
-				{
-					return (obj.ToString(), null);
-				}
-				if (obj is JArray jarray && (targetType.Name.StartsWith("IEnumerable") || targetType.Name.StartsWith("List")))
-				{
-					var array = Array.CreateInstance(targetType.GenericTypeArguments[0], jarray.Count);
-					int idx = 0;
-					foreach (JToken item in jarray)
-					{
-						var tmp = item.ToObject(targetType.GenericTypeArguments[0]);
-						array.SetValue(tmp, idx++);
-					}
-					return (array, null);
-				}
-
-
-				return (Convert.ChangeType(obj, targetType), null);
-			}
-			catch (Exception ex)
-			{
-				if (string.IsNullOrWhiteSpace(obj.ToString()) && (targetType == typeof(long) || targetType == typeof(double)))
-				{
-					var filterModule = GetProgramModule<FilterModule.Program>();
-					var task = filterModule.FilterOnPropertyAndValue(function, "ParameterName", "@" + parameterName, retrieveOneItem: "first", propertyToExtract: "parent");
-					task.Wait();
-					var parameter = task.Result as JObject;
-					if (parameter != null)
-					{
-						return (0, new Error($"{parameter["VariableNameOrValue"]} is empty. Empty content cannot be used for the column {parameterName}. It must contains some value", "ConvertFailed", Exception: ex));
-					}
-					else
-					{
-						return (0, new Error($"{parameterName} is empty. Empty content cannot be used, it must contains some value", "ConvertFailed", Exception: ex));
-					}
-				}
-
-				return (null, new Error($"Error converting '{obj}' to type {targetType} for parameter {parameterName}", "ConvertFailed", Exception: ex));
-
-			}
-
-
-		}
-
-		private IEnumerable ConvertJArray(JArray jArray, Type targetType)
-		{
-			var listType = typeof(List<>).MakeGenericType(targetType);
-			var toObjectMethod = typeof(JArray).GetMethod("ToObject", new Type[] { });
-			var genericToObjectMethod = toObjectMethod.MakeGenericMethod(listType);
-
-			var list = genericToObjectMethod.Invoke(jArray, null);
-
-			return (IEnumerable)list;
-		}
-
-		private string FormatType(string value, Type targetType)
-		{
-			if (!value.StartsWith("0")) return value;
-			if (targetType == null) return value;
-
-			if (targetType == typeof(double) || targetType == typeof(float) || targetType == typeof(decimal))
-			{
-				if (value.Contains(CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator)) return value;
-				var idx = FindFirstNonDigitIndex(value);
-				value = value.Substring(0, idx) + CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator + value.Substring(idx + 1);
-			}
-			else if ((targetType == typeof(int) || targetType == typeof(long)) && value.Contains(CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator))
-			{
-				var tmp = double.Parse(value);
-				value = ((long)tmp).ToString();
-			}
-
-			return value;
-		}
-
-		private static int FindFirstNonDigitIndex(string input)
-		{
-			for (int i = 0; i < input.Length; i++)
-			{
-				if (!char.IsDigit(input[i]))
-				{
-					return i; // Return the index of the first non-digit character
-				}
-			}
-			return -1; // Return -1 if no non-digit characters are found
-		}
-
-		private void Done(IDbConnection connection)
-		{
-			var transaction = GetVariable<IDbTransaction>();
-			if (transaction == null && connection != null)
-			{
-				connection.Close();
-			}
-		}
 
 		public async Task<(int, IError?)> InsertEventSourceData(long id, string data, string keyHash)
 		{
-			var transaction = GetVariable<IDbTransaction>();
-			IDbConnection? connection = GetVariable<IDbConnection>();
-			if (connection == null) connection = dbFactory.CreateHandler();
+			var dataSource = goalStep.GetVariable<DataSource>();
+
+			var transaction = goal.GetVariable<IDbTransaction>(dataSource.Name);
+			IDbConnection? connection = goal.GetVariable<IDbConnection>(dataSource.Name);
+
+			if (connection == null) connection = dbFactory.CreateHandler(goalStep);
 
 			return await eventSourceRepository.AddEventSourceData(connection, id, data, keyHash, transaction);
 		}
 
+		[Description("Executes a sql statement that is fully dynamic or from a variable.")]
+		public async Task<(long, IError?)> ExecuteDynamicSql(string sql, [HandlesVariable] string? dataSourceName = null)
+		{
+			return await Execute(sql, dataSourceName);
 
-		public async Task<(long, IError?)> Execute(string sql, string? dataSourceName = null)
+		}
+
+		[Description("Executes a sql statement that defined by user. This statement will be validated.")]
+		public async Task<(long RowsAffected, IError? Error)> Execute(string sql, [HandlesVariable] string? dataSourceName = null)
 		{
 			try
 			{
-				if (!string.IsNullOrEmpty(dataSourceName))
-				{
-					var error = await SetDataSourceName(dataSourceName, false);
-					if (error != null) return (0, error);
-				}
+
+				(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName, false);
+				if (error != null) return (0, error);
+
 
 				long rowsAffected = 0;
 				var prepare = Prepare(sql, null);
@@ -644,7 +451,7 @@ namespace PLang.Modules.DbModule
 					return (0, prepare.error);
 				}
 
-				var transaction = GetVariable<IDbTransaction>();
+				var transaction = goal.GetVariable<IDbTransaction>();
 				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 				{
 					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, null);
@@ -677,77 +484,108 @@ namespace PLang.Modules.DbModule
 			logger.LogWarning($"Had error running Setup ({goalStep.Text}) but will continue. Error message:{ex.Message}");
 		}
 
-		public async Task<(long, IError?)> CreateTable(string sql, string? dataSourceName = null)
+		[Description("When user does not define a primary key, add it to the create statement as id column not null, when KeepHistory is set to false, make the column auto increment")]
+		public async Task<(long, IError?)> CreateTable(string sql)
 		{
-			if (string.IsNullOrEmpty(dataSourceName)) dataSourceName = goalStep?.Goal?.DataSourceName;
-
-			return await Execute(sql, dataSourceName);
+			return await Execute(sql, goal.DataSourceName);
 
 		}
-		
+
 		[Description("When select should return 1 row (limit 1)")]
-		public async Task<(object?, IError? errors)> SelectOneRow(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
+		public async Task<(object?, IError? errors)> SelectOneRow(string sql, List<ParameterInfo>? SqlParameters = null, [HandlesVariable] string? dataSourceName = null)
 		{
-			if (!string.IsNullOrEmpty(dataSourceName))
-			{
-				var error = await SetDataSourceName(dataSourceName, false);
-				if (error != null) return (0, error);
-			}
+
+			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
+			if (error != null) return (0, error);
+
 
 			var result = await Select(sql, SqlParameters);
-			if (result.error != null)
+			if (result.Error != null)
 			{
-				return (null, result.error);
+				return (null, result.Error);
 			}
 
-			if (result.rows.Count == 0)
+			if (result.Table.Count == 0)
 			{
 				if (this.function == null || this.function.ReturnValues == null || this.function.ReturnValues.Count == 1) return (null, null);
 
-				var dict = new ReturnDictionary<string, object?>();
+				var returnValues = new List<ObjectValue>();
 				foreach (var rv in this.function.ReturnValues)
 				{
-					dict.Add(rv.VariableName, GetDefaultValue(rv.Type));
+					returnValues.Add(new ObjectValue(rv.VariableName, GetDefaultValue(rv.Type)));
 				}
-				return (dict, null);
+				return (returnValues, null);
 			}
 
-			var rowsAsList = ((IList<object>)result.rows);
-			var columns = ((IDictionary<string, object>)rowsAsList[0]);
+			var columns = result.Table.ColumnNames;
 
-			if (columns.Count == 1)
+			if (columns.Any())
 			{
-				return (columns.FirstOrDefault().Value, null);
+				return (columns.FirstOrDefault(), null);
 			}
-			return (result.rows[0], null);
+			return (result.Table[0], null);
 
 		}
 
-		public async Task<(List<object> rows, IError? error)> Select(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
+		
+		public async Task<(Table? Table, IError? Error)> Select(string sql, List<ParameterInfo>? SqlParameters = null, [HandlesVariable] string? dataSourceName = null)
 		{
 			try
 			{
-				if (!string.IsNullOrEmpty(dataSourceName))
-				{
-					var error = await SetDataSourceName(dataSourceName, false);
-					if (error != null) return (new(), error);
-				}
+
+				(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
+				if (error != null) return (null, error);
+
 
 				var prep = Prepare(sql, SqlParameters);
 				if (prep.error != null)
 				{
-					return (new(), prep.error);
+					return (null, prep.error);
 				}
 				logger.LogDebug($"Sql: {prep.sql} - Parameters:{prep.param}");
-				var rows = (await prep.connection.QueryAsync<dynamic>(prep.sql, prep.param)).ToList();
-				logger.LogDebug($"Rows: {rows.Count}");
+
+				var con = (DbConnection)prep.connection;
+				await using var cmd = con.CreateCommand();
+				cmd.CommandText = prep.sql;
+
+				// Add parameters if any:
+				if (SqlParameters is not null)
+				{
+					foreach (var prop in SqlParameters)
+					{
+						var param = cmd.CreateParameter();
+						param.ParameterName = prop.ParameterName;
+						param.Value = prop.VariableNameOrValue ?? DBNull.Value;
+						cmd.Parameters.Add(param);
+					}
+				}
+
+				using var reader = await cmd.ExecuteReaderAsync();
+
+				
+				var cols = Enumerable.Range(0, reader.FieldCount)
+					.Select(reader.GetName)
+					.ToList();
+
+				var table = new Table(cols);
+				while (await reader.ReadAsync())
+				{
+					var row = new Row(table);
+					foreach (var col in cols)
+						row[col] = reader[col];
+					table.Add(row);
+				}
+
+
+				//var rows = (await prep.connection.QueryAsync<dynamic>(prep.sql, prep.param)).ToList();
+				logger.LogDebug($"Rows: {table.Count}");
 				Done(prep.connection);
 
-				return (rows == null) ? (new(), null) : (rows, null);
+				return (table == null) ? (new(cols), null) : (table, null);
 			}
 			catch (Exception ex)
 			{
-				return (new(), new ExceptionError(ex));
+				return (null, new ExceptionError(ex));
 			}
 		}
 
@@ -762,13 +600,12 @@ namespace PLang.Modules.DbModule
 			return type.IsValueType && !type.IsPrimitive ? Activator.CreateInstance(type) : null;
 		}
 
-		public async Task<(long, IError?)> Update(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
+		public async Task<(long, IError?)> Update(string sql, List<ParameterInfo>? SqlParameters = null, [HandlesVariable] string? dataSourceName = null)
 		{
-			if (!string.IsNullOrEmpty(dataSourceName))
-			{
-				var error = await SetDataSourceName(dataSourceName, false);
-				if (error != null) return (0, error);
-			}
+
+			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
+			if (error != null) return (0, error);
+
 			var prepare = Prepare(sql, SqlParameters);
 			if (prepare.error != null)
 			{
@@ -787,13 +624,12 @@ namespace PLang.Modules.DbModule
 			return (result, null);
 		}
 
-		public async Task<(long, IError?)> Delete(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
+		public async Task<(long, IError?)> Delete(string sql, List<ParameterInfo>? SqlParameters = null, [HandlesVariable] string? dataSourceName = null)
 		{
-			if (!string.IsNullOrEmpty(dataSourceName))
-			{
-				var error = await SetDataSourceName(dataSourceName, false);
-				if (error != null) return (0, error);
-			}
+
+			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
+			if (error != null) return (0, error);
+
 			long rowsAffected;
 			var prepare = Prepare(sql, SqlParameters);
 			if (prepare.error != null)
@@ -813,13 +649,13 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("Insert or update table(Upsert). Will return affected row count")]
-		public async Task<(long rowsAffected, IError? error)> InsertOrUpdate(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
+		public async Task<(long rowsAffected, IError? error)> InsertOrUpdate(string sql, List<ParameterInfo>? SqlParameters = null, [HandlesVariable] string? dataSourceName = null)
 		{
 			return await Insert(sql, SqlParameters, dataSourceName);
 		}
 
 		[Description("Insert or update table(Upsert). Will return the primary key of the affected row")]
-		public async Task<(object? rowsAffected, IError? error)> InsertOrUpdateAndSelectIdOfRow(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
+		public async Task<(object? rowsAffected, IError? error)> InsertOrUpdateAndSelectIdOfRow(string sql, List<ParameterInfo>? SqlParameters = null, [HandlesVariable] string? dataSourceName = null)
 		{
 			return await InsertAndSelectIdOfInsertedRow(sql, SqlParameters, dataSourceName);
 		}
@@ -827,13 +663,12 @@ namespace PLang.Modules.DbModule
 
 
 		[Description("Insert into table. Will return affected row count")]
-		public async Task<(long rowsAffected, IError? error)> Insert(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
+		public async Task<(long rowsAffected, IError? error)> Insert(string sql, List<ParameterInfo>? SqlParameters = null, [HandlesVariable] string? dataSourceName = null)
 		{
-			if (!string.IsNullOrEmpty(dataSourceName))
-			{
-				var error = await SetDataSourceName(dataSourceName, false);
-				if (error != null) return (0, error);
-			}
+
+			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
+			if (error != null) return (0, error);
+
 			long rowsAffected = 0;
 			var prepare = Prepare(sql, SqlParameters, true);
 			if (prepare.error != null)
@@ -869,13 +704,12 @@ namespace PLang.Modules.DbModule
 
 		}
 		[Description("Insert statement that will return the id of the inserted row. Use only if user requests the id")]
-		public async Task<(object?, IError?)> InsertAndSelectIdOfInsertedRow(string sql, List<object>? SqlParameters = null, string? dataSourceName = null)
+		public async Task<(object?, IError?)> InsertAndSelectIdOfInsertedRow(string sql, List<ParameterInfo>? SqlParameters = null, [HandlesVariable] string? dataSourceName = null)
 		{
-			if (!string.IsNullOrEmpty(dataSourceName))
-			{
-				var error = await SetDataSourceName(dataSourceName, false);
-				if (error != null) return (null, error);
-			}
+
+			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
+			if (error != null) return (null, error);
+
 
 			var prepare = Prepare(sql, SqlParameters, true);
 			if (prepare.error != null)
@@ -955,23 +789,24 @@ namespace PLang.Modules.DbModule
 			return null;
 		}
 
-		[Description("Insert a list(bulk) into database, return number of rows inserted. columnMapping maps which variable should match with a column. User will define that he is using bulk insert.")]
+		[Description("ONLY When inserting list of items(%variables% is plural). Insert a list(bulk) into database, return number of rows inserted. columnMapping maps which variable should match with a column. User will define that he is using bulk insert.")]
 		public async Task<(long, IError?)> InsertBulk(string tableName, List<object> itemsToInsert, [HandlesVariable] Dictionary<string, object>? columnMapping = null, bool ignoreContraintOnInsert = false)
 		{
 			if (itemsToInsert.Count == 0) return (0, null);
 
-			var dataSource = await dbSettings.GetCurrentDataSource();
+			(var dataSource, var error) = await dbSettings.GetCurrentDataSource();
+			if (error != null) return (0, error);
 
 			var propertiesInItems = GetProperties(itemsToInsert[0]);
 			if (columnMapping == null)
 			{
-				var sqlSelectColumns = await dbSettings.FormatSelectColumnsStatement(tableName);
+				var sqlSelectColumns = await dbSettings.FormatSelectColumnsStatement(dataSource, tableName);
 				var result = await Select(sqlSelectColumns);
-				if (result.error != null)
+				if (result.Error != null)
 				{
-					return (0, result.error);
+					return (0, result.Error);
 				}
-				var columnsInTable = result.rows as List<dynamic>;
+				var columnsInTable = result.Table;
 				if (columnsInTable == null)
 				{
 					return (0, new Error($"Table {tableName} could not be found", "TableNotFound"));
@@ -980,9 +815,9 @@ namespace PLang.Modules.DbModule
 				columnMapping = new();
 				foreach (var column in columnsInTable)
 				{
-					if (propertiesInItems.FirstOrDefault(p => p.Equals(column.name, StringComparison.OrdinalIgnoreCase)) != null)
+					if (propertiesInItems.FirstOrDefault(p => p.Equals(column.Get<string>("name"), StringComparison.OrdinalIgnoreCase)) != null)
 					{
-						columnMapping.Add(column.name, column.name);
+						columnMapping.Add(column.Get<string>("name"), column.Get<string>("name"));
 					}
 				}
 			}
@@ -993,7 +828,7 @@ namespace PLang.Modules.DbModule
 			long affectedRows = 0;
 			var generator = new IdGenerator(1);
 			var id = generator.ElementAt(0);
-			IDbTransaction? transaction = GetVariable<IDbTransaction>();
+			IDbTransaction? transaction = goal.GetVariable<IDbTransaction>();
 			if (transaction == null)
 			{
 				await BeginTransaction();
@@ -1002,7 +837,7 @@ namespace PLang.Modules.DbModule
 			// TODO: This is actually not the most optimized bulk insert, it's inserting each row at a time
 			for (int i = 0; i < itemsToInsert.Count; i++)
 			{
-				var param = new List<object>();
+				var param = new List<ParameterInfo>();
 				bool rowHasAnyValue = false;
 				foreach (var column in columnMapping)
 				{
@@ -1132,12 +967,13 @@ namespace PLang.Modules.DbModule
 
 		public async override Task<(string, IError?)> GetAdditionalAssistantErrorInfo()
 		{
-			var dataSource = await dbSettings.GetCurrentDataSource();
+			(var dataSource, var error) = await dbSettings.GetCurrentDataSource(goalStep);
+			if (error != null) return (string.Empty, error);
 
-			List<object> parameters = new List<object>();
+			List<ParameterInfo> parameters = new();
 			parameters.Add(new ParameterInfo("Database", dataSource.DbName, "System.String"));
 
-			(var connection, var par, _, var error) = Prepare("", parameters);
+			(var connection, var par, _, error) = Prepare("", parameters);
 			if (error != null)
 			{
 				return (string.Empty, error);
@@ -1152,6 +988,321 @@ namespace PLang.Modules.DbModule
 		}
 
 
+		private (DynamicParameters DynamicParameters, IError? Error) GetDynamicParameters(string sql, bool isInsert, List<ParameterInfo>? Parameters)
+		{
+			DynamicParameters param = new();
+			if (Parameters == null) return (param, null);
+
+			var multipleErrors = new GroupedErrors("SqlParameters");
+
+			foreach (var p in Parameters)
+			{
+				var parameterName = p.ParameterName.Replace("@", "");
+				if (parameterName.Contains("."))
+				{
+					var oldParameterName = parameterName;
+					parameterName = parameterName.Replace(".", "");
+					sql = sql.Replace(oldParameterName, parameterName);
+				}
+				if (isInsert && parameterName == "id" && eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
+				{
+					var id = p.VariableNameOrValue.ToString();
+					if (id == "auto" || string.IsNullOrEmpty(id))
+					{
+						var generator = new IdGenerator(new Random().Next(0, 1023));
+						var newId = generator.ElementAt(0);
+						param.Add("@" + parameterName, newId, DbType.Int64);
+					}
+					else
+					{
+						param.Add("@" + parameterName, id, DbType.Int64);
+					}
+				}
+				else if (p.VariableNameOrValue == null)
+				{
+					param.Add("@" + parameterName, null);
+				}
+				else if (VariableHelper.ContainsVariable(p.VariableNameOrValue))
+				{
+					var variableName = p.VariableNameOrValue.ToString();
+					string prefix = "";
+					string postfix = "";
+					if (variableName.ToString().StartsWith("\\%"))
+					{
+						variableName = variableName.Substring(2);
+						prefix = "%";
+					}
+					if (variableName.ToString().EndsWith("\\%"))
+					{
+						variableName = variableName.TrimEnd('%').TrimEnd('\\');
+						postfix = "%";
+					}
+					var variableValue = variableName; // variableHelper.LoadVariables(variableName);
+					(object? value, Error? error) = ConvertObjectToType(variableValue, p.TypeFullName, parameterName, p.VariableNameOrValue);
+					if (error != null) multipleErrors.Add(error);
+
+					param.Add("@" + parameterName, prefix + value + postfix);
+				}
+				else
+				{
+					string prefix = "";
+					string postfix = "";
+					var variableName = p.VariableNameOrValue;
+					if (variableName.ToString().StartsWith("\\%"))
+					{
+						variableName = variableName.ToString().Substring(2);
+						prefix = "%";
+					}
+					if (variableName.ToString().EndsWith("\\%"))
+					{
+						variableName = variableName.ToString().TrimEnd('%').TrimEnd('\\');
+						postfix = "%";
+					}
+
+
+					(object? value, IError? error) = ConvertObjectToType(prefix + variableName + postfix, p.TypeFullName, parameterName, p.VariableNameOrValue);
+					if (error != null)
+					{
+						if (parameterName == "id" && eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
+						{
+							var dataSource = goalStep.GetVariable<DataSource>();
+							multipleErrors.Add(new ProgramError($"Parameter @id is empty. Are you on the right data source? Current data source is {dataSource.Name}", goalStep, function));
+						}
+						multipleErrors.Add(error);
+					}
+					param.Add("@" + parameterName, value);
+				}
+			}
+
+			IError? errorToReturn = (multipleErrors.Count > 0) ? multipleErrors : null;
+			return (param, errorToReturn);
+
+		}
+
+
+		private (object?, Error?) ConvertObjectToType(object obj, string typeFullName, string parameterName, object variableNameOrValue)
+		{
+			// TODO: because of bad structure in building, can be removed when fix
+			if (typeFullName == "String") typeFullName = "System.String";
+
+			Type? targetType = Type.GetType(typeFullName);
+			if (targetType == null)
+			{
+				typeFullName = ConvertFromColumnTypeToCSharpType(typeFullName);
+				targetType = Type.GetType(typeFullName);
+			}
+			try
+			{
+				if (targetType == null)
+				{
+					return (null, new Error($"Could not find {typeFullName} for parameter {parameterName}", "TypeNotFound"));
+				}
+
+				var parseMethod = targetType.GetMethod("Parse", new[] { typeof(string) });
+				if (parseMethod != null)
+				{
+					try
+					{
+						string value = FormatType(obj.ToString(), targetType);
+						return (parseMethod.Invoke(null, [value]), null);
+					}
+					catch { }
+				}
+
+				if (targetType == typeof(string) && (obj is JObject || obj is JArray || obj is JProperty || obj is JValue))
+				{
+					return (obj.ToString(), null);
+				}
+				if (obj is JArray jarray && (targetType.Name.StartsWith("IEnumerable") || targetType.Name.StartsWith("List")))
+				{
+					var array = Array.CreateInstance(targetType.GenericTypeArguments[0], jarray.Count);
+					int idx = 0;
+					foreach (JToken item in jarray)
+					{
+						var tmp = item.ToObject(targetType.GenericTypeArguments[0]);
+						array.SetValue(tmp, idx++);
+					}
+					return (array, null);
+				}
+
+
+				return (Convert.ChangeType(obj, targetType), null);
+			}
+			catch (Exception ex)
+			{
+				if (string.IsNullOrWhiteSpace(obj.ToString()) && (targetType == typeof(long) || targetType == typeof(double)))
+				{
+					var filterModule = GetProgramModule<FilterModule.Program>();
+					var task = filterModule.FilterOnPropertyAndValue(function, "ParameterName", "@" + parameterName, retrieveOneItem: "first", propertyToExtract: "parent");
+					task.Wait();
+					var parameter = task.Result as JObject;
+					if (parameter != null)
+					{
+						return (0, new Error($"{parameter["VariableNameOrValue"]} is empty. Empty content cannot be used for the column {parameterName}. It must contains some value", "ConvertFailed", Exception: ex));
+					}
+					else
+					{
+						return (0, new Error($"{parameterName} is empty. Empty content cannot be used, it must contains some value", "ConvertFailed", Exception: ex));
+					}
+				}
+
+				return (null, new Error($"Error converting '{obj}' to type {targetType} for parameter {parameterName}", "ConvertFailed", Exception: ex));
+
+			}
+
+
+		}
+
+		private IEnumerable ConvertJArray(JArray jArray, Type targetType)
+		{
+			var listType = typeof(List<>).MakeGenericType(targetType);
+			var toObjectMethod = typeof(JArray).GetMethod("ToObject", new Type[] { });
+			var genericToObjectMethod = toObjectMethod.MakeGenericMethod(listType);
+
+			var list = genericToObjectMethod.Invoke(jArray, null);
+
+			return (IEnumerable)list;
+		}
+
+		private string FormatType(string value, Type targetType)
+		{
+			if (!value.StartsWith("0")) return value;
+			if (targetType == null) return value;
+
+			if (targetType == typeof(double) || targetType == typeof(float) || targetType == typeof(decimal))
+			{
+				if (value.Contains(CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator)) return value;
+				var idx = FindFirstNonDigitIndex(value);
+				value = value.Substring(0, idx) + CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator + value.Substring(idx + 1);
+			}
+			else if ((targetType == typeof(int) || targetType == typeof(long)) && value.Contains(CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator))
+			{
+				var tmp = double.Parse(value);
+				value = ((long)tmp).ToString();
+			}
+
+			return value;
+		}
+
+		private static int FindFirstNonDigitIndex(string input)
+		{
+			for (int i = 0; i < input.Length; i++)
+			{
+				if (!char.IsDigit(input[i]))
+				{
+					return i; // Return the index of the first non-digit character
+				}
+			}
+			return -1; // Return -1 if no non-digit characters are found
+		}
+
+		private void Done(IDbConnection connection)
+		{
+			var dataSource = goalStep.GetVariable<DataSource>();
+			var transaction = goal.GetVariable<IDbTransaction>(dataSource.Name);
+			if (transaction == null && connection != null)
+			{
+				//connection.Close();
+			}
+		}
+
+
+		private async Task<(DataSource?, IError?)> GetRuntimeDataSource(DataSource datasource, List<ObjectValue> variables)
+		{
+			var parameters = new Dictionary<string, object?>();
+
+			var dataSourceVariables = variableHelper.GetVariables(datasource.Name);
+			string localPath = datasource.LocalPath;
+			string connectionString = datasource.ConnectionString;
+
+			for (int i = 0; i < variables.Count; i++)
+			{
+				if (variables[i].Value == null || string.IsNullOrEmpty(variables[i].Value?.ToString()))
+				{
+					return (null, new StepError($"Variable {variables[i].Name} has not been set.", goalStep, "UndefinedVariable"));
+				}
+
+				parameters.Add($"%variable{i}%", variables[i].Value);
+
+				localPath = localPath.Replace($"%variable{i}%", variables[i].Value.ToString());
+				connectionString = connectionString.Replace($"%variable{i}%", variables[i].Value.ToString());
+			}
+
+			string dirPath = Path.GetDirectoryName(localPath);
+			if (!fileSystem.Directory.Exists(dirPath))
+			{
+				fileSystem.Directory.CreateDirectory(dirPath);
+			}
+
+			if (!fileSystem.File.Exists(localPath))
+			{
+				using (var fs = fileSystem.File.Create(localPath))
+				{
+					fs.Close();
+				}
+			}
+
+			var runtimeDataSource = datasource with { LocalPath = localPath, ConnectionString = connectionString };
+			if (memoryStack.Contains("GetRuntimeDataSource"))
+			{
+				return (runtimeDataSource, null);
+			}
+
+
+			parameters.Add("GetRuntimeDataSource", true);
+
+			var goal = prParser.GetAllGoals().FirstOrDefault(p => p.DataSourceName != null && p.DataSourceName.Equals(datasource.Name));
+			if (goal != null)
+			{
+				var storedKey = "%__stepsExecuted__%";
+
+				goal.AddVariable(runtimeDataSource);
+
+				var plangRuntime = programFactory.GetProgram<PlangModule.Program>(goalStep);
+				var varsRuntime = programFactory.GetProgram<LocalOrGlobalVariableModule.Program>(goalStep);
+				var (value, error) = await varsRuntime.Load([storedKey]);
+				if (error != null) return (null, error);
+
+				bool hasExecuted = false;
+				GroupedErrors groupedErrors = new();
+				var stepExecuted = (value as JObject)?.ToObject<Dictionary<string, DateTime>>() ?? new();
+				foreach (var step in goal.GoalSteps)
+				{
+					if (stepExecuted.ContainsKey(step.Hash)) continue;
+
+					hasExecuted = true;
+					(var result, error) = await plangRuntime.RunStep(step, parameters);
+					if (error != null)
+					{
+						groupedErrors.Add(error);
+					}
+					else
+					{
+						stepExecuted.AddOrReplace(step.Hash, DateTime.UtcNow);
+					}
+				}
+				if (!hasExecuted) return (runtimeDataSource, null);
+
+
+				object? tmp = null;
+				if (memoryStack.Contains(storedKey))
+				{
+					tmp = memoryStack.Get(storedKey);
+				}
+
+				memoryStack.Put(storedKey, stepExecuted);
+				error = await varsRuntime.Store([storedKey]);
+				memoryStack.Remove(storedKey);
+
+				if (tmp != null)
+				{
+					memoryStack.Put(storedKey, tmp);
+				}
+				if (error != null) return (null, error);
+			}
+
+			return (runtimeDataSource, null);
+		}
 
 	}
 }

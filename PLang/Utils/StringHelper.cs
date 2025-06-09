@@ -6,11 +6,14 @@ namespace PLang.Utils
 {
 	public class StringHelper
 	{
-		public static string ConvertToString(object? body)
+		public static string? ConvertToString(object? body)
 		{
 			if (body == null) return "";
-			if (body.GetType() == typeof(JObject)) return body.ToString()!;
-			if (body.GetType() == typeof(string)) return body.ToString()!;
+			if (body is string str) return str;
+			if (body is JValue) return body.ToString();
+
+			if (IsToStringOverridden(body)) return body.ToString();
+
 			try
 			{
 				JsonConvert.DeserializeObject(body.ToString()!);
@@ -27,6 +30,12 @@ namespace PLang.Utils
 					return body.ToString() ?? "";
 				}
 			}
+		}
+
+		public static bool IsToStringOverridden(object obj)
+		{
+			var method = obj.GetType().GetMethod("ToString", Type.EmptyTypes);
+			return method?.DeclaringType != typeof(object);
 		}
 
 

@@ -15,7 +15,8 @@ namespace PLang.Errors.Events
 		public Goal Goal { get; set; }
 
 		public bool IgnoreError => false;
-
+		public DateTime CreatedUtc { get; init; } = DateTime.UtcNow;
+		public List<IError> ErrorChain { get; set; } = new();
 		public object AsData()
 		{
 			throw new NotImplementedException();

@@ -4,5 +4,7 @@
 	{
 		public bool ContinueBuild { get; }
 		public bool Retry { get; }
+		public int RetryCount => 3;
+		public string? LlmBuilderHelp { get; }
 	}
 }

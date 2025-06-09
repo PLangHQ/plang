@@ -158,10 +158,8 @@ namespace PLang.Building.Parsers
 				return instruction;
 			}
 
-			instruction = JsonHelper.ParseFilePath<Instruction>(fileSystem, step.AbsolutePrFilePath);
-			if (instruction != null) return instruction;
-
-			throw new Exception("Could not parse Instruction file.");
+			return JsonHelper.ParseFilePath<Instruction>(fileSystem, step.AbsolutePrFilePath);
+			
 		}
 		public List<Goal> ForceLoadAllGoals()
 		{
@@ -433,19 +431,20 @@ namespace PLang.Building.Parsers
 		}
 
 
-		public List<Instruction> GetInstructions(List<GoalStep> steps, string? functionName = null)
+		public (List<Instruction>? Instructions, IError? Error) GetInstructions(List<GoalStep> steps, string? functionName = null)
 		{
 			var instructions = new List<Instruction>();
 			foreach (var step in steps)
 			{
 				var instruction = ParseInstructionFile(step);
 				if (instruction == null) continue;
-				if (functionName != null && instruction.GetFunctions().FirstOrDefault(p => p.FunctionName == functionName) == null) continue;
 
+				if (instruction.Function.Name != functionName) continue;
+				
 				instructions.Add(instruction);
 			}
 
-			return instructions;
+			return (instructions, null);
 
 		}
 	}

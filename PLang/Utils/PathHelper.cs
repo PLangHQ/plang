@@ -5,11 +5,11 @@ namespace PLang.Utils
 {
 	public class PathHelper
 	{
-		public static string GetPath(string path, IPLangFileSystem fileSystem, Goal? goal)
+		public static string GetPath(string? path, IPLangFileSystem fileSystem, Goal? goal)
 		{
-			if (path == null)
+			if (string.IsNullOrEmpty(path))
 			{
-				throw new ArgumentNullException("path cannot be empty");
+				path = fileSystem.GoalsPath;
 			}
 			var pathWithDirSep = path.AdjustPathToOs();
 

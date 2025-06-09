@@ -1,6 +1,112 @@
 {
-  "Action": {
-    "FunctionName": "RunLoop",
+  "Text": "go through %stepThatCallGoal%, call goal CheckGoal item=%parameter%",
+  "ModuleType": null,
+  "Reload": false,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"ExplainUserIntent\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+      "model": "gpt-4o",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\nJSON scheme information\r\nExplanation: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user's request.\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"ExplainUserIntent\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## functions available starts ##\r\n[{\"Description\":\"Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called. Predefined variables are %list%, %item%, %position%, %listCount%, use can overwrite those using parameters. cpuUsage is percentage of cpu cores available, 80% => 0.8\",\"MethodName\":\"RunLoop\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"variableToLoopThrough\"},{\"Type\":\"PLang.Models.GoalToCall\",\"Name\":\"goalNameToCall\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]},{\"Type\":\"System.Int32\",\"Name\":\"threadCount\",\"DefaultValue\":1},{\"Type\":\"System.Double\",\"Name\":\"cpuUsage\",\"DefaultValue\":0.0},{\"Type\":\"System.Boolean\",\"Name\":\"failFast\",\"DefaultValue\":true},{\"Type\":\"System.String\",\"Name\":\"goalToCallBeforeItemIsProcessed\"},{\"Type\":\"System.String\",\"Name\":\"goalToCallAfterItemIsProcessed\"}]}]\r\n## functions available ends ##\r\n## defined variables ##\r\nstepthatcallgoal (type:object), parameter (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "go through %stepThatCallGoal%, call goal CheckGoal item=%parameter%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": null
+    }
+  ],
+  "Properties": {
+    "Parameters": {
+      "variableToLoopThrough": [
+        {
+          "Name": "variableToLoopThrough",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "goalNameToCall": [
+        {
+          "Name": "Value",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "parameters": [
+        {
+          "Name": "parameters",
+          "FullTypeName": "System.Object"
+        }
+      ],
+      "threadCount": [
+        {
+          "Name": "threadCount",
+          "FullTypeName": "System.Int32"
+        }
+      ],
+      "cpuUsage": [
+        {
+          "Name": "cpuUsage",
+          "FullTypeName": "System.Double"
+        }
+      ],
+      "failFast": [
+        {
+          "Name": "failFast",
+          "FullTypeName": "System.Boolean"
+        }
+      ],
+      "goalToCallBeforeItemIsProcessed": [
+        {
+          "Name": "goalToCallBeforeItemIsProcessed",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "goalToCallAfterItemIsProcessed": [
+        {
+          "Name": "goalToCallAfterItemIsProcessed",
+          "FullTypeName": "System.String"
+        }
+      ]
+    },
+    "ReturnValues": {}
+  },
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "ExplainUserIntent": "The user wants to iterate through the items in %stepThatCallGoal% and call the goal 'CheckGoal' for each item, passing %parameter% as a parameter.",
+    "Name": "RunLoop",
     "Parameters": [
       {
         "Type": "System.String",
@@ -21,55 +127,5 @@
       }
     ],
     "ReturnValues": null
-  },
-  "Text": "go through %stepThatCallGoal%, call goal CheckGoal item=%parameter%",
-  "Reload": false,
-  "LlmRequest": {
-    "temperature": 0.0,
-    "top_p": 0.0,
-    "frequencyPenalty": 0.0,
-    "presencePenalty": 0.0,
-    "maxLength": 4000,
-    "llmResponseType": "json",
-    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-    "model": "gpt-4o",
-    "promptMessage": [
-      {
-        "role": "system",
-        "content": [
-          {
-            "type": "text",
-            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-          },
-          {
-            "type": "text",
-            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-          }
-        ]
-      },
-      {
-        "role": "assistant",
-        "content": [
-          {
-            "type": "text",
-            "text": "## functions available starts ##\r\n[{\"Description\":\"Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called. Predefined variables are %list%, %item%, %position%, %listCount%, use can overwrite those using parameters. cpuUsage is percentage of cpu cores available, 80% => 0.8\",\"MethodName\":\"RunLoop\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"variableToLoopThrough\"},{\"Type\":\"PLang.Models.GoalToCall\",\"Name\":\"goalNameToCall\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]},{\"Type\":\"System.Int32\",\"Name\":\"threadCount\",\"DefaultValue\":1},{\"Type\":\"System.Double\",\"Name\":\"cpuUsage\",\"DefaultValue\":0.0},{\"Type\":\"System.Boolean\",\"Name\":\"failFast\",\"DefaultValue\":true},{\"Type\":\"System.String\",\"Name\":\"goalToCallBeforeItemIsProcessed\"},{\"Type\":\"System.String\",\"Name\":\"goalToCallAfterItemIsProcessed\"}]}]\r\n## functions available ends ##\r\n## defined variables ##\r\nstepThatCallGoal (type:System.Object), parameter (type:object), \r\n## defined variables ##"
-          }
-        ]
-      },
-      {
-        "role": "user",
-        "content": [
-          {
-            "type": "text",
-            "text": "go through %stepThatCallGoal%, call goal CheckGoal item=%parameter%"
-          }
-        ]
-      }
-    ],
-    "type": "PLang.Modules.GenericFunctionBuilder",
-    "caching": true,
-    "RawResponse": "```json\n{\n\t\"FunctionName\": \"RunLoop\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"System.String\",\n\t\t\t\"Name\": \"variableToLoopThrough\",\n\t\t\t\"Value\": \"%stepThatCallGoal%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"PLang.Models.GoalToCall\",\n\t\t\t\"Name\": \"goalNameToCall\",\n\t\t\t\"Value\": \"CheckGoal\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Dictionary<String, Object>\",\n\t\t\t\"Name\": \"parameters\",\n\t\t\t\"Value\": {\n\t\t\t\t\"item\": \"%parameter%\"\n\t\t\t}\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
-  },
-  "RunOnBuild": false,
-  "Metadata": {}
+  }
 }

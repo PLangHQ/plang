@@ -7,10 +7,10 @@ namespace PLang.Modules.TerminalModule
 	{
 		public Builder() : base() { }
 
-		public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep goalStep)
+		public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep goalStep, IBuilderError? previousBuildError = null)
 		{
 			AppendToAssistantCommand(@"Remove % around dataOutputVariable and errorDebugInfoOutputVariable");
-			return await base.Build(goalStep);
+			return await base.Build(goalStep, previousBuildError);
 
 		}
 	}

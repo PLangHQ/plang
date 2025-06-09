@@ -265,7 +265,7 @@ namespace PLang.Modules.FileModule
 				logger.LogWarning($"{absolutePath} does not exist");
 				return null;
 			}
-			ReturnDictionary<string, object?> returnValues = new();
+			List<ObjectValue?> returnValues = new();
 			List<string> sheetNames = MiniExcel.GetSheetNames(absolutePath);
 			if (sheetsToVariable == null || sheetsToVariable.Count == 0)
 			{
@@ -310,7 +310,7 @@ namespace PLang.Modules.FileModule
 
 				var sheetData = await (await MiniExcel.QueryAsync(absolutePath, useHeaderRow: useHeaderRow, startCell: startCell, sheetName: sheetName)).ToDynamicListAsync();
 
-				returnValues.AddOrReplace(sheetToVariable.Value.ToString()!, sheetData);
+				returnValues.Add(new ObjectValue(sheetToVariable.Value.ToString()!, sheetData));
 
 			}
 			return returnValues;

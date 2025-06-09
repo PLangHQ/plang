@@ -23,7 +23,7 @@ namespace PLangTests.Modules.WebCrawlerModule
             LoadOpenAI();
 
             builder = new Builder();
-            builder.InitBaseBuilder("PLang.Modules.WebCrawlerModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+            builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
         }
 
@@ -34,17 +34,8 @@ namespace PLangTests.Modules.WebCrawlerModule
             if (llmService == null) return;
 
             builder = new Builder();
-            builder.InitBaseBuilder("PLang.Modules.WebCrawlerModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+            builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
         }
-
-        public GoalStep GetStep(string text)
-        {
-            var step = new PLang.Building.Model.GoalStep();
-            step.Text = text;
-            step.ModuleType = "PLang.Modules.WebCrawlerModule";
-            return step;
-        }
-
 
 
 
@@ -54,15 +45,15 @@ namespace PLangTests.Modules.WebCrawlerModule
         {
             SetupResponse(text);
 
-            var step = GetStep(text);
+            LoadStep(text);
 
             (var instruction, var error) = await builder.Build(step);
-            var gf = instruction.Action as GenericFunction;
+            var gf = instruction.Function as GenericFunction;
 
-            Store(text, instruction.LlmRequest.RawResponse);
+            Store(text, instruction.LlmRequest[0].RawResponse);
 
 
-            Assert.AreEqual("NavigateToUrl", gf.FunctionName);
+            Assert.AreEqual("NavigateToUrl", gf.Name);
             Assert.AreEqual("url", gf.Parameters[0].Name);
             Assert.AreEqual("example.org", gf.Parameters[0].Value);
             Assert.AreEqual("useUserSession", gf.Parameters[1].Name);
@@ -75,15 +66,15 @@ namespace PLangTests.Modules.WebCrawlerModule
         {
             SetupResponse(text);
 
-            var step = GetStep(text);
+            LoadStep(text);
 
             (var instruction, var error) = await builder.Build(step);
-            var gf = instruction.Action as GenericFunction;
+            var gf = instruction.Function as GenericFunction;
 
-            Store(text, instruction.LlmRequest.RawResponse);
+            Store(text, instruction.LlmRequest[0].RawResponse);
 
 
-            Assert.AreEqual("Input", gf.FunctionName);
+            Assert.AreEqual("Input", gf.Name);
 			Assert.AreEqual("value", gf.Parameters[0].Name);
 			Assert.AreEqual("%name%", gf.Parameters[0].Value);
 			Assert.AreEqual("cssSelector", gf.Parameters[1].Name);

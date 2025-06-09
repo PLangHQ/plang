@@ -1,0 +1,133 @@
+﻿using Fizzler;
+using PLang.Models.ObjectValueConverters;
+using PLang.Runtime;
+using Sprache;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace PLang.Models.ObjectValueExtractors
+{
+	public class MathExtractor : IExtractor
+	{
+		private readonly string op;
+		private readonly IEnumerable<object> list;
+		private readonly ObjectValue parent;
+
+		public static string[] MathOperators = ["+", "-", "/", "*", "^"];
+		public MathExtractor(string op, IEnumerable<object> list, ObjectValue parent)
+		{
+			this.op = op;
+			this.list = list;
+			this.parent = parent;
+		}
+
+		public ObjectValue? Extract(PathSegment segment, MemoryStack? memoryStack = null)
+		{
+			var firstItem = list.FirstOrDefault();
+			if (firstItem != null && firstItem.GetType().IsPrimitive)
+			{
+				return new ObjectValue(segment.Value, DoOp(list, segment));
+			}
+
+			List<double> result = new();
+			foreach (var item in list)
+			{
+				if (item is IList list2)
+				{
+					result.Add(DoOp(list2.Cast<object>(), segment));
+				}
+				else
+				{
+					throw new Exception($"item in {segment.Value} is not list");
+				}					
+			}
+			return new ObjectValue(segment.Value, result);
+
+		}
+
+		private double DoOp(IEnumerable<object> value, PathSegment segment)
+		{
+			Func<object, double> toDouble = x => Convert.ToDouble(x);
+
+			var parts = segment.Value.Split(':', 2, StringSplitOptions.TrimEntries);
+			string op = parts[0].ToLowerInvariant();
+			string param = parts.Length > 1 ? parts[1] : null;
+
+			var result = op switch
+			{
+				"sum" => value.Sum(toDouble),
+				"avg" => value.Average(toDouble),
+				"average" => value.Average(toDouble),
+				"mean" => value.Average(toDouble),
+				"max" => value.Max(toDouble),
+				"min" => value.Min(toDouble),
+				"count" => toDouble(value.Count()),
+				"first" => toDouble(value.First()),
+				"last" => toDouble(value.Last()),
+				"range" => value.Max(toDouble) - value.Min(toDouble),
+				"median" => Median(value, toDouble),
+				"mode" => Mode(value, toDouble),
+				"percentile" => Percentile(value, toDouble, param),
+				"elementat" => toDouble(value.ElementAt(int.Parse(param ?? "0"))),
+				"stddev" => StdDev(value, toDouble),
+				"variance" => Variance(value, toDouble),
+				_ => throw new ArgumentException($"Unknown operation: {op}")
+			};
+
+			return result;
+
+		}
+
+
+		// Helpers
+		static double Median(IEnumerable<object> list, Func<object, double> conv)
+		{
+			var sorted = list.Select(conv).OrderBy(x => x).ToList();
+			int count = sorted.Count;
+			return count % 2 == 1
+				? sorted[count / 2]
+				: (sorted[count / 2 - 1] + sorted[count / 2]) / 2.0;
+		}
+
+		static double Mode(IEnumerable<object> list, Func<object, double> conv)
+		{
+			return list.Select(conv)
+				.GroupBy(x => x)
+				.OrderByDescending(g => g.Count())
+				.ThenBy(g => g.Key)
+				.First().Key;
+		}
+
+		static double Percentile(IEnumerable<object> list, Func<object, double> conv, string? param)
+		{
+			if (!double.TryParse(param, out double p)) throw new ArgumentException("Invalid percentile parameter.");
+			var sorted = list.Select(conv).OrderBy(x => x).ToList();
+			if (sorted.Count == 0) return 0;
+			double n = (p / 100.0) * (sorted.Count - 1);
+			int k = (int)n;
+			double d = n - k;
+			return k + 1 < sorted.Count
+				? sorted[k] + d * (sorted[k + 1] - sorted[k])
+				: sorted[k];
+		}
+
+		static double StdDev(IEnumerable<object> list, Func<object, double> conv)
+		{
+			var values = list.Select(conv).ToList();
+			double avg = values.Average();
+			double sumSq = values.Sum(x => Math.Pow(x - avg, 2));
+			return Math.Sqrt(sumSq / values.Count);
+		}
+
+		static double Variance(IEnumerable<object> list, Func<object, double> conv)
+		{
+			var values = list.Select(conv).ToList();
+			double avg = values.Average();
+			return values.Sum(x => Math.Pow(x - avg, 2)) / values.Count;
+		}
+	}
+}

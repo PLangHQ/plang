@@ -146,6 +146,7 @@ namespace PLang.Runtime.Tests
 		[TestMethod()]
 		public async Task RunGoalTest_ParametersSetInMemoryStack()
 		{
+			var context = new PLangAppContext();
 			containerFactory = Substitute.For<IServiceContainerFactory>();
 			containerFactory.CreateContainer(Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IOutputStreamFactory>(), 
 				Arg.Any<IOutputSystemStreamFactory>(), Arg.Any<IErrorHandlerFactory>(), errorSystemHandlerFactory, Arg.Any<IAskUserHandlerFactory>()).Returns(p =>
@@ -155,14 +156,14 @@ namespace PLang.Runtime.Tests
 				IEngine engine = container.GetInstance<IEngine>();
 				engine.GetMemoryStack().Returns(a =>
 				{
-					return new MemoryStack(pseudoRuntime, engine, settings, new PLangAppContext());
+					return new MemoryStack(pseudoRuntime, engine, settings, context);
 				});
 				engine.GetGoal("GoalWith2Steps").Returns(new Goal());
 				return container;
 			});
 
 
-			var context = new PLangAppContext();
+			
 			context.AddOrReplace("Test", 1);
 			
 			var memoryStackMock = Substitute.For<MemoryStack>(pseudoRuntime, engine, settings, context);

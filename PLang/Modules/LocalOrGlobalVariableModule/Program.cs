@@ -40,14 +40,14 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			List<object?> objects = new();
 			foreach (var variable in variables)
 			{
-				List<object> parameters = new List<object>();
+				List<ParameterInfo> parameters = new();
 				parameters.Add(new ParameterInfo("variable", variable, "System.String"));
 				try
 				{
 					var result = await db.Select("SELECT * FROM __Variables__ WHERE variable=@variable", parameters);
-					if (result.rows.Count == 0) continue;
+					if (result.Table.Count == 0) continue;
 
-					dynamic row = result.rows[0];
+					dynamic row = result.Table[0];
 					if (row == null) continue;
 
 					var json = row.value?.ToString();
@@ -57,7 +57,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 
 					if (function?.ReturnValues?.Count == 0)
 					{
-						memoryStack.Put(variable, value);
+						memoryStack.Put(variable, value, goalStep: goalStep);
 					}
 					else
 					{
@@ -108,21 +108,21 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 				var value = variableHelper.LoadVariables(variable);
 				if (value == null) continue;
 
-				List<object> parameters = new List<object>();
+				List<ParameterInfo> parameters = new();
 				parameters.Add(new ParameterInfo("variable", variable, "System.String"));
 				parameters.Add(new ParameterInfo("value", JsonConvert.SerializeObject(value), "System.String"));
 
 				var result = await db.Select("INSERT INTO __Variables__ (variable, value) VALUES (@variable, @value) ON CONFLICT(variable) DO UPDATE SET value = excluded.value;", parameters);
-				if (result.error != null)
+				if (result.Error != null)
 				{
-					if (result.error.Message.Contains("no such table"))
+					if (result.Error.Message.Contains("no such table"))
 					{
 						var createTableResult = await CreateVariablesTable(db);
 						if (createTableResult.Error != null) return createTableResult.Error;
 
 						return await Store(variables);
 					}
-					return result.error;
+					return result.Error;
 				}
 			}
 			return null;
@@ -131,22 +131,43 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 		[Description("One or more variables to return. Variable can contain !, e.g. !callback=%callback%. When key is undefined, it is same as value, e.g. return %name% => then variables dictionary has key and value as name=%name%")]
 		public async Task<IError?> Return([HandlesVariable] Dictionary<string, object> variables)
 		{
-			var returnDict = new ReturnDictionary<string, object?>();
-			foreach (var variable in variables)
+			var returnValues = new List<ObjectValue>();
+			var properties = new Properties();
+
+			var propertyVars = variables.Where(p => p.Key.StartsWith("!"));
+			foreach (var property in propertyVars)
 			{
-				var value = variableHelper.LoadVariables(variable.Value);
-				if (variable.Key.StartsWith("!"))
+				var value = variableHelper.LoadVariables(property.Value);
+				if (value != null)
 				{
-					context.AddOrReplace(variable.Key, value);
+					var ov = new ObjectValue(property.Key, value, value.GetType());
+					properties.Add(ov);
+				}
+			}
+
+			var vars = variables.Where(p => !p.Key.StartsWith("!"));
+			foreach (var variable in vars)
+			{
+				var objectValue = memoryStack.GetObjectValue(variable.Key);
+				if (objectValue != null && !objectValue.Initiated) return new ProgramError($"Variable '{variable.Key}' does not exist. Is there a typo?");
+				if (objectValue != null)
+				{
+					objectValue.Properties.AddRange(properties);
+					returnValues.Add(objectValue);
 				}
 				else
 				{
-					returnDict.Add(variable.Key, value);
+					var value = variableHelper.LoadVariables(variable.Value);
+					if (value != null)
+					{
+						returnValues.Add(new ObjectValue(variable.Key, value, properties: properties));
+					}
 				}
-				memoryStack.Remove(variable.Value.ToString());
+
+				memoryStack.Remove(variable.Value.ToString(), goalStep);
 			}
 
-			return new Return(returnDict);
+			return new Return(returnValues);
 		}
 
 		[Description("goalName should be prefix with !, it can whole word only but can contain dot(.)")]
@@ -237,7 +258,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			if (htmlDecode) value = HttpUtility.HtmlDecode(value);
 
 			object? content = (doNotLoadVariablesInValue) ? value : variableHelper.LoadVariables(value);
-			memoryStack.Put(key, content);
+			memoryStack.Put(key, content, goalStep: goalStep);
 		}
 
 		[Description(@"Set json variable.")]
@@ -248,13 +269,13 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			object? content = (doNotLoadVariablesInValue) ? value : variableHelper.LoadVariables(value);
 			if (content == null)
 			{
-				memoryStack.Put(key, content);
+				memoryStack.Put(key, content, goalStep: goalStep);
 				return;
 			}
 
 			if (content is JToken)
 			{
-				memoryStack.Put(key, content);
+				memoryStack.Put(key, content, goalStep: goalStep);
 				return;
 			}
 
@@ -264,27 +285,27 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 				if (str.StartsWith("["))
 				{
 					var jobject = JArray.Parse(content.ToString());
-					memoryStack.Put(key, jobject);
+					memoryStack.Put(key, jobject, goalStep: goalStep);
 					return;
 				}
 				else if (str.StartsWith("{"))
 				{
 					JObject jobject = JObject.Parse(content.ToString());
-					memoryStack.Put(key, jobject);
+					memoryStack.Put(key, jobject, goalStep: goalStep);
 					return;
 				}
 
 				str = JsonConvert.SerializeObject(str);
 				var jobj = JsonConvert.DeserializeObject(str);
 
-				memoryStack.Put(key, jobj);
+				memoryStack.Put(key, jobj, goalStep: goalStep);
 			}
 			catch
 			{
 				var str = JsonConvert.SerializeObject(content.ToString());
 				var jobj = JsonConvert.DeserializeObject(str);
 
-				memoryStack.Put(key, jobj);
+				memoryStack.Put(key, jobj, goalStep: goalStep);
 			}
 
 		}
@@ -294,29 +315,29 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			var objectValue = memoryStack.GetObjectValue2(key, false);
 			if (objectValue.Initiated) return;
 
-			memoryStack.Put(key, value ?? defaultValue);
+			memoryStack.Put(key, value ?? defaultValue, goalStep: goalStep);
 
 		}
 
 		[Description(@"Set int/long variable.")]
 		public async Task SetNumberVariable([HandlesVariable] string key, long? value = null, long? defaultValue = null)
 		{
-			memoryStack.Put(key, value ?? defaultValue);
+			memoryStack.Put(key, value ?? defaultValue, goalStep: goalStep);
 		}
 		[Description(@"Set double variable.")]
 		public async Task SetDoubleVariable([HandlesVariable] string key, double? value = null, double? defaultValue = null)
 		{
-			memoryStack.Put(key, value ?? defaultValue);
+			memoryStack.Put(key, value ?? defaultValue, goalStep: goalStep);
 		}
 		[Description(@"Set float variable.")]
 		public async Task SetFloatVariable([HandlesVariable] string key, float? value = null, float? defaultValue = null)
 		{
-			memoryStack.Put(key, value ?? defaultValue);
+			memoryStack.Put(key, value ?? defaultValue, goalStep: goalStep);
 		}
 		[Description(@"Set bool variable.")]
 		public async Task SetBoolVariable([HandlesVariable] string key, bool? value = null, bool? defaultValue = null)
 		{
-			memoryStack.Put(key, value ?? defaultValue);
+			memoryStack.Put(key, value ?? defaultValue, goalStep: goalStep);
 		}
 
 		[Description(@"Set variable. Developer might use single/double quote to indicate the string value. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
@@ -337,7 +358,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 					key = newKey.ToString();
 				}
 			}
-			memoryStack.Put(key, content);
+			memoryStack.Put(key, content, goalStep: goalStep);
 		}
 
 
@@ -421,7 +442,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 				((List<object>)val).Add(value);
 				//throw new Exception("Cannot append to an object");
 			}
-			memoryStack.Put(key, val);
+			memoryStack.Put(key, val, goalStep: goalStep);
 			return val;
 		}
 
@@ -439,24 +460,6 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			}
 		}
 
-
-		public async Task SetStaticVariable([HandlesVariableAttribute] string key, object value)
-		{
-			if (value.ToString().StartsWith("%") && value.ToString().EndsWith("%"))
-			{
-				value = memoryStack.Get(value.ToString());
-			}
-			memoryStack.PutStatic(key, value);
-		}
-
-		public async Task<object> GetStaticVariable([HandlesVariableAttribute] string key)
-		{
-			return memoryStack.GetStatic(key);
-		}
-		public async Task RemoveStaticVariable([HandlesVariableAttribute] string key)
-		{
-			memoryStack.RemoveStatic(key);
-		}
 
 		[Description("Sets a value to %Settings.XXXX% variable")]
 		public async Task SetSettingValue([HandlesVariableAttribute] string key, object value)
@@ -483,7 +486,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 
 
 
-		public async Task<string?> TrimForLlm(object? obj, int valueLimit = 30, string? groupOn = null, 
+		public async Task<object?> TrimForLlm(object? obj, int maxItemCount = 30, int? maxItemLength = null, string? groupOn = null, 
 			int samplesPerGroup = 5, int listLimit = 50, int totalCharsLimit = 2000, bool formatJson = false)
 		{
 			if (obj == null) return null;
@@ -502,7 +505,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			}
 
 
-			var resultList = new List<JObject>();
+			var resultList = new List<string>();
 			var totalChars = 0;
 			var formatting = (formatJson) ? Formatting.Indented : Formatting.None;
 
@@ -527,14 +530,14 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 						if (totalChars > totalCharsLimit)
 							break;
 
-						resultList.Add(trimmed);
+						resultList.Add(trimmed.ToString());
 					}
 
 					if (totalChars > totalCharsLimit)
 						break;
 				}
 
-				return JsonConvert.SerializeObject(resultList, formatting);
+				return resultList;
 			}
 
 			// fallback to old logic if not a group
@@ -542,16 +545,25 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 			{
 				foreach (var item in flatArr)
 				{
+					if (resultList.Count >= maxItemCount) break;
+
 					if (item is JObject objItem)
 					{
 						var trimmed = TrimObject(objItem);
 						totalChars += Encoding.UTF8.GetByteCount(trimmed.ToString(formatting));
 						if (totalChars > totalCharsLimit) break;
-						resultList.Add(trimmed);
+						resultList.Add(trimmed.ToString());
+					}
+					else if (item is JValue objValue)
+					{
+						
+						string value = objValue.ToString();
+						if (value.Length > maxItemLength) value = value.MaxLength(maxItemLength.Value);
+						resultList.Add(value);
 					}
 				}
 
-				return JsonConvert.SerializeObject(resultList, formatting);
+				return resultList;
 			}
 
 			if (json is JObject singleObj)
@@ -561,7 +573,7 @@ namespace PLang.Modules.LocalOrGlobalVariableModule
 				return jsonStr.Length > totalCharsLimit ? jsonStr.Substring(0, totalCharsLimit) + "..." : jsonStr;
 			}
 
-			return json.ToString(formatting);
+			return json;
 		}
 
 		private JObject TrimObject(JObject input)

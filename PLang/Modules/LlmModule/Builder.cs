@@ -1,9 +1,12 @@
-﻿using PLang.Building.Model;
+﻿using Newtonsoft.Json.Linq;
+using PLang.Building.Model;
 using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Models;
+using PLang.Services.CompilerService;
 using PLang.Utils;
 using PLang.Utils.Extractors;
+using static PLang.Modules.BaseBuilder;
 using static PLang.Services.LlmService.PLangLlmService;
 
 namespace PLang.Modules.LlmModule
@@ -17,12 +20,7 @@ namespace PLang.Modules.LlmModule
 			this.programFactory = programFactory;
 		}
 
-		public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step)
-		{
-			return await Build(step, null, 0);
-		}
-
-		public async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, string? error = null, int errorCount = 0)
+		public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, IBuilderError? previousBuildError = null)
 		{
 			AppendToSystemCommand(@"The following user request is for constructing a message to LLM engine
 
@@ -148,29 +146,27 @@ or url
 
 ## examples ##
 ");
-			if (error != null)
-			{
-				AppendToAssistantCommand(error);
-			}
-			
-			(var instruction, var buildError) = await base.Build(step);
-            if (buildError != null || instruction == null)
-            {
-                return (null, buildError ?? new StepBuilderError("Could not build step", step));
-            }
 
-			var genericFunction = instruction.Action as GenericFunction;
-			if (genericFunction != null && genericFunction.FunctionName == "AskLlm")
+
+			(var instruction, var buildError) = await base.Build(step, previousBuildError);
+			if (buildError != null || instruction == null)
+			{
+				return (null, buildError ?? new StepBuilderError("Could not build step", step));
+			}
+
+			var genericFunction = instruction.Function as GenericFunction;
+			if (genericFunction != null && genericFunction.Name == "AskLlm")
 			{
 				var scheme = genericFunction.Parameters.FirstOrDefault(p => p.Name == "scheme");
 				var responseTypeParameter = genericFunction.Parameters.FirstOrDefault(p => p.Name == "llmResponseType");
-                string responseType = responseTypeParameter?.Value as string;
+				string responseType = responseTypeParameter?.Value as string;
 
 				if (string.IsNullOrEmpty(responseType))
-                {
-					error = $"\nLLM gave empty responseType in last request. Please make sure that you give responseType. If non is defined set it as text";
-					return await Build(step, error, ++errorCount);
+				{
+					string error = $"\nLLM gave empty responseType in last request. Please make sure that you give responseType. If non is defined set it as text";
+					return await Build(step, new BuilderError(error));
 				}
+
 				if (!VariableHelper.IsVariable(scheme.Value) && responseType == "json")
 				{
 					List<LlmMessage> messages = new();
@@ -191,24 +187,21 @@ or url
 					if (validateResult.Error != null) return (instruction, new BuilderError(validateResult.Error));
 
 					var schemeIdx = genericFunction.Parameters.FindIndex(p => p.Name == "scheme");
-
-					genericFunction.Parameters[schemeIdx] = scheme with { Value = result.Item1 };
-
+					instruction.Properties.AddOrReplace("ReturnScheme", JObject.Parse(validScheme));
 				}
+
 				if (scheme != null && scheme.Value != null && !VariableHelper.IsVariable(scheme.Value) && responseType == "json" && !JsonHelper.LookAsJsonScheme(scheme.Value.ToString()))
 				{
-					if (errorCount < 2)
-					{
-						error = $"\nChatGPT generated follow scheme property: {scheme.Value}\n\nThis is not valid json. Can you try to generate a valid json from user request.";
-						return await Build(step, error, ++errorCount);
-					}
 
-					throw new BuilderStepException($"Could not determine scheme for the step. Make sure to include a json scheme, e.g. {{Result:string}}. Step: {step.Text}", step);
+					string error = $"\nChatGPT generated follow scheme property: {scheme.Value}\n\nThis is not valid JSON scheme. Can you try to generate a valid json from user request.";
+					return await Build(step, new BuilderError(error));
+
 				}
+
 			}
 			return (instruction, null);
 		}
-		
+
 
 
 	}

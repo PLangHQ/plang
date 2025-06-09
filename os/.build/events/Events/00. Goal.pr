@@ -4,170 +4,8 @@
   "Text": "Events",
   "GoalSteps": [
     {
-      "Text": "before each goal, include private, call Runtime/SendExecutionPath action=\"start\", startup args=--debug",
-      "Comment": null,
-      "ModuleType": null,
-      "Name": null,
-      "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\Events\\Events.pr",
-      "Indent": 0,
-      "Execute": true,
-      "RunOnce": false,
-      "Generated": "2025-05-07T11:18:24.8414505+00:00",
-      "WaitForExecution": true,
-      "LoggerLevel": null,
-      "ErrorHandlers": null,
-      "CacheHandler": null,
-      "CancellationHandler": null,
-      "Custom": {},
-      "Number": 0,
-      "LineNumber": 2,
-      "LlmRequest": null,
-      "EventBinding": {
-        "EventType": "Before",
-        "EventScope": "Goal",
-        "GoalToBindTo": {
-          "Value": "*"
-        },
-        "GoalToCall": {
-          "Value": "Runtime/SendExecutionPath"
-        },
-        "GoalToCallParameters": {
-          "action": "start"
-        },
-        "IncludePrivate": true,
-        "StepNumber": null,
-        "StepText": null,
-        "WaitForExecution": true,
-        "RunOnlyOnStartParameter": [
-          "--debug"
-        ],
-        "OnErrorContinueNextStep": false,
-        "ErrorKey": null,
-        "ErrorMessage": null,
-        "StatusCode": null,
-        "ExceptionType": null,
-        "IsLocal": false,
-        "IncludeOsGoals": false,
-        "Id": "Before_Goal_*_Runtime/SendExecutionPath_True___True_--debug_False_____False"
-      },
-      "IsEvent": true,
-      "Hash": null,
-      "BuilderVersion": null,
-      "RelativeGoalPath": "\\events\\Events.goal"
-    },
-    {
-      "Text": "after each goal, include private, call Runtime/SendExecutionPath action=\"end\", startup args=--debug",
-      "Comment": null,
-      "ModuleType": null,
-      "Name": null,
-      "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\Events\\Events.pr",
-      "Indent": 0,
-      "Execute": true,
-      "RunOnce": false,
-      "Generated": "2025-05-07T11:18:27.0402744+00:00",
-      "WaitForExecution": true,
-      "LoggerLevel": null,
-      "ErrorHandlers": null,
-      "CacheHandler": null,
-      "CancellationHandler": null,
-      "Custom": {},
-      "Number": 1,
-      "LineNumber": 3,
-      "LlmRequest": null,
-      "EventBinding": {
-        "EventType": "After",
-        "EventScope": "Goal",
-        "GoalToBindTo": {
-          "Value": "*"
-        },
-        "GoalToCall": {
-          "Value": "Runtime/SendExecutionPath"
-        },
-        "GoalToCallParameters": {
-          "action": "end"
-        },
-        "IncludePrivate": true,
-        "StepNumber": null,
-        "StepText": null,
-        "WaitForExecution": true,
-        "RunOnlyOnStartParameter": [
-          "--debug"
-        ],
-        "OnErrorContinueNextStep": false,
-        "ErrorKey": null,
-        "ErrorMessage": null,
-        "StatusCode": null,
-        "ExceptionType": null,
-        "IsLocal": false,
-        "IncludeOsGoals": false,
-        "Id": "After_Goal_*_Runtime/SendExecutionPath_True___True_--debug_False_____False"
-      },
-      "IsEvent": true,
-      "Hash": null,
-      "BuilderVersion": null,
-      "RelativeGoalPath": "\\events\\Events.goal"
-    },
-    {
-      "Text": "before each step, include private, call Runtime/SendExecutionPath action=\"start_step\", startup args=--debug",
-      "Comment": null,
-      "ModuleType": null,
-      "Name": null,
-      "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\Events\\Events.pr",
-      "Indent": 0,
-      "Execute": true,
-      "RunOnce": false,
-      "Generated": "2025-05-07T11:18:28.798477+00:00",
-      "WaitForExecution": true,
-      "LoggerLevel": null,
-      "ErrorHandlers": null,
-      "CacheHandler": null,
-      "CancellationHandler": null,
-      "Custom": {},
-      "Number": 2,
-      "LineNumber": 4,
-      "LlmRequest": null,
-      "EventBinding": {
-        "EventType": "Before",
-        "EventScope": "Step",
-        "GoalToBindTo": {
-          "Value": "*"
-        },
-        "GoalToCall": {
-          "Value": "Runtime/SendExecutionPath"
-        },
-        "GoalToCallParameters": {
-          "action": "start_step"
-        },
-        "IncludePrivate": true,
-        "StepNumber": null,
-        "StepText": null,
-        "WaitForExecution": true,
-        "RunOnlyOnStartParameter": [
-          "--debug"
-        ],
-        "OnErrorContinueNextStep": false,
-        "ErrorKey": null,
-        "ErrorMessage": null,
-        "StatusCode": null,
-        "ExceptionType": null,
-        "IsLocal": false,
-        "IncludeOsGoals": false,
-        "Id": "Before_Step_*_Runtime/SendExecutionPath_True___True_--debug_False_____False"
-      },
-      "IsEvent": true,
-      "Hash": null,
-      "BuilderVersion": null,
-      "RelativeGoalPath": "\\events\\Events.goal"
-    },
-    {
       "Text": "before each step, include private goals, call Runtime/SendDebug, start parameter --debug",
-      "Comment": null,
+      "Comment": "- before each step, include private, call Runtime/SendExecutionPath action=\"start_step\", startup args=--debug",
       "ModuleType": null,
       "Name": null,
       "Description": null,
@@ -176,33 +14,33 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-05-07T11:18:28.8050328+00:00",
+      "Generated": "2025-06-06T17:47:41.5226137+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
+      "Retry": false,
       "CacheHandler": null,
       "CancellationHandler": null,
-      "Custom": {},
-      "Number": 3,
+      "Number": 0,
       "LineNumber": 5,
       "LlmRequest": null,
       "EventBinding": {
         "EventType": "Before",
         "EventScope": "Step",
         "GoalToBindTo": {
-          "Value": "*"
+          "Value": "*."
         },
         "GoalToCall": {
           "Value": "Runtime/SendDebug"
         },
-        "GoalToCallParameters": null,
+        "GoalToCallParameters": {
+          "StartParameter": "--debug"
+        },
         "IncludePrivate": true,
         "StepNumber": null,
         "StepText": null,
         "WaitForExecution": true,
-        "RunOnlyOnStartParameter": [
-          "--debug"
-        ],
+        "RunOnlyOnStartParameter": null,
         "OnErrorContinueNextStep": false,
         "ErrorKey": null,
         "ErrorMessage": null,
@@ -210,12 +48,20 @@
         "ExceptionType": null,
         "IsLocal": false,
         "IncludeOsGoals": false,
-        "Id": "Before_Step_*_Runtime/SendDebug_True___True_--debug_False_____False"
+        "IsOnStep": true,
+        "Id": "Before_Step_*._Runtime/SendDebug_True___True__False_____False",
+        "UniqueId": "8be06afd-8525-471b-bb73-ae4821638767",
+        "Goal": null,
+        "GoalStep": null,
+        "Stopwatch": null
       },
       "IsEvent": true,
       "Hash": null,
       "BuilderVersion": null,
-      "RelativeGoalPath": "\\events\\Events.goal"
+      "RelativeGoalPath": "\\events\\Events.goal",
+      "Stopwatch": null,
+      "UserIntent": null,
+      "Variables": []
     },
     {
       "Text": "before goal ends, include private goals, call Runtime/SendDebug, start parameter --debug",
@@ -228,21 +74,21 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-05-07T11:18:28.811883+00:00",
+      "Generated": "2025-06-06T17:47:41.533897+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
+      "Retry": false,
       "CacheHandler": null,
       "CancellationHandler": null,
-      "Custom": {},
-      "Number": 4,
+      "Number": 1,
       "LineNumber": 6,
       "LlmRequest": null,
       "EventBinding": {
         "EventType": "Before",
-        "EventScope": "EndOfApp",
+        "EventScope": "Goal",
         "GoalToBindTo": {
-          "Value": "*"
+          "Value": "*. "
         },
         "GoalToCall": {
           "Value": "Runtime/SendDebug"
@@ -262,15 +108,23 @@
         "ExceptionType": null,
         "IsLocal": false,
         "IncludeOsGoals": false,
-        "Id": "Before_EndOfApp_*_Runtime/SendDebug_True___True_--debug_False_____False"
+        "IsOnStep": false,
+        "Id": "Before_Goal_*. _Runtime/SendDebug_True___True_--debug_False_____False",
+        "UniqueId": "9995c14f-52b9-4231-b18f-676b0cfd1924",
+        "Goal": null,
+        "GoalStep": null,
+        "Stopwatch": null
       },
       "IsEvent": true,
       "Hash": null,
       "BuilderVersion": null,
-      "RelativeGoalPath": "\\events\\Events.goal"
+      "RelativeGoalPath": "\\events\\Events.goal",
+      "Stopwatch": null,
+      "UserIntent": null,
+      "Variables": []
     },
     {
-      "Text": "on step error, exception type: PLang.Exceptions.InvalidInstructionFileException, call Runtime/HandleBadInstructionFile",
+      "Text": "on step error,\n    exception type: PLang.Exceptions.InvalidInstructionFileException, include os\n    call /events/Runtime/HandleBadInstructionFile",
       "Comment": null,
       "ModuleType": null,
       "Name": null,
@@ -280,14 +134,14 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-05-07T11:18:28.821028+00:00",
+      "Generated": "2025-06-06T17:47:41.5449771+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
+      "Retry": false,
       "CacheHandler": null,
       "CancellationHandler": null,
-      "Custom": {},
-      "Number": 5,
+      "Number": 2,
       "LineNumber": 7,
       "LlmRequest": null,
       "EventBinding": {
@@ -297,7 +151,7 @@
           "Value": "*"
         },
         "GoalToCall": {
-          "Value": "Runtime/HandleBadInstructionFile"
+          "Value": "/events/Runtime/HandleBadInstructionFile"
         },
         "GoalToCallParameters": null,
         "IncludePrivate": false,
@@ -311,16 +165,24 @@
         "StatusCode": null,
         "ExceptionType": "PLang.Exceptions.InvalidInstructionFileException",
         "IsLocal": false,
-        "IncludeOsGoals": false,
-        "Id": "After_StepError_*_Runtime/HandleBadInstructionFile_False___True__False____PLang.Exceptions.InvalidInstructionFileException_False"
+        "IncludeOsGoals": true,
+        "IsOnStep": true,
+        "Id": "After_StepError_*_/events/Runtime/HandleBadInstructionFile_False___True__False____PLang.Exceptions.InvalidInstructionFileException_False",
+        "UniqueId": "53ac06cd-df82-4cd1-8461-510d7a964591",
+        "Goal": null,
+        "GoalStep": null,
+        "Stopwatch": null
       },
       "IsEvent": true,
       "Hash": null,
       "BuilderVersion": null,
-      "RelativeGoalPath": "\\events\\Events.goal"
+      "RelativeGoalPath": "\\events\\Events.goal",
+      "Stopwatch": null,
+      "UserIntent": null,
+      "Variables": []
     },
     {
-      "Text": "on step error, exception type: PLang.Exceptions.MethodNotFoundException, call Runtime/HandleBadInstructionFile",
+      "Text": "on step error,\n    exception type: PLang.Exceptions.MethodNotFoundException, include os, \n    call /events/Runtime/HandleBadInstructionFile",
       "Comment": null,
       "ModuleType": null,
       "Name": null,
@@ -330,15 +192,15 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-05-07T11:18:28.8373584+00:00",
+      "Generated": "2025-06-06T17:47:41.5561355+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
+      "Retry": false,
       "CacheHandler": null,
       "CancellationHandler": null,
-      "Custom": {},
-      "Number": 6,
-      "LineNumber": 8,
+      "Number": 3,
+      "LineNumber": 10,
       "LlmRequest": null,
       "EventBinding": {
         "EventType": "After",
@@ -347,7 +209,7 @@
           "Value": "*"
         },
         "GoalToCall": {
-          "Value": "Runtime/HandleBadInstructionFile"
+          "Value": "/events/Runtime/HandleBadInstructionFile"
         },
         "GoalToCallParameters": null,
         "IncludePrivate": false,
@@ -361,16 +223,24 @@
         "StatusCode": null,
         "ExceptionType": "PLang.Exceptions.MethodNotFoundException",
         "IsLocal": false,
-        "IncludeOsGoals": false,
-        "Id": "After_StepError_*_Runtime/HandleBadInstructionFile_False___True__False____PLang.Exceptions.MethodNotFoundException_False"
+        "IncludeOsGoals": true,
+        "IsOnStep": true,
+        "Id": "After_StepError_*_/events/Runtime/HandleBadInstructionFile_False___True__False____PLang.Exceptions.MethodNotFoundException_False",
+        "UniqueId": "1b2caaae-7c14-459a-b42a-581a37a4602c",
+        "Goal": null,
+        "GoalStep": null,
+        "Stopwatch": null
       },
       "IsEvent": true,
       "Hash": null,
       "BuilderVersion": null,
-      "RelativeGoalPath": "\\events\\Events.goal"
+      "RelativeGoalPath": "\\events\\Events.goal",
+      "Stopwatch": null,
+      "UserIntent": null,
+      "Variables": []
     },
     {
-      "Text": "on step error, key:\"InvalidParameter\", call Runtime/HandleBadInstructionFile",
+      "Text": "on step error, key:\"InvalidParameter\", include os, call /events/Runtime/HandleBadInstructionFile",
       "Comment": null,
       "ModuleType": null,
       "Name": null,
@@ -380,15 +250,15 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-05-07T11:18:28.8446484+00:00",
+      "Generated": "2025-06-06T17:47:41.5678246+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
+      "Retry": false,
       "CacheHandler": null,
       "CancellationHandler": null,
-      "Custom": {},
-      "Number": 7,
-      "LineNumber": 9,
+      "Number": 4,
+      "LineNumber": 13,
       "LlmRequest": null,
       "EventBinding": {
         "EventType": "After",
@@ -397,7 +267,7 @@
           "Value": "*"
         },
         "GoalToCall": {
-          "Value": "Runtime/HandleBadInstructionFile"
+          "Value": "/events/Runtime/HandleBadInstructionFile"
         },
         "GoalToCallParameters": null,
         "IncludePrivate": false,
@@ -411,16 +281,24 @@
         "StatusCode": null,
         "ExceptionType": null,
         "IsLocal": false,
-        "IncludeOsGoals": false,
-        "Id": "After_StepError_*_Runtime/HandleBadInstructionFile_False___True__False_InvalidParameter____False"
+        "IncludeOsGoals": true,
+        "IsOnStep": true,
+        "Id": "After_StepError_*_/events/Runtime/HandleBadInstructionFile_False___True__False_InvalidParameter____False",
+        "UniqueId": "454b82b1-dd3b-4e83-ac8d-1574cf2e89ea",
+        "Goal": null,
+        "GoalStep": null,
+        "Stopwatch": null
       },
       "IsEvent": true,
       "Hash": null,
       "BuilderVersion": null,
-      "RelativeGoalPath": "\\events\\Events.goal"
+      "RelativeGoalPath": "\\events\\Events.goal",
+      "Stopwatch": null,
+      "UserIntent": null,
+      "Variables": []
     },
     {
-      "Text": "on step error key:\"PrFileNotFound\", call Runtime/PrFileNotFound",
+      "Text": "on step error, key:\"InvalidInstructionFile\", include os, call /events/Runtime/HandleBadInstructionFile",
       "Comment": null,
       "ModuleType": null,
       "Name": null,
@@ -430,15 +308,15 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-05-07T11:18:28.8530243+00:00",
+      "Generated": "2025-06-06T17:47:41.57513+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
+      "Retry": false,
       "CacheHandler": null,
       "CancellationHandler": null,
-      "Custom": {},
-      "Number": 8,
-      "LineNumber": 10,
+      "Number": 5,
+      "LineNumber": 14,
       "LlmRequest": null,
       "EventBinding": {
         "EventType": "After",
@@ -447,7 +325,65 @@
           "Value": "*"
         },
         "GoalToCall": {
-          "Value": "Runtime/PrFileNotFound"
+          "Value": "/events/Runtime/HandleBadInstructionFile"
+        },
+        "GoalToCallParameters": null,
+        "IncludePrivate": false,
+        "StepNumber": null,
+        "StepText": null,
+        "WaitForExecution": true,
+        "RunOnlyOnStartParameter": null,
+        "OnErrorContinueNextStep": false,
+        "ErrorKey": "InvalidInstructionFile",
+        "ErrorMessage": null,
+        "StatusCode": null,
+        "ExceptionType": null,
+        "IsLocal": false,
+        "IncludeOsGoals": true,
+        "IsOnStep": true,
+        "Id": "After_StepError_*_/events/Runtime/HandleBadInstructionFile_False___True__False_InvalidInstructionFile____False",
+        "UniqueId": "26c490c5-2100-48ee-9195-153f2e314fa7",
+        "Goal": null,
+        "GoalStep": null,
+        "Stopwatch": null
+      },
+      "IsEvent": true,
+      "Hash": null,
+      "BuilderVersion": null,
+      "RelativeGoalPath": "\\events\\Events.goal",
+      "Stopwatch": null,
+      "UserIntent": null,
+      "Variables": []
+    },
+    {
+      "Text": "on step error key:\"PrFileNotFound\", include os, call /events/Runtime/PrFileNotFound",
+      "Comment": null,
+      "ModuleType": null,
+      "Name": null,
+      "Description": null,
+      "PrFileName": "Events.pr",
+      "RelativePrPath": ".build\\events\\Events\\Events.pr",
+      "Indent": 0,
+      "Execute": true,
+      "RunOnce": false,
+      "Generated": "2025-06-06T17:47:41.5935087+00:00",
+      "WaitForExecution": true,
+      "LoggerLevel": null,
+      "ErrorHandlers": null,
+      "Retry": false,
+      "CacheHandler": null,
+      "CancellationHandler": null,
+      "Number": 6,
+      "LineNumber": 15,
+      "LlmRequest": null,
+      "EventBinding": {
+        "EventType": "After",
+        "EventScope": "StepError",
+        "GoalToBindTo": {
+          "Value": "*. "
+        },
+        "GoalToCall": {
+          "Value": "/events/Runtime/PrFileNotFound"
         },
         "GoalToCallParameters": null,
         "IncludePrivate": false,
@@ -461,16 +397,24 @@
         "StatusCode": null,
         "ExceptionType": null,
         "IsLocal": false,
-        "IncludeOsGoals": false,
-        "Id": "After_StepError_*_Runtime/PrFileNotFound_False___True__False_PrFileNotFound____False"
+        "IncludeOsGoals": true,
+        "IsOnStep": true,
+        "Id": "After_StepError_*. _/events/Runtime/PrFileNotFound_False___True__False_PrFileNotFound____False",
+        "UniqueId": "6faa6bac-2bcd-4de7-ac9d-9fe751d9f415",
+        "Goal": null,
+        "GoalStep": null,
+        "Stopwatch": null
       },
       "IsEvent": true,
       "Hash": null,
       "BuilderVersion": null,
-      "RelativeGoalPath": "\\events\\Events.goal"
+      "RelativeGoalPath": "\\events\\Events.goal",
+      "Stopwatch": null,
+      "UserIntent": null,
+      "Variables": []
     },
     {
-      "Text": "on step error, call Runtime/DebugErrorInIde, start args --debug",
+      "Text": "on step error, call /events/Runtime/DebugErrorInIde, start args --debug",
       "Comment": null,
       "ModuleType": null,
       "Name": null,
@@ -480,15 +424,15 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-05-07T11:18:28.8621489+00:00",
+      "Generated": "2025-06-06T17:47:41.6136145+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
+      "Retry": false,
       "CacheHandler": null,
       "CancellationHandler": null,
-      "Custom": {},
-      "Number": 9,
-      "LineNumber": 11,
+      "Number": 7,
+      "LineNumber": 16,
       "LlmRequest": null,
       "EventBinding": {
         "EventType": "After",
@@ -497,16 +441,16 @@
           "Value": "*"
         },
         "GoalToCall": {
-          "Value": "Runtime/DebugErrorInIde"
+          "Value": "/events/Runtime/DebugErrorInIde"
         },
-        "GoalToCallParameters": null,
+        "GoalToCallParameters": {
+          "startArgs": "--debug"
+        },
         "IncludePrivate": false,
         "StepNumber": null,
         "StepText": null,
         "WaitForExecution": true,
-        "RunOnlyOnStartParameter": [
-          "--debug"
-        ],
+        "RunOnlyOnStartParameter": null,
         "OnErrorContinueNextStep": false,
         "ErrorKey": null,
         "ErrorMessage": null,
@@ -514,12 +458,20 @@
         "ExceptionType": null,
         "IsLocal": false,
         "IncludeOsGoals": false,
-        "Id": "After_StepError_*_Runtime/DebugErrorInIde_False___True_--debug_False_____False"
+        "IsOnStep": true,
+        "Id": "After_StepError_*_/events/Runtime/DebugErrorInIde_False___True__False_____False",
+        "UniqueId": "f8178b78-7a3f-463e-acc0-064a8012a58f",
+        "Goal": null,
+        "GoalStep": null,
+        "Stopwatch": null
       },
       "IsEvent": true,
       "Hash": null,
       "BuilderVersion": null,
-      "RelativeGoalPath": "\\events\\Events.goal"
+      "RelativeGoalPath": "\\events\\Events.goal",
+      "Stopwatch": null,
+      "UserIntent": null,
+      "Variables": []
     },
     {
       "Text": "on module error status 402, include private, call /apps/Wallet/PaymentRequest contract=%!error.Contract%",
@@ -532,15 +484,15 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-05-07T11:18:28.8780985+00:00",
+      "Generated": "2025-06-06T17:47:41.6352089+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
+      "Retry": false,
       "CacheHandler": null,
       "CancellationHandler": null,
-      "Custom": {},
-      "Number": 10,
-      "LineNumber": 12,
+      "Number": 8,
+      "LineNumber": 17,
       "LlmRequest": null,
       "EventBinding": {
         "EventType": "After",
@@ -566,15 +518,23 @@
         "ExceptionType": null,
         "IsLocal": false,
         "IncludeOsGoals": false,
-        "Id": "After_ModuleError_*_/apps/Wallet/PaymentRequest_True___True__False___402__False"
+        "IsOnStep": false,
+        "Id": "After_ModuleError_*_/apps/Wallet/PaymentRequest_True___True__False___402__False",
+        "UniqueId": "501e5548-7c79-489a-ad10-ab62dd60cee5",
+        "Goal": null,
+        "GoalStep": null,
+        "Stopwatch": null
       },
       "IsEvent": true,
       "Hash": null,
       "BuilderVersion": null,
-      "RelativeGoalPath": "\\events\\Events.goal"
+      "RelativeGoalPath": "\\events\\Events.goal",
+      "Stopwatch": null,
+      "UserIntent": null,
+      "Variables": []
     },
     {
-      "Text": "on app error, call Runtime/OnAppError",
+      "Text": "on app error, call /events/Runtime/OnAppError",
       "Comment": null,
       "ModuleType": null,
       "Name": null,
@@ -584,15 +544,15 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-05-07T11:18:28.8906115+00:00",
+      "Generated": "2025-06-06T17:47:41.6484114+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
+      "Retry": false,
       "CacheHandler": null,
       "CancellationHandler": null,
-      "Custom": {},
-      "Number": 11,
-      "LineNumber": 13,
+      "Number": 9,
+      "LineNumber": 18,
       "LlmRequest": null,
       "EventBinding": {
         "EventType": "After",
@@ -601,7 +561,7 @@
           "Value": "*"
         },
         "GoalToCall": {
-          "Value": "Runtime/OnAppError"
+          "Value": "/events/Runtime/OnAppError"
         },
         "GoalToCallParameters": null,
         "IncludePrivate": false,
@@ -616,12 +576,20 @@
         "ExceptionType": null,
         "IsLocal": false,
         "IncludeOsGoals": false,
-        "Id": "After_AppError_*_Runtime/OnAppError_False___True__False_____False"
+        "IsOnStep": false,
+        "Id": "After_AppError_*_/events/Runtime/OnAppError_False___True__False_____False",
+        "UniqueId": "f8759e31-a7d3-4840-ba80-614b41a6d110",
+        "Goal": null,
+        "GoalStep": null,
+        "Stopwatch": null
       },
       "IsEvent": true,
       "Hash": null,
       "BuilderVersion": null,
-      "RelativeGoalPath": "\\events\\Events.goal"
+      "RelativeGoalPath": "\\events\\Events.goal",
+      "Stopwatch": null,
+      "UserIntent": null,
+      "Variables": []
     }
   ],
   "SubGoals": [],
@@ -636,9 +604,13 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "FileHash": "bd2372d79e5d821bdbd8d672d1a21f7075d52854285b72812fef6e80e2f1387e",
+  "FileHash": "9f6004da0e130f3b07670f58376217f78d3e68aa0c53b8237868b96787b26caa",
   "Hash": null,
+  "IsOS": false,
+  "CurrentStepIndex": 0,
   "IncomingVariablesRequired": null,
   "DataSourceName": null,
-  "IsSetup": false
+  "IsSetup": false,
+  "Stopwatch": null,
+  "Variables": []
 }

@@ -26,7 +26,7 @@ namespace PLang.Modules.OutputModule.Tests
 			LoadOpenAI();
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.OutputModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -37,16 +37,9 @@ namespace PLang.Modules.OutputModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.OutputModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
-		public GoalStep GetStep(string text)
-		{
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
-			step.ModuleType = "PLang.Modules.OutputModule";
-			return step;
-		}
 
 
 
@@ -56,14 +49,14 @@ namespace PLang.Modules.OutputModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("Ask", gf.FunctionName);
+			Assert.AreEqual("Ask", gf.Name);
 			Assert.AreEqual("text", gf.Parameters[0].Name);
 			Assert.AreEqual("what should the settings be?", gf.Parameters[0].Value);
 			Assert.AreEqual("settings", gf.ReturnValues[0].VariableName);
@@ -76,13 +69,13 @@ namespace PLang.Modules.OutputModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
-			Assert.AreEqual("Write", gf.FunctionName);
+			Store(text, instruction.LlmRequest[0].RawResponse);
+			Assert.AreEqual("Write", gf.Name);
 			Assert.AreEqual("content", gf.Parameters[0].Name);
 			Assert.AreEqual("Hello PLang world", gf.Parameters[0].Value);
 			Assert.AreEqual("writeToBuffer", gf.Parameters[1].Name);

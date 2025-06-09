@@ -37,8 +37,8 @@ namespace PLang.Modules.DbModule.Tests
 
 			var db = new SqliteConnection("DataSource=In memory;Version=3");
 
-			builder = new Builder(fileSystem, dbFactory, settings, context, llmServiceFactory, typeHelper, logger, memoryStack, variableHelper, null, prParser);
-			builder.InitBaseBuilder("PLang.Modules.DbModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder = new Builder(fileSystem, dbFactory, settings, context, llmServiceFactory, typeHelper, logger, memoryStack, variableHelper, null, prParser, programFactory);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -50,8 +50,8 @@ namespace PLang.Modules.DbModule.Tests
 			var db = new SqliteConnection("DataSource=In memory;Version=3");
 			var aiService = Substitute.For<ILlmService>();
 
-			llmService.Query(Arg.Any<LlmRequest>(), typeof(FunctionInfo)).Returns(p => {
-				return JsonConvert.DeserializeObject(@$"{{""FunctionName"": ""{functionName}""}}", typeof(FunctionInfo));
+			llmService.Query(Arg.Any<LlmRequest>(), typeof(DbGenericFunction)).Returns(p => {
+				return JsonConvert.DeserializeObject(@$"{{""FunctionName"": ""{functionName}""}}", typeof(DbGenericFunction));
 			});
 
 
@@ -59,17 +59,11 @@ namespace PLang.Modules.DbModule.Tests
 			dataSources.Add(new DataSource("data", "Microsoft.Data.Sqlite.SqliteConnection", "", "", "", ""));
 			settings.GetValues<DataSource>(typeof(ModuleSettings)).Returns(dataSources);
 
-			builder = new Builder(fileSystem, dbFactory, settings, context, llmServiceFactory, typeHelper, logger, memoryStack, variableHelper, null, prParser);
-			builder.InitBaseBuilder("PLang.Modules.DbModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder = new Builder(fileSystem, dbFactory, settings, context, llmServiceFactory, typeHelper, logger, memoryStack, variableHelper, null, prParser, programFactory);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
-		public GoalStep GetStep(string text)
-		{
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
-			step.ModuleType = "PLang.Modules.DbModule";
-			return step;
-		}
+	
 
 		[DataTestMethod]
 		[DataRow("set datasource as 'MainDb'")]
@@ -78,14 +72,14 @@ namespace PLang.Modules.DbModule.Tests
 		
 			SetupResponse(text, "SetDataSouceName");
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("SetDataSouceName", gf.FunctionName);
+			Assert.AreEqual("SetDataSouceName", gf.Name);
 			Assert.AreEqual("name", gf.Parameters[0].Name);
 			Assert.AreEqual("MainDb", gf.Parameters[0].Value);
 
@@ -98,14 +92,14 @@ namespace PLang.Modules.DbModule.Tests
 
 			SetupResponse(text, "BeginTransaction");
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("BeginTransaction", gf.FunctionName);
+			Assert.AreEqual("BeginTransaction", gf.Name);
 			Assert.AreEqual(0, gf.Parameters.Count);
 
 		}
@@ -117,14 +111,14 @@ namespace PLang.Modules.DbModule.Tests
 
 			SetupResponse(text, "EndTransaction");
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("EndTransaction", gf.FunctionName);
+			Assert.AreEqual("EndTransaction", gf.Name);
 			Assert.AreEqual(0, gf.Parameters.Count);
 
 		}
@@ -138,14 +132,14 @@ namespace PLang.Modules.DbModule.Tests
 
 			SetupResponse(text, "Select");
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("Select", gf.FunctionName);
+			Assert.AreEqual("Select", gf.Name);
 			Assert.AreEqual("sql", gf.Parameters[0].Name);
 			Assert.AreEqual("select name from users where id=@id", gf.Parameters[0].Value);
 
@@ -167,14 +161,14 @@ namespace PLang.Modules.DbModule.Tests
 
 			SetupResponse(text, "Update");
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as DbGenericFunction;
+			var gf = instruction.Function as DbGenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("Update", gf.FunctionName);
+			Assert.AreEqual("Update", gf.Name);
 			Assert.AreEqual("sql", gf.Parameters[0].Name);
 			Assert.AreEqual("update users set name=@name where id=@id", gf.Parameters[0].Value);
 
@@ -193,14 +187,14 @@ namespace PLang.Modules.DbModule.Tests
 		{
 			SetupResponse(text, "Insert");
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("Insert", gf.FunctionName);
+			Assert.AreEqual("Insert", gf.Name);
 			Assert.AreEqual("sql", gf.Parameters[0].Name);
 			Assert.AreEqual("insert into users (id, name) values (@id, @name)", gf.Parameters[0].Value);
 
@@ -220,14 +214,14 @@ namespace PLang.Modules.DbModule.Tests
 		{
 			SetupResponse(text, "Insert");
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("InsertAndSelectIdOfInsertedRow", gf.FunctionName);
+			Assert.AreEqual("InsertAndSelectIdOfInsertedRow", gf.Name);
 			Assert.AreEqual("sql", gf.Parameters[0].Name);
 			Assert.AreEqual("insert into users (id, name) values (@id, @name)", gf.Parameters[0].Value);
 
@@ -248,14 +242,14 @@ namespace PLang.Modules.DbModule.Tests
 		{
 			SetupResponse(text, "Delete");
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as DbGenericFunction;
+			var gf = instruction.Function as DbGenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("Delete", gf.FunctionName);
+			Assert.AreEqual("Delete", gf.Name);
 			Assert.AreEqual("sql", gf.Parameters[0].Name);
 			Assert.AreEqual("DELETE FROM users WHERE id=@id", gf.Parameters[0].Value);
 

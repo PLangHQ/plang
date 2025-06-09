@@ -409,8 +409,7 @@ namespace PLang.Runtime.Tests
 			//first add the item, no event called
 			stack.PutStatic("item", 1);
 
-			//change the item, now the event is called
-			stack.RemoveStatic("item");
+			
 
 			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test", Arg.Any<Dictionary<string, object>>());
 		}

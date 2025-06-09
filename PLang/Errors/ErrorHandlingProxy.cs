@@ -149,7 +149,7 @@ public class ErrorHandlingInterceptor : IInterceptor
 		try
 		{
 			var result = await task.ConfigureAwait(false);
-			CheckForError(result, method);
+			await CheckForError(result, method);
 			return result;
 		}
 		catch (Exception ex)

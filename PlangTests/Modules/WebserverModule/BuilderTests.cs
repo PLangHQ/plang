@@ -27,7 +27,7 @@ namespace PLang.Modules.WebserverModule.Tests
 			LoadOpenAI();
 			
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.WebserverModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -38,17 +38,8 @@ namespace PLang.Modules.WebserverModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.WebserverModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
-
-		public GoalStep GetStep(string text)
-		{
-			var step = new PLang.Building.Model.GoalStep();
-			step.Text = text;
-			step.ModuleType = "PLang.Modules.WebserverModule";
-			return step;
-		}
-
 
 
 		[DataTestMethod]
@@ -57,14 +48,14 @@ namespace PLang.Modules.WebserverModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("StartWebserver", gf.FunctionName);
+			Assert.AreEqual("StartWebserver", gf.Name);
 			Assert.AreEqual("port", gf.Parameters[0].Name);
 			Assert.AreEqual((long) 8080, gf.Parameters[0].Value);
 
@@ -85,14 +76,14 @@ namespace PLang.Modules.WebserverModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("GetUserIp", gf.FunctionName);
+			Assert.AreEqual("GetUserIp", gf.Name);
 			Assert.AreEqual("headerKey", gf.Parameters[0].Name);
 			Assert.AreEqual(null, gf.Parameters[0].Value);
 
@@ -108,14 +99,14 @@ namespace PLang.Modules.WebserverModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("WriteToResponseHeader", gf.FunctionName);
+			Assert.AreEqual("WriteToResponseHeader", gf.Name);
 			Assert.AreEqual("headers", gf.Parameters[0].Name);
 
 			var dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(gf.Parameters[0].Value.ToString());
@@ -133,14 +124,14 @@ namespace PLang.Modules.WebserverModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("GetRequestHeader", gf.FunctionName);
+			Assert.AreEqual("GetRequestHeader", gf.Name);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("cache-control", gf.Parameters[0].Value);
 
@@ -156,14 +147,14 @@ namespace PLang.Modules.WebserverModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("GetCookie", gf.FunctionName);
+			Assert.AreEqual("GetCookie", gf.Name);
 			Assert.AreEqual("name", gf.Parameters[0].Name);
 			Assert.AreEqual("TOS", gf.Parameters[0].Value);
 
@@ -181,14 +172,14 @@ namespace PLang.Modules.WebserverModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("WriteCookie", gf.FunctionName);
+			Assert.AreEqual("WriteCookie", gf.Name);
 			Assert.AreEqual("name", gf.Parameters[0].Name);
 			Assert.AreEqual("service", gf.Parameters[0].Value);
 			Assert.AreEqual("value", gf.Parameters[1].Name);
@@ -204,14 +195,14 @@ namespace PLang.Modules.WebserverModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("DeleteCookie", gf.FunctionName);
+			Assert.AreEqual("DeleteCookie", gf.Name);
 			Assert.AreEqual("name", gf.Parameters[0].Name);
 			Assert.AreEqual("service", gf.Parameters[0].Value);
 

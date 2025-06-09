@@ -11,25 +11,32 @@ using System.Linq.Dynamic.Core;
 using System.Reflection;
 using System.Text;
 using PLang.Errors;
+using PLang.SafeFileSystem;
 
 namespace PLang.Services.SettingsService
 {
 	public class SqliteSettingsRepository : ISettingsRepository
 	{
 		private readonly IPLangFileSystem fileSystem;
+		private readonly IPLangFileSystemFactory fileSystemFactory;
 		private readonly PLangAppContext context;
 		private readonly ILogger logger;
 		private bool inMemory = false;
 		private readonly string contextKey = "__SqliteSettingsRepository_DataSource__";
 		public static Dictionary<string, IDbConnection> InMemoryDbCache = new();
-		private string defaultSystemDbPath = Path.Join(".", ".db", "system.sqlite");
+		private string defaultSystemDbPath;
 		private string systemDbPath;
-		public SqliteSettingsRepository(IPLangFileSystem fileSystem, PLangAppContext context, ILogger logger)
-		{			
-			this.fileSystem = fileSystem;
+		public SqliteSettingsRepository(IPLangFileSystemFactory fileSystemFactory, PLangAppContext context, ILogger logger)
+		{
+			this.fileSystem = fileSystemFactory.CreateHandler();
+			if (fileSystem.RootDirectory.Equals(fileSystem.OsDirectory))
+			{
+				throw new Exception($"Settings should never point to OS folder. {ErrorReporting.CreateIssueShouldNotHappen}");
+			}
 			this.context = context;
 			this.logger = logger;
 			AppContext.TryGetSwitch(ReservedKeywords.Test, out inMemory);
+			defaultSystemDbPath = fileSystem.Path.Join(".", ".db", "system.sqlite");
 			systemDbPath = defaultSystemDbPath;
 			context.AddOrReplace(contextKey, LocalDataSourcePath);
 			
@@ -92,7 +99,7 @@ namespace PLang.Services.SettingsService
 					string dbName = "InMemorySystemDb";
 					if (!fileSystem.IsRootApp)
 					{
-						var path = fileSystem.RelativeAppPath.Replace(Path.DirectorySeparatorChar, '_');
+						var path = fileSystem.RelativeAppPath.Replace(fileSystem.Path.DirectorySeparatorChar, '_');
 						if (dbName != "/") dbName = path;
 					}
 					
@@ -120,7 +127,7 @@ namespace PLang.Services.SettingsService
 				return "Data Source=InMemorySharedDb" + appId + ";Mode=Memory;Cache=Shared;";
 			}
 
-			string sharedDataSourcePath = Path.Join(fileSystem.SharedPath, appId, ".db", "system.sqlite");
+			string sharedDataSourcePath = fileSystem.Path.Join(fileSystem.SharedPath, appId, ".db", "system.sqlite");
 			return $"Data Source={sharedDataSourcePath};";
 			
 		}
@@ -133,7 +140,7 @@ namespace PLang.Services.SettingsService
 			//only time System.IO is used in the system.
 			if (!File.Exists(dbPath))
 			{
-				string? dirName = Path.GetDirectoryName(dbPath);
+				string? dirName = System.IO.Path.GetDirectoryName(dbPath);
 				if (!string.IsNullOrEmpty(dirName) && !Directory.Exists(dirName))
 				{
 					var dir = Directory.CreateDirectory(dirName!);

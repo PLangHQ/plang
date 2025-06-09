@@ -52,11 +52,13 @@ namespace PLang.Utils
 		}
 		public static object ToFormat(string contentType, IError error, string[]? propertyOrder = null, string? extraInfo = null)
 		{
-			AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool detailedError);
-			if (error is MultipleError me)
+			AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool detailedError);			
+			if (error.ErrorChain != null && error.ErrorChain.Count > 0)
 			{
+				var errorChain = error.ErrorChain ?? new();
+
 				List<object> errors = new List<object>();	
-				foreach (var e in me.Errors)
+				foreach (var e in errorChain)
 				{
 					errors.Add(e.ToFormat(contentType));
 				}
@@ -71,8 +73,6 @@ namespace PLang.Utils
 					return str;
 				}
 				return errors;
-
-				
 			}
 			if (error is RuntimeEventError rve && rve.InitialError != null)
 			{
@@ -107,6 +107,7 @@ namespace PLang.Utils
 			Goal? goal = null;
 			GoalStep? step = null;
 			GenericFunction? genericFunction = null;
+			Instruction? instruction = null;
 			Dictionary<string, object?>? parameterValues = null;
 			Exception? exception = null;
 			if (propertyOrder != null)
@@ -128,8 +129,18 @@ namespace PLang.Utils
 			property = properties.FirstOrDefault(p => p.Name.Equals("Step"));
 			if (property != null) step = (GoalStep?)property.GetValue(error);
 
+
+			property = properties.FirstOrDefault(p => p.Name.Equals("Instruction"));
+			if (detailedError && property != null) instruction = (Instruction?)property.GetValue(error);
+
 			property = properties.FirstOrDefault(p => p.Name.Equals("GenericFunction"));
 			if (detailedError && property != null) genericFunction = (GenericFunction?)property.GetValue(error);
+
+			if (genericFunction == null && instruction != null)
+			{
+				genericFunction = instruction.Function as GenericFunction;
+			}
+
 
 			property = properties.FirstOrDefault(p => p.Name.Equals("ParameterValues"));
 			if (detailedError && property != null) parameterValues = (Dictionary<string, object?>?)property.GetValue(error);
@@ -166,7 +177,7 @@ namespace PLang.Utils
 	- The error occurred in the module: `{step.ModuleType}`";
 					if (genericFunction != null)
 					{
-						errorSource += $".`{genericFunction.FunctionName}`";
+						errorSource += $".`{genericFunction.Name}`";
 					}
 				}
 
@@ -234,7 +245,7 @@ namespace PLang.Utils
 				{
 					errorSource = $@"
 📦 Error Source:
-	- The error occurred in the module: `{step.ModuleType}.{genericFunction.FunctionName}`
+	- The error occurred in the module: `{step.ModuleType}.{genericFunction.Name}`
 	{paramInfo}
 ".TrimEnd();
 				}
@@ -305,6 +316,15 @@ namespace PLang.Utils
 			return message;
 		}
 
-
+		internal static string MakeForLlm(IBuilderError error)
+		{
+			string errorMessage = $@"Previous LLM request caused following <error>, try to fix it.
+<error>{error.Message}<error>";
+			if (error.FixSuggestion != null)
+			{
+				errorMessage += error.FixSuggestion;
+			}
+			return errorMessage;
+		}
 	}
 }

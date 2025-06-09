@@ -16,6 +16,7 @@ using System.Collections;
 using PLang.Utils;
 using Microsoft.Extensions.Logging;
 using PLang.Services.OutputStream;
+using PLang.Modules.ThrowErrorModule;
 
 namespace PLang.Modules.ConditionalModule
 {
@@ -34,103 +35,226 @@ namespace PLang.Modules.ConditionalModule
 			this.fileSystem = fileSystem;
 			this.logger = logger;
 		}
-		/*
-		 * 
-		 * Needs more change then expected, leaving it commented out
-		 * 
-		public async Task<bool> FileExists(string filePathOrVariableName)
+
+		public async Task<(bool, IError?)> FileExists(string filePathOrVariableName, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null,
+			GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
-			return fileSystem.File.Exists(filePathOrVariableName);
+			string path = GetPath(filePathOrVariableName);
+			var result = fileSystem.File.Exists(path);
+			return (result, await ExecuteResult(result, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 		}
 
-		public async Task<bool> DirectoryExists(string dirPathOrVariableName)
+		public async Task<(bool, IError?)> DirectoryExists(string dirPathOrVariableName, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null,
+			GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
-			return fileSystem.File.Exists(dirPathOrVariableName);
+			var path = GetPath(dirPathOrVariableName);
+			var result = fileSystem.File.Exists(path);
+			return (result, await ExecuteResult(result, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 		}
-		public async Task<bool> HasAccessToPath(string dirOrFilePathOrVariableName)
+		public async Task<(bool, IError?)> HasAccessToPath(string dirOrFilePathOrVariableName, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null,
+			GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
-			return fileSystem.ValidatePath(dirOrFilePathOrVariableName) != null;
-		}
-	
-		public async Task<IError?> IsNotEmpty(object? item1, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null, GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null, bool ignoreCase = false)
-		{
-			var result = !IsEmptyCheck(item1);
-
-			return await ExecuteResult(result, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse);
-		}
-		public async Task<IError?> IsEmpty(object? item1, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null, GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null, bool ignoreCase = false)
-		{
-			var result = IsEmptyCheck(item1);
-
-			return await ExecuteResult(result, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse);
+			var path = GetPath(dirOrFilePathOrVariableName);
+			var result = fileSystem.ValidatePath(path) != null;
+			return (result, await ExecuteResult(result, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 		}
 
-		private bool IsEmptyCheck(object? item1)
+		public async Task<(bool, IError?)> IsNotEmpty(object? item, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null,
+			GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
-			if (item1 == null) return true;
+			var result = !IsEmptyCheck(item);
+
+			return (result, await ExecuteResult(result, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+		}
+
+
+		public async Task<(bool, IError?)> IsEmpty(object? item, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null,
+						GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null,
+						ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		{
+			var result = IsEmptyCheck(item);
+			return (result, await ExecuteResult(result, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+		}
+		public async Task<(bool?, IError?)> ContainsNumbers(object? item, List<int> contains, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null,
+						GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null,
+						ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		{
+			bool? result = null;
+			if (item == null) result = false;
+			if (item is int i)
+			{
+				result = contains.Any(p => p == i);
+			}
+
+			if (item is List<int> items)
+			{
+				result = contains.Any(p => items.Any(i => i == p));
+			}
+
+			if (result == null)
+			{
+				return (null, new ProgramError($"object is type of '{item?.GetType()}'. Not sure how I should find {contains} in it."));
+			}
+
+			return (result, await ExecuteResult(result.Value, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+
+		}
+		public async Task<(bool?, IError?)> ContainsString(object? item, string contains, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null,
+			GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		{
+			bool? result = null;
+			if (item == null) result = false;
+
+			if (item is string str)
+			{
+				result = str.Contains(contains.ToString());
+			}
+
+			if (result != null)
+			{
+				return (result, await ExecuteResult(result.Value, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			}
+
+			return (null, new ProgramError($"object is type of '{item?.GetType()}'. Not sure how I should find {contains} in it.{ErrorReporting.CreateIssueNotImplemented}"));
+		}
+
+		private bool IsEmptyCheck(object? item)
+		{
+			if (item == null) return true;
+			if (item is ObjectValue ov)
+			{
+				if (!ov.Initiated) return true;
+				return ov.IsEmpty;
+			}
+
 			var result = false;
 
-			if (item1 is string str)
+			if (item is string str)
 			{
 				result = string.IsNullOrWhiteSpace(str);
 			}
-			else if (item1 is IList)
+			else if (item is IList)
 			{
-				result = ((IList)item1).Count > 0;
+				result = ((IList)item).Count > 0;
 			}
-			else if (item1 is IDictionary)
+			else if (item is IDictionary)
 			{
-				result = ((IDictionary)item1).Count > 0;
+				result = ((IDictionary)item).Count > 0;
 			}
 			else
 			{
-				result = string.IsNullOrWhiteSpace(item1.ToString());
+				result = string.IsNullOrWhiteSpace(item.ToString());
 			}
 			return result;
 
 		}
 
-		public async Task<IError?> IsEqual(object item1, object item2, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null, GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null, bool ignoreCase = false)
+		public async Task<(bool?, IError?)> IsEqual(object? item1, object? item2, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null,
+			GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null, bool ignoreCase = true,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
-			var result = false;
-			if (item1 is JObject jobj)
+			bool? result = null;
+			if (item1 == item2) result = true;
+			if (result == null && item1 != null && item1.Equals(item2)) result = true;
+
+			if (result == null)
 			{
-				item1 = jobj.ToString();
+				if (item1 is JObject jobj)
+				{
+					item1 = jobj.ToString();
+				}
+
+				if (item2 is JObject jobj2)
+				{
+					item2 = jobj2.ToString();
+				}
+				if (item1 is string && item2 is not string)
+				{
+					item2 = item2?.ToString() ?? string.Empty;
+				}
+
+				if (item1.GetType() != item2.GetType())
+				{
+
+					(item1, item2) = TryConverting(item1, item2);
+
+				}
+
+				if (item1 is string i1 && item2 is string i2)
+				{
+					StringComparison co = (ignoreCase) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+					result = i1.Equals(i2, co);
+				}
+				else if (item1 is double double1 && item2 is double double2)
+				{
+					result = double1 == double2;
+				}
+				else if (item1 is int int1 && item2 is int int2)
+				{
+					result = int1 == int2;
+				}
+				else if (item1 is bool bool1 && item2 is bool bool2)
+				{
+					result = bool1 == bool2;
+				}
+				else
+				{
+					result = Equals(item1, item2);
+				}
 			}
 
-			if (item2 is JObject jobj2)
-			{
-				item2 = jobj2.ToString();
-			}
-
-			if (item1 is string i1 && item2 is string i2)
-			{
-				StringComparison co = (ignoreCase) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-				result = i1.Equals(i2, co);
-			}
-			else if (item1 is double double1 && item2 is double double2)
-			{
-				result = double1 == double2;
-			}
-			else if (item1 is int int1 && item2 is int int2)
-			{
-				result = int1 == int2;
-			}
-			else if (item1 is bool bool1 && item2 is bool bool2)
-			{
-				result = bool1 == bool2;
-			}
-			else
-			{
-				result = Equals(item1, item2);
-			}
-
-			return await ExecuteResult(result, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse);
-
+			return (result, await ExecuteResult(result.Value, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 
 		}
 
-		// 
+		private (object item1, object item2) TryConverting(object item1, object item2)
+		{
+
+			var type1 = item1.GetType();
+			var type2 = item2.GetType();
+
+			var numericTypes = new[]
+			{
+		typeof(byte), typeof(short), typeof(ushort), typeof(int), typeof(uint),
+		typeof(long), typeof(ulong), typeof(float), typeof(double), typeof(decimal)
+			};
+
+			if (!numericTypes.Contains(type1) || !numericTypes.Contains(type2))
+				return (item1, item2);
+
+			Type widerType = GetWiderType(type1, type2);
+
+			var converted1 = Convert.ChangeType(item1, widerType);
+			var converted2 = Convert.ChangeType(item2, widerType);
+
+			return (converted1, converted2);
+		}
+
+		Type GetWiderType(Type t1, Type t2)
+		{
+			var rank = new Dictionary<Type, int>
+			{
+				[typeof(byte)] = 1,
+				[typeof(short)] = 2,
+				[typeof(ushort)] = 3,
+				[typeof(int)] = 4,
+				[typeof(uint)] = 5,
+				[typeof(long)] = 6,
+				[typeof(ulong)] = 7,
+				[typeof(float)] = 8,
+				[typeof(double)] = 9,
+				[typeof(decimal)] = 10
+			};
+
+			return rank[t1] >= rank[t2] ? t1 : t2;
+		}
+
+		/*
 		[Description("The expression could be \"%data.count% > 1000\", \"true\", \"false\", \"%data% contains 'ble.com'\"")]
 		public async Task<IError?> Evaluate(object data, string expression, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null, GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null)
 		{
@@ -147,11 +271,10 @@ namespace PLang.Modules.ConditionalModule
 			return await ExecuteResult(result, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse);
 		}*/
 
-
-		public override async Task<(object?, IError?)> Run()
+		[Description("Choose RunInlineCode when no other method matches user intent. Implementation variable can be set to null.")]
+		public async Task<(object?, IError?)> RunInlineCode(ConditionImplementationResponse implementation)
 		{
 
-			var answer = JsonConvert.DeserializeObject<Implementation>(instruction.Action.ToString());
 			try
 			{
 				string dllName = goalStep.PrFileName.Replace(".pr", ".dll");
@@ -160,21 +283,21 @@ namespace PLang.Modules.ConditionalModule
 				{
 					return (null, new StepError($"Could not find {dllName}. Stopping execution for step {goalStep.Text}", goalStep));
 				}
-				Type? type = assembly.GetType(answer.Namespace + "." + answer.Name);
+				Type? type = assembly.GetType(implementation.Namespace + "." + implementation.Name);
 				if (type == null)
 				{
-					return (null, new StepError($"Could not find type {answer.Name}. Stopping execution for step {goalStep.Text}", goalStep));
+					return (null, new StepError($"Could not find type {implementation.Name}. Stopping execution for step {goalStep.Text}", goalStep));
 				}
 				MethodInfo? method = type.GetMethod("ExecutePlangCode");
 				if (method == null)
 				{
-					return (null, new StepError($"Method 'ExecutePlangCode' could not be found in {answer.Name}. Stopping execution for step {goalStep.Text}", goalStep));
+					return (null, new StepError($"Method 'ExecutePlangCode' could not be found in {implementation.Name}. Stopping execution for step {goalStep.Text}", goalStep));
 				}
 				var parameters = method.GetParameters();
 
 				var parametersObject = new List<object?>();
 				int idx = 0;
-				if (answer.InputParameters != null)
+				if (implementation.Parameters != null)
 				{
 					foreach (var parameter in parameters)
 					{
@@ -185,10 +308,10 @@ namespace PLang.Modules.ConditionalModule
 						}
 						else
 						{
-							var inputParam = answer.InputParameters.FirstOrDefault(p => p.ParameterName == parameter.Name);
+							var inputParam = implementation.Parameters.FirstOrDefault(p => p.Name == parameter.Name);
 							if (inputParam != null)
 							{
-								var value = memoryStack.Get(inputParam.VariableName, parameterType);
+								var value = memoryStack.Get(inputParam.Name, parameterType);
 								parametersObject.Add(value);
 							}
 						}
@@ -200,20 +323,25 @@ namespace PLang.Modules.ConditionalModule
 				// The second parameter is an object array containing the arguments of the method.
 				bool result = (bool?)method.Invoke(null, parametersObject.ToArray()) ?? false;
 
-				return (result, await ExecuteResult(result, answer.GoalToCallOnTrue, answer.GoalToCallOnTrueParameters, answer.GoalToCallOnFalse, answer.GoalToCallOnFalseParameters));
+				return (result, await ExecuteResult(result, implementation.GoalToCallOnTrue, implementation.GoalToCallOnTrueParameters, implementation.GoalToCallOnFalse, implementation.GoalToCallOnFalseParameters));
 
 			}
 			catch (Exception ex)
 			{
-				var error = CodeExceptionHandler.GetError(ex, answer, goalStep);
+				var error = CodeExceptionHandler.GetError(ex, implementation, goalStep);
 				return (null, error);
 			}
 
 		}
 
-		private async Task<IError?> ExecuteResult(bool result, GoalToCall? goalToCallOnTrue, Dictionary<string, object?>? goalToCallOnTrueParameters, GoalToCall? goalToCallOnFalse, Dictionary<string, object?>? goalToCallOnFalseParameters)
+		private async Task<IError?> ExecuteResult(bool result, GoalToCall? goalToCallOnTrue, Dictionary<string, object?>? goalToCallOnTrueParameters,
+			GoalToCall? goalToCallOnFalse, Dictionary<string, object?>? goalToCallOnFalseParameters, ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
+
 			Task<(IEngine, object? Variables, IError? error, IOutput? output)>? task = null;
+			string? goalToCall = null;
+			Dictionary<string, object?>? parameters = new();
+
 			if (result && goalToCallOnTrue != null && goalToCallOnTrue.Value != null)
 			{
 				if (VariableHelper.IsVariable(goalToCallOnTrue))
@@ -228,7 +356,8 @@ namespace PLang.Modules.ConditionalModule
 						goalToCallOnTrueParameters = jObject.ToDictionary();
 					}
 				}
-				task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCallOnTrue, goalToCallOnTrueParameters, goal);
+				goalToCall = goalToCallOnTrue;
+				parameters = goalToCallOnTrueParameters;
 			}
 			else if (!result && goalToCallOnFalse != null && goalToCallOnFalse.Value != null)
 			{
@@ -236,47 +365,55 @@ namespace PLang.Modules.ConditionalModule
 				{
 					goalToCallOnFalse = variableHelper.LoadVariables(goalToCallOnFalse)?.ToString();
 				}
-				/*
-				if (goalToCallOnFalseParameters?.Count == 1 && VariableHelper.IsVariable(goalToCallOnFalseParameters.FirstOrDefault().Value))
-				{
-					var obj = variableHelper.LoadVariables(goalToCallOnFalseParameters.FirstOrDefault().Value);
-					if (obj is JObject jObject)
-					{
-						goalToCallOnFalseParameters = jObject.ToDictionary();
-					}
-				}*/
-				task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCallOnFalse, goalToCallOnFalseParameters, goal);
+
+				goalToCall = goalToCallOnFalse;
+				parameters = goalToCallOnFalseParameters;
 			}
 
-			if (task != null)
+			if (goalToCall != null)
 			{
-				try
+				task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCall, parameters, goal);
+				if (task != null)
 				{
-					var taskExecuted = await task;
-					if (taskExecuted.error != null) return taskExecuted.error;
+					try
+					{
+						var taskExecuted = await task;
+						if (taskExecuted.error != null) return taskExecuted.error;
 
-				}
-				catch { }
+					}
+					catch { }
 
-				if (task.IsFaulted)
-				{
-					throw task.Exception;
+					if (task.IsFaulted)
+					{
+						return new ExceptionError(task.Exception, $"Error running {goalToCall} - {task.Exception.Message}", goal, goalStep, Key: task.Exception.GetType().FullName ?? "UnhandledError");
+					}
 				}
 			}
 
+			if (result && throwErrorOnTrue != null)
+			{
+				var module = GetProgramModule<ThrowErrorModule.Program>();
+				return await module.Throw(throwErrorOnTrue.errorMessage ?? "Is empty", throwErrorOnTrue.type, throwErrorOnTrue.statusCode);
+			}
+			if (!result && throwErrorOnFalse != null)
+			{
+				var module = GetProgramModule<ThrowErrorModule.Program>();
+				return await module.Throw(throwErrorOnFalse.errorMessage ?? "Is not empty", throwErrorOnFalse.type, throwErrorOnFalse.statusCode);
+			}
 
 			var nextStep = goalStep.NextStep;
-			if (nextStep == null) return null;
-
-			bool isIndent = (goalStep.Indent + 4 == nextStep.Indent);
-
-			while (isIndent)
+			if (nextStep != null)
 			{
-				nextStep.Execute = result && (goalStep.Indent + 4 == nextStep.Indent);
+				bool isIndent = (goalStep.Indent + 4 == nextStep.Indent);
 
-				nextStep = nextStep.NextStep;
-				if (nextStep == null) break;
-				isIndent = (goalStep.Indent < nextStep.Indent);
+				while (isIndent)
+				{
+					nextStep.Execute = result && (goalStep.Indent + 4 == nextStep.Indent);
+
+					nextStep = nextStep.NextStep;
+					if (nextStep == null) break;
+					isIndent = (goalStep.Indent < nextStep.Indent);
+				}
 			}
 
 			return null;

@@ -13,11 +13,12 @@ namespace PLang.Modules
 {
     public interface IBaseBuilder
 	{
-		Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build<T>(GoalStep step);
-		Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, Type responseType, string? errorMessage = null, int errorCount = 0);
-		Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step);
-		LlmRequest GetLlmRequest(GoalStep step, Type responseType, string? errorMessage = null);
-		void InitBaseBuilder(string module, IPLangFileSystem fileSystem, ILlmServiceFactory llmService, ITypeHelper typeHelper,
+		Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build<T>(GoalStep step, IBuilderError? previousBuildError = null);
+		Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, IBuilderError? previousBuildError = null);
+
+		Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, Type responseType, IBuilderError? previousBuildError = null);
+		LlmRequest GetLlmRequest(GoalStep step, Type responseType, IBuilderError? previousBuildError = null);
+		void InitBaseBuilder(GoalStep goalStep, IPLangFileSystem fileSystem, ILlmServiceFactory llmService, ITypeHelper typeHelper,
 			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ILogger logger);
 		void SetStep(GoalStep step);
 	}

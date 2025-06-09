@@ -1,5 +1,6 @@
 Setup
-- create table tasks, columns decription(not null), due_date(datetime, not null), created(datetime, default now)
+- create table tasks, columns description(not null), 
+    due_date(datetime, not null), created(datetime, default now)
 - alter table tasks, add column: completed(bit)
 - add unqiue index to table tasks, on description and due_date
 - create table items, columns: name(string, not null)

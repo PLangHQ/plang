@@ -43,11 +43,11 @@ namespace PLang.Modules.TerminalModule
 		public async Task Read(string? variableName)
 		{
 			var result = outputStreamFactory.CreateHandler().Read();
-			memoryStack.Put(variableName, result);
+			memoryStack.Put(variableName, result, goalStep: goalStep);
 		}
 
 		[Description("Run a executable. Parameters string should not be escaped. onDataStreamVariable and onErrorStreamVariable need to be defined by the user, this is not same as returning a variable (write to %variable%)")]
-		public async Task<(object?, IError?, IProperties?)> RunTerminal(string appExecutableName, List<string>? parameters = null,
+		public async Task<(object?, IError?, Properties?)> RunTerminal(string appExecutableName, List<string>? parameters = null,
 			string? pathToWorkingDirInTerminal = null,
 			[HandlesVariable] string? onDataStreamVariable = null, [HandlesVariable] string? onErrorStreamVariable = null,
 			bool hideTerminal = false
@@ -152,8 +152,8 @@ namespace PLang.Modules.TerminalModule
 				return Task.CompletedTask;
 			});
 
-			properties.Add("Process", process);
-			properties.Add("StartInfo", startInfo);
+			properties.Add(new ObjectValue("Process", process));
+			properties.Add(new ObjectValue("StartInfo", startInfo));
 
 			StringBuilder? dataOutput = new();
 			StringBuilder? errorOutput = new();
@@ -165,7 +165,7 @@ namespace PLang.Modules.TerminalModule
 
 				if (!string.IsNullOrEmpty(onDataStreamVariable))
 				{
-					memoryStack.Put(onDataStreamVariable, e.Data);
+					memoryStack.Put(onDataStreamVariable, e.Data, goalStep: goalStep);
 				}
 
 				dataOutput.Append(e.Data + Environment.NewLine);
@@ -180,7 +180,7 @@ namespace PLang.Modules.TerminalModule
 
 				if (!string.IsNullOrEmpty(onErrorStreamVariable))
 				{
-					memoryStack.Put(onErrorStreamVariable, e.Data);
+					memoryStack.Put(onErrorStreamVariable, e.Data, goalStep: goalStep);
 				}
 				errorOutput.Append(e.Data + Environment.NewLine);
 

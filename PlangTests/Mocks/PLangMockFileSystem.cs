@@ -66,5 +66,10 @@ namespace PLangTests.Mocks
 		{
 			throw new NotImplementedException();
 		}
+
+		public void ClearFileAccess()
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

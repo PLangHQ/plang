@@ -1,13 +1,12 @@
-﻿using PLang.Building.Model;
+﻿using Castle.Components.DictionaryAdapter.Xml;
+using PLang.Building.Model;
 
 namespace PLang.Errors.Builder
 {
-	public record InstructionBuilderError(string Message, GoalStep Step, string Key = "InstructionBuilder", int StatusCode = 400,
-		bool ContinueBuild = true, Exception? Exception = null, string? FixSuggestion = null, string? HelpfulLinks = null) : 
-		StepBuilderError(Message, Step, Key, StatusCode, ContinueBuild, Exception, FixSuggestion, HelpfulLinks)
+	public record InstructionBuilderError(string Message, GoalStep Step, Instruction Instruction, string Key = "InstructionBuilder", int StatusCode = 400,
+		bool ContinueBuild = true, Exception? Exception = null, string? FixSuggestion = null, string? HelpfulLinks = null, bool Retry = true, string? LlmBuilderHelp = null) : 
+		StepBuilderError(Message, Step, Key, StatusCode, ContinueBuild, Exception, FixSuggestion, HelpfulLinks, Retry, LlmBuilderHelp)
 	{
-		public override GoalStep Step { get; set; } = Step;
-		public override Goal Goal { get; set; } = Step.Goal;
 		public override string ToString()
 		{
 			return base.ToString();

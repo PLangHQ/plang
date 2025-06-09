@@ -33,26 +33,26 @@ namespace PLang.Runtime
 			this.fileSystem = fileSystem;
 		}
 
-		public async Task<(IEngine engine, object? Variables, IError? error, IOutput? output)> RunGoal(IEngine engine, PLangAppContext context, string relativeAppPath, GoalToCall goalName,
-			Dictionary<string, object?>? parameters, Goal? callingGoal = null,
-			bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0,
-			int indent = 0, bool keepMemoryStackOnAsync = false, bool isolated = false)
+		public async Task<(IEngine engine, object? Variables, IError? error, IOutput? output)>
+			RunGoal(IEngine engine, PLangAppContext context, string relativeAppPath, GoalToCall goalName,
+						Dictionary<string, object?>? parameters, Goal? callingGoal = null,
+						bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50,
+						uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0,
+						bool keepMemoryStackOnAsync = false, bool isolated = false)
 		{
 
-			bool isNewEngine = false;
-			Goal? goal = null;
+			Goal? goalToRun = null;
 			try
 			{
 				IError? error;
-				Stopwatch stopwatch = Stopwatch.StartNew();
+
 				if (goalName == null || goalName.Value == null)
 				{
-					error = new Error($"Goal to call is empty. Calling goal is {callingGoal}");
+					error = new Error($"Goal to call is empty. This is not allowed. Calling goal is {callingGoal}") {  Goal = callingGoal };
 					var output2 = new TextOutput("Error", "text/html", false, error, "desktop");
 					return (engine, null, error, output2);
 				}
-				
-				ServiceContainer? container = null;
+
 				if (goalName.Value.StartsWith("/"))
 				{
 					relativeAppPath = "/";
@@ -63,159 +63,117 @@ namespace PLang.Runtime
 				}
 
 				string absolutePathToGoal = fileSystem.Path.Join(fileSystem.RootDirectory, relativeAppPath).AdjustPathToOs();
-				string goalToRun = fileSystem.Path.Join(relativeAppPath, goalName);
-				if (goalToRun.StartsWith("//")) goalToRun = goalToRun.Substring(1);
+				string goalToRunPath = fileSystem.Path.Join(relativeAppPath, goalName);
+				if (goalToRunPath.StartsWith("//")) goalToRunPath = goalToRunPath.Substring(1);
 
-				
+				// todo: (Decision) The idea behind isolation is when you call a external app, that app should not have access
+				// to the memory of the calling app, and only get the parameters that are sent
+				// this is not working now, when I rent engine it gets the memory.
+				// this might not be an issues since all goals are open source and can be easily validated
+				// decision: leave it in to give memory stack to isolated goals
 				if (isolated || !waitForExecution || CreateNewContainer(absolutePathToGoal))
 				{
-					var ms = engine.GetMemoryStack();
-					var activeEvents = engine.GetEventRuntime().GetActiveEvents();
-					/* todo: this needs to be looked at
-					 */
+
+					goalToRun = engine.GetGoal(goalToRunPath);
+					if (goalToRun == null) return GoalToRunIsNull(engine, relativeAppPath, goalName, callingGoal, goalToRunPath);
+
 					var engineRootPath = (relativeAppPath.Contains("/apps/")) ? absolutePathToGoal : fileSystem.RootDirectory;
-
-					engine = await engine.GetEnginePool(engineRootPath, null).RentAsync(engineRootPath);
-					isNewEngine = true;
-
-					foreach (var item in ms.GetMemoryStack())
+					if (goalToRun.IsOS)
 					{
-						engine.GetMemoryStack().Put(item.Value);
+						engineRootPath = fileSystem.OsDirectory;
 					}
-					foreach (var item in context)
+
+					GoalStep? callingStep = null;
+					if (callingGoal != null)
 					{
-						engine.GetContext().AddOrReplace(item.Key, item.Value);
+						callingStep = callingGoal.GoalSteps[callingGoal.CurrentStepIndex];
+						//return (engine, null, new Error($"calling goal cannot be empty.{ErrorReporting.CreateIssueShouldNotHappen}"), null);
 					}
-					engine.GetEventRuntime().SetActiveEvents(activeEvents);
 
-					goal = engine.GetGoal(goalToRun);
-
+					engine = await engine.GetEnginePool(engineRootPath).RentAsync(engine, callingStep, engineRootPath);
 				}
 				else
 				{
-					goal = engine.GetGoal(goalToRun, callingGoal);
+					goalToRun = engine.GetGoal(goalToRunPath, callingGoal);
 				}
 
 
-				if (goal == null)
+				if (goalToRun == null)
 				{
-					var goalsAvailable = engine.GetGoalsAvailable(relativeAppPath, goalToRun);
-					if (goalsAvailable == null || goalsAvailable.Count == 0)
-					{
-						var error2 = new Error($"No goals available at {relativeAppPath} trying to run {goalToRun}");
-						var output2 = new TextOutput("Error", "text/html", false, error2, "desktop");
-						return (engine, null, error2, output2);
-					}
-
-					var goals = string.Join('\n', goalsAvailable.OrderBy(p => p.GoalName).Select(p => $" - {p.GoalName} -> Path:{p.RelativeGoalPath}"));
-					string strGoalsAvailable = "";
-					if (!string.IsNullOrWhiteSpace(goals))
-					{
-						strGoalsAvailable = $" These goals are available: \n{goals}";
-
-					}
-
-					error = new GoalError($"WARNING! - Goal '{goalName}' at {fileSystem.RootDirectory} was not found.", callingGoal, "GoalNotFound", 500, FixSuggestion: strGoalsAvailable);
-					var output3 = new TextOutput("Error", "text/html", false, error, "desktop");
-					return (engine, null, error, output3);
+					return GoalToRunIsNull(engine, relativeAppPath, goalName, callingGoal, goalToRunPath);
 				}
 
 				if (waitForExecution)
 				{
-					goal.ParentGoal = callingGoal;
+					goalToRun.ParentGoal = callingGoal;
 
 				}
 
 				var memoryStack = engine.GetMemoryStack();
-				context = engine.GetContext();
+				GoalStep? goalStep = (callingGoal != null) ? callingGoal.GoalSteps[callingGoal.CurrentStepIndex] : null;
 
 				if (parameters != null)
 				{
-					string key;
-					foreach (var param in parameters)
+					foreach (var param in parameters ?? [])
 					{
-						object? value = param.Value;
-						key = param.Key.Replace("%", "");
-						if (VariableHelper.IsVariable(param.Value))
+						if (param.Key.StartsWith("!"))
 						{
-							value = memoryStack.Get(param.Value?.ToString());
-						}
-						if (key.StartsWith("!"))
-						{
-							context.AddOrReplace(key, value);
+							goalToRun.AddVariable(param.Value, variableName: param.Key);
 						}
 						else
 						{
-							memoryStack.Put(key, value);
+							memoryStack.Put(param.Key, param.Value, goalStep: goalStep);
 						}
 					}
 				}
-				var prevIndent = context.GetOrDefault(ReservedKeywords.ParentGoalIndent, 0);
-				context.AddOrReplace(ReservedKeywords.ParentGoalIndent, (prevIndent + indent));
+				var prevIndent = goalToRun.GetVariable<int?>(ReservedKeywords.ParentGoalIndent) ?? 0;
+				goalToRun.AddVariable((prevIndent + indent), variableName: ReservedKeywords.ParentGoalIndent);
 
 				Task<(object? Variables, IError? Error)> task;
 				if (waitForExecution)
 				{
-					task = engine.RunGoal(goal, waitForXMillisecondsBeforeRunningGoal);
+					task = engine.RunGoal(goalToRun, waitForXMillisecondsBeforeRunningGoal);
 					try
 					{
 						await task;
 					}
 					catch { }
+
+					if (task.IsFaulted && task.Exception != null)
+					{
+						error = new ExceptionError(task.Exception, task.Exception.Message, callingGoal, goalStep);
+					}
+					else
+					{
+						error = task.Result.Error;
+					}
+
+					return (engine, task.Result.Variables, error, new TextOutput("", "text/html", false, null, "desktop"));
 				}
 				else
 				{
 					task = Task.Run(async () =>
 					{
-						var stuff = await engine.RunGoal(goal, waitForXMillisecondsBeforeRunningGoal);
-						return stuff;
+						try
+						{
+							var result = await engine.RunGoal(goalToRun, waitForXMillisecondsBeforeRunningGoal);
+							return result;
+						} catch
+						{
+							throw;
+						} finally
+						{
+							engine.ParentEngine?.GetEnginePool(engine.Path).Return(engine);
+						}
+						
 					});
+					
+					KeepAlive(engine, task);
 
-					var alives = AppContext.GetData("KeepAlive") as List<Alive>;
-					if (alives == null) alives = new List<Alive>();
-
-					var aliveType = alives.FirstOrDefault(p => p.Type == task.GetType() && p.Key == "WaitForExecution");
-					if (aliveType == null)
-					{
-						aliveType = new Alive(task.GetType(), "WaitForExecution", [new EngineWait(task, engine)]);
-						alives.Add(aliveType);
-
-						AppContext.SetData("KeepAlive", alives);
-					}
-					else
-					{
-						aliveType.Instances!.Add(new EngineWait(task, engine));
-					}
-
-				}
-				
-				error = task.Result.Error;
-				if (error is EndGoal endGoal)
-				{
-					/*
-					if (GoalHelper.IsPartOfCallStack(goal, endGoal) && endGoal.Levels == 1)
-					{
-						error = null;
-					}*/
-
+					return (engine, null, null, new TextOutput("", "text/html", false, null, "desktop"));
 				}
 
-				context.AddOrReplace(ReservedKeywords.ParentGoalIndent, prevIndent);
-				//Console.WriteLine($"{space}  Elapsed After Run: {stopwatch.Elapsed}  - {goalToRun}");
-				if (task.IsFaulted && task.Exception != null)
-				{
-					var error3 = new Error(task.Exception.Message, Exception: task.Exception);
-					var output3 = new TextOutput("Error", "text/html", false, error3, "desktop");
-					return (engine, task.Result.Variables, error3, output3);
-				}
-				if (waitForExecution)
-				{
-					return (engine, task.Result.Variables, error, new TextOutput("", "text/html", false, null, "desktop"));
-				}
-				else
-				{
-					return (engine, new(), null, new TextOutput("", "text/html", false, null, "desktop"));
-				}
+
 			}
 			catch (Exception ex)
 			{
@@ -223,16 +181,60 @@ namespace PLang.Runtime
 			}
 			finally
 			{
-				if (goal != null)
+				if (goalToRun != null)
 				{
-					await goal.DisposeVariables(engine.GetMemoryStack());
+					await goalToRun.DisposeVariables(engine.GetMemoryStack());
 				}
-				if (isNewEngine)
+				if (waitForExecution && engine.ParentEngine != null)
 				{
-					engine.GetEnginePool(engine.Path, null).Return(engine);
+					engine.ParentEngine.GetEnginePool(engine.Path).Return(engine);
 				}
 			}
 		}
+
+		private static void KeepAlive(IEngine engine, Task<(object? Variables, IError? Error)> task)
+		{
+			var alives = AppContext.GetData("KeepAlive") as List<Alive>;
+			if (alives == null) alives = new List<Alive>();
+
+			var aliveType = alives.FirstOrDefault(p => p.Type == task.GetType() && p.Key == "WaitForExecution");
+			if (aliveType == null)
+			{
+				aliveType = new Alive(task.GetType(), "WaitForExecution", [new EngineWait(task, engine)]);
+				alives.Add(aliveType);
+
+				AppContext.SetData("KeepAlive", alives);
+			}
+			else
+			{
+				aliveType.Instances!.Add(new EngineWait(task, engine));
+			}
+		}
+
+		private (IEngine engine, object? Variables, IError? error, IOutput? output) GoalToRunIsNull(IEngine engine, string relativeAppPath,
+				GoalToCall goalName, Goal? callingGoal, string goalToRunPath)
+		{
+			var goalsAvailable = engine.GetGoalsAvailable(relativeAppPath, goalToRunPath);
+			if (goalsAvailable == null || goalsAvailable.Count == 0)
+			{
+				var error2 = new Error($"No goals available at {relativeAppPath} trying to run {goalToRunPath}");
+				var output2 = new TextOutput("Error", "text/html", false, error2, "desktop");
+				return (engine, null, error2, output2);
+			}
+
+			var goals = string.Join('\n', goalsAvailable.OrderBy(p => p.GoalName).Select(p => $" - {p.GoalName} -> Path:{p.RelativeGoalPath}"));
+			string strGoalsAvailable = "";
+			if (!string.IsNullOrWhiteSpace(goals))
+			{
+				strGoalsAvailable = $" These goals are available: \n{goals}";
+
+			}
+
+			var error = new GoalError($"WARNING! - Goal '{goalName}' at {fileSystem.RootDirectory} was not found.", callingGoal, "GoalNotFound", 500, FixSuggestion: strGoalsAvailable);
+			var output3 = new TextOutput("Error", "text/html", false, error, "desktop");
+			return (engine, null, error, output3);
+		}
+
 		public record EngineWait(Task task, IEngine engine);
 		public (string absolutePath, GoalToCall goalName) GetAppAbsolutePath(string absolutePathToGoal, GoalToCall? goalName = null)
 		{

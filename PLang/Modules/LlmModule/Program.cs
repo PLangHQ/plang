@@ -3,14 +3,17 @@ using NBitcoin;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
+using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Runtime;
 using PLang.Services.LlmService;
 using PLang.Utils;
 using System.Collections;
 using System.ComponentModel;
+using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Modules.LlmModule
 {
@@ -89,11 +92,11 @@ namespace PLang.Modules.LlmModule
 
 		private string? GetAppendText(string appendToSystemKey)
 		{
-			
+
 			if (!context.ContainsKey(appendToSystemKey)) return null;
 
 			string? text = null;
-			var	messages = context[appendToSystemKey] as List<string> ?? new();
+			var messages = context[appendToSystemKey] as List<string> ?? new();
 			foreach (var message in messages)
 			{
 				text += message + Environment.NewLine;
@@ -109,7 +112,7 @@ namespace PLang.Modules.LlmModule
 			return goal.GetVariable<List<LlmMessage>>(PreviousConversationKey) ?? new();
 		}
 
-		public async Task<(object?, IError?)> AskLlm(
+		public async Task<(object?, IError?, Properties?)> AskLlm(
 			[HandlesVariable] List<LlmMessage> promptMessages,
 			string? scheme = null,
 			string model = "gpt-4o-mini",
@@ -128,7 +131,7 @@ namespace PLang.Modules.LlmModule
 			{
 				return (null, new StepError("The message to the llm service is empty. You must ask it something.", goalStep, "LlmError",
 					FixSuggestion: "If you are loading data from file or variable, make sure that the data loads fully",
-					HelpfulLinks: "https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.LlmModule.md"));
+					HelpfulLinks: "https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.LlmModule.md"), null);
 			}
 
 			if (continuePrevConversation)
@@ -142,13 +145,14 @@ namespace PLang.Modules.LlmModule
 				{
 					scheme = goal.GetVariable<string>(PreviousConversationSchemeKey) ?? null;
 				}
-			} else
+			}
+			else
 			{
 				goal.RemoveVariable(PreviousConversationKey);
 				goal.RemoveVariable(PreviousConversationSchemeKey);
 			}
 
-			for (int i =0;i<promptMessages.Count;i++)
+			for (int i = 0; i < promptMessages.Count; i++)
 			{
 				var message = promptMessages[i];
 				for (int idx = 0; idx < message.Content.Count; idx++)
@@ -158,7 +162,7 @@ namespace PLang.Modules.LlmModule
 					{
 						var obj = variableHelper.LoadVariables(c.Text);
 						c.Text = GetObjectRepresentation(obj);
-						
+
 					}
 
 					if (c.ImageUrl != null)
@@ -167,8 +171,8 @@ namespace PLang.Modules.LlmModule
 						if (imageUrls is IList list)
 						{
 							c.ImageUrl.Url = list[0].ToString();
-							for (int b=1;b<list.Count;b++)
-							{							
+							for (int b = 1; b < list.Count; b++)
+							{
 
 								var imageUrl = new ImageUrl(list[b].ToString());
 
@@ -176,7 +180,7 @@ namespace PLang.Modules.LlmModule
 
 								message.Content.Add(llmContent);
 								idx++;
-								
+
 							}
 						}
 						else
@@ -185,11 +189,11 @@ namespace PLang.Modules.LlmModule
 							c.ImageUrl.Url = imageUrls.ToString();
 						}
 					}
-					
+
 				}
 				AppendToMessage(message);
 			}
-			
+
 
 			var llmQuestion = new LlmRequest("LlmModule", promptMessages, model, cacheResponse);
 			llmQuestion.maxLength = maxLength;
@@ -200,67 +204,72 @@ namespace PLang.Modules.LlmModule
 			llmQuestion.llmResponseType = llmResponseType;
 			llmQuestion.scheme = scheme;
 
+			var properties = new Properties();
+			properties.Add(new ObjectValue("Llm", llmQuestion));
+
 			IError? error = null;
 			try
 			{
 				(var response, var queryError) = await llmServiceFactory.CreateHandler().Query(llmQuestion, typeof(object));
 
-				if (queryError != null) return (null, queryError);
+				if (queryError != null) return (null, queryError, properties);
+				if (response == null) return (null, new ProgramError("Response was empty", goalStep), properties);
 
 				promptMessages.Add(new LlmMessage("assistant", llmQuestion.RawResponse));
 				goal.AddVariable(promptMessages, variableName: PreviousConversationKey);
 				goal.AddVariable(scheme, variableName: PreviousConversationSchemeKey);
 
-				if (function == null || function.ReturnValues == null || function.ReturnValues.Count == 0)
-				{
-					if (response is JObject)
-					{
-						var objResult = (JObject)response;
-						foreach (var property in objResult.Properties())
-						{
-							if (property.Value is JValue)
-							{
-								var value = ((JValue)property.Value).Value;
-								memoryStack.Put(property.Name, value);
-							}
-							else
-							{
-								memoryStack.Put(property.Name, property.Value);
-							}
-						}
-					}
-				}
-
 				if (function != null && function.ReturnValues != null && function.ReturnValues.Count > 0)
 				{
-					var returnDict = new ReturnDictionary<string, object?>();
-					foreach (var returnValue in function.ReturnValues)
-					{
-						returnDict.AddOrReplace(returnValue.VariableName, response);
-					}
-					return (returnDict, null);
-				} else
-				{
-					return (response, null);
+					return (response, null, properties);
 				}
-				
+
+				if (response is not JObject)
+				{
+					return (response, new ProgramError("Response from LLM is not written to variable", FixSuggestion: $"Add `write to %result%` to you step, e.g. {goalStep.Text}\n\twrite to %result%"), properties);
+				}
+
+				var returnValues = new List<ObjectValue>();
+				var objResult = (JObject)response;
+				foreach (var property in objResult.Properties())
+				{
+					if (property.Value is JValue)
+					{
+						var value = ((JValue)property.Value).Value;
+
+						var objectValue = new ObjectValue(property.Name, value);
+						returnValues.Add(objectValue);
+
+					}
+					else
+					{
+						var objectValue = new ObjectValue(property.Name, property.Value);
+						returnValues.Add(objectValue);
+					}
+				}
+				return (returnValues, null, properties);
+
+
+
 			}
 			catch (Exception ex)
 			{
 				error = new ProgramError(ex.Message, goalStep, function);
-			} finally {
+			}
+			finally
+			{
 				LogLevel logLevel = LogLevel.Trace;
 				Enum.TryParse(goalStep.LoggerLevel, true, out logLevel);
 
 				logger.Log(logLevel, "Llm question - prompt:{0}", JsonConvert.SerializeObject(llmQuestion.promptMessage));
 				logger.Log(logLevel, "Llm question - response:{0}", llmQuestion.RawResponse);
 
-				
+
 			}
-			return (null, error);
+			return (null, error, properties);
 		}
 
-		
+
 
 		public async Task UseSharedIdentity(bool useSharedIdentity = true)
 		{

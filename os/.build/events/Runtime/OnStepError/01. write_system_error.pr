@@ -1,6 +1,94 @@
 {
-  "Action": {
-    "FunctionName": "WriteToSystemOutput",
+  "Text": "write out system error \"%!error%\"",
+  "ModuleType": null,
+  "Reload": false,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"ExplainUserIntent\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+      "model": "gpt-4o",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\nJSON scheme information\r\nExplanation: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user's request.\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"ExplainUserIntent\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## functions available starts ##\r\n[{\"MethodName\":\"SetOutputStream\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"channel\"},{\"Type\":\"PLang.Models.GoalToCall\",\"Name\":\"goalToCall\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]}]},{\"Description\":\"Send to user and waits for answer. Uses llm to construct a question to user and to format the answer. Developer defines specifically to use llm\",\"MethodName\":\"AskUserUsingLlm\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"text\"},{\"Type\":\"System.String\",\"Name\":\"type\",\"DefaultValue\":\"text\"},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":202},{\"Type\":\"System.String\",\"Name\":\"developerInstructionForResult\",\"DefaultValue\":\"give me the object that matches, e.g. { \\\"id\\\": 123, \\\"name\\\": \\\"example\\\"}\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"options\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]},{\"Type\":\"System.String\",\"Name\":\"scheme\"}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Send to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. regexPattern can contain %variable%. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.\",\"MethodName\":\"AskUser\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"text\"},{\"Type\":\"System.String\",\"Name\":\"type\",\"DefaultValue\":\"text\"},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":202},{\"Type\":\"System.String\",\"Name\":\"regexPattern\"},{\"Type\":\"System.String\",\"Name\":\"errorMessage\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"Description\":\"Send to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. regexPattern can contain %variable%. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting. channel=user|system|logger|audit|metric. User can also define his custom channel\",\"MethodName\":\"Ask\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"text\"},{\"Type\":\"System.String\",\"Name\":\"type\",\"DefaultValue\":\"text\"},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":202},{\"Type\":\"System.String\",\"Name\":\"regexPattern\"},{\"Type\":\"System.String\",\"Name\":\"errorMessage\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]},{\"Type\":\"System.String\",\"Name\":\"channel\"}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"Description\":\"Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. channel=user|system|logger|audit|metric. User can also define his custom channel\",\"MethodName\":\"Write\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"content\"},{\"Type\":\"System.Boolean\",\"Name\":\"writeToBuffer\",\"DefaultValue\":false},{\"Type\":\"System.String\",\"Name\":\"type\",\"DefaultValue\":\"text\"},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":200},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"paramaters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]},{\"Type\":\"System.String\",\"Name\":\"channel\"}]}]\r\n## functions available ends ##\r\n## defined variables ##\r\n!error (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "write out system error \"%!error%\""
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": null
+    }
+  ],
+  "Properties": {
+    "Parameters": {
+      "writeToBuffer": [
+        {
+          "Name": "writeToBuffer",
+          "FullTypeName": "System.Boolean"
+        }
+      ],
+      "type": [
+        {
+          "Name": "type",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "statusCode": [
+        {
+          "Name": "statusCode",
+          "FullTypeName": "System.Int32"
+        }
+      ],
+      "paramaters": [
+        {
+          "Name": "paramaters",
+          "FullTypeName": "System.Object"
+        }
+      ],
+      "channel": [
+        {
+          "Name": "channel",
+          "FullTypeName": "System.String"
+        }
+      ]
+    },
+    "ReturnValues": {}
+  },
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "ExplainUserIntent": "The user wants to write out a system error message using the content of the variable %!error%.",
+    "Name": "Write",
     "Parameters": [
       {
         "Type": "System.Object",
@@ -21,58 +109,18 @@
         "Type": "System.Int32",
         "Name": "statusCode",
         "Value": 500
+      },
+      {
+        "Type": "Dictionary<String, Object>",
+        "Name": "paramaters",
+        "Value": {}
+      },
+      {
+        "Type": "System.String",
+        "Name": "channel",
+        "Value": "system"
       }
     ],
     "ReturnValues": null
-  },
-  "Text": "write out system error \"%!error%\"",
-  "Reload": false,
-  "LlmRequest": {
-    "temperature": 0.0,
-    "top_p": 0.0,
-    "frequencyPenalty": 0.0,
-    "presencePenalty": 0.0,
-    "maxLength": 4000,
-    "llmResponseType": "json",
-    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-    "model": "gpt-4o",
-    "promptMessage": [
-      {
-        "role": "system",
-        "content": [
-          {
-            "type": "text",
-            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-          },
-          {
-            "type": "text",
-            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-          }
-        ]
-      },
-      {
-        "role": "assistant",
-        "content": [
-          {
-            "type": "text",
-            "text": "## functions available starts ##\r\n[{\"Description\":\"Send to user and waits for answer. Uses llm to construct a question to user and to format the answer. Developer defines specifically to use llm\",\"MethodName\":\"AskUserUsingLlm\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"text\"},{\"Type\":\"System.String\",\"Name\":\"type\",\"DefaultValue\":\"text\"},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":202},{\"Type\":\"System.String\",\"Name\":\"developerInstructionForResult\",\"DefaultValue\":\"give me the object that matches, e.g. { \\\"id\\\": 123, \\\"name\\\": \\\"example\\\"}\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"options\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]},{\"Type\":\"System.String\",\"Name\":\"scheme\"}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Send to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. regexPattern can contain %variable%. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.\",\"MethodName\":\"AskUser\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"text\"},{\"Type\":\"System.String\",\"Name\":\"type\",\"DefaultValue\":\"text\"},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":202},{\"Type\":\"System.String\",\"Name\":\"regexPattern\"},{\"Type\":\"System.String\",\"Name\":\"errorMessage\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"Description\":\"Send to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. regexPattern can contain %variable%. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.\",\"MethodName\":\"Ask\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"text\"},{\"Type\":\"System.String\",\"Name\":\"type\",\"DefaultValue\":\"text\"},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":202},{\"Type\":\"System.String\",\"Name\":\"regexPattern\"},{\"Type\":\"System.String\",\"Name\":\"errorMessage\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"Description\":\"Write to the system output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text\",\"MethodName\":\"WriteToSystemOutput\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"content\"},{\"Type\":\"System.Boolean\",\"Name\":\"writeToBuffer\",\"DefaultValue\":false},{\"Type\":\"System.String\",\"Name\":\"type\",\"DefaultValue\":\"text\"},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":200}]},{\"Description\":\"Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text\",\"MethodName\":\"Write\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"content\"},{\"Type\":\"System.Boolean\",\"Name\":\"writeToBuffer\",\"DefaultValue\":false},{\"Type\":\"System.String\",\"Name\":\"type\",\"DefaultValue\":\"text\"},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":200},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"paramaters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]}]}]\r\n## functions available ends ##\r\n## defined variables ##\r\n!error (type:object), \r\n## defined variables ##"
-          }
-        ]
-      },
-      {
-        "role": "user",
-        "content": [
-          {
-            "type": "text",
-            "text": "write out system error \"%!error%\""
-          }
-        ]
-      }
-    ],
-    "type": "PLang.Modules.GenericFunctionBuilder",
-    "caching": true,
-    "RawResponse": null
-  },
-  "RunOnBuild": false,
-  "Metadata": {}
+  }
 }

@@ -27,7 +27,7 @@ namespace PLang.Modules.ListDictionaryModule.Tests
 
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.ListDictionaryModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -37,15 +37,9 @@ namespace PLang.Modules.ListDictionaryModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.ListDictionaryModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
-		public GoalStep GetStep(string text)
-		{
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
-			step.ModuleType = "PLang.Modules.ListDictionaryModule";
-			return step;
-		}
+
 
 
 		[DataTestMethod]
@@ -54,14 +48,14 @@ namespace PLang.Modules.ListDictionaryModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 			
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("DeleteKeyFromDictionary", gf.FunctionName);
+			Assert.AreEqual("DeleteKeyFromDictionary", gf.Name);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("%item%", gf.Parameters[0].Value);
 			Assert.AreEqual("dictionary", gf.Parameters[1].Name);
@@ -75,14 +69,14 @@ namespace PLang.Modules.ListDictionaryModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("AddToList", gf.FunctionName);
+			Assert.AreEqual("AddToList", gf.Name);
 			Assert.AreEqual("value", gf.Parameters[0].Name);
 			Assert.AreEqual("%item%", gf.Parameters[0].Value);
 			Assert.AreEqual("listInstance", gf.Parameters[1].Name);
@@ -98,14 +92,14 @@ namespace PLang.Modules.ListDictionaryModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("AddToDictionary", gf.FunctionName);
+			Assert.AreEqual("AddToDictionary", gf.Name);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("%productId%", gf.Parameters[0].Value);
 			Assert.AreEqual("value", gf.Parameters[1].Name);

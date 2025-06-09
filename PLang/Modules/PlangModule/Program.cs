@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Modules.PlangModule
 {
@@ -48,31 +49,38 @@ get apps available, compiles plang code, gets goals and steps from .goal files, 
 		}
 
 		[Description("Get goals in file or folder. visiblity is either public|public_and_private|private")]
-		public async Task<object> GetGoals(string fileOrFolderPath, string visiblity = "public", string[]? fields = null)
+		public async Task<(object? Goals, IError? Error)> GetGoals(string fileOrFolderPath, string visibility = "public", string[]? fields = null)
 		{
 			List<Goal> goals = new List<Goal>();
 			string path = GetPath(fileOrFolderPath);
 			if (path.EndsWith(".goal"))
 			{
-				goals = goalParser.ParseGoalFile(path);
+				goals = prParser.GetAllGoals().Where(p => p.AbsoluteGoalPath.Equals(path, StringComparison.OrdinalIgnoreCase)).ToList();
 			}
-			else
+			else if (fileSystem.Directory.Exists(fileOrFolderPath))
 			{
-				var files = fileSystem.Directory.GetFiles(path);
-				foreach (var file in files)
-				{
-					goals.AddRange(goalParser.ParseGoalFile(file));
-				}
+				goals = prParser.GetAllGoals().Where(p => p.AbsoluteGoalFolderPath.StartsWith(path, StringComparison.OrdinalIgnoreCase)).ToList();
+			}else
+			{
+				return (null, new ProgramError($"The path {fileOrFolderPath} could not be found, searched for it at {path}"));
 			}
-			if (visiblity == "public")
+
+			if (visibility == "public")
 			{
 				goals = goals.Where(p => p.Visibility == Visibility.Public).ToList();
 			}
-			if (visiblity == "private")
+			if (visibility == "private")
 			{
 				goals = goals.Where(p => p.Visibility == Visibility.Private).ToList();
 			}
-			if (fields == null) return goals;
+			/*
+			 * should we return error if it's 0 goals?
+			if (goals.Count == 0)
+			{
+				return (null, new ProgramError($"No goals found at {fileOrFolderPath}, the absolute path is: {path}"));
+			}*/
+
+			if (fields == null) return (goals, null);
 
 			JArray array = new JArray();
 			foreach (var goal in goals)
@@ -95,9 +103,20 @@ get apps available, compiles plang code, gets goals and steps from .goal files, 
 				array.Add(jObject);
 			}
 
-
-			return array;
+			return (array, null);
 		}
+		[Description("Get all setup goals.")]
+		public async Task<(List<Goal>?, IError?)> GetSetupGoals(string? appPath = null, string visibility = "public", string[]? fields = null)
+		{
+			var path = GetPath(appPath);
+
+			var result = await GetGoals(appPath, visibility, fields);
+			if (result.Error != null) return (null, result.Error);
+
+			var goals = (List<Goal>) result.Goals;
+			return (goals.Where(p => p.IsSetup).ToList(), null);
+		}
+
 
 		public async Task<(string?, IError?)> GetModules(string stepText, List<string> excludeModules)
 		{
@@ -129,10 +148,24 @@ get apps available, compiles plang code, gets goals and steps from .goal files, 
 			return TypeHelper.GetMethodDescription(programType, methodName);
 		}
 
+		public async Task<(object, IError)> Run(string @namespace, string @class, string method, Dictionary<string, object?>? Parameters)
+		{
+			return (null, null);
+			//return genericFunction.Run(@namespace, @class, method, Parameters);
+		}
+
 		public async Task<string> GetMethodMappingScheme()
 		{
 			string scheme = TypeHelper.GetJsonSchema(typeof(MethodExecution));
 			return scheme;
+		}
+		/*
+		 * TODO: Dictionary<string, object?> Parameters should be Parameters class, or just parameter, that is better 
+		 * */
+		public async Task<(object obj, IError?)> RunModule(string @namespace, string @class, string method, Dictionary<string, object?>? Parameters)
+		{
+			var programType = typeHelper.Run(@namespace, @class, method, Parameters);
+			return (null, new Error(ErrorReporting.CreateIssueNotImplemented));
 		}
 
 		public async Task<(Dictionary<string, object>?, IError?)> GetStepProperties(string moduleName, string methodName)
@@ -225,20 +258,14 @@ get apps available, compiles plang code, gets goals and steps from .goal files, 
 			return forceModuleType;
 		}
 
-		public async Task<List<VariableHelper.Variable>> GetVariables(GoalStep step)
+		public async Task<List<ObjectValue>> GetVariables(GoalStep step)
 		{
 			if (step == null) return new();
 
 			var variables = variableHelper.GetVariables(step.Text);
 			return variables;
-			/*
-			List<string> list = new();
-			foreach (var variable in variables)
-			{
-				list.Add(variable.OriginalKey);
-			}
-			return list;*/
 		}
+
 		public async Task<(List<GoalStep>?, IError?)> GetSteps(string goalPath)
 		{
 			
@@ -305,7 +332,8 @@ get apps available, compiles plang code, gets goals and steps from .goal files, 
 		{
 			var startingEngine = engine.GetContext()[ReservedKeywords.StartingEngine] as IEngine;
 			if (startingEngine == null) startingEngine = engine;
-			engine.GetContext().Remove(ReservedKeywords.IsEvent);
+
+			//engine.GetContext().Remove(ReservedKeywords.IsEvent);
 
 			fileAccessHandler.GiveAccess(fileSystem.OsDirectory, fileSystem.GoalsPath);
 			if (parameters != null)
@@ -321,27 +349,25 @@ get apps available, compiles plang code, gets goals and steps from .goal files, 
 		}
 
 		[Description("Run from a specific step and the following steps")]
-		public async Task<IError?> RunFromStep(string prFileName)
+		public async Task<(object?, IError?)> RunFromStep(GoalStep step)
 		{
-			if (string.IsNullOrEmpty(prFileName))
+			if (step == null)
 			{
-				return new ProgramError($"prFileName is empty. I cannot run a step if I don't know what to run.", goalStep, function,
-					FixSuggestion: "Something has broken between the IDE sending the information and the runtime. Check if SendDebug.goal and the IDE is talking together correctly.");
+				return (null, new ProgramError($"step is empty. I cannot run a step if I don't know what to run.", goalStep, function,
+					FixSuggestion: "Something has broken between the IDE sending the information and the runtime. Check if SendDebug.goal and the IDE is talking together correctly."));
 			}
 
-			var absolutePrFileName = fileSystem.Path.Join(fileSystem.GoalsPath, prFileName);
-
 			fileAccessHandler.GiveAccess(fileSystem.OsDirectory, fileSystem.GoalsPath);
-			if (!fileSystem.File.Exists(absolutePrFileName))
+			if (!fileSystem.File.Exists(step.AbsolutePrFilePath))
 			{
-				return new ProgramError($"The file {prFileName} could not be found. I looked for it at {absolutePrFileName}", goalStep, function);
+				return (null, new ProgramError($"The file {step.RelativePrPath} could not be found. I looked for it at {step.AbsolutePrFilePath}", goalStep, function));
 			}
 			var startingEngine = engine.GetContext()[ReservedKeywords.StartingEngine] as IEngine;
 			if (startingEngine == null) startingEngine = engine;
-			engine.GetContext().Remove(ReservedKeywords.IsEvent);
+
 			engine.GetEventRuntime().SetActiveEvents(new());
 
-			var result = await startingEngine.RunFromStep(absolutePrFileName);
+			var result = await startingEngine.RunFromStep(step.AbsolutePrFilePath);
 			return result;
 		}
 
@@ -361,16 +387,20 @@ get apps available, compiles plang code, gets goals and steps from .goal files, 
 			var error = await builder.Start(Container, step.Goal.AbsoluteGoalPath);
 
 			var goals = prParser.ForceLoadAllGoals();
-			var goal = goals.FirstOrDefault(p => p.AbsoluteGoalPath == step.Goal.AbsoluteGoalPath);
-			if (goal != null)
+			var goal = goals.FirstOrDefault(p => p.AbsolutePrFilePath == step.Goal.AbsolutePrFilePath);
+			if (goal == null) return (null, new StepError($"Could not find goal after building. {ErrorReporting.CreateIssueShouldNotHappen}", step));
+
+			GoalStep? newStep = newStep = goal.GoalSteps.FirstOrDefault(p => p.Number == step.Number);
+			if (newStep == null) return (null, new StepError($"Could not find step after building. {ErrorReporting.CreateIssueShouldNotHappen}", step));
+
+			if (!fileSystem.File.Exists(step.AbsolutePrFilePath))
 			{
-				step = goal.GoalSteps.FirstOrDefault(p => p.Number == step.Number);
+				return (newStep, new StepError($"Could not find instruction file after building. {ErrorReporting.CreateIssueShouldNotHappen}", step));
 			}
-			if (step != null && fileSystem.File.Exists(step.AbsolutePrFilePath))
-			{
-				step.PrFile = fileSystem.File.ReadAllText(step.AbsolutePrFilePath);
-			}
-			return (step, error);
+			
+			newStep.PrFile = fileSystem.File.ReadAllText(step.AbsolutePrFilePath);
+			
+			return (newStep, error);
 		}
 
 		[Description("Builds(compiles) a goal in plang code")]

@@ -1,5 +1,6 @@
 ﻿using PLang.Building.Model;
 using PLang.Models;
+using PLang.Runtime;
 
 namespace PLang.Errors
 {
@@ -10,7 +11,7 @@ namespace PLang.Errors
 		public IError? InitialError { get; } = Error;
 	}
 
-	public record Return(ReturnDictionary<string, object?> Variables) : IError, IErrorHandled
+	public record Return(List<ObjectValue> Variables) : IError, IErrorHandled
 	{
 		public bool IgnoreError => true;
 
@@ -28,7 +29,8 @@ namespace PLang.Errors
 
 		public GoalStep? Step { get;set; }
 		public Goal? Goal { get; set; }
-
+		public DateTime CreatedUtc { get; init; } = DateTime.UtcNow;
+		public List<IError> ErrorChain { get; set; } = new();
 		public Exception? Exception => null;
 
 		public object AsData()

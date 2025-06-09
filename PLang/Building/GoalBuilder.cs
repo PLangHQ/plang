@@ -1,6 +1,7 @@
 ﻿using LightInject;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using OpenAI.Audio;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
@@ -14,6 +15,7 @@ using PLang.Services.LlmService;
 using PLang.Utils;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
 using static PLang.Modules.DbModule.ModuleSettings;
@@ -63,25 +65,23 @@ namespace PLang.Building
 			this.instructionBuilder = instructionBuilder;
 			BuildErrors = new();
 		}
+
+
+
 		public async Task<IBuilderError?> BuildGoal(IServiceContainer container, Goal goal, int errorCount = 0, int goalIndex = 0)
 		{
-
+			GroupedBuildErrors groupedBuildErrors = new();
 			if (!goal.HasChanged)
 			{
 				bool hasChanged = goal.GoalSteps.Any(p => string.IsNullOrEmpty(p.AbsolutePrFilePath));
 				if (!hasChanged)
 				{
-					foreach (var step in goal.GoalSteps)
-					{
-						var instruction = JsonConvert.DeserializeObject<Model.Instruction>(step.PrFile.ToString());
+					var validationError = await ValidateSteps(goal);
+					if (validationError == null) return null;
 
-						var gf = JsonConvert.DeserializeObject< GenericFunction>(instruction.Action.ToString());
-						await instructionBuilder.RunBuilderMethod(step, gf);
-					}
-					return null;
+					validationError.ErrorChain.ForEach(p => { if (p.Step != null) p.Step.Reload = true; });
 				}
 			}
-
 
 			logger.LogInformation($"\nStart to build {goal.GoalName} - {goal.RelativeGoalPath} - {goal.HasChanged}");
 
@@ -96,59 +96,101 @@ namespace PLang.Building
 			}
 
 			var (vars, buildEventError) = await eventRuntime.RunBuildGoalEvents(EventType.Before, goal);
-			if (buildEventError != null && !buildEventError.ContinueBuild)
+			if (!ContinueBuild(buildEventError, goal))
 			{
 				return buildEventError;
-			}
-			else if (buildEventError != null)
-			{
-				logger.LogWarning(buildEventError.ToFormat().ToString());
 			}
 
 			for (int i = 0; i < goal.GoalSteps.Count; i++)
 			{
-				var buildStepError = await stepBuilder.BuildStep(goal, i);
-				if (buildStepError != null && !buildStepError.ContinueBuild)
+				if (goal.GoalSteps[i].IsValid) continue;
+
+				var buildStepError = await BuildStep(goal, i);
+				if (buildStepError != null)
 				{
-					if (buildStepError.Step == null) buildStepError.Step = goal.GoalSteps[i];
-					if (buildStepError.Goal == null) buildStepError.Goal = goal;
-					return buildStepError;
+					if (!buildStepError.ContinueBuild) return buildStepError;
+					groupedBuildErrors.Add(buildStepError);
 				}
-				else if (buildStepError != null)
-				{
-					if (buildStepError.Step == null) buildStepError.Step = goal.GoalSteps[i];
-					if (buildStepError.Goal == null) buildStepError.Goal = goal;
-					BuildErrors.Add(buildStepError);
-					logger.LogWarning(buildStepError.ToFormat().ToString());
-				}
-				else
-				{
-					goal.GoalSteps[i].Hash = JsonConvert.SerializeObject(goal.GoalSteps[i]).ComputeHash().Hash;
-					WriteToGoalPrFile(goal);
-				}
+
 			}
 			RemoveUnusedPrFiles(goal);
 			RegisterForPLangUserInjections(container, goal);
 
 			(vars, buildEventError) = await eventRuntime.RunBuildGoalEvents(EventType.After, goal);
-			if (buildEventError != null && !buildEventError.ContinueBuild)
+			if (!ContinueBuild(buildEventError))
 			{
 				return buildEventError;
 			}
-			else if (buildEventError != null)
-			{
-				logger.LogWarning(buildEventError.ToFormat().ToString());
-			}
 
-			if (goal.IsSetup)
-			{
-				context.Remove(ReservedKeywords.CurrentDataSource);
-			}
 			WriteToGoalPrFile(goal);
 			logger.LogInformation($"Done building goal {goal.GoalName}");
-		
+
+			return (groupedBuildErrors.Count > 0) ? groupedBuildErrors : null;
+		}
+
+		private async Task<IBuilderError?> BuildStep(Goal goal, int i, List<string>? excludeModules = null)
+		{
+			if (excludeModules == null) excludeModules = new();
+
+			var buildStepError = await stepBuilder.BuildStep(goal, i, excludeModules);
+			if (!ContinueBuild(buildStepError, goal, goal.GoalSteps[i]))
+			{
+				return buildStepError;
+			}
+
+			if (buildStepError is IInvalidModuleError ime)
+			{
+				excludeModules.Add(ime.ModuleType);
+				return await stepBuilder.BuildStep(goal, i, excludeModules, buildStepError);
+			}
+
+			goal.GoalSteps[i].Hash = JsonConvert.SerializeObject(goal.GoalSteps[i], GoalSerializer.Settings).ComputeHash().Hash;
+			WriteToGoalPrFile(goal);
+
 			return null;
 		}
+
+		private bool ContinueBuild(IBuilderError? buildStepError, Goal? goal = null, GoalStep? goalStep = null)
+		{
+			if (buildStepError == null) return true;
+
+			if (buildStepError.Goal == null) buildStepError.Goal = goal;
+			if (buildStepError.Step == null) buildStepError.Step = goalStep;
+
+			BuildErrors.Add(buildStepError);
+
+			logger.LogWarning(buildStepError.ToFormat().ToString());
+
+			return buildStepError.ContinueBuild;
+		}
+
+		private async Task<GroupedBuildErrors?> ValidateSteps(Goal goal)
+		{
+			GroupedBuildErrors errors = new();
+			foreach (var step in goal.GoalSteps)
+			{
+				var functionResult = step.GetFunction(fileSystem);
+				if (functionResult.Error != null)
+				{
+					step.Reload = true;
+					errors.Add(functionResult.Error);
+					continue;
+				}
+
+				var builderRun = await instructionBuilder.RunBuilderMethod(step, step.Instruction, functionResult.Function);
+				if (builderRun.Error != null)
+				{
+					errors.Add(builderRun.Error);
+					step.Reload = true;
+				}
+				else
+				{
+					step.IsValid = true;
+				}
+			}
+			return (errors.Count > 0) ? errors : null;
+		}
+
 
 		private void RegisterForPLangUserInjections(IServiceContainer container, Goal goal)
 		{
@@ -160,7 +202,7 @@ namespace PLang.Building
 			}
 		}
 
-		private void LoadInjections(Goal goal)
+		private IBuilderError LoadInjections(Goal goal)
 		{
 			goal.Injections.RemoveAll(p => !p.AtSignInjection);
 
@@ -170,29 +212,27 @@ namespace PLang.Building
 				var instruction = prParser.ParseInstructionFile(injection);
 				if (instruction == null) continue;
 
-				var gfs = instruction.GetFunctions();
-				if (gfs != null && gfs.Length > 0)
-				{
-					var gf = gfs[0];
+				var gf = instruction.Function;
 
-					var typeParam = gf.Parameters.FirstOrDefault(p => p.Name == "type");
-					var pathToDllParam = gf.Parameters.FirstOrDefault(p => p.Name == "pathToDll");
-					var isGlobalParam = gf.Parameters.FirstOrDefault(p => p.Name == "isDefaultOrGlobalForWholeApp");
-					var environmentVariableParam = gf.Parameters.FirstOrDefault(p => p.Name == "environmentVariable");
-					var environmentVariableValueParam = gf.Parameters.FirstOrDefault(p => p.Name == "environmentVariableValue");
+				var typeParam = gf.Parameters.FirstOrDefault(p => p.Name == "type");
+				var pathToDllParam = gf.Parameters.FirstOrDefault(p => p.Name == "pathToDll");
+				var isGlobalParam = gf.Parameters.FirstOrDefault(p => p.Name == "isDefaultOrGlobalForWholeApp");
+				var environmentVariableParam = gf.Parameters.FirstOrDefault(p => p.Name == "environmentVariable");
+				var environmentVariableValueParam = gf.Parameters.FirstOrDefault(p => p.Name == "environmentVariableValue");
 
-					string type = (typeParam == null) ? null : (string)typeParam.Value;
-					string pathToDll = (pathToDllParam == null) ? null : (string)pathToDllParam.Value;
-					bool isGlobal = (isGlobalParam == null) ? false : (bool)isGlobalParam.Value;
-					string? environmentVariable = (environmentVariableParam == null) ? null : (string?)environmentVariableParam.Value;
-					string environmentVariableValue = (environmentVariableValueParam == null) ? null : (string?)environmentVariableValueParam.Value;
+				string type = (typeParam == null) ? null : (string)typeParam.Value;
+				string pathToDll = (pathToDllParam == null) ? null : (string)pathToDllParam.Value;
+				bool isGlobal = (isGlobalParam == null) ? false : (bool)isGlobalParam.Value;
+				string? environmentVariable = (environmentVariableParam == null) ? null : (string?)environmentVariableParam.Value;
+				string environmentVariableValue = (environmentVariableValueParam == null) ? null : (string?)environmentVariableValueParam.Value;
 
-					var dependancyInjection = new Injections(type, pathToDll, isGlobal, environmentVariable, environmentVariableValue);
+				var dependancyInjection = new Injections(type, pathToDll, isGlobal, environmentVariable, environmentVariableValue);
 
-					goal.Injections.Add(dependancyInjection);
-				}
+				goal.Injections.Add(dependancyInjection);
+
 
 			}
+			return null;
 
 
 		}
@@ -202,21 +242,26 @@ namespace PLang.Building
 			container.RegisterForPLangUserInjections(type, path, isGlobal, environmentVariable, environmentVariableValue);
 		}
 
-		private void WriteToGoalPrFile(Goal goal)
+		private IBuilderError? WriteToGoalPrFile(Goal goal)
 		{
 			if (!fileSystem.Directory.Exists(goal.AbsolutePrFolderPath))
 			{
 				fileSystem.Directory.CreateDirectory(goal.AbsolutePrFolderPath);
 			}
 
-			LoadInjections(goal);
+			var error = LoadInjections(goal);
+			if (error != null) return error;
 
 			var assembly = Assembly.GetAssembly(this.GetType());
 			goal.BuilderVersion = assembly.GetName().Version.ToString();
 			goal.Hash = "";
-			goal.Hash = JsonConvert.SerializeObject(goal).ComputeHash().Hash;
 
-			fileSystem.File.WriteAllText(goal.AbsolutePrFilePath, JsonConvert.SerializeObject(goal, Formatting.Indented));
+			var json = JsonConvert.SerializeObject(goal, GoalSerializer.Settings);
+			goal.Hash = json.ComputeHash().Hash;
+
+			json = JsonConvert.SerializeObject(goal, GoalSerializer.Settings);
+			fileSystem.File.WriteAllText(goal.AbsolutePrFilePath, json);
+			return null;
 		}
 
 		private async Task<(Goal, IBuilderError?)> LoadMethodAndDescription(Goal goal)
@@ -264,15 +309,15 @@ GoalApiIfo:
 
 		public record GoalDescription(string Description, Dictionary<string, string>? IncomingVariablesRequired = null);
 
-	private async Task<(Goal, IBuilderError?)> CreateDescriptionForGoal(Goal goal, Goal? oldGoal)
-	{
-		if (!string.IsNullOrEmpty(goal.Description) && goal.GetGoalAsString() == oldGoal?.GetGoalAsString())
+		private async Task<(Goal, IBuilderError?)> CreateDescriptionForGoal(Goal goal, Goal? oldGoal)
 		{
-			return (goal, null);
-		}
+			if (!string.IsNullOrEmpty(goal.Description) && goal.GetGoalAsString() == oldGoal?.GetGoalAsString())
+			{
+				return (goal, null);
+			}
 
-		var promptMessage = new List<LlmMessage>();
-		promptMessage.Add(new LlmMessage("system", $@"
+			var promptMessage = new List<LlmMessage>();
+			promptMessage.Add(new LlmMessage("system", $@"
 You will receive a code written in Plang programming language
 Your job is to write a description for this Goal called {goal.GoalName} and find out what variables are needed for the execution of the code.
 
@@ -289,81 +334,81 @@ Describe conditions that are affected by variables, describe what value of varia
 [llm] or step starting with system: and contains scheme:, will create variables from that scheme automatically, e.g. scheme: {{ name:string }} will create %name% variable
 Be concise
 "));
-		Type responseType = typeof(GoalDescription);
-		string model = "gpt-4o-mini";
-		promptMessage.Add(new LlmMessage("user", goal.GetGoalAsString()));
-		var llmRequest = new LlmRequest("GoalDescription", promptMessage, model);
+			Type responseType = typeof(GoalDescription);
+			string model = "gpt-4o-mini";
+			promptMessage.Add(new LlmMessage("user", goal.GetGoalAsString()));
+			var llmRequest = new LlmRequest("GoalDescription", promptMessage, model);
 
-		(var result, var queryError) = await llmServiceFactory.CreateHandler().Query(llmRequest, responseType);
-		if (queryError is IBuilderError builderError) return (goal, builderError);
-		if (queryError != null) return (goal, new GoalBuilderError(queryError, goal, false));
+			(var result, var queryError) = await llmServiceFactory.CreateHandler().Query(llmRequest, responseType);
+			if (queryError is IBuilderError builderError) return (goal, builderError);
+			if (queryError != null) return (goal, new GoalBuilderError(queryError, goal, false));
 
-		var goalDescription = result as GoalDescription;
-		if (goalDescription == null)
-		{
-			return (goal, new GoalBuilderError("Could not create description for goal", goal));
-		}
-
-		goal.Description = goalDescription.Description;
-		goal.IncomingVariablesRequired = goalDescription.IncomingVariablesRequired;
-
-		return (goal, null);
-	}
-
-	/*
-	public async Task<(DataSource? DataSource, IError? Error)> GetOrCreateDataSource(string? name)
-	{
-
-		if (string.IsNullOrEmpty(name))
-		{
-			return await dbSettings.GetDefaultDataSource();
-		}
-
-		var dataSourceResult = await dbSettings.GetDataSource(name);
-		if (dataSourceResult.DataSource != null) return dataSourceResult;
-
-		return await dbSettings.CreateDataSource(name);
-	}*/
-
-	private void RemoveUnusedPrFiles(Goal goal)
-	{
-		if (!fileSystem.Directory.Exists(goal.AbsolutePrFolderPath)) return;
-		var files = fileSystem.Directory.GetFiles(goal.AbsolutePrFolderPath, "*.pr");
-		foreach (var file in files)
-		{
-			string fileNameInGoalFolder = Path.GetFileName(file);
-			if (fileNameInGoalFolder.StartsWith(ISettings.GoalFileName)) continue;
-
-			if (goal.GoalSteps.FirstOrDefault(p => p.PrFileName == fileNameInGoalFolder) == null)
+			var goalDescription = result as GoalDescription;
+			if (goalDescription == null)
 			{
-				fileSystem.File.Delete(file);
+				return (goal, new GoalBuilderError("Could not create description for goal", goal));
 			}
+
+			goal.Description = goalDescription.Description;
+			goal.IncomingVariablesRequired = goalDescription.IncomingVariablesRequired;
+
+			return (goal, null);
 		}
 
-		var dirs = fileSystem.Directory.GetDirectories(goal.AbsolutePrFolderPath);
-		foreach (var dir in dirs)
+		/*
+		public async Task<(DataSource? DataSource, IError? Error)> GetOrCreateDataSource(string? name)
 		{
-			foreach (var subGoal in goal.SubGoals)
+
+			if (string.IsNullOrEmpty(name))
 			{
-
-				dirs = dirs.Where(p => !p.StartsWith(Path.Join(goal.AbsolutePrFolderPath, subGoal))).ToArray();
+				return await dbSettings.GetDefaultDataSource();
 			}
-		}
 
-		foreach (var dir in dirs)
+			var dataSourceResult = await dbSettings.GetDataSource(name);
+			if (dataSourceResult.DataSource != null) return dataSourceResult;
+
+			return await dbSettings.CreateDataSource(name);
+		}*/
+
+		private void RemoveUnusedPrFiles(Goal goal)
 		{
-			fileSystem.Directory.Delete(dir, true);
+			if (!fileSystem.Directory.Exists(goal.AbsolutePrFolderPath)) return;
+			var files = fileSystem.Directory.GetFiles(goal.AbsolutePrFolderPath, "*.pr");
+			foreach (var file in files)
+			{
+				string fileNameInGoalFolder = Path.GetFileName(file);
+				if (fileNameInGoalFolder.StartsWith(ISettings.GoalFileName)) continue;
+
+				if (goal.GoalSteps.FirstOrDefault(p => p.PrFileName == fileNameInGoalFolder) == null)
+				{
+					fileSystem.File.Delete(file);
+				}
+			}
+
+			var dirs = fileSystem.Directory.GetDirectories(goal.AbsolutePrFolderPath);
+			foreach (var dir in dirs)
+			{
+				foreach (var subGoal in goal.SubGoals)
+				{
+
+					dirs = dirs.Where(p => !p.StartsWith(Path.Join(goal.AbsolutePrFolderPath, subGoal))).ToArray();
+				}
+			}
+
+			foreach (var dir in dirs)
+			{
+				fileSystem.Directory.Delete(dir, true);
+			}
+			int i = 0;
+
 		}
-		int i = 0;
+		private bool GoalNameContainsMethod(Goal goal)
+		{
+			var goalName = goal.GoalName.ToUpper() + " " + goal.Comment;
+			var match = Regex.Match(goalName, @"\s+(GET|POST|DELETE|PATCH|OPTION|HEAD|PUT)($|.*)");
+			return match.Success;
+		}
 
 	}
-	private bool GoalNameContainsMethod(Goal goal)
-	{
-		var goalName = goal.GoalName.ToUpper() + " " + goal.Comment;
-		var match = Regex.Match(goalName, @"\s+(GET|POST|DELETE|PATCH|OPTION|HEAD|PUT)($|.*)");
-		return match.Success;
-	}
-
-}
 
 }

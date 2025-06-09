@@ -22,7 +22,7 @@ namespace PLang.SafeFileSystem
 		public string Id { get; init; }
 
 		private string rootPath;
-		List<FileAccessControl>? fileAccesses = null;
+		List<FileAccessControl> fileAccesses = new();
 		private readonly PLangAppContext context;
 
 		public bool IsRootApp { get; private set; }
@@ -112,9 +112,8 @@ namespace PLang.SafeFileSystem
 
 		public void SetFileAccess(List<FileAccessControl> fileAccesses)
 		{
-			if (fileAccesses == null || fileAccesses.Count == 0) return;
-			
-			var engineFileAccess = this.fileAccesses?.FirstOrDefault(p => p.ProcessId is not null);
+			var engineFileAccess = this.fileAccesses.FirstOrDefault(p => p.ProcessId is not null);
+
 			this.fileAccesses = fileAccesses;
 			if (engineFileAccess != null)
 			{
@@ -124,9 +123,12 @@ namespace PLang.SafeFileSystem
 
 		public void AddFileAccess(FileAccessControl fileAccess)
 		{
-			if (fileAccesses == null) this.fileAccesses = new();
-
 			this.fileAccesses.Add(fileAccess);
+		}
+
+		public void ClearFileAccess()
+		{
+			this.fileAccesses.Clear();
 		}
 
 		public bool IsPathRooted(string? path)

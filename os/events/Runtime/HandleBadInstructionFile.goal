@@ -1,8 +1,8 @@
 HandleBadInstructionFile
-- write out system error "%!error%"
-- ask user "The .pr file for '%!error.Step.Text%' is not valid, would you like to rebuild? (y|n)", options "y|n", write to %answer%
+- write out error(500) to system, "Error: %!error.Message%", properties: %!error%
+- ask system "The .pr file for '%!error.Step.Text%' is not valid, would you like to rebuild? (y|n)", options "y|n", write to %answer%
 - if %answer% = "y" then
     - rebuild plang step %!error.Step%, write to %step%
-    - [plang] run step %step.RelativePrPath%
+    - retry
 - if %answer% == "n" then
-    - write out %!error.ToString()%
+    - throw %!error%

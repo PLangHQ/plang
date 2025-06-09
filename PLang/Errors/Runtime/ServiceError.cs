@@ -6,6 +6,7 @@ namespace PLang.Errors.Runtime
 		Error(Message, Key, StatusCode, Exception, FixSuggestion, HelpfulLinks), IBuilderError
 	{
 		public bool Retry => false;
+		public string? LlmBuilderHelp { get; set; }
 		public override string ToString()
 		{
 			return base.ToString(); 

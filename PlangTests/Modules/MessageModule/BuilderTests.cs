@@ -30,7 +30,7 @@ namespace PLang.Modules.MessageModule.Tests
 
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.MessageModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -41,15 +41,7 @@ namespace PLang.Modules.MessageModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.MessageModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
-		}
-
-		public GoalStep GetStep(string text)
-		{
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
-			step.ModuleType = "PLang.Modules.MessageModule";
-			return step;
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
 
@@ -60,14 +52,14 @@ namespace PLang.Modules.MessageModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("GetPublicKey", gf.FunctionName);
+			Assert.AreEqual("GetPublicKey", gf.Name);
 			Assert.AreEqual("publicKey", gf.ReturnValues[0].VariableName);
 
 
@@ -80,14 +72,14 @@ namespace PLang.Modules.MessageModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("SetCurrentAccount", gf.FunctionName);
+			Assert.AreEqual("SetCurrentAccount", gf.Name);
 			Assert.AreEqual("publicKeyOrName", gf.Parameters[0].Name);
 			Assert.AreEqual("Default", gf.Parameters[0].Value);
 		}
@@ -98,14 +90,14 @@ namespace PLang.Modules.MessageModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("Listen", gf.FunctionName);
+			Assert.AreEqual("Listen", gf.Name);
 			Assert.AreEqual("goalName", gf.Parameters[0].Name);
 			Assert.AreEqual("!Process.Message", gf.Parameters[0].Value);
 			Assert.AreEqual("contentVariableName", gf.Parameters[1].Name);
@@ -119,14 +111,14 @@ namespace PLang.Modules.MessageModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 			
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("SendPrivateMessageToMyself", gf.FunctionName);
+			Assert.AreEqual("SendPrivateMessageToMyself", gf.Name);
 			Assert.AreEqual("content", gf.Parameters[0].Name);
 			Assert.AreEqual("%message%", gf.Parameters[0].Value);
 		}
@@ -137,14 +129,14 @@ namespace PLang.Modules.MessageModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("SendPrivateMessage", gf.FunctionName);
+			Assert.AreEqual("SendPrivateMessage", gf.Name);
 			Assert.AreEqual("content", gf.Parameters[0].Name);
 			Assert.AreEqual("%message%", gf.Parameters[0].Value);
 			Assert.AreEqual("npubReceiverPublicKey", gf.Parameters[1].Name);

@@ -10,6 +10,8 @@ namespace PLang.Errors.AskUser
 
 		public bool Retry => false;
 
+		public string? LlmBuilderHelp { get; set; }
+
 		public override async Task<(bool, IError?)> InvokeCallback(object[]? value)
         {
             return await Callback.Invoke(value);

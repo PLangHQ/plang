@@ -35,7 +35,7 @@ namespace PLang.Modules.CallGoalModule
 				return (null, new ProgramError($"Could not find goal {goalName} in {appName}", goalStep, function));
 			}
 
-			IEngine newEngine = await engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath, goalStep).RentAsync(appName + "_" + goalName);
+			IEngine newEngine = await engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath).RentAsync(engine, goalStep, appName + "_" + goalName);
 
 			try
 			{
@@ -49,7 +49,7 @@ namespace PLang.Modules.CallGoalModule
 						}
 						else
 						{
-							newEngine.GetMemoryStack().Put(item.Key, item.Value);
+							newEngine.GetMemoryStack().Put(item.Key, item.Value, goalStep: goalStep);
 						}
 					}
 				}
@@ -66,7 +66,7 @@ namespace PLang.Modules.CallGoalModule
 			}
 			finally
 			{
-				engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath, goalStep).Return(newEngine);
+				engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath).Return(newEngine);
 
 			}
 		}
@@ -76,17 +76,24 @@ namespace PLang.Modules.CallGoalModule
 		public async Task<(object? Return, IError? Error)> RunGoal(GoalToCall goalName, Dictionary<string, object?>? parameters = null, bool waitForExecution = true,
 			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, bool keepMemoryStackOnAsync = false, bool isolated = false)
 		{
-			string path = (goal != null) ? goal.RelativeAppStartupFolderPath : "/";
-			int indent = (goalStep == null) ? 0 : goalStep.Indent;
-
-			var result = await pseudoRuntime.RunGoal(engine, engine.GetContext(), path, goalName, parameters, goal,
-					waitForExecution, delayWhenNotWaitingInMilliseconds, waitForXMillisecondsBeforeRunningGoal, indent, keepMemoryStackOnAsync, isolated);
-			
-			if (result.error is Return ret)
+			try
 			{
-				return (ret.Variables, null);
+				string path = (goal != null) ? goal.RelativeAppStartupFolderPath : "/";
+				int indent = (goalStep == null) ? 0 : goalStep.Indent;
+
+				var result = await pseudoRuntime.RunGoal(engine, engine.GetContext(), path, goalName, parameters, goal,
+						waitForExecution, delayWhenNotWaitingInMilliseconds, waitForXMillisecondsBeforeRunningGoal, indent, keepMemoryStackOnAsync, isolated);
+
+				if (result.error is Return ret)
+				{
+					return (ret.Variables, null);
+				}
+				return (result.Variables, result.error);
+			} catch (Exception ex)
+			{
+				Console.WriteLine("RunGoal:" + ex.ToString());
+				throw;
 			}
-			return (result.Variables, result.error);
 
 		}
 

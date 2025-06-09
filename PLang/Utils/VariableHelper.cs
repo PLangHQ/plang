@@ -1,6 +1,7 @@
 ﻿using Jil;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Runtime;
@@ -17,13 +18,11 @@ namespace PLang.Utils
 {
 	public class VariableHelper
 	{
-		private readonly PLangAppContext context;
 		private readonly ISettings settings;
 		private readonly MemoryStack memoryStack;
 		private JsonSerializerOptions jsonSerializerOptions;
-		public VariableHelper(PLangAppContext context, MemoryStack memoryStack, ISettings settings)
+		public VariableHelper(MemoryStack memoryStack, ISettings settings)
 		{
-			this.context = context;
 			this.settings = settings;
 			this.memoryStack = memoryStack;
 
@@ -101,7 +100,7 @@ namespace PLang.Utils
 			{
 				foreach (var variable in variables)
 				{
-					var jsonProperty = FindPropertyNameByValue(jobject, variable.OriginalKey);
+					var jsonProperty = FindPropertyNameByValue(jobject, variable.PathAsVariable);
 					if (jsonProperty == null) {
 						LoadVariableInTextValue(jobject, variable, defaultValue);
 						continue;
@@ -123,7 +122,7 @@ namespace PLang.Utils
 						JArray messages = (JArray)jobject[jsonProperty.Substring(0, jsonProperty.IndexOf("["))];
 						for (int i = 0; i < messages.Count; i++)
 						{
-							if (messages[i].Type == JTokenType.String && messages[i].ToString() == variable.OriginalKey)
+							if (messages[i].Type == JTokenType.String && messages[i].ToString() == variable.PathAsVariable)
 							{
 								if (variable.Value is JToken token) {
 									if (!IsEmpty(token))
@@ -167,11 +166,11 @@ namespace PLang.Utils
 							if (IsEmpty(variable.Value) && defaultValue != null && defaultValue is JToken defaultJValue && jobject[jsonProperty] != null)
 							{
 								var token = defaultJValue.SelectToken(jobject[jsonProperty].Path) as JValue;
-								jobject[jsonProperty] = jobject[jsonProperty].ToString().Replace(variable.OriginalKey, token.ToString());
+								jobject[jsonProperty] = jobject[jsonProperty].ToString().Replace(variable.PathAsVariable, token.ToString());
 							}
 							else
 							{
-								jobject[jsonProperty] = jobject[jsonProperty].ToString().Replace(variable.OriginalKey, variable.Value.ToString());
+								jobject[jsonProperty] = jobject[jsonProperty].ToString().Replace(variable.PathAsVariable, variable.Value.ToString());
 							}
 						}
 					}
@@ -186,7 +185,7 @@ namespace PLang.Utils
 				{
 					for (int i=0;i<array.Count; i++)
 					{
-						if (array[i].ToString().Equals(variable.Key, StringComparison.OrdinalIgnoreCase))
+						if (array[i].ToString().Equals(variable.PathAsVariable, StringComparison.OrdinalIgnoreCase))
 						{
 							array[i] = variable.Value?.ToString();
 						}
@@ -209,13 +208,13 @@ namespace PLang.Utils
 				}
 				
 
-				content = content.Replace(variable.Key, strValue);
+				content = content.Replace(variable.PathAsVariable, strValue);
 			}
 			return content;
 
 		}
 
-		private void LoadVariableInTextValue(JToken jobject, Variable variable, object? defaultValue = null)
+		private void LoadVariableInTextValue(JToken jobject, ObjectValue variable, object? defaultValue = null)
 		{
 			var children = jobject.Children();
 			foreach (var child in children)
@@ -531,9 +530,9 @@ namespace PLang.Utils
 		public record Variable(string OriginalKey, string Key, object? Value);
 
 
-		internal List<Variable> GetVariables(string content, bool emptyIfNotFound = true)
+		internal List<ObjectValue> GetVariables(string content, bool emptyIfNotFound = true)
 		{
-			List<Variable> variables = new List<Variable>();
+			List<ObjectValue> variables = new List<ObjectValue>();
 
 			if (!content.Contains("%")) return variables;
 
@@ -545,7 +544,7 @@ namespace PLang.Utils
 			foreach (Match match in matches)
 			{
 				var variable = match.Value;
-				if (variables.FirstOrDefault(p => p.Key.Equals(variable, StringComparison.OrdinalIgnoreCase)) != null)
+				if (variables.FirstOrDefault(p => p.Name.Equals(variable, StringComparison.OrdinalIgnoreCase)) != null)
 				{
 					continue;
 				}
@@ -556,42 +555,24 @@ namespace PLang.Utils
 					continue;
 				}
 
-				var variableValue = memoryStack.Get(variable);
+				var ov = memoryStack.GetObjectValue(variable);
 
-				if (!emptyIfNotFound && variableValue == null)
+				if (!ov.Initiated)
 				{
-					throw new VariableDoesNotExistsException($"Variable {variable} not found");
-				}
-				var content2 = content;
-				if (false && JsonHelper.IsJson(content) && variableValue != null && variableValue.GetType() != typeof(string) && !variableValue.GetType().IsPrimitive)
-				{
-					var json = JsonConvert.SerializeObject(variableValue).Trim();
-					// Create the outer JSON structure and inject the serialized JSON
-					JObject outerJson = new JObject();
-					outerJson["innerJson"] = JValue.FromObject(json);
+					AppContext.TryGetSwitch("Builder", out bool isBuilder);
+					if (isBuilder) ov = ObjectValue.Nullable(variable);
 
-					// Serialize the outer JSON structure
-					string finalJson = JsonConvert.SerializeObject(outerJson["innerJson"]).TrimStart('"').TrimEnd('"');
-					variables.Add(new Variable(variable, variable, finalJson));
+					//throw new VariableDoesNotExistsException($"Variable {variable} not found");
 				}
-				else
-				{
-					variables.Add(new Variable(variable, variable, variableValue ?? null));
-				}
-
+				variables.Add(ov);
 			}
 
 			return variables;
 		}
-		private void LoadSetting(List<Variable> variables, string variable, string content)
-		{
-			
+		private void LoadSetting(List<ObjectValue> variables, string variable, string content)
+		{			
 			var settingsObjects = GetSettingObjectsValue(content);
-			foreach (var settingObject in settingsObjects)
-			{
-				variables.Add(new Variable(settingObject.Name.AsVar(), settingObject.Name.AsVar(), settingObject.Value));
-			}
-			
+			variables.AddRange(settingsObjects);			
 		}
 		public static bool ContainsVariable(object? variable)
 		{
@@ -612,14 +593,15 @@ namespace PLang.Utils
 			return variableName.StartsWith("Settings.") || variableName.StartsWith("%Settings.");
 		}
 
-		internal ObjectValue GetObjectValue(string? variableName, bool staticVariable)
+		public ObjectValue? GetObjectValue(string? variableName, Goal goal)
 		{
 			if (variableName == null) return null;
 			if (IsSetting(variableName))
 			{
 				return GetSettingObjectValue(variableName);
 			}
-			return memoryStack.GetObjectValue(variableName, staticVariable);
+			memoryStack.Goal = goal;
+			return memoryStack.GetObjectValue(variableName);
 		}
 		public List<ObjectValue> GetSettingObjectsValue(string variableName)
 		{
@@ -670,5 +652,30 @@ namespace PLang.Utils
 
 		}
 
+		public object? GetValue(string? variableName, Type parameterType)
+		{
+			if (!IsVariable(variableName)) { return variableName; }
+
+			var objectValue = memoryStack.Get(variableName!, parameterType);
+			return objectValue;
+		}
+
+
+		public static string Clean(string str)
+		{
+			if (string.IsNullOrEmpty(str)) return "";
+
+			str = str.Trim();
+			bool isVariable = IsVariable(str);
+
+			if (isVariable && str.StartsWith("%")) str = str.Substring(1);
+			if (isVariable && str.EndsWith("%")) str = str.Remove(str.Length - 1);
+			if (str.StartsWith("@")) str = str.Substring(1);
+			if (str.StartsWith("$.")) str = str.Remove(0, 2);
+			str = str.TrimEnd('+').TrimEnd('-');
+			str = Regex.Replace(str, "α([0-9]+)α", match => $"[{match.Groups[1].Value}]");
+
+			return str.Replace("α", ".");
+		}
 	}
 }

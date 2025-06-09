@@ -13,7 +13,9 @@ using System.Diagnostics.Contracts;
 
 namespace PLang.Modules.ThrowErrorModule
 {
-	[Description("Allows user to throw error. Allows user to return out of goal or stop(end) running goal. Create payment request(status code 402)")]
+	public record ErrorInfo(string? errorMessage = null, string type = "error", int statusCode = 400);
+
+	[Description("Allows user to throw error or retry a step. Allows user to return out of goal or stop(end) running goal. Create payment request(status code 402)")]
 	public class Program : BaseProgram
 	{
 		private readonly IOutputStreamFactory outputStreamFactory;
@@ -34,6 +36,16 @@ namespace PLang.Modules.ThrowErrorModule
 			return new UserDefinedError(message.ToString(), goalStep, type, statusCode);
 		}
 
+		[Description("Retries a step that caused an error")]
+		public async Task<IError?> Retry()
+		{
+			var error = goal.GetVariable<IError>(ReservedKeywords.Error);
+			if (error == null) return new ProgramError("No error available. Cannot retry a step when there is no error");
+			if (error.Step == null) return new ProgramError("No step available. Cannot retry a step when I dont know which step to retry");
+
+			error.Step.Retry = true;
+			return null;
+		}
 
 		[Description("When user intends the execution of the goal to stop without giving a error response. This is equal to doing return in a function. Depth is how far up the stack it should end, previous goal is 1")]
 		[MethodSettings(CanBeAsync = false, CanHaveErrorHandling = false, CanBeCached = false)]

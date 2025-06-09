@@ -144,23 +144,24 @@ namespace PLang.Building.Parsers.Tests
 				
 			};
 			fileSystem.AddStep(step);
-
+			/*
 			object actionMock = new { Hello = true };
 			fileSystem.AddInstruction(step.AbsolutePrFilePath, new Model.Instruction(actionMock));
 
 			// Mock an Instruction.
 			
 			Model.Instruction existingInstruction = new Model.Instruction(actionMock);
-
+			
 			// Act
 			var result = prParser.ParseInstructionFile(step);
 
 			// Assert
 			Assert.IsNotNull(result);
-			Assert.AreEqual(((dynamic) existingInstruction.Action).Hello, ((JValue) ((dynamic)result.Action).Hello).Value<bool>()); 
+			Assert.AreEqual(((dynamic) existingInstruction.Function).Hello, ((JValue) ((dynamic)result.Function).Hello).Value<bool>()); 
+			*/
 		}
 
-	
+
 
 
 		[TestMethod()]

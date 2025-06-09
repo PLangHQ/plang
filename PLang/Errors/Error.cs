@@ -14,22 +14,55 @@ namespace PLang.Errors
 		public string? HelpfulLinks { get; }
 		public GoalStep? Step { get; set; }
 		public Goal? Goal { get; set; }
+		public DateTime CreatedUtc { get; init; }
 		public Exception? Exception { get; }
+		List<IError> ErrorChain { get; set; }
 		public object ToFormat(string contentType = "text");
 		public object AsData();
 	}
-	public record Error(string Message, string Key = "GeneralError", int StatusCode = 400, Exception? Exception = null,
-		string? FixSuggestion = null, string? HelpfulLinks = null, object? Data = null) : IError
+	public record Error(object error) : IError
 	{
+		public Error(string Message, string Key = "GeneralError", int StatusCode = 400, Exception? Exception = null,
+		string? FixSuggestion = null, string? HelpfulLinks = null, object? Data = null, Dictionary<string, object?>? Properties = null)
+			: this(new
+			{
+				Message,
+				Key,
+				StatusCode,
+				Properties,
+				Data,
+				Exception,
+				FixSuggestion,
+				HelpfulLinks,
+			})
+		{
+			this.Message = Message;
+			this.Key = Key;
+			this.StatusCode = StatusCode;	
+			this.Exception = Exception;
+			this.FixSuggestion = FixSuggestion;
+			this.HelpfulLinks = HelpfulLinks;
+		}
+		//public Error(IErrorReporting error)
 		public virtual GoalStep? Step { get; set; }
 		public virtual Goal? Goal { get; set; }
-		public string? FixSuggestion { get; set; } = FixSuggestion;
-		public string? HelpfulLinks { get; set; } = HelpfulLinks;
-
+		public string? FixSuggestion { get; set; }
+		public string? HelpfulLinks { get; set; }
+		public DateTime CreatedUtc { get; init; } = DateTime.UtcNow;
 		public virtual object ToFormat(string contentType = "text")
 		{
 			return ErrorHelper.ToFormat(contentType, this);
 		}
+
+		public List<IError> ErrorChain { get; set; } = new();
+
+		public int StatusCode {get;set;}
+
+		public string Key { get; set; }
+
+		public string Message { get; set; }
+
+		public Exception? Exception { get; set; }
 
 		public override string? ToString()
 		{
@@ -39,6 +72,8 @@ namespace PLang.Errors
 		{
 			return this;
 		}
+
+
 	}
 
 	public interface IErrorHandled : IEventError, IError { }

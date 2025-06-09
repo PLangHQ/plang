@@ -57,7 +57,7 @@ Error happend at
 	Step: {Step.Text} line {Step.LineNumber}
 	Goal: {Step.Goal.GoalName} in {Step.Goal.GoalFileName}
 
-	Calling {Step.ModuleType}.Program.{GenericFunction.FunctionName} 
+	Calling {Step.ModuleType}.Program.{GenericFunction.Name} 
 		Parameters:
 			{JsonConvert.SerializeObject(GenericFunction.Parameters)} 
 

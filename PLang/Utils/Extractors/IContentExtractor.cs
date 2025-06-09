@@ -1,6 +1,7 @@
 ﻿
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OpenAI.Images;
 using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Modules.UiModule;
@@ -100,28 +101,26 @@ namespace PLang.Utils.Extractors
 		{
 			var htmlExtractor = new HtmlExtractor();
 			var implementation = htmlExtractor.ExtractByType(content, "csharp") as string;
-			var json = htmlExtractor.ExtractByType(content, "json");
 
+			var json = htmlExtractor.ExtractByType(content, "json");
 			var jsonExtractor = new JsonExtractor();
-			var jsonObject = jsonExtractor.Extract(json.ToString()!, responseType);
+			var implementationResponse = jsonExtractor.Extract(json.ToString()!, responseType);
 
 			if (implementation != null && implementation.Contains("System.IO."))
 			{
 				implementation = implementation.Replace("System.IO.", "PLang.SafeFileSystem.");
 			}
 
-			if (responseType == typeof(CodeImplementationResponse))
+			if (implementationResponse is CodeImplementationResponse cir)
 			{
-				var cir = jsonObject as CodeImplementationResponse;
-				var ci = new CodeImplementationResponse(cir.Namespace, cir.Name, implementation, cir.InputParameters, cir.OutParameters, cir.Using, cir.Assemblies);
+				cir.Implementation = implementation;
+				return cir;
 
-				return ci;
-			} else if (responseType == typeof(ConditionImplementationResponse))
+			} else if (implementationResponse is ConditionImplementationResponse cir2)
 			{
-				var cir = jsonObject as ConditionImplementationResponse;
-				var ci = new ConditionImplementationResponse(cir.Namespace, cir.Name, implementation, cir.InputParameters, cir.Using, cir.Assemblies, cir.GoalToCallOnTrue, cir.GoalToCallOnFalse, cir.GoalToCallOnTrueParameters, cir.GoalToCallOnFalseParameters);
+				cir2.Implementation = implementation;
+				return cir2;
 
-				return ci;
 			} else
 			{
 				return implementation;

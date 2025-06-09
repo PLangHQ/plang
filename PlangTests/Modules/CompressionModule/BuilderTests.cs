@@ -27,7 +27,7 @@ namespace PLang.Modules.CompressionModule.Tests
 			LoadOpenAI();
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CompressionModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -37,15 +37,9 @@ namespace PLang.Modules.CompressionModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CompressionModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
-		public GoalStep GetStep(string text)
-		{
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
-			step.ModuleType = "PLang.Modules.CompressionModule";
-			return step;
-		}
+
 		[DataTestMethod]
 		[DataRow("compress %filePath% to %destination%")]
 		[DataRow("compress %filePath% to %destination% with high compression")]
@@ -53,14 +47,14 @@ namespace PLang.Modules.CompressionModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("CompressFile", gf.FunctionName);
+			Assert.AreEqual("CompressFile", gf.Name);
 			Assert.AreEqual("filePath", gf.Parameters[0].Name);
 			Assert.AreEqual("%filePath%", gf.Parameters[0].Value);
 			Assert.AreEqual("saveToPath", gf.Parameters[1].Name);
@@ -80,14 +74,14 @@ namespace PLang.Modules.CompressionModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("CompressDirectory", gf.FunctionName);
+			Assert.AreEqual("CompressDirectory", gf.Name);
 			Assert.AreEqual("sourceDirectoryName", gf.Parameters[0].Name);
 			Assert.AreEqual("%dir%", gf.Parameters[0].Value);
 			Assert.AreEqual("destinationArchiveFileName", gf.Parameters[1].Name);
@@ -106,14 +100,14 @@ namespace PLang.Modules.CompressionModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("CompressFiles", gf.FunctionName);
+			Assert.AreEqual("CompressFiles", gf.Name);
 			Assert.AreEqual("filePaths", gf.Parameters[0].Name);
 			Assert.AreEqual("%files%", gf.Parameters[0].Value);
 			Assert.AreEqual("saveToPath", gf.Parameters[1].Name);
@@ -129,14 +123,14 @@ namespace PLang.Modules.CompressionModule.Tests
 
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("DecompressFile", gf.FunctionName);
+			Assert.AreEqual("DecompressFile", gf.Name);
 			Assert.AreEqual("sourceArchiveFileName", gf.Parameters[0].Name);
 			Assert.AreEqual("%file%", gf.Parameters[0].Value);
 			Assert.AreEqual("destinationDirectoryName", gf.Parameters[1].Name);

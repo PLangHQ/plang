@@ -11,6 +11,7 @@
     <SignAssembly>False</SignAssembly>
 		<PublishSingleFile>false</PublishSingleFile>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+		<RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
   </PropertyGroup>
 
   <ItemGroup>

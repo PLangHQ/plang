@@ -30,7 +30,7 @@ namespace PLang.Modules.CachingModule.Tests
 
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CachingModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -40,7 +40,7 @@ namespace PLang.Modules.CachingModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CachingModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 		public GoalStep GetStep(string text)
 		{
@@ -57,14 +57,14 @@ namespace PLang.Modules.CachingModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 			
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("Get", gf.FunctionName);
+			Assert.AreEqual("Get", gf.Name);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual(key, gf.Parameters[0].Value);
 			
@@ -79,14 +79,14 @@ namespace PLang.Modules.CachingModule.Tests
 
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("SetForSlidingExpiration", gf.FunctionName);
+			Assert.AreEqual("SetForSlidingExpiration", gf.Name);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("ObjCache", gf.Parameters[0].Value);
 			Assert.AreEqual("value", gf.Parameters[1].Name);
@@ -108,14 +108,14 @@ namespace PLang.Modules.CachingModule.Tests
 
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("SetForAbsoluteExpiration", gf.FunctionName);
+			Assert.AreEqual("SetForAbsoluteExpiration", gf.Name);
 			Assert.AreEqual("key", gf.Parameters[0].Name);
 			Assert.AreEqual("ObjCache", gf.Parameters[0].Value);
 			Assert.AreEqual("value", gf.Parameters[1].Name);

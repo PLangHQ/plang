@@ -18,11 +18,16 @@ using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using System.Text;
 using System.Text.RegularExpressions;
+using static PLang.Modules.BaseBuilder;
 using static PLang.Modules.CodeModule.Builder;
 using static PLang.Runtime.Startup.ModuleLoader;
+using ReturnValue = PLang.Modules.BaseBuilder.ReturnValue;
 
 namespace PLang.Services.CompilerService
 {
+	/*
+	 * todo: probably security issues here, adding lot of assemblies that probably should not be added
+	 * */
 	public class CSharpCompiler
 	{
 		private List<string> Assemblies = new List<string>();
@@ -59,9 +64,9 @@ namespace PLang.Services.CompilerService
 		public string GetPreviousBuildDllNamesToExclude(GoalStep step)
 		{
 			var prevBuildGoalFile = prParser.ParseInstructionFile(step);
-			if (prevBuildGoalFile != null && prevBuildGoalFile.Action != null)
+			if (prevBuildGoalFile != null && prevBuildGoalFile.Function != null)
 			{
-				string dllFileName = ((dynamic)prevBuildGoalFile.Action).Name + ".dll";
+				string dllFileName = ((dynamic)prevBuildGoalFile.Function).Name + ".dll";
 				string dllFilePath = Path.Join(step.Goal.RelativePrFolderPath, dllFileName);
 				if (fileSystem.File.Exists(dllFilePath))
 				{
@@ -90,9 +95,9 @@ namespace PLang.Services.CompilerService
 			}
 		}
 
-		public record Parameter(string VariableName, string ParameterName, string ParameterType);
+		//public record Parameter(string VariableName, string ParameterName, string ParameterType);
 
-		public async Task<(Implementation?, CompilerError?)> BuildCode(ImplementationResponse answer, GoalStep step, MemoryStack memoryStack)
+		public async Task<(T?, CompilerError?)> BuildCode<T>(T answer, GoalStep step, MemoryStack memoryStack) where T : ImplementationResponse
 		{
 			if (answer.Assemblies != null)
 			{
@@ -160,7 +165,7 @@ namespace PLang.Services.CompilerService
 				method = root.DescendantNodes().OfType<MethodDeclarationSyntax>().FirstOrDefault();
 			}
 			var parameters = method.ParameterList.Parameters.Where(p => p.Identifier.Text != "fileSystem").ToList();
-			var answerParameters = GetParameters(answer);
+			var answerParameters = answer.Parameters ?? [];
 
 			if (parameters.GroupBy(p => p.Identifier.Text).Where(p => p.Count() > 1).Count() > 0)
 			{
@@ -174,10 +179,13 @@ Json response:
 C# code:
 {sourceCode}
 ### Previous LLM generated code ###
-Parameter {parameterName.FirstOrDefault().Identifier.Text} is defined ExecutePlangCode twice, c# does not support this. You can define it just once as ref if needed
+
+CSharp Compiler Error:
+Parameter {parameterName.FirstOrDefault().Identifier.Text} is defined ExecutePlangCode twice, c# compiler does not support this. You can define it just once as ref if needed.
+Fix this error.
 					";
 
-				return (null, new CompilerError($"Parameter count not matching. Need to request new code from LLM.", error, step));
+				return (null, new CompilerError($"Parameter count not matching. Need to request new code from LLM.", error, step, FixSuggestion: error));
 			}
 
 			if (parameters.Count != answerParameters.Count)
@@ -193,36 +201,18 @@ C# code:
  Parameters in json does not match parameter count in method. Please fix.
 					";
 
-				return (null, new CompilerError($"Parameter count not matching. Need to request new code from LLM.", error, step));
+				return (null, new CompilerError($"Parameter count not matching. Need to request new code from LLM.", error, step, FixSuggestion: error));
 			}
-			List<Parameter> inputParameters = new();
-			List<Parameter> outputParameters = new();
+
 			for (int i = 0; i < parameters.Count; i++)
 			{
 				var parameter = parameters[i];
 				var parameterName = parameter.Identifier.Text;
-				var variableName = answerParameters[i];
+				var variableName = answerParameters[i].Name;
 
 				var stepText = step.Text.ToLower();
 
-				if (inputParameters.FirstOrDefault(p => p.ParameterName == parameterName) != null)
-				{
-					logger.LogWarning($"{parameterName} was defined twice in code. Need to request new code from LLM.");
-					//retry with gpt with error that parameter is not in step text.
-					string error = @$"
-### Previous LLM generated code ###
-{code}
-### Previous LLM generated code ###
- The parameter name '{parameterName}' is a duplicate. Ambiguity between '{parameterName}'. Please fix.
-					";
-
-					return (null, new CompilerError($"{parameterName} was defined twice in code. Need to request new code from LLM.", error, step));
-				}
-				else if (parameter.Type?.ToString().Trim() == "PLang.SafeFileSystem.PLangFileSystem" || parameter.Type?.ToString().Trim() == "PLangFileSystem")
-				{
-					inputParameters.Add(new Parameter(variableName, parameterName, parameter.Type.ToString()));
-				}
-				else if (!StepTextContainsVariable(step, variableName))
+				if (!StepTextContainsVariable(step, variableName))
 				{
 					logger.LogWarning($"{variableName} is not in step.Text. Will retry with LLM");
 					//retry with gpt with error that parameter is not in step text.
@@ -242,27 +232,8 @@ These are the rules with variables:
 - Make sure to keep underscore in variables if the user defined it like that
 					";
 
-					return (null, new CompilerError($"{variableName} is not in step.Text. Will retry with LLM", error, step));
+					return (null, new CompilerError($"{variableName} is not in step.Text. Will retry with LLM", error, step, FixSuggestion: error));
 				}
-				else
-				{
-					if (answer is CodeImplementationResponse cir2)
-					{
-						if (IsOutOrRef(parameter))
-						{
-							outputParameters.Add(new Parameter(variableName, parameterName, parameter.Type.ToString()));
-						}
-						else
-						{
-							inputParameters.Add(new Parameter(variableName, parameterName, parameter.Type.ToString()));
-						}
-					}
-					else
-					{
-						inputParameters.Add(new Parameter(variableName, parameterName, parameter.Type.ToString()));
-					}
-				}
-
 			}
 
 			var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
@@ -275,6 +246,7 @@ These are the rules with variables:
 			compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(System.IO.Abstractions.IDirectory).Assembly.Location));
 
 			compilation = compilation.AddSyntaxTrees(tree);
+			compilation = AddDefaultReferences(compilation);
 
 			var model = compilation.GetSemanticModel(tree);
 			var diagnostics = model.GetDiagnostics().Where(d => d.Id == "CS0246"); // CS0246: The type or namespace name could not be found
@@ -314,10 +286,10 @@ These are the rules with variables:
 					}
 					if (files.Length > 0)
 					{
-						foreach (var file in files)
+						foreach (var filePath in files)
 						{
-							compilation = compilation.AddReferences(MetadataReference.CreateFromFile(file));
-							string relativePath = file.Substring(file.LastIndexOf(".services"));
+							compilation = compilation.AddReferences(MetadataReference.CreateFromFile(filePath));
+							string relativePath = filePath.Substring(filePath.LastIndexOf(".services"));
 							servicesAssembly.Add(relativePath);
 						}
 					}
@@ -337,7 +309,7 @@ These are the rules with variables:
 								string error = "== Code generated by ChatGPT in previous request, start ==\n" + code + "\n== Code generated ends ==\nBut it had errors:\n";
 								error += $"The dll {dllName} does not exist in path {RuntimeEnvironment.GetRuntimeDirectory()}";
 								error += "\nFix the error and generate the C# code again.";
-								return (null, new CompilerError($"dll couldn't be found in path {RuntimeEnvironment.GetRuntimeDirectory()}", error, step));
+								return (null, new CompilerError($"dll couldn't be found in path {RuntimeEnvironment.GetRuntimeDirectory()}", error, step, FixSuggestion: error));
 							}
 						}
 						catch (System.IO.FileNotFoundException fex)
@@ -353,14 +325,14 @@ Check out Plang help documentation to assist you:
 Read the documentation link provided above to get understanding.",
 								HelpfulLinks: $@"
 You can find those 3rd party plugins at https://nuget.org
-Search for {fileName} - https://www.nuget.org/packages?q={fileName}"));
+Search for {fileName} - https://www.nuget.org/packages?q={fileName}", Retry: false));
 						}
 						catch (Exception ex)
 						{
 							string error = "== Code generated by ChatGPT in previous request, start ==\n" + code + "\n== Code generated ends ==\nBut it had errors:\n";
 							error += $"{ex}";
 							error += "\nFix the error and generate the C# code again.";
-							return (null, new CompilerError($"Unspecified compiler error", error, step, Exception: ex));
+							return (null, new CompilerError($"Unspecified compiler error", error, step, Exception: ex, FixSuggestion: error));
 						}
 					}
 				}
@@ -377,79 +349,71 @@ Search for {fileName} - https://www.nuget.org/packages?q={fileName}"));
 			var embeddedTexts = new List<EmbeddedText> { EmbeddedText.FromSource(tree.FilePath, tree.GetText()) };
 
 
-			using (var file = fileSystem.File.Create(dllFilePath))
-			using (var pdbFile = fileSystem.File.Create(pdbFilePath))
+			using var file = fileSystem.File.Create(dllFilePath);
+			using var pdbFile = fileSystem.File.Create(pdbFilePath);
+
+			var emitOptions = new EmitOptions(debugInformationFormat: DebugInformationFormat.PortablePdb);
+			var emitResult = compilation.Emit(file, embeddedTexts: embeddedTexts, pdbStream: pdbFile, options: emitOptions);
+
+			file.Dispose();
+			pdbFile.Dispose();
+			if (!emitResult.Success)
 			{
-				var emitOptions = new EmitOptions(debugInformationFormat: DebugInformationFormat.PortablePdb);
-				var emitResult = compilation.Emit(file, embeddedTexts: embeddedTexts, pdbStream: pdbFile, options: emitOptions);
+				string error = "Fix the <compilation_error> in <code> that is provided.\n<code>\n" + code + "\n<code>\n";
+				var errors = emitResult.Diagnostics.Where(p => p.Severity == DiagnosticSeverity.Error).ToList();
 
-				file.Dispose();
-				pdbFile.Dispose();
-				if (!emitResult.Success)
+				foreach (var diagnostic in errors)
 				{
-					string error = "Fix the <compilation_error> in <code> that is provided.\n<code>\n" + code + "\n<code>\n";
-					var errors = emitResult.Diagnostics.Where(p => p.Severity == DiagnosticSeverity.Error).ToList();
-
-					foreach (var diagnostic in errors)
+					string str = diagnostic.ToString();
+					error += "<compilation_error>\n" + diagnostic.ToString() + "\n<compilation_error>\n";
+					if (str.Contains("PLangFileSystem.PLangFileSystem("))
 					{
-						string str = diagnostic.ToString();
-						error += "<compilation_error>\n" + diagnostic.ToString() + "\n<compilation_error>\n";
-						if (str.Contains("PLangFileSystem.PLangFileSystem("))
-						{
-							error += "PLangFileSystem.PLangFileSystem cannot be contructed it is an abstract class. It must me injected into ExecutePlangCode(IPlangFileSystem fileSystem...)\n";
-						}
-						else if (str.Contains("Use of unassigned local variable"))
-						{
-							var message = diagnostic.GetMessage();
-							var variableName = message.Substring(message.IndexOf("'") + 1).Replace("'", "");
-							error += @$"To solve the error 'Use of unassigned local variable'. Make sure to initialize the unassigned local variable {variableName}, see <example>
+						error += "PLangFileSystem.PLangFileSystem cannot be contructed it is an abstract class. It must me injected into ExecutePlangCode(IPlangFileSystem fileSystem...)\n";
+					}
+					else if (str.Contains("Use of unassigned local variable"))
+					{
+						var message = diagnostic.GetMessage();
+						var variableName = message.Substring(message.IndexOf("'") + 1).Replace("'", "");
+						error += @$"To solve the error 'Use of unassigned local variable'. Make sure to initialize the unassigned local variable {variableName}, see <example>
 
 <example>
 long {variableName} = 0;
 // use {variableName}
 <example>
 ";
-						}
-
 					}
-					error += "\nFix the error and generate the C# code again. Make sure to reference all assemblies needed.";
-
-					return (null, new CompilerError("Compiler error", error, step));
 
 				}
-			}
-			if (answer is CodeImplementationResponse cir)
-			{
+				error += "\nFix the error and generate the C# code again. Make sure to reference all assemblies needed.";
 
-				foreach (var vars in outputParameters)
+				return (null, new CompilerError("Compiler error", error, step));
+
+			}
+
+			List<string> listOfAssembliesUsed = new();
+			var assembliesUsed = compilation.GetUsedAssemblyReferences().Distinct();
+			foreach (var au in assembliesUsed)
+			{
+				if (!listOfAssembliesUsed.Contains(au.Display))
 				{
-					memoryStack.PutForBuilder(vars.VariableName, vars.ParameterType.ToString());
+					listOfAssembliesUsed.Add(au.Display);
 				}
-
-				var implementation = new Implementation(answer.Namespace, answer.Name, answer.Implementation, answer.Using,
-					inputParameters, outputParameters, null, null, null, null, servicesAssembly);
-				return (implementation, null);
 			}
-			else if (answer is ConditionImplementationResponse conIr)
+
+			answer = answer with { Implementation = code, Assemblies = listOfAssembliesUsed };
+
+			foreach (var vars in answer.ReturnValues ?? [])
 			{
-				var implementation = new Implementation(answer.Namespace, answer.Name, answer.Implementation, answer.Using,
-					inputParameters, null, conIr.GoalToCallOnTrue, conIr.GoalToCallOnFalse,
-					conIr.GoalToCallOnTrueParameters, conIr.GoalToCallOnFalseParameters, servicesAssembly);
-				return (implementation, null);
+				memoryStack.PutForBuilder(vars.VariableName, vars.Type.ToString());
 			}
 
-			return (null, new CompilerError("Could not generate code", "Create C# code from user input", step));
-
-
-		}
-		public bool IsOutOrRef(ParameterSyntax parameterSyntax)
-		{
-			return parameterSyntax.Modifiers.Any(m => m.IsKind(SyntaxKind.RefKeyword)) ||
-				parameterSyntax.Modifiers.Any(m => m.IsKind(SyntaxKind.OutKeyword));
+			return (answer, null);
 		}
 
-		private MetadataReference TryResolveReference(string[] usingList, string assemblyName)
+
+		private MetadataReference? TryResolveReference(List<string> usingList, string assemblyName)
 		{
+
 			var assemblies = AssemblyLoadContext.Default.Assemblies;
 
 			foreach (var assembly in assemblies)
@@ -464,33 +428,13 @@ long {variableName} = 0;
 			return null;
 		}
 
-		private List<string> GetParameters(ImplementationResponse answer)
-		{
-			List<string> parameters = new();
-			if (answer is CodeImplementationResponse cir)
-			{
-				if (cir.InputParameters != null) parameters.AddRange(cir.InputParameters);
-				if (cir.OutParameters != null)
-				{
-					foreach (var parameter in cir.OutParameters)
-					{
-						if (!parameters.Contains(parameter))
-						{
-							parameters.Add(parameter);
-						}
-					}
-
-				}
-			}
-			else
-			{
-				if (answer.InputParameters != null) parameters.AddRange(answer.InputParameters);
-			}
-			return parameters;
-		}
-
 		private bool StepTextContainsVariable(GoalStep step, string variableName)
 		{
+			//todo: could do better here
+			if (variableName.Contains("α"))
+			{
+				variableName = variableName.Substring(0, variableName.IndexOf("α"));
+			}
 			return step.Text.Contains(variableName, StringComparison.OrdinalIgnoreCase);
 		}
 
@@ -545,54 +489,42 @@ long {variableName} = 0;
 		internal async Task<IBuilderError?> BuildFile(FileCodeImplementationResponse file, GoalStep step, MemoryStack memoryStack)
 		{
 			var tree = CSharpSyntaxTree.ParseText(file.SourceCode);
-		
-
 			var coreLibPath = typeof(object).Assembly.Location;
 
-			// Initial list of references - START with the core library
 			var refs = new List<MetadataReference>
 			{
 				MetadataReference.CreateFromFile(coreLibPath)
 			};
 
-			// OPTIONALLY: Add references from the current AppDomain if needed for other dependencies
-			// Be cautious, as this might pull in unexpected references.
 			var list = AppDomain.CurrentDomain.GetAssemblies()
 						  .Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location) && a.Location != coreLibPath) // Avoid duplicates
 						  .Select(a => MetadataReference.CreateFromFile(a.Location))
 						  .Cast<MetadataReference>();
 			refs.AddRange(list);
 
-			var defaultUsings = new[]
-		{
-			"System",
-			"System.Collections.Generic",
-			"System.Linq",
-			"System.Text",
-			"System.Text.RegularExpressions",
-			"System.Threading.Tasks"
-		};
+			List<string> defaultUsings = new[]
+			{
+				"System",
+				"System.Collections.Generic",
+				"System.Linq",
+				"System.Text",
+				"System.Text.RegularExpressions",
+				"System.Threading.Tasks"
+			}.ToList();
+
 			var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithUsings(defaultUsings);
-			/*
-			var compilation = CSharpCompilation.Create(
-				assemblyName: Path.GetFileNameWithoutExtension(file.FileName),
-				syntaxTrees: new[] { tree },
-				references: refs,
-				options: options
-			);*/
-
-
-
 			var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
 					.WithOptimizationLevel(OptimizationLevel.Debug)
 					.WithPlatform(Platform.AnyCpu).WithUsings(defaultUsings);
-			var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(file.FileName), options: compilationOptions)
+			var compilation = CSharpCompilation.Create(
+					Path.GetFileNameWithoutExtension(file.FileName), new[] { tree },
+					refs,
+					options: compilationOptions)
 				.AddReferences(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
 			List<string> servicesAssembly = new();
 			compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(SafeFileSystem.PLangFileSystem).Assembly.Location));
 			compilation = compilation.AddReferences(MetadataReference.CreateFromFile(typeof(System.IO.Abstractions.IDirectory).Assembly.Location));
 
-			compilation = compilation.AddSyntaxTrees(tree);
 
 
 			foreach (var assembly in Assemblies)
@@ -606,6 +538,12 @@ long {variableName} = 0;
 				if (File.Exists(assemblyPath))
 				{
 					compilation = compilation.AddReferences(MetadataReference.CreateFromFile(assemblyPath));
+					var loadedAssembly = Assembly.Load(assembly.Replace(".dll", ""));
+					if (loadedAssembly != null)
+					{
+						assemblyPath = loadedAssembly.Location;
+						compilation = compilation.AddReferences(MetadataReference.CreateFromFile(assemblyPath));
+					}
 				}
 				else
 				{
@@ -632,7 +570,7 @@ long {variableName} = 0;
 			{
 				fileSystem.File.Delete(dllFile);
 			}
-			
+
 
 			using var filestream = fileSystem.FileStream.New(dllFile, FileMode.CreateNew);
 			var result = compilation.Emit(filestream);
@@ -656,5 +594,100 @@ long {variableName} = 0;
 
 			return null;
 		}
+
+
+
+		public CSharpCompilation AddDefaultReferences(CSharpCompilation compilation)
+		{
+
+			// Get all essential system assemblies
+			var essentialAssemblies = new List<string>
+	{
+		// Core runtime
+		"System.Private.CoreLib.dll",
+		"System.Runtime.dll",
+		"System.dll",
+		"netstandard.dll",
+		"mscorlib.dll",
+		
+		// Common System assemblies
+		"System.Collections.dll",
+		"System.Collections.Concurrent.dll",
+		"System.Console.dll",
+		"System.Diagnostics.Debug.dll",
+		"System.Diagnostics.Process.dll",
+		"System.Diagnostics.TraceSource.dll",
+		"System.IO.dll",
+		"System.IO.FileSystem.dll",
+		"System.Linq.dll",
+		"System.Linq.Expressions.dll",
+		"System.Net.Http.dll",
+		"System.Net.Primitives.dll",
+		"System.ObjectModel.dll",
+		"System.Private.Uri.dll", // This fixes your Uri error
+		"System.Reflection.dll",
+		"System.Runtime.Extensions.dll",
+		"System.Runtime.InteropServices.dll",
+		"System.Runtime.Serialization.dll",
+		"System.Security.Cryptography.dll",
+		"System.Text.Encoding.dll",
+		"System.Text.Json.dll",
+		"System.Text.RegularExpressions.dll",
+		"System.Threading.dll",
+		"System.Threading.Tasks.dll",
+		"System.Threading.Thread.dll",
+		"System.Xml.dll",
+		"System.Xml.Linq.dll",
+		
+		// Additional commonly used assemblies
+		"System.ComponentModel.dll",
+		"System.ComponentModel.Primitives.dll",
+		"System.Data.Common.dll",
+		"System.Drawing.Primitives.dll",
+		"System.Globalization.dll",
+		"System.Memory.dll",
+		"System.Numerics.dll",
+		"System.Web.dll"
+	};
+
+			// Add type-based references (more reliable than file paths)
+			var typeBasedReferences = new List<MetadataReference>
+	{
+		MetadataReference.CreateFromFile(typeof(object).Assembly.Location), // System.Private.CoreLib
+		MetadataReference.CreateFromFile(typeof(Console).Assembly.Location), // System.Console
+		MetadataReference.CreateFromFile(typeof(Uri).Assembly.Location), // System.Private.Uri
+		MetadataReference.CreateFromFile(typeof(System.Collections.Generic.List<>).Assembly.Location), // System.Collections
+		MetadataReference.CreateFromFile(typeof(System.Linq.Enumerable).Assembly.Location), // System.Linq
+		MetadataReference.CreateFromFile(typeof(System.Text.RegularExpressions.Regex).Assembly.Location), // System.Text.RegularExpressions
+		MetadataReference.CreateFromFile(typeof(System.Net.Http.HttpClient).Assembly.Location), // System.Net.Http
+		MetadataReference.CreateFromFile(typeof(System.Threading.Tasks.Task).Assembly.Location), // System.Threading.Tasks
+		MetadataReference.CreateFromFile(typeof(System.IO.File).Assembly.Location), // System.IO
+		MetadataReference.CreateFromFile(typeof(System.Xml.XmlDocument).Assembly.Location), // System.Xml
+	};
+
+			// Add all type-based references
+			compilation = compilation.AddReferences(typeBasedReferences);
+
+			// Add file-based references for assemblies that exist
+			foreach (var assemblyName in essentialAssemblies)
+			{
+				var assemblyPath = Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), assemblyName);
+				if (File.Exists(assemblyPath))
+				{
+					try
+					{
+						compilation = compilation.AddReferences(MetadataReference.CreateFromFile(assemblyPath));
+					}
+					catch
+					{
+						// Ignore if assembly can't be loaded
+					}
+				}
+			}
+
+			return compilation;
+		}
+
+
 	}
 }

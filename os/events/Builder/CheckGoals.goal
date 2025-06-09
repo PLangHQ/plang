@@ -9,10 +9,11 @@ InspectFileContent
 - go through %stepThatCallGoal%, call goal CheckGoal item=%parameter%
 
 CheckGoal
-- if %parameter.Value% not contains "%" then, call SearchFor
+- if %parameter.Value% does not contains "%" then, call SearchFor
 
 SearchFor
-- search in /.build/ for all dirs with name %parameter.Value.Replace("!", "")%, include sub folder , write to %dirs%
+- search in /.build/ for all dirs with name %parameter.Value.Replace("!", "")%, include sub folder
+    write to %dirs%
 - if %dirs.Count% == 0 then
     - append to %missingGoals% list, unique = '%file.Path% - Missing goal: %item.Value%'
 

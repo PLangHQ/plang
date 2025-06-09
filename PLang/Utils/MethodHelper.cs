@@ -1,17 +1,25 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.AspNetCore.Razor.Language.Intermediate;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Building.Model;
+using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Errors.Handlers;
+using PLang.Errors.Methods;
 using PLang.Exceptions;
 using PLang.Models;
+using PLang.Models.ObjectValueConverters;
+using PLang.Modules.DbModule;
 using PLang.Runtime;
+using PLang.Services.CompilerService;
 using System.Collections;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Text.RegularExpressions;
 using System.Xml;
 using static PLang.Modules.BaseBuilder;
+using Parameter = PLang.Modules.BaseBuilder.Parameter;
 
 namespace PLang.Utils
 {
@@ -28,156 +36,209 @@ namespace PLang.Utils
 			this.typeHelper = typeHelper;
 		}
 
-		public async Task<MethodInfo?> GetMethod(object callingInstance, GenericFunction function)
+		public async Task<MethodInfo?> GetMethod(object callingInstance, IGenericFunction function)
 		{
-			var methods =  callingInstance.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
+			var methods = callingInstance.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
 
-			string? error = null;
+			GroupedBuildErrors? error = null;
 			var method = methods.FirstOrDefault(p =>
 			{
-				if (p.Name == function.FunctionName)
+				if (p.Name == function.Name)
 				{
-					error = IsParameterMatch(p, function.Parameters);
-					if (error == null) return true;
+					//todo: lot of work done here at runtime
+					(var _, error) = IsParameterMatch(p, function.Parameters, goalStep);
+					if (error.Count == 0) return true;
 				}
 
 				return false;
 			});
 			if (method != null) return method;
 
-			throw new MethodNotFoundException($"Method {function.FunctionName} could not be found that matches with your statement. " + error);
+			throw new MethodNotFoundException($"Method {function.Name} could not be found that matches with your statement. " + error);
 		}
 
 
 		public record MethodNotFoundResponse(string Text);
 
 
-		public GroupedBuildErrors? ValidateFunctions(GenericFunction[] functions, string module, MemoryStack memoryStack)
+		public (
+			Dictionary<string, List<ParameterType>>? ParametersProperties,
+			Dictionary<string, List<ParameterType>>? ReturnObjectProperties,
+			IBuilderError? Errors
+			)
+				ValidateFunctions(IGenericFunction function, string module, MemoryStack memoryStack)
 		{
+			Dictionary<string, List<ParameterType>>? ParameterProperties = new();
+			Dictionary<string, List<ParameterType>>? ReturnObjectProperties = new();
+
 			var multipleError = new GroupedBuildErrors("InvalidFunction");
-			if (functions == null || functions[0] == null) return null;
-
-			foreach (var function in functions)
+			if (string.IsNullOrWhiteSpace(function.Name) || function.Name.ToUpper() == "N/A")
 			{
-
-				if (function.FunctionName == null || function.FunctionName.ToUpper() == "N/A")
+				return (null, null, new InvalidModuleError(module, $"No function in {module} matches the user intent.", function));
+			}
+			else
+			{
+				var runtimeType = typeHelper.GetRuntimeType(module);
+				if (runtimeType == null)
 				{
-					multipleError.Add(new InvalidFunctionsError(function.FunctionName ?? "N/A", "", true));
+					return (null, null, new InvalidModuleError(module, $"Could not load {module}.Program", function));
+				}
+
+				var instanceFunctions = runtimeType.GetMethods().Where(p => p.Name == function.Name);
+				if (instanceFunctions.Count() == 0)
+				{
+					return (null, null, new InvalidFunctionsError(function.Name, $"Could not find {function.Name} in module", false));
 				}
 				else
 				{
-					var runtimeType = typeHelper.GetRuntimeType(module);
-					if (runtimeType == null)
-					{
-						throw new BuilderException($"Could not load {module}.Program");
-					}
 
-					var instanceFunctions = runtimeType.GetMethods().Where(p => p.Name == function.FunctionName);
-					if (instanceFunctions.Count() == 0)
+					foreach (var instanceFunction in instanceFunctions)
 					{
-						multipleError.Add(new InvalidFunctionsError(function.FunctionName, $"Could not find {function.FunctionName} in module", true));
-					}
-					else
-					{
+						(var parameterProperties, var parameterErrors) = IsParameterMatch(instanceFunction, function.Parameters, goalStep);
+						ParameterProperties.AddOrReplace(parameterProperties);
 
-						foreach (var instanceFunction in instanceFunctions)
+						if (parameterErrors.Count == 0)
 						{
-							var parameterError = IsParameterMatch(instanceFunction, function.Parameters);
-							if (parameterError == null)
+							if (instanceFunction.ReturnType != typeof(Task) && function.ReturnValues != null && function.ReturnValues.Count > 0)
 							{
-								if (instanceFunction.ReturnType != typeof(Task) && function.ReturnValues != null && function.ReturnValues.Count > 0)
+								foreach (var returnValue in function.ReturnValues)
 								{
-									foreach (var returnValue in function.ReturnValues)
-									{
-										memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
-									}
+									memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
+
+									var objectProperties = GetParameterTypes(returnValue.VariableName, returnValue.Type);
+									ReturnObjectProperties.Add(returnValue.VariableName, objectProperties);
 								}
 							}
-							else
-							{
-								multipleError.Add(new InvalidFunctionsError(function.FunctionName, $"Parameters don't match with {function.FunctionName} - {parameterError}", false));
-							}
-
+						}
+						else
+						{
+							multipleError.Add(parameterErrors);
 						}
 
 					}
+
 				}
 			}
-			return (multipleError.Count > 0) ? multipleError : null;
+
+
+			return (ParameterProperties, ReturnObjectProperties, (multipleError.Count > 0) ? multipleError : null);
 		}
 
 
 
-		public string? IsParameterMatch(MethodInfo p, List<Parameter> parameters)
+		public (Dictionary<string, List<ParameterType>>? ParameterProperties, GroupedBuildErrors Error) IsParameterMatch(MethodInfo p, List<Parameter> parameters, GoalStep goalStep)
 		{
-			string? error = null;
-			var variablesInStep = variableHelper.GetVariables(goalStep.Text);
+			GroupedBuildErrors buildErrors = new();
 
+			var variablesInStep = variableHelper.GetVariables(goalStep.Text);
+			Dictionary<string, List<ParameterType>>? parameterProperties = new();
 			foreach (var methodParameter in p.GetParameters())
 			{
 				var parameterType = methodParameter.ParameterType.Name.ToLower();
 				if (parameterType.Contains("`")) parameterType = parameterType.Substring(0, parameterType.IndexOf("`"));
 
 				var parameter = parameters.FirstOrDefault(x => x.Name == methodParameter.Name);
-				
+
 				if (parameter == null && parameterType != "nullable" && !methodParameter.HasDefaultValue && !methodParameter.IsOptional)
 				{
-					error += $"{methodParameter.Name} ({parameterType}) is missing from parameters. {methodParameter.Name} is a required parameter\n";
+					buildErrors.Add(new InvalidParameterError(p.Name,
+						$"{methodParameter.Name} ({parameterType}) is missing from parameters. {methodParameter.Name} is a required parameter", goalStep));
 				}
 				else if (parameter != null && parameterType == "string" && methodParameter.CustomAttributes.Count() > 0 && methodParameter.CustomAttributes.First().AttributeType.Name == "NullableAttribute" && parameter.Value == null)
 				{
-					error += $"{methodParameter.Name} ({parameterType}) is missing from parameters. {methodParameter.Name} is a required parameter\n";
+					buildErrors.Add(new InvalidParameterError(p.Name,
+						$"{methodParameter.Name} ({parameterType}) is missing from parameters. {methodParameter.Name} is a required parameter", goalStep));
 				}
 
 				if (parameter != null && parameter.Value != null && parameterType == "string" && parameter.Value.ToString().StartsWith("\"") && parameter.Value.ToString().EndsWith("\""))
 				{
-					error += $"{methodParameter.Name} is string, the property Value cannot start and end with quote(\").";
-				}			
+					buildErrors.Add(new InvalidParameterError(p.Name,
+						$"{methodParameter.Name} is string, the property Value cannot start and end with quote(\").", goalStep));
+				}
 
-				if (parameter != null && VariableHelper.IsVariable(parameter.Value) && !variablesInStep.Any(p => p.OriginalKey.ToString().Equals(parameter.Value?.ToString(), StringComparison.OrdinalIgnoreCase)))
+				if (parameter != null && VariableHelper.IsVariable(parameter.Value) && !variablesInStep.Any(p => p.PathAsVariable.Equals(parameter.Value?.ToString(), StringComparison.OrdinalIgnoreCase)))
 				{
-					error += $"{parameter.Value} could not be found in step. User is not defining {parameter.Value} as variable.";
+					buildErrors.Add(new InvalidParameterError(p.Name,
+						$"{parameter.Value} could not be found in step. User is not defining {parameter.Value} as variable.", goalStep));
 				}
 				if (parameterType == "nullable" && methodParameter.ParameterType.GenericTypeArguments.Length > 0)
 				{
 					parameterType = methodParameter.ParameterType.GenericTypeArguments[0].Name.ToLower();
 				}
+
 				string? parameterTypeName = methodParameter.ParameterType.FullName;
 				if (parameterTypeName == null)
 				{
-					throw new ArgumentNullException($"Parameter does not have type: {methodParameter.ParameterType}");
+					buildErrors.Add(new InvalidParameterError(p.Name,
+						$"Parameter does not have type: {methodParameter.ParameterType}", goalStep));
 				}
+
 				if (parameterTypeName == "System.Object")
 				{
 					continue;
 				}
 
-				if (parameter != null && parameter.Type == CleanAssemblyInfo(parameterTypeName)) {
+
+				var objectProperties = GetParameterTypes(methodParameter.Name, parameterTypeName);
+				parameterProperties.Add(methodParameter.Name, objectProperties);
+
+
+				if (parameter != null && parameter.Type == CleanAssemblyInfo(parameterTypeName))
+				{
 					continue;
 				}
-				
+
 				if (methodParameter.IsOptional) continue;
 
 				if (parameters.FirstOrDefault(p => p.Type.ToLower().StartsWith(parameterType)) == null && parameters.FirstOrDefault(p => p.Type.ToLower() == parameterTypeName!.ToLower()) == null)
 				{
-					
+
 					// temp thing, should be removed
 					if (parameterTypeName == "PLang.Models.GoalToCall")
 					{
 						parameterTypeName = "String";
 						if (parameters.FirstOrDefault(p => p.Type.ToLower().StartsWith(parameterTypeName)) == null && parameters.FirstOrDefault(p => p.Type.ToLower() == parameterTypeName!.ToLower()) == null)
 						{
-							error += $"{methodParameter.Name} ({methodParameter.ParameterType.Name}) is missing\n";
+							buildErrors.Add(new InvalidParameterError(p.Name,
+								$"{methodParameter.Name} ({methodParameter.ParameterType.Name}) is missing", goalStep));
 						}
 					}
 					else if (!methodParameter.ParameterType.Name.ToLower().StartsWith("nullable") && !methodParameter.IsOptional && !methodParameter.HasDefaultValue)
 					{
-						error += $"{methodParameter.Name} ({methodParameter.ParameterType.Name}) is missing\n";
+						buildErrors.Add(new InvalidParameterError(p.Name,
+								$"{methodParameter.Name} ({methodParameter.ParameterType.Name}) is missing\n", goalStep));
 					}
-
 				}
+
 			}
-			return error;
+			return (parameterProperties, buildErrors);
+		}
+
+
+		private List<ParameterType> GetParameterTypes(string parameterName, string parameterTypeName)
+		{
+			List<ParameterType> objectProperties = new();
+			var type = Type.GetType(parameterTypeName, throwOnError: false);
+			if (type == null) return objectProperties;
+			if (type.Name.StartsWith("List`") || type.Name.StartsWith("Dictionary`") || type.Name.StartsWith("Tuple`"))
+			{
+				type = type.BaseType;
+			}
+			if (type == null || TypeHelper.IsConsideredPrimitive(type) || type.FullName == "System.Object")
+			{
+				objectProperties.Add(new ParameterType() { FullTypeName = type.FullName, Name = parameterName });
+				return objectProperties;
+			}
+
+
+			var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+			foreach (var prop in properties)
+			{
+				objectProperties.Add(new ParameterType() { FullTypeName = prop.PropertyType.FullName, Name = prop.Name });
+			}
+
+			return objectProperties;
 		}
 
 		private string CleanAssemblyInfo(string parameterTypeName)
@@ -188,12 +249,16 @@ namespace PLang.Utils
 			return newParamType.Replace("[[", "[") + "]";
 		}
 
-		public Dictionary<string, object?> GetParameterValues(MethodInfo method, GenericFunction function)
+		public Dictionary<string, object?> GetParameterValues(MethodInfo method, IGenericFunction function)
 		{
 			var parameterValues = new Dictionary<string, object?>();
 			var parameters = method.GetParameters();
 			if (parameters.Length == 0) return parameterValues;
 
+			JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+			{
+				Converters = { new JsonObjectValueConverter() }
+			};
 
 			foreach (var parameter in parameters)
 			{
@@ -219,7 +284,7 @@ namespace PLang.Utils
 					var handlesAttribute = parameter.CustomAttributes.FirstOrDefault(p => p.AttributeType == typeof(HandlesVariableAttribute));
 					if (handlesAttribute == null && VariableHelper.IsVariable(variableValue))
 					{
-						var ov = variableHelper.GetObjectValue(variableValue.ToString(), false);
+						var ov = variableHelper.GetObjectValue(variableValue.ToString(), goal: goalStep.Goal);
 						if (ov != null && ov.Value != null && parameter.ParameterType.IsInstanceOfType(ov.Value))
 						{
 							//parameterValues.Add(inputParameter.Name, ov.Value);
@@ -233,19 +298,19 @@ namespace PLang.Utils
 
 					}
 
-					if (parameter.ParameterType.Name.StartsWith("Dictionary"))
+					if (parameter.ParameterType.Name.StartsWith("Dictionary") || parameter.ParameterType.Name.StartsWith("IDictionary"))
 					{
 						if (parameter.ParameterType.ToString().StartsWith("System.Collections.Generic.Dictionary`2[System.String,System.Tuple`2["))
 						{
 							SetDictionaryWithTupleParameter(parameter, variableValue, handlesAttribute, parameterValues);
-							
+
 						}
 						else
 						{
 							SetDictionaryParameter(parameter, variableValue, handlesAttribute, parameterValues);
 						}
 					}
-					else if (parameter.ParameterType.Name.StartsWith("List"))
+					else if (parameter.ParameterType.Name.StartsWith("List") || parameter.ParameterType.Name.StartsWith("IList"))
 					{
 						SetListParameter(parameter, variableValue, handlesAttribute, parameterValues);
 
@@ -355,10 +420,14 @@ namespace PLang.Utils
 					if (obj is IList list && list.Count > 0)
 					{
 						var item = list[0];
-						if (item != null && item.GetType().Name == "DapperRow")
+						if (item is Row row)
 						{
-							obj = variableHelper.LoadVariables(((IDictionary<string, object>)item).Values.FirstOrDefault());
+							obj = variableHelper.LoadVariables(row.Values.FirstOrDefault());
+						} else
+						{
+							throw new Exception("Why no load here?");
 						}
+
 					}
 
 					elementType = (obj.GetType() == rootElementType) ? rootElementType : mainElementType;
@@ -371,15 +440,18 @@ namespace PLang.Utils
 			parameterValues.Add(parameter.Name, newArray);
 		}
 
-		private void SetListParameter(ParameterInfo parameter, object? variableValue, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
+		private void SetListParameter(ParameterInfo parameter, object? obj, CustomAttributeData? handlesAttribute, Dictionary<string, object?> parameterValues)
 		{
 			if (parameter.Name == null) return;
+			string typeName = parameter.ParameterType.Name;
 
 			System.Collections.IList? list = null;
-
+			object? variableValue = obj;
 			if (VariableHelper.IsVariable(variableValue))
 			{
-				variableValue = variableHelper.LoadVariables(variableValue);
+				variableValue = variableHelper.GetValue(variableValue.ToString(), parameter.ParameterType);
+				parameterValues.Add(parameter.Name, variableValue);
+				return;
 			}
 
 			if (variableValue is string str && JsonHelper.IsJson(str))
@@ -394,9 +466,18 @@ namespace PLang.Utils
 					variableValue = JArray.Parse(str);
 				}
 			}
+
+
 			if (variableValue == null)
 			{
-				list = Activator.CreateInstance(parameter.ParameterType) as IList;
+				if (parameter.ParameterType.Name.StartsWith("IList"))
+				{
+					list = new List<object>();
+				}
+				else
+				{
+					list = Activator.CreateInstance(parameter.ParameterType) as IList;
+				}
 
 			}
 			else if (variableValue is JArray)
@@ -426,7 +507,14 @@ namespace PLang.Utils
 			}
 			else if (!variableValue.GetType().Name.StartsWith("List"))
 			{
-				list = Activator.CreateInstance(parameter.ParameterType) as IList;
+				if (parameter.ParameterType.Name.StartsWith("IList"))
+				{
+					list = new List<object>();
+				}
+				else
+				{
+					list = Activator.CreateInstance(parameter.ParameterType) as IList;
+				}
 				list.Add(variableValue);
 			}
 
@@ -442,7 +530,7 @@ namespace PLang.Utils
 			}
 			if (list.GetType() == parameter.ParameterType)
 			{
-				for (int i=0;i<list.Count;i++)
+				for (int i = 0; i < list.Count; i++)
 				{
 					list[i] = variableHelper.LoadVariables(list[i]);
 				}
@@ -450,21 +538,21 @@ namespace PLang.Utils
 				return;
 			}
 
-			var instanceList = Activator.CreateInstance(parameter.ParameterType);
+			var instanceList = (parameter.ParameterType.Name.StartsWith("IList")) ? new List<object>() : Activator.CreateInstance(parameter.ParameterType);
 			var addMethod = instanceList.GetType().GetMethod("Add");
 
 			for (int i = 0; list != null && i < list.Count; i++)
 			{
-				object? obj = variableHelper.LoadVariables(list[i]);
-				
+				object? objInstance = variableHelper.LoadVariables(list[i]);
 
-				if (obj != null && parameter.ParameterType.GenericTypeArguments[0] == typeof(string))
+
+				if (objInstance != null && parameter.ParameterType.GenericTypeArguments.Count() > 0 && parameter.ParameterType.GenericTypeArguments[0] == typeof(string))
 				{
-					addMethod.Invoke(instanceList, new object[] { obj.ToString() });
+					addMethod.Invoke(instanceList, new object[] { objInstance.ToString() });
 				}
 				else
 				{
-					addMethod.Invoke(instanceList, new object[] { obj });
+					addMethod.Invoke(instanceList, new object[] { objInstance });
 				}
 			}
 
@@ -518,7 +606,8 @@ namespace PLang.Utils
 					try
 					{
 						dict = jobject.ToObject<Dictionary<string, Tuple<object?, object?>?>>();
-					} catch (Exception)
+					}
+					catch (Exception)
 					{
 						var itemWithList = jobject.ToObject<Dictionary<string, List<object?>?>>();
 						if (itemWithList == null) throw;
@@ -583,7 +672,8 @@ namespace PLang.Utils
 						}
 						catch { }
 					}
-					if (dict == null && variableValue is string str) {
+					if (dict == null && variableValue is string str)
+					{
 						dict = new();
 						dict.Add(str.Replace("%", ""), obj);
 					}
@@ -713,7 +803,7 @@ namespace PLang.Utils
 			{
 				if (targetType.Name == "String")
 				{
-					return JsonConvert.SerializeObject(value, Newtonsoft.Json.Formatting.Indented);
+					return StringHelper.ConvertToString(value);
 				}
 				return parameterInfo.DefaultValue;
 			}

@@ -58,7 +58,7 @@ namespace PLang.Services.OpenAi
 			{
 				try
 				{
-
+					question.RawResponse = q.RawResponse;
 					return (Extractor.Extract(q.RawResponse, responseType), null);
 
 				}

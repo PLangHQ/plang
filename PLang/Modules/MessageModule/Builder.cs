@@ -18,7 +18,7 @@ namespace PLang.Modules.MessageModule
 		}
 
 
-		public override Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step)
+		public override Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, IBuilderError? previousBuildError = null)
 		{
 			var moduleSettings = new ModuleSettings(settings, llmServiceFactory);
 			var replays = moduleSettings.GetRelays();
@@ -26,7 +26,7 @@ namespace PLang.Modules.MessageModule
 			AppendToAssistantCommand(@$"Following Relay servers are available: {JsonConvert.SerializeObject(replays)}.
 Following are Nostr accounts:{JsonConvert.SerializeObject(accounts)}
 ");
-			return base.Build(step);
+			return base.Build(step, previousBuildError);
 		}
 	}
 }

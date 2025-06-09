@@ -14,6 +14,7 @@ namespace PLang.Errors.Events
 	{
 		public bool IgnoreError => true;
 		public bool Retry => false;
+		public string? LlmBuilderHelp { get; set; }
 		public override string ToString()
 		{
 			return (InitialError ?? this).ToFormat().ToString();

@@ -10,6 +10,7 @@
     <FileVersion>$(Version)</FileVersion>
     <AssemblyName>plangw</AssemblyName>
 		<PreserveCompilationContext>true</PreserveCompilationContext>
+		<RunAnalyzersDuringLiveAnalysis>false</RunAnalyzersDuringLiveAnalysis>
   </PropertyGroup>
 
   <ItemGroup>

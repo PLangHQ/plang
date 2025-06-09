@@ -25,8 +25,8 @@ namespace PLang.Modules.CallGoalModule.Tests
 			llmServiceFactory.CreateHandler().Returns(llmService);
 		
 
-			builder = new Builder(goalParser, prParser, memoryStack);
-			builder.InitBaseBuilder("PLang.Modules.CallGoalModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder = new Builder(goalParser, prParser, memoryStack, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -35,16 +35,10 @@ namespace PLang.Modules.CallGoalModule.Tests
 			var llmService = GetLlmService(stepText, caller, type);
 			if (llmService == null) return;
 
-			builder = new Builder(goalParser, prParser, memoryStack);
-			builder.InitBaseBuilder("PLang.Modules.CallGoalModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder = new Builder(goalParser, prParser, memoryStack, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
-		public GoalStep GetStep(string text)
-		{
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
-			step.ModuleType = "PLang.Modules.CallGoalModule";
-			return step;
-		}
+		
 
 		[DataTestMethod]
 		[DataRow("call !Process.Image name=%full_name%, %address%")]
@@ -52,14 +46,14 @@ namespace PLang.Modules.CallGoalModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("RunGoal", gf.FunctionName);
+			Assert.AreEqual("RunGoal", gf.Name);
 			Assert.AreEqual("goalName", gf.Parameters[0].Name);
 			Assert.AreEqual("!Process.Image", gf.Parameters[0].Value);
 			Assert.AreEqual("parameters", gf.Parameters[1].Name);
@@ -76,14 +70,14 @@ namespace PLang.Modules.CallGoalModule.Tests
 		public async Task RunGoal2_Test(string text)
 		{
 			SetupResponse(text);
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("RunGoal", gf.FunctionName);
+			Assert.AreEqual("RunGoal", gf.Name);
 			Assert.AreEqual("goalName", gf.Parameters[0].Name);
 			Assert.AreEqual("!RunReporting", gf.Parameters[0].Value);
 			Assert.AreEqual("parameters", gf.Parameters[1].Name);

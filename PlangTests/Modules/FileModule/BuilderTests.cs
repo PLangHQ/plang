@@ -27,7 +27,7 @@ namespace PLang.Modules.FileModule.Tests
 			LoadOpenAI();
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.FileModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -37,16 +37,9 @@ namespace PLang.Modules.FileModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.FileModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
-		public GoalStep GetStep(string text)
-		{
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
-			step.ModuleType = "PLang.Modules.FileModule";
-			return step;
-		}
 
 		[DataTestMethod]
 		[DataRow("read %mp4File% to %mp4ContentBase64%")]
@@ -54,14 +47,14 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 			 
-			var step = GetStep(text);		
+			LoadStep(text);		
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("ReadBinaryFileAndConvertToBase64", gf.FunctionName);
+			Assert.AreEqual("ReadBinaryFileAndConvertToBase64", gf.Name);
 			Assert.AreEqual("path", gf.Parameters[0].Name);
 			Assert.AreEqual("%mp4File%", gf.Parameters[0].Value);
 			Assert.AreEqual("mp4ContentBase64", gf.ReturnValues[0].VariableName);
@@ -75,14 +68,14 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("ReadTextFile", gf.FunctionName);
+			Assert.AreEqual("ReadTextFile", gf.Name);
 			Assert.AreEqual("path", gf.Parameters[0].Name);
 			Assert.AreEqual("file.txt", gf.Parameters[0].Value);
 			Assert.AreEqual("content", gf.ReturnValues[0].VariableName);
@@ -95,14 +88,14 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("ReadFileAsStream", gf.FunctionName);
+			Assert.AreEqual("ReadFileAsStream", gf.Name);
 			Assert.AreEqual("path", gf.Parameters[0].Name);
 			Assert.AreEqual("file.mp4", gf.Parameters[0].Value);
 			Assert.AreEqual("stream", gf.ReturnValues[0].VariableName);
@@ -116,14 +109,14 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("ReadMultipleTextFiles", gf.FunctionName);
+			Assert.AreEqual("ReadMultipleTextFiles", gf.Name);
 			Assert.AreEqual("folderPath", gf.Parameters[0].Name);
 			Assert.AreEqual("%dir%", gf.Parameters[0].Value);
 			if (text.Contains("and subfolders"))
@@ -149,14 +142,14 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("WriteToFile", gf.FunctionName);
+			Assert.AreEqual("WriteToFile", gf.Name);
 			Assert.AreEqual("path", gf.Parameters[0].Name);
 			Assert.AreEqual("file.txt", gf.Parameters[0].Value);
 			Assert.AreEqual("content", gf.Parameters[1].Name);
@@ -174,14 +167,14 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("AppendToFile", gf.FunctionName);
+			Assert.AreEqual("AppendToFile", gf.Name);
 			Assert.AreEqual("path", gf.Parameters[0].Name);
 			Assert.AreEqual("file.txt", gf.Parameters[0].Value);
 			Assert.AreEqual("content", gf.Parameters[1].Name);
@@ -201,14 +194,14 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("CopyFile", gf.FunctionName);
+			Assert.AreEqual("CopyFile", gf.Name);
 			Assert.AreEqual("sourceFileName", gf.Parameters[0].Name);
 			Assert.AreEqual("%file1%", gf.Parameters[0].Value);
 			Assert.AreEqual("destFileName", gf.Parameters[1].Name);
@@ -222,14 +215,14 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 			
-			Assert.AreEqual("DeleteFile", gf.FunctionName);
+			Assert.AreEqual("DeleteFile", gf.Name);
 			Assert.AreEqual("fileName", gf.Parameters[0].Name);
 			Assert.AreEqual("%file1%", gf.Parameters[0].Value);
 		}
@@ -241,14 +234,14 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text); 
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("GetFileInfo", gf.FunctionName);
+			Assert.AreEqual("GetFileInfo", gf.Name);
 			Assert.AreEqual("fileName", gf.Parameters[0].Name);
 			Assert.AreEqual("%file%", gf.Parameters[0].Value);
 			AssertVar.AreEqual("fileInfo", gf.ReturnValues[0].VariableName);
@@ -262,14 +255,14 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("CreateDirectory", gf.FunctionName);
+			Assert.AreEqual("CreateDirectory", gf.Name);
 			Assert.AreEqual("directoryPath", gf.Parameters[0].Name);
 			Assert.AreEqual("%dirName%", gf.Parameters[0].Value);
 
@@ -282,14 +275,14 @@ namespace PLang.Modules.FileModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("DeleteDirectory", gf.FunctionName);
+			Assert.AreEqual("DeleteDirectory", gf.Name);
 			Assert.AreEqual("directoryPath", gf.Parameters[0].Name);
 			Assert.AreEqual("%dirName%", gf.Parameters[0].Value);
 

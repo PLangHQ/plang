@@ -28,6 +28,7 @@ namespace PLang.Errors.Types
 	{
 		public bool Retry => false;
 		public bool ContinueBuild => false;
+		public string? LlmBuilderHelp { get; set; }
 
 		public override PaymentRequest AsData()
 		{

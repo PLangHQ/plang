@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using NBitcoin;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Errors;
@@ -6,11 +7,13 @@ using PLang.Errors.Runtime;
 using PLang.Errors.Types;
 using PLang.Exceptions;
 using PLang.Models;
+using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Threading.Channels;
 using static PLang.Utils.StepHelper;
 
 namespace PLang.Modules.OutputModule
@@ -27,6 +30,20 @@ namespace PLang.Modules.OutputModule
 			this.outputStreamFactory = outputStreamFactory;
 			this.outputSystemStreamFactory = outputSystemStreamFactory;
 			this.programFactory = programFactory;
+		}
+
+		public record GoalToCallWithParams(GoalToCall GoalToCall, Dictionary<string, object?>? parameters = null);
+		public async Task<IError?> SetOutputStream(string channel, GoalToCall goalToCall, Dictionary<string, object?>? parameters = null)
+		{
+			var validate = programFactory.GetProgram<ValidateModule.Program>(goalStep);
+			var error = await validate.IsNotEmpty([channel], "Channel cannot be empty");
+			if (error != null) return error;
+
+			error = await validate.IsNotEmpty([goalToCall], "GoalToCall cannot be empty");
+			if (error != null) return error;
+
+			goal.AddVariable(new GoalToCallWithParams(goalToCall, parameters), variableName: "!output_stream_" + channel);
+			return null;
 		}
 
 		[Description("Send to user and waits for answer. Uses llm to construct a question to user and to format the answer. Developer defines specifically to use llm")]
@@ -53,10 +70,11 @@ namespace PLang.Modules.OutputModule
 		[Description("Send to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. regexPattern can contain %variable%. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.")]
 		public async Task<(string?, IError?)> AskUser(string text, string type = "text", int statusCode = 202, string? regexPattern = null, string? errorMessage = null, Dictionary<string, object>? parameters = null)
 		{
-			return await Ask(text, type, statusCode, regexPattern, errorMessage, parameters);
+			return await Ask(text, type, statusCode, regexPattern, errorMessage, parameters, "user");
 		}
-		[Description("Send to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. regexPattern can contain %variable%. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.")]
-		public async Task<(string?, IError?)> Ask(string text, string type = "text", int statusCode = 202, string? regexPattern = null, string? errorMessage = null, Dictionary<string, object>? parameters = null)
+
+		[Description("Send to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. regexPattern can contain %variable%. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting. channel=user|system|logger|audit|metric. User can also define his custom channel")]
+		public async Task<(string?, IError?)> Ask(string text, string type = "text", int statusCode = 202, string? regexPattern = null, string? errorMessage = null, Dictionary<string, object>? parameters = null, string? channel = null)
 		{
 			string? result;
 			if (context.ContainsKey("!answer"))
@@ -99,40 +117,36 @@ namespace PLang.Modules.OutputModule
 
 		}
 
-		[Description("Write to the system output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text")]
-		public async Task<IError?> WriteToSystemOutput(object? content = null, bool writeToBuffer = false, string type = "text", int statusCode = 200)
+		[Description("Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. channel=user|system|logger|audit|metric. User can also define his custom channel")]
+		public async Task<IError?> Write(object content, bool writeToBuffer = false, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null, string? channel = null)
 		{
 
-			if (writeToBuffer)
+
+			if (channel != null && goal.GetVariable<bool?>("!output_stream_" + channel + "_goal") == null)
 			{
-				await outputSystemStreamFactory.CreateHandler().WriteToBuffer(content, type, statusCode);
-			}
-			else
-			{
-				await outputSystemStreamFactory.CreateHandler().Write(content, type, statusCode);
+				var goalToCall = goal.GetVariable<GoalToCallWithParams>("!output_stream_" + channel);
+				if (goalToCall != null)
+				{
+					paramaters.AddOrReplace("type", type);
+					paramaters.AddOrReplace("statusCode", statusCode);
+					paramaters.AddOrReplace("content", content);
+					foreach (var goalParam in goalToCall.parameters ?? [])
+					{
+						paramaters.AddOrReplace(goalParam.Key, goalParam.Value);
+					}
+					paramaters.AddOrReplace("!output_stream_" + channel + "_goal", true);
+
+					var callGoalModule = programFactory.GetProgram<CallGoalModule.Program>(goalStep);
+					var result = await callGoalModule.RunGoal(goalToCall.GoalToCall, paramaters);
+					if (result.Error != null) return result.Error;
+
+					// writing to channel does not return any value
+					return null;
+				}
 			}
 
-			return null;
-		}
+			await outputStreamFactory.CreateHandler().Write(content, type, statusCode, paramaters);
 
-
-		[Description("Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text")]
-		public async Task<IError?> Write(object content, bool writeToBuffer = false, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null)
-		{
-			if (statusCode >= 400)
-			{
-				if (content == null) return new UserDefinedError("Content is null", goalStep, StatusCode: statusCode);
-				//await outputStream.CreateHandler().Write(content, type, statusCode);
-				return new UserDefinedError(content?.ToString(), goalStep, StatusCode: statusCode);
-			}
-			if (writeToBuffer)
-			{
-				await outputStreamFactory.CreateHandler().WriteToBuffer(content, type, statusCode);
-			}
-			else
-			{
-				await outputStreamFactory.CreateHandler().Write(content, type, statusCode, paramaters);
-			}
 			return null;
 		}
 

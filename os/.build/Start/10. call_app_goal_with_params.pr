@@ -1,105 +1,136 @@
 {
-  "Action": {
-    "FunctionName": "RunApp",
+  "Text": "call /apps/%app%/%goals[0].name% %goals[0].params%\n    on ask call AskMe",
+  "ModuleType": null,
+  "Reload": false,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+      "model": "gpt-4o",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "\r\nOnly choose RunApp if user specifically defines it as app\r\n\r\nUse <examples> to understand user input\r\n\r\n<examples>\r\ncall goal /Start => function name:RunGoal  goalName:/Start, that is rooted, no parameter.\r\ncall ParseText => function name:RunGoal, goalName: ParseText, no parameters\r\nrun Folder/Search q=%fileName% => function: RunGoal, goalName:Folder/Search,, parameter key is q, and value is %fileName%\r\nexecute goal EvaluteScore %user%, write to %score% => function: RunGoal, goalName:EvaluteScore, parameter is user=%user%, return value is %score%\r\nset %data% = ParseDocument(%document%) => function: RunGoal, goalName:ParseDocument, parameter is %document%, %data% is the return value\r\n%user% = GetUser %id% => function: RunGoal, goalName:GetUser, parameter is %id%, return value is %user%\r\n\r\ncall app Gmail/Search %query% => function name:RunApp, appName:Gmail, goalName:/Search , %query% is key and value in parameters\r\ncall app /Builder/DbModule %content%, write to %result% => function name:RunApp, appName:Builder, goalName:/DbModule , %query% is key and value in parameters, return value %result%\r\n<examples>\r\n\""
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nThe user intends to call a specific goal within an application, passing parameters to it, and handle any 'ask' events by calling another function named 'AskMe'."
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## functions available starts ##\r\n[{\"Description\":\"Call/Runs another app. app can be located in another directory, then path points the way. goalName is default \\\"Start\\\" when it cannot be mapped\",\"MethodName\":\"RunApp\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"appName\"},{\"Type\":\"PLang.Models.GoalToCall\",\"Name\":\"goalName\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]},{\"Type\":\"System.Boolean\",\"Name\":\"waitForExecution\",\"DefaultValue\":true},{\"Type\":\"System.Int32\",\"Name\":\"delayWhenNotWaitingInMilliseconds\",\"DefaultValue\":50},{\"Type\":\"System.UInt32\",\"Name\":\"waitForXMillisecondsBeforeRunningGoal\",\"DefaultValue\":0},{\"Type\":\"System.Boolean\",\"Name\":\"keepMemoryStackOnAsync\",\"DefaultValue\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Call/Runs another goal. goalName can be prefixed with !. If backward slash(\\\\) is used by user, change to forward slash(/)\",\"MethodName\":\"RunGoal\",\"Parameters\":[{\"Type\":\"PLang.Models.GoalToCall\",\"Name\":\"goalName\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]},{\"Type\":\"System.Boolean\",\"Name\":\"waitForExecution\",\"DefaultValue\":true},{\"Type\":\"System.Int32\",\"Name\":\"delayWhenNotWaitingInMilliseconds\",\"DefaultValue\":50},{\"Type\":\"System.UInt32\",\"Name\":\"waitForXMillisecondsBeforeRunningGoal\",\"DefaultValue\":0},{\"Type\":\"System.Boolean\",\"Name\":\"keepMemoryStackOnAsync\",\"DefaultValue\":false},{\"Type\":\"System.Boolean\",\"Name\":\"isolated\",\"DefaultValue\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}}]\r\n## functions available ends ##\r\n## defined variables ##\r\napp (type:object), goals[0].name (type:object), goals[0].params (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "call /apps/%app%/%goals[0].name% %goals[0].params%\n    on ask call AskMe"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.CallGoalModule.Builder",
+      "caching": true,
+      "RawResponse": "```json\n{\n\t\"Reasoning\": \"The user wants to call a specific goal within an application, passing parameters to it. The goal is located within a specific app, and the parameters are provided. The user also specifies handling 'ask' events by calling another function named 'AskMe'.\",\n\t\"Name\": \"RunApp\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"System.String\",\n\t\t\t\"Name\": \"appName\",\n\t\t\t\"Value\": \"%app%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"PLang.Models.GoalToCall\",\n\t\t\t\"Name\": \"goalName\",\n\t\t\t\"Value\": \"/%goals[0].name%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Dictionary<String, Object>\",\n\t\t\t\"Name\": \"parameters\",\n\t\t\t\"Value\": \"%goals[0].params%\"\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
+    }
+  ],
+  "Properties": {
+    "Parameters": {
+      "appName": [
+        {
+          "Name": "appName",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "goalName": [
+        {
+          "Name": "Value",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "parameters": [
+        {
+          "Name": "parameters",
+          "FullTypeName": "System.Object"
+        }
+      ],
+      "waitForExecution": [
+        {
+          "Name": "waitForExecution",
+          "FullTypeName": "System.Boolean"
+        }
+      ],
+      "delayWhenNotWaitingInMilliseconds": [
+        {
+          "Name": "delayWhenNotWaitingInMilliseconds",
+          "FullTypeName": "System.Int32"
+        }
+      ],
+      "waitForXMillisecondsBeforeRunningGoal": [
+        {
+          "Name": "waitForXMillisecondsBeforeRunningGoal",
+          "FullTypeName": "System.UInt32"
+        }
+      ],
+      "keepMemoryStackOnAsync": [
+        {
+          "Name": "keepMemoryStackOnAsync",
+          "FullTypeName": "System.Boolean"
+        }
+      ]
+    },
+    "ReturnValues": {}
+  },
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to call a specific goal within an application, passing parameters to it. The goal is located within a specific app, and the parameters are provided. The user also specifies handling 'ask' events by calling another function named 'AskMe'.",
+    "Name": "RunApp",
     "Parameters": [
       {
         "Type": "System.String",
         "Name": "appName",
-        "Value": "/apps/%app%/%goals[0].name%"
+        "Value": "%app%"
       },
       {
         "Type": "PLang.Models.GoalToCall",
         "Name": "goalName",
-        "Value": "AskMe"
+        "Value": "/%goals[0].name%"
       },
       {
         "Type": "Dictionary<String, Object>",
         "Name": "parameters",
         "Value": "%goals[0].params%"
-      },
-      {
-        "Type": "System.Boolean",
-        "Name": "waitForExecution",
-        "Value": true
-      },
-      {
-        "Type": "System.Int32",
-        "Name": "delayWhenNotWaitingInMilliseconds",
-        "Value": 50
-      },
-      {
-        "Type": "System.UInt32",
-        "Name": "waitForXMillisecondsBeforeRunningGoal",
-        "Value": 0
-      },
-      {
-        "Type": "System.Boolean",
-        "Name": "keepMemoryStackOnAsync",
-        "Value": false
       }
     ],
     "ReturnValues": null
-  },
-  "Text": "call /apps/%app%/%goals[0].name% %goals[0].params%\n    on ask call AskMe",
-  "Reload": false,
-  "LlmRequest": {
-    "temperature": 0.0,
-    "top_p": 0.0,
-    "frequencyPenalty": 0.0,
-    "presencePenalty": 0.0,
-    "maxLength": 4000,
-    "llmResponseType": "json",
-    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-    "model": "gpt-4o",
-    "promptMessage": [
-      {
-        "role": "system",
-        "content": [
-          {
-            "type": "text",
-            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-          },
-          {
-            "type": "text",
-            "text": "Match the one of the <goals_in_file>, <goals> or <apps> depending on user intent. In that order\r\nUse <examples> to understand user input\r\n\r\n<examples>\r\ncall goal /Start => /Start is goalName that is rooted, no parameter.\r\ncall ParseText => ParseText is goalName, no parameters\r\ncall Gmail/Search %query%, => Gmail/Search is goalName,  %query% is key and value in parameters\r\ncall Folder/Search q=%fileName% => Folder/Search is goalName, parameter key is q, and value is %fileName%\r\ncall goal EvaluteScore %user%, write to %score% => EvaluteScore is goalName, parameter is user, return value is %score%\r\nset %data% = ParseDocument(%document%) => ParseDocument is goalName, parameter is %document%, %data% is the return value\r\n%user% = GetUser %id% => GetUser is goalName, parameter is %id%, return value is %user%\r\n<examples>\r\n"
-          },
-          {
-            "type": "text",
-            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-          }
-        ]
-      },
-      {
-        "role": "assistant",
-        "content": [
-          {
-            "type": "text",
-            "text": "## functions available starts ##\r\n[{\"Description\":\"Call/Runs another app. app can be located in another directory, then path points the way. goalName is default \\\"Start\\\" when it cannot be mapped\",\"MethodName\":\"RunApp\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"appName\"},{\"Type\":\"PLang.Models.GoalToCall\",\"Name\":\"goalName\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]},{\"Type\":\"System.Boolean\",\"Name\":\"waitForExecution\",\"DefaultValue\":true},{\"Type\":\"System.Int32\",\"Name\":\"delayWhenNotWaitingInMilliseconds\",\"DefaultValue\":50},{\"Type\":\"System.UInt32\",\"Name\":\"waitForXMillisecondsBeforeRunningGoal\",\"DefaultValue\":0},{\"Type\":\"System.Boolean\",\"Name\":\"keepMemoryStackOnAsync\",\"DefaultValue\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Call/Runs another goal. goalName can be prefixed with !. If backward slash(\\\\) is used by user, change to forward slash(/)\",\"MethodName\":\"RunGoal\",\"Parameters\":[{\"Type\":\"PLang.Models.GoalToCall\",\"Name\":\"goalName\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]},{\"Type\":\"System.Boolean\",\"Name\":\"waitForExecution\",\"DefaultValue\":true},{\"Type\":\"System.Int32\",\"Name\":\"delayWhenNotWaitingInMilliseconds\",\"DefaultValue\":50},{\"Type\":\"System.UInt32\",\"Name\":\"waitForXMillisecondsBeforeRunningGoal\",\"DefaultValue\":0},{\"Type\":\"System.Boolean\",\"Name\":\"keepMemoryStackOnAsync\",\"DefaultValue\":false},{\"Type\":\"System.Boolean\",\"Name\":\"isolated\",\"DefaultValue\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}}]\r\n## functions available ends ##\r\n## defined variables ##\r\napp (type:System.Object), goals[0].name (type:object), goals[0].params (type:object), \r\n## defined variables ##"
-          },
-          {
-            "type": "text",
-            "text": "<goals_in_file>\n[{\"GoalName\":\"AskMe\",\"RelativePrFolderPath\":\".build\\\\Start\\\\AskMe\",\"Description\":null}]\n<goals_in_file>"
-          },
-          {
-            "type": "text",
-            "text": "<apps>\n[{\"AppName\":\"/apps/\",\"Description\":null,\"SubGoals\":[{\"GoalName\":\"BuildStep\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Builder\\\\BuildGoal\\\\BuildStep\"},{\"GoalName\":\"BuildAction\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Builder\\\\BuildGoal\\\\BuildAction\"},{\"GoalName\":\"Bye\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Builder\\\\Hello\\\\Bye\"},{\"GoalName\":\"ConsoleOutput\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Tests\\\\CreateStepTest\\\\ConsoleOutput\"},{\"GoalName\":\"PLang.Modules.ConditionalModule.Specifics\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Tests\\\\CreateStepTest\\\\PLang.Modules.ConditionalModule.Specifics\"},{\"GoalName\":\"FormatQuestionAsHtml\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Tests\\\\CreateStepTest\\\\FormatQuestionAsHtml\"},{\"GoalName\":\"NotSupported\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Tests\\\\CreateStepTest\\\\NotSupported\"},{\"GoalName\":\"AddId\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Tests\\\\CreateStepTest\\\\AddId\"},{\"GoalName\":\"Success\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Tests\\\\RunTest\\\\Success\"},{\"GoalName\":\"Fail\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Tests\\\\RunTest\\\\Fail\"},{\"GoalName\":\"Question\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Tests\\\\Start\\\\Question\"},{\"GoalName\":\"Editor\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Tests\\\\Start\\\\Editor\"},{\"GoalName\":\"CancelContract\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Wallet\\\\Charge\\\\CancelContract\"},{\"GoalName\":\"ChoosePaymentService\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Wallet\\\\PaymentRequest\\\\ChoosePaymentService\"},{\"GoalName\":\"CallService\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Wallet\\\\PaymentRequest\\\\CallService\"},{\"GoalName\":\"ServiceNotFound\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Wallet\\\\PaymentRequest\\\\ServiceNotFound\"},{\"GoalName\":\"SignContract\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Wallet\\\\services\\\\payment.plang.io\\\\ConfirmContract\\\\SignContract\"},{\"GoalName\":\"CancelSignature\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Wallet\\\\services\\\\payment.plang.io\\\\ConfirmContract\\\\CancelSignature\"},{\"GoalName\":\"BuildGoal\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Builder\\\\BuildGoal\"},{\"GoalName\":\"Hello\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Builder\\\\Hello\"},{\"GoalName\":\"Download\",\"RelativePrFolderPath\":\".build\\\\apps\\\\CloudStorage\\\\Download\"},{\"GoalName\":\"GetDirectory\",\"RelativePrFolderPath\":\".build\\\\apps\\\\CloudStorage\\\\GetDirectory\"},{\"GoalName\":\"Start\",\"RelativePrFolderPath\":\".build\\\\apps\\\\CloudStorage\\\\Start\"},{\"GoalName\":\"MakeFormSaver\",\"RelativePrFolderPath\":\".build\\\\apps\\\\CodeGenerator\\\\MakeFormSaver\"},{\"GoalName\":\"InstallDependencies\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Installer\\\\InstallDependencies\"},{\"GoalName\":\"CreateStepTest\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Tests\\\\CreateStepTest\"},{\"GoalName\":\"RunTest\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Tests\\\\RunTest\"},{\"GoalName\":\"Start\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Tests\\\\Start\"},{\"GoalName\":\"Charge\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Wallet\\\\Charge\"},{\"GoalName\":\"Hello\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Wallet\\\\Hello\"},{\"GoalName\":\"PaymentRequest\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Wallet\\\\PaymentRequest\"},{\"GoalName\":\"Start\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Wallet\\\\Start\"},{\"GoalName\":\"ConfirmContract\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Wallet\\\\services\\\\blockchain\\\\ConfirmContract\"},{\"GoalName\":\"ConfirmContract\",\"RelativePrFolderPath\":\".build\\\\apps\\\\Wallet\\\\services\\\\payment.plang.io\\\\ConfirmContract\"}]},{\"AppName\":\"/apps/Builder\",\"Description\":null,\"SubGoals\":[{\"GoalName\":\"BuildStep\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Builder\\\\BuildGoal\\\\BuildStep\"},{\"GoalName\":\"BuildAction\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Builder\\\\BuildGoal\\\\BuildAction\"},{\"GoalName\":\"Bye\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Builder\\\\Hello\\\\Bye\"},{\"GoalName\":\"BuildGoal\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Builder\\\\BuildGoal\"},{\"GoalName\":\"Hello\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Builder\\\\Hello\"}]},{\"AppName\":\"/apps/Tests\",\"Description\":null,\"SubGoals\":[{\"GoalName\":\"ConsoleOutput\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Tests\\\\CreateStepTest\\\\ConsoleOutput\"},{\"GoalName\":\"PLang.Modules.ConditionalModule.Specifics\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Tests\\\\CreateStepTest\\\\PLang.Modules.ConditionalModule.Specifics\"},{\"GoalName\":\"FormatQuestionAsHtml\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Tests\\\\CreateStepTest\\\\FormatQuestionAsHtml\"},{\"GoalName\":\"NotSupported\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Tests\\\\CreateStepTest\\\\NotSupported\"},{\"GoalName\":\"AddId\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Tests\\\\CreateStepTest\\\\AddId\"},{\"GoalName\":\"Success\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Tests\\\\RunTest\\\\Success\"},{\"GoalName\":\"Fail\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Tests\\\\RunTest\\\\Fail\"},{\"GoalName\":\"Question\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Tests\\\\Start\\\\Question\"},{\"GoalName\":\"Editor\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Tests\\\\Start\\\\Editor\"},{\"GoalName\":\"CreateStepTest\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Tests\\\\CreateStepTest\"},{\"GoalName\":\"RunTest\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Tests\\\\RunTest\"},{\"GoalName\":\"Start\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Tests\\\\Start\"}]},{\"AppName\":\"/apps/Wallet\",\"Description\":null,\"SubGoals\":[{\"GoalName\":\"CancelContract\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Wallet\\\\Charge\\\\CancelContract\"},{\"GoalName\":\"ChoosePaymentService\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Wallet\\\\PaymentRequest\\\\ChoosePaymentService\"},{\"GoalName\":\"CallService\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Wallet\\\\PaymentRequest\\\\CallService\"},{\"GoalName\":\"ServiceNotFound\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Wallet\\\\PaymentRequest\\\\ServiceNotFound\"},{\"GoalName\":\"SignContract\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Wallet\\\\services\\\\payment.plang.io\\\\ConfirmContract\\\\SignContract\"},{\"GoalName\":\"CancelSignature\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Wallet\\\\services\\\\payment.plang.io\\\\ConfirmContract\\\\CancelSignature\"},{\"GoalName\":\"Charge\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Wallet\\\\Charge\"},{\"GoalName\":\"Hello\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Wallet\\\\Hello\"},{\"GoalName\":\"PaymentRequest\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Wallet\\\\PaymentRequest\"},{\"GoalName\":\"Start\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Wallet\\\\Start\"},{\"GoalName\":\"ConfirmContract\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Wallet\\\\services\\\\blockchain\\\\ConfirmContract\"},{\"GoalName\":\"ConfirmContract\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Wallet\\\\services\\\\payment.plang.io\\\\ConfirmContract\"}]},{\"AppName\":\"/apps/CloudStorage\",\"Description\":null,\"SubGoals\":[{\"GoalName\":\"Download\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\CloudStorage\\\\Download\"},{\"GoalName\":\"GetDirectory\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\CloudStorage\\\\GetDirectory\"},{\"GoalName\":\"Start\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\CloudStorage\\\\Start\"}]},{\"AppName\":\"/apps/CodeGenerator\",\"Description\":null,\"SubGoals\":[{\"GoalName\":\"MakeFormSaver\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\CodeGenerator\\\\MakeFormSaver\"}]},{\"AppName\":\"/apps/Installer\",\"Description\":null,\"SubGoals\":[{\"GoalName\":\"InstallDependencies\",\"RelativePrFolderPath\":\".build\\\\C:\\\\Users\\\\Ingi Gauti\\\\source\\\\repos\\\\plang\\\\PlangConsole\\\\bin\\\\Debug\\\\net9.0\\\\os\\\\apps\\\\Installer\\\\InstallDependencies\"}]}]\n<apps>"
-          }
-        ]
-      },
-      {
-        "role": "user",
-        "content": [
-          {
-            "type": "text",
-            "text": "call /apps/%app%/%goals[0].name% %goals[0].params%\n    on ask call AskMe"
-          }
-        ]
-      }
-    ],
-    "type": "PLang.Modules.CallGoalModule.Builder",
-    "caching": true,
-    "RawResponse": "```json\n{\n\t\"FunctionName\": \"RunApp\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"System.String\",\n\t\t\t\"Name\": \"appName\",\n\t\t\t\"Value\": \"/apps/%app%/%goals[0].name%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"PLang.Models.GoalToCall\",\n\t\t\t\"Name\": \"goalName\",\n\t\t\t\"Value\": \"AskMe\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Dictionary<String, Object>\",\n\t\t\t\"Name\": \"parameters\",\n\t\t\t\"Value\": \"%goals[0].params%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"System.Boolean\",\n\t\t\t\"Name\": \"waitForExecution\",\n\t\t\t\"Value\": true\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"System.Int32\",\n\t\t\t\"Name\": \"delayWhenNotWaitingInMilliseconds\",\n\t\t\t\"Value\": 50\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"System.UInt32\",\n\t\t\t\"Name\": \"waitForXMillisecondsBeforeRunningGoal\",\n\t\t\t\"Value\": 0\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"System.Boolean\",\n\t\t\t\"Name\": \"keepMemoryStackOnAsync\",\n\t\t\t\"Value\": false\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
-  },
-  "RunOnBuild": false,
-  "Metadata": {}
+  }
 }

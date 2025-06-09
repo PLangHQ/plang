@@ -26,7 +26,7 @@ namespace PLang.Modules.ScheduleModule.Tests
 			LoadOpenAI();
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.ScheduleModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -37,16 +37,9 @@ namespace PLang.Modules.ScheduleModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.ScheduleModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
-		public GoalStep GetStep(string text)
-		{
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
-			step.ModuleType = "PLang.Modules.ScheduleModule";
-			return step;
-		}
 
 
 
@@ -56,14 +49,14 @@ namespace PLang.Modules.ScheduleModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("Sleep", gf.FunctionName);
+			Assert.AreEqual("Sleep", gf.Name);
 			Assert.AreEqual("sleepTimeInMilliseconds", gf.Parameters[0].Name);
 			Assert.AreEqual((long) 1000, gf.Parameters[0].Value);
 
@@ -77,14 +70,14 @@ namespace PLang.Modules.ScheduleModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("Schedule", gf.FunctionName);
+			Assert.AreEqual("Schedule", gf.Name);
 			Assert.AreEqual("cronCommand", gf.Parameters[0].Name);
 			Assert.AreEqual("0 11 * * 1", gf.Parameters[0].Value);
 			Assert.AreEqual("goalName", gf.Parameters[1].Name);

@@ -1,18 +1,22 @@
 ﻿using BCrypt.Net;
 using Microsoft.IdentityModel.Tokens;
 using NBitcoin;
+using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NSec.Cryptography;
 using PLang.Building.Model;
+using PLang.Errors;
 using PLang.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Modules.DbModule;
 using PLang.Services.SettingsService;
 using PLang.Utils;
 using Sprache;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Specialized;
 using System.Data;
 using System.Dynamic;
@@ -44,13 +48,14 @@ namespace PLang.Runtime
 
 	public class MemoryStack
 	{
-		Dictionary<string, ObjectValue?> variables = new Dictionary<string, ObjectValue?>();
-		static Dictionary<string, ObjectValue?> staticVariables = new Dictionary<string, ObjectValue?>();
+		ConcurrentDictionary<string, ObjectValue> variables = new ConcurrentDictionary<string, ObjectValue>();
 		private readonly IPseudoRuntime pseudoRuntime;
 		private readonly IEngine engine;
 		private readonly ISettings settings;
 		private readonly PLangAppContext context;
+
 		public Goal Goal { get; set; }
+
 		public MemoryStack(IPseudoRuntime pseudoRuntime, IEngine engine, ISettings settings, PLangAppContext context)
 		{
 			this.pseudoRuntime = pseudoRuntime;
@@ -59,14 +64,11 @@ namespace PLang.Runtime
 			this.context = context;
 		}
 
-		public Dictionary<string, ObjectValue> GetMemoryStack()
+		public ConcurrentDictionary<string, ObjectValue> GetMemoryStack()
 		{
 			return variables;
 		}
-		public Dictionary<string, ObjectValue> GetStaticMemoryStack()
-		{
-			return staticVariables;
-		}
+
 
 		public List<ObjectValue> GetVariablesWithEvent(string eventName)
 		{
@@ -160,34 +162,184 @@ namespace PLang.Runtime
 			public ObjectValue ObjectValue { get; set; } = ObjectValue;
 		};
 
-
-		public ObjectValue GetObjectValue(string variableName, bool staticVariable, bool initiate = false)
+		public T? Get<T>(string key, bool staticVariable = false)
 		{
-			if (variableName == null) return new ObjectValue("", null, null, null, initiate);
+			return (T?)Get(key, staticVariable);
+		}
 
-			variableName = Clean(variableName).ToLower();
-			KeyValuePair<string, ObjectValue?> variable;
-			if (staticVariable)
-			{
-				variable = staticVariables.FirstOrDefault(p => p.Key.Equals(variableName, StringComparison.OrdinalIgnoreCase));
-			}
-			else
-			{
-				variable = variables.FirstOrDefault(p => p.Key.Equals(variableName, StringComparison.OrdinalIgnoreCase));
-			}
+		public object? Get(string key, Type type, bool staticVariable = false)
+		{
+			var obj = Get(key, staticVariable);
+			return ConvertToType(obj, key, type);
+		}
+		public object? Get(string? key, bool staticVariable = false, object? defaultValue = null)
+		{
+			return GetObjectValue2(key, staticVariable, defaultValue).Value;
+		}
+		
 
-			if (variable.Key != null)
-			{
-				return variable.Value;
-			}
+		public ObjectValue GetObjectValue(string variableName, bool initiate = false)
+		{
+			if (variableName == null) return ObjectValue.Nullable(variableName, initiate);
+
+			var objectValue = GetFromVariables(variableName);
+			if (objectValue != null) return objectValue;
+
+			objectValue = GetFromGoal(variableName);
+			if (objectValue != null) return objectValue;
+
+			objectValue = GetFromContext(variableName);
+			if (objectValue != null) return objectValue;
+
+			return ObjectValue.Nullable(variableName, initiate);
+		}
+
+		private ObjectValue? GetFromContext(string variableName)
+		{
+			if (context == null) return null;
 
 			var contextObject = context.FirstOrDefault(p => p.Key.ToLower() == variableName);
-			if (contextObject.Key != null)
+			if (contextObject.Key == null) return null;
+
+			var type = (contextObject.Value != null) ? contextObject.Value.GetType() : typeof(Nullable);
+			return new ObjectValue(variableName, contextObject.Value, type, null, true);
+		}
+
+		private ObjectValue? GetFromGoal(string variableName)
+		{
+			if (Goal == null || !variableName.StartsWith("!")) return null;
+
+			var obj = Goal.GetVariable(variableName);
+			if (obj == null) return null;
+
+			return new ObjectValue(variableName, obj, obj.GetType(), null, true);
+		}
+		public record KeyPath(string VariableName, string FullPath, string? Path = null, string Type = ".");
+		public KeyPath? GetKeyPath(string variableName)
+		{
+			variableName = Clean(variableName);
+			if (string.IsNullOrEmpty(variableName)) { return null; }
+
+			string fullPath = variableName;
+			string key = variableName.ToLower();
+			string? path = null;
+			string type = ".";
+			
+			if (variableName.Contains("."))
 			{
-				var type = (contextObject.Value != null) ? contextObject.Value.GetType() : typeof(Nullable);
-				return new ObjectValue(variableName, contextObject.Value, type, null, true);
+				key = variableName.Substring(0, variableName.IndexOf("."));
+				path = variableName.Substring(variableName.IndexOf(".") + 1);
 			}
-			return new ObjectValue(variableName, null, typeof(Nullable), null, initiate);
+			else if (!variableName.StartsWith("!") && variableName.Contains("!"))
+			{
+				key = variableName.Substring(0, variableName.IndexOf("!"));
+				path = variableName.Substring(variableName.IndexOf("!") + 1);
+				type = "!";
+			}
+			
+			return new KeyPath(key, fullPath, path, type);
+		}
+		private ObjectValue? GetFromVariables(string variableName)
+		{
+			var keyPlan = GetKeyPath(variableName);
+			if (keyPlan == null) return ObjectValue.Null;
+
+			KeyValuePair<string, ObjectValue> variable = variables.FirstOrDefault(p => p.Value.IsName(keyPlan.VariableName));
+			if (variable.Key == null) return null;
+
+			// return the variable, e.g. %user%
+			if (keyPlan.Path == null) return variable.Value;
+
+			//sub variable, e.g. %user.name%
+			if (keyPlan.Type == ".")
+			{
+				return variable.Value.Get<ObjectValue>(keyPlan.Path) ?? ObjectValue.Nullable(keyPlan.FullPath);
+			}
+
+			// return the property of variable, e.g. %user!properties%
+			if (keyPlan.Type == "!")
+			{
+				if (keyPlan.Path.Equals("properties", StringComparison.OrdinalIgnoreCase))
+				{
+					return new ObjectValue(keyPlan.Path, variable.Value.Properties, parent: variable.Value, isProperty: true);
+				}
+				return variable.Value.Properties.FirstOrDefault(p => p.IsName(keyPlan.Path)) ?? ObjectValue.Nullable(keyPlan.FullPath);
+			}
+			return variable.Value;
+
+		}
+
+		public ObjectValue GetObjectValue2(string? originalKey, bool staticVariable = false, object? defaultValueObject = null)
+		{
+			if (string.IsNullOrEmpty(originalKey)) return new ObjectValue("", null, typeof(Nullable), null, false);
+			string key = Clean(originalKey);
+
+			var keyLower = key.ToLower();
+			if (IsNow(keyLower))
+			{
+				return GetNow(key);
+			}
+
+			if (ReservedKeywords.IsReserved(key))
+			{
+				if (keyLower.Equals(ReservedKeywords.MemoryStack, StringComparison.OrdinalIgnoreCase))
+				{
+					return new ObjectValue(key, this.GetMemoryStack(), typeof(Dictionary<string, ObjectValue>), null);
+				}
+				else if (keyLower.Equals(ReservedKeywords.GUID, StringComparison.OrdinalIgnoreCase))
+				{
+					return new ObjectValue(ReservedKeywords.GUID, Guid.NewGuid(), typeof(Guid), null);
+				}
+
+
+				var objV = this.variables.FirstOrDefault(p => p.Key.ToLower() == keyLower);
+				if (objV.Key != null && objV.Value != null)
+				{
+					return objV.Value;
+				}
+
+
+			}
+
+			var objVal = GetObjectValue(key);
+			if (objVal.Initiated) return objVal;
+
+			var plan = GetVariableExecutionPlan(originalKey, key, staticVariable);
+			if (plan.MathPlan != null)
+			{
+				plan.ObjectValue = plan.MathPlan.Execute(plan.ObjectValue);
+			}
+
+			if (plan.VariableName.Equals("settings", StringComparison.OrdinalIgnoreCase) && plan.Calls.Count > 0)
+			{
+				var value = settings.Get<string>(typeof(Settings), plan.Calls[0], "", $"What is settings for {plan.Calls[0]}:");
+				return new ObjectValue(key, value, typeof(string), null);
+			}
+			if (!plan.ObjectValue.Initiated)
+			{
+				return plan.ObjectValue;
+				//return new ObjectValue(key, null, typeof(Nullable), null, false);
+			}
+
+			var objectValue = plan.ObjectValue;
+			if (plan.JsonPath != null)
+			{
+				objectValue = ApplyJsonPath(objectValue, plan);
+			}
+
+			foreach (var call in plan.Calls)
+			{
+				if (call.Contains("("))
+				{
+					objectValue = ExecuteMethod(objectValue, call, plan.VariableName);
+				}
+				else
+				{
+					objectValue = ExecuteProperty(objectValue, call, plan.VariableName);
+				}
+			}
+
+			return objectValue;
 		}
 
 		public VariableExecutionPlan GetVariableExecutionPlan(string originalKey, string cleanKey, bool staticVariable)
@@ -230,7 +382,7 @@ namespace PLang.Runtime
 				if (numberData.IndexOf("]") != -1)
 				{
 					variableName = variableName.Substring(0, variableName.IndexOf("["));
-					objectValue = GetObjectValue(variableName, staticVariable);
+					objectValue = GetObjectValue(variableName);
 
 					numberData = numberData.Substring(0, numberData.IndexOf("]")).Trim();
 					if (objectValue.Initiated && objectValue.Value.GetType().Name.StartsWith("Dictionary"))
@@ -258,15 +410,15 @@ namespace PLang.Runtime
 			}
 			else if (originalKey.Contains("[") && originalKey.Contains("]"))
 			{
-				(dictKey, index, string arrayKey) = GetArrayValue(originalKey, variableName, staticVariable);
+				(dictKey, index, string? arrayKey) = GetArrayValue(originalKey, variableName);
 				if (index != -1 && !long.TryParse(arrayKey, out _))
 				{
-					
-					for (int i=0;i<keySplit.Length;i++)
+
+					for (int i = 0; i < keySplit.Length; i++)
 					{
 						keySplit[i] = keySplit[i].Replace("[" + arrayKey + "]", "[" + index + "]");
 					}
-					
+
 				}
 				else if (dictKey != "")
 				{
@@ -275,7 +427,7 @@ namespace PLang.Runtime
 			}
 
 			List<string> calls;
-			if (objectValue == null) objectValue = GetObjectValue(variableName, staticVariable);
+			if (objectValue == null) objectValue = GetObjectValue(variableName);
 
 			if (objectValue.Value == null)
 			{
@@ -295,7 +447,8 @@ namespace PLang.Runtime
 				if (index != -1)
 				{
 					jsonPath = $"$[{index}]." + path;
-				} else if (!path.Contains("(") && !path.Contains(")"))
+				}
+				else if (!path.Contains("(") && !path.Contains(")"))
 				{
 					string tempJsonPath = "$." + path;
 					if (jToken.SelectTokens(tempJsonPath).ToArray().Length > 0)
@@ -340,7 +493,7 @@ namespace PLang.Runtime
 			return new VariableExecutionPlan(variableName, objectValue, calls, index, jsonPath, mathPlan, targetObject ?? objectValue.Value);
 		}
 
-		private (string, int, string?) GetArrayValue(string originalKey, string variableName, bool staticVariable)
+		private (string, int, string?) GetArrayValue(string originalKey, string variableName)
 		{
 			string key = originalKey.Trim('%');
 			string dictKey = "";
@@ -349,7 +502,7 @@ namespace PLang.Runtime
 			if (match == null) return ("", -1, null);
 
 			var indexName = match.Groups["indexName"].Value;
-			var objectValue = GetObjectValue(indexName, staticVariable);
+			var objectValue = GetObjectValue(indexName);
 			if (objectValue.Initiated && objectValue.Value != null && objectValue.Value.GetType().Name.StartsWith("Dictionary"))
 			{
 
@@ -523,92 +676,6 @@ namespace PLang.Runtime
 			return objectValue;
 		}
 
-		public object? Get(string? key, bool staticVariable = false, object? defaultValue = null)
-		{
-			return GetObjectValue2(key, staticVariable, defaultValue).Value;
-		}
-
-		public ObjectValue GetObjectValue2(string? originalKey, bool staticVariable = false, object? defaultValueObject = null)
-		{
-			if (string.IsNullOrEmpty(originalKey)) return new ObjectValue("", null, typeof(Nullable), null, false);
-			string key = Clean(originalKey);
-
-			var keyLower = key.ToLower();
-			if (IsNow(keyLower))
-			{
-				return GetNow(key);
-			}
-
-			if (ReservedKeywords.IsReserved(key))
-			{
-				if (keyLower.Equals(ReservedKeywords.MemoryStack, StringComparison.OrdinalIgnoreCase))
-				{
-					return new ObjectValue(key, this.GetMemoryStack(), typeof(Dictionary<string, ObjectValue>), null);
-				}
-				else if (keyLower.Equals(ReservedKeywords.GUID, StringComparison.OrdinalIgnoreCase))
-				{
-					return new ObjectValue(ReservedKeywords.GUID, Guid.NewGuid(), typeof(Guid), null);
-				}
-
-
-				var objV = this.variables.FirstOrDefault(p => p.Key.ToLower() == keyLower);
-				if (objV.Key != null && objV.Value != null)
-				{
-					return objV.Value;
-				}
-
-				var value = context.FirstOrDefault(p => p.Key.ToLower() == keyLower);
-				if (value.Value != null)
-				{
-					return new ObjectValue(key, value.Value, value.Value.GetType(), null);
-				}
-
-			}
-
-			var variables = (staticVariable) ? staticVariables : this.variables;
-			var varKey = variables.FirstOrDefault(p => p.Key.ToLower() == key.ToLower());
-			if (varKey.Key != null && varKey.Value != null && varKey.Value.Initiated)
-			{
-				return variables[varKey.Key];
-			}
-
-			var plan = GetVariableExecutionPlan(originalKey, key, staticVariable);
-			if (plan.MathPlan != null)
-			{
-				plan.ObjectValue = plan.MathPlan.Execute(plan.ObjectValue);
-			}
-
-			if (plan.VariableName.Equals("settings", StringComparison.OrdinalIgnoreCase) && plan.Calls.Count > 0)
-			{
-				var value = settings.Get<string>(typeof(Settings), plan.Calls[0], "", $"What is settings for {plan.Calls[0]}:");
-				return new ObjectValue(key, value, typeof(string), null);
-			}
-			if (!plan.ObjectValue.Initiated)
-			{
-				return plan.ObjectValue;
-				//return new ObjectValue(key, null, typeof(Nullable), null, false);
-			}
-
-			var objectValue = plan.ObjectValue;
-			if (plan.JsonPath != null)
-			{
-				objectValue = ApplyJsonPath(objectValue, plan);
-			}
-
-			foreach (var call in plan.Calls)
-			{
-				if (call.Contains("("))
-				{
-					objectValue = ExecuteMethod(objectValue, call, plan.VariableName);
-				}
-				else
-				{
-					objectValue = ExecuteProperty(objectValue, call, plan.VariableName);
-				}
-			}
-
-			return objectValue;
-		}
 
 
 
@@ -684,6 +751,9 @@ namespace PLang.Runtime
 
 		public void PutForBuilder(string key, object? value)
 		{
+			AppContext.TryGetSwitch("Runtime", out bool isEnabled);
+			if (isEnabled) return;
+
 			if (string.IsNullOrEmpty(key)) return;
 			key = Clean(key);
 			//Put(key, value, false, false);
@@ -696,15 +766,17 @@ namespace PLang.Runtime
 			Put(key, value, true);
 		}
 
-		public void Put(ObjectValue? value)
+		public void Put(ObjectValue? value, GoalStep? goalStep = null)
 		{
 			if (value == null) return;
 
-			AddOrReplace(this.variables, value.Name, value);
+			AddOrReplace(this.variables, value.Name, value, goalStep);
 
 		}
 
-		public void Put(string originalKey, object? value, bool staticVariable = false, bool initialize = true, bool convertToJson = true, IProperties? properties = null)
+		public void Put(string originalKey, object? value, bool staticVariable = false,
+			bool initialize = true, bool convertToJson = true,
+			Properties? properties = null, GoalStep? goalStep = null)
 		{
 			if (string.IsNullOrEmpty(originalKey)) return;
 			string key = Clean(originalKey);
@@ -713,10 +785,10 @@ namespace PLang.Runtime
 			{
 				throw new Exception($"{key} is reserved. You must choose another variable name");
 			}
-			var variables = (staticVariable) ? staticVariables : this.variables;
+
 			if (value == null)
 			{
-				AddOrReplace(variables, key, new ObjectValue(key, null, null, null, initialize, properties));
+				AddOrReplace(variables, key, new ObjectValue(key, null, null, null, initialize, properties), goalStep);
 				return;
 			}
 
@@ -727,7 +799,7 @@ namespace PLang.Runtime
 				return;
 			}
 
-			
+
 			if (convertToJson && JsonHelper.IsJson(value))
 			{
 				string strValue = value.ToString()!.Trim();
@@ -762,7 +834,7 @@ namespace PLang.Runtime
 			if (!key.Contains("."))
 			{
 				var type = (value == null) ? null : value.GetType();
-				AddOrReplace(variables, key, new ObjectValue(key, value, type, null, initialize, properties));
+				AddOrReplace(variables, key, new ObjectValue(key, value, type, null, initialize, properties), goalStep);
 				return;
 			}
 
@@ -805,8 +877,10 @@ namespace PLang.Runtime
 					{
 						objectValue = ExecuteMethod(objectValue, call, keyPlan.VariableName);
 					}
-					else if (obj.GetType().Name == "DapperRow")
+					else if (obj is Table)
 					{
+						throw new Exception("I dont believe this is used");
+
 						var row = ((IDictionary<string, object>)obj);
 						var column = row.Keys.FirstOrDefault(p => p.Equals(call, StringComparison.OrdinalIgnoreCase));
 						if (column == null)
@@ -911,7 +985,7 @@ namespace PLang.Runtime
 					SetJsonValue(jobj, keyPlan.JsonPath, value);
 				}
 
-				AddOrReplace(variables, keyPlan.VariableName, objectValue);
+				AddOrReplace(variables, keyPlan.VariableName, objectValue, goalStep);
 			}
 
 
@@ -943,7 +1017,7 @@ namespace PLang.Runtime
 			}
 		}
 
-		private void AddOrReplace(Dictionary<string, ObjectValue?> variables, string key, ObjectValue objectValue)
+		private void AddOrReplace(ConcurrentDictionary<string, ObjectValue?> variables, string key, ObjectValue objectValue, GoalStep? goalStep = null)
 		{
 			string eventType;
 			key = Clean(key).ToLower();
@@ -966,11 +1040,13 @@ namespace PLang.Runtime
 			}
 
 			variables.AddOrReplace(key, objectValue);
-			CallEvent(eventType, objectValue);
+			CallEvent(eventType, objectValue, goalStep);
 		}
 
-		private void CallEvent(string eventType, ObjectValue objectValue)
+		private void CallEvent(string eventType, ObjectValue objectValue, GoalStep? step = null)
 		{
+			if (step == null || step.IsEvent) return;
+
 			var context = engine.GetContext();
 			if (context != null && context.ContainsKey(ReservedKeywords.IsEvent))
 			{
@@ -993,13 +1069,13 @@ namespace PLang.Runtime
 						{
 							if (eve.goalName == goal.GoalName) return;
 
-							context.AddOrReplace(ReservedKeywords.IsEvent, true);
+							eve.Parameters.AddOrReplace(ReservedKeywords.IsEvent, true);
 							var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, eve.goalName, eve.Parameters);
 							if (result.error != null)
 							{
-								Console.WriteLine(ErrorHelper.ToFormat("text", result.error));
+								throw new ExceptionWrapper(result.error);
 							}
-							context.Remove(ReservedKeywords.IsEvent);
+
 						}
 					}
 				});
@@ -1015,36 +1091,15 @@ namespace PLang.Runtime
 			{
 				return true;
 			}
-			return (staticVariables.FirstOrDefault(p => p.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Key != null);
+			return false;
 
 		}
 
 		public string Clean(string str)
 		{
-			if (str == null) return "";
-
-			str = str.Trim();
-			bool isVariable = IsVariable(str);
-
-			if (isVariable && str.StartsWith("%")) str = str.Substring(1);
-			if (isVariable && str.EndsWith("%")) str = str.Remove(str.Length - 1);
-			if (str.StartsWith("@")) str = str.Substring(1);
-			if (str.StartsWith("$.")) str = str.Remove(0, 2);
-			str = str.TrimEnd('+').TrimEnd('-');
-			str = Regex.Replace(str, "α([0-9]+)α", match => $"[{match.Groups[1].Value}]");
-
-			return str.Replace("α", ".");
-		}
-		public T? Get<T>(string key, bool staticVariable = false)
-		{
-			return (T?)Get(key, staticVariable);
+			return VariableHelper.Clean(str);
 		}
 
-		public object? Get(string key, Type type, bool staticVariable = false)
-		{
-			var obj = Get(key, staticVariable);
-			return ConvertToType(obj, key, type);
-		}
 
 		public static object? ConvertToType(object? value, string key, Type targetType)
 		{
@@ -1132,10 +1187,6 @@ namespace PLang.Runtime
 
 		}
 
-		private static object? GetInstance(object? value, Type targetType, Type underlyingType)
-		{
-			return Activator.CreateInstance(targetType, Convert.ChangeType(value, underlyingType));
-		}
 
 		private bool IsNow(string keyLower)
 		{
@@ -1202,8 +1253,16 @@ namespace PLang.Runtime
 			propertyDescription = propertyDescription.Trim();
 
 			AppContext.TryGetSwitch("Builder", out bool isBuilder);
-
-			if (type == typeof(ExpandoObject) || type.Name == "DapperRow")
+			if (obj is Table table)
+			{
+				throw new Exception("Dont think this should be used");
+				value = table[propertyDescription];
+			}
+			if (obj is Row row)
+			{
+				value = row[propertyDescription];
+			}
+			if (type == typeof(ExpandoObject))
 			{
 				var expando = ((IDictionary<string, object>)obj);
 				var key = expando.Keys.FirstOrDefault(p => p.ToLower() == propertyDescription.ToLower());
@@ -1490,7 +1549,8 @@ namespace PLang.Runtime
 								obj = null;
 							}
 						}
-					} else
+					}
+					else
 					{
 						obj = result;
 					}
@@ -1613,7 +1673,7 @@ namespace PLang.Runtime
 		}
 
 
-		public void Remove(string key)
+		public void Remove(string key, GoalStep? goalStep = null)
 		{
 			key = Clean(key).ToLower();
 			if (key.Contains("."))
@@ -1621,10 +1681,9 @@ namespace PLang.Runtime
 				throw new ArgumentException("When remove item from memory it cannot be a partial of the item. That means you cannot use dot(.)");
 			}
 
-			if (variables.TryGetValue(key, out ObjectValue? objectValue))
+			if (variables.Remove(key, out ObjectValue? objectValue) && objectValue != null)
 			{
-				variables.Remove(key);
-				CallEvent(VariableEventType.OnRemove, objectValue);
+				CallEvent(VariableEventType.OnRemove, objectValue, goalStep);
 			}
 		}
 
@@ -1636,18 +1695,9 @@ namespace PLang.Runtime
 				throw new ArgumentException("When remove item from memory it cannot be a partial of the item. That means you cannot use dot(.)");
 			}
 
-			if (staticVariables.TryGetValue(key, out ObjectValue? objectValue))
-			{
-				staticVariables.Remove(key);
-				CallEvent(VariableEventType.OnRemove, objectValue);
-			}
 		}
 
 
-		public object? GetStatic(string key)
-		{
-			return Get(key, true);
-		}
 
 		private string CleanGoalName(string goalName)
 		{
@@ -1676,12 +1726,12 @@ namespace PLang.Runtime
 				int delayWhenNotWaitingInMilliseconds = 0)
 		{
 			key = Clean(key);
-			var variables = (staticVariable) ? staticVariables : this.variables;
-			var objectValue = GetObjectValue(key, staticVariable);
+
+			var objectValue = GetObjectValue(key);
 			if (!objectValue.Initiated)
 			{
 				Put(key, null, staticVariable, false);
-				objectValue = GetObjectValue(key, staticVariable);
+				objectValue = GetObjectValue(key);
 			}
 
 			AddEvent(objectValue, VariableEventType.OnCreate, callingGoalHash, goalName, parameters, waitForResponse, delayWhenNotWaitingInMilliseconds);
@@ -1693,12 +1743,12 @@ namespace PLang.Runtime
 		public void AddOnChangeEvent(string key, string goalName, string callingGoalHash, bool staticVariable = false, bool notifyWhenCreated = true, Dictionary<string, object?>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 0)
 		{
 			key = Clean(key);
-			var variables = (staticVariable) ? staticVariables : this.variables;
-			var objectValue = GetObjectValue(key, staticVariable, notifyWhenCreated);
+
+			var objectValue = GetObjectValue(key, notifyWhenCreated);
 			if (!objectValue.Initiated)
 			{
 				Put(key, null, staticVariable, notifyWhenCreated);
-				objectValue = GetObjectValue(key, staticVariable, notifyWhenCreated);
+				objectValue = GetObjectValue(key, notifyWhenCreated);
 			}
 			;
 
@@ -1711,7 +1761,6 @@ namespace PLang.Runtime
 		public void AddOnRemoveEvent(string key, string goalName, string callingGoalHash, bool staticVariable = false, Dictionary<string, object?>? parameters = null, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 0)
 		{
 			key = Clean(key);
-			var variables = (staticVariable) ? staticVariables : this.variables;
 
 			var objectValue = GetObjectValue(key, staticVariable);
 			if (objectValue == null) return;
@@ -1726,10 +1775,9 @@ namespace PLang.Runtime
 		internal void Clear()
 		{
 			this.variables.Clear();
-			staticVariables.Clear();
 		}
 
-		internal bool ContainsObject(GoalVariable goalVariable)
+		internal bool ContainsObject(Building.Model.Variable goalVariable)
 		{
 			foreach (var variable in variables)
 			{

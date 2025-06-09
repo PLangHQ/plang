@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Crypto.Tls;
 using PLang.Attributes;
@@ -8,6 +9,7 @@ using PLang.Runtime;
 using PLang.Utils;
 using System.Collections;
 using System.ComponentModel;
+using System.Linq;
 
 namespace PLang.Modules.ListDictionaryModule
 {
@@ -219,48 +221,58 @@ Add, update, delete and retrieve list or dictionary. It can be stored as local l
 			return null;
 		}
 
-
-		[Description("Merges two objects or lists according to primary key")]
-		public async Task<object?> MergeLists(object list1, object list2, string key)
+		private (JArray? Array, IError? Error) ToJArray(object? value)
 		{
-			
+			JArray? array = null;
+			if (value is string str1)
+			{
+				if (str1.TrimStart().StartsWith("["))
+				{
+					array = JArray.Parse(str1);
+				}
+				else if (str1.TrimStart().StartsWith("{"))
+				{
+
+					var obj = JObject.Parse(str1);
+					array = new JArray(obj);
+				}
+				else
+				{
+					return (null, new ProgramError($"Dont know how to convert value: {value}"));
+				}
+				return (array, null);
+			}
+			return (null, new ProgramError($"Dont know how to convert value: {JsonConvert.SerializeObject(value)}"));
+		}
+		[Description("Merges two objects or lists according to primary key")]
+		public async Task<(object?, IError?)> MergeLists(object? list1, object? list2, string key)
+		{
+			if (list1 != null && list1 is not JArray)
+			{
+				var result = ToJArray(list1);
+				if (result.Error != null) return (null, result.Error);
+				list1 = result.Array;
+			}
+			if (list2 != null && list2 is not JArray)
+			{
+				var result = ToJArray(list2);
+				if (result.Error != null) return (null, result.Error);
+				list2 = result.Array;
+			}
+
+			if (list1 == null) list1 = new JArray();
+			if (list2 == null) list2 = new JArray();
 
 			if (list1 is JArray jArray1 && list2 is JArray jArray2)
 			{
-				JArray mainArray;
-				JArray secondaryArray;
-				if (jArray1.Count >= jArray2.Count)
-				{
-					mainArray = jArray1;
-					secondaryArray = jArray2;
-				} else
-				{
-					mainArray = jArray2;
-					secondaryArray = jArray1;
-				}
-
-				for (int i=0;i<mainArray.Count;i++)
-				{
-					var id = mainArray[i][key];
-					for (int b=0;b<secondaryArray.Count;b++)
-					{
-						if (secondaryArray[b][key] != null && secondaryArray[b][key].ToString().Equals(id.ToString(), StringComparison.OrdinalIgnoreCase))
-						{
-							JObject jObj1 = mainArray[i] as JObject;
-							JObject jObj2 = secondaryArray[b] as JObject;
-							jObj1.Merge(jObj2, new JsonMergeSettings
-							{
-								MergeArrayHandling = MergeArrayHandling.Replace
-							});
-						}
-					}
-				}
-				return mainArray;
-
-
+				JArray mergedArray = new JArray(jArray1.Concat(jArray2)
+					.Select(token => token.ToString())  
+					.Distinct(StringComparer.OrdinalIgnoreCase)
+					.Select(str => (JToken)str));
+				return (mergedArray, null);
 			}
-			throw new NotImplementedException();
-			
+			return (null, new ProgramError("Could not merge objects"));
+
 		}
 	}
 }

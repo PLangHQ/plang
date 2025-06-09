@@ -73,7 +73,8 @@ namespace PLang.Utils
 
 		public static bool IsSetup(Goal goal)
 		{
-			var result = (goal.GoalFileName.Equals("Setup.goal", StringComparison.OrdinalIgnoreCase)) || (goal.RelativeGoalFolderPath.Equals(Path.Join(Path.DirectorySeparatorChar.ToString(), "setup"), StringComparison.OrdinalIgnoreCase));
+			var result = (goal.GoalFileName.Equals("Setup.goal", StringComparison.OrdinalIgnoreCase)) || 
+				(goal.RelativeGoalFolderPath.Equals(Path.Join(Path.DirectorySeparatorChar.ToString(), "setup"), StringComparison.OrdinalIgnoreCase));
 			return result;
 		}
 

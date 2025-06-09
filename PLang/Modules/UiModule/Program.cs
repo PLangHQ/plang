@@ -117,7 +117,7 @@ namespace PLang.Modules.UiModule
 			}
 			var outputTarget = new OutputTarget(cssSelectors, elementPosition, overwriteIfExists, overwriteElement);
 
-			memoryStack.Put(ReservedKeywords.OutputTarget, outputTarget);
+			memoryStack.Put(ReservedKeywords.OutputTarget, outputTarget, goalStep: goalStep);
 			return null;
 		}
 		/*
@@ -174,7 +174,7 @@ namespace PLang.Modules.UiModule
 			}
 			SetupCssAndJsFiles();
 
-			var indent = context.GetOrDefault(ReservedKeywords.ParentGoalIndent, 0);
+			var indent = goal.GetVariable<int?>(ReservedKeywords.ParentGoalIndent) ?? 0;
 			indent += goalStep.Indent;
 			AddToTree(content, indent);
 		}

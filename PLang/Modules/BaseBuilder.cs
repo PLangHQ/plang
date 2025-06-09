@@ -2,6 +2,8 @@
 using LightInject;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using PLang.Attributes;
+using PLang.Building;
 using PLang.Building.Model;
 using PLang.Container;
 using PLang.Errors;
@@ -13,12 +15,13 @@ using PLang.Runtime;
 using PLang.Services.LlmService;
 using PLang.Utils;
 using PLang.Utils.Extractors;
+using System.Text.Json.Serialization;
 using Instruction = PLang.Building.Model.Instruction;
 
 namespace PLang.Modules
 {
 
-
+	[GreatLeapAttribute]  // or [Class]
 	public abstract class BaseBuilder : IBaseBuilder
 	{
 
@@ -43,10 +46,14 @@ namespace PLang.Modules
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 		{ }
 
-		public void InitBaseBuilder(string module, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper,
+
+
+		[Init]
+		public void InitBaseBuilder(GoalStep goalStep, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory, ITypeHelper typeHelper,
 			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ILogger logger)
 		{
-			this.module = module;
+			this.GoalStep = goalStep;
+			this.module = goalStep.ModuleType;
 			this.fileSystem = fileSystem;
 			this.llmServiceFactory = llmServiceFactory;
 			this.typeHelper = typeHelper;
@@ -69,73 +76,46 @@ namespace PLang.Modules
 		{
 			this.contentExtractor = contentExtractor;
 		}
-		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build<T>(GoalStep step)
+	
+		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build<T>(GoalStep step, IBuilderError? previousBuildError = null)
 		{
-			return await Build(step, typeof(T));
+			return await Build(step, typeof(T), previousBuildError);
 		}
-		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step)
+		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, IBuilderError? previousBuildError = null)
 		{
-			return await Build(step, typeof(GenericFunction));
+			return await Build(step, typeof(GenericFunction), previousBuildError);
 		}
 
-		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, Type? responseType = null, string? errorMessage = null, int errorCount = 0)
+		[Method]
+		public virtual async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, Type responseType, IBuilderError? previousBuildError = null)
 		{
-			if (errorCount > 3)
-			{
-				logger.LogError(errorMessage);
-				return (null, new StepBuilderError("Could not get a valid function from LLM. You need to adjust your wording.", step));
-			} else if (errorCount > 0)
-			{
-				logger.LogWarning("Couldn't handle response from LLM, trying again");
-			}
+			var result = await BuildInternal(step, responseType, previousBuildError);
+			return result;
+		}
 
+
+
+		private async Task<(Instruction? Instruction, IBuilderError? BuilderError)> BuildInternal(GoalStep step, Type? responseType = null, IBuilderError? previousBuildError = null)
+		{
+			
 			if (responseType == null) responseType = typeof(GenericFunction);
 
-			var question = GetLlmRequest(step, responseType, errorMessage);
-			question.Reload = step.Reload;
+			var question = GetLlmRequest(step, responseType, previousBuildError);			
 
 			try
 			{
+				
+
 				(var result, var queryError) = await llmServiceFactory.CreateHandler().Query(question, responseType);
-				if (queryError != null) return (null, queryError as IBuilderError);
+				if (queryError != null) return (null, new BuilderError(queryError));
+
 				if (result == null || (result is string str && string.IsNullOrEmpty(str)))
 				{
 					return (null, new StepBuilderError($"Could not build for {responseType.Name}", step));
 				}
-				if (result is GenericFunction gf && gf.FunctionName == "N/A")
-				{
-					return (null, new InvalidModuleError(step.ModuleType, $"Could find function to match step in module {step.ModuleType}"));
-				}
 
-				var instruction = new Instruction(result);
-				instruction.LlmRequest = question;
+				var instruction = InstructionCreator.Create(result, responseType, step, question);
 
-				var methodHelper = new MethodHelper(step, variableHelper, typeHelper);
-				var invalidFunctions = methodHelper.ValidateFunctions(instruction.GetFunctions(), step.ModuleType, memoryStack);
-
-				if (invalidFunctions != null)
-				{
-					if (invalidFunctions.Key == "N/A")
-					{
-						return (null, invalidFunctions);
-					}
-
-					errorMessage = @$"## Error from previous LLM request ## 
-Previous response from LLM caused error. This was your response.
-{Newtonsoft.Json.JsonConvert.SerializeObject(instruction.Action)}
-
-This is the error(s)
-";
-					foreach (var invalidFunction in invalidFunctions.Errors)
-					{
-						errorMessage += " - " + invalidFunction.Message;
-					}
-					errorMessage += $@"Make sure to fix the error and return valid JSON response
-## Error from previous LLM request ##
-
-				";
-					return await Build(step, responseType, errorMessage, ++errorCount);
-				}
 
 				//cleanup for next time
 				appendedSystemCommand.Clear();
@@ -153,7 +133,7 @@ This is the error(s)
 					innerMessage = ex.InnerException?.InnerException.Message;
 				}
 				
-				return await Build(step, responseType, 
+				return (null, new StepBuilderError( 
 					$@"
 <error>
 {innerMessage}
@@ -162,43 +142,66 @@ This is the error(s)
 
 Previous LLM request resulted in this error, see in <error>. 
 Make sure to use the information in <error> to return valid JSON response"
-, ++errorCount);
+, step));
 			}
 		}
 
+		[Property]
 		public record Parameter(string Type, string Name, object? Value);
+		[Property]
 		public record ReturnValue(string Type, string VariableName);
-		public record GenericFunction(string FunctionName, List<Parameter> Parameters, List<ReturnValue>? ReturnValues = null);
+		[Property]
+		public record ComplexReturnValue(string Type, string VariableName, List<ReturnValue> Properties) : ReturnValue(Type, VariableName);
+		[Property]
+		public record GenericFunction(string Reasoning, string Name, List<Parameter>? Parameters = null, List<ReturnValue>? ReturnValues = null) : IGenericFunction
+		{
+			public Instruction Instruction { get; set; }
+		}
 
+		public interface IGenericFunction
+		{
+			string Reasoning { get; }
+			string Name { get; }
+			List<Parameter>? Parameters { get; }
+			List<ReturnValue>? ReturnValues { get; }
+
+			[Newtonsoft.Json.JsonIgnore]
+			public Instruction Instruction { get; set; }
+		}
+		[Method]
 		public void AppendToSystemCommand(string appendedSystemCommand)
 		{
 			this.appendedSystemCommand.Add(appendedSystemCommand);
 		}
+		[Method]
 		public void SetSystem(string systemCommand)
 		{
 			this.system = systemCommand;
 		}
+		[Method]
 		public void AppendToAssistantCommand(string appendedAssistantCommand)
 		{
 			this.appendedAssistantCommand.Add(appendedAssistantCommand);
 		}
+		[Method]
 		public void SetAssistant(string assistantCommand)
 		{
 			this.assistant = assistantCommand;
 		}
 		string model = null;
+		[Method]
 		public void SetModel(string model)
 		{
 			this.model = model;
 		}
-
-		public virtual LlmRequest GetLlmRequest(GoalStep step, Type responseType, string? errorMessage = null)
+		[Method]
+		public virtual LlmRequest GetLlmRequest(GoalStep step, Type responseType, IBuilderError? previousBuildError = null)
 		{			
 			var promptMessage = new List<LlmMessage>();
 
 			if (string.IsNullOrEmpty(system))
 			{
-				system = GetDefaultSystemText();
+				system = GetDefaultSystemText(step);
 			}
 			var systemContent = new List<LlmContent>();
 			systemContent.Add(new LlmContent(system));
@@ -206,12 +209,15 @@ Make sure to use the information in <error> to return valid JSON response"
 			{
 				systemContent.Add(new LlmContent(append));
 			}
-			promptMessage.Add(new LlmMessage("system", systemContent));
+
+			promptMessage.Add(new LlmMessage("system", string.Join("\n", systemContent.Select(p => p.Text))));
 			
 			var assistantContent = new List<LlmContent>();
+			assistantContent.Add(new LlmContent($"## Canonical User Intent (already disambiguated by LLM)\r\n{step.UserIntent}"));
+
 			if (string.IsNullOrEmpty(assistant))
 			{
-				(assistant, var error) = GetDefaultAssistantText(step);
+				(assistant, var error) = GetDefaultAssistantText(step, previousBuildError);
 				if (error != null) throw new ExceptionWrapper(error);
 			}
 
@@ -222,19 +228,29 @@ Make sure to use the information in <error> to return valid JSON response"
 			}
 			if (assistantContent.Count > 0)
 			{
-				promptMessage.Add(new LlmMessage("assistant", assistantContent));
+				promptMessage.Add(new LlmMessage("assistant", string.Join("\n", assistantContent.Select(p => p.Text))));
 			}
-			if (errorMessage != null)
-			{
-				promptMessage.Add(new LlmMessage("assistant", errorMessage));
-			}
+
 			var userContent = new List<LlmContent>();
 			string user = step.LlmText ?? step.Text;
 			user = user.Replace("\\n", "\n").Replace("\\r", "\r").Replace("\\t", "\t");
 			userContent.Add(new LlmContent(user));
 			promptMessage.Add(new LlmMessage("user", userContent));
 
+			if (previousBuildError != null)
+			{
+				string errorInfoForLlm = ErrorHelper.MakeForLlm(previousBuildError);
+				promptMessage.Add(new LlmMessage("assistant", errorInfoForLlm));
+				step.Reload = true;
+
+				// upgrade the model since there was error
+				model = "gpt-4o";
+			}
+
+
 			var llmRequest = new LlmRequest(GetType().FullName, promptMessage);
+
+			llmRequest.Reload = step.Reload;
 			if (contentExtractor != null)
 			{
 				llmRequest.llmResponseType = contentExtractor.LlmResponseType;
@@ -248,40 +264,48 @@ Make sure to use the information in <error> to return valid JSON response"
 			{
 				llmRequest.model = model;
 			}
+
 			return llmRequest;
 
 		}
 
-		private string GetDefaultSystemText()
+		[Method]
+		public string GetDefaultSystemText(GoalStep step)
 		{
+			/*
+			 * file.read system.txt, write to %content%
+			 * write out content
+			 * */
+			return $@"User is writing code in plang programming language.
 
-			return $@"
 Your job is: 
-1. Parse user intent
+1. Parse and understand user intent
 2. Map the intent to one of C# function provided to you
 3. Return a valid JSON
 
-Variable is defined with starting and ending %, e.g. %filePath%. 
-%Variable% MUST be wrapped in quotes("") in json response, e.g. {{ ""name"":""%name%"" }}
+## Rules
+%variable% in plang is defined with starting and ending percentage sign (%)
+%variable% MUST be wrapped in quotes("") in json response, e.g. {{ ""name"":""%name%"" }}
+leave %variable% as is and do not change text to a variable
 null is used to represent no value, e.g. {{ ""name"": null }}
 Variables should not be changed, they can include dot(.) and parentheses()
 Keep \n, \r, \t that are submitted to you for string variables
 Parameter.Value that is type String MUST be without escaping quotes. See <Example>
 Error handling is process by another step, if you see 'on error...' you can ignore it
+If there is some api key, settings, config replace it with %Settings.Get(""settingName"", ""defaultValue"", ""Explain"")% 
+- settingName would be the api key, config key, 
+- defaultValue for settings is the usual value given, make it """" if no value can be default
+- Explain is an explanation about the setting that novice user can understand.
+Dictionary<T1, T2> value is {{key: value, ... }}
+
 <Example>
 get url ""http://example.org"" => Value: ""http://example.org""
 write out 'Hello world' => Value: ""Hello world""
 <Example>
 
-If there is some api key, settings, config replace it with %Settings.Get(""settingName"", ""defaultValue"", ""Explain"")% 
-- settingName would be the api key, config key, 
-- defaultValue for settings is the usual value given, make it """" if no value can be default
-- Explain is an explanation about the setting that novice user can understand.
-
-Dictionary<T1, T2> value is {{key: value, ... }}
-
-JSON scheme information
-FunctionName: Name of the function to use from list of functions, if no function matches set as ""N/A""
+## JSON scheme information
+Reasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.
+Name: Name of the function to use from list of functions, if no function matches set as ""N/A""
 Parameters: List of parameters that are needed according to the user intent.
 - Type: the object type in c#
 - Name: name of the variable
@@ -291,8 +315,11 @@ ReturnValue rules
 - If no %variable% is defined then set as null.
 ".Trim();
 		}
-
-		private (string, IBuilderError?) GetDefaultAssistantText(GoalStep step)
+		[Method]
+		/*
+		 * TODO: SignatureInfo should be append to each return, roslyn? who can do it? #good-first-issue
+		 * */
+		public (string?, IBuilderError?) GetDefaultAssistantText(GoalStep step, IBuilderError? previousBuildError = null)
 		{
 			var programType = typeHelper.GetRuntimeType(module);
 			var variables = GetVariablesInStep(step).Replace("%", "");
@@ -322,20 +349,20 @@ ReturnValue rules
 			return (assistant.Trim(), null);
 		}
 
-		protected string GetVariablesInStep(GoalStep step)
+		[Method]
+		public string GetVariablesInStep(GoalStep step)
 		{
 			var variables = variableHelper.GetVariables(step.Text);
 			string vars = "";
 			foreach (var variable in variables)
 			{
-				var objectValue = memoryStack.GetObjectValue(variable.OriginalKey, false);
-				if (objectValue.Initiated)
+				if (variable.Initiated)
 				{
-					vars += variable.OriginalKey + " (" + objectValue.Value + "), ";
+					vars += variable.Name + " (" + variable.Value + "), ";
 				}
 				else
 				{
-					vars += variable.OriginalKey + " (type:" + (objectValue.Value ?? "object") + "), ";
+					vars += variable.Name + " (type:" + (variable.Value?.GetType().FullName ?? "object") + "), ";
 
 				}
 			}

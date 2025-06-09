@@ -3,7 +3,8 @@ using PLang.Utils;
 
 namespace PLang.Errors.Builder
 {
-	public record CompilerError(string Message, string LlmInstruction, GoalStep Step, string Key = "CompilerError", int StatusCode = 500, bool ContinueBuild = true, Exception? Exception = null, string? FixSuggestion = null, string? HelpfulLinks = null) : StepBuilderError(Message, Step, Key, StatusCode, ContinueBuild, Exception, FixSuggestion, HelpfulLinks)
+	public record CompilerError(string Message, string LlmInstruction, GoalStep Step, string Key = "CompilerError", int StatusCode = 500, 
+		bool ContinueBuild = true, Exception? Exception = null, string? FixSuggestion = null, string? HelpfulLinks = null, bool Retry = true) : StepBuilderError(Message, Step, Key, StatusCode, ContinueBuild, Exception, FixSuggestion, HelpfulLinks, Retry)
 	{
 		public override GoalStep Step { get; set; } = Step;
 		public override Goal? Goal { get; set; } = Step.Goal;

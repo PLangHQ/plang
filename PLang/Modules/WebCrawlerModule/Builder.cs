@@ -8,10 +8,10 @@ namespace PLang.Modules.WebCrawlerModule
 	{
 		public Builder() : base() { }
 
-		public override Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep goalStep)
+		public override Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep goalStep, IBuilderError? previousBuildError = null)
 		{
 			AppendToAssistantCommand("Make sure to convert html tags into correct css selector format");
-			return base.Build<GenericFunction>(goalStep);
+			return base.Build<GenericFunction>(goalStep, previousBuildError);
 		}
 
 

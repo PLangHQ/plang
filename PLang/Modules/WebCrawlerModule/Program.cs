@@ -1,6 +1,8 @@
-﻿using HtmlAgilityPack;
+﻿using AngleSharp.Dom;
+using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
+using NBitcoin;
 using Newtonsoft.Json.Linq;
 using PLang.Errors;
 using PLang.Errors.Runtime;
@@ -10,6 +12,7 @@ using PLang.Models;
 using PLang.Modules.WebCrawlerModule.Models;
 using PLang.Runtime;
 using PLang.Utils;
+using ReverseMarkdown.Converters;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -25,21 +28,7 @@ namespace PLang.Modules.WebCrawlerModule
 		private readonly IEngine engine;
 		private readonly IPseudoRuntime runtime;
 		private readonly ProgramFactory programFactory;
-		/*
-		private readonly string RequestContextKey = "!RequestContextKey";
-		private readonly string ResponseContextKey = "!ResponseContextKey";
-		private readonly string ConsoleContextKey = "!ConsoleContextKey";
-		private readonly string FileChooserContextKey = "!FileChooserContextKey";
-		private readonly string DownloadContextKey = "!DownloadContextKey";
 
-
-
-
-		private readonly string PageContextKeyIndex = "!PageContextKeyIndex";
-		private readonly string CurrentPageContextKey = "!PageContextKey";
-		private readonly string DialogContextKey = "!DialogContextKey";
-		private readonly string BrowserStartPropertiesContextKey = "!BrowserStartPropertiesContextKey";
-		*/
 		private object locker = new object();
 		public Program(PLangAppContext context, IPLangFileSystem fileSystem, ILogger logger, IEngine engine, IPseudoRuntime runtime, ProgramFactory programFactory) : base()
 		{
@@ -49,6 +38,11 @@ namespace PLang.Modules.WebCrawlerModule
 			this.engine = engine;
 			this.runtime = runtime;
 			this.programFactory = programFactory;
+		}
+
+		public async Task<BrowserInstance> GetBrowserInstance()
+		{
+			return Goal.GetVariable<BrowserInstance>() ?? await StartBrowser();
 		}
 
 		private string GetChromeUserDataDir()
@@ -73,30 +67,123 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 
 		[Description("browserType=Chrome|Edge|Firefox|Safari. hideTestingMode tries to disguise that it is a bot.")]
-		public async Task<IBrowserContext> StartBrowser(string browserType = "Chrome", bool headless = false, string profileName = "",
+		public async Task<BrowserInstance> StartBrowser(string browserType = "Chrome", bool headless = false, string profileName = "",
 			bool kioskMode = false, Dictionary<string, object>? argumentOptions = null, int? timoutInSeconds = 30, bool hideTestingMode = false,
 			GoalToCall? onRequest = null, GoalToCall? onResponse = null)
 		{
-			var playwright = Goal.GetVariable<IPlaywright>();
-			if (playwright == null)
+			var browserInstance = Goal.GetVariable<BrowserInstance>();
+			if (browserInstance != null)
 			{
-				playwright = await Playwright.CreateAsync();
-				Goal.AddVariable(playwright, () => { playwright.Dispose(); return Task.CompletedTask; });
+				return browserInstance;
 			}
 
-			var browser = Goal.GetVariable<IBrowserContext>();
-			if (browser != null)
-			{
-				return browser;
-			}
-
-			browser = await GetBrowserType(playwright, browserType, headless, profileName, kioskMode, argumentOptions, hideTestingMode);
-			Goal.AddVariable(browser, async () => { await browser.DisposeAsync(); });
-
-			browser.SetDefaultTimeout((timoutInSeconds ?? 30) * 1000);
+			var playwright = await Playwright.CreateAsync();
+			var browser = await GetBrowserType(playwright, browserType, headless, profileName, kioskMode, argumentOptions, hideTestingMode);
 			
-			return browser;
+			browser.SetDefaultTimeout((timoutInSeconds ?? 30) * 1000);
+
+			browserInstance = new BrowserInstance(playwright, browser);
+			Goal.AddVariable(browserInstance, async () => { await browserInstance.Dispose(); });
+
+			await browser.RouteAsync("*/**", async route =>
+			{
+				var routeAsyncUrl = browserInstance.RouteAsyncByUrl;
+				if (routeAsyncUrl == null)
+				{
+					await route.ContinueAsync();
+				}
+				else
+				{
+					var request = route.Request;
+					RouteAsync? routeAsync = null;
+					foreach (var routeUrl in routeAsyncUrl)
+					{
+						try
+						{
+							if (routeUrl.Key == "**/*")
+							{
+								routeAsync = routeUrl.Value;
+								break;
+							}
+							else if (Regex.IsMatch(request.Url, routeUrl.Key, RegexOptions.IgnoreCase))
+							{
+								routeAsync = routeUrl.Value;
+								break;
+							}
+						} catch (Exception ex)
+						{
+							logger.LogError(ex, $"Error parsing regex for {request.Url}");
+						}
+					}
+
+
+					if (routeAsync == null)
+					{
+						await route.ContinueAsync();
+					}
+					else
+					{
+						var filteredHeaders = route.Request.Headers;
+
+						filteredHeaders = filteredHeaders
+							.Where(kv => !routeAsync.HeadersToRemove
+								.Any(h => kv.Key.Equals(h, StringComparison.OrdinalIgnoreCase)))
+							.ToDictionary(kv => kv.Key, kv => kv.Value);
+
+						var options = new RouteContinueOptions();
+						options.Headers = filteredHeaders;
+
+						//await route.FetchAsync(options);
+						await route.ContinueAsync(options);
+					}
+				}
+
+
+			});
+
+			var callGoal = programFactory.GetProgram<CallGoalModule.Program>(goalStep);
+			if (onRequest != null)
+			{
+				browser.Request += async (sender, e) =>
+				{
+
+					var parameters = new Dictionary<string, object?> {
+						{ "!sender", sender },
+						{ "!request", WebCrawlerHelper.GetRequest(e) },
+						{ "!PlaywrightRequest", e }
+						};
+					var result = await callGoal.RunGoal(onRequest, parameters, isolated: true);
+
+					if (result.Error != null)
+					{
+						throw new ExceptionWrapper(result.Error);
+					}
+
+				};
+			}
+
+			if (onResponse != null)
+			{
+				browser.Response += async (sender, e) =>
+				{
+
+					var parameters = new Dictionary<string, object?> {
+						{ "!sender", sender },
+						{ "!request", WebCrawlerHelper.GetResponse(e) },
+						{ "!" + e.GetType().FullName, e }
+						};
+					var result = await callGoal.RunGoal(onResponse, parameters, isolated: true);
+
+					if (result.Error != null)
+					{
+						throw new ExceptionWrapper(result.Error);
+					}
+
+				};
+			}
+			return browserInstance;
 		}
+
 
 		private async Task<IBrowserContext> GetBrowserType(IPlaywright playwright, string browserType, bool headless,
 			string profileName, bool kioskMode, Dictionary<string, object>? argumentOptions, bool hideTestingMode)
@@ -115,17 +202,13 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 
 
-		private async Task<IBrowserContext> GetBrowser(string browserType = "Chrome", bool headless = false, bool useUserSession = false, string userSessionPath = "",
+		private async Task<BrowserInstance> GetBrowser(string browserType = "Chrome", bool headless = false, bool useUserSession = false, string userSessionPath = "",
 			bool incognito = false, bool kioskMode = false, Dictionary<string, object>? argumentOptions = null, int? timeoutInSeconds = null)
 		{
-			var browser = goal.GetVariable<IBrowserContext>();
-			if (browser != null) return browser;
+			var browserInstance = await GetBrowserInstance();
+			if (browserInstance != null) return browserInstance;
 
-			logger.LogDebug("Key BrowserContextKey not existing. Starting browser");
-			browser = await StartBrowser(browserType, headless, userSessionPath, kioskMode, argumentOptions, timeoutInSeconds);
-
-			//browser.
-			return browser;
+			return await StartBrowser(browserType, headless, userSessionPath, kioskMode, argumentOptions, timeoutInSeconds);
 		}
 
 
@@ -141,110 +224,64 @@ namespace PLang.Modules.WebCrawlerModule
 		{
 			if (cssSelector == null) cssSelector = await GetCssSelector();
 
-			var page = await GetCurrentPage();
-			var element = await page.QuerySelectorAsync(cssSelector);
-			if (element != null)
-			{
-				SetCssSelector(cssSelector);
+			var page = await GetPage();
 
-				return (element, null);
-			}
-			return (null, new ProgramError($"Element {cssSelector} does not exist.", goalStep, function));
+			var element = await page.QuerySelectorAsync(cssSelector);
+			if (element == null) return (null, new ProgramError($"Element {cssSelector} does not exist.", goalStep, function));
+			
+			SetCssSelector(cssSelector);
+
+			return (element, null);
+			
+			
 		}
 
 		public async Task CloseBrowser()
 		{
-			var browser = goal.GetVariable<IBrowserContext>();
+			var browser = goal.GetVariable<BrowserInstance>();
 			if (browser != null)
 			{
-				await browser.CloseAsync();
+				await browser.Browser.CloseAsync();
 			}
 
-			goal.RemoveVariable<IBrowserContext>();
-			goal.RemoveVariable<IPlaywright>();
+			goal.RemoveVariable<BrowserInstance>();
 		}
 
 
 		public async Task WaitForUrl(string expectedUrl, int timeoutInSeconds)
 		{
-			var page = await GetCurrentPage();
+			var page = await GetPage();
+
 			await page.WaitForURLAsync(expectedUrl, new PageWaitForURLOptions() { Timeout = timeoutInSeconds * 1000 });
 		}
 
-		private async Task<IPage> GetCurrentPage(string? url = null, int idx = -1, IPage? page = null, int? timeoutInSeconds = null)
+		public async Task<IPage> GetPage(int idx = -1)
 		{
-			if (idx == -1)
-			{
-				idx = goal.GetVariable<int?>("pageIndex") ?? 0;
-			}
+			var browserInstance = await GetBrowserInstance();
+			return await browserInstance.GetCurrentPage(idx);
+		}
+		/*
+		private async Task<(IPage? Page, IError? Error)> GetPage(string? url = null, int idx = -1, int? timeoutInSeconds = null)
+		{
+			var browserInstance = Goal.GetVariable<BrowserInstance>();
+			if (browserInstance == null) return (null, new ProgramError("No browser exists", FixSuggestion: "Add a step before this step, `- open browser`"));
 
-				var browser = await GetBrowser();
-			if (idx > browser.Pages.Count - 1)
+			var page = await browserInstance.GetCurrentPage(idx);			
+			page.Dialog += (object? sender, IDialog e) =>
 			{
-				idx = browser.Pages.Count - 1;
-			}
-			if (idx == -1 && browser.Pages.Count > 0)
-			{
-				idx = 0;
-			}
-
-			var pageGotoOptions = new PageGotoOptions();
-			pageGotoOptions.WaitUntil = WaitUntilState.DOMContentLoaded;
-			if (timeoutInSeconds != null)
-			{
-				pageGotoOptions.Timeout = timeoutInSeconds.Value * 1000;
-			}
-
-			if (idx == -1)
-			{
-				page = await browser.NewPageAsync();
-
-				
-
-				if (!string.IsNullOrEmpty(url))
-				{
-					BindEventsToPage(page, url);
-					var response = await page.GotoAsync(url, pageGotoOptions);
-					Goal.AddVariable(response);
-
-					if (response != null)
-					{
-						var wrappedResponse = await WebCrawlerHelper.GetResponse(response);
-						memoryStack.Put(goal.GoalName + ".response", wrappedResponse);
-					}
-				}
-			}
-			else
-			{
-				page = browser.Pages[idx];
-				if (url != null)
-				{
-					var response = await page.GotoAsync(url, pageGotoOptions);
-					Goal.AddVariable(response);
-					if (response != null)
-					{
-						var wrappedResponse = await WebCrawlerHelper.GetResponse(response);
-						memoryStack.Put(goal.GoalName + ".response", wrappedResponse);
-					}
-				}
-			}
-			page.Dialog += async (object? sender, IDialog e) =>
-			{
-				List<IDialog> dialogs = goal.GetVariable<List<IDialog>>() ?? new();				
+				List<IDialog> dialogs = goal.GetVariable<List<IDialog>>() ?? new();
 				dialogs.Add(e);
 				goal.AddVariable(dialogs);
 			};
 
-			goal.AddVariable(idx, variableName: "pageIndex");
-
-			return page;
-		}
+			return (page, null);
+		}*/
 
 
 		[Description("opens a page to a url. browserType=Chrome|Edge|Firefox|IE|Safari. hideTestingMode tries to disguise that it is a bot.")]
 		public async Task NavigateToUrl(string url, string browserType = "Chrome", bool headless = false,
 				string profileName = "", bool kioskMode = false, Dictionary<string, object>? argumentOptions = null,
-				int? timeoutInSecods = null, bool hideTestingMode = false, int pageIndex = 0,
+				int? timeoutInSeconds = null, bool hideTestingMode = false, int pageIndex = -1,
 				GoalToCall? onRequest = null, GoalToCall? onResponse = null, GoalToCall? onWebsocketReceived = null, GoalToCall? onWebsocketSent = null,
 				GoalToCall? onConsoleOutput = null, GoalToCall? onWorker = null,
 				GoalToCall? onDialog = null, GoalToCall? onLoad = null, GoalToCall? onDOMLoad = null, GoalToCall? onFileChooser = null,
@@ -261,41 +298,32 @@ namespace PLang.Modules.WebCrawlerModule
 				url = "https://" + url;
 			}
 
-			var browser = await StartBrowser(browserType, headless, profileName, kioskMode, argumentOptions, timeoutInSecods, hideTestingMode);
-
-			IPage page;
-			if (browser.Pages.Count == 0)
+			var pageGotoOptions = new PageGotoOptions();
+			pageGotoOptions.WaitUntil = WaitUntilState.DOMContentLoaded;
+			if (timeoutInSeconds != null)
 			{
-				page = await browser.NewPageAsync();
-				BindEventsToPage(page, url, onRequest, onResponse, onWebsocketReceived, onWebsocketSent,
+				pageGotoOptions.Timeout = timeoutInSeconds.Value * 1000;
+			}
+
+			IPage page = await GetPage(pageIndex);
+			BindEventsToPage(page, url, onRequest, onResponse, onWebsocketReceived, onWebsocketSent,
 					onConsoleOutput, onWorker,
 					onDialog, onLoad, onDOMLoad, onFileChooser,
 					onIFrameLoad, onDownload);
-			}
-			else
-			{
-				if (pageIndex > browser.Pages.Count - 1)
-				{
-					page = await browser.NewPageAsync();
-					pageIndex = browser.Pages.Count - 1;
-					BindEventsToPage(page, url, onRequest, onResponse, onWebsocketReceived, onWebsocketSent,
-						onConsoleOutput, onWorker,
-						onDialog, onLoad, onDOMLoad, onFileChooser,
-						onIFrameLoad, onDownload);
-				}
-				else
-				{
-					page = browser.Pages[pageIndex];
-				}
-			}
 
-			page = await GetCurrentPage(url);
+
+			var response = await page.GotoAsync(url, pageGotoOptions);
+			Goal.AddVariable(response);
+
+			var wrappedResponse = await WebCrawlerHelper.GetResponse(response);
+			memoryStack.Put(goal.GoalName + ".response", wrappedResponse, goalStep: goalStep);
+
 
 		}
 
 		public async Task<object> ExtractClassesToList(string[] cssSelectors, string fromCssSelector)
 		{
-			var page = await GetCurrentPage();
+			var page = await GetPage();
 			var elements = await page.QuerySelectorAllAsync(fromCssSelector);
 			List<string> classes = new List<string>();
 			foreach (var element in elements)
@@ -326,26 +354,26 @@ return result;");
 
 		public async Task ScrollToBottom()
 		{
-			var page = await GetCurrentPage();
+			var page = await GetPage();
 			await page.EvaluateAsync("window.scrollTo(0, document.body.scrollHeight);");
 		}
 		public async Task ScrollToElementByCssSelector(string cssSelector)
 		{
-			var page = await GetCurrentPage();
+			var page = await GetPage();
 			var element = page.QuerySelectorAsync(cssSelector);
 			await page.EvaluateAsync("(element) => { element.scrollIntoView(true);", element);
 		}
 
 		public async Task ScrollToElement(PlangWebElement element)
 		{
-			var page = await GetCurrentPage();
+			var page = await GetPage();
 			await page.EvaluateAsync("(element) => { element.scrollIntoView(true);", element.WebElement);
 		}
 
 		[Description("operatorOnText can be equals|contains|startswith|endswith")]
 		public async Task<PlangWebElement?> GetElementByText(string text, string operatorOnText = "equals", int? timeoutInSeconds = null, string? cssSelector = null)
 		{
-			var page = await GetCurrentPage();
+			var page = await GetPage();
 
 			string escapedText = Regex.Escape(text);
 			string pattern = operatorOnText switch
@@ -368,7 +396,7 @@ return result;");
 		public async Task WaitForElementToAppear(string cssSelector, int timeoutInSeconds = 30, bool waitForElementToChange = false)
 		{
 			var timeoutMs = timeoutInSeconds * 1000;
-			var page = await GetCurrentPage();
+			var page = await GetPage();
 
 			var locator = page.Locator(cssSelector);
 			await locator.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = timeoutMs });
@@ -394,7 +422,7 @@ return result;");
 
 		public async Task SetFocus(string? cssSelector = null, int? timoutInSeconds = null)
 		{
-			var page = await GetCurrentPage();
+			var page = await GetPage();
 			cssSelector = await GetCssSelector(cssSelector);
 
 			await page.FocusAsync(cssSelector, new PageFocusOptions() { Timeout = timoutInSeconds * 1000 });
@@ -407,7 +435,7 @@ return result;");
 
 		public async Task Click(string cssSelector, int elementAtToClick = 0, bool clickAllMatchingElements = false, int? timeoutInSeconds = null)
 		{
-			var page = await GetCurrentPage();
+			var page = await GetPage();
 			var elements = await page.QuerySelectorAllAsync(cssSelector);
 			if (clickAllMatchingElements)
 			{
@@ -428,7 +456,7 @@ return result;");
 		 **/
 		public async Task<string?> AcceptAlert()
 		{
-			var page = await GetCurrentPage();
+			var page = await GetPage();
 			List<IDialog>? dialogs = goal.GetVariable<List<IDialog>>() ?? new();
 			if (dialogs.Count == 0) return null;
 
@@ -444,6 +472,25 @@ return result;");
 			return message;
 		}
 
+		
+
+		[Description("url can be regex. when user does not define url match all with url=**/*")]
+		public async Task RemoveHeaderFromRequest(string url, List<string> headersToRemove)
+		{
+			var browserInstance = await GetBrowserInstance();
+			var routeAsyncUrls = browserInstance.RouteAsyncByUrl;
+			if (!routeAsyncUrls.TryGetValue(url, out RouteAsync? route))
+			{
+				route = new RouteAsync(headersToRemove);
+				routeAsyncUrls.Add(url, route);
+			} else
+			{
+				route.HeadersToRemove.AddRange(headersToRemove);
+				routeAsyncUrls[url] = route;				
+			}
+			
+			browserInstance.RouteAsyncByUrl = routeAsyncUrls;
+		}
 
 
 		private async Task<string> GetCssSelector(string? cssSelector = null)
@@ -470,7 +517,7 @@ return result;");
 		[Description("Writes a text to an element")]
 		public async Task SendKey(string value, string? cssSelector = null, int? timeoutInSeconds = null, bool humanStyle = false)
 		{
-			var page = await GetCurrentPage();
+			var page = await GetPage();
 			cssSelector = await GetCssSelector();
 
 			var element = await page.QuerySelectorAsync(cssSelector);
@@ -501,7 +548,7 @@ return result;");
 		[Description("select an option by its value in select input by cssSelector")]
 		public async Task SelectByValue(string value, string? cssSelector = null, int? timeoutInSeconds = null)
 		{
-			var page = await GetCurrentPage();
+			var page = await GetPage();
 			cssSelector = await GetCssSelector();
 
 			var element = await page.QuerySelectorAsync(cssSelector);
@@ -514,7 +561,7 @@ return result;");
 		[Description("select an option by its text in select input by cssSelector")]
 		public async Task SelectByText(string text, string? cssSelector = null, int? timeoutInSeconds = null)
 		{
-			var page = await GetCurrentPage();
+			var page = await GetPage();
 			cssSelector = await GetCssSelector();
 
 			var element = await page.QuerySelectorAsync(cssSelector);
@@ -526,7 +573,7 @@ return result;");
 
 		public async Task Submit(string? cssSelector = null, int? timeoutInSeconds = null)
 		{
-			var page = await GetCurrentPage();
+			var page = await GetPage();
 			cssSelector = await GetCssSelector();
 
 			var element = await page.QuerySelectorAsync(cssSelector);
@@ -564,7 +611,7 @@ return result;");
 
 		public async Task<List<PlangWebElement>> GetElements(string? cssSelector = null, string? shadowDomCssSelector = null)
 		{
-			var page = await GetCurrentPage();
+			var page = await GetPage();
 			cssSelector = await GetCssSelector();
 
 			var elements = await page.QuerySelectorAllAsync(cssSelector);
@@ -575,7 +622,7 @@ return result;");
 		{
 			if (element == null) return (null, new ProgramError("You must send in element to look inside", goalStep, function));
 
-			var page = await GetCurrentPage();
+			var page = await GetPage();
 			var elements = await element.QuerySelectorAllAsync(elementName);
 
 			return (await GetPlangWebElements(elements), null);
@@ -584,7 +631,7 @@ return result;");
 		public async Task<string?> FindElementAndExtractAttribute(string attribute, string? cssSelector = null, PlangWebElement? element = null)
 		{
 
-			var page = await GetCurrentPage();
+			var page = await GetPage();
 
 			IElementHandle? e;
 			if (element != null)
@@ -605,7 +652,7 @@ return result;");
 		[Description("When cssSelector is null, all html is retrieved from page. outputFormat=html|md")]
 		public async Task<(string?, IError?)> ExtractContent(string? cssSelector = null, PlangWebElement? element = null, string outputFormat = "html")
 		{
-			var page = await GetCurrentPage();
+			var page = await GetPage();
 
 			string html;
 			if (string.IsNullOrWhiteSpace(cssSelector))
@@ -622,7 +669,7 @@ return result;");
 				}
 				html = await selectorElement.InnerHTMLAsync();
 			}
-			
+
 			outputFormat = outputFormat.TrimStart('.');
 			if (outputFormat == "md")
 			{
@@ -664,20 +711,20 @@ return result;");
 		}
 		public async Task SwitchTab(int tabIndex)
 		{
-			await GetCurrentPage(null, tabIndex);
+			await GetPage(tabIndex);
 		}
 
 
 		public async Task<Uri> GetUriFromPage(int? tabIndex = null)
 		{
-			var page = await GetCurrentPage(idx: tabIndex ?? -1);
+			var page = await GetPage(idx: tabIndex ?? -1);
 			return new Uri(page.Url);
 		}
 
 		public async Task AddDefaultRequestHeader(Dictionary<string, object> headers)
 		{
-			var browser = await GetBrowser();
-			await browser.SetExtraHTTPHeadersAsync(headers.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString()!));
+			var browserInstance = await GetBrowserInstance();
+			await browserInstance.Browser.SetExtraHTTPHeadersAsync(headers.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString()!));
 		}
 
 		[Description("keys of the header, find by value where operation (startwith|endwith|equals|contains), request object can be null, will use the pages request")]
@@ -710,14 +757,6 @@ return result;");
 			return (dict, null);
 		}
 
-
-		public async Task ListenToNetworkTraffic(string url, string oper)
-		{
-			var browser = await GetBrowser();
-
-
-		}
-
 		public async Task Wait(int milliseconds = 1000)
 		{
 			await Task.Delay(milliseconds);
@@ -742,7 +781,7 @@ return result;");
 				return new ProgramError("File exists and will not be overwritten.", goalStep, function, FixSuggestion: $"Rewrite your step to include that you want to overwrite the file, e.g. `- {goalStep.Text}, overwrite`");
 			}
 
-			var page = await GetCurrentPage();
+			var page = await GetPage();
 			if (cssSelector != null)
 			{
 				var element = await page.QuerySelectorAsync(cssSelector);
@@ -852,7 +891,7 @@ return result;");
 			options.Args = args.ToArray();
 			return options;
 		}
-		
+
 		private BrowserTypeLaunchPersistentContextOptions GetChromeOptionsPersistent(bool headless, bool kioskMode, Dictionary<string, object>? argumentOptions, bool hideTestingMode)
 		{
 			var options = new BrowserTypeLaunchPersistentContextOptions();
@@ -937,11 +976,11 @@ return result;");
 					var path = GetChromeUserDataDir();
 					var profileDir = Path.Join(path, userProfile);
 					CopyDirectory(profileDir, profileTemp);
-					
+
 
 					options.Channel = "chrome";
 					//options.Args = options.Args!.Append($"--user-data-dir={path}");
-					options.Args = options.Args!.Append($"--profile-directory={userProfile}");					
+					options.Args = options.Args!.Append($"--profile-directory={userProfile}");
 
 					if (hideTestingMode)
 					{
@@ -955,7 +994,7 @@ return result;");
 					}
 
 
-					browser = await playwright.Chromium.LaunchPersistentContextAsync(tempProfileFolder, options);				
+					browser = await playwright.Chromium.LaunchPersistentContextAsync(tempProfileFolder, options);
 
 				}
 				catch (PlaywrightException pe)
@@ -1053,7 +1092,11 @@ return result;");
 
 				if (onRequest != null)
 				{
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!request", WebCrawlerHelper.GetRequest(e) } };
+					var parameters = new Dictionary<string, object?> {
+						{ "!sender", sender },
+						{ "!request", WebCrawlerHelper.GetRequest(e) },
+						{ "!" + e.GetType().FullName, e }
+					};
 					var result = await callGoal.RunGoal(onRequest, parameters, isolated: true);
 
 					if (result.Error != null)
@@ -1081,6 +1124,7 @@ return result;");
 
 					if (result.Error != null)
 					{
+						Console.WriteLine("page.Response:" + result.Error);
 						throw new ExceptionWrapper(result.Error);
 					}
 				}

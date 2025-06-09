@@ -1,7 +1,9 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using LightInject;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.SafeFileSystem;
 using PLang.Services.SettingsService;
 using PLang.Utils;
 using PLangTests;
@@ -31,7 +33,7 @@ namespace PLang.Repository.Tests
 			string module = "SqliteSettingsRepositoryTests";
 			var value = new DunderMifflin("Micheal");
 
-			SqliteSettingsRepository settingsRepository = new SqliteSettingsRepository(fileSystem, context, logger);
+			SqliteSettingsRepository settingsRepository = new SqliteSettingsRepository(container.GetInstance<IPLangFileSystemFactory>(), context, logger);
 			settingsRepository.Init();
 
 			var setting = settingsRepository.GetSettings().FirstOrDefault(p => p.Key == key);
@@ -65,7 +67,7 @@ namespace PLang.Repository.Tests
 			string classType = "SqliteSettingsRepositoryTests";
 			var value = new DunderMifflin("Micheal");
 
-			SqliteSettingsRepository settingsRepository = new SqliteSettingsRepository(fileSystem, context, logger);
+			SqliteSettingsRepository settingsRepository = new SqliteSettingsRepository(container.GetInstance<IPLangFileSystemFactory>(), context, logger);
 			settingsRepository.Init();
 
 			Assert.IsNotNull(context[Settings.SaltKey]);

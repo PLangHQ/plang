@@ -15,7 +15,7 @@ namespace PLang.Errors
 	{
 
 		public static readonly string UnhandledError = "UnhandledError";
-		public bool Retry => false;
+		public bool Retry { get; set; }
 		public ExceptionError(IError error)
 		{
 
@@ -27,17 +27,18 @@ namespace PLang.Errors
 			this.Goal = error.Goal;
 			this.Step = error.Step;
 		}
-		public ExceptionError(Exception ex, string? Message = null, Goal? Goal = null, GoalStep? Step = null, int StatusCode = 500, string Key = "UnhandledError", string? FixSuggestion = null, string? HelpfulLinks = null) { 
+		public ExceptionError(Exception ex, string? Message = null, Goal? Goal = null, GoalStep? Step = null, int StatusCode = 500, string Key = "UnhandledError", string? FixSuggestion = null, string? HelpfulLinks = null, bool Retry = true) { 
 		
 			var lowestException = ExceptionHelper.GetLowestException(ex);
 			this.StatusCode = StatusCode;
 			this.Key = Key;
 			this.Message = Message ?? lowestException.Message;
-			this.Exception = lowestException;
+			this.Exception = lowestException ?? ex;
 			this.FixSuggestion = FixSuggestion;
 			this.HelpfulLinks = HelpfulLinks;
 			this.Goal = Goal;
 			this.Step = Step;
+			this.Retry = Retry;
 		}
 
 		public int StatusCode { get; init; }
@@ -49,11 +50,12 @@ namespace PLang.Errors
 		public Exception Exception { get; init; }
 		public string? FixSuggestion { get; init; }
 		public string? HelpfulLinks { get; init; }
-
+		public string? LlmBuilderHelp { get; set; }
 		public bool ContinueBuild => false;
 		public Goal? Goal { get; set; }
 		public GoalStep? Step { get; set; }
-
+		public DateTime CreatedUtc { get; init; } = DateTime.UtcNow;
+		public List<IError>? ErrorChain { get; set; }
 		public object AsData()
 		{
 			throw new NotImplementedException();

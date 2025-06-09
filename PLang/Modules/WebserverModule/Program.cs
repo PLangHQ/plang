@@ -706,7 +706,7 @@ Error:
 					}
 				}
 
-				memoryStack.Put("request", obj);
+				memoryStack.Put("request", obj, goalStep: goalStep);
 
 
 				return null;
@@ -730,12 +730,12 @@ Error:
 						}
 					}
 				}
-				memoryStack.Put("request", formData);
+				memoryStack.Put("request", formData, goalStep: goalStep);
 				return null;
 			}
 
 
-			memoryStack.Put("request", nvc);
+			memoryStack.Put("request", nvc, goalStep: goalStep);
 			return null;
 
 			/*
@@ -781,7 +781,7 @@ Error:
 			if (signature != null)
 			{
 				context.AddOrReplace(ReservedKeywords.Signature, signature);
-				memoryStack.Put(ReservedKeywords.Identity, signature.Identity);
+				memoryStack.Put(ReservedKeywords.Identity, signature.Identity, goalStep: goalStep);
 			}
 			return null;
 		}

@@ -28,7 +28,7 @@ namespace PLang.Errors
 		public string Key { get; init; }
 
 		public string Message { get; init; }
-
+		public string? LlmBuilderHelp { get; set; }
 		public Exception Exception { get; init; }
 		public string? FixSuggestion { get; init; }
 		public string? HelpfulLinks { get; init; }
@@ -36,7 +36,8 @@ namespace PLang.Errors
 		public bool ContinueBuild => false;
 		public Goal? Goal { get; set; }
 		public GoalStep? Step { get; set; }
-
+		public DateTime CreatedUtc { get; init; } = DateTime.UtcNow;
+		public List<IError>? ErrorChain { get; set; }
 		public object AsData()
 		{
 			throw new NotImplementedException();

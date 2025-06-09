@@ -1,4 +1,5 @@
-﻿using Org.BouncyCastle.Bcpg;
+﻿using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Bcpg;
 using PLang.Attributes;
 using PLang.Errors;
 using PLang.Errors.Runtime;
@@ -24,15 +25,15 @@ namespace PLang.Modules.ValidateModule
 		{
 		}
 
-		[Description("Check each %variable% if it is empty. Create error message fitting the intent of the validation. Extract all %variables% from this statement as a JSON array of strings, ensuring it is not wrapped as a single string.")]
-		public async Task<IError?> IsNotEmpty([HandlesVariable] List<object> variables, string errorMessage, int statusCode = 400)
+		[Description("Check each %variable% if it is empty. Create error message fitting the intent of the validation. Extract all %variables% from this statement as a JSON array of strings, ensuring it is not wrapped as a single string. channel=error|warning|info|debug|trace. channel is null unless sepecifically defined by user e.g. channel:error")]
+		public async Task<IError?> IsNotEmpty([HandlesVariable] string[] variables, string errorMessage, int statusCode = 400)
 		{
 			if (string.IsNullOrEmpty(errorMessage)) errorMessage = "Variables are empty";
 			if (variables == null)
 			{
 				return new ProgramError(errorMessage, goalStep, function, StatusCode: 500);
 			}
-			if (variables.Count == 0)
+			if (variables.Length == 0)
 			{
 				return new ProgramError(errorMessage, goalStep, function, StatusCode: 500);
 			}
@@ -41,39 +42,22 @@ namespace PLang.Modules.ValidateModule
 
 			foreach (var variable in variables)
 			{
-				object? obj;
-				if (variable is string variableName && VariableHelper.IsVariable(variableName))
+				bool isEmpty = true;
+				string varName;
+				if (VariableHelper.IsVariable(variable))
 				{
-					var objectValue = memoryStack.GetObjectValue2(variableName);
-					if (objectValue.Initiated && objectValue.Value != null && !VariableHelper.IsEmpty(objectValue.Value)) continue;
-
-					if (!objectValue.Initiated || objectValue.Value == null || (objectValue.Type == typeof(string) && string.IsNullOrWhiteSpace(objectValue.Value?.ToString())))
-					{
-						multiError.Add(new ProgramError(variableName, goalStep, function, StatusCode: statusCode));
-						continue;
-					}
-					obj = objectValue.Value;
-				}
-				else
+					var ov = memoryStack.GetObjectValue(variable);
+					isEmpty = ov.IsEmpty;
+					varName = ov.Name;
+				} else
 				{
-					obj = variable;
+					varName = variable;
+					isEmpty = VariableHelper.IsEmpty(variable);
 				}
 
-				if (obj == null)
+				if (isEmpty)
 				{
-					multiError.Add(new ProgramError(variable.ToString(), goalStep, function, StatusCode: statusCode));
-					continue;
-				}
-
-				if (obj is IList list && list.Count == 0)
-				{
-					multiError.Add(new ProgramError(variable.ToString(), goalStep, function, StatusCode: statusCode));
-					continue;
-				}
-
-				if (obj is IDictionary dict && dict.Count == 0)
-				{
-					multiError.Add(new ProgramError(variable.ToString(), goalStep, function, StatusCode: statusCode));
+					multiError.Add(new ProgramError($"%{varName}% is empty", goalStep, function, StatusCode: statusCode));
 					continue;
 				}
 			}
@@ -138,9 +122,43 @@ namespace PLang.Modules.ValidateModule
 			return null;
 		}
 
+		public async Task<(List<object>?, IError?)> ValidateItemIsInList(object[] itemsToCheckInList, IList list, string? errorMessage = "item is not in list", bool caseSensitive = false)
+		{
+			StringComparison comparisonType = (caseSensitive) ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+			List<object> returnValues = new();
+			foreach (var itemToCheckInList in itemsToCheckInList)
+			{
+				foreach (var item in list)
+				{
+					if (item is ObjectValue ov)
+					{
+						if (ov.Equals(itemToCheckInList.ToString(), comparisonType))
+						{
+							returnValues.Add(item);
+						}
+					} else if (item is string str)
+					{
+						if (str.Equals(itemToCheckInList.ToString(), comparisonType))
+						{
+							returnValues.Add(item);
+						}
+					}
+					else if (item.Equals(itemToCheckInList))
+					{
+						returnValues.Add(item);
+					}
+				}
+			}
+			if (returnValues.Count > 0) return (returnValues, null);
 
-		[Description("Validates if contract is valid. Uses properties on the contract from signatureProperties as signatures to validate against. propertiesToMatch specifies properties that should be used on the validation, when null all poperties are used except signatureProperties")]
-		public async Task<IError?> ValidateContract(object contract, List<string> signatureProperties, List<string>? propertiesToMatch = null)
+			if (string.IsNullOrEmpty(errorMessage)) errorMessage = "item is not in list";
+
+			return (null, new ProgramError(errorMessage));
+		}
+
+
+		[Description("Validates if signed contract is valid. Uses properties on the contract from signatureProperties as signatures to validate against. propertiesToMatch specifies properties that should be used on the validation, when null all poperties are used except signatureProperties")]
+		public async Task<IError?> ValidateSignedContract(object contract, List<string> signatureProperties, List<string>? propertiesToMatch = null)
 		{
 			return new ProgramError("Not implemented");
 		}

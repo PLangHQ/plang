@@ -46,7 +46,7 @@ namespace PLang.Modules.SerializerModule
 					Newtonsoft.Json.JsonSerializer.CreateDefault().Serialize(jw, data);
 					jw.Flush();
 
-					
+
 					return null;
 				}
 			}
@@ -69,16 +69,28 @@ namespace PLang.Modules.SerializerModule
 					if (dict == null) return (null, null);
 
 					return (dict, null);
-				} catch (Exception ex) { 
+				}
+				catch (Exception ex)
+				{
 					return (null, new ProgramError("Error deserializing json. Is it json?", goalStep, function, Exception: ex));
 				}
-			} else if (serializer.Contains("xml")) {
+			}
+			else if (serializer.Contains("xml"))
+			{
 				var doc = new XmlDocument();
 				doc.Load(stream);
-				// Work with DOM-style API
+
 				return (doc.InnerXml, null);
 			}
-				return (null, new ProgramError($"serializer {serializer} is not supported", goalStep, function, Key: "SerializerNotSupported"));
+			else if (serializer.Contains("text") || string.IsNullOrEmpty(serializer))
+			{
+				using (StreamReader reader = new StreamReader(stream))
+				{
+					return (await reader.ReadToEndAsync(), null);
+				}
+			}
+
+			return (null, new ProgramError($"serializer {serializer} is not supported", goalStep, function, Key: "SerializerNotSupported"));
 
 		}
 		public async Task<object?> Deserialize(byte[] data, string serializer = "json")

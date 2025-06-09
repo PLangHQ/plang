@@ -3,6 +3,7 @@ using NBitcoin.Protocol;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.AskUser;
+using PLang.Errors.Builder;
 using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Utils;
@@ -14,11 +15,11 @@ namespace PLang.Services.CompilerService
 	public class CodeExceptionHandler
 	{
 
-		public static IError GetError(Exception ex, Implementation? implementation, GoalStep step)
+		public static IError GetError(Exception ex, ImplementationResponse? implementation, GoalStep step)
 		{
 			if (implementation == null)
 			{
-				implementation = new Implementation("No namespace", "No name provided", "No code provided", null, new(), new(), null, null);
+				return new StepBuilderError("implementation was empty", step);
 			}
 			if (ex is MissingSettingsException mse)
 			{
@@ -41,7 +42,7 @@ namespace PLang.Services.CompilerService
 
 		}
 
-		private static string FormatMessage(Exception ex, Implementation implementation, GoalStep step)
+		private static string FormatMessage(Exception ex, ImplementationResponse implementation, GoalStep step)
 		{
 			string message = "";
 			if (ex.InnerException == null)
@@ -51,7 +52,7 @@ namespace PLang.Services.CompilerService
 You might have to define your step bit more, try including variable type, such as %name%(string), %age%(number), %tags%(array).
 
 The C# code is this:
-{implementation.Code}
+{implementation.Implementation}
 
 ";
 			}
@@ -77,7 +78,7 @@ The error occured in this line:
 	{lineNr}. {errorLine.Trim()}
 
 The C# code is this:
-{InsertLineNumbers(implementation.Code)}
+{InsertLineNumbers(implementation.Implementation)}
 
 ";
 			return message;
@@ -94,10 +95,10 @@ The C# code is this:
 			return string.Join(Environment.NewLine, lines);
 		}
 
-		private static (string errorLine, int lineNr) GetErrorLine(int lineNr, Implementation implementation, string message)
+		private static (string errorLine, int lineNr) GetErrorLine(int lineNr, ImplementationResponse implementation, string message)
 		{
-			lineNr -= ((implementation.Using != null) ? implementation.Using.Length : 0) + 7;
-			string[] codeLines = implementation.Code.ReplaceLineEndings().Split(Environment.NewLine);
+			lineNr -= ((implementation.Using != null) ? implementation.Using.Count : 0) + 7;
+			string[] codeLines = implementation.Implementation.ReplaceLineEndings().Split(Environment.NewLine);
 			if (lineNr == 0) return ("", -1);
 
 			if (codeLines.Length > lineNr && !string.IsNullOrEmpty(codeLines[lineNr]))

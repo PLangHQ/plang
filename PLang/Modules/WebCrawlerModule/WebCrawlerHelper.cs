@@ -1,5 +1,7 @@
-﻿using Microsoft.Playwright;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Playwright;
 using PLang.Modules.WebCrawlerModule.Models;
+using System.Text;
 
 namespace PLang.Modules.WebCrawlerModule
 {
@@ -13,16 +15,21 @@ namespace PLang.Modules.WebCrawlerModule
 				try
 				{
 					await response.FinishedAsync();
-					content = await response.TextAsync();
+					var contentType = (response.Headers.ContainsKey("Content-Type")) ? response.Headers["Content-Type"] : "text/" ?? "text/";
+
+					if (IsText(contentType))
+					{
+						var bytes = await response.BodyAsync();
+						content = Encoding.UTF8.GetString(bytes);
+					}
 				}
 				catch (Exception ex)
 				{
+					Console.WriteLine($"Error getting content from {response.Url} - {ex.Message}");
 				}
 			}
 
 			var headers = response.Headers;
-			
-
 			var parentUrl = response.Frame.Url;
 			string? serverIp = null;
 			int? serverPort = null;
@@ -34,7 +41,8 @@ namespace PLang.Modules.WebCrawlerModule
 
 				serverIp = serverAddress?.IpAddress;
 				serverPort = serverAddress?.Port;
-			} catch (Exception ex)
+			}
+			catch (Exception ex)
 			{
 				int i = 0;
 				Console.WriteLine($"Connection disconnected {response.Url}");
@@ -51,6 +59,36 @@ namespace PLang.Modules.WebCrawlerModule
 
 			};
 
+		}
+
+		private static bool IsText(string contentType)
+		{
+			if (string.IsNullOrEmpty(contentType)) return false;
+
+			// Extended set of known text-based content types
+			var textContentTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+				{
+					"text/",
+					"application/json",
+					"application/xml",
+					"application/javascript",
+					"application/xhtml+xml",
+					"application/ld+json",
+					"application/xml+rss",
+					"application/atom+xml",
+					"application/x-www-form-urlencoded",
+					"application/xml+rss",
+				};
+
+			// Check if the Content-Type matches any of the known text types
+			if (textContentTypes.Contains(contentType))
+				return true;
+
+			// If it contains "charset", it is likely a text type (e.g., application/json; charset=utf-8)
+			if (contentType.IndexOf("charset=", StringComparison.OrdinalIgnoreCase) >= 0)
+				return true;
+
+			return false;
 		}
 
 		private static bool IsEmptyContent(IResponse response)

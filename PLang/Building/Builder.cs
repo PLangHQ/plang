@@ -78,12 +78,13 @@ namespace PLang.Building
 					else if (goalError != null)
 					{
 						logger.LogWarning(goalError.ToFormat().ToString());
+						goalBuilder.BuildErrors.Add(goalError);
 					}
 				}
 
 				if (absoluteGoalPath != null)
 				{
-					goals = goals.Where(p => p.Equals(absoluteGoalPath)).ToList();
+					goals = goals.Where(p => p.AbsoluteGoalPath.Equals(absoluteGoalPath)).ToList();
 				}
 
 				(_, error) = await eventBuilder.BuildEventsPr();
@@ -105,6 +106,7 @@ namespace PLang.Building
 					}
 					else if (goalError != null)
 					{
+						goalBuilder.BuildErrors.Add(goalError);
 						logger.LogWarning(goalError.ToFormat().ToString());
 					}
 				}

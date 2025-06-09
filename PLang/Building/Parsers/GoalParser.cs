@@ -46,11 +46,18 @@ namespace PLang.Building.Parsers
 
 		public List<Goal> ParseGoalFile(string goalFileAbsolutePath, bool isOS = false)
 		{
+			if (fileSystem.Path.GetExtension(goalFileAbsolutePath) != ".goal")
+			{
+				throw new Exception($"The file {goalFileAbsolutePath} is not a goal file. It should end with .goal");
+			}
 			Goal? currentGoal = null;
 			var content = fileSystem.File.ReadAllText(goalFileAbsolutePath);
 			content = content.Replace("\t", "    ");
-			var rootPath = fileSystem.GoalsPath;
-			var rootBuildPath = fileSystem.BuildPath;
+
+			string rootPath = fileSystem.RootDirectory;
+			string rootBuildPath = fileSystem.BuildPath;
+			
+			
 			var appName = "";
 			if (isOS)
 			{
@@ -208,7 +215,12 @@ namespace PLang.Building.Parsers
 				uncertainComment = null;
 				stepNr = 0;
 				currentGoal.GoalSteps = new List<GoalStep>();
+				
 				goals.Add(currentGoal);
+				if (goals.Count > 1)
+				{
+					currentGoal.ParentGoal = goals[0];
+				}
 			}
 			var setupOnceDictionary = settings.GetOrDefault<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", new());
 			var goalsWithSameName = goals.GroupBy(p => p.GoalName).Where(p => p.Count() > 1).FirstOrDefault();
@@ -256,6 +268,15 @@ namespace PLang.Building.Parsers
 				goal.RelativePrPath = Path.Join(".build", prFileAbsolutePath.Replace(rootBuildPath, ""));
 				goal.RelativePrFolderPath = Path.GetDirectoryName(goal.RelativePrPath);
 
+				if (!goal.AbsolutePrFilePath.StartsWith("c:") && goal.AbsolutePrFilePath.Contains("c:"))
+				{
+					throw new Exception($"Absolute path contains c in wrong place: {goal.AbsolutePrFilePath}");
+				}
+
+				if (goal.RelativeGoalPath.Contains("c:"))
+				{
+					throw new Exception($"Relative path contains full path: {goal.RelativeGoalPath}");
+				}
 				//check if goal inside of goal is named same as base folder
 				if (i == 0)
 				{
@@ -311,7 +332,6 @@ namespace PLang.Building.Parsers
 					goals[i].GoalSteps[b].RelativeGoalPath = goal.RelativeGoalPath;
 					if (prevStep != null)
 					{
-						goals[i].GoalSteps[b].Custom = prevStep.Custom;
 						goals[i].GoalSteps[b].EventBinding = prevStep.EventBinding;
 						goals[i].GoalSteps[b].IsEvent = prevStep.IsEvent;
 						goals[i].GoalSteps[b].Generated = prevStep.Generated;
@@ -334,6 +354,7 @@ namespace PLang.Building.Parsers
 						goals[i].GoalSteps[b].PrFileName = prevStep.PrFileName;
 						goals[i].GoalSteps[b].ModuleType = prevStep.ModuleType;
 						goals[i].GoalSteps[b].Name = prevStep.Name;
+						goals[i].GoalSteps[b].UserIntent = prevStep.UserIntent;
 						goals[i].GoalSteps[b].RunOnce = prevStep.RunOnce;
 
 						var prFile = fileSystem.File.ReadAllText(absolutePrStepFilePath);

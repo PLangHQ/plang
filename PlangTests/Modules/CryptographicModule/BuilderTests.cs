@@ -28,7 +28,7 @@ namespace PLang.Modules.CryptographicModule.Tests
 
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CryptographicModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 		}
 
@@ -38,16 +38,9 @@ namespace PLang.Modules.CryptographicModule.Tests
 			if (llmService == null) return;
 
 			builder = new GenericFunctionBuilder();
-			builder.InitBaseBuilder("PLang.Modules.CryptographicModule", fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
+			builder.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 		}
 
-		public GoalStep GetStep(string text)
-		{
-			var step = new Building.Model.GoalStep();
-			step.Text = text;
-			step.ModuleType = "PLang.Modules.CryptographicModule";
-			return step;
-		}
 
 		[DataTestMethod]
 		[DataRow("encrypt %text%, write to %encryptedText%")]
@@ -55,14 +48,14 @@ namespace PLang.Modules.CryptographicModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("Encrypt", gf.FunctionName);
+			Assert.AreEqual("Encrypt", gf.Name);
 			Assert.AreEqual("content", gf.Parameters[0].Name);
 			Assert.AreEqual("%text%", gf.Parameters[0].Value);
 			AssertVar.AreEqual("%encryptedText%", gf.ReturnValues[0].VariableName);
@@ -74,14 +67,14 @@ namespace PLang.Modules.CryptographicModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("Decrypt", gf.FunctionName);
+			Assert.AreEqual("Decrypt", gf.Name);
 			Assert.AreEqual("content", gf.Parameters[0].Name);
 			Assert.AreEqual("%encryptedText%", gf.Parameters[0].Value);
 			AssertVar.AreEqual("%text%", gf.ReturnValues[0].VariableName);
@@ -93,14 +86,14 @@ namespace PLang.Modules.CryptographicModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("HashInput", gf.FunctionName);
+			Assert.AreEqual("HashInput", gf.Name);
 			Assert.AreEqual("input", gf.Parameters[0].Name);
 			Assert.AreEqual("%password%", gf.Parameters[0].Value);
 			Assert.AreEqual("useSalt", gf.Parameters[1].Name);
@@ -115,14 +108,14 @@ namespace PLang.Modules.CryptographicModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("HashInput", gf.FunctionName);
+			Assert.AreEqual("HashInput", gf.Name);
 			Assert.AreEqual("input", gf.Parameters[0].Name);
 			Assert.AreEqual("%text%", gf.Parameters[0].Value);
 			Assert.AreEqual("useSalt", gf.Parameters[1].Name);
@@ -139,14 +132,14 @@ namespace PLang.Modules.CryptographicModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse); 
+			Store(text, instruction.LlmRequest[0].RawResponse); 
 			
-			Assert.AreEqual("VerifyHashedValues", gf.FunctionName);
+			Assert.AreEqual("VerifyHashedValues", gf.Name);
 			Assert.AreEqual("text", gf.Parameters[0].Name);
 			Assert.AreEqual("%password%", gf.Parameters[0].Value);
 			Assert.AreEqual("hash", gf.Parameters[1].Name);
@@ -162,14 +155,14 @@ namespace PLang.Modules.CryptographicModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse); 
+			Store(text, instruction.LlmRequest[0].RawResponse); 
 			
-			Assert.AreEqual("ValidateBearerToken", gf.FunctionName);
+			Assert.AreEqual("ValidateBearerToken", gf.Name);
 			Assert.AreEqual("token", gf.Parameters[0].Name);
 			Assert.AreEqual("%token%", gf.Parameters[0].Value);
 			AssertVar.AreEqual("isValidToken", gf.ReturnValues[0].VariableName);
@@ -183,14 +176,14 @@ namespace PLang.Modules.CryptographicModule.Tests
 		{
 			SetupResponse(text);
 
-			var step = GetStep(text);
+			LoadStep(text);
 
 			(var instruction, var error) = await builder.Build(step);
-			var gf = instruction.Action as GenericFunction;
+			var gf = instruction.Function as GenericFunction;
 
-			Store(text, instruction.LlmRequest.RawResponse);
+			Store(text, instruction.LlmRequest[0].RawResponse);
 
-			Assert.AreEqual("GenerateBearerToken", gf.FunctionName);
+			Assert.AreEqual("GenerateBearerToken", gf.Name);
 			Assert.AreEqual("uniqueString", gf.Parameters[0].Name);
 			Assert.AreEqual("%email%", gf.Parameters[0].Value);
 			Assert.AreEqual("issuer", gf.Parameters[1].Name);

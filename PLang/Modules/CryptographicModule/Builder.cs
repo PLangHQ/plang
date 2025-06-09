@@ -12,11 +12,11 @@ namespace PLang.Modules.CryptographicModule
 		{
 			moduleSettings = new ModuleSettings(settings);
 		}
-		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step)
+		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep step, IBuilderError? previousBuildError = null)
 		{
 			string names = string.Join(", ", moduleSettings.GetBearerTokenSecrets().Select(p => p.Name));
 			AppendToAssistantCommand($"Bearer token names are: {names}");
-			return await base.Build(step);
+			return await base.Build(step, previousBuildError);
 		}
 
 	}

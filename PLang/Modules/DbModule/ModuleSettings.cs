@@ -34,11 +34,12 @@ namespace PLang.Modules.DbModule
 		private readonly ILogger logger;
 		private readonly ITypeHelper typeHelper;
 		private readonly PrParser prParser;
+		private readonly MemoryStack memoryStack;
 		private string defaultLocalDbPath = "./.db/data/data.sqlite";
 		public record SqlStatement(string SelectTablesAndViewsInMyDatabaseSqlStatement, string SelectColumnsFromTablesSqlStatement);
 
 		public ModuleSettings(IPLangFileSystem fileSystem, ISettings settings, PLangAppContext context, ILlmServiceFactory llmServiceFactory,
-			ILogger logger, ITypeHelper typeHelper, PrParser prParser)
+			ILogger logger, ITypeHelper typeHelper, PrParser prParser, MemoryStack memoryStack)
 		{
 			this.fileSystem = fileSystem;
 			this.settings = settings;
@@ -47,23 +48,40 @@ namespace PLang.Modules.DbModule
 			this.logger = logger;
 			this.typeHelper = typeHelper;
 			this.prParser = prParser;
-			
+			this.memoryStack = memoryStack;
 		}
 
-
+		public bool UseInMemoryDataSource { get; set; } = false;
 		public record DataSource(string Name, string TypeFullName, string ConnectionString, string DbName, string SelectTablesAndViews, string SelectColumns, bool KeepHistory = true, bool IsDefault = false, string? LocalPath = null)
 		{
 			public bool IsDefault { get; set; } = IsDefault;
+			public bool KeepHistory { get; set; } = KeepHistory;
 		}
 
-
-		public async Task<(DataSource?, IError?)> CreateDataSource(string dataSourceName = "data", string dbType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
+		public async Task<(DataSource?, IError?)> CreateOrUpdateDataSource(string dataSourceName = "data", string dbType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
 		{
+			var result = await CreateDataSource(dataSourceName, dbType, setAsDefaultForApp, keepHistoryEventSourcing);
+			if (result.Error != null && result.Error.Key == "DataSourceExists")
+			{
+				var dataSource = result.DataSource!;
+
+				dataSource.IsDefault = setAsDefaultForApp;
+				dataSource.KeepHistory = keepHistoryEventSourcing;
+				await AddDataSourceToSettings(dataSource);
+
+				return (dataSource, null);
+			}
+			return result;
+		}
+		public async Task<(DataSource? DataSource, IError? Error)> CreateDataSource(string dataSourceName = "data", string dbType = "sqlite", bool setAsDefaultForApp = false, bool keepHistoryEventSourcing = false)
+		{
+			if (dataSourceName == "%variable0%") { throw new Exception("Why?"); }
+
 			var dataSources = await GetAllDataSources();
 			var dataSource = dataSources.FirstOrDefault(p => p.Name.Equals(dataSourceName, StringComparison.OrdinalIgnoreCase));
 			if (dataSource != null && setAsDefaultForApp == dataSource.IsDefault && keepHistoryEventSourcing == dataSource.KeepHistory)
 			{
-				return (dataSource, new Error($"Data source with the name '{dataSourceName}' already exists."));
+				return (dataSource, new Error($"Data source with the name '{dataSourceName}' already exists.", Key: "DataSourceExists"));
 			}
 			if (dataSource != null)
 			{
@@ -72,7 +90,7 @@ namespace PLang.Modules.DbModule
 					dataSource = dataSource with { IsDefault = setAsDefaultForApp, KeepHistory = keepHistoryEventSourcing };
 					await AddDataSourceToSettings(dataSource);
 				}
-				return (dataSource, null);
+				return await ProcessDataSource(dataSource);
 			}
 
 			if (dbType == "sqlite" || dbType == typeof(SqliteConnection).FullName)
@@ -96,15 +114,19 @@ namespace PLang.Modules.DbModule
 				var goal = prParser.GetAllGoals().FirstOrDefault(p => p.DataSourceName != null && p.DataSourceName.Equals(dataSourceName));
 				if (goal != null)
 				{
-					var instruction = prParser.GetInstructions(goal.GoalSteps, "CreateDataSource").FirstOrDefault();
+					var instructionResult = prParser.GetInstructions(goal.GoalSteps, "CreateDataSource");
+					if (instructionResult.Error != null) return (null, instructionResult.Error);
+
+					var instruction = instructionResult.Instructions!.FirstOrDefault();
 					if (instruction != null)
 					{
-						var gf = instruction.GetFunctions().FirstOrDefault();
+						var gf = instruction.Function;
 
-						setAsDefaultForApp = GeneralFunctionHelper.GetParameterValueAsBool(gf, "setAsDefaultForApp") ?? false;
-						keepHistoryEventSourcing = GeneralFunctionHelper.GetParameterValueAsBool(gf, "keepHistoryEventSourcing") ?? false;
+						setAsDefaultForApp = GenericFunctionHelper.GetParameterValueAsBool(gf, "setAsDefaultForApp") ?? false;
+						keepHistoryEventSourcing = GenericFunctionHelper.GetParameterValueAsBool(gf, "keepHistoryEventSourcing") ?? false;
 					}
 				}
+
 				var localPath = $"/.db/{dataSourceName}{fileName}".AdjustPathToOs();
 				return await CreateSqliteDataSource(dataSourceName, localPath, setAsDefaultForApp, keepHistoryEventSourcing);
 			}
@@ -154,14 +176,9 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 
 			localPath = localPath.Replace(fileSystem.RootDirectory, "").AdjustPathToOs();
 			string dataSourcePath = "";
-			AppContext.TryGetSwitch(ReservedKeywords.Test, out bool inMemory);
-			AppContext.TryGetSwitch("Builder", out bool isBuilder);
 
-			if (inMemory)
-			{
-				dataSourcePath = "Data Source=InMemoryDataDb;Mode=Memory;Cache=Shared;";
-			}
-			else if (!dataSourceName.Contains("%"))
+
+			if (!dataSourceName.Contains("%"))
 			{
 				string dirPath = Path.GetDirectoryName(localPath) ?? "/.db/";
 				if (!fileSystem.Directory.Exists(dirPath))
@@ -182,11 +199,16 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 
 			await AddDataSourceToSettings(dataSource);
 
-			return (dataSource, null);
+			return await ProcessDataSource(dataSource);
 		}
 
-		private (string dataSourceName, string dataSourcePath) GetNameAndPathByVariable(string dataSourceName, string? dataSourcePath)
+		public (string dataSourceName, string? dataSourcePath) GetNameAndPathByVariable(string dataSourceName, string? dataSourcePath)
 		{
+			if (!dataSourceName.Contains("%")) return (dataSourceName, dataSourcePath);
+
+			var ov = memoryStack.GetObjectValue(dataSourceName);
+			if (ov.Initiated) return (ov.ValueAs<string>()!, dataSourcePath);
+
 			var varToMatch = dataSourceName ?? dataSourcePath;
 			if (varToMatch == null) return (dataSourceName, dataSourcePath);
 
@@ -204,10 +226,15 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 
 			return (dataSourceName, dataSourcePath);
 		}
+		private SqlStatement GetSqliteDbInfoStatement()
+		{
+			var statement = new SqlStatement("SELECT name FROM sqlite_master WHERE type IN ('table', 'view');", "SELECT name, type, [notnull] as isNotNull, pk as isPrimaryKey FROM pragma_table_info(@TableName);");
+			return statement;
+		}
 
 		private DataSource GetSqliteDataSource(string name, string dataSourceUri, string localPath, bool history = true, bool isDefault = false)
 		{
-			var statement = new SqlStatement("SELECT name FROM sqlite_master WHERE type IN ('table', 'view');", "SELECT name, type, [notnull] as isNotNull, pk as isPrimaryKey FROM pragma_table_info(@TableName);");
+			var statement = GetSqliteDbInfoStatement();
 
 			var dataSource = new DataSource(name, typeof(SqliteConnection).FullName, dataSourceUri, "data",
 				statement.SelectTablesAndViewsInMyDatabaseSqlStatement, statement.SelectColumnsFromTablesSqlStatement,
@@ -308,9 +335,6 @@ Be concise"));
 			{
 				AppContext.SetData(ReservedKeywords.Inject_IDbConnection, typeFullName);
 				context.AddOrReplace(ReservedKeywords.Inject_IDbConnection, typeFullName);
-
-				AppContext.SetData(ReservedKeywords.CurrentDataSource, dataSource);
-				context.AddOrReplace(ReservedKeywords.CurrentDataSource, dataSource);
 			}
 			return null;
 		}
@@ -354,35 +378,47 @@ Be concise"));
 			settings.SetList(typeof(ModuleSettings), dataSources);
 		}
 
+		public async Task<List<DataSource>> GetAllDataSourcesForBuilder()
+		{
+			var dataSources = settings.GetValues<DataSource>(this.GetType()).ToList();
+			for (int i=0;i< dataSources.Count;i++ )
+			{
+				(dataSources[i], _) = await ProcessDataSource(dataSources[i]);
+			}
+			return dataSources;
+		}
+
 		public async Task<List<DataSource>> GetAllDataSources()
 		{
-			return settings.GetValues<DataSource>(this.GetType()).ToList();
+			var dataSources = settings.GetValues<DataSource>(this.GetType()).ToList();
+			return dataSources;
 		}
-		public async Task<(DataSource? DataSource, IError? Error)> GetDefaultDataSource(GoalStep? step = null)
-		{
-			var dataSources = await GetAllDataSources();
 
+		public async Task<(DataSource? DataSource, IError? Error)> GetCurrentDataSource(GoalStep? goalStep = null)
+		{
+			// first check if datasource is on goalStep
+			if (goalStep != null)
+			{
+				var ds = goalStep.GetVariable<DataSource>();
+				if (ds != null) return (ds, null);
+
+				return await GetDataSourceNotFoundError(null, goalStep);
+			}
+
+			var dataSources = await GetAllDataSources();
 			var dataSource = dataSources.FirstOrDefault(p => p.IsDefault);
+
 			if (dataSource == null)
 			{
-				await CreateSqliteDataSource("data", defaultLocalDbPath, true, true);
-				dataSources = await GetAllDataSources();
-
-				dataSource = dataSources.FirstOrDefault(p => p.IsDefault);
+				(dataSource, var error) = await CreateDataSource("data");
+				if (error != null) return (dataSource, error);
 			}
 
-			AppContext.TryGetSwitch("Builder", out bool isBuilder);
-			if (isBuilder)
-			{
-				dataSource = dataSource with { ConnectionString = $"Data Source={dataSource.Name};Mode=Memory;Cache=Shared;" };
-				return (dataSource, null);
-			}
-
-			return (dataSource, null);
+			return await ProcessDataSource(dataSource);
 		}
-		public async Task<(DataSource? DataSource, IError? Error)> GetDataSource(string name, GoalStep? step = null)
-		{
 
+		public async Task<(DataSource? DataSource, IError? Error)> GetDataSource(string? name, GoalStep? step = null)
+		{
 			if (string.IsNullOrEmpty(name))
 			{
 				return (null, new ProgramError("You need to provide a data source name", step));
@@ -392,24 +428,25 @@ Be concise"));
 				name = name.TrimStart('/');
 			}
 			var dataSources = await GetAllDataSources();
-			var dataSourceName = name;
-			if (name.Contains("%"))
-			{
-				(dataSourceName, _) = GetNameAndPathByVariable(name, null);
-			}
-
-			var dataSource = dataSources.FirstOrDefault(p => p.Name.Equals(dataSourceName, StringComparison.OrdinalIgnoreCase));
+			var dsNameAndPath = GetNameAndPathByVariable(name, null);
+			var dataSource = dataSources.FirstOrDefault(p => p.Name.Equals(dsNameAndPath.dataSourceName, StringComparison.OrdinalIgnoreCase));
 
 			if (dataSource == null)
 			{
-				return (null, await GetDataSourceNotFoundError(name, step));
+				return await GetDataSourceNotFoundError(name, step);
 			}
+
+			return await ProcessDataSource(dataSource);
+
+		}
+
+		private async Task<(DataSource? DataSource, IError? Error)> ProcessDataSource(DataSource? dataSource)
+		{
+			if (dataSource == null) return await GetDataSourceNotFoundError(null, null);
 
 			if (dataSource.TypeFullName != typeof(SqliteConnection).FullName) return (dataSource, null);
 
-
-			AppContext.TryGetSwitch("Builder", out bool isBuilder);
-			if (isBuilder)
+			if (UseInMemoryDataSource)
 			{
 				dataSource = dataSource with { ConnectionString = $"Data Source={dataSource.Name};Mode=Memory;Cache=Shared;" };
 				return (dataSource, null);
@@ -417,7 +454,7 @@ Be concise"));
 
 			if (!string.IsNullOrEmpty(dataSource.LocalPath)
 					&& !dataSource.LocalPath.Contains("%")
-					&& (!isBuilder && !fileSystem.File.Exists(dataSource.LocalPath)))
+					&& !fileSystem.File.Exists(dataSource.LocalPath))
 			{
 				using (var fs = fileSystem.File.Create(dataSource.LocalPath))
 				{
@@ -430,7 +467,13 @@ Be concise"));
 			return (dataSource, null);
 		}
 
-		public async Task<Error> GetDataSourceNotFoundError(string name, GoalStep? step)
+		public DataSource GetTempMemoryDataSource(string name)
+		{
+			var dataSource = GetSqliteDataSource(name, $"Data Source={name};Mode=Memory;Cache=Shared;", "data");
+			return dataSource;
+		}
+
+		public async Task<(DataSource?, IError?)> GetDataSourceNotFoundError(string? name = null, GoalStep? step = null)
 		{
 			var dataSources = await GetAllDataSources();
 			logger.LogDebug("Datasources: {0}", JsonConvert.SerializeObject(dataSources));
@@ -446,7 +489,7 @@ Be concise"));
 				existingDatasources = "No datasources available";
 			}
 
-			return new Error($"Datasource {name} does not exists", Key: "DataSourceNotFound",
+			return (null, new Error($"Datasource '{name}' does not exists", Key: "DataSourceNotFound",
 						FixSuggestion: $@"{existingDatasources}
 
 Create a step that creates a new Data source, e.g.
@@ -458,51 +501,10 @@ or you can catch this error and create it on this error
 	on error key=DataSourceNotFound, call CreateDataSource and retry
 
 where the goal CreateDataSource would create the database and table
-", HelpfulLinks: "https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.DbModule.md");
+", HelpfulLinks: "https://github.com/PLangHQ/plang/blob/main/Documentation/modules/PLang.Modules.DbModule.md"));
 		}
 
-		public async Task<DataSource> GetCurrentDataSource()
-		{
-			if (context.ContainsKey(ReservedKeywords.CurrentDataSource + "_name"))
-			{
-				string name = context[ReservedKeywords.CurrentDataSource + "_name"].ToString();
-				(var ds, _) = await GetDataSource(name, null);
 
-				if (ds != null)
-				{
-					context.AddOrReplace(ReservedKeywords.CurrentDataSource, ds);
-					return ds;
-				}
-			}
-
-			if (context.ContainsKey(ReservedKeywords.CurrentDataSource))
-			{
-				var ds = context[ReservedKeywords.CurrentDataSource] as DataSource;
-				if (ds != null) return ds;
-			}
-
-			var dataSources = await GetAllDataSources();
-			if (dataSources.Count == 0)
-			{
-				string name = context.ContainsKey(ReservedKeywords.CurrentDataSource + "_name") ? context[ReservedKeywords.CurrentDataSource + "_name"].ToString() : "data";
-				await CreateDataSource(name);
-				dataSources = await GetAllDataSources();
-			}
-
-			var dataSource = dataSources.FirstOrDefault(p => p.IsDefault);
-			if (dataSource != null)
-			{
-				context.AddOrReplace(ReservedKeywords.CurrentDataSource, dataSource);
-				return dataSource;
-			}
-			dataSources = await GetAllDataSources();
-			if (dataSources.Count == 0)
-			{
-				throw new RuntimeException("Could not find any data source.");
-			}
-			context.AddOrReplace(ReservedKeywords.CurrentDataSource, dataSources[0]);
-			return dataSources[0];
-		}
 		private Type? GetDbType(string typeFullName)
 		{
 			var types = GetSupportedDbTypes();
@@ -579,9 +581,8 @@ where the goal CreateDataSource would create the database and table
 		}
 
 
-		public async Task<string> FormatSelectColumnsStatement(string tableName)
+		public async Task<string> FormatSelectColumnsStatement(DataSource dataSource, string tableName)
 		{
-			var dataSource = await GetCurrentDataSource();
 			string selectColumns = dataSource.SelectColumns.ToLower();
 
 			if (selectColumns.Contains("'@tablename'"))
@@ -615,8 +616,6 @@ where the goal CreateDataSource would create the database and table
 				AppContext.SetData(ReservedKeywords.Inject_IDbConnection, dataSource.TypeFullName);
 				context.AddOrReplace(ReservedKeywords.Inject_IDbConnection, dataSource.TypeFullName);
 
-				AppContext.SetData(ReservedKeywords.CurrentDataSource, dataSource);
-				context.AddOrReplace(ReservedKeywords.CurrentDataSource, dataSource);
 
 				return dbConnection;
 			}
@@ -636,6 +635,22 @@ where the goal CreateDataSource would create the database and table
 			return dbConnection;
 
 
+		}
+
+
+
+		public static string ConvertVariableNamesInDataSourceName(VariableHelper variableHelper, string dataSourceName)
+		{
+			if (!dataSourceName.Contains("%")) return dataSourceName;
+
+			var dataSourceVariables = variableHelper.GetVariables(dataSourceName);
+			for (int i = 0; i < dataSourceVariables.Count; i++)
+			{
+				if (dataSourceVariables[i].Name.Equals($"variable{i}")) continue;
+
+				dataSourceName = dataSourceName.Replace(dataSourceVariables[i].PathAsVariable, $"%variable{i}%");
+			}
+			return dataSourceName;
 		}
 	}
 }
