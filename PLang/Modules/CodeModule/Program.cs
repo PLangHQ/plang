@@ -14,6 +14,7 @@ using PLang.Services.CompilerService;
 using PLang.Utils;
 using System.ComponentModel;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using static PLang.Modules.BaseBuilder;
 using static PLang.Modules.CodeModule.Builder;
 using static PLang.Runtime.Startup.ModuleLoader;
@@ -56,16 +57,20 @@ namespace PLang.Modules.CodeModule
 				if (implementation.Assemblies != null && implementation.Assemblies.Count > 0)
 				{
 					foreach (var serviceAssembly in implementation.Assemblies)
-					{
-						string assemblyPath = Path.Join(Goal.AbsoluteAppStartupFolderPath, serviceAssembly).AdjustPathToOs();
-						if (fileSystem.File.Exists(assemblyPath))
+					{/*
+						var assemblyPath = Path.Join(RuntimeEnvironment.GetRuntimeDirectory(), serviceAssembly);
+						if (File.Exists(assemblyPath))
 						{
 							serviceAssemblies.Add(Assembly.LoadFile(assemblyPath));
 						}
 						else
 						{
-							logger.LogWarning($"Could not find file {assemblyPath}");
-						}
+							assemblyPath = Path.Join(Goal.AbsoluteAppStartupFolderPath, serviceAssembly).AdjustPathToOs();
+							if (fileSystem.File.Exists(assemblyPath))
+							{
+								serviceAssemblies.Add(Assembly.LoadFile(assemblyPath));
+							}
+						}*/
 					}
 				}
 
@@ -88,17 +93,8 @@ namespace PLang.Modules.CodeModule
 				var args = parametersObject!.ToArray();
 				logger.LogTrace("Parameters:{0}", args);
 				object? result = method.Invoke(null, args);
-				List<ObjectValue> rd = new();
-				
-				for (int i = 0; i < parameters.Length; i++)
-				{
-					var parameterInfo = parameters[i];
-					if (parameterInfo.IsOut || parameterInfo.ParameterType.IsByRef)
-					{
-						rd.Add(new ObjectValue(parameterInfo.Name!, args[i]));
-					}
-				}
-				return (rd, null);
+			
+				return (result, null);
 			}
 			catch (Exception ex)
 			{

@@ -118,11 +118,11 @@ namespace PLang.Modules.WebserverModule
 		}
 
 
-		public record Routing(string Path, GoalToCall? GoalToCall = null, string[]? Method = null, string ContentType = "text/html",
+		public record Routing(string Path, GoalToCallInfo? GoalToCall = null, string[]? Method = null, string ContentType = "text/html",
 									Dictionary<string, object?>? Parameters = null, long? MaxContentLength = null, string? DefaultResponseContentEncoding = null);
 
 		[Description("When path is /api, overwite the default ContentType value to application/json unless defined by user")]
-		public async Task<IError?> AddRoute(string path, GoalToCall? goalToCall = null, string[]? method = null, string ContentType = "text/html",
+		public async Task<IError?> AddRoute(string path, GoalToCallInfo? goalToCall = null, string[]? method = null, string ContentType = "text/html",
 									Dictionary<string, object?>? Parameters = null, long? MaxContentLength = null, string? DefaultResponseContentEncoding = null,
 									string? webserverName = "default")
 		{
@@ -842,8 +842,8 @@ Error:
 
 
 		private List<WebSocketInfo> websocketInfos = new List<WebSocketInfo>();
-		public record WebSocketInfo(ClientWebSocket ClientWebSocket, string Url, GoalToCall GoalToCall, string WebSocketName, string ContentRecievedVariableName);
-		public record WebSocketData(GoalToCall GoalToCall, string Url, string Method, string Contract)
+		public record WebSocketInfo(ClientWebSocket ClientWebSocket, string Url, GoalToCallInfo GoalToCall, string WebSocketName, string ContentRecievedVariableName);
+		public record WebSocketData(GoalToCallInfo GoalToCall, string Url, string Method, string Contract)
 		{
 			public Dictionary<string, object?> Parameters = new();
 			public Signature? Signature = null;
@@ -853,7 +853,7 @@ Error:
 			throw new NotImplementedException();
 		}
 
-		public async Task SendToWebSocket(GoalToCall goalToCall, Dictionary<string, object?>? parameters = null, string webSocketName = "default")
+		public async Task SendToWebSocket(GoalToCallInfo goalToCall, Dictionary<string, object?>? parameters = null, string webSocketName = "default")
 		{
 			var webSocketInfo = websocketInfos.FirstOrDefault(p => p.WebSocketName == webSocketName);
 			if (webSocketInfo == null)
@@ -876,14 +876,14 @@ Error:
 			await webSocketInfo.ClientWebSocket.SendAsync(new ArraySegment<byte>(message), WebSocketMessageType.Text, true, CancellationToken.None);
 
 		}
-		public async Task<WebSocketInfo> StartWebSocketConnection(string url, GoalToCall goalToCall, string webSocketName = "default", string contentRecievedVariableName = "%content%")
+		public async Task<WebSocketInfo> StartWebSocketConnection(string url, GoalToCallInfo goalToCall, string webSocketName = "default", string contentRecievedVariableName = "%content%")
 		{
 			if (string.IsNullOrEmpty(url))
 			{
 				throw new RuntimeException($"url cannot be empty");
 			}
 
-			if (string.IsNullOrEmpty(goalToCall))
+			if (goalToCall != null)
 			{
 				throw new RuntimeException($"goalToCall cannot be empty");
 			}
@@ -949,9 +949,9 @@ Error:
 							continue;
 						}
 
-						websocketData.Parameters.AddOrReplace(ReservedKeywords.Identity, verifiedSignature.Signature.Identity);
+						websocketData.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.Identity, verifiedSignature.Signature.Identity);
 
-						await pseudoRuntime.RunGoal(engine, context, fileSystem.RootDirectory, websocketData.GoalToCall, websocketData.Parameters);
+						await pseudoRuntime.RunGoal(engine, context, fileSystem.RootDirectory, websocketData.GoalToCall);
 					}
 					messageStream.SetLength(0);
 				}

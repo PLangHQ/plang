@@ -23,7 +23,7 @@ namespace PLang.Modules.WebSocketModule
 		public record WebsocketConnection(string name, ClientWebSocket connection);
 
 		public async Task<(object?, IError?)> Connect(string url, string? name = null, Dictionary<string, object>? headers = null,
-				GoalToCall? onMessage = null, GoalToCall? onConnected = null, GoalToCall? onClose = null, GoalToCall? onError = null, int bufferSize = 8192)
+				GoalToCallInfo? onMessage = null, GoalToCallInfo? onConnected = null, GoalToCallInfo? onClose = null, GoalToCallInfo? onError = null, int bufferSize = 8192)
 		{
 			ExceptionHelper.NotImplemented();
 			if (string.IsNullOrEmpty(onMessage))
@@ -56,10 +56,9 @@ namespace PLang.Modules.WebSocketModule
 					var result = await _socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
 					var json = Encoding.UTF8.GetString(buffer, 0, result.Count);
 
-					var parameters = new Dictionary<string, object?>();
-					parameters.Add("data", json);
+					onMessage.Parameters.Add("data", json);
 
-					var (returns, error) = await caller.RunGoal(onMessage, parameters);
+					var (returns, error) = await caller.RunGoal(onMessage);
 					if (error != null)
 					{
 						await caller.RunGoal(onError);

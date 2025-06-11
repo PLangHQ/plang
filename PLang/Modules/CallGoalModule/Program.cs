@@ -17,7 +17,7 @@ namespace PLang.Modules.CallGoalModule
 	{
 
 		[Description("Call/Runs another app. app can be located in another directory, then path points the way. goalName is default \"Start\" when it cannot be mapped")]
-		public async Task<(object? Variables, IError? Error)> RunApp(string? appName = null, GoalToCall? goalName = null, Dictionary<string, object?>? parameters = null, bool waitForExecution = true,
+		public async Task<(object? Variables, IError? Error)> RunApp(string? appName = null, GoalToCallInfo? goalName = null, Dictionary<string, object?>? parameters = null, bool waitForExecution = true,
 			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, bool keepMemoryStackOnAsync = false)
 		{
 			if (string.IsNullOrEmpty(appName))
@@ -73,7 +73,7 @@ namespace PLang.Modules.CallGoalModule
 
 
 		[Description("Call/Runs another goal. goalName can be prefixed with !. If backward slash(\\) is used by user, change to forward slash(/)")]
-		public async Task<(object? Return, IError? Error)> RunGoal(GoalToCall goalName, Dictionary<string, object?>? parameters = null, bool waitForExecution = true,
+		public async Task<(object? Return, IError? Error)> RunGoal(GoalToCallInfo goalInfo, bool waitForExecution = true,
 			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, bool keepMemoryStackOnAsync = false, bool isolated = false)
 		{
 			try
@@ -81,7 +81,7 @@ namespace PLang.Modules.CallGoalModule
 				string path = (goal != null) ? goal.RelativeAppStartupFolderPath : "/";
 				int indent = (goalStep == null) ? 0 : goalStep.Indent;
 
-				var result = await pseudoRuntime.RunGoal(engine, engine.GetContext(), path, goalName, parameters, goal,
+				var result = await pseudoRuntime.RunGoal(engine, engine.GetContext(), path, goalInfo, goal,
 						waitForExecution, delayWhenNotWaitingInMilliseconds, waitForXMillisecondsBeforeRunningGoal, indent, keepMemoryStackOnAsync, isolated);
 
 				if (result.error is Return ret)

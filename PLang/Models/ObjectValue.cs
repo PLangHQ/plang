@@ -9,12 +9,12 @@ namespace PLang.Runtime;
 public class DynamicObjectValue : ObjectValue
 {
 	Func<object> func;
-	public DynamicObjectValue(string name, Func<object>? func, Type? type = null, ObjectValue? parent = null, bool Initiated = true, Properties? properties = null) : base(name, null, type, parent, Initiated, properties)
+	public DynamicObjectValue(string name, Func<object> func, Type? type = null, ObjectValue? parent = null, bool Initiated = true, Properties? properties = null, bool isProperty = false, bool isSystemVariable = false) : base(name, null, type, parent, Initiated, properties, isProperty, isSystemVariable)
 	{
 		this.func = func;
 	}
 
-	public new object Value
+	public override object Value
 	{
 		get { return func(); }
 	}
@@ -62,7 +62,7 @@ public class ObjectValue
 {
 	private object? value;
 	public static ObjectValue Null { get { return Nullable(""); } }
-	public ObjectValue(string name, object? value, Type? type = null, ObjectValue? parent = null, bool Initiated = true, Properties? properties = null, bool isProperty = false)
+	public ObjectValue(string name, object? value, Type? type = null, ObjectValue? parent = null, bool Initiated = true, Properties? properties = null, bool isProperty = false, bool isSystemVariable = false)
 	{
 		name = VariableHelper.Clean(name);
 
@@ -85,13 +85,14 @@ public class ObjectValue
 		Updated = DateTime.Now;
 		Properties = properties ?? new();
 		IsProperty = isProperty;
+		IsSystemVariable = isSystemVariable;
 	}
 
 	public List<VariableEvent> Events = new List<VariableEvent>();
 	public string Name { get; set; }
 
-	
-	public object? Value
+	public bool IsSystemVariable { get; set; }
+	public virtual object? Value
 	{
 		get { return this.value; }
 		set

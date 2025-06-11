@@ -40,15 +40,26 @@ namespace PLang.Models.ObjectValueExtractors
 			{
 				return new JsonExtractor(jToken, objectValue);
 			}
-			else if (type.Name.StartsWith("Dictionary`2") && obj is IDictionary dict)
+			
+			if (ImplementsInterface("IDictionary`2", type))
 			{
-				return new DictionaryExtractor(dict, objectValue);
-			}
-			else if (type.Name.StartsWith("List`1") && obj is IList list)
+				var dict = obj as IDictionary;
+				if (dict != null)
+				{
+					return new DictionaryExtractor(dict, objectValue);
+				}
+			}			
+			
+			if (ImplementsInterface("IList`1", type))
 			{
-				return new ListExtractor(list.Cast<object>(), objectValue);
-			}
-			else if (type.Name.StartsWith("<>f__Anonymous"))
+				var list = obj as IList;
+				if (list != null)
+				{
+					return new ListExtractor(list.Cast<object>(), objectValue);
+				}
+			}			
+			
+			if (type.Name.StartsWith("<>f__Anonymous"))
 			{
 				return new AnonymousExtractor(obj as dynamic, objectValue);
 			}
@@ -60,6 +71,10 @@ namespace PLang.Models.ObjectValueExtractors
 			throw new NotImplementedException($"Not extractor for {type}");
 		}
 
+		private static bool ImplementsInterface(string interfaceName, Type type)
+		{
+			return (type.GetInterfaces().FirstOrDefault(p => p.Name.Equals(interfaceName)) != null);
+		}
 
 		public static IExtractor? GetListExtractor(object? obj, PathSegment segment, ObjectValue parent)
 		{

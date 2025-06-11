@@ -140,7 +140,7 @@ namespace PLang.Building.Events.Tests
 			await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.StartOfApp);
 				
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
-						@"\", new Models.GoalToCall("Process"), Arg.Any<Dictionary<string, object?>>());
+						@"\", new Models.GoalToCallInfo("Process"));
 			
 		}
 
@@ -169,7 +169,7 @@ namespace PLang.Building.Events.Tests
 			await eventRuntime.RunStartEndEvents(EventType.After, EventScope.StartOfApp);
 
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
-						@"\", "!Process", Arg.Any<Dictionary<string, object?>>());
+						@"\", "!Process");
 
 		}
 
@@ -197,7 +197,7 @@ namespace PLang.Building.Events.Tests
 			await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.AppError);
 
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
-						@"\", "!Process", Arg.Any<Dictionary<string, object?>>());
+						@"\", "!Process");
 
 		}
 		[TestMethod()]
@@ -227,7 +227,7 @@ namespace PLang.Building.Events.Tests
 			await eventRuntime.RunStartEndEvents(EventType.After, EventScope.EndOfApp);
 
 			await pseudoRuntime.Received(2).RunGoal(engine, Arg.Any<PLangAppContext>(),
-						@"\", "!Process", Arg.Any<Dictionary<string, object?>>());
+						@"\", "!Process");
 
 		}
 
@@ -255,7 +255,7 @@ namespace PLang.Building.Events.Tests
 			await eventRuntime.RunStartEndEvents(EventType.After, EventScope.AppError);
 
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
-						@"\", "!Process", Arg.Any<Dictionary<string, object?>>());
+						@"\", "!Process");
 
 		}
 
@@ -288,7 +288,7 @@ namespace PLang.Building.Events.Tests
 				await eventRuntime.RunGoalEvents(EventType.Before, goal);
 
 				await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
-							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
+							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Goal>());
 			}
 		}
 
@@ -321,7 +321,7 @@ namespace PLang.Building.Events.Tests
 				await eventRuntime.RunGoalEvents(EventType.After, goal);
 
 				await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
-							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
+							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Goal>());
 			}
 		}
 
@@ -354,7 +354,7 @@ namespace PLang.Building.Events.Tests
 					await eventRuntime.RunStepEvents(EventType.Before, goal, step);
 				}
 				await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<PLangAppContext>(),
-							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
+							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Goal>());
 			}
 		}
 
@@ -388,7 +388,7 @@ namespace PLang.Building.Events.Tests
 					await eventRuntime.RunStepEvents(EventType.After, goal, step);
 				}
 				await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<PLangAppContext>(),
-							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
+							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Goal>());
 			}
 		}
 
@@ -420,7 +420,7 @@ namespace PLang.Building.Events.Tests
 			{
 				await eventRuntime.RunGoalErrorEvents(goal, 0, new Error("Test"));
 				await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(),
-							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
+							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Goal>());
 			}
 		}
 
@@ -454,7 +454,7 @@ namespace PLang.Building.Events.Tests
 					await eventRuntime.RunOnErrorStepEvents(new Error("Test error"), goal, step);
 				}
 				await pseudoRuntime.Received(goal.GoalSteps.Count).RunGoal(engine, Arg.Any<PLangAppContext>(),
-							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Dictionary<string, object?>>(), Arg.Any<Goal>());
+							goal.RelativeAppStartupFolderPath, "!Process", Arg.Any<Goal>());
 			}
 		}
 

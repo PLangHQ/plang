@@ -216,14 +216,14 @@ namespace PLang.Events
 				if (ActiveEvents.ContainsKey(eve.Id)) continue;
 
 				var parameters = new Dictionary<string, object?>();
-				parameters.Add(ReservedKeywords.Event, eve);
-				parameters.Add(ReservedKeywords.IsEvent, true);
-				parameters.Add("!plang.EventUniqueId", Guid.NewGuid().ToString());
+				eve.GoalToCall.Parameters.Add(ReservedKeywords.Event, eve);
+				eve.GoalToCall.Parameters.Add(ReservedKeywords.IsEvent, true);
+				eve.GoalToCall.Parameters.Add("!plang.EventUniqueId", Guid.NewGuid().ToString());
 
-				ActiveEvents.TryAdd(eve.Id, eve.GoalToCall);
+				ActiveEvents.TryAdd(eve.Id, eve.GoalToCall.Name);
 				logger.LogDebug("Run event type {0} on scope {1}, binding to {2} calling {3}", eventType, eventScope, eve.GoalToBindTo, eve.GoalToCall);
 
-				var task = caller.RunGoal(eve.GoalToCall, parameters, isolated: !eve.IsLocal);
+				var task = caller.RunGoal(eve.GoalToCall, isolated: !eve.IsLocal);
 				if (eve.WaitForExecution)
 				{
 					await task;
@@ -275,7 +275,7 @@ namespace PLang.Events
 			if (eve.ErrorMessage != null && !error.Message.Contains(eve.ErrorMessage, StringComparison.OrdinalIgnoreCase)) return false;
 			if (eve.StatusCode != null && eve.StatusCode != error.StatusCode) return false;
 			if (eve.ExceptionType != null && !eve.ExceptionType.Equals(error.Exception?.GetType().FullName)) return false;
-			if (eve.GoalToBindTo == "*") return true;
+			if (eve.GoalToBindTo.Name == "*") return true;
 
 			return false;
 		}
@@ -421,9 +421,11 @@ namespace PLang.Events
 			var errorHandler = StepHelper.GetErrorHandlerForStep(step.ErrorHandlers, error);
 			if (errorHandler != null)
 			{
-				if (errorHandler.GoalToCall != null && !string.IsNullOrEmpty(errorHandler.GoalToCall))
+				if (errorHandler.GoalToCall != null)
 				{
-					var eventBinding = new EventBinding(EventType.Before, EventScope.StepError, goal.RelativeGoalPath, errorHandler.GoalToCall, errorHandler.GoalToCallParameters,
+					var goalToBindTo = new GoalToBindTo(goal.RelativeGoalPath);
+
+					var eventBinding = new EventBinding(EventType.Before, EventScope.StepError, goalToBindTo, errorHandler.GoalToCall,
 						true, step.Number, step.Text, true, null, errorHandler.IgnoreError, errorHandler.Key, errorHandler.Message, errorHandler.StatusCode, IsLocal: true, IsOnStep: true);
 
 					eventsToRun.Add(eventBinding);
@@ -530,26 +532,26 @@ namespace PLang.Events
 
 				string goalToCallPath;				
 				if (eve.IsOnStep) {
-					goalToCallPath = Path.Join(callingGoal?.RelativeGoalFolderPath ?? "", eve.GoalToCall);
+					goalToCallPath = Path.Join(callingGoal?.RelativeGoalFolderPath ?? "", eve.GoalToCall.Name);
 				} else if (eve.GoalToCall.ToString().StartsWith("/"))
 				{
-					goalToCallPath = eve.GoalToCall;
+					goalToCallPath = eve.GoalToCall.Name;
 				} else
 				{
-					goalToCallPath = Path.Join("/events", eve.GoalToCall);
+					goalToCallPath = Path.Join("/events", eve.GoalToCall.Name);
 				}
 
 				logger.LogDebug("Run event type {0} on scope {1}, binding to {2} calling {3}", eve.EventType.ToString(), eve.EventScope.ToString(), eve.GoalToBindTo, eve.GoalToCall);
 
-				if (eve.GoalToCallParameters != null)
+				if (eve.GoalToCall.Parameters != null)
 				{
-					foreach (var goalParameter in eve.GoalToCallParameters)
+					foreach (var goalParameter in eve.GoalToCall.Parameters)
 					{
 						parameters.AddOrReplace(goalParameter.Key, goalParameter.Value);
 					}
 				}
 
-				ActiveEvents.TryAdd(eve.Id, eve.GoalToCall);
+				ActiveEvents.TryAdd(eve.Id, eve.GoalToCall.Name);
 
 				if (callingStep != null) caller.SetStep(callingStep);
 				if (callingGoal != null) caller.SetGoal(callingGoal);
@@ -561,7 +563,7 @@ namespace PLang.Events
 				}
 				else
 				{
-					task = caller.RunGoal(goalToCallPath, parameters, isolated: !eve.IsLocal);
+					task = caller.RunGoal(eve.GoalToCall, isolated: !eve.IsLocal);
 				}
 
 				if (eve.WaitForExecution)
@@ -684,7 +686,7 @@ namespace PLang.Events
 				if (goal.IsOS && !eventBinding.IncludeOsGoals) return false;
 			}
 
-			if (goal.GoalName == eventBinding.GoalToCall) return false;
+			if (goal.GoalName == eventBinding.GoalToCall.Name) return false;
 
 			string goalToBindTo = eventBinding.GoalToBindTo.ToString().ToLower().Replace("!", "");
 			// GoalToBindTo = Hello

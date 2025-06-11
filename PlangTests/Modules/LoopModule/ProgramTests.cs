@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using PLang.Building.Model;
+using PLang.Models;
 using PLang.Modules.LoopModule;
 using PLang.Runtime;
 using PLang.Utils;
@@ -33,7 +34,7 @@ namespace PLangTests.Modules.LoopModule
 		public async Task RunLoop_List_Test()
 		{
 			var listName = "products";
-			string goalNameToCall = "!Process";
+			
 			var parameters = new Dictionary<string, object>();
 
 			var products = new List<string>();
@@ -42,10 +43,12 @@ namespace PLangTests.Modules.LoopModule
 			products.Add("Product 3");
 			products.Add("Product 4");
 			memoryStack.Put(listName, products);
-			
-			await p.RunLoop(listName, goalNameToCall, parameters);
 
-			await pseudoRuntime.Received(4).RunGoal(Arg.Any<IEngine>(), context, Arg.Any<string>(), goalNameToCall, Arg.Any<Dictionary<string, object>>(), Arg.Any<Goal>());
+			GoalToCallInfo goalNameToCall = new("!Process", parameters);
+
+			await p.RunLoop(listName, goalNameToCall);
+
+			await pseudoRuntime.Received(4).RunGoal(Arg.Any<IEngine>(), context, Arg.Any<string>(), goalNameToCall, Arg.Any<Goal>());
 		}
 
 		public record Product(string Name, double Price);
@@ -64,16 +67,16 @@ namespace PLangTests.Modules.LoopModule
 			products.Add("Product 4", new Product("Nr4", 400));
 			memoryStack.Put(dictName, products);
 
-			await p.RunLoop(dictName, goalNameToCall, parameters);
+			await p.RunLoop(dictName, goalNameToCall);
 
-			await pseudoRuntime.Received(4).RunGoal(Arg.Any<IEngine>(), context, Arg.Any<string>(), goalNameToCall, Arg.Any<Dictionary<string, object>>(), Arg.Any<Goal>());
+			await pseudoRuntime.Received(4).RunGoal(Arg.Any<IEngine>(), context, Arg.Any<string>(), goalNameToCall, Arg.Any<Goal>());
 		}
 
 		[TestMethod]
 		public async Task RunLoop_ChangeDefaultValues_Test()
 		{
 			var listName = "products";
-			string goalNameToCall = "!Process";
+			
 			var parameters = new Dictionary<string, object>();
 			parameters.Add("list", "products");
 			parameters.Add("item", "product");
@@ -87,9 +90,11 @@ namespace PLangTests.Modules.LoopModule
 			products.Add("Product 4");
 			memoryStack.Put(listName, products);
 
-			await p.RunLoop(listName, goalNameToCall, parameters);
+			GoalToCallInfo goalNameToCall = new("!Process", parameters);
 
-			await pseudoRuntime.Received(4).RunGoal(Arg.Any<IEngine>(), context, Arg.Any<string>(), goalNameToCall, Arg.Is<Dictionary<string, object>>(p => DictionaryCheck(p)), Arg.Any<Goal>());
+			await p.RunLoop(listName, goalNameToCall);
+
+			await pseudoRuntime.Received(4).RunGoal(Arg.Any<IEngine>(), context, Arg.Any<string>(), goalNameToCall, Arg.Any<Goal>());
 		}
 
 		private bool DictionaryCheck(Dictionary<string, object> p)

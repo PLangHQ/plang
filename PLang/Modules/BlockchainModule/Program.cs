@@ -82,43 +82,43 @@ namespace PLang.Modules.BlockchainModule
 			return new Account(hdWallet.GetPrivateKey(GetCurrentAddressIndex()), chainId);
 		}
 
-		public async Task ListenToApprovalEventOnSmartContract(string contractAddressOrSymbol, GoalToCall goalToCall, string subscriptIdVariableName = "subscriptionId")
+		public async Task ListenToApprovalEventOnSmartContract(string contractAddressOrSymbol, GoalToCallInfo goalToCall, string subscriptIdVariableName = "subscriptionId")
 		{
 			string abi = @"{""anonymous"":false,""inputs"":[{""indexed"":true,""name"":""owner"",""type"":""address""},{""indexed"":true,""name"":""spender"",""type"":""address""},{""indexed"":false,""name"":""value"",""type"":""uint256""}],""name"":""Approval"",""type"":""event""}";
 			await ListenToEventOnSmartContract(contractAddressOrSymbol, abi, goalToCall, subscriptIdVariableName);
 		}
 
-		public async Task ListenToApprovalForAllEventOnSmartContract(string contractAddressOrSymbol, GoalToCall goalToCall, string subscriptIdVariableName = "subscriptionId")
+		public async Task ListenToApprovalForAllEventOnSmartContract(string contractAddressOrSymbol, GoalToCallInfo goalToCall, string subscriptIdVariableName = "subscriptionId")
 		{
 			string abi = @"{""anonymous"":false,""inputs"":[{""indexed"":true,""internalType"":""address"",""name"":""account"",""type"":""address""},{""indexed"":true,""internalType"":""address"",""name"":""operator"",""type"":""address""},{""indexed"":false,""internalType"":""bool"",""name"":""approved"",""type"":""bool""}],""name"":""ApprovalForAll"",""type"":""event""}";
 			await ListenToEventOnSmartContract(contractAddressOrSymbol, abi, goalToCall, subscriptIdVariableName);
 		}
 
-		public async Task ListenToTransferBatchEventOnSmartContract(string contractAddressOrSymbol, GoalToCall goalToCall, string subscriptIdVariableName = "subscriptionId")
+		public async Task ListenToTransferBatchEventOnSmartContract(string contractAddressOrSymbol, GoalToCallInfo goalToCall, string subscriptIdVariableName = "subscriptionId")
 		{
 			string abi = @"{""anonymous"":false,""inputs"":[{""indexed"":true,""internalType"":""address"",""name"":""operator"",""type"":""address""},{""indexed"":true,""internalType"":""address"",""name"":""from"",""type"":""address""},{""indexed"":true,""internalType"":""address"",""name"":""to"",""type"":""address""},{""indexed"":false,""internalType"":""uint256[]"",""name"":""ids"",""type"":""uint256[]""},{""indexed"":false,""internalType"":""uint256[]"",""name"":""values"",""type"":""uint256[]""}],""name"":""TransferBatch"",""type"":""event""}";
 			await ListenToEventOnSmartContract(contractAddressOrSymbol, abi, goalToCall, subscriptIdVariableName);
 		}
 
-		public async Task ListenToUriEventOnSmartContract(string contractAddressOrSymbol, GoalToCall goalToCall, string subscriptIdVariableName = "subscriptionId")
+		public async Task ListenToUriEventOnSmartContract(string contractAddressOrSymbol, GoalToCallInfo goalToCall, string subscriptIdVariableName = "subscriptionId")
 		{
 			string abi = @"{""anonymous"":false,""inputs"":[{""indexed"":false,""internalType"":""string"",""name"":""value"",""type"":""string""},{""indexed"":true,""internalType"":""uint256"",""name"":""id"",""type"":""uint256""}],""name"":""URI"",""type"":""event""}";
 			await ListenToEventOnSmartContract(contractAddressOrSymbol, abi, goalToCall, subscriptIdVariableName);
 		}
 
-		public async Task ListenToTransferSingleEventOnSmartContract(string contractAddressOrSymbol, GoalToCall goalToCall, string subscriptIdVariableName = "subscriptionId")
+		public async Task ListenToTransferSingleEventOnSmartContract(string contractAddressOrSymbol, GoalToCallInfo goalToCall, string subscriptIdVariableName = "subscriptionId")
 		{
 			string abi = @"{""anonymous"":false,""inputs"":[{""indexed"":true,""internalType"":""address"",""name"":""operator"",""type"":""address""},{""indexed"":true,""internalType"":""address"",""name"":""from"",""type"":""address""},{""indexed"":true,""internalType"":""address"",""name"":""to"",""type"":""address""},{""indexed"":false,""internalType"":""uint256"",""name"":""id"",""type"":""uint256""},{""indexed"":false,""internalType"":""uint256"",""name"":""value"",""type"":""uint256""}],""name"":""TransferSingle"",""type"":""event""}";
 			await ListenToEventOnSmartContract(contractAddressOrSymbol, abi, goalToCall, subscriptIdVariableName);
 		}
-		public async Task ListenToTransferEventOnSmartContract(string contractAddressOrSymbol, GoalToCall goalToCall, string subscriptIdVariableName = "subscriptionId")
+		public async Task ListenToTransferEventOnSmartContract(string contractAddressOrSymbol, GoalToCallInfo goalToCall, string subscriptIdVariableName = "subscriptionId")
 		{
 			string abi = @"{""anonymous"":false,""inputs"":[{""indexed"":true,""name"":""from"",""type"":""address""},{""indexed"":true,""name"":""to"",""type"":""address""},{""indexed"":false,""name"":""value"",""type"":""uint256""}],""name"":""Transfer"",""type"":""event""}";
 			await ListenToEventOnSmartContract(contractAddressOrSymbol, abi, goalToCall, subscriptIdVariableName);
 		}
 
 		private static readonly object _lock = new();
-		public async Task ListenToEventOnSmartContract(string contractAddressOrSymbol, string abi, GoalToCall goalToCall, string subscriptIdVariableName = "subscriptionId")
+		public async Task ListenToEventOnSmartContract(string contractAddressOrSymbol, string abi, GoalToCallInfo goalToCall, string subscriptIdVariableName = "subscriptionId")
 		{
 			var rpcServer = await GetCurrentRpcServer();
 			if (contractAddressOrSymbol.Length != 42)
@@ -176,7 +176,9 @@ namespace PLang.Modules.BlockchainModule
 							}
 						}
 						parameters.Add("__TxLog__", eventLog.Log);
-						var task = pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalToCall, parameters, goal);
+						goalToCall.Parameters.AddOrReplaceDict(parameters);
+
+						var task = pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalToCall, goal);
 						task.Wait();
 					}
 				}
@@ -253,7 +255,7 @@ namespace PLang.Modules.BlockchainModule
 		}
 
 
-		public async Task ListenToBlock(string callGoal, string subcriptionId = "subscriptionId", string? callGoalOnUnsubscribe = null)
+		public async Task ListenToBlock(GoalToCallInfo callGoal, string subcriptionId = "subscriptionId", GoalToCallInfo? callGoalOnUnsubscribe = null)
 		{
 
 			var rpcServer = await GetCurrentRpcServer();
@@ -271,20 +273,21 @@ namespace PLang.Modules.BlockchainModule
 				secondsSinceLastBlock = (lastBlockNotification == null) ? 0 : (int)DateTime.Now.Subtract(lastBlockNotification.Value).TotalSeconds;
 				lastBlockNotification = DateTime.Now;
 				var utcTimestamp = DateTimeOffset.FromUnixTimeSeconds((long)block.Timestamp.Value);
-				var parameters = new Dictionary<string, object>();
+				var parameters = new Dictionary<string, object?>();
 				parameters.Add("block", block);
 				parameters.Add("timestamp", utcTimestamp);
 				parameters.Add("lastBlockNotification", lastBlockNotification);
+				
+				callGoal.Parameters.AddOrReplaceDict(parameters);
 
-				pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, callGoal, parameters, Goal);
+				pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, callGoal, Goal);
 			});
 
 			subscription.GetUnsubscribeResponseAsObservable().Subscribe(response =>
 			{
 				if (callGoalOnUnsubscribe != null)
 				{
-					var parameters = new Dictionary<string, object>();
-					pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, callGoalOnUnsubscribe, parameters, Goal);
+					pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, callGoalOnUnsubscribe, Goal);
 				}
 			});
 

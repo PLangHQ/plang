@@ -106,7 +106,7 @@ namespace PLang.Utils
 
 			Goal? goal = null;
 			GoalStep? step = null;
-			GenericFunction? genericFunction = null;
+			IGenericFunction? genericFunction = null;
 			Instruction? instruction = null;
 			Dictionary<string, object?>? parameterValues = null;
 			Exception? exception = null;
@@ -134,11 +134,11 @@ namespace PLang.Utils
 			if (detailedError && property != null) instruction = (Instruction?)property.GetValue(error);
 
 			property = properties.FirstOrDefault(p => p.Name.Equals("GenericFunction"));
-			if (detailedError && property != null) genericFunction = (GenericFunction?)property.GetValue(error);
+			if (detailedError && property != null) genericFunction = (IGenericFunction?)property.GetValue(error);
 
 			if (genericFunction == null && instruction != null)
 			{
-				genericFunction = instruction.Function as GenericFunction;
+				genericFunction = instruction.Function as IGenericFunction;
 			}
 
 

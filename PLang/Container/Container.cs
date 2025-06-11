@@ -461,11 +461,11 @@ namespace PLang.Container
 			});
 
 			var memoryStack = container.GetInstance<MemoryStack>();
-			memoryStack.Put(new DynamicObjectValue("Now", () => { return SystemTime.Now(); }, typeof(DateTime)));
-			memoryStack.Put(new DynamicObjectValue("NowUtc", () => { return SystemTime.UtcNow(); }, typeof(DateTime)));
+			memoryStack.Put(new DynamicObjectValue("Now", () => { return SystemTime.Now(); }, typeof(DateTime), isSystemVariable: true));
+			memoryStack.Put(new DynamicObjectValue("NowUtc", () => { return SystemTime.UtcNow(); }, typeof(DateTime), isSystemVariable: true));
 
-			memoryStack.Put(new DynamicObjectValue("!MemoryStack", () => { return memoryStack.GetMemoryStack(); }, typeof(Dictionary<string, ObjectValue>)));
-			memoryStack.Put(new DynamicObjectValue("!GUID", () => { return Guid.NewGuid(); }, typeof(Guid)));
+			memoryStack.Put(new DynamicObjectValue("!MemoryStack", () => { return memoryStack.GetMemoryStack(); }, typeof(Dictionary<string, ObjectValue>), isSystemVariable: true));
+			memoryStack.Put(new DynamicObjectValue("!GUID", () => { return Guid.NewGuid(); }, typeof(Guid), isSystemVariable: true));
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			var settings = container.GetInstance<ISettings>();

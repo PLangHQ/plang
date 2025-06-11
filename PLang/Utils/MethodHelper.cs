@@ -66,7 +66,7 @@ namespace PLang.Utils
 			Dictionary<string, List<ParameterType>>? ReturnObjectProperties,
 			IBuilderError? Errors
 			)
-				ValidateFunctions(IGenericFunction function, string module, MemoryStack memoryStack)
+				ValidateFunctions(IGenericFunction function, string module, MemoryStack? memoryStack)
 		{
 			Dictionary<string, List<ParameterType>>? ParameterProperties = new();
 			Dictionary<string, List<ParameterType>>? ReturnObjectProperties = new();
@@ -103,7 +103,7 @@ namespace PLang.Utils
 							{
 								foreach (var returnValue in function.ReturnValues)
 								{
-									memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
+									if (memoryStack != null) memoryStack.PutForBuilder(returnValue.VariableName, returnValue.Type);
 
 									var objectProperties = GetParameterTypes(returnValue.VariableName, returnValue.Type);
 									ReturnObjectProperties.Add(returnValue.VariableName, objectProperties);
@@ -124,7 +124,11 @@ namespace PLang.Utils
 			return (ParameterProperties, ReturnObjectProperties, (multipleError.Count > 0) ? multipleError : null);
 		}
 
-
+		private bool ParamTypeIsOk(string methodParamType, string buildParamType)
+		{
+			if (buildParamType.StartsWith("System.") || buildParamType.StartsWith("Dictionary<") || buildParamType.StartsWith("List<")) return true;
+			return (methodParamType == buildParamType);
+		}
 
 		public (Dictionary<string, List<ParameterType>>? ParameterProperties, GroupedBuildErrors Error) IsParameterMatch(MethodInfo p, List<Parameter> parameters, GoalStep goalStep)
 		{
@@ -132,6 +136,17 @@ namespace PLang.Utils
 
 			var variablesInStep = variableHelper.GetVariables(goalStep.Text);
 			Dictionary<string, List<ParameterType>>? parameterProperties = new();
+
+			foreach (var buildParameter in parameters ?? [])
+			{
+				var typeFound = p.GetParameters().FirstOrDefault(p => ParamTypeIsOk(CleanAssemblyInfo(p.ParameterType.FullName), buildParameter.Type));
+				if (typeFound == null)
+				{
+					buildErrors.Add(new InvalidParameterError(goalStep.Instruction?.Function.Name, $"Could not find {buildParameter.Type} in method {p.Name}", goalStep));
+				}
+			}
+
+
 			foreach (var methodParameter in p.GetParameters())
 			{
 				var parameterType = methodParameter.ParameterType.Name.ToLower();
@@ -446,66 +461,56 @@ namespace PLang.Utils
 			string typeName = parameter.ParameterType.Name;
 
 			System.Collections.IList? list = null;
-			object? variableValue = obj;
-			if (VariableHelper.IsVariable(variableValue))
+			
+			if (obj is string variableName && VariableHelper.IsVariable(variableName))
 			{
-				variableValue = variableHelper.GetValue(variableValue.ToString(), parameter.ParameterType);
-				parameterValues.Add(parameter.Name, variableValue);
+				var value = variableHelper.GetValue(variableName, parameter.ParameterType);
+				
+				parameterValues.Add(parameter.Name, value);
 				return;
 			}
 
-			if (variableValue is string str && JsonHelper.IsJson(str))
-			{
-				if (str.TrimStart().StartsWith("{"))
-				{
-					var jobj = JObject.Parse(str);
-					variableValue = JArray.FromObject(jobj);
-				}
-				else if (str.TrimStart().StartsWith("["))
-				{
-					variableValue = JArray.Parse(str);
-				}
-			}
 
-
-			if (variableValue == null)
+			object? variableValue = null;
+			if (obj is JArray jArray)
 			{
-				if (parameter.ParameterType.Name.StartsWith("IList"))
+				list = jArray.ToObject(parameter.ParameterType) as System.Collections.IList;
+			} else if (obj is JObject jObject)
+			{
+				list = JArray.FromObject(jObject) as System.Collections.IList;
+			} else if (obj is IList)
+			{
+				list = (System.Collections.IList)obj;
+			}
+			else if (obj is string str)
+			{
+				if (JsonHelper.IsJson(str, out variableValue))
 				{
-					list = new List<object>();
-				}
-				else
-				{
-					list = Activator.CreateInstance(parameter.ParameterType) as IList;
-				}
-
-			}
-			else if (variableValue is JArray)
-			{
-				list = ((JArray)variableValue).ToObject(parameter.ParameterType) as System.Collections.IList;
-			}
-			else if (variableValue is JObject)
-			{
-				list = JArray.FromObject(variableValue) as System.Collections.IList;
-			}
-			else if (variableValue != null && variableValue.GetType().Name.StartsWith("List"))
-			{
-				list = (System.Collections.IList)variableValue;
-			}
-			else if (variableValue is string && Regex.IsMatch(variableValue.ToString(), "\\[(.*)\\]"))
-			{
-				Match match = Regex.Match(variableValue.ToString(), "\\[(.*)\\]");
-				if (match.Success)
-				{
-					var items = match.Value.TrimStart('[').TrimEnd(']').Split(',');
-					list = new List<object>();
-					foreach (var item in items)
+					//is json object
+					if (variableValue is JArray jArray2)
 					{
-						list.Add(item.Trim());
+						list = jArray2.ToObject(parameter.ParameterType) as System.Collections.IList;
+					}
+					else if (variableValue is JObject jObject2)
+					{
+						list = JArray.FromObject(jObject2) as System.Collections.IList;
+					}
+				}
+				else if (Regex.IsMatch(str, "\\[(.*)\\]"))
+				{
+					Match match = Regex.Match(str, "\\[(.*)\\]");
+					if (match.Success)
+					{
+						var items = match.Value.TrimStart('[').TrimEnd(']').Split(',');
+						list = new List<object>();
+						foreach (var item in items)
+						{
+							list.Add(item.Trim());
+						}
 					}
 				}
 			}
-			else if (!variableValue.GetType().Name.StartsWith("List"))
+			else
 			{
 				if (parameter.ParameterType.Name.StartsWith("IList"))
 				{
@@ -514,8 +519,9 @@ namespace PLang.Utils
 				else
 				{
 					list = Activator.CreateInstance(parameter.ParameterType) as IList;
+					if (list == null) list = new List<object>();
 				}
-				list.Add(variableValue);
+				list.Add(obj);
 			}
 
 			if (handlesAttribute != null)
@@ -615,7 +621,15 @@ namespace PLang.Utils
 						dict = new();
 						foreach (var item in itemWithList)
 						{
-							dict.Add(item.Key, new Tuple<object?, object?>(item.Value, null));
+							if (item.Value == null) continue;
+
+							if (item.Value.Count > 1)
+							{
+								dict.Add(item.Key, new Tuple<object?, object?>(item.Value[0], item.Value[1]));
+							} else if (item.Value.Count > 0)
+							{
+								dict.Add(item.Key, new Tuple<object?, object?>(item.Value[0], null));
+							}
 						}
 					}
 				}
@@ -747,7 +761,12 @@ namespace PLang.Utils
 		private object? ConvertToType(object? value, ParameterInfo parameterInfo)
 		{
 			if (value == null) return null;
-			if (parameterInfo.ParameterType == typeof(GoalToCall)) return (value == null || value.ToString() == null) ? null : new GoalToCall(value.ToString()!);
+			if (value is JObject jobj && parameterInfo.ParameterType == typeof(GoalToCallInfo))
+			{
+				int i = 0;
+				var o  = jobj.ToObject<GoalToCallInfo>();
+			}
+
 			var targetType = parameterInfo.ParameterType;
 			if (targetType.Name == "String" && (value is JObject || value is JArray || value is JToken || value is JProperty))
 			{

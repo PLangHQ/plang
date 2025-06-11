@@ -362,7 +362,7 @@ namespace PLang.Modules.FileModule
 		public async Task WriteCsvFile(string path, object variableToWriteToCsv, bool append = false, bool hasHeaderRecord = true,
 			string delimiter = ",",
 			string newLine = "\n", string encoding = "utf-8", bool ignoreBlankLines = true,
-				bool allowComments = false, char comment = '#', GoalToCall? goalToCallOnBadData = null, bool createDirectoryAutomatically = true)
+				bool allowComments = false, char comment = '#', GoalToCallInfo? goalToCallOnBadData = null, bool createDirectoryAutomatically = true)
 		{
 			var absolutePath = GetPath(path);
 			if (createDirectoryAutomatically)
@@ -389,9 +389,9 @@ namespace PLang.Modules.FileModule
 				{
 					if (goalToCallOnBadData == null) return;
 
-					Dictionary<string, object> parameters = new Dictionary<string, object>();
-					parameters.Add("data", data);
-					pseudoRuntime.RunGoal(engine, context, fileSystem.RelativeAppPath, goalToCallOnBadData, parameters, Goal);
+					goalToCallOnBadData.Parameters.Add("data", data);
+
+					pseudoRuntime.RunGoal(engine, context, fileSystem.RelativeAppPath, goalToCallOnBadData, Goal);
 				},
 				NewLine = newLine,
 				Encoding = GetEncoding(encoding),
@@ -458,7 +458,7 @@ namespace PLang.Modules.FileModule
 		}
 		public async Task<object> ReadCsvFile(string path, bool hasHeaderRecord = true, string delimiter = ",",
 				string newLine = "\n", string encoding = "utf-8", bool ignoreBlankLines = true,
-				bool allowComments = false, char comment = '#', string? goalToCallOnBadData = null)
+				bool allowComments = false, char comment = '#', GoalToCallInfo? goalToCallOnBadData = null)
 		{
 			var absolutePath = GetPath(path);
 			var readConfig = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.CurrentCulture)
@@ -469,8 +469,8 @@ namespace PLang.Modules.FileModule
 					if (goalToCallOnBadData == null) return;
 
 					Dictionary<string, object> parameters = new Dictionary<string, object>();
-					parameters.Add("data", data);
-					pseudoRuntime.RunGoal(engine, context, fileSystem.RelativeAppPath, goalToCallOnBadData, parameters, Goal);
+					goalToCallOnBadData.Parameters.Add("data", data);
+					pseudoRuntime.RunGoal(engine, context, fileSystem.RelativeAppPath, goalToCallOnBadData, Goal);
 				},
 				NewLine = newLine,
 				Encoding = GetEncoding(encoding),
@@ -805,7 +805,7 @@ namespace PLang.Modules.FileModule
 			}
 		}
 
-		public async Task StopListeningToFileChange(string[] fileSearchPatterns, GoalToCall? goalToCall = null)
+		public async Task StopListeningToFileChange(string[] fileSearchPatterns, GoalToCallInfo? goalToCall = null)
 		{
 			string key = $"FileWatcher_{fileSearchPatterns}_";
 			if (goalToCall != null) key += goalToCall;
@@ -826,7 +826,7 @@ namespace PLang.Modules.FileModule
 		private ConcurrentDictionary<string, Timer> timers = new ConcurrentDictionary<string, Timer>();
 
 		[Description("debounceTime is the time in ms that is waited until action is executed to prevent multiple execution for same file. At least one listenFor variable needs to be true")]
-		public async Task ListenToFileChange(List<string> fileSearchPatterns, GoalToCall goalToCall,
+		public async Task ListenToFileChange(List<string> fileSearchPatterns, GoalToCallInfo goalToCall,
 			List<string>? excludeFiles = null,
 			bool includeSubdirectories = false, long debounceTime = 150,
 			bool listenForFileChange = false,
@@ -917,7 +917,8 @@ namespace PLang.Modules.FileModule
 								parameters.Add(changeTypeVariableName, e.ChangeType);
 								parameters.Add(senderVariableName, sender);
 
-								var task = pseudoRuntime.RunGoal(engine, context, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall, parameters);
+								goalToCall.Parameters.AddOrReplaceDict(parameters);
+								var task = pseudoRuntime.RunGoal(engine, context, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall);
 								task.Wait();
 
 							}, e.FullPath, debounceTime, Timeout.Infinite);
@@ -962,7 +963,7 @@ namespace PLang.Modules.FileModule
 		}
 
 		private static readonly object _lock = new object();
-		private async Task WatcherCallGoal(object sender, FileSystemEventArgs e, GoalToCall goalToCall, List<string>? excludeFiles,
+		private async Task WatcherCallGoal(object sender, FileSystemEventArgs e, GoalToCallInfo goalToCall, List<string>? excludeFiles,
 			string absoluteFilePathVariableName, string fileNameVariableName,
 			string changeTypeVariableName, string senderVariableName)
 		{
@@ -976,9 +977,10 @@ namespace PLang.Modules.FileModule
 				parameters.Add(changeTypeVariableName, e.ChangeType);
 				parameters.Add(senderVariableName, sender);
 
+				goalToCall.Parameters.AddOrReplaceDict(parameters);
 				try
 				{
-					var task = pseudoRuntime.RunGoal(engine, context, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall, parameters);
+					var task = pseudoRuntime.RunGoal(engine, context, fileSystem.Path.DirectorySeparatorChar.ToString(), goalToCall);
 					task.Wait();
 
 					var (engine2, vars, error, output) = task.Result;

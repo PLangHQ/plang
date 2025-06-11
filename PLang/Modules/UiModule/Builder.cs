@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Builder;
@@ -42,8 +43,12 @@ If there is some api key, settings, config replace it with %Settings.Get(""setti
 The user is build or manipulating user interface written in html. His intent will reflect that
 Response with only the function name you would choose");
 
-			string methods = typeHelper.GetMethodNamesAsString(typeof(Program));
-			SetAssistant($"### function available ###\n{methods}### function available ###");
+			var classDescriptionHelper = new ClassDescriptionHelper();
+
+			var result = classDescriptionHelper.GetClassDescription(typeof(Program));
+			if (result.Error != null) return (null,  result.Error);
+
+			SetAssistant($"### function available ###\n{JsonConvert.SerializeObject(result.ClassDescription)}\n### function available ###");
 
 			var buildFunctionName = await base.Build<FunctionName>(step);
 

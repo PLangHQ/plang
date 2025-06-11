@@ -62,7 +62,7 @@ namespace PLangTests.Modules.ScheduleModule
 			string goalName = "Process";
 			string goalName2 = "Process2";
 			var cronJobs = new List<CronJob>();
-			cronJobs.Add(new CronJob(@"c:\file.pr", cronCommand, goalName, null, now.AddMinutes(-2).DateTime));
+			cronJobs.Add(new CronJob(@"c:\file.pr", cronCommand, goalName, now.AddMinutes(-2).DateTime));
 			cronJobs.Add(new CronJob(@"c:\file2.pr", cronCommand, goalName2, null));
 
 
@@ -86,7 +86,7 @@ namespace PLangTests.Modules.ScheduleModule
 
 			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory);
 			await p.Run();
-			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(), Arg.Any<string>(), "Process", Arg.Any<Dictionary<string, object>>());
+			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(), Arg.Any<string>(), "Process");
 
 
 			SystemTime.OffsetUtcNow = () =>
@@ -95,7 +95,7 @@ namespace PLangTests.Modules.ScheduleModule
 			};
 
 			await p.Run();
-			await pseudoRuntime.Received(3).RunGoal(engine, Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Dictionary<string, object>>());
+			await pseudoRuntime.Received(3).RunGoal(engine, Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>());
 
 			SystemTime.OffsetUtcNow = () =>
 			{
@@ -103,7 +103,7 @@ namespace PLangTests.Modules.ScheduleModule
 			};
 
 			await p.Run();
-			await pseudoRuntime.Received(3).RunGoal(engine, Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Dictionary<string, object>>());
+			await pseudoRuntime.Received(3).RunGoal(engine, Arg.Any<PLangAppContext>(), Arg.Any<string>(), Arg.Any<string>());
 
 			SystemTime.OffsetUtcNow = () =>
 			{
@@ -121,7 +121,7 @@ namespace PLangTests.Modules.ScheduleModule
 			string goalName = "Process";
 			string goalName2 = "Process2";
 			var cronJobs = new List<CronJob>();
-			cronJobs.Add(new CronJob(@"c:\file.pr", cronCommand, goalName, null, now.AddMinutes(-2).DateTime));
+			cronJobs.Add(new CronJob(@"c:\file.pr", cronCommand, goalName, now.AddMinutes(-2).DateTime));
 			cronJobs.Add(new CronJob(@"c:\file2.pr", cronCommand, goalName2));
 
 
@@ -149,7 +149,7 @@ namespace PLangTests.Modules.ScheduleModule
 			};
 			var p = new Program(settings, prParser, engine, pseudoRuntime, logger, fileSystem, outputStreamFactory);
 			await p.Run();
-			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(), Arg.Any<string>(), "Process", Arg.Any<Dictionary<string, object>>());
+			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Any<PLangAppContext>(), Arg.Any<string>(), "Process");
 
 
 		}

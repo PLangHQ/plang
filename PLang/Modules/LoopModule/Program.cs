@@ -12,6 +12,7 @@ using PLang.Exceptions;
 using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
+using PLang.Utils;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -48,9 +49,10 @@ namespace PLang.Modules.LoopModule
 		}
 
 		[Description("Call another Goal, when ! is prefixed, e.g. !RenameFile or !Google/Search, parameters are sent to the goal being called. Predefined variables are %list%, %item%, %position%, %listCount%, use can overwrite those using parameters. cpuUsage is percentage of cpu cores available, 80% => 0.8")]
-		public async Task<IError?> RunLoop([HandlesVariableAttribute] string variableToLoopThrough, GoalToCall goalNameToCall, [HandlesVariableAttribute] Dictionary<string, object?>? parameters = null,
-			 int threadCount = 1, double cpuUsage = 0, bool failFast = true, [HandlesVariable] string? goalToCallBeforeItemIsProcessed = null, [HandlesVariable] string? goalToCallAfterItemIsProcessed = null)
+		public async Task<IError?> RunLoop([HandlesVariableAttribute] string variableToLoopThrough, [HandlesVariableAttribute] GoalToCallInfo goalToCall,
+			 int threadCount = 1, double cpuUsage = 0, bool failFast = true, [HandlesVariable] GoalToCallInfo? goalToCallBeforeItemIsProcessed = null, [HandlesVariable] GoalToCallInfo? goalToCallAfterItemIsProcessed = null)
 		{
+			var parameters = goalToCall.Parameters;
 			if (parameters == null) parameters = new();
 
 			string listName = GetParameterName(parameters, "list");
@@ -108,18 +110,12 @@ namespace PLang.Modules.LoopModule
 				{
 					foreach (var item in enumerables)
 					{
-						var goalParameters = new Dictionary<string, object?>();
-						goalParameters.Add(listName.ToString()!, enumerables);
-						goalParameters.Add(itemName.ToString()!, item);
-						goalParameters.Add(positionName.ToString()!, idx++);
-						goalParameters.Add(listCountName, -1);
-						var missingEntries = parameters.Where(p => !goalParameters.ContainsKey(p.Key));
-						foreach (var entry in missingEntries)
-						{
-							goalParameters.Add(entry.Key, entry.Value);
-						}
-
-						var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalNameToCall, goalParameters, Goal);
+						goalToCall.Parameters.AddOrReplace(listName.ToString()!, enumerables);
+						goalToCall.Parameters.AddOrReplace(itemName.ToString()!, item);
+						goalToCall.Parameters.AddOrReplace(positionName.ToString()!, idx++);
+						goalToCall.Parameters.AddOrReplace(listCountName, -1);
+						
+						var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCall, Goal);
 						if (result.error != null && result.error is not IErrorHandled) return result.error;
 					}
 				}
@@ -136,26 +132,20 @@ namespace PLang.Modules.LoopModule
 						await semaphore.WaitAsync(token);
 						try
 						{
+							goalToCall.Parameters.AddOrReplace(listName.ToString()!, enumerables);
+							goalToCall.Parameters.AddOrReplace(itemName.ToString()!, item);
+							goalToCall.Parameters.AddOrReplace(positionName.ToString()!, idx++);
+							goalToCall.Parameters.AddOrReplace(listCountName, -1);
 							
-							var goalParameters = new Dictionary<string, object?>();
-							goalParameters.Add(listName.ToString()!, enumerables);
-							goalParameters.Add(itemName.ToString()!, item);
-							goalParameters.Add(positionName.ToString()!, idx++);
-							goalParameters.Add(listCountName, -1);
-							var missingEntries = parameters.Where(p => !goalParameters.ContainsKey(p.Key));
-							foreach (var entry in missingEntries)
-							{
-								goalParameters.Add(entry.Key, entry.Value);
-							}
-
 							Task<(IEngine engine, object? Variables, IError? error, IOutput? output)> task;
 							if (goalToCallBeforeItemIsProcessed != null)
 							{
-								task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCallBeforeItemIsProcessed, goalParameters, Goal, isolated: true);
+								goalToCallBeforeItemIsProcessed.Parameters.AddOrReplaceDict(goalToCall.Parameters);
+								task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCallBeforeItemIsProcessed, Goal, isolated: true);
 								await task;
 							}
 
-							task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalNameToCall, goalParameters, Goal, isolated: true);
+							task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCall, Goal, isolated: true);
 							var result = await task;
 							if (result.error != null)
 							{
@@ -171,7 +161,8 @@ namespace PLang.Modules.LoopModule
 
 							if (goalToCallAfterItemIsProcessed != null)
 							{
-								task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCallAfterItemIsProcessed, goalParameters, Goal, isolated: true);
+								goalToCallAfterItemIsProcessed.Parameters.AddOrReplaceDict(goalToCall.Parameters);
+								task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCallAfterItemIsProcessed, Goal, isolated: true);
 								await task;
 							}
 

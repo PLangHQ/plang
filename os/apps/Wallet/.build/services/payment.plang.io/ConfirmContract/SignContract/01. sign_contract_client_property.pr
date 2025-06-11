@@ -1,0 +1,94 @@
+{
+  "Text": "sign contract %contract%, sign to property \"client\", write to %signedContract%",
+  "ModuleType": null,
+  "Reload": false,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null,\n\t\"Instruction\": {\n\t\"Text\": string,\n\t\"ModuleType\": string,\n\t\"GenericFunctionType\": string,\n\t\"FunctionJson\"?: jtoken\n}\n}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null,\n\t\"Instruction\": {\n\t\"Text\": string,\n\t\"ModuleType\": string,\n\t\"GenericFunctionType\": string,\n\t\"FunctionJson\"?: jtoken\n}\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nThe user wants to digitally sign a contract object, specifically signing it with the property 'client', and then store the signed contract in a variable.\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"Get the current identity, also called %MyIdentity%\",\"MethodName\":\"GetMyIdentity\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"PLang.Interfaces.Identity\"}},{\"Description\":\"Get an identity by name or identification\",\"MethodName\":\"GetIdentity\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"nameOrIdentity\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"PLang.Interfaces.Identity\"}},{\"Description\":\"Create a new identity in the system\",\"MethodName\":\"CreateIdentity\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"name\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"setAsDefault\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"PLang.Interfaces.Identity\"}},{\"Description\":\"Set the current identity(MyIdentity). Name or identity, identity could be a public address, 0x123....\",\"MethodName\":\"SetCurrentIdentity\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"nameOrIdentity\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"PLang.Interfaces.Identity\"}},{\"Description\":\"Archives a identity. Name or identity, identity could be a public address, 0x123....\",\"MethodName\":\"ArchiveIdentity\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"nameOrIdentity\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"PLang.Interfaces.Identity\"}},{\"Description\":\"Gets all identites in the system\",\"MethodName\":\"GetIdentities\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"PLang.Interfaces.Identity\"}},{\"Description\":\"Set the app to use shared identity. This is usefull when app is running on multiple location but want to use one identity for them all\",\"MethodName\":\"UseSharedIdentity\",\"Parameters\":[]},{\"MethodName\":\"RemoveSharedIdentity\",\"Parameters\":[]},{\"Description\":\"Sign a object to a specific property on that object. Returns signature object that contains the values to validate the signature\",\"MethodName\":\"SignIntoProperty\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"body\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"property\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Sign a content with specific headers and contracts. Returns signature object that contains the values to validate the signature\",\"MethodName\":\"Sign\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"body\",\"IsRequired\":true},{\"Type\":\"List<string>\",\"Name\":\"contracts\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Int32]\",\"Name\":\"expiresInSeconds\",\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"headers\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"PLang.Models.Signature\"}},{\"Description\":\"Validate a signature on specific properties\",\"MethodName\":\"VerifySignatureOnProperties\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"signatureFromUser\",\"IsRequired\":true},{\"Type\":\"List<string>\",\"Name\":\"properties\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"PLang.Models.Signature\"}},{\"Description\":\"Validate a signature. Return the signature when valid, gives error when invalid\",\"MethodName\":\"VerifySignature\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"signatureFromUser\",\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"headers\",\"IsRequired\":false},{\"Type\":\"System.Object\",\"Name\":\"body\",\"IsRequired\":false},{\"Type\":\"List<string>\",\"Name\":\"contracts\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"PLang.Models.Signature\"}},{\"MethodName\":\"GetPrivateKey\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"System.String\"}}],\"SupportingObjects\":[]}\r\n## functions available ends ##\r\n## defined variables ##\r\ncontract (type:object), signedcontract (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "sign contract %contract%, sign to property \"client\", write to %signedContract%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to sign the 'contract' object specifically on the 'client' property and store the resulting signed contract in the variable 'signedContract'. The function 'SignIntoProperty' matches this intent as it signs an object to a specific property and returns a signature object.\",\n  \"Name\": \"SignIntoProperty\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"body\",\n      \"Value\": \"%contract%\"\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"property\",\n      \"Value\": \"client\"\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"System.Object\",\n      \"VariableName\": \"%signedContract%\"\n    }\n  ],\n  \"Instruction\": {\n    \"Text\": \"Sign the contract object on the 'client' property and store the signed contract in %signedContract%.\",\n    \"ModuleType\": \"Signature\",\n    \"GenericFunctionType\": \"SignIntoProperty\",\n    \"FunctionJson\": null\n  }\n}"
+    }
+  ],
+  "Properties": {
+    "Parameters": {
+      "property": [
+        {
+          "Name": "property",
+          "FullTypeName": "System.String"
+        }
+      ]
+    },
+    "ReturnValues": {
+      "%signedContract%": [
+        {
+          "Name": "%signedContract%",
+          "FullTypeName": "System.Object"
+        }
+      ]
+    }
+  },
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to sign the 'contract' object specifically on the 'client' property and store the resulting signed contract in the variable 'signedContract'. The function 'SignIntoProperty' matches this intent as it signs an object to a specific property and returns a signature object.",
+    "Name": "SignIntoProperty",
+    "Parameters": [
+      {
+        "Type": "System.Object",
+        "Name": "body",
+        "Value": "%contract%"
+      },
+      {
+        "Type": "System.String",
+        "Name": "property",
+        "Value": "client"
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "System.Object",
+        "VariableName": "%signedContract%"
+      }
+    ]
+  }
+}

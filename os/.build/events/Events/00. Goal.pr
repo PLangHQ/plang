@@ -9,12 +9,14 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-06-06T17:47:41.5226137+00:00",
+      "Confidence": null,
+      "Inconsistency": null,
+      "Generated": "2025-06-10T18:50:17.4008339+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -28,19 +30,19 @@
         "EventType": "Before",
         "EventScope": "Step",
         "GoalToBindTo": {
-          "Value": "*."
+          "Name": "*"
         },
         "GoalToCall": {
-          "Value": "Runtime/SendDebug"
-        },
-        "GoalToCallParameters": {
-          "StartParameter": "--debug"
+          "Name": "Runtime/SendDebug",
+          "Parameters": {}
         },
         "IncludePrivate": true,
         "StepNumber": null,
         "StepText": null,
         "WaitForExecution": true,
-        "RunOnlyOnStartParameter": null,
+        "RunOnlyOnStartParameter": [
+          "--debug"
+        ],
         "OnErrorContinueNextStep": false,
         "ErrorKey": null,
         "ErrorMessage": null,
@@ -49,8 +51,8 @@
         "IsLocal": false,
         "IncludeOsGoals": false,
         "IsOnStep": true,
-        "Id": "Before_Step_*._Runtime/SendDebug_True___True__False_____False",
-        "UniqueId": "8be06afd-8525-471b-bb73-ae4821638767",
+        "Id": "Before_Step_*_Runtime/SendDebug_True___True_--debug_False_____False",
+        "UniqueId": "a4e7a4e3-2d87-4dc0-aa53-55467cbe8ca9",
         "Goal": null,
         "GoalStep": null,
         "Stopwatch": null
@@ -69,12 +71,14 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-06-06T17:47:41.533897+00:00",
+      "Confidence": null,
+      "Inconsistency": null,
+      "Generated": "2025-06-10T18:50:17.4092288+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -88,12 +92,12 @@
         "EventType": "Before",
         "EventScope": "Goal",
         "GoalToBindTo": {
-          "Value": "*. "
+          "Name": "*"
         },
         "GoalToCall": {
-          "Value": "Runtime/SendDebug"
+          "Name": "Runtime/SendDebug",
+          "Parameters": {}
         },
-        "GoalToCallParameters": null,
         "IncludePrivate": true,
         "StepNumber": null,
         "StepText": null,
@@ -109,8 +113,8 @@
         "IsLocal": false,
         "IncludeOsGoals": false,
         "IsOnStep": false,
-        "Id": "Before_Goal_*. _Runtime/SendDebug_True___True_--debug_False_____False",
-        "UniqueId": "9995c14f-52b9-4231-b18f-676b0cfd1924",
+        "Id": "Before_Goal_*_Runtime/SendDebug_True___True_--debug_False_____False",
+        "UniqueId": "573ae45c-08cc-4312-a7be-76d26c32dc39",
         "Goal": null,
         "GoalStep": null,
         "Stopwatch": null
@@ -129,12 +133,14 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-06-06T17:47:41.5449771+00:00",
+      "Confidence": null,
+      "Inconsistency": null,
+      "Generated": "2025-06-10T18:50:17.4177311+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -148,12 +154,12 @@
         "EventType": "After",
         "EventScope": "StepError",
         "GoalToBindTo": {
-          "Value": "*"
+          "Name": "*"
         },
         "GoalToCall": {
-          "Value": "/events/Runtime/HandleBadInstructionFile"
+          "Name": "/events/Runtime/HandleBadInstructionFile",
+          "Parameters": {}
         },
-        "GoalToCallParameters": null,
         "IncludePrivate": false,
         "StepNumber": null,
         "StepText": null,
@@ -166,9 +172,9 @@
         "ExceptionType": "PLang.Exceptions.InvalidInstructionFileException",
         "IsLocal": false,
         "IncludeOsGoals": true,
-        "IsOnStep": true,
+        "IsOnStep": false,
         "Id": "After_StepError_*_/events/Runtime/HandleBadInstructionFile_False___True__False____PLang.Exceptions.InvalidInstructionFileException_False",
-        "UniqueId": "53ac06cd-df82-4cd1-8461-510d7a964591",
+        "UniqueId": "3f7aaca4-2ac6-48a5-beb8-474021eb94c2",
         "Goal": null,
         "GoalStep": null,
         "Stopwatch": null
@@ -187,12 +193,14 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-06-06T17:47:41.5561355+00:00",
+      "Confidence": null,
+      "Inconsistency": null,
+      "Generated": "2025-06-10T18:50:17.42754+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -206,12 +214,12 @@
         "EventType": "After",
         "EventScope": "StepError",
         "GoalToBindTo": {
-          "Value": "*"
+          "Name": "*"
         },
         "GoalToCall": {
-          "Value": "/events/Runtime/HandleBadInstructionFile"
+          "Name": "/events/Runtime/HandleBadInstructionFile",
+          "Parameters": {}
         },
-        "GoalToCallParameters": null,
         "IncludePrivate": false,
         "StepNumber": null,
         "StepText": null,
@@ -226,7 +234,7 @@
         "IncludeOsGoals": true,
         "IsOnStep": true,
         "Id": "After_StepError_*_/events/Runtime/HandleBadInstructionFile_False___True__False____PLang.Exceptions.MethodNotFoundException_False",
-        "UniqueId": "1b2caaae-7c14-459a-b42a-581a37a4602c",
+        "UniqueId": "321655d3-1784-42b7-a388-c5bad7356309",
         "Goal": null,
         "GoalStep": null,
         "Stopwatch": null
@@ -245,12 +253,14 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-06-06T17:47:41.5678246+00:00",
+      "Confidence": null,
+      "Inconsistency": null,
+      "Generated": "2025-06-10T18:50:17.4358338+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -264,12 +274,12 @@
         "EventType": "After",
         "EventScope": "StepError",
         "GoalToBindTo": {
-          "Value": "*"
+          "Name": "*"
         },
         "GoalToCall": {
-          "Value": "/events/Runtime/HandleBadInstructionFile"
+          "Name": "/events/Runtime/HandleBadInstructionFile",
+          "Parameters": {}
         },
-        "GoalToCallParameters": null,
         "IncludePrivate": false,
         "StepNumber": null,
         "StepText": null,
@@ -284,7 +294,7 @@
         "IncludeOsGoals": true,
         "IsOnStep": true,
         "Id": "After_StepError_*_/events/Runtime/HandleBadInstructionFile_False___True__False_InvalidParameter____False",
-        "UniqueId": "454b82b1-dd3b-4e83-ac8d-1574cf2e89ea",
+        "UniqueId": "331f4653-e469-4a02-ba0a-d40daeba4559",
         "Goal": null,
         "GoalStep": null,
         "Stopwatch": null
@@ -303,12 +313,14 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-06-06T17:47:41.57513+00:00",
+      "Confidence": null,
+      "Inconsistency": null,
+      "Generated": "2025-06-10T18:50:17.4410694+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -322,12 +334,12 @@
         "EventType": "After",
         "EventScope": "StepError",
         "GoalToBindTo": {
-          "Value": "*"
+          "Name": "*"
         },
         "GoalToCall": {
-          "Value": "/events/Runtime/HandleBadInstructionFile"
+          "Name": "/events/Runtime/HandleBadInstructionFile",
+          "Parameters": {}
         },
-        "GoalToCallParameters": null,
         "IncludePrivate": false,
         "StepNumber": null,
         "StepText": null,
@@ -342,7 +354,7 @@
         "IncludeOsGoals": true,
         "IsOnStep": true,
         "Id": "After_StepError_*_/events/Runtime/HandleBadInstructionFile_False___True__False_InvalidInstructionFile____False",
-        "UniqueId": "26c490c5-2100-48ee-9195-153f2e314fa7",
+        "UniqueId": "c3416cee-12e0-49ee-be6a-e9435f6057b6",
         "Goal": null,
         "GoalStep": null,
         "Stopwatch": null
@@ -361,12 +373,14 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-06-06T17:47:41.5935087+00:00",
+      "Confidence": null,
+      "Inconsistency": null,
+      "Generated": "2025-06-10T18:50:17.4560236+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -380,12 +394,12 @@
         "EventType": "After",
         "EventScope": "StepError",
         "GoalToBindTo": {
-          "Value": "*. "
+          "Name": "*"
         },
         "GoalToCall": {
-          "Value": "/events/Runtime/PrFileNotFound"
+          "Name": "/events/Runtime/PrFileNotFound",
+          "Parameters": {}
         },
-        "GoalToCallParameters": null,
         "IncludePrivate": false,
         "StepNumber": null,
         "StepText": null,
@@ -399,8 +413,8 @@
         "IsLocal": false,
         "IncludeOsGoals": true,
         "IsOnStep": true,
-        "Id": "After_StepError_*. _/events/Runtime/PrFileNotFound_False___True__False_PrFileNotFound____False",
-        "UniqueId": "6faa6bac-2bcd-4de7-ac9d-9fe751d9f415",
+        "Id": "After_StepError_*_/events/Runtime/PrFileNotFound_False___True__False_PrFileNotFound____False",
+        "UniqueId": "1f1fc891-a63e-48d1-b02b-fc751dfac2ed",
         "Goal": null,
         "GoalStep": null,
         "Stopwatch": null
@@ -419,12 +433,14 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-06-06T17:47:41.6136145+00:00",
+      "Confidence": null,
+      "Inconsistency": null,
+      "Generated": "2025-06-10T18:50:17.4666799+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -438,19 +454,19 @@
         "EventType": "After",
         "EventScope": "StepError",
         "GoalToBindTo": {
-          "Value": "*"
+          "Name": "*"
         },
         "GoalToCall": {
-          "Value": "/events/Runtime/DebugErrorInIde"
-        },
-        "GoalToCallParameters": {
-          "startArgs": "--debug"
+          "Name": "/events/Runtime/DebugErrorInIde",
+          "Parameters": {}
         },
         "IncludePrivate": false,
         "StepNumber": null,
         "StepText": null,
         "WaitForExecution": true,
-        "RunOnlyOnStartParameter": null,
+        "RunOnlyOnStartParameter": [
+          "--debug"
+        ],
         "OnErrorContinueNextStep": false,
         "ErrorKey": null,
         "ErrorMessage": null,
@@ -459,8 +475,8 @@
         "IsLocal": false,
         "IncludeOsGoals": false,
         "IsOnStep": true,
-        "Id": "After_StepError_*_/events/Runtime/DebugErrorInIde_False___True__False_____False",
-        "UniqueId": "f8178b78-7a3f-463e-acc0-064a8012a58f",
+        "Id": "After_StepError_*_/events/Runtime/DebugErrorInIde_False___True_--debug_False_____False",
+        "UniqueId": "06083ee4-13f8-42e3-93b6-783ced97e077",
         "Goal": null,
         "GoalStep": null,
         "Stopwatch": null
@@ -479,12 +495,14 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-06-06T17:47:41.6352089+00:00",
+      "Confidence": null,
+      "Inconsistency": null,
+      "Generated": "2025-06-10T18:50:17.4763348+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -498,13 +516,13 @@
         "EventType": "After",
         "EventScope": "ModuleError",
         "GoalToBindTo": {
-          "Value": "*"
+          "Name": "*"
         },
         "GoalToCall": {
-          "Value": "/apps/Wallet/PaymentRequest"
-        },
-        "GoalToCallParameters": {
-          "contract": "%!error.Contract%"
+          "Name": "/apps/Wallet/PaymentRequest",
+          "Parameters": {
+            "contract": "%!error.Contract%"
+          }
         },
         "IncludePrivate": true,
         "StepNumber": null,
@@ -520,7 +538,7 @@
         "IncludeOsGoals": false,
         "IsOnStep": false,
         "Id": "After_ModuleError_*_/apps/Wallet/PaymentRequest_True___True__False___402__False",
-        "UniqueId": "501e5548-7c79-489a-ad10-ab62dd60cee5",
+        "UniqueId": "48521af9-8618-454c-9a25-230141ed8dc7",
         "Goal": null,
         "GoalStep": null,
         "Stopwatch": null
@@ -539,12 +557,14 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\Events\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-06-06T17:47:41.6484114+00:00",
+      "Confidence": null,
+      "Inconsistency": null,
+      "Generated": "2025-06-10T18:50:17.4854098+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -558,12 +578,12 @@
         "EventType": "After",
         "EventScope": "AppError",
         "GoalToBindTo": {
-          "Value": "*"
+          "Name": "*"
         },
         "GoalToCall": {
-          "Value": "/events/Runtime/OnAppError"
+          "Name": "/events/Runtime/OnAppError",
+          "Parameters": {}
         },
-        "GoalToCallParameters": null,
         "IncludePrivate": false,
         "StepNumber": null,
         "StepText": null,
@@ -578,7 +598,7 @@
         "IncludeOsGoals": false,
         "IsOnStep": false,
         "Id": "After_AppError_*_/events/Runtime/OnAppError_False___True__False_____False",
-        "UniqueId": "f8759e31-a7d3-4840-ba80-614b41a6d110",
+        "UniqueId": "1d9f8971-ed76-44c4-a88c-c0695d641450",
         "Goal": null,
         "GoalStep": null,
         "Stopwatch": null

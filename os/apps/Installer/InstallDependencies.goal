@@ -3,7 +3,7 @@ InstallDependencies
 - filter %json% where property is 'libraries', write to %libraries%
 - filter %libraries% where property starts with "%libraryName%/",return first, write to %library%
 - if %library% is empty
-    - end with error, 'Library %libraryName% could not be found in depency file'
+    - end with error, 'Library %libraryName% could not be found in dependency file'
 - download file https://www.nuget.org/api/v2/package/%library.path% if it doesnt exist and save to "%pathToSave%/%library.path%.nupkg"
 /- validate sha512 hash for file "%pathToSave%/%library.path%.nupkg", and %library.sha512%, write to %isValid%
 /- if %isValid% is false the

@@ -93,6 +93,15 @@ public class StepBuilder : IStepBuilder
 			(step, error) = await BuildStepProperties(goal, step, instruction);
 			if (error != null) return error;
 
+			if (step.Confidence == "Low" || step.Confidence == "Medium")
+			{
+				logger.Value.LogWarning($"{step.Confidence} confidence");
+			}
+
+			if (!string.IsNullOrEmpty(step.Inconsistency))
+			{
+				logger.Value.LogWarning($"Inconsistency: {step.Inconsistency}");
+			}
 			//CheckForBuildRunner(goal, step, instruction);
 
 			//Set reload to false after Build Instruction
@@ -295,8 +304,12 @@ public class StepBuilder : IStepBuilder
 			return (step, new InvalidModuleStepError(module, $"ModuleType {module} does not exist.", step, FixSuggestion: "Choose a module from list provided in <modules>"));
 		}
 
+		
+
 		step.ModuleType = module;
 		step.Name = stepInformation.StepName;
+		step.Confidence = stepInformation.Confidence;
+		step.Inconsistency = stepInformation.Inconsistency;
 		step.UserIntent = stepInformation.ExplainUserIntent;
 		step.Description = stepInformation.StepDescription;
 		step.PrFileName = GetPrFileName(stepIndex, step.Name);
@@ -516,24 +529,15 @@ You might not need to map the error handling or cache handler if this service is
 			modulesAvailable = string.Join(", ", userRequestedModule);
 		}
 		var jsonScheme = TypeHelper.GetJsonSchema(typeof(StepInformation));
-		var system =
-$@"You are provided with a statement from the user. 
-This statement is a step in a Function. 
 
-You MUST determine which <modules> can be used to solve the statement.
-You MUST choose from available <modules> provided to determine which <modules>. If you cannot choose module, set as null
-You can see what <variables> are used in the step
-
-variable is defined with starting and ending %, e.g. %filePath%
-
-";
-		if (step.Goal.RelativeGoalFolderPath.ToLower() == Path.DirectorySeparatorChar + "ui")
+		var stepInformationSystemPath = fileSystem.Path.Join(fileSystem.OsDirectory, "modules", "StepInformationSystem.llm");
+		if (!fileSystem.File.Exists(stepInformationSystemPath))
 		{
-			system += "\n\nUser is programming in the UI folder, this put priority on PLang.Modules.UiModule. The user is trying to create UI";
+			throw new Exception($"StepInformationSystem.llm is missing from system. It should be located at {stepInformationSystemPath}");
 		}
-
-		var question = step.Text;
-		system += $@"This is a list of modules you can choose from
+		var system = fileSystem.File.ReadAllText(stepInformationSystemPath);
+		
+		string assistant = $@"This is a list of modules you can choose from
 <modules>
 {modulesAvailable}
 <modules>
@@ -541,26 +545,18 @@ variable is defined with starting and ending %, e.g. %filePath%
 		var variablesInStep = variableHelper.GetVariables(step.Text);
 		if (variablesInStep.Count > 0)
 		{
-			system += $@"
+			assistant += $@"
 <variables>
 {string.Join(",", variablesInStep.Select(p => p.Path + $"({p.Type})"))}
 <variables>
 ";
 		}
 
-		system += $@"
-ExplainUserIntent: Write a short description of the user intent
-Reason: short descrpition of why you choose the module
-StepName: Short name for step, lower case, use _ instead of /
-StepDescription: Rewrite the step as you understand it, make it detailed
-Modules: Name of module. Suggest 1-3 modules that could be used to solve the step.
-Read the description of each module, then determine which module to use.
-Make sure to return valid JSON, escape double quote if needed
-";
 
 		List<LlmMessage> promptMessage = new();
 		promptMessage.Add(new LlmMessage("system", system));
-		promptMessage.Add(new LlmMessage("user", question));
+		promptMessage.Add(new LlmMessage("assistant", assistant));
+		promptMessage.Add(new LlmMessage("user", step.Text));
 
 		if (prevError != null)
 		{

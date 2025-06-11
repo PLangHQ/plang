@@ -69,7 +69,7 @@ namespace PLang.Modules.WebCrawlerModule
 		[Description("browserType=Chrome|Edge|Firefox|Safari. hideTestingMode tries to disguise that it is a bot.")]
 		public async Task<BrowserInstance> StartBrowser(string browserType = "Chrome", bool headless = false, string profileName = "",
 			bool kioskMode = false, Dictionary<string, object>? argumentOptions = null, int? timoutInSeconds = 30, bool hideTestingMode = false,
-			GoalToCall? onRequest = null, GoalToCall? onResponse = null)
+			GoalToCallInfo? onRequest = null, GoalToCallInfo? onResponse = null)
 		{
 			var browserInstance = Goal.GetVariable<BrowserInstance>();
 			if (browserInstance != null)
@@ -79,7 +79,7 @@ namespace PLang.Modules.WebCrawlerModule
 
 			var playwright = await Playwright.CreateAsync();
 			var browser = await GetBrowserType(playwright, browserType, headless, profileName, kioskMode, argumentOptions, hideTestingMode);
-			
+
 			browser.SetDefaultTimeout((timoutInSeconds ?? 30) * 1000);
 
 			browserInstance = new BrowserInstance(playwright, browser);
@@ -110,7 +110,8 @@ namespace PLang.Modules.WebCrawlerModule
 								routeAsync = routeUrl.Value;
 								break;
 							}
-						} catch (Exception ex)
+						}
+						catch (Exception ex)
 						{
 							logger.LogError(ex, $"Error parsing regex for {request.Url}");
 						}
@@ -146,13 +147,11 @@ namespace PLang.Modules.WebCrawlerModule
 			{
 				browser.Request += async (sender, e) =>
 				{
+					onRequest.Parameters.Add("!sender", sender);
+					onRequest.Parameters.Add("!request", WebCrawlerHelper.GetRequest(e));
+					onRequest.Parameters.Add("!PlaywrightRequest", e);
 
-					var parameters = new Dictionary<string, object?> {
-						{ "!sender", sender },
-						{ "!request", WebCrawlerHelper.GetRequest(e) },
-						{ "!PlaywrightRequest", e }
-						};
-					var result = await callGoal.RunGoal(onRequest, parameters, isolated: true);
+					var result = await callGoal.RunGoal(onRequest, isolated: true);
 
 					if (result.Error != null)
 					{
@@ -167,12 +166,11 @@ namespace PLang.Modules.WebCrawlerModule
 				browser.Response += async (sender, e) =>
 				{
 
-					var parameters = new Dictionary<string, object?> {
-						{ "!sender", sender },
-						{ "!request", WebCrawlerHelper.GetResponse(e) },
-						{ "!" + e.GetType().FullName, e }
-						};
-					var result = await callGoal.RunGoal(onResponse, parameters, isolated: true);
+					onResponse.Parameters.Add("!sender", sender);
+					onResponse.Parameters.Add("!request", WebCrawlerHelper.GetResponse(e));
+					onResponse.Parameters.Add("!" + e.GetType().FullName, e);
+
+					var result = await callGoal.RunGoal(onResponse, isolated: true);
 
 					if (result.Error != null)
 					{
@@ -228,12 +226,12 @@ namespace PLang.Modules.WebCrawlerModule
 
 			var element = await page.QuerySelectorAsync(cssSelector);
 			if (element == null) return (null, new ProgramError($"Element {cssSelector} does not exist.", goalStep, function));
-			
+
 			SetCssSelector(cssSelector);
 
 			return (element, null);
-			
-			
+
+
 		}
 
 		public async Task CloseBrowser()
@@ -282,10 +280,10 @@ namespace PLang.Modules.WebCrawlerModule
 		public async Task NavigateToUrl(string url, string browserType = "Chrome", bool headless = false,
 				string profileName = "", bool kioskMode = false, Dictionary<string, object>? argumentOptions = null,
 				int? timeoutInSeconds = null, bool hideTestingMode = false, int pageIndex = -1,
-				GoalToCall? onRequest = null, GoalToCall? onResponse = null, GoalToCall? onWebsocketReceived = null, GoalToCall? onWebsocketSent = null,
-				GoalToCall? onConsoleOutput = null, GoalToCall? onWorker = null,
-				GoalToCall? onDialog = null, GoalToCall? onLoad = null, GoalToCall? onDOMLoad = null, GoalToCall? onFileChooser = null,
-				GoalToCall? onIFrameLoad = null, GoalToCall? onDownload = null)
+				GoalToCallInfo? onRequest = null, GoalToCallInfo? onResponse = null, GoalToCallInfo? onWebsocketReceived = null, GoalToCallInfo? onWebsocketSent = null,
+				GoalToCallInfo? onConsoleOutput = null, GoalToCallInfo? onWorker = null,
+				GoalToCallInfo? onDialog = null, GoalToCallInfo? onLoad = null, GoalToCallInfo? onDOMLoad = null, GoalToCallInfo? onFileChooser = null,
+				GoalToCallInfo? onIFrameLoad = null, GoalToCallInfo? onDownload = null)
 		{
 			if (string.IsNullOrEmpty(url))
 			{
@@ -472,7 +470,7 @@ return result;");
 			return message;
 		}
 
-		
+
 
 		[Description("url can be regex. when user does not define url match all with url=**/*")]
 		public async Task RemoveHeaderFromRequest(string url, List<string> headersToRemove)
@@ -483,12 +481,13 @@ return result;");
 			{
 				route = new RouteAsync(headersToRemove);
 				routeAsyncUrls.Add(url, route);
-			} else
+			}
+			else
 			{
 				route.HeadersToRemove.AddRange(headersToRemove);
-				routeAsyncUrls[url] = route;				
+				routeAsyncUrls[url] = route;
 			}
-			
+
 			browserInstance.RouteAsyncByUrl = routeAsyncUrls;
 		}
 
@@ -1058,9 +1057,9 @@ return result;");
 			return url.Replace("http://", "").Replace("https://", "").TrimEnd('/');
 		}
 
-		private void BindEventsToPage(IPage page, string pageUrl, GoalToCall? onRequest = null, GoalToCall? onResponse = null, GoalToCall? onWebsocketReceived = null, GoalToCall? onWebsocketSent = null,
-			GoalToCall? onConsoleOutput = null, GoalToCall? onWorker = null, GoalToCall? onDialog = null, GoalToCall? onLoad = null,
-			GoalToCall? onDOMLoad = null, GoalToCall? onFileChooser = null, GoalToCall? onIFrameLoad = null, GoalToCall? onDownload = null)
+		private void BindEventsToPage(IPage page, string pageUrl, GoalToCallInfo? onRequest = null, GoalToCallInfo? onResponse = null, GoalToCallInfo? onWebsocketReceived = null, GoalToCallInfo? onWebsocketSent = null,
+			GoalToCallInfo? onConsoleOutput = null, GoalToCallInfo? onWorker = null, GoalToCallInfo? onDialog = null, GoalToCallInfo? onLoad = null,
+			GoalToCallInfo? onDOMLoad = null, GoalToCallInfo? onFileChooser = null, GoalToCallInfo? onIFrameLoad = null, GoalToCallInfo? onDownload = null)
 		{
 			var callGoal = programFactory.GetProgram<CallGoalModule.Program>(goalStep);
 
@@ -1072,8 +1071,9 @@ return result;");
 				}
 				if (onConsoleOutput != null)
 				{
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!console", e } };
-					var result = await callGoal.RunGoal(onConsoleOutput, parameters, isolated: true);
+					onConsoleOutput.Parameters.Add("!sender", sender);
+					onConsoleOutput.Parameters.Add("!console", e);
+					var result = await callGoal.RunGoal(onConsoleOutput, isolated: true);
 
 					if (result.Error != null)
 					{
@@ -1092,12 +1092,10 @@ return result;");
 
 				if (onRequest != null)
 				{
-					var parameters = new Dictionary<string, object?> {
-						{ "!sender", sender },
-						{ "!request", WebCrawlerHelper.GetRequest(e) },
-						{ "!" + e.GetType().FullName, e }
-					};
-					var result = await callGoal.RunGoal(onRequest, parameters, isolated: true);
+					onRequest.Parameters.Add("!sender", sender);
+					onRequest.Parameters.Add("!request", WebCrawlerHelper.GetRequest(e));
+					onRequest.Parameters.Add("!" + e.GetType().FullName, e);
+					var result = await callGoal.RunGoal(onRequest, isolated: true);
 
 					if (result.Error != null)
 					{
@@ -1119,8 +1117,9 @@ return result;");
 					var response = await WebCrawlerHelper.GetResponse(e);
 					if (response == null) return;
 
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!response", response } };
-					var result = await callGoal.RunGoal(onResponse, parameters, isolated: true);
+					onResponse.Parameters.Add("!sender", sender);
+					onResponse.Parameters.Add("!response", response);
+					var result = await callGoal.RunGoal(onResponse, isolated: true);
 
 					if (result.Error != null)
 					{
@@ -1140,8 +1139,10 @@ return result;");
 					{
 						e.FrameReceived += async (object? sender, IWebSocketFrame e) =>
 						{
-							var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!websocket", e } };
-							var result = await callGoal.RunGoal(onWebsocketReceived, parameters, isolated: true);
+							onWebsocketReceived.Parameters.Add("!sender", sender);
+							onWebsocketReceived.Parameters.Add("!websocket", e);
+
+							var result = await callGoal.RunGoal(onWebsocketReceived, isolated: true);
 							if (result.Error != null)
 							{
 								throw new ExceptionWrapper(result.Error);
@@ -1152,8 +1153,9 @@ return result;");
 					{
 						e.FrameSent += async (object? sender, IWebSocketFrame e) =>
 						{
-							var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!websocket", e } };
-							var result = await callGoal.RunGoal(onWebsocketSent, parameters, isolated: true);
+							onWebsocketSent.Parameters.Add("!sender", sender);
+							onWebsocketSent.Parameters.Add("!websocket", e);
+							var result = await callGoal.RunGoal(onWebsocketSent, isolated: true);
 
 							if (result.Error != null)
 							{
@@ -1170,8 +1172,10 @@ return result;");
 			{
 				page.Worker += async (object? sender, IWorker e) =>
 				{
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!worker", e } };
-					var result = await callGoal.RunGoal(onWorker, parameters, isolated: true);
+					onWorker.Parameters.Add("!sender", sender);
+					onWorker.Parameters.Add("!worker", e);
+
+					var result = await callGoal.RunGoal(onWorker, isolated: true);
 
 					if (result.Error != null)
 					{
@@ -1192,8 +1196,9 @@ return result;");
 				}
 				if (onDialog != null)
 				{
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!dialog", e } };
-					var result = await callGoal.RunGoal(onDialog, parameters, isolated: true);
+					onDialog.Parameters.Add("!sender", sender);
+					onDialog.Parameters.Add("!dialog", e);
+					var result = await callGoal.RunGoal(onDialog, isolated: true);
 
 					if (result.Error != null)
 					{
@@ -1206,8 +1211,9 @@ return result;");
 			{
 				page.Load += async (object? sender, IPage e) =>
 				{
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!page", e } };
-					var result = await callGoal.RunGoal(onLoad, parameters, isolated: true);
+					onLoad.Parameters.Add("!sender", sender);
+					onLoad.Parameters.Add("!page", e);
+					var result = await callGoal.RunGoal(onLoad, isolated: true);
 
 					if (result.Error != null)
 					{
@@ -1221,8 +1227,10 @@ return result;");
 			{
 				page.DOMContentLoaded += async (object? sender, IPage e) =>
 				{
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!page", e } };
-					var result = await callGoal.RunGoal(onLoad, parameters, isolated: true);
+					onDOMLoad.Parameters.Add("!sender", sender);
+					onDOMLoad.Parameters.Add("!page", e);
+
+					var result = await callGoal.RunGoal(onDOMLoad, isolated: true);
 
 					if (result.Error != null)
 					{
@@ -1242,8 +1250,9 @@ return result;");
 
 				if (onFileChooser != null)
 				{
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!filechooser", e } };
-					var result = await callGoal.RunGoal(onLoad, parameters, isolated: true);
+					onFileChooser.Parameters.Add("!sender", sender);
+					onFileChooser.Parameters.Add("!filechooser", e);
+					var result = await callGoal.RunGoal(onFileChooser, isolated: true);
 
 					if (result.Error != null)
 					{
@@ -1256,8 +1265,10 @@ return result;");
 			{
 				page.FrameNavigated += async (object? sender, IFrame e) =>
 				{
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!iframe", e } };
-					var result = await callGoal.RunGoal(onIFrameLoad, parameters, isolated: true);
+					onIFrameLoad.Parameters.Add("!sender", sender);
+					onIFrameLoad.Parameters.Add("!iframe", e);
+
+					var result = await callGoal.RunGoal(onIFrameLoad, isolated: true);
 
 					if (result.Error != null)
 					{
@@ -1274,8 +1285,10 @@ return result;");
 				}
 				if (onDownload != null)
 				{
-					var parameters = new Dictionary<string, object?> { { "!sender", sender }, { "!download", e } };
-					var result = await callGoal.RunGoal(onDownload, parameters, isolated: true);
+					onDownload.Parameters.Add("!sender", sender);
+					onDownload.Parameters.Add("!download", e);
+
+					var result = await callGoal.RunGoal(onDownload, isolated: true);
 
 					if (result.Error != null)
 					{

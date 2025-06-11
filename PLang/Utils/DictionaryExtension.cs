@@ -6,6 +6,16 @@ namespace PLang.Utils
 	public static class DictionaryExtension
 	{
 		private static readonly Lock _lock = new();
+
+		public static void AddOrReplaceDict<TKey, TValue>(this Dictionary<TKey, TValue?>? dict, Dictionary<TKey, TValue?>? dict2)
+		{
+			if (dict2 is null || dict is null) return;
+
+			foreach (var item in dict2)
+			{
+				dict.AddOrReplace(item.Key, item.Value);
+			}
+		}
 		public static void AddOrReplace<TKey, TValue>(this Dictionary<TKey, TValue?>? dict, TKey key, TValue? value)
 		{
 			if (dict is null) return;

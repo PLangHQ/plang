@@ -17,16 +17,13 @@ namespace PLang.Utils
 	public interface ITypeHelper
 	{
 		BaseBuilder GetInstructionBuilderInstance(string module);
-		string GetMethodsAsString(Type type, string? methodName = null);
 		List<Type> GetRuntimeModules();
 		string GetModulesAsString(List<string>? excludedModules = null);
 		BaseProgram GetProgramInstance(string module);
 		List<Type> GetBuilderModules();
 		Type? GetBuilderType(string module);
 		Type? GetRuntimeType(string? module);
-		string GetMethodNamesAsString(Type type, string? methodName = null);
 		List<Type> GetTypesByType(Type type);
-		(List<MethodDescription>?, IBuilderError?) GetMethodDescriptions(Type type, string? methodName = null);
 		Task Run(string @namespace, string @class, string method, Dictionary<string, object?> parameters);
 	}
 
@@ -133,8 +130,8 @@ namespace PLang.Utils
 
 			return types;
 		}
-
-		public (List<MethodDescription>?, IBuilderError?) GetMethodDescriptions(Type? type, string? methodName = null)
+		/*
+		public (ClassDescription?, IBuilderError?) GetMethodDescriptions(Type? type, string? methodName = null)
 		{
 
 			if (type == null) return (new(), new BuilderError("Type is null"));
@@ -144,7 +141,7 @@ namespace PLang.Utils
 			{
 				methods = type.GetMethods().Where(p => p.Name == methodName);
 			}
-			List<MethodDescription> methodDescs = new();
+			ClassDescription classDescription = new();
 			GroupedBuildErrors errors = new GroupedBuildErrors();
 
 			foreach (var method in methods)
@@ -154,29 +151,32 @@ namespace PLang.Utils
 					continue;
 				}
 
-				var (desc, error) = TypeHelper.GetMethodDescription(type, method.Name);
+				var (desc, supportiveObjects, error) = TypeHelper.GetMethodDescription(type, method.Name);
 				if (error != null) errors.Add(error);
 
 				if (desc != null)
 				{
-					methodDescs.Add(desc);
+					classDescription.Methods.Add(desc);
+				}
+
+				if (supportiveObjects?.Count > 0)
+				{
+					foreach (var so in supportiveObjects)
+					{
+						var found = classDescription.SupportingObjects.FirstOrDefault(p => p.Type == so.Type);
+						if (found == null)
+						{
+							classDescription.SupportingObjects.Add(so);
+						}
+					}
 				}
 
 			}
 
-			return (methodDescs, (errors.Count > 0) ? errors : null);
-		}
+			return (classDescription, (errors.Count > 0) ? errors : null);
+		}*/
 
-		public string GetMethodNamesAsString(Type type, string? methodName = null)
-		{
-			JsonSerializerSettings settings = new JsonSerializerSettings()
-			{
-				NullValueHandling = NullValueHandling.Ignore
-			};
-			return JsonConvert.SerializeObject(GetMethodDescriptions(type, methodName), settings: settings, formatting: Formatting.None);
-
-		}
-		public string GetMethodsAsString(Type type, string? methodName = null)
+		public string GetMethodsAsString_depcricated(Type type, string? methodName = null)
 		{
 			if (type == null) return "";
 
@@ -538,7 +538,33 @@ namespace PLang.Utils
 
 		}
 
+		public static bool IsConsideredPrimitive(Type type)
+		{
+			if (type.IsArray)
+			{
+				return true;
+			}
 
+			return type.IsPrimitive ||
+				   type == typeof(string) ||
+				   type.FullName == "System.Object" ||
+				   type == typeof(DateTime) ||
+				   type == typeof(Guid) ||
+				   type == typeof(TimeSpan) ||
+				   type == typeof(Uri) ||
+				   type == typeof(decimal) ||
+				   type == typeof(BigInteger) ||
+				   type == typeof(Version) ||
+				   type == typeof(JToken);
+		}
+		public static T? ConvertToType<T>(object? value)
+		{
+			if (value == null) return default;
+
+			var obj = ConvertToType(value, typeof(T));
+			if (obj == null) return default;
+			return (T?)obj;
+		}
 		public static object? ConvertToType(object? value, Type targetType)
 		{
 			if (value == null) return null;
@@ -556,6 +582,20 @@ namespace PLang.Utils
 
 			if (targetType.IsInstanceOfType(value))
 				return value;
+
+			if (value is JObject jobj)
+			{
+				return jobj.ToObject(targetType);
+			}
+
+			if (value is JArray jArray)
+			{
+				return jArray.ToObject(targetType);
+			}
+			if (value is JToken jToken)
+			{
+				return jToken.ToObject(targetType);
+			}
 
 			try
 			{
@@ -584,13 +624,13 @@ namespace PLang.Utils
 			}
 		}
 
+		/*
 
-
-		public static (MethodDescription?, IBuilderError?) GetMethodDescription(Type type, string methodName)
+		public (MethodDescription? MethodDescription, List<ComplexDescription>? SuppportiveObjects, IBuilderError? Error) GetMethodDescription(Type type, string methodName)
 		{
 			var method = type.GetMethods().FirstOrDefault(m => m.Name == methodName);
 			if (method == null)
-				return (null, new BuilderError($"Method {methodName} not found in type {type.FullName}."));
+				return (null, null, new BuilderError($"Method {methodName} not found in type {type.FullName}."));
 
 			string? methodDescription = null;
 			var descAttribute =
@@ -603,7 +643,7 @@ namespace PLang.Utils
 			var parameters = method.GetParameters();
 
 			var paramsDesc = GetParameterDescriptions(parameters);
-			if (paramsDesc.Error != null) return (null, paramsDesc.Error);
+			if (paramsDesc.Error != null) return (null, null, paramsDesc.Error);
 
 			var returnValueInfo = GetReturnValue(method);
 
@@ -614,10 +654,9 @@ namespace PLang.Utils
 				Parameters = paramsDesc.ParameterDescriptions!,
 				ReturnValue = returnValueInfo,
 			};
-
-			return (md, null);
+			return (md, paramsDesc.SupportiveObjects, null);
 		}
-
+		
 		private static ReturnValue? GetReturnValue(MethodInfo method)
 		{
 			if (method.ReturnType.GenericTypeArguments.Length > 0)
@@ -649,7 +688,7 @@ namespace PLang.Utils
 
 			return null;
 		}
-
+		
 		private static string GetTypeToUse(Type type)
 		{
 
@@ -692,7 +731,7 @@ namespace PLang.Utils
 
 			return typeToUseString ?? "void";
 		}
-
+		/*
 		public static object? GetParameterInfoDefaultValue(System.Reflection.ParameterInfo parameterInfo)
 		{
 			if (parameterInfo.HasDefaultValue) return parameterInfo.DefaultValue;
@@ -714,10 +753,12 @@ namespace PLang.Utils
 			}
 
 			return null;
-		}
-
-		private static (List<IPropertyDescription>? ParameterDescriptions, IBuilderError? Error) GetParameterDescriptions(System.Reflection.ParameterInfo[] parameters)
+		}*/
+		/*
+		private (List<IPropertyDescription>? ParameterDescriptions, IBuilderError? Error) GetParameterDescriptions(System.Reflection.ParameterInfo[] parameters)
 		{
+
+			List<ComplexDescription> supportiveObjects = new();
 			List<IPropertyDescription> parametersDescriptions = new();
 			foreach (var parameterInfo in parameters)
 			{
@@ -728,13 +769,8 @@ namespace PLang.Utils
 
 				if (string.IsNullOrWhiteSpace(parameterInfo.Name))
 				{
-					return (null, new BuilderError($"Parameter '{parameterInfo.Name}' has no name."));
+					return (null, null, new BuilderError($"Parameter '{parameterInfo.Name}' has no name."));
 				}
-				/*
-				if (parameterInfo.ParameterType == typeof(List<object>))
-				{
-					return (null, new BuilderError($"Parameter '{parameterInfo.Name}' is List<object>. It cannot be a unclear object, it must be a defined class"));
-				}*/
 
 				object? defaultValue = GetParameterInfoDefaultValue(parameterInfo);
 				
@@ -790,6 +826,14 @@ namespace PLang.Utils
 						TypeProperties = GetPropertyInfos(item.GetProperties(), instance, item),
 						IsRequired = isRequired
 					};
+
+					supportiveObjects.Add(pd as ComplexDescription);
+					pd = new ComplexDescription()
+					{
+						Type = parameterInfo.ParameterType.ToString() + " (see SupportingObjects)",
+						Name = parameterInfo.Name,
+						IsRequired = isRequired
+					};
 				}
 
 
@@ -827,10 +871,10 @@ namespace PLang.Utils
 				parametersDescriptions.Add(pd);
 			}
 
-			return (parametersDescriptions, null);
+			return (parametersDescriptions, supportiveObjects, null);
 		}
 
-		private static List<IPropertyDescription>? GetPropertyInfos(PropertyInfo[] properties, object? instance, Type item, int depth = 0)
+		private List<IPropertyDescription>? GetPropertyInfos(PropertyInfo[] properties, object? instance, Type item, int depth = 0)
 		{
 			if (depth == 10)
 			{
@@ -914,6 +958,22 @@ namespace PLang.Utils
 					}
 					else
 					{
+
+						pd = new ComplexDescription()
+						{
+							Type = propertyType.ToString(),
+							Name = propertyType.Name,
+							TypeProperties = GetPropertyInfos(item.GetProperties(), instance, item),
+							IsRequired = isRequired
+						};
+
+						supportiveObjects.Add(pd as ComplexDescription);
+						pd = new ComplexDescription()
+						{
+							Type = propertyType.ToString() + " (see SupportingObjects)",
+							Name = propertyType.Name,
+							IsRequired = isRequired
+						};
 						pd = new ComplexDescription()
 						{
 							Type = propertyType.ToString(),
@@ -954,7 +1014,8 @@ namespace PLang.Utils
 
 			return (parameterDescriptions.Count > 0) ? parameterDescriptions : null;
 		}
-
+		*/
+		/*
 		public static bool IsConsideredPrimitive(Type type)
 		{
 			if (type.IsArray)
@@ -973,6 +1034,7 @@ namespace PLang.Utils
 				   type == typeof(Version) ||
 				   type == typeof(JToken);
 		}
+		*/
 
 		public static (string?, IBuilderError?) GetMethodAsJson(Type type, string methodName)
 		{

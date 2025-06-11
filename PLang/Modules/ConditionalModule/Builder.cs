@@ -50,7 +50,6 @@ namespace PLang.Modules.ConditionalModule
 
 		public async Task<(Instruction? Instruction, IBuilderError? Error)> PrepareStep(GoalStep step)
 		{
-			AppendToSystemCommand("");
 			return await base.Build(step);
 		}
 

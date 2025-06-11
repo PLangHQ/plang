@@ -167,11 +167,11 @@ or url
 					return await Build(step, new BuilderError(error));
 				}
 
-				if (!VariableHelper.IsVariable(scheme.Value) && responseType == "json")
+				if (!VariableHelper.IsVariable(scheme?.Value) && responseType == "json")
 				{
 					List<LlmMessage> messages = new();
 					messages.Add(new LlmMessage("system", "Make the user input into a valid json scheme. ONLY give me scheme, DO not explaing. DO not wrap it"));
-					messages.Add(new LlmMessage("user", scheme.Value.ToString()));
+					messages.Add(new LlmMessage("user", scheme?.Value.ToString()));
 
 					var llm = programFactory.GetProgram<LlmModule.Program>(step);
 					var result = await llm.AskLlm(messages, llmResponseType: "text", model: "gpt-4o");

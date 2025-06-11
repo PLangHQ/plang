@@ -2,6 +2,7 @@
 using LightInject;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Building;
 using PLang.Building.Model;
@@ -15,6 +16,7 @@ using PLang.Runtime;
 using PLang.Services.LlmService;
 using PLang.Utils;
 using PLang.Utils.Extractors;
+using System;
 using System.Text.Json.Serialization;
 using Instruction = PLang.Building.Model.Instruction;
 
@@ -156,6 +158,14 @@ Make sure to use the information in <error> to return valid JSON response"
 		public record GenericFunction(string Reasoning, string Name, List<Parameter>? Parameters = null, List<ReturnValue>? ReturnValues = null) : IGenericFunction
 		{
 			public Instruction Instruction { get; set; }
+
+			public T? GetParameter<T>(string name)
+			{
+				var parameter = Parameters?.FirstOrDefault(p => p.Name == name);
+				if (parameter == null) return default;
+
+				return (T?) TypeHelper.ConvertToType(parameter.Value, typeof(T));
+			}
 		}
 
 		public interface IGenericFunction
@@ -322,14 +332,18 @@ ReturnValue rules
 		public (string?, IBuilderError?) GetDefaultAssistantText(GoalStep step, IBuilderError? previousBuildError = null)
 		{
 			var programType = typeHelper.GetRuntimeType(module);
+			if (programType == null) return (null, new StepBuilderError($"Could not load type {module}", step));
+
 			var variables = GetVariablesInStep(step).Replace("%", "");
-			var (methods, error) = typeHelper.GetMethodDescriptions(programType);
+
+			var classDescriptionHelper = new ClassDescriptionHelper();
+			var (classDescription, error) = classDescriptionHelper.GetClassDescription(programType);
 			if (error != null) return (null, error);
 
 			string assistant = "";
-			if (methods?.Count > 0)
+			if (classDescription != null)
 			{
-				var json = JsonConvert.SerializeObject(methods, new JsonSerializerSettings
+				var json = JsonConvert.SerializeObject(classDescription, new JsonSerializerSettings
 				{
 					NullValueHandling = NullValueHandling.Ignore
 				});

@@ -2,6 +2,7 @@
 using NSubstitute;
 using PLang.Building.Model;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Modules.CallGoalModule;
 using PLang.Utils;
 using PLangTests.Helpers;
@@ -27,10 +28,12 @@ namespace PLangTests.Modules.CallGoalModule
 
 		[TestMethod]
 		public async Task RunGoalWithOnlyGoalName()
-		{	
-			await p.RunGoal("!Process");
+		{
+			GoalToCallInfo goalToCall = new GoalToCallInfo("!Process");
 
-			await pseudoRuntime.Received(1).RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), "!Process", Arg.Any<Dictionary<string, object>>(), Arg.Any<Goal>());
+			await p.RunGoal(goalToCall);
+
+			await pseudoRuntime.Received(1).RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), goalToCall, Arg.Any<Goal>());
 		}
 
 		[TestMethod]
@@ -40,11 +43,13 @@ namespace PLangTests.Modules.CallGoalModule
 
 			prParser.ForceLoadAllGoals();
 
+			
 			var parameters = new Dictionary<string, object?>();
 			parameters.Add("h", "1");
-			await p.RunGoal("!apps/GoalWith1Step", parameters);
+			var goalToCall = new GoalToCallInfo("!apps/GoalWith1Step", parameters);
+			await p.RunGoal(goalToCall);
 
-			await pseudoRuntime.Received(1).RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), "!apps/GoalWith1Step", Arg.Is<Dictionary<string, object?>>(p => p.ContainsKey("h")), Arg.Any<Goal>());
+			await pseudoRuntime.Received(1).RunGoal(engine, context, Path.DirectorySeparatorChar.ToString(), goalToCall, Arg.Any<Goal>());
 		}
 
 
@@ -56,12 +61,11 @@ namespace PLangTests.Modules.CallGoalModule
 			context.AddOrReplace("test", "1");
 
 			bool waitForExecution = false;
-
-			await p.RunGoal("!Process/File", parameters, waitForExecution);			
+			var goalToCall = new GoalToCallInfo("!Process/File", parameters);
+			await p.RunGoal(goalToCall, waitForExecution);			
 
 			await pseudoRuntime.Received(1).RunGoal(engine, Arg.Is<PLangAppContext>(p => p.ContainsKey("test")), 
-					Path.DirectorySeparatorChar.ToString(), "!Process/File", 
-					Arg.Is<Dictionary<string, object?>>(p => p.ContainsKey("h")), Arg.Any<Goal>(), waitForExecution);
+					Path.DirectorySeparatorChar.ToString(), goalToCall, Arg.Any<Goal>(), waitForExecution);
 		}
 	}
 }

@@ -40,7 +40,7 @@ namespace PLang.Events
 	// before each goal in api/* call !DoStuff
 	// before each step call !Debugger.SendInfo
 	// after Run.goal, call !AfterRun
-	public record EventBinding(string EventType, string EventScope, GoalToCall GoalToBindTo, GoalToCall GoalToCall, Dictionary<string, object?>? GoalToCallParameters = null,
+	public record EventBinding(string EventType, string EventScope, GoalToBindTo GoalToBindTo, GoalToCallInfo GoalToCall,
         [property: DefaultValue("false")] bool IncludePrivate = false,
         int? StepNumber = null, string? StepText = null,
 		[property: DefaultValue("true")] bool WaitForExecution = true,
@@ -49,7 +49,7 @@ namespace PLang.Events
 		string? ErrorKey = null, string? ErrorMessage = null, int? StatusCode = null, string? ExceptionType = null, bool IsLocal = false, bool IncludeOsGoals = false, bool IsOnStep = false)
 	{
 		[LlmIgnore]
-		public string Id { get { return $"{EventType}_{EventScope}_{GoalToBindTo}_{GoalToCall}_{IncludePrivate}_{StepNumber}_{StepText}_{WaitForExecution}_{string.Join(',', RunOnlyOnStartParameter ?? [""])}_{OnErrorContinueNextStep}_{ErrorKey}_{ErrorMessage}_{StatusCode}_{ExceptionType}_{IsLocal}".ToString(); } }
+		public string Id { get { return $"{EventType}_{EventScope}_{GoalToBindTo.Name}_{GoalToCall.Name}_{IncludePrivate}_{StepNumber}_{StepText}_{WaitForExecution}_{string.Join(',', RunOnlyOnStartParameter ?? [""])}_{OnErrorContinueNextStep}_{ErrorKey}_{ErrorMessage}_{StatusCode}_{ExceptionType}_{IsLocal}".ToString(); } }
 		[IgnoreWhenInstructed]
 		public string UniqueId { get { return Guid.NewGuid().ToString(); } }
 		[JsonIgnore]

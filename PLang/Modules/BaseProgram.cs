@@ -672,58 +672,6 @@ namespace PLang.Modules
 			return PathHelper.GetPath(path, fileSystem, this.Goal);
 		}
 
-		protected async Task<(string?, IError?)> AssistWithError(string error, GoalStep step, GenericFunction function)
-		{
-			AppContext.TryGetSwitch("llmerror", out bool isEnabled);
-			if (!isEnabled) return (null, null);
-
-			string additionSystemErrorInfo = await GetAdditionalSystemErrorInfo();
-			string system = @$"You are c# expert developer debugging an error that c# throws.
-The user is programming in a programming language called Plang, a pseudo language, that is built on top of c#.
-
-The user is not familiar with c# and does not understand it, he only understands Plang.
-
-You job is to identify why an error occurred that user provides.
-You will be provided with function information and the parameters used. 
-You will get description of what the function should do.
-{additionSystemErrorInfo}
-
-Be straight to the point, point out the most obvious reason and how to fix in plang source code. 
-Be Concise";
-
-			var additionalAssistant = await GetAdditionalAssistantErrorInfo();
-			if (additionalAssistant.error != null)
-			{
-				return (null, additionalAssistant.error);
-			}
-			string assistant = @$"
-## plang source code ##
-{step.Text}
-## plang source code ##
-## function info ##
-{typeHelper.GetMethodsAsString(this.GetType(), function.Name)}
-## function info ##
-" + additionalAssistant.info;
-
-			try
-			{
-				var promptMesage = new List<LlmMessage>();
-				promptMesage.Add(new LlmMessage("system", system));
-				promptMesage.Add(new LlmMessage("assistant", assistant));
-				promptMesage.Add(new LlmMessage("user", error));
-
-				var llmRequest = new LlmRequest("AssistWithError", promptMesage);
-
-				return await llmServiceFactory.CreateHandler().Query<string>(llmRequest);
-			}
-			catch
-			{
-				return (null, new Error("ErrorToConnect", "Could not connect to LLM service"));
-			}
-
-
-		}
-
 
 		public IError? TaskHasError(Task<(IEngine, object? Variables, IError? error, IOutput output)> task)
 		{

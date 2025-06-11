@@ -109,7 +109,7 @@ namespace PLang.Modules.MessageModule
 		IDisposable? disconnectDisposable = null;
 		IDisposable? messageReceivedDisposable = null;
 		[Description("goalName should be prefixed by ! and be whole word with possible slash(/)")]
-		public async Task Listen(GoalToCall goalName, [HandlesVariable] string contentVariableName = "content",
+		public async Task Listen(GoalToCallInfo goalName, [HandlesVariable] string contentVariableName = "content",
 				[HandlesVariable] string senderVariableName = "sender",
 				[HandlesVariable] string eventVariableName = "__NosrtEventKey__", DateTimeOffset? listenFromDateTime = null,
 				string[]? onlyMessageFromSenders = null)
@@ -210,7 +210,7 @@ namespace PLang.Modules.MessageModule
 
 		}
 
-		private async Task<IError?> ProcessEvent(IEngine engine, NostrEventResponse response, string contentVariableName, string eventVariableName, string senderVariableName, string publicKey, GoalToCall goalName)
+		private async Task<IError?> ProcessEvent(IEngine engine, NostrEventResponse response, string contentVariableName, string eventVariableName, string senderVariableName, string publicKey, GoalToCallInfo goalName)
 		{
 			var ev = response.Event as NostrEncryptedEvent;
 			if (ev == null || ev.Content == null) return null;
@@ -286,8 +286,10 @@ namespace PLang.Modules.MessageModule
 				engine = container.GetInstance<IEngine>();
 				engine.Init(container);
 
+				goalName.Parameters.AddOrReplaceDict(parameters);
+
 				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
-				var task = pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName, parameters, goal);
+				var task = pseudoRuntime.RunGoal(engine, context, Goal.RelativeAppStartupFolderPath, goalName, goal);
 				if (task == null) return null;
 
 

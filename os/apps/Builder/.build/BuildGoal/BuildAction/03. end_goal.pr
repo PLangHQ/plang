@@ -1,68 +1,77 @@
 {
-  "Action": {
-    "FunctionName": "EndGoalExecution",
-    "Parameters": [
-      {
-        "Type": "System.String",
-        "Name": "message",
-        "Value": null
-      },
-      {
-        "Type": "System.Int32",
-        "Name": "levels",
-        "Value": 0
-      }
-    ],
-    "ReturnValues": null
-  },
   "Text": "end goal",
+  "ModuleType": null,
   "Reload": false,
-  "LlmRequest": {
-    "temperature": 0.0,
-    "top_p": 0.0,
-    "frequencyPenalty": 0.0,
-    "presencePenalty": 0.0,
-    "maxLength": 4000,
-    "llmResponseType": "json",
-    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-    "model": "gpt-4o",
-    "promptMessage": [
-      {
-        "role": "system",
-        "content": [
-          {
-            "type": "text",
-            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-          },
-          {
-            "type": "text",
-            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-          }
-        ]
-      },
-      {
-        "role": "assistant",
-        "content": [
-          {
-            "type": "text",
-            "text": "## functions available starts ##\r\n[{\"Description\":\"When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc. type can be error|critical. statusCode(like http status code) should be defined by user.\",\"MethodName\":\"Throw\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"message\"},{\"Type\":\"System.String\",\"Name\":\"type\",\"DefaultValue\":\"error\"},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":400}]},{\"Description\":\"When user intends the execution of the goal to stop without giving a error response. This is equal to doing return in a function. Depth is how far up the stack it should end, previous goal is 1\",\"MethodName\":\"EndGoalExecution\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"message\"},{\"Type\":\"System.Int32\",\"Name\":\"levels\",\"DefaultValue\":0}]},{\"Description\":\"Shutdown the application\",\"MethodName\":\"EndApp\",\"Parameters\":[]},{\"Description\":\"Create payment request(402)\",\"MethodName\":\"CreatePaymentRequest\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"name\"},{\"Type\":\"System.String\",\"Name\":\"description\"},{\"Type\":\"System.String\",\"Name\":\"error\"},{\"Type\":\"System.Collections.Generic.List`1[System.Collections.Generic.Dictionary`2[System.String,System.Object]]\",\"Name\":\"services\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]}],\"ReturnValue\":{\"Type\":\"PLang.Errors.Types.PaymentContract\"}}]\r\n## functions available ends ##"
-          }
-        ]
-      },
-      {
-        "role": "user",
-        "content": [
-          {
-            "type": "text",
-            "text": "end goal"
-          }
-        ]
-      }
-    ],
-    "type": "PLang.Modules.GenericFunctionBuilder",
-    "caching": true,
-    "RawResponse": "```json\n{\n\t\"FunctionName\": \"EndGoalExecution\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"System.String\",\n\t\t\"Name\": \"message\",\n\t\t\"Value\": null\n\t}, {\n\t\t\"Type\": \"System.Int32\",\n\t\t\"Name\": \"levels\",\n\t\t\"Value\": 0\n\t}]\n}\n```"
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null,\n\t\"Instruction\": {\n\t\"Text\": string,\n\t\"ModuleType\": string,\n\t\"GenericFunctionType\": string,\n\t\"FunctionJson\"?: jtoken\n}\n}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null,\n\t\"Instruction\": {\n\t\"Text\": string,\n\t\"ModuleType\": string,\n\t\"GenericFunctionType\": string,\n\t\"FunctionJson\"?: jtoken\n}\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nTerminate the current goal execution immediately\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"When user intends to throw an error or critical, etc. This can be stated as 'show error', 'throw crtical', 'print error', etc. type can be error|critical. statusCode(like http status code) should be defined by user.\",\"MethodName\":\"Throw\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"message\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"DefaultValue\":\"error\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":400,\"IsRequired\":false}]},{\"Description\":\"Retries a step that caused an error\",\"MethodName\":\"Retry\",\"Parameters\":[]},{\"Description\":\"When user intends the execution of the goal to stop without giving a error response. This is equal to doing return in a function. Depth is how far up the stack it should end, previous goal is 1\",\"MethodName\":\"EndGoalExecution\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"message\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"levels\",\"DefaultValue\":0,\"IsRequired\":false}]},{\"Description\":\"Shutdown the application\",\"MethodName\":\"EndApp\",\"Parameters\":[]},{\"Description\":\"Create payment request(402)\",\"MethodName\":\"CreatePaymentRequest\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"name\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"description\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"error\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[System.Collections.Generic.Dictionary`2[System.String,System.Object]]\",\"Name\":\"services\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"PLang.Errors.Types.PaymentContract\"}}],\"SupportingObjects\":[]}\r\n## functions available ends ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "end goal"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to terminate the current goal execution immediately without error. The 'EndGoalExecution' function is designed to stop the execution of the goal, which matches the user's intent.\",\n  \"Name\": \"EndGoalExecution\",\n  \"Parameters\": [],\n  \"ReturnValues\": null,\n  \"Instruction\": {\n    \"Text\": \"End the current goal execution immediately.\",\n    \"ModuleType\": \"System\",\n    \"GenericFunctionType\": \"EndGoalExecution\"\n  }\n}"
+    }
+  ],
+  "Properties": {
+    "Parameters": {
+      "message": [
+        {
+          "Name": "message",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "levels": [
+        {
+          "Name": "levels",
+          "FullTypeName": "System.Int32"
+        }
+      ]
+    },
+    "ReturnValues": {}
   },
-  "RunOnBuild": false,
-  "Metadata": {}
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to terminate the current goal execution immediately without error. The 'EndGoalExecution' function is designed to stop the execution of the goal, which matches the user's intent.",
+    "Name": "EndGoalExecution",
+    "Parameters": [],
+    "ReturnValues": null
+  }
 }

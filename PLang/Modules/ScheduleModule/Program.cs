@@ -56,7 +56,7 @@ namespace PLang.Modules.ScheduleModule
 			await Task.Delay(sleepTimeInMilliseconds);
 		}
 
-		public async Task<IError?> WaitOnVariable([HandlesVariable] string variableName, long timeInMilliseconds, string eventOnVariable = "not_changed", GoalToCall? goalToCall = null, Dictionary<string, object?>? parameters = null)
+		public async Task<IError?> WaitOnVariable([HandlesVariable] string variableName, GoalToCallInfo goalToCall, long timeInMilliseconds = 1000)
 		{
 			if (timeInMilliseconds == 0)
 			{
@@ -76,36 +76,35 @@ namespace PLang.Modules.ScheduleModule
 
 				await Task.Delay(100);
 			}
-			if (goalToCall == null) return null;
-
-			var result = await pseudoRuntime.RunGoal(engine, context, fileSystem.RelativeAppPath, goalToCall, parameters);
+			
+			var result = await pseudoRuntime.RunGoal(engine, context, fileSystem.RelativeAppPath, goalToCall);
 
 			return result.error;
 		}
 
-		public record CronJob(string AbsolutePrFilePath, string CronCommand, GoalToCall GoalName, Dictionary<string, object?>? Parameters = null, DateTime? NextRun = null, int MaxExecutionTimeInMilliseconds = 30000)
+		public record CronJob(string AbsolutePrFilePath, string CronCommand, GoalToCallInfo GoalName, DateTime? NextRun = null, int MaxExecutionTimeInMilliseconds = 30000)
 		{
 			public bool IsArchived = false;
 		};
 
 		[Description("Use numerical representation for cronCommand, e.g. 0 11 * * 1. goalName is the goal that should be called, it should be prefixed by ! and be whole word with possible slash(/).")]
-		public async Task Schedule(string cronCommand, GoalToCall goalName, Dictionary<string, object?>? parameters = null, DateTime? nextRun = null)
+		public async Task Schedule(string cronCommand, GoalToCallInfo goalName, DateTime? nextRun = null)
 		{
-			await Schedule(goalStep.AbsolutePrFilePath, cronCommand, goalName, parameters, nextRun);
+			await Schedule(goalStep.AbsolutePrFilePath, cronCommand, goalName, nextRun);
 		}
 
-		private async Task Schedule(string absolutePrFilePath, string cronCommand, GoalToCall goalName, Dictionary<string, object?>? parameters = null, DateTime? nextRun = null)
+		private async Task Schedule(string absolutePrFilePath, string cronCommand, GoalToCallInfo goalName, DateTime? nextRun = null)
 		{
 			var cronJobs = moduleSettings.GetCronJobs();
 			var idx = cronJobs.FindIndex(p => p.AbsolutePrFilePath == absolutePrFilePath);
 			if (idx == -1)
 			{
-				var cronJob = new CronJob(absolutePrFilePath, cronCommand, goalName, parameters, nextRun);
+				var cronJob = new CronJob(absolutePrFilePath, cronCommand, goalName, nextRun);
 				cronJobs.Add(cronJob);
 			}
 			else
 			{
-				cronJobs[idx] = new CronJob(absolutePrFilePath, cronCommand, goalName, parameters, nextRun);
+				cronJobs[idx] = new CronJob(absolutePrFilePath, cronCommand, goalName, nextRun);
 			}
 
 			settings.SetList(typeof(ModuleSettings), cronJobs);
@@ -239,7 +238,7 @@ namespace PLang.Modules.ScheduleModule
 					var nextOccurrence = schedule.GetNextOccurrence(SystemTime.OffsetUtcNow().DateTime);
 					if (item.NextRun == null)
 					{
-						await p.Schedule(item.AbsolutePrFilePath, item.CronCommand, item.GoalName, item.Parameters, nextOccurrence);
+						await p.Schedule(item.AbsolutePrFilePath, item.CronCommand, item.GoalName, nextOccurrence);
 						continue;
 					}
 					if (item.NextRun > SystemTime.OffsetUtcNow().DateTime)
@@ -255,7 +254,7 @@ namespace PLang.Modules.ScheduleModule
 
 						int maxExecutionTime = (item.MaxExecutionTimeInMilliseconds == 0) ? 30000 : item.MaxExecutionTimeInMilliseconds;
 						cts.CancelAfter(maxExecutionTime);
-						var result = await pseudoRuntime.RunGoal(engine, engine.GetContext(), fileSystem.RelativeAppPath, item.GoalName, item.Parameters);
+						var result = await pseudoRuntime.RunGoal(engine, engine.GetContext(), fileSystem.RelativeAppPath, item.GoalName);
 						if (result.error != null)
 						{
 							logger.LogError(result.error.ToString());
@@ -263,7 +262,7 @@ namespace PLang.Modules.ScheduleModule
 					}
 
 					nextOccurrence = schedule.GetNextOccurrence(SystemTime.OffsetUtcNow().DateTime);
-					await p.Schedule(item.AbsolutePrFilePath, item.CronCommand, item.GoalName, item.Parameters, nextOccurrence);
+					await p.Schedule(item.AbsolutePrFilePath, item.CronCommand, item.GoalName, nextOccurrence);
 
 				}
 			}

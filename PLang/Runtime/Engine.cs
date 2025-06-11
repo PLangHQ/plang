@@ -1015,8 +1015,8 @@ private async Task CacheGoal(Goal goal)
 					{
 						var engine = container.GetInstance<IEngine>();
 						var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
-						var parameters = context.GetReserverdKeywords();
-						var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalStep.CancellationHandler.GoalNameToCallAfterCancellation, parameters, goal);
+						
+						var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalStep.CancellationHandler.GoalNameToCallAfterCancellation, goal);
 						return (null, result.error);
 					}
 					return (null, new StepError("Step was cancelled because it ran for to long. To extend the timeout, include timeout in your step.", goalStep));

@@ -334,7 +334,7 @@ namespace PLang.Runtime.Tests
 
 			stack.Put("item", 1);
 
-			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test", Arg.Any<Dictionary<string, object>>());
+			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test");
 		}
 
 		[TestMethod]
@@ -352,7 +352,7 @@ namespace PLang.Runtime.Tests
 			//change the item, now the event is called
 			stack.Put("item", 2);
 
-			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test", Arg.Any<Dictionary<string, object>>());
+			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test");
 		}
 
 		[TestMethod]
@@ -370,7 +370,7 @@ namespace PLang.Runtime.Tests
 			//change the item, now the event is called
 			stack.Put("item", 2);
 
-			pseudoRuntime.Received(2).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test", Arg.Any<Dictionary<string, object>>());
+			pseudoRuntime.Received(2).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test");
 		}
 
 
@@ -389,7 +389,7 @@ namespace PLang.Runtime.Tests
 			//change the item, now the event is called
 			stack.Remove("item");
 
-			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test", Arg.Any<Dictionary<string, object>>());
+			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test");
 		}
 
 
@@ -411,7 +411,7 @@ namespace PLang.Runtime.Tests
 
 			
 
-			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test", Arg.Any<Dictionary<string, object>>());
+			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test");
 		}
 
 
@@ -434,7 +434,7 @@ namespace PLang.Runtime.Tests
 			//lets modify it, it should not call the goal
 			stack.PutStatic("item", 2);
 
-			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test", Arg.Any<Dictionary<string, object>>());
+			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test");
 		}
 		[TestMethod]
 		public void TestOnChangeStaticVariable()
@@ -455,7 +455,7 @@ namespace PLang.Runtime.Tests
 			// now change the variable
 			stack.PutStatic("item", 2);
 
-			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test", Arg.Any<Dictionary<string, object?>>());
+			pseudoRuntime.Received(1).RunGoal(Arg.Any<IEngine>(), Arg.Any<PLangAppContext>(), Path.DirectorySeparatorChar.ToString(), "Test");
 		}
 
 		[TestMethod]

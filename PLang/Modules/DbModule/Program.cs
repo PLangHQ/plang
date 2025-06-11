@@ -53,6 +53,11 @@ namespace PLang.Modules.DbModule
 		private readonly ILogger logger;
 		private readonly ITypeHelper typeHelper;
 
+		[Description("ParameterName must be prefixed with @. VariableNameOrValue can be any primative type or a %variable%")]
+		public record ParameterInfo(string ParameterName, object? VariableNameOrValue, string TypeFullName);
+		public record TableInfo(string Name, List<ColumnInfo> Columns);
+		public record ColumnInfo(string Information);
+
 		public Program(IDbServiceFactory dbFactory, IPLangFileSystem fileSystem, ISettings settings, ILlmServiceFactory llmServiceFactory,
 			IEventSourceRepository eventSourceRepository, PLangAppContext context, ILogger logger, ITypeHelper typeHelper, ModuleSettings dbSettings, PrParser prParser, ProgramFactory programFactory) : base()
 		{
@@ -160,18 +165,14 @@ namespace PLang.Modules.DbModule
 				if (error != null) return (dataSource, error);
 			}
 
-			if (!IsBuilder && name.Contains("%"))
+			if (!IsBuilder && dataSource!.Name.Contains("%"))
 			{
-				var variables = variableHelper.GetVariables(name);
+				var variables = variableHelper.GetVariables(dataSource.Name);
 				(dataSource, var error) = await GetRuntimeDataSource(dataSource, variables);
 				if (error != null) return (dataSource, error);
 			}
-			else if (IsBuilder)
-			{
 
-			}
-
-			if (dataSource == null) return (null, new ProgramError($"Could not find data source named: {name}"));
+			if (dataSource == null) return (null, new ProgramError($"Could not find data source named: {dataSource.Name}"));
 
 
 			if (setForGoal)
@@ -328,8 +329,6 @@ namespace PLang.Modules.DbModule
 			return (list, null);
 		}
 
-		public record TableInfo(string Name, List<ColumnInfo> Columns);
-		public record ColumnInfo(string Information);
 		[Description("Returns tables and views in database with the columns description")]
 		public async Task<(List<TableInfo>? TablesAndColumns, IError? Error)> GetDatabaseStructure(List<string>? tables = null, [HandlesVariable] string? dataSourceName = null)
 		{
@@ -380,7 +379,6 @@ namespace PLang.Modules.DbModule
 			await EndTransaction();
 		}
 
-		public record ParameterInfo(string ParameterName, object? VariableNameOrValue, string TypeFullName);
 
 
 		private (IDbConnection? connection, DynamicParameters? param, string sql, IError? error) Prepare(string sql, List<ParameterInfo>? Parameters = null, bool isInsert = false)
@@ -492,43 +490,40 @@ namespace PLang.Modules.DbModule
 		}
 
 		[Description("When select should return 1 row (limit 1)")]
-		public async Task<(object?, IError? errors)> SelectOneRow(string sql, List<ParameterInfo>? SqlParameters = null, [HandlesVariable] string? dataSourceName = null)
+		public async Task<(object?, IError? errors)> SelectOneRow(string sql, List<ParameterInfo>? sqlParameters = null, [HandlesVariable] string? dataSourceName = null)
 		{
 
 			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
 			if (error != null) return (0, error);
 
 
-			var result = await Select(sql, SqlParameters);
+			var result = await Select(sql, sqlParameters);
 			if (result.Error != null)
 			{
 				return (null, result.Error);
 			}
+			if (result.Table == null || result.Table.Count == 0) return (null, null);
 
-			if (result.Table.Count == 0)
+			if (function.ReturnValues != null && function.ReturnValues.Count == 1)
 			{
-				if (this.function == null || this.function.ReturnValues == null || this.function.ReturnValues.Count == 1) return (null, null);
-
-				var returnValues = new List<ObjectValue>();
-				foreach (var rv in this.function.ReturnValues)
-				{
-					returnValues.Add(new ObjectValue(rv.VariableName, GetDefaultValue(rv.Type)));
-				}
-				return (returnValues, null);
+				return (result.Table[0], null);
 			}
 
-			var columns = result.Table.ColumnNames;
 
-			if (columns.Any())
+			var returnValues = new List<ObjectValue>();
+			foreach (var columnName in result.Table.ColumnNames)
 			{
-				return (columns.FirstOrDefault(), null);
+				returnValues.Add(new ObjectValue(columnName, result.Table[columnName]));
 			}
-			return (result.Table[0], null);
+			return (returnValues, null);
+
+
+
 
 		}
 
-		
-		public async Task<(Table? Table, IError? Error)> Select(string sql, List<ParameterInfo>? SqlParameters = null, [HandlesVariable] string? dataSourceName = null)
+
+		public async Task<(Table? Table, IError? Error)> Select(string sql, List<ParameterInfo>? sqlParameters = null, [HandlesVariable] string? dataSourceName = null)
 		{
 			try
 			{
@@ -537,7 +532,7 @@ namespace PLang.Modules.DbModule
 				if (error != null) return (null, error);
 
 
-				var prep = Prepare(sql, SqlParameters);
+				var prep = Prepare(sql, sqlParameters);
 				if (prep.error != null)
 				{
 					return (null, prep.error);
@@ -549,9 +544,9 @@ namespace PLang.Modules.DbModule
 				cmd.CommandText = prep.sql;
 
 				// Add parameters if any:
-				if (SqlParameters is not null)
+				if (sqlParameters is not null)
 				{
-					foreach (var prop in SqlParameters)
+					foreach (var prop in sqlParameters)
 					{
 						var param = cmd.CreateParameter();
 						param.ParameterName = prop.ParameterName;
@@ -562,7 +557,7 @@ namespace PLang.Modules.DbModule
 
 				using var reader = await cmd.ExecuteReaderAsync();
 
-				
+
 				var cols = Enumerable.Range(0, reader.FieldCount)
 					.Select(reader.GetName)
 					.ToList();
@@ -600,13 +595,13 @@ namespace PLang.Modules.DbModule
 			return type.IsValueType && !type.IsPrimitive ? Activator.CreateInstance(type) : null;
 		}
 
-		public async Task<(long, IError?)> Update(string sql, List<ParameterInfo>? SqlParameters = null, [HandlesVariable] string? dataSourceName = null)
+		public async Task<(long, IError?)> Update(string sql, List<ParameterInfo>? sqlParameters = null, [HandlesVariable] string? dataSourceName = null)
 		{
 
 			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
 			if (error != null) return (0, error);
 
-			var prepare = Prepare(sql, SqlParameters);
+			var prepare = Prepare(sql, sqlParameters);
 			if (prepare.error != null)
 			{
 				return (0, prepare.error);
@@ -624,14 +619,14 @@ namespace PLang.Modules.DbModule
 			return (result, null);
 		}
 
-		public async Task<(long, IError?)> Delete(string sql, List<ParameterInfo>? SqlParameters = null, [HandlesVariable] string? dataSourceName = null)
+		public async Task<(long, IError?)> Delete(string sql, List<ParameterInfo>? sqlParameters = null, [HandlesVariable] string? dataSourceName = null)
 		{
 
 			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
 			if (error != null) return (0, error);
 
 			long rowsAffected;
-			var prepare = Prepare(sql, SqlParameters);
+			var prepare = Prepare(sql, sqlParameters);
 			if (prepare.error != null)
 			{
 				return (0, prepare.error);
@@ -648,29 +643,29 @@ namespace PLang.Modules.DbModule
 			return (rowsAffected, null);
 		}
 
-		[Description("Insert or update table(Upsert). Will return affected row count")]
-		public async Task<(long rowsAffected, IError? error)> InsertOrUpdate(string sql, List<ParameterInfo>? SqlParameters = null, [HandlesVariable] string? dataSourceName = null)
+		[Description("Insert or update table(Upsert). Will return affected row count. ")]
+		public async Task<(long rowsAffected, IError? error)> InsertOrUpdate(string sql, List<ParameterInfo>? sqlParameters = null, [HandlesVariable] string? dataSourceName = null)
 		{
-			return await Insert(sql, SqlParameters, dataSourceName);
+			return await Insert(sql, sqlParameters, dataSourceName);
 		}
 
 		[Description("Insert or update table(Upsert). Will return the primary key of the affected row")]
-		public async Task<(object? rowsAffected, IError? error)> InsertOrUpdateAndSelectIdOfRow(string sql, List<ParameterInfo>? SqlParameters = null, [HandlesVariable] string? dataSourceName = null)
+		public async Task<(object? rowsAffected, IError? error)> InsertOrUpdateAndSelectIdOfRow(string sql, List<ParameterInfo>? sqlParameters = null, [HandlesVariable] string? dataSourceName = null)
 		{
-			return await InsertAndSelectIdOfInsertedRow(sql, SqlParameters, dataSourceName);
+			return await InsertAndSelectIdOfInsertedRow(sql, sqlParameters, dataSourceName);
 		}
 
 
 
 		[Description("Insert into table. Will return affected row count")]
-		public async Task<(long rowsAffected, IError? error)> Insert(string sql, List<ParameterInfo>? SqlParameters = null, [HandlesVariable] string? dataSourceName = null)
+		public async Task<(long rowsAffected, IError? error)> Insert(string sql, List<ParameterInfo>? sqlParameters = null, [HandlesVariable] string? dataSourceName = null)
 		{
 
 			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
 			if (error != null) return (0, error);
 
 			long rowsAffected = 0;
-			var prepare = Prepare(sql, SqlParameters, true);
+			var prepare = Prepare(sql, sqlParameters, true);
 			if (prepare.error != null)
 			{
 				return (0, prepare.error);
@@ -704,14 +699,14 @@ namespace PLang.Modules.DbModule
 
 		}
 		[Description("Insert statement that will return the id of the inserted row. Use only if user requests the id")]
-		public async Task<(object?, IError?)> InsertAndSelectIdOfInsertedRow(string sql, List<ParameterInfo>? SqlParameters = null, [HandlesVariable] string? dataSourceName = null)
+		public async Task<(object?, IError?)> InsertAndSelectIdOfInsertedRow(string sql, List<ParameterInfo>? sqlParameters = null, [HandlesVariable] string? dataSourceName = null)
 		{
 
 			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
 			if (error != null) return (null, error);
 
 
-			var prepare = Prepare(sql, SqlParameters, true);
+			var prepare = Prepare(sql, sqlParameters, true);
 			if (prepare.error != null)
 			{
 				return (0, prepare.error);
@@ -993,7 +988,7 @@ namespace PLang.Modules.DbModule
 			DynamicParameters param = new();
 			if (Parameters == null) return (param, null);
 
-			var multipleErrors = new GroupedErrors("SqlParameters");
+			var multipleErrors = new GroupedErrors("sqlParameters");
 
 			foreach (var p in Parameters)
 			{

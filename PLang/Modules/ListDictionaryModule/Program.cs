@@ -13,10 +13,9 @@ using System.Linq;
 
 namespace PLang.Modules.ListDictionaryModule
 {
-	[Description(@"<description>
+	[Description(@"
 get first|last|random|position| item from list or dictionary.
 Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global
-<description>
 ")]
 	public class Program : BaseProgram
 	{
@@ -60,7 +59,7 @@ Add, update, delete and retrieve list or dictionary. It can be stored as local l
 			return listInstance;
 		}
 
-		[Description("Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue MUST always be defined, it MUST be the listInstance %variable%")]
+		[Description("Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue MUST always be defined")]
 		public async Task<List<object>> AddToList(object? value, List<object>? listInstance = null, bool uniqueValue = false, bool caseSensitive = false)
 		{
 			if (value == null) return new();

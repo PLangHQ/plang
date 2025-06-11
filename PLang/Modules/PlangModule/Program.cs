@@ -24,9 +24,7 @@ using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Modules.PlangModule
 {
-	[Description(@"<description>
-get apps available, compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime Engine for plang, can run goal and step(s) in plang
-<description>")]
+	[Description(@"get apps available, compiles plang code, gets goals and steps from .goal files, method descriptions and class scheme. Runtime Engine for plang, can run goal and step(s) in plang")]
 	public class Program : BaseProgram
 	{
 		private readonly ILogger logger;
@@ -49,7 +47,7 @@ get apps available, compiles plang code, gets goals and steps from .goal files, 
 		}
 
 		[Description("Get goals in file or folder. visiblity is either public|public_and_private|private")]
-		public async Task<(object? Goals, IError? Error)> GetGoals(string fileOrFolderPath, string visibility = "public", string[]? fields = null)
+		public async Task<(object? Goals, IError? Error)> GetGoals(string fileOrFolderPath, string visibility = "public", List<string>? propertiesToExtract = null)
 		{
 			List<Goal> goals = new List<Goal>();
 			string path = GetPath(fileOrFolderPath);
@@ -80,22 +78,22 @@ get apps available, compiles plang code, gets goals and steps from .goal files, 
 				return (null, new ProgramError($"No goals found at {fileOrFolderPath}, the absolute path is: {path}"));
 			}*/
 
-			if (fields == null) return (goals, null);
+			if (propertiesToExtract?.Count == 0) return (goals, null);
 
 			JArray array = new JArray();
 			foreach (var goal in goals)
 			{
 				var jObject = new JObject();
-				foreach (var field in fields)
+				foreach (var propertyName in propertiesToExtract)
 				{
 
-					var property = goal.GetType().GetProperties().FirstOrDefault(p => p.Name.Equals(field, StringComparison.OrdinalIgnoreCase));
+					var property = goal.GetType().GetProperties().FirstOrDefault(p => p.Name.Equals(propertyName, StringComparison.OrdinalIgnoreCase));
 					if (property != null)
 					{
 						var value = property.GetValue(goal);
 						if (value != null)
 						{
-							jObject.Add(field, value.ToString());
+							jObject.Add(propertyName, value.ToString());
 						}
 					}
 
@@ -105,12 +103,12 @@ get apps available, compiles plang code, gets goals and steps from .goal files, 
 
 			return (array, null);
 		}
-		[Description("Get all setup goals.")]
-		public async Task<(List<Goal>?, IError?)> GetSetupGoals(string? appPath = null, string visibility = "public", string[]? fields = null)
+		[Description("Get all setup goals. visibility=public|private|public_and_private. propertiesToExtract define what properties from the goal should be extracted")]
+		public async Task<(List<Goal>?, IError?)> GetSetupGoals(string? appPath = null, string visibility = "public", List<string>? propertiesToExtract = null)
 		{
 			var path = GetPath(appPath);
 
-			var result = await GetGoals(appPath, visibility, fields);
+			var result = await GetGoals(appPath, visibility, propertiesToExtract);
 			if (result.Error != null) return (null, result.Error);
 
 			var goals = (List<Goal>) result.Goals;
@@ -135,17 +133,25 @@ get apps available, compiles plang code, gets goals and steps from .goal files, 
 			return (modulesAvailable, null);
 		}
 
-		public async Task<string> GetMethods(string moduleName)
+		[Description("Returns the class description with methods in a module")]
+		public async Task<(ClassDescription?, IError?)> GetClassDescription(string moduleName)
 		{
 			var programType = typeHelper.GetRuntimeType(moduleName);
-			var methods = typeHelper.GetMethodNamesAsString(programType);
-			return methods;
+
+			var classDescriptionHelper = new ClassDescriptionHelper();
+			return classDescriptionHelper.GetClassDescription(programType);
+			
 		}
 
+		[Description("Returns the method description in a module for specific method")]
 		public async Task<(MethodDescription?, IError?)> GetMethodDescription(string moduleName, string methodName)
 		{
 			var programType = typeHelper.GetRuntimeType(moduleName);
-			return TypeHelper.GetMethodDescription(programType, methodName);
+
+			var classDescriptionHelper = new ClassDescriptionHelper();
+			var result = classDescriptionHelper.GetMethodDescription(programType, methodName);
+
+			return (result.MethodDescription, result.Error);
 		}
 
 		public async Task<(object, IError)> Run(string @namespace, string @class, string method, Dictionary<string, object?>? Parameters)

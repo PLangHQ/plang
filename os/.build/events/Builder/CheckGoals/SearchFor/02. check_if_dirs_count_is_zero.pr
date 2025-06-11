@@ -1,0 +1,130 @@
+{
+  "Text": "if %dirs.Count% == 0 then",
+  "ModuleType": null,
+  "Reload": false,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null,\n\t\"Instruction\": {\n\t\"Text\": string,\n\t\"ModuleType\": string,\n\t\"GenericFunctionType\": string,\n\t\"FunctionJson\"?: jtoken\n}\n}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.\n"
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null,\n\t\"Instruction\": {\n\t\"Text\": string,\n\t\"ModuleType\": string,\n\t\"GenericFunctionType\": string,\n\t\"FunctionJson\"?: jtoken\n}\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nCheck if the collection of directories is empty\n## functions available starts ##\r\n[{\"MethodName\":\"FileExists\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"filePathOrVariableName\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfTrue\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfFalse\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnTrue\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnFalse\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"IsRequired\":true}],\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Boolean\"}},{\"MethodName\":\"DirectoryExists\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"dirPathOrVariableName\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfTrue\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfFalse\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnTrue\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnFalse\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"IsRequired\":true}],\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Boolean\"}},{\"MethodName\":\"HasAccessToPath\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"dirOrFilePathOrVariableName\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfTrue\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfFalse\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnTrue\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnFalse\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"IsRequired\":true}],\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Boolean\"}},{\"MethodName\":\"IsNotEmpty\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"item\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfTrue\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfFalse\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnTrue\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnFalse\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"IsRequired\":true}],\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Boolean\"}},{\"MethodName\":\"IsEmpty\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"item\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCall\",\"Name\":\"goalToCallIfTrue\",\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parametersForGoalIfTrue\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCall\",\"Name\":\"goalToCallIfFalse\",\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parametersForGoalIfFalse\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnTrue\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnFalse\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"IsRequired\":true}],\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Boolean\"}},{\"MethodName\":\"ContainsNumbers\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"item\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[System.Int32]\",\"Name\":\"contains\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfTrue\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfFalse\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnTrue\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnFalse\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"IsRequired\":true}],\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"Nullable<Boolean>\"}},{\"MethodName\":\"ContainsString\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"item\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"contains\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfTrue\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfFalse\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnTrue\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnFalse\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"IsRequired\":true}],\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"Nullable<Boolean>\"}},{\"MethodName\":\"IsEqual\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"item1\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"item2\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfTrue\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfFalse\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"ignoreCase\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnTrue\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnFalse\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"IsRequired\":true}],\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"Nullable<Boolean>\"}},{\"Description\":\"Choose RunInlineCode when no other method matches user intent. Implementation variable can be set to null.\",\"MethodName\":\"RunInlineCode\",\"Parameters\":[{\"Type\":\"PLang.Services.CompilerService.ConditionImplementationResponse\",\"Name\":\"implementation\",\"TypeProperties\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"GoalToCallOnTrue\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"GoalToCallOnFalse\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Reasoning\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Namespace\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"List<string>\",\"Name\":\"Using\",\"TypeProperties\":[{\"Type\":\"System.Int32\",\"Name\":\"Capacity\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"List<string>\",\"Name\":\"Assemblies\",\"TypeProperties\":[{\"Type\":\"System.Int32\",\"Name\":\"Capacity\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter]\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Int32\",\"Name\":\"Capacity\",\"IsRequired\":true},{\"Type\":\"PLang.Modules.BaseBuilder+Parameter\",\"Name\":\"Item\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Type\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"Value\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue]\",\"Name\":\"ReturnValues\",\"TypeProperties\":[{\"Type\":\"System.Int32\",\"Name\":\"Capacity\",\"IsRequired\":true},{\"Type\":\"PLang.Modules.BaseBuilder+ReturnValue\",\"Name\":\"Item\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Type\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"VariableName\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"PLang.Building.Model.Instruction\",\"Name\":\"Instruction\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Text\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"ModuleType\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"GenericFunctionType\",\"IsRequired\":true},{\"Type\":\"Newtonsoft.Json.Linq.JToken\",\"Name\":\"FunctionJson\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\"}}]\r\n## functions available ends ##\r\n## defined variables ##\r\ndirs.count (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "if %dirs.Count% == 0 then"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.ConditionalModule.Builder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to check if the count of directories (%dirs.Count%) is equal to 0, which means checking if the collection is empty. The best matching function is 'IsEqual' to compare the count with 0.\",\n  \"Name\": \"IsEqual\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"item1\",\n      \"Value\": \"%dirs.Count%\"\n    },\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"item2\",\n      \"Value\": 0\n    }\n  ],\n  \"ReturnValues\": null,\n  \"Instruction\": {\n    \"Text\": \"Check if %dirs.Count% is equal to 0\",\n    \"ModuleType\": \"Condition\",\n    \"GenericFunctionType\": \"IsEqual\"\n  }\n}"
+    }
+  ],
+  "Properties": {
+    "Parameters": {
+      "goalToCallIfTrue": [
+        {
+          "Name": "Name",
+          "FullTypeName": "System.String"
+        },
+        {
+          "Name": "Parameters",
+          "FullTypeName": "System.Collections.Generic.Dictionary`2[[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Object, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
+        }
+      ],
+      "goalToCallIfFalse": [
+        {
+          "Name": "Name",
+          "FullTypeName": "System.String"
+        },
+        {
+          "Name": "Parameters",
+          "FullTypeName": "System.Collections.Generic.Dictionary`2[[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Object, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
+        }
+      ],
+      "ignoreCase": [
+        {
+          "Name": "ignoreCase",
+          "FullTypeName": "System.Boolean"
+        }
+      ],
+      "throwErrorOnTrue": [
+        {
+          "Name": "errorMessage",
+          "FullTypeName": "System.String"
+        },
+        {
+          "Name": "type",
+          "FullTypeName": "System.String"
+        },
+        {
+          "Name": "statusCode",
+          "FullTypeName": "System.Int32"
+        }
+      ],
+      "throwErrorOnFalse": [
+        {
+          "Name": "errorMessage",
+          "FullTypeName": "System.String"
+        },
+        {
+          "Name": "type",
+          "FullTypeName": "System.String"
+        },
+        {
+          "Name": "statusCode",
+          "FullTypeName": "System.Int32"
+        }
+      ]
+    },
+    "ReturnValues": {}
+  },
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to check if the count of directories (%dirs.Count%) is equal to 0, which means checking if the collection is empty. The best matching function is 'IsEqual' to compare the count with 0.",
+    "Name": "IsEqual",
+    "Parameters": [
+      {
+        "Type": "System.Object",
+        "Name": "item1",
+        "Value": "%dirs.Count%"
+      },
+      {
+        "Type": "System.Object",
+        "Name": "item2",
+        "Value": 0
+      }
+    ],
+    "ReturnValues": null
+  }
+}

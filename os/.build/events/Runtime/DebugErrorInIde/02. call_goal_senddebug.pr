@@ -10,23 +10,19 @@
       "presencePenalty": 0.0,
       "maxLength": 4000,
       "llmResponseType": "json",
-      "scheme": "{\n\t\"ExplainUserIntent\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-      "model": "gpt-4o",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null,\n\t\"Instruction\": {\n\t\"Text\": string,\n\t\"ModuleType\": string,\n\t\"GenericFunctionType\": string,\n\t\"FunctionJson\"?: jtoken\n}\n}",
+      "model": "gpt-4.1-mini",
       "promptMessage": [
         {
           "role": "system",
           "content": [
             {
               "type": "text",
-              "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\nJSON scheme information\r\nExplanation: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user's request.\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.\n\r\nOnly choose RunApp if user specifically defines it as app\r\n\r\nUse <examples> to understand user input\r\n\r\n<examples>\r\ncall goal /Start => function name:RunGoal  goalName:/Start, that is rooted, no parameter.\r\ncall ParseText => function name:RunGoal, goalName: ParseText, no parameters\r\nrun Folder/Search q=%fileName% => function: RunGoal, goalName:Folder/Search,, parameter key is q, and value is %fileName%\r\nexecute goal EvaluteScore %user%, write to %score% => function: RunGoal, goalName:EvaluteScore, parameter is user=%user%, return value is %score%\r\nset %data% = ParseDocument(%document%) => function: RunGoal, goalName:ParseDocument, parameter is %document%, %data% is the return value\r\n%user% = GetUser %id% => function: RunGoal, goalName:GetUser, parameter is %id%, return value is %user%\r\n\r\ncall app Gmail/Search %query% => function name:RunApp, appName:Gmail, goalName:/Search , %query% is key and value in parameters\r\ncall app /Builder/DbModule %content%, write to %result% => function name:RunApp, appName:Builder, goalName:/DbModule , %query% is key and value in parameters, return value %result%\r\n<examples>\r\n\""
             },
             {
               "type": "text",
-              "text": "\r\nOnly choose RunApp if user specifically defines it as app\r\n\r\nUse <examples> to understand user input\r\n\r\n<examples>\r\ncall goal /Start => function name:RunGoal  goalName:/Start, that is rooted, no parameter.\r\ncall ParseText => function name:RunGoal, goalName: ParseText, no parameters\r\nrun Folder/Search q=%fileName% => function: RunGoal, goalName:Folder/Search,, parameter key is q, and value is %fileName%\r\nexecute goal EvaluteScore %user%, write to %score% => function: RunGoal, goalName:EvaluteScore, parameter is user=%user%, return value is %score%\r\nset %data% = ParseDocument(%document%) => function: RunGoal, goalName:ParseDocument, parameter is %document%, %data% is the return value\r\n%user% = GetUser %id% => function: RunGoal, goalName:GetUser, parameter is %id%, return value is %user%\r\n\r\ncall app Gmail/Search %query% => function name:RunApp, appName:Gmail, goalName:/Search , %query% is key and value in parameters\r\ncall app /Builder/DbModule %content%, write to %result% => function name:RunApp, appName:Builder, goalName:/DbModule , %query% is key and value in parameters, return value %result%\r\n<examples>\r\n\""
-            },
-            {
-              "type": "text",
-              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"ExplainUserIntent\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null,\n\t\"Instruction\": {\n\t\"Text\": string,\n\t\"ModuleType\": string,\n\t\"GenericFunctionType\": string,\n\t\"FunctionJson\"?: jtoken\n}\n}"
             }
           ]
         },
@@ -35,7 +31,7 @@
           "content": [
             {
               "type": "text",
-              "text": "## functions available starts ##\r\n[{\"Description\":\"Call/Runs another app. app can be located in another directory, then path points the way. goalName is default \\\"Start\\\" when it cannot be mapped\",\"MethodName\":\"RunApp\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"appName\"},{\"Type\":\"PLang.Models.GoalToCall\",\"Name\":\"goalName\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]},{\"Type\":\"System.Boolean\",\"Name\":\"waitForExecution\",\"DefaultValue\":true},{\"Type\":\"System.Int32\",\"Name\":\"delayWhenNotWaitingInMilliseconds\",\"DefaultValue\":50},{\"Type\":\"System.UInt32\",\"Name\":\"waitForXMillisecondsBeforeRunningGoal\",\"DefaultValue\":0},{\"Type\":\"System.Boolean\",\"Name\":\"keepMemoryStackOnAsync\",\"DefaultValue\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Call/Runs another goal. goalName can be prefixed with !. If backward slash(\\\\) is used by user, change to forward slash(/)\",\"MethodName\":\"RunGoal\",\"Parameters\":[{\"Type\":\"PLang.Models.GoalToCall\",\"Name\":\"goalName\"},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\"}]},{\"Type\":\"System.Boolean\",\"Name\":\"waitForExecution\",\"DefaultValue\":true},{\"Type\":\"System.Int32\",\"Name\":\"delayWhenNotWaitingInMilliseconds\",\"DefaultValue\":50},{\"Type\":\"System.UInt32\",\"Name\":\"waitForXMillisecondsBeforeRunningGoal\",\"DefaultValue\":0},{\"Type\":\"System.Boolean\",\"Name\":\"keepMemoryStackOnAsync\",\"DefaultValue\":false},{\"Type\":\"System.Boolean\",\"Name\":\"isolated\",\"DefaultValue\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}}]\r\n## functions available ends ##"
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nInvoke the predefined goal named 'SendDebug' to perform its associated actions or workflow\n## functions available starts ##\r\n[{\"Description\":\"Call/Runs another app. app can be located in another directory, then path points the way. goalName is default \\\"Start\\\" when it cannot be mapped\",\"MethodName\":\"RunApp\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"appName\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalName\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"waitForExecution\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"delayWhenNotWaitingInMilliseconds\",\"DefaultValue\":50,\"IsRequired\":false},{\"Type\":\"System.UInt32\",\"Name\":\"waitForXMillisecondsBeforeRunningGoal\",\"DefaultValue\":0,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"keepMemoryStackOnAsync\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Call/Runs another goal. goalName can be prefixed with !. If backward slash(\\\\) is used by user, change to forward slash(/)\",\"MethodName\":\"RunGoal\",\"Parameters\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalInfo\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"TypeProperties\":[{\"Type\":\"System.Object\",\"Name\":\"Item\",\"IsRequired\":true}],\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"waitForExecution\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"delayWhenNotWaitingInMilliseconds\",\"DefaultValue\":50,\"IsRequired\":false},{\"Type\":\"System.UInt32\",\"Name\":\"waitForXMillisecondsBeforeRunningGoal\",\"DefaultValue\":0,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"keepMemoryStackOnAsync\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"isolated\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}}]\r\n## functions available ends ##"
             }
           ]
         },
@@ -51,21 +47,19 @@
       ],
       "type": "PLang.Modules.CallGoalModule.Builder",
       "caching": true,
-      "RawResponse": "```json\n{\n\t\"ExplainUserIntent\": \"The user wants to execute the goal named 'SendDebug' without any additional parameters.\",\n\t\"Name\": \"RunGoal\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"PLang.Models.GoalToCall\",\n\t\t\"Name\": \"goalName\",\n\t\t\"Value\": \"SendDebug\"\n\t}, {\n\t\t\"Type\": \"Dictionary<String, Object>\",\n\t\t\"Name\": \"parameters\",\n\t\t\"Value\": {}\n\t}],\n\t\"ReturnValues\": null\n}\n```"
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to call a goal named 'SendDebug' without any parameters. The appropriate function is RunGoal with the goal name 'SendDebug' and no parameters.\",\n  \"Name\": \"RunGoal\",\n  \"Parameters\": [\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalInfo\",\n      \"Value\": {\n        \"Name\": \"SendDebug\",\n        \"Parameters\": {}\n      }\n    }\n  ],\n  \"ReturnValues\": null,\n  \"Instruction\": {\n    \"Text\": \"Call the goal 'SendDebug' with no parameters.\",\n    \"ModuleType\": \"Goal\",\n    \"GenericFunctionType\": \"RunGoal\"\n  }\n}"
     }
   ],
   "Properties": {
     "Parameters": {
-      "goalName": [
+      "goalInfo": [
         {
-          "Name": "Value",
+          "Name": "Name",
           "FullTypeName": "System.String"
-        }
-      ],
-      "parameters": [
+        },
         {
-          "Name": "parameters",
-          "FullTypeName": "System.Object"
+          "Name": "Parameters",
+          "FullTypeName": "System.Collections.Generic.Dictionary`2[[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Object, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
         }
       ],
       "waitForExecution": [
@@ -103,18 +97,16 @@
   },
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
   "Function": {
-    "ExplainUserIntent": "The user wants to execute the goal named 'SendDebug' without any additional parameters.",
+    "Reasoning": "The user wants to call a goal named 'SendDebug' without any parameters. The appropriate function is RunGoal with the goal name 'SendDebug' and no parameters.",
     "Name": "RunGoal",
     "Parameters": [
       {
-        "Type": "PLang.Models.GoalToCall",
-        "Name": "goalName",
-        "Value": "SendDebug"
-      },
-      {
-        "Type": "Dictionary<String, Object>",
-        "Name": "parameters",
-        "Value": {}
+        "Type": "PLang.Models.GoalToCallInfo",
+        "Name": "goalInfo",
+        "Value": {
+          "Name": "SendDebug",
+          "Parameters": {}
+        }
       }
     ],
     "ReturnValues": null

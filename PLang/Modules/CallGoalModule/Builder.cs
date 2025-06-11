@@ -6,6 +6,7 @@ using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Errors;
 using PLang.Errors.Builder;
+using PLang.Models;
 using PLang.Runtime;
 using PLang.Utils;
 
@@ -94,37 +95,39 @@ The parameters provided in <function> might not be correct, these are the legal 
 				return (null, new StepBuilderError("Goal name is empty", step, "GoalNotDefined", Retry: true));
 			}
 
-
-			var goalName = gf.Parameters[0].Value?.ToString();
-			if (goalName != null && goalName.Contains("%"))
-			{
-				return (instruction, null);
-			}
-			if (string.IsNullOrEmpty(goalName))
+			var goalName = gf.GetParameter<GoalToCallInfo>("goalInfo");
+			if (goalName == null)
 			{
 				return (null, new StepBuilderError("Goal name is empty", step, "GoalNotDefined", Retry: true));
 			}
+
+			if (goalName.Name.Contains("%"))
+			{
+				return (instruction, null);
+			}
+			
 
 			if (allGoals == null)
 			{
 				allGoals = goalParser.GetAllGoals();
 			}
-			var goalsFound = allGoals.Where(p => p.RelativePrFolderPath.Contains(goalName.Replace("!", "").AdjustPathToOs(), StringComparison.OrdinalIgnoreCase)).ToList();
+			var goalsFound = allGoals.Where(p => p.RelativePrFolderPath.Contains(goalName.Name.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase)).ToList();
 			if (goalsFound.Count == 0)
 			{
 				return (null, new StepBuilderError($"Could not find {goalName}", step, "GoalNotFound"));
 			} else if (goalsFound.Count > 1)
 			{
-				logger.LogWarning($"Found {goalsFound.Count} goals containing {goalName}, must be improved");
+				//todo: we should only find one goal, otherwise use should define it better
+				//logger.LogWarning($"Found {goalsFound.Count} goals containing {goalName}, must be improved");
 			}
 
 
-				var parameters = GenericFunctionHelper.GetParameterValueAsDictionary(gf, "parameters");
+			var parameters = gf.Parameters;
 			if (parameters == null) return (instruction, null);
 
 			foreach (var parameter in parameters)
 			{
-				memoryStack.PutForBuilder(parameter.Key, parameter.Value);
+				memoryStack.PutForBuilder(parameter.Name, parameter.Type);
 			}
 
 			return (instruction, null);

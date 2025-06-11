@@ -1,4 +1,5 @@
 ﻿using Jil;
+using Nethereum.Model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
@@ -67,21 +68,18 @@ namespace PLang.Utils
 		public object? LoadVariables(object? obj, bool emptyIfNotFound = true, object? defaultValue = null)
 		{
 			if (obj == null) return null;
-
-			string? content = obj.ToString();
-			if (content == null) return null;
 			
-			if (IsVariable(content))
+			if (obj is string variableName && IsVariable(variableName))
 			{
-				if (content.StartsWith("%Settings."))
+				if (variableName.StartsWith("%Settings."))
 				{
-					var vars = GetVariables(content, emptyIfNotFound);
+					var vars = GetVariables(variableName, emptyIfNotFound);
 					if (vars.Count == 0) return null;
 					return vars[0].Value;
 				}
 				else
 				{
-					var value = memoryStack.Get(content, false, defaultValue);
+					var value = memoryStack.Get(variableName, false, defaultValue);
 					if (value != null)
 					{
 						if (value is JValue jValue) return jValue.Value;
@@ -90,108 +88,30 @@ namespace PLang.Utils
                 }
 			}
 
+			string? content = obj.ToString();
+			if (content == null) return null;
+
 			var variables = GetVariables(content, emptyIfNotFound);
 			if (variables.Count == 0) return obj;
+
+			if (IsRecordType(obj.GetType()))
+			{
+				return LoadVariablesToRecord(obj, variables, defaultValue);
+			}
+
 			if (obj.ToString().Contains("[*]"))
 			{
 				obj = JObject.Parse("{}");
 			}
 			if (obj is JObject jobject)
 			{
-				foreach (var variable in variables)
-				{
-					var jsonProperty = FindPropertyNameByValue(jobject, variable.PathAsVariable);
-					if (jsonProperty == null) {
-						LoadVariableInTextValue(jobject, variable, defaultValue);
-						continue;
-					};
-
-					if (jsonProperty.Contains("."))
-					{
-						var value = (variable.Value == null) ? null : JsonSerialize(variable.Value);
-						if (value != null)
-						{
-							SetNestedPropertyValue(jobject, jsonProperty, value);
-						} else if (defaultValue != null && defaultValue is JToken jToken)
-						{
-							SetNestedPropertyValue(jobject, jsonProperty, jToken);
-						}
-					}
-					else if (jsonProperty.Contains("[") && jsonProperty.Contains("]"))
-					{
-						JArray messages = (JArray)jobject[jsonProperty.Substring(0, jsonProperty.IndexOf("["))];
-						for (int i = 0; i < messages.Count; i++)
-						{
-							if (messages[i].Type == JTokenType.String && messages[i].ToString() == variable.PathAsVariable)
-							{
-								if (variable.Value is JToken token) {
-									if (!IsEmpty(token))
-									{
-										messages[i] = token;
-									} else if (defaultValue is JToken defaultJValue)
-									{
-										messages[i] = defaultJValue.SelectToken(token.Path);
-									}
-								} else
-								{
-									if (!IsEmpty(variable.Value))
-									{
-										messages[i] = JsonSerialize(variable.Value);
-									}
-									else if (defaultValue != null)
-									{
-										messages[i] = JsonSerialize(defaultValue);
-									}
-								}
-								break;
-							}
-						}
-
-					}
-					else if (jobject[jsonProperty] != null)
-					{
-						if (jobject[jsonProperty] != null && IsVariable(jobject[jsonProperty].ToString()))
-						{
-							if (IsEmpty(variable.Value) && defaultValue != null && defaultValue is JToken defaultJValue && jobject[jsonProperty] != null)
-							{
-								var value = defaultJValue.SelectToken(jobject[jsonProperty].Path) as JValue;
-								jobject[jsonProperty] = value;
-							}
-							else
-							{
-								jobject[jsonProperty] = (variable.Value == null) ? null : JsonSerialize(variable.Value);
-							}
-						} else
-						{
-							if (IsEmpty(variable.Value) && defaultValue != null && defaultValue is JToken defaultJValue && jobject[jsonProperty] != null)
-							{
-								var token = defaultJValue.SelectToken(jobject[jsonProperty].Path) as JValue;
-								jobject[jsonProperty] = jobject[jsonProperty].ToString().Replace(variable.PathAsVariable, token.ToString());
-							}
-							else
-							{
-								jobject[jsonProperty] = jobject[jsonProperty].ToString().Replace(variable.PathAsVariable, variable.Value.ToString());
-							}
-						}
-					}
-
-				}
-				return jobject;
+				return LoadVariablesToJObject(jobject, variables, defaultValue);				
 			}
 
 			if (obj is JArray array)
 			{
-				foreach (var variable in variables)
-				{
-					for (int i=0;i<array.Count; i++)
-					{
-						if (array[i].ToString().Equals(variable.PathAsVariable, StringComparison.OrdinalIgnoreCase))
-						{
-							array[i] = variable.Value?.ToString();
-						}
-					}
-				}
-				return array;
+				return LoadVariablesToJArray(array, variables, defaultValue);
+				
 			}
 			if (variables.Count == 1 && IsVariable(content)) return variables[0].Value;
 
@@ -212,6 +132,145 @@ namespace PLang.Utils
 			}
 			return content;
 
+		}
+
+		private object? LoadVariablesToJArray(JArray array, List<ObjectValue> variables, object? defaultValue)
+		{
+			foreach (var variable in variables)
+			{
+				for (int i = 0; i < array.Count; i++)
+				{
+					if (array[i].ToString().Equals(variable.PathAsVariable, StringComparison.OrdinalIgnoreCase))
+					{
+						array[i] = variable.Value?.ToString();
+					}
+				}
+			}
+			return array;
+		}
+
+		private object? LoadVariablesToJObject(JObject jobject, List<ObjectValue> variables, object? defaultValue)
+		{
+			foreach (var variable in variables)
+			{
+				var jsonProperty = FindPropertyNameByValue(jobject, variable.PathAsVariable);
+				if (jsonProperty == null)
+				{
+					LoadVariableInTextValue(jobject, variable, defaultValue);
+					continue;
+				}
+				;
+
+				if (jsonProperty.Contains("."))
+				{
+					var value = (variable.Value == null) ? null : JsonSerialize(variable.Value);
+					if (value != null)
+					{
+						SetNestedPropertyValue(jobject, jsonProperty, value);
+					}
+					else if (defaultValue != null && defaultValue is JToken jToken)
+					{
+						SetNestedPropertyValue(jobject, jsonProperty, jToken);
+					}
+				}
+				else if (jsonProperty.Contains("[") && jsonProperty.Contains("]"))
+				{
+					JArray messages = (JArray)jobject[jsonProperty.Substring(0, jsonProperty.IndexOf("["))];
+					for (int i = 0; i < messages.Count; i++)
+					{
+						if (messages[i].Type == JTokenType.String && messages[i].ToString() == variable.PathAsVariable)
+						{
+							if (variable.Value is JToken token)
+							{
+								if (!IsEmpty(token))
+								{
+									messages[i] = token;
+								}
+								else if (defaultValue is JToken defaultJValue)
+								{
+									messages[i] = defaultJValue.SelectToken(token.Path);
+								}
+							}
+							else
+							{
+								if (!IsEmpty(variable.Value))
+								{
+									messages[i] = JsonSerialize(variable.Value);
+								}
+								else if (defaultValue != null)
+								{
+									messages[i] = JsonSerialize(defaultValue);
+								}
+							}
+							break;
+						}
+					}
+
+				}
+				else if (jobject[jsonProperty] != null)
+				{
+					if (jobject[jsonProperty] != null && IsVariable(jobject[jsonProperty].ToString()))
+					{
+						if (IsEmpty(variable.Value) && defaultValue != null && defaultValue is JToken defaultJValue && jobject[jsonProperty] != null)
+						{
+							var value = defaultJValue.SelectToken(jobject[jsonProperty].Path) as JValue;
+							jobject[jsonProperty] = value;
+						}
+						else
+						{
+							jobject[jsonProperty] = (variable.Value == null) ? null : JsonSerialize(variable.Value);
+						}
+					}
+					else
+					{
+						if (IsEmpty(variable.Value) && defaultValue != null && defaultValue is JToken defaultJValue && jobject[jsonProperty] != null)
+						{
+							var token = defaultJValue.SelectToken(jobject[jsonProperty].Path) as JValue;
+							jobject[jsonProperty] = jobject[jsonProperty].ToString().Replace(variable.PathAsVariable, token.ToString());
+						}
+						else
+						{
+							jobject[jsonProperty] = jobject[jsonProperty].ToString().Replace(variable.PathAsVariable, variable.Value.ToString());
+						}
+					}
+				}
+
+			}
+			return jobject;
+		}
+
+		private object? LoadVariablesToRecord(object obj, List<ObjectValue> variables, object? defaultValue)
+		{
+			var type = obj.GetType();
+			var props = type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+			var values = new object?[props.Length];
+
+			for (int i = 0; i < props.Length; i++)
+			{
+				var value = props[i].GetValue(obj);
+				if (value is string str)
+				{
+					if (IsVariable(str))
+					{
+						var variable = variables.FirstOrDefault(p => p.PathAsVariable.Equals(str, StringComparison.OrdinalIgnoreCase));
+						values[i] = variable?.Value;
+					}
+					else if (str.Contains("%"))
+					{
+						var varValue = LoadVariables(str);
+						values[i] = varValue;
+					} else
+					{
+						values[i] = str;
+					}
+				} else
+				{
+					values[i] = value;
+				}
+			}
+
+			var ctor = type.GetConstructors().First();
+			return ctor.Invoke(values);
 		}
 
 		private void LoadVariableInTextValue(JToken jobject, ObjectValue variable, object? defaultValue = null)
@@ -256,14 +315,12 @@ namespace PLang.Utils
 
 		public static bool IsRecordType(Type type)
 		{
-			// Check if the type has the CompilerGeneratedAttribute and a method named "<Clone>$"
-			var isCompilerGenerated = type.GetCustomAttribute<CompilerGeneratedAttribute>() != null;
 			var hasCloneMethod = type.GetMethod("<Clone>$") != null;
-
-			// Optionally, you might also want to check for the existence of EqualityContract
+			var hasPrintMembers = type.GetMethod("PrintMembers", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance) != null;
+		
 			var hasEqualityContract = type.GetProperty("EqualityContract", BindingFlags.Instance | BindingFlags.NonPublic) != null;
 
-			return isCompilerGenerated && hasCloneMethod && hasEqualityContract;
+			return hasPrintMembers && hasCloneMethod && hasEqualityContract;
 		}
 
 		private bool IsRecordWithoutToString(object obj)

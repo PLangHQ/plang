@@ -1,0 +1,134 @@
+﻿using AngleSharp.Attributes;
+using Newtonsoft.Json.Linq;
+using PLang.Utils;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace PLang.Models
+{
+	[Description("Name of goal to bind to, name can be * to bind to all, name can be regex")]
+	public class GoalToBindTo
+	{
+		private string name;
+		public GoalToBindTo(string name)
+		{
+			if (string.IsNullOrWhiteSpace(name)) throw new Exception("goal name cannot be empty");
+
+			// bad for regex, 
+			if (name.Contains("\\"))
+			{
+				name = name.Replace("\\", "/");
+			}
+			this.name = name.Replace("!", "");
+		}
+		public string Name { get { return name; } set { name = value; } }
+
+		public override string? ToString() => Name;
+
+		// Implicit conversion from string to GoalToCall
+		public static implicit operator GoalToBindTo(string? value) => new GoalToBindTo(value);
+
+		// Implicit conversion from GoalToCall to string
+		public static implicit operator string?(GoalToBindTo? goalToCall) => goalToCall?.Name;
+
+		public override bool Equals(object? obj)
+		{
+			if (obj is GoalToBindTo other)
+			{
+				return string.Equals(Name, other.Name, StringComparison.OrdinalIgnoreCase);
+			}
+			return false;
+		}
+
+		public override int GetHashCode() => Name?.GetHashCode() ?? 0;
+	}
+
+
+	[Description("Name of goal and parameters that is called, e.g. in condition, loops, run goal")]
+	public class GoalToCallInfo
+	{
+		private string name;
+		private Dictionary<string, object?> parameters;
+
+		public GoalToCallInfo(string name, Dictionary<string, object?>? parameters = null)
+		{
+			if (string.IsNullOrWhiteSpace(name))
+			{
+				throw new Exception("goal name cannot be empty");
+			}
+
+			if (name.Contains("\\"))
+			{
+				name = name.Replace("\\", "/");
+			}
+			this.name = name.Replace("!", "");
+			this.parameters = parameters ?? new();
+		}
+
+		public string Name { get { return name; } set { name = value; } }
+		public Dictionary<string, object?> Parameters { get { return parameters; } set { parameters = value ?? new(); } }
+
+
+
+		public override string? ToString() => Name;
+
+		// Implicit conversion from string to GoalToCall
+		public static implicit operator GoalToCallInfo(string? value) => new GoalToCallInfo(value);
+
+		// Implicit conversion from GoalToCall to string
+		public static implicit operator string?(GoalToCallInfo? goalToCall) => goalToCall?.Name;
+
+		public override bool Equals(object? obj)
+		{
+			if (obj is GoalToCallInfo other)
+			{
+				return string.Equals(Name, other.Name, StringComparison.OrdinalIgnoreCase);
+			}
+			return false;
+		}
+		public override int GetHashCode() => Name?.GetHashCode() ?? 0;
+	}
+	/*
+	public class GoalToCall
+	{
+		public string? Value { get; }
+
+		public GoalToCall(string? value)
+		{
+
+			if (!string.IsNullOrWhiteSpace(value))
+			{
+				if (value.Contains("\\"))
+				{
+					value = value.Replace("\\", "/");
+				}
+
+				Value = value.Replace("!", "");
+			}
+
+		}
+
+		public override string? ToString() => Value;
+
+		// Implicit conversion from string to GoalToCall
+		public static implicit operator GoalToCall(string? value) => new GoalToCall(value);
+
+		// Implicit conversion from GoalToCall to string
+		public static implicit operator string?(GoalToCall? goalToCall) => goalToCall?.Value;
+
+		public override bool Equals(object? obj)
+		{
+			if (obj is GoalToCall other)
+			{
+				return string.Equals(Value, other.Value, StringComparison.OrdinalIgnoreCase);
+			}
+			return false;
+		}
+
+		public override int GetHashCode() => Value?.GetHashCode() ?? 0;
+	}*/
+}

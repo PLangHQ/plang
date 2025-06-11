@@ -11,6 +11,7 @@ using PLang.Events;
 using PLang.Interfaces;
 using PLang.Models;
 using PLang.Modules.DbModule;
+using PLang.Runtime;
 using PLang.Services.LlmService;
 using PLang.Utils;
 using System.Collections.Generic;
@@ -43,12 +44,13 @@ namespace PLang.Building
 		private readonly PLangAppContext context;
 		private readonly ModuleSettings dbSettings;
 		private readonly IInstructionBuilder instructionBuilder;
+		private readonly VariableHelper variableHelper;
 		private readonly IStepBuilder stepBuilder;
 		public List<IBuilderError> BuildErrors { get; init; }
 		public GoalBuilder(ILogger logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 				IGoalParser goalParser, IStepBuilder stepBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
 				PrParser prParser, ISettings settings, PLangAppContext context, Modules.DbModule.ModuleSettings dbSettings,
-				IInstructionBuilder instructionBuilder)
+				IInstructionBuilder instructionBuilder, VariableHelper variableHelper)
 		{
 
 			this.fileSystem = fileSystem;
@@ -63,6 +65,7 @@ namespace PLang.Building
 			this.context = context;
 			this.dbSettings = dbSettings;
 			this.instructionBuilder = instructionBuilder;
+			this.variableHelper = variableHelper;
 			BuildErrors = new();
 		}
 
@@ -78,8 +81,6 @@ namespace PLang.Building
 				{
 					var validationError = await ValidateSteps(goal);
 					if (validationError == null) return null;
-
-					validationError.ErrorChain.ForEach(p => { if (p.Step != null) p.Step.Reload = true; });
 				}
 			}
 
@@ -96,7 +97,7 @@ namespace PLang.Building
 			}
 
 			var (vars, buildEventError) = await eventRuntime.RunBuildGoalEvents(EventType.Before, goal);
-			if (!ContinueBuild(buildEventError, goal))
+			if (!ContinueBuildGoal(buildEventError, goal))
 			{
 				return buildEventError;
 			}
@@ -117,7 +118,7 @@ namespace PLang.Building
 			RegisterForPLangUserInjections(container, goal);
 
 			(vars, buildEventError) = await eventRuntime.RunBuildGoalEvents(EventType.After, goal);
-			if (!ContinueBuild(buildEventError))
+			if (!ContinueBuildGoal(buildEventError, goal))
 			{
 				return buildEventError;
 			}
@@ -133,15 +134,13 @@ namespace PLang.Building
 			if (excludeModules == null) excludeModules = new();
 
 			var buildStepError = await stepBuilder.BuildStep(goal, i, excludeModules);
-			if (!ContinueBuild(buildStepError, goal, goal.GoalSteps[i]))
+			if (buildStepError != null)
 			{
-				return buildStepError;
-			}
-
-			if (buildStepError is IInvalidModuleError ime)
-			{
-				excludeModules.Add(ime.ModuleType);
-				return await stepBuilder.BuildStep(goal, i, excludeModules, buildStepError);
+				buildStepError = await ContinueBuildStep(buildStepError, goal, i, excludeModules);
+				if (buildStepError != null)
+				{
+					return buildStepError;
+				}
 			}
 
 			goal.GoalSteps[i].Hash = JsonConvert.SerializeObject(goal.GoalSteps[i], GoalSerializer.Settings).ComputeHash().Hash;
@@ -150,18 +149,44 @@ namespace PLang.Building
 			return null;
 		}
 
-		private bool ContinueBuild(IBuilderError? buildStepError, Goal? goal = null, GoalStep? goalStep = null)
+		private bool ContinueBuildGoal(IBuilderError? buildStepError, Goal goal)
 		{
 			if (buildStepError == null) return true;
 
 			if (buildStepError.Goal == null) buildStepError.Goal = goal;
-			if (buildStepError.Step == null) buildStepError.Step = goalStep;
 
 			BuildErrors.Add(buildStepError);
 
-			logger.LogWarning(buildStepError.ToFormat().ToString());
+			logger.LogWarning($"  - ❌ Error building goal - {buildStepError.Message}");
 
 			return buildStepError.ContinueBuild;
+		}
+
+		private async Task<IBuilderError?> ContinueBuildStep(IBuilderError? buildStepError, Goal goal, int stepIndex, List<string> excludeModules)
+		{
+			if (buildStepError == null) return null;
+
+			if (buildStepError.Goal == null) buildStepError.Goal = goal;
+			if (buildStepError.Step == null) buildStepError.Step = goal.GoalSteps[stepIndex];
+
+			if (buildStepError is IInvalidModuleError ime && excludeModules.Count < 3)
+			{
+				logger.LogWarning($"  - ❌ Error building step - Error Message: {buildStepError.Message}");
+
+				excludeModules.Add(ime.ModuleType);
+				logger.LogWarning($"  - 🔍 Will try to find another module - attempt {excludeModules.Count+1} of 3");
+				
+				var result = await BuildStep(goal, stepIndex, excludeModules);
+				return result;
+			}
+			else
+			{
+				logger.LogError($"  - ❌ Error finding module for step. I tried {string.Join(",", excludeModules)} - Error message: {buildStepError.Message}");
+			}
+
+			BuildErrors.Add(buildStepError);
+
+			return buildStepError;
 		}
 
 		private async Task<GroupedBuildErrors?> ValidateSteps(Goal goal)
@@ -172,8 +197,23 @@ namespace PLang.Building
 				var functionResult = step.GetFunction(fileSystem);
 				if (functionResult.Error != null)
 				{
+					step.IsValid = false;
 					step.Reload = true;
 					errors.Add(functionResult.Error);
+
+					// skip rest of validation, we already know this step has invalid build
+					continue;
+				}
+
+				var methodHelper = new MethodHelper(step, variableHelper, typeHelper);
+				(var parameterProperties, var returnObjectsProperties, var invalidFunctionError) = methodHelper.ValidateFunctions(step.Instruction.Function, step.ModuleType, null);
+				if (invalidFunctionError != null)
+				{
+					step.Reload = true;
+					step.IsValid = false;
+					errors.Add(invalidFunctionError);
+
+					// skip rest of validation, we already know this step has invalid build
 					continue;
 				}
 
@@ -182,11 +222,13 @@ namespace PLang.Building
 				{
 					errors.Add(builderRun.Error);
 					step.Reload = true;
+					step.IsValid = false;
+
+					// skip rest of validation, we already know this step has invalid build
+					continue;
 				}
-				else
-				{
-					step.IsValid = true;
-				}
+
+				step.IsValid = true;
 			}
 			return (errors.Count > 0) ? errors : null;
 		}
@@ -295,7 +337,7 @@ GoalApiIfo:
 				promptMessage.Add(new LlmMessage("user", goal.GetGoalAsString()));
 				var llmRequest = new LlmRequest("GoalApiInfo", promptMessage);
 
-				(var result, var queryError) = await llmServiceFactory.CreateHandler().Query<GoalInfo>(llmRequest);
+				(var result, var queryError) = await llmServiceFactory.CreateHandler().Query<Model.GoalInfo>(llmRequest);
 				if (queryError != null) return (goal, new GoalBuilderError(queryError, goal, false));
 
 				if (result != null)

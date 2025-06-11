@@ -206,7 +206,7 @@ namespace PlangWindowForms
 			outputTargetElement = jObj["outputTarget"]?.ToString() ?? "body";
 			domOperation = jObj["domOperation"]?.ToString() ?? "innerHTML";
 
-			string goalName = jObj["goalName"].ToString();
+			GoalToCallInfo goalName = jObj["goalName"].ToString();
 
 			var parameters = new Dictionary<string, object?>();
 			if (jObj.ContainsKey("args"))
@@ -217,12 +217,13 @@ namespace PlangWindowForms
 			{
 				parameters = jObj["parameters"]?.ToObject<Dictionary<string, object?>?>();
 			}
+			goalName.Parameters.AddOrReplaceDict(parameters);
 
 			try
 			{				
 				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
 				engine.GetMemoryStack().GetMemoryStack().Clear();
-				var goalResult = await pseudoRuntime.RunGoal(engine, engine.GetContext(), "", goalName, parameters);
+				var goalResult = await pseudoRuntime.RunGoal(engine, engine.GetContext(), "", goalName);
 
 				ShowErrorInDevTools(goalResult.error);
 
@@ -244,7 +245,7 @@ namespace PlangWindowForms
 				var @event = variable.Events.FirstOrDefault(p => p.EventType == VariableEventType.OnChange);
 				if (@event == null) continue;
 
-				jsVars.Add(new JsVariable(variable.Name, @event.goalName, @event.Parameters));
+				jsVars.Add(new JsVariable(variable.Name, @event.GoalToCall, @event.GoalToCall.Parameters));
 			}
 			var jsVarsJson = JsonConvert.ToString(JsonConvert.SerializeObject(jsVars));
 
@@ -337,7 +338,9 @@ namespace PlangWindowForms
 				//goalName = args.Request.Uri.ToString().Replace("plang:", "", StringComparison.OrdinalIgnoreCase);
 				Task.Run(() =>
 				{
-					var task = pseudoRuntime.RunGoal(engine, engine.GetContext(), "", parsedUrl.goalName, parsedUrl.param);
+					GoalToCallInfo goalToCall = new GoalToCallInfo(parsedUrl.goalName, parsedUrl.param);
+
+					var task = pseudoRuntime.RunGoal(engine, engine.GetContext(), "", goalToCall);
 					task.Wait();
 					var goalResult = task.Result;
 					int i = 0;
@@ -494,11 +497,13 @@ namespace PlangWindowForms
 
 			if (!isMedia && args.Request.Uri.StartsWith("https://goal/"))
 			{
-				(string goalName, Dictionary<string, object?>? param) = ParseUrl(args.Request.Uri, args.Request);
+				var parsedUrl = ParseUrl(args.Request.Uri, args.Request);
+
+				GoalToCallInfo goalToCall = new GoalToCallInfo(parsedUrl.goalName, parsedUrl.param);
 				var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
 				//engine.GetMemoryStack().GetMemoryStack().Clear();
 				//goalName = args.Request.Uri.ToString().Replace("plang:", "", StringComparison.OrdinalIgnoreCase);
-				var wait =  pseudoRuntime.RunGoal(engine, engine.GetContext(), "", goalName, param).ConfigureAwait(false);
+				var wait =  pseudoRuntime.RunGoal(engine, engine.GetContext(), "", goalToCall).ConfigureAwait(false);
 				var goalResult = await wait;
 
 				if (goalResult.error != null)

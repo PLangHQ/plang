@@ -1,75 +1,131 @@
 {
-  "Action": {
-    "Namespace": "PLangGeneratedCode",
-    "Name": "CheckLibraryEmpty",
-    "Code": "\nnamespace PLangGeneratedCode\n{\n    public static class CheckLibraryEmpty\n    {\n        public static bool ExecutePlangCode(dynamic? library)\n        {\n            return library == null || string.IsNullOrEmpty(Convert.ToString(library));\n        }\n    }\n}\n",
-    "Using": null,
-    "InputParameters": [
-      {
-        "VariableName": "%library%",
-        "ParameterName": "library",
-        "ParameterType": "dynamic?"
-      }
-    ],
-    "OutParameters": null,
-    "GoalToCallOnTrue": null,
-    "GoalToCallOnFalse": null,
-    "GoalToCallOnTrueParameters": null,
-    "GoalToCallOnFalseParameters": null,
-    "ServicesAssembly": []
-  },
   "Text": "if %library% is empty",
+  "ModuleType": null,
   "Reload": false,
-  "LlmRequest": {
-    "temperature": 0.0,
-    "top_p": 0.0,
-    "frequencyPenalty": 0.0,
-    "presencePenalty": 0.0,
-    "maxLength": 4000,
-    "llmResponseType": "csharp",
-    "scheme": "{\n\t\"GoalToCallOnTrue\": {\n\t\"Value\": string\n} = null,\n\t\"GoalToCallOnTrueParameters\"? : { String : Object, ... } = null,\n\t\"GoalToCallOnFalse\": {\n\t\"Value\": string\n} = null,\n\t\"GoalToCallOnFalseParameters\"? : { String : Object, ... } = null,\n\t\"Namespace\": string,\n\t\"Name\": string,\n\t\"Using\"?: string[] = null,\n\t\"Assemblies\"?: string[] = null,\n\t\"InputParameters\"?: string[] = null\n}",
-    "model": "gpt-4o",
-    "promptMessage": [
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null,\n\t\"Instruction\": {\n\t\"Text\": string,\n\t\"ModuleType\": string,\n\t\"GenericFunctionType\": string,\n\t\"FunctionJson\"?: jtoken\n}\n}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.\n"
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null,\n\t\"Instruction\": {\n\t\"Text\": string,\n\t\"ModuleType\": string,\n\t\"GenericFunctionType\": string,\n\t\"FunctionJson\"?: jtoken\n}\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nCheck whether the variable %library% is empty or not\n## functions available starts ##\r\n{\"Methods\":[{\"MethodName\":\"FileExists\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"filePathOrVariableName\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfTrue\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfFalse\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnTrue\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnFalse\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Boolean\"}},{\"MethodName\":\"DirectoryExists\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"dirPathOrVariableName\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfTrue\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfFalse\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnTrue\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnFalse\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Boolean\"}},{\"MethodName\":\"HasAccessToPath\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"dirOrFilePathOrVariableName\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfTrue\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfFalse\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnTrue\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnFalse\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Boolean\"}},{\"MethodName\":\"IsNotEmpty\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"item\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfTrue\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfFalse\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnTrue\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnFalse\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Boolean\"}},{\"MethodName\":\"IsEmpty\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"item\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfTrue\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parametersForGoalIfTrue\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfFalse\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parametersForGoalIfFalse\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnTrue\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnFalse\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Boolean\"}},{\"MethodName\":\"ContainsNumbers\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"item\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[System.Int32]\",\"Name\":\"contains\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfTrue\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfFalse\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnTrue\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnFalse\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"Nullable<Boolean>\"}},{\"MethodName\":\"ContainsString\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"item\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"contains\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfTrue\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfFalse\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnTrue\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnFalse\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"Nullable<Boolean>\"}},{\"MethodName\":\"IsEqual\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"item1\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"item2\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfTrue\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfFalse\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"ignoreCase\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnTrue\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnFalse\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"Nullable<Boolean>\"}},{\"Description\":\"Choose RunInlineCode when no other method matches user intent. Implementation variable can be set to null.\",\"MethodName\":\"RunInlineCode\",\"Parameters\":[{\"Type\":\"PLang.Services.CompilerService.ConditionImplementationResponse\",\"Name\":\"implementation\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\"}}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallIfTrue\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Modules.ThrowErrorModule.ErrorInfo\",\"Name\":\"throwErrorOnTrue\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Building.Model.Instruction\",\"Name\":\"Instruction\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Text\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"ModuleType\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"GenericFunctionType\",\"IsRequired\":true},{\"Type\":\"Newtonsoft.Json.Linq.JToken\",\"Name\":\"FunctionJson\",\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"PLang.Services.CompilerService.ConditionImplementationResponse\",\"Name\":\"implementation\",\"TypeProperties\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"GoalToCallOnTrue\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"GoalToCallOnFalse\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Reasoning\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Namespace\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"List<string>\",\"Name\":\"Using\",\"IsRequired\":true},{\"Type\":\"List<string>\",\"Name\":\"Assemblies\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter]\",\"Name\":\"Parameters\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue]\",\"Name\":\"ReturnValues\",\"IsRequired\":true},{\"Type\":\"PLang.Building.Model.Instruction\",\"Name\":\"Instruction\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":true}],\"IsRequired\":true}]}\r\n## functions available ends ##\r\n## defined variables ##\r\nlibrary (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "if %library% is empty"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.ConditionalModule.Builder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to check if the variable %library% is empty. The IsEmpty function is designed to check if an object is empty, which matches the user's intent exactly.\",\n  \"Name\": \"IsEmpty\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"item\",\n      \"Value\": \"%library%\"\n    }\n  ],\n  \"ReturnValues\": null,\n  \"Instruction\": {\n    \"Text\": \"Check if %library% is empty\",\n    \"ModuleType\": \"Condition\",\n    \"GenericFunctionType\": \"IsEmpty\",\n    \"FunctionJson\": null\n  }\n}"
+    }
+  ],
+  "Properties": {
+    "Parameters": {
+      "goalToCallIfTrue": [
+        {
+          "Name": "Name",
+          "FullTypeName": "System.String"
+        },
+        {
+          "Name": "Parameters",
+          "FullTypeName": "System.Collections.Generic.Dictionary`2[[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Object, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
+        }
+      ],
+      "parametersForGoalIfTrue": [
+        {
+          "Name": "parametersForGoalIfTrue",
+          "FullTypeName": "System.Object"
+        }
+      ],
+      "goalToCallIfFalse": [
+        {
+          "Name": "Name",
+          "FullTypeName": "System.String"
+        },
+        {
+          "Name": "Parameters",
+          "FullTypeName": "System.Collections.Generic.Dictionary`2[[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Object, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
+        }
+      ],
+      "parametersForGoalIfFalse": [
+        {
+          "Name": "parametersForGoalIfFalse",
+          "FullTypeName": "System.Object"
+        }
+      ],
+      "throwErrorOnTrue": [
+        {
+          "Name": "errorMessage",
+          "FullTypeName": "System.String"
+        },
+        {
+          "Name": "type",
+          "FullTypeName": "System.String"
+        },
+        {
+          "Name": "statusCode",
+          "FullTypeName": "System.Int32"
+        }
+      ],
+      "throwErrorOnFalse": [
+        {
+          "Name": "errorMessage",
+          "FullTypeName": "System.String"
+        },
+        {
+          "Name": "type",
+          "FullTypeName": "System.String"
+        },
+        {
+          "Name": "statusCode",
+          "FullTypeName": "System.Int32"
+        }
+      ]
+    },
+    "ReturnValues": {}
+  },
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to check if the variable %library% is empty. The IsEmpty function is designed to check if an object is empty, which matches the user's intent exactly.",
+    "Name": "IsEmpty",
+    "Parameters": [
       {
-        "role": "system",
-        "content": [
-          {
-            "type": "text",
-            "text": "Act as a senior C# developer, that converts the user intent into a valid C#(Version. 11) code. \r\n\r\n## Rules ##\r\n- Generate static class. The code generated should have 1 method with the static method named ExecutePlangCode and return bool. \r\n- A variable in user intent is defined by starting and ending %.\r\n- Variables defined in the user intent can be passed into the ExecutePlangCode function by value, but only if defined by user. \r\n- Variable names passed to ExecutePlangCode function MUST be unmodified from the user statement\r\n- The code will not be modified after you generate it.\r\n- ALWAYS use long or long? instead of int or int?\r\n- Use long.TryParse when validating if variable is long\r\n- Do not reference any DTO classes. Choose the type that seems to fit best when not defined by user input. Use dynamic? if complex object is needed.\r\n- Strings are defined with double quote (\")\r\n- Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. \r\n- ONLY IF PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into ExecutePlangCode method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.\r\n- When condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. ExecutePlangCode(dynamic? variable)\r\n- Replace the dot(.) in variables with the letter α e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α\r\n- Keep underscore in variables if defined by user, e.g.  if %user_id%(string) is null => ExecutePlangCode(string? user_id)\r\n- Consider top security measures when generating code and validate code\r\n- append @ sign for variable that match reserved keywords in C#\r\n- C# code MUST only contain the contition code and return bool, an external system will call goals(methods) that user defines in his intent.\r\n- initialize variables before using them in TryParse\r\n- Always convert object to type before doing return.\r\n- Always convert object to correct type in code, e.g. if code requires the object to be string use Convert.ToString(obj), when object should be bool Convert.ToBoolean(obj), etc.\r\n- when checking if string is empty, check if it's null and do .ToString() on it and check if empty\r\n- GoalToCallOnTrueParameters and GoalToCallOnFalseParameters should not be in c# code\r\n- Variable with ! reference variables stored in context, e.g. %!request%.\r\n## Rules ##\r\n\r\n## Response information ##\r\n- Namespace: MUST be PLangGeneratedCode\r\n- Name: is name of class, it should represent the intent of what the code is doing. \r\n\r\n- GoalToCallOnTrue or GoalToCallOnFalse is optional, if not defined by user, set as null\r\n- GoalToCallOnTrue and GoalToCallOnFalse MUST not be in c# code\r\n- Goals can be called with parameters using GoalToCallOnTrueParameters and GoalToCallOnFalseParameters, e.g. if %isValid% then, call UpdateProduct id=%id%, call FalseCall status='false'. Then id is parameter for True, and status for False\r\n- Using: must include namespaces that are needed to compile code.\r\n- InputParameters: InputParameters MUST match parameter count sent to ExecutePlangCode. Keep format as is defined by user, e.g. if %!error% then => Parameters would be [\"%!error%\"], if %items.count% > 0 and %isValid% then => Parameters would be [\"%list[0]%\", \"%isValid%\"]\r\n- Assemblies: dll to reference to compile using Roslyn\r\n## Response information ##\r\n"
-          },
-          {
-            "type": "text",
-            "text": "Only write the raw c# code and json scheme, no summary, no extra text to explain, be concise.\r\n\tYOU MUST implement all code needed and valid c# code. \r\n\tYou must return ```csharp for the code implementation and ```json scheme: {\n\t\"GoalToCallOnTrue\": {\n\t\"Value\": string\n} = null,\n\t\"GoalToCallOnTrueParameters\"? : { String : Object, ... } = null,\n\t\"GoalToCallOnFalse\": {\n\t\"Value\": string\n} = null,\n\t\"GoalToCallOnFalseParameters\"? : { String : Object, ... } = null,\n\t\"Namespace\": string,\n\t\"Name\": string,\n\t\"Using\"?: string[] = null,\n\t\"Assemblies\"?: string[] = null,\n\t\"InputParameters\"?: string[] = null\n}"
-          }
-        ]
-      },
-      {
-        "role": "assistant",
-        "content": [
-          {
-            "type": "text",
-            "text": "## functions available starts ##\r\n[{\"MethodName\":\"Run\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"System.Object\"}}]\r\n## functions available ends ##\r\n## defined variables ##\r\nlibrary (type:System.Object), \r\n## defined variables ##"
-          },
-          {
-            "type": "text",
-            "text": "## examples ##\r\n'if %isValid% is true then', this condition would return true if %isValid% is true. \r\n'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false.\r\n'if %data.user% is not empty, then call ProcessUser user=%data.user%', => public static bool ExecutePlangCode(object? dataαuuser) { return (dataαuuser == null || string.IsNullOrEmpty(dataαuuser.ToString()); }, GoalToCallOnTrue=ProcessUser, GoalToCallOnTrueParameters={user:%data.user%}\r\n'if %data% (string) is null, call CreateData, else AppendData' => public static bool ExecutePlangCode(string? dataαuser_id) { return string.IsNullOrEmpty(userIdentity); }, GoalToCallOnTrue=CreateData, GoalToCallOnFalse=AppendData\r\n'if %exists% (bool) is null, call CreateUser' => public static bool ExecutePlangCode(bool? dataαuser_id) { return exists == null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null\r\n'if %exists% (bool) is not null, call CreateUser' => public static bool ExecutePlangCode(bool? dataαuser_id) { return exists != null;}, GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=null\r\n'if %data.user_id% is empty, call CreateUser, else UpdateUser user=%data%' => public static bool ExecutePlangCode(dynamic? dataαuser_id) { return (dataαuser_id == null || (dataαuser_id is string str && string.IsNullOrEmpty(str))); } //if we dont know the type of %data.user_id%, , GoalToCallOnTrue=CreateUser, GoalToCallOnFalse=UpdateUser, GoalToCallOnFalseParameters={user:%data%}\r\n'if !%isValid% then => public static bool ExecutePlangCode(bool? isValid) { return !isValid; }, GoalToCallOnTrue=null, GoalToCallOnFalse=null\r\n'if %first_name% is null, call UpdateFirstName' => public static bool ExecutePlangCode(string? first_name) { return (first_name == null || string.IsNullOrEmpty(str)); }\r\n'if directory %path% exists, call DoStuff => public static bool ExecutePlangCode(string? path, IPlangFileSystem fileSystem) { return fileSystem.Directory.Exists(path); }\r\n'if file %path% exists, call DoStuff => public static bool ExecutePlangCode(string? path, IPlangFileSystem fileSystem) { return fileSystem.File.Exists(path); }\r\n'if %!response.IsHtml% then call ParseHtml => public static bool ExecutePlangCode(bool? isHtml) { return isHtml; }\r\n## examples ##\r\n"
-          }
-        ]
-      },
-      {
-        "role": "user",
-        "content": [
-          {
-            "type": "text",
-            "text": "if %library% is empty"
-          }
-        ]
+        "Type": "System.Object",
+        "Name": "item",
+        "Value": "%library%"
       }
     ],
-    "type": "PLang.Modules.ConditionalModule.Builder",
-    "caching": true,
-    "RawResponse": "```csharp\nnamespace PLangGeneratedCode\n{\n    public static class CheckLibraryEmpty\n    {\n        public static bool ExecutePlangCode(dynamic? library)\n        {\n            return library == null || string.IsNullOrEmpty(Convert.ToString(library));\n        }\n    }\n}\n```\n```json\n{\n    \"GoalToCallOnTrue\": null,\n    \"GoalToCallOnFalse\": null,\n    \"Namespace\": \"PLangGeneratedCode\",\n    \"Name\": \"CheckLibraryEmpty\",\n    \"Using\": null,\n    \"Assemblies\": null,\n    \"InputParameters\": [\"%library%\"]\n}\n```"
-  },
-  "RunOnBuild": false,
-  "Metadata": {}
+    "ReturnValues": null
+  }
 }

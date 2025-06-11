@@ -17,10 +17,11 @@ using PLang.Utils;
 using Microsoft.Extensions.Logging;
 using PLang.Services.OutputStream;
 using PLang.Modules.ThrowErrorModule;
+using static PLang.Modules.ConditionalModule.ConditionEvaluator;
 
 namespace PLang.Modules.ConditionalModule
 {
-	[Description(@"Manages if conditions for the user request. Example 1:'if %isValid% is true then', this condition would return true if %isValid% is true. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.")]
+	[Description(@"Manages if conditions for the user request. Example 1:'if %isValid% is true then call SomeGoal, else call OtherGoal', this condition would return true if %isValid% is true and call a goals on either conditions. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.")]
 	public class Program : BaseProgram
 	{
 		private readonly IEngine engine;
@@ -36,52 +37,82 @@ namespace PLang.Modules.ConditionalModule
 			this.logger = logger;
 		}
 
-		public async Task<(bool, IError?)> FileExists(string filePathOrVariableName, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null,
-			GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null,
+		public async Task<(bool, IError?)> FileExists(string filePathOrVariableName, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			string path = GetPath(filePathOrVariableName);
 			var result = fileSystem.File.Exists(path);
-			return (result, await ExecuteResult(result, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 		}
 
-		public async Task<(bool, IError?)> DirectoryExists(string dirPathOrVariableName, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null,
-			GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null,
+		public async Task<(bool, IError?)> DirectoryExists(string dirPathOrVariableName, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			var path = GetPath(dirPathOrVariableName);
 			var result = fileSystem.File.Exists(path);
-			return (result, await ExecuteResult(result, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 		}
-		public async Task<(bool, IError?)> HasAccessToPath(string dirOrFilePathOrVariableName, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null,
-			GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null,
+		public async Task<(bool, IError?)> HasAccessToPath(string dirOrFilePathOrVariableName, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			var path = GetPath(dirOrFilePathOrVariableName);
 			var result = fileSystem.ValidatePath(path) != null;
-			return (result, await ExecuteResult(result, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+		}
+		
+		public async Task<(bool, IError?)> SimpleCondition(SimpleCondition condition, 
+			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		{
+			var result = ConditionEngine.Evaluate(condition);
+			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 		}
 
-		public async Task<(bool, IError?)> IsNotEmpty(object? item, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null,
-			GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null,
+		public async Task<(bool, IError?)> CompoundCondition(CompoundCondition condition, 
+			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		{
+			var result = ConditionEngine.Evaluate(condition);
+			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+		}
+		
+		public async Task<(bool, IError?)> IsFalse(bool? item, GoalToCallInfo? goalToCallIfTrue = null,
+			GoalToCallInfo? goalToCallIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		{
+			if (item == null) { item = false; }
+			item = !item;
+
+			return (item.Value, await ExecuteResult(item.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+		}
+
+		public async Task<(bool, IError?)> IsTrue(bool? item, GoalToCallInfo? goalToCallIfTrue = null,
+			GoalToCallInfo? goalToCallIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		{
+			if (item == null) { item = false; }
+
+			return (item.Value, await ExecuteResult(item.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+		}
+		public async Task<(bool, IError?)> IsNotEmpty(object? item, GoalToCallInfo? goalToCallIfTrue = null,
+			GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			var result = !IsEmptyCheck(item);
 
-			return (result, await ExecuteResult(result, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 		}
 
 
-		public async Task<(bool, IError?)> IsEmpty(object? item, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null,
-						GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null,
+		public async Task<(bool, IError?)> IsEmpty(object? item, GoalToCallInfo? goalToCallIfTrue = null,
+						GoalToCallInfo? goalToCallIfFalse = null,
 						ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			var result = IsEmptyCheck(item);
-			return (result, await ExecuteResult(result, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 		}
-		public async Task<(bool?, IError?)> ContainsNumbers(object? item, List<int> contains, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null,
-						GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null,
-						ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		public async Task<(bool?, IError?)> ContainsNumbers(object? item, List<int> contains, GoalToCallInfo? goalToCallIfTrue = null,  GoalToCallInfo? goalToCallIfFalse = null, 
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			bool? result = null;
 			if (item == null) result = false;
@@ -100,11 +131,10 @@ namespace PLang.Modules.ConditionalModule
 				return (null, new ProgramError($"object is type of '{item?.GetType()}'. Not sure how I should find {contains} in it."));
 			}
 
-			return (result, await ExecuteResult(result.Value, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return (result, await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 
 		}
-		public async Task<(bool?, IError?)> ContainsString(object? item, string contains, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null,
-			GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null,
+		public async Task<(bool?, IError?)> ContainsString(object? item, string contains, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			bool? result = null;
@@ -117,7 +147,7 @@ namespace PLang.Modules.ConditionalModule
 
 			if (result != null)
 			{
-				return (result, await ExecuteResult(result.Value, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+				return (result, await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 			}
 
 			return (null, new ProgramError($"object is type of '{item?.GetType()}'. Not sure how I should find {contains} in it.{ErrorReporting.CreateIssueNotImplemented}"));
@@ -154,8 +184,8 @@ namespace PLang.Modules.ConditionalModule
 
 		}
 
-		public async Task<(bool?, IError?)> IsEqual(object? item1, object? item2, GoalToCall? goalToCallIfTrue = null, Dictionary<string, object?>? parametersForGoalIfTrue = null,
-			GoalToCall? goalToCallIfFalse = null, Dictionary<string, object?>? parametersForGoalIfFalse = null, bool ignoreCase = true,
+		public async Task<(bool?, IError?)> IsEqual(object? item1, object? item2, GoalToCallInfo? goalToCallIfTrue = null,
+			GoalToCallInfo? goalToCallIfFalse = null, bool ignoreCase = true,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			bool? result = null;
@@ -208,7 +238,7 @@ namespace PLang.Modules.ConditionalModule
 				}
 			}
 
-			return (result, await ExecuteResult(result.Value, goalToCallIfTrue, parametersForGoalIfTrue, goalToCallIfFalse, parametersForGoalIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+			return (result, await ExecuteResult(result.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 
 		}
 
@@ -323,7 +353,7 @@ namespace PLang.Modules.ConditionalModule
 				// The second parameter is an object array containing the arguments of the method.
 				bool result = (bool?)method.Invoke(null, parametersObject.ToArray()) ?? false;
 
-				return (result, await ExecuteResult(result, implementation.GoalToCallOnTrue, implementation.GoalToCallOnTrueParameters, implementation.GoalToCallOnFalse, implementation.GoalToCallOnFalseParameters));
+				return (result, await ExecuteResult(result, implementation.GoalToCallOnTrue, implementation.GoalToCallOnFalse));
 
 			}
 			catch (Exception ex)
@@ -334,45 +364,36 @@ namespace PLang.Modules.ConditionalModule
 
 		}
 
-		private async Task<IError?> ExecuteResult(bool result, GoalToCall? goalToCallOnTrue, Dictionary<string, object?>? goalToCallOnTrueParameters,
-			GoalToCall? goalToCallOnFalse, Dictionary<string, object?>? goalToCallOnFalseParameters, ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		private async Task<IError?> ExecuteResult(bool result, GoalToCallInfo? goalToCallOnTrue,
+			GoalToCallInfo? goalToCallOnFalse, ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 
 			Task<(IEngine, object? Variables, IError? error, IOutput? output)>? task = null;
-			string? goalToCall = null;
+			GoalToCallInfo? goalToCall = null;
 			Dictionary<string, object?>? parameters = new();
 
-			if (result && goalToCallOnTrue != null && goalToCallOnTrue.Value != null)
+			if (result && goalToCallOnTrue != null)
 			{
 				if (VariableHelper.IsVariable(goalToCallOnTrue))
 				{
-					goalToCallOnTrue = variableHelper.LoadVariables(goalToCallOnTrue)?.ToString();
-				}
-				if (goalToCallOnTrueParameters?.Count == 1 && VariableHelper.IsVariable(goalToCallOnTrueParameters.FirstOrDefault().Value))
-				{
-					var obj = variableHelper.LoadVariables(goalToCallOnTrueParameters.FirstOrDefault().Value);
-					if (obj is JObject jObject)
-					{
-						goalToCallOnTrueParameters = jObject.ToDictionary();
-					}
+					goalToCallOnTrue.Name = variableHelper.LoadVariables(goalToCallOnTrue.Name)?.ToString();
 				}
 				goalToCall = goalToCallOnTrue;
-				parameters = goalToCallOnTrueParameters;
 			}
-			else if (!result && goalToCallOnFalse != null && goalToCallOnFalse.Value != null)
+			else if (!result && goalToCallOnFalse != null)
 			{
 				if (VariableHelper.IsVariable(goalToCallOnFalse))
 				{
-					goalToCallOnFalse = variableHelper.LoadVariables(goalToCallOnFalse)?.ToString();
+					goalToCallOnFalse.Name = variableHelper.LoadVariables(goalToCallOnFalse.Name)?.ToString();
 				}
-
 				goalToCall = goalToCallOnFalse;
-				parameters = goalToCallOnFalseParameters;
 			}
 
 			if (goalToCall != null)
 			{
-				task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCall, parameters, goal);
+				goalToCall.Parameters = variableHelper.LoadVariables(goalToCall.Parameters);
+
+				task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCall, goal);
 				if (task != null)
 				{
 					try

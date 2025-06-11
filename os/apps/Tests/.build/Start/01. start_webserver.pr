@@ -1,97 +1,149 @@
 {
-  "Action": {
-    "FunctionName": "StartWebserver",
+  "Text": "start webserver",
+  "ModuleType": null,
+  "Reload": false,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null,\n\t\"Instruction\": {\n\t\"Text\": string,\n\t\"ModuleType\": string,\n\t\"GenericFunctionType\": string,\n\t\"FunctionJson\"?: jtoken\n}\n}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null,\n\t\"Instruction\": {\n\t\"Text\": string,\n\t\"ModuleType\": string,\n\t\"GenericFunctionType\": string,\n\t\"FunctionJson\"?: jtoken\n}\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nThe user wants to start a webserver to handle HTTP requests and serve content.\n## functions available starts ##\r\n{\"Methods\":[{\"MethodName\":\"ShutdownWebserver\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"webserverName\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"PLang.Modules.WebserverModule.Program+WebserverInfo\"}},{\"MethodName\":\"RestartWebserver\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"webserverName\",\"DefaultValue\":\"default\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Boolean\"}},{\"Description\":\"When path is /api, overwite the default ContentType value to application/json unless defined by user\",\"MethodName\":\"AddRoute\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"System.String[]\",\"Name\":\"method\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"ContentType\",\"DefaultValue\":\"text/html\",\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Int64]\",\"Name\":\"MaxContentLength\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"DefaultResponseContentEncoding\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"webserverName\",\"DefaultValue\":\"default\",\"IsRequired\":false}]},{\"MethodName\":\"StartWebserver\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"webserverName\",\"DefaultValue\":\"default\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"scheme\",\"DefaultValue\":\"http\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"host\",\"DefaultValue\":\"localhost\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"port\",\"DefaultValue\":8080,\"IsRequired\":false},{\"Type\":\"System.Int64\",\"Name\":\"maxContentLengthInBytes\",\"DefaultValue\":4194304,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"defaultResponseContentEncoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"signedRequestRequired\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.WebserverModule.Program+Routing]\",\"Name\":\"routings\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"PLang.Modules.WebserverModule.Program+WebserverInfo\"}},{\"MethodName\":\"Redirect\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"IsRequired\":true}]},{\"MethodName\":\"WriteToResponseHeader\",\"Parameters\":[{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"headers\",\"IsRequired\":true}]},{\"Description\":\"headerKey should be null unless specified by user\",\"MethodName\":\"GetUserIp\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"headerKey\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"MethodName\":\"GetRequestHeader\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"MethodName\":\"GetCookie\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"name\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"MethodName\":\"WriteCookie\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"name\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"value\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"expiresInSeconds\",\"DefaultValue\":604800,\"IsRequired\":false}]},{\"MethodName\":\"DeleteCookie\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"name\",\"IsRequired\":true}]},{\"MethodName\":\"SendFileToClient\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"fileName\",\"IsRequired\":false}]},{\"MethodName\":\"VerifySignature\",\"Parameters\":[{\"Type\":\"System.Net.HttpListenerRequest\",\"Name\":\"request\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"body\",\"IsRequired\":true},{\"Type\":\"PLang.Runtime.MemoryStack\",\"Name\":\"memoryStack\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":true}]},{\"MethodName\":\"SendToWebSocket\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"data\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"headers\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"webSocketName\",\"DefaultValue\":\"default\",\"IsRequired\":false}]},{\"MethodName\":\"SendToWebSocket\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"data\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"headers\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"webSocketName\",\"DefaultValue\":\"default\",\"IsRequired\":false}]},{\"MethodName\":\"StartWebSocketConnection\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"webSocketName\",\"DefaultValue\":\"default\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"contentRecievedVariableName\",\"DefaultValue\":\"%content%\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"PLang.Modules.WebserverModule.Program+WebSocketInfo\"}}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.WebserverModule.Program+Routing]\",\"Name\":\"routings\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Path\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"GoalToCall\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.String[]\",\"Name\":\"Method\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"ContentType\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"IsRequired\":true},{\"Type\":\"System.Nullable`1[System.Int64]\",\"Name\":\"MaxContentLength\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"DefaultResponseContentEncoding\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"System.Net.HttpListenerRequest\",\"Name\":\"request\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"ServiceName\",\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"PLang.Building.Model.RetryHandler\",\"Name\":\"RetryHandler\",\"TypeProperties\":[{\"Type\":\"System.Int32\",\"Name\":\"RetryCount\",\"IsRequired\":true},{\"Type\":\"System.Nullable`1[System.Int32]\",\"Name\":\"RetryDelayInMilliseconds\",\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"PLang.Building.Model.CachingHandler\",\"Name\":\"CacheHandler\",\"TypeProperties\":[{\"Type\":\"System.Int64\",\"Name\":\"TimeInMilliseconds\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"CacheKey\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"CachingType\",\"Description\":\"Sliding = 0, Absolute = 1\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Location\",\"Description\":\"Location = \\\"memory\\\"|\\\"disk\\\". Default is \\\"memory\\\"\",\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"PLang.Building.Model.CancellationHandler\",\"Name\":\"CancellationHandler\",\"TypeProperties\":[{\"Type\":\"System.Nullable`1[System.Int64]\",\"Name\":\"CancelExecutionAfterXMilliseconds\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"GoalNameToCallAfterCancellation\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Building.Model.ErrorHandler]\",\"Name\":\"ErrorHandlers\",\"IsRequired\":true},{\"Type\":\"PLang.Building.Model.GoalApiInfo\",\"Name\":\"GoalApiInfo\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Method\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Description\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"ContentEncoding\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"ContentType\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"MaxContentLengthInBytes\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"CacheControlPrivateOrPublic\",\"IsRequired\":true},{\"Type\":\"System.Nullable`1[System.Int32]\",\"Name\":\"CacheControlMaxAge\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"NoCacheOrNoStore\",\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"PLang.Building.Model.GoalInfo\",\"Name\":\"GoalInfo\",\"TypeProperties\":[{\"Type\":\"PLang.Building.Model.GoalApiInfo\",\"Name\":\"GoalApiInfo\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"PLang.Building.Model.Goal\",\"Name\":\"Goal\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"GoalName\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Comment\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Text\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Building.Model.GoalStep]\",\"Name\":\"GoalSteps\",\"IsRequired\":true},{\"Type\":\"List<string>\",\"Name\":\"SubGoals\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Description\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"GoalFileName\",\"IsRequired\":true},{\"Type\":\"PLang.Building.Model.GoalInfo\",\"Name\":\"GoalInfo\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, String>\",\"Name\":\"IncomingVariablesRequired\",\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"PLang.Runtime.MemoryStack\",\"Name\":\"memoryStack\",\"TypeProperties\":[{\"Type\":\"PLang.Building.Model.Goal\",\"Name\":\"Goal\",\"Description\":\"(see SupportingObjects)\",\"IsRequired\":true}],\"IsRequired\":true}]}\r\n## functions available ends ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "start webserver"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to start a webserver. The appropriate function to use is StartWebserver, which allows starting a webserver with default parameters if no specific details are provided.\",\n  \"Name\": \"StartWebserver\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"webserverName\",\n      \"Value\": \"default\"\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"scheme\",\n      \"Value\": \"http\"\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"host\",\n      \"Value\": \"localhost\"\n    },\n    {\n      \"Type\": \"System.Int32\",\n      \"Name\": \"port\",\n      \"Value\": 8080\n    },\n    {\n      \"Type\": \"System.Int64\",\n      \"Name\": \"maxContentLengthInBytes\",\n      \"Value\": 4194304\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"defaultResponseContentEncoding\",\n      \"Value\": \"utf-8\"\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"signedRequestRequired\",\n      \"Value\": false\n    }\n  ],\n  \"ReturnValues\": null,\n  \"Instruction\": {\n    \"Text\": \"Start a webserver with default settings on localhost at port 8080 using HTTP scheme.\",\n    \"ModuleType\": \"WebserverModule\",\n    \"GenericFunctionType\": \"StartWebserver\"\n  }\n}"
+    }
+  ],
+  "Properties": {
+    "Parameters": {
+      "webserverName": [
+        {
+          "Name": "webserverName",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "scheme": [
+        {
+          "Name": "scheme",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "host": [
+        {
+          "Name": "host",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "port": [
+        {
+          "Name": "port",
+          "FullTypeName": "System.Int32"
+        }
+      ],
+      "maxContentLengthInBytes": [
+        {
+          "Name": "maxContentLengthInBytes",
+          "FullTypeName": "System.Int64"
+        }
+      ],
+      "defaultResponseContentEncoding": [
+        {
+          "Name": "defaultResponseContentEncoding",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "signedRequestRequired": [
+        {
+          "Name": "signedRequestRequired",
+          "FullTypeName": "System.Boolean"
+        }
+      ],
+      "routings": [
+        {
+          "Name": "routings",
+          "FullTypeName": "System.Object"
+        }
+      ]
+    },
+    "ReturnValues": {}
+  },
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to start a webserver. The appropriate function to use is StartWebserver, which allows starting a webserver with default parameters if no specific details are provided.",
+    "Name": "StartWebserver",
     "Parameters": [
       {
-        "Type": "String",
+        "Type": "System.String",
         "Name": "webserverName",
         "Value": "default"
       },
       {
-        "Type": "String",
+        "Type": "System.String",
         "Name": "scheme",
         "Value": "http"
       },
       {
-        "Type": "String",
+        "Type": "System.String",
         "Name": "host",
         "Value": "localhost"
       },
       {
-        "Type": "Int32",
+        "Type": "System.Int32",
         "Name": "port",
         "Value": 8080
       },
       {
-        "Type": "Int64",
+        "Type": "System.Int64",
         "Name": "maxContentLengthInBytes",
         "Value": 4194304
       },
       {
-        "Type": "String",
+        "Type": "System.String",
         "Name": "defaultResponseContentEncoding",
         "Value": "utf-8"
       },
       {
-        "Type": "Boolean",
+        "Type": "System.Boolean",
         "Name": "signedRequestRequired",
         "Value": false
-      },
-      {
-        "Type": "List`1<Routing>",
-        "Name": "routings",
-        "Value": null
       }
     ],
     "ReturnValues": null
-  },
-  "Text": "start webserver",
-  "Reload": false,
-  "LlmRequest": {
-    "temperature": 0.0,
-    "top_p": 0.0,
-    "frequencyPenalty": 0.0,
-    "presencePenalty": 0.0,
-    "maxLength": 4000,
-    "llmResponseType": "json",
-    "scheme": "{\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-    "model": "gpt-4o",
-    "promptMessage": [
-      {
-        "role": "system",
-        "content": [
-          {
-            "type": "text",
-            "text": "Your job is: \r\n1. Parse user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\nVariable is defined with starting and ending %, e.g. %filePath%. \r\n%Variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See == QuoteExample ==\r\n\r\n== QuoteExample ==\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n== QuoteExample ==\r\n\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\n\r\n\r\n\r\nJSON scheme information\r\nFunctionName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
-          },
-          {
-            "type": "text",
-            "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"FunctionName\": string,\n\t\"Parameters\": [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}],\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
-          }
-        ]
-      },
-      {
-        "role": "assistant",
-        "content": [
-          {
-            "type": "text",
-            "text": "## functions available starts ##\r\nShutdownWebserver(String webserverName)  : WebserverInfo \nRestartWebserver(String? webserverName = \"default\")  : Boolean \nAddRoute(String path, GoalToCall? goalToCall, String? method, String? ContentType = \"text/html\", Dictionary`2<String, Object>? Parameters, Nullable`1<Int64>? MaxContentLength, String? DefaultResponseContentEncoding, String? webserverName = \"default\")  : void \nStartWebserver(String? webserverName = \"default\", String? scheme = \"http\", String? host = \"localhost\", Int32? port = 8080, Int64? maxContentLengthInBytes = 4194304, String? defaultResponseContentEncoding = \"utf-8\", Boolean? signedRequestRequired = False, List`1<Routing>? routings)  : WebserverInfo \nRedirect(String url)  : void\nWriteToResponseHeader(Dictionary`2<String, Object> headers)  : void\nGetUserIp(String? headerKey)  : String  // headerKey should be null unless specified by user. \nGetRequestHeader(String key)  : String \nGetCookie(String name)  : String \nWriteCookie(String name, String value, Int32? expiresInSeconds = 604800)  : void\nDeleteCookie(String name)  : void\nSendFileToClient(String path, String? fileName)  : void\nVerifySignature(HttpListenerRequest request, String body, MemoryStack memoryStack)  : void\nSendToWebSocket(GoalToCall goalToCall, Dictionary`2<String, Object>? parameters, String? webSocketName = \"default\")  : void\nStartWebSocketConnection(String url, GoalToCall goalToCall, String? webSocketName = \"default\", String? contentRecievedVariableName = \"%content%\")  : WebSocketInfo\r\n## functions available ends ##"
-          }
-        ]
-      },
-      {
-        "role": "user",
-        "content": [
-          {
-            "type": "text",
-            "text": "start webserver"
-          }
-        ]
-      }
-    ],
-    "type": "PLang.Modules.GenericFunctionBuilder",
-    "caching": true,
-    "RawResponse": "```json\n{\n\t\"FunctionName\": \"StartWebserver\",\n\t\"Parameters\": [{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"webserverName\",\n\t\t\t\"Value\": \"default\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"scheme\",\n\t\t\t\"Value\": \"http\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"host\",\n\t\t\t\"Value\": \"localhost\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Int32\",\n\t\t\t\"Name\": \"port\",\n\t\t\t\"Value\": 8080\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Int64\",\n\t\t\t\"Name\": \"maxContentLengthInBytes\",\n\t\t\t\"Value\": 4194304\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"String\",\n\t\t\t\"Name\": \"defaultResponseContentEncoding\",\n\t\t\t\"Value\": \"utf-8\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Boolean\",\n\t\t\t\"Name\": \"signedRequestRequired\",\n\t\t\t\"Value\": false\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"List`1<Routing>\",\n\t\t\t\"Name\": \"routings\",\n\t\t\t\"Value\": null\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}\n```"
-  },
-  "RunOnBuild": false
+  }
 }

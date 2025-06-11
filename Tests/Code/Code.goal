@@ -1,7 +1,8 @@
 Code
+- listen to %assertResult%, call Result
 - set %name%(string) as 'Toby Flenderson'
-- [code] get first  name of %name%,  write to %firstName%
-- write out %firstName%
+- [code] get first name of %name%, write to %firstName%
+- assert that %firstName% is "Toby"
 - [code] get last name of %name%, write to %lastName%
 - write out %lastName%
 - [code] uppercase %name%, write to %uppercaseName%
@@ -11,3 +12,6 @@ Code
 - set %fileNameWithExtension% as 'video.mp4'
 - [code] remove file extension from %fileNameWithExtension%, write to %fileName%
 - write out %fileName%
+
+Result
+- write out "%assertResult%"

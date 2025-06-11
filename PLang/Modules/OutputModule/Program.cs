@@ -32,8 +32,7 @@ namespace PLang.Modules.OutputModule
 			this.programFactory = programFactory;
 		}
 
-		public record GoalToCallWithParams(GoalToCall GoalToCall, Dictionary<string, object?>? parameters = null);
-		public async Task<IError?> SetOutputStream(string channel, GoalToCall goalToCall, Dictionary<string, object?>? parameters = null)
+		public async Task<IError?> SetOutputStream(string channel, GoalToCallInfo goalToCall, Dictionary<string, object?>? parameters = null)
 		{
 			var validate = programFactory.GetProgram<ValidateModule.Program>(goalStep);
 			var error = await validate.IsNotEmpty([channel], "Channel cannot be empty");
@@ -42,7 +41,7 @@ namespace PLang.Modules.OutputModule
 			error = await validate.IsNotEmpty([goalToCall], "GoalToCall cannot be empty");
 			if (error != null) return error;
 
-			goal.AddVariable(new GoalToCallWithParams(goalToCall, parameters), variableName: "!output_stream_" + channel);
+			goal.AddVariable(new GoalToCallInfo(goalToCall, parameters), variableName: "!output_stream_" + channel);
 			return null;
 		}
 
@@ -65,7 +64,9 @@ namespace PLang.Modules.OutputModule
 				param.Add("options", json);
 			}
 
-			return await callGoalModule.RunGoal("/modules/OutputModule/AskUserLlm", param, isolated: true);
+			var goalToCall = new GoalToCallInfo("/modules/OutputModule/AskUserLlm", param);
+
+			return await callGoalModule.RunGoal(goalToCall, isolated: true);
 		}
 		[Description("Send to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. regexPattern can contain %variable%. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.")]
 		public async Task<(string?, IError?)> AskUser(string text, string type = "text", int statusCode = 202, string? regexPattern = null, string? errorMessage = null, Dictionary<string, object>? parameters = null)
@@ -124,20 +125,16 @@ namespace PLang.Modules.OutputModule
 
 			if (channel != null && goal.GetVariable<bool?>("!output_stream_" + channel + "_goal") == null)
 			{
-				var goalToCall = goal.GetVariable<GoalToCallWithParams>("!output_stream_" + channel);
+				var goalToCall = goal.GetVariable<GoalToCallInfo>("!output_stream_" + channel);
 				if (goalToCall != null)
 				{
-					paramaters.AddOrReplace("type", type);
-					paramaters.AddOrReplace("statusCode", statusCode);
-					paramaters.AddOrReplace("content", content);
-					foreach (var goalParam in goalToCall.parameters ?? [])
-					{
-						paramaters.AddOrReplace(goalParam.Key, goalParam.Value);
-					}
-					paramaters.AddOrReplace("!output_stream_" + channel + "_goal", true);
+					goalToCall.Parameters.AddOrReplace("type", type);
+					goalToCall.Parameters.AddOrReplace("statusCode", statusCode);
+					goalToCall.Parameters.AddOrReplace("content", content);
+					goalToCall.Parameters.AddOrReplace("!output_stream_" + channel + "_goal", true);
 
 					var callGoalModule = programFactory.GetProgram<CallGoalModule.Program>(goalStep);
-					var result = await callGoalModule.RunGoal(goalToCall.GoalToCall, paramaters);
+					var result = await callGoalModule.RunGoal(goalToCall);
 					if (result.Error != null) return result.Error;
 
 					// writing to channel does not return any value

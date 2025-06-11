@@ -120,7 +120,7 @@ namespace PLang.Building
 					return eventError;
 				}
 
-				CleanUp();
+				ReleaseDatabase();
 				ShowBuilderErrors(goals, stopwatch);
 
 
@@ -179,7 +179,7 @@ namespace PLang.Building
 			return null;
 		}
 
-		private void CleanUp()
+		private void ReleaseDatabase()
 		{
 			var anchors = AppContext.GetData("AnchorMemoryDb") as Dictionary<string, IDbConnection>;
 			foreach (var anchor in anchors ?? [])

@@ -19,7 +19,7 @@ namespace PLang.Building.Model
 		public string? Key { get; set; }
 
 		[DefaultValueAttribute(null)]
-		public GoalToCall? GoalToCall { get; set; }
+		public GoalToCallInfo? GoalToCall { get; set; }
 		[DefaultValueAttribute(null)]
 		public Dictionary<string, object?>? GoalToCallParameters { get; set; }
 

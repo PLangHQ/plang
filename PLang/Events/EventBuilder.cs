@@ -51,9 +51,11 @@ namespace PLang.Events
         public virtual async Task<(List<string>, IError?)> BuildEventsPr()
         {
             (var goalFiles, var error) = GetEventGoalFiles();
+			
             if (error != null) return (goalFiles, error);
+			if (goalFiles.Count == 0) return (new(), null);
 
-            logger.LogInformation($"Building {goalFiles.Count} event file(s)");
+			logger.LogInformation($"Building {goalFiles.Count} event file(s)");
             var validGoalFiles = new List<string>();
             foreach (var filePath in goalFiles)
             {
@@ -197,7 +199,7 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, Module, Go
 			if (eventBinding.EventScope == "StartOfApp" || eventBinding.EventScope == "EndOfApp"
 				 || eventBinding.EventScope == "AppError" || eventBinding.EventScope == "RunningApp")
             {
-                eventBinding = new EventBinding(eventBinding.EventType, eventBinding.EventScope, null, eventBinding.GoalToCall, eventBinding.GoalToCallParameters, eventBinding.IncludePrivate, eventBinding.StepNumber, eventBinding.StepText, eventBinding.WaitForExecution, eventBinding.RunOnlyOnStartParameter, eventBinding.OnErrorContinueNextStep);
+                eventBinding = new EventBinding(eventBinding.EventType, eventBinding.EventScope, null, eventBinding.GoalToCall, eventBinding.IncludePrivate, eventBinding.StepNumber, eventBinding.StepText, eventBinding.WaitForExecution, eventBinding.RunOnlyOnStartParameter, eventBinding.OnErrorContinueNextStep);
 
             }
             return null;

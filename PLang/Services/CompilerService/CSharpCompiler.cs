@@ -394,9 +394,12 @@ long {variableName} = 0;
 			var assembliesUsed = compilation.GetUsedAssemblyReferences().Distinct();
 			foreach (var au in assembliesUsed)
 			{
-				if (!listOfAssembliesUsed.Contains(au.Display))
+				string fileName = Path.GetFileName(au.Display);
+				if (fileName is null) continue;
+
+				if (!listOfAssembliesUsed.Contains(fileName))
 				{
-					listOfAssembliesUsed.Add(au.Display);
+					listOfAssembliesUsed.Add(fileName);
 				}
 			}
 

@@ -61,16 +61,28 @@ namespace PLang.Modules.DbModule
 
 		public record DbGenericFunction(string Reasoning, string Name,
 			List<Parameter>? Parameters = null, List<ReturnValue>? ReturnValues = null,
-			List<string>? TableNames = null, string? DataSource = null, Dictionary<string, string>? AffectedColumns = null) : IGenericFunction
-		{
-			public Instruction Instruction { get; set; }
-		}
+			List<string>? TableNames = null, string? DataSource = null, Dictionary<string, string>? AffectedColumns = null) : GenericFunction(Reasoning, Name, Parameters, ReturnValues);
+
 
 		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep goalStep, IBuilderError? previousBuildError = null)
 		{
-			string system = @$"
 
-";
+			/*
+			 * analyze step
+			 * is it select, insert, update, .....
+			 * is it set datasource, ....
+			 * 
+			 * if set datasource = done
+			 * if other, then
+			 *		- figure out datasource
+			 *		- retrieve table info
+			 *		- set rules for @id, %now%, etc.
+			 *		- do llm
+			 *		- save
+			 *		
+			 */
+
+			string system = @$"";
 			//
 			var dataSource = goalStep.GetVariable<DataSource>();
 			if (dataSource == null)
@@ -81,6 +93,7 @@ namespace PLang.Modules.DbModule
 
 			string sqlType;
 			string autoIncremental;
+			string insertAppend = "";
 			if (dataSource != null)
 			{
 				sqlType = dataSource.TypeFullName;
@@ -95,11 +108,16 @@ Database type:{dataSource.TypeFullName}
 Database name:{dataSource.DbName}
 </dataSource>
 ";
+				if (dataSource.KeepHistory)
+				{
+					insertAppend = "- On Insert, InsertOrUpdate, InsertOrUpdateAndSelectIdOfRow you must modify sql to include id(System.Int64) column and ParameterInfo @id=\"auto\"";
+				}
 			}
 			else
 			{
 				sqlType = "sqlite";
 				autoIncremental = "(NO auto increment),";
+				insertAppend = "- On Insert, InsertOrUpdate, InsertOrUpdateAndSelectIdOfRow you must modify sql to include id(System.Int64) column and ParameterInfo @id=\"auto\". ";
 			}
 
 			system += @$"
@@ -110,6 +128,7 @@ Rules:
 - You MUST generate valid sql statement for {sqlType}
 - Returning 1 mean user want only one row to be returned (limit 1)
 - On CreateTable, include primary key, id, not null, {autoIncremental} when not defined by user. It must be long
+{insertAppend}
 - Number(int => long) MUST be type System.Int64 unless defined by user.
 ";
 
@@ -118,20 +137,35 @@ Rules:
 
 			return buildResult;
 		}
-		/*
 
+		public record DataSourceWithTableInfo(DataSource DataSource, List<TableInfo> TableInfos);
+
+		public async Task<List<DataSourceWithTableInfo>> GetDataSources(List<string> TableNames)
+		{
+			List<DataSourceWithTableInfo> DataSources = new();
+
+			using var program = GetProgram(GoalStep);
+			var dataSources = await program.GetDataSources();
+			foreach (var dataSource in dataSources)
+			{
+
+				var dbStructure = await program.GetDatabaseStructure(TableNames, dataSource.Name);
+				if (dbStructure.TablesAndColumns is null) continue;
+				if (dbStructure.Error != null)
+				{
+					logger.LogWarning(dbStructure.Error.Message);
+					continue;
+				}
+				DataSources.Add(new DataSourceWithTableInfo(dataSource, dbStructure.TablesAndColumns));
+			}
+
+			return DataSources;
+		}
+
+		/*
 		public async Task<(Instruction?, IBuilderError?)> Build2(GoalStep goalStep)
 		{
-			(var buildInstruction, var buildError) = await base.Build(goalStep);
-			if (buildError != null) return (null, buildError);
-
-			// todo: really need clean this build process
-			List<string> asIs = ["CreateDataSource", "SetDataSourceName", "GetDataSources", "GetDataSource", "ExecuteDynamicSql"];
-			var gf = buildInstruction?.Action as GenericFunction;
-			if (gf != null && (asIs.Contains(gf.FunctionName)))
-			{
-				return (buildInstruction, null);
-			}
+			
 
 			var (dataSource, error) = await GetDataSource(gf, goalStep);
 			if (error != null) return (null, new StepBuilderError(error, goalStep));
@@ -657,9 +691,9 @@ integer/int should always be System.Int64.
 			return result;
 		}
 
-		private async Task AppendTableInfo(DataSource dataSource, Program program, string[]? tableNames)
+		private async Task<IError?> AppendTableInfo(DataSource dataSource, Program program, string[]? tableNames)
 		{
-			if (tableNames == null) return;
+			if (tableNames == null) return null;
 
 			foreach (var item in tableNames)
 			{
@@ -687,12 +721,14 @@ integer/int should always be System.Int64.
 					{
 						string indexInformation = string.Empty;
 						var indexes = await program.Select($"SELECT name, [unique], [partial] FROM pragma_index_list('{tableName}') WHERE origin = 'u';");
-						foreach (dynamic index in indexes.rows)
+						if (indexes.Error != null) return indexes.Error;
+
+						foreach (dynamic index in indexes.Table!)
 						{
 							var columns = await program.Select($"SELECT group_concat(name) as columns FROM pragma_index_info('{index.name}')");
-							if (columns.rows.Count > 0)
+							if (columns.Table.Count > 0)
 							{
-								dynamic row = columns.rows[0];
+								dynamic row = columns.Table[0];
 								indexInformation += @$"- index name:{index.name} - is unique:{index.unique} - is partial:{index.partial} - columns:{row.columns}\n";
 							}
 						}
@@ -712,13 +748,15 @@ I will not be able to validate the sql. To enable validation run the command: pl
 				}
 			}
 
+			return null;
+
 
 		}
 		
 		public async Task<object?> GetColumnInfo(string selectColumns, Program program, DataSource dataSource)
 		{
 			var result = await program.Select(selectColumns, dataSourceName: dataSource.Name);
-			var columnInfo = result.rows;
+			var columnInfo = result.Table;
 			if (columnInfo != null && ((dynamic)columnInfo).Count > 0)
 			{
 				return columnInfo;
@@ -860,6 +898,39 @@ Reason:{error.Message}", step,
 			return null;
 		}
 
+		public async Task<(Instruction, IBuilderError?)> BuilderInsertAndSelectIdOfInsertedRow(GoalStep step, Instruction instruction, DbGenericFunction gf)
+		{
+			return await BuilderInsert(step, instruction, gf);
+		}
+		public async Task<(Instruction, IBuilderError?)> BuilderInsertOrUpdateAndSelectIdOfRow(GoalStep step, Instruction instruction, DbGenericFunction gf)
+		{
+			return await BuilderInsert(step, instruction, gf);
+		}
+		public async Task<(Instruction, IBuilderError?)> BuilderInsertOrUpdate(GoalStep step, Instruction instruction, DbGenericFunction gf)
+		{
+			return await BuilderInsert(step, instruction, gf);
+		}
+		public async Task<(Instruction, IBuilderError?)> BuilderInsert(GoalStep step, Instruction instruction, DbGenericFunction gf)
+		{
+			var dataSourceResult = await dbSettings.GetDataSource(gf.DataSource);
+			if (dataSourceResult.Error != null) return (instruction, new StepBuilderError(dataSourceResult.Error, step));
+
+			if (dataSourceResult.DataSource!.KeepHistory == false) return (instruction, null);
+
+			var parameter = gf.Parameters?.FirstOrDefault(p => p.Name.Equals("sqlParameters"));
+			if (parameter == null) return (instruction, new StepBuilderError("No parameters included. It needs at least to have @id", step));
+
+			var parameterInfos = TypeHelper.ConvertToType<List<ParameterInfo>>(parameter.Value);
+			if (parameterInfos == null)
+			{
+				return (instruction, new StepBuilderError("Instruction file is invalid. Could not deserialize ParameterInfo list", step));
+			}
+
+			var hasId = parameterInfos.FirstOrDefault(p => p.ParameterName == "@id");
+			if (hasId?.VariableNameOrValue?.ToString() == "auto") return (instruction, null);
+
+			return (instruction, new StepBuilderError("No id provided in sqlParameters. This is required for this datasource", step));
+		}
 
 		public async Task<(Instruction, IBuilderError?)> BuilderCreateDataSource(GoalStep step, Instruction instruction, DbGenericFunction gf)
 		{
@@ -1024,7 +1095,7 @@ Reason:{error.Message}", step,
 
 
 			string errorInfo = "Error(s) while trying to valid the sql.\n";
-			if (errors.Count > 0)
+			if (errors.Count > 1)
 			{
 				errorInfo += $"I tried connecting to {errors.Count} data sources. Read each error message as only one might apply:\n";
 			}

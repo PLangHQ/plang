@@ -9,12 +9,14 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\BuilderEvents\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-06-06T17:47:41.4640921+00:00",
+      "Confidence": null,
+      "Inconsistency": null,
+      "Generated": "2025-06-10T18:50:17.353253+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -26,14 +28,14 @@
       "LlmRequest": null,
       "EventBinding": {
         "EventType": "Before",
-        "EventScope": "Goal",
+        "EventScope": "EndOfApp",
         "GoalToBindTo": {
-          "Value": "Builder/End"
+          "Name": "builder"
         },
         "GoalToCall": {
-          "Value": "Builder/CheckGoals"
+          "Name": "Builder/CheckGoals",
+          "Parameters": {}
         },
-        "GoalToCallParameters": null,
         "IncludePrivate": false,
         "StepNumber": null,
         "StepText": null,
@@ -47,8 +49,8 @@
         "IsLocal": false,
         "IncludeOsGoals": false,
         "IsOnStep": false,
-        "Id": "Before_Goal_Builder/End_Builder/CheckGoals_False___True__False_____False",
-        "UniqueId": "c415da79-a47f-4a1e-b2da-1868a8bcdb41",
+        "Id": "Before_EndOfApp_builder_Builder/CheckGoals_False___True__False_____False",
+        "UniqueId": "448592c0-d0a0-4546-ad8e-4e803b21838f",
         "Goal": null,
         "GoalStep": null,
         "Stopwatch": null
@@ -67,12 +69,14 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\BuilderEvents\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-06-06T17:47:41.4726561+00:00",
+      "Confidence": null,
+      "Inconsistency": null,
+      "Generated": "2025-06-10T18:50:17.3611827+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -86,14 +90,14 @@
         "EventType": "After",
         "EventScope": "ModuleError",
         "GoalToBindTo": {
-          "Value": "*"
+          "Name": "*"
         },
         "GoalToCall": {
-          "Value": "/apps/Wallet/PaymentRequest"
-        },
-        "GoalToCallParameters": {
-          "contract": "%!error.Contract%",
-          "callback": "%!error.Callback%"
+          "Name": "/apps/Wallet/PaymentRequest",
+          "Parameters": {
+            "contract": "%!error.Contract%",
+            "callback": "%!error.Callback%"
+          }
         },
         "IncludePrivate": true,
         "StepNumber": null,
@@ -109,7 +113,7 @@
         "IncludeOsGoals": false,
         "IsOnStep": false,
         "Id": "After_ModuleError_*_/apps/Wallet/PaymentRequest_True___True__False___402__False",
-        "UniqueId": "28b2efdc-1b1a-469b-ac68-6bc1585e4cc1",
+        "UniqueId": "227dd668-98f6-4624-a9db-caf958b28cde",
         "Goal": null,
         "GoalStep": null,
         "Stopwatch": null
@@ -128,12 +132,14 @@
       "ModuleType": null,
       "Name": null,
       "Description": null,
-      "PrFileName": "Events.pr",
-      "RelativePrPath": ".build\\events\\BuilderEvents\\Events.pr",
+      "PrFileName": null,
+      "RelativePrPath": null,
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Generated": "2025-06-06T17:47:41.4814749+00:00",
+      "Confidence": null,
+      "Inconsistency": null,
+      "Generated": "2025-06-10T18:50:17.3682063+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -147,12 +153,12 @@
         "EventType": "After",
         "EventScope": "StepError",
         "GoalToBindTo": {
-          "Value": "*"
+          "Name": "*"
         },
         "GoalToCall": {
-          "Value": "/events/Runtime/HandleBadInstructionFile"
+          "Name": "/events/Runtime/HandleBadInstructionFile",
+          "Parameters": {}
         },
-        "GoalToCallParameters": null,
         "IncludePrivate": false,
         "StepNumber": null,
         "StepText": null,
@@ -167,7 +173,7 @@
         "IncludeOsGoals": true,
         "IsOnStep": true,
         "Id": "After_StepError_*_/events/Runtime/HandleBadInstructionFile_False___True__False_InvalidInstructionFile____False",
-        "UniqueId": "088c9a90-847d-4b90-bd3a-1092c93db95e",
+        "UniqueId": "d334d685-676d-47b0-8902-92f0ef7994a2",
         "Goal": null,
         "GoalStep": null,
         "Stopwatch": null

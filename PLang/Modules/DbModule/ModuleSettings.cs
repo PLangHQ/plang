@@ -489,7 +489,7 @@ Be concise"));
 				existingDatasources = "No datasources available";
 			}
 
-			return (null, new Error($"Datasource '{name}' does not exists", Key: "DataSourceNotFound",
+			return (null, new StepBuilderError($"Datasource '{name}' does not exists", step, Key: "DataSourceNotFound",
 						FixSuggestion: $@"{existingDatasources}
 
 Create a step that creates a new Data source, e.g.

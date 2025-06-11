@@ -5,7 +5,7 @@ Caching
 - cache 'abc' for 10 minutes, to 'abcKey'
 - get cache 'abcKey', write to %cachedAbcKey%
 - write out %cachedAbcKey%
-- get https://cat-fact.herokuapp.com/facts/random, write to %catFact%
-    cache for 10 minutes, key 'catFact'
-- get cache 'catFact', write to %cachedCatFact%
-- write out  %cachedCatFact.text%
+- get https://jsonplaceholder.typicode.com/posts/, write to %posts%
+    cache for 10 minutes, key 'posts'
+- get cache 'posts', write to %cachedPosts%
+- write out "posts: %cachedPosts%"

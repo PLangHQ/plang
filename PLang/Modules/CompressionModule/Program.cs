@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace PLang.Modules.CompressionModule
 {
+	[Description("compress and decompress(extract) a file or folder. This can be various of file formats, zip, gz, or other custom formats. Example usage: `zip file.txt to file.zip`, or `unzip file.zip to file.txt`")]
 	public class Program : BaseProgram
 	{
 		private readonly IPLangFileSystem fileSystem;

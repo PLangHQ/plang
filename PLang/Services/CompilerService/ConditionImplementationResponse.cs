@@ -9,9 +9,7 @@ namespace PLang.Services.CompilerService
 		public ConditionImplementationResponse() { }
 		public ConditionImplementationResponse(string reasoning, string @namespace, string name, string? implementation = null,
 			List<Parameter>? parameters = null, List<string>? @using = null, 
-			List<string>? assemblies = null, GoalToCall? goalToCallOnTrue = null, GoalToCall? goalToCallOnFalse = null, 
-			Dictionary<string, object?>? goalToCallOnTrueParameters = null, 
-			Dictionary<string, object?>? goalToCallOnFalseParameters = null)
+			List<string>? assemblies = null, GoalToCallInfo? goalToCallOnTrue = null, GoalToCallInfo? goalToCallOnFalse = null)
 		{
 			Reasoning = reasoning;
 			Namespace = @namespace;
@@ -21,18 +19,10 @@ namespace PLang.Services.CompilerService
 			Using = @using;
 			Assemblies = assemblies;
 			GoalToCallOnTrue = goalToCallOnTrue;
-			GoalToCallOnFalse = goalToCallOnFalse;
-			GoalToCallOnTrueParameters = goalToCallOnTrueParameters;
-			GoalToCallOnFalseParameters = goalToCallOnFalseParameters;
-			
+			GoalToCallOnFalse = goalToCallOnFalse;			
 		}
 
-		public GoalToCall? GoalToCallOnTrue { get; set; } = null;
-		public Dictionary<string, object?>? GoalToCallOnTrueParameters { get; set; } = null;
-		public GoalToCall? GoalToCallOnFalse { get; set; } = null;
-		public Dictionary<string, object?>? GoalToCallOnFalseParameters { get; set; } = null;
-
-
-		
+		public GoalToCallInfo? GoalToCallOnTrue { get; set; } = null;
+		public GoalToCallInfo? GoalToCallOnFalse { get; set; } = null;		
 	}
 }

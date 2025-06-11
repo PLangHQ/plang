@@ -18,8 +18,8 @@ namespace PLang.Runtime
 {
 	public interface IPseudoRuntime
 	{
-		Task<(IEngine engine, object? Variables, IError? error, IOutput? output)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCall goalName,
-			Dictionary<string, object?>? parameters, Goal? callingGoal = null, bool waitForExecution = true,
+		Task<(IEngine engine, object? Variables, IError? error, IOutput? output)> RunGoal(IEngine engine, PLangAppContext context, string appPath, GoalToCallInfo goalToCall,
+			Goal? callingGoal = null, bool waitForExecution = true,
 			long delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0,
 			bool keepMemoryStackOnAsync = false, bool isolated = false);
 	}
@@ -34,26 +34,21 @@ namespace PLang.Runtime
 		}
 
 		public async Task<(IEngine engine, object? Variables, IError? error, IOutput? output)>
-			RunGoal(IEngine engine, PLangAppContext context, string relativeAppPath, GoalToCall goalName,
-						Dictionary<string, object?>? parameters, Goal? callingGoal = null,
+			RunGoal(IEngine engine, PLangAppContext context, string relativeAppPath, GoalToCallInfo goalToCall, Goal? callingGoal = null,
 						bool waitForExecution = true, long delayWhenNotWaitingInMilliseconds = 50,
 						uint waitForXMillisecondsBeforeRunningGoal = 0, int indent = 0,
 						bool keepMemoryStackOnAsync = false, bool isolated = false)
 		{
+
+			var goalName = goalToCall.Name;
+			var parameters = goalToCall.Parameters;
 
 			Goal? goalToRun = null;
 			try
 			{
 				IError? error;
 
-				if (goalName == null || goalName.Value == null)
-				{
-					error = new Error($"Goal to call is empty. This is not allowed. Calling goal is {callingGoal}") {  Goal = callingGoal };
-					var output2 = new TextOutput("Error", "text/html", false, error, "desktop");
-					return (engine, null, error, output2);
-				}
-
-				if (goalName.Value.StartsWith("/"))
+				if (goalName.StartsWith("/"))
 				{
 					relativeAppPath = "/";
 				}
@@ -212,7 +207,7 @@ namespace PLang.Runtime
 		}
 
 		private (IEngine engine, object? Variables, IError? error, IOutput? output) GoalToRunIsNull(IEngine engine, string relativeAppPath,
-				GoalToCall goalName, Goal? callingGoal, string goalToRunPath)
+				GoalToCallInfo goalName, Goal? callingGoal, string goalToRunPath)
 		{
 			var goalsAvailable = engine.GetGoalsAvailable(relativeAppPath, goalToRunPath);
 			if (goalsAvailable == null || goalsAvailable.Count == 0)
@@ -236,7 +231,7 @@ namespace PLang.Runtime
 		}
 
 		public record EngineWait(Task task, IEngine engine);
-		public (string absolutePath, GoalToCall goalName) GetAppAbsolutePath(string absolutePathToGoal, GoalToCall? goalName = null)
+		public (string absolutePath, GoalToCallInfo goalName) GetAppAbsolutePath(string absolutePathToGoal, GoalToCallInfo? goalName = null)
 		{
 			absolutePathToGoal = absolutePathToGoal.AdjustPathToOs();
 

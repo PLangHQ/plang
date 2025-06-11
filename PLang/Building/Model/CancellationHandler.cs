@@ -13,6 +13,6 @@ namespace PLang.Building.Model
 		[DefaultValueAttribute(30)]
 		public long? CancelExecutionAfterXMilliseconds {get;set;} = 30;
 		[DefaultValueAttribute(null)]
-		public GoalToCall? GoalNameToCallAfterCancellation { get; set; } = null;
+		public GoalToCallInfo? GoalNameToCallAfterCancellation { get; set; } = null;
 	}
 }

@@ -55,7 +55,14 @@ namespace PLang.Building
 		public async Task<(Model.Instruction?, IBuilderError?)> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep step, IBuilderError? previousBuildError = null)
 		{
 			var result = await BuildInstructionInternal(stepBuilder, goal, step, previousBuildError);
-			if (result.Error == null) return result;
+			if (result.Error == null)
+			{
+				if (previousBuildError != null)
+				{
+					logger.LogInformation("  - 👍 Error has been fixed");
+				}
+				return result;
+			}
 
 			if (previousBuildError != null) result.Error.ErrorChain.Add(previousBuildError);
 			if (result.Error is IInvalidModuleError ime) return result;
@@ -73,7 +80,8 @@ namespace PLang.Building
 			var classInstance = builderFactory.Create(step.ModuleType);
 			classInstance.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
-			logger.LogInformation($"- Build using {step.ModuleType}");
+			string logInfo = (previousBuildError != null) ? "Retrying to build" : "Build";
+			logger.LogInformation(@$"- {logInfo} using {step.ModuleType}");
 			
 			var build = await classInstance.Build(step, previousBuildError);
 			if (build.BuilderError != null) return build;
