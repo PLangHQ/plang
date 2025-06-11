@@ -464,8 +464,6 @@ namespace PLang.Modules
 			}
 			else if (result is Table table)
 			{
-				var dict = (IDictionary<string, object>)result;
-
 				if (returnValues.Count == 1)
 				{
 					memoryStack.Put(returnValues[0].VariableName, table, properties: properties, goalStep: goalStep);

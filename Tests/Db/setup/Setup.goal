@@ -4,3 +4,6 @@ Setup
 - alter table tasks, add column: completed(bit)
 - add unqiue index to table tasks, on description and due_date
 - create table items, columns: name(string, not null)
+- create table "users"
+    create column "name"
+    create column "creation_date"

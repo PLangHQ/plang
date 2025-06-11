@@ -157,7 +157,7 @@ namespace PLang.Building
 
 			BuildErrors.Add(buildStepError);
 
-			logger.LogWarning($"  - ❌ Error building goal - {buildStepError.Message}");
+			logger.LogWarning($"  - ❌ Error building goal - {buildStepError.MessageOrDetail}");
 
 			return buildStepError.ContinueBuild;
 		}
@@ -171,7 +171,7 @@ namespace PLang.Building
 
 			if (buildStepError is IInvalidModuleError ime && excludeModules.Count < 3)
 			{
-				logger.LogWarning($"  - ❌ Error building step - Error Message: {buildStepError.Message}");
+				logger.LogWarning($"  - ❌ Error building step - Error Message: {buildStepError.MessageOrDetail}");
 
 				excludeModules.Add(ime.ModuleType);
 				logger.LogWarning($"  - 🔍 Will try to find another module - attempt {excludeModules.Count+1} of 3");
@@ -181,7 +181,7 @@ namespace PLang.Building
 			}
 			else
 			{
-				logger.LogError($"  - ❌ Error finding module for step. I tried {string.Join(",", excludeModules)} - Error message: {buildStepError.Message}");
+				logger.LogError($"  - ❌ Error finding module for step. I tried {string.Join(",", excludeModules)} - Error message: {buildStepError.MessageOrDetail}");
 			}
 
 			BuildErrors.Add(buildStepError);

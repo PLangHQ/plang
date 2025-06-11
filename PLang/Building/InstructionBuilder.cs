@@ -70,7 +70,7 @@ namespace PLang.Building
 			if (!result.Error.ContinueBuild || !result.Error.Retry) return result;
 			if (result.Error.RetryCount < GetErrorCount(step, result.Error)) return (result.Instruction, FunctionCouldNotBeCreated(step));
 
-			logger.LogWarning($"- Error building step, will try again. Error: {result.Error.Message}");
+			logger.LogWarning($"- Error building step, will try again. Error: {result.Error.MessageOrDetail}");
 			return await BuildInstruction(stepBuilder, goal, step, result.Error);
 		}
 

@@ -2,7 +2,7 @@ CallGoal
 - set variable %greetings% to 'How is the'
 - call !Show %greetings%, time=%Now% / greetings & Now are parameters
 / Here we call apps/HelloWorld/Start.goal, if it is not install it will install it.
-- call !apps/HelloWorld/Start
+- call app /HelloWorld/Start
 
 Show
 - write out '%greetings% PLang world at %time%'

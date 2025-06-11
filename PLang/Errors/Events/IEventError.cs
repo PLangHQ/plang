@@ -1,5 +1,6 @@
 ﻿
 using PLang.Building.Model;
+using PLang.Utils;
 
 namespace PLang.Errors.Events
 {
@@ -21,7 +22,22 @@ namespace PLang.Errors.Events
 		{
 			throw new NotImplementedException();
 		}
+		public string MessageOrDetail
+		{
+			get
+			{
+				AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool isEnabled);
+				if (isEnabled)
+				{
+					return ToString();
+				}
+				else
+				{
+					return Message.MaxLength(80);
+				}
+			}
 
+		}
 		public object ToFormat(string contentType = "text")
 		{
 			return InitialError.ToFormat(contentType);

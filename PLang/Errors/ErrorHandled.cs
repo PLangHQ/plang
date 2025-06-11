@@ -1,6 +1,7 @@
 ﻿using PLang.Building.Model;
 using PLang.Models;
 using PLang.Runtime;
+using PLang.Utils;
 
 namespace PLang.Errors
 {
@@ -32,7 +33,14 @@ namespace PLang.Errors
 		public DateTime CreatedUtc { get; init; } = DateTime.UtcNow;
 		public List<IError> ErrorChain { get; set; } = new();
 		public Exception? Exception => null;
+		public string MessageOrDetail
+		{
+			get
+			{
+				return Message;
+			}
 
+		}
 		public object AsData()
 		{
 			return this;

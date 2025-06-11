@@ -36,7 +36,22 @@ namespace PLang.Errors
 		public IGenericFunction? Function { get => function; }
 
 		public Exception? Exception => null;
+		public string MessageOrDetail
+		{
+			get
+			{
+				AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool isEnabled);
+				if (isEnabled)
+				{
+					return ToString();
+				}
+				else
+				{
+					return Message.MaxLength(80);
+				}
+			}
 
+		}
 		public DateTime CreatedUtc { get; init; } = DateTime.UtcNow;
 		public List<IError>? ErrorChain { get; set; }
 

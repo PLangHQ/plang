@@ -100,7 +100,7 @@ public class StepBuilder : IStepBuilder
 
 			if (!string.IsNullOrEmpty(step.Inconsistency))
 			{
-				logger.Value.LogWarning($"Inconsistency: {step.Inconsistency}");
+				logger.Value.LogWarning($"  - ⚠️ Inconsistency: {step.Inconsistency}");
 			}
 			//CheckForBuildRunner(goal, step, instruction);
 
@@ -156,7 +156,7 @@ public class StepBuilder : IStepBuilder
 
 		if (ShouldReturnError(step, error)) return (instruction, error);
 
-		logger.Value.LogWarning("Error getting instruction, will try again. Error:" + error.Message.MaxLength(100, "..."));		
+		logger.Value.LogWarning("Error getting instruction, will try again. Error:" + error.MessageOrDetail);		
 
 		return await BuildInstruction(stepBuilder, goal, step, error);
 
@@ -273,7 +273,7 @@ public class StepBuilder : IStepBuilder
 		if (prevError != null) result.Error.ErrorChain.Add(prevError);
 		if (ShouldReturnError(step, result.Error)) return (step, result.Error);
 
-		logger.Value.LogWarning($"- Error building step, will try again. Error: {result.Error.Message.MaxLength(30, "...")}");
+		logger.Value.LogWarning($"- Error building step, will try again. Error: {result.Error.MessageOrDetail}");
 		
 		return await BuildStepInformationWithRetry(goal, step, stepIndex, excludeModules, result.Error);
 	}

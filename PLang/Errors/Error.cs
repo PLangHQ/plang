@@ -16,7 +16,8 @@ namespace PLang.Errors
 		public Goal? Goal { get; set; }
 		public DateTime CreatedUtc { get; init; }
 		public Exception? Exception { get; }
-		List<IError> ErrorChain { get; set; }
+		public List<IError> ErrorChain { get; set; }
+		public string MessageOrDetail { get; }
 		public object ToFormat(string contentType = "text");
 		public object AsData();
 	}
@@ -63,6 +64,21 @@ namespace PLang.Errors
 		public string Message { get; set; }
 
 		public Exception? Exception { get; set; }
+
+		public string MessageOrDetail {
+			get
+			{
+				AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool isEnabled);
+				if (isEnabled)
+				{
+					return ToString();
+				} else
+				{
+					return Message.MaxLength(80);
+				}
+			}
+			
+		}
 
 		public override string? ToString()
 		{

@@ -70,7 +70,22 @@ namespace PLang.Errors
 		{
 			throw new NotImplementedException();
 		}
+		public string MessageOrDetail
+		{
+			get
+			{
+				AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool isEnabled);
+				if (isEnabled)
+				{
+					return ToString();
+				}
+				else
+				{
+					return Message.MaxLength(80);
+				}
+			}
 
+		}
 		public int Count { get { return ErrorChain.Count; } }
 
 		public Exception? Exception { get; }
@@ -103,7 +118,22 @@ namespace PLang.Errors
 			}
 			return this;
 		}
+		public string MessageOrDetail
+		{
+			get
+			{
+				AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool isEnabled);
+				if (isEnabled)
+				{
+					return ToString();
+				}
+				else
+				{
+					return Message.MaxLength(80);
+				}
+			}
 
+		}
 		public object ToFormat(string contentType = "text")
 		{
 			if (contentType == "text")

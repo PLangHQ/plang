@@ -195,7 +195,7 @@ namespace PLang.Modules.DbModule
 
 		public async Task<IError?> BeginTransaction(string? name = null)
 		{
-			(name, var error) = GetNameForConnection(name);
+			(name, var error) = await GetNameForConnection(name);
 			if (error != null) return error;
 
 			var dbConnection = dbFactory.CreateHandler(goalStep);
@@ -217,13 +217,20 @@ namespace PLang.Modules.DbModule
 			return null;
 		}
 
-		private (string? Name, IError? Error) GetNameForConnection(string? name = null)
+		private async Task<(string? Name, IError? Error)> GetNameForConnection(string? name = null)
 		{
 			if (!string.IsNullOrEmpty(name)) return (name, null);
 
 			if (goal == null) return (null, new ProgramError("No goal loaded", Key: "NoGoal"));
 
 			var dataSource = goalStep.GetVariable<DataSource>();
+			if (dataSource == null)
+			{
+				var dataSources = await dbSettings.GetAllDataSources();
+				dataSource = dataSources.FirstOrDefault(p => p.IsDefault);
+			}
+
+
 			if (dataSource == null) return (null, new ProgramError("No datasource to create transaction on", Key: "NoDataSource"));
 
 			return (dataSource.Name, null);
@@ -231,7 +238,7 @@ namespace PLang.Modules.DbModule
 
 		public async Task<IError?> EndTransaction(string? name = null)
 		{
-			(name, var error) = GetNameForConnection(name);
+			(name, var error) = await GetNameForConnection(name);
 			if (error != null) return error;
 
 			var dbConnection = goal.GetVariable<IDbConnection>(name);
@@ -270,7 +277,7 @@ namespace PLang.Modules.DbModule
 				return null;
 			}
 
-			(name, var error) = GetNameForConnection(name);
+			(name, var error) = await GetNameForConnection(name);
 			if (error != null) return error;
 
 			var dbConnection = goal.GetVariable<IDbConnection>(name);
