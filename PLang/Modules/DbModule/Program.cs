@@ -78,7 +78,7 @@ namespace PLang.Modules.DbModule
 		public async Task<IError?> AsyncConstructor()
 		{
 			(DataSource? DataSource, IError? Error) result;
-			if (instruction.Properties.TryGetValue("DataSource", out var name) && !string.IsNullOrWhiteSpace(name.ToString()))
+			if (instruction.Properties.TryGetValue("DataSource", out var name) && !string.IsNullOrWhiteSpace(name?.ToString()))
 			{
 				result = await dbSettings.GetDataSource(name.ToString(), goalStep);
 			}

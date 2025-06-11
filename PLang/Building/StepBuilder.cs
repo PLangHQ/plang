@@ -100,7 +100,7 @@ public class StepBuilder : IStepBuilder
 
 			if (!string.IsNullOrEmpty(step.Inconsistency))
 			{
-				logger.Value.LogWarning($"  - ⚠️ Inconsistency: {step.Inconsistency}");
+				logger.Value.LogWarning($"  - ⚠️  Inconsistency: {step.Inconsistency}");
 			}
 			//CheckForBuildRunner(goal, step, instruction);
 

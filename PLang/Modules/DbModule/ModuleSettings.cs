@@ -401,8 +401,6 @@ Be concise"));
 			{
 				var ds = goalStep.GetVariable<DataSource>();
 				if (ds != null) return (ds, null);
-
-				return await GetDataSourceNotFoundError(null, goalStep);
 			}
 
 			var dataSources = await GetAllDataSources();
@@ -489,7 +487,7 @@ Be concise"));
 				existingDatasources = "No datasources available";
 			}
 
-			return (null, new StepBuilderError($"Datasource '{name}' does not exists", step, Key: "DataSourceNotFound",
+			return (null, new BuilderError($"Datasource '{name}' does not exists", Key: "DataSourceNotFound",
 						FixSuggestion: $@"{existingDatasources}
 
 Create a step that creates a new Data source, e.g.

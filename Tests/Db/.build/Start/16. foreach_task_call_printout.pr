@@ -47,7 +47,7 @@
       ],
       "type": "PLang.Modules.GenericFunctionBuilder",
       "caching": true,
-      "RawResponse": "{\n  \"Reasoning\": \"The user wants to iterate over each item in the %tasks% list and call the !PrintOut goal for each item. The RunLoop function is designed to loop through a collection and call a specified goal for each item, which matches the user's intent perfectly.\",\n  \"Name\": \"RunLoop\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"variableToLoopThrough\",\n      \"Value\": \"%tasks%\"\n    },\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalToCall\",\n      \"Value\": {\n        \"Name\": \"!PrintOut\",\n        \"Parameters\": {}\n      }\n    }\n  ],\n  \"ReturnValues\": null,\n  \"Instruction\": {\n    \"Text\": \"Loop through the %tasks% list and call the !PrintOut goal for each item.\",\n    \"ModuleType\": \"PLang.Models.GoalToCallInfo\",\n    \"GenericFunctionType\": \"RunLoop\"\n  }\n}"
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to iterate over each item in the %tasks% list and call the !PrintOut goal for each item. The RunLoop function is designed to loop through a collection and call a specified goal for each element, which matches the user's intent perfectly.\",\n  \"Name\": \"RunLoop\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"variableToLoopThrough\",\n      \"Value\": \"%tasks%\"\n    },\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalToCall\",\n      \"Value\": {\n        \"Name\": \"!PrintOut\",\n        \"Parameters\": {}\n      }\n    }\n  ],\n  \"ReturnValues\": null,\n  \"Instruction\": {\n    \"Text\": \"Loop through the %tasks% list and call the !PrintOut goal for each item.\",\n    \"ModuleType\": \"PLang\",\n    \"GenericFunctionType\": \"RunLoop\",\n    \"FunctionJson\": null\n  }\n}"
     }
   ],
   "Properties": {
@@ -111,7 +111,7 @@
   },
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
   "Function": {
-    "Reasoning": "The user wants to iterate over each item in the %tasks% list and call the !PrintOut goal for each item. The RunLoop function is designed to loop through a collection and call a specified goal for each item, which matches the user's intent perfectly.",
+    "Reasoning": "The user wants to iterate over each item in the %tasks% list and call the !PrintOut goal for each item. The RunLoop function is designed to loop through a collection and call a specified goal for each element, which matches the user's intent perfectly.",
     "Name": "RunLoop",
     "Parameters": [
       {

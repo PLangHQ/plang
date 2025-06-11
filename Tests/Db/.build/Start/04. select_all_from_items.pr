@@ -11,14 +11,14 @@
       "maxLength": 4000,
       "llmResponseType": "json",
       "scheme": "{\n\t\"TableNames\"?: string[] = null,\n\t\"DataSource\": string = null,\n\t\"AffectedColumns\"? : { String : String, ... } = null,\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null,\n\t\"Instruction\": {\n\t\"Text\": string,\n\t\"ModuleType\": string,\n\t\"GenericFunctionType\": string,\n\t\"FunctionJson\"?: jtoken\n}\n}",
-      "model": "gpt-4.1-mini",
+      "model": "gpt-4o",
       "promptMessage": [
         {
           "role": "system",
           "content": [
             {
               "type": "text",
-              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.\n\r\nUse dataSourceName from <dataSource> when parameter for method is dataSourceName\r\n\r\n<dataSource>\r\ndataSourceName:data\r\nDatabase type:Microsoft.Data.Sqlite.SqliteConnection\r\nDatabase name:data\r\n</dataSource>\r\n\r\nTableNames: Tables defined in sql statement\r\nAffectedColumns: Dictionary of affected columns with type(primary_key|select|insert|update|delete|create|alter|index|drop|where|order|other), e.g. select name from users where id=1 => 'name':'select', 'id':'where'\r\n\r\nRules:\r\n- You MUST generate valid sql statement for Microsoft.Data.Sqlite.SqliteConnection\r\n- Returning 1 mean user want only one row to be returned (limit 1)\r\n- On CreateTable, include primary key, id, not null, (NO auto increment) when not defined by user. It must be long\r\n- On Insert, InsertOrUpdate, InsertOrUpdateAndSelectIdOfRow you must modify sql to include id(System.Int64) column and ParameterInfo @id=\"auto\"\r\n- Number(int => long) MUST be type System.Int64 unless defined by user.\r\n"
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.\n\r\nTableNames: Tables defined in sql statement\r\nAffectedColumns: Dictionary of affected columns with type(primary_key|select|insert|update|delete|create|alter|index|drop|where|order|other), e.g. select name from users where id=1 => 'name':'select', 'id':'where'\r\n\r\nRules:\r\n- You MUST generate valid sql statement for sqlite\r\n- Returning 1 mean user want only one row to be returned (limit 1)\r\n- On CreateTable, include primary key, id, not null, (NO auto increment), when not defined by user. It must be long\r\n- On Insert, InsertOrUpdate, InsertOrUpdateAndSelectIdOfRow you must modify sql to include id(System.Int64) column and ParameterInfo @id=\"auto\". \r\n- Number(int => long) MUST be type System.Int64 unless defined by user.\r\n"
             },
             {
               "type": "text",
@@ -43,11 +43,20 @@
               "text": "select * from items, write to %items%"
             }
           ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Previous LLM request caused following <error>, try to fix it.\r\n<error>Missing DataSource from instruction file. Not legal pr file<error>Try rebuilding the .pr file: .build\\Start\\04. select_all_from_items.pr"
+            }
+          ]
         }
       ],
       "type": "PLang.Modules.DbModule.Builder",
       "caching": true,
-      "RawResponse": "{\n  \"TableNames\": [\n    \"items\"\n  ],\n  \"DataSource\": \"data\",\n  \"AffectedColumns\": {\n    \"*\": \"select\"\n  },\n  \"Reasoning\": \"The user wants to select all records from the 'items' table and store the result in the variable %items%. The Select method is appropriate for retrieving multiple rows from a table and returning them as a table object.\",\n  \"Name\": \"Select\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"sql\",\n      \"Value\": \"select * from items\"\n    },\n    {\n      \"Type\": \"System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]\",\n      \"Name\": \"sqlParameters\",\n      \"Value\": null\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"dataSourceName\",\n      \"Value\": \"data\"\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"PLang.Modules.DbModule.Table\",\n      \"VariableName\": \"%items%\"\n    }\n  ],\n  \"Instruction\": {\n    \"Text\": \"Execute a SQL select statement to retrieve all records from the 'items' table and store the result in %items%.\",\n    \"ModuleType\": \"DbModule\",\n    \"GenericFunctionType\": \"Select\"\n  }\n}"
+      "RawResponse": "```json\n{\n\t\"TableNames\": [\"items\"],\n\t\"DataSource\": \"%Settings.Get(\\\"DataSource\\\", \\\"defaultDataSource\\\", \\\"The data source for the database connection\\\")%\",\n\t\"AffectedColumns\": {\n\t\t\"*\": \"select\"\n\t},\n\t\"Reasoning\": \"The user wants to retrieve all records from the 'items' table and store the results in the variable %items%. The 'Select' function is appropriate for executing a SQL SELECT statement.\",\n\t\"Name\": \"Select\",\n\t\"Parameters\": [{\n\t\t\"Type\": \"System.String\",\n\t\t\"Name\": \"sql\",\n\t\t\"Value\": \"SELECT * FROM items\"\n\t}],\n\t\"ReturnValues\": [{\n\t\t\"Type\": \"PLang.Modules.DbModule.Table\",\n\t\t\"VariableName\": \"%items%\"\n\t}],\n\t\"Instruction\": {\n\t\t\"Text\": \"select * from items, write to %items%\",\n\t\t\"ModuleType\": \"Database\",\n\t\t\"GenericFunctionType\": \"Select\"\n\t}\n}\n```"
     }
   ],
   "Properties": {
@@ -101,27 +110,17 @@
     "TableNames": [
       "items"
     ],
-    "DataSource": "data",
+    "DataSource": "%Settings.Get(\"DataSource\", \"defaultDataSource\", \"The data source for the database connection\")%",
     "AffectedColumns": {
       "*": "select"
     },
-    "Reasoning": "The user wants to select all records from the 'items' table and store the result in the variable %items%. The Select method is appropriate for retrieving multiple rows from a table and returning them as a table object.",
+    "Reasoning": "The user wants to retrieve all records from the 'items' table and store the results in the variable %items%. The 'Select' function is appropriate for executing a SQL SELECT statement.",
     "Name": "Select",
     "Parameters": [
       {
         "Type": "System.String",
         "Name": "sql",
-        "Value": "select * from items"
-      },
-      {
-        "Type": "System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]",
-        "Name": "sqlParameters",
-        "Value": null
-      },
-      {
-        "Type": "System.String",
-        "Name": "dataSourceName",
-        "Value": "data"
+        "Value": "SELECT * FROM items"
       }
     ],
     "ReturnValues": [
