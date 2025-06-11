@@ -9,6 +9,7 @@ using PLang.Modules;
 using System.Data;
 using System.Numerics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Websocket.Client.Logging;
 using static PLang.Modules.DbModule.Program;
 
@@ -130,174 +131,7 @@ namespace PLang.Utils
 
 			return types;
 		}
-		/*
-		public (ClassDescription?, IBuilderError?) GetMethodDescriptions(Type? type, string? methodName = null)
-		{
-
-			if (type == null) return (new(), new BuilderError("Type is null"));
-
-			var methods = type.GetMethods().Where(p => p.DeclaringType?.Name == "Program");
-			if (methodName != null)
-			{
-				methods = type.GetMethods().Where(p => p.Name == methodName);
-			}
-			ClassDescription classDescription = new();
-			GroupedBuildErrors errors = new GroupedBuildErrors();
-
-			foreach (var method in methods)
-			{
-				if (!method.ReturnType.Name.Contains("Task"))
-				{
-					continue;
-				}
-
-				var (desc, supportiveObjects, error) = TypeHelper.GetMethodDescription(type, method.Name);
-				if (error != null) errors.Add(error);
-
-				if (desc != null)
-				{
-					classDescription.Methods.Add(desc);
-				}
-
-				if (supportiveObjects?.Count > 0)
-				{
-					foreach (var so in supportiveObjects)
-					{
-						var found = classDescription.SupportingObjects.FirstOrDefault(p => p.Type == so.Type);
-						if (found == null)
-						{
-							classDescription.SupportingObjects.Add(so);
-						}
-					}
-				}
-
-			}
-
-			return (classDescription, (errors.Count > 0) ? errors : null);
-		}*/
-
-		public string GetMethodsAsString_depcricated(Type type, string? methodName = null)
-		{
-			if (type == null) return "";
-
-
-			var methods = type.GetMethods().Where(p => p.DeclaringType.Name == "Program");
-			if (methodName != null)
-			{
-				methods = type.GetMethods().Where(p => p.Name == methodName);
-			}
-			List<string> methodDescs = new List<string>();
-
-			foreach (var method in methods)
-			{
-				var strMethod = "";
-				if (method.Module.Name != type.Module.Name) continue;
-				if (method.Name == "Run" || method.Name == "Dispose" || method.IsSpecialName) continue;
-
-				strMethod += method.Name + "(";
-				var parameters = method.GetParameters();
-				foreach (var param in parameters)
-				{
-					if (!strMethod.EndsWith("(")) strMethod += ", ";
-					strMethod += param.ParameterType.Name;
-					if (param.ParameterType.GenericTypeArguments.Length > 0)
-					{
-						strMethod += "<";
-						for (int i = 0; i < param.ParameterType.GenericTypeArguments.Length; i++)
-						{
-							if (i != 0) strMethod += ", ";
-							strMethod += param.ParameterType.GenericTypeArguments[i].Name;
-						}
-						strMethod += ">";
-					}
-					if (param.IsOptional)
-					{
-						strMethod += "?";
-					}
-
-					strMethod += " " + param.Name;
-					if (!string.IsNullOrEmpty(param.DefaultValue?.ToString()))
-					{
-						if (param.DefaultValue.GetType() == typeof(string))
-						{
-							strMethod += " = \"" + param.DefaultValue + "\"";
-						}
-						else
-						{
-							strMethod += " = " + param.DefaultValue;
-						}
-					}
-
-					var paramDescs = param.CustomAttributes.Where(p => p.AttributeType.Name == "DescriptionAttribute");
-					foreach (var desc in paramDescs)
-					{
-						strMethod += " /* " + desc.ConstructorArguments.FirstOrDefault().Value + " */ ";
-					}
-
-				}
-				strMethod += ") ";
-
-				if (method.ReturnType == typeof(Task))
-				{
-					strMethod += " : void";
-				}
-				else if (method.ReturnType.GenericTypeArguments.Length > 0)
-				{
-					string returns = "void";
-
-					foreach (var returnType in method.ReturnType.GenericTypeArguments)
-					{
-
-						if (returnType.Name.StartsWith("ValueTuple"))
-						{
-							foreach (var tupleType in returnType.GenericTypeArguments)
-							{
-								if (tupleType.Name == "Object" || !tupleType.IsAssignableFrom(typeof(IError)))
-								{
-									if (tupleType.Name.StartsWith("List"))
-									{
-										returns = $"List<{tupleType.GenericTypeArguments[0].Name}>";
-									}
-									else if (tupleType.Name.StartsWith("Dictionary"))
-									{
-										returns = $"Dicionary<{tupleType.GenericTypeArguments[0].Name}, {tupleType.GenericTypeArguments[1].Name}>";
-
-									}
-									else
-									{
-										returns = tupleType.Name;
-									}
-								}
-							}
-						}
-						else if (!returnType.IsAssignableFrom(typeof(IError)))
-						{
-							returns = returnType.Name;
-						}
-					}
-					strMethod += $" : {returns} ";
-				}
-				else
-				{
-					Console.WriteLine($"WARNING return type of {method.Name} is not Task");
-				}
-
-				var descriptions = method.CustomAttributes.Where(p => p.AttributeType.Name == "DescriptionAttribute");
-				foreach (var desc in descriptions)
-				{
-					if (!strMethod.Contains(" // ")) strMethod += " // ";
-
-					strMethod += desc.ConstructorArguments.FirstOrDefault().Value + ". ";
-				}
-
-				strMethod += "\n";
-				methodDescs.Add(strMethod);
-			}
-
-
-
-			return string.Join("", methodDescs);
-		}
+	
 
 		public string GetModulesAsString(List<string> excludedModules)
 		{
@@ -498,7 +332,7 @@ namespace PLang.Utils
 		}
 		public async Task Run(string @namespace, string @class, string method, Dictionary<string, object?>? Parameters)
 		{
-			
+
 			//InvokeMethoed(GetProgramInstance(), @namespace, @class, method, Parameters);
 		}
 
@@ -624,417 +458,49 @@ namespace PLang.Utils
 			}
 		}
 
-		/*
 
-		public (MethodDescription? MethodDescription, List<ComplexDescription>? SuppportiveObjects, IBuilderError? Error) GetMethodDescription(Type type, string methodName)
+		public static (object item1, object item2) TryConvertToMatchingType(object item1, object item2)
 		{
-			var method = type.GetMethods().FirstOrDefault(m => m.Name == methodName);
-			if (method == null)
-				return (null, null, new BuilderError($"Method {methodName} not found in type {type.FullName}."));
 
-			string? methodDescription = null;
-			var descAttribute =
-				method.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
-			if (descAttribute != null)
+			var type1 = item1.GetType();
+			var type2 = item2.GetType();
+
+			var numericTypes = new[]
 			{
-				methodDescription = descAttribute.ConstructorArguments[0].Value as string;
-			}
-
-			var parameters = method.GetParameters();
-
-			var paramsDesc = GetParameterDescriptions(parameters);
-			if (paramsDesc.Error != null) return (null, null, paramsDesc.Error);
-
-			var returnValueInfo = GetReturnValue(method);
-
-			var md = new MethodDescription()
-			{
-				Description = methodDescription,
-				MethodName = method.Name,
-				Parameters = paramsDesc.ParameterDescriptions!,
-				ReturnValue = returnValueInfo,
+		typeof(byte), typeof(short), typeof(ushort), typeof(int), typeof(uint),
+		typeof(long), typeof(ulong), typeof(float), typeof(double), typeof(decimal)
 			};
-			return (md, paramsDesc.SupportiveObjects, null);
-		}
-		
-		private static ReturnValue? GetReturnValue(MethodInfo method)
-		{
-			if (method.ReturnType.GenericTypeArguments.Length > 0)
-			{
-				if (method.ReturnType.GenericTypeArguments[0].Name.StartsWith("Tuple"))
-				{
-					var type = method.ReturnType.GenericTypeArguments[0].GenericTypeArguments
-						.FirstOrDefault(p => !typeof(IError).IsAssignableFrom(p));
-					if (type != null && type.FullName != null)
-					{
-						return new ReturnValue()
-						{
-							Type = type.FullName
-						};
-					}
-				}
-				else
-				{
-					var returnValueType = GetTypeToUse(method.ReturnType);
-					if (returnValueType == "void") return null;
 
-					return new ReturnValue()
-					{
-						Type = returnValueType
-					};
+			if (!numericTypes.Contains(type1) || !numericTypes.Contains(type2))
+				return (item1, item2);
 
-				}
-			}
+			Type widerType = GetWiderType(type1, type2);
 
-			return null;
-		}
-		
-		private static string GetTypeToUse(Type type)
-		{
+			var converted1 = Convert.ChangeType(item1, widerType);
+			var converted2 = Convert.ChangeType(item2, widerType);
 
-			Type? typeToUse;
-			if (type.GenericTypeArguments[0].GenericTypeArguments.Length > 0)
-			{
-				typeToUse = type.GenericTypeArguments[0].GenericTypeArguments
-						.FirstOrDefault(p => !typeof(IError).IsAssignableFrom(p));
-
-			}
-			else
-			{
-				typeToUse = type.GenericTypeArguments.FirstOrDefault(p => !typeof(IError).IsAssignableFrom(p));
-			}
-
-			if (typeToUse == null) return "void";
-
-			var typeToUseString = "void";
-			if (typeToUse.Name.Contains("`"))
-			{
-				string className = typeToUse.Name.Substring(0, typeToUse.Name.IndexOf("`")) + "<";
-				var types = typeToUse.GetGenericArguments();
-				for (int b = 0; b < types.Length; b++)
-				{
-					if (b != 0) className += ",";
-					className += types[b].Name;
-				}
-				typeToUseString = className + ">";
-			}
-			else
-			{
-				typeToUseString = typeToUse?.FullName;
-			}
-
-			if (typeToUseString != null && typeToUseString.Contains("Version="))
-			{
-				throw new Exception("Should not happend, FullName with version.");
-			}
-
-
-			return typeToUseString ?? "void";
-		}
-		/*
-		public static object? GetParameterInfoDefaultValue(System.Reflection.ParameterInfo parameterInfo)
-		{
-			if (parameterInfo.HasDefaultValue) return parameterInfo.DefaultValue;
-
-			var attribute = parameterInfo.GetCustomAttribute<System.ComponentModel.DefaultValueAttribute>();
-			if (attribute != null)
-			{
-				return attribute.Value ?? "null";
-			}
-
-			if (!parameterInfo.HasDefaultValue && parameterInfo.ParameterType.ToString() != "System.Object")
-			{
-				var constructors = parameterInfo.ParameterType.GetConstructors();
-				constructors = constructors.Where(c => c.GetParameters().Length == 0).ToArray();
-				if (constructors.Length > 0)
-				{
-					return Activator.CreateInstance(parameterInfo.ParameterType);
-				}
-			}
-
-			return null;
-		}*/
-		/*
-		private (List<IPropertyDescription>? ParameterDescriptions, IBuilderError? Error) GetParameterDescriptions(System.Reflection.ParameterInfo[] parameters)
-		{
-
-			List<ComplexDescription> supportiveObjects = new();
-			List<IPropertyDescription> parametersDescriptions = new();
-			foreach (var parameterInfo in parameters)
-			{
-				if (parameterInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "JsonIgnoreAttribute") !=
-					null) continue;
-				if (parameterInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "IgnoreWhenInstructedAttribute") != null) continue;
-				if (parameterInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "LlmIgnoreAttribute") != null) continue;
-
-				if (string.IsNullOrWhiteSpace(parameterInfo.Name))
-				{
-					return (null, null, new BuilderError($"Parameter '{parameterInfo.Name}' has no name."));
-				}
-
-				object? defaultValue = GetParameterInfoDefaultValue(parameterInfo);
-				
-				bool isRequired = parameterInfo.GetCustomAttribute(typeof(System.Runtime.InteropServices.OptionalAttribute)) == null;
-				IPropertyDescription pd;
-				if (IsConsideredPrimitive(parameterInfo.ParameterType))
-				{
-					pd = new PrimitiveDescription
-					{
-						Type = parameterInfo.ParameterType.ToString(),
-						Name = parameterInfo.Name,
-						DefaultValue = defaultValue,
-						IsRequired = isRequired
-					};
-				}
-				else if (parameterInfo.ParameterType.IsEnum)
-				{
-					var enums = Enum.GetNames(parameterInfo.ParameterType);
-					var defaultEnum = (defaultValue != null) ? Enum.Parse(parameterInfo.ParameterType, defaultValue.ToString()) : defaultValue;
-					pd = new EnumDescription()
-					{
-						Type = parameterInfo.ParameterType.ToString(),
-						Name = parameterInfo.Name,
-						AvailableValues = string.Join("|", enums),
-						DefaultValue = defaultEnum,
-						IsRequired = isRequired
-					};
-				}
-				else
-				{
-					Type item = parameterInfo.ParameterType;
-					if (parameterInfo.ParameterType.Name == "List`1")
-					{
-						item = parameterInfo.ParameterType.GenericTypeArguments[0];
-					}
-
-
-					object? instance = null;
-					if (item.ToString() != "System.Object")
-					{
-						var constructors = item.GetConstructors();
-						constructors = constructors.Where(c => c.GetParameters().Length == 0).ToArray();
-						if (constructors.Length > 0)
-						{
-							instance = Activator.CreateInstance(item);
-						}
-					}
-
-					pd = new ComplexDescription()
-					{
-						Type = parameterInfo.ParameterType.ToString(),
-						Name = parameterInfo.Name,
-						TypeProperties = GetPropertyInfos(item.GetProperties(), instance, item),
-						IsRequired = isRequired
-					};
-
-					supportiveObjects.Add(pd as ComplexDescription);
-					pd = new ComplexDescription()
-					{
-						Type = parameterInfo.ParameterType.ToString() + " (see SupportingObjects)",
-						Name = parameterInfo.Name,
-						IsRequired = isRequired
-					};
-				}
-
-
-				if (parameterInfo.CustomAttributes.FirstOrDefault(p =>
-						p.AttributeType.Name is "NullableAttribute" or "OptionalAttribute") != null)
-				{
-					//pd.Defa = false;
-				}
-
-
-				if (parameterInfo.ParameterType == typeof(List<string>))
-				{
-					pd.Type = "List<string>";
-				}
-				else if (parameterInfo.ParameterType.FullName != null &&
-						 parameterInfo.ParameterType.FullName.StartsWith("System.Collections.Generic.Dictionary"))
-				{
-					pd.Type =
-						$"Dictionary<{parameterInfo.ParameterType.GenericTypeArguments[0].Name}, {parameterInfo.ParameterType.GenericTypeArguments[1].Name}>";
-				}
-				else if (parameterInfo.ParameterType.Name == "Nullable`1")
-				{
-					//pd.IsRequired = false;
-				}
-
-
-
-				var description =
-					parameterInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
-				if (description != null)
-				{
-					pd.Description += description.ConstructorArguments[0].Value;
-				}
-
-				parametersDescriptions.Add(pd);
-			}
-
-			return (parametersDescriptions, supportiveObjects, null);
+			return (converted1, converted2);
 		}
 
-		private List<IPropertyDescription>? GetPropertyInfos(PropertyInfo[] properties, object? instance, Type item, int depth = 0)
+		private static Type GetWiderType(Type t1, Type t2)
 		{
-			if (depth == 10)
+			var rank = new Dictionary<Type, int>
 			{
-				return null;
-			}
+				[typeof(byte)] = 1,
+				[typeof(short)] = 2,
+				[typeof(ushort)] = 3,
+				[typeof(int)] = 4,
+				[typeof(uint)] = 5,
+				[typeof(long)] = 6,
+				[typeof(ulong)] = 7,
+				[typeof(float)] = 8,
+				[typeof(double)] = 9,
+				[typeof(decimal)] = 10
+			};
 
-			List<IPropertyDescription> parameterDescriptions = new();
-			foreach (var propertyInfo in properties)
-			{
-
-
-				if (!propertyInfo.CanWrite || propertyInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "JsonIgnoreAttribute") !=
-					null) continue;
-				if (propertyInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "IgnoreWhenInstructedAttribute") != null) continue;
-				if (propertyInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "LlmIgnoreAttribute") != null) continue;
-
-				var propertyType = propertyInfo.PropertyType;
-				if (propertyInfo.PropertyType.Name.StartsWith("Nullable`1"))
-				{
-					propertyType = propertyInfo.PropertyType.GenericTypeArguments[0];
-				}
-				bool isRequired = propertyInfo.GetCustomAttribute(typeof(System.Runtime.InteropServices.OptionalAttribute)) == null;
-				object? defaultValue = null;
-				if (instance != null)
-				{
-					try
-					{
-						defaultValue = instance.GetType().GetProperty(propertyType.Name)?.GetValue(instance);
-					}
-					catch
-					{
-						// ignored
-					}
-				}
-
-				IPropertyDescription pd;
-				if (IsConsideredPrimitive(propertyType))
-				{
-					pd = new PrimitiveDescription
-					{
-						Type = propertyInfo.PropertyType.ToString(),
-						Name = propertyInfo.Name,
-						DefaultValue = defaultValue,
-						IsRequired = isRequired
-					};
-				}
-				else if (propertyType.IsEnum)
-				{
-					var enums = Enum.GetNames(propertyType);
-					var defaultEnum = (defaultValue != null) ? Enum.Parse(propertyType, defaultValue.ToString()) : defaultValue;
-					pd = new EnumDescription()
-					{
-						Type = propertyInfo.PropertyType.ToString(),
-						Name = propertyInfo.Name,
-						AvailableValues = string.Join("|", enums),
-						DefaultValue = defaultEnum,
-						IsRequired = isRequired
-					};
-				}
-				else
-				{
-					object? instance2 = null;
-					if (propertyType.ToString() != "System.Object")
-					{
-						var constructors = propertyType.GetConstructors();
-						constructors = constructors.Where(c => c.GetParameters().Length == 0).ToArray();
-						if (constructors.Length > 0)
-						{
-							instance2 = Activator.CreateInstance(propertyType);
-						}
-					}
-					if (item == propertyType)
-					{
-						pd = new ComplexDescription()
-						{
-							Type = propertyType.ToString(),
-							Name = propertyInfo.Name,
-							TypeProperties = [],
-							IsRequired = isRequired
-						};
-					}
-					else
-					{
-
-						pd = new ComplexDescription()
-						{
-							Type = propertyType.ToString(),
-							Name = propertyType.Name,
-							TypeProperties = GetPropertyInfos(item.GetProperties(), instance, item),
-							IsRequired = isRequired
-						};
-
-						supportiveObjects.Add(pd as ComplexDescription);
-						pd = new ComplexDescription()
-						{
-							Type = propertyType.ToString() + " (see SupportingObjects)",
-							Name = propertyType.Name,
-							IsRequired = isRequired
-						};
-						pd = new ComplexDescription()
-						{
-							Type = propertyType.ToString(),
-							Name = propertyInfo.Name,
-							TypeProperties = GetPropertyInfos(propertyType.GetProperties(), instance2, item, ++depth),
-							IsRequired = isRequired
-						};
-					}
-				}
-
-				if (propertyInfo.CustomAttributes.FirstOrDefault(p =>
-						p.AttributeType.Name is "NullableAttribute" or "OptionalAttribute") != null)
-				{
-					//  pd.IsRequired = false;
-				}
-
-
-				if (propertyType == typeof(List<string>))
-				{
-					pd.Type = "List<string>";
-				}
-				else if (propertyType.FullName != null &&
-						 propertyType.FullName.StartsWith("System.Collections.Generic.Dictionary"))
-				{
-					pd.Type =
-						$"Dictionary<{propertyType.GenericTypeArguments[0].Name}, {propertyType.GenericTypeArguments[1].Name}>";
-				}
-
-				var description =
-					propertyInfo.CustomAttributes.FirstOrDefault(p => p.AttributeType.Name == "DescriptionAttribute");
-				if (description != null)
-				{
-					pd.Description += description.ConstructorArguments[0].Value;
-				}
-
-				parameterDescriptions.Add(pd);
-			}
-
-			return (parameterDescriptions.Count > 0) ? parameterDescriptions : null;
+			return rank[t1] >= rank[t2] ? t1 : t2;
 		}
-		*/
-		/*
-		public static bool IsConsideredPrimitive(Type type)
-		{
-			if (type.IsArray)
-			{
-				return true;
-			}
 
-			return type.IsPrimitive ||
-				   type == typeof(string) ||
-				   type == typeof(DateTime) ||
-				   type == typeof(Guid) ||
-				   type == typeof(TimeSpan) ||
-				   type == typeof(Uri) ||
-				   type == typeof(decimal) ||
-				   type == typeof(BigInteger) ||
-				   type == typeof(Version) ||
-				   type == typeof(JToken);
-		}
-		*/
 
 		public static (string?, IBuilderError?) GetMethodAsJson(Type type, string methodName)
 		{
@@ -1144,6 +610,38 @@ namespace PLang.Utils
 
 			string returnType = method.ReturnType.ToString();
 			return (json + @$"],\n""ReturnType"":{returnType}\n}}", null);
+		}
+		public static bool IsRecordOrAnonymousType(object obj)
+		{
+			var type = obj.GetType();
+			var result = IsRecordType(type);
+			if (result) return result;
+
+			return (type.Name.StartsWith("<>f__Anonymous"));
+		}
+		public static bool IsRecordType(object obj)
+		{
+			return IsRecordType(obj.GetType());
+		}
+		public static bool IsRecordType(Type type)
+		{
+			var hasCloneMethod = type.GetMethod("<Clone>$") != null;
+			var hasPrintMembers = type.GetMethod("PrintMembers", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance) != null;
+
+			var hasEqualityContract = type.GetProperty("EqualityContract", BindingFlags.Instance | BindingFlags.NonPublic) != null;
+
+			return hasPrintMembers && hasCloneMethod && hasEqualityContract;
+		}
+
+		public static bool IsRecordWithoutToString(object obj)
+		{
+			var type = obj.GetType();
+			bool isRecord = type.GetMethod("PrintMembers", BindingFlags.Instance | BindingFlags.NonPublic) != null;
+			if (!isRecord) return false;
+			var toStringMethod = obj.GetType().GetMethods().Any(p => p.Name == "ToString" && p.DeclaringType != typeof(object) && p?.DeclaringType != typeof(ValueType)
+				&& p?.CustomAttributes.FirstOrDefault(p => p.AttributeType == typeof(CompilerGeneratedAttribute)) == null);
+
+			return toStringMethod;
 		}
 	}
 }

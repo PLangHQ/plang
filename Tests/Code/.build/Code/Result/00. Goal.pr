@@ -14,7 +14,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": "Very High",
+      "Confidence": null,
       "Inconsistency": null,
       "Generated": "2025-06-11T18:10:07.33803+00:00",
       "WaitForExecution": true,
@@ -73,10 +73,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "47a8fe87caf2fde22fbfcea953cde6134bc08e1fe248ac40287bd66ededbc4e3",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "95f97506cb8dd41ee8c670ede90763d8c3618f65cce5c6c6e216ecbe9584da8d",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\Code.goal",
-      "UserIntent": "Output the value of the variable %assertResult% to the user or output stream"
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
@@ -91,8 +91,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "FileHash": "3078f840ead3328b51010d4efaccd7dcadeea989b41ba051ca0a2cbe71d38999",
-  "Hash": "4ed99e10e574cf69d4aa450fa3b96c4ccc8a0c18b2a2d4a858198172907770b3",
+  "FileHash": "a5b3e874c5efcd04c2c7c13fd49473877f61d635d80a531198fb8d9e312bda2c",
+  "Hash": "704fc849c553ac477398bcac288975d98f0fa994c28327906514c530b2be6603",
   "IncomingVariablesRequired": {
     "assertResult": "The result that needs to be written out."
   },

@@ -4,14 +4,14 @@ Code
 - [code] get first name of %name%, write to %firstName%
 - assert that %firstName% is "Toby"
 - [code] get last name of %name%, write to %lastName%
-- write out %lastName%
+- assert that %lastName% is "Flenderson"
 - [code] uppercase %name%, write to %uppercaseName%
-- write out %uppercaseName%
+- assert that %uppercaseName% is "TOBY FLENDERSON"
 - [code] create list string with 10 rows of random list data, write to %list%
-- write out %list%
+- assert that %list.Count% is 10
 - set %fileNameWithExtension% as 'video.mp4'
 - [code] remove file extension from %fileNameWithExtension%, write to %fileName%
-- write out %fileName%
+- assert that %fileName% is "video"
 
 Result
 - write out "%assertResult%"

@@ -94,7 +94,7 @@ namespace PLang.Utils
 			var variables = GetVariables(content, emptyIfNotFound);
 			if (variables.Count == 0) return obj;
 
-			if (IsRecordType(obj.GetType()))
+			if (TypeHelper.IsRecordType(obj))
 			{
 				return LoadVariablesToRecord(obj, variables, defaultValue);
 			}
@@ -308,31 +308,12 @@ namespace PLang.Utils
 
 			if (value is IDictionary || value is IList) return true;
 			if (strValue.Equals(fullName)) return true;
-			if (!IsRecordWithoutToString(value)) return true;
+			if (!TypeHelper.IsRecordWithoutToString(value)) return true;
 
 			return false;
 		}
 
-		public static bool IsRecordType(Type type)
-		{
-			var hasCloneMethod = type.GetMethod("<Clone>$") != null;
-			var hasPrintMembers = type.GetMethod("PrintMembers", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance) != null;
 		
-			var hasEqualityContract = type.GetProperty("EqualityContract", BindingFlags.Instance | BindingFlags.NonPublic) != null;
-
-			return hasPrintMembers && hasCloneMethod && hasEqualityContract;
-		}
-
-		private bool IsRecordWithoutToString(object obj)
-		{
-			var type = obj.GetType();
-			bool isRecord = type.GetMethod("PrintMembers", BindingFlags.Instance | BindingFlags.NonPublic) != null;
-			if (!isRecord) return false;
-			var toStringMethod = obj.GetType().GetMethods().Any(p => p.Name == "ToString" && p.DeclaringType != typeof(object) && p?.DeclaringType != typeof(ValueType) 
-				&& p?.CustomAttributes.FirstOrDefault(p => p.AttributeType == typeof(CompilerGeneratedAttribute)) == null);
-
-			return toStringMethod;
-		}
 
 
 		public JToken JsonSerialize(object? obj)

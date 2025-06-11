@@ -184,7 +184,7 @@ namespace PLang.Modules.ConditionalModule
 
 		}
 
-		public async Task<(bool?, IError?)> IsEqual(object? item1, object? item2, GoalToCallInfo? goalToCallIfTrue = null,
+		public async Task<(bool? Result, IError? Error)> IsEqual(object? item1, object? item2, GoalToCallInfo? goalToCallIfTrue = null,
 			GoalToCallInfo? goalToCallIfFalse = null, bool ignoreCase = true,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
@@ -211,7 +211,7 @@ namespace PLang.Modules.ConditionalModule
 				if (item1.GetType() != item2.GetType())
 				{
 
-					(item1, item2) = TryConverting(item1, item2);
+					(item1, item2) = TypeHelper.TryConvertToMatchingType(item1, item2);
 
 				}
 
@@ -242,47 +242,6 @@ namespace PLang.Modules.ConditionalModule
 
 		}
 
-		private (object item1, object item2) TryConverting(object item1, object item2)
-		{
-
-			var type1 = item1.GetType();
-			var type2 = item2.GetType();
-
-			var numericTypes = new[]
-			{
-		typeof(byte), typeof(short), typeof(ushort), typeof(int), typeof(uint),
-		typeof(long), typeof(ulong), typeof(float), typeof(double), typeof(decimal)
-			};
-
-			if (!numericTypes.Contains(type1) || !numericTypes.Contains(type2))
-				return (item1, item2);
-
-			Type widerType = GetWiderType(type1, type2);
-
-			var converted1 = Convert.ChangeType(item1, widerType);
-			var converted2 = Convert.ChangeType(item2, widerType);
-
-			return (converted1, converted2);
-		}
-
-		Type GetWiderType(Type t1, Type t2)
-		{
-			var rank = new Dictionary<Type, int>
-			{
-				[typeof(byte)] = 1,
-				[typeof(short)] = 2,
-				[typeof(ushort)] = 3,
-				[typeof(int)] = 4,
-				[typeof(uint)] = 5,
-				[typeof(long)] = 6,
-				[typeof(ulong)] = 7,
-				[typeof(float)] = 8,
-				[typeof(double)] = 9,
-				[typeof(decimal)] = 10
-			};
-
-			return rank[t1] >= rank[t2] ? t1 : t2;
-		}
 
 		/*
 		[Description("The expression could be \"%data.count% > 1000\", \"true\", \"false\", \"%data% contains 'ble.com'\"")]

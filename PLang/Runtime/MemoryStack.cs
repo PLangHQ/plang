@@ -1,7 +1,5 @@
-﻿using BCrypt.Net;
+﻿
 using Microsoft.IdentityModel.Tokens;
-using NBitcoin;
-using NBitcoin.Secp256k1;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NSec.Cryptography;
@@ -176,7 +174,7 @@ namespace PLang.Runtime
 		{
 			return GetObjectValue2(key, staticVariable, defaultValue).Value;
 		}
-		
+
 
 		public ObjectValue GetObjectValue(string variableName, bool initiate = false)
 		{
@@ -224,7 +222,7 @@ namespace PLang.Runtime
 			string key = variableName.ToLower();
 			string? path = null;
 			string type = ".";
-			
+
 			if (variableName.Contains("."))
 			{
 				key = variableName.Substring(0, variableName.IndexOf("."));
@@ -236,7 +234,7 @@ namespace PLang.Runtime
 				path = variableName.Substring(variableName.IndexOf("!") + 1);
 				type = "!";
 			}
-			
+
 			return new KeyPath(key, fullPath, path, type);
 		}
 		private ObjectValue? GetFromVariables(string variableName)
@@ -758,7 +756,7 @@ namespace PLang.Runtime
 			key = Clean(key);
 			//Put(key, value, false, false);
 			var objectValue = new ObjectValue(key, value, null, null, false);
-			variables.AddOrReplace(key, objectValue);
+			AddOrReplace(this.variables, key, objectValue);
 		}
 
 		public void PutStatic(string key, object? value)
@@ -1017,31 +1015,37 @@ namespace PLang.Runtime
 			}
 		}
 
-		private void AddOrReplace(ConcurrentDictionary<string, ObjectValue?> variables, string key, ObjectValue objectValue, GoalStep? goalStep = null)
+		private void AddOrReplace(ConcurrentDictionary<string, ObjectValue> variables, string key, ObjectValue objectValue, GoalStep? goalStep = null)
 		{
-			string eventType;
+			string? eventType = null;
 			key = Clean(key).ToLower();
 			if (key.Contains("!goal") || key.Contains("!step") || key.Contains("!event"))
 			{
 				throw new Exception($"The key '{key}' cannot be added to memory stack");
 			}
-			if (variables.TryGetValue(key, out ObjectValue? prevValue) && prevValue != null && prevValue.Initiated)
-			{
-				eventType = VariableEventType.OnChange;
-			}
-			else
-			{
-				eventType = VariableEventType.OnCreate;
-			}
 
-			if (prevValue != null)
+			ObjectValue? prevObjectValue = variables.FirstOrDefault(p => p.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Value;
+
+			if (prevObjectValue != null)
 			{
-				objectValue.Events = prevValue.Events;
+				if (prevObjectValue.Initiated)
+				{
+					eventType = VariableEventType.OnChange;
+				}
+				else
+				{
+					eventType = VariableEventType.OnCreate;
+				}
+				objectValue.Events = prevObjectValue.Events;
 			}
 
 			variables.AddOrReplace(key, objectValue);
-			CallEvent(eventType, objectValue, goalStep);
+			if (eventType != null)
+			{
+				CallEvent(eventType, objectValue, goalStep);
+			}
 		}
+
 
 		private void CallEvent(string eventType, ObjectValue objectValue, GoalStep? step = null)
 		{
@@ -1056,26 +1060,20 @@ namespace PLang.Runtime
 			var events = objectValue.Events.Where(p => p.EventType == eventType);
 			foreach (var eve in events)
 			{
+				eve.GoalToCall.Parameters.AddOrReplace(objectValue.Name, objectValue.Value);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.VariableName, objectValue.Name);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.VariableValue, objectValue.Value);
+				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.IsEvent, true);
+
+				var goal = step.Goal;
+				if (eve.GoalToCall.Name == goal.GoalName) return;
+				 
 				var task = Task.Run(async () =>
 				{
-					var context = engine.GetContext();
-					if (context != null && context.ContainsKey(ReservedKeywords.Goal))
+					var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, eve.GoalToCall);
+					if (result.error != null)
 					{
-						var goal = context[ReservedKeywords.Goal] as Goal;
-						if (goal != null)
-						{
-							if (eve.GoalToCall == goal.GoalName) return;
-
-							eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.IsEvent, true);
-							var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, eve.GoalToCall);
-							if (result.error != null)
-							{
-								throw new ExceptionWrapper(result.error);
-							}
-
-						}
+						throw new ExceptionWrapper(result.error);
 					}
 				});
 				task.Wait();
@@ -1706,7 +1704,7 @@ namespace PLang.Runtime
 		private void AddEvent(ObjectValue objectValue, string eventType, string callingGoalHash, GoalToCallInfo goalName, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 100)
 		{
 
-			var existingEvent = objectValue.Events.FirstOrDefault(p => p.EventType == eventType && p.GoalToCall == goalName);
+			var existingEvent = objectValue.Events.FirstOrDefault(p => p.EventType == eventType && p.GoalToCall.Name == goalName.Name);
 			if (existingEvent != null)
 			{
 				existingEvent.GoalToCall.Parameters = goalName.Parameters;
@@ -1732,7 +1730,7 @@ namespace PLang.Runtime
 			}
 
 			AddEvent(objectValue, VariableEventType.OnCreate, callingGoalHash, goalName, waitForResponse, delayWhenNotWaitingInMilliseconds);
-			variables.AddOrReplace(key, objectValue);
+			AddOrReplace(variables, key, objectValue);
 		}
 
 
@@ -1750,7 +1748,7 @@ namespace PLang.Runtime
 			;
 
 			AddEvent(objectValue, VariableEventType.OnChange, callingGoalHash, goalName, waitForResponse, delayWhenNotWaitingInMilliseconds);
-			variables.AddOrReplace(key, objectValue);
+			AddOrReplace(variables, key, objectValue);
 
 		}
 
@@ -1764,7 +1762,7 @@ namespace PLang.Runtime
 
 
 			AddEvent(objectValue, VariableEventType.OnRemove, callingGoalHash, goalName, waitForResponse, delayWhenNotWaitingInMilliseconds);
-			variables.AddOrReplace(key, objectValue);
+			AddOrReplace(variables, key, objectValue);
 
 
 		}
@@ -1777,7 +1775,7 @@ namespace PLang.Runtime
 
 			foreach (var var in newVars)
 			{
-				this.variables.AddOrReplace(var.Key, var.Value);
+				AddOrReplace(variables, var.Key, var.Value);
 			}
 		}
 

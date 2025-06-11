@@ -22,7 +22,13 @@ namespace PLang.Models.ObjectValueExtractors
 		public ObjectValue? Extract(PathSegment segment, MemoryStack? memoryStack = null)
 		{
 			if (list == null) return ObjectValue.Nullable(segment.Value);
-			
+
+			var property = list.GetType().GetProperties().FirstOrDefault(p => p.Name.Equals(segment.Value, StringComparison.OrdinalIgnoreCase));
+			if (property != null)
+			{
+				return new ObjectValue(segment.Value, property.GetValue(list), parent: parent, properties: parent.Properties);
+			}
+
 			List<ObjectValue> newList = new();
 			foreach (var item in list)
 			{

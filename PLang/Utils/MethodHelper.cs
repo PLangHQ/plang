@@ -365,7 +365,7 @@ namespace PLang.Utils
 			if (value != null)
 			{
 
-				if (parameter.ParameterType != typeof(string) && parameter.ParameterType == typeof(object) && value != null && JsonHelper.IsJson(value.ToString()))
+				if (!TypeHelper.IsRecordOrAnonymousType(value) && parameter.ParameterType != typeof(string) && parameter.ParameterType == typeof(object) && value != null && JsonHelper.IsJson(value.ToString()))
 				{
 					value = JsonConvert.DeserializeObject(value.ToString()!, parameter.ParameterType);
 				}
