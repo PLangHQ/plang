@@ -19,6 +19,27 @@ namespace PLang.Models.ObjectValueExtractors
 			this.parent = parent;
 		}
 
+		private object? IsProperty(string path)
+		{
+			if (path.Equals("count", StringComparison.OrdinalIgnoreCase)) {
+				return list.Count();
+			}
+			if (path.Equals("first", StringComparison.OrdinalIgnoreCase))
+			{
+				return list.FirstOrDefault();
+			}
+			if (path.Equals("last", StringComparison.OrdinalIgnoreCase))
+			{
+				return list.LastOrDefault();
+			}
+			if (path.Equals("any", StringComparison.OrdinalIgnoreCase))
+			{
+				return list.Any();
+			}
+			
+			return null;
+		}
+
 		public ObjectValue? Extract(PathSegment segment, MemoryStack? memoryStack = null)
 		{
 
@@ -28,6 +49,14 @@ namespace PLang.Models.ObjectValueExtractors
 
 			if (segment.Type == SegmentType.Path)
 			{
+				/*
+				// check for list.count, list.first, list.last, ...
+				var value = IsProperty(segment.Value);
+				if (value != null)
+				{
+					return new ObjectValue(segment.Value, value, parent: parent, properties: parent.Properties);
+				}*/
+
 				var extractor = ExtractorFactory.GetListExtractor(list, segment, parent);
 				if (extractor == null) throw new Exception("Could not find extractor");
 

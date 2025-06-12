@@ -90,7 +90,7 @@ namespace PLang.Models.ObjectValueExtractors
 
 			var supportedOps = new List<string>
 			{
-				"sum", "avg", "average","mean", "max",  "min", "first", "last", "range","median","mode","percentile:<value>","stddev","variance"
+				"sum", "count", "avg", "average","mean", "max",  "min", "first", "last", "range","median","mode","percentile:<value>","stddev","variance"
 			};
 			var op = supportedOps.FirstOrDefault(p => p.Equals(segment.Value, StringComparison.OrdinalIgnoreCase));
 			if (op != null) return new MathExtractor(op, list, parent);

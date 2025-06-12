@@ -1,11 +1,11 @@
 ErrorHandling
-- read file.txt into %content%, throw error if not found
+- read file.txt into %content%
     on error call HandleError, retry 2 times over 1 seconds, continue to next step
 - call goal TestLevelsOfEndOfGoal2
 - call goal TestHttpWithRetryBefore, on error continue to next step
 - call goal TestHttpWithRetryAfter, on error continue to next step
 - call goal TestConditionWithEndOfGoal 
-- read file2.txt into %content%, throw error if not found
+- read file2.txt into %content%
     on error  call HandleError2
 - write out 'This should not be written out as HandleError2 should stop execution of goal'
 

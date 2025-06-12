@@ -1,4 +1,5 @@
 ﻿using Fizzler;
+using Namotion.Reflection;
 using PLang.Models.ObjectValueConverters;
 using PLang.Runtime;
 using Sprache;
@@ -7,6 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace PLang.Models.ObjectValueExtractors
@@ -30,24 +32,33 @@ namespace PLang.Models.ObjectValueExtractors
 			var firstItem = list.FirstOrDefault();
 			if (firstItem != null && firstItem.GetType().IsPrimitive)
 			{
-				return new ObjectValue(segment.Value, DoOp(list, segment));
+				return new ObjectValue(segment.Value, DoOp(list, segment), parent: parent, properties: parent.Properties);
 			}
 
-			List<double> result = new();
-			foreach (var item in list)
+			if (firstItem is IList)
 			{
-				if (item is IList list2)
+				List<double> result = new();
+				foreach (var item in list)
 				{
-					result.Add(DoOp(list2.Cast<object>(), segment));
+					if (item is IList list2)
+					{
+						result.Add(DoOp(list2.Cast<object>(), segment));
+					}
 				}
-				else
-				{
-					throw new Exception($"item in {segment.Value} is not list");
-				}					
+				return new ObjectValue(segment.Value, result, parent: parent, properties: parent.Properties);
 			}
-			return new ObjectValue(segment.Value, result);
 
+			if (firstItem is ObjectValue)
+			{
+
+				double opResult = DoOp(list.Select(p => ((ObjectValue) p).Value), segment);
+				return new ObjectValue(segment.Value, opResult, parent: parent, properties: parent.Properties);
+
+			}
+
+			throw new Exception($"Could not figure out how to calculate {segment.Value} in {parent.PathAsVariable}");
 		}
+
 
 		private double DoOp(IEnumerable<object> value, PathSegment segment)
 		{
@@ -128,6 +139,17 @@ namespace PLang.Models.ObjectValueExtractors
 			var values = list.Select(conv).ToList();
 			double avg = values.Average();
 			return values.Sum(x => Math.Pow(x - avg, 2)) / values.Count;
+		}
+
+		internal static int IndexOfMathOperator(string value)
+		{
+			int idx = -1;
+			foreach (var op in MathOperators)
+			{
+				idx = value.IndexOf(op);
+				if (idx != -1) return idx;
+			}
+			return -1;
 		}
 	}
 }

@@ -27,7 +27,7 @@ namespace PLang.Models.ObjectValueConverters
 				if (match.Groups[1].Success)
 				{
 					string value = match.Groups[1].Value.Trim();
-					 
+
 					bool openBracket = value.Contains('(');
 					bool closeBracket = value.Contains(')');
 					if (openBracket && closeBracket)
@@ -40,28 +40,16 @@ namespace PLang.Models.ObjectValueConverters
 					}
 					else
 					{
-						
-						if (MathExtractor.MathOperators.Select(p => value.Contains(p)).Any())
+						int startIndex = MathExtractor.IndexOfMathOperator(value);
+						if (startIndex != -1)
 						{
-							int startIndex = -1;
-							for (int i=0;i<value.Length;i++) 
+							string pathValue = value[..startIndex];
+							string math = value[startIndex..];
+
+							if (!string.IsNullOrEmpty(pathValue.Trim()))
 							{
-								if (MathExtractor.MathOperators.Contains(value[i].ToString()))
-								{
-									startIndex = i;
-								}
+								segments.Add(new PathSegment(pathValue.Trim(), SegmentType.Path));
 							}
-							if (startIndex == -1)
-							{
-								segments.Add(new PathSegment(value, SegmentType.Path));
-								continue;
-							}
-
-
-							string pathValue = value.Substring(0, startIndex);
-							string math = value.Substring(startIndex);
-
-							segments.Add(new PathSegment(pathValue.Trim(), SegmentType.Path));
 							segments.Add(new PathSegment(math.Trim(), SegmentType.Math));
 						}
 						else

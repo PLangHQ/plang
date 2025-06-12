@@ -1261,7 +1261,7 @@ namespace PLang.Modules.DbModule
 				goal.AddVariable(runtimeDataSource);
 
 				var plangRuntime = programFactory.GetProgram<PlangModule.Program>(goalStep);
-				var varsRuntime = programFactory.GetProgram<LocalOrGlobalVariableModule.Program>(goalStep);
+				var varsRuntime = programFactory.GetProgram<VariableModule.Program>(goalStep);
 				var (value, error) = await varsRuntime.Load([storedKey]);
 				if (error != null) return (null, error);
 

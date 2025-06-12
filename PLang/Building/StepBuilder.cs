@@ -282,7 +282,7 @@ public class StepBuilder : IStepBuilder
 	{
 		LlmRequest llmQuestion = GetBuildStepInformationQuestion(goal, step, excludeModules, prevError);
 
-		logger.Value.LogInformation($"- Find module for {step.Text.Trim(['\n', '\r', '\t']).MaxLength(80)}");
+		logger.Value.LogInformation($"{step.LineNumber}: Find module for {step.Text.Trim(['\n', '\r', '\t']).MaxLength(80)}");
 
 		(var stepInformation, var llmError) = await llmServiceFactory.CreateHandler().Query<StepInformation>(llmQuestion);
 		if (llmError != null) return (step, new BuilderError(llmError, false));
@@ -371,7 +371,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 	{
 		LlmRequest llmQuestion = GetBuildStepPropertiesQuestion(goal, step, instruction);
 
-		logger.Value.LogInformation($"- Building properties for {step.Text}");
+		logger.Value.LogInformation($"  - Building properties for {step.Text}");
 
 		(var stepProperties, var llmError) = await llmServiceFactory.CreateHandler().Query<StepProperties>(llmQuestion);
 		if (llmError != null) return (step, new StepBuilderError(llmError, step));

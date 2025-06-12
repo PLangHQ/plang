@@ -73,7 +73,8 @@ public class ObjectValue
 			this.Path = $"{parent.Name}!{name}";
 		} else
 		{
-			this.Path = (parent != null) ? $"{parent.Name}.{name}" : name;
+			string prefix = (Char.IsLetterOrDigit(name[0])) ? "." : "";
+			this.Path = (parent != null) ? $"{parent.Name}{prefix}{name}" : name;
 		}
 			
 
@@ -142,13 +143,14 @@ public class ObjectValue
 		//%user.address.zip% => %user.address.zip!int% (to force int)
 		//%html% => %html!raw% (unprocessed, dangerous)
 		//%dbResult% => %dbResult!sql%, %dbResult!parameters%, %dbResult!properties%
-		//%names[0]% => %names[idx]% - memoryStack neeed
+		//%names[0]% => %names[idx]% - memoryStack needed
 		var segments = PathSegmentParser.ParsePath(path);
 
 		var objectValue = ObjectValueExtractor.Extract(this, segments, memoryStack);
-		if (objectValue != null) objectValue.Path = this.Name + "." + path;
 
 		if (convertToType == null || convertToType == typeof(ObjectValue)) return objectValue;
+		if (objectValue == null) return ObjectValue.Nullable(path);
+
 		return objectValue.ValueAs(objectValue, convertToType);
 		
 	}

@@ -81,7 +81,7 @@ namespace PLang.Building
 			classInstance.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 			string logInfo = (previousBuildError != null) ? "Retrying to build" : "Build";
-			logger.LogInformation(@$"- {logInfo} using {step.ModuleType}");
+			logger.LogInformation(@$"  - {logInfo} using {step.ModuleType}");
 			
 			var build = await classInstance.Build(step, previousBuildError);
 			if (build.BuilderError != null) return build;

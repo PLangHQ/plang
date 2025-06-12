@@ -1,5 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Namotion.Reflection;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Asn1.X509;
 using PLang.Models.ObjectTypes;
 using PLangTests;
 using System.Xml.Linq;
@@ -93,6 +95,13 @@ namespace PLang.Runtime.Tests
 			var count = ov.Get<int>("numbers.count", memoryStack);
 
 			Assert.AreEqual(expectedCount, count);
+
+			memoryStack.Put("user", testUser);
+			var name2 = memoryStack.GetObjectValue("user.name");
+
+			Assert.AreEqual(expectedName, name2.Value);
+
+
 		}
 
 
@@ -226,9 +235,6 @@ namespace PLang.Runtime.Tests
 
 			var number5 = ov.Get<List<int>>("numbers[index]", memoryStack);
 			Assert.AreEqual(3, number5.Count);
-
-
-
 
 			var name1 = ov.Get<string>("name[1]");
 			Assert.AreEqual("John Doe 2", name1);
@@ -374,6 +380,28 @@ namespace PLang.Runtime.Tests
 			Assert.AreEqual(192.5, sumDiv2);
 			var sumDiv3 = objectValue.Get<double>("items.price.sum * 0,77.round(0)");
 			Assert.AreEqual(192, sumDiv3);
+		}
+
+		[TestMethod]
+		public void Test_ObjectValue_TestDate()
+		{
+			var expected = DateTimeOffset.Now;
+
+			var objectValue = new DynamicObjectValue("now", () => { return expected; });
+			var dt = objectValue.Get<DateTimeOffset>("+5days");
+
+			Assert.AreEqual(expected.AddDays(5), dt);
+
+
+			var memoryStack = new MemoryStack(null, null, null, null);
+			memoryStack.Put(new DynamicObjectValue("now", () => { return expected; }));
+
+			var ov = memoryStack.GetObjectValue("%now%");
+			Assert.AreEqual(expected, ov.Value);
+
+			var ov2 = memoryStack.GetObjectValue("%now+5days%");
+			Assert.AreEqual(expected.AddDays(5), ov2.Value);
+
 		}
 	}
 }

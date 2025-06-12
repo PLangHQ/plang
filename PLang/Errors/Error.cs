@@ -71,7 +71,7 @@ namespace PLang.Errors
 				AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool isEnabled);
 				if (isEnabled)
 				{
-					return ToString();
+					return ErrorHelper.ToFormat("text", this).ToString();
 				} else
 				{
 					return Message.MaxLength(80);

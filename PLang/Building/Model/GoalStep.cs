@@ -188,6 +188,8 @@ namespace PLang.Building.Model
 			if (result.Error != null) return (null,  result.Error);
 
 			Instruction = result.Instruction!;
+			Instruction.Step = this;
+			result.Instruction!.Function.Instruction = Instruction;
 
 			return (result.Instruction!.Function, null);
 		}

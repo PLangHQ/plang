@@ -28,6 +28,8 @@ namespace PLang.Building.Model
 		{
 			if (value == null) return;
 
+
+			if (variableName != null) variableName += typeof(T).FullName;
 			if (variableName == null) variableName = typeof(T).FullName;
 
 			var variableIdx = _variables.FindIndex(p => p.VariableName.Equals(variableName, StringComparison.OrdinalIgnoreCase));
@@ -80,8 +82,9 @@ namespace PLang.Building.Model
 
 		public T? GetVariable<T>(string? variableName = null)
 		{
+			if (variableName != null) variableName += typeof(T).FullName;
 			if (variableName == null) variableName = typeof(T).FullName;
-
+			
 			var variable = _variables.FirstOrDefault(p => p.VariableName.Equals(variableName, StringComparison.OrdinalIgnoreCase));
 			if (variable != null) return (T?)variable?.Value;
 
@@ -95,6 +98,7 @@ namespace PLang.Building.Model
 
 		public bool RemoveVariable<T>(string? variableName = null)
 		{
+			if (variableName != null) variableName += typeof(T).FullName;
 			if (variableName == null) variableName = typeof(T).FullName;
 			return RemoveVariable(variableName);
 		}

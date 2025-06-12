@@ -3,12 +3,14 @@ using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NSec.Cryptography;
+using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Events;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Models.ObjectValueExtractors;
 using PLang.Modules.DbModule;
 using PLang.Services.SettingsService;
 using PLang.Utils;
@@ -223,6 +225,17 @@ namespace PLang.Runtime
 			string? path = null;
 			string type = ".";
 
+
+			int i = 0;
+			while (i < variableName.Length && (char.IsLetterOrDigit(variableName[i]) || variableName[i] == '_' || variableName[i] == ' '))
+				i++;
+
+			if (i >= 0 && i != variableName.Length) {
+				return new KeyPath(variableName[..i], variableName, variableName[i..], variableName[i].ToString());
+			}
+			return new KeyPath(variableName, variableName, null, type);
+
+			/*
 			if (variableName.Contains("."))
 			{
 				key = variableName.Substring(0, variableName.IndexOf("."));
@@ -235,7 +248,22 @@ namespace PLang.Runtime
 				type = "!";
 			}
 
-			return new KeyPath(key, fullPath, path, type);
+			
+			if (path == null)
+			{
+				foreach (var mathOperator in MathExtractor.MathOperators)
+				{
+					if (variableName.Contains(mathOperator))
+					{
+						key = variableName.Substring(0, variableName.IndexOf(mathOperator));
+						path = variableName.Substring(variableName.IndexOf(mathOperator));
+						type = mathOperator;
+						break;
+					}
+				}
+			}
+
+			return new KeyPath(key, fullPath, path, type);*/
 		}
 		private ObjectValue? GetFromVariables(string variableName)
 		{
@@ -248,12 +276,6 @@ namespace PLang.Runtime
 			// return the variable, e.g. %user%
 			if (keyPlan.Path == null) return variable.Value;
 
-			//sub variable, e.g. %user.name%
-			if (keyPlan.Type == ".")
-			{
-				return variable.Value.Get<ObjectValue>(keyPlan.Path) ?? ObjectValue.Nullable(keyPlan.FullPath);
-			}
-
 			// return the property of variable, e.g. %user!properties%
 			if (keyPlan.Type == "!")
 			{
@@ -263,7 +285,11 @@ namespace PLang.Runtime
 				}
 				return variable.Value.Properties.FirstOrDefault(p => p.IsName(keyPlan.Path)) ?? ObjectValue.Nullable(keyPlan.FullPath);
 			}
-			return variable.Value;
+
+			//sub variable, e.g. %user.name%, %now+5days%
+			return variable.Value.Get<ObjectValue>(keyPlan.Path) ?? ObjectValue.Nullable(keyPlan.FullPath);
+			
+			
 
 		}
 
@@ -1683,17 +1709,6 @@ namespace PLang.Runtime
 				CallEvent(VariableEventType.OnRemove, objectValue, goalStep);
 			}
 		}
-
-		public void RemoveStatic(string key)
-		{
-			key = Clean(key).ToLower();
-			if (key.Contains("."))
-			{
-				throw new ArgumentException("When remove item from memory it cannot be a partial of the item. That means you cannot use dot(.)");
-			}
-
-		}
-
 
 
 		private string CleanGoalName(string goalName)
