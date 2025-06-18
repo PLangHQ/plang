@@ -5,5 +5,5 @@
 		public string StepName { get; init; } = StepName.ToLower();
 	};
 
-	public record StepProperties(bool WaitForExecution = true, string? LoggerLevel = null, List<ErrorHandler>? ErrorHandlers = null, CachingHandler? CachingHandler = null);
+	public record StepProperties(string Reasoning, bool WaitForExecution = true, string? LoggerLevel = null, List<ErrorHandler>? ErrorHandlers = null, CachingHandler? CachingHandler = null);
 }

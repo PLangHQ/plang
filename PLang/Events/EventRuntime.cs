@@ -634,7 +634,7 @@ namespace PLang.Events
 
 		private bool EventMatchesError(EventBinding eve, IError error)
 		{
-			if (eve.ErrorKey != null && eve.ErrorKey.Equals(error.Key, StringComparison.OrdinalIgnoreCase)) return true;
+			if (eve.ErrorKey != null && (eve.ErrorKey == "*" || eve.ErrorKey.Equals(error.Key, StringComparison.OrdinalIgnoreCase))) return true;
 			if (eve.ErrorMessage != null && error.Message.Contains(eve.ErrorMessage, StringComparison.OrdinalIgnoreCase)) return true;
 			if (eve.StatusCode != null && eve.StatusCode == error.StatusCode) return true;
 			if (eve.ExceptionType != null && Type.GetType(eve.ExceptionType) == error.Exception?.GetType()) return true;

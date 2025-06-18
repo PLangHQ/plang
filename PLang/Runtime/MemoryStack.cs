@@ -895,7 +895,7 @@ namespace PLang.Runtime
 							anonProperties.Add(call, value);
 						}
 
-						objectValue = new ObjectValue(objectValue.Name, anonProperties, anonProperties.GetType(), objectValue, initialize, properties);
+						objectValue = new ObjectValue(objectValue.Name, anonProperties, anonProperties.GetType(), objectValue.Parent, initialize, properties);
 					}
 					else if (call.Contains("("))
 					{

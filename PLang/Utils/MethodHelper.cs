@@ -99,6 +99,7 @@ namespace PLang.Utils
 
 						if (parameterErrors.Count == 0)
 						{
+						
 							if (instanceFunction.ReturnType != typeof(Task) && function.ReturnValues != null && function.ReturnValues.Count > 0)
 							{
 								foreach (var returnValue in function.ReturnValues)
@@ -109,6 +110,8 @@ namespace PLang.Utils
 									ReturnObjectProperties.Add(returnValue.VariableName, objectProperties);
 								}
 							}
+
+							return (ParameterProperties, ReturnObjectProperties, null);
 						}
 						else
 						{
@@ -760,6 +763,8 @@ namespace PLang.Utils
 
 		private object? ConvertToType(object? value, ParameterInfo parameterInfo)
 		{
+			return TypeHelper.ConvertToType(value, parameterInfo.ParameterType);
+			/*
 			if (value == null) return null;
 			if (value is JObject jobj && parameterInfo.ParameterType == typeof(GoalToCallInfo))
 			{
@@ -820,12 +825,26 @@ namespace PLang.Utils
 			}
 			catch (Exception ex)
 			{
-				if (targetType.Name == "String")
+				try
 				{
-					return StringHelper.ConvertToString(value);
+					var jsonSerializer = new JsonSerializerSettings()
+					{
+						NullValueHandling = NullValueHandling.Ignore,
+						DefaultValueHandling = DefaultValueHandling.Populate,
+					};
+
+					var json = JsonConvert.SerializeObject(value);
+					return JsonConvert.DeserializeObject(json, targetType, jsonSerializer);
 				}
-				return parameterInfo.DefaultValue;
-			}
+				catch { 
+					if (targetType.Name == "String")
+					{
+						return StringHelper.ConvertToString(value);
+					}
+					return parameterInfo.DefaultValue;
+				}
+				
+			}*/
 		}
 	}
 }

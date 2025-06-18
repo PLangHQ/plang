@@ -10,6 +10,7 @@ using System.Data;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Xml;
 using Websocket.Client.Logging;
 using static PLang.Modules.DbModule.Program;
 
@@ -437,6 +438,12 @@ namespace PLang.Utils
 				{
 					targetType = targetType.GenericTypeArguments[0];
 				}
+				if (targetType.Name == "XmlDocument")
+				{
+					XmlDocument doc = new XmlDocument();
+					doc.LoadXml(value.ToString());
+					return doc;
+				}
 
 				var parseMethod = targetType.GetMethod("Parse", new[] { typeof(string) });
 				if (parseMethod != null)
@@ -450,11 +457,40 @@ namespace PLang.Utils
 
 			try
 			{
+				if (value is JToken token)
+				{
+					var jsonSerializer = new JsonSerializer()
+					{
+						NullValueHandling = NullValueHandling.Ignore,
+						DefaultValueHandling = DefaultValueHandling.Populate,
+					};
+					return token.ToObject(targetType, jsonSerializer);
+				}
+
 				return Convert.ChangeType(value, targetType);
 			}
 			catch (Exception ex)
 			{
-				return value;
+				try
+				{
+					var jsonSerializer = new JsonSerializerSettings()
+					{
+						ObjectCreationHandling = ObjectCreationHandling.Replace
+					};
+
+					var json = JsonConvert.SerializeObject(value);
+
+					return JsonConvert.DeserializeObject(json, targetType);
+				}
+				catch
+				{
+					if (targetType.Name == "String")
+					{
+						return StringHelper.ConvertToString(value);
+					}
+					return value;
+				}
+
 			}
 		}
 

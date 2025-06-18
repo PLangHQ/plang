@@ -33,7 +33,7 @@ namespace PLang.Utils
 					return errorHandler;
 				}
 
-				if (!string.IsNullOrEmpty(errorHandler.Key) && error.Key.Equals(errorHandler.Key, StringComparison.OrdinalIgnoreCase))
+				if (!string.IsNullOrEmpty(errorHandler.Key) && (errorHandler.Key == "*" || error.Key.Equals(errorHandler.Key, StringComparison.OrdinalIgnoreCase)))
 				{
 					return errorHandler;
 				}

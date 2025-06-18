@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Asn1.Cmp;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Errors.Types;
@@ -20,6 +21,9 @@ namespace PLang.Modules.HttpModule
 		Modules.ProgramFactory programFactory, VariableHelper variableHelper) : BaseProgram()
 	{
 		private new readonly VariableHelper variableHelper = variableHelper;
+
+		public record HttpRequest(string Url, string Method = "GET", object? Data = null, Dictionary<string, object?>? Headers = null, string Encoding = "utf-8", string ContentType = "text/html", int TimeoutInSeconds = 30, bool SignRequest = true);
+
 
 		public async Task<(string Path, IError? Error, Properties? Properties)> DownloadFile(string url, string pathToSaveTo,
 			bool overwriteFile = false,
@@ -81,6 +85,11 @@ namespace PLang.Modules.HttpModule
 					return (absoluteSaveTo, null, resObj);
 				}
 			}
+		}
+
+		public async Task<(object? Data, IError? Error, Properties Properties)> Request(HttpRequest request)
+		{
+			return await Request(request.Url, request.Method, request.Data, !request.SignRequest, request.Headers, request.Encoding, request.ContentType, request.TimeoutInSeconds);
 		}
 		public async Task<(object? Data, IError? Error, Properties Properties)> Post(string url, object? data = null, bool doNotSignRequest = false, Dictionary<string, object>? headers = null, string encoding = "utf-8", string contentType = "application/json", int timeoutInSeconds = 30)
 		{

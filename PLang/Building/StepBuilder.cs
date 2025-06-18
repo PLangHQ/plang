@@ -148,7 +148,7 @@ public class StepBuilder : IStepBuilder
 	}
 
 	private async Task<(Model.Instruction? Instruction, IBuilderError? Error)> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep step, IBuilderError? previousBuilderError = null)
-	{		
+	{
 		(var instruction, var error) = await instructionBuilder.BuildInstruction(this, goal, step, previousBuilderError);
 		if (error == null) return (instruction, null);
 
@@ -156,7 +156,7 @@ public class StepBuilder : IStepBuilder
 
 		if (ShouldReturnError(step, error)) return (instruction, error);
 
-		logger.Value.LogWarning("Error getting instruction, will try again. Error:" + error.MessageOrDetail);		
+		logger.Value.LogWarning("Error getting instruction, will try again. Error:" + error.MessageOrDetail);
 
 		return await BuildInstruction(stepBuilder, goal, step, error);
 
@@ -164,7 +164,7 @@ public class StepBuilder : IStepBuilder
 
 	private bool ShouldReturnError(GoalStep step, IBuilderError error)
 	{
-		var result= (error.ErrorChain.Count > 2 || !error.Retry || !error.ContinueBuild || error is IInvalidModuleError);
+		var result = (error.ErrorChain.Count > 2 || !error.Retry || !error.ContinueBuild || error is IInvalidModuleError);
 		if (result) return result;
 
 		return error.RetryCount < GetErrorCount(step, error);
@@ -260,7 +260,7 @@ public class StepBuilder : IStepBuilder
 		var builderRun = await this.instructionBuilder.RunBuilderMethod(step, instruction, gf);
 		if (builderRun.Error != null) return (false, builderRun.Error);
 
-		logger.Value.LogInformation($"- Step {step.Name} is already built");
+		logger.Value.LogInformation($"{step.LineNumber}: Step {step.Name} is already built");
 		return (true, null);
 	}
 	public Dictionary<string, List<IBuilderError>> ErrorCount { get; set; } = new();
@@ -274,7 +274,7 @@ public class StepBuilder : IStepBuilder
 		if (ShouldReturnError(step, result.Error)) return (step, result.Error);
 
 		logger.Value.LogWarning($"- Error building step, will try again. Error: {result.Error.MessageOrDetail}");
-		
+
 		return await BuildStepInformationWithRetry(goal, step, stepIndex, excludeModules, result.Error);
 	}
 
@@ -304,7 +304,7 @@ public class StepBuilder : IStepBuilder
 			return (step, new InvalidModuleStepError(module, $"ModuleType {module} does not exist.", step, FixSuggestion: "Choose a module from list provided in <modules>"));
 		}
 
-		
+
 
 		step.ModuleType = module;
 		step.Name = stepInformation.StepName;
@@ -365,18 +365,18 @@ Builder will continue on other steps but not this one: ({step.Text}).
 	}
 
 
-	
+
 
 	private async Task<(GoalStep step, IBuilderError? error)> BuildStepProperties(Goal goal, GoalStep step, Instruction instruction)
 	{
-		LlmRequest llmQuestion = GetBuildStepPropertiesQuestion(goal, step, instruction);
+		LlmRequest llmQuestion = await GetBuildStepPropertiesQuestion(goal, step, instruction);
 
-		logger.Value.LogInformation($"  - Building properties for {step.Text}");
+		logger.Value.LogInformation($"  - Building properties for {step.Text.Trim(['\n', '\r', '\t']).MaxLength(80)}");
 
 		(var stepProperties, var llmError) = await llmServiceFactory.CreateHandler().Query<StepProperties>(llmQuestion);
 		if (llmError != null) return (step, new StepBuilderError(llmError, step));
 
-		if (stepProperties == null)	return (step, new StepBuilderError($"Could not get answer from LLM.", step));
+		if (stepProperties == null) return (step, new StepBuilderError($"Could not get answer from LLM.", step));
 
 		(bool canBeCached, bool canHaveErrorHandling, bool canBeAsync) = GetMethodSettings(step, instruction);
 		step.ErrorHandlers = (canHaveErrorHandling) ? stepProperties.ErrorHandlers : null;
@@ -397,68 +397,31 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		return null;
 	}
 
-	private LlmRequest GetBuildStepPropertiesQuestion(Goal goal, GoalStep step, Instruction instruction)
+	private async Task<LlmRequest> GetBuildStepPropertiesQuestion(Goal goal, GoalStep step, Instruction instruction)
 	{
 
 		(bool canBeCached, bool canHaveErrorHandling, bool canBeAsync) = GetMethodSettings(step, instruction);
 
+		var stepInformationSystemPath = fileSystem.Path.Join(fileSystem.OsDirectory, "modules", "StepPropertiesSystem.llm");
+		if (!fileSystem.File.Exists(stepInformationSystemPath))
+		{
+			throw new Exception($"StepPropertiesSystem.llm is missing from system. It should be located at {stepInformationSystemPath}");
+		}
+		var content = fileSystem.File.ReadAllText(stepInformationSystemPath);
+		var templateProgram = new Modules.TemplateEngineModule.Program(fileSystem, null);
+
+		Dictionary<string, object> variables = new();
+		variables.Add("canBeCached", canBeCached);
+		variables.Add("canHaveErrorHandling", canHaveErrorHandling);
+		variables.Add("canBeAsync", canBeAsync);
+
+		var obj = new { Name = instruction.Function.Name, Parameters = instruction.Function.Parameters, ReturnValue = instruction.Function.ReturnValues };
+		variables.Add("function", obj);
+
+		(var system, var error) = await templateProgram.RenderContent(content, stepInformationSystemPath, variables);
+
+
 		var stepPropertiesScheme = TypeHelper.GetJsonSchema(typeof(StepProperties));
-
-		var cachingHandlerScheme = "";
-		var cachingSystemText = "CachingHandler: is always null";
-		if (canBeCached)
-		{
-			cachingSystemText = "CachingHandler: How caching is handled, default is null";
-		}
-		var errorHandlerScheme = "";
-		var errorHandlerSystemText = "ErrorHandler: is always null";
-		if (canHaveErrorHandling)
-		{
-			errorHandlerSystemText = @"ErrorHandlers: 
-	- How to handle errors defined by user, default is null. 
-	- StatusCode, Message and Key is null, unless clearly defined by user in on error clause.  
-	- User can send parameter(s) to a goal being called, the parameter(s) come after the goal name
-	- Retry can happend before or after GoalToCall is executed depending on user intent
-
-	Examples: 
-		on error key: DataSourceNotFound, call CreateDataSource and retry => { IgnoreError = false, Key = ""DataSourceNotFound"", GoalToCall = ""CreateDataSource"", RetryHandler = { RetryCount = 1 } }
-		on error continue to next step => { IgnoreError = true, GoalToCall = null, RetryHandler = null } 
-		on error call HandleError => { IgnoreError = false, GoalToCall = ""HandleError"", RetryHandler = null }
-		on error retry 3 times over 3 seconds, call HandleError => { IgnoreError = false, GoalToCall = ""HandleError"", RunRetryBeforeCallingGoalToCall = true, RetryHandler = { RetryCount = 3, RetryDelayInMilliseconds = 1000 } }
-		on error call HandleError, retry 3 times over 3 seconds => { IgnoreError = false, GoalToCall = ""HandleError"", RunRetryBeforeCallingGoalToCall = false, RetryHandler = { RetryCount = 3, RetryDelayInMilliseconds = 1000 } }
-		on error message 'timeout' ignore error => { IgnoreError = true, RetryHandler = null }
-";
-		}
-
-		var asyncSystemText = @"WaitForExecution: Default is true. Indicates if code should wait for execution to finish.";
-		if (!canBeAsync)
-		{
-			asyncSystemText = "WaitForExecution: is always true";
-		}
-
-		var system = $@"You job is to understand the user intent and map his intent to properties matching StepProperties.
-The user statement is a step of executable code.
-
-## ErrorHandler rules ##
-{errorHandlerSystemText}
-## ErrorHandler rules ##
-
-## WaitForExecution rules ##
-{asyncSystemText}
-## WaitForExecution rules ##
-
-## CacheHandler rules ##
-{cachingSystemText}
-## CacheHandler rules ##
-
-LoggerLevel: default null
-
-Take into account that another service will execute the user intent before error handling and cache handler, following is the instruction for that service. 
-You might not need to map the error handling or cache handler if this service is handling them in the service instruction
-=== service instruction ==
-{JsonConvert.SerializeObject(instruction.Function)}
-=== service instruction ==
-";
 
 		List<LlmMessage> promptMessage = new();
 		promptMessage.Add(new LlmMessage("system", system));

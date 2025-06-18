@@ -53,7 +53,7 @@ namespace PLang.Modules.TemplateEngineModule
 			return result;
 		}
 
-		private async Task<(string? Result, IError? Error)> RenderContent(string content, string fullPath)
+		public async Task<(string? Result, IError? Error)> RenderContent(string content, string fullPath, Dictionary<string, object?>? variables = null)
 		{
 
 			var templateContext = new TemplateContext();
@@ -91,13 +91,22 @@ namespace PLang.Modules.TemplateEngineModule
 			// Push the custom function into the template context
 			templateContext.PushGlobal(scriptObject);
 
-
-			foreach (var kvp in memoryStack.GetMemoryStack())
+			if (memoryStack != null)
 			{
-				var sv = ScriptVariable.Create(kvp.Key, ScriptVariableScope.Global);
-				templateContext.SetValue(sv, kvp.Value.Value);
+				foreach (var kvp in memoryStack.GetMemoryStack())
+				{
+					var sv = ScriptVariable.Create(kvp.Key, ScriptVariableScope.Global);
+					templateContext.SetValue(sv, kvp.Value.Value);
+				}
 			}
-
+			if (variables != null)
+			{
+				foreach (var kvp in variables)
+				{
+					var sv = ScriptVariable.Create(kvp.Key, ScriptVariableScope.Global);
+					templateContext.SetValue(sv, kvp.Value);
+				}
+			}
 			try
 			{
 				var parsed = Template.Parse(content);
