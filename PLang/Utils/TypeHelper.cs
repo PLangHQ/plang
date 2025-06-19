@@ -6,7 +6,9 @@ using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Modules;
+using System.Collections;
 using System.Data;
+using System.Dynamic;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -132,7 +134,7 @@ namespace PLang.Utils
 
 			return types;
 		}
-	
+
 
 		public string GetModulesAsString(List<string> excludedModules)
 		{
@@ -432,28 +434,36 @@ namespace PLang.Utils
 				return jToken.ToObject(targetType);
 			}
 
-			try
+
+			string? strValue = value.ToString()?.Trim();
+			if (strValue != null)
 			{
-				if (targetType.Name.StartsWith("Nullable"))
+				try
 				{
-					targetType = targetType.GenericTypeArguments[0];
-				}
-				if (targetType.Name == "XmlDocument")
-				{
-					XmlDocument doc = new XmlDocument();
-					doc.LoadXml(value.ToString());
-					return doc;
-				}
+					if (targetType.Name.StartsWith("Nullable"))
+					{
+						targetType = targetType.GenericTypeArguments[0];
+					}
+					if (targetType.Name == "XmlDocument")
+					{
+						XmlDocument doc = new XmlDocument();
+						doc.LoadXml(strValue);
+						return doc;
+					}
 
-				var parseMethod = targetType.GetMethod("Parse", new[] { typeof(string) });
-				if (parseMethod != null)
-				{
-					return parseMethod.Invoke(null, new object[] { value.ToString() });
+					if (targetType == typeof(bool) && IsBoolValue(strValue, out bool? boolValue))
+					{
+						return boolValue;
+					}
+
+					var parseMethod = targetType.GetMethod("Parse", new[] { typeof(string) });
+					if (parseMethod != null)
+					{
+						return parseMethod.Invoke(null, new object[] { strValue });
+					}
 				}
-
-
+				catch { }
 			}
-			catch { }
 
 			try
 			{
@@ -494,9 +504,25 @@ namespace PLang.Utils
 			}
 		}
 
-
-		public static (object item1, object item2) TryConvertToMatchingType(object item1, object item2)
+		private static bool IsBoolValue(string strValue, out bool? boolValue)
 		{
+			if (strValue == "1" || strValue.Equals("true", StringComparison.OrdinalIgnoreCase))
+			{
+				boolValue = true;
+				return true;
+			}
+			if (strValue == "0" || strValue.Equals("false", StringComparison.OrdinalIgnoreCase))
+			{
+				boolValue = false;
+				return true;
+			}
+			boolValue = null;
+			return false;
+		}
+
+		public static (object? item1, object? item2) TryConvertToMatchingType(object item1, object item2)
+		{
+			if (item1 == null || item2 == null) return (item1, item2);
 
 			var type1 = item1.GetType();
 			var type2 = item2.GetType();
@@ -678,6 +704,59 @@ namespace PLang.Utils
 				&& p?.CustomAttributes.FirstOrDefault(p => p.AttributeType == typeof(CompilerGeneratedAttribute)) == null);
 
 			return toStringMethod;
+		}
+
+		public static bool IsListOrDict(object? obj)
+		{
+			return (obj is IList || obj is IDictionary || obj is ITuple);
+		}
+
+		public static bool ImplementsDict(object? obj, out IDictionary? dict)
+		{
+			var isDict = (obj.GetType().GetInterfaces().FirstOrDefault(p => p.Name.Equals("IDictionary`2")) != null);
+			if (!isDict)
+			{
+				dict = null;
+				return false;
+			}
+
+			dict = obj as IDictionary;
+			if (dict != null) return true;
+
+			if (obj is ExpandoObject eo)
+			{
+				dict = eo.ToDictionary();
+				return true;
+			}
+			if (obj is IDynamicMetaObjectProvider mop)
+			{
+				dict = AsDictionary(obj);
+				return true;
+			}
+
+			dict = null;
+			return false;
+		}
+
+		static IDictionary AsDictionary(object obj)
+		{
+			var type = obj.GetType();
+			var dictInterface = type.GetInterfaces()
+				.FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
+
+			if (dictInterface == null)
+				return null;
+
+			var keyProp = dictInterface.GetProperty("Keys");
+			var valueIndexer = dictInterface.GetProperty("Item");
+
+			var keys = (IEnumerable)keyProp.GetValue(obj);
+			var result = new Dictionary<object, object>();
+
+			foreach (var key in keys)
+				result[key] = valueIndexer.GetValue(obj, new[] { key });
+
+			return result;
 		}
 	}
 }

@@ -152,6 +152,7 @@ public class StepBuilder : IStepBuilder
 		(var instruction, var error) = await instructionBuilder.BuildInstruction(this, goal, step, previousBuilderError);
 		if (error == null) return (instruction, null);
 
+		error.Step = step;
 		if (previousBuilderError != null) error.ErrorChain.Add(previousBuilderError);
 
 		if (ShouldReturnError(step, error)) return (instruction, error);
@@ -336,7 +337,7 @@ public class StepBuilder : IStepBuilder
 
 	private StepBuilderError GetStepInformationError(GoalStep step)
 	{
-		ErrorCount.TryGetValue(step.RelativePrPath, out var errors);
+		ErrorCount.TryGetValue(step.Text, out var errors);
 		string errorCount = "";
 		if (errors != null && errors.Count > 0)
 		{

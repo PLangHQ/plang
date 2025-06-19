@@ -131,7 +131,7 @@ namespace PLang.Events
 					var eventBinding = events.FirstOrDefault(p => p == step.EventBinding);
 					if (eventBinding != null) continue;
 
-					var binding = step.EventBinding with { IsLocal = !eventFile.StartsWith(fileSystem.Path.Join(fileSystem.OsDirectory, ".build")) };
+					var binding = step.EventBinding with { IsOnStep = false, IsLocal = !eventFile.StartsWith(fileSystem.Path.Join(fileSystem.OsDirectory, ".build")) };
 					events.Add(binding);
 				}
 
@@ -218,7 +218,7 @@ namespace PLang.Events
 				var parameters = new Dictionary<string, object?>();
 				eve.GoalToCall.Parameters.Add(ReservedKeywords.Event, eve);
 				eve.GoalToCall.Parameters.Add(ReservedKeywords.IsEvent, true);
-				eve.GoalToCall.Parameters.Add("!plang.EventUniqueId", Guid.NewGuid().ToString());
+				eve.GoalToCall.Parameters.Add("!plang", new { EventUniqueId = Guid.NewGuid().ToString() });
 
 				ActiveEvents.TryAdd(eve.Id, eve.GoalToCall.Name);
 				logger.LogDebug("Run event type {0} on scope {1}, binding to {2} calling {3}", eventType, eventScope, eve.GoalToBindTo, eve.GoalToCall);
@@ -522,34 +522,21 @@ namespace PLang.Events
 					return (null, new RuntimeEventError("Goal name is empty", eve, callingGoal, callingStep));
 				}
 
-				var parameters = new Dictionary<string, object?>();
 				eve.Goal = callingGoal;
 				eve.GoalStep = callingStep;
 
-				parameters.Add(ReservedKeywords.Event, eve);
-				parameters.Add(ReservedKeywords.IsEvent, true);
-				parameters.Add(ReservedKeywords.Error, error);
-
-				string goalToCallPath;				
+				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.Event, eve);
+				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.IsEvent, true);
+				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.Error, error);
+			
 				if (eve.IsOnStep) {
-					goalToCallPath = Path.Join(callingGoal?.RelativeGoalFolderPath ?? "", eve.GoalToCall.Name);
-				} else if (eve.GoalToCall.ToString().StartsWith("/"))
+					eve.GoalToCall.Name = Path.Join(callingGoal?.RelativeGoalFolderPath ?? "", eve.GoalToCall.Name);
+				} else if (!eve.GoalToCall.Name.StartsWith("/"))
 				{
-					goalToCallPath = eve.GoalToCall.Name;
-				} else
-				{
-					goalToCallPath = Path.Join("/events", eve.GoalToCall.Name);
+					eve.GoalToCall.Name = Path.Join("/events", eve.GoalToCall.Name);
 				}
 
 				logger.LogDebug("Run event type {0} on scope {1}, binding to {2} calling {3}", eve.EventType.ToString(), eve.EventScope.ToString(), eve.GoalToBindTo, eve.GoalToCall);
-
-				if (eve.GoalToCall.Parameters != null)
-				{
-					foreach (var goalParameter in eve.GoalToCall.Parameters)
-					{
-						parameters.AddOrReplace(goalParameter.Key, goalParameter.Value);
-					}
-				}
 
 				ActiveEvents.TryAdd(eve.Id, eve.GoalToCall.Name);
 
@@ -557,9 +544,10 @@ namespace PLang.Events
 				if (callingGoal != null) caller.SetGoal(callingGoal);
 
 				Task<(object? Variables, IError? Error)> task;
-				if (eve.GoalToCall.ToString().StartsWith("apps/") || eve.GoalToCall.ToString().StartsWith("/apps/"))
+				if (eve.GoalToCall.Name.StartsWith("apps/") || eve.GoalToCall.Name.StartsWith("/apps/"))
 				{
-					task = caller.RunApp("/", eve.GoalToCall, parameters);
+					throw new Exception($"Callling app from event is not supported. {ErrorReporting.CreateIssueNotImplemented}");
+
 				}
 				else
 				{

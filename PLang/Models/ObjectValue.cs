@@ -31,7 +31,8 @@ public class HtmlObjectValue : ObjectValue
 		if (Value is HtmlNode node)
 		{
 			return node.InnerHtml;
-		} else if (Value is List<HtmlNode> nodes)
+		}
+		else if (Value is List<HtmlNode> nodes)
 		{
 			if (nodes.Count == 1 && convertToType == typeof(string))
 			{
@@ -41,7 +42,8 @@ public class HtmlObjectValue : ObjectValue
 			List<string> strings = new();
 			strings.AddRange(nodes.Select(p => p.OuterHtml));
 			return strings;
-		} else if (Value is HtmlNodeCollection col)
+		}
+		else if (Value is HtmlNodeCollection col)
 		{
 			if (col.Count == 1 && convertToType == typeof(string))
 			{
@@ -53,7 +55,7 @@ public class HtmlObjectValue : ObjectValue
 			return strings;
 
 		}
-			throw new NotImplementedException($"{convertToType} - {Value.GetType()}");
+		throw new NotImplementedException($"{convertToType} - {Value.GetType()}");
 
 	}
 }
@@ -71,12 +73,13 @@ public class ObjectValue
 		{
 			if (parent == null) throw new Exception("parent cannot be empty on property");
 			this.Path = $"{parent.Name}!{name}";
-		} else
+		}
+		else
 		{
 			string prefix = (Char.IsLetterOrDigit(name[0])) ? "." : "";
 			this.Path = (parent != null) ? $"{parent.Name}{prefix}{name}" : name;
 		}
-			
+
 
 		this.value = value;
 		Type = type ?? value?.GetType();
@@ -136,23 +139,29 @@ public class ObjectValue
 		if (value == null) return default;
 		return (T?)value;
 	}
-
-	public object? Get(string path, Type? convertToType = null, MemoryStack? memoryStack = null)
+	public ObjectValue GetObjectValue(string path, Type? convertToType = null, MemoryStack? memoryStack = null)
 	{
-		//%user.name% => %user.name!upper%
-		//%user.address.zip% => %user.address.zip!int% (to force int)
-		//%html% => %html!raw% (unprocessed, dangerous)
-		//%dbResult% => %dbResult!sql%, %dbResult!parameters%, %dbResult!properties%
-		//%names[0]% => %names[idx]% - memoryStack needed
 		var segments = PathSegmentParser.ParsePath(path);
 
 		var objectValue = ObjectValueExtractor.Extract(this, segments, memoryStack);
 
 		if (convertToType == null || convertToType == typeof(ObjectValue)) return objectValue;
 		if (objectValue == null) return ObjectValue.Nullable(path);
+		return objectValue;
+	}
+	public object? Get(string path, Type? convertToType = null, MemoryStack? memoryStack = null)
+	{
+
+		//%user.name% => %user.name!upper%
+		//%user.address.zip% => %user.address.zip!int% (to force int)
+		//%html% => %html!raw% (unprocessed, dangerous)
+		//%dbResult% => %dbResult!sql%, %dbResult!parameters%, %dbResult!properties%
+		//%names[0]% => %names[idx]% - memoryStack needed
+		var objectValue = GetObjectValue(path, convertToType, memoryStack);
+		if (convertToType == typeof(ObjectValue) || convertToType == null) return objectValue;
 
 		return objectValue.ValueAs(objectValue, convertToType);
-		
+
 	}
 
 	public override string? ToString()
@@ -163,13 +172,13 @@ public class ObjectValue
 	public T? ValueAs<T>()
 	{
 		if (Value == null) return default;
-		return (T?) ValueAs(this, typeof(T));
+		return (T?)ValueAs(this, typeof(T));
 	}
 
 	public virtual object? ValueAs(ObjectValue objectValue, Type convertToType)
 	{
 		return ObjectValueConverter.Convert(objectValue, convertToType);
-		
+
 	}
 
 	public object? Math(string math)

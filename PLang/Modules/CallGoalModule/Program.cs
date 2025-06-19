@@ -17,31 +17,27 @@ namespace PLang.Modules.CallGoalModule
 	{
 
 		[Description("Call/Runs another app. app can be located in another directory, then path points the way. goalName is default \"Start\" when it cannot be mapped")]
-		public async Task<(object? Variables, IError? Error)> RunApp(string? appName = null, GoalToCallInfo? goalName = null, Dictionary<string, object?>? parameters = null, bool waitForExecution = true,
+		public async Task<(object? Variables, IError? Error)> RunApp(AppToCallInfo appToCall, bool waitForExecution = true,
 			int delayWhenNotWaitingInMilliseconds = 50, uint waitForXMillisecondsBeforeRunningGoal = 0, bool keepMemoryStackOnAsync = false)
 		{
-			if (string.IsNullOrEmpty(appName))
-			{
-				return (null, new ProgramError($"App name is missing from step: {goalStep.Text}", goalStep, function));
-			}
-
-			var (goals, error) = await prParser.LoadAppPath(appName, fileAccessHandler);
+			
+			var (goals, error) = await prParser.LoadAppPath(appToCall.AppName, fileAccessHandler);
 			if (error != null) return (null, error);
 
-			var goal = goals!.FirstOrDefault(p => p.GoalName == goalName);
+			var goal = goals!.FirstOrDefault(p => p.GoalName == appToCall.Name);
 
 			if (goal == null)
 			{
-				return (null, new ProgramError($"Could not find goal {goalName} in {appName}", goalStep, function));
+				return (null, new ProgramError($"Could not find goal {appToCall.Name} in {appToCall.AppName}", goalStep, function));
 			}
 
-			IEngine newEngine = await engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath).RentAsync(engine, goalStep, appName + "_" + goalName);
+			IEngine newEngine = await engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath).RentAsync(engine, goalStep, appToCall.AppName + "_" + appToCall.Name);
 
 			try
 			{
-				if (parameters != null)
+				if (appToCall.Parameters != null)
 				{
-					foreach (var item in parameters)
+					foreach (var item in appToCall.Parameters)
 					{
 						if (item.Key.StartsWith("!"))
 						{
@@ -80,8 +76,9 @@ namespace PLang.Modules.CallGoalModule
 			{
 				string path = (goal != null) ? goal.RelativeAppStartupFolderPath : "/";
 				int indent = (goalStep == null) ? 0 : goalStep.Indent;
+				var context = engine.GetContext();
 
-				var result = await pseudoRuntime.RunGoal(engine, engine.GetContext(), path, goalInfo, goal,
+				var result = await pseudoRuntime.RunGoal(engine, context, path, goalInfo, goal,
 						waitForExecution, delayWhenNotWaitingInMilliseconds, waitForXMillisecondsBeforeRunningGoal, indent, keepMemoryStackOnAsync, isolated);
 
 				if (result.error is Return ret)

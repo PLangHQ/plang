@@ -14,9 +14,11 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
+      "Confidence": null,
+      "Inconsistency": null,
       "Generated": "2025-06-06T15:46:31.1669653+00:00",
       "WaitForExecution": true,
-      "LoggerLevel": "error",
+      "LoggerLevel": null,
       "ErrorHandlers": null,
       "Retry": false,
       "CacheHandler": null,
@@ -71,11 +73,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "ab11baf23fef74e1757932cdb524f44ad2d21b1120447f1e5041ce115895290c",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "e529181e7a88150c5151085e7526912c04ca66fbe8eba0f0db6caa60f39c1baa",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal",
-      "UserIntent": "The user wants to log an error message using a logger.",
-      "Variables": []
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
@@ -90,12 +91,11 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "FileHash": "f3a5b531f6fee2520b90cec3070a343d557fa72a1a0829cd776a38ef97ba6598",
-  "Hash": "86d83cb77643239c2ca9e268656dbe030c1630cf8221d470d6c004ff70c611a1",
+  "FileHash": "62f019b76d9e1262da48dba0520ccd75bebee7df636f32676c12cfa4e04fee48",
+  "Hash": "a309956be3c37bd06002aebe94a59b51d7331958ee754b44bba263ee96b019bd",
   "IncomingVariablesRequired": {
     "%error%": "The error message that needs to be logged."
   },
   "DataSourceName": null,
-  "IsSetup": false,
-  "Variables": []
+  "IsSetup": false
 }

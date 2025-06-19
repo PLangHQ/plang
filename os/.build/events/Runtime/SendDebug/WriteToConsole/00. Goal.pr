@@ -14,9 +14,11 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
+      "Confidence": null,
+      "Inconsistency": null,
       "Generated": "2025-06-06T15:46:26.2007014+00:00",
       "WaitForExecution": true,
-      "LoggerLevel": "warning",
+      "LoggerLevel": null,
       "ErrorHandlers": null,
       "Retry": false,
       "CacheHandler": null,
@@ -71,11 +73,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "d5bf85324c09f9711eaad3539665c852553fdfff101fa04c3bef2ec1fbfd3e49",
-      "BuilderVersion": "1.0.0.0",
+      "Hash": "f3e3bb92f85a1a2d1b879e647d85d49a3ea351805ea0f99950ae53e62579e637",
+      "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal",
-      "UserIntent": "The user wants to log a warning message indicating a failure to connect to the IDE for debugging purposes.",
-      "Variables": []
+      "UserIntent": null
     }
   ],
   "SubGoals": [],
@@ -90,10 +91,9 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "FileHash": "f3a5b531f6fee2520b90cec3070a343d557fa72a1a0829cd776a38ef97ba6598",
-  "Hash": "725c3ef3dc58d9a1f3c6eb75d30cf71774cc927341ad38e1149e4817c9878898",
+  "FileHash": "62f019b76d9e1262da48dba0520ccd75bebee7df636f32676c12cfa4e04fee48",
+  "Hash": "7e880b41d890a9a03e9e06903d685547ad04fc9c0c86b66e6af1daf14e13e37b",
   "IncomingVariablesRequired": null,
   "DataSourceName": null,
-  "IsSetup": false,
-  "Variables": []
+  "IsSetup": false
 }

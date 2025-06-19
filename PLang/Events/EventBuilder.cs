@@ -116,6 +116,10 @@ Include OS goals must be defined by user when set to true
 EventType {{ Before , After }}
 EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, Module, GoalError, StepError, ModuleError }}
 
+
+<examples>
+- before goal end ... => EventType = After, EventScope = Goal  //indicates that this should run just before it end or after it has runned
+<examples>
 "));
                  
                     promptMessage.Add(new LlmMessage("user", step.Text));

@@ -208,7 +208,7 @@ namespace PLang.Modules.ConditionalModule
 					item2 = item2?.ToString() ?? string.Empty;
 				}
 
-				if (item1.GetType() != item2.GetType())
+				if (item1?.GetType() != item2?.GetType())
 				{
 
 					(item1, item2) = TypeHelper.TryConvertToMatchingType(item1, item2);

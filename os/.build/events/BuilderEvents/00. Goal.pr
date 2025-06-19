@@ -16,7 +16,7 @@
       "RunOnce": false,
       "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-06-12T16:28:05.9575595+00:00",
+      "Generated": "2025-06-19T15:03:05.9612672+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -28,7 +28,7 @@
       "LlmRequest": null,
       "EventBinding": {
         "EventType": "Before",
-        "EventScope": "EndOfApp",
+        "EventScope": "Goal",
         "GoalToBindTo": {
           "Name": "builder"
         },
@@ -49,8 +49,8 @@
         "IsLocal": false,
         "IncludeOsGoals": false,
         "IsOnStep": false,
-        "Id": "Before_EndOfApp_builder_Builder/CheckGoals_False___True__False_____False",
-        "UniqueId": "86cfb2dc-1785-4929-9376-2b90d6abd156",
+        "Id": "Before_Goal_builder_Builder/CheckGoals_False___True__False_____False",
+        "UniqueId": "b69d24f5-80e8-4283-9b79-6a3969c94f94",
         "Goal": null,
         "GoalStep": null,
         "Stopwatch": null
@@ -76,7 +76,7 @@
       "RunOnce": false,
       "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-06-12T16:28:05.9708525+00:00",
+      "Generated": "2025-06-19T15:03:05.9747681+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -113,7 +113,7 @@
         "IncludeOsGoals": false,
         "IsOnStep": false,
         "Id": "After_ModuleError_*_/apps/Wallet/PaymentRequest_True___True__False___402__False",
-        "UniqueId": "7ffb9bec-8905-4176-9968-c41bf2daa103",
+        "UniqueId": "2b8dee34-cfb2-4a87-a743-fff49fbe8596",
         "Goal": null,
         "GoalStep": null,
         "Stopwatch": null
@@ -139,7 +139,7 @@
       "RunOnce": false,
       "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-06-12T16:28:05.9833725+00:00",
+      "Generated": "2025-06-19T15:03:05.9905753+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -171,9 +171,9 @@
         "ExceptionType": null,
         "IsLocal": false,
         "IncludeOsGoals": true,
-        "IsOnStep": true,
+        "IsOnStep": false,
         "Id": "After_StepError_*_/events/Runtime/HandleBadInstructionFile_False___True__False_InvalidInstructionFile____False",
-        "UniqueId": "4488bbca-9f1a-4a07-935e-37b297a8b33d",
+        "UniqueId": "d9d9cee3-dcee-41b0-bb96-cdffadbecfa1",
         "Goal": null,
         "GoalStep": null,
         "Stopwatch": null

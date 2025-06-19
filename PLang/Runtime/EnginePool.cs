@@ -61,16 +61,16 @@ namespace PLang.Runtime
 			if (callingStep != null) 
 				engine.SetCallingStep(callingStep);
 
-			engine.GetContext().Clear();
+			//engine.GetContext().Clear();
 			foreach (var item in parentEngine.GetContext())
 			{
 				engine.GetContext().AddOrReplace(item.Key, item.Value);
 			}
 
-			engine.GetMemoryStack().Clear();
+			//engine.GetMemoryStack().Clear();
 			foreach (var item in parentEngine.GetMemoryStack().GetMemoryStack())
 			{
-				engine.GetMemoryStack().Put(item.Value, callingStep);
+				engine.GetMemoryStack().Put(item, callingStep);
 			}
 						
 			return engine;

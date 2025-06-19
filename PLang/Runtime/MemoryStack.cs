@@ -64,9 +64,11 @@ namespace PLang.Runtime
 			this.context = context;
 		}
 
-		public ConcurrentDictionary<string, ObjectValue> GetMemoryStack()
+		public List<ObjectValue> GetMemoryStack()
 		{
-			return variables;
+			//remove memorystack from variables before returning it to prevent circular reference.
+			return variables.Where(p => !p.Key.Equals(ReservedKeywords.MemoryStack, StringComparison.OrdinalIgnoreCase))
+				.Select(p => p.Value).OrderByDescending(p => p.Updated).ThenBy(p => p.Name).ToList();
 		}
 
 
@@ -174,7 +176,11 @@ namespace PLang.Runtime
 		}
 		public object? Get(string? key, bool staticVariable = false, object? defaultValue = null)
 		{
-			return GetObjectValue2(key, staticVariable, defaultValue).Value;
+			var ov = GetObjectValue(key);
+
+			object? obj = ov.Value;
+			if (defaultValue != null && !ov.Initiated || obj == null) return defaultValue;
+			return obj;
 		}
 
 
@@ -182,37 +188,44 @@ namespace PLang.Runtime
 		{
 			if (variableName == null) return ObjectValue.Nullable(variableName, initiate);
 
-			var objectValue = GetFromVariables(variableName);
+			var keyPath = GetKeyPath(variableName);
+
+			var objectValue = GetFromVariables(keyPath);
 			if (objectValue != null) return objectValue;
 
-			objectValue = GetFromGoal(variableName);
+			objectValue = GetFromGoal(keyPath);
 			if (objectValue != null) return objectValue;
 
-			objectValue = GetFromContext(variableName);
+			objectValue = GetFromContext(keyPath);
 			if (objectValue != null) return objectValue;
 
 			return ObjectValue.Nullable(variableName, initiate);
 		}
 
-		private ObjectValue? GetFromContext(string variableName)
+		private ObjectValue? GetFromContext(KeyPath keyPath)
 		{
 			if (context == null) return null;
 
-			var contextObject = context.FirstOrDefault(p => p.Key.ToLower() == variableName);
+
+			var contextObject = context.FirstOrDefault(p => p.Key.ToLower() == keyPath.VariableName);
 			if (contextObject.Key == null) return null;
 
 			var type = (contextObject.Value != null) ? contextObject.Value.GetType() : typeof(Nullable);
-			return new ObjectValue(variableName, contextObject.Value, type, null, true);
+			return new ObjectValue(keyPath.VariableName, contextObject.Value, type, null, true);
 		}
 
-		private ObjectValue? GetFromGoal(string variableName)
+		private ObjectValue? GetFromGoal(KeyPath keyPath)
 		{
-			if (Goal == null || !variableName.StartsWith("!")) return null;
+			if (Goal == null) return null;
 
-			var obj = Goal.GetVariable(variableName);
+			var obj = Goal.GetVariable(keyPath.VariableName);
 			if (obj == null) return null;
 
-			return new ObjectValue(variableName, obj, obj.GetType(), null, true);
+			var ov = new ObjectValue(keyPath.VariableName, obj, obj.GetType(), null, true);
+			if (string.IsNullOrEmpty(keyPath.Path)) return ov;
+
+			var newObj = ov.GetObjectValue(keyPath.Path.TrimStart('.'), memoryStack: this);
+			return newObj;
 		}
 		public record KeyPath(string VariableName, string FullPath, string? Path = null, string Type = ".");
 		public KeyPath? GetKeyPath(string variableName)
@@ -225,9 +238,8 @@ namespace PLang.Runtime
 			string? path = null;
 			string type = ".";
 
-
 			int i = 0;
-			while (i < variableName.Length && (char.IsLetterOrDigit(variableName[i]) || variableName[i] == '_' || variableName[i] == ' '))
+			while (i < variableName.Length && (char.IsLetterOrDigit(variableName[i]) || variableName[i] == '_' || variableName[i] == '!' || variableName[i] == ' '))
 				i++;
 
 			if (i >= 0 && i != variableName.Length) {
@@ -265,29 +277,27 @@ namespace PLang.Runtime
 
 			return new KeyPath(key, fullPath, path, type);*/
 		}
-		private ObjectValue? GetFromVariables(string variableName)
+		private ObjectValue? GetFromVariables(KeyPath keyPath)
 		{
-			var keyPlan = GetKeyPath(variableName);
-			if (keyPlan == null) return ObjectValue.Null;
 
-			KeyValuePair<string, ObjectValue> variable = variables.FirstOrDefault(p => p.Value.IsName(keyPlan.VariableName));
+			KeyValuePair<string, ObjectValue> variable = variables.FirstOrDefault(p => p.Value.IsName(keyPath.VariableName));
 			if (variable.Key == null) return null;
 
 			// return the variable, e.g. %user%
-			if (keyPlan.Path == null) return variable.Value;
+			if (keyPath.Path == null) return variable.Value;
 
 			// return the property of variable, e.g. %user!properties%
-			if (keyPlan.Type == "!")
+			if (keyPath.Type == "!")
 			{
-				if (keyPlan.Path.Equals("properties", StringComparison.OrdinalIgnoreCase))
+				if (keyPath.Path.Equals("properties", StringComparison.OrdinalIgnoreCase))
 				{
-					return new ObjectValue(keyPlan.Path, variable.Value.Properties, parent: variable.Value, isProperty: true);
+					return new ObjectValue(keyPath.Path, variable.Value.Properties, parent: variable.Value, isProperty: true);
 				}
-				return variable.Value.Properties.FirstOrDefault(p => p.IsName(keyPlan.Path)) ?? ObjectValue.Nullable(keyPlan.FullPath);
+				return variable.Value.Properties.FirstOrDefault(p => p.IsName(keyPath.Path)) ?? ObjectValue.Nullable(keyPath.FullPath);
 			}
 
 			//sub variable, e.g. %user.name%, %now+5days%
-			return variable.Value.Get<ObjectValue>(keyPlan.Path) ?? ObjectValue.Nullable(keyPlan.FullPath);
+			return variable.Value.Get<ObjectValue>(keyPath.Path) ?? ObjectValue.Nullable(keyPath.FullPath);
 			
 			
 

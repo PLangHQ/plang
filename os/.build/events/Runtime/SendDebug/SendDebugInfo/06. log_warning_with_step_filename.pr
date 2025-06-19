@@ -1,5 +1,5 @@
 {
-  "Text": "log warning 'Running from step %!DebugResponse.prFileName%'",
+  "Text": "log warning 'Running from step %debugResponse.prFileName%'",
   "ModuleType": null,
   "Reload": false,
   "LlmRequest": [
@@ -31,7 +31,7 @@
           "content": [
             {
               "type": "text",
-              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nLog a warning message that includes the value of the variable %!DebugResponse.prFileName%\n## functions available starts ##\r\n[{\"Description\":\"loggerLevel can be trace, debug, information, warning, error. args can be null if not defined\",\"MethodName\":\"Log\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"message\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"loggerLevel\",\"DefaultValue\":\"information\",\"IsRequired\":false},{\"Type\":\"System.Object[]\",\"Name\":\"args\",\"IsRequired\":false}]}]\r\n## functions available ends ##\r\n## defined variables ##\r\n!debugresponse.prfilename (type:object), \r\n## defined variables ##"
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nLog a warning message that includes the current step's file name for debugging or monitoring purposes\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"loggerLevel can be trace, debug, information, warning, error. args can be null if not defined\",\"MethodName\":\"Log\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"message\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"loggerLevel\",\"DefaultValue\":\"information\",\"IsRequired\":false},{\"Type\":\"System.Object[]\",\"Name\":\"args\",\"IsRequired\":false}]}],\"SupportingObjects\":[]}\r\n## functions available ends ##\r\n## defined variables ##\r\ndebugresponse.prfilename (type:object), \r\n## defined variables ##"
             }
           ]
         },
@@ -40,14 +40,14 @@
           "content": [
             {
               "type": "text",
-              "text": "log warning 'Running from step %!DebugResponse.prFileName%'"
+              "text": "log warning 'Running from step %debugResponse.prFileName%'"
             }
           ]
         }
       ],
       "type": "PLang.Modules.GenericFunctionBuilder",
       "caching": true,
-      "RawResponse": "{\n  \"Reasoning\": \"The user wants to log a warning message that includes the value of the variable %!DebugResponse.prFileName%. The Log function supports logging messages with different levels including warning, so it is appropriate to use it with loggerLevel set to 'warning'.\",\n  \"Name\": \"Log\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"message\",\n      \"Value\": \"Running from step %!DebugResponse.prFileName%\"\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"loggerLevel\",\n      \"Value\": \"warning\"\n    }\n  ],\n  \"ReturnValues\": null,\n  \"Instruction\": {\n    \"Text\": \"Log a warning message with the specified text including the variable %!DebugResponse.prFileName%\",\n    \"ModuleType\": \"Logging\",\n    \"GenericFunctionType\": \"Log\",\n    \"FunctionJson\": null\n  }\n}"
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to log a warning message that includes the current step's file name. The Log function supports different log levels including 'warning', so it is appropriate to use it with the message and level set to 'warning'.\",\n  \"Name\": \"Log\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"message\",\n      \"Value\": \"Running from step %debugResponse.prFileName%\"\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"loggerLevel\",\n      \"Value\": \"warning\"\n    }\n  ],\n  \"ReturnValues\": null,\n  \"Instruction\": {\n    \"Text\": \"Log a warning message with the current step's file name included.\",\n    \"ModuleType\": \"Logging\",\n    \"GenericFunctionType\": \"Log\"\n  }\n}"
     }
   ],
   "Properties": {
@@ -75,13 +75,13 @@
   },
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
   "Function": {
-    "Reasoning": "The user wants to log a warning message that includes the value of the variable %!DebugResponse.prFileName%. The Log function supports logging messages with different levels including warning, so it is appropriate to use it with loggerLevel set to 'warning'.",
+    "Reasoning": "The user wants to log a warning message that includes the current step's file name. The Log function supports different log levels including 'warning', so it is appropriate to use it with the message and level set to 'warning'.",
     "Name": "Log",
     "Parameters": [
       {
         "Type": "System.String",
         "Name": "message",
-        "Value": "Running from step %!DebugResponse.prFileName%"
+        "Value": "Running from step %debugResponse.prFileName%"
       },
       {
         "Type": "System.String",

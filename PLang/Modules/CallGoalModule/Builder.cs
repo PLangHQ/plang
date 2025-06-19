@@ -55,8 +55,12 @@ call app /Builder/DbModule %content%, write to %result% => function name:RunApp,
 
 		public async Task<(Instruction?, IBuilderError?)> BuilderRunApp(GoalStep step, Instruction instruction, GenericFunction gf)
 		{
-			var appName = GenericFunctionHelper.GetParameterValueAsString(gf, "appName", "");			
+			var appName = GenericFunctionHelper.GetParameterValueAsString(gf, "appToCall", "");			
 			var goalName = GenericFunctionHelper.GetParameterValueAsString(gf, "goalName", "Start");
+
+			//todo: need to fix this valiation
+			return (instruction, null);
+
 
 			if (goalName.Contains("%") || appName.Contains("%")) return (instruction, null);
 

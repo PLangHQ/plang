@@ -280,7 +280,27 @@ namespace PLang.Utils
 			{
 				if (child is JValue jValue)
 				{
-					jValue.Value = LoadVariables(jValue.Value);
+					var obj = LoadVariables(jValue.Value);
+					if (obj != null)
+					{
+						try
+						{
+							var serializer = new Newtonsoft.Json.JsonSerializer
+							{
+								ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+							};
+
+							JToken replacement = JToken.FromObject(obj, serializer);
+							jValue.Replace(replacement);
+						} catch (Exception ex)
+						{
+							int b = 0;
+						}
+					} else
+					{
+						jValue.Value = null;
+					}
+
 					if (IsEmpty(jValue.Value) && defaultValue is JObject defaultJObj)
 					{
 						var token = defaultJObj.SelectToken(jValue.Path);

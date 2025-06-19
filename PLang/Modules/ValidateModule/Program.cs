@@ -71,7 +71,7 @@ namespace PLang.Modules.ValidateModule
 
 			foreach (var variable in variables)
 			{
-				var obj = memoryStack.GetObjectValue2(variable);
+				var obj = memoryStack.GetObjectValue(variable);
 				if (obj.Initiated || obj.Value != null) return null;
 
 				if (string.IsNullOrEmpty(errorMessage))

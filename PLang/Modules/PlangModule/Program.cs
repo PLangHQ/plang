@@ -355,25 +355,25 @@ namespace PLang.Modules.PlangModule
 		}
 
 		[Description("Run from a specific step and the following steps")]
-		public async Task<(object?, IError?)> RunFromStep(GoalStep step)
+		public async Task<(object?, IError?)> RunFromStep(string prFileName)
 		{
-			if (step == null)
+			if (string.IsNullOrEmpty(prFileName))
 			{
-				return (null, new ProgramError($"step is empty. I cannot run a step if I don't know what to run.", goalStep, function,
+				return (null, new ProgramError($"prFileName is empty. I cannot run a step if I don't know what to run.", goalStep, function,
 					FixSuggestion: "Something has broken between the IDE sending the information and the runtime. Check if SendDebug.goal and the IDE is talking together correctly."));
 			}
 
 			fileAccessHandler.GiveAccess(fileSystem.OsDirectory, fileSystem.GoalsPath);
-			if (!fileSystem.File.Exists(step.AbsolutePrFilePath))
+			if (!fileSystem.File.Exists(prFileName))
 			{
-				return (null, new ProgramError($"The file {step.RelativePrPath} could not be found. I looked for it at {step.AbsolutePrFilePath}", goalStep, function));
+				return (null, new ProgramError($"The file {prFileName} could not be found.", goalStep, function));
 			}
 			var startingEngine = engine.GetContext()[ReservedKeywords.StartingEngine] as IEngine;
 			if (startingEngine == null) startingEngine = engine;
 
 			engine.GetEventRuntime().SetActiveEvents(new());
 
-			var result = await startingEngine.RunFromStep(step.AbsolutePrFilePath);
+			var result = await startingEngine.RunFromStep(prFileName);
 			return result;
 		}
 

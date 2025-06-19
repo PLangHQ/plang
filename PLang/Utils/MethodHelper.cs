@@ -174,7 +174,7 @@ namespace PLang.Utils
 						$"{methodParameter.Name} is string, the property Value cannot start and end with quote(\").", goalStep));
 				}
 
-				if (parameter != null && VariableHelper.IsVariable(parameter.Value) && !variablesInStep.Any(p => p.PathAsVariable.Equals(parameter.Value?.ToString(), StringComparison.OrdinalIgnoreCase)))
+				if (parameter != null && VariableHelper.IsVariable(parameter.Value) && !goalStep.Text.Contains(parameter.Value.ToString(), StringComparison.OrdinalIgnoreCase))
 				{
 					buildErrors.Add(new InvalidParameterError(p.Name,
 						$"{parameter.Value} could not be found in step. User is not defining {parameter.Value} as variable.", goalStep));

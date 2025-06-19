@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace PLang.Models
 {
@@ -47,7 +48,20 @@ namespace PLang.Models
 		public override int GetHashCode() => Name?.GetHashCode() ?? 0;
 	}
 
-
+	public class AppToCallInfo : GoalToCallInfo
+	{
+		private string appName;
+		public AppToCallInfo(string appName, string goalName = "Start", Dictionary<string, object?>? parameters = null) :
+			base(goalName, parameters)
+		{
+			if (string.IsNullOrWhiteSpace(appName))
+			{
+				throw new Exception("app name cannot be empty");
+			}
+			this.appName = appName;
+		}
+		public string AppName { get { return appName; } set { appName = value; } }
+	}
 	[Description("Name of goal and parameters that is called, e.g. in condition, loops, run goal")]
 	public class GoalToCallInfo
 	{
@@ -69,7 +83,19 @@ namespace PLang.Models
 			this.parameters = parameters ?? new();
 		}
 
-		public string Name { get { return name; } set { name = value; } }
+		public string Name
+		{
+			get { return name; }
+			set
+			{
+
+				if (value.Contains("\\"))
+				{
+					value = value.Replace("\\", "/");
+				}
+				name = value;
+			}
+		}
 		public Dictionary<string, object?> Parameters { get { return parameters; } set { parameters = value ?? new(); } }
 
 

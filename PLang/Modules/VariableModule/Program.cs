@@ -275,7 +275,7 @@ namespace PLang.Modules.VariableModule
 		[Description(@"Set default value of int/long variable. If value already exists it wont be set.")]
 		public async Task SetDefaultNumberVariable([HandlesVariable] string key, long? value = null, long? defaultValue = null)
 		{
-			var objectValue = memoryStack.GetObjectValue2(key, false);
+			var objectValue = memoryStack.GetObjectValue(key, false);
 			if (objectValue.Initiated) return;
 
 			memoryStack.Put(key, value ?? defaultValue, goalStep: goalStep);
@@ -351,7 +351,7 @@ namespace PLang.Modules.VariableModule
 		{
 			foreach (var key in keyValues)
 			{
-				var objectValue = memoryStack.GetObjectValue2(key.Key, false);
+				var objectValue = memoryStack.GetObjectValue(key.Key, false);
 				if (objectValue.Initiated) continue;
 
 				await SetVariable(key.Key, key.Value, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot);
@@ -364,7 +364,7 @@ namespace PLang.Modules.VariableModule
 		{
 			foreach (var key in keyValues)
 			{
-				var objectValue = memoryStack.GetObjectValue2(key.Key, false);
+				var objectValue = memoryStack.GetObjectValue(key.Key, false);
 				object? value = !VariableHelper.IsEmpty(key.Value.Item1) ? key.Value.Item1 : key.Value.Item2;
 
 				await SetVariable(key.Key, value, doNotLoadVariablesInValue, keyIsDynamic, onlyIfValueIsNot);

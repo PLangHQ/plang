@@ -48,6 +48,8 @@ namespace PLang.Models.ObjectValueExtractors
 
 			try
 			{
+				if (!parent.Initiated) return ObjectValue.Nullable(segment.Value);
+
 				var expressionObj = new NCalc.Expression(parent.Value + expression.Replace(",", "."));
 				var result = expressionObj.Evaluate();
 

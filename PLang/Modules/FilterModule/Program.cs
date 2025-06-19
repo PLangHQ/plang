@@ -40,10 +40,11 @@ namespace PLang.Modules.FilterModule
 				extractedBlocks.Add((language, code));
 			}
 
-			if (format != null) {
+			if (format != null)
+			{
 				extractedBlocks = extractedBlocks.Where(p => format.Contains(p.Code)).ToList();
 			}
-			
+
 
 			return (extractedBlocks.Count == 1) ? extractedBlocks[0].Code : extractedBlocks;
 
@@ -74,17 +75,20 @@ namespace PLang.Modules.FilterModule
 
 			string[] lines = content.Split(new char[] { '\r', '\n' });
 			IEnumerable<string> matchedLines = null;
-			
+
 			if (matching == "startwith")
 			{
 				matchedLines = lines.Where(p => p.TrimStart().StartsWith(textToFind, StringComparison.OrdinalIgnoreCase));
-			} else if (matching == "endwith")
+			}
+			else if (matching == "endwith")
 			{
 				matchedLines = lines.Where(p => p.TrimEnd().EndsWith(textToFind, StringComparison.OrdinalIgnoreCase));
-			} else if (matching == "equals")
+			}
+			else if (matching == "equals")
 			{
 				matchedLines = lines.Where(p => p.Equals(textToFind, StringComparison.OrdinalIgnoreCase));
-			} else
+			}
+			else
 			{
 				matchedLines = lines.Where(p => p.Contains(textToFind, StringComparison.OrdinalIgnoreCase));
 			}
@@ -251,14 +255,14 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 	retrieveOneItem=""first""
 </example>
 ")]
-		public async Task<object?> FilterOnPropertyAndValue(object variableToExtractFrom, string propertyToFilterOn, string valueToFilterBy, string? operatorToFilterOnValue = "=",
+		public async Task<(object?, IError?)> FilterOnPropertyAndValue(object variableToExtractFrom, string propertyToFilterOn, string valueToFilterBy, string? operatorToFilterOnValue = "=",
 			 string operatorOnPropertyToFilter = "=", string? propertyToExtract = null, bool throwErrorWhenNothingFound = false, string? retrieveOneItem = null,
 			 string operatorToFilterOnValueComparer = "insensitive")
 		{
-			if (variableToExtractFrom == null || string.IsNullOrEmpty(variableToExtractFrom.ToString())) return null;
+			if (variableToExtractFrom == null || string.IsNullOrEmpty(variableToExtractFrom.ToString())) return (null, null);
 			if (valueToFilterBy == "null") valueToFilterBy = null;
 
-			Func<object?, bool> filterPredicate = GetPredicate(operatorToFilterOnValue, valueToFilterBy, operatorToFilterOnValueComparer);
+			Func<object, bool> filterPredicate = GetPredicate(operatorToFilterOnValue, valueToFilterBy, operatorToFilterOnValueComparer);
 
 			List<object> filteredList = new();
 			if (variableToExtractFrom is JObject jObject)
@@ -278,7 +282,7 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 					filteredList = dynamicList
 						.Where(item =>
 						{
-							var obj = (JValue) (item as JObject)?[propertyToFilterOn];
+							var obj = (JValue)(item as JObject)?[propertyToFilterOn];
 							return filterPredicate(obj.Value);
 
 						})
@@ -297,17 +301,55 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 							if (obj == null) { return false; }
 
 							var jValue = obj?[propertyToFilterOn] as JValue;
-							
+
 							return filterPredicate(jValue?.Value);
 
 						})
 						.ToList());
 					}
-				} else
+				}
+				else if (list.Count > 0 && TypeHelper.ImplementsDict(list[0], out IDictionary? dict2))
+				{
+					var keyName = dict2.Keys.Cast<string>().FirstOrDefault(p => p.Equals(propertyToFilterOn, StringComparison.OrdinalIgnoreCase));
+					if (keyName == null) return (null, new ProgramError($"Could not find {propertyToFilterOn} in object"));
+
+					foreach (var item in list)
+					{
+						if (!TypeHelper.ImplementsDict(item, out IDictionary? dict)) continue;
+
+						var obj = dict[keyName];
+						var result = filterPredicate(obj);
+						if (!result) continue;
+
+						if (string.IsNullOrWhiteSpace(propertyToExtract))
+						{
+							filteredList.Add(obj);
+						}
+						else if (propertyToExtract == "parent")
+						{
+							filteredList.Add(dict);
+						}
+						else
+						{
+
+							keyName = dict.Keys.Cast<string>().FirstOrDefault(p => p.Equals(propertyToFilterOn, StringComparison.OrdinalIgnoreCase));
+							if (string.IsNullOrEmpty(keyName))
+							{
+								filteredList.Add(obj);
+							}
+							else
+							{
+								filteredList.Add(dict[keyName]);
+							}
+						}
+					}
+				}
+				else
 				{
 
 					foreach (var item in list)
 					{
+
 						var property = item.GetType().GetProperties().FirstOrDefault(p => p.Name.Equals(propertyToFilterOn, StringComparison.OrdinalIgnoreCase));
 						if (property != null)
 						{
@@ -331,10 +373,10 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 									filterPredicate(entry.Value.ToString()))
 					.ToDictionary(entry => entry.Key, entry => entry.Value);
 
-				if (retrieveOneItem == "first") return filteredDictionary.FirstOrDefault();
-				if (retrieveOneItem == "last") return filteredDictionary.FirstOrDefault();
+				if (retrieveOneItem == "first") return (filteredDictionary.FirstOrDefault(), null);
+				if (retrieveOneItem == "last") return (filteredDictionary.LastOrDefault(), null);
 
-				return filteredDictionary;
+				return (filteredDictionary, null);
 			}
 			else
 			{
@@ -344,17 +386,22 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 
 			}
 
-			if (filteredList == null) return null;
+			if (filteredList == null) return (null, null);
 
-			if (retrieveOneItem == "first") return filteredList.FirstOrDefault();
-			if (retrieveOneItem == "last") return filteredList.FirstOrDefault();
+			if (retrieveOneItem == "first") return (filteredList.FirstOrDefault(), null);
+			if (retrieveOneItem == "last") return (filteredList.LastOrDefault(), null);
 			if (int.TryParse(retrieveOneItem, out int idx))
 			{
-				if (filteredList.Count > idx && idx >= 0) return filteredList[idx];
-				return null;
+				if (filteredList.Count > idx && idx >= 0) return (filteredList[idx], null);
+				return (null, new ProgramError($"List does not have {idx + 1} items"));
 			}
-			return filteredList;
+			return (filteredList, null);
 
+		}
+
+		private bool ImplementsDict(object? v, out IDictionary dict)
+		{
+			throw new NotImplementedException();
 		}
 
 		private List<object>? GetFilteredJObject(JToken jToken, string propertyToFilterOn, string propertyToFilterOnOperator, Func<object, bool>? filterPredicate = null, string? propertyToExtract = null)
@@ -475,11 +522,11 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 
 
 					return v != null && v.ToString().Contains(valueToFilterBy, comparer);
-			}),
+				}),
 
 				"startwith" => new Func<object, bool>(v => v != null && v.ToString().StartsWith(valueToFilterBy, comparer)),
 				"endswith" => new Func<object, bool>(v => v != null && v.ToString().EndsWith(valueToFilterBy, comparer)), // Similar to contains
-				"equals" or	"=" => new Func<object, bool>(v =>
+				"equals" or "=" => new Func<object, bool>(v =>
 				{
 					if (v == null && valueToFilterBy == null) return true;
 					if (v == null) return false;
@@ -511,7 +558,7 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 
 			var doc = new HtmlDocument();
 			doc.LoadHtml(html);
-			
+
 			var nodes = doc.DocumentNode.QuerySelectorAll(cssSelector);
 
 			if (!string.IsNullOrEmpty(retrieveOneItem))

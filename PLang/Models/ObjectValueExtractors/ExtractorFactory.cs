@@ -4,9 +4,11 @@ using Newtonsoft.Json.Linq;
 using PLang.Models.ObjectTypes;
 using PLang.Models.ObjectValueConverters;
 using PLang.Runtime;
+using PLang.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
@@ -41,13 +43,9 @@ namespace PLang.Models.ObjectValueExtractors
 				return new JsonExtractor(jToken, objectValue);
 			}
 			
-			if (ImplementsInterface("IDictionary`2", type))
-			{
-				var dict = obj as IDictionary;
-				if (dict != null)
-				{
-					return new DictionaryExtractor(dict, objectValue);
-				}
+			if (TypeHelper.ImplementsDict(obj, out IDictionary? dict) && dict != null)
+			{				
+				return new DictionaryExtractor(dict, objectValue);				
 			}			
 			
 			if (ImplementsInterface("IList`1", type))
@@ -97,5 +95,9 @@ namespace PLang.Models.ObjectValueExtractors
 
 			return new ListObjectExtractor(list, parent);
 		}
+
+
+
+		
 	}
 }

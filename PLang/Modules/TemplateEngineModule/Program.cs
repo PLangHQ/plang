@@ -95,8 +95,8 @@ namespace PLang.Modules.TemplateEngineModule
 			{
 				foreach (var kvp in memoryStack.GetMemoryStack())
 				{
-					var sv = ScriptVariable.Create(kvp.Key, ScriptVariableScope.Global);
-					templateContext.SetValue(sv, kvp.Value.Value);
+					var sv = ScriptVariable.Create(kvp.Name, ScriptVariableScope.Global);
+					templateContext.SetValue(sv, kvp.Value);
 				}
 			}
 			if (variables != null)

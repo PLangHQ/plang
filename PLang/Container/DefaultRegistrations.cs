@@ -168,6 +168,11 @@ namespace PLang.Container
 					return instance;
 				}, instance.GetType().FullName);
 			}
+
+			if (isDefault)
+			{
+				SetContext(container, type, ReservedKeywords.Inject_SettingsRepository, isDefault, true);
+			}
 		}
 
 

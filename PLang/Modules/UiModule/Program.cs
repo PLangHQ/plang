@@ -263,10 +263,10 @@ namespace PLang.Modules.UiModule
 			var templateContext = new TemplateContext();
 			foreach (var kvp in memoryStack.GetMemoryStack())
 			{
-				expandoObject.Add(kvp.Key, kvp.Value.Value);
+				expandoObject.Add(kvp.Name, kvp.Value);
 
-				var sv = ScriptVariable.Create(kvp.Key, ScriptVariableScope.Global);
-				templateContext.SetValue(sv, kvp.Value.Value);
+				var sv = ScriptVariable.Create(kvp.Name, ScriptVariableScope.Global);
+				templateContext.SetValue(sv, kvp.Value);
 			}
 
 			var parsed = Template.Parse(obj.ToString());

@@ -1128,7 +1128,7 @@ namespace PLang.Modules.DbModule
 				}
 
 
-				return (Convert.ChangeType(obj, targetType), null);
+				return (TypeHelper.ConvertToType(obj, targetType), null);
 			}
 			catch (Exception ex)
 			{
@@ -1137,9 +1137,10 @@ namespace PLang.Modules.DbModule
 					var filterModule = GetProgramModule<FilterModule.Program>();
 					var task = filterModule.FilterOnPropertyAndValue(function, "ParameterName", "@" + parameterName, retrieveOneItem: "first", propertyToExtract: "parent");
 					task.Wait();
-					var parameter = task.Result as JObject;
-					if (parameter != null)
+					var result = task.Result;
+					if (result.Item1 != null)
 					{
+						var parameter = result.Item1 as JObject;
 						return (0, new Error($"{parameter["VariableNameOrValue"]} is empty. Empty content cannot be used for the column {parameterName}. It must contains some value", "ConvertFailed", Exception: ex));
 					}
 					else

@@ -435,6 +435,16 @@ namespace PLang.Modules
 						if (properties != null) objectValue.Properties = properties;
 						memoryStack.Put(objectValue, goalStep);
 					}
+					else if (returnValues.Count == 1 && objectValues.Count > 1)
+					{
+						Dictionary<string, object> dict = new();
+						foreach (var ov in objectValues)
+						{
+							dict.AddOrReplace(ov.Name, ov.Value);
+						}
+						var objectValue = new ObjectValue(returnValues[0].VariableName, dict);
+						memoryStack.Put(objectValue, goalStep);
+					}
 					else
 					{
 						foreach (var returnValue in returnValues)

@@ -515,7 +515,6 @@ long {variableName} = 0;
 				"System.Threading.Tasks"
 			}.ToList();
 
-			var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithUsings(defaultUsings);
 			var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
 					.WithOptimizationLevel(OptimizationLevel.Debug)
 					.WithPlatform(Platform.AnyCpu).WithUsings(defaultUsings);

@@ -464,8 +464,10 @@ namespace PLang.Container
 			memoryStack.Put(new DynamicObjectValue("Now", () => { return SystemTime.Now(); }, typeof(DateTime), isSystemVariable: true));
 			memoryStack.Put(new DynamicObjectValue("NowUtc", () => { return SystemTime.UtcNow(); }, typeof(DateTime), isSystemVariable: true));
 
-			memoryStack.Put(new DynamicObjectValue("!MemoryStack", () => { return memoryStack.GetMemoryStack(); }, typeof(Dictionary<string, ObjectValue>), isSystemVariable: true));
-			memoryStack.Put(new DynamicObjectValue("!GUID", () => { return Guid.NewGuid(); }, typeof(Guid), isSystemVariable: true));
+			memoryStack.Put(new DynamicObjectValue(ReservedKeywords.MemoryStack, () => { 
+				return memoryStack.GetMemoryStack(); 
+			}, typeof(Dictionary<string, ObjectValue>), isSystemVariable: true));
+			memoryStack.Put(new DynamicObjectValue(ReservedKeywords.GUID, () => { return Guid.NewGuid(); }, typeof(Guid), isSystemVariable: true));
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
 			var settings = container.GetInstance<ISettings>();

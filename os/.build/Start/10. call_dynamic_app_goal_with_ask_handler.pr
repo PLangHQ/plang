@@ -31,7 +31,7 @@
           "content": [
             {
               "type": "text",
-              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nInvoke a specific goal or app dynamically based on variable values and handle user input with a fallback call\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"Call/Runs another app. app can be located in another directory, then path points the way. goalName is default \\\"Start\\\" when it cannot be mapped\",\"MethodName\":\"RunApp\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"appName\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalName (see SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parameters\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"waitForExecution\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"delayWhenNotWaitingInMilliseconds\",\"DefaultValue\":50,\"IsRequired\":false},{\"Type\":\"System.UInt32\",\"Name\":\"waitForXMillisecondsBeforeRunningGoal\",\"DefaultValue\":0,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"keepMemoryStackOnAsync\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Call/Runs another goal. goalName can be prefixed with !. If backward slash(\\\\) is used by user, change to forward slash(/)\",\"MethodName\":\"RunGoal\",\"Parameters\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalInfo (see SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"waitForExecution\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"delayWhenNotWaitingInMilliseconds\",\"DefaultValue\":50,\"IsRequired\":false},{\"Type\":\"System.UInt32\",\"Name\":\"waitForXMillisecondsBeforeRunningGoal\",\"DefaultValue\":0,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"keepMemoryStackOnAsync\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"isolated\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalName\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Dictionary`2\",\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\napp (type:object), goals[0].name (type:object), goals[0].params (type:object), \r\n## defined variables ##"
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nInvoke a specific app goal with parameters and handle an 'ask' event by calling another goal named AskMe\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"Call/Runs another app. app can be located in another directory, then path points the way. goalName is default \\\"Start\\\" when it cannot be mapped\",\"MethodName\":\"RunApp\",\"Parameters\":[{\"Type\":\"PLang.Models.AppToCallInfo\",\"Name\":\"appToCall\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"waitForExecution\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"delayWhenNotWaitingInMilliseconds\",\"DefaultValue\":50,\"IsRequired\":false},{\"Type\":\"System.UInt32\",\"Name\":\"waitForXMillisecondsBeforeRunningGoal\",\"DefaultValue\":0,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"keepMemoryStackOnAsync\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Call/Runs another goal. goalName can be prefixed with !. If backward slash(\\\\) is used by user, change to forward slash(/)\",\"MethodName\":\"RunGoal\",\"Parameters\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalInfo\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"waitForExecution\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"delayWhenNotWaitingInMilliseconds\",\"DefaultValue\":50,\"IsRequired\":false},{\"Type\":\"System.UInt32\",\"Name\":\"waitForXMillisecondsBeforeRunningGoal\",\"DefaultValue\":0,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"keepMemoryStackOnAsync\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"isolated\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.AppToCallInfo\",\"Name\":\"appToCall\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"AppName\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalInfo\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal\",\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\napp (type:object), goals[0].name (type:object), goals[0].params (type:object), \r\n## defined variables ##"
             }
           ]
         },
@@ -47,18 +47,16 @@
       ],
       "type": "PLang.Modules.CallGoalModule.Builder",
       "caching": true,
-      "RawResponse": "{\n  \"Reasoning\": \"The user wants to call a dynamic app path with a dynamic goal name and parameters, which fits the RunApp function. The parameters are passed as a dictionary from %goals[0].params%. The fallback 'on ask call AskMe' is ignored as per instructions.\",\n  \"Name\": \"RunApp\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"appName\",\n      \"Value\": \"/apps/%app%\"\n    },\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalName\",\n      \"Value\": {\n        \"Name\": \"%goals[0].name%\",\n        \"Dictionary`2\": \"%goals[0].params%\"\n      }\n    }\n  ],\n  \"ReturnValues\": null,\n  \"Instruction\": {\n    \"Text\": \"Call the app dynamically with the given app path and goal name with parameters.\",\n    \"ModuleType\": \"PLang\",\n    \"GenericFunctionType\": \"RunApp\"\n  }\n}"
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to call a specific app goal with parameters dynamically provided by %app%, %goals[0].name%, and %goals[0].params%. Additionally, on an 'ask' event, the user wants to call the AskMe goal. The best match is to use RunApp to call the app with the given goal and parameters. The 'on ask call AskMe' is an event handler that triggers the AskMe goal, which can be represented as a separate RunGoal call if needed, but since the user only specifies the call, we focus on the main call.\",\n  \"Name\": \"RunApp\",\n  \"Parameters\": [\n    {\n      \"Type\": \"PLang.Models.AppToCallInfo\",\n      \"Name\": \"appToCall\",\n      \"Value\": {\n        \"AppName\": \"%app%\",\n        \"Name\": \"%goals[0].name%\",\n        \"Parameters\": \"%goals[0].params%\"\n      }\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"waitForExecution\",\n      \"Value\": true\n    }\n  ],\n  \"ReturnValues\": null,\n  \"Instruction\": {\n    \"Text\": \"Call the app %app% with goal %goals[0].name% and parameters %goals[0].params%. On 'ask' event, call the AskMe goal.\",\n    \"ModuleType\": \"PLang\",\n    \"GenericFunctionType\": \"RunApp\"\n  }\n}"
     }
   ],
   "Properties": {
     "Parameters": {
-      "appName": [
+      "appToCall": [
         {
-          "Name": "appName",
+          "Name": "AppName",
           "FullTypeName": "System.String"
-        }
-      ],
-      "goalName": [
+        },
         {
           "Name": "Name",
           "FullTypeName": "System.String"
@@ -66,12 +64,6 @@
         {
           "Name": "Parameters",
           "FullTypeName": "System.Collections.Generic.Dictionary`2[[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Object, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
-        }
-      ],
-      "parameters": [
-        {
-          "Name": "parameters",
-          "FullTypeName": "System.Object"
         }
       ],
       "waitForExecution": [
@@ -103,21 +95,22 @@
   },
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
   "Function": {
-    "Reasoning": "The user wants to call a dynamic app path with a dynamic goal name and parameters, which fits the RunApp function. The parameters are passed as a dictionary from %goals[0].params%. The fallback 'on ask call AskMe' is ignored as per instructions.",
+    "Reasoning": "The user wants to call a specific app goal with parameters dynamically provided by %app%, %goals[0].name%, and %goals[0].params%. Additionally, on an 'ask' event, the user wants to call the AskMe goal. The best match is to use RunApp to call the app with the given goal and parameters. The 'on ask call AskMe' is an event handler that triggers the AskMe goal, which can be represented as a separate RunGoal call if needed, but since the user only specifies the call, we focus on the main call.",
     "Name": "RunApp",
     "Parameters": [
       {
-        "Type": "System.String",
-        "Name": "appName",
-        "Value": "/apps/%app%"
+        "Type": "PLang.Models.AppToCallInfo",
+        "Name": "appToCall",
+        "Value": {
+          "AppName": "%app%",
+          "Name": "%goals[0].name%",
+          "Parameters": "%goals[0].params%"
+        }
       },
       {
-        "Type": "PLang.Models.GoalToCallInfo",
-        "Name": "goalName",
-        "Value": {
-          "Name": "%goals[0].name%",
-          "Dictionary`2": "%goals[0].params%"
-        }
+        "Type": "System.Boolean",
+        "Name": "waitForExecution",
+        "Value": true
       }
     ],
     "ReturnValues": null
