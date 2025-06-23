@@ -40,16 +40,16 @@ namespace PLang.Services.OpenAi
 		}
 
 
-		public virtual async Task<(T?, IError?)> Query<T>(LlmRequest question) where T : class
+		public virtual async Task<(T? Response, IError? Error)> Query<T>(LlmRequest question) where T : class
 		{
 			var result = await Query(question, typeof(T));
 			return ((T?)result.Item1, result.Item2);
 		}
-		public virtual async Task<(object?, IError?)> Query(LlmRequest question, Type responseType)
+		public virtual async Task<(object? Response, IError? Error)> Query(LlmRequest question, Type responseType)
 		{
 			return await Query(question, responseType, 0);
 		}
-		public virtual async Task<(object?, IError?)> Query(LlmRequest question, Type responseType, int errorCount)
+		public virtual async Task<(object? Response, IError? Error)> Query(LlmRequest question, Type responseType, int errorCount)
 		{
 			Extractor = ExtractorFactory.GetExtractor(question, responseType);
 
@@ -139,10 +139,6 @@ I could not deserialize your response. This is the error. Please try to fix it.
 			}
 		}
 
-		public async Task<(object?, IError?)> GetBalance()
-		{
-			return (null, null);
-		}
 
 	}
 }

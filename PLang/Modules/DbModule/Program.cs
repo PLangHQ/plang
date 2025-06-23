@@ -442,15 +442,14 @@ namespace PLang.Modules.DbModule
 		[Description("Executes a sql statement that defined by user. This statement will be validated.")]
 		public async Task<(long RowsAffected, IError? Error)> Execute(string sql, [HandlesVariable] string? dataSourceName = null)
 		{
+			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName, false);
+			if (error != null) return (0, error);
+
+
+			long rowsAffected = 0;
+			var prepare = Prepare(sql, null);
 			try
 			{
-
-				(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName, false);
-				if (error != null) return (0, error);
-
-
-				long rowsAffected = 0;
-				var prepare = Prepare(sql, null);
 				if (prepare.error != null)
 				{
 					return (0, prepare.error);
@@ -479,8 +478,12 @@ namespace PLang.Modules.DbModule
 						return (1, null);
 					}
 				}
-				return (0, new Error(ex.Message, "ExecuteSql", Exception: ex));
 
+				return (0, new ProgramError(ex.Message, goalStep, function, Key: "SqlError", Exception: ex));
+			}
+			finally
+			{
+				Done(prepare.connection);
 			}
 		}
 
@@ -532,14 +535,15 @@ namespace PLang.Modules.DbModule
 
 		public async Task<(Table? Table, IError? Error)> Select(string sql, List<ParameterInfo>? sqlParameters = null, [HandlesVariable] string? dataSourceName = null)
 		{
+
+			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
+			if (error != null) return (null, error);
+
+
+			var prep = Prepare(sql, sqlParameters);
+
 			try
 			{
-
-				(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName);
-				if (error != null) return (null, error);
-
-
-				var prep = Prepare(sql, sqlParameters);
 				if (prep.error != null)
 				{
 					return (null, prep.error);
@@ -557,7 +561,8 @@ namespace PLang.Modules.DbModule
 					{
 						var param = cmd.CreateParameter();
 						param.ParameterName = prop.ParameterName;
-						param.Value = prop.VariableNameOrValue ?? DBNull.Value;
+						param.Value = ConvertToType(prop.VariableNameOrValue, prop.TypeFullName) ?? DBNull.Value;
+						
 						cmd.Parameters.Add(param);
 					}
 				}
@@ -581,14 +586,28 @@ namespace PLang.Modules.DbModule
 
 				//var rows = (await prep.connection.QueryAsync<dynamic>(prep.sql, prep.param)).ToList();
 				logger.LogDebug($"Rows: {table.Count}");
-				Done(prep.connection);
+
 
 				return (table == null) ? (new(cols), null) : (table, null);
 			}
 			catch (Exception ex)
 			{
-				return (null, new ExceptionError(ex));
+				return (null, new ProgramError(ex.Message, goalStep, function, Key: "SqlError", Exception: ex));
 			}
+			finally
+			{
+				Done(prep.connection);
+			}
+		}
+
+		private object? ConvertToType(object? variableNameOrValue, string fullType)
+		{
+			if (variableNameOrValue is JToken token)
+			{
+				variableNameOrValue = token.ToString();
+			}
+
+			return TypeHelper.ConvertToType(variableNameOrValue, Type.GetType(fullType));
 		}
 
 		private object? GetDefaultValue(string strType)
@@ -609,21 +628,32 @@ namespace PLang.Modules.DbModule
 			if (error != null) return (0, error);
 
 			var prepare = Prepare(sql, sqlParameters);
-			if (prepare.error != null)
+			try
 			{
-				return (0, prepare.error);
+				if (prepare.error != null)
+				{
+					return (0, prepare.error);
+				}
+				long result;
+				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
+				{
+					result = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
+				}
+				else
+				{
+					result = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param);
+				}
+				return (result, null);
 			}
-			long result;
-			if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
+			catch (Exception ex)
 			{
-				result = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
+				return (0, new ProgramError(ex.Message, goalStep, function, Key: "SqlError", Exception: ex));
 			}
-			else
+			finally
 			{
-				result = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param);
+				Done(prepare.connection);
 			}
-			Done(prepare.connection);
-			return (result, null);
+
 		}
 
 		public async Task<(long, IError?)> Delete(string sql, List<ParameterInfo>? sqlParameters = null, [HandlesVariable] string? dataSourceName = null)
@@ -634,20 +664,31 @@ namespace PLang.Modules.DbModule
 
 			long rowsAffected;
 			var prepare = Prepare(sql, sqlParameters);
-			if (prepare.error != null)
+			try
 			{
-				return (0, prepare.error);
+				if (prepare.error != null)
+				{
+					return (0, prepare.error);
+				}
+				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
+				{
+					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
+				}
+				else
+				{
+					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param);
+				}
+
+				return (rowsAffected, null);
 			}
-			if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
+			catch (Exception ex)
 			{
-				rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
+				return (0, new ProgramError(ex.Message, goalStep, function, Key: "SqlError", Exception: ex));
 			}
-			else
+			finally
 			{
-				rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param);
+				Done(prepare.connection);
 			}
-			Done(prepare.connection);
-			return (rowsAffected, null);
 		}
 
 		[Description("Insert or update table(Upsert). Will return affected row count. ")]
@@ -696,7 +737,7 @@ namespace PLang.Modules.DbModule
 					ShowWarning(ex);
 					return (rowsAffected, null);
 				}
-				return (0, new ProgramError(ex.Message, goalStep, function, Exception: ex));
+				return (0, new ProgramError(ex.Message, goalStep, function, Key: "SqlError", Exception: ex));
 			}
 			finally
 			{
@@ -714,32 +755,44 @@ namespace PLang.Modules.DbModule
 
 
 			var prepare = Prepare(sql, sqlParameters, true);
-			if (prepare.error != null)
+			try
 			{
-				return (0, prepare.error);
-			}
-
-			if (eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
-			{
-				var value = await prepare.connection.QuerySingleOrDefaultAsync(prepare.sql, prepare.param) as IDictionary<string, object>;
-				Done(prepare.connection);
-				return (value.FirstOrDefault().Value, null);
-			}
-			else
-			{
-				var id = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, returnId: true);
-				Done(prepare.connection);
-				if (id != 0)
+				if (prepare.error != null)
 				{
-					return (id, null);
+					return (0, prepare.error);
 				}
 
-				if (prepare.param.ParameterNames.Contains("id"))
+				if (eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
 				{
-					return (prepare.param.Get<long>("id"), null);
-				}
+					var value = await prepare.connection.QuerySingleOrDefaultAsync(prepare.sql, prepare.param) as IDictionary<string, object>;
+					Done(prepare.connection);
 
-				return (null, null);
+					return (value.FirstOrDefault().Value, null);
+				}
+				else
+				{
+					var id = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, returnId: true);
+					Done(prepare.connection);
+					if (id != 0)
+					{
+						return (id, null);
+					}
+
+					if (prepare.param.ParameterNames.Contains("id"))
+					{
+						return (prepare.param.Get<long>("id"), null);
+					}
+
+					return (null, null);
+				}
+			}
+			catch (Exception ex)
+			{
+				return (0, new ProgramError(ex.Message, goalStep, function, Key: "SqlError", Exception: ex));
+			}
+			finally
+			{
+				Done(prepare.connection);
 			}
 
 		}
@@ -1006,7 +1059,13 @@ namespace PLang.Modules.DbModule
 					parameterName = parameterName.Replace(".", "");
 					sql = sql.Replace(oldParameterName, parameterName);
 				}
-				if (isInsert && parameterName == "id" && eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
+
+				if (p.VariableNameOrValue?.ToString() == "auto" && eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
+				{
+					return (param, new Error("Auto incremental cannot be handled by plang when Event sourcing is disabled"));
+				}
+
+				if (isInsert && parameterName == "id" && (p.VariableNameOrValue?.ToString() == "auto" || eventSourceRepository.GetType() != typeof(DisableEventSourceRepository)))
 				{
 					var id = p.VariableNameOrValue.ToString();
 					if (id == "auto" || string.IsNullOrEmpty(id))

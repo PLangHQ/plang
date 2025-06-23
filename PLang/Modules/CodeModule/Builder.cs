@@ -255,7 +255,7 @@ This would map the user statement to the parameter 'content' of the code and hav
 ## Rules ##
 - Generate static class. The code generated should have 1 method with the static method named ExecutePlangCode. 
 - A variable in user intent is defined by starting and ending %.
-- Variables defined in the user intent can be passed into the ExecutePlangCode function by value, but only if defined by user intent. 
+- Variables defined in the user intent can be passed into the ExecutePlangCode function by value, but only if defined by user. 
 - Variable names passed to ExecutePlangCode function MUST be unmodified from the user statement
 - The code will not be modified after you generate it.
 - If condition fails, throw Exception, unless defined otherwise by user command
@@ -274,8 +274,8 @@ This would map the user statement to the parameter 'content' of the code and hav
 - When checking type and converting variables to type, use Convert.ChangeType method
 - When user defines assembly or using, include them in your answer
 - append @ sign for reserved variable in C#
-- when input and output variable is same only define it once
 - on error in step is handled by external system, DO NOT generate code for it
+- follow user instruction when generating code
 ## Rules ##
 
 ## Response information ##
@@ -284,19 +284,24 @@ This would map the user statement to the parameter 'content' of the code and hav
 {dllName}
 - Using: must include namespaces that are needed to compile code.
 - Assemblies: dll to reference to compile using Roslyn
-- Parameters: Parameters MUST match parameter count sent to ExecutePlangCode. Keep format as is defined by user, e.g. user: 'convert %name% to upper, write to %nameUpper%' => InputParameters would be [""%name%""]. user: 'check %items.count% > 0 and %isValid% and %!error.status%, write ""yes"" to %answer%' => InputParameters would be [""%list[0]%"", ""%isValid%"", ""%!error.status%""]
+- Parameters: Parameters MUST match parameter count sent to ExecutePlangCode.
+- PLang.Modules.BaseBuilder+Parameter has scheme => {{ Name:string, Value:string, Type:string }} Name is the name of the parameter in the ExecutePlangCode method, Value is the %variable% name that matches and Type is .net object type
 - ReturnValues: keep as is defined by user, e.g. user: 'is leap year, write ""yes"" to %answer% => ReturnValues would be [""%answer%""], only return 1 value
 ## Response information ##
 ");
 
 			AppendToAssistantCommand($@"
+
+
+
+
 ## examples ##
 replace ""<strong>"" with """" from %html%, write to %html% => string ExecutePlangCode(string? html) {{
     //validate input parameter 
     html = html.Replace(""<strong>"", """");
 	return html;
 }}
-Parameters: ""%html%""]
+Parameters: [{{Name:""html"", Value:""%html%"", Type:""string""}}]
 ReturnValue: ""%html%""
 
 %list.Count%*50, write to %result% => long ExecutePlangCode(long? listαCount) {{
@@ -304,7 +309,7 @@ ReturnValue: ""%html%""
     result = listαCount*50;
 	return result;
 }}
-Parameters: ""%list.Count%""
+Parameters: [{{Name:""listαCount"", Value:""%list.Count%"", Type:""long""}}]
 ReturnValues: ""%result%""
 
 %response.data.total%*%response.data.total_amount%, write to %allTotal%, => long ExecutePlangCode(dynamic? response.data.total, dynamic? response.data.total_amount) {{ 
@@ -312,23 +317,16 @@ ReturnValues: ""%result%""
 	long allTotal = response.data.total*response.data.total_amount;
 	return allTotal;
 }}
-Parameters: ""%response.data.total%"", ""%response.data.total_amount%""
+Parameters: [{{Name:""response.data.total"", Value:""%response.data.total%"", Type:""dynamic""}}, Name:""response.data.total_amount"", Value:""%response.data.total_amount%"", Type:""dynamic""}}]
 ReturnValues: ""%allTotal%""
 
-check if %dirPath% exists, write to %folderExists% => bool ExecutePlangCode(IPlangFileSystem fileSystem, string dirPath) {{
-	//validate input parameter 
-	folderExists = fileSystem.Directory.Exists(dirPath);
-	return folderExists;
-}}
-Parameters: ""%dirPath%""
-ReturnValues: ""%folderExists%""
 
 get filename of %filePath%, write to %fileName% => string ExecutePlangCode(IPlangFileSystem fileSystem, string filePath) {{
 	//validate input parameter 
 	fileName = fileSystem.Path.GetFileName(filePath);
 	return fileName;
 }}
-Parameters: ""fileSystem"", ""%filePath%""
+Parameters: [{{Name:""fileSystem"", Value:""%filePath%"", Type:""string""}}]
 ReturnValues: ""%fileName%""
 ## examples ##");
 

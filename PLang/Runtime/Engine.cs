@@ -865,6 +865,8 @@ private async Task CacheGoal(Goal goal)
 			var stepErrorResult = await eventRuntime.RunOnErrorStepEvents(error, goal, step);
 			if (stepErrorResult.Error != null && stepErrorResult.Error is not IErrorHandled)
 			{
+				if (error == stepErrorResult.Error) return (null, error);
+
 				var multipleErrors = new MultipleError(error);
 				multipleErrors.Add(stepErrorResult.Error);
 				return (null, multipleErrors);

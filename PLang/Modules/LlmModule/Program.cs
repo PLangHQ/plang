@@ -282,12 +282,7 @@ namespace PLang.Modules.LlmModule
 			return identityService.GetCurrentIdentity().Identifier;
 		}
 
-		[Description("Get the current balance at the LLM service")]
-		public async Task<object?> GetBalance()
-		{
-			(var response, var queryError) = await llmServiceFactory.CreateHandler().GetBalance();
-			return response;
-		}
+
 
 		private string? GetObjectRepresentation(object obj)
 		{

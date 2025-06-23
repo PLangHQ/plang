@@ -20,7 +20,7 @@ using System.Text;
 
 namespace PLang.Modules.FilterModule
 {
-	[Description("Allow user to find text, filter, select, query from a variable and get specific item from that variable.")]
+	[Description("Allow user to find text, filter out items, select, query from a %variable% and get specific item from that variable.")]
 	public class Program : BaseProgram
 	{
 		[Description("Parses an input that is wrapped with markdown code format and return text inside those code blocks")]
@@ -245,6 +245,7 @@ operatorOnPropertyToFilter: equals|startswith|endswith|contains
 propertyToExtract: by default it returns the element that matches the property, can be defined as 'parent' or when propertyToExtract is specified it will find that property and return the object from that property.
 operatorToFilterOnValue: =|!= 
 operatorToFilterOnValueComparer: insensitive|case-sensitive
+throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound og status code: 404 or when user defines so
 <example>
 - filter %json% where property starts with ""%item%/"" and has ""John"" as value, get parent object, write to %libraries% => variableToExtractFrom=""%json%"", 
 	propertyToFilterOn=""%item%/"", valueToFilterBy=""John"", operatorToFilterOnValue=""contains"", operatorOnPropertyToFilter=""startswith"", propertyToExtract=""parent""
@@ -257,9 +258,11 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 ")]
 		public async Task<(object?, IError?)> FilterOnPropertyAndValue(object variableToExtractFrom, string propertyToFilterOn, string valueToFilterBy, string? operatorToFilterOnValue = "=",
 			 string operatorOnPropertyToFilter = "=", string? propertyToExtract = null, bool throwErrorWhenNothingFound = false, string? retrieveOneItem = null,
-			 string operatorToFilterOnValueComparer = "insensitive")
+			 string operatorToFilterOnValueComparer = "insensitive", bool throwErrorOnEmptyResult = false)
 		{
-			if (variableToExtractFrom == null || string.IsNullOrEmpty(variableToExtractFrom.ToString())) return (null, null);
+			IError? error = (throwErrorOnEmptyResult) ? new NotFoundError() : null;
+
+			if (variableToExtractFrom == null || string.IsNullOrEmpty(variableToExtractFrom.ToString())) return (null, error);
 			if (valueToFilterBy == "null") valueToFilterBy = null;
 
 			Func<object, bool> filterPredicate = GetPredicate(operatorToFilterOnValue, valueToFilterBy, operatorToFilterOnValueComparer);
@@ -279,14 +282,27 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 				var dynamicList = list.ToDynamicList();
 				if (dynamicList.Count > 0 && dynamicList[0] is JObject)
 				{
-					filteredList = dynamicList
-						.Where(item =>
+					foreach (var item in dynamicList)
+					{
+						var value = (JValue) item[propertyToFilterOn];
+						var result = filterPredicate(value);
+						if (!result) continue;
+						
+						if (propertyToExtract == null)
 						{
-							var obj = (JValue)(item as JObject)?[propertyToFilterOn];
-							return filterPredicate(obj.Value);
+							filteredList.Add(value);
+						} else if (propertyToExtract == "parent")
+						{
+							filteredList.Add(item);
+						} else if (((JObject) item).ContainsKey(propertyToExtract))
+						{
+							filteredList.Add(item[propertyToExtract]);
+						} else
+						{
+							filteredList.Add(value);
+						}
+					}
 
-						})
-						.ToList();
 				}
 				else if (dynamicList.Count > 0 && dynamicList[0] is JArray)
 				{
@@ -373,6 +389,8 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 									filterPredicate(entry.Value.ToString()))
 					.ToDictionary(entry => entry.Key, entry => entry.Value);
 
+				if (filteredDictionary.Count == 0) return (null, error);
+
 				if (retrieveOneItem == "first") return (filteredDictionary.FirstOrDefault(), null);
 				if (retrieveOneItem == "last") return (filteredDictionary.LastOrDefault(), null);
 
@@ -386,7 +404,7 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 
 			}
 
-			if (filteredList == null) return (null, null);
+			if (filteredList == null || filteredList.Count == 0) return (null, error);
 
 			if (retrieveOneItem == "first") return (filteredList.FirstOrDefault(), null);
 			if (retrieveOneItem == "last") return (filteredList.LastOrDefault(), null);
@@ -399,10 +417,6 @@ operatorToFilterOnValueComparer: insensitive|case-sensitive
 
 		}
 
-		private bool ImplementsDict(object? v, out IDictionary dict)
-		{
-			throw new NotImplementedException();
-		}
 
 		private List<object>? GetFilteredJObject(JToken jToken, string propertyToFilterOn, string propertyToFilterOnOperator, Func<object, bool>? filterPredicate = null, string? propertyToExtract = null)
 		{

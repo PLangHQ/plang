@@ -35,7 +35,8 @@ namespace PLangTests.Integration
 				fileBytes = reader.ReadBytes((int)stream.Length);
 			}
 			fileSystem.AddFile(fullPath, new System.IO.Abstractions.TestingHelpers.MockFileData(fileBytes));
-			await fileProgram.ReadExcelFile(path, useHeaderRow: false);
+
+			await fileProgram.ReadExcelFile(path);
 
 
 

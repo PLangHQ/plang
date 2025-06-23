@@ -205,7 +205,7 @@ namespace PLang.Building
 					continue;
 				}
 
-				var methodHelper = new MethodHelper(step, variableHelper, typeHelper);
+				var methodHelper = new MethodHelper(step, variableHelper, typeHelper, logger);
 				(var parameterProperties, var returnObjectsProperties, var invalidFunctionError) = methodHelper.ValidateFunctions(step.Instruction.Function, step.ModuleType, null);
 				if (invalidFunctionError != null)
 				{

@@ -1,6 +1,7 @@
 ﻿using PLang.Building.Model;
 using PLang.Errors.Events;
 using PLang.Errors.Runtime;
+using PLang.Runtime;
 using PLang.Utils;
 
 namespace PLang.Errors
@@ -18,6 +19,7 @@ namespace PLang.Errors
 		public Exception? Exception { get; }
 		public List<IError> ErrorChain { get; set; }
 		public string MessageOrDetail { get; }
+		public List<ObjectValue> Variables { get; set; }
 		public object ToFormat(string contentType = "text");
 		public object AsData();
 	}
@@ -79,6 +81,8 @@ namespace PLang.Errors
 			}
 			
 		}
+
+		public List<ObjectValue> Variables { get; set; } = new();
 
 		public override string? ToString()
 		{

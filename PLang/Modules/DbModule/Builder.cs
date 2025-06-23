@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using AngleSharp.Html.Dom;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using Newtonsoft.Json;
@@ -10,11 +11,13 @@ using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Runtime;
 using PLang.Services.DbService;
 using PLang.Services.EventSourceService;
 using PLang.Services.LlmService;
 using PLang.Utils;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Reflection.PortableExecutable;
@@ -61,7 +64,7 @@ namespace PLang.Modules.DbModule
 
 		public record DbGenericFunction(string Reasoning, string Name,
 			List<Parameter>? Parameters = null, List<ReturnValue>? ReturnValues = null,
-			List<string>? TableNames = null, string? DataSource = null, Dictionary<string, string>? AffectedColumns = null) : GenericFunction(Reasoning, Name, Parameters, ReturnValues);
+			List<string>? TableNames = null, string? DataSource = null, Dictionary<string, string>? AffectedColumns = null, string? Warning = null) : GenericFunction(Reasoning, Name, Parameters, ReturnValues);
 
 
 		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep goalStep, IBuilderError? previousBuildError = null)
@@ -134,9 +137,59 @@ Rules:
 
 			AppendToSystemCommand(system);
 			var buildResult = await base.Build<DbGenericFunction>(goalStep, previousBuildError);
+			var gf = buildResult.Instruction.Function as DbGenericFunction;
+			
+			var parameters = gf.GetParameter<List<ParameterInfo>>("sqlParameters");
+			if (parameters != null && parameters.Count > 0)
+			{
+				if (gf.TableNames == null && gf.TableNames.Count == 0)
+				{
+					return (null, new StepBuilderError("You must provide TableNames", goalStep));
+				}
+				if (string.IsNullOrEmpty(gf.DataSource))
+				{
+					return (null, new StepBuilderError("You must provide DataSource", goalStep));
+				}
+
+				using var program = GetProgram(GoalStep);
+				var dbStructure = await program.GetDatabaseStructure(gf.TableNames, gf.DataSource);
+				string? sql = gf.GetParameter<string>("sql");
+
+				string? insertWarning = null;
+				if (gf.Name.StartsWith("Insert"))
+				{
+					insertWarning = "Validate that the insert statement is not missing a not null column. Give a warning.";
+				}
+				List<LlmMessage> messages = new List<LlmMessage>();
+				messages.Add(new LlmMessage("system", @$"
+You are provided with a information for sql query executed in c#.
+You job is to validate it with <table> information provided.
+
+Adjust the Parameters to match the names and data types of the columns in the <table>. 
+Datatype are .net object, TEXT=System.String, INTEGER=System.Int64, REAL=System.Double, NUMERIC=System.Double, BOOLEAN=System.Boolean, BLOB=byte[], etc.
+Validate <sql> statement that it matches with columns, adjust the sql if needed.
+{insertWarning}
+"));
+				
+				messages.Add(new LlmMessage("user", $@"
+<parameters>{JsonConvert.SerializeObject(parameters)}</parameters>
+<sql>{sql}</sql>
+<table>{JsonConvert.SerializeObject(dbStructure.TablesAndColumns)}</table>"));
+				LlmRequest question = new LlmRequest("ParameterList", messages);
+				question.llmResponseType = "json";				
+
+				var result = await llmServiceFactory.CreateHandler().Query<ValidateSqlParameters>(question);
+				if (result.Error != null) return (null, new StepBuilderError(result.Error, goalStep));
+
+				var sqlAndParams = result.Response;
+				gf.Parameters[0] = gf.Parameters[0] with { Value = sqlAndParams.Sql };
+				gf.Parameters[1] = gf.Parameters[1] with { Value = sqlAndParams.Parameters };
+				gf = gf with { Warning = sqlAndParams.Warning }; 
+			}
 
 			return buildResult;
 		}
+		private record ValidateSqlParameters(string Sql, List<ParameterInfo> Parameters, string? Warning = null);
 
 		public record DataSourceWithTableInfo(DataSource DataSource, List<TableInfo> TableInfos);
 

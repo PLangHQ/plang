@@ -1,4 +1,5 @@
-﻿using PLang.Models.ObjectValueConverters;
+﻿using Newtonsoft.Json.Linq;
+using PLang.Models.ObjectValueConverters;
 using PLang.Runtime;
 using System.Collections;
 
@@ -23,12 +24,22 @@ namespace PLang.Models.ObjectValueExtractors
 			if (dict.Count == 0) return null;
 
 			var key = TryGetKey(dict, segment.Value);
-			if (key == null)
+			if (key != null)
 			{
-				return ObjectValue.Nullable(segment.Value);
+				return new ObjectValue(segment.Value, dict[key], parent: parent, properties: parent.Properties);
 			}
 
-			return new ObjectValue(segment.Value, dict[key], parent: parent, properties: parent.Properties);
+			var property = dict.GetType().GetProperties().FirstOrDefault(p => p.Name.Equals(segment.Value, StringComparison.OrdinalIgnoreCase));
+			if (property != null)
+			{
+				var value= property.GetValue(dict);
+				return new ObjectValue(segment.Value, value, parent: parent, properties: parent.Properties);
+			}
+
+
+
+
+			return ObjectValue.Nullable(segment.Value);
 		}
 
 		private string? TryGetKey(IDictionary dict, string value)
@@ -38,6 +49,7 @@ namespace PLang.Models.ObjectValueExtractors
 				if (k is string strKey && string.Equals(strKey, value, StringComparison.OrdinalIgnoreCase))
 					return strKey;
 			}
+			
 			return null;
 		}
 	}

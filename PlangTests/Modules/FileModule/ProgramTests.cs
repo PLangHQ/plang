@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PLang.Modules.FileModule;
+using static PLang.Modules.FileModule.Program;
 
 namespace PLangTests.Modules.FileModule
 {
@@ -107,10 +108,10 @@ namespace PLangTests.Modules.FileModule
 			}
 			fileSystem.AddFile(fullPath, new System.IO.Abstractions.TestingHelpers.MockFileData(fileBytes));
 
-			var dictionary = new Dictionary<string, object>();
-			dictionary.Add("Sheet-1", "Sheet1");
-			dictionary.Add("Orders 2023-B3:E5", "Orders2023");
-			await p.ReadExcelFile(path, useHeaderRow: true, sheetsToVariable: dictionary);
+			var sheets = new List<Sheet>();
+			sheets.Add(new Sheet("Sheet-1", "A1", "Sheet1"));
+			sheets.Add(new Sheet("Orders", "B3", "Orders2023"));
+			await p.ReadExcelFile(path, sheetsToExtract: sheets);
 
 			Assert.IsNotNull(memoryStack.Get("Sheet1"));
 			Assert.IsNotNull(memoryStack.Get("Orders2023"));
@@ -213,7 +214,7 @@ namespace PLangTests.Modules.FileModule
 			fileSystem.AddFile(fullPath, new System.IO.Abstractions.TestingHelpers.MockFileData(fileBytes));
 
 			
-			await p.ReadExcelFile(path, useHeaderRow:false);
+			await p.ReadExcelFile(path);
 
 			Assert.IsNotNull(memoryStack.Get("Sheet1"));
 		}		

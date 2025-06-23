@@ -357,23 +357,24 @@ namespace PLang.Modules.PlangModule
 		[Description("Run from a specific step and the following steps")]
 		public async Task<(object?, IError?)> RunFromStep(string prFileName)
 		{
+			
 			if (string.IsNullOrEmpty(prFileName))
 			{
 				return (null, new ProgramError($"prFileName is empty. I cannot run a step if I don't know what to run.", goalStep, function,
 					FixSuggestion: "Something has broken between the IDE sending the information and the runtime. Check if SendDebug.goal and the IDE is talking together correctly."));
 			}
-
+			var absoluteFilePath = GetPath(prFileName);
 			fileAccessHandler.GiveAccess(fileSystem.OsDirectory, fileSystem.GoalsPath);
-			if (!fileSystem.File.Exists(prFileName))
+			if (!fileSystem.File.Exists(absoluteFilePath))
 			{
-				return (null, new ProgramError($"The file {prFileName} could not be found.", goalStep, function));
+				return (null, new ProgramError($"The file {prFileName} could not be found. I searched for it at {absoluteFilePath}", goalStep, function));
 			}
 			var startingEngine = engine.GetContext()[ReservedKeywords.StartingEngine] as IEngine;
 			if (startingEngine == null) startingEngine = engine;
 
 			engine.GetEventRuntime().SetActiveEvents(new());
 
-			var result = await startingEngine.RunFromStep(prFileName);
+			var result = await startingEngine.RunFromStep(absoluteFilePath);
 			return result;
 		}
 

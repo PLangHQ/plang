@@ -63,7 +63,7 @@ Make sure to backup the folder {1} as it contains your private key. If you loose
 		}
 
 
-		public virtual async Task<(T?, IError?)> Query<T>(LlmRequest question) where T : class
+		public virtual async Task<(T? Response, IError? Error)> Query<T>(LlmRequest question) where T : class
 		{
 			var result = await Query(question, typeof(T));
 			if (result.Item2 != null) return (default(T), result.Item2);
@@ -79,11 +79,11 @@ LlmRequest:{question}
 The answer was:{result.Item1}", GetType(), "LlmService"));
 		}
 
-		public virtual async Task<(object?, IError?)> Query(LlmRequest question, Type responseType)
+		public virtual async Task<(object? Response, IError? Error)> Query(LlmRequest question, Type responseType)
 		{
 			return await Query(question, responseType, 0);
 		}
-		public virtual async Task<(object?, IError?)> Query(LlmRequest question, Type responseType, int errorCount = 0)
+		public virtual async Task<(object? Response, IError? Error)> Query(LlmRequest question, Type responseType, int errorCount = 0)
 		{
 			Extractor = ExtractorFactory.GetExtractor(question, responseType);
 			AppContext.TryGetSwitch(ReservedKeywords.Debug, out bool isDebug);
@@ -361,26 +361,5 @@ What is name of payer?", GetCountry));
 		}
 
 
-		public async Task<(object?, IError?)> GetBalance()
-		{
-			var requestUrl = url.Replace("api/Llm", "").TrimEnd('/');
-			using (var httpClient = new HttpClient())
-			{
-				var httpMethod = new HttpMethod("GET");
-				using (var request = new HttpRequestMessage(httpMethod, requestUrl + "/api/Balance.goal"))
-				{
-					request.Headers.UserAgent.ParseAdd("plang llm v0.1");
-
-					httpClient.Timeout = new TimeSpan(0, 0, 30);
-					await SignRequest(request);
-
-					using (var response = await httpClient.SendAsync(request))
-					{
-						var content = await response.Content.ReadAsStringAsync();
-						return (content, null);
-					}
-				}
-			}
-		}
 	}
 }

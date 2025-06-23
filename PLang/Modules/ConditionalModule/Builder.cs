@@ -50,6 +50,11 @@ namespace PLang.Modules.ConditionalModule
 
 		public async Task<(Instruction? Instruction, IBuilderError? Error)> PrepareStep(GoalStep step)
 		{
+			if (step.NextStep != null && step.NextStep.Indent > step.Indent)
+			{
+				AppendToSystemCommand("Next line of code will be executed if this return true");
+			}
+
 			return await base.Build(step);
 		}
 

@@ -157,6 +157,8 @@ Make sure to use the information in <error> to return valid JSON response"
 		[Property]
 		public record GenericFunction(string Reasoning, string Name, List<Parameter>? Parameters = null, List<ReturnValue>? ReturnValues = null) : IGenericFunction
 		{
+			[LlmIgnore]
+			[Newtonsoft.Json.JsonIgnore]
 			public Instruction Instruction { get; set; }
 
 			public T? GetParameter<T>(string name)
@@ -175,6 +177,7 @@ Make sure to use the information in <error> to return valid JSON response"
 			List<Parameter>? Parameters { get; }
 			List<ReturnValue>? ReturnValues { get; }
 
+			[LlmIgnore]
 			[Newtonsoft.Json.JsonIgnore]
 			public Instruction Instruction { get; set; }
 		}
@@ -302,10 +305,8 @@ Variables should not be changed, they can include dot(.) and parentheses()
 Keep \n, \r, \t that are submitted to you for string variables
 Parameter.Value that is type String MUST be without escaping quotes. See <Example>
 Error handling is process by another step, if you see 'on error...' you can ignore it
-If there is some api key, settings, config replace it with %Settings.Get(""settingName"", ""defaultValue"", ""Explain"")% 
-- settingName would be the api key, config key, 
-- defaultValue for settings is the usual value given, make it """" if no value can be default
-- Explain is an explanation about the setting that novice user can understand.
+If there is some api key, settings, config replace it with %Settings.NameOfApiKey% 
+- NameOfApiKey should named in relation to what is happening if change is needed
 Dictionary<T1, T2> value is {{key: value, ... }}
 
 <Example>

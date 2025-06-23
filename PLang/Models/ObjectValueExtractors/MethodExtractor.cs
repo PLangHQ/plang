@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using NCalc.Helpers;
+using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Asn1.X509.Qualified;
 using Org.BouncyCastle.Crypto;
 using PLang.Exceptions;
@@ -47,11 +48,16 @@ namespace PLang.Models.ObjectValueExtractors
 			(var methods, obj) = GetMethodsOnType(obj, methodName, paramValues);
 
 			AppContext.TryGetSwitch("Builder", out bool isBuilder);
-			if (!methods.Any() && !isBuilder)
+			if (!methods.Any() && isBuilder)
 			{
-				throw new MethodNotFoundException($"Method {methodName} not found on {parent.PathAsVariable}");
+				return new ObjectValue(segment.Value, obj, parent: parent, properties: parent.Properties);
+				//throw new MethodNotFoundException($"Method {methodName} not found on {parent.PathAsVariable}");
 			}
 
+			if (!methods.Any())
+			{
+				(methods, obj) = GetMethodsOnDifferentType(obj, methodName, paramValues);
+			}
 
 			foreach (var method in methods)
 			{
@@ -85,7 +91,31 @@ namespace PLang.Models.ObjectValueExtractors
 					throw;
 				}
 			}
-			throw new NotImplementedException();
+
+			throw new NotImplementedException($"Could not find method '{methodDescription}' on %{parent.Name}.{methodDescription}%");
+		}
+
+		private (IEnumerable<MethodInfo>, object? obj) GetMethodsOnDifferentType(object obj, string methodName, List<object> paramValues)
+		{
+			if (obj is not double && double.TryParse(obj.ToString(), out double result))
+			{
+				(var methods, obj) = GetMethodsOnType(result, methodName, paramValues);
+				if (methods.Any()) return (methods, obj);
+			}
+
+			if (obj is not bool && bool.TryParse(obj.ToString(), out bool boolResult))
+			{
+				(var methods, obj) = GetMethodsOnType(boolResult, methodName, paramValues);
+				if (methods.Any()) return (methods, obj);
+			}
+
+			if (obj.GetType().IsPrimitive && obj is not string)
+			{
+				(var methods, obj) = GetMethodsOnType(obj.ToString(), methodName, paramValues);
+				if (methods.Any()) return (methods, obj);
+			}
+
+			throw new Exception($"No sure what to do with {obj.GetType()} on for method: {methodName}");
 		}
 
 		private object? Invoke(MethodInfo method, object? obj, object[] parameters)
@@ -147,8 +177,6 @@ namespace PLang.Models.ObjectValueExtractors
 				obj = obj.ToString() ?? string.Empty; 
 				return GetMethodsOnType(obj, methodName, paramValues);
 			}
-
-
 			return (new List<MethodInfo>(), obj);
 
 		}

@@ -83,7 +83,7 @@ namespace PLang.Modules.CallGoalModule
 
 				if (result.error is Return ret)
 				{
-					return (ret.Variables, null);
+					return (ret.ReturnVariables, null);
 				}
 				return (result.Variables, result.error);
 			} catch (Exception ex)

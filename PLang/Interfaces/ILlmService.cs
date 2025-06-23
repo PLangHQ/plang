@@ -14,10 +14,8 @@ namespace PLang.Interfaces
 	public interface ILlmService
     {
         public IContentExtractor Extractor { get; set; }
-		public abstract Task<(T?, IError?)> Query<T>(LlmRequest question) where T : class;
-		public abstract Task<(object?, IError?)> Query(LlmRequest question, Type responseType);
-
-		public abstract Task<(object?, IError?)> GetBalance();
+		public abstract Task<(T? Response, IError? Error)> Query<T>(LlmRequest question) where T : class;
+		public abstract Task<(object? Response, IError? Error)> Query(LlmRequest question, Type responseType);
 
 	}
 }

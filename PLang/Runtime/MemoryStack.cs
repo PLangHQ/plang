@@ -14,6 +14,7 @@ using PLang.Models.ObjectValueExtractors;
 using PLang.Modules.DbModule;
 using PLang.Services.SettingsService;
 using PLang.Utils;
+using PLang.Utils.JsonConverters;
 using Sprache;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -67,8 +68,88 @@ namespace PLang.Runtime
 		public List<ObjectValue> GetMemoryStack()
 		{
 			//remove memorystack from variables before returning it to prevent circular reference.
-			return variables.Where(p => !p.Key.Equals(ReservedKeywords.MemoryStack, StringComparison.OrdinalIgnoreCase))
+			var vars = variables.Where(p => !p.Key.Equals(ReservedKeywords.MemoryStack, StringComparison.OrdinalIgnoreCase) && !p.Key.Equals(ReservedKeywords.MemoryStack + "Json", StringComparison.OrdinalIgnoreCase))
 				.Select(p => p.Value).OrderByDescending(p => p.Updated).ThenBy(p => p.Name).ToList();
+			return vars;
+		}
+
+		public string GetMemoryStackJson()
+		{
+			try
+			{
+				var ms = GetMemoryStack();
+
+				List<string> varsInList = new();
+				var eventBinding = Goal.GetVariable<EventBinding>(ReservedKeywords.Event);
+				if (eventBinding != null && eventBinding.GoalStep != null)
+				{
+					varsInList = VariableHelper.GetVariablesInText(eventBinding.GoalStep.Text);
+				}
+
+				for (int i = 0; i < ms.Count; i++)
+				{
+					if (ms[i].Value is IList list && list.Count > 50)
+					{
+						ms[i].Value = list.Cast<object>().Take(50).ToList();
+					}
+					else if (ms[i].Value is IDictionary dict && dict.Count > 50)
+					{
+						ms[i].Value = dict.Cast<object>().Take(50).ToList();
+					}
+					ms[i].Order += varsInList.Count;
+				}
+
+				
+				var customSettings = new JsonSerializerSettings
+				{
+					ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+					MaxDepth = 5,
+
+					Converters = new List<JsonConverter>(),
+					NullValueHandling = NullValueHandling.Include,
+					Formatting = Formatting.None
+				};
+
+				// javascript cannot handle long variables, so we convert it to string
+				customSettings.Converters.Add(new LongAsStringConverter());
+
+				if (varsInList.Count == 0) return JsonConvert.SerializeObject(ms, customSettings);
+
+				// when there is variable in step, lets reorder the memorystack to put 
+				// used variable at the top and notify use if variable is empty.
+				// This modifies the memory stack, so we need a new instance of it
+				// "simples" way to close it to serialize to json and back, not the fastest.
+				var json = JsonConvert.SerializeObject(ms, customSettings);
+				var newMs = JsonConvert.DeserializeObject<List<ObjectValue>>(json);
+
+				for (int i = 0; i < varsInList.Count; i++)
+				{
+					var ov = this.GetObjectValue(varsInList[i]);
+					if (!ov.Initiated)
+					{
+						ov = new ObjectValue(varsInList[i], $"{varsInList[i]} is empty");
+					}
+					ov.Order = i;
+					var index = ms.FindIndex(p => p.PathAsVariable == ov.PathAsVariable);
+					if (index != -1)
+					{
+						newMs[index] = ov;
+					}
+					else
+					{
+						ov.Name = ov.PathAsVariable.Replace("%", "");
+						newMs.Add(ov);
+					}
+
+				}
+				newMs = newMs.OrderBy(p => p.Order).ToList();
+				return JsonConvert.SerializeObject(newMs, customSettings);
+
+			} catch (Exception ex)
+			{
+				int i = 0;
+				return "";
+			}
 		}
 
 
@@ -242,7 +323,8 @@ namespace PLang.Runtime
 			while (i < variableName.Length && (char.IsLetterOrDigit(variableName[i]) || variableName[i] == '_' || variableName[i] == '!' || variableName[i] == ' '))
 				i++;
 
-			if (i >= 0 && i != variableName.Length) {
+			if (i >= 0 && i != variableName.Length)
+			{
 				return new KeyPath(variableName[..i], variableName, variableName[i..], variableName[i].ToString());
 			}
 			return new KeyPath(variableName, variableName, null, type);
@@ -297,9 +379,9 @@ namespace PLang.Runtime
 			}
 
 			//sub variable, e.g. %user.name%, %now+5days%
-			return variable.Value.Get<ObjectValue>(keyPath.Path) ?? ObjectValue.Nullable(keyPath.FullPath);
-			
-			
+			return variable.Value.Get<ObjectValue>(keyPath.Path, this) ?? ObjectValue.Nullable(keyPath.FullPath);
+
+
 
 		}
 
@@ -1103,7 +1185,7 @@ namespace PLang.Runtime
 
 				var goal = step.Goal;
 				if (eve.GoalToCall.Name == goal.GoalName) return;
-				 
+
 				var task = Task.Run(async () =>
 				{
 					var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, eve.GoalToCall);
@@ -1808,6 +1890,7 @@ namespace PLang.Runtime
 		{
 			foreach (var variable in variables)
 			{
+				if (variable.Key.StartsWith(ReservedKeywords.MemoryStack, StringComparison.OrdinalIgnoreCase)) continue;
 				if (variable.Value?.Value == goalVariable.Value) return true;
 			}
 			return false;

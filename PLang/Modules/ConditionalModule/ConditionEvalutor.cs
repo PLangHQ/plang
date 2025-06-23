@@ -12,8 +12,9 @@ namespace PLang.Modules.ConditionalModule
 	public static class ConditionEvaluator
 	{
 		public enum ConditionKind { Simple, Compound }
-
+		[Description("operators: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf")]
 		public record CompoundCondition : Condition;
+		[Description("Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf")]
 		public record SimpleCondition : Condition;
 		public record Condition
 		{

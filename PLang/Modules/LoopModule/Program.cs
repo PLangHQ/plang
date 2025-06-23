@@ -75,7 +75,7 @@ namespace PLang.Modules.LoopModule
 				effectiveThreads = Math.Max(effectiveThreads, 1);
 			}
 
-
+			
 
 			var obj = memoryStack.Get(variableToLoopThrough);
 			if (obj == null)
@@ -88,6 +88,11 @@ namespace PLang.Modules.LoopModule
 				var l = new List<object>();
 				l.Add(obj);
 				obj = l;
+			}
+
+			if (obj.GetType().Name.StartsWith("KeyValuePair`2"))
+			{
+				obj = obj.GetType().GetProperty("Value").GetValue(obj);
 			}
 
 			if (obj is JToken jtoken && !jtoken.HasValues)
@@ -108,15 +113,22 @@ namespace PLang.Modules.LoopModule
 				int idx = 1;
 				if (effectiveThreads == 1)
 				{
+					foreach (var param in goalToCall.Parameters)
+					{
+						goalToCall.Parameters.AddOrReplace(param.Key, variableHelper.LoadVariables(param.Value));
+					}
+
+
 					foreach (var item in enumerables)
 					{
 						goalToCall.Parameters.AddOrReplace(listName.ToString()!, enumerables);
 						goalToCall.Parameters.AddOrReplace(itemName.ToString()!, item);
 						goalToCall.Parameters.AddOrReplace(positionName.ToString()!, idx++);
 						goalToCall.Parameters.AddOrReplace(listCountName, -1);
-						
+
 						var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalToCall, Goal);
 						if (result.error != null && result.error is not IErrorHandled) return result.error;
+						
 					}
 				}
 				else

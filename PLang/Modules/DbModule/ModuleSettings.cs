@@ -408,7 +408,7 @@ Be concise"));
 
 			if (dataSource == null)
 			{
-				(dataSource, var error) = await CreateDataSource("data");
+				(dataSource, var error) = await CreateDataSource("data", setAsDefaultForApp: true, keepHistoryEventSourcing: true);
 				if (error != null) return (dataSource, error);
 			}
 

@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Models.ObjectValueConverters;
 using PLang.Runtime;
 using PLang.Services.SettingsService;
 using System.Collections;
@@ -22,6 +23,7 @@ namespace PLang.Utils
 		private readonly ISettings settings;
 		private readonly MemoryStack memoryStack;
 		private JsonSerializerOptions jsonSerializerOptions;
+		private JsonSerializerSettings jsonSerializerSettings;
 		public VariableHelper(MemoryStack memoryStack, ISettings settings)
 		{
 			this.settings = settings;
@@ -33,6 +35,12 @@ namespace PLang.Utils
 				ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles, //.Preserve,
 				//DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
 				IgnoreReadOnlyProperties = true
+			};
+
+			jsonSerializerSettings = new JsonSerializerSettings
+			{
+				Converters = { new JsonObjectValueConverter() },
+				ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
 			};
 		}
 
@@ -63,7 +71,7 @@ namespace PLang.Utils
 			return items;
 		}
 
-
+		
 
 		public object? LoadVariables(object? obj, bool emptyIfNotFound = true, object? defaultValue = null)
 		{
@@ -159,7 +167,6 @@ namespace PLang.Utils
 					LoadVariableInTextValue(jobject, variable, defaultValue);
 					continue;
 				}
-				;
 
 				if (jsonProperty.Contains("."))
 				{
@@ -272,7 +279,7 @@ namespace PLang.Utils
 			var ctor = type.GetConstructors().First();
 			return ctor.Invoke(values);
 		}
-
+		
 		private void LoadVariableInTextValue(JToken jobject, ObjectValue variable, object? defaultValue = null)
 		{
 			var children = jobject.Children();
@@ -317,6 +324,7 @@ namespace PLang.Utils
 				int i = 0;
 			}
 		}
+		
 
 		private bool ShouldSerializeToText(object value)
 		{
@@ -367,7 +375,7 @@ namespace PLang.Utils
 				{
 					string message = ex.Message;
 					if (JsonHelper.IsJson(message)) return message;
-					return JsonConvert.SerializeObject(message);
+					return JsonConvert.SerializeObject(message, jsonSerializerSettings);
 				}
 				string json;
 				
@@ -379,14 +387,14 @@ namespace PLang.Utils
 					}
 					else
 					{
-						json = JsonConvert.SerializeObject(obj);
+						json = JsonConvert.SerializeObject(obj, jsonSerializerSettings);
 					}
 				}
 				else
 				{
 					try
 					{
-						json = JsonConvert.SerializeObject(obj);
+						json = JsonConvert.SerializeObject(obj, jsonSerializerSettings);
 					}
 					catch
 					{
@@ -404,7 +412,8 @@ namespace PLang.Utils
 			{
 				var settings = new JsonSerializerSettings
 				{
-					Error = HandleSerializationError
+					Error = HandleSerializationError,
+					Converters = { new JsonObjectValueConverter() }
 				};
 				
 				return JsonConvert.SerializeObject(obj, settings);
@@ -560,7 +569,7 @@ namespace PLang.Utils
 					}
 					break;
 				case JTokenType.String:
-					if ((string?)token == value)
+					if (token.ToString().Equals(value, StringComparison.OrdinalIgnoreCase))
 					{
 						return parentPath;
 					} else if (token.ToString().Contains(value))
@@ -587,21 +596,34 @@ namespace PLang.Utils
 
 		public record Variable(string OriginalKey, string Key, object? Value);
 
-
-		internal List<ObjectValue> GetVariables(string content, bool emptyIfNotFound = true)
+		public static List<string> GetVariablesInText(string content)
 		{
-			List<ObjectValue> variables = new List<ObjectValue>();
-
-			if (!content.Contains("%")) return variables;
+			if (!content.Contains("%")) return new();
 
 			var pattern = @"(?<!\\)%([^\n\r%]+|Settings\.Get\((""|')+.*?(""|')+, (""|')+.*?(""|')+, (""|')+.*?(""|')+\))%";
 
 			var regex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
 			var matches = regex.Matches(content);
-
+			List<string> vars = new();
 			foreach (Match match in matches)
 			{
-				var variable = match.Value;
+				vars.Add(match.Value);
+			}
+			return vars;
+		}
+
+
+		internal List<ObjectValue> GetVariables(string content, bool emptyIfNotFound = true)
+		{
+			List<ObjectValue> variables = new List<ObjectValue>();
+
+			var varsList = GetVariablesInText(content);
+			if (varsList.Count == 0) return variables;
+
+			if (!content.Contains("%")) return variables;
+
+			foreach (string variable in varsList)
+			{
 				if (variables.FirstOrDefault(p => p.Name.Equals(variable, StringComparison.OrdinalIgnoreCase)) != null)
 				{
 					continue;

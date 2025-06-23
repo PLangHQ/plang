@@ -45,8 +45,10 @@ namespace PLang.Utils
 			parsedObject = null;
 
 			if (obj == null) return false;
+			if (obj is not string) return false;
 			if (obj is Table || obj is Row) return false;
 			if (obj.GetType().Name.StartsWith("<>f__Anonymous")) return false;
+			
 
 			string content = obj.ToString()!;
 

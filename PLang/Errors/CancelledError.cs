@@ -1,4 +1,5 @@
 ﻿using PLang.Building.Model;
+using PLang.Runtime;
 using PLang.Utils;
 using System;
 using System.Collections.Generic;
@@ -35,6 +36,7 @@ namespace PLang.Errors
 		public Goal? Goal { get => goal; set { goal = value; } }
 		public IGenericFunction? Function { get => function; }
 
+		public List<ObjectValue> Variables { get; set; } = new();
 		public Exception? Exception => null;
 		public string MessageOrDetail
 		{

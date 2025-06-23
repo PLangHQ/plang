@@ -29,6 +29,14 @@ namespace PLang.Models.ObjectValueExtractors
 
 		public ObjectValue? Extract(PathSegment segment, MemoryStack? memoryStack = null)
 		{
+			var property = list.GetType().GetProperties().FirstOrDefault(p => p.Name.Equals(segment.Value, StringComparison.OrdinalIgnoreCase));
+			if (property != null)
+			{
+				var value = property.GetValue(list);
+				return new ObjectValue(segment.Value, value, parent: parent, properties: parent.Properties);
+			}
+
+
 			var firstItem = list.FirstOrDefault();
 			if (firstItem != null && firstItem.GetType().IsPrimitive)
 			{
@@ -37,7 +45,7 @@ namespace PLang.Models.ObjectValueExtractors
 
 			if (firstItem is IList)
 			{
-				List<double> result = new();
+				List<object> result = new();
 				foreach (var item in list)
 				{
 					if (item is IList list2)
@@ -48,10 +56,11 @@ namespace PLang.Models.ObjectValueExtractors
 				return new ObjectValue(segment.Value, result, parent: parent, properties: parent.Properties);
 			}
 
+
 			if (firstItem is ObjectValue)
 			{
 
-				double opResult = DoOp(list.Select(p => ((ObjectValue) p).Value), segment);
+				object opResult = DoOp(list.Select(p => ((ObjectValue) p).Value), segment);
 				return new ObjectValue(segment.Value, opResult, parent: parent, properties: parent.Properties);
 
 			}
@@ -60,7 +69,7 @@ namespace PLang.Models.ObjectValueExtractors
 		}
 
 
-		private double DoOp(IEnumerable<object> value, PathSegment segment)
+		private object DoOp(IEnumerable<object> value, PathSegment segment)
 		{
 			Func<object, double> toDouble = x => Convert.ToDouble(x);
 
@@ -77,13 +86,13 @@ namespace PLang.Models.ObjectValueExtractors
 				"max" => value.Max(toDouble),
 				"min" => value.Min(toDouble),
 				"count" => toDouble(value.Count()),
-				"first" => toDouble(value.First()),
-				"last" => toDouble(value.Last()),
+				"first" => value.FirstOrDefault(),
+				"last" => value.LastOrDefault(),
 				"range" => value.Max(toDouble) - value.Min(toDouble),
 				"median" => Median(value, toDouble),
 				"mode" => Mode(value, toDouble),
 				"percentile" => Percentile(value, toDouble, param),
-				"elementat" => toDouble(value.ElementAt(int.Parse(param ?? "0"))),
+				"elementat" => value.ElementAt(int.Parse(param ?? "0")),
 				"stddev" => StdDev(value, toDouble),
 				"variance" => Variance(value, toDouble),
 				_ => throw new ArgumentException($"Unknown operation: {op}")

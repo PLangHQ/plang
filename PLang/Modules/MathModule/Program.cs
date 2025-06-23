@@ -25,6 +25,7 @@ namespace PLang.Modules.MathModule
 
 		}
 
+
 		public async Task<(decimal?, IError?)> MultiplyVariableByPower(object variable, int baseValue, int exponent)
 		{
 			if (!decimal.TryParse(Convert.ToString(variable), out var numericAmount))

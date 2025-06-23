@@ -384,6 +384,10 @@ namespace PLang.Modules.HttpModule
 			{
 				request.Headers.TryAddWithoutValidation("!contract", JsonConvert.SerializeObject(context["!contract"]));
 			}
+			if (request.Headers.Accept.Count == 0)
+			{
+				request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*"));
+			}
 
 			request.Headers.UserAgent.ParseAdd("plang v0.1");
 			if (data != null)

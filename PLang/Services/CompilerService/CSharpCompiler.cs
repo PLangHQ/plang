@@ -247,6 +247,7 @@ These are the rules with variables:
 
 			compilation = compilation.AddSyntaxTrees(tree);
 			compilation = AddDefaultReferences(compilation);
+			
 
 			var model = compilation.GetSemanticModel(tree);
 			var diagnostics = model.GetDiagnostics().Where(d => d.Id == "CS0246"); // CS0246: The type or namespace name could not be found
@@ -347,13 +348,13 @@ Search for {fileName} - https://www.nuget.org/packages?q={fileName}", Retry: fal
 			}
 
 			var embeddedTexts = new List<EmbeddedText> { EmbeddedText.FromSource(tree.FilePath, tree.GetText()) };
-
+			var resource = new ResourceDescription(sourceCodePath, () => new MemoryStream(System.Text.Encoding.UTF8.GetBytes(code)),	true);
 
 			using var file = fileSystem.File.Create(dllFilePath);
 			using var pdbFile = fileSystem.File.Create(pdbFilePath);
 
 			var emitOptions = new EmitOptions(debugInformationFormat: DebugInformationFormat.PortablePdb);
-			var emitResult = compilation.Emit(file, embeddedTexts: embeddedTexts, pdbStream: pdbFile, options: emitOptions);
+			var emitResult = compilation.Emit(file, embeddedTexts: embeddedTexts, pdbStream: pdbFile, options: emitOptions, manifestResources: new[] { resource });
 
 			file.Dispose();
 			pdbFile.Dispose();

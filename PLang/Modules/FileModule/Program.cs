@@ -256,8 +256,11 @@ namespace PLang.Modules.FileModule
 			return fileStream;
 		}
 
-		[Description("sheetsToVariable is name of sheet that should load into variable. Sheet1=%products% will load Sheet1 into %product% variable, Sheet2-A4=%categories%, will load data from A4 into %categories%")]
-		public async Task<object?> ReadExcelFile(string path, bool useHeaderRow = true, [HandlesVariable] Dictionary<string, object>? sheetsToVariable = null, int headerStartsInRow = 1)
+		public record Sheet(string Name, string StartRow = "A1", string? VariableName = null, bool UseHeaderRow = true);
+
+		[Description("sheetsToExtract is name of sheet that should load into variable. Sheet1=%products% will load Sheet1 into %product% variable. StartRow MUST contains letter and number, e.g. A1")]
+		public async Task<object?> ReadExcelFile(string path,
+			[HandlesVariable] List<Sheet>? sheetsToExtract = null)
 		{
 			var absolutePath = GetPath(path);
 			if (!fileSystem.File.Exists(absolutePath))
@@ -265,52 +268,33 @@ namespace PLang.Modules.FileModule
 				logger.LogWarning($"{absolutePath} does not exist");
 				return null;
 			}
-			List<ObjectValue?> returnValues = new();
-			List<string> sheetNames = MiniExcel.GetSheetNames(absolutePath);
-			if (sheetsToVariable == null || sheetsToVariable.Count == 0)
-			{
-				sheetsToVariable = new Dictionary<string, object>();
 
+			
+			if (sheetsToExtract == null || sheetsToExtract.Count == 0)
+			{
+				sheetsToExtract = new();
+				List<string> sheetNames = MiniExcel.GetSheetNames(absolutePath);
 				foreach (var sheetName in sheetNames)
 				{
-					sheetsToVariable.Add(sheetName, MakeFitForVariable(sheetName));
+					sheetsToExtract.Add(new Sheet(sheetName, "A1", MakeFitForVariable(sheetName)));
 				}
 			}
-			else
+
+				List<ObjectValue?> returnValues = new();
+			foreach (var sheet in sheetsToExtract)
 			{
-				Dictionary<string, object> dict = new Dictionary<string, object>();
-				int index = 0;
-				foreach (var sheetToVariable in sheetsToVariable)
+				var newSheet = sheet; 
+				if (string.IsNullOrEmpty(sheet.VariableName))
 				{
-					var sheetName = ExtractSheetName(sheetToVariable.Key);
-					if (sheetNames.FirstOrDefault(p => p == sheetName) == null)
-					{
-						dict.Add(sheetNames[index], sheetToVariable.Value);
-					}
-					else
-					{
-						dict.Add(sheetToVariable.Key, sheetToVariable.Value);
-					}
-					index++;
+					newSheet = newSheet with { VariableName = MakeFitForVariable(sheet.Name) };
 				}
-				sheetsToVariable = dict;
-			}
-
-			foreach (var sheetToVariable in sheetsToVariable)
-			{
-				string sheetName = ExtractSheetName(sheetToVariable.Key);
-
-				var dataToExtract = sheetToVariable.Key;
-				string startCell = "A1";
-				if (sheetToVariable.Key.Contains("-") && sheetToVariable.Key.Contains(":"))
+				if (string.IsNullOrEmpty(sheet.StartRow))
 				{
-					dataToExtract = ExtractRowsToRead(sheetToVariable.Key);
-					startCell = dataToExtract.Substring(0, dataToExtract.IndexOf(":"));
+					newSheet = newSheet with { StartRow = "A1" };
 				}
+				var sheetData = await (await MiniExcel.QueryAsync(absolutePath, useHeaderRow: newSheet.UseHeaderRow, startCell: newSheet.StartRow, sheetName: newSheet.Name)).ToDynamicListAsync();
 
-				var sheetData = await (await MiniExcel.QueryAsync(absolutePath, useHeaderRow: useHeaderRow, startCell: startCell, sheetName: sheetName)).ToDynamicListAsync();
-
-				returnValues.Add(new ObjectValue(sheetToVariable.Value.ToString()!, sheetData));
+				returnValues.Add(new ObjectValue(newSheet.VariableName!, sheetData));
 
 			}
 			return returnValues;

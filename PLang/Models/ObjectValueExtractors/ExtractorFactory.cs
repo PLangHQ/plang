@@ -1,5 +1,6 @@
 ﻿using AngleSharp.Common;
 using Fizzler;
+using NCalc.Domain;
 using Newtonsoft.Json.Linq;
 using PLang.Models.ObjectTypes;
 using PLang.Models.ObjectValueConverters;
@@ -13,6 +14,7 @@ using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
+using static Nethereum.KeyStore.KeyStoreKdfChecker;
 
 namespace PLang.Models.ObjectValueExtractors
 {
@@ -56,6 +58,19 @@ namespace PLang.Models.ObjectValueExtractors
 					return new ListExtractor(list.Cast<object>(), objectValue);
 				}
 			}			
+
+			if (type.Name.StartsWith("KeyValuePair`2"))
+			{
+				object key = type.GetProperty("Key").GetValue(obj);
+				object value = type.GetProperty("Value").GetValue(obj);
+
+				var kvpType = obj.GetType();
+				var genericArgs = kvpType.GetGenericArguments();
+				var extractorType = typeof(KeyValuePairExtractor<,>).MakeGenericType(genericArgs);
+				var extractor = Activator.CreateInstance(extractorType, [key, value, objectValue]);
+
+				return extractor as IExtractor;
+			}
 			
 			if (type.Name.StartsWith("<>f__Anonymous"))
 			{

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Razor.Language.Intermediate;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
@@ -28,12 +29,14 @@ namespace PLang.Utils
 		private GoalStep goalStep;
 		private readonly VariableHelper variableHelper;
 		private readonly ITypeHelper typeHelper;
+		private readonly ILogger logger;
 
-		public MethodHelper(GoalStep goalStep, VariableHelper variableHelper, ITypeHelper typeHelper)
+		public MethodHelper(GoalStep goalStep, VariableHelper variableHelper, ITypeHelper typeHelper, ILogger logger)
 		{
 			this.goalStep = goalStep;
 			this.variableHelper = variableHelper;
 			this.typeHelper = typeHelper;
+			this.logger = logger;
 		}
 
 		public async Task<MethodInfo?> GetMethod(object callingInstance, IGenericFunction function)
@@ -57,6 +60,10 @@ namespace PLang.Utils
 			throw new MethodNotFoundException($"Method {function.Name} could not be found that matches with your statement. " + error);
 		}
 
+		private object? LoadVariables(object variable)
+		{
+			return variableHelper.LoadVariables(variable, true);
+		}
 
 		public record MethodNotFoundResponse(string Text);
 
@@ -273,10 +280,6 @@ namespace PLang.Utils
 			var parameters = method.GetParameters();
 			if (parameters.Length == 0) return parameterValues;
 
-			JsonConvert.DefaultSettings = () => new JsonSerializerSettings
-			{
-				Converters = { new JsonObjectValueConverter() }
-			};
 
 			foreach (var parameter in parameters)
 			{
@@ -312,6 +315,9 @@ namespace PLang.Utils
 						{
 							parameterValues.Add(inputParameter.Name, ov.Value);
 							continue;
+						} else if (!ov.Initiated && function.Instruction.Step.ModuleType != "PLang.Modules.ConditionalModule")
+						{
+							logger.LogWarning($"{variableValue} does not exist - {goalStep.LineNumber}:{goalStep.Text}");
 						}
 
 					}
@@ -362,7 +368,7 @@ namespace PLang.Utils
 			object? value = variableValue;
 			if (handlesAttribute == null)
 			{
-				value = variableHelper.LoadVariables(variableValue);
+				value = LoadVariables(variableValue);
 			}
 
 			if (value != null)
@@ -397,7 +403,7 @@ namespace PLang.Utils
 			Type elementType;
 			if (mainElementType.IsArray && variableValueIsArray)
 			{
-				var value = (handlesAttribute != null) ? variableValue : variableHelper.LoadVariables(variableValue);
+				var value = (handlesAttribute != null) ? variableValue : LoadVariables(variableValue);
 				if (value is JArray array)
 				{
 					parameterValues.Add(parameter.Name, array.ToObject(mainElementType));
@@ -418,7 +424,7 @@ namespace PLang.Utils
 
 			if (!variableValueIsArray)
 			{
-				parameterValues.Add(parameter.Name, variableHelper.LoadVariables(variableValue));
+				parameterValues.Add(parameter.Name, LoadVariables(variableValue));
 				return;
 			}
 
@@ -430,7 +436,7 @@ namespace PLang.Utils
 
 				if (handlesAttribute == null)
 				{
-					object? obj = variableHelper.LoadVariables(tmp);
+					object? obj = LoadVariables(tmp);
 					if (obj == null)
 					{
 						continue;
@@ -440,7 +446,7 @@ namespace PLang.Utils
 						var item = list[0];
 						if (item is Row row)
 						{
-							obj = variableHelper.LoadVariables(row.Values.FirstOrDefault());
+							obj = LoadVariables(row.Values.FirstOrDefault());
 						} else
 						{
 							throw new Exception("Why no load here?");
@@ -541,7 +547,7 @@ namespace PLang.Utils
 			{
 				for (int i = 0; i < list.Count; i++)
 				{
-					list[i] = variableHelper.LoadVariables(list[i]);
+					list[i] = LoadVariables(list[i]);
 				}
 				parameterValues.Add(parameter.Name, list);
 				return;
@@ -552,7 +558,7 @@ namespace PLang.Utils
 
 			for (int i = 0; list != null && i < list.Count; i++)
 			{
-				object? objInstance = variableHelper.LoadVariables(list[i]);
+				object? objInstance = LoadVariables(list[i]);
 
 
 				if (objInstance != null && parameter.ParameterType.GenericTypeArguments.Count() > 0 && parameter.ParameterType.GenericTypeArguments[0] == typeof(string))
@@ -587,7 +593,7 @@ namespace PLang.Utils
 			Dictionary<string, Tuple<object?, object?>?>? dict = null;
 			if (VariableHelper.IsVariable(variableValue))
 			{
-				var obj = variableHelper.LoadVariables(variableValue);
+				var obj = LoadVariables(variableValue);
 				if (obj is JArray jArray)
 				{
 					foreach (JObject jobject in jArray)
@@ -658,7 +664,7 @@ namespace PLang.Utils
 
 			foreach (var item in dict)
 			{
-				dict[item.Key] = new Tuple<object?, object?>(variableHelper.LoadVariables(item.Value?.Item1), variableHelper.LoadVariables(item.Value?.Item2));
+				dict[item.Key] = new Tuple<object?, object?>(LoadVariables(item.Value?.Item1), LoadVariables(item.Value?.Item2));
 			}
 			parameterValues.Add(parameter.Name, dict);
 
@@ -669,7 +675,7 @@ namespace PLang.Utils
 			Dictionary<string, object?>? dict = null;
 			if (VariableHelper.IsVariable(variableValue))
 			{
-				var obj = variableHelper.LoadVariables(variableValue);
+				var obj = LoadVariables(variableValue);
 				if (obj is JArray jArray)
 				{
 					dict = MapJArray(jArray);
@@ -733,7 +739,7 @@ namespace PLang.Utils
 
 			foreach (var item in dict)
 			{
-				dict[item.Key] = variableHelper.LoadVariables(item.Value);
+				dict[item.Key] = LoadVariables(item.Value);
 			}
 			parameterValues.Add(parameter.Name, dict);
 		}

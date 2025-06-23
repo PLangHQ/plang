@@ -59,37 +59,7 @@ namespace PLang.Modules.TemplateEngineModule
 			var templateContext = new TemplateContext();
 			templateContext.MemberRenamer = member => member.Name;
 
-			var scriptObject = new ScriptObject(StringComparer.OrdinalIgnoreCase);
-			scriptObject.Import("date_format", new Func<object, string, string>((input, format) =>
-			{
-				if (input is DateTime dateTime)
-				{
-					return dateTime.ToString(format);
-				}
-				else if (input is string str && DateTime.TryParse(str, out var parsedDate))
-				{
-					return parsedDate.ToString(format);
-				}
-				return input?.ToString() ?? string.Empty;
-			}));
 
-			scriptObject.Import("json", new Func<object, bool, string>((input, indent) =>
-			{
-				return JsonConvert.SerializeObject(input, (indent) ? Formatting.Indented : Formatting.None);
-			}));
-
-			scriptObject.Import("render", new Func<string, Task<string>>(async (path) =>
-			{
-				var result = await RenderFile(path, false);
-				if (result.Item2 != null)
-				{
-					throw new ExceptionWrapper(result.Item2);
-				}
-				return result.Item1;
-			}));
-
-			// Push the custom function into the template context
-			templateContext.PushGlobal(scriptObject);
 
 			if (memoryStack != null)
 			{
@@ -107,6 +77,12 @@ namespace PLang.Modules.TemplateEngineModule
 					templateContext.SetValue(sv, kvp.Value);
 				}
 			}
+
+			SetFunctionsOnTemplate(templateContext);
+
+
+
+
 			try
 			{
 				var parsed = Template.Parse(content);
@@ -155,6 +131,56 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 				return (null, pe);
 
 			}
+		}
+
+		private bool ContainsVariable(string key, TemplateContext templateContext)
+		{
+			var sv = ScriptVariable.Create(key, ScriptVariableScope.Global);
+			return (templateContext.GetValue(sv) != null);
+		}
+
+		private void SetFunctionsOnTemplate(TemplateContext templateContext)
+		{
+			var scriptObject = new ScriptObject(StringComparer.OrdinalIgnoreCase);
+
+			if (!ContainsVariable("date_format", templateContext))
+			{
+				scriptObject.Import("date_format", new Func<object, string, string>((input, format) =>
+				{
+					if (input is DateTime dateTime)
+					{
+						return dateTime.ToString(format);
+					}
+					else if (input is string str && DateTime.TryParse(str, out var parsedDate))
+					{
+						return parsedDate.ToString(format);
+					}
+					return input?.ToString() ?? string.Empty;
+				}));
+			}
+			if (!ContainsVariable("json", templateContext))
+			{
+				scriptObject.Import("json", new Func<object, bool, string>((input, indent) =>
+				{
+					return JsonConvert.SerializeObject(input, (indent) ? Formatting.Indented : Formatting.None);
+				}));
+			}
+
+			if (!ContainsVariable("render", templateContext))
+			{
+				scriptObject.Import("render", new Func<string, Task<string>>(async (path) =>
+				{
+					var result = await RenderFile(path, false);
+					if (result.Item2 != null)
+					{
+						throw new ExceptionWrapper(result.Item2);
+					}
+					return result.Item1;
+				}));
+			}
+
+			// Push the custom function into the template context
+			templateContext.PushGlobal(scriptObject);
 		}
 	}
 }

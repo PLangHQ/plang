@@ -116,6 +116,7 @@ namespace PLang.Building.Model
 
 		private JToken? functionJson;
 		[JsonProperty("Function")]
+		[LlmIgnore]
 		public JToken? FunctionJson
 		{
 			get { return functionJson; }

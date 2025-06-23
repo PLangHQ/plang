@@ -59,7 +59,8 @@ namespace PLang.Modules.ConditionalModule
 			var result = fileSystem.ValidatePath(path) != null;
 			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 		}
-		
+
+		[Description("Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf")]
 		public async Task<(bool, IError?)> SimpleCondition(SimpleCondition condition, 
 			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
@@ -68,6 +69,7 @@ namespace PLang.Modules.ConditionalModule
 			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 		}
 
+		[Description("Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf")]
 		public async Task<(bool, IError?)> CompoundCondition(CompoundCondition condition, 
 			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
@@ -103,7 +105,7 @@ namespace PLang.Modules.ConditionalModule
 			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 		}
 
-
+		 
 		public async Task<(bool, IError?)> IsEmpty(object? item, GoalToCallInfo? goalToCallIfTrue = null,
 						GoalToCallInfo? goalToCallIfFalse = null,
 						ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
@@ -170,11 +172,11 @@ namespace PLang.Modules.ConditionalModule
 			}
 			else if (item is IList)
 			{
-				result = ((IList)item).Count > 0;
+				result = ((IList)item).Count == 0;
 			}
 			else if (item is IDictionary)
 			{
-				result = ((IDictionary)item).Count > 0;
+				result = ((IDictionary)item).Count == 0;
 			}
 			else
 			{
@@ -358,8 +360,24 @@ namespace PLang.Modules.ConditionalModule
 					try
 					{
 						var taskExecuted = await task;
-						if (taskExecuted.error != null) return taskExecuted.error;
-
+						if (taskExecuted.error != null && taskExecuted.error is not Return)
+						{
+							if (taskExecuted.error is EndGoal eg)
+							{
+								if (--eg.Levels > 0) return taskExecuted.error;
+							}
+							else
+							{
+								return taskExecuted.error;
+							}
+						}
+						else if (taskExecuted.error is Return r)
+						{
+							foreach (var variable in r.ReturnVariables)
+							{
+								memoryStack.Put(variable);
+							}
+						}
 					}
 					catch { }
 

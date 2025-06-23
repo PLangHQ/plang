@@ -245,8 +245,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "FileHash": "62f019b76d9e1262da48dba0520ccd75bebee7df636f32676c12cfa4e04fee48",
-  "Hash": "609668b95de2b4eb1b2a7c4086817479dcee675f049b86e41faa0edef3b03746",
+  "FileHash": "c26a22d4b21d3afc187e2cf494341b311e8d75466d0df4ccd9c842dbfc4de497",
+  "Hash": "ad35bdcbc4bf5389b5ec8f741bc7ee18f22531a491c89c5499a8accc524a43a0",
   "IncomingVariablesRequired": {
     "plang.debugPort": "The port number used for the debug connection, default is 60877.",
     "Event.GoalStep.LineNumber": "The line number of the current goal step that is being debugged.",

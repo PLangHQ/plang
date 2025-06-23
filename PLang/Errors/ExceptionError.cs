@@ -1,6 +1,7 @@
 ﻿using PLang.Building;
 using PLang.Building.Model;
 using PLang.Errors.Builder;
+using PLang.Runtime;
 using PLang.Utils;
 using System;
 using System.Collections.Generic;
@@ -56,6 +57,7 @@ namespace PLang.Errors
 		public GoalStep? Step { get; set; }
 		public DateTime CreatedUtc { get; init; } = DateTime.UtcNow;
 		public List<IError>? ErrorChain { get; set; }
+		public List<ObjectValue> Variables { get; set; } = new();
 		public object AsData()
 		{
 			throw new NotImplementedException();

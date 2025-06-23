@@ -1,5 +1,6 @@
 ﻿using PLang.Building.Model;
 using PLang.Errors.Builder;
+using PLang.Runtime;
 using PLang.Utils;
 
 namespace PLang.Errors
@@ -24,6 +25,8 @@ namespace PLang.Errors
 		public Goal? Goal { get; set; }
 		public DateTime CreatedUtc { get; init; } = DateTime.UtcNow;
 		public List<IError> ErrorChain { get; set; } = new();
+
+		public List<ObjectValue> Variables { get; set; } = new();
 		public void Add(IError error)
 		{
 			if (ErrorChain == null) ErrorChain = new();
@@ -110,11 +113,14 @@ namespace PLang.Errors
 		public Goal? Goal { get; set; } = InitialError.Step?.Goal;
 		public DateTime CreatedUtc { get; init; } = DateTime.UtcNow;
 		public List<IError> ErrorChain { get; set; } = new();
+
+		public List<ObjectValue> Variables { get; set; } = new();
 		public MultipleError Add(IError error)
 		{
 			if (error != InitialError)
 			{
 				ErrorChain.Add(error);
+				Variables.AddRange(error.Variables);
 			}
 			return this;
 		}

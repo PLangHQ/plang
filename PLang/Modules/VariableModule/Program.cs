@@ -359,6 +359,16 @@ namespace PLang.Modules.VariableModule
 
 		}
 
+		public async Task SetVariableWithCondition([HandlesVariableAttribute] string variableName, bool boolValue, object valueIfTrue, object valueIfFalse) {
+			if (boolValue)
+			{
+				await SetVariable(variableName, valueIfTrue);
+			} else
+			{
+				await SetVariable(variableName, valueIfFalse);
+			}
+		}
+
 		[Description(@"Set value on variables or a default value is value is empty. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote("") by escaping it.  onlyIfValueIsSet can be define by user, null|""null""|""empty"" or value a user defines. Be carefull, there is difference between null and ""null"", to be ""null"" is must be defined by user.")]
 		public async Task SetValueOnVariablesOrDefaultIfValueIsEmpty([HandlesVariableAttribute] Dictionary<string, Tuple<object?, object?>> keyValues, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null)
 		{

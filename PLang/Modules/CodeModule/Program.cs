@@ -46,7 +46,7 @@ namespace PLang.Modules.CodeModule
 
 				string dllName = goalStep.PrFileName.Replace(".pr", ".dll");
 				Assembly assembly = Assembly.LoadFile(Path.Join(Goal.AbsolutePrFolderPath, dllName));
-				
+
 				if (assembly == null)
 				{
 					return (null, new StepError($"Could not find {dllName}. Stopping execution for step {goalStep.Text}", goalStep));
@@ -89,11 +89,11 @@ namespace PLang.Modules.CodeModule
 
 				(var parametersObject, var error) = GetParameters(parameters, implementation.Parameters, implementation.ReturnValues);
 				if (error != null) return (null, error);
-				
+
 				var args = parametersObject!.ToArray();
 				logger.LogTrace("Parameters:{0}", args);
 				object? result = method.Invoke(null, args);
-			
+
 				return (result, null);
 			}
 			catch (Exception ex)
@@ -122,7 +122,7 @@ namespace PLang.Modules.CodeModule
 			var method = type.GetMethod(methodName);
 			if (method == null) return (null, new ProgramError($"Method {methodName} could not be found."));
 
-			var instance = Activator.CreateInstance(type);			
+			var instance = Activator.CreateInstance(type);
 			var parameters = method.GetParameters();
 
 			(var parametersObject, var error) = GetParameters(parameters, implementation.Parameters, implementation.ReturnValues);
@@ -134,7 +134,8 @@ namespace PLang.Modules.CodeModule
 
 				return (result, null);
 
-			} catch (Exception ex)
+			}
+			catch (Exception ex)
 			{
 				return (null, new ExceptionError(ex));
 			}
@@ -186,8 +187,11 @@ namespace PLang.Modules.CodeModule
 						{
 							return (null, new ProgramError($"{parameters[i].Name} could not be found in build code. Please rebuild step", goalStep, function, StatusCode: 500));
 						}
-						var value = memoryStack.Get(inParameter.Name, parameters[i].ParameterType);
+
+						var value = memoryStack.Get(inParameter.Value.ToString(), parameters[i].ParameterType);
 						parametersObject.Add(value);
+
+
 					}
 				}
 			}

@@ -1,8 +1,10 @@
 ﻿using HtmlAgilityPack;
+using Newtonsoft.Json;
 using PLang.Models;
 using PLang.Models.ObjectValueConverters;
 using PLang.Models.ObjectValueExtractors;
 using PLang.Utils;
+using Websocket.Client.Logging;
 
 namespace PLang.Runtime;
 
@@ -72,16 +74,22 @@ public class ObjectValue
 		if (isProperty)
 		{
 			if (parent == null) throw new Exception("parent cannot be empty on property");
-			this.Path = $"{parent.Name}!{name}";
+			this.Path = $"{parent.Path}!{name}";
 		}
 		else
 		{
 			string prefix = (Char.IsLetterOrDigit(name[0])) ? "." : "";
-			this.Path = (parent != null) ? $"{parent.Name}{prefix}{name}" : name;
+			this.Path = (parent != null) ? $"{parent.Path}{prefix}{name}" : name;
 		}
 
-
-		this.value = value;
+		if (value is string str)
+		{
+			this.value = str;// str.Trim();
+		}
+		else
+		{
+			this.value = value;
+		}
 		Type = type ?? value?.GetType();
 		this.Initiated = Initiated;
 		Parent = parent;
@@ -132,7 +140,8 @@ public class ObjectValue
 	public DateTime Updated { get; set; }
 	public string Path { get; set; }
 	public string PathAsVariable { get { return $"%{Path}%"; } }
-
+	[JsonIgnore]
+	public int Order { get; set; } = 999;
 	public T? Get<T>(string path, MemoryStack? memoryStack = null)
 	{
 		var value = Get(path, typeof(T), memoryStack);
@@ -144,7 +153,7 @@ public class ObjectValue
 		var segments = PathSegmentParser.ParsePath(path);
 
 		var objectValue = ObjectValueExtractor.Extract(this, segments, memoryStack);
-
+		
 		if (convertToType == null || convertToType == typeof(ObjectValue)) return objectValue;
 		if (objectValue == null) return ObjectValue.Nullable(path);
 		return objectValue;
@@ -199,7 +208,7 @@ public class ObjectValue
 
 	public bool IsName(string variableName)
 	{
-		return Name.Equals(variableName, StringComparison.OrdinalIgnoreCase);
+		return Name.Equals(variableName.Replace("%", ""), StringComparison.OrdinalIgnoreCase);
 	}
 
 	public bool Equals(object? obj, StringComparison? stringComparison)

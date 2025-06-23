@@ -97,7 +97,7 @@ namespace PLang.Building
 			if (builderError != null) return (instruction, builderError);
 
 			// ValidateFunctions run after builder methods since they might change the function
-			var methodHelper = new MethodHelper(step, variableHelper, typeHelper);
+			var methodHelper = new MethodHelper(step, variableHelper, typeHelper, logger);
 			(var parameterProperties, var returnObjectsProperties, var invalidFunctionError) = methodHelper.ValidateFunctions(instruction.Function, step.ModuleType, memoryStack);
 			if (invalidFunctionError != null)
 			{

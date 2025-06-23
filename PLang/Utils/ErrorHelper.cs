@@ -164,6 +164,8 @@ namespace PLang.Utils
 			string firstLine = $"";
 			if (step != null)
 			{
+
+
 				firstLine = $@"📄 File: {step.RelativeGoalPath}:{step.LineNumber}
 🔢 Line: {step.LineNumber}
 🧩 Key:  {error.Key}
@@ -187,6 +189,15 @@ namespace PLang.Utils
 				firstLine = $@"📄 File: {goal.RelativeGoalPath}";
 			}
 
+			string? variables = null;
+			if (error.Variables.Count > 0)
+			{
+				variables = @" Variables:";
+				foreach (var variable in error.Variables)
+				{
+					variables += $"\n\t - {variable.PathAsVariable} => {JsonConvert.SerializeObject(variable.Value)}";
+				}
+			}
 			string? callStack = null;
 			if (goal?.ParentGoal != null)
 			{
@@ -263,9 +274,11 @@ namespace PLang.Utils
 🔴 ======== {error.Key} ========
 {firstLine.TrimEnd()}
 
-{callStack}
-
 🚫 Reason: {reasonAndFix}
+
+{variables}
+
+{callStack}
 
 {errorSource}
 
@@ -310,7 +323,10 @@ namespace PLang.Utils
 				message += $@"
 
 👨‍💻 For C# Developers:
-	- {FormatLine(exception.ToString())}";
+	- {FormatLine(exception.Message)}
+
+	StackTrace: {FormatLine(exception.StackTrace)}
+";
 			}
 
 			return message;

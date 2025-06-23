@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using NBitcoin;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Crypto.Tls;
@@ -15,7 +16,7 @@ namespace PLang.Modules.ListDictionaryModule
 {
 	[Description(@"
 get first|last|random|position| item from list or dictionary.
-Add, update, delete and retrieve list or dictionary. It can be stored as local list/directory or as static/global
+Add, update, delete and retrieve list or dictionary. Group by key, merge two lists
 ")]
 	public class Program : BaseProgram
 	{
@@ -243,6 +244,39 @@ Add, update, delete and retrieve list or dictionary. It can be stored as local l
 			}
 			return (null, new ProgramError($"Dont know how to convert value: {JsonConvert.SerializeObject(value)}"));
 		}
+
+
+		[Description("Group a %variable% by key")]
+		public async Task<(object?, IError?)> GroupBy(object? obj, string key)
+		{
+			if (obj is IList list && list.Count > 0)
+			{
+				var dict = TypeHelper.AsDictionary(list[0]);
+				if (dict == null) return (null, new Error(ErrorReporting.CreateIssueNotImplemented));
+				
+				Dictionary<object, List<object>> groupedDict = new();
+				foreach (var item in list)
+				{
+					var dictItem = TypeHelper.AsDictionary(item);
+
+					if (dictItem == null) return (null, new ProgramError($"Only dictionary in list objects are supported {ErrorReporting.CreateIssueNotImplemented}"));
+					if (!dictItem.ContainsKey(key)) continue;
+
+					object keyValue = dictItem[key];
+
+					groupedDict.TryGetValue(keyValue, out List<object>? groupedList);
+					if (groupedList == null) groupedList = new List<object>();
+
+					groupedList.Add(dictItem);
+					groupedDict.AddOrReplace(keyValue, groupedList);
+				}
+
+				return (groupedDict, null);
+			}
+			
+			return (null, new Error(ErrorReporting.CreateIssueNotImplemented));
+		}
+
 		[Description("Merges two objects or lists according to primary key")]
 		public async Task<(object?, IError?)> MergeLists(object? list1, object? list2, string key)
 		{

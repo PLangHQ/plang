@@ -95,7 +95,7 @@ namespace PLang.Modules
 			variableHelper = container.GetInstance<VariableHelper>();
 			this.typeHelper = container.GetInstance<ITypeHelper>();
 			this.llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
-			methodHelper = new MethodHelper(goalStep, variableHelper, typeHelper);
+			methodHelper = new MethodHelper(goalStep, variableHelper, typeHelper, logger);
 			fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 		}
 
@@ -104,8 +104,8 @@ namespace PLang.Modules
 
 		public virtual async Task<(object? ReturnValue, IError? Error)> Run()
 		{
-			
-				// no support for multiple functions, return on first
+			instruction.Function.Instruction = instruction;
+			instruction.Step = goalStep;
 			return await RunFunction(instruction.Function);
 			
 		}
@@ -269,12 +269,23 @@ namespace PLang.Modules
 
 		private async Task<(object? ReturnValue, IError? error)> HandleError(object? result, IError? error)
 		{
-			if (error == null) return (result, null);
+			if (error == null || error is EndGoal) return (result, error);
 
 			if (error.Goal == null) error.Goal = goal;
 			if (error.Step == null)	error.Step = goalStep;
 			if (error is ProgramError pe && pe.GenericFunction is null)	pe.GenericFunction = function;
-			
+
+			//only add variables on first error
+			if (error is not Return && error.Variables.Count == 0)
+			{
+				var variables = VariableHelper.GetVariablesInText(error.Step.Text);
+				foreach (var variable in variables)
+				{
+					error.Variables.Add(memoryStack.GetObjectValue(variable));
+				}
+			}
+
+
 			if (error is AskUserError aue)
 			{
 				(var isHandled, var handlerError) = await HandleAskUser(aue);
@@ -449,8 +460,18 @@ namespace PLang.Modules
 					{
 						foreach (var returnValue in returnValues)
 						{
-							var objectValue = new ObjectValue(returnValue.VariableName, objectValues);
-							memoryStack.Put(objectValue, goalStep);
+							object? value = objectValues.FirstOrDefault(p => p.IsName(returnValue.VariableName));
+							if (value == null) value = objectValues;
+
+							if (value is ObjectValue ov)
+							{
+								memoryStack.Put(ov, goalStep);
+							}
+							else
+							{
+								var objectValue = new ObjectValue(returnValue.VariableName, value);
+								memoryStack.Put(objectValue, goalStep);
+							}
 						}
 					}
 				}
