@@ -524,6 +524,7 @@ namespace PLang.Events
 
 				eve.Goal = callingGoal;
 				eve.GoalStep = callingStep;
+				eve.Instruction = callingStep?.Instruction;
 
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.Event, eve);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.IsEvent, true);

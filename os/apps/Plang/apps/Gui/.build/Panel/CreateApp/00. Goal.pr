@@ -155,7 +155,7 @@
     },
     {
       "Text": "select name, description from iconFrameworks, write to %iconFrameworks%",
-      "Comment": "/*- read llm/appInfo/prepareAppInfoQuestionsSystem.llm, load vars, write to %system%\n- read %!plang.rootpath%/readme.md, set content \"\" if not found, write to %readme%\n- [llm] system: %system%\nuser: <table>%appInfosTable%<table>\n<readme>%readme%<readme>\nscheme: [{columnName:string, required:bool, explain:string, answer:string|null}]\nwrite to %questions%*/\n",
+      "Comment": null,
       "ModuleType": "PLang.Modules.DbModule",
       "Name": "select_name_description_from_iconframeworks",
       "Description": "Execute a select query on the iconFrameworks data source to get the name and description columns, then write the resulting data set into the variable %iconFrameworks% for further use.",
@@ -174,7 +174,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 2,
-      "LineNumber": 31,
+      "LineNumber": 24,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -223,7 +223,7 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "a2c2b422616f966140f9905bddc32e924d3e9a1dc6662776f318eca570c62941",
+      "Hash": "e75bdc132a87e5dfb6bfcb9b860d4929ed7eab4b05c29f4076409aec4c4d46f9",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Panel.goal",
       "UserIntent": null
@@ -249,7 +249,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 3,
-      "LineNumber": 32,
+      "LineNumber": 25,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -298,7 +298,7 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "433c2683f678d3e4ceb317d8d1b1985ecd840d1cdbb4a75af131eed5df9bd8d7",
+      "Hash": "8f0477d5731a08de19bd29429867e0ab30fadbdcdbf350991106782cae1c54ed",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Panel.goal",
       "UserIntent": null
@@ -324,7 +324,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 4,
-      "LineNumber": 33,
+      "LineNumber": 26,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -373,7 +373,7 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "cef2bcc71a8a41ccb864eee738c923fc5bc9aeaa834e8bde18c7d873d1ff9ba4",
+      "Hash": "33d360371d5035d2c2e8bc1195bd72f3c894a546c30febd2c028b019a403b43b",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Panel.goal",
       "UserIntent": null
@@ -399,7 +399,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 5,
-      "LineNumber": 34,
+      "LineNumber": 27,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -448,14 +448,14 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "2e1c330b27c04e3eb509e3bbfdd5d9bc228519d125d01830a3d12473d79121a4",
+      "Hash": "42f1e055c9d76f1e7f304be3fd528e0274efd73946a7028b171750bdca18d3b5",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Panel.goal",
       "UserIntent": null
     }
   ],
   "SubGoals": [],
-  "Description": "The CreateApp goal initiates the GUI builder process by welcoming the user and gathering necessary information through a series of questions. It retrieves database table information related to app details, reads a README file for additional context, and collects data from various frameworks and font families to prepare for user interaction. The goal culminates in calling another goal, AskQuestion, to engage the user further.",
+  "Description": "The CreateApp goal initializes the GUI builder by displaying a welcome message and gathering necessary information from various database tables related to application information, icon frameworks, CSS frameworks, and font families. It then proceeds to call the AskQuestion goal for further interaction.",
   "Visibility": 0,
   "GoalFileName": "Panel.goal",
   "RelativeGoalPath": "\\Panel.goal",
@@ -466,13 +466,13 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "FileHash": "197f6df431c1c5f6b842e84b0a93121ab99fd840d6a36f1f065ec4a9e63ae8e9",
-  "Hash": "25e4ed54acaf39ff3cc97ecaf192e7a526e94c2b4712f30a743a3f640dbc554e",
+  "FileHash": "13de39b70b55fce476c6e30307e6a48ee98339ae2ced2b49c3a6dcc3239b00a5",
+  "Hash": "96cd5e61b07de1fd310b1031440601426748cec2e9c00f2edcc7ee67f9edb134",
   "IncomingVariablesRequired": {
-    "appInfosTable": "This variable holds the information retrieved from the 'appInfos' database table, which is essential for the subsequent steps.",
-    "system": "This variable is loaded from an external LLM file and contains system-related information necessary for processing user input.",
-    "readme": "This variable contains the content of the README file, which provides context for the application being built.",
-    "questions": "This variable will hold the structured questions prepared for the user based on the app information and frameworks."
+    "appInfosTable": "This variable will hold the information retrieved from the 'appInfos' database table.",
+    "iconFrameworks": "This variable will store the selected name and description from the 'iconFrameworks' database table.",
+    "cssFrameworks": "This variable will contain the selected name and description from the 'cssFrameworks' database table.",
+    "fontFamilies": "This variable will hold the selected name and description from the 'fontFamilies' database table."
   },
   "DataSourceName": null,
   "IsSetup": false

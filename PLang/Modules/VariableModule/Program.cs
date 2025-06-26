@@ -90,7 +90,7 @@ namespace PLang.Modules.VariableModule
     created DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated DATETIME DEFAULT CURRENT_TIMESTAMP,
     expires DATETIME
-);");
+);", ["__Variables__"]);
 
 		}
 
@@ -148,15 +148,17 @@ namespace PLang.Modules.VariableModule
 			var vars = variables.Where(p => !p.Key.StartsWith("!"));
 			foreach (var variable in vars)
 			{
-				var objectValue = memoryStack.GetObjectValue(variable.Key);
-				if (objectValue != null && !objectValue.Initiated) return new ProgramError($"Variable '{variable.Key}' does not exist. Is there a typo?");
-				if (objectValue != null)
+				if (variable.Value is string str && VariableHelper.IsVariable(str))
 				{
+					var objectValue = memoryStack.GetObjectValue(str);
+					if (objectValue != null && !objectValue.Initiated) return new ProgramError($"Variable '{str}' does not exist. Is there a typo?");
+
+					if (objectValue == null) objectValue = ObjectValue.Nullable(variable.Key);
 					objectValue.Properties.AddRange(properties);
+
 					returnValues.Add(objectValue);
-				}
-				else
-				{
+
+				} else { 
 					var value = variableHelper.LoadVariables(variable.Value);
 					if (value != null)
 					{
@@ -164,7 +166,7 @@ namespace PLang.Modules.VariableModule
 					}
 				}
 
-				memoryStack.Remove(variable.Value.ToString(), goalStep);
+				
 			}
 
 			return new Return(returnValues);

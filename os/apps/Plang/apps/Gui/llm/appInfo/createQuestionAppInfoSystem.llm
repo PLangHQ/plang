@@ -34,7 +34,7 @@ Following is the table information that he is filling up.
 When user has answered all the questions, set hasAnsweredAll = true
 
 <questions_answered>
-%questions%
+%answers%
 </questions_answered>
 
 Make sure to follow the ## Rules

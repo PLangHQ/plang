@@ -160,7 +160,8 @@
     "LoadAppInfo",
     "CreateApp",
     "AskQuestion",
-    "SaveToDb"
+    "SaveToDb",
+    "FixInsert"
   ],
   "Description": "The Panel goal retrieves application information from the database and stores it in the variable \\%appInfos\\%. If the count of applications is greater than one, it calls the SelectApp goal. If there is only one application, it calls the ProcessApp goal with the first application information.",
   "Visibility": 1,
@@ -173,8 +174,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "FileHash": "197f6df431c1c5f6b842e84b0a93121ab99fd840d6a36f1f065ec4a9e63ae8e9",
-  "Hash": "c1c118895116281955f7aa5cb689c56a9d0c58fbc9fc4fc931cd35d35a2181c6",
+  "FileHash": "13de39b70b55fce476c6e30307e6a48ee98339ae2ced2b49c3a6dcc3239b00a5",
+  "Hash": "80c1222f342294a002c01a27ec6c84d9573a657eb4d8914fd3f017bbef3b6ff6",
   "IncomingVariablesRequired": {
     "appInfos": "A collection of application information retrieved from the database."
   },

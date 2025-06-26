@@ -9,11 +9,12 @@ SendDebug
 SendDebugInfo
 - post http://localhost:%plang.debugPort%/ 
     data: {
-        "!MemoryStack":"%!MemoryStackJson%",
+        "!MemoryStack":"%!MemoryStack%",
         "!Context": "%!context%"
         "AbsolutePath":"%!Event.Goal.AbsoluteGoalPath%", 
         "!Goal":"%!Event.Goal%", 
         "!Step":"%!Event.GoalStep%",
+        "!Instruction":"%!Event.Instruction%",
         "!Event":"%!Event%",
         "!IsHttpRequest":"%!IsHttpRequest%",
         "!StepIndex": %!Event.GoalStep.Index%,

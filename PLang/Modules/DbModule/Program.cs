@@ -432,22 +432,48 @@ namespace PLang.Modules.DbModule
 			return await eventSourceRepository.AddEventSourceData(connection, id, data, keyHash, transaction);
 		}
 
-		[Description("Executes a sql statement that is fully dynamic or from a variable.")]
-		public async Task<(long, IError?)> ExecuteDynamicSql(string sql, [HandlesVariable] string? dataSourceName = null)
+		[Description("Executes a sql statement that is fully dynamic or from a %variable%. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be updated")]
+		public async Task<(long, IError?)> ExecuteDynamicSql(string sql, List<string> tableAllowList, [HandlesVariable] string? dataSourceName = null)
 		{
-			return await Execute(sql, dataSourceName);
+			return await Execute(sql, tableAllowList, dataSourceName);
 
 		}
 
-		[Description("Executes a sql statement that defined by user. This statement will be validated.")]
-		public async Task<(long RowsAffected, IError? Error)> Execute(string sql, [HandlesVariable] string? dataSourceName = null)
+		[Description("Executes a sql statement that defined by user. This statement will be validated. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be updated")]
+		public async Task<(long RowsAffected, IError? Error)> Execute(string sql, List<string> tableAllowList, [HandlesVariable] string? dataSourceName = null)
 		{
+			if (tableAllowList.Count == 0)
+			{
+				return (0, new ProgramError("You must define a allow list of tables"));
+			}
+
+			//todo: this is not a secure allow check
+			//should deconstruct the sql to find out real table in sql statement
+			foreach (var table in tableAllowList)
+			{
+				if (!sql.Contains(table, StringComparison.OrdinalIgnoreCase))
+				{
+					return (0, new ProgramError($"Table {table} was not in sql: {sql}"));
+				}
+			}
+			return await ExecuteRaw(sql, dataSourceName);
+		}
+
+		private async Task<(long RowsAffected, IError? Error)> ExecuteRaw(string sql, [HandlesVariable] string? dataSourceName = null) { 
 			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName, false);
 			if (error != null) return (0, error);
 
 
 			long rowsAffected = 0;
-			var prepare = Prepare(sql, null);
+
+			List<ParameterInfo>? parameters = null;
+			if (sql.Contains("@id"))
+			{
+				parameters = new List<ParameterInfo>();
+				parameters.Add(new ParameterInfo("@id", "auto", "System.Int64"));
+			}
+
+			var prepare = Prepare(sql, parameters);
 			try
 			{
 				if (prepare.error != null)
@@ -458,7 +484,7 @@ namespace PLang.Modules.DbModule
 				var transaction = goal.GetVariable<IDbTransaction>();
 				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 				{
-					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, null);
+					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
 				}
 				else
 				{
@@ -495,7 +521,7 @@ namespace PLang.Modules.DbModule
 		[Description("When user does not define a primary key, add it to the create statement as id column not null, when KeepHistory is set to false, make the column auto increment")]
 		public async Task<(long, IError?)> CreateTable(string sql)
 		{
-			return await Execute(sql, goal.DataSourceName);
+			return await ExecuteRaw(sql, goal.DataSourceName);
 
 		}
 

@@ -133,7 +133,8 @@ namespace PLang.Building.Model
 		[IgnoreWhenInstructed]
 		[LlmIgnore]
 		public bool IsOS { get; set; }
-
+		[IgnoreWhenInstructed]
+		public string UniqueId { get; set; }
 		[IgnoreWhenInstructed]
 		[LlmIgnore]
 		public int CurrentStepIndex { get; set; }

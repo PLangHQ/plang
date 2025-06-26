@@ -16,7 +16,7 @@
       "RunOnce": false,
       "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-06-22T19:51:57.1777019+00:00",
+      "Generated": "2025-06-26T14:26:22.8277001+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -30,7 +30,7 @@
         "EventType": "Before",
         "EventScope": "Goal",
         "GoalToBindTo": {
-          "Name": "builder"
+          "Name": "Builder"
         },
         "GoalToCall": {
           "Name": "Builder/CheckGoals",
@@ -49,10 +49,11 @@
         "IsLocal": false,
         "IncludeOsGoals": false,
         "IsOnStep": false,
-        "Id": "Before_Goal_builder_Builder/CheckGoals_False___True__False_____False",
-        "UniqueId": "b0a60d95-f792-4453-abb9-65e97b24014e",
+        "Id": "Before_Goal_Builder_Builder/CheckGoals_False___True__False_____False",
+        "UniqueId": "5ccb6a33-e038-4567-a698-9828c324e1b6",
         "Goal": null,
         "GoalStep": null,
+        "Instruction": null,
         "Stopwatch": null
       },
       "IsEvent": true,
@@ -76,7 +77,7 @@
       "RunOnce": false,
       "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-06-22T19:51:57.1927326+00:00",
+      "Generated": "2025-06-26T14:26:22.841089+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -113,9 +114,10 @@
         "IncludeOsGoals": false,
         "IsOnStep": false,
         "Id": "After_ModuleError_*_/apps/Wallet/PaymentRequest_True___True__False___402__False",
-        "UniqueId": "b8137c6e-2aeb-4ae1-b35b-e9cad525a61f",
+        "UniqueId": "274b1974-a37c-4c14-80ee-1bd64fa04980",
         "Goal": null,
         "GoalStep": null,
+        "Instruction": null,
         "Stopwatch": null
       },
       "IsEvent": true,
@@ -139,7 +141,7 @@
       "RunOnce": false,
       "Confidence": null,
       "Inconsistency": null,
-      "Generated": "2025-06-22T19:51:57.2175465+00:00",
+      "Generated": "2025-06-26T14:26:22.8544099+00:00",
       "WaitForExecution": true,
       "LoggerLevel": null,
       "ErrorHandlers": null,
@@ -173,9 +175,10 @@
         "IncludeOsGoals": true,
         "IsOnStep": false,
         "Id": "After_StepError_*_/events/Runtime/HandleBadInstructionFile_False___True__False_InvalidInstructionFile____False",
-        "UniqueId": "52af803b-6a31-4bfb-bc1c-7c0951e22b30",
+        "UniqueId": "6948a63d-bfec-4ece-bc76-cd8abddb7a56",
         "Goal": null,
         "GoalStep": null,
+        "Instruction": null,
         "Stopwatch": null
       },
       "IsEvent": true,

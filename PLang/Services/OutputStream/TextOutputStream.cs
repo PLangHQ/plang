@@ -105,7 +105,7 @@ namespace PLang.Services.OutputStream
 		{
 			if (obj == null) return;
 
-			string content = obj.ToString();
+			string content = obj.ToString() ?? string.Empty;
 			var fullName = obj.GetType().FullName ?? "";
 			if (fullName.IndexOf("[") != -1)
 			{
@@ -115,7 +115,7 @@ namespace PLang.Services.OutputStream
 			byte[]? bytes = null;
 			if (content != null && !content.StartsWith(fullName))
 			{
-				if (TypeHelper.IsRecordWithoutToString(obj))
+				if (!TypeHelper.IsConsideredPrimitive(obj.GetType()) && !TypeHelper.IsRecordWithToString(obj))
 				{
 					bytes = encoding.GetBytes(JsonConvert.SerializeObject(obj, Formatting.Indented));
 				}

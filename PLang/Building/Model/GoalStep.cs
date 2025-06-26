@@ -176,6 +176,8 @@ namespace PLang.Building.Model
 			return Goal;
 		}
 
+		[IgnoreWhenInstructed]
+		public string UniqueId { get; set; }
 
 		[IgnoreWhenInstructed]
 		public Stopwatch Stopwatch { get; set; }

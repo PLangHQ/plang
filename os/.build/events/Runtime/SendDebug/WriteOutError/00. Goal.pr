@@ -24,7 +24,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 39,
+      "LineNumber": 40,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -73,7 +73,7 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "e529181e7a88150c5151085e7526912c04ca66fbe8eba0f0db6caa60f39c1baa",
+      "Hash": "10b85c6ffb02dc0fe2bffa0bad54b4cce414e49d7f68cbf340b4a57b62187b96",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\events\\Runtime\\SendDebug.goal",
       "UserIntent": null
@@ -91,8 +91,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "FileHash": "c26a22d4b21d3afc187e2cf494341b311e8d75466d0df4ccd9c842dbfc4de497",
-  "Hash": "8a275fee8bd749bbf1942d0fc1a1e67e5849c60e3097031b08382dea6be0df5f",
+  "FileHash": "457902170325be13c09c0172e10d885c5978382ee354307b0da0e74e4f8d5ea0",
+  "Hash": "7ef3430469357f2e8b79c3f72806841db1cc71f6b203490add22584be0355610",
   "IncomingVariablesRequired": {
     "%error%": "The error message that needs to be logged."
   },

@@ -336,7 +336,7 @@ namespace PLang.Utils
 
 			if (value is IDictionary || value is IList) return true;
 			if (strValue.Equals(fullName)) return true;
-			if (!TypeHelper.IsRecordWithoutToString(value)) return true;
+			if (TypeHelper.IsRecordWithToString(value)) return false;
 
 			return false;
 		}

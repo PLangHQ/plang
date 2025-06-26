@@ -1,5 +1,6 @@
 ﻿using AngleSharp.Attributes;
 using Newtonsoft.Json.Linq;
+using PLang.Errors;
 using PLang.Utils;
 using System;
 using System.Collections.Generic;
@@ -61,6 +62,31 @@ namespace PLang.Models
 			this.appName = appName;
 		}
 		public string AppName { get { return appName; } set { appName = value; } }
+
+		public static (string? appName, string? goalName, IError?) GetAppAndGoalName(string name)
+		{
+			string appFolder = "/apps/";
+			int appFolderIndex = name.IndexOf("apps");
+			if (appFolderIndex != -1)
+			{
+				appFolder = name.Substring(0, 5);
+				name = name.Remove(5).TrimStart('/');
+			}
+
+			int appNameIndex = name.IndexOf('/');
+			if (appNameIndex == -1) return (null, null, new Error($"Could not determine appName for '{name}'"));
+
+			string appName = name.Substring(0, appNameIndex).TrimStart('/').TrimEnd('/');
+			string goalName = name.Remove(appNameIndex).TrimStart('/');
+			if (string.IsNullOrEmpty(goalName.Trim('/'))) goalName = "Start.goal";
+
+			return ($"{appFolder}/{appName}", goalName, null);
+
+
+
+
+
+		}
 	}
 	[Description("Name of goal and parameters that is called, e.g. in condition, loops, run goal")]
 	public class GoalToCallInfo

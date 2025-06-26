@@ -166,8 +166,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "FileHash": "197f6df431c1c5f6b842e84b0a93121ab99fd840d6a36f1f065ec4a9e63ae8e9",
-  "Hash": "33579ffff97914086085def7ddc00133e890fe420e718297d73c180efb665993",
+  "FileHash": "13de39b70b55fce476c6e30307e6a48ee98339ae2ced2b49c3a6dcc3239b00a5",
+  "Hash": "5130d23c34652645cbfdd860189649a5746b8cc664babd6682f5bf72223dbd29",
   "IncomingVariablesRequired": {
     "appInfos.name": "A list of application names from which the user can select."
   },

@@ -555,7 +555,7 @@ namespace PLang.Runtime
 		{
 			if (waitForXMillisecondsBeforeRunningGoal > 0) await Task.Delay((int)waitForXMillisecondsBeforeRunningGoal);
 			goal.Stopwatch = Stopwatch.StartNew();
-			memoryStack.Put("!plang.GoalUniqueId", Guid.NewGuid().ToString());
+			goal.UniqueId = Guid.NewGuid().ToString();
 
 			AppContext.SetSwitch("Runtime", true);
 			SetLogLevel(goal.Comment);
@@ -771,7 +771,13 @@ private async Task CacheGoal(Goal goal)
 			{
 				if (HasExecuted(step)) return (null, null);
 
-				memoryStack.Put("!plang.StepUniqueId", Guid.NewGuid().ToString());
+				step.UniqueId = Guid.NewGuid().ToString();
+
+				var error = LoadInstruction(goal, step);
+				if (error != null)
+				{
+					return (null, error);
+				}
 
 				if (retryCount == 0)
 				{
@@ -925,23 +931,6 @@ private async Task CacheGoal(Goal goal)
 
 		public async Task<(object? ReturnValue, IError? Error)> ProcessPrFile(Goal goal, GoalStep goalStep, int stepIndex)
 		{
-			if (goalStep.RunOnce && HasExecuted(goalStep))
-			{
-				return (null, null);
-			}
-
-			if (!fileSystem.File.Exists(goalStep.AbsolutePrFilePath))
-			{
-				return (null, new StepError($"Could not find pr file {goalStep.RelativePrPath}. Maybe try to build again?. This step is defined in Goal at {goal.RelativeGoalPath}. The location of it on drive should be {goalStep.AbsolutePrFilePath}.", goalStep, Key: "PrFileNotFound"));
-			}
-
-			var instruction = prParser.ParseInstructionFile(goalStep);
-			if (instruction == null)
-			{
-				return (null, new StepError($"Instruction file could not be loaded for {goalStep.RelativePrPath}", goalStep, Key: "InstructionFileNotLoaded"));
-			}
-			goalStep.Instruction = instruction;
-
 			if (stepIndex < goal.GoalSteps.Count && !goal.GoalSteps[stepIndex].Execute)
 			{
 				logger.LogDebug($"Step is disabled: {goal.GoalSteps[stepIndex].Execute}");
@@ -954,9 +943,11 @@ private async Task CacheGoal(Goal goal)
 				return (null, new StepError("Could not find module:" + goalStep.ModuleType, goalStep, Key: "ModuleNotFound"));
 			}
 
+			if (goalStep.Instruction == null) LoadInstruction(goal, goalStep);
+
 			goal.AddVariable(goal, variableName: ReservedKeywords.Goal);
 			goal.AddVariable(goalStep, variableName: ReservedKeywords.Step);
-			goal.AddVariable(instruction, variableName: ReservedKeywords.Instruction);
+			goal.AddVariable(goalStep.Instruction, variableName: ReservedKeywords.Instruction);
 
 			BaseProgram? classInstance;
 			try
@@ -972,7 +963,7 @@ private async Task CacheGoal(Goal goal)
 				return await HandleMissingSettings(mse, goal, goalStep, stepIndex);
 			}
 
-			classInstance.Init(container, goal, goalStep, instruction, this.HttpContext);
+			classInstance.Init(container, goal, goalStep, goalStep.Instruction, this.HttpContext);
 
 			if (classInstance is IAsyncConstructor asyncConstructor)
 			{
@@ -1017,7 +1008,7 @@ private async Task CacheGoal(Goal goal)
 					{
 						var engine = container.GetInstance<IEngine>();
 						var pseudoRuntime = container.GetInstance<IPseudoRuntime>();
-						
+
 						var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, goalStep.CancellationHandler.GoalNameToCallAfterCancellation, goal);
 						return (null, result.error);
 					}
@@ -1037,6 +1028,24 @@ private async Task CacheGoal(Goal goal)
 				}
 			}
 		}
+
+		private IError? LoadInstruction(Goal goal, GoalStep step)
+		{
+
+			if (!fileSystem.File.Exists(step.AbsolutePrFilePath))
+			{
+				return new StepError($"Could not find pr file {step.RelativePrPath}. Maybe try to build again?. This step is defined in Goal at {goal.RelativeGoalPath}. The location of it on drive should be {step.AbsolutePrFilePath}.", step, Key: "PrFileNotFound");
+			}
+
+			var instruction = prParser.ParseInstructionFile(step);
+			if (instruction == null)
+			{
+				return new StepError($"Instruction file could not be loaded for {step.RelativePrPath}", step, Key: "InstructionFileNotLoaded");
+			}
+			step.Instruction = instruction;
+			return null;
+		}
+
 		private List<IDisposable> listOfDisposables = new();
 		private async Task<(object?, IError?)> HandleMissingSettings(MissingSettingsException mse, Goal goal, GoalStep goalStep, int stepIndex)
 		{

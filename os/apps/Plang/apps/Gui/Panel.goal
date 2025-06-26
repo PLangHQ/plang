@@ -21,13 +21,6 @@ LoadAppInfo
 CreateApp
 - write out "Welcome to the GUI builder. Lets answer few questions before we continue"
 - get db table information "appInfos", write to %appInfosTable%
-/*- read llm/appInfo/prepareAppInfoQuestionsSystem.llm, load vars, write to %system%
-- read %!plang.rootpath%/readme.md, set content "" if not found, write to %readme%
-- [llm] system: %system%
-        user: <table>%appInfosTable%<table>
-                <readme>%readme%<readme>
-        scheme: [{columnName:string, required:bool, explain:string, answer:string|null}]
-        write to %questions%*/
 - select name, description from iconFrameworks, write to %iconFrameworks%
 - select name, description from cssFrameworks, write to %cssFrameworks%   
 - select name, description from fontFamilies, write to %fontFamilies%        
@@ -52,14 +45,15 @@ AskQuestion
 - if %result.hasAnsweredAll% then SaveToDb, else AskQuestion
 
 SaveToDb
-- write to "Save to db: %result%"
-- read llm/insertToDbSystem.llm, load vars, write to %system%
+- write out "Save to db: %answers%"
+- read llm/appInfo/insertToDbSystem.llm, load vars, write to %system%
 - [llm] system: %system%
     user: %answers%
     scheme: {sql:string}
-- execute sql %sql%
+- execute sql statement %sql%, allow list:"appInfos"
     on error call FixInsert
-- call goal 
+- select * from appInfos order by id desc, return 1 row, %appInfo%
+- write out "Done"
 
 FixInsert
 - write out %!error%

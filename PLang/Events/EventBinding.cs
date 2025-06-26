@@ -49,13 +49,15 @@ namespace PLang.Events
 		string? ErrorKey = null, string? ErrorMessage = null, int? StatusCode = null, string? ExceptionType = null, bool IsLocal = false, bool IncludeOsGoals = false, bool IsOnStep = false)
 	{
 		[LlmIgnore]
-		public string Id { get { return $"{EventType}_{EventScope}_{GoalToBindTo.Name}_{GoalToCall.Name}_{IncludePrivate}_{StepNumber}_{StepText}_{WaitForExecution}_{string.Join(',', RunOnlyOnStartParameter ?? [""])}_{OnErrorContinueNextStep}_{ErrorKey}_{ErrorMessage}_{StatusCode}_{ExceptionType}_{IsLocal}".ToString(); } }
+		public string Id { get { return $"{EventType}_{EventScope}_{GoalToBindTo?.Name}_{GoalToCall?.Name}_{IncludePrivate}_{StepNumber}_{StepText}_{WaitForExecution}_{string.Join(',', RunOnlyOnStartParameter ?? [""])}_{OnErrorContinueNextStep}_{ErrorKey}_{ErrorMessage}_{StatusCode}_{ExceptionType}_{IsLocal}".ToString(); } }
 		[IgnoreWhenInstructed]
 		public string UniqueId { get { return Guid.NewGuid().ToString(); } }
 		[JsonIgnore]
 		public Goal? Goal { get; set; }
-		[JsonIgnore] 
+		[JsonIgnore]
 		public GoalStep? GoalStep { get; set; }
+		[JsonIgnore]
+		public Instruction? Instruction { get; set; }
 
 		[IgnoreWhenInstructed]
 		public Stopwatch Stopwatch { get; set; }

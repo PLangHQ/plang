@@ -111,7 +111,7 @@ namespace PLang.Building
 			var error = await stepBuilder.LoadVariablesIntoMemoryStack(instruction.Function, memoryStack, context, settings);
 			if (error != null) return (build.Instruction, error);
 
-
+			instruction.ModuleType = step.ModuleType;
 			//write properties of objects to instruction file
 			instruction.Properties.AddOrReplace("Parameters", parameterProperties);
 			instruction.Properties.AddOrReplace("ReturnValues", returnObjectsProperties);

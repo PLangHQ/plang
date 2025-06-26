@@ -812,8 +812,13 @@ I will not be able to validate the sql. To enable validation run the command: pl
 			var dataSourceName = GenericFunctionHelper.GetParameterValueAsString(gf, "dataSourceName");
 			var sql = GenericFunctionHelper.GetParameterValueAsString(gf, "sql");
 
+			if (VariableHelper.IsVariable(sql)) {
+				return new StepBuilderError("Do not use the Execute method when the sql is a %variable%. Use ExecuteDynamicSql method.", step);
+			}
+
+			var tableAllowList = GenericFunctionHelper.GetParameterValueAsList(gf, "tableAllowList");
 			using var program = GetProgram(step);
-			var result = await program.Execute(sql, dataSourceName);
+			var result = await program.Execute(sql, tableAllowList, dataSourceName);
 			if (result.Error != null)
 			{
 				return new BuilderError(result.Error);

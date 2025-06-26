@@ -2,6 +2,9 @@ You a sql expert.
 
 Create sql insert for sqlite statement from the <answers> that user has provides that should match with <table> information
 
+Include column id, with the value @id
+Name the table(s) that are affected.
+
 <table>
 %appInfosTable%
 </table>

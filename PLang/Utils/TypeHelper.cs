@@ -696,7 +696,7 @@ public class TypeHelper : ITypeHelper
 		return hasPrintMembers && hasCloneMethod && hasEqualityContract;
 	}
 
-	public static bool IsRecordWithoutToString(object obj)
+	public static bool IsRecordWithToString(object obj)
 	{
 		var type = obj.GetType();
 		bool isRecord = type.GetMethod("PrintMembers", BindingFlags.Instance | BindingFlags.NonPublic) != null;

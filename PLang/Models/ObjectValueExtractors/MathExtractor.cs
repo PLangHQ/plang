@@ -56,13 +56,21 @@ namespace PLang.Models.ObjectValueExtractors
 				return new ObjectValue(segment.Value, result, parent: parent, properties: parent.Properties);
 			}
 
-
 			if (firstItem is ObjectValue)
 			{
 
 				object opResult = DoOp(list.Select(p => ((ObjectValue) p).Value), segment);
 				return new ObjectValue(segment.Value, opResult, parent: parent, properties: parent.Properties);
 
+			}
+
+			object? obj = null;
+			if (segment.Value.Equals("first", StringComparison.OrdinalIgnoreCase)) obj = list.FirstOrDefault();
+			if (segment.Value.Equals("last", StringComparison.OrdinalIgnoreCase)) obj = list.LastOrDefault();
+			if (segment.Value.Equals("count", StringComparison.OrdinalIgnoreCase)) obj = list.Count();
+			if (obj != null)
+			{
+				return new ObjectValue(segment.Value, obj, parent: parent, properties: parent.Properties);
 			}
 
 			throw new Exception($"Could not figure out how to calculate {segment.Value} in {parent.PathAsVariable}");

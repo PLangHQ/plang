@@ -1,14 +1,18 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
+using PLang.Models;
+using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Utils;
 using ReverseMarkdown.Converters;
 using Scriban;
 using Scriban.Runtime;
 using Scriban.Syntax;
+using System.Collections;
 using System.ComponentModel;
 using System.Dynamic;
 using System.Text;
@@ -176,7 +180,75 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 
 				}));
 			}
-			
+
+			if (!ContainsVariable("goalToCall", templateContext))
+			{
+				scriptObject.Import("goalToCall", new Func<object, string, Task<object?>>(async (data, goalName) =>
+				{
+					var parameters = new Dictionary<string, object?>();
+					parameters.Add("data", data);
+					parameters.Add(ReservedKeywords.Goal, goal);
+					parameters.Add(ReservedKeywords.Step, goalStep);
+					parameters.Add(ReservedKeywords.Instruction, goalStep.Instruction);
+
+					var caller = GetProgramModule<CallGoalModule.Program>();
+					var result = await caller.RunGoal(new Models.GoalToCallInfo(goalName, parameters));
+					if (result.Error != null) return result.Error.ToString();
+
+					if (result.Return is IList<ObjectValue> list)
+					{
+						if (list.Count == 0) return data;
+						if (list.Count == 1) return list[0].Value;
+
+						return GetScriptObject(list);
+
+					} else if (result.Return is ObjectValue ov)
+					{
+						return ov.Value;
+					}
+
+					return result.Return ?? data;
+
+				}));
+			}
+
+			if (!ContainsVariable("appToCall", templateContext))
+			{
+				scriptObject.Import("appToCall", new Func<object, string, Task<object?>>(async (data, appName) =>
+				{
+					var parameters = new Dictionary<string, object?>();
+					parameters.Add("data", data);
+					parameters.Add(ReservedKeywords.Goal, goal);
+					parameters.Add(ReservedKeywords.Step, goalStep);
+					parameters.Add(ReservedKeywords.Instruction, goalStep.Instruction);
+
+					var caller = GetProgramModule<CallGoalModule.Program>();
+					(appName, var goalName, var error) = AppToCallInfo.GetAppAndGoalName(appName);
+					if (error != null) return error.ToString();
+
+					var result = await caller.RunApp(new Models.AppToCallInfo(appName, goalName, parameters));
+					if (result.Error != null) return result.Error.ToString();
+
+					if (result.Variables is IList<ObjectValue> list)
+					{
+						if (list.Count == 0) return data;
+						if (list.Count == 1) return list[0].Value;
+
+						if (list.Count == 0) return data;
+						if (list.Count == 1) return list[0].Value;
+
+						return GetScriptObject(list);
+						
+					}
+					else if (result.Variables is ObjectValue ov)
+					{
+						return ov.Value;
+					}
+
+					return result.Variables ?? data;
+
+				}));
+			}
 
 			if (!ContainsVariable("render", templateContext))
 			{
@@ -193,6 +265,21 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 
 			// Push the custom function into the template context
 			templateContext.PushGlobal(scriptObject);
+		}
+
+		private ScriptObject? GetScriptObject(IList<ObjectValue> list)
+		{
+			var scriptObj = new Scriban.Runtime.ScriptObject();
+			foreach (var item in list)
+			{
+				object? value = item.Value;
+				if (value is JValue v)
+				{
+					value = v.ToString();
+				}
+				scriptObj[item.Name] = value;
+			}
+			return scriptObj;
 		}
 	}
 }

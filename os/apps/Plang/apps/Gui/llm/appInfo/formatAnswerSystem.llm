@@ -6,10 +6,5 @@ You job is to analyze the answer from the user and map the answer to columns. Th
 %prepQuestions%
 <question_asked>
 
-You MUST map them to this <question> array
-
-<question>
-%questions%
-<question>
-
+You MUST map them to the question array, that matches the <table> information
 Decide if user has answered all questions and set hasAnsweredAll as true or false

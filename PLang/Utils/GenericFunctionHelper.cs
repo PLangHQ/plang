@@ -34,6 +34,23 @@ namespace PLang.Utils
 			dict.Add(parameterName, parameterValue);
 			return dict;
 		}
+
+		public static List<string>? GetParameterValueAsList(IGenericFunction gf, string parameterName)
+		{
+			if (gf.Parameters == null) return null;
+
+			var parameterValue = gf.Parameters.FirstOrDefault(p => p.Name == parameterName)?.Value?.ToString();
+			if (parameterValue == null) return null;
+
+			if (JsonHelper.IsJson(parameterValue))
+			{
+				var parameters = JsonConvert.DeserializeObject<List<string>>(parameterValue);
+				return parameters;
+			}
+			var list = new List<string>();
+			list.Add(parameterValue);
+			return list;
+		}
 		public static bool? GetParameterValueAsBool(IGenericFunction gf, string parameterName)
 		{
 			if (gf.Parameters == null) return null;

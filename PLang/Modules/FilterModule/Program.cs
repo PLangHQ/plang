@@ -286,7 +286,11 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 			var items = ov.GetObjectValue(propertyToFilterOn);
 			if (items == null || !items.Initiated)
 			{
-				return (null, new ProgramError($"{propertyToFilterOn} does not exists in object. Are you matching the path correctly? e.g. if you filter on 'street' on a user object with property address.street, you must define the property to filter on to be 'address.street' "));
+				var variableModule = GetProgramModule<VariableModule.Program>();
+				var trimmedObject = await variableModule.TrimForLlm(ov.Value, 2, 3, null, 1, 2, 2000, true);
+
+				return (null, new ProgramError($"{propertyToFilterOn} does not exists in object. Are you matching the path correctly? e.g. if you filter on 'street' on a user object with property address.street, you must define the property to filter on to be 'address.street'", 
+					FixSuggestion: $"The object that is being filtered on looks like this: {trimmedObject}"));
 			}
 
 
@@ -300,7 +304,18 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 						var extractedItem = GetExtractedItem(item, propertyToExtract);
 						if (extractedItem != null)
 						{
-							filteredList.Add(extractedItem);
+							if (extractedItem is IList list2 && extractedItem is not JObject)
+							{
+								foreach (var item2 in list2)
+								{
+									filteredList.Add(item2);
+								}
+								
+							}
+							else
+							{
+								filteredList.Add(extractedItem);
+							}
 						}
 					}
 

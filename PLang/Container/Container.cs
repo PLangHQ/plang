@@ -457,9 +457,6 @@ namespace PLang.Container
 			memoryStack.Put(new DynamicObjectValue("NowUtc", () => { return SystemTime.UtcNow(); }, typeof(DateTime), isSystemVariable: true));
 
 			memoryStack.Put(new DynamicObjectValue(ReservedKeywords.MemoryStack, () => {
-				return memoryStack.GetMemoryStack();
-			}, typeof(Dictionary<string, ObjectValue>), isSystemVariable: true));
-			memoryStack.Put(new DynamicObjectValue(ReservedKeywords.MemoryStack + "Json", () => {
 				return memoryStack.GetMemoryStackJson();
 			}, typeof(Dictionary<string, ObjectValue>), isSystemVariable: true));
 			memoryStack.Put(new DynamicObjectValue(ReservedKeywords.GUID, () => { return Guid.NewGuid(); }, typeof(Guid), isSystemVariable: true));

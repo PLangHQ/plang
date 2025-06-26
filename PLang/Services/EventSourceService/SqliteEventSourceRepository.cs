@@ -157,35 +157,43 @@ namespace PLang.Services.EventSourceService
 
 		public async Task<(int, IError?)> AddEventSourceData(IDbConnection dbConnection, long id, string data, string keyHash, IDbTransaction? transaction)
 		{
-			var decryptedData = encryption.Decrypt<EventData>(data, keyHash);
-
-			var param = new DynamicParameters();
-			if (decryptedData.Parameters != null)
-			{
-				foreach (var item in decryptedData.Parameters)
-				{
-					param.Add(item.Key, item.Value);
-				}
-			}
-
-			await dbConnection.ExecuteAsync("INSERT OR IGNORE INTO __Events__ (id, data, key_hash, processed) VALUES (@id, @data, @key_hash, 1) ",
-				new { id, data, key_hash = keyHash }, transaction);
-
-			int result = 0;
 			try
 			{
-				result = await dbConnection.ExecuteAsync(decryptedData.Sql, param, transaction);
+				var decryptedData = encryption.Decrypt<EventData>(data, keyHash);
+
+				var param = new DynamicParameters();
+				if (decryptedData.Parameters != null)
+				{
+					foreach (var item in decryptedData.Parameters)
+					{
+						param.Add(item.Key, item.Value);
+					}
+				}
+
+				await dbConnection.ExecuteAsync("INSERT OR IGNORE INTO __Events__ (id, data, key_hash, processed) VALUES (@id, @data, @key_hash, 1) ",
+					new { id, data, key_hash = keyHash }, transaction);
+
+				int result = 0;
+				try
+				{
+					result = await dbConnection.ExecuteAsync(decryptedData.Sql, param, transaction);
+				}
+				catch (Exception ex)
+				{
+					string message = ex.ToString().ToLower();
+					if (message.Contains("unique constraint failed") || message.Contains("already exists") || message.Contains("duplicate column name"))
+					{
+						return (result, null);
+					}
+					return (0, new Error(ex.Message, "SqlError", Exception: ex));
+				}
+
+				return (result, null);
 			} catch (Exception ex)
 			{
-				string message = ex.ToString().ToLower();
-				if (message.Contains("unique constraint failed") || message.Contains("already exists") || message.Contains("duplicate column name"))
-				{
-					return (result, null);
-				}
-				return (0, new Error(ex.Message, "SqlError", Exception: ex));
+				Console.WriteLine($"data: {data} | keyHash:{keyHash}");
+				throw;
 			}
-
-			return (result, null);
 		}
 	}
 }

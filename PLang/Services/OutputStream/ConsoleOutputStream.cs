@@ -71,7 +71,7 @@ namespace PLang.Services.OutputStream
 		{
 			if (obj == null) return;
 
-			string content = obj.ToString();
+			string content = obj.ToString() ?? string.Empty;
 			var fullName = obj.GetType().FullName ?? "";
 			if (fullName.IndexOf("[") != -1)
 			{
@@ -85,9 +85,9 @@ namespace PLang.Services.OutputStream
 
 			if (!content.StartsWith(fullName))
 			{
-				if (TypeHelper.IsRecordWithoutToString(obj))
+				if (!TypeHelper.IsConsideredPrimitive(obj.GetType()) && !TypeHelper.IsRecordWithToString(obj))
 				{
-					Console.WriteLine(JsonConvert.SerializeObject(obj, Formatting.Indented));
+					Console.WriteLine(ToJson(obj));
 				}
 				else
 				{
@@ -96,10 +96,19 @@ namespace PLang.Services.OutputStream
 			}
 			else
 			{
-				Console.WriteLine(JsonConvert.SerializeObject(obj, Formatting.Indented));
+				Console.WriteLine(ToJson(obj));
 			}
 			Console.ResetColor();
 
+		}
+
+		private string ToJson(object obj) {
+			JsonSerializerSettings settings = new JsonSerializerSettings()
+			{
+				Formatting = Formatting.Indented,
+				ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+			};
+			return JsonConvert.SerializeObject(obj, settings);
 		}
 
 		private void SetColor(int statusCode)

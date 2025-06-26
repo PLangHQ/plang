@@ -316,8 +316,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "FileHash": "197f6df431c1c5f6b842e84b0a93121ab99fd840d6a36f1f065ec4a9e63ae8e9",
-  "Hash": "35dac67514a387159dda4665ead0fa501248514a86d09438f2dd36c2909d302d",
+  "FileHash": "13de39b70b55fce476c6e30307e6a48ee98339ae2ced2b49c3a6dcc3239b00a5",
+  "Hash": "fff17eb770a922c624e9671929d8a40a684fa723014af251c27abf72048188c0",
   "IncomingVariablesRequired": {
     "appInfos.count": "The count of application information records to determine if CreateApp should be called.",
     "appInfo.id": "The ID of the application info to retrieve associated designs."
