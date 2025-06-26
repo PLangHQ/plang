@@ -21,47 +21,54 @@ namespace PLang.Models.ObjectValueConverters
 		{
 			var segments = new List<PathSegment>();
 			var regex = new Regex(@"([^[.\]]+)|\[(.+?)\]", RegexOptions.Compiled);
-
-			foreach (Match match in regex.Matches(path))
+			try
 			{
-				if (match.Groups[1].Success)
+				foreach (Match match in regex.Matches(path))
 				{
-					string value = match.Groups[1].Value.Trim();
+					if (match.Groups[1].Success)
+					{
+						string value = match.Groups[1].Value.Trim();
 
-					bool openBracket = value.Contains('(');
-					bool closeBracket = value.Contains(')');
-					if (openBracket && closeBracket)
-					{
-						segments.Add(new PathSegment(value, SegmentType.Method));
-					}
-					else if (openBracket || closeBracket)
-					{
-						throw new Exception($"{value} is not a valid variable. You must have both open and close the paranthese");
-					}
-					else
-					{
-						int startIndex = MathExtractor.IndexOfMathOperator(value);
-						if (startIndex != -1)
+						bool openBracket = value.Contains('(');
+						bool closeBracket = value.Contains(')');
+						if (openBracket && closeBracket)
 						{
-							string pathValue = value[..startIndex];
-							string math = value[startIndex..];
-
-							if (!string.IsNullOrEmpty(pathValue.Trim()))
-							{
-								segments.Add(new PathSegment(pathValue.Trim(), SegmentType.Path));
-							}
-							segments.Add(new PathSegment(math.Trim(), SegmentType.Math));
+							segments.Add(new PathSegment(value, SegmentType.Method));
+						}
+						else if (openBracket || closeBracket)
+						{
+							throw new Exception($"{value} is not a valid variable. You must have both open and close the paranthese");
 						}
 						else
 						{
-							segments.Add(new PathSegment(value, SegmentType.Path));
+							int startIndex = MathExtractor.IndexOfMathOperator(value);
+							if (startIndex != -1)
+							{
+								string pathValue = value[..startIndex];
+								string math = value[startIndex..];
+
+								if (!string.IsNullOrEmpty(pathValue.Trim()))
+								{
+									segments.Add(new PathSegment(pathValue.Trim(), SegmentType.Path));
+								}
+								segments.Add(new PathSegment(math.Trim(), SegmentType.Math));
+							}
+							else
+							{
+								segments.Add(new PathSegment(value, SegmentType.Path));
+							}
 						}
 					}
+					else if (match.Groups[2].Success)
+					{
+						segments.Add(new PathSegment(match.Groups[2].Value, SegmentType.Index));
+					}
 				}
-				else if (match.Groups[2].Success)
-				{
-					segments.Add(new PathSegment(match.Groups[2].Value, SegmentType.Index));
-				}
+			} catch (Exception ex)
+			{
+				// got stack overflow from regex at one time, seeing if this can catch it? path should be the reason.
+				Console.WriteLine($"Exception: {ex.Message} - path:{path}");
+				throw;
 			}
 
 			return segments;

@@ -43,7 +43,7 @@ namespace PLang.Models.ObjectValueExtractors
 		public ObjectValue? Extract(PathSegment segment, MemoryStack? memoryStack = null)
 		{
 
-			if (list == null || !list.Any()) return null;
+			if (list == null) return null;
 
 			int index = 0;
 

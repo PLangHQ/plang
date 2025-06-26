@@ -1,0 +1,63 @@
+BuildGui
+- if %sketch% is empty then 
+    - read sketch.png as base64, include data, write to %sketch%
+    - read file desc.txt, write to %desc%
+- write out "<li>Building description of app</li>", buffer
+- read llm/buildDescriptionSystem.txt, write to %system%
+- [llm] system: %system%
+        image: %sketch%
+        user: %desc%
+        model: "o1"
+        scheme: {Overview: string, Features: string, Database:string, UI:string, Logic:string, NameOfApp:string}
+        write to %result%
+- write out "<li><strong>App:</strong>%result.NameOfApp%<br><strong>Overview:</strong><br>%result.Overview%", buffer
+- write out "<li>Building database of app</li>", buffer
+- create folder ".output/%result.NameOfApp%", do incremental naming, write to %folderPath%
+- read llm/buildDbSystem.txt, load vars, write to %dbSystem%
+- [llm] system: %dbSystem%
+        user: %result.Database%
+         write to %setupFile%
+- save %setupFile% to %folderPath%\Setup.goal
+- write out "<li>Building User interface of app</li>", buffer
+- read llm/buildUiSystem.txt, load vars, write to %uiSystem%
+- write %uiSystem% to text file %folderPath%/.debug/uiSystem.txt    
+- write %result.UI% to text file %folderPath%/.debug/uiUser.txt    
+- [llm] system: %uiSystem%
+        image: %sketch%
+        user: %result.UI%
+        model: "o1"
+        scheme: {
+                fileName:string, description:string, html:string,
+                    goalsToCallBeforeRender: [{name:string, description:string}],
+                    goalsToCall:[{name:string, parameters:string[], outputTarget:string, domOperation:string}], 
+                    modules:[{fileName:string, description:string, html:string, goalsToCallBeforeRender: object[]?, goalsToCall:object[]?, modules:object[]?}]
+                }
+        write to %uiFiles%
+- write %uiFiles% to text file %folderPath%/.debug/uiFile.json        
+- call SaveUiFiles item=%uiFiles%
+- read llm/plangexample2.txt, dont load variables, write to %examples%
+- read llm/buildLogicSystem.txt, load vars, write to %logicSystem%
+- write %logicSystem% to %folderPath%/.debug/logicSystem.txt, overwrite
+- write "%result.Logic%" to %folderPath%/.debug/logicUser.txt, overwrite
+- write out "<li>Building logic of app</li>", buffer
+- [llm] system: %logicSystem%
+        user: %result.Logic%
+        model: "o1"
+        scheme: [{fileName:string, plangCode:string}]
+        write to %plangCode%
+- save %plangCode% to %folderPath%/.debug/plangCode.json        
+- foreach %plangCode%, call SavePlangFiles
+- copy "plang.js" to "%folderPath%/ui/plang.js"
+- write out "<li>Done - app is ready</li>", buffer
+- write out "<button class='bg-blue-500 text-white font-semibold rounded-lg px-6 py-2 hover:bg-blue-600 focus:ring-2 focus:ring-blue-300 focus:outline-none' data-path="%folderPath%" onclick="callGoal('OpenVsCode', { path:this.dataset.path })">Open VS Code</button>", buffer
+
+SaveUiFiles
+- save %item.html% to %folderPath%/%item.fileName%
+- foreach %item.modules%, call SaveUiFiles %item%
+
+SavePlangFiles
+- save %item.plangCode% to %folderPath%/%item.fileName%
+
+ClearHtmlFromUiFiles
+- foreach %item.modules%, call ClearHtmlFromUiFiles
+- set append to %htmlInfo% list = %item%

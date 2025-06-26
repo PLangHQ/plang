@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Prototype</title>
+    <script type="module" src="ui/plang.js"></script>
+    <style>
+        body {
+           
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding:0;
+        }
+        #tldraw { border:0px yellow solid;}
+    </style>
+
+    <link rel="stylesheet" href="ui/tldraw.css">
+</head>
+
+<body>
+    <div id="tldraw"></div>
+    <script src="ui/tldraw.js"></script>
+<!--
+    <div class="bg-white shadow-lg rounded-lg p-6 max-w-full">
+        <label for="description" class="block text-gray-700 font-semibold mb-2">Description</label>
+        <div class="flex items-center space-x-4">
+            <textarea type="text" id="description" placeholder="Enter description..."
+                class="flex-grow border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+            <button id="makeButton"
+                class="bg-blue-500 text-white font-semibold rounded-lg px-6 py-2 hover:bg-blue-600 focus:ring-2 focus:ring-blue-300 focus:outline-none">
+                Make
+            </button>
+        </div>
+    </div>
+-->
+    <div id="progressDialog">
+        <ul id="progress">
+            <li>Starting to create app</li>
+        </ul>
+    </div>
+    <style>
+        #progressDialog {
+            position: fixed;
+            bottom: 20px; /* Adjust distance from bottom */
+            left: 50%;
+            transform: translateX(-50%);
+            background: white; /* Optional background */
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display:none;
+        }
+    </style>
+   
+    <script type="module">
+    /*
+    document.getElementById("makeButton").addEventListener("click", async () => {
+        const editor = window.tldrawEditor;
+        if (!editor) {
+            alert("Editor instance is not available!");
+            return;
+        }
+
+        const shapeIds = editor.getCurrentPageShapeIds();
+        if (shapeIds.size === 0) {
+            alert("No shapes on the canvas to export.");
+            return;
+        }
+
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+
+            const blob = await window.exportToBlob({
+                editor: editor,
+                ids: [...shapeIds],
+                format: "png",
+                opts: { background: false },
+            });
+            var data = await blobToDataURI(blob);
+            document.getElementById('progressDialog').setAttribute('style', 'display:block');
+            const desc = document.getElementById('description').value;
+            const message = { goalName: "BuildGui", parameters:{sketch: data, desc:desc}, outputTarget: "#progress", domOperation: "append" };
+            window.chrome.webview.postMessage(message);
+            
+        } catch (error) {
+            console.error("Error exporting canvas:", error);
+            alert("Failed to export the canvas.");
+        }
+    });
+    function blobToDataURI(blob) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result); 
+            reader.onerror = reject;
+            reader.readAsDataURL(blob); 
+        });
+    }
+*/
+    </script>
+
+</body>
+
+</html>

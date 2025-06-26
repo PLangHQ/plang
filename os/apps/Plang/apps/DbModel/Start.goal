@@ -1,0 +1,95 @@
+Start
+- ask, "1. Create new connection
+ 2. View connections
+ 3. Change connection", write to %answer%
+- if %answer%=1 then CreateConnection
+- if %answer%=2 then ViewConnections
+- if %answer%=3 then ChangeConnection
+
+CreateConnection
+- ask "give me description and url", %answer%
+- read llm/getSummaryTechSpecUrlsSystem.llm, write to %system%
+- [llm] system: %system%
+        user:%user%
+        scheme: {uris:string[], summary:string, techSpeck:string}
+        write to %service%
+- foreach %service.urls%, call GetDoc item=%uri%
+- read llm/system.llm, write to %system%
+- [llm] system: %system%, 
+        user: %user%
+        scheme:{action:"GenerateCode|CreateFile", param:object}
+        write to %result%
+- write %codeResult.techSpec% to "SPEC.md"        
+- call goal %result.action%, %param%
+
+GenerateCode
+- foreach %result.urls% call GetUrl url=%item%
+- read llm/writeGoalFile.llm, write to %system%
+- trim %docs% for llm, %llm.tokens%, %llm.maxTokens%, %system%, %user%, write to %summariesDocs%
+- [llm] system:%system%
+        user: %user%
+        model:"o3"
+        scheme: { README: string, files[]:{path:string, code:string}}
+        write to %codeResult%
+- write %codeResult.README% to "README.md"
+- foreach %codeResult.files% call SaveCodeFile item=%file%
+
+SaveCodeFile
+- save %file.code% to %file.path%
+- read llm/fileDocSystem.llm, load vars, write to %system%
+- [llm] system:%system%
+        user: %file.code%
+        model: "gpt-4o-mini"
+        scheme: {README:string}
+        write to %docFile%
+- write %docFile.README% to %file.path.replace(".goal", ".md")%
+
+CreateFile
+- create file %file.path%, content=null
+
+GetDoc
+- call goal %file.replace(".goal", "")%, write to %content%
+- add dict %docs%: key:content, value:%content%
+
+GetUrl
+- get %url%, write to %response%
+- convert to "md" format, write to %content%
+- add dict %docs%: key:content, value:%content%
+
+ViewConnections
+- select folders "/clients/", write to %clients%
+- write out " === Clients ==="
+- foreach %clients%, call WriteOutClient item=%client%
+
+WriteOutClient
+- write out "%position%. %client%"
+- read ".goal" files from "/clients/%client%", write to %files%
+- foreach %files% call WriteOutFile item=%file%
+
+WriteOutFile
+- write out "%position%. %file%"
+
+
+ChangeConnection
+- ask "what would you like to change?", write to %answer%
+- get all folders in "clients", write to %client%
+- read llm/changeConnectionSystem.llm, write to %system%
+- [llm] system: %system%
+        user: %answer%
+        scheme: {client:string, user_intent:string}
+        write to %result%
+- get all tables and views, with columns, data source name: "model/%client%/", write to %dbScheme%
+- get all setup goal files in "/clients/%client%", "GoalName", "description", "IncomingVariablesRequired"
+        write to %setupFiles%
+- read llm/changeConnectionExecutionSystem.llm, load vars, write to %system%
+- [llm] system: %system%
+        user: %dbScheme%
+        scheme: {description:string, files:{path:string, content:string}}
+        write to %changes%
+- write %changes.description% to "model/change-%NowUtc%.md"
+- foreach %changes.files% call ModifyFile item=%file%
+- terminal app:"git", params: "difftool", %files.path%, write to %output%
+- write out "Diff output: %output%"
+
+ModifyFile
+- write %file.content% to %file.path%

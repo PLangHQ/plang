@@ -1,20 +1,21 @@
-﻿using PLang.Building.Model;
+﻿using Newtonsoft.Json;
+using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
+using PLang.Services.OutputStream;
 using PLang.Utils;
+using ReverseMarkdown.Converters;
 using Scriban;
 using Scriban.Runtime;
 using Scriban.Syntax;
+using System.ComponentModel;
 using System.Dynamic;
-using System.Text.RegularExpressions;
-using static PLang.Modules.BaseBuilder;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using static PLang.Modules.BaseBuilder;
-using PLang.Services.OutputStream;
-using System.ComponentModel;
-using Newtonsoft.Json;
+using static PLang.Modules.BaseBuilder;
 
 namespace PLang.Modules.TemplateEngineModule
 {
@@ -31,7 +32,7 @@ namespace PLang.Modules.TemplateEngineModule
 		}
 
 		[Description("Render a file path either into a write into value or straight to the output stream when no return variable is defined. Set writeToOutputStream=true when no variable is defined to write into")]
-		public async Task<(string?, IError?)> RenderFile(string path, bool writeToOutputStream = false)
+		public async Task<(string?, IError?)> RenderFile(string path, Dictionary<string, object?>? variables = null, bool writeToOutputStream = false)
 		{
 			var fullPath = GetPath(path);
 			if (!fileSystem.File.Exists(fullPath))
@@ -45,7 +46,7 @@ namespace PLang.Modules.TemplateEngineModule
 
 			if (!writeToOutputStream) return result;
 
-			if (function.ReturnValues == null || function.ReturnValues.Count == 0)
+			if (outputStreamFactory != null && (function.ReturnValues == null || function.ReturnValues.Count == 0))
 			{
 				await outputStreamFactory.CreateHandler().Write(result.Result);
 			}
@@ -165,12 +166,23 @@ Runtime documentation: https://github.com/scriban/scriban/blob/master/doc/runtim
 					return JsonConvert.SerializeObject(input, (indent) ? Formatting.Indented : Formatting.None);
 				}));
 			}
+			if (!ContainsVariable("md", templateContext))
+			{
+				scriptObject.Import("md", new Func<string, Task<string?>>(async (input) =>
+				{
+					var convert = GetProgramModule<ConvertModule.Program>();
+					var md = await convert.ConvertToMd(input);
+					return md;
+
+				}));
+			}
+			
 
 			if (!ContainsVariable("render", templateContext))
 			{
 				scriptObject.Import("render", new Func<string, Task<string>>(async (path) =>
 				{
-					var result = await RenderFile(path, false);
+					var result = await RenderFile(path, writeToOutputStream: false);
 					if (result.Item2 != null)
 					{
 						throw new ExceptionWrapper(result.Item2);

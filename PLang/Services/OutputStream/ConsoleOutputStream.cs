@@ -1,25 +1,32 @@
-﻿using Newtonsoft.Json;
+﻿using MimeKit;
+using Newtonsoft.Json;
+using PLang.Errors;
+using PLang.Runtime;
+using PLang.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using static PLang.Modules.OutputModule.Program;
 using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
 {
-	
 
-	public class ConsoleOutputStream : IOutputStream, IDisposable
+
+	public class ConsoleOutputStream : IOutputStream
 	{
 		Stream standardOutputStream;
 		Stream standardErrorStream;
-		private bool disposed;
 
-		public ConsoleOutputStream() {
+		public ConsoleOutputStream()
+		{
+			// todo: dont think this is good, why override encoding?
 			Console.OutputEncoding = Encoding.UTF8;
 			Console.InputEncoding = Encoding.UTF8;
+
 			standardOutputStream = Console.OpenStandardOutput();
 			standardErrorStream = Console.OpenStandardError();
 		}
@@ -27,15 +34,33 @@ namespace PLang.Services.OutputStream
 		public Stream ErrorStream => standardErrorStream;
 
 		public string Output { get => "text"; }
+		public bool IsStateful { get { return true; } }
 
-		public async Task<string> Ask(string text, string type = "text", int statusCode = 202, Dictionary<string, object>? parameters = null, Callback? callback = null)
+		public async Task<(string?, IError?)> Ask(string text, string type = "text", int statusCode = 202, Dictionary<string, object>? parameters = null,
+			Callback? callback = null, List<Option>? options = null)
 		{
-			Console.WriteLine("[Ask] " + text);
-		
-			string line = Console.ReadLine();
-			return line;
-		}		
+			string? strOptions = GetStringFormattedOptions(options);
+			SetColor(statusCode);
 
+			Console.WriteLine($"[Ask] {text}{strOptions}");
+
+			string? line = Console.ReadLine();
+			Console.ResetColor();
+
+			return (line, null);
+		}
+
+		private string? GetStringFormattedOptions(List<Option>? options)
+		{
+			if (options == null) return null;
+
+			string? strOptions = null;
+			foreach (var option in options)
+			{
+				strOptions += $"\n\t{option.ListNumber}. {option.SelectionInfo}";
+			}
+			return strOptions;
+		}
 
 		public string Read()
 		{
@@ -55,12 +80,12 @@ namespace PLang.Services.OutputStream
 			SetColor(statusCode);
 			if (paramaters != null && paramaters.TryGetValue("Position", out object? value))
 			{
-				Console.SetCursorPosition(0, Console.CursorTop - (int) value);
+				Console.SetCursorPosition(0, Console.CursorTop - (int)value);
 			}
 
 			if (!content.StartsWith(fullName))
 			{
-				if (IsRecordWithoutToString(obj))
+				if (TypeHelper.IsRecordWithoutToString(obj))
 				{
 					Console.WriteLine(JsonConvert.SerializeObject(obj, Formatting.Indented));
 				}
@@ -75,41 +100,6 @@ namespace PLang.Services.OutputStream
 			}
 			Console.ResetColor();
 
-		}
-
-		public virtual void Dispose()
-		{
-			if (disposed)
-			{
-				return;
-			}
-			standardOutputStream.Dispose();
-			standardErrorStream.Dispose();
-			disposed = true;
-		}
-
-		protected virtual void ThrowIfDisposed()
-		{
-			if (disposed)
-			{
-				throw new ObjectDisposedException(GetType().FullName);
-			}
-		}
-
-		private bool IsRecordWithoutToString(object obj)
-		{
-			var type = obj.GetType();
-			bool isRecord = type.GetMethod("PrintMembers", BindingFlags.Instance | BindingFlags.NonPublic) != null;
-
-			var toStringMethod = obj.GetType().GetMethods().Any(p => p.Name == "ToString" && p.DeclaringType != typeof(object) && p?.DeclaringType != typeof(ValueType));
-
-			if (toStringMethod) return false;
-			return isRecord;
-		}
-
-		public async Task WriteToBuffer(object? obj, string type, int statusCode = 200)
-		{
-			await Write(obj, type);
 		}
 
 		private void SetColor(int statusCode)
@@ -135,7 +125,8 @@ namespace PLang.Services.OutputStream
 			else if (statusCode >= 100)
 			{
 				Console.ForegroundColor = ConsoleColor.Cyan;
-			} else
+			}
+			else
 			{
 				Console.ResetColor();
 			}

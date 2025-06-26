@@ -1,0 +1,5 @@
+Every day at 9, download https://reykjavik.is/byggingarmal/fundargerdir-byggingarfulltrua, extract all pdf links from content, download each pdf, for each pdf, read the content of the pdf file, use llm to determine the title, date and generate summary, then store in database, title, content, summary, url and date. make sure to store each url only once.
+
+Every day and when adding address use LLM to determine if an %address% is mentioned in a meeting. If is mentioned send me a Discord message with a summary of the content where address is mentioned with link to pdf
+
+When no meeting exists, download all, insert into db, and load the meetings ui after each is downloaded

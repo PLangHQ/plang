@@ -184,7 +184,7 @@ namespace PLang.Utils
 				if (parameter != null && VariableHelper.IsVariable(parameter.Value) && !goalStep.Text.Contains(parameter.Value.ToString(), StringComparison.OrdinalIgnoreCase))
 				{
 					buildErrors.Add(new InvalidParameterError(p.Name,
-						$"{parameter.Value} could not be found in step. User is not defining {parameter.Value} as variable.", goalStep));
+						$"{parameter.Value} could not be found in step. User is not defining {parameter.Value} as variable. You should not make up new variables.", goalStep));
 				}
 				if (parameterType == "nullable" && methodParameter.ParameterType.GenericTypeArguments.Length > 0)
 				{

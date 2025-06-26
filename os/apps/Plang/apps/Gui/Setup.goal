@@ -1,0 +1,42 @@
+Setup
+- create table appInfos, columns:
+    name(string, not null), shortDescription(string, not null),
+    appType(string, not null, enum('desktop', 'web', 'mobile', 'tablet')),
+    languages(string, not null), rtl(bool, default false, not null)
+    cssFramework(string), fontFamily(string, not null),     
+    themeColors(string, not null),
+    iconFramework(string, not null), 
+    animationPreferences(string, not null)
+    created(datetime, not null, default now), updated(datetime, not null, default now)
+- create table iconFrameworks, columns:
+    name(string, not null), description(string, not null),
+    url(string, not null),
+    service(string, not null),
+    created(datetime, not null, default now), updated(datetime, not null, default now)
+- insert into iconFrameworks, 
+    name="font-awesome", description="Large collection of icons", url="https://use.fontawesome.com/releases/v6.7.2/fontawesome-free-6.7.2-web.zip",
+     service="FontAwesome"
+- create table cssFrameworks, columns:
+    name(string, not null), description(string, not null)
+    url(string, not null),
+    created(datetime, not null, default now), updated(datetime, not null, default now)
+- insert into cssFrameworks
+    name="ui-kit", url="https://github.com/uikit/uikit/releases/download/v3.23.10/uikit-3.23.10.zip", 
+    description="Powerful for complex websites & apps", service="UiKit"
+- insert into cssFrameworks
+    name="pico", url="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.{theme}.min.css", 
+    description="Minimal, good for simple & backend", service="pico"    
+- create table fontFamilies, columns:
+    name(string, not null), description(string, not null)
+    url(string, not null),
+    created(datetime, not null, default now), updated(datetime, not null, default now) 
+- insert into fontFamilies
+    name="Inter", url="https://gwfh.mranftl.com/api/fonts/inter?download=zip&subsets=latin&variants=regular&formats=woff2", 
+    description="Sans-serif font", service="google"
+- insert into fontFamilies
+    name="Merriweather", url="https://gwfh.mranftl.com/api/fonts/merriweather?download=zip&subsets=latin&variants=regular&formats=woff2", 
+    description="Sans font", service="google"           
+- create table designs, columns:
+    appId(number, not null, foreign key to appInfos.id),
+    name(string, not null), designFile(string), executionPlan(string),
+    created(datetime, not null, default now), updated(datetime, not null, default now)

@@ -153,6 +153,8 @@ public class StepBuilder : IStepBuilder
 		if (error == null) return (instruction, null);
 
 		error.Step = step;
+		error.Goal = goal;
+
 		if (previousBuilderError != null) error.ErrorChain.Add(previousBuilderError);
 
 		if (ShouldReturnError(step, error)) return (instruction, error);

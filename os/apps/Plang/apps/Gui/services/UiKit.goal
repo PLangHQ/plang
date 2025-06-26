@@ -1,0 +1,7 @@
+FontAwesome
+- select * from cssFrameworks where name="ui-kit", return 1 row, write to %css%
+- download %css.url%, write to "css.zip"
+- unzip "css.zip" to "css"
+- copy "fontAwesome/webfonts/fa-regular-400.woff2" to "../../../fonts/fa-fonts.woff2"
+- delete folder "fontAwesome"
+- delete file "fontAwesome.zip"

@@ -1,4 +1,6 @@
-﻿using PLang.Runtime;
+﻿using PLang.Errors;
+using PLang.Runtime;
+using static PLang.Modules.OutputModule.Program;
 using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
@@ -8,10 +10,11 @@ namespace PLang.Services.OutputStream
 		public Stream Stream { get; }
 		public Stream ErrorStream { get; }
 		public string Output { get; }
+		public bool IsStateful { get; }
+
 		public Task Write(object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null);
-        public Task WriteToBuffer(object? obj, string type = "text", int statusCode = 200);
         public string Read();
-        public Task<string> Ask(string text, string type = "text", int statusCode = 200, Dictionary<string, object>? parameters = null, Callback? callback = null);
+        public Task<(string?, IError?)> Ask(string text, string type = "text", int statusCode = 200, Dictionary<string, object>? parameters = null, Callback? callback = null, List<Option>? options = null);
 
     }
 

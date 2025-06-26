@@ -1,9 +1,11 @@
 ﻿using Nostr.Client.Client;
+using PLang.Errors;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static PLang.Modules.OutputModule.Program;
 using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
@@ -22,8 +24,9 @@ namespace PLang.Services.OutputStream
 		public Stream ErrorStream => throw new NotImplementedException();
 
 		public string Output => "text";
+		public bool IsStateful => false;
 
-		public Task<string> Ask(string text, string type = "ask", int statusCode = 104, Dictionary<string, object>? parameters = null, Callback? callback = null)
+		public async Task<(string?, IError?)> Ask(string text, string type, int statusCode = 200, Dictionary<string, object?>? parameters = null, Callback? callback = null, List<Option>? options = null)
 		{
 			throw new NotImplementedException();
 		}
@@ -38,9 +41,5 @@ namespace PLang.Services.OutputStream
 			throw new NotImplementedException();
 		}
 
-		public Task WriteToBuffer(object? obj, string type = "text", int statusCode = 200)
-		{
-			throw new NotImplementedException();
-		}
 	}
 }

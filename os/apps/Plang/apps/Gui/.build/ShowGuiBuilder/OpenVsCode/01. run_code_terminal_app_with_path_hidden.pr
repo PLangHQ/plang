@@ -1,0 +1,119 @@
+{
+  "Text": "terminal app: \"code\", param:\"%path%\", dont show",
+  "ModuleType": null,
+  "Reload": false,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nOpen a terminal application named 'code' with the given path parameter without showing the terminal window\n## functions available starts ##\r\n{\"Methods\":[{\"MethodName\":\"Read\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"variableName\",\"IsRequired\":true}]},{\"Description\":\"Run a executable. Parameters string should not be escaped. onDataStreamVariable and onErrorStreamVariable need to be defined by the user, this is not same as returning a variable (write to %variable%)\",\"MethodName\":\"RunTerminal\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"appExecutableName\",\"IsRequired\":true},{\"Type\":\"List<string>\",\"Name\":\"parameters\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"pathToWorkingDirInTerminal\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"onDataStreamVariable\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"onErrorStreamVariable\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"hideTerminal\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}}],\"SupportingObjects\":[]}\r\n## functions available ends ##\r\n## defined variables ##\r\npath (type:object), \r\n## defined variables ##\nRemove % around dataOutputVariable and errorDebugInfoOutputVariable"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "terminal app: \"code\", param:\"%path%\", dont show"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.TerminalModule.Builder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to run the terminal application 'code' with the parameter '%path%' and hide the terminal window. The RunTerminal function supports specifying the executable name, parameters, and hiding the terminal, so it fits the user's intent.\",\n  \"Name\": \"RunTerminal\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"appExecutableName\",\n      \"Value\": \"code\"\n    },\n    {\n      \"Type\": \"List<string>\",\n      \"Name\": \"parameters\",\n      \"Value\": [\"%path%\"]\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"hideTerminal\",\n      \"Value\": true\n    }\n  ]\n}"
+    }
+  ],
+  "Properties": {
+    "Parameters": {
+      "appExecutableName": [
+        {
+          "Name": "appExecutableName",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "parameters": [
+        {
+          "Name": "parameters",
+          "FullTypeName": "System.Object"
+        }
+      ],
+      "pathToWorkingDirInTerminal": [
+        {
+          "Name": "pathToWorkingDirInTerminal",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "onDataStreamVariable": [
+        {
+          "Name": "onDataStreamVariable",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "onErrorStreamVariable": [
+        {
+          "Name": "onErrorStreamVariable",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "hideTerminal": [
+        {
+          "Name": "hideTerminal",
+          "FullTypeName": "System.Boolean"
+        }
+      ]
+    },
+    "ReturnValues": {}
+  },
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to run the terminal application 'code' with the parameter '%path%' and hide the terminal window. The RunTerminal function supports specifying the executable name, parameters, and hiding the terminal, so it fits the user's intent.",
+    "Name": "RunTerminal",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "appExecutableName",
+        "Value": "code"
+      },
+      {
+        "Type": "List<string>",
+        "Name": "parameters",
+        "Value": [
+          "%path%"
+        ]
+      },
+      {
+        "Type": "System.Boolean",
+        "Name": "hideTerminal",
+        "Value": true
+      }
+    ],
+    "ReturnValues": null
+  }
+}

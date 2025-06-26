@@ -1,4 +1,6 @@
-﻿using System;
+﻿using NBitcoin.Secp256k1;
+using PLang.Utils;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -28,17 +30,29 @@ namespace PLang.Modules.ConditionalModule
 			// compound-node fields
 			public string? Logic { get; init; }                    // "AND" | "OR"
 			public IReadOnlyList<Condition>? Conditions { get; init; }
+			public bool IsNot { get; set; }
 		}
 		/// Static engine with separate evaluators
 		public static class ConditionEngine
 		{
-			public static bool Evaluate(Condition c) =>
-				c.Kind == ConditionKind.Simple
+			public static bool Evaluate(Condition c)
+			{
+				
+				(var left, var right) = TypeHelper.TryConvertToMatchingType(c.LeftValue, c.RightValue);
+				c = c with { LeftValue = left, RightValue = right };
+				
+
+				var result = c.Kind == ConditionKind.Simple
 					? EvaluateSimple(c)
 					: EvaluateCompound(c);
+				if (c.IsNot) return !result;
+				return result;
+			}
 
 			public static bool EvaluateSimple(Condition n) => n.Operator switch
 			{
+				
+
 				"==" => Equals(n.LeftValue, n.RightValue),
 				"!=" => !Equals(n.LeftValue, n.RightValue),
 				">" => Cmp(n) > 0,
@@ -61,9 +75,9 @@ namespace PLang.Modules.ConditionalModule
 			};
 
 			/* helpers */
-			static int Cmp(Condition n) => n.LeftValue is IComparable l &&
+			static int? Cmp(Condition n) => n.LeftValue is IComparable l &&
 											 n.RightValue is IComparable r ? l.CompareTo(r)
-											 : throw new InvalidOperationException("IComparable needed");
+											 : null;
 			static bool Has(object? c, object? i) =>
 				c switch
 				{

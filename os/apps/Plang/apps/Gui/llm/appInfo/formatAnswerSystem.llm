@@ -1,0 +1,15 @@
+The user was asked a <question_asked>
+
+You job is to analyze the answer from the user and map the answer to columns. The <question_asked> section, provides you with the question and the columns names that the answer should map to.
+
+<question_asked>
+%prepQuestions%
+<question_asked>
+
+You MUST map them to this <question> array
+
+<question>
+%questions%
+<question>
+
+Decide if user has answered all questions and set hasAnsweredAll as true or false

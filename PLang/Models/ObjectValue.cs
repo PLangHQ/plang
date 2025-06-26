@@ -103,6 +103,20 @@ public class ObjectValue
 	public List<VariableEvent> Events = new List<VariableEvent>();
 	public string Name { get; set; }
 
+	public ObjectValue Root
+	{
+		get
+		{
+			var parent = Parent;
+			if (parent == null) return this;
+
+			while (parent.Parent != null)
+			{
+				parent = parent.Parent;
+			}
+			return parent;
+		}
+	}
 	public bool IsSystemVariable { get; set; }
 	public virtual object? Value
 	{

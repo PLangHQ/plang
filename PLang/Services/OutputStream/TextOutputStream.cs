@@ -1,108 +1,138 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using NBitcoin;
+using Newtonsoft.Json;
 using PLang.Errors;
+using PLang.Runtime;
 using PLang.Utils;
 using System;
-using System.Net;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
+using static PLang.Modules.OutputModule.Program;
 using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
 {
-	public class TextOutputStream : IOutputStream, IDisposable
+	
+
+	public class TextOutputStream : IOutputStream
 	{
-		private readonly HttpListenerContext httpContext;
-		private readonly MemoryStream memoryStream;
-		public TextOutputStream(HttpListenerContext httpContext)
-		{
-			this.httpContext = httpContext;
-			this.memoryStream = new MemoryStream();
+		private readonly bool isStatefull;
+		private readonly string? callbackUri;
+		Encoding encoding;
+		Stream stream;
+
+		public TextOutputStream(Stream stream, Encoding encoding, bool isStatefull = true, string? callbackUri = null) {
+			this.encoding = encoding;
+			this.stream = stream;
+
+			this.isStatefull = isStatefull;
+			this.callbackUri = callbackUri;
 		}
+		public Stream Stream => stream;
+		public Stream ErrorStream => stream;
 
-		public Stream Stream { get { return this.memoryStream; } }
-		public Stream ErrorStream { get { return this.memoryStream; } }
+		public string Output { get => "text"; }
+		public bool IsStateful => isStatefull;
 
-		public string Output => "text";
-
-		public async Task<string> Ask(string text, string type, int statusCode = 400, Dictionary<string, object>? parameters = null, Callback? callback = null)
+		public async Task<(string?, IError?)> Ask(string text, string type = "text", int statusCode = 202, Dictionary<string, object>? parameters = null,
+			Callback? callback = null, List<Option>? options = null)
 		{
-			throw new NotImplementedException();
-
-			using (var writer = new StreamWriter(httpContext.Response.OutputStream, httpContext.Response.ContentEncoding ?? Encoding.UTF8))
+			string? strOptions = null;
+			foreach (var option in options)
 			{
-				if (text != null)
-				{
-					string content = text.ToString();
-					
-
-					await writer.WriteAsync(content);
-				}
-				await writer.FlushAsync();
+				strOptions += $"\n\t{option.ListNumber}. {option.SelectionInfo}";
 			}
-			return "";
+
+			var bytes = encoding.GetBytes($"[Ask] {text}{options}");
+			await this.stream.WriteAsync(bytes);
+
+			if (!IsStateful) return (null, null);
+
+			string endMarker = "\n";
+			if (parameters != null && parameters.ContainsKey("endMarker"))
+			{
+				endMarker = parameters["endMarker"].ToString() ?? "\n";
+				if (string.IsNullOrEmpty(endMarker)) endMarker = "\n";
+			}
+
+			string line = await ReadUntilAsync(stream, encoding, endMarker);
+			return (line, null);
 		}
 
-		public void Dispose()
+
+		public static async Task<string> ReadUntilAsync(Stream stream, Encoding encoding, string endMarker)
 		{
-			memoryStream.Dispose();
+			var buffer = new List<byte>();
+			int markerLen = encoding.GetByteCount(endMarker);
+			var markerBytes = encoding.GetBytes(endMarker);
+			var readBuf = new byte[1];
+			while (true)
+			{
+				int b = await stream.ReadAsync(readBuf.AsMemory(0, 1));
+				if (b == -1) break;
+				buffer.Add((byte)b);
+
+				if (buffer.Count >= markerLen)
+				{
+					bool isMarker = true;
+					for (int i = 0; i < markerLen; i++)
+					{
+						if (buffer[buffer.Count - markerLen + i] != markerBytes[i])
+						{
+							isMarker = false;
+							break;
+						}
+					}
+					if (isMarker)
+					{
+						buffer.RemoveRange(buffer.Count - markerLen, markerLen);
+						break;
+					}
+				}
+			}
+			return encoding.GetString(buffer.ToArray());
 		}
+
 
 		public string Read()
 		{
-			return "";
+			return Console.ReadLine() ?? "";
 		}
-		private string? GetAsString(object? obj)
-		{
-			if (obj == null) return null;
 
-			if (obj is JValue || obj is JObject || obj is JArray)
+		public async Task Write(object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null)
+		{
+			if (obj == null) return;
+
+			string content = obj.ToString();
+			var fullName = obj.GetType().FullName ?? "";
+			if (fullName.IndexOf("[") != -1)
 			{
-				return obj.ToString();
+				fullName = fullName.Substring(0, fullName.IndexOf("["));
 			}
-			if (obj is IError)
+
+			byte[]? bytes = null;
+			if (content != null && !content.StartsWith(fullName))
 			{
-				return ((IError)obj).ToFormat("json").ToString();
+				if (TypeHelper.IsRecordWithoutToString(obj))
+				{
+					bytes = encoding.GetBytes(JsonConvert.SerializeObject(obj, Formatting.Indented));
+				}
+				else
+				{
+					bytes = encoding.GetBytes(content);
+				}
 			}
 			else
 			{
-				string content = obj.ToString()!;
-				
-
-				return content;
+				bytes = encoding.GetBytes(JsonConvert.SerializeObject(obj, Formatting.Indented));
 			}
 
-
-		}
-		public async Task Write(object? obj, string type, int httpStatusCode = 200, Dictionary<string, object?>? paramaters = null)
-		{
-			httpContext.Response.StatusCode = httpStatusCode;
-			httpContext.Response.StatusDescription = type;
-
-			string? content = GetAsString(obj);
-			if (content == null) return;
-
-			byte[] buffer = Encoding.UTF8.GetBytes(content);
-			memoryStream.Write(buffer, 0, buffer.Length);
-			//httpContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
-
-			
-			return;
-			
-		}
-
-		public async Task WriteToBuffer(object? obj, string type, int httpStatusCode = 200)
-		{
-			httpContext.Response.StatusCode = httpStatusCode;
-			httpContext.Response.StatusDescription = type;
-			httpContext.Response.SendChunked = true;
-
-			string? content = GetAsString(obj);
-			if (content == null) return;
-
-			byte[] buffer = Encoding.UTF8.GetBytes(content);
-			httpContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
+			await this.stream.WriteAsync(bytes);
 			
 
 		}
+
 	}
 }

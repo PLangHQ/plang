@@ -68,25 +68,9 @@ namespace PLang.Modules.DbModule
 
 
 		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep goalStep, IBuilderError? previousBuildError = null)
-		{
-
-			/*
-			 * analyze step
-			 * is it select, insert, update, .....
-			 * is it set datasource, ....
-			 * 
-			 * if set datasource = done
-			 * if other, then
-			 *		- figure out datasource
-			 *		- retrieve table info
-			 *		- set rules for @id, %now%, etc.
-			 *		- do llm
-			 *		- save
-			 *		
-			 */
-
+		{			
 			string system = @$"";
-			//
+			
 			var dataSource = goalStep.GetVariable<DataSource>();
 			if (dataSource == null)
 			{
@@ -124,8 +108,10 @@ Database name:{dataSource.DbName}
 			}
 
 			system += @$"
-TableNames: Tables defined in sql statement
-AffectedColumns: Dictionary of affected columns with type(primary_key|select|insert|update|delete|create|alter|index|drop|where|order|other), e.g. select name from users where id=1 => 'name':'select', 'id':'where'
+Additional json Response explaination:
+- DataSource: Datasource to use
+- TableNames: List of tables defined in sql statement
+- AffectedColumns: Dictionary of affected columns with type(primary_key|select|insert|update|delete|create|alter|index|drop|where|order|other), e.g. select name from users where id=1 => 'name':'select', 'id':'where'
 
 Rules:
 - You MUST generate valid sql statement for {sqlType}
@@ -133,6 +119,7 @@ Rules:
 - On CreateTable, include primary key, id, not null, {autoIncremental} when not defined by user. It must be long
 {insertAppend}
 - Number(int => long) MUST be type System.Int64 unless defined by user.
+- string in user sql statement should be replaced with @ parameter in sql statement and added as parameters in ParamterInfo but as strings. Strings are as is in the parameter list.
 ";
 
 			AppendToSystemCommand(system);
@@ -142,7 +129,7 @@ Rules:
 			var parameters = gf.GetParameter<List<ParameterInfo>>("sqlParameters");
 			if (parameters != null && parameters.Count > 0)
 			{
-				if (gf.TableNames == null && gf.TableNames.Count == 0)
+				if (gf.TableNames == null || gf.TableNames.Count == 0)
 				{
 					return (null, new StepBuilderError("You must provide TableNames", goalStep));
 				}
@@ -184,7 +171,9 @@ Validate <sql> statement that it matches with columns, adjust the sql if needed.
 				var sqlAndParams = result.Response;
 				gf.Parameters[0] = gf.Parameters[0] with { Value = sqlAndParams.Sql };
 				gf.Parameters[1] = gf.Parameters[1] with { Value = sqlAndParams.Parameters };
-				gf = gf with { Warning = sqlAndParams.Warning }; 
+				gf = gf with { Warning = sqlAndParams.Warning };
+
+				buildResult.Instruction = buildResult.Instruction with { Function = gf };
 			}
 
 			return buildResult;

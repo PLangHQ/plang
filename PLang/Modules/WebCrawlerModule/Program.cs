@@ -40,9 +40,12 @@ namespace PLang.Modules.WebCrawlerModule
 			this.programFactory = programFactory;
 		}
 
-		public async Task<BrowserInstance> GetBrowserInstance()
+		public async Task<BrowserInstance> GetBrowserInstance(string browserType = "Chrome", bool headless = false, string profileName = "",
+			bool kioskMode = false, Dictionary<string, object>? argumentOptions = null, int? timoutInSeconds = 30, bool hideTestingMode = false,
+			GoalToCallInfo? onRequest = null, GoalToCallInfo? onResponse = null)
 		{
-			return Goal.GetVariable<BrowserInstance>() ?? await StartBrowser();
+			return Goal.GetVariable<BrowserInstance>() ?? await StartBrowser(browserType, headless, profileName, kioskMode, argumentOptions, timoutInSeconds,
+				hideTestingMode, onRequest, onResponse);
 		}
 
 		private string GetChromeUserDataDir()
@@ -66,7 +69,7 @@ namespace PLang.Modules.WebCrawlerModule
 			return userDataDir;
 		}
 
-		[Description("browserType=Chrome|Edge|Firefox|Safari. hideTestingMode tries to disguise that it is a bot.")]
+		[Description("browserType=Chrome|Edge|Firefox|Safari. hideTestingMode tries to disguise that it is a bot. when user want to use the default profile, set profileName=\"default\"")]
 		public async Task<BrowserInstance> StartBrowser(string browserType = "Chrome", bool headless = false, string profileName = "",
 			bool kioskMode = false, Dictionary<string, object>? argumentOptions = null, int? timoutInSeconds = 30, bool hideTestingMode = false,
 			GoalToCallInfo? onRequest = null, GoalToCallInfo? onResponse = null)
@@ -200,10 +203,11 @@ namespace PLang.Modules.WebCrawlerModule
 		}
 
 
-		private async Task<BrowserInstance> GetBrowser(string browserType = "Chrome", bool headless = false, bool useUserSession = false, string userSessionPath = "",
-			bool incognito = false, bool kioskMode = false, Dictionary<string, object>? argumentOptions = null, int? timeoutInSeconds = null)
+		private async Task<BrowserInstance> GetBrowser(string browserType = "Chrome", bool headless = false, string profileName = "", string userSessionPath = "",
+			bool incognito = false, bool kioskMode = false, Dictionary<string, object>? argumentOptions = null, int? timeoutInSeconds = null, bool hideTestingMode = false,
+			GoalToCallInfo? onRequest = null, GoalToCallInfo? onResponse = null)
 		{
-			var browserInstance = await GetBrowserInstance();
+			var browserInstance = await GetBrowserInstance(browserType, headless, profileName, kioskMode, argumentOptions, timeoutInSeconds, hideTestingMode, onRequest, onRequest );
 			if (browserInstance != null) return browserInstance;
 
 			return await StartBrowser(browserType, headless, userSessionPath, kioskMode, argumentOptions, timeoutInSeconds);
@@ -303,6 +307,7 @@ namespace PLang.Modules.WebCrawlerModule
 				pageGotoOptions.Timeout = timeoutInSeconds.Value * 1000;
 			}
 
+			var browser = GetBrowserInstance(browserType, headless, profileName, kioskMode, argumentOptions, timeoutInSeconds, hideTestingMode, onRequest, onResponse);
 			IPage page = await GetPage(pageIndex);
 			BindEventsToPage(page, url, onRequest, onResponse, onWebsocketReceived, onWebsocketSent,
 					onConsoleOutput, onWorker,

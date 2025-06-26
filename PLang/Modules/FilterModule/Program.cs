@@ -1,22 +1,24 @@
-﻿using HtmlAgilityPack;
+﻿using Fizzler.Systems.HtmlAgilityPack;
+using Ganss.Xss;
+using HtmlAgilityPack;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.IdentityModel.Tokens;
+using NBitcoin.Protocol;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Errors.Methods;
 using PLang.Errors.Runtime;
+using PLang.Runtime;
 using PLang.Utils;
+using Sprache;
 using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq.Dynamic.Core;
-using System.Text.RegularExpressions;
-using Fizzler.Systems.HtmlAgilityPack;
-using Ganss.Xss;
-using PLang.Building.Model;
-using Sprache;
-using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace PLang.Modules.FilterModule
 {
@@ -262,12 +264,51 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 		{
 			IError? error = (throwErrorOnEmptyResult) ? new NotFoundError() : null;
 
+
 			if (variableToExtractFrom == null || string.IsNullOrEmpty(variableToExtractFrom.ToString())) return (null, error);
 			if (valueToFilterBy == "null") valueToFilterBy = null;
 
+
+			ObjectValue? ov;
+			if (variableToExtractFrom is not ObjectValue)
+			{
+				ov = new ObjectValue("object", variableToExtractFrom);
+			} else
+			{
+				ov = (ObjectValue)variableToExtractFrom;
+			}
+
+
 			Func<object, bool> filterPredicate = GetPredicate(operatorToFilterOnValue, valueToFilterBy, operatorToFilterOnValueComparer);
 
+
 			List<object> filteredList = new();
+			var items = ov.GetObjectValue(propertyToFilterOn);
+			if (items == null || !items.Initiated)
+			{
+				return (null, new ProgramError($"{propertyToFilterOn} does not exists in object. Are you matching the path correctly? e.g. if you filter on 'street' on a user object with property address.street, you must define the property to filter on to be 'address.street' "));
+			}
+
+
+			if (items.Value is IList list)
+			{
+				foreach (var item in list)
+				{
+					if (filterPredicate(item))
+					{
+						
+						var extractedItem = GetExtractedItem(item, propertyToExtract);
+						if (extractedItem != null)
+						{
+							filteredList.Add(extractedItem);
+						}
+					}
+
+				}
+
+
+			}
+			/*
 			if (variableToExtractFrom is JObject jObject)
 			{
 				filteredList = GetFilteredJObject(jObject, propertyToFilterOn, operatorOnPropertyToFilter, filterPredicate, propertyToExtract);
@@ -402,7 +443,7 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 				var jsonObject = JsonConvert.DeserializeObject(json);
 				filteredList = GetFilteredJObject(jsonObject as JToken, propertyToFilterOn, operatorOnPropertyToFilter, filterPredicate, propertyToExtract);
 
-			}
+			}*/
 
 			if (filteredList == null || filteredList.Count == 0) return (null, error);
 
@@ -417,6 +458,38 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 
 		}
 
+		private object? GetExtractedItem(object item, string? propertyToExtract)
+		{
+			if (propertyToExtract == null) return item;
+			if (item is JValue jValue)
+			{
+				var parent = jValue.Parent?.Parent;
+				if (propertyToExtract == "parent") return parent;
+				
+				if (parent is JObject jObject)
+				{
+					if (jObject.ContainsKey(propertyToExtract)) return jObject[propertyToExtract];
+				}
+
+				throw new Exception($"Not sure what to do with {parent.GetType()} for property to extract: {propertyToExtract}. {ErrorReporting.CreateIssueNotImplemented}");
+
+			}
+
+			if (item is ObjectValue ov) 
+			{
+				var parent = ov.Parent;
+				if (propertyToExtract == "parent") return parent;
+
+				var ovExtracted = parent?.GetObjectValue(propertyToExtract);
+				if (ovExtracted?.Initiated == true) return ovExtracted;
+
+				throw new Exception($"'{propertyToExtract}' could not be found in object.");
+
+			}
+
+			throw new Exception($"Not sure what to do with {item.GetType()} for property to extract: {propertyToExtract}. {ErrorReporting.CreateIssueNotImplemented}");
+
+		}
 
 		private List<object>? GetFilteredJObject(JToken jToken, string propertyToFilterOn, string propertyToFilterOnOperator, Func<object, bool>? filterPredicate = null, string? propertyToExtract = null)
 		{
@@ -544,6 +617,10 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 				{
 					if (v == null && valueToFilterBy == null) return true;
 					if (v == null) return false;
+					if (v is ObjectValue ov)
+					{
+						return v.Equals(valueToFilterBy);
+					}
 
 					if (v is string str)
 					{

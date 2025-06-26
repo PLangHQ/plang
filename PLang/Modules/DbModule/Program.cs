@@ -53,7 +53,7 @@ namespace PLang.Modules.DbModule
 		private readonly ILogger logger;
 		private readonly ITypeHelper typeHelper;
 
-		[Description("ParameterName must be prefixed with @. VariableNameOrValue can be any primative type or a %variable%")]
+		[Description("ParameterName must be prefixed with @. VariableNameOrValue can be any primative type, string or a %variable%")]
 		public record ParameterInfo(string ParameterName, object? VariableNameOrValue, string TypeFullName);
 		public record TableInfo(string Name, List<ColumnInfo> Columns);
 		public record ColumnInfo(string Information);

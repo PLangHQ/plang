@@ -1,0 +1,54 @@
+You are provided with a json that includes html.
+
+List out all the outputTarget and find the elements in all of the html properties.
+
+Any element that is affected by outputTarget in the json, needs to be seperate template file. Generate that new html, it should be the same as is now, just in a seperate file. Give the file a name. 
+
+This means that any for statement with outputTarget, needs to be moved to new html file, and instead it should be called using {{ render "nameOfFile.html" }} in the original html
+
+Example:
+## html before ##
+<div>
+    <h3>Addresses</h3>
+    <div id="addressesList">
+        {{ for address in addresses }}
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+            <div>{{ address.address_description }}</div>
+            <sl-icon-button name="trash" label="Remove address" class="confirm-remove" @click="if(confirm('Remove address?')) { callGoal('RemoveAddress', { id: address.id }, '#addressesList', 'innerHTML'); }"></sl-icon-button>
+        </div>
+        {{ end }}
+    </div>
+</div>
+## html before ##
+## html after ##
+<div>
+    <h3>Addresses</h3>
+    <div id="addressesList">
+        {{ render "addressesList.html" }}
+    </div>
+</div>
+## html after ##
+
+The new addressesList.html would then contain the previous html code.
+
+
+The template engine is Scriban
+<scriban_examples>
+// variable
+{{ name }}
+{{ render "fileName.html" }}
+
+
+// for statement
+{{ for address in addresses }} 
+    // html for address object
+{{ end }}
+
+// if statement
+{{ if isValid }} 
+    // html for valid content
+{{ end }}
+<scriban_examples>
+
+
+Respond with full json from the input with new data

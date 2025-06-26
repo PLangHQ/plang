@@ -1,0 +1,7 @@
+FontAwesome
+- select * from iconFrameworks where name="font-awesome", return 1 row, write to %font%
+- download %font.url%, write to "fontAwesome.zip"
+- unzip "fontAwesome.zip" to "fontAwesome"
+- copy "fontAwesome/webfonts/fa-regular-400.woff2" to "../../../fonts/fa-fonts.woff2"
+- delete folder "fontAwesome"
+- delete file "fontAwesome.zip"

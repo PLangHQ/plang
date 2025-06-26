@@ -1,0 +1,4561 @@
+{
+	"info": {
+		"_postman_id": "23f5485a-c0a5-4a66-b678-d4732e5b9a89",
+		"name": "Jira Software Cloud API",
+		"description": "Atlassian's Jira Software Cloud REST API provides a robust interface for developers to build add-ons, develop integrations with other applications, and script interactions with Jira Software. This REST API enables access to a wide range of resources in Jira Software Cloud, ensuring comprehensive coverage of HTTP response codes and allowing for effective scripting of interactions.\n\nJira Software is built upon the Jira platform, and as such, shares many features and functions with the broader Jira platform. This commonality extends to their respective APIs, with the Jira Cloud platform offering additional REST API references that supplement those available specifically for Jira Software.\n\n# Getting Started\n\nDevelopers must set up an account to integrate with the Jira Software Cloud REST API. To be quick, we will generate an API token for your Atlassian account to authenticate anywhere you would have used a password. \n\n1. Create your developer account here: https://developer.atlassian.com/\n2. Generate an API token here: https://id.atlassian.com/manage-profile/security/api-tokens \n3. Add your account email and API token to the Collection variables in this Postman collection \n4. You can now authenticate using  Basic auth in the Postman Authorization tab \n\n\n# Important Concepts\n## Base URL Differences\nIt's important to note the base URL differences when building on-premises integrations. The API operations' base URLs for on-premises tools differ from those used by Connect apps, necessitating adjustments in the API request paths.\n\n# Authentication for Direct REST API Requests\nFor direct integrations with the REST APIs, developers can utilize several authentication methods:\n\n* OAuth 2.0: This is the recommended token-based method, known for its flexibility and security.\n* OAuth 1.0a: As a legacy method, it is not recommended due to its outdated security measures.\n* Basic HTTP: This method is suggested for simple tools such as scripts or bots but offers lower security compared to OAuth methods.\n\nIn cases where on-premises tools are used, OAuth credentials are employed to authenticate API calls. These credentials are necessary for obtaining a token, which is used to make authorized API calls.\n\nhttps://id.atlassian.com/manage-profile/security/api-tokens",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "2160514",
+		"_collection_link": "https://www.postman.com/postman/atlassian-jira-api/collection/tdpgtl0/jira-software-cloud-api?action=share&source=collection_link&creator=2160514"
+	},
+	"item": [
+		{
+			"name": "Backlog",
+			"item": [
+				{
+					"name": "Move issues to backlog",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"issues\": [\n    \"10001\",\n    \"PR-1\",\n    \"PR-3\"\n  ]\n}"
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/backlog/issue",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"backlog",
+								"issue"
+							]
+						},
+						"description": "Move issues to the backlog.  \nThis operation is equivalent to remove future and active sprints from a given set of issues. At most 50 issues may be moved at once."
+					},
+					"response": []
+				},
+				{
+					"name": "Move issues to backlog for board",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"issues\": [\n    \"PR-1\",\n    \"10001\",\n    \"PR-3\"\n  ],\n  \"rankBeforeIssue\": \"PR-4\",\n  \"rankCustomFieldId\": 10521\n}"
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/backlog/:boardId/issue",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"backlog",
+								":boardId",
+								"issue"
+							],
+							"variable": [
+								{
+									"key": "boardId",
+									"value": ""
+								}
+							]
+						},
+						"description": "Move issues to the backlog of a particular board (if they are already on that board).  \nThis operation is equivalent to remove future and active sprints from a given set of issues if the board has sprints If the board does not have sprints this will put the issues back into the backlog from the board. At most 50 issues may be moved at once."
+					},
+					"response": []
+				}
+			],
+			"description": "APIs related to the backlog"
+		},
+		{
+			"name": "Jira Boards",
+			"item": [
+				{
+					"name": "Projects",
+					"item": [
+						{
+							"name": "Get projects",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId/project",
+									"protocol": "https",
+									"host": [
+										"{{domain}}",
+										"atlassian",
+										"net"
+									],
+									"path": [
+										"rest",
+										"agile",
+										"1.0",
+										"board",
+										":boardId",
+										"project"
+									],
+									"query": [
+										{
+											"key": "startAt",
+											"value": "{{startAt}}",
+											"description": "The starting index of the returned projects. Base index: 0. See the 'Pagination' section at the top of this page for more details.",
+											"disabled": true
+										},
+										{
+											"key": "maxResults",
+											"value": "{{maxResults}}",
+											"description": "The maximum number of projects to return per page. See the 'Pagination' section at the top of this page for more details.",
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "boardId",
+											"value": "{{boardId}}",
+											"description": "The ID of the board that contains returned projects."
+										}
+									]
+								},
+								"description": "Returns all projects that are associated with the board, for the given board ID. If the user does not have permission to view the board, no projects will be returned at all. Returned projects are ordered by the name.\n\nA project is associated with a board if the board filter contains reference the project or there is an issue from the project that belongs to the board.\n\nThe board filter contains reference the project only if JQL query guarantees that returned issues will be returned from the project set defined in JQL. For instance the query `project in (ABC, BCD) AND reporter = admin` have reference to ABC and BCD projects but query `project in (ABC, BCD) OR reporter = admin` doesn't have reference to any project.\n\nAn issue belongs to the board if its status is mapped to the board's column. Epic issues do not belongs to the scrum boards."
+							},
+							"response": []
+						},
+						{
+							"name": "Get projects full",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId/project/full",
+									"protocol": "https",
+									"host": [
+										"{{domain}}",
+										"atlassian",
+										"net"
+									],
+									"path": [
+										"rest",
+										"agile",
+										"1.0",
+										"board",
+										":boardId",
+										"project",
+										"full"
+									],
+									"variable": [
+										{
+											"key": "boardId",
+											"value": "{{boardId}}",
+											"description": "The ID of the board that contains returned projects."
+										}
+									]
+								},
+								"description": "Returns all projects that are statically associated with the board, for the given board ID. Returned projects are ordered by the name.\n\nA project is associated with a board if the board filter contains reference the project.\n\nThe board filter contains reference the project only if JQL query guarantees that returned issues will be returned from the project set defined in JQL. For instance the query `project in (ABC, BCD) AND reporter = admin` have reference to ABC and BCD projects but query `project in (ABC, BCD) OR reporter = admin` doesn't have reference to any project."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Issues",
+					"item": [
+						{
+							"name": "Get issues for backlog",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId/backlog",
+									"protocol": "https",
+									"host": [
+										"{{domain}}",
+										"atlassian",
+										"net"
+									],
+									"path": [
+										"rest",
+										"agile",
+										"1.0",
+										"board",
+										":boardId",
+										"backlog"
+									],
+									"query": [
+										{
+											"key": "startAt",
+											"value": "{{startAt}}",
+											"description": "The starting index of the returned issues. Base index: 0. See the 'Pagination' section at the top of this page for more details.",
+											"disabled": true
+										},
+										{
+											"key": "maxResults",
+											"value": "{{maxResults}}",
+											"description": "The maximum number of issues to return per page. Default: 50. See the 'Pagination' section at the top of this page for more details. Note, the total number of issues returned is limited by the property 'jira.search.views.default.max' in your Jira instance. If you exceed this limit, your results will be truncated.",
+											"disabled": true
+										},
+										{
+											"key": "jql",
+											"value": "{{jql}}",
+											"description": "Filters results using a JQL query. If you define an order in your JQL query, it will override the default order of the returned issues.  \nNote that `username` and `userkey` can't be used as search terms for this parameter due to privacy reasons. Use `accountId` instead.",
+											"disabled": true
+										},
+										{
+											"key": "validateQuery",
+											"value": "{{validateQuery}}",
+											"description": "Specifies whether to validate the JQL query or not. Default: true.",
+											"disabled": true
+										},
+										{
+											"key": "fields",
+											"value": "{{fields}}",
+											"description": "The list of fields to return for each issue. By default, all navigable and Agile fields are returned.",
+											"disabled": true
+										},
+										{
+											"key": "expand",
+											"value": "{{expand}}",
+											"description": "This parameter is currently not used.",
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "boardId",
+											"value": "{{boardId}}",
+											"description": "The ID of the board that has the backlog containing the requested issues."
+										}
+									]
+								},
+								"description": "Returns all issues from the board's backlog, for the given board ID. This only includes issues that the user has permission to view. The backlog contains incomplete issues that are not assigned to any future or active sprint. Note, if the user does not have permission to view the board, no issues will be returned at all. Issues returned from this resource include Agile fields, like sprint, closedSprints, flagged, and epic. By default, the returned issues are ordered by rank."
+							},
+							"response": []
+						},
+						{
+							"name": "Get issues without epic for board",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId/epic/none/issue",
+									"protocol": "https",
+									"host": [
+										"{{domain}}",
+										"atlassian",
+										"net"
+									],
+									"path": [
+										"rest",
+										"agile",
+										"1.0",
+										"board",
+										":boardId",
+										"epic",
+										"none",
+										"issue"
+									],
+									"query": [
+										{
+											"key": "startAt",
+											"value": "{{startAt}}",
+											"description": "The starting index of the returned issues. Base index: 0. See the 'Pagination' section at the top of this page for more details.",
+											"disabled": true
+										},
+										{
+											"key": "maxResults",
+											"value": "{{maxResults}}",
+											"description": "The maximum number of issues to return per page. See the 'Pagination' section at the top of this page for more details. Note, the total number of issues returned is limited by the property 'jira.search.views.default.max' in your Jira instance. If you exceed this limit, your results will be truncated.",
+											"disabled": true
+										},
+										{
+											"key": "jql",
+											"value": "{{jql}}",
+											"description": "Filters results using a JQL query. If you define an order in your JQL query, it will override the default order of the returned issues.  \nNote that `username` and `userkey` can't be used as search terms for this parameter due to privacy reasons. Use `accountId` instead.",
+											"disabled": true
+										},
+										{
+											"key": "validateQuery",
+											"value": "{{validateQuery}}",
+											"description": "Specifies whether to validate the JQL query or not. Default: true.",
+											"disabled": true
+										},
+										{
+											"key": "fields",
+											"value": "{{fields}}",
+											"description": "The list of fields to return for each issue. By default, all navigable and Agile fields are returned.",
+											"disabled": true
+										},
+										{
+											"key": "expand",
+											"value": "{{expand}}",
+											"description": "A comma-separated list of the parameters to expand.",
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "boardId",
+											"value": "{{boardId}}",
+											"description": "The ID of the board that contains the requested issues."
+										}
+									]
+								},
+								"description": "Returns all issues that do not belong to any epic on a board, for a given board ID. This only includes issues that the user has permission to view. Issues returned from this resource include Agile fields, like sprint, closedSprints, flagged, and epic. By default, the returned issues are ordered by rank."
+							},
+							"response": []
+						},
+						{
+							"name": "Get board issues for epic",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId/epic/:epicId/issue",
+									"protocol": "https",
+									"host": [
+										"{{domain}}",
+										"atlassian",
+										"net"
+									],
+									"path": [
+										"rest",
+										"agile",
+										"1.0",
+										"board",
+										":boardId",
+										"epic",
+										":epicId",
+										"issue"
+									],
+									"query": [
+										{
+											"key": "startAt",
+											"value": "{{startAt}}",
+											"description": "The starting index of the returned issues. Base index: 0. See the 'Pagination' section at the top of this page for more details.",
+											"disabled": true
+										},
+										{
+											"key": "maxResults",
+											"value": "{{maxResults}}",
+											"description": "The maximum number of issues to return per page. Default: 50. See the 'Pagination' section at the top of this page for more details. Note, the total number of issues returned is limited by the property 'jira.search.views.default.max' in your Jira instance. If you exceed this limit, your results will be truncated.",
+											"disabled": true
+										},
+										{
+											"key": "jql",
+											"value": "{{jql}}",
+											"description": "Filters results using a JQL query. If you define an order in your JQL query, it will override the default order of the returned issues.",
+											"disabled": true
+										},
+										{
+											"key": "validateQuery",
+											"value": "{{validateQuery}}",
+											"description": "Specifies whether to validate the JQL query or not. Default: true.",
+											"disabled": true
+										},
+										{
+											"key": "fields",
+											"value": "{{fields}}",
+											"description": "The list of fields to return for each issue. By default, all navigable and Agile fields are returned.",
+											"disabled": true
+										},
+										{
+											"key": "expand",
+											"value": "{{expand}}",
+											"description": "A comma-separated list of the parameters to expand.",
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "boardId",
+											"value": "{{boardId}}",
+											"description": "The ID of the board that contains the requested issues."
+										},
+										{
+											"key": "epicId",
+											"value": "{{epicId}}",
+											"description": "The ID of the epic that contains the requested issues."
+										}
+									]
+								},
+								"description": "Returns all issues that belong to an epic on the board, for the given epic ID and the board ID. This only includes issues that the user has permission to view. Issues returned from this resource include Agile fields, like sprint, closedSprints, flagged, and epic. By default, the returned issues are ordered by rank."
+							},
+							"response": []
+						},
+						{
+							"name": "Get issues for board",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId/issue",
+									"protocol": "https",
+									"host": [
+										"{{domain}}",
+										"atlassian",
+										"net"
+									],
+									"path": [
+										"rest",
+										"agile",
+										"1.0",
+										"board",
+										":boardId",
+										"issue"
+									],
+									"query": [
+										{
+											"key": "startAt",
+											"value": "{{startAt}}",
+											"description": "The starting index of the returned issues. Base index: 0. See the 'Pagination' section at the top of this page for more details.",
+											"disabled": true
+										},
+										{
+											"key": "maxResults",
+											"value": "{{maxResults}}",
+											"description": "The maximum number of issues to return per page. See the 'Pagination' section at the top of this page for more details. Note, the total number of issues returned is limited by the property 'jira.search.views.default.max' in your Jira instance. If you exceed this limit, your results will be truncated.",
+											"disabled": true
+										},
+										{
+											"key": "jql",
+											"value": "{{jql}}",
+											"description": "Filters results using a JQL query. If you define an order in your JQL query, it will override the default order of the returned issues.  \nNote that `username` and `userkey` can't be used as search terms for this parameter due to privacy reasons. Use `accountId` instead.",
+											"disabled": true
+										},
+										{
+											"key": "validateQuery",
+											"value": "{{validateQuery}}",
+											"description": "Specifies whether to validate the JQL query or not. Default: true.",
+											"disabled": true
+										},
+										{
+											"key": "fields",
+											"value": "{{fields}}",
+											"description": "The list of fields to return for each issue. By default, all navigable and Agile fields are returned.",
+											"disabled": true
+										},
+										{
+											"key": "expand",
+											"value": "{{expand}}",
+											"description": "This parameter is currently not used.",
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "boardId",
+											"value": "{{boardId}}",
+											"description": "The ID of the board that contains the requested issues."
+										}
+									]
+								},
+								"description": "Returns all issues from a board, for a given board ID. This only includes issues that the user has permission to view. An issue belongs to the board if its status is mapped to the board's column. Epic issues do not belongs to the scrum boards. Note, if the user does not have permission to view the board, no issues will be returned at all. Issues returned from this resource include Agile fields, like sprint, closedSprints, flagged, and epic. By default, the returned issues are ordered by rank."
+							},
+							"response": []
+						},
+						{
+							"name": "Move issues to board",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"issues\": [\n    \"PR-1\",\n    \"10001\",\n    \"PR-3\"\n  ],\n  \"rankBeforeIssue\": \"PR-4\",\n  \"rankCustomFieldId\": 10521\n}"
+								},
+								"url": {
+									"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId/issue",
+									"protocol": "https",
+									"host": [
+										"{{domain}}",
+										"atlassian",
+										"net"
+									],
+									"path": [
+										"rest",
+										"agile",
+										"1.0",
+										"board",
+										":boardId",
+										"issue"
+									],
+									"variable": [
+										{
+											"key": "boardId",
+											"value": "{{boardId}}"
+										}
+									]
+								},
+								"description": "Move issues from the backog to the board (if they are already in the backlog of that board).  \nThis operation either moves an issue(s) onto a board from the backlog (by adding it to the issueList for the board) Or transitions the issue(s) to the first column for a kanban board with backlog. At most 50 issues may be moved at once."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Epics",
+					"item": [
+						{
+							"name": "Get epics",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId/epic",
+									"protocol": "https",
+									"host": [
+										"{{domain}}",
+										"atlassian",
+										"net"
+									],
+									"path": [
+										"rest",
+										"agile",
+										"1.0",
+										"board",
+										":boardId",
+										"epic"
+									],
+									"query": [
+										{
+											"key": "startAt",
+											"value": "{{startAt}}",
+											"description": "The starting index of the returned epics. Base index: 0. See the 'Pagination' section at the top of this page for more details.",
+											"disabled": true
+										},
+										{
+											"key": "maxResults",
+											"value": "{{maxResults}}",
+											"description": "The maximum number of epics to return per page. See the 'Pagination' section at the top of this page for more details.",
+											"disabled": true
+										},
+										{
+											"key": "done",
+											"value": "{{done}}",
+											"description": "Filters results to epics that are either done or not done. Valid values: true, false.",
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "boardId",
+											"value": "{{boardId}}",
+											"description": "The ID of the board that contains the requested epics."
+										}
+									]
+								},
+								"description": "Returns all epics from the board, for the given board ID. This only includes epics that the user has permission to view. Note, if the user does not have permission to view the board, no epics will be returned at all."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Features",
+					"item": [
+						{
+							"name": "Get features for board",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId/features",
+									"protocol": "https",
+									"host": [
+										"{{domain}}",
+										"atlassian",
+										"net"
+									],
+									"path": [
+										"rest",
+										"agile",
+										"1.0",
+										"board",
+										":boardId",
+										"features"
+									],
+									"variable": [
+										{
+											"key": "boardId",
+											"value": "{{boardId}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Toggle features",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId/features",
+									"protocol": "https",
+									"host": [
+										"{{domain}}",
+										"atlassian",
+										"net"
+									],
+									"path": [
+										"rest",
+										"agile",
+										"1.0",
+										"board",
+										":boardId",
+										"features"
+									],
+									"variable": [
+										{
+											"key": "boardId",
+											"value": "{{boardId}}"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Properties",
+					"item": [
+						{
+							"name": "Get board property keys",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{protocol}}://{{host}}/{{basePath}}rest/agile/1.0/board/:boardId/properties",
+									"protocol": "{{protocol}}",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"{{basePath}}rest",
+										"agile",
+										"1.0",
+										"board",
+										":boardId",
+										"properties"
+									],
+									"variable": [
+										{
+											"key": "boardId",
+											"value": "{{boardId}}",
+											"description": "the ID of the board from which property keys will be returned."
+										}
+									]
+								},
+								"description": "Returns the keys of all properties for the board identified by the id. The user who retrieves the property keys is required to have permissions to view the board."
+							},
+							"response": []
+						},
+						{
+							"name": "Get board property",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{protocol}}://{{host}}/{{basePath}}rest/agile/1.0/board/:boardId/properties/:propertyKey",
+									"protocol": "{{protocol}}",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"{{basePath}}rest",
+										"agile",
+										"1.0",
+										"board",
+										":boardId",
+										"properties",
+										":propertyKey"
+									],
+									"variable": [
+										{
+											"key": "boardId",
+											"value": "{{boardId}}",
+											"description": "the ID of the board from which the property will be returned."
+										},
+										{
+											"key": "propertyKey",
+											"value": "{{propertyKey}}",
+											"description": "the key of the property to return."
+										}
+									]
+								},
+								"description": "Returns the value of the property with a given key from the board identified by the provided id. The user who retrieves the property is required to have permissions to view the board."
+							},
+							"response": []
+						},
+						{
+							"name": "Set board property",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{protocol}}://{{host}}/{{basePath}}rest/agile/1.0/board/:boardId/properties/:propertyKey",
+									"protocol": "{{protocol}}",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"{{basePath}}rest",
+										"agile",
+										"1.0",
+										"board",
+										":boardId",
+										"properties",
+										":propertyKey"
+									],
+									"variable": [
+										{
+											"key": "boardId",
+											"value": "{{boardId}}",
+											"description": "the ID of the board on which the property will be set."
+										},
+										{
+											"key": "propertyKey",
+											"value": "{{propertyKey}}",
+											"description": "the key of the board's property. The maximum length of the key is 255 bytes."
+										}
+									]
+								},
+								"description": "Sets the value of the specified board's property.\n\nYou can use this resource to store a custom data against the board identified by the id. The user who stores the data is required to have permissions to modify the board."
+							},
+							"response": []
+						},
+						{
+							"name": "Delete board property",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{protocol}}://{{host}}/{{basePath}}rest/agile/1.0/board/:boardId/properties/:propertyKey",
+									"protocol": "{{protocol}}",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"{{basePath}}rest",
+										"agile",
+										"1.0",
+										"board",
+										":boardId",
+										"properties",
+										":propertyKey"
+									],
+									"variable": [
+										{
+											"key": "boardId",
+											"value": "{{boardId}}",
+											"description": "the id of the board from which the property will be removed."
+										},
+										{
+											"key": "propertyKey",
+											"value": "{{propertyKey}}",
+											"description": "the key of the property to remove."
+										}
+									]
+								},
+								"description": "Removes the property from the board identified by the id. Ths user removing the property is required to have permissions to modify the board."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Filters",
+					"item": [
+						{
+							"name": "Get all quick filters",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId/quickfilter",
+									"protocol": "https",
+									"host": [
+										"{{domain}}",
+										"atlassian",
+										"net"
+									],
+									"path": [
+										"rest",
+										"agile",
+										"1.0",
+										"board",
+										":boardId",
+										"quickfilter"
+									],
+									"query": [
+										{
+											"key": "startAt",
+											"value": "{{startAt}}",
+											"description": "The starting index of the returned quick filters. Base index: 0. See the 'Pagination' section at the top of this page for more details.",
+											"disabled": true
+										},
+										{
+											"key": "maxResults",
+											"value": "{{maxResults}}",
+											"description": "The maximum number of sprints to return per page. See the 'Pagination' section at the top of this page for more details.",
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "boardId",
+											"value": "{{boardId}}",
+											"description": "The ID of the board that contains the requested quick filters."
+										}
+									]
+								},
+								"description": "Returns all quick filters from a board, for a given board ID."
+							},
+							"response": []
+						},
+						{
+							"name": "Get quick filter",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId/quickfilter/:quickFilterId",
+									"protocol": "https",
+									"host": [
+										"{{domain}}",
+										"atlassian",
+										"net"
+									],
+									"path": [
+										"rest",
+										"agile",
+										"1.0",
+										"board",
+										":boardId",
+										"quickfilter",
+										":quickFilterId"
+									],
+									"variable": [
+										{
+											"key": "boardId",
+											"value": "{{boardId}}"
+										},
+										{
+											"key": "quickFilterId",
+											"value": "{{quickFilterId}}",
+											"description": "The ID of the requested quick filter."
+										}
+									]
+								},
+								"description": "Returns the quick filter for a given quick filter ID. The quick filter will only be returned if the user can view the board that the quick filter belongs to."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Get all boards",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"board"
+							],
+							"query": [
+								{
+									"key": "startAt",
+									"value": "{{startAt}}",
+									"description": "The starting index of the returned boards. Base index: 0. See the 'Pagination' section at the top of this page for more details.",
+									"disabled": true
+								},
+								{
+									"key": "maxResults",
+									"value": "{{maxResults}}",
+									"description": "The maximum number of boards to return per page. See the 'Pagination' section at the top of this page for more details.",
+									"disabled": true
+								},
+								{
+									"key": "type",
+									"value": "{{type}}",
+									"description": "Filters results to boards of the specified types. Valid values: scrum, kanban, simple.",
+									"disabled": true
+								},
+								{
+									"key": "name",
+									"value": "{{name}}",
+									"description": "Filters results to boards that match or partially match the specified name.",
+									"disabled": true
+								},
+								{
+									"key": "projectKeyOrId",
+									"value": "{{projectKeyOrId}}",
+									"description": "Filters results to boards that are relevant to a project. Relevance means that the jql filter defined in board contains a reference to a project.",
+									"disabled": true
+								},
+								{
+									"key": "accountIdLocation",
+									"value": "{{accountIdLocation}}",
+									"disabled": true
+								},
+								{
+									"key": "projectLocation",
+									"value": "{{projectLocation}}",
+									"disabled": true
+								},
+								{
+									"key": "includePrivate",
+									"value": "{{includePrivate}}",
+									"description": "Appends private boards to the end of the list. The name and type fields are excluded for security reasons.",
+									"disabled": true
+								},
+								{
+									"key": "negateLocationFiltering",
+									"value": "{{negateLocationFiltering}}",
+									"description": "If set to true, negate filters used for querying by location. By default false.",
+									"disabled": true
+								},
+								{
+									"key": "orderBy",
+									"value": "{{orderBy}}",
+									"description": "Ordering of the results by a given field. If not provided, values will not be sorted. Valid values: name.",
+									"disabled": true
+								},
+								{
+									"key": "expand",
+									"value": "{{expand}}",
+									"description": "List of fields to expand for each board. Valid values: admins, permissions.",
+									"disabled": true
+								},
+								{
+									"key": "projectTypeLocation",
+									"value": "{{projectTypeLocation}}",
+									"description": "Filters results to boards that are relevant to a project types. Support Jira Software, Jira Service Management. Valid values: software, service\\_desk. By default software.",
+									"disabled": true
+								},
+								{
+									"key": "filterId",
+									"value": "{{filterId}}",
+									"description": "Filters results to boards that are relevant to a filter. Not supported for next-gen boards.",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Returns all boards. This only includes boards that the user has permission to view.\n\n**Deprecation notice:** The required OAuth 2.0 scopes will be updated on February 15, 2024.\n\n *  `read:board-scope:jira-software`, `read:project:jira`"
+					},
+					"response": []
+				},
+				{
+					"name": "Create board",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"filterId\": 10040,\n  \"location\": {\n    \"projectKeyOrId\": \"10000\",\n    \"type\": \"project\"\n  },\n  \"name\": \"scrum board\",\n  \"type\": \"scrum\"\n}"
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"board"
+							]
+						},
+						"description": "Creates a new board. Board name, type and filter ID is required.\n\n *  `name` \\- Must be less than 255 characters.\n *  `type` \\- Valid values: scrum, kanban\n *  `filterId` \\- ID of a filter that the user has permissions to view. Note, if the user does not have the 'Create shared objects' permission and tries to create a shared board, a private board will be created instead (remember that board sharing depends on the filter sharing).\n *  `location` \\- The container that the board will be located in. `location` must include the `type` property (Valid values: project, user). If choosing 'project', then a project must be specified by a `projectKeyOrId` property in `location`. If choosing 'user', the current user is chosen by default. The `projectKeyOrId` property should not be provided.\n\nNote:\n\n *  If you want to create a new project with an associated board, use the [Jira platform REST API](https://docs.atlassian.com/jira/REST/latest). For more information, see the [Create project](#api-rest-api-3-project-post) method. The `projectTypeKey` for software boards must be 'software' and the `projectTemplateKey` must be either `com.pyxis.greenhopper.jira:gh-kanban-template` or `com.pyxis.greenhopper.jira:gh-scrum-template`.\n *  You can create a filter using the [Jira REST API](https://docs.atlassian.com/jira/REST/latest). For more information, see the [Create filter](#api-rest-api-3-filter-post) method.\n *  If you do not ORDER BY the Rank field for the filter of your board, you will not be able to reorder issues on the board."
+					},
+					"response": []
+				},
+				{
+					"name": "Get board by filter id",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/filter/:filterId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"board",
+								"filter",
+								":filterId"
+							],
+							"query": [
+								{
+									"key": "startAt",
+									"value": "{{startAt}}",
+									"description": "The starting index of the returned boards. Base index: 0. See the 'Pagination' section at the top of this page for more details.",
+									"disabled": true
+								},
+								{
+									"key": "maxResults",
+									"value": "{{maxResults}}",
+									"description": "The maximum number of boards to return per page. Default: 50. See the 'Pagination' section at the top of this page for more details.",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "filterId",
+									"value": "{{filterId}}",
+									"description": "Filters results to boards that are relevant to a filter. Not supported for next-gen boards."
+								}
+							]
+						},
+						"description": "Returns any boards which use the provided filter id. This method can be executed by users without a valid software license in order to find which boards are using a particular filter."
+					},
+					"response": []
+				},
+				{
+					"name": "Get board",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/:boardId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								":boardId"
+							],
+							"variable": [
+								{
+									"key": "boardId",
+									"value": ""
+								}
+							]
+						},
+						"description": "Returns the board for the given board ID. This board will only be returned if the user has permission to view it. Admins without the view permission will see the board as a private one, so will see only a subset of the board's data (board location for instance)."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete board",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"board",
+								":boardId"
+							],
+							"variable": [
+								{
+									"key": "boardId",
+									"value": ""
+								}
+							]
+						},
+						"description": "Deletes the board. Admin without the view permission can still remove the board."
+					},
+					"response": []
+				},
+				{
+					"name": "Get configuration",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId/configuration",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"board",
+								":boardId",
+								"configuration"
+							],
+							"variable": [
+								{
+									"key": "boardId",
+									"value": "{{boardId}}",
+									"description": "The ID of the board for which configuration is requested."
+								}
+							]
+						},
+						"description": "Get the board configuration. The response contains the following fields:\n\n *  `id` \\- ID of the board.\n *  `name` \\- Name of the board.\n *  `filter` \\- Reference to the filter used by the given board.\n *  `location` \\- Reference to the container that the board is located in. Includes the container type (Valid values: project, user).\n *  `subQuery` (Kanban only) - JQL subquery used by the given board.\n *  `columnConfig` \\- The column configuration lists the columns for the board, in the order defined in the column configuration. For each column, it shows the issue status mapping as well as the constraint type (Valid values: none, issueCount, issueCountExclSubs) for the min/max number of issues. Note, the last column with statuses mapped to it is treated as the \"Done\" column, which means that issues in that column will be marked as already completed.\n *  `estimation` (Scrum only) - Contains information about type of estimation used for the board. Valid values: none, issueCount, field. If the estimation type is \"field\", the ID and display name of the field used for estimation is also returned. Note, estimates for an issue can be updated by a PUT /rest/api/3/issue/\\{issueIdOrKey\\} request, however the fields must be on the screen. \"timeoriginalestimate\" field will never be on the screen, so in order to update it \"originalEstimate\" in \"timetracking\" field should be updated.\n *  `ranking` \\- Contains information about custom field used for ranking in the given board."
+					},
+					"response": []
+				},
+				{
+					"name": "Get reports for board",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId/reports",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"board",
+								":boardId",
+								"reports"
+							],
+							"variable": [
+								{
+									"key": "boardId",
+									"value": "{{boardId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all sprints",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId/sprint",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"board",
+								":boardId",
+								"sprint"
+							],
+							"query": [
+								{
+									"key": "startAt",
+									"value": "{{startAt}}",
+									"description": "The starting index of the returned sprints. Base index: 0. See the 'Pagination' section at the top of this page for more details.",
+									"disabled": true
+								},
+								{
+									"key": "maxResults",
+									"value": "{{maxResults}}",
+									"description": "The maximum number of sprints to return per page. See the 'Pagination' section at the top of this page for more details.",
+									"disabled": true
+								},
+								{
+									"key": "state",
+									"value": "{{state}}",
+									"description": "Filters results to sprints in specified states. Valid values: future, active, closed. You can define multiple states separated by commas, e.g. state=active,closed",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "boardId",
+									"value": "{{boardId}}",
+									"description": "The ID of the board that contains the requested sprints."
+								}
+							]
+						},
+						"description": "Returns all sprints from a board, for a given board ID. This only includes sprints that the user has permission to view."
+					},
+					"response": []
+				},
+				{
+					"name": "Get board issues for sprint",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId/sprint/:sprintId/issue",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"board",
+								":boardId",
+								"sprint",
+								":sprintId",
+								"issue"
+							],
+							"query": [
+								{
+									"key": "startAt",
+									"value": "{{startAt}}",
+									"description": "The starting index of the returned issues. Base index: 0. See the 'Pagination' section at the top of this page for more details.",
+									"disabled": true
+								},
+								{
+									"key": "maxResults",
+									"value": "{{maxResults}}",
+									"description": "The maximum number of issues to return per page. See the 'Pagination' section at the top of this page for more details. Note, the total number of issues returned is limited by the property 'jira.search.views.default.max' in your Jira instance. If you exceed this limit, your results will be truncated.",
+									"disabled": true
+								},
+								{
+									"key": "jql",
+									"value": "{{jql}}",
+									"description": "Filters results using a JQL query. If you define an order in your JQL query, it will override the default order of the returned issues.  \nNote that `username` and `userkey` can't be used as search terms for this parameter due to privacy reasons. Use `accountId` instead.",
+									"disabled": true
+								},
+								{
+									"key": "validateQuery",
+									"value": "{{validateQuery}}",
+									"description": "Specifies whether to validate the JQL query or not. Default: true.",
+									"disabled": true
+								},
+								{
+									"key": "fields",
+									"value": "{{fields}}",
+									"description": "The list of fields to return for each issue. By default, all navigable and Agile fields are returned.",
+									"disabled": true
+								},
+								{
+									"key": "expand",
+									"value": "{{expand}}",
+									"description": "A comma-separated list of the parameters to expand.",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "boardId",
+									"value": "{{boardId}}",
+									"description": "The ID of the board that contains requested issues."
+								},
+								{
+									"key": "sprintId",
+									"value": "{{sprintId}}",
+									"description": "The ID of the sprint that contains requested issues."
+								}
+							]
+						},
+						"description": "Get all issues you have access to that belong to the sprint from the board. Issue returned from this resource contains additional fields like: sprint, closedSprints, flagged and epic. Issues are returned ordered by rank. JQL order has higher priority than default rank."
+					},
+					"response": []
+				},
+				{
+					"name": "Get all versions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId/version",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"board",
+								":boardId",
+								"version"
+							],
+							"query": [
+								{
+									"key": "startAt",
+									"value": "{{startAt}}",
+									"description": "The starting index of the returned versions. Base index: 0. See the 'Pagination' section at the top of this page for more details.",
+									"disabled": true
+								},
+								{
+									"key": "maxResults",
+									"value": "{{maxResults}}",
+									"description": "The maximum number of versions to return per page. See the 'Pagination' section at the top of this page for more details.",
+									"disabled": true
+								},
+								{
+									"key": "released",
+									"value": "{{released}}",
+									"description": "Filters results to versions that are either released or unreleased. Valid values: true, false.",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "boardId",
+									"value": "{{boardId}}",
+									"description": "The ID of the board that contains the requested versions."
+								}
+							]
+						},
+						"description": "Returns all versions from a board, for a given board ID. This only includes versions that the user has permission to view. Note, if the user does not have permission to view the board, no versions will be returned at all. Returned versions are ordered by the name of the project from which they belong and then by sequence defined by user."
+					},
+					"response": []
+				}
+			],
+			"description": "APIs related to boards"
+		},
+		{
+			"name": "Jira Epic",
+			"item": [
+				{
+					"name": "Get issues without epic",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/epic/none/issue",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"epic",
+								"none",
+								"issue"
+							],
+							"query": [
+								{
+									"key": "startAt",
+									"value": "{{startAt}}",
+									"description": "The starting index of the returned issues. Base index: 0. See the 'Pagination' section at the top of this page for more details.",
+									"disabled": true
+								},
+								{
+									"key": "maxResults",
+									"value": "{{maxResults}}",
+									"description": "The maximum number of issues to return per page. See the 'Pagination' section at the top of this page for more details. Note, the total number of issues returned is limited by the property 'jira.search.views.default.max' in your Jira instance. If you exceed this limit, your results will be truncated.",
+									"disabled": true
+								},
+								{
+									"key": "jql",
+									"value": "{{jql}}",
+									"description": "Filters results using a JQL query. If you define an order in your JQL query, it will override the default order of the returned issues.",
+									"disabled": true
+								},
+								{
+									"key": "validateQuery",
+									"value": "{{validateQuery}}",
+									"description": "Specifies whether to validate the JQL query or not. Default: true.",
+									"disabled": true
+								},
+								{
+									"key": "fields",
+									"value": "{{fields}}",
+									"description": "The list of fields to return for each issue. By default, all navigable and Agile fields are returned.",
+									"disabled": true
+								},
+								{
+									"key": "expand",
+									"value": "{{expand}}",
+									"description": "A comma-separated list of the parameters to expand.",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Returns all issues that do not belong to any epic. This only includes issues that the user has permission to view. Issues returned from this resource include Agile fields, like sprint, closedSprints, flagged, and epic. By default, the returned issues are ordered by rank. **Note:** If you are querying a next-gen project, do not use this operation. Instead, search for issues that don't belong to an epic by using the [Search for issues using JQL](https://developer.atlassian.com/cloud/jira/platform/rest/v2/#api-rest-api-2-search-get) operation in the Jira platform REST API. Build your JQL query using the `parent is empty` clause. For more information on the `parent` JQL field, see [Advanced searching](https://confluence.atlassian.com/x/dAiiLQ#Advancedsearching-fieldsreference-Parent)."
+					},
+					"response": []
+				},
+				{
+					"name": "Remove issues from epic",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"issues\": [\n    \"10001\",\n    \"PR-1\",\n    \"PR-3\"\n  ]\n}"
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/epic/none/issue",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"epic",
+								"none",
+								"issue"
+							]
+						},
+						"description": "Removes issues from epics. The user needs to have the edit issue permission for all issue they want to remove from epics. The maximum number of issues that can be moved in one operation is 50. **Note:** This operation does not work for epics in next-gen projects. Instead, update the issue using `\\{ fields: \\{ parent: \\{\\} \\} \\}`"
+					},
+					"response": []
+				},
+				{
+					"name": "Get epic",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/epic/:epicIdOrKey",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"epic",
+								":epicIdOrKey"
+							],
+							"variable": [
+								{
+									"key": "epicIdOrKey",
+									"value": "{{epicIdOrKey}}",
+									"description": "The id or key of the requested epic."
+								}
+							]
+						},
+						"description": "Returns the epic for a given epic ID. This epic will only be returned if the user has permission to view it. **Note:** This operation does not work for epics in next-gen projects."
+					},
+					"response": []
+				},
+				{
+					"name": "Partially update epic",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"color\": {\n    \"key\": \"color_6\"\n  },\n  \"done\": true,\n  \"name\": \"epic 2\",\n  \"summary\": \"epic 2 summary\"\n}"
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/epic/:epicIdOrKey",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"epic",
+								":epicIdOrKey"
+							],
+							"variable": [
+								{
+									"key": "epicIdOrKey",
+									"value": "{{epicIdOrKey}}",
+									"description": "The id or key of the epic to update."
+								}
+							]
+						},
+						"description": "Performs a partial update of the epic. A partial update means that fields not present in the request JSON will not be updated. Valid values for color are `color_1` to `color_9`. **Note:** This operation does not work for epics in next-gen projects."
+					},
+					"response": []
+				},
+				{
+					"name": "Get issues for epic",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/epic/:epicIdOrKey/issue",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"epic",
+								":epicIdOrKey",
+								"issue"
+							],
+							"query": [
+								{
+									"key": "startAt",
+									"value": "{{startAt}}",
+									"description": "The starting index of the returned issues. Base index: 0. See the 'Pagination' section at the top of this page for more details.",
+									"disabled": true
+								},
+								{
+									"key": "maxResults",
+									"value": "{{maxResults}}",
+									"description": "The maximum number of issues to return per page. Default: 50. See the 'Pagination' section at the top of this page for more details. Note, the total number of issues returned is limited by the property 'jira.search.views.default.max' in your Jira instance. If you exceed this limit, your results will be truncated.",
+									"disabled": true
+								},
+								{
+									"key": "jql",
+									"value": "{{jql}}",
+									"description": "Filters results using a JQL query. If you define an order in your JQL query, it will override the default order of the returned issues.  \nNote that `username` and `userkey` can't be used as search terms for this parameter due to privacy reasons. Use `accountId` instead.",
+									"disabled": true
+								},
+								{
+									"key": "validateQuery",
+									"value": "{{validateQuery}}",
+									"description": "Specifies whether to validate the JQL query or not. Default: true.",
+									"disabled": true
+								},
+								{
+									"key": "fields",
+									"value": "{{fields}}",
+									"description": "The list of fields to return for each issue. By default, all navigable and Agile fields are returned.",
+									"disabled": true
+								},
+								{
+									"key": "expand",
+									"value": "{{expand}}",
+									"description": "A comma-separated list of the parameters to expand.",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "epicIdOrKey",
+									"value": "{{epicIdOrKey}}",
+									"description": "The id or key of the epic that contains the requested issues."
+								}
+							]
+						},
+						"description": "Returns all issues that belong to the epic, for the given epic ID. This only includes issues that the user has permission to view. Issues returned from this resource include Agile fields, like sprint, closedSprints, flagged, and epic. By default, the returned issues are ordered by rank. **Note:** If you are querying a next-gen project, do not use this operation. Instead, search for issues that belong to an epic by using the [Search for issues using JQL](https://developer.atlassian.com/cloud/jira/platform/rest/v2/#api-rest-api-2-search-get) operation in the Jira platform REST API. Build your JQL query using the `parent` clause. For more information on the `parent` JQL field, see [Advanced searching](https://confluence.atlassian.com/x/dAiiLQ#Advancedsearching-fieldsreference-Parent)."
+					},
+					"response": []
+				},
+				{
+					"name": "Move issues to epic",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"issues\": [\n    \"10001\",\n    \"PR-1\",\n    \"PR-3\"\n  ]\n}"
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/epic/:epicIdOrKey/issue",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"epic",
+								":epicIdOrKey",
+								"issue"
+							],
+							"variable": [
+								{
+									"key": "epicIdOrKey",
+									"value": "{{epicIdOrKey}}",
+									"description": "The id or key of the epic that you want to assign issues to."
+								}
+							]
+						},
+						"description": "Moves issues to an epic, for a given epic id. Issues can be only in a single epic at the same time. That means that already assigned issues to an epic, will not be assigned to the previous epic anymore. The user needs to have the edit issue permission for all issue they want to move and to the epic. The maximum number of issues that can be moved in one operation is 50. **Note:** This operation does not work for epics in next-gen projects."
+					},
+					"response": []
+				},
+				{
+					"name": "Rank epics",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"rankBeforeEpic\": \"10000\",\n  \"rankCustomFieldId\": 10521\n}"
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/epic/:epicIdOrKey/rank",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"epic",
+								":epicIdOrKey",
+								"rank"
+							],
+							"variable": [
+								{
+									"key": "epicIdOrKey",
+									"value": "{{epicIdOrKey}}",
+									"description": "The id or key of the epic to rank."
+								}
+							]
+						},
+						"description": "Moves (ranks) an epic before or after a given epic.\n\nIf rankCustomFieldId is not defined, the default rank field will be used.\n\n**Note:** This operation does not work for epics in next-gen projects."
+					},
+					"response": []
+				}
+			],
+			"description": "Apis related to epics"
+		},
+		{
+			"name": "Issue",
+			"item": [
+				{
+					"name": "Rank issues",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"issues\": [\n    \"PR-1\",\n    \"10001\",\n    \"PR-3\"\n  ],\n  \"rankBeforeIssue\": \"PR-4\",\n  \"rankCustomFieldId\": 10521\n}"
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/issue/rank",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"issue",
+								"rank"
+							]
+						},
+						"description": "Moves (ranks) issues before or after a given issue. At most 50 issues may be ranked at once.\n\nThis operation may fail for some issues, although this will be rare. In that case the 207 status code is returned for the whole response and detailed information regarding each issue is available in the response body.\n\nIf rankCustomFieldId is not defined, the default rank field will be used."
+					},
+					"response": []
+				},
+				{
+					"name": "Get issue",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/issue/:issueIdOrKey",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"issue",
+								":issueIdOrKey"
+							],
+							"query": [
+								{
+									"key": "fields",
+									"value": "{{fields}}",
+									"description": "The list of fields to return for each issue. By default, all navigable and Agile fields are returned.",
+									"disabled": true
+								},
+								{
+									"key": "expand",
+									"value": "{{expand}}",
+									"description": "A comma-separated list of the parameters to expand.",
+									"disabled": true
+								},
+								{
+									"key": "updateHistory",
+									"value": "{{updateHistory}}",
+									"description": "A boolean indicating whether the issue retrieved by this method should be added to the current user's issue history",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "issueIdOrKey",
+									"value": ""
+								}
+							]
+						},
+						"description": "Returns a single issue, for a given issue ID or issue key. Issues returned from this resource include Agile fields, like sprint, closedSprints, flagged, and epic."
+					},
+					"response": []
+				},
+				{
+					"name": "Get issue estimation for board",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/issue/:issueIdOrKey/estimation",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"issue",
+								":issueIdOrKey",
+								"estimation"
+							],
+							"query": [
+								{
+									"key": "boardId",
+									"value": "{{boardId}}",
+									"description": "The ID of the board required to determine which field is used for estimation.",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "issueIdOrKey",
+									"value": "{{issueIdOrKey}}",
+									"description": "The ID or key of the requested issue."
+								}
+							]
+						},
+						"description": "Returns the estimation of the issue and a fieldId of the field that is used for it. `boardId` param is required. This param determines which field will be updated on a issue.\n\nOriginal time internally stores and returns the estimation as a number of seconds.\n\nThe field used for estimation on the given board can be obtained from [board configuration resource](#agile/1.0/board-getConfiguration). More information about the field are returned by [edit meta resource](#api-rest-api-3-issue-getEditIssueMeta) or [field resource](#api-rest-api-3-field-get)."
+					},
+					"response": []
+				},
+				{
+					"name": "Estimate issue for board",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"value\": \"8.0\"\n}"
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/issue/:issueIdOrKey/estimation",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"issue",
+								":issueIdOrKey",
+								"estimation"
+							],
+							"query": [
+								{
+									"key": "boardId",
+									"value": "{{boardId}}",
+									"description": "The ID of the board required to determine which field is used for estimation.",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "issueIdOrKey",
+									"value": "{{issueIdOrKey}}",
+									"description": "The ID or key of the requested issue."
+								}
+							]
+						},
+						"description": "Updates the estimation of the issue. boardId param is required. This param determines which field will be updated on a issue.\n\nNote that this resource changes the estimation field of the issue regardless of appearance the field on the screen.\n\nOriginal time tracking estimation field accepts estimation in formats like \"1w\", \"2d\", \"3h\", \"20m\" or number which represent number of minutes. However, internally the field stores and returns the estimation as a number of seconds.\n\nThe field used for estimation on the given board can be obtained from [board configuration resource](#agile/1.0/board-getConfiguration). More information about the field are returned by [edit meta resource](#api-rest-api-3-issue-issueIdOrKey-editmeta-get) or [field resource](#api-rest-api-3-field-get)."
+					},
+					"response": []
+				}
+			],
+			"description": "Apis related to issues"
+		},
+		{
+			"name": "Sprint",
+			"item": [
+				{
+					"name": "Create sprint",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"endDate\": \"2015-04-20T01:22:00.000+10:00\",\n  \"goal\": \"sprint 1 goal\",\n  \"name\": \"sprint 1\",\n  \"originBoardId\": 5,\n  \"startDate\": \"2015-04-11T15:22:00.000+10:00\"\n}"
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/sprint",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"sprint"
+							]
+						},
+						"description": "Creates a future sprint. Sprint name and origin board id are required. Start date, end date, and goal are optional.\n\nNote that the sprint name is trimmed. Also, when starting sprints from the UI, the \"endDate\" set through this call is ignored and instead the last sprint's duration is used to fill the form."
+					},
+					"response": []
+				},
+				{
+					"name": "Get sprint",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/sprint/:sprintId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"sprint",
+								":sprintId"
+							],
+							"variable": [
+								{
+									"key": "sprintId",
+									"value": "{{sprintId}}",
+									"description": "The ID of the requested sprint."
+								}
+							]
+						},
+						"description": "Returns the sprint for a given sprint ID. The sprint will only be returned if the user can view the board that the sprint was created on, or view at least one of the issues in the sprint."
+					},
+					"response": []
+				},
+				{
+					"name": "Update sprint",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"completeDate\": \"2015-04-20T11:11:28.008+10:00\",\n  \"endDate\": \"2015-04-16T14:01:00.000+10:00\",\n  \"goal\": \"sprint 1 goal\",\n  \"name\": \"sprint 1\",\n  \"startDate\": \"2015-04-11T15:36:00.000+10:00\",\n  \"state\": \"closed\"\n}"
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/sprint/:sprintId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"sprint",
+								":sprintId"
+							],
+							"variable": [
+								{
+									"key": "sprintId",
+									"value": "{{sprintId}}",
+									"description": "the ID of the sprint to update."
+								}
+							]
+						},
+						"description": "Performs a full update of a sprint. A full update means that the result will be exactly the same as the request body. Any fields not present in the request JSON will be set to null.\n\nNotes:\n\n *  For closed sprints, only the name and goal can be updated; changes to other fields will be ignored.\n *  A sprint can be started by updating the state to 'active'. This requires the sprint to be in the 'future' state and have a startDate and endDate set.\n *  A sprint can be completed by updating the state to 'closed'. This action requires the sprint to be in the 'active' state. This sets the completeDate to the time of the request.\n *  Other changes to state are not allowed.\n *  The completeDate field cannot be updated manually."
+					},
+					"response": []
+				},
+				{
+					"name": "Partially update sprint",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"new name\"\n}"
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/sprint/:sprintId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"sprint",
+								":sprintId"
+							],
+							"variable": [
+								{
+									"key": "sprintId",
+									"value": "{{sprintId}}",
+									"description": "The ID of the sprint to update."
+								}
+							]
+						},
+						"description": "Performs a partial update of a sprint. A partial update means that fields not present in the request JSON will not be updated.\n\nNotes:\n\n *  For closed sprints, only the name and goal can be updated; changes to other fields will be ignored.\n *  A sprint can be started by updating the state to 'active'. This requires the sprint to be in the 'future' state and have a startDate and endDate set.\n *  A sprint can be completed by updating the state to 'closed'. This action requires the sprint to be in the 'active' state. This sets the completeDate to the time of the request.\n *  Other changes to state are not allowed.\n *  The completeDate field cannot be updated manually."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete sprint",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/sprint/:sprintId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"sprint",
+								":sprintId"
+							],
+							"variable": [
+								{
+									"key": "sprintId",
+									"value": "{{sprintId}}",
+									"description": "The ID of the sprint to delete."
+								}
+							]
+						},
+						"description": "Deletes a sprint. Once a sprint is deleted, all open issues in the sprint will be moved to the backlog."
+					},
+					"response": []
+				},
+				{
+					"name": "Get issues for sprint",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/sprint/:sprintId/issue",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"sprint",
+								":sprintId",
+								"issue"
+							],
+							"query": [
+								{
+									"key": "startAt",
+									"value": "{{startAt}}",
+									"description": "The starting index of the returned issues. Base index: 0. See the 'Pagination' section at the top of this page for more details.",
+									"disabled": true
+								},
+								{
+									"key": "maxResults",
+									"value": "{{maxResults}}",
+									"description": "The maximum number of issues to return per page. See the 'Pagination' section at the top of this page for more details. Note, the total number of issues returned is limited by the property 'jira.search.views.default.max' in your Jira instance. If you exceed this limit, your results will be truncated.",
+									"disabled": true
+								},
+								{
+									"key": "jql",
+									"value": "{{jql}}",
+									"description": "Filters results using a JQL query. If you define an order in your JQL query, it will override the default order of the returned issues.  \nNote that `username` and `userkey` can't be used as search terms for this parameter due to privacy reasons. Use `accountId` instead.",
+									"disabled": true
+								},
+								{
+									"key": "validateQuery",
+									"value": "{{validateQuery}}",
+									"description": "Specifies whether to validate the JQL query or not. Default: true.",
+									"disabled": true
+								},
+								{
+									"key": "fields",
+									"value": "{{fields}}",
+									"description": "The list of fields to return for each issue. By default, all navigable and Agile fields are returned.",
+									"disabled": true
+								},
+								{
+									"key": "expand",
+									"value": "{{expand}}",
+									"description": "A comma-separated list of the parameters to expand.",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "sprintId",
+									"value": "{{sprintId}}",
+									"description": "The ID of the sprint that contains the requested issues."
+								}
+							]
+						},
+						"description": "Returns all issues in a sprint, for a given sprint ID. This only includes issues that the user has permission to view. By default, the returned issues are ordered by rank."
+					},
+					"response": []
+				},
+				{
+					"name": "Move issues to sprint and rank",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"issues\": [\n    \"PR-1\",\n    \"10001\",\n    \"PR-3\"\n  ],\n  \"rankBeforeIssue\": \"PR-4\",\n  \"rankCustomFieldId\": 10521\n}"
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/sprint/:sprintId/issue",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"sprint",
+								":sprintId",
+								"issue"
+							],
+							"variable": [
+								{
+									"key": "sprintId",
+									"value": "{{sprintId}}",
+									"description": "The ID of the sprint that you want to assign issues to."
+								}
+							]
+						},
+						"description": "Moves issues to a sprint, for a given sprint ID. Issues can only be moved to open or active sprints. The maximum number of issues that can be moved in one operation is 50."
+					},
+					"response": []
+				},
+				{
+					"name": "Get properties keys",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/sprint/:sprintId/properties",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"sprint",
+								":sprintId",
+								"properties"
+							],
+							"variable": [
+								{
+									"key": "sprintId",
+									"value": "{{sprintId}}",
+									"description": "the ID of the sprint from which property keys will be returned."
+								}
+							]
+						},
+						"description": "Returns the keys of all properties for the sprint identified by the id. The user who retrieves the property keys is required to have permissions to view the sprint."
+					},
+					"response": []
+				},
+				{
+					"name": "Get property",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/sprint/:sprintId/properties/:propertyKey",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"sprint",
+								":sprintId",
+								"properties",
+								":propertyKey"
+							],
+							"variable": [
+								{
+									"key": "sprintId",
+									"value": "{{sprintId}}",
+									"description": "the ID of the sprint from which the property will be returned."
+								},
+								{
+									"key": "propertyKey",
+									"value": "{{propertyKey}}",
+									"description": "the key of the property to return."
+								}
+							]
+						},
+						"description": "Returns the value of the property with a given key from the sprint identified by the provided id. The user who retrieves the property is required to have permissions to view the sprint."
+					},
+					"response": []
+				},
+				{
+					"name": "Set property",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/sprint/:sprintId/properties/:propertyKey",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"sprint",
+								":sprintId",
+								"properties",
+								":propertyKey"
+							],
+							"variable": [
+								{
+									"key": "sprintId",
+									"value": "{{sprintId}}",
+									"description": "the ID of the sprint on which the property will be set."
+								},
+								{
+									"key": "propertyKey",
+									"value": "{{propertyKey}}",
+									"description": "the key of the sprint's property. The maximum length of the key is 255 bytes."
+								}
+							]
+						},
+						"description": "Sets the value of the specified sprint's property.\n\nYou can use this resource to store a custom data against the sprint identified by the id. The user who stores the data is required to have permissions to modify the sprint."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete property",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/sprint/:sprintId/properties/:propertyKey",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"sprint",
+								":sprintId",
+								"properties",
+								":propertyKey"
+							],
+							"variable": [
+								{
+									"key": "sprintId",
+									"value": "{{sprintId}}",
+									"description": "the ID of the sprint from which the property will be removed."
+								},
+								{
+									"key": "propertyKey",
+									"value": "{{propertyKey}}",
+									"description": "the key of the property to remove."
+								}
+							]
+						},
+						"description": "Removes the property from the sprint identified by the id. Ths user removing the property is required to have permissions to modify the sprint."
+					},
+					"response": []
+				},
+				{
+					"name": "Swap sprint",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sprintToSwapWith\": 3\n}"
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/sprint/:sprintId/swap",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"agile",
+								"1.0",
+								"sprint",
+								":sprintId",
+								"swap"
+							],
+							"variable": [
+								{
+									"key": "sprintId",
+									"value": "{{sprintId}}",
+									"description": "The ID of the sprint to swap."
+								}
+							]
+						},
+						"description": "Swap the position of the sprint with the second sprint."
+					},
+					"response": []
+				}
+			],
+			"description": "Apis related to sprints"
+		},
+		{
+			"name": "Development Information",
+			"item": [
+				{
+					"name": "Store development information",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{Authorization}}",
+								"description": "All requests must be signed with either a Connect JWT token or OAuth token for an on-premise integration that corresponds to an app installed in Jira. If the JWT token corresponds to a Connect app that does not define the jiraDevelopmentTool module it will be rejected with a 403. See https://developer.atlassian.com/blog/2015/01/understanding-jwt/ for more details about Connect JWT tokens. See https://developer.atlassian.com/cloud/jira/software/integrate-jsw-cloud-with-onpremises-tools/ for details about on-premise integrations."
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/devinfo/0.10/bulk",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"devinfo",
+								"0.10",
+								"bulk"
+							]
+						},
+						"description": "Stores development information provided in the request to make it available when viewing issues in Jira. Existing repository and entity data for the same ID will be replaced if the updateSequenceId of existing data is less than the incoming data. Submissions are performed asynchronously. Submitted data will eventually be available in Jira; most updates are available within a short period of time, but may take some time during peak load and/or maintenance times."
+					},
+					"response": []
+				},
+				{
+					"name": "Get repository",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{Authorization}}",
+								"description": "All requests must be signed with either a Connect JWT token or OAuth token for an on-premise integration that corresponds to an app installed in Jira. If the JWT token corresponds to a Connect app that does not define the jiraDevelopmentTool module it will be rejected with a 403. See https://developer.atlassian.com/blog/2015/01/understanding-jwt/ for more details about Connect JWT tokens. See https://developer.atlassian.com/cloud/jira/software/integrate-jsw-cloud-with-onpremises-tools/ for details about on-premise integrations."
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/devinfo/0.10/repository/:repositoryId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"devinfo",
+								"0.10",
+								"repository",
+								":repositoryId"
+							],
+							"variable": [
+								{
+									"key": "repositoryId",
+									"value": "{{repositoryId}}",
+									"description": "The ID of repository to fetch"
+								}
+							]
+						},
+						"description": "For the specified repository ID, retrieves the repository and the most recent 400 development information entities. The result will be what is currently stored, ignoring any pending updates or deletes."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete repository",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{Authorization}}",
+								"description": "All requests must be signed with either a Connect JWT token or OAuth token for an on-premise integration that corresponds to an app installed in Jira. If the JWT token corresponds to a Connect app that does not define the jiraDevelopmentTool module it will be rejected with a 403. See https://developer.atlassian.com/blog/2015/01/understanding-jwt/ for more details about Connect JWT tokens. See https://developer.atlassian.com/cloud/jira/software/integrate-jsw-cloud-with-onpremises-tools/ for details about on-premise integrations."
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/devinfo/0.10/repository/:repositoryId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"devinfo",
+								"0.10",
+								"repository",
+								":repositoryId"
+							],
+							"query": [
+								{
+									"key": "_updateSequenceId",
+									"value": "{{_updateSequenceId}}",
+									"description": "An optional property to use to control deletion. Only stored data with an updateSequenceId less than or equal to that provided will be deleted. This can be used to help ensure submit/delete requests are applied correctly if they are issued close together. ",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "repositoryId",
+									"value": "{{repositoryId}}",
+									"description": "The ID of repository to delete"
+								}
+							]
+						},
+						"description": "Deletes the repository data stored by the given ID and all related development information entities. Deletion is performed asynchronously."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete development information by properties",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{Authorization}}",
+								"description": "All requests must be signed with either a Connect JWT token or OAuth token for an on-premise integration that corresponds to an app installed in Jira. If the JWT token corresponds to a Connect app that does not define the jiraDevelopmentTool module it will be rejected with a 403. See https://developer.atlassian.com/blog/2015/01/understanding-jwt/ for more details about Connect JWT tokens. See https://developer.atlassian.com/cloud/jira/software/integrate-jsw-cloud-with-onpremises-tools/ for details about on-premise integrations."
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/devinfo/0.10/bulkByProperties",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"devinfo",
+								"0.10",
+								"bulkByProperties"
+							],
+							"query": [
+								{
+									"key": "_updateSequenceId",
+									"value": "{{_updateSequenceId}}",
+									"description": "An optional property to use to control deletion. Only stored data with an updateSequenceId less than or equal to that provided will be deleted. This can be used to help ensure submit/delete requests are applied correctly if they are issued close together. ",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Deletes development information entities which have all the provided properties. Repositories which have properties that match ALL of the properties (i.e. treated as an AND), and all their related development information (such as commits, branches and pull requests), will be deleted. For example if request is `DELETE bulk?accountId=123&projectId=ABC` entities which have properties `accountId=123` and `projectId=ABC` will be deleted. Optional param `_updateSequenceId` is no longer supported. Deletion is performed asynchronously: specified entities will eventually be removed from Jira. "
+					},
+					"response": []
+				},
+				{
+					"name": "Check if data exists for the supplied properties",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{Authorization}}",
+								"description": "All requests must be signed with either a Connect JWT token or OAuth token for an on-premise integration that corresponds to an app installed in Jira. If the JWT token corresponds to a Connect app that does not define the jiraDevelopmentTool module it will be rejected with a 403. See https://developer.atlassian.com/blog/2015/01/understanding-jwt/ for more details about Connect JWT tokens. See https://developer.atlassian.com/cloud/jira/software/integrate-jsw-cloud-with-onpremises-tools/ for details about on-premise integrations."
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/devinfo/0.10/existsByProperties",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"devinfo",
+								"0.10",
+								"existsByProperties"
+							],
+							"query": [
+								{
+									"key": "_updateSequenceId",
+									"value": "{{_updateSequenceId}}",
+									"description": "An optional property. Filters out entities and repositories which have updateSequenceId greater than specified. ",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Checks if repositories which have all the provided properties exists. For example, if request is `GET existsByProperties?accountId=123&projectId=ABC` then result will be positive only if there is at least one repository with both properties `accountId=123` and `projectId=ABC`. Special property `_updateSequenceId` can be used to filter all entities with updateSequenceId less or equal than the value specified. In addition to the optional `_updateSequenceId`, one or more query params must be supplied to specify properties to search by. "
+					},
+					"response": []
+				},
+				{
+					"name": "Delete development information entity",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{Authorization}}",
+								"description": "All requests must be signed with either a Connect JWT token or OAuth token for an on-premise integration that corresponds to an app installed in Jira. If the JWT token corresponds to a Connect app that does not define the jiraDevelopmentTool module it will be rejected with a 403. See https://developer.atlassian.com/blog/2015/01/understanding-jwt/ for more details about Connect JWT tokens. See https://developer.atlassian.com/cloud/jira/software/integrate-jsw-cloud-with-onpremises-tools/ for details about on-premise integrations."
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/devinfo/0.10/repository/:repositoryId/:entityType/:entityId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"devinfo",
+								"0.10",
+								"repository",
+								":repositoryId",
+								":entityType",
+								":entityId"
+							],
+							"query": [
+								{
+									"key": "_updateSequenceId",
+									"value": "{{_updateSequenceId}}",
+									"description": "An optional property to use to control deletion. Only stored data with an updateSequenceId less than or equal to that provided will be deleted. This can be used to help ensure submit/delete requests are applied correctly if they are issued close together. ",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "repositoryId",
+									"value": "{{repositoryId}}"
+								},
+								{
+									"key": "entityType",
+									"value": "{{entityType}}"
+								},
+								{
+									"key": "entityId",
+									"value": "{{entityId}}"
+								}
+							]
+						},
+						"description": "Deletes particular development information entity. Deletion is performed asynchronously."
+					},
+					"response": []
+				}
+			],
+			"description": "APIs related to integrating development information (commits, branches and pull requests) with Jira. These APIs are available to Atlassian Connect apps and on-premise integrations using OAuth. Connect apps using these APIs must have the Development Tool module in the app descriptor, see https://developer.atlassian.com/cloud/jira/software/modules/development-tool/. For more details on integrating Jira Software Cloud with on-premises tools using OAuth 2.0 credentials, see https://developer.atlassian.com/cloud/jira/software/integrate-jsw-cloud-with-onpremises-tools/."
+		},
+		{
+			"name": "Feature Flags",
+			"item": [
+				{
+					"name": "Submit Feature Flag data",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/featureflags/0.1/bulk",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"featureflags",
+								"0.1",
+								"bulk"
+							]
+						},
+						"description": "Update / insert Feature Flag data.\n\nFeature Flags are identified by their ID, and existing Feature Flag data for the same ID will be replaced if it exists and the updateSequenceId of existing data is less than the incoming data.\n\nSubmissions are performed asynchronously. Submitted data will eventually be available in Jira; most updates are available within a short period of time, but may take some time during peak load and/or maintenance times. The getFeatureFlagById operation can be used to confirm that data has been stored successfully (if needed).\n\nIn the case of multiple Feature Flags being submitted in one request, each is validated individually prior to submission. Details of which Feature Flags failed submission (if any) are available in the response object.\n\nOnly Connect apps that define the `jiraFeatureFlagInfoProvider` module can access this resource.\nThis resource requires the 'WRITE' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Feature Flags by Property",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/featureflags/0.1/bulkByProperties",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"featureflags",
+								"0.1",
+								"bulkByProperties"
+							],
+							"query": [
+								{
+									"key": "_updateSequenceId",
+									"value": "{{_updateSequenceId}}",
+									"description": "This parameter usage is no longer supported.\n\nAn optional `_updateSequenceId` to use to control deletion.\n\nOnly stored data with an `updateSequenceId` less than or equal to that provided will be deleted.\nThis can be used help ensure submit/delete requests are applied correctly if issued close together.\n\nIf not provided, all stored data that matches the request will be deleted.\n",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Bulk delete all Feature Flags that match the given request.\n\nOne or more query params must be supplied to specify Properties to delete by. Optional param `_updateSequenceId` is no longer supported.\nIf more than one Property is provided, data will be deleted that matches ALL of the Properties (e.g. treated as an AND).\nSee the documentation for the submitFeatureFlags operation for more details.\n\ne.g. DELETE /bulkByProperties?accountId=account-123&createdBy=user-456\n\nDeletion is performed asynchronously. The getFeatureFlagById operation can be used to confirm that data has been deleted successfully (if needed).\n\nOnly Connect apps that define the `jiraFeatureFlagInfoProvider` module can access this resource.\nThis resource requires the 'DELETE' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Get a Feature Flag by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/featureflags/0.1/flag/:featureFlagId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"featureflags",
+								"0.1",
+								"flag",
+								":featureFlagId"
+							],
+							"variable": [
+								{
+									"key": "featureFlagId",
+									"value": "{{featureFlagId}}",
+									"description": "The ID of the Feature Flag to fetch.\n"
+								}
+							]
+						},
+						"description": "Retrieve the currently stored Feature Flag data for the given ID.\n\nThe result will be what is currently stored, ignoring any pending updates or deletes.\n\nOnly Connect apps that define the `jiraFeatureFlagInfoProvider` module can access this resource.\nThis resource requires the 'READ' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete a Feature Flag by ID",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/featureflags/0.1/flag/:featureFlagId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"featureflags",
+								"0.1",
+								"flag",
+								":featureFlagId"
+							],
+							"query": [
+								{
+									"key": "_updateSequenceId",
+									"value": "{{_updateSequenceId}}",
+									"description": "This parameter usage is no longer supported.\n\nAn optional `_updateSequenceId` to use to control deletion.\n\nOnly stored data with an `updateSequenceId` less than or equal to that provided will be deleted.\nThis can be used help ensure submit/delete requests are applied correctly if issued close together.\n",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "featureFlagId",
+									"value": "{{featureFlagId}}",
+									"description": "The ID of the Feature Flag to delete.\n"
+								}
+							]
+						},
+						"description": "Delete the Feature Flag data currently stored for the given ID.\n\nDeletion is performed asynchronously. The getFeatureFlagById operation can be used to confirm that data has been deleted successfully (if needed).\n\nOnly Connect apps that define the `jiraFeatureFlagInfoProvider` module can access this resource.\nThis resource requires the 'DELETE' scope for Connect apps.\n"
+					},
+					"response": []
+				}
+			],
+			"description": "Apis related to integrating Feature Flags with Jira Software. These apis are only available to Atlassian Connect apps. To use these apis you must have the Feature Flag module (see https://developer.atlassian.com/cloud/jira/software/modules/feature-flag/) in your app's descriptor"
+		},
+		{
+			"name": "Deployments",
+			"item": [
+				{
+					"name": "Submit deployment data",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/deployments/0.1/bulk",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"deployments",
+								"0.1",
+								"bulk"
+							]
+						},
+						"description": "Update / insert deployment data.\n\nDeployments are identified by the combination of `pipelineId`, `environmentId` and `deploymentSequenceNumber`, and existing deployment data for the same deployment will be replaced if it exists and the `updateSequenceNumber` of existing data is less than the incoming data.\n\nSubmissions are processed asynchronously. Submitted data will eventually be available in Jira. Most updates are available within a short period of time, but may take some time during peak load and/or maintenance times. The `getDeploymentByKey` operation can be used to confirm that data has been stored successfully (if needed).\n\nIn the case of multiple deployments being submitted in one request, each is validated individually prior to submission. Details of which deployments failed submission (if any) are available in the response object.\n\nOnly Connect apps that define the `jiraDeploymentInfoProvider` module, and on-premise integrations, can access this resource.\nThis resource requires the 'WRITE' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete deployments by Property",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/deployments/0.1/bulkByProperties",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"deployments",
+								"0.1",
+								"bulkByProperties"
+							],
+							"query": [
+								{
+									"key": "_updateSequenceNumber",
+									"value": "{{_updateSequenceNumber}}",
+									"description": "This parameter usage is no longer supported.\n\nAn optional `updateSequenceNumber` to use to control deletion.\n\nOnly stored data with an `updateSequenceNumber` less than or equal to that provided will be deleted.\nThis can be used help ensure submit/delete requests are applied correctly if issued close together.\n\nIf not provided, all stored data that matches the request will be deleted.\n",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Bulk delete all deployments that match the given request.\n\nOne or more query params must be supplied to specify the Properties to delete by. Optional param `_updateSequenceNumber` is no longer supported.\nIf more than one Property is provided, data will be deleted that matches ALL of the Properties (i.e. treated as AND).\nSee the documentation for the `submitDeployments` operation for more details.\n\nExample operation: DELETE /bulkByProperties?accountId=account-123&createdBy=user-456\n\nDeletion is performed asynchronously. The `getDeploymentByKey` operation can be used to confirm that data has been deleted successfully (if needed).\n\nOnly Connect apps that define the `jiraDeploymentInfoProvider` module, and on-premise integrations, can access this resource.\nThis resource requires the 'DELETE' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Get a deployment by key",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/deployments/0.1/pipelines/:pipelineId/environments/:environmentId/deployments/:deploymentSequenceNumber",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"deployments",
+								"0.1",
+								"pipelines",
+								":pipelineId",
+								"environments",
+								":environmentId",
+								"deployments",
+								":deploymentSequenceNumber"
+							],
+							"variable": [
+								{
+									"key": "pipelineId",
+									"value": "{{pipelineId}}",
+									"description": "The ID of the deployment's pipeline.\n"
+								},
+								{
+									"key": "environmentId",
+									"value": "{{environmentId}}",
+									"description": "The ID of the deployment's environment.\n"
+								},
+								{
+									"key": "deploymentSequenceNumber",
+									"value": "{{deploymentSequenceNumber}}",
+									"description": "The deployment's deploymentSequenceNumber.\n"
+								}
+							]
+						},
+						"description": "Retrieve the currently stored deployment data for the given `pipelineId`, `environmentId` and `deploymentSequenceNumber` combination.\n\nThe result will be what is currently stored, ignoring any pending updates or deletes.\n\nOnly Connect apps that define the `jiraDeploymentInfoProvider` module, and on-premise integrations, can access this resource.\nThis resource requires the 'READ' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete a deployment by key",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/deployments/0.1/pipelines/:pipelineId/environments/:environmentId/deployments/:deploymentSequenceNumber",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"deployments",
+								"0.1",
+								"pipelines",
+								":pipelineId",
+								"environments",
+								":environmentId",
+								"deployments",
+								":deploymentSequenceNumber"
+							],
+							"query": [
+								{
+									"key": "_updateSequenceNumber",
+									"value": "{{_updateSequenceNumber}}",
+									"description": "This parameter usage is no longer supported.\n\nAn optional `_updateSequenceNumber` to use to control deletion.\n\nOnly stored data with an `updateSequenceNumber` less than or equal to that provided will be deleted.\nThis can be used help ensure submit/delete requests are applied correctly if issued close together.\n",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "pipelineId",
+									"value": "{{pipelineId}}",
+									"description": "The ID of the deployment's pipeline.\n"
+								},
+								{
+									"key": "environmentId",
+									"value": "{{environmentId}}",
+									"description": "The ID of the deployment's environment.\n"
+								},
+								{
+									"key": "deploymentSequenceNumber",
+									"value": "{{deploymentSequenceNumber}}",
+									"description": "The deployment's deploymentSequenceNumber.\n"
+								}
+							]
+						},
+						"description": "Delete the currently stored deployment data for the given `pipelineId`, `environmentId` and `deploymentSequenceNumber` combination.\n\nDeletion is performed asynchronously. The `getDeploymentByKey` operation can be used to confirm that data has been deleted successfully (if needed).\n\nOnly Connect apps that define the `jiraDeploymentInfoProvider` module, and on-premise integrations, can access this resource.\nThis resource requires the 'DELETE' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Get deployment gating status by key",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/deployments/0.1/pipelines/:pipelineId/environments/:environmentId/deployments/:deploymentSequenceNumber/gating-status",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"deployments",
+								"0.1",
+								"pipelines",
+								":pipelineId",
+								"environments",
+								":environmentId",
+								"deployments",
+								":deploymentSequenceNumber",
+								"gating-status"
+							],
+							"variable": [
+								{
+									"key": "pipelineId",
+									"value": "{{pipelineId}}",
+									"description": "The ID of the Deployment's pipeline.\n"
+								},
+								{
+									"key": "environmentId",
+									"value": "{{environmentId}}",
+									"description": "The ID of the Deployment's environment.\n"
+								},
+								{
+									"key": "deploymentSequenceNumber",
+									"value": "{{deploymentSequenceNumber}}",
+									"description": "The Deployment's deploymentSequenceNumber.\n"
+								}
+							]
+						},
+						"description": "Retrieve the  Deployment gating status for the given `pipelineId + environmentId + deploymentSequenceNumber` combination.\nOnly apps that define the `jiraDeploymentInfoProvider` module can access this resource. This resource requires the 'READ' scope.\n"
+					},
+					"response": []
+				}
+			],
+			"description": "APIs related to integrating deployments data with Jira Software. These APIs\nare available to Atlassian Connect apps. To use these APIs you must\nhave the Deployment module see https://developer.atlassian.com/cloud/jira/software/modules/deployment/\nin your app's descriptor. They are also related to integrating Jira\nSoftware Cloud with on-premises tools using\nOAuth 2.0 credentials, see https://developer.atlassian.com/cloud/jira/software/integrate-jsw-cloud-with-onpremises-tools/.\n"
+		},
+		{
+			"name": "Builds",
+			"item": [
+				{
+					"name": "Submit build data",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/builds/0.1/bulk",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"builds",
+								"0.1",
+								"bulk"
+							]
+						},
+						"description": "Update / insert builds data.\n\nBuilds are identified by the combination of `pipelineId` and `buildNumber`, and existing build data for the same\nbuild will be replaced if it exists and the `updateSequenceNumber` of the existing data is less than the\nincoming data.\n\nSubmissions are performed asynchronously. Submitted data will eventually be available in Jira; most updates are\navailable within a short period of time, but may take some time during peak load and/or maintenance times.\nThe `getBuildByKey` operation can be used to confirm that data has been stored successfully (if needed).\n\nIn the case of multiple builds being submitted in one request, each is validated individually prior to\nsubmission. Details of which build failed submission (if any) are available in the response object.\n\nOnly Connect apps that define the `jiraBuildInfoProvider` module, and on-premise integrations, can access this resource.\nThis resource requires the 'WRITE' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete builds by Property",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/builds/0.1/bulkByProperties",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"builds",
+								"0.1",
+								"bulkByProperties"
+							],
+							"query": [
+								{
+									"key": "_updateSequenceNumber",
+									"value": "{{_updateSequenceNumber}}",
+									"description": "This parameter usage is no longer supported.\n\nAn optional `_updateSequenceNumber` to use to control deletion.\n\nOnly stored data with an `updateSequenceNumber` less than or equal to that provided will be deleted.\nThis can be used help ensure submit/delete requests are applied correctly if issued close together.\n\nIf not provided, all stored data that matches the request will be deleted.\n",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Bulk delete all builds data that match the given request.\n\nOne or more query params must be supplied to specify Properties to delete by.\nOptional param `_updateSequenceNumber` is no longer supported.\nIf more than one Property is provided, data will be deleted that matches ALL of the\nProperties (e.g. treated as an AND).\n\nSee the documentation for the `submitBuilds` operation for more details.\n\ne.g. DELETE /bulkByProperties?accountId=account-123&repoId=repo-345\n\nDeletion is performed asynchronously. The `getBuildByKey` operation can be used to confirm that data has been\ndeleted successfully (if needed).\n\nOnly Connect apps that define the `jiraBuildInfoProvider` module, and on-premise integrations, can access this resource.\nThis resource requires the 'DELETE' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Get a build by key",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/builds/0.1/pipelines/:pipelineId/builds/:buildNumber",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"builds",
+								"0.1",
+								"pipelines",
+								":pipelineId",
+								"builds",
+								":buildNumber"
+							],
+							"variable": [
+								{
+									"key": "pipelineId",
+									"value": "{{pipelineId}}",
+									"description": "The `pipelineId` of the build.\n"
+								},
+								{
+									"key": "buildNumber",
+									"value": "{{buildNumber}}",
+									"description": "The `buildNumber` of the build.\n"
+								}
+							]
+						},
+						"description": "Retrieve the currently stored build data for the given `pipelineId` and `buildNumber` combination.\n\nThe result will be what is currently stored, ignoring any pending updates or deletes.\n\nOnly Connect apps that define the `jiraBuildInfoProvider` module, and on-premise integrations, can access this resource.\nThis resource requires the 'READ' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete a build by key",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/builds/0.1/pipelines/:pipelineId/builds/:buildNumber",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"builds",
+								"0.1",
+								"pipelines",
+								":pipelineId",
+								"builds",
+								":buildNumber"
+							],
+							"query": [
+								{
+									"key": "_updateSequenceNumber",
+									"value": "{{_updateSequenceNumber}}",
+									"description": "This parameter usage is no longer supported.\n\nAn optional `_updateSequenceNumber` to use to control deletion.\n\nOnly stored data with an `updateSequenceNumber` less than or equal to that provided will be deleted.\nThis can be used help ensure submit/delete requests are applied correctly if issued close together.\n",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "pipelineId",
+									"value": "{{pipelineId}}",
+									"description": "The `pipelineId` of the build to delete.\n"
+								},
+								{
+									"key": "buildNumber",
+									"value": "{{buildNumber}}",
+									"description": "The `buildNumber` of the build to delete.\n"
+								}
+							]
+						},
+						"description": "Delete the build data currently stored for the given `pipelineId` and `buildNumber` combination.\n\nDeletion is performed asynchronously. The `getBuildByKey` operation can be used to confirm that data has been\ndeleted successfully (if needed).\n\nOnly Connect apps that define the `jiraBuildInfoProvider` module, and on-premise integrations, can access this resource.\nThis resource requires the 'DELETE' scope for Connect apps.\n"
+					},
+					"response": []
+				}
+			],
+			"description": "APIs related to integrating builds data with Jira Software. These APIs\nare available to Atlassian Connect apps. To use these APIs you must\nhave the Build module see https://developer.atlassian.com/cloud/jira/software/modules/build/\nin your app's descriptor. They are also related to integrating Jira\nSoftware Cloud with on-premises tools using\nOAuth 2.0 credentials, see https://developer.atlassian.com/cloud/jira/software/integrate-jsw-cloud-with-onpremises-tools/.\n"
+		},
+		{
+			"name": "Remote Links",
+			"item": [
+				{
+					"name": "Submit Remote Link data",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/remotelinks/1.0/bulk",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"remotelinks",
+								"1.0",
+								"bulk"
+							]
+						},
+						"description": "Update / insert Remote Link data.\n\nRemote Links are identified by their ID, existing Remote Link data for the same ID will be replaced if it\nexists and the updateSequenceId of existing data is less than the incoming data.\n\nSubmissions are performed asynchronously. Submitted data will eventually be available in Jira; most updates are\navailable within a short period of time, but may take some time during peak load and/or maintenance times.\nThe `getRemoteLinkById` operation can be used to confirm that data has been stored successfully (if needed).\n\nIn the case of multiple Remote Links being submitted in one request, each is validated individually prior to\nsubmission. Details of which Remote LInk failed submission (if any) are available in the response object.\n\nOnly Connect apps that define the `jiraRemoteLinkInfoProvider` module can access this resource. This resource\nrequires the 'WRITE' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Remote Links by Property",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/remotelinks/1.0/bulkByProperties",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"remotelinks",
+								"1.0",
+								"bulkByProperties"
+							],
+							"query": [
+								{
+									"key": "_updateSequenceNumber",
+									"value": "{{_updateSequenceNumber}}",
+									"description": "This parameter usage is no longer supported.\n\nAn optional `_updateSequenceNumber` to use to control deletion.\n\nOnly stored data with an `updateSequenceNumber` less than or equal to that provided will be deleted.\nThis can be used help ensure submit/delete requests are applied correctly if issued close together.\n\nIf not provided, all stored data that matches the request will be deleted.\n",
+									"disabled": true
+								},
+								{
+									"key": "params",
+									"value": "{{params}}",
+									"description": "Free-form query parameters to specify which properties to delete by. Properties refer to the arbitrary\ninformation the provider tagged Remote Links with previously.\n\nFor example, if the provider previously tagged a remote link with accountId:\n  \"properties\": {\n    \"accountId\": \"account-123\"\n  }\n\nAnd now they want to delete Remote Links in bulk by that specific accountId as follows:\ne.g. DELETE /bulkByProperties?accountId=account-123\n",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Bulk delete all Remote Links data that match the given request.\n\nOne or more query params must be supplied to specify Properties to delete by.\nOptional param `_updateSequenceNumber` is no longer supported. If more than one Property is provided,\ndata will be deleted that matches ALL of the Properties (e.g. treated as an AND).\n\nSee the documentation for the `submitRemoteLinks` operation for more details.\n\ne.g. DELETE /bulkByProperties?accountId=account-123&repoId=repo-345\n\nDeletion is performed asynchronously. The `getRemoteLinkById` operation can be used to confirm that data has been\ndeleted successfully (if needed).\n\nOnly Connect apps that define the `jiraRemoteLinkInfoProvider` module, and on-premise integrations, can access this resource.\nThis resource requires the 'DELETE' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Get a Remote Link by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/remotelinks/1.0/remotelink/:remoteLinkId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"remotelinks",
+								"1.0",
+								"remotelink",
+								":remoteLinkId"
+							],
+							"variable": [
+								{
+									"key": "remoteLinkId",
+									"value": "{{remoteLinkId}}",
+									"description": "The ID of the Remote Link to fetch.\n"
+								}
+							]
+						},
+						"description": "Retrieve the currently stored Remote Link data for the given ID.\n\nThe result will be what is currently stored, ignoring any pending updates or deletes.\n\nOnly Connect apps that define the `jiraRemoteLinkInfoProvider` module, and on-premise integrations, can access this resource.\nThis resource requires the 'READ' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete a Remote Link by ID",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/remotelinks/1.0/remotelink/:remoteLinkId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"remotelinks",
+								"1.0",
+								"remotelink",
+								":remoteLinkId"
+							],
+							"query": [
+								{
+									"key": "_updateSequenceNumber",
+									"value": "{{_updateSequenceNumber}}",
+									"description": "This parameter usage is no longer supported.\n\nAn optional `_updateSequenceNumber` to use to control deletion.\n\nOnly stored data with an `updateSequenceNumber` less than or equal to that provided will be deleted.\nThis can be used help ensure submit/delete requests are applied correctly if issued close together.\n",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "remoteLinkId",
+									"value": "{{remoteLinkId}}",
+									"description": "The ID of the Remote Link to fetch.\n"
+								}
+							]
+						},
+						"description": "Delete the Remote Link data currently stored for the given ID.\n\nDeletion is performed asynchronously. The `getRemoteLinkById` operation can be used to confirm that data has been\ndeleted successfully (if needed).\n\nOnly Connect apps that define the `jiraRemoteLinkInfoProvider` module, and on-premise integrations, can access this resource.\nThis resource requires the 'DELETE' scope for Connect apps.\n"
+					},
+					"response": []
+				}
+			],
+			"description": "APIs related to integrating Remote Links data with Jira Software. These APIs are available to Atlassian Connect\napps. To use these APIs you must have the Remote Link module in your app's descriptor. Read more about Jira Software modules [here](https://developer.atlassian.com/cloud/jira/software/about-jira-modules/).\n\n# Module\n\nThe Remote Link module allows third-party providers to add a generic link through a public REST API and associate it with Jira issues or services.\n\nSupplied remote link information will be presented in the right sidebar of the new Jira issue view under Releases.\n\nThis module also provides actions, which allows users to perform an action on the remote link.\n\nNote that the module key and name are not private and should therefore not contain any sensitive or personally identifiable information.\n\n## Example Module\n\nAn example can also be found at [jira-data-provider-sample-addon](https://bitbucket.org/atlassianlabs/jira-data-provider-sample-addon/src/master/), which has an `atlassian-connect.json`.\n\n```\n{\n  \"modules\": {\n    \"jiraRemoteLinkInfoProvider\": {\n      \"homeUrl\": \"https://my-remotelink-provider.com\",\n      \"logoUrl\": \"https://my-remotelink-provider.com/images/logo.svg\",\n      \"documentationUrl\": \"https://my-remotelink-provider.com/docs/jira-integration\",\n      \"actions\": [\n        {\n          \"actionId\": \"action-1\",\n          \"actionLabel\": {\n            \"value\": {\n              \"value\": \"Acknowledge\"\n            }\n          },\n          \"templateUrl\": \"https://my-remotelink-provider.com/ack/{ack-id}\"\n        }\n      ],\n      \"name\": {\n        \"value\": \"My Remote Link Provider\"\n      },\n      \"key\": \"remotelink-integration\"\n    }\n  }\n}\n```\n\n### Properties\n\n| Property         | type          | Description                                                                                                                                     | Required |\n|------------------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------|----------|\n| key              | string        | A key to identify this module.  Must match `^[a-zA-Z0-9-]+$` pattern, with a max length of 100                                                  | Yes      |\n| name             | object (i18N) | A human readable name. This object supports  [internationalization](https://developer.atlassian.com/cloud/jira/software/internationalization/). | Yes      |\n| homeUrl          | string        | URL to the provider’s homepage                                                                                                                  | Yes      |\n| logoUrl          | string        | Optional URL to the provider’s logo, which will be displayed in the UI                                                                          |          |\n| documentationUrl | string        | Optional URL to documentation about the provider’s Jira integration                                                                             |          |\n| actions          | object        | Optional actions that can be performed by Jira users on the remote link\n\n### Actions object\n\n| Property    | type   | Description                                                                                                                                                                                                                                  | Required |\n|-------------|--------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|\n| actionId    | string | A key to identify a specific action. Used for associating a specific Remote link to an action of this ID.   The actionId of an action must be unique across all actions.                                                                     | Yes      |\n| actionLabel | object | The actionLabel of an Action is shown visibly to the User alongside the Remote Link.                                                                                                                                                         | Yes      |\n| templateUrl | string | The templateUrl of an Action is a template where strings can be substituted into the URL for a specific Remote Link.   Strings used in the templateUrl must be passed in via an attribute map when associating an action with a remote link. | Yes      |\n\n### ActionLabel Object\n\n| Property | type          | Description                                                                                                                                         | Required |\n|----------|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|----------|\n| value    | object (i18n) | The label shown on the UI. This object supports  [internationalization](https://developer.atlassian.com/cloud/jira/software/internationalization/). | Yes      |\n"
+		},
+		{
+			"name": "Security Information",
+			"item": [
+				{
+					"name": "Submit Security Workspaces to link",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/security/1.0/linkedWorkspaces/bulk",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"security",
+								"1.0",
+								"linkedWorkspaces",
+								"bulk"
+							]
+						},
+						"description": "Insert Security Workspace IDs to establish a relationship between them and the Jira site the app is installed on. If a relationship between the workspace ID and Jira already exists then the workspace ID will be ignored and Jira will process the rest of the entries.\n\nOnly Connect apps that define the `jiraSecurityInfoProvider` module can access this resource.\nThis resource requires the 'WRITE' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete linked Security Workspaces",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/security/1.0/linkedWorkspaces/bulk",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"security",
+								"1.0",
+								"linkedWorkspaces",
+								"bulk"
+							]
+						},
+						"description": "Bulk delete all linked Security Workspaces that match the given request.\n\nOnly Connect apps that define the `jiraSecurityInfoProvider` module can access this resource.\nThis resource requires the 'DELETE' scope for Connect apps.\n\ne.g. DELETE /bulk?workspaceIds=111-222-333,444-555-666\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Get linked Security Workspaces",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/security/1.0/linkedWorkspaces",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"security",
+								"1.0",
+								"linkedWorkspaces"
+							]
+						},
+						"description": "Retrieve all Security Workspaces linked with the Jira site.\n\nThe result will be what is currently stored, ignoring any pending updates or deletes.\n\nOnly Connect apps that define the `jiraSecurityInfoProvider` module can access this resource.\nThis resource requires the 'READ' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Get a linked Security Workspace by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/security/1.0/linkedWorkspaces/:workspaceId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"security",
+								"1.0",
+								"linkedWorkspaces",
+								":workspaceId"
+							],
+							"variable": [
+								{
+									"key": "workspaceId",
+									"value": "{{workspaceId}}",
+									"description": "The ID of the workspace to fetch.\n"
+								}
+							]
+						},
+						"description": "Retrieve a specific Security Workspace linked to the Jira site for the given workspace ID.\n\nThe result will be what is currently stored, ignoring any pending updates or deletes.\n\nOnly Connect apps that define the `jiraSecurityInfoProvider` module can access this resource.\nThis resource requires the 'READ' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Submit Vulnerability data",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/security/1.0/bulk",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"security",
+								"1.0",
+								"bulk"
+							]
+						},
+						"description": "Update / Insert Vulnerability data.\n\nVulnerabilities are identified by their ID, any existing Vulnerability data with the same ID will be replaced if it exists and the updateSequenceNumber of the existing data is less than the incoming data.\n\nSubmissions are performed asynchronously. Most updates are available within a short period of time but may take some time during peak load and/or maintenance times. The GET vulnerability endpoint can be used to confirm that data has been stored successfully (if needed).\n\nIn the case of multiple Vulnerabilities being submitted in one request, each is validated individually prior to submission. Details of Vulnerabilities that failed submission (if any) are available in the response object.\n\nA maximum of 1000 vulnerabilities can be submitted in one request.\n\nOnly Connect apps that define the `jiraSecurityInfoProvider` module can access this resource.\nThis resource requires the 'WRITE' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Vulnerabilities by Property",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/security/1.0/bulkByProperties",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"security",
+								"1.0",
+								"bulkByProperties"
+							]
+						},
+						"description": "Bulk delete all Vulnerabilities that match the given request.\n\nOne or more query params must be supplied to specify Properties to delete by.\nIf more than one Property is provided, data will be deleted that matches ALL of the Properties (e.g. treated as an AND).\nRead the POST bulk endpoint documentation for more details.\n\ne.g. DELETE /bulkByProperties?accountId=account-123&createdBy=user-456\n\nDeletion is performed asynchronously. The GET vulnerability endpoint can be used to confirm that data has been deleted successfully (if needed).\n\nOnly Connect apps that define the `jiraSecurityInfoProvider` module can access this resource.\nThis resource requires the 'DELETE' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Get a Vulnerability by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/security/1.0/vulnerability/:vulnerabilityId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"security",
+								"1.0",
+								"vulnerability",
+								":vulnerabilityId"
+							],
+							"variable": [
+								{
+									"key": "vulnerabilityId",
+									"value": "{{vulnerabilityId}}",
+									"description": "The ID of the Vulnerability to fetch.\n"
+								}
+							]
+						},
+						"description": "Retrieve the currently stored Vulnerability data for the given ID.\n\nThe result will be what is currently stored, ignoring any pending updates or deletes.\n\nOnly Connect apps that define the `jiraSecurityInfoProvider` module can access this resource.\nThis resource requires the 'READ' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete a Vulnerability by ID",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/security/1.0/vulnerability/:vulnerabilityId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"security",
+								"1.0",
+								"vulnerability",
+								":vulnerabilityId"
+							],
+							"variable": [
+								{
+									"key": "vulnerabilityId",
+									"value": "{{vulnerabilityId}}",
+									"description": "The ID of the Vulnerability to delete.\n"
+								}
+							]
+						},
+						"description": "Delete the Vulnerability data currently stored for the given ID.\n\nDeletion is performed asynchronously. The GET vulnerability endpoint can be used to confirm that data has been deleted successfully (if needed).\n\nOnly Connect apps that define the `jiraSecurityInfoProvider` module can access this resource.\nThis resource requires the 'DELETE' scope for Connect apps.\n"
+					},
+					"response": []
+				}
+			],
+			"description": "Send security information to Jira Software and enable your teams to turn unplanned vulnerabilities into planned and tracked work.\n\nSecurity is everyone's responsibility, and the security feature in Jira lets you triage and track relevant vulnerabilities as a team. Discuss and prioritise issues, minimise errors and duplication, and plan security work to complete in your sprints.\n\nAPIs related to integrating Security information with Jira Software are available to Atlassian Connect apps. To use these APIs you must have the Security module in your app's descriptor. Read more about Jira Software modules [here](https://developer.atlassian.com/cloud/jira/software/about-jira-modules/).\n"
+		},
+		{
+			"name": "Operations",
+			"item": [
+				{
+					"name": "Submit Operations Workspace Ids",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/operations/1.0/linkedWorkspaces/bulk",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"operations",
+								"1.0",
+								"linkedWorkspaces",
+								"bulk"
+							]
+						},
+						"description": "Insert Operations Workspace IDs to establish a relationship between them and the Jira site the app is installed in. If a relationship between the Workspace ID and Jira already exists then the workspace ID will be ignored and Jira will process the rest of the entries.\n\nOnly Connect apps that define the `jiraOperationsInfoProvider` module can access this resource.\nThis resource requires the 'WRITE' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Operations Workpaces by Id",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/operations/1.0/linkedWorkspaces/bulk",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"operations",
+								"1.0",
+								"linkedWorkspaces",
+								"bulk"
+							]
+						},
+						"description": "Bulk delete all Operations Workspaces that match the given request.\n\nOnly Connect apps that define the `jiraOperationsInfoProvider` module can access this resource.\nThis resource requires the 'DELETE' scope for Connect apps.\n\ne.g. DELETE /bulk?workspaceIds=111-222-333,444-555-666\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Get all Operations Workspace IDs or a specific Operations Workspace by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/operations/1.0/linkedWorkspaces",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"operations",
+								"1.0",
+								"linkedWorkspaces"
+							]
+						},
+						"description": "Retrieve the either all Operations Workspace IDs associated with the Jira site or a specific Operations Workspace ID for the given ID.\n\nThe result will be what is currently stored, ignoring any pending updates or deletes.\n\ne.g. GET /workspace?workspaceId=111-222-333\n\nOnly Connect apps that define the `jiraOperationsInfoProvider` module can access this resource.\nThis resource requires the 'READ' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Submit Incident or Review data",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/operations/1.0/bulk",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"operations",
+								"1.0",
+								"bulk"
+							]
+						},
+						"description": "Update / insert Incident or Review data.\n\nIncidents and reviews are identified by their ID, and existing Incident and Review data for the same ID will be replaced if it exists and the updateSequenceNumber of existing data is less than the incoming data.\n\nSubmissions are performed asynchronously. Submitted data will eventually be available in Jira; most updates are available within a short period of time, but may take some time during peak load and/or maintenance times. The getIncidentById or getReviewById operation can be used to confirm that data has been stored successfully (if needed).\n\nIn the case of multiple Incidents and Reviews being submitted in one request, each is validated individually prior to submission. Details of which entities failed submission (if any) are available in the response object.\n\nA maximum of 1000 incidents can be submitted in one request.\n\nOnly Connect apps that define the `jiraOperationsInfoProvider` module can access this resource.\nThis resource requires the 'WRITE' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Incidents or Review by Property",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/operations/1.0/bulkByProperties",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"operations",
+								"1.0",
+								"bulkByProperties"
+							]
+						},
+						"description": "Bulk delete all Entties that match the given request.\n\nOne or more query params must be supplied to specify Properties to delete by.\nIf more than one Property is provided, data will be deleted that matches ALL of the Properties (e.g. treated as an AND).\nSee the documentation for the submitEntity operation for more details.\n\ne.g. DELETE /bulkByProperties?accountId=account-123&createdBy=user-456\n\nDeletion is performed asynchronously. The getIncidentById operation can be used to confirm that data has been deleted successfully (if needed).\n\nOnly Connect apps that define the `jiraOperationsInfoProvider` module can access this resource.\nThis resource requires the 'DELETE' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Get a Incident by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/operations/1.0/incidents/:incidentId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"operations",
+								"1.0",
+								"incidents",
+								":incidentId"
+							],
+							"variable": [
+								{
+									"key": "incidentId",
+									"value": "{{incidentId}}",
+									"description": "The ID of the Incident to fetch.\n"
+								}
+							]
+						},
+						"description": "Retrieve the currently stored Incident data for the given ID.\n\nThe result will be what is currently stored, ignoring any pending updates or deletes.\n\nOnly Connect apps that define the `jiraOperationsInfoProvider` module can access this resource.\nThis resource requires the 'READ' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete a Incident by ID",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/operations/1.0/incidents/:incidentId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"operations",
+								"1.0",
+								"incidents",
+								":incidentId"
+							],
+							"variable": [
+								{
+									"key": "incidentId",
+									"value": "{{incidentId}}",
+									"description": "The ID of the Incident to delete.\n"
+								}
+							]
+						},
+						"description": "Delete the Incident data currently stored for the given ID.\n\nDeletion is performed asynchronously. The getIncidentById operation can be used to confirm that data has been deleted successfully (if needed).\n\nOnly Connect apps that define the `jiraOperationsInfoProvider` module can access this resource.\nThis resource requires the 'DELETE' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Get a Review by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/operations/1.0/post-incident-reviews/:reviewId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"operations",
+								"1.0",
+								"post-incident-reviews",
+								":reviewId"
+							],
+							"variable": [
+								{
+									"key": "reviewId",
+									"value": "{{reviewId}}",
+									"description": "The ID of the Review to fetch.\n"
+								}
+							]
+						},
+						"description": "Retrieve the currently stored Review data for the given ID.\n\nThe result will be what is currently stored, ignoring any pending updates or deletes.\n\nOnly Connect apps that define the `jiraOperationsInfoProvider` module can access this resource.\nThis resource requires the 'READ' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete a Review by ID",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/operations/1.0/post-incident-reviews/:reviewId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"operations",
+								"1.0",
+								"post-incident-reviews",
+								":reviewId"
+							],
+							"variable": [
+								{
+									"key": "reviewId",
+									"value": "{{reviewId}}",
+									"description": "The ID of the Review to delete.\n"
+								}
+							]
+						},
+						"description": "Delete the Review data currently stored for the given ID.\n\nDeletion is performed asynchronously. The getReviewById operation can be used to confirm that data has been deleted successfully (if needed).\n\nOnly Connect apps that define the `jiraOperationsInfoProvider` module can access this resource.\nThis resource requires the 'DELETE' scope for Connect apps.\n"
+					},
+					"response": []
+				}
+			],
+			"description": "APIs related to integrating Incident and Post-Incident Review (PIR) data with Jira Software. These APIs are available to Atlassian Connect\napps. To use these APIs you must have the Operations module in your app's descriptor. Read more about Jira Software modules [here](https://developer.atlassian.com/cloud/jira/software/about-jira-modules/).\n\n# Module\n\nThe Operations module allows third-party providers to add incident and PIR information through a public REST API.\n\nSupplied incident information will be presented in the Incidents page in Jira Software, and as a link to any issues created via the Incidents Page.\n\nThis module also provides actions, one which allows Jira to provide a direct link to the operations provider where the user can create a post-incident review and two which allow Jira to search for relevant workspaces and devops components.\n\nNote that the module key and name are not private and therefore should not contain any sensitive or personally identifiable information.\n\n## Example Module\n\nAn example can also be found at [jira-data-provider-sample-addon](https://bitbucket.org/atlassianlabs/jira-data-provider-sample-addon/src/master/), which has an `atlassian-connect.json`.\n\n```\n{\n  \"modules\": {\n    \"jiraOperationsInfoProvider\": {\n      \"homeUrl\": \"https://my-operations-provider.com\",\n      \"logoUrl\": \"https://my-operations-provider.com/images/logo.svg\",\n      \"documentationUrl\": \"https://my-operations-provider.com/docs/jira-integration\",\n      \"actions\": {\n          \"fetchWorkspaces\": {\n              \"templateUrl\": \"/workspaces/list\"\n          },\n          \"searchContainers\": {\n              \"templateUrl\": \"/containers/search\"\n          },\n          \"createPostIncidentReview\": {\n              \"url\": \"https://my-operations-provider.com/my-workspace/create-post-incident-review?affected-component={component-id}&incident={incident-id}\n          }\n      },\n      \"name\": {\n        \"value\": \"My Operations Provider\"\n      },\n      \"key\": \"operations-integration\"\n    }\n  }\n}\n```\n\n### Properties\n\n| Property         | type          | Description                                                                                                                                     | Required |\n|------------------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------|----------|\n| key              | string        | A key to identify this module.  Must match `^[a-zA-Z0-9-]+$` pattern, with a max length of 100                                                  | Yes      |\n| name             | object (i18N) | A human readable name. This object supports  [internationalization](https://developer.atlassian.com/cloud/jira/software/internationalization/). | Yes      |\n| homeUrl          | string        | URL to the provider’s homepage                                                                                                                  | Yes      |\n| logoUrl          | string        | Optional URL to the provider’s logo, which will be displayed in the UI                                                                          |          |\n| documentationUrl | string        | Optional URL to documentation about the provider’s Jira integration                                                                             |          |\n| actions          | object        | Actions the can be used by Jira to improve the integrated experience                                                                            | Yes      |\n\n### Actions object\n\n| Property               | type   | Description                                                                                                                                                                                                                                  | Required |\n|------------------------|--------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|\n| fetchWorkspaces | object | An action defined by the provider to allow Jira to retrieve details about operations workspaces via a post endpoint.                                                                                                                                                         | Yes      |\n| searchContainers | object | An action defined by the provider to allow Jira to search using details about devops components via a get endpoint.                                                                                                                                                         | Yes      |\n| createPostIncidentReview | object | An action defined by the provider to allow Jira to create a new Post-Incident Review object via a post endpoint.                                                                                                                                                         |       |\n"
+		},
+		{
+			"name": "DevOps Components",
+			"item": [
+				{
+					"name": "Submit DevOps Components",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/devopscomponents/1.0/bulk",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"devopscomponents",
+								"1.0",
+								"bulk"
+							]
+						},
+						"description": "Update / insert DevOps Component data.\n\nComponents are identified by their ID, and existing Component data for the same ID will be replaced if it exists and the updateSequenceNumber of existing data is less than the incoming data.\n\nSubmissions are performed asynchronously. Submitted data will eventually be available in Jira; most updates are available within a short period of time, but may take some time during peak load and/or maintenance times. The getComponentById operation can be used to confirm that data has been stored successfully (if needed).\n\nIn the case of multiple Components being submitted in one request, each is validated individually prior to submission. Details of which Components failed submission (if any) are available in the response object.\n\nA maximum of 1000 components can be submitted in one request.\n\nOnly Connect apps that define the `jiraDevOpsComponentProvider` module can access this resource.\nThis resource requires the 'WRITE' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete DevOps Components by Property",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/devopscomponents/1.0/bulkByProperties",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"devopscomponents",
+								"1.0",
+								"bulkByProperties"
+							]
+						},
+						"description": "Bulk delete all Components that match the given request.\n\nOne or more query params must be supplied to specify Properties to delete by.\nIf more than one Property is provided, data will be deleted that matches ALL of the Properties (e.g. treated as an AND).\nSee the documentation for the submitComponents operation for more details.\n\ne.g. DELETE /bulkByProperties?accountId=account-123&createdBy=user-456\n\nDeletion is performed asynchronously. The getComponentById operation can be used to confirm that data has been deleted successfully (if needed).\n\nOnly Connect apps that define the `jiraDevOpsComponentProvider` module can access this resource.\nThis resource requires the 'DELETE' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Get a Component by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/devopscomponents/1.0/:componentId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"devopscomponents",
+								"1.0",
+								":componentId"
+							],
+							"variable": [
+								{
+									"key": "componentId",
+									"value": "{{componentId}}",
+									"description": "The ID of the Component to fetch.\n"
+								}
+							]
+						},
+						"description": "Retrieve the currently stored Component data for the given ID.\n\nThe result will be what is currently stored, ignoring any pending updates or deletes.\n\nOnly Connect apps that define the `jiraDevOpsComponentProvider` module can access this resource.\nThis resource requires the 'READ' scope for Connect apps.\n"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete a Component by ID",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "https://{{domain}}.atlassian.net/rest/devopscomponents/1.0/:componentId",
+							"protocol": "https",
+							"host": [
+								"{{domain}}",
+								"atlassian",
+								"net"
+							],
+							"path": [
+								"rest",
+								"devopscomponents",
+								"1.0",
+								":componentId"
+							],
+							"variable": [
+								{
+									"key": "componentId",
+									"value": "{{componentId}}",
+									"description": "The ID of the Component to delete.\n"
+								}
+							]
+						},
+						"description": "Delete the Component data currently stored for the given ID.\n\nDeletion is performed asynchronously. The getComponentById operation can be used to confirm that data has been deleted successfully (if needed).\n\nOnly Connect apps that define the `jiraDevOpsComponentProvider` module can access this resource.\nThis resource requires the 'DELETE' scope for Connect apps.\n"
+					},
+					"response": []
+				}
+			],
+			"description": "APIs related to integrating Dev Ops Components affected by Incident data with Jira Software. These APIs are available to Atlassian Connect\napps. To use these APIs you must have the DevOps Component module in your app's descriptor. Read more about Jira Software modules [here](https://developer.atlassian.com/cloud/jira/software/about-jira-modules/).\n\n# Module\nThe DevOps Component module allows third-party providers to add devops components through a public REST API.\n\nSupplied devops components information will be used by the Connection Manager tab in Jira to allow users to associate devops components with Jira projects. All incident and PIR information related to that devops component will be presented in the Incidents page in Jira Software, and as a link to any issues created via the Incidents Page.\n\nThis module also provides actions, two will be used by Jira to let the provider know when the devops component has been associated or disassociated with a Jira project, and two can be used by the Provider to associate a devops component with a Jira Issue.\n\nNote that the module key and name are not private and therefore should not contain any sensitive or personally identifiable information.\n\n## Example Module\n\nAn example can also be found at [jira-data-provider-sample-addon](https://bitbucket.org/atlassianlabs/jira-data-provider-sample-addon/src/master/), which has an `atlassian-connect.json`.\n\n```\n{\n  \"modules\": {\n    \"jiraDevOpsComponentProvider\": {\n      \"homeUrl\": \"https://my-operations-provider.com\",\n      \"logoUrl\": \"https://my-operations-provider.com/images/logo.svg\",\n      \"documentationUrl\": \"https://my-operations-provider.com/docs/jira-integration\",\n      \"actions\": {\n        \"associateEntity\": {\n            \"templateUrl\": \"/components/associate\"\n        },\n        \"disassociateEntity\": {\n            \"templateUrl\": \"/components/disassociate\"\n        },\n        \"onEntityAssociated\": {\n            \"templateUrl\": \"/components/associate\"\n        },\n        \"onEntityDisassociated\": {\n            \"templateUrl\": \"/components/disassociate\"\n        }\n      },\n      \"name\": {\n        \"value\": \"My DevOps Component Provider\"\n      },\n      \"key\": \"devops-component-integration\"\n    }\n  }\n}\n```\n\n### Properties\n\n| Property         | type          | Description                                                                                                                                     | Required |\n|------------------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------|----------|\n| key              | string        | A key to identify this module.  Must match `^[a-zA-Z0-9-]+$` pattern, with a max length of 100                                                  | Yes      |\n| name             | object (i18N) | A human readable name. This object supports  [internationalization](https://developer.atlassian.com/cloud/jira/software/internationalization/). | Yes      |\n| homeUrl          | string        | URL to the provider’s homepage                                                                                                                  | Yes      |\n| logoUrl          | string        | Optional URL to the provider’s logo, which will be displayed in the UI                                                                          |          |\n| documentationUrl | string        | Optional URL to documentation about the provider’s Jira integration                                                                             |          |\n| actions          | object        | Actions the can be used by Jira to improve the integrated experience                                                                            | Yes      |\n\n### Actions object\n\n| Property               | type   | Description                                                                                                                                                                                                                                  | Required |\n|------------------------|--------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|\n| associateEntity | object | An action defined by the provider to allow Jira to retrieve details about operations workspaces via a post endpoint.                                                                                                                                                         | Yes      |\n| disassociateEntity | object | An action defined by the provider to allow Jira to search using details about operations workspaces via a get endpoint.                                                                                                                                                         | Yes      |\n| onEntityAssociated | object | An action defined by the provider to allow Jira to create a new operations container via a post endpoint.                                                                                                                                                         |          |\n| onEntityDisassociated | object | An action defined by the provider to allow Jira to create a new Post-Incident Review object via a post endpoint.                                                                                                                                                         |       |\n"
+		},
+		{
+			"name": "Use Cases",
+			"item": [
+				{
+					"name": "Bulk Add All Issues to an Epic",
+					"item": [
+						{
+							"name": "Get issues without epic for board",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const response = pm.response.json();",
+											"const issues = response.issues.map(x => x.id);",
+											"pm.collectionVariables.set(\"issue_ids\", issues);"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/board/:boardId/epic/none/issue",
+									"protocol": "https",
+									"host": [
+										"{{domain}}",
+										"atlassian",
+										"net"
+									],
+									"path": [
+										"rest",
+										"agile",
+										"1.0",
+										"board",
+										":boardId",
+										"epic",
+										"none",
+										"issue"
+									],
+									"query": [
+										{
+											"key": "startAt",
+											"value": "{{startAt}}",
+											"description": "The starting index of the returned issues. Base index: 0. See the 'Pagination' section at the top of this page for more details.",
+											"disabled": true
+										},
+										{
+											"key": "maxResults",
+											"value": "{{maxResults}}",
+											"description": "The maximum number of issues to return per page. See the 'Pagination' section at the top of this page for more details. Note, the total number of issues returned is limited by the property 'jira.search.views.default.max' in your Jira instance. If you exceed this limit, your results will be truncated.",
+											"disabled": true
+										},
+										{
+											"key": "jql",
+											"value": "{{jql}}",
+											"description": "Filters results using a JQL query. If you define an order in your JQL query, it will override the default order of the returned issues.  \nNote that `username` and `userkey` can't be used as search terms for this parameter due to privacy reasons. Use `accountId` instead.",
+											"disabled": true
+										},
+										{
+											"key": "validateQuery",
+											"value": "{{validateQuery}}",
+											"description": "Specifies whether to validate the JQL query or not. Default: true.",
+											"disabled": true
+										},
+										{
+											"key": "fields",
+											"value": "{{fields}}",
+											"description": "The list of fields to return for each issue. By default, all navigable and Agile fields are returned.",
+											"disabled": true
+										},
+										{
+											"key": "expand",
+											"value": "{{expand}}",
+											"description": "A comma-separated list of the parameters to expand.",
+											"disabled": true
+										}
+									],
+									"variable": [
+										{
+											"key": "boardId",
+											"value": "{{board_id}}",
+											"description": "The ID of the board that contains the requested issues."
+										}
+									]
+								},
+								"description": "Returns all issues that do not belong to any epic on a board, for a given board ID. This only includes issues that the user has permission to view. Issues returned from this resource include Agile fields, like sprint, closedSprints, flagged, and epic. By default, the returned issues are ordered by rank."
+							},
+							"response": []
+						},
+						{
+							"name": "Move issues to epic",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"issues\": [\n    {{issue_ids}}\n  ]\n}"
+								},
+								"url": {
+									"raw": "https://{{domain}}.atlassian.net/rest/agile/1.0/epic/:epicIdOrKey/issue",
+									"protocol": "https",
+									"host": [
+										"{{domain}}",
+										"atlassian",
+										"net"
+									],
+									"path": [
+										"rest",
+										"agile",
+										"1.0",
+										"epic",
+										":epicIdOrKey",
+										"issue"
+									],
+									"variable": [
+										{
+											"key": "epicIdOrKey",
+											"value": "{{new_epic}}",
+											"description": "The id or key of the epic that you want to assign issues to."
+										}
+									]
+								},
+								"description": "Moves issues to an epic, for a given epic id. Issues can be only in a single epic at the same time. That means that already assigned issues to an epic, will not be assigned to the previous epic anymore. The user needs to have the edit issue permission for all issue they want to move and to the epic. The maximum number of issues that can be moved in one operation is 50. **Note:** This operation does not work for epics in next-gen projects."
+							},
+							"response": []
+						}
+					],
+					"description": "Bulk add all Jira Issues without a parent to an Epic"
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{
+				"key": "password",
+				"value": "{{api_token}}",
+				"type": "string"
+			},
+			{
+				"key": "username",
+				"value": "{{account_email}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "domain",
+			"value": "<your-domain-here>",
+			"type": "string"
+		},
+		{
+			"key": "account_email",
+			"value": "<account-email-here>",
+			"type": "string"
+		},
+		{
+			"key": "api_token",
+			"value": "<your-api-token-here>",
+			"type": "string"
+		},
+		{
+			"key": "issue_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "project_key",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "old_project_key",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "board_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "issue_ids",
+			"value": ""
+		},
+		{
+			"key": "new_epic",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

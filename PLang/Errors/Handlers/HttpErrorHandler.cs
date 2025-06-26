@@ -70,6 +70,12 @@ namespace PLang.Errors.Handlers
 			catch (ObjectDisposedException)
 			{
 				logger.LogWarning($"Object disposed when writing error to response:\n{error}");
+			} catch (Exception ex)
+			{
+				Console.WriteLine(error);
+
+				Console.WriteLine("------------------------- Exception -------------------");
+				Console.WriteLine(ex);
 			}
 
 		}

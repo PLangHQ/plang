@@ -1,0 +1,118 @@
+{
+  "Text": "start window app, 1400x950, call TlDraw",
+  "ModuleType": null,
+  "Reload": false,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nThe user wants to start a windowed application with a specific window size and then call another goal or function named TlDraw.\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"goalName is required. It is one word. Example: call !NameOfGoal, run !Google.Search. Do not use the names in your response unless defined by user\",\"MethodName\":\"RunWindowApp\",\"Parameters\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalName\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"width\",\"DefaultValue\":800,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"height\",\"DefaultValue\":450,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"iconPath\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"windowTitle\",\"DefaultValue\":\"plang\",\"IsRequired\":false}]}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalName\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal\",\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "start window app, 1400x950, call TlDraw"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to start a windowed application with a specific size (1400x950) and then call the goal named TlDraw. The RunWindowApp function matches this intent as it allows specifying the window size and the goal to call.\",\n  \"Name\": \"RunWindowApp\",\n  \"Parameters\": [\n    {\n      \"Type\": \"PLang.Models.GoalToCallInfo\",\n      \"Name\": \"goalName\",\n      \"Value\": {\n        \"Name\": \"TlDraw\",\n        \"Parameters\": {}\n      }\n    },\n    {\n      \"Type\": \"System.Int32\",\n      \"Name\": \"width\",\n      \"Value\": 1400\n    },\n    {\n      \"Type\": \"System.Int32\",\n      \"Name\": \"height\",\n      \"Value\": 950\n    }\n  ]\n}"
+    }
+  ],
+  "Properties": {
+    "Parameters": {
+      "goalName": [
+        {
+          "Name": "Name",
+          "FullTypeName": "System.String"
+        },
+        {
+          "Name": "Parameters",
+          "FullTypeName": "System.Collections.Generic.Dictionary`2[[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Object, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
+        }
+      ],
+      "width": [
+        {
+          "Name": "width",
+          "FullTypeName": "System.Int32"
+        }
+      ],
+      "height": [
+        {
+          "Name": "height",
+          "FullTypeName": "System.Int32"
+        }
+      ],
+      "iconPath": [
+        {
+          "Name": "iconPath",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "windowTitle": [
+        {
+          "Name": "windowTitle",
+          "FullTypeName": "System.String"
+        }
+      ]
+    },
+    "ReturnValues": {}
+  },
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to start a windowed application with a specific size (1400x950) and then call the goal named TlDraw. The RunWindowApp function matches this intent as it allows specifying the window size and the goal to call.",
+    "Name": "RunWindowApp",
+    "Parameters": [
+      {
+        "Type": "PLang.Models.GoalToCallInfo",
+        "Name": "goalName",
+        "Value": {
+          "Name": "TlDraw",
+          "Parameters": {}
+        }
+      },
+      {
+        "Type": "System.Int32",
+        "Name": "width",
+        "Value": 1400
+      },
+      {
+        "Type": "System.Int32",
+        "Name": "height",
+        "Value": 950
+      }
+    ],
+    "ReturnValues": null
+  }
+}

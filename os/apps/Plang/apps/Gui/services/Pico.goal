@@ -1,0 +1,16 @@
+Pico
+- %themes% = ["red", "pink", "fuchsia", "purple", "violet", "indigo", "blue", "azure", "cyan", "jade", "green", "lime", "yellow", "amber", "pumpkin", "orange", "sand", "grey", "zinc", "slate" ]
+- if %themeColor% is empty then AskUserForColor, else ChooseColor
+- select * from cssFrameworks where name="pico", return 1 row, %css%
+- replace "{theme}" with %answer% in %css.url%, write to %css.url%
+- download %css.url%, write to "pico.css"
+- copy "pico.css" to "../../../css/pico.css"
+- delete file "pico.css"
+
+AskUserForColor
+- ask user "What theme would you like?", selection: %themes%, write to %answer%
+
+ChooseColor
+- [llm] system: "You job is to select one <theme> from available list according to user selection. <theme>%themes%<theme>"
+        user: "Theme color: %themeColor%"
+        scheme: {answer:string}

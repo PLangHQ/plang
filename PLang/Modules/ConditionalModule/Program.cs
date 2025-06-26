@@ -21,7 +21,7 @@ using static PLang.Modules.ConditionalModule.ConditionEvaluator;
 
 namespace PLang.Modules.ConditionalModule
 {
-	[Description(@"Manages if conditions for the user request. Example 1:'if %isValid% is true then call SomeGoal, else call OtherGoal', this condition would return true if %isValid% is true and call a goals on either conditions. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists.")]
+	[Description(@"Manages if conditions for the user request. Example 1:'if %isValid% is true then call SomeGoal, else call OtherGoal', this condition would return true if %isValid% is true and call a goals on either conditions. Example 2:'if %address% is empty then', this would check if the %address% variable is empty and return true if it is, else false. Use when checking if file or directory exists. Prefer predefined methods over SimpleCondition and CompoundCondition")]
 	public class Program : BaseProgram
 	{
 		private readonly IEngine engine;
@@ -60,7 +60,7 @@ namespace PLang.Modules.ConditionalModule
 			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 		}
 
-		[Description("Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf")]
+		[Description("Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf. IsNot property indicates if the condition is a negation of the specified operator. True for ‘is not’, ‘does not’, etc.")]
 		public async Task<(bool, IError?)> SimpleCondition(SimpleCondition condition, 
 			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
@@ -69,7 +69,7 @@ namespace PLang.Modules.ConditionalModule
 			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 		}
 
-		[Description("Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf")]
+		[Description("Operator: ==|!=|<|>|<=|>=|in|contains|startswith|endswith|indexOf.  IsNot property indicates if the condition is a negation of the specified operator. True for ‘is not’, ‘does not’, etc.")]
 		public async Task<(bool, IError?)> CompoundCondition(CompoundCondition condition, 
 			GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)

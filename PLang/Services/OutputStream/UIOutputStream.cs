@@ -1,11 +1,13 @@
 ﻿using Newtonsoft.Json;
 using PLang.Building.Model;
+using PLang.Errors;
 using PLang.Interfaces;
 using PLang.Runtime;
 using RazorEngineCore;
 using System.IO;
 using System.IO.Abstractions;
 using System.Text;
+using static PLang.Modules.OutputModule.Program;
 using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
@@ -23,6 +25,7 @@ namespace PLang.Services.OutputStream
 		StringBuilder sb;
 		public Action<string>? onFlush { get; set; }
 		public IForm IForm { get; set; }
+		public bool IsStateful => true;
 
 		public string Output => "html";
 
@@ -36,10 +39,10 @@ namespace PLang.Services.OutputStream
 			sb = new StringBuilder();
 		}
 
-		public async Task<string> Ask(string text, string type = "ask", int statusCode = 104, Dictionary<string, object>? parameters = null, Callback? callback = null)
+		public async Task<(string?, IError?)> Ask(string text, string type, int statusCode = 200, Dictionary<string, object?>? parameters = null, Callback? callback = null, List<Option>? options = null)
 		{
-			return "";
-			//throw new NotImplementedException();
+			
+			throw new NotImplementedException();
 		}
 
 		public async Task Execute(string javascriptToCall)

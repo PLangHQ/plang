@@ -17,8 +17,9 @@ namespace PLangTests.Modules.OutputModule
 		[TestMethod]
 		public async Task Ask_Test()
 		{
-			outputStream.Ask(Arg.Any<string>()).Returns("good");
-			var p = new Program(outputStreamFactory, outputSystemStreamFactory, programFactory);
+			throw new Exception("Needs fixing");
+		//	outputStream.Ask(Arg.Any<string>()).Returns(new Task<(string, PLang.Errors.IError)>("good", null));
+			var p = new Program(outputStreamFactory, outputSystemStreamFactory, variableHelper, programFactory);
 			var result = await p.Ask("Hello, how are your?");
 
 			Assert.AreEqual("good", result.Item1);
@@ -27,7 +28,7 @@ namespace PLangTests.Modules.OutputModule
 		[TestMethod]
 		public async Task Write_Test()
 		{			
-			var p = new Program(outputStreamFactory, outputSystemStreamFactory, programFactory);
+			var p = new Program(outputStreamFactory, outputSystemStreamFactory, variableHelper, programFactory);
 			await p.Write("Hello, how are your?");
 
 			await outputStream.Received(1).Write(Arg.Any<object>());

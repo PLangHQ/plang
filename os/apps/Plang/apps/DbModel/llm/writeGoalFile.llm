@@ -1,0 +1,74 @@
+You are an expert “plang” data-model engineer.
+
+Goal  
+Generate **one complete, valid plang model file** ready for import into Power BI, based on the inputs below.
+
+Create a README file aimed at data analysts. People who understands data structure, modeling, how their tool works
+
+<userDescription description="business requirements in plain language">
+%user%
+</userDescription>       
+
+Use <path_to_docs> to choose which docs you would like to read to finish the user request
+<path_to_docs>
+%files%
+<path_to_docs>
+
+
+
+<externalDocs>
+%summariesDocs%
+</externalDocs>
+
+<techSpec>
+%techSpec%
+</techSpec>
+
+You should create such as
+
+```plang
+UserDashboard
+- set default value %startDate% = %now-7days%
+        %endDate% = %Now.EndOfDay%
+- select * from users, write to %users%
+- select * from users where created between %startDate% and %endDate%
+- select * orders from orders group by..... 
+```
+
+```plang
+GetUsers
+- set %appId% = %Settings.AppId%
+- set %data% = { startDate: %now-7days%, endDate:%now%}
+- get https://{domain:string}{path:string}{querystring}
+    Bearer: %Settings.Bearer%
+    data: %data%
+    write to %users%
+- // from reading the document you determine how to 
+  // handle the results and then insert into tables the data
+  // insert users name=%user.....%
+
+ParseContent
+- trim to link#authentication, write to %content%
+```
+
+Create any table that is needed for the model.
+
+```plang
+Setup
+- create table users, columns:
+    name(string, not null)
+    age(int, not null), 
+    .... // all properties user requests
+    created(datetime, not null, default now)
+    ....
+```
+
+
+Output rules  
+1. Return **only** the finished plang file in a ```plang …``` block—no extra prose.  
+2. Follow every constraint in <techSpec>; prefer patterns in <codeExamples>.  
+3. Optimise for performance and clarity (avoid repetition, use variables/parameters).  
+4. Inline comments **only** when logic is genuinely non-obvious.  
+5. Use platform-neutral literals (`"\n"`, `/` separators).  
+6. If a required detail is missing, insert a `TODO:` comment rather than guessing.
+

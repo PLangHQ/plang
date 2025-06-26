@@ -1,7 +1,11 @@
-﻿using PLang.Interfaces;
+﻿using PLang.Errors;
+using PLang.Interfaces;
 using PLang.Services.SigningService;
 using PLang.Utils;
+using System;
 using System.Net.WebSockets;
+using System.Text;
+using static PLang.Modules.OutputModule.Program;
 using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
@@ -14,20 +18,26 @@ namespace PLang.Services.OutputStream
 
 		public WebsocketOutputStream(WebSocket webSocket, IPLangSigningService signingService)
 		{			
-			this.webSocket = webSocket;
+			this.webSocket = webSocket;		
 			this.signingService = signingService;
-			Stream = new MemoryStream();
-			ErrorStream = new MemoryStream();
+		
 		}
 
 		public Stream Stream { get; private set; }
 		public Stream ErrorStream { get; private set; }
 
 		public string Output => "text";
+		public bool IsStateful => false;
 
-		public async Task<string> Ask(string text, string type = "text", int statusCode = 200, Dictionary<string, object>? parameters = null, Callback? callback = null)
+		public async Task<(string?, IError?)> Ask(string text, string type, int statusCode = 200, Dictionary<string, object?>? parameters = null, Callback? callback = null, List<Option>? options = null)
 		{
-			throw new NotImplementedException();
+			using var ms = new MemoryStream();
+			var jsonOutputStream = new JsonOutputStream(ms, Encoding.UTF8, IsStateful);
+			(_, var error) = await jsonOutputStream.Ask(text, type, statusCode, parameters, callback, options);
+			if (error != null) return (null, error);
+
+			await webSocket.SendAsync(ms.ToArray(), WebSocketMessageType.Text, true, CancellationToken.None);
+			return (null, null);
 		}
 
 		public string Read()
@@ -42,11 +52,6 @@ namespace PLang.Services.OutputStream
 			byte[] buffer = System.Text.Encoding.UTF8.GetBytes(obj.ToString()!);
 			await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
 
-		}
-
-		public async Task WriteToBuffer(object? obj, string type = "text", int statusCode = 200)
-		{
-			await Write(obj, type, statusCode);
 		}
 
 		public virtual void Dispose()

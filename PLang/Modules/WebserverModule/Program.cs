@@ -362,9 +362,10 @@ namespace PLang.Modules.WebserverModule
 								var stream = streamFactory.CreateHandler().Stream;
 								if (resp.OutputStream.CanWrite)
 								{
-									stream.Seek(0, SeekOrigin.Begin);
-									stream.CopyTo(resp.OutputStream);
+									//stream.Seek(0, SeekOrigin.Begin);
+									//stream.CopyTo(resp.OutputStream);
 								}
+								await resp.OutputStream.FlushAsync();
 
 							}
 

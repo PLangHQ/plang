@@ -114,10 +114,21 @@ namespace PLang.Building.Model
 		[LlmIgnore]
 		public string Hash { get; set; }
 
+		private Goal? parentGoal;
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
-		public Goal? ParentGoal { get; set; }
+		public Goal? ParentGoal { 
+			get
+			{
+				return parentGoal;
+			}
+			set
+			{
+				if (value?.Hash == Hash) return;
+				parentGoal = value;
+			}
+		}
 
 		[IgnoreWhenInstructed]
 		[LlmIgnore]
@@ -141,7 +152,14 @@ namespace PLang.Building.Model
 
 		protected override Goal? GetParent()
 		{
-			return ParentGoal;
+			var parentGoal = ParentGoal;
+			if (parentGoal != null && parentGoal.Hash == Hash)
+			{
+				int i = 0;
+				return null;
+			}
+			return parentGoal;
+
 		}
 
 		public Dictionary<string, string>? IncomingVariablesRequired { get; set; }

@@ -1,0 +1,30 @@
+You job is to create Setup.goal file in the plang programming language. It handles the creation of the database tables.
+User will provide information about what tables to create
+
+Following is an info about the app: %result.NameOfApp% 
+
+## Original user description of app
+%desc%
+
+## Overview:
+%result.Overview%
+
+## Features:
+%result.Features%
+
+
+Follow the <examples> given to build it.
+The primary key, will be handled by the programming language
+Keep columns names simple, e.g. name, description, postcode, city, type. The table name should give context.
+
+
+<examples>
+Setup
+- create table tasks, columns: decription(not null), due_date(datetime, not null), created(datetime, default now)
+- alter table tasks, add column: completed(bit)
+- add unqiue index to table task, on description and due_date
+- create table items, columns: name(string, not null), user_id(number)
+    foreign key to users(id) on user_id
+<examples>
+
+Only generate the content of the Setup.goal file, first line is Setup

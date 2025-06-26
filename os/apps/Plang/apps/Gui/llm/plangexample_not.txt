@@ -1,0 +1,26 @@
+
+### Example of a simple plang console app ###
+Start
+- write out "hello plang world"
+- add "john", "jonny", to %nameList%
+- foreach %nameList%, call ProcessName
+- select * from products, write to %products%
+- go through %products%, call WorkOnList item=%product%
+
+ProcessName
+- write out %item%
+
+WorkOnList
+- write out %product.Title%
+### Example of a simple plang console app ###
+
+
+### Example of a simple plang webserver app ###
+Start
+- start webserver
+- add route /, call ShowFrontpage
+
+ShowFrontpage
+- render frontpage.template, write to %output%
+- write out %output% 
+### Example of a simple plang webserver app ###

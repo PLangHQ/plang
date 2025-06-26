@@ -1,0 +1,66 @@
+Panel
+- select * from appInfos, write to %appInfos%
+- if %appInfos.count% > 1 then call SelectApp, else call ProcessApp appInfo=%appInfos.first%
+
+SelectApp
+- ask user "Which app are you working on?", 
+    selection: %appInfos.name%, on callback call LoadAppInfo, 
+    answer is required, 
+    write to %appInfo%
+- call goal ProcessApp
+
+ProcessApp
+- if %appInfos.count% == 0 then call CreateApp
+- select * from designs where appInfoId=%appInfo.id% order by updated desc, write to %designs%
+- set %text% = "Welcome to GUI editor"
+- write out json {design:%designs%, text:%text%, designFile:%designs.designFile.first%}
+
+LoadAppInfo
+- select * from appInfos, write to %appInfos%
+
+CreateApp
+- write out "Welcome to the GUI builder. Lets answer few questions before we continue"
+- get db table information "appInfos", write to %appInfosTable%
+/*- read llm/appInfo/prepareAppInfoQuestionsSystem.llm, load vars, write to %system%
+- read %!plang.rootpath%/readme.md, set content "" if not found, write to %readme%
+- [llm] system: %system%
+        user: <table>%appInfosTable%<table>
+                <readme>%readme%<readme>
+        scheme: [{columnName:string, required:bool, explain:string, answer:string|null}]
+        write to %questions%*/
+- select name, description from iconFrameworks, write to %iconFrameworks%
+- select name, description from cssFrameworks, write to %cssFrameworks%   
+- select name, description from fontFamilies, write to %fontFamilies%        
+- call goal AskQuestion
+
+AskQuestion
+- read llm/appInfo/createQuestionAppInfoSystem.llm, load vars, write to %system%
+- [llm] system: %system%
+        user: "Give me next question(s)"
+        model: "gpt-4.1"
+        scheme: {columnNames:string[], question:string}
+        write to %prepQuestions%
+- ask user %prepQuestions.question%, write %answer%
+- read llm/appInfo/formatAnswerSystem.llm, load vars, write %system%
+- [llm] system: %system%
+        user: %answer%
+        model: "gpt-4.1"
+        continue: true
+        scheme: {questions:[{columnName:string, answer:string|null}], hasAnsweredAll:true|false}
+        write to %result%
+- append %result.questions% to list %answers%
+- if %result.hasAnsweredAll% then SaveToDb, else AskQuestion
+
+SaveToDb
+- write to "Save to db: %result%"
+- read llm/insertToDbSystem.llm, load vars, write to %system%
+- [llm] system: %system%
+    user: %answers%
+    scheme: {sql:string}
+- execute sql %sql%
+    on error call FixInsert
+- call goal 
+
+FixInsert
+- write out %!error%
+    

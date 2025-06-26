@@ -1,0 +1,385 @@
+<llm_help> is to explain what code does, It MUST NOT be included in code
+
+### Database (select, insert, update, delete, execute) ###
+<llm_help>standard sql statements<llm_help>
+- select * from users where age > %age%, write to %users%
+- update users set name = %name% where id=%id%
+- delete from users where id=%id%
+- execute select statement %sql%
+- insert into user, name=%fullName%, %email%
+<llm_help>get inserted id and write it into %id%<llm_help>
+- insert into tasks, %description%, %due_date%, is_complete=%isDone%, write to %id% 
+<llm_help>This return 1 row and %name% and %address% variables are available<llm_help>
+- select name, address from users where id=%id%, return 1 row 
+<llm_help>using return 1 row is usefull when aggregating in sql, such as count, avg, etc. This allows the plang code to access %total%<llm_help>
+- select count(*) as total from users, return 1 row
+<llm_help>use begin and end transaction when doing multiple db execution that are grouped together
+    NEVER use begin or end transaction for 1 sql statement<llm_help>
+- begin transaction
+- update users set name = %name% where id=%id%
+- delete from users where id=%id%
+- end transaction
+<llm_help>when LIKE is needed with variable<llm_help>
+- select * from product where title LIKE \%%search%\%, write to %products%
+- select * from product where title LIKE %search%\%, write to %products%
+### Database (select, insert, update, delete, execute) ###
+
+### File handling ###
+- read file.txt, write to %content%
+- write %content% to %filePath%
+- delete %file%
+- wait for %file%, call ProcessFile
+- listen for changed to %folder%, call FolderChanged
+- read file.txt, write to %text%
+- read pdf file.pdf, write to %content% / option params: %password%, %includePageNr%(true), imageHandling(none|base64|filePath), format(md)
+- read excel file.xlsx, write to %rows% / option params: %firstRowHeader(true)%, %sheetName%
+- read csv file.csv, write to %rows% /option params: %firstRowHeader%(true), %encoding%
+- read jsonl file.jsonl, write to %jsonLines% /option params: %loadVariables%(false), %encoding%(utf-8), %newLineSymbol%
+- read all files in /path, write to %files% / read all those files and return list of files(Path, AbsolutePath, Content, FileName, Created, DateTime LastWriteTime, FolderPath)
+- get all file paths in /dirPath, write to %paths% / string[] of of paths.
+### File handling ###
+
+### calling goal ###
+<llm_help>%variables% are global so no need to send as parameter when calling goal unless to change the name for clearer context
+call goal is available as standalone, in if statements and loop/foreach/for/go through statements
+<llm_help>
+- set %name% = "John"
+- call goal ProcessUser user=%item% <llm_help>%name% does not to be sent to ProcessUser, it will be accessable inside ProcessUser since variables are global<llm_help>
+- call goal DoDailyTask
+### calling goal ###
+
+### conditions ###
+<llm_help>
+if condition always calls a goal. Any variable available in goal will be available in goal being called
+<llm_help>
+- if %name% contains "John" (case insentive) then call ProcessName address=%item%
+- if %age% between 18 and 99 then call goal IsAllowed isOver=true, else call goal IsNotAllowed %age%
+- if %list.Count% > 0 then call ListNotEmpty, else call ListIsEmpty
+<llm_help>this will call the goal NameIsEmpty and send a parameter %age% into it. Naming the parameter is not needed if it's the same as variable<llm_help>
+- if %name% is empty then call NameIsEmpty %age% 
+### conditions ###
+
+### for statements ###
+<llm_help>
+for statements can handle empty lists
+for statements always calls a goal
+for statement defines 4 variables(%list%, %item%, %position%, %listCount%) automatically that can be access in the goal that is being called
+<llm_help>
+- foreach %files%, call ProcessFile
+<llm_help>
+it is possible to change the name of those variable to be used in the calling goal, here instead of %item%, the variable will be %product% so in WorkOnList goal we will use %product%
+or when going through those files, the item becomes %file% so in ProcessFile we will use %file%
+<llm_help>
+LoopExample
+- go through %products%, call WorkOnList item=%product%
+- foreach %files%, call ProcessFile item=%file%
+
+WorkOnList
+- write out %product.name%
+
+ProcessFile
+- read %file%, into %content%
+
+### for statements ###
+
+
+
+### http (GET, POST, DELETE, PATCH, PUT) ###
+<llm_help>
+When doing http request to external services, use your knowledge to build the url, when user specific part of url is needed such as api keys, tokens, etc. use %Settings.XXX% where XXX is a nice name for the api.
+<llm_help>
+
+- get http://example.org, write to %content%
+<llm_help> get with caching<llm_help>
+- get http://example.org, write to %content%
+    cache for 10 minutes, key: "example.org"
+- post http://example.org
+    Bearer: %Settings.ApiKey%
+    data: {
+        name: %name%
+    }
+    write to %response%
+- patch http://example.org
+    Bearer: %Settings.ApiKey%
+    data: {
+        age: %age%
+    }
+    write to %response%    
+- download http://example.org/file.jpg to image/file.jpg
+- download http://example.org/file.txt to file.txt, overwrite
+- post https://httpbin.org/post
+    data='test=1'
+    write to %postResponse%
+- post  multipart https://httpbin.org/post
+    data: @file='1px.png', name='1px'
+    write to %postResponse2%
+- put https://httpbin.org/put, write to %putResponse%
+- write out %putResponse%  
+### http ###
+
+### output stream ###
+<llm_help>write out must have some content to write<llm_help>
+- write out "Hello world with %variable%"
+- write out to notification "This is notification %someVariable% to user"
+- write out to error "This is error to user %error%"
+- write out to system "This is system output %message%"
+- write out to system error "This is system error"
+- write out to system notification "This is system notification"
+### output stream ###
+
+### custom c# code ###
+<llm_help>describe the problem that should be solved, be concise<llm_help>
+- [code] extract all "name" from %content%, write to %names%
+- [code] get first name of %name%, write to %firstName%
+- [code] extract all email addresses from %html%, write to %emails%
+### custom c# code ###
+
+### variables ###
+<llm_help>%Now% give DateTime.Now object
+use object and properties, e.g. %user.name% instead of creating new variable unless needed
+NEVER create new %variable% unless needed<llm_help>
+- set %name% = "John Johnsson"
+<llm_help>variables C# objects. You can use Properties and Methods on the objects<llm_help>
+- write out "%name.ToLower()% - %name.Length%"
+<llm_help>string and %variable% can be combined<llm_help>
+- write out "This is %name% and we are at %address.city% and today is %Now.ToString("d")%"
+<llm_help>select statements with 1 row return will load columns into variables, e.g.<llm_help>
+- select name from users where id=%id%, return 1 row
+- write out %name%
+<llm_help>BAD code<llm_help>
+- set %searchName% = %name%
+- select * from users where name=%searchName%, write to %users%
+<llm_help>GOOD code<llm_help>
+- select * from users where name=%name%, write to %users%
+<llm_help>List<llm_help>
+- append %name% to %names% list
+<llm_help> Dictionary <llm_help>
+- append key: name, value: %name% to dict %dict%
+- add [{"name":"Product1", "price":123}, {"name":"Product2", "price":222}] to list, write to %products%
+- add {"name":"Product3", "price":333} to %products%
+- foreach item in %products%, call ShowProduct
+- add 'key1', 'hello' to dictionary, overwrite,  write to %ble%
+- add 'key2', 'plang',  write to %ble%, overwrite
+- add 'key3', 'world',  to %ble%, overwrite
+- go through %ble%, call ShowHello
+- remove 'key3'  from %ble%
+- go through %ble%, call ShowHello
+### variables ###
+
+### Caching ###
+- cache %Now-1year% to 'lastYear'
+- cache 'abc' for 10 minutes, to 'abcKey'
+- get cache 'abcKey', write to %cachedAbcKey%
+### Caching ###
+
+### call goals (method calling) ###
+- call goal Show message=%greetings%, time=%Now%
+<llm_help>when DoCalculation uses already defined variables<llm_help>
+- call goal DoCalculation 
+<llm_help>
+When a goal will take a long time, such as with analyzing text using LLM and the user interface expects quick response, it is possible to run the goal on seperate thread
+<llm_help>
+- call goal LlmAnalyzing, dont wait
+### call goals (method calling) ###
+
+### compression ###
+- compress file.txt to file.zip
+- decompress %file% to %path%
+### compression ###
+
+### encryption / decryption ###
+- encrypt %text%, write to %encryptedText%
+- decrypt %encryptedText%, write to %decryptedText%
+- hash %password%, write to %hashedPassword%
+- hash %password% using bcrypt, write to %hashedPassword%
+- get bearer secret, write to %bearerSecret%
+- create bearer, test@example.org, write to %bearer%, expires in 5 minutes
+- validate bearer token %bearer%, write to %isValidBearer%
+### encryption / decryption ###
+
+### culture ###
+- set culture to is-is
+### culture ###
+
+
+#### Setup.goal (create database structure) ####
+
+Setup
+- create table tasks, columns decription(not null), due_date(datetime, not null), created(datetime, default now)
+- alter table tasks, add column: completed(bit)
+- add unqiue index to table task, on description and due_date
+- create table items, columns: name(string, not null)
+#### Setup.goal (create database structure) ####
+
+#### Error ####
+<llm_help>
+Each step can handle a error that can accure on that step, this is done by using 'on error ...., call HandleSomeError' where the HandleSomeError goal is a goal that handles the error in some way. Maybe just write it out. If error is handled on the step, the goal continues to run the next step unless then goal trhows that error, an %!error% variable is sent to the goal that handles the error.
+
+on error is optional and should only be used when we know how to handle the error
+dont add on error unless must, let the user define the error handling
+<llm_help>
+DoGetRequest
+- get http://example.org, write to %response%
+    on error call HandleError
+- write out "this step will run since HandleError doesnt throw the error"
+
+HandleError
+- write out %!error%
+
+DoGetRequestWithTimeout
+- get http://example.org, write to %response%
+    on error message 'timeout' call HandleTimeoutError
+- write out "this step will run since HandleError doesnt throw the error"
+
+HandleTimeoutError
+- write out "We had a timeout"
+- throw %!error%
+#### Error ####
+
+#### Events ####
+Events
+- before app starts, call PrepareApp
+- before each step, include private goals,call SendDebug, args: --debug
+- before each step, call BeforeStep
+- after each step, call BeforeStep
+- before goal, call DoStuff
+- before goal ends, call DoStuffEnd
+- before app ends, call EndApp
+#### Events ####
+
+
+#### LLM ####
+<llm_help> when scheme contains date, time or datetime, system command should ask to format according to standard, ISO 8601<llm_help>
+- [llm] system: extract user info from user input, make sure date is ISO 8601
+        user: %user%
+        scheme: {name:string, age:number, date:datetime}
+        write to %text%
+- [llm] system: answer the user questions
+        user: How many people live on earth
+        write to %text%
+- [llm] system: structure the data from user
+        user: My address is JohnStreet 34, 234-333 New York
+        scheme: {street:string, addressNumber:number, zip:string, city:string}
+        write to %text%
+- [llm] system: give me sentiment from the user comment
+        user:  %comment%
+        scheme: {sentiment:negative|neutral|positive}
+        write to %result%        
+- [llm] system: analyze this invoice
+        user: image is png,  
+        image: %base64%
+        scheme:{name:string, address:string, phone:string, total_balance:number, total_tax:number, [description:string, qty:number, price:number, total:number]}
+        write to %invoiceInfo%
+- write out %invoiceInfo%
+- [llm] system: You should act a lawyer, specialising in non disclosure contracts.
+        user: give me an overview of what this image is about.
+        image: https://img.examples.com/example.jpg
+        write to %info%
+- write out %info%
+#### LLM ####
+
+#### Messages ####
+Messages
+- get public key for messages, write to %pubKey%
+- write out %pubKey%
+- listen for new message, call NewMessage, write content to %content%, %sender% for sender address
+- send my self message, 'Hi how are you, %Now%'
+- send message to %pubKey%, 'Another message that I will recieve, %now%'
+
+NewMessage
+- write out "%content%, with the Identity: %Identity% from %sender%"
+#### End of Tests\Message\Message.goal ####
+
+#### Messages ####
+
+#### Schedule ####
+<llm_help>
+scheduled tasks, such as every X call Y, should be located in Start goal or be in a goal that is called from Start. 
+<llm_help>
+Schedule
+- sleep for 1 sec
+- every 1 minute, call ItIsCalled
+- every friday at 13, call DoStuff
+- start scheduler <llm_help>MUST be called to start the scheduler<llm_help>
+#### Schedule ####
+
+
+#### Terminal ####
+Terminal
+- when var %outputDelta% changes, call WriteOutputDelta <llm_help>listen for change on the %outputDelta% variable<llm_help>
+- terminal ping google.com, output delta %outputDelta%, write to %output%
+- terminal ping example.org, write %output%
+#### Terminal ####
+
+### Endgoal & ThrowError ###
+- throw error 'Test variable is false'
+<llm_help>end goal is ONLY needed when certain if condition are set. last step in goal is same as end goal<llm_help>
+- if %isTrue% then
+    - end goal 
+<llm_help>allows for ending current goal and the previous one.<llm_help>
+- end goal and previous
+- end goal, and 2 levels up
+#### Endgoal & ThrowError ####
+
+#### Start window app ####
+- start window app, call ShowMainWindow
+- start window app, size 800x900, title: MyApp, call ShowMainWindow
+#### Start window app ####
+
+#### Start webserver app ####
+- start webserver
+- start webserver, port 8080, host: 'myserver.com'
+#### Start webserver app ####
+
+#### Webcrawler ####
+- go to https://quotes.toscrape.com/, dont show browser
+- click href=/login
+<llm_help> Help LLM here by using [Webcrawler], otherwise it thinks it's a variable<llm_help>
+- [Webcrawler] set #username as 'test'
+- set input #password value as '123'
+- submit form
+- find href="/logout", write to %isLoggedIn%
+<llm_help> since isLoggedIn is a list, lets the the first(1) item in the list<llm_help>
+- if %isLoggedIn[1]% = 'Logout' then
+    - write out 'Yes, I am logged in' 
+- click first .tag-item link
+- [Webcrawler] extract all .quote, clear html, write into %quotes%
+- go through %quotes%, call ShowQuote
+#### Webcrawler ####
+
+### User interface ### 
+<llm_help> %variable% are accessable inside when render is called, this is usefull e.g. on select statements, api calls, etc.<llm_help>
+<llm_help>will write the rendered html to the output stream<llm_help>
+- render header.html 
+<llm_help>write the rendered content to %footer% variable<llm_help>
+- render footer.html, write to %footer% 
+<llm_help> user interface might be combination of multiple action, e.g. select from db and render template<llm_help>
+- select * from addresses, write to %addresses%
+- render address.html
+### User interface ### 
+
+
+### Example of a simple plang desktop/window app ###
+Start
+- start window app, 900x650, call ShowMainWindow
+- every saturday at 9, call ProcessCheck
+- start scheduler
+
+ShowMainWindow
+<llm_help> this assumes index.template is Scriban template that uses %products% variable<llm_help>
+- select * from products, write to %products%
+- render index.template, write to %index% 
+- write out %index%
+
+ProcessCheck
+<llm_help>'write out' write to ui view, write out to system goes to console<llm_help>
+- write out to system "Just ran on saturday %Now%"
+
+Search
+- select * from products where name LIKE \%%q%\%, write to %products%
+<llm_help>when render is not written to a variable, it is written straight to output stream. This allows us to skip the write out command<llm_help>
+- render "/ui/Products.html"
+
+
+
+### Example of a simple plang window app ###

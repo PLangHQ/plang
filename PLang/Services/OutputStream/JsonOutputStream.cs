@@ -8,37 +8,46 @@ using PLang.Utils;
 using System;
 using System.Net;
 using System.Text;
+using static PLang.Modules.OutputModule.Program;
 using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
 {
-	public class JsonOutputStream : IOutputStream, IDisposable
+	public class JsonOutputStream : IOutputStream
 	{
-		private readonly HttpListenerContext httpContext;
-		private readonly MemoryStream memoryStream;
-		public JsonOutputStream(HttpListenerContext httpContext)
+		private readonly Stream stream;
+		private readonly Encoding encoding;
+		private bool isStateful;
+
+		public JsonOutputStream(Stream stream, Encoding encoding, bool isStateful)
 		{
-			this.httpContext = httpContext;
-			this.memoryStream = new MemoryStream();
-			httpContext.Response.ContentType = "application/json";
+			this.stream = stream;
+			this.encoding = encoding;
+			this.isStateful = isStateful;
 		}
 
-		public Stream Stream { get { return this.memoryStream; } }
-		public Stream ErrorStream { get { return this.memoryStream; } }
+		public Stream Stream { get { return this.stream; } }
+		public Stream ErrorStream { get { return this.stream; } }
 
 		public string Output => "json";
 
-		public async Task<string> Ask(string text, string type, int statusCode = 200, Dictionary<string, object>? parameters = null, Callback? callback = null)
+		public bool IsStateful => isStateful;
+
+		public async Task<(string?, IError?)> Ask(string text, string type, int statusCode = 200, Dictionary<string, object?>? parameters = null, Callback? callback = null, List<Option>? options = null)
 		{
 			
-			httpContext.Response.SendChunked = true;
-			httpContext.Response.StatusCode = statusCode;
 			if (parameters == null || !parameters.ContainsKey("url"))
 			{
 				throw new Exception("url parameter must be defined");
 			}
 
-			using (var writer = new StreamWriter(httpContext.Response.OutputStream, httpContext.Response.ContentEncoding ?? Encoding.UTF8))
+			Dictionary<int, object> dictOptions = new();
+			foreach (var option in options)
+			{
+				dictOptions.Add(option.ListNumber, option.SelectionInfo);
+			}
+
+			using (var writer = new StreamWriter(stream, encoding))
 			{
 				if (text != null)
 				{
@@ -52,6 +61,7 @@ namespace PLang.Services.OutputStream
 						url,
 						body = text,
 						parameters,
+						options = dictOptions,
 						callback
 					};
 
@@ -60,73 +70,24 @@ namespace PLang.Services.OutputStream
 				}
 				await writer.FlushAsync();
 			}
-			return null;
-		}
-
-		public void Dispose()
-		{
-			memoryStream.Dispose();
+			return (null, null);
 		}
 
 		public string Read()
 		{
 			return "";
 		}
-		private string? GetAsString(object? obj)
-		{
-			if (obj == null) return null;
-
-			if (obj is JValue || obj is JObject || obj is JArray)
-			{
-				return obj.ToString();
-			}
-			if (obj is IError)
-			{
-				return ((IError)obj).ToFormat("json").ToString();
-			}
-			else
-			{
-				string content = obj.ToString()!;
-				if (!JsonHelper.IsJson(content))
-				{
-					content = JsonConvert.SerializeObject(obj);
-				}
-
-				return content;
-			}
-
-
-		}
+		
 		public async Task Write(object? obj, string type, int httpStatusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
-			httpContext.Response.StatusCode = httpStatusCode;
-			httpContext.Response.StatusDescription = type;
-
-			string? content = GetAsString(obj);
+			
+			string? content = TypeHelper.GetAsString(obj);
 			if (content == null) return;
 
 			byte[] buffer = Encoding.UTF8.GetBytes(content);
-			memoryStream.Write(buffer, 0, buffer.Length);
-			//httpContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
-
-
-			return;
+			stream.Write(buffer, 0, buffer.Length);
 
 		}
 
-		public async Task WriteToBuffer(object? obj, string type, int httpStatusCode = 200)
-		{
-			httpContext.Response.StatusCode = httpStatusCode;
-			httpContext.Response.StatusDescription = type;
-			httpContext.Response.SendChunked = true;
-
-			string? content = GetAsString(obj);
-			if (content == null) return;
-
-			byte[] buffer = Encoding.UTF8.GetBytes(content);
-			httpContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
-
-
-		}
 	}
 }

@@ -153,8 +153,8 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, Module, Go
 						llmRequest = new LlmRequest("ModuleEvents", promptMessage);
 						llmRequest.scheme = "{methods:string[]}";
 						(var methodsToBind, queryError) = await llmServiceFactory.CreateHandler().Query<string[]>(llmRequest);
-						*/
-						int s = 0;
+						
+						int s = 0;*/
 
 					}
 

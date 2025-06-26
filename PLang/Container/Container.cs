@@ -81,16 +81,8 @@ namespace PLang.Container
 			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
-			if (contentType == "application/json")
-			{
-				container.RegisterOutputStreamFactory(typeof(JsonOutputStream), true, new JsonOutputStream(httpContext));
-				container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
-			}
-			else
-			{
-				container.RegisterOutputStreamFactory(typeof(TextOutputStream), true, new TextOutputStream(httpContext));
-				container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
-			}
+			container.RegisterOutputStreamFactory(typeof(HttpOutputStream), true, new HttpOutputStream(httpContext, container.GetInstance<IPLangFileSystem>(), contentType));
+			container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
 			
 			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler(container.GetInstance<IOutputSystemStreamFactory>()));
 
@@ -270,7 +262,7 @@ namespace PLang.Container
 			});
 
 
-			container.RegisterOutputStreamFactory(typeof(MemoryOutputStream), false, new MemoryOutputStream());
+			//container.RegisterOutputStreamFactory(typeof(MemoryOutputStream), false, new MemoryOutputStream());
 			container.RegisterSingleton<IEventBuilder, EventBuilder>();
 			if (AppContext.TryGetSwitch("Builder", out bool isBuilder) && !isBuilder)
 			{

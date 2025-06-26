@@ -5,6 +5,7 @@ using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
 {
+	/*
 	public class MemoryOutputStream : MemoryStream, IOutputStream, IDisposable
 	{
 		MemoryStream errorStream;
@@ -48,5 +49,5 @@ namespace PLang.Services.OutputStream
 			this.Write(bytes, 0, bytes.Length);
 			return;
 		}
-	}
+	}*/
 }

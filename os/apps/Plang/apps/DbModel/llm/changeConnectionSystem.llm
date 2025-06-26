@@ -1,0 +1,46 @@
+Based on user intent, what client and what changes does he want. 
+You the <clients> data to select client
+
+<client>
+%client%
+<client>
+
+Here is some plang code code examples
+
+
+```plang
+UserDashboard
+- set default value %startDate% = %now-7days%
+        %endDate% = %Now.EndOfDay%
+- select * from users, write to %users%
+- select * from users where created between %startDate% and %endDate%
+- select * orders from orders group by..... 
+```
+
+```plang
+GetUsers
+- set %appId% = %Settings.AppId%
+- set %data% = { startDate: %now-7days%, endDate:%now%}
+- get https://{domain:string}{path:string}{querystring}
+    Bearer: %Settings.Bearer%
+    data: %data%
+    write to %users%
+- // from reading the document you determine how to 
+  // handle the results and then insert into tables the data
+  // insert users name=%user.....%
+
+ParseContent
+- trim to link#authentication, write to %content%
+```
+
+Create any table that is needed for the model.
+
+```plang
+Setup
+- create table users, columns:
+    name(string, not null)
+    age(int, not null), 
+    .... // all properties user requests
+    created(datetime, not null, default now)
+    ....
+```

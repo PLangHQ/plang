@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Nethereum.ABI.CompilationMetadata;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Errors;
@@ -759,6 +760,34 @@ public class TypeHelper : ITypeHelper
 			result[key] = valueIndexer.GetValue(obj, new[] { key });
 
 		return result;
+	}
+
+
+
+	public static string? GetAsString(object? obj, string format = "text")
+	{
+		if (obj == null) return null;
+		if (obj is string str) return str;
+		if (obj.GetType().IsPrimitive) return obj.ToString();
+
+		if (obj is JValue || obj is JObject || obj is JArray)
+		{
+			return obj.ToString();
+		}
+		if (obj is IError)
+		{
+			return ((IError)obj).ToFormat(format).ToString();
+		}
+		else
+		{
+			string content = obj.ToString()!;
+			if (!JsonHelper.IsJson(content))
+			{
+				content = JsonConvert.SerializeObject(obj);
+			}
+
+			return content;
+		}
 	}
 }
 

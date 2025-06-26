@@ -228,7 +228,7 @@ regexToExtractDatabaseNameFromConnectionString: generate regex to extract the da
 		}
 		private SqlStatement GetSqliteDbInfoStatement()
 		{
-			var statement = new SqlStatement("SELECT name FROM sqlite_master WHERE type IN ('table', 'view');", "SELECT name, type, [notnull] as isNotNull, pk as isPrimaryKey FROM pragma_table_info(@TableName);");
+			var statement = new SqlStatement("SELECT name FROM sqlite_master WHERE type IN ('table', 'view');", "SELECT name, type, [notnull] as isNotNull, pk as isPrimaryKey, dflt_value as default_value FROM pragma_table_info(@TableName);");
 			return statement;
 		}
 

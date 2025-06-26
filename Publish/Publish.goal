@@ -29,4 +29,4 @@ RemoveFile
 - delete file %item%
 
 ConsoleOutPut
-- write out "%data%", param: "Position": -1
+- write out "%buildVar%"

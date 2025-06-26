@@ -1,0 +1,12 @@
+Postman
+- read "%file.path%", write %content%
+- foreach %content.items%, LoadMethods
+- set %obj% = {
+    name=%content.name%,
+    description:%content.description%,
+    %methods%
+    }
+- return %obj%
+
+GetMethods
+- add dict "methods", {key:name, value:{name:%item.name%, %item.description%}}
