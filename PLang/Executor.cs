@@ -271,6 +271,10 @@ namespace PLang
 
 		public async Task<IEngine> Run(bool debug = false, bool test = false, string[]? args = null)
 		{
+			var app = new App(args);
+			app.Context.Add(ReservedKeywords.Test, true);
+			
+
 			if (test) AppContext.SetSwitch(ReservedKeywords.Test, true);
 
 			this.engine = container.GetInstance<IEngine>();

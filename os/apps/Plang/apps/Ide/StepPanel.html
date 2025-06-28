@@ -1,0 +1,221 @@
+
+<h3>Step Information</h3>
+<p><em>{{ step.LineNumber }}:</em> {{ step.Text | html.escape | string.slice 0 100 }}{{ if step.Text | string.size > 100 }}...{{ end }}</p>
+<div class="uk-flex uk-margin">
+    <div>
+        <button class="uk-button uk-button-default" onclick="build();">🏗️ Build <span
+                uk-icon="icon: chevron-down"></span></button>
+        <div uk-dropdown>
+            <ul class="uk-list">
+                <li><a href="#" onclick="rebuildStep(false);">Rebuild step</a></li>
+                <li><a href="#" onclick="rebuildStep(true);">Rebuild step in c# debug mode</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div>
+        <button class="uk-button uk-button-default" onclick="run(false, false);">▶️ Run <span
+                uk-icon="icon: chevron-down"></span></button>
+        <div uk-dropdown>
+            <ul class="uk-list">
+                <li><a href="#" onclick="run(true, false)">Run file {{ goal.GoalName }}</a></li>
+                {{ if step && step.Execute == 'True' }}
+                <li><a href="#">Run from {{ step.Name }}</a></li>
+                {{ end }}
+                <li><a href="#" onclick="run(true, true)">Run in c# debug mode</a></li>
+            </ul>
+        </div>
+    </div>
+    <div>
+        <button class="uk-button uk-button-default" onclick="gui();">🖼️ Make GUI</button>
+        </div>
+</div>
+
+<script>
+    
+    function gui() {
+        vscode.postMessage({
+            command: 'gui'
+        });
+    }
+    function openFile(path) {
+        vscode.postMessage({
+            command: 'openFile',
+            data: path
+        });
+    }
+    function openPrFile() {
+        let path = '{{ step.RelativePrPath | string.replace "\\" "/" }}';
+        vscode.postMessage({
+            command: 'openFile',
+            data: path
+        });
+    }
+
+    function openStepPrFile() {
+        let path = '{{ goal.RelativePrPath | string.replace "\\" "/" }}';
+        vscode.postMessage({
+            command: 'openFile',
+            data: path
+        });
+    }
+
+    function build() {
+        vscode.postMessage({
+            command: 'build'
+        });
+    }
+
+    function rebuildStep(debug) {
+        path = '{{ step.RelativePrPath | string.replace "\\" "/" }}';
+        vscode.postMessage({
+            command: 'rebuildStep',
+            data: {path, debug}
+        });
+    }
+
+    function run(onlyFile, csdebug) {
+        vscode.postMessage({
+            command: 'run',
+            data: { onlyFile: onlyFile, csdebug: csdebug }
+        });
+    }
+</script>
+<hr>
+{{ if instruction.Function.Name }}
+<h5>{{ instruction.Function.Name }} on {{ step.ModuleType }}</h5>
+{{ else }}
+<h5>{{ step.ModuleType }}</h5>
+{{ end }}
+📕 <a href="https://github.com/PLangHQ/plang/blob/main/Documentation/modules/{{ step.ModuleType }}.md">More info
+    {{ step.ModuleType }}</a>
+<p>{{ step.Description | html.escape }}</p>
+{{ if instruction.Function.Explanation }}
+    <h5>LLM Explanation</h5>
+    {{ instruction.Function.Explanation | html.escape }}
+{{ end }}
+{{ module }}
+
+{{ if instruction.Function.Parameters && instruction.Function.Parameters.size > 0 }}
+<hr>
+<h4>🧮 {{ instruction.Function.Name }} Parameters</h4>
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
+            <th>Type</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{ for parameter in instruction.Function.Parameters }}
+        <tr>
+            <td>{{ parameter.Name }}</td>
+            <td>{{ parameter.Value | json true | html.escape }}</td>
+            <td>{{ parameter.Type | html.escape }}</td>
+        </tr>
+        {{ end }}
+    </tbody>
+</table>
+{{ end }}
+
+{{ if instruction.Function.ReturnValues && instruction.Function.ReturnValues.size > 0 }}
+<h4>🔁 Return value</h4>
+<table>
+    <thead>
+        <tr>
+            <th>Variable Name</th>
+            <th>Type</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{ for parameter in instruction.Function.ReturnValues }}
+        <tr>
+            <td>{{ parameter.VariableName }}</td>
+            <td>{{ parameter.Type | html.escape }}</td>
+        </tr>
+        {{ end }}
+    </tbody>
+</table>
+{{ end }}
+
+{{ if step.ErrorHandlers && step.ErrorHandlers.size > 0 }}
+<div>
+    <h4>⚠️ Error Handling</h4>
+    <ul>
+        {{ for errorHandler in step.ErrorHandlers }}
+        <li>
+            When error
+            {{ if errorHandler.Key != '' }}
+            with Key: <strong>{{ errorHandler.Key }}</strong>
+            {{ end }}
+            {{ if errorHandler.Message != '' }}
+            with Message containing: <strong>{{ errorHandler.Message }}</strong>
+            {{ end }}
+            {{ if errorHandler.StatusCode != '' }}
+            with StatusCode: <strong>{{ errorHandler.StatusCode }}</strong>
+            {{ end }}
+            occurs then
+            {{ if errorHandler.RetryHandler != '' }}
+                {{ if errorHandler.RunRetryBeforeCallingGoalToCall == 'True' }}
+                    try it again <strong>#{{ errorHandler.RetryHandler.RetryCount }}</strong> times before calling
+                    <strong>{{ errorHandler.GoalToCall.Value }}</strong>
+                {{ else }}
+                    call <strong>{{ errorHandler.GoalToCall.Value }}</strong> and retry step <strong>#{{ errorHandler.RetryHandler.RetryCount }}</strong>
+                    time{{ if errorHandler.RetryHandler.RetryCount > 1 }}s{{ end }}            
+                {{ end }}
+                {{ if errorHandler.RetryHandler.RetryDelayInMilliseconds != '' }}
+                with {{ errorHandler.RetryHandler.RetryDelayInMilliseconds }}ms delay
+                {{ end }}
+            {{ else if errorHandler.GoalToCall != '' }}
+                call <strong>{{ errorHandler.GoalToCall.Value }}</strong>
+            {{ end }}
+            
+            {{ if errorHandler.IgnoreError == True }}
+            <em>ignore the error ({{ errorHandler.IgnoreError }})</em>
+            {{ end }}
+        </li>
+
+        {{ end }}
+    </ul>
+</div>
+{{ end }}
+
+{{ if step.CacheHandler != '' && step.CacheHandler.CacheKey != '' }}
+<div>
+    <h4>Cache Handling</h4>
+    Cache this step for {{ step.CacheHandler.TimeInMilliseconds }}ms
+    {{ if step.CacheHandler.CachingType == 1 }}
+    with sliding timer
+    {{ else }}
+    with fix timeout
+    {{ end }}
+    using the Key <strong>{{ step.CacheHandler.CacheKey }}</strong>
+    {{ if step.CacheHandler.Location == 'disk' }}
+    on <strong>disk</strong>
+    {{ else }}
+    in <strong>memory</strong>
+    {{ end }}
+
+</div>
+{{ end }}
+
+
+
+<ul uk-accordion class=" uk-overflow-auto uk-width-1-1">
+    <li>
+        <a class="uk-accordion-title" href="#">Step .pr file</a>
+        <div class="uk-accordion-content uk-overflow-auto uk-width-1-1">
+            <a href="#" onclick="openStepPrFile();">Open in editor</a>
+            <pre><code class="language-json">{{ step | json true | html.escape }}</code></pre>
+        </div>
+    </li>
+    <li>
+        <a class="uk-accordion-title" href="#">Instruction .pr file</a>
+        <div class="uk-accordion-content uk-overflow-auto uk-width-1-1">
+            <a href="#" onclick="openPrFile();">Open in editor</a>
+            <pre><code class="language-json">{{ instruction | json true | html.escape }}</code></pre>
+        </div>
+    </li>
+</ul>
+

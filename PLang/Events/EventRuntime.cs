@@ -30,7 +30,7 @@ namespace PLang.Events
 		(List<string> EventFiles, IError? Error) GetEventsFiles(string buildPath, bool builder = false);
 		bool GoalHasBinding(Goal goal, EventBinding eventBinding);
 		bool IsStepMatch(GoalStep step, EventBinding eventBinding);
-		IError Load(bool builder = false);
+		IError? Load(bool builder = false);
 		Task<(object? Variables, IBuilderError? Error)> RunBuildGoalEvents(string eventType, Goal goal);
 		Task<(object? Variables, IBuilderError? Error)> RunBuildStepEvents(string eventType, Goal goal, GoalStep step, int stepIdx);
 		Task<(object? Variables, IError? Error)> RunGoalEvents(string eventType, Goal goal, bool isBuilder = false);
@@ -43,6 +43,20 @@ namespace PLang.Events
 		void SetActiveEvents(ConcurrentDictionary<string, string> activeEvents);
 		ConcurrentDictionary<string, string> GetActiveEvents();
 		Task<(object? Variables, IError? Error)> RunOnModuleError(MethodInfo method, IError error, Exception ex);
+	}
+
+	public interface IBuilderEventRuntime : IEventRuntime { }
+
+	public class BuilderEventRuntime : EventRuntime, IBuilderEventRuntime
+	{
+		public BuilderEventRuntime(IPLangFileSystem fileSystem, PrParser prParser, PLangAppContext context, ILogger logger, Program caller, MemoryStack memoryStack) : base(fileSystem, prParser, context, logger, caller, memoryStack)
+		{
+		}
+
+		public IError? Load()
+		{
+			return base.Load(true);
+		}
 	}
 	public class EventRuntime : IEventRuntime
 	{

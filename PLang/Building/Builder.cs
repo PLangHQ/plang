@@ -27,14 +27,14 @@ namespace PLang.Building
 		private readonly ISettings settings;
 		private readonly IGoalBuilder goalBuilder;
 		private readonly IEventBuilder eventBuilder;
-		private readonly IEventRuntime eventRuntime;
+		private readonly IBuilderEventRuntime eventRuntime;
 		private readonly PrParser prParser;
 		private readonly IErrorHandlerFactory exceptionHandlerFactory;
 		private readonly IAskUserHandlerFactory askUserHandlerFactory;
 		private readonly IGoalParser goalParser;
 
 		public Builder(ILogger logger, IPLangFileSystem fileSystem, ISettings settings, IGoalBuilder goalBuilder,
-			IEventBuilder eventBuilder, IEventRuntime eventRuntime,
+			IEventBuilder eventBuilder, IBuilderEventRuntime eventRuntime,
 			PrParser prParser, IErrorHandlerFactory exceptionHandlerFactory, IAskUserHandlerFactory askUserHandlerFactory, 
 			IGoalParser goalParser)
 		{

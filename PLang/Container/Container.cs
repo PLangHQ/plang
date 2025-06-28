@@ -51,11 +51,20 @@ using static PLang.Modules.DbModule.ModuleSettings;
 
 namespace PLang.Container
 {
+	public class PlangContainer : ServiceContainer
+	{
+		public PlangContainer(string absolutePath)
+		{
+			AbsolutePath = absolutePath;
+		}
+
+		public string AbsolutePath { get; }
+	}
+
 	public static class Instance
 	{
 		public record InjectedType(string InjectorName, Type ServiceType, Type ImplementationType);
 		private static readonly Dictionary<Type, InjectedType> injectedTypes = [];
-
 
 		public static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeAppStartupPath,
 			IAskUserHandlerFactory askUserHandlerFactory, IOutputStreamFactory outputStreamFactory, IOutputSystemStreamFactory outputSystemStreamFactory,
@@ -180,6 +189,31 @@ namespace PLang.Container
 			SetupAssemblyResolve(container.GetInstance<IPLangFileSystem>(), container.GetInstance<ILogger>(), container.GetInstance<DependancyHelper>());
 		}
 
+		
+		public static void RegisterEventRuntimeForBuilder(this ServiceContainer container)
+		{
+			using (var runtimeContainer = new ServiceContainer())
+			{
+				var context = container.GetInstance<PLangAppContext>();
+				var fileSystem = container.GetInstance<IPLangFileSystem>();
+				var engine = container.GetInstance<IEngine>();
+
+				runtimeContainer.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, container.GetInstance<IAskUserHandlerFactory>(),
+					container.GetInstance<IOutputStreamFactory>(), container.GetInstance<IOutputSystemStreamFactory>(),
+					container.GetInstance<IErrorHandlerFactory>(), container.GetInstance<IErrorSystemHandlerFactory>());
+				runtimeContainer.RegisterSingleton<IEventRuntime, EventRuntime>();
+
+				var fileAccessHandler2 = runtimeContainer.GetInstance<IFileAccessHandler>();
+				fileAccessHandler2.GiveAccess(Environment.CurrentDirectory, fileSystem.OsDirectory);
+
+				var engine2 = runtimeContainer.GetInstance<IEngine>();
+				engine2.Init(runtimeContainer, container.GetInstance<PLangAppContext>());
+
+				var eventRuntime = runtimeContainer.GetInstance<IBuilderEventRuntime>();
+				container.RegisterSingleton<IBuilderEventRuntime>(factory => { return eventRuntime; });
+			}
+		}
+
 		private static void RegisterEventRuntime(this ServiceContainer container, bool isBuilder = false)
 		{
 			var context = container.GetInstance<PLangAppContext>();
@@ -192,24 +226,7 @@ namespace PLang.Container
 				return;
 			}
 
-
-			using (var runtimeContainer = new ServiceContainer())
-			{
-
-				runtimeContainer.RegisterForPLang(fileSystem.RootDirectory, fileSystem.RelativeAppPath, container.GetInstance<IAskUserHandlerFactory>(),
-					container.GetInstance<IOutputStreamFactory>(), container.GetInstance<IOutputSystemStreamFactory>(),
-					container.GetInstance<IErrorHandlerFactory>(), container.GetInstance<IErrorSystemHandlerFactory>());
-				runtimeContainer.RegisterSingleton<IEventRuntime, EventRuntime>();
-				
-				var fileAccessHandler2 = runtimeContainer.GetInstance<IFileAccessHandler>();				
-				fileAccessHandler2.GiveAccess(Environment.CurrentDirectory, fileSystem.OsDirectory);				
-
-				var engine2 = runtimeContainer.GetInstance<IEngine>(); 
-				engine2.Init(runtimeContainer, container.GetInstance<PLangAppContext>());
-
-				var eventRuntime = runtimeContainer.GetInstance<IEventRuntime>();
-				container.RegisterSingleton<IEventRuntime>(factory => { return eventRuntime; });
-			}
+			RegisterEventRuntimeForBuilder(container);
 
 		}
 

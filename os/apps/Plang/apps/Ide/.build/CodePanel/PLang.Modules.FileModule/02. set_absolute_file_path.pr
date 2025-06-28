@@ -1,0 +1,112 @@
+{
+  "Text": "set %absoluteFilePath% = %request.appPath%/%goal.RelativeGoalFolderPath%/%path.Value%",
+  "ModuleType": null,
+  "Reload": false,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nConstruct a full file path by concatenating multiple path components into a single variable\n## functions available starts ##\r\n{\"Methods\":[{\"MethodName\":\"Load\",\"Parameters\":[{\"Type\":\"List<string>\",\"Name\":\"variables\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"Store\",\"Parameters\":[{\"Type\":\"List<string>\",\"Name\":\"variables\",\"IsRequired\":false}]},{\"Description\":\"One or more variables to return. Variable can contain !, e.g. !callback=%callback%. When key is undefined, it is same as value, e.g. return %name% => then variables dictionary has key and value as name=%name%\",\"MethodName\":\"Return\",\"Parameters\":[{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"variables\",\"IsRequired\":false}]},{\"MethodName\":\"OnCreateVariablesListener\",\"Parameters\":[{\"Type\":\"List<string>\",\"Name\":\"keys\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalName\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"waitForResponse\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"delayWhenNotWaitingInMilliseconds\",\"DefaultValue\":50,\"IsRequired\":false}]},{\"MethodName\":\"OnChangeVariablesListener\",\"Parameters\":[{\"Type\":\"List<string>\",\"Name\":\"keys\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalName\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"notifyWhenCreated\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"waitForResponse\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"delayWhenNotWaitingInMilliseconds\",\"DefaultValue\":50,\"IsRequired\":false}]},{\"MethodName\":\"OnRemoveVariablesListener\",\"Parameters\":[{\"Type\":\"List<string>\",\"Name\":\"keys\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalName\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"waitForResponse\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"delayWhenNotWaitingInMilliseconds\",\"DefaultValue\":50,\"IsRequired\":false}]},{\"MethodName\":\"GetEnvironmentVariable\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"MethodName\":\"LoadVariables\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Set string variable. Developer might use single/double quote to indicate the string value, the wrapped quote should not be included in the value. If value is json, make sure to format it as valid json, use double quote(\\\") by escaping it\",\"MethodName\":\"SetStringVariable\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"value\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"urlDecode\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"htmlDecode\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotLoadVariablesInValue\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"defaultValue\",\"IsRequired\":false}]},{\"Description\":\"Set json variable. Make sure value is valid json\",\"MethodName\":\"SetJsonObjectVariable\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"value\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotLoadVariablesInValue\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Object\",\"Name\":\"defaultValue\",\"IsRequired\":false}]},{\"Description\":\"Set default value of int/long variable. If value already exists it wont be set.\",\"MethodName\":\"SetDefaultNumberVariable\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.Nullable`1[System.Int64]\",\"Name\":\"value\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Int64]\",\"Name\":\"defaultValue\",\"IsRequired\":false}]},{\"Description\":\"Set int/long variable.\",\"MethodName\":\"SetNumberVariable\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.Nullable`1[System.Int64]\",\"Name\":\"value\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Int64]\",\"Name\":\"defaultValue\",\"IsRequired\":false}]},{\"Description\":\"Set double variable.\",\"MethodName\":\"SetDoubleVariable\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.Nullable`1[System.Double]\",\"Name\":\"value\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Double]\",\"Name\":\"defaultValue\",\"IsRequired\":false}]},{\"Description\":\"Set float variable.\",\"MethodName\":\"SetFloatVariable\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.Nullable`1[System.Single]\",\"Name\":\"value\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Single]\",\"Name\":\"defaultValue\",\"IsRequired\":false}]},{\"Description\":\"Set bool variable.\",\"MethodName\":\"SetBoolVariable\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.Nullable`1[System.Boolean]\",\"Name\":\"value\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Boolean]\",\"Name\":\"defaultValue\",\"IsRequired\":false}]},{\"Description\":\"Set variable. Developer might use single/double quote to indicate the string value. If value is json, make sure to format it as valid json, use double quote(\\\") by escaping it\",\"MethodName\":\"SetVariable\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"value\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotLoadVariablesInValue\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"keyIsDynamic\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Object\",\"Name\":\"onlyIfValueIsNot\",\"IsRequired\":false},{\"Type\":\"System.Object\",\"Name\":\"defaultValue\",\"IsRequired\":false}]},{\"Description\":\"Set multiple variables with possible default values. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote(\\\") by escaping it. onlyIfValueIsSet can be define by user, null|\\\"null\\\"|\\\"empty\\\" or value a user defines. Be carefull, there is difference between null and \\\"null\\\", to be \\\"null\\\" is must be defined by user.\",\"MethodName\":\"SetVariables\",\"Parameters\":[{\"Type\":\"Dictionary<String, Tuple`2>\",\"Name\":\"keyValues\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotLoadVariablesInValue\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"keyIsDynamic\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Object\",\"Name\":\"onlyIfValueIsNot\",\"IsRequired\":false}]},{\"Description\":\"Set value on variables. If value is json, make sure to format it as valid json, use double quote(\\\") by escaping it.  onlyIfValueIsSet can be define by user, null|\\\"null\\\"|\\\"empty\\\" or value a user defines. Be carefull, there is difference between null and \\\"null\\\", to be \\\"null\\\" is must be defined by user.\",\"MethodName\":\"SetValuesOnVariables\",\"Parameters\":[{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"keyValues\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotLoadVariablesInValue\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"keyIsDynamic\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Object\",\"Name\":\"onlyIfValueIsNot\",\"IsRequired\":false}]},{\"Description\":\"Set default value on variables if not set, good for setting value if variable is empty. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote(\\\") by escaping it.  onlyIfValueIsSet can be define by user, null|\\\"null\\\"|\\\"empty\\\" or value a user defines. Be carefull, there is difference between null and \\\"null\\\", to be \\\"null\\\" is must be defined by user.\",\"MethodName\":\"SetDefaultValueOnVariables\",\"Parameters\":[{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"keyValues\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotLoadVariablesInValue\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"keyIsDynamic\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Object\",\"Name\":\"onlyIfValueIsNot\",\"IsRequired\":false}]},{\"MethodName\":\"SetVariableWithCondition\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"variableName\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"boolValue\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"valueIfTrue\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"valueIfFalse\",\"IsRequired\":true}]},{\"Description\":\"Set value on variables or a default value is value is empty. Number can be represented with _, e.g. 100_000. If value is json, make sure to format it as valid json, use double quote(\\\") by escaping it.  onlyIfValueIsSet can be define by user, null|\\\"null\\\"|\\\"empty\\\" or value a user defines. Be carefull, there is difference between null and \\\"null\\\", to be \\\"null\\\" is must be defined by user.\",\"MethodName\":\"SetValueOnVariablesOrDefaultIfValueIsEmpty\",\"Parameters\":[{\"Type\":\"Dictionary<String, Tuple`2>\",\"Name\":\"keyValues\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotLoadVariablesInValue\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"keyIsDynamic\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Object\",\"Name\":\"onlyIfValueIsNot\",\"IsRequired\":false}]},{\"Description\":\"Append to variable. valueLocation=postfix|prefix seperatorLocation=end|start\",\"MethodName\":\"AppendToVariable\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"value\",\"IsRequired\":false},{\"Type\":\"System.Char\",\"Name\":\"seperator\",\"DefaultValue\":\"\\n\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"valueLocation\",\"DefaultValue\":\"postfix\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"seperatorLocation\",\"DefaultValue\":\"end\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"shouldBeUnique\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotLoadVariablesInValue\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"GetVariable\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"RemoveVariables\",\"Parameters\":[{\"Type\":\"System.String[]\",\"Name\":\"keys\",\"IsRequired\":true}]},{\"Description\":\"Sets a value to %Settings.XXXX% variable\",\"MethodName\":\"SetSettingValue\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"value\",\"IsRequired\":true}]},{\"Description\":\"Sets a value to %Settings.XXXX% variable but only if it is not set before\",\"MethodName\":\"SetDefaultSettingValue\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"value\",\"IsRequired\":true}]},{\"MethodName\":\"ConvertToBase64\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"MethodName\":\"TrimForLlm\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"obj\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"maxItemCount\",\"DefaultValue\":30,\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Int32]\",\"Name\":\"maxItemLength\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"groupOn\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"samplesPerGroup\",\"DefaultValue\":5,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"listLimit\",\"DefaultValue\":50,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"totalCharsLimit\",\"DefaultValue\":2000,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"formatJson\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalName\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal\",\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\nabsolutefilepath (type:object), request.apppath (type:object), goal.relativegoalfolderpath (type:object), path.value (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "set %absoluteFilePath% = %request.appPath%/%goal.RelativeGoalFolderPath%/%path.Value%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to set a variable %absoluteFilePath% by concatenating multiple path components (%request.appPath%, %goal.RelativeGoalFolderPath%, %path.Value%) into a single string representing a full file path. The appropriate function is SetStringVariable or SetVariable to assign this concatenated string to the variable.\",\n  \"Name\": \"SetStringVariable\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"key\",\n      \"Value\": \"%absoluteFilePath%\"\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"value\",\n      \"Value\": \"%request.appPath%/%goal.RelativeGoalFolderPath%/%path.Value%\"\n    }\n  ]\n}"
+    }
+  ],
+  "Properties": {
+    "Parameters": {
+      "key": [
+        {
+          "Name": "key",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "value": [
+        {
+          "Name": "value",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "urlDecode": [
+        {
+          "Name": "urlDecode",
+          "FullTypeName": "System.Boolean"
+        }
+      ],
+      "htmlDecode": [
+        {
+          "Name": "htmlDecode",
+          "FullTypeName": "System.Boolean"
+        }
+      ],
+      "doNotLoadVariablesInValue": [
+        {
+          "Name": "doNotLoadVariablesInValue",
+          "FullTypeName": "System.Boolean"
+        }
+      ],
+      "defaultValue": [
+        {
+          "Name": "defaultValue",
+          "FullTypeName": "System.String"
+        }
+      ]
+    },
+    "ReturnValues": {}
+  },
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to set a variable %absoluteFilePath% by concatenating multiple path components (%request.appPath%, %goal.RelativeGoalFolderPath%, %path.Value%) into a single string representing a full file path. The appropriate function is SetStringVariable or SetVariable to assign this concatenated string to the variable.",
+    "Name": "SetStringVariable",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "key",
+        "Value": "%absoluteFilePath%"
+      },
+      {
+        "Type": "System.String",
+        "Name": "value",
+        "Value": "%request.appPath%/%goal.RelativeGoalFolderPath%/%path.Value%"
+      }
+    ],
+    "ReturnValues": null
+  }
+}

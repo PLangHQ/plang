@@ -1,0 +1,113 @@
+{
+  "Text": "append to dict \"tableInfos\", key:%tableName%, value:%tableInfo%",
+  "ModuleType": null,
+  "Reload": false,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+      "model": "gpt-4o",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nAdd or update an entry in the dictionary variable 'tableInfos' with a key from 'tableName' and a value from 'tableInfo'.\n## functions available starts ##\r\n{\"Methods\":[{\"MethodName\":\"ClearList\",\"Parameters\":[{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\",\"IsRequired\":false}]},{\"MethodName\":\"ClearDictionary\",\"Parameters\":[{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"dictionary\",\"IsRequired\":false}]},{\"MethodName\":\"DeleteFromList\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"item\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Boolean\"}},{\"MethodName\":\"DeleteKeyFromDictionary\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"dictionary\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Boolean\"}},{\"Description\":\"Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue should always be used with AddItemsToList\",\"MethodName\":\"AddItemsToList\",\"Parameters\":[{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"value\",\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Method always returns instance of listInstance, it creates a new instance if it is null. ReturnValue MUST always be defined\",\"MethodName\":\"AddToList\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"value\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"uniqueValue\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"caseSensitive\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"GetItem\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"operator\",\"DefaultValue\":\"first\",\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\",\"IsRequired\":false},{\"Type\":\"List<string>\",\"Name\":\"sortColumns\",\"IsRequired\":false},{\"Type\":\"List<string>\",\"Name\":\"sortOperator\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Gets an item from a list by position\",\"MethodName\":\"GetFromList\",\"Parameters\":[{\"Type\":\"System.Int32\",\"Name\":\"position\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"listInstance\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddItemsToDictionary\",\"MethodName\":\"AddItemsToDictionary\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"value\",\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"dictionaryInstance\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"updateIfExists\",\"DefaultValue\":true,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"Description\":\"Method always returns instance of dictionaryInstance, it creates a new instance if it is null. ReturnValue should always be used with AddToDictionary\",\"MethodName\":\"AddToDictionary\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"value\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"dictionaryInstance\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"updateIfExists\",\"DefaultValue\":true,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"Dictionary<String,Object>\"}},{\"Description\":\"Gets an object from dictionary. ReturnValue should always be used with GetFromDictionary\",\"MethodName\":\"GetFromDictionary\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"dictionaryInstance\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Group a %variable% by key\",\"MethodName\":\"GroupBy\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"obj\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Merges two objects or lists according to primary key\",\"MethodName\":\"MergeLists\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"list1\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"list2\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"key\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\"}}],\"SupportingObjects\":[]}\r\n## functions available ends ##\r\n## defined variables ##\r\ntablename (type:object), tableinfo (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "append to dict \"tableInfos\", key:%tableName%, value:%tableInfo%"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Previous LLM request caused following <error>, try to fix it.\r\n<error>%tableInfos% could not be found in step. User is not defining %tableInfos% as variable.\r\n<error>"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n\t\"Reasoning\": \"The user intends to add or update an entry in a dictionary with a specified key and value. The appropriate function for this task is 'AddToDictionary', which allows adding a key-value pair to a dictionary and updates the value if the key already exists.\",\n\t\"Name\": \"AddToDictionary\",\n\t\"Parameters\": [\n\t\t{\n\t\t\t\"Type\": \"System.String\",\n\t\t\t\"Name\": \"key\",\n\t\t\t\"Value\": \"%tableName%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"System.Object\",\n\t\t\t\"Name\": \"value\",\n\t\t\t\"Value\": \"%tableInfo%\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"Dictionary<String, Object>\",\n\t\t\t\"Name\": \"dictionaryInstance\",\n\t\t\t\"Value\": \"tableInfos\"\n\t\t},\n\t\t{\n\t\t\t\"Type\": \"System.Boolean\",\n\t\t\t\"Name\": \"updateIfExists\",\n\t\t\t\"Value\": true\n\t\t}\n\t],\n\t\"ReturnValues\": null\n}"
+    }
+  ],
+  "Properties": {
+    "Parameters": {
+      "key": [
+        {
+          "Name": "key",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "dictionaryInstance": [
+        {
+          "Name": "dictionaryInstance",
+          "FullTypeName": "System.Object"
+        }
+      ],
+      "updateIfExists": [
+        {
+          "Name": "updateIfExists",
+          "FullTypeName": "System.Boolean"
+        }
+      ]
+    },
+    "ReturnValues": {}
+  },
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user intends to add or update an entry in a dictionary with a specified key and value. The appropriate function for this task is 'AddToDictionary', which allows adding a key-value pair to a dictionary and updates the value if the key already exists.",
+    "Name": "AddToDictionary",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "key",
+        "Value": "%tableName%"
+      },
+      {
+        "Type": "System.Object",
+        "Name": "value",
+        "Value": "%tableInfo%"
+      },
+      {
+        "Type": "Dictionary<String, Object>",
+        "Name": "dictionaryInstance",
+        "Value": "tableInfos"
+      },
+      {
+        "Type": "System.Boolean",
+        "Name": "updateIfExists",
+        "Value": true
+      }
+    ],
+    "ReturnValues": null
+  }
+}

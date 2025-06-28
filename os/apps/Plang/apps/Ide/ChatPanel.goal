@@ -1,0 +1,4 @@
+ChatPanel
+- render template "ChatPanel.html", write to %html%
+/- write %html% to "file.html"
+- write out %html%

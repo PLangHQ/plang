@@ -1,0 +1,3 @@
+HtmlOut
+- render template "/layout/layout.html", write to %html%
+- write out %html%

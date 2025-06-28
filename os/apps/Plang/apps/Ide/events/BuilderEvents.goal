@@ -1,0 +1,2 @@
+BuilderEvents
+/- before builder ends, call goal CopyFiles

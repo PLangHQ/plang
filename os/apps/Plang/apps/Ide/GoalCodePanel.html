@@ -1,0 +1,100 @@
+
+<h3>{{ goal.GoalName }} - Goal Information</h3>
+<p>{{ goal.Description }}</p>
+<div class="uk-flex uk-margin">
+    <div>
+        <button class="uk-button uk-button-default" onclick="build(false);">🏗️ Build<span
+                uk-icon="icon: chevron-down"></span></button>
+        <div uk-dropdown>
+            <ul class="uk-list">
+                <li><a href="#" onclick="build(true);">Build in c# debug mode</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div>
+        <button class="uk-button uk-button-default" onclick="run(false, false);">▶️ Run <span
+                uk-icon="icon: chevron-down"></span></button>
+        <div uk-dropdown>
+            <ul class="uk-list">
+                <li><a href="#" onclick="run(true, false)">Run file {{ goal.GoalName }}</a></li>
+                <li><a href="#" onclick="run(true, true)">Run in c# debug mode</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+{{ if goal.DataSourceName != '' }}
+<strong>DataSourceName</strong>: {{ goal.DataSourceName }}
+{{ end }}
+<script>
+
+    function openFile(path) {
+        vscode.postMessage({
+            command: 'openFile',
+            data: path
+        });
+    }
+
+    function openStepPrFile() {
+        let path = '{{ goal.RelativePrPath | string.replace "\\" "/" }}';
+        vscode.postMessage({
+            command: 'openFile',
+            data: path
+        });
+    }
+
+    function build(csdebug) {
+        vscode.postMessage({
+            command: 'build',
+            data: {csdebug:csdebug}
+        });
+    }
+
+    function run(onlyFile, csdebug) {
+        vscode.postMessage({
+            command: 'run',
+            data: { onlyFile: onlyFile, csdebug: csdebug }
+        });
+    }
+</script>
+<hr>
+{{ if goal.IncomingVariablesRequired != '' }}
+{{ keys_list = goal.IncomingVariablesRequired | object.keys }}
+{{ values_list = goal.IncomingVariablesRequired | object.values }}
+
+{{ if keys_list.size > 0 && keys_list.size == values_list.size }}
+<h3>Required variables</h3>
+    <table>
+{{ for key in keys_list }}
+    <tr>
+        <th>{{ key }}</th>
+        <td>{{ values_list[for.index] }}</td>
+</tr>
+  {{ end }}
+</table>
+{{ end }}
+
+{{ end }}
+
+{{ if goalsCouldBeCalled.size > 0 }}
+    <h3>Goals called</h3>
+    {{ for obj in goalsCouldBeCalled }}
+        {{ if obj[0].Value != '' && obj[0].Value != null }}
+    - {{ obj[0].Value }}<br>
+        {{ end }}
+   {{ end }}
+{{ end }}
+
+
+
+<ul uk-accordion class=" uk-overflow-auto uk-width-1-1">
+    <li>
+        <a class="uk-accordion-title" href="#">Goal .pr file</a>
+        <div class="uk-accordion-content uk-overflow-auto uk-width-1-1">
+            <a href="#" onclick="openStepPrFile();">Open in editor</a>
+            <pre><code class="language-json">{{ goal | json true | html.escape }}</code></pre>
+        </div>
+    </li>
+</ul>
+

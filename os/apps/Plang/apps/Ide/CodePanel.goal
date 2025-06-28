@@ -1,0 +1,78 @@
+CodePanel
+- give file access to %request.appPath%
+- read file %request.goalBuildPath%, write to %goal%
+    on error 'cannot be found', call LoadStepNotBuilt
+- if %request.lineNumber% != -1 then call LoadStep, else LoadGoal
+- call goal HtmlOut
+
+LoadGoal
+- call goal LoadGoalsCalled
+- render template "GoalCodePanel.html", write to %content%
+
+LoadStep
+- filter %goal% where "GoalSteps.LineNumber" = %request.lineNumber%, extract parent, first item, write to %step%
+- if %step.EventBinding% is not empty then, DisplayEvent, else call DisplayStep
+
+LoadStepNotBuilt
+- render template "StepNotBuiltPanel.html", write to %content%
+- end goal and previous
+
+DisplayEvent
+- render template "EventPanel.html", write to %content%
+
+DisplayStep
+- if %step.RelativePrPath% is empty then LoadStepNotBuilt, else LoadStepInfo
+
+LoadStepInfo
+- read file %request.appPath%/%step.RelativePrPath%, into %instruction%
+    on error key:"FileNotFound" call LoadStepNotBuilt
+- call goal %step.ModuleType%
+    on error key:'GoalNotFound' call WriteOut
+- render template "StepPanel.html", write to %content%
+
+
+WriteOut
+- write out to system "Not found: %step.ModuleType%"
+
+PLang.Modules.CodeModule
+- render template "/modules/%step.ModuleType%.html", write to %module%
+
+PLang.Modules.ConditionalModule
+- render template "/modules/PLang.Modules.CodeModule.html", write to %module%
+
+PLang.Modules.DbModule
+/- foreach %instruction.Properties.TableNames%, call GetTableInfo item=%tableName%
+- render template "/modules/%step.ModuleType%.html", write to %module%
+
+PLang.Modules.FileModule
+- filter %instruction% where "Function.Parameters.Name"="path", get parent, first entry, write to %path%
+- set %absoluteFilePath% = %request.appPath%/%goal.RelativeGoalFolderPath%/%path.Value%
+- if %path.Value% does not contain  "%" then 
+    - read file %absoluteFilePath%, write to %content%
+        on error key:FileNotFound call HandleError
+    - render template "/modules/%step.ModuleType%.html", write to %module%
+
+HandleError
+- write out "%absoluteFilePath% not found"
+- end goal and previous
+
+
+LoadGoalsCalled
+- foreach %goal.GoalSteps% call FindGoalsToCall item=%step%
+
+FindGoalsToCall
+- filter %step% on property "GoalToCall", write to %goalsToCall%
+- append %goalsToCall% to list %goalsCouldBeCalled%
+- if %step.RelativePrPath% is not empty then 
+    - read file %request.appPath%/%step.RelativePrPath%, into %instruction%
+    - filter %instruction% on property "Type"="PLang.Models.GoalToCall", get parent, write to %goalsToCall%
+    - append %goalsToCall% to list %goalsCouldBeCalled%
+    - filter %instruction% on property "GoalToCallOnTrue", write to %goalsToCall%
+    - append %goalsToCall% to list %goalsCouldBeCalled%
+    - filter %instruction% on property "GoalToCallOnFalse", write to %goalsToCall%
+    - append %goalsToCall% to list %goalsCouldBeCalled%
+
+
+GetTableInfo
+- get table information for %tableName%, write to %tableInfo%
+- append to dict "tableInfos", key:%tableName%, value:%tableInfo%

@@ -1,0 +1,3 @@
+GoalNotFound
+- render "GoalNotFound.html", write to %content%
+- call goal HtmlOut

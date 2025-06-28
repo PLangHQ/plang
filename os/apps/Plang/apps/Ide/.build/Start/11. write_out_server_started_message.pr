@@ -1,0 +1,101 @@
+{
+  "Text": "write out \"plang server started at 60878\"",
+  "ModuleType": null,
+  "Reload": false,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nOutput a message to inform that the plang server has started on port 60878\n## functions available starts ##\r\n{\"Methods\":[{\"MethodName\":\"SetOutputStream\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"channel\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parameters\",\"IsRequired\":false}]},{\"Description\":\"Send to user and waits for answer. Uses llm to construct a question to user and to format the answer. Developer defines specifically to use llm\",\"MethodName\":\"AskUserUsingLlm\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"text\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"DefaultValue\":\"text\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":202,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"developerInstructionForResult\",\"DefaultValue\":\"give me the object that matches, e.g. { \\\"id\\\": 123, \\\"name\\\": \\\"example\\\"}\",\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"options\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"scheme\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Send to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. regexPattern can contain %variable%. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.\",\"MethodName\":\"AskUser\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"text\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"DefaultValue\":\"text\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":202,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"regexPattern\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parameters\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"Description\":\"Send to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. regexPattern can contain %variable%. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting. channel=user|system|logger|audit|metric. User can also define his custom channel\",\"MethodName\":\"Ask\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"text\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"type\",\"DefaultValue\":\"text\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":202,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"regexPattern\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"errorMessage\",\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"parameters\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"channel\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"Description\":\"Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. channel=user|system|logger|audit|metric. User can also define his custom channel\",\"MethodName\":\"Write\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"content\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"writeToBuffer\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"type\",\"DefaultValue\":\"text\",\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"statusCode\",\"DefaultValue\":200,\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"paramaters\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"channel\",\"IsRequired\":false}]}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal\",\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "write out \"plang server started at 60878\""
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to output a message indicating that the plang server has started at port 60878. The Write function is suitable for writing output messages.\",\n  \"Name\": \"Write\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"content\",\n      \"Value\": \"plang server started at 60878\"\n    }\n  ]\n}"
+    }
+  ],
+  "Properties": {
+    "Parameters": {
+      "writeToBuffer": [
+        {
+          "Name": "writeToBuffer",
+          "FullTypeName": "System.Boolean"
+        }
+      ],
+      "type": [
+        {
+          "Name": "type",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "statusCode": [
+        {
+          "Name": "statusCode",
+          "FullTypeName": "System.Int32"
+        }
+      ],
+      "paramaters": [
+        {
+          "Name": "paramaters",
+          "FullTypeName": "System.Object"
+        }
+      ],
+      "channel": [
+        {
+          "Name": "channel",
+          "FullTypeName": "System.String"
+        }
+      ]
+    },
+    "ReturnValues": {}
+  },
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to output a message indicating that the plang server has started at port 60878. The Write function is suitable for writing output messages.",
+    "Name": "Write",
+    "Parameters": [
+      {
+        "Type": "System.Object",
+        "Name": "content",
+        "Value": "plang server started at 60878"
+      }
+    ],
+    "ReturnValues": null
+  }
+}

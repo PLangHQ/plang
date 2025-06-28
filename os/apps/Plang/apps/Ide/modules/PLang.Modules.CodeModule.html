@@ -1,0 +1,141 @@
+
+{{ if instruction.Function.Name == "RunFileCode" }}
+    {{ code = instruction.Function.Parameters[0].Value }}
+
+<div class="uk-overflow-auto uk-width-1-1">
+    <h4>C# Code</h4>
+    <table>
+        <tbody>
+            <tr>
+                <th>FileName</th>
+                <th>{{ code.FileName }}</th>
+            </tr>
+        </tbody>
+    </table>
+    
+    <h4>Input parameters</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>Variable name</th>
+                <th>Parameter name</th>
+                <th>Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ for item in code.InputParameters }}
+            <tr>
+                <td>{{ item.VariableName }}</td>
+                <td>{{ item.ParameterName }}</td>
+                <td>{{ item.ParameterType }}</td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+</div>
+
+<div class="uk-overflow-auto uk-width-1-1">
+    <h4>Output parameters:</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>Variable name</th>
+                <th>Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ for item in code.OutputParameters }}
+            <tr>
+                <td>{{ item.VariableName }}</td>
+                <td>{{ item.ParameterType }}</td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+</div>
+<div class="uk-overflow-auto uk-width-1-1">
+<h4>Source code</h4>
+<p>Source code might modified by plang runtime, wrapping it into a namespace and a class</p>
+<pre class="line-numbers"><code class="language-csharp">{{ code.SourceCode | string.replace "α" "." | html.escape }}</code></pre>
+</div>
+{{ end }}
+
+{{ if instruction.Function.Name == "RunInlineCode" }}
+    {{ code = instruction.Function.Parameters[0].Value }}
+
+<div class="uk-overflow-auto uk-width-1-1">
+    <h4>Input parameters</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>Variable name</th>
+                <th>Parameter name</th>
+                <th>Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ for item in code.Parameters }}
+            <tr>
+                <td>{{ item.Value }}</td>
+                <td>{{ item.Name }}</td>
+                <td>{{ item.Type }}</td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+</div>
+
+{{ if code.ReturnValues && code.ReturnValues.size > 0 }}
+
+
+<div class="uk-overflow-auto uk-width-1-1">
+    <h4>Return Values:</h4>
+    <table>
+        <thead>
+            <tr>
+                <th>Variable name</th>
+                <th>Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ for item in code.ReturnValues }}
+            <tr>
+                <td>%{{ item.VariableName }}%</td>
+                <td>{{ item.Type }}</td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+</div>
+{{ end }}
+
+{{ if step.ModuleType == 'PLang.Modules.ConditionalModule' }}
+<div class="uk-overflow-auto uk-width-1-1">
+    <h4>Return from condition</h4>
+    <ul>
+        {{ if code.GoalToCallOnTrue != '' && code.GoalToCallOnTrue.Value != '' }}
+        <li>Call <strong>{{ code.GoalToCallOnTrue.Value }}</strong> when <em
+                class="uk-text-success">true</em>
+            {{ if code.GoalToCallOnTrueParameters != null }}
+            {{ code.GoalToCallOnTrueParameters }}
+            {{ end}}
+        </li>
+        {{ end }}
+
+        {{ if code.GoalToCallOnFalse != '' && code.GoalToCallOnFalse.Value != '' }}
+        <li>Call <strong>{{ code.GoalToCallOnFalse.Value }}</strong> when <em>false</em>
+            {{ if code.GoalToCallOnFalseParameters != null }}
+            {{ code.GoalToCallOnFalseParameters }}
+            {{ end}}
+        </li>
+        {{ end }}
+        {{ if code.GoalToCallOnTrue == '' && code.GoalToCallOnFalse == '' }}
+        <li>Will run next step on <em class="uk-text-success">true</li>
+        {{ end }}
+    </ul>
+</div>
+{{ end }}
+<div class="uk-overflow-auto uk-width-1-1">
+<pre class="line-numbers"><code class="language-csharp">{{ code.Implementation | string.replace "α" "." | html.escape }}</code></pre>
+</div>
+{{ end }}

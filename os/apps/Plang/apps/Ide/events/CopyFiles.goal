@@ -1,0 +1,2 @@
+CopyFiles
+- copy all files and subfolder in ../, exclude ".db/", to ../../../dist/plang, overwrite

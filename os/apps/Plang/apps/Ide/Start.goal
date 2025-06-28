@@ -1,0 +1,34 @@
+Start
+- start webserver, port 60878
+- add route "/diagnostics", POST, call Diagnostics
+- add route "/runtest", POST, call RunTest
+- add route "/CreateStepTest", POST, call CreateStepTest
+- add route "/CodePanel", POST, call CodePanel
+- add route "/ChatPanel", POST, call ChatPanel
+- add route "/GoalNotFound", POST, call GoalNotFound
+- add route "/ExecutionPath", POST, call ExecutionPath
+- add route "/RenderLlm", POST, call RenderLlm
+- add route "/Gui", POST, call Gui
+- write out "plang server started at 60878"
+
+Diagnostics
+- read llm/diagnosticsSystem.txt, write to %system%
+- [llm] system: %system%
+        user:  <plang_code>%request.stepText%<plang_code>
+                <method_mapping>%request.action%<method_mapping>
+                <error_message>%request.error%<error_message>
+        format: "md"
+        write to %response%
+- write out %response%
+
+RunTest
+- load plang step from %goalPath%, %stepPrFileName%, write to %step%
+- [plang] run step %step%, %parameters%, just this step, write to %result%
+- if %result% == %expectedValue% 
+    convert expectedValue to %expectedValueType%
+    (convert objects to json and do deep compare) then call Success, else Fail
+
+
+CreateStepTest
+- run apps/Tests/CreateStepTest, goalPath=%request.goalPath%, stepPrFileName=%request.stepPrFileName%, output="html"
+

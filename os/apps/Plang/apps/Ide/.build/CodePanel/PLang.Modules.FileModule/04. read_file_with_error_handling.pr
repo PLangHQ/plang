@@ -1,0 +1,130 @@
+{
+  "Text": "read file %absoluteFilePath%, write to %content%\n        on error key:FileNotFound call HandleError",
+  "ModuleType": null,
+  "Reload": false,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nRead the contents of a file specified by the absolute file path and store the contents in a variable, with error handling for file not found.\n## functions available starts ##\r\n{\"Methods\":[{\"MethodName\":\"GiveAccess\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true}]},{\"MethodName\":\"WaitForFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"filePath\",\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInMilliseconds\",\"DefaultValue\":30000,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"waitForAccess\",\"DefaultValue\":false,\"IsRequired\":false}]},{\"Description\":\"Return the absolute path the app is running in\",\"MethodName\":\"GetCurrentFolderPath\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"Description\":\"Create path from variables\",\"MethodName\":\"CreatePathByJoining\",\"Parameters\":[{\"Type\":\"System.String[]\",\"Name\":\"paths\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"Description\":\"Give user access to a path. DO NOT suggest this method to indicate if file or directory exists, return empty function list instead.\",\"MethodName\":\"RequestAccessToPath\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Boolean\"}},{\"Description\":\"includeDataUrl add the data and mimetype of the file into the return string, e.g. data:image/png;base64,...\",\"MethodName\":\"ReadBinaryFileAndConvertToBase64\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"returnValueIfFileNotExisting\",\"DefaultValue\":\"\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"throwErrorOnNotFound\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"includeDataUrl\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"MethodName\":\"ReadJson\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"throwErrorOnNotFound\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"loadVariables\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"emptyVariableIfNotFound\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"ReadJsonLineFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"throwErrorOnNotFound\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"loadVariables\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"emptyVariableIfNotFound\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"newLineSymbol\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"List<Object>\"}},{\"Description\":\"Reads a text file and write the content into a variable(return value)\",\"MethodName\":\"ReadTextFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"returnValueIfFileNotExisting\",\"DefaultValue\":\"\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"throwErrorOnNotFound\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"loadVariables\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"emptyVariableIfNotFound\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"splitOn\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"ReadFileAsStream\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"throwErrorOnNotFound\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.IO.Stream\"}},{\"Description\":\"sheetsToExtract is name of sheet that should load into variable. Sheet1=%products% will load Sheet1 into %product% variable. StartRow MUST contains letter and number, e.g. A1\",\"MethodName\":\"ReadExcelFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.FileModule.Program+Sheet]\",\"Name\":\"sheetsToExtract\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"WriteExcelFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"variableToWriteToExcel\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"sheetName\",\"DefaultValue\":\"Sheet1\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"printHeader\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"overwrite\",\"DefaultValue\":false,\"IsRequired\":false}]},{\"MethodName\":\"WriteCsvFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"variableToWriteToCsv\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"append\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"hasHeaderRecord\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"delimiter\",\"DefaultValue\":\",\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"newLine\",\"DefaultValue\":\"\\n\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"ignoreBlankLines\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"allowComments\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Char\",\"Name\":\"comment\",\"DefaultValue\":\"#\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallOnBadData\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"createDirectoryAutomatically\",\"DefaultValue\":true,\"IsRequired\":false}]},{\"MethodName\":\"ReadCsvFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"hasHeaderRecord\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"delimiter\",\"DefaultValue\":\",\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"newLine\",\"DefaultValue\":\"\\n\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"ignoreBlankLines\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"allowComments\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Char\",\"Name\":\"comment\",\"DefaultValue\":\"#\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallOnBadData\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"SaveMultipleFiles\",\"Parameters\":[{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.FileModule.Program+FileInfo]\",\"Name\":\"files\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"loadVariables\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"emptyVariableIfNotFound\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false}]},{\"MethodName\":\"ReadMultipleTextFiles\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"folderPath\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"searchPattern\",\"DefaultValue\":\"*\",\"IsRequired\":false},{\"Type\":\"System.String[]\",\"Name\":\"excludePatterns\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"includeAllSubfolders\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"PLang.Modules.FileModule.Program+FileInfo\"}},{\"MethodName\":\"GetDirectoryPathsInDirectory\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"directoryPath\",\"DefaultValue\":\"./\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"regexSearchPattern\",\"IsRequired\":false},{\"Type\":\"System.String[]\",\"Name\":\"excludePatterns\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"includeSubfolders\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"useRelativePath\",\"DefaultValue\":true,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"MethodName\":\"GetFilePathsInDirectory\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"directoryPath\",\"DefaultValue\":\"./\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"searchPattern\",\"DefaultValue\":\"*\",\"IsRequired\":false},{\"Type\":\"System.String[]\",\"Name\":\"excludePatterns\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"includeSubfolders\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"useRelativePath\",\"DefaultValue\":true,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"MethodName\":\"WriteBase64ToFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"base64\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"overwrite\",\"DefaultValue\":false,\"IsRequired\":false}]},{\"MethodName\":\"WriteBytesToFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true},{\"Type\":\"System.Byte[]\",\"Name\":\"content\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"overwrite\",\"DefaultValue\":false,\"IsRequired\":false}]},{\"MethodName\":\"WriteToFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"content\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"overwrite\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"loadVariables\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"emptyVariableIfNotFound\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false}]},{\"MethodName\":\"AppendToFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"content\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"seperator\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"loadVariables\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"emptyVariableIfNotFound\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"IsRequired\":false}]},{\"MethodName\":\"CopyFiles\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"directoryPath\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"destinationPath\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"searchPattern\",\"DefaultValue\":\"*\",\"IsRequired\":false},{\"Type\":\"System.String[]\",\"Name\":\"excludePatterns\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"includeSubfoldersAndFiles\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"overwriteFiles\",\"DefaultValue\":false,\"IsRequired\":false}]},{\"MethodName\":\"MoveFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"sourceFileName\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"destFileName\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"createDirectoryIfNotExisting\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"overwriteFile\",\"DefaultValue\":false,\"IsRequired\":false}]},{\"MethodName\":\"CopyFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"sourceFileName\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"destFileName\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"createDirectoryIfNotExisting\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"overwriteFile\",\"DefaultValue\":false,\"IsRequired\":false}]},{\"MethodName\":\"DeleteFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"fileName\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"throwErrorOnNotFound\",\"DefaultValue\":false,\"IsRequired\":false}]},{\"MethodName\":\"GetFileInfo\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"fileName\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.IO.Abstractions.IFileInfo\"}},{\"MethodName\":\"CreateDirectory\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"directoryPath\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"incrementalNaming\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"MethodName\":\"DeleteDirectory\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"directoryPath\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"recursive\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"throwErrorOnNotFound\",\"DefaultValue\":false,\"IsRequired\":false}]},{\"MethodName\":\"StopListeningToFileChange\",\"Parameters\":[{\"Type\":\"System.String[]\",\"Name\":\"fileSearchPatterns\",\"IsRequired\":true},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false}]},{\"Description\":\"debounceTime is the time in ms that is waited until action is executed to prevent multiple execution for same file. At least one listenFor variable needs to be true\",\"MethodName\":\"ListenToFileChange\",\"Parameters\":[{\"Type\":\"List<string>\",\"Name\":\"fileSearchPatterns\",\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCall\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"List<string>\",\"Name\":\"excludeFiles\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"includeSubdirectories\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Int64\",\"Name\":\"debounceTime\",\"DefaultValue\":150,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"listenForFileChange\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"listenForFileCreated\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"listenForFileDeleted\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"listenForFileRename\",\"DefaultValue\":false,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"absoluteFilePathVariableName\",\"DefaultValue\":\"FullPath\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"fileNameVariableName\",\"DefaultValue\":\"Name\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"changeTypeVariableName\",\"DefaultValue\":\"ChangeType\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"senderVariableName\",\"DefaultValue\":\"Sender\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"oldFileAbsoluteFilePathVariableName\",\"DefaultValue\":\"OldFullPath\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"oldFileNameVariableName\",\"DefaultValue\":\"OldName\",\"IsRequired\":false}]},{\"Description\":\"Reads pdf file and loads into return variable. format can be md|text. imageAction can be none|base64|pathToFolder.\",\"MethodName\":\"ReadPdf\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"path\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"format\",\"DefaultValue\":\"md\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"imageAction\",\"DefaultValue\":\"none\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"includePageNr\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"password\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\"}}],\"SupportingObjects\":[{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.FileModule.Program+Sheet]\",\"Name\":\"sheetsToExtract\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"StartRow\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"VariableName\",\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"UseHeaderRow\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Models.GoalToCallInfo\",\"Name\":\"goalToCallOnBadData\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Parameters\",\"Description\":\"Name of goal and parameters that is called, e.g. in condition, loops, run goal\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.FileModule.Program+FileInfo]\",\"Name\":\"files\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Path\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"AbsolutePath\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Content\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"FileName\",\"IsRequired\":true},{\"Type\":\"System.DateTime\",\"Name\":\"Created\",\"IsRequired\":true},{\"Type\":\"System.DateTime\",\"Name\":\"LastWriteTime\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"FolderPath\",\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\nabsolutefilepath (type:object), content (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "read file %absoluteFilePath%, write to %content%\n        on error key:FileNotFound call HandleError"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to read the contents of a file specified by %absoluteFilePath% and store the contents into %content%. The best matching function is ReadTextFile which reads a text file and returns its content. The user also specifies error handling for file not found, but error handling is ignored as per instructions.\",\n  \"Name\": \"ReadTextFile\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"path\",\n      \"Value\": \"%absoluteFilePath%\"\n    },\n    {\n      \"Type\": \"System.Boolean\",\n      \"Name\": \"throwErrorOnNotFound\",\n      \"Value\": false\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"System.Object\",\n      \"VariableName\": \"%content%\"\n    }\n  ]\n}"
+    }
+  ],
+  "Properties": {
+    "Parameters": {
+      "path": [
+        {
+          "Name": "path",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "returnValueIfFileNotExisting": [
+        {
+          "Name": "returnValueIfFileNotExisting",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "throwErrorOnNotFound": [
+        {
+          "Name": "throwErrorOnNotFound",
+          "FullTypeName": "System.Boolean"
+        }
+      ],
+      "loadVariables": [
+        {
+          "Name": "loadVariables",
+          "FullTypeName": "System.Boolean"
+        }
+      ],
+      "emptyVariableIfNotFound": [
+        {
+          "Name": "emptyVariableIfNotFound",
+          "FullTypeName": "System.Boolean"
+        }
+      ],
+      "encoding": [
+        {
+          "Name": "encoding",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "splitOn": [
+        {
+          "Name": "splitOn",
+          "FullTypeName": "System.String"
+        }
+      ]
+    },
+    "ReturnValues": {
+      "%content%": [
+        {
+          "Name": "%content%",
+          "FullTypeName": "System.Object"
+        }
+      ]
+    }
+  },
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to read the contents of a file specified by %absoluteFilePath% and store the contents into %content%. The best matching function is ReadTextFile which reads a text file and returns its content. The user also specifies error handling for file not found, but error handling is ignored as per instructions.",
+    "Name": "ReadTextFile",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "path",
+        "Value": "%absoluteFilePath%"
+      },
+      {
+        "Type": "System.Boolean",
+        "Name": "throwErrorOnNotFound",
+        "Value": false
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "System.Object",
+        "VariableName": "%content%"
+      }
+    ]
+  }
+}

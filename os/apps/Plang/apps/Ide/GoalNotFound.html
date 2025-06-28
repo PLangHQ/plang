@@ -1,0 +1,42 @@
+<h3>Goal not built</h3>
+<div class="uk-flex uk-margin">
+    <div>
+        <button class="uk-button uk-button-default" onclick="build(false);">🏗️ Build<span
+                uk-icon="icon: chevron-down"></span></button>
+        <div uk-dropdown>
+            <ul class="uk-list">
+                <li><a href="#" onclick="build(false);">Build (cmd+k | ctrl+shift+b)</a></li>
+                <li>
+                    <hr>
+                </li>
+                <li><a href="#" onclick="build(true);">Build in c# debug mode</a></li>
+                <li><a href="#" onclick="buildGUI();">Build GUI</a></li>
+            </ul>
+        </div>
+    </div>
+    <div>
+        <a class="uk-button uk-button-default"
+            href="https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md">❓ Help create goal
+            file</a>
+    </div>
+</div>
+<script>
+    function build(csdebug) {
+        vscode.postMessage({
+            command: 'build',
+            data: { csdebug: csdebug }
+        });
+    }
+    
+    function buildGUI() {
+        vscode.postMessage({
+            command: 'buildGUI'
+        });
+    }
+</script>
+<h2>Writing plang code</h2>
+<p>
+    Plang provides many tools to build your application on. Your <a
+        href="https://github.com/PLangHQ/plang/blob/main/Documentation/modules/README.md">best option is to read what is
+        available in the documentation</a>.
+</p>
