@@ -36,17 +36,25 @@ namespace PLang.Services.OutputStream
 		public string Output { get => "text"; }
 		public bool IsStateful => isStatefull;
 
-		public async Task<(string?, IError?)> Ask(string text, string type = "text", int statusCode = 202, Dictionary<string, object>? parameters = null,
+		public bool IsFlushed { get; set; }
+
+		public async Task<(string?, IError?)> Ask(string text, string type = "text", int statusCode = 202, Dictionary<string, object?>? parameters = null,
 			Callback? callback = null, List<Option>? options = null)
 		{
 			string? strOptions = null;
-			foreach (var option in options)
+			if (options != null)
 			{
-				strOptions += $"\n\t{option.ListNumber}. {option.SelectionInfo}";
+				foreach (var option in options)
+				{
+					strOptions += $"\n\t{option.ListNumber}. {option.SelectionInfo}";
+				}
 			}
 
 			var bytes = encoding.GetBytes($"[Ask] {text}{options}");
+			
 			await this.stream.WriteAsync(bytes);
+			await this.stream.FlushAsync();
+			IsFlushed = true;
 
 			if (!IsStateful) return (null, null);
 

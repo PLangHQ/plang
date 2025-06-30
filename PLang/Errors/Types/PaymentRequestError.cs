@@ -19,7 +19,7 @@ namespace PLang.Errors.Types
 		public Callback? Callback {  get; }
 	}
 
-	public record PaymentContract(string name, string description, string error, List<Dictionary<string, object>> services, Signature? Client = null, Signature? Service = null);
+	public record PaymentContract(string name, string description, string error, List<Dictionary<string, object>> services, SignedMessage? Client = null, SignedMessage? Service = null);
 	public record PaymentRequest(PaymentContract contract, Callback Callback);
 
 	public record PaymentRequestError(GoalStep GoalStep, PaymentContract Contract, string Message, string Key = "PaymentRequest", int StatusCode = 402, 

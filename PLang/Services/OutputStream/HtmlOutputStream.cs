@@ -37,6 +37,8 @@ namespace PLang.Services.OutputStream
 		public string Output => "html";
 		public bool IsStateful { get { return isStateful; } }
 
+		public bool IsFlushed { get; set; }
+
 		public async Task<(string?, IError?)> Ask(string question, string type, int statusCode = 200, Dictionary<string, object?>? parameters = null, Callback? callback = null, List<Option>? options = null)
 		{
 			if (parameters == null) parameters = new();
@@ -69,7 +71,10 @@ namespace PLang.Services.OutputStream
 			using (var writer = new StreamWriter(stream, encoding))
 			{
 				await writer.WriteAsync(content);
+				await writer.FlushAsync();
 			}
+			IsFlushed = true;
+
 			return (null, null);
 		}
 
@@ -86,8 +91,8 @@ namespace PLang.Services.OutputStream
 			byte[] buffer = Encoding.UTF8.GetBytes(content);
 			stream.Write(buffer, 0, buffer.Length);
 			//httpContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
-
-
+			await stream.FlushAsync();
+			IsFlushed = true;
 			return;
 
 		}

@@ -28,7 +28,7 @@ namespace PLang.Utils
 			List<CallbackInfo>? callbacks = obj["CallbackInfos"]?.ToObject<List<CallbackInfo>>();
 			if (callbacks == null) return (null, new Error("Callback info not valid format", Data: obj["CallbackInfos"]));
 
-			Signature? signature = obj["Signature"]?.ToObject<Signature>();
+			SignedMessage? signature = obj["Signature"]?.ToObject<SignedMessage>();
 			if (signature == null) return (null, new Error("Signature not validate format", Data: obj["Signature"]));
 
 			

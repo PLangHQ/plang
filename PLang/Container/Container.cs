@@ -47,6 +47,7 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Websocket.Client.Logging;
 using static PLang.Modules.DbModule.ModuleSettings;
+using static PLang.Modules.WebserverModule.Program;
 
 
 namespace PLang.Container
@@ -74,14 +75,15 @@ namespace PLang.Container
 			RegisterEventRuntime(container);
 			RegisterBaseVariables(container, parentEngine);
 		}
-
-		public static void RegisterForPLangWebserver(this ServiceContainer container, string appStartupPath, string relativeAppPath, HttpListenerContext httpContext, string contentType)
+		
+		public static void RegisterForPLangWebserver(this ServiceContainer container, string appStartupPath, string relativeAppPath, 
+			HttpListenerContext httpContext, string contentType, LiveConnection? liveResponse)
 		{
 			container.RegisterBaseForPLang(appStartupPath, relativeAppPath);
 			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
-			container.RegisterOutputStreamFactory(typeof(HttpOutputStream), true, new HttpOutputStream(httpContext, container.GetInstance<IPLangFileSystem>(), contentType));
+			container.RegisterOutputStreamFactory(typeof(HttpOutputStream), true, new HttpOutputStream(httpContext.Response, container.GetInstance<IPLangFileSystem>(), contentType, liveResponse, httpContext.Request.Url));
 			container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
 			
 			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler(container.GetInstance<IOutputSystemStreamFactory>()));

@@ -33,6 +33,8 @@ namespace PLang.Services.OutputStream
 
 		public bool IsStateful => isStateful;
 
+		public bool IsFlushed { get; set; }
+
 		public async Task<(string?, IError?)> Ask(string text, string type, int statusCode = 200, Dictionary<string, object?>? parameters = null, Callback? callback = null, List<Option>? options = null)
 		{
 			
@@ -69,6 +71,7 @@ namespace PLang.Services.OutputStream
 					await writer.WriteAsync(JsonConvert.SerializeObject(askObj));
 				}
 				await writer.FlushAsync();
+				IsFlushed = true;
 			}
 			return (null, null);
 		}
@@ -86,6 +89,9 @@ namespace PLang.Services.OutputStream
 
 			byte[] buffer = Encoding.UTF8.GetBytes(content);
 			stream.Write(buffer, 0, buffer.Length);
+			await stream.FlushAsync();
+
+			IsFlushed = true;
 
 		}
 
