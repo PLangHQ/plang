@@ -1,0 +1,39 @@
+Math
+- %temp% = 90
+- write out %temp%
+- solve for sqrt(%temp%), write to %firstResult%
+- write out "square root of %temp% is: %firstResult%"
+- what is sqrt(4), write to %result%
+- write out "square root of 4 is: %result%"
+- solve for "(Sqrt(100) + %result%) / %result%", write to %result%
+- write out "result of (Sqrt(100) + 2) / 2 is: %result%"
+- what is 5 plus 7, write to %sum%
+- write out %sum%
+- what is 7 + 7.6533333, write to %sum%
+- write out %sum%
+- what is 9 times 6, write to %product%
+- write out %product%
+- what is %sum% minus 633, write to %difference%
+- write out %difference%
+- what is -8 - 0.93, write to %difference%
+- write out %difference%
+- find the quotient of 9 divided by 0, write to %quotient%
+- write out %quotient%
+- what is 8 to the power of 2, write to %power%
+- write out %power%
+- what is -2 ^ 3, write to %power%
+- write out %power%
+- find the first 20 prime numbers, write to %primes%
+- write out each item in %primes%
+- find the 20th fibonacci number, write to %fib%
+- write out %fib%
+- find the 1st fibonacci number, write to %fib%
+- write out %fib%
+- find the 3rd fibonacci number, write to %fib%
+- write out %fib%
+- what is tangent of 45 degrees, write to %tan%
+- write out %tan%
+- what is sin of pi, write to %sin%
+- write out %sin%
+- solve 5 + (12 - square root of 9) to the power of 2 all divided by 2 after then subtract 1, write to %test%
+- write out %test%

@@ -1,0 +1,4 @@
+Expression
+- what is sqrt(4), write to %result%
+- solve for "(sqrt(100) + %result% + pow(2, 3)) / %result%", write to %result%
+- write out "result of (sqrt(100) + 2 + pow(2, 3)) / 2 is: %result%"
