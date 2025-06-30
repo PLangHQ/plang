@@ -11,6 +11,7 @@ namespace PLang.Services.OutputStream
 		public Stream ErrorStream { get; }
 		public string Output { get; }
 		public bool IsStateful { get; }
+		public bool IsFlushed { get; set; }
 
 		public Task Write(object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null);
         public string Read();

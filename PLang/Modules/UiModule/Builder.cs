@@ -20,8 +20,6 @@ namespace PLang.Modules.UiModule
 		}
 
 
-
-		public record FunctionName(string Name);
 		public override async Task<(Instruction? Instruction, IBuilderError? BuilderError)> Build(GoalStep step, IBuilderError? previousBuildError = null)
 		{
 
@@ -50,9 +48,9 @@ Response with only the function name you would choose");
 
 			SetAssistant($"### function available ###\n{JsonConvert.SerializeObject(result.ClassDescription)}\n### function available ###");
 
-			var buildFunctionName = await base.Build<FunctionName>(step);
+			var buildFunctionName = await base.Build<GenericFunction>(step);
 
-			var functionName = buildFunctionName.Instruction.Function as FunctionName;
+			var functionName = buildFunctionName.Instruction.Function;
 
 
 			if (buildFunctionName.BuilderError != null) return (null, buildFunctionName.BuilderError);

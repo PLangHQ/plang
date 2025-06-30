@@ -26,20 +26,119 @@ namespace PLang.Modules.UiModule
 	{
 		Task Flush();
 	}
-	[Description("Takes any user command and tries to convert it to html. Add, remove, insert content to css selector")]
+	[Description("Takes any user command and tries to convert it to html. Add, remove, insert content to css selector. Set the (default) layout for the UI")]
 	public class Program : BaseProgram, IFlush
 	{
 		private readonly IOutputStreamFactory outputStreamFactory;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly MemoryStack memoryStack;
-
+		private string? clientTarget;
 		public Program(IOutputStreamFactory outputStream, IPLangFileSystem fileSystem, MemoryStack memoryStack) : base()
 		{
 			this.outputStreamFactory = outputStream;
 			this.fileSystem = fileSystem;
 			this.memoryStack = memoryStack;
+
+			clientTarget = memoryStack.Get("!target") as string;
 		}
 
+		public record LayoutOptions(bool IsDefault, string Name = "default", string DefaultTarget = "main",  string Description = "");
+		[Description("set the layout for the gui")]
+		public async Task<(List<LayoutOptions>, IError?)> SetLayout(LayoutOptions options)
+		{
+			context.TryGetValue("Layouts", out object? obj);
+			var layouts = obj as List<LayoutOptions>;
+			if (layouts == null)
+			{
+				layouts = new List<LayoutOptions>();
+			}
+
+			var idx = layouts.FindIndex(p => p.Name == options.Name);
+			if (idx == -1)
+			{
+				layouts.Add(options);
+			} else
+			{
+				layouts[idx] = options;
+			}
+			context.AddOrReplace("Layouts", layouts);
+			return (layouts, null);
+		}
+
+		private LayoutOptions? GetLayoutOptions(string? name = null)
+		{
+			context.TryGetValue("Layouts", out object? obj);
+			var layouts = obj as List<LayoutOptions>;
+			if (layouts == null)
+			{
+				return null;				
+			}
+			if (string.IsNullOrEmpty(name))
+			{
+				return layouts.FirstOrDefault(p => p.IsDefault);
+			}
+			return layouts.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));			
+		}
+
+
+		public record RenderTemplateOptions(string CssFramework, string Template, string Html, string? Target = null, string Layout = "default", bool RenderToOutputstream = false);
+		[Description(@"template=table|form|button|card|etc..... target is a css selector in html. When user doesn't write the return value into any variable, set it as renderToOutputstream=true, or when user defines it. Examples:
+```plang
+- render form, with 'Name', 'Address', append to #main => Template: form 
+- render table for %users%, 
+	Header: Name, Age
+	Rows: %name%, %age%
+		=> Properties: { Key: Header, Value : [""Name"", ""Age""], Key: Rows, Value: [""name"", ""age""] }
+```")]
+		public async Task<(object?, IError?)> RenderTemplate(RenderTemplateOptions options)
+		{
+			var templateEngine = GetProgramModule<TemplateEngineModule.Program>();
+			var outputStream = outputStreamFactory.CreateHandler();
+
+			string html = options.Html;
+			var filePath = GetPath(html);
+			if (fileSystem.File.Exists(filePath))
+			{
+				html = await fileSystem.File.ReadAllTextAsync(filePath);
+			}
+
+			(var content, var error) = await templateEngine.RenderContent(html);
+			if (error != null) return (content, error);
+
+			options = options with { Html = html };
+
+			if (!outputStream.IsFlushed)
+			{
+				var layoutOptions = GetLayoutOptions();
+
+				if (layoutOptions != null)
+				{
+					var parameters = new Dictionary<string, object?>();
+					parameters.Add((clientTarget ?? options.Target ?? layoutOptions.DefaultTarget).TrimStart('#'), content);
+
+					(content, error) = await templateEngine.RenderFile(layoutOptions.Name, parameters, options.RenderToOutputstream);
+
+					/*
+					string[] jsFiles = ["SigningKeyManager.js", "Plang.js"];
+					string jsFilesContent = String.Empty;
+					foreach (var jsFile in jsFiles)
+					{
+						jsFilesContent = fileSystem.File.ReadAllTextAsync(GetPath()
+					}*/
+
+					if (error != null) return (content, error);
+
+					return (content, null);
+				}
+			}
+
+			if (options.RenderToOutputstream)
+			{
+				await outputStreamFactory.CreateHandler().Write(options);
+			}
+
+			return (options, null);
+		}
 
 		public async Task<(string?, IError?)> RenderImageToHtml(string path)
 		{
@@ -179,28 +278,16 @@ namespace PLang.Modules.UiModule
 			AddToTree(content, indent);
 		}
 
-		[Description("status(primary|success|warning|danger), position(top-left|top-center|top-right|bottom-left|bottom-center|bottom-right), icon(UIkit icon e.g. icon: check|uri)")]
-		public async Task ShowNotification(string message, string status = "primary", string position = "top-center",
-				int timeout = 5000, string? id = null, string? icon = null, string? group = null)
+		public record Notification(string message,
+			[Description("status(primary|success|warning|danger)")]
+			string? status = null, 
+			[Description("position(top-left|top-center|top-right|bottom-left|bottom-center|bottom-right)")]
+			string? position = null, int timeout = 10*1000, string? id = null,
+			[Description("icon(UIkit icon e.g. icon: check|uri)")]
+			string? icon = null, string? group = null);
+		public async Task ShowNotification(Notification notification)
 		{
-			if (icon != null)
-			{
-				if (icon.Contains("."))
-				{
-					message = @$"<span><img class=""notification_icon"" src=""{icon}""></span>" + message;
-				}
-				else
-				{
-					message = @$"<span uk-icon='{icon}'></span>" + message;
-				}
-			}
-			message = EscapeTextForJavascript(message);
-			await ExecuteJavascript(@$"plangUi.showNotification(""{message}"", {{status: '{status}', position: '{position}', timeout: {timeout}, group: '{group}', id:'{id}' }})");
-		}
-
-		public async Task CloseNotification(string? id = null, string? group = null)
-		{
-			await ExecuteJavascript(@$"plangUi.hideNoticiation('{id}', '{group}');");
+			await outputStreamFactory.CreateHandler().Write(notification);
 		}
 
 		private void AddToTree(object? obj, int indent)

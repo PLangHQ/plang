@@ -18,6 +18,7 @@ using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Services.SigningService;
 using PLang.Utils;
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Net;
 using System.Net.Mime;
@@ -26,6 +27,8 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
+using static Dapper.SqlMapper;
+using static PLang.Modules.WebserverModule.Program;
 using static PLang.Utils.StepHelper;
 
 namespace PLang.Modules.WebserverModule
@@ -44,6 +47,12 @@ namespace PLang.Modules.WebserverModule
 		private readonly ProgramFactory programFactory;
 		private readonly static List<WebserverInfo> listeners = new();
 		private bool disposed;
+		ConcurrentDictionary<string, LiveConnection> liveConnections;
+
+		public record LiveConnection(HttpListenerResponse Response, bool IsFlushed, GoalToCallInfo? OnConnect = null, GoalToCallInfo? OnDisconnect = null)
+		{
+			public bool IsFlushed { get; set; } = IsFlushed;
+		};
 
 		public Program(ILogger logger, IEventRuntime eventRuntime, IPLangFileSystem fileSystem
 			, ISettings settings, IOutputStreamFactory outputStreamFactory
@@ -59,6 +68,13 @@ namespace PLang.Modules.WebserverModule
 			this.pseudoRuntime = pseudoRuntime;
 			this.engine = engine;
 			this.programFactory = programFactory;
+			
+			liveConnections = new();
+		}
+
+		public async Task<long> GetNumberOfLiveConnections()
+		{
+			return liveConnections.Count;
 		}
 
 		public async Task<WebserverInfo?> ShutdownWebserver(string webserverName)
@@ -157,7 +173,7 @@ namespace PLang.Modules.WebserverModule
 		}
 
 		public async Task<WebserverInfo> StartWebserver(string webserverName = "default", string scheme = "http", string host = "localhost",
-			int port = 8080, long maxContentLengthInBytes = 4096 * 1024,
+			int port = 8080, long maxContentLengthInBytes = 4096 * 2,
 			string defaultResponseContentEncoding = "utf-8",
 			bool signedRequestRequired = false, List<Routing>? routings = null)
 		{
@@ -195,208 +211,18 @@ namespace PLang.Modules.WebserverModule
 					while (true)
 					{
 
-						var httpContext = listener.GetContext();
-						var routings = webserverInfo.Routings;
-
-						var request = httpContext.Request;
-						var resp = httpContext.Response;
+						var httpContext = await listener.GetContextAsync();
 
 						httpContext.Response.Headers.Add("Server", "plang v" + version);
-
-						if (signedRequestRequired && string.IsNullOrEmpty(request.Headers.Get("X-Signature")))
+						if (signedRequestRequired && string.IsNullOrEmpty(httpContext.Request.Headers.Get("X-Signature")))
 						{
 							await WriteError(httpContext.Response, $"You must sign your request to user this web service. Using plang, you simply say. '- GET http://... sign request");
 							continue;
 						}
 
 
-
-						Goal? goal = null;
-						string? goalPath = null;
-						string? requestedFile = null;
-						var container = new ServiceContainer();
-						string contentType = "application/json";
-						try
-						{
-
-							requestedFile = httpContext.Request.Url?.LocalPath;
-							(goalPath, var routing) = GetGoalPath(routings, httpContext.Request);
-
-							if (string.IsNullOrEmpty(goalPath))
-							{
-								ProcessGeneralRequest(httpContext);
-								continue;
-							}
-
-							goal = prParser.GetGoal(Path.Join(goalPath, ISettings.GoalFileName));
-							if (goal == null)
-							{
-								await WriteNotfound(resp, $"Goal could not be loaded");
-								continue;
-							}
-							if (httpContext.Request.QueryString.GetValues("__signature__") != null)
-							{
-								httpContext.Response.AddHeader("X-Goal-Hash", goal.Hash);
-								httpContext.Response.AddHeader("X-Goal-Signature", goal.Signature);
-								httpContext.Response.StatusCode = 200;
-								httpContext.Response.Close();
-								continue;
-							}
-
-							long maxContentLength = (goal.GoalInfo?.GoalApiInfo != null && goal.GoalInfo?.GoalApiInfo?.MaxContentLengthInBytes != 0) ? goal.GoalInfo?.GoalApiInfo.MaxContentLengthInBytes ?? maxContentLengthInBytes : maxContentLengthInBytes;
-							if (httpContext.Request.ContentLength64 > maxContentLength)
-							{
-								httpContext.Response.StatusCode = 413;
-								using (var writer = new StreamWriter(resp.OutputStream, resp.ContentEncoding ?? Encoding.UTF8))
-								{
-									await writer.WriteAsync($"Content sent to server is to big. Max {maxContentLength} bytes");
-									await writer.FlushAsync();
-								}
-								httpContext.Response.Close();
-								continue;
-							}
-
-							if (httpContext.Request.IsWebSocketRequest)
-							{
-								ProcessWebsocketRequest(httpContext);
-								continue;
-							}
-
-							if (!IsValidMethod(routing, request, goal))
-							{
-								await WriteError(resp, $"Http method '{request.HttpMethod}' is not allowed on goal {goal.GoalName}");
-								continue;
-							}
-
-							string encodyName = Encoding.GetEncoding(defaultResponseContentEncoding).BodyName;
-
-							httpContext.Response.ContentEncoding = Encoding.GetEncoding(defaultResponseContentEncoding);
-							httpContext.Response.ContentType = $"{routing.ContentType}; charset={encodyName}";
-							httpContext.Response.Headers["Content-Type"] = $"{routing.ContentType}; charset={encodyName}"; 
-
-							httpContext.Response.SendChunked = true;
-							httpContext.Response.AddHeader("X-Goal-Hash", goal.Hash);
-							httpContext.Response.AddHeader("X-Goal-Signature", goal.Signature);
-							if (goal.GoalInfo != null && goal.GoalInfo.GoalApiInfo != null)
-							{
-								if (goal.GoalInfo.GoalApiInfo.ContentEncoding != null)
-								{
-									var encoding = Encoding.GetEncoding(goal.GoalInfo.GoalApiInfo.ContentEncoding);
-									httpContext.Response.ContentEncoding = encoding;
-									encodyName = encoding.BodyName;
-								}
-								if (goal.GoalInfo.GoalApiInfo.ContentType != null)
-								{
-									httpContext.Response.ContentType = $"{goal.GoalInfo.GoalApiInfo.ContentType}; charset={encodyName}";
-									httpContext.Response.Headers["Content-Type"] = $"{goal.GoalInfo.GoalApiInfo.ContentType}; charset={encodyName}";
-								}
-
-								if (goal.GoalInfo.GoalApiInfo.NoCacheOrNoStore != null)
-								{
-									httpContext.Response.Headers["Cache-Control"] = goal.GoalInfo.GoalApiInfo.NoCacheOrNoStore;
-								}
-								else if (goal.GoalInfo.GoalApiInfo.CacheControlPrivateOrPublic != null || goal.GoalInfo.GoalApiInfo.CacheControlMaxAge != null)
-								{
-									string? publicOrPrivate = goal.GoalInfo.GoalApiInfo.CacheControlPrivateOrPublic;
-									if (publicOrPrivate == null) { publicOrPrivate = "public"; }
-
-
-									httpContext.Response.Headers["Cache-Control"] = $"{publicOrPrivate}, {goal.GoalInfo.GoalApiInfo.CacheControlMaxAge}";
-								}
-							}
-
-							logger.LogDebug($"Register container for webserver - AbsoluteAppStartupFolderPath:{goal.AbsoluteAppStartupFolderPath}");
-
-							container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, Path.DirectorySeparatorChar.ToString(), httpContext, httpContext.Response.ContentType);
-							var context = container.GetInstance<PLangAppContext>();
-							context.AddOrReplace(ReservedKeywords.IsHttpRequest, true);
-
-							var engine = container.GetInstance<IEngine>();
-							engine.Init(container);
-							engine.HttpContext = httpContext;
-
-							engine.AddContext(ReservedKeywords.StartingEngine, this.engine);
-							var requestMemoryStack = engine.GetMemoryStack();
-							var identityService = container.GetInstance<IPLangIdentityService>();
-							var error = await ParseRequest(httpContext, identityService, request.HttpMethod, requestMemoryStack);
-							 
-							List<CallbackInfo>? callbackInfos = null;
-							if (request.Headers["!callback"] != null)
-							{
-								var identity = programFactory.GetProgram<Modules.IdentityModule.Program>(goalStep);
-								var callbackResult = await CallbackHelper.GetCallbackInfos(identity, request.Headers["!callback"]);
-								if (callbackResult.Error != null)
-								{
-									await ShowError(container, callbackResult.Error);
-									continue;
-								}
-								callbackInfos = callbackResult.CallbackInfos;
-
-								var keys = request.Headers.AllKeys.Where(p => p.StartsWith("!"));
-								foreach (var key in keys)
-								{
-									if (key != null && !context.ContainsKey(key))
-									{
-										context.AddOrReplace(key, request.Headers[key]);
-									}
-								}
-							}
-
-							if (error != null)
-							{
-								await ShowError(container, error);
-
-								continue;
-							}
-
-							(var vars, error) = await engine.RunGoal(goal, 0, callbackInfos);
-							if (error != null && error is not IErrorHandled)
-							{
-								await ShowError(container, error);
-								continue;
-							}
-							else
-							{
-
-								var streamFactory = container.GetInstance<IOutputStreamFactory>();
-								var stream = streamFactory.CreateHandler().Stream;
-								if (resp.OutputStream.CanWrite)
-								{
-									//stream.Seek(0, SeekOrigin.Begin);
-									//stream.CopyTo(resp.OutputStream);
-								}
-								await resp.OutputStream.FlushAsync();
-
-							}
-
-						}
-						catch (Exception ex)
-						{
-							logger.LogError(ex, @"WebServerError - requestedFile:{0} - goalPath:{1} - goal:{2} - 
-
-Error:
-{3}", requestedFile, goalPath, goal, ex.ToString());
-							var error = new Error(ex.Message, Key: "WebserverCore", 500, ex);
-							try
-							{
-								var errorHandlerFactory = container.GetInstance<IErrorHandlerFactory>();
-								var handler = errorHandlerFactory.CreateHandler();
-								await handler.ShowError(error);
-								continue;
-							}
-							catch (Exception ex2)
-							{
-								Console.WriteLine("Original exception:" + JsonConvert.SerializeObject(ex));
-								Console.WriteLine("Exception while handling original exception:" + JsonConvert.SerializeObject(ex2));
-							}
-
-						}
-						finally
-						{
-							context.Remove("IsHttpRequest");
-							resp.Close();
-							container.Dispose();
-						}
+						_ = HandleRequestAsync(httpContext, webserverInfo, defaultResponseContentEncoding, maxContentLengthInBytes);
+						
 					}
 				}
 				catch (Exception ex)
@@ -407,6 +233,271 @@ Error:
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
 			return webserverInfo;
+		}
+
+		private async Task HandleRequestAsync(HttpListenerContext httpContext, WebserverInfo webserverInfo, string defaultResponseContentEncoding, long maxContentLengthInBytes)
+		{
+
+			var routings = webserverInfo.Routings;
+
+			var request = httpContext.Request;
+			var resp = httpContext.Response;
+
+
+			var isPlangRequest = httpContext.Request.AcceptTypes?.FirstOrDefault(p => p.StartsWith("application/plang")) != null;
+			if (isPlangRequest)
+			{
+				var error = await ProcessPlangRequest(httpContext);
+				if (error != null)
+				{
+					using (var writer = new StreamWriter(resp.OutputStream, resp.ContentEncoding ?? Encoding.UTF8))
+					{
+						Console.WriteLine(error.ToString());
+						await writer.WriteAsync(error.ToFormat("html").ToString());
+						await writer.FlushAsync();
+					}
+				}
+				return;
+			}
+
+
+			Goal? goal = null;
+			string? goalPath = null;
+			string? requestedFile = null;
+			var container = new ServiceContainer();
+			string contentType = "application/json";
+			try
+			{
+
+				requestedFile = httpContext.Request.Url?.LocalPath;
+				(goalPath, var routing) = GetGoalPath(routings, httpContext.Request);
+
+				if (string.IsNullOrEmpty(goalPath))
+				{
+					ProcessGeneralRequest(httpContext);
+					return;
+				}
+
+				goal = prParser.GetGoal(Path.Join(goalPath, ISettings.GoalFileName));
+				if (goal == null)
+				{
+					await WriteNotfound(resp, $"Goal could not be loaded");
+					return;
+				}
+				if (httpContext.Request.QueryString.GetValues("__signature__") != null)
+				{
+					httpContext.Response.AddHeader("X-Goal-Hash", goal.Hash);
+					httpContext.Response.AddHeader("X-Goal-Signature", goal.Signature);
+					httpContext.Response.StatusCode = 200;
+					httpContext.Response.Close();
+					return;
+				}
+
+				long maxContentLength = (goal.GoalInfo?.GoalApiInfo != null && goal.GoalInfo?.GoalApiInfo?.MaxContentLengthInBytes != 0) ? goal.GoalInfo?.GoalApiInfo.MaxContentLengthInBytes ?? maxContentLengthInBytes : maxContentLengthInBytes;
+				if (httpContext.Request.ContentLength64 > maxContentLength)
+				{
+					httpContext.Response.StatusCode = 413;
+					using (var writer = new StreamWriter(resp.OutputStream, resp.ContentEncoding ?? Encoding.UTF8))
+					{
+						await writer.WriteAsync($"Content sent to server is to big. Max {maxContentLength} bytes");
+						await writer.FlushAsync();
+					}
+					httpContext.Response.Close();
+					return;
+				}
+
+				if (httpContext.Request.IsWebSocketRequest)
+				{
+					await ProcessWebsocketRequest(httpContext);
+					return;
+				}
+
+				if (!IsValidMethod(routing, request, goal))
+				{
+					await WriteError(resp, $"Http method '{request.HttpMethod}' is not allowed on goal {goal.GoalName}");
+					return;
+				}
+
+				string encodyName = Encoding.GetEncoding(defaultResponseContentEncoding).BodyName;
+
+				httpContext.Response.ContentEncoding = Encoding.GetEncoding(defaultResponseContentEncoding);
+				httpContext.Response.ContentType = $"{routing.ContentType}; charset={encodyName}";
+				httpContext.Response.Headers["Content-Type"] = $"{routing.ContentType}; charset={encodyName}";
+
+				httpContext.Response.SendChunked = true;
+				httpContext.Response.AddHeader("X-Goal-Hash", goal.Hash);
+				httpContext.Response.AddHeader("X-Goal-Signature", goal.Signature);
+				if (goal.GoalInfo != null && goal.GoalInfo.GoalApiInfo != null)
+				{
+					if (goal.GoalInfo.GoalApiInfo.ContentEncoding != null)
+					{
+						var encoding = Encoding.GetEncoding(goal.GoalInfo.GoalApiInfo.ContentEncoding);
+						httpContext.Response.ContentEncoding = encoding;
+						encodyName = encoding.BodyName;
+					}
+					if (goal.GoalInfo.GoalApiInfo.ContentType != null)
+					{
+						httpContext.Response.ContentType = $"{goal.GoalInfo.GoalApiInfo.ContentType}; charset={encodyName}";
+						httpContext.Response.Headers["Content-Type"] = $"{goal.GoalInfo.GoalApiInfo.ContentType}; charset={encodyName}";
+					}
+
+					if (goal.GoalInfo.GoalApiInfo.NoCacheOrNoStore != null)
+					{
+						httpContext.Response.Headers["Cache-Control"] = goal.GoalInfo.GoalApiInfo.NoCacheOrNoStore;
+					}
+					else if (goal.GoalInfo.GoalApiInfo.CacheControlPrivateOrPublic != null || goal.GoalInfo.GoalApiInfo.CacheControlMaxAge != null)
+					{
+						string? publicOrPrivate = goal.GoalInfo.GoalApiInfo.CacheControlPrivateOrPublic;
+						if (publicOrPrivate == null) { publicOrPrivate = "public"; }
+
+
+						httpContext.Response.Headers["Cache-Control"] = $"{publicOrPrivate}, {goal.GoalInfo.GoalApiInfo.CacheControlMaxAge}";
+					}
+				}
+
+				logger.LogDebug($"Register container for webserver - AbsoluteAppStartupFolderPath:{goal.AbsoluteAppStartupFolderPath}");
+
+				(var parameters, var signature, var error) = await ParseRequest(httpContext, request.HttpMethod);
+
+				LiveConnection? liveResponse = null;
+				if (signature != null && signature.Identity != null)
+				{
+					liveConnections.TryGetValue(signature.Identity, out liveResponse);
+				}
+
+				container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, Path.DirectorySeparatorChar.ToString(),
+					httpContext, httpContext.Response.ContentType, liveResponse);
+				var context = container.GetInstance<PLangAppContext>();
+				context.AddOrReplace(ReservedKeywords.IsHttpRequest, true);
+
+				var engine = container.GetInstance<IEngine>();
+				engine.Init(container);
+				engine.HttpContext = httpContext;
+
+				engine.AddContext(ReservedKeywords.StartingEngine, this.engine);
+
+				var requestMemoryStack = engine.GetMemoryStack();
+				var identityService = container.GetInstance<IPLangIdentityService>();
+
+
+				List<CallbackInfo>? callbackInfos = null;
+				if (request.Headers["!callback"] != null)
+				{
+					var identity = programFactory.GetProgram<Modules.IdentityModule.Program>(goalStep);
+					var callbackResult = await CallbackHelper.GetCallbackInfos(identity, request.Headers["!callback"]);
+					if (callbackResult.Error != null)
+					{
+						await ShowError(container, callbackResult.Error);
+						return;
+					}
+					callbackInfos = callbackResult.CallbackInfos;
+
+					var keys = request.Headers.AllKeys.Where(p => p.StartsWith("!"));
+					foreach (var key in keys)
+					{
+						if (key != null && !context.ContainsKey(key))
+						{
+							context.AddOrReplace(key, request.Headers[key]);
+						}
+					}
+				}
+
+				if (error != null)
+				{
+					await ShowError(container, error);
+
+					return;
+				}
+
+				(var vars, error) = await engine.RunGoal(goal, 0, callbackInfos);
+				if (error != null && error is not IErrorHandled)
+				{
+					await ShowError(container, error);
+					return;
+				}
+
+
+			}
+			catch (Exception ex)
+			{
+				logger.LogError(ex, @"WebServerError - requestedFile:{0} - goalPath:{1} - goal:{2} - 
+
+Error:
+{3}", requestedFile, goalPath, goal, ex.ToString());
+				var error = new Error(ex.Message, Key: "WebserverCore", 500, ex);
+				try
+				{
+					var errorHandlerFactory = container.GetInstance<IErrorHandlerFactory>();
+					var handler = errorHandlerFactory.CreateHandler();
+					await handler.ShowError(error);
+					return;
+				}
+				catch (Exception ex2)
+				{
+					Console.WriteLine("Original exception:" + JsonConvert.SerializeObject(ex));
+					Console.WriteLine("Exception while handling original exception:" + JsonConvert.SerializeObject(ex2));
+				}
+
+			}
+			finally
+			{
+				context.Remove("IsHttpRequest");
+				resp.Close();
+				container.Dispose();
+			}
+		}
+
+		private async Task<IError?> ProcessPlangRequest(HttpListenerContext httpContext)
+		{
+			var signatureData = httpContext.Request.Headers["X-Signature"];
+			if (string.IsNullOrEmpty(signatureData)) return new Error("X-Signature is empty. Use plang app or compatible to continue.");
+
+
+			var signing = GetProgramModule<IdentityModule.Program>();
+			var signatureResult = await signing.VerifySignature(signatureData);
+			if (signatureResult.Error != null) return signatureResult.Error;
+
+
+			string? query = httpContext.Request.Url?.Query;
+			if (query == "?plang.poll=1")
+			{
+				var response = httpContext.Response;
+				response.SendChunked = true;
+				response.ContentType = "application/json; charset=utf-8";
+				response.AddHeader("Cache-Control", "no-cache");
+
+				liveConnections.AddOrReplace(signatureResult.Signature.Identity, new LiveConnection(response, true));
+
+				var payload = JsonConvert.SerializeObject("ping");
+				var buffer = Encoding.UTF8.GetBytes(payload + Environment.NewLine);
+
+				try
+				{
+					while (true)
+					{
+						await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+						await response.OutputStream.FlushAsync();
+						await Task.Delay(TimeSpan.FromSeconds(20));
+					}
+				}
+				catch (Exception ex)
+				{
+					// client disconnected or other I/O error
+					liveConnections.TryRemove(signatureResult.Signature.Identity, out var liveConnection);
+					if (liveConnection.OnDisconnect != null)
+					{
+						var caller = GetProgramModule<CallGoalModule.Program>();
+						// no point in waiting for the goal to finish running
+						caller.RunGoal(liveConnection.OnDisconnect);
+					}
+					Console.WriteLine($"Long-poll ended: {ex.Message}");
+				}
+				finally
+				{
+					response.OutputStream.Close();
+				}
+			}
+			return null;
 		}
 
 		private bool IsValidMethod(Routing routing, HttpListenerRequest request, Goal goal)
@@ -450,7 +541,7 @@ Error:
 
 			using (var container = new ServiceContainer())
 			{
-				container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath, httpContext, "text/html");
+				container.RegisterForPLangWebserver(goal.AbsoluteAppStartupFolderPath, goal.RelativeGoalFolderPath, httpContext, "text/html", null);
 
 				requestedFile = requestedFile.Replace("/", Path.DirectorySeparatorChar.ToString()).Replace(@"\", Path.DirectorySeparatorChar.ToString());
 
@@ -668,9 +759,9 @@ Error:
 
 		}
 
-		private async Task<IError?> ParseRequest(HttpListenerContext? context, IPLangIdentityService identityService, string? method, MemoryStack memoryStack)
+		private async Task<(Dictionary<string, object?>? Parameters, SignedMessage? Signature, IError? Error)> ParseRequest(HttpListenerContext? context, string? method)
 		{
-			if (context == null) return new Error("context is empty");
+			if (context == null) return (null, null, new Error("context is empty"));
 
 			var request = context.Request;
 			string contentType = request.ContentType ?? "application/json";
@@ -678,20 +769,31 @@ Error:
 			{
 				throw new HttpRequestException("ContentType is missing");
 			}
-			if (method == null) return new Error("Could not map request to api");
+			if (method == null) return (null, null, new Error("Could not map request to api"));
 
 			if (request.HttpMethod != method)
 			{
-				return new Error($"Only {method} is supported. You sent {request.HttpMethod}");
+				return (null, null, new Error($"Only {method} is supported. You sent {request.HttpMethod}"));
 			}
 			string body = "";
 			using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
 			{
 				body = await reader.ReadToEndAsync();
 			}
-			var error = await VerifySignature(request, body, memoryStack);
-			if (error != null) return error;
 
+			IError? error;
+			SignedMessage? signature = null;
+			if (request.Headers["X-Signature"] != null)
+			{
+				var signatureFromUser = request.Headers["X-Signature"];
+
+				var signing = GetProgramModule<IdentityModule.Program>();
+				(signature, error) = await signing.VerifySignature(signatureFromUser);
+
+				if (error != null) return (null, null, error);
+			}
+
+			Dictionary<string, object?> parameter = new();
 			var nvc = request.QueryString;
 			if (contentType.StartsWith("application/json") && !string.IsNullOrEmpty(body))
 			{
@@ -706,11 +808,9 @@ Error:
 						obj.Add(key, nvc[key]);
 					}
 				}
+				parameter.Add("request", obj);
 
-				memoryStack.Put("request", obj, goalStep: goalStep);
-
-
-				return null;
+				return (parameter, signature, null);
 			}
 
 			if (contentType.StartsWith("application/x-www-form-urlencoded") && !string.IsNullOrEmpty(body))
@@ -731,13 +831,12 @@ Error:
 						}
 					}
 				}
-				memoryStack.Put("request", formData, goalStep: goalStep);
-				return null;
+				parameter.Add("request", formData);
+				return (parameter, signature, null);
 			}
 
-
-			memoryStack.Put("request", nvc, goalStep: goalStep);
-			return null;
+			parameter.Add("request", nvc);
+			return (parameter, signature, null);
 
 			/*
 			 * @ingig - Not really sure what is happening here, so decide to remove it for now. 
@@ -847,7 +946,7 @@ Error:
 		public record WebSocketData(GoalToCallInfo GoalToCall, string Url, string Method, string Contract)
 		{
 			public Dictionary<string, object?> Parameters = new();
-			public Signature? Signature = null;
+			public SignedMessage? Signature = null;
 		};
 		public async Task SendToWebSocket(object data, Dictionary<string, object?>? headers = null, string webSocketName = "default")
 		{

@@ -36,6 +36,8 @@ namespace PLang.Services.OutputStream
 		public string Output { get => "text"; }
 		public bool IsStateful { get { return true; } }
 
+		public bool IsFlushed { get;set; }
+
 		public async Task<(string?, IError?)> Ask(string text, string type = "text", int statusCode = 202, Dictionary<string, object>? parameters = null,
 			Callback? callback = null, List<Option>? options = null)
 		{
@@ -43,10 +45,11 @@ namespace PLang.Services.OutputStream
 			SetColor(statusCode);
 
 			Console.WriteLine($"[Ask] {text}{strOptions}");
+			IsFlushed = true;
 
 			string? line = Console.ReadLine();
 			Console.ResetColor();
-
+			
 			return (line, null);
 		}
 
@@ -99,7 +102,7 @@ namespace PLang.Services.OutputStream
 				Console.WriteLine(ToJson(obj));
 			}
 			Console.ResetColor();
-
+			IsFlushed = true;
 		}
 
 		private string ToJson(object obj) {

@@ -29,6 +29,8 @@ namespace PLang.Services.OutputStream
 		public string Output => "text";
 		public bool IsStateful => false;
 
+		public bool IsFlushed { get; set; }
+
 		public async Task<(string?, IError?)> Ask(string text, string type, int statusCode = 200, Dictionary<string, object?>? parameters = null, Callback? callback = null, List<Option>? options = null)
 		{
 			using var ms = new MemoryStream();
@@ -37,6 +39,7 @@ namespace PLang.Services.OutputStream
 			if (error != null) return (null, error);
 
 			await webSocket.SendAsync(ms.ToArray(), WebSocketMessageType.Text, true, CancellationToken.None);
+			IsFlushed = true;
 			return (null, null);
 		}
 
@@ -51,7 +54,7 @@ namespace PLang.Services.OutputStream
 
 			byte[] buffer = System.Text.Encoding.UTF8.GetBytes(obj.ToString()!);
 			await webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
-
+			IsFlushed = true;
 		}
 
 		public virtual void Dispose()
