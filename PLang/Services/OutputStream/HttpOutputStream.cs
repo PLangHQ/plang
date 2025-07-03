@@ -19,13 +19,13 @@ namespace PLang.Services.OutputStream
 {
 	public class HttpOutputStream : IOutputStream
 	{
-		private readonly HttpListenerResponse response;
+		private readonly HttpResponse response;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly string contentType;
 		private readonly LiveConnection? liveResponse;
 		private readonly Uri uri;
 
-		public HttpOutputStream(HttpListenerResponse response, IPLangFileSystem fileSystem, string contentType, LiveConnection? liveResponse, Uri uri)
+		public HttpOutputStream(HttpResponse response, IPLangFileSystem fileSystem, string contentType, LiveConnection? liveResponse, Uri uri)
 		{
 			this.response = response;
 			this.fileSystem = fileSystem;
@@ -34,8 +34,8 @@ namespace PLang.Services.OutputStream
 			this.uri = uri;
 		}
 
-		public Stream Stream { get { return this.response.OutputStream; } }
-		public Stream ErrorStream { get { return this.response.OutputStream; } }
+		public Stream Stream { get { return this.response.Body; } }
+		public Stream ErrorStream { get { return this.response.Body; } }
 
 		public bool IsStateful { get { return false; } }
 		public string Output
@@ -48,15 +48,16 @@ namespace PLang.Services.OutputStream
 
 		public bool IsFlushed { get; set; }
 
-		private (HttpListenerResponse?, bool IsFlushed, IError? Error) GetResponse()
+		private (HttpResponse?, bool IsFlushed, IError? Error) GetResponse()
 		{
 			try
 			{
-				if (response.OutputStream.CanWrite)
+				if (response.Body.CanWrite)
 				{
 					return (response, IsFlushed, null);
 				}
-			} catch (Exception ex)
+			}
+			catch (Exception ex)
 			{
 
 			}
@@ -68,51 +69,51 @@ namespace PLang.Services.OutputStream
 				bool isFlushed = liveResponse.IsFlushed;
 				liveResponse.IsFlushed = true;
 				return (liveResponse?.Response, isFlushed, null);
-			} catch (Exception ex)
+			}
+			catch (Exception ex)
 			{
 				return (null, true, new ExceptionError(ex));
 			}
-			
+
 		}
 
 		public async Task<(string?, IError?)> Ask(string text, string type, int statusCode = 200, Dictionary<string, object?>? parameters = null, Callback? callback = null, List<Option>? options = null)
 		{
 			(var response, var isFlushed, var error) = GetResponse();
 			if (error != null) return (null, error);
-			
+
 			if (response == null) throw new Exception("Response is null");
 
 			if (!isFlushed)
 			{
-				response.SendChunked = true;
 				response.StatusCode = statusCode;
-				response.StatusDescription = type;
 				response.ContentType = contentType;
 			}
 
-			if (contentType.Contains("json"))
+			IOutputStream outputStream;
+			if (contentType.Contains("plang"))
 			{
-				var jsonOutputStream = new JsonOutputStream(response.OutputStream, response.ContentEncoding ?? Encoding.UTF8, false);
-				return await jsonOutputStream.Ask(text, type, statusCode, parameters, callback, options);
+				outputStream = new PlangOutputStream(response.Body, response.Headers..ContentEncoding ?? Encoding.UTF8, false);
 			}
-
-			if (contentType.Contains("html"))
+			else if (contentType.Contains("json"))
 			{
-				var htmlOutputStream = new HtmlOutputStream(response.OutputStream, response.ContentEncoding ?? Encoding.UTF8, fileSystem, uri.ToString(), false);
-				return await htmlOutputStream.Ask(text, type, statusCode, parameters, callback, options);
-				
+				outputStream = new JsonOutputStream(response.Body, response.ContentEncoding ?? Encoding.UTF8, false);
 			}
-
-			if (contentType.Contains("text"))
+			else if (contentType.Contains("html"))
 			{
-				var textOutputStream = new TextOutputStream(response.OutputStream, response.ContentEncoding ?? Encoding.UTF8, false, uri.ToString());
-				return await textOutputStream.Ask(text, type, statusCode, parameters, callback, options);
-
+				outputStream = new HtmlOutputStream(response.Body, response.ContentEncoding ?? Encoding.UTF8, fileSystem, uri.ToString(), false);
 			}
+			else
+			{
+				outputStream = new TextOutputStream(response.OutputStream, response.ContentEncoding ?? Encoding.UTF8, false, uri.ToString());
+			}
+			
+			var result = await outputStream.Ask(text, type, statusCode, parameters, callback, options);
+			IsFlushed = true;
 
-			response.StatusCode = 400;
+			return result;
 
-			return (null, new Error($"Content type {contentType} is not supported."));
+
 		}
 
 
@@ -120,7 +121,7 @@ namespace PLang.Services.OutputStream
 		{
 			return "";
 		}
-	
+
 		public async Task Write(object? obj, string type, int httpStatusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
 
@@ -133,19 +134,30 @@ namespace PLang.Services.OutputStream
 				response.StatusCode = httpStatusCode;
 				response.StatusDescription = type;
 				response.SendChunked = true;
+				response.Headers.Add("Content-Type", contentType);
 			}
 
-			string? content = TypeHelper.GetAsString(obj, Output);
-			if (content == null) return;
+			IOutputStream outputStream;
+			if (contentType.Contains("plang"))
+			{
+				outputStream = new PlangOutputStream(response.OutputStream, response.ContentEncoding ?? Encoding.UTF8, false);
+			}
+			else if (contentType.Contains("json"))
+			{
+				outputStream = new JsonOutputStream(response.OutputStream, response.ContentEncoding ?? Encoding.UTF8, false);
+			}
+			else if (contentType.Contains("html"))
+			{
+				outputStream = new HtmlOutputStream(response.OutputStream, response.ContentEncoding ?? Encoding.UTF8, fileSystem, uri.ToString(), false);
+			}
+			else
+			{
+				outputStream = new TextOutputStream(response.OutputStream, response.ContentEncoding ?? Encoding.UTF8, false, uri.ToString());
+			}
 
-			byte[] buffer = Encoding.UTF8.GetBytes(content);
-
-			await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
-			await response.OutputStream.FlushAsync();
+			await outputStream.Write(obj);
 
 			IsFlushed = true;
-
-			return;
 
 		}
 

@@ -138,7 +138,8 @@ namespace PLang.Services.OutputStream
 			}
 
 			await this.stream.WriteAsync(bytes);
-			
+			await this.stream.FlushAsync();
+
 
 		}
 

@@ -107,7 +107,7 @@ namespace PLang.Modules.UiModule
 
 			options = options with { Html = html };
 
-			if (!outputStream.IsFlushed)
+			if (!outputStream.IsFlushed && !memoryStack.Get<bool>("!request.IsAjax")) 
 			{
 				var layoutOptions = GetLayoutOptions();
 
@@ -117,14 +117,6 @@ namespace PLang.Modules.UiModule
 					parameters.Add((clientTarget ?? options.Target ?? layoutOptions.DefaultTarget).TrimStart('#'), content);
 
 					(content, error) = await templateEngine.RenderFile(layoutOptions.Name, parameters, options.RenderToOutputstream);
-
-					/*
-					string[] jsFiles = ["SigningKeyManager.js", "Plang.js"];
-					string jsFilesContent = String.Empty;
-					foreach (var jsFile in jsFiles)
-					{
-						jsFilesContent = fileSystem.File.ReadAllTextAsync(GetPath()
-					}*/
 
 					if (error != null) return (content, error);
 

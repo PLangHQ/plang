@@ -5,9 +5,11 @@ using System.Runtime.Serialization;
 
 namespace PLang.Models
 {
+	public record HashedData(string Type, string Format, string Hash);
+
 	public record SignedMessage
 	{
-		[JsonProperty("type", Order =1)]
+		[JsonProperty("type", Order = 1)]
 		public string Type { get; set; } = "Ed25519";
 
 		[JsonProperty("nonce", Order = 2)]
@@ -23,7 +25,7 @@ namespace PLang.Models
 		public string? Name { get; set; }
 
 		[JsonProperty("data", Order = 7)]
-		public object? Data { get; set; }
+		public HashedData? Data { get; set; }
 
 		[JsonProperty("contracts", Order = 8)]
 		public List<string> Contracts { get; set; }

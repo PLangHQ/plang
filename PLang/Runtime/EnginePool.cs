@@ -12,6 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using PLang.Services.OutputStream;
 
 namespace PLang.Runtime
 {
@@ -43,23 +44,30 @@ namespace PLang.Runtime
 			}
 		}
 
-		public async Task<IEngine> RentAsync(IEngine parentEngine, GoalStep? callingStep, string name)
+		public async Task<IEngine> RentAsync(IEngine parentEngine, GoalStep? callingStep, string name, IOutputStream? outputStream = null)
 		{
 			if (_pool.TryTake(out var engine))
 			{
-				return SetProperties(engine, parentEngine, callingStep, name);
+				return SetProperties(engine, parentEngine, callingStep, name, outputStream);
 			}
 
 			var newEngine = _factory();
-			return SetProperties(newEngine, parentEngine, callingStep, name);
+			return SetProperties(newEngine, parentEngine, callingStep, name, outputStream);
 		}
 
-		private IEngine SetProperties(IEngine engine, IEngine parentEngine, GoalStep? callingStep, string name)
+		private IEngine SetProperties(IEngine engine, IEngine parentEngine, GoalStep? callingStep, string name, IOutputStream? outputStream)
 		{
 			engine.Name = name;
 			engine.SetParentEngine(parentEngine);
-			if (callingStep != null) 
+			
+			if (outputStream != null)
+			{
+				engine.SetOutputStream(outputStream);
+			}
+			if (callingStep != null)
+			{
 				engine.SetCallingStep(callingStep);
+			}
 
 			//engine.GetContext().Clear();
 			foreach (var item in parentEngine.GetContext())

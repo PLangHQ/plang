@@ -62,6 +62,7 @@ namespace PLang.Runtime
 		void ReplaceContext(PLangAppContext pLangAppContext);
 		void ReplaceMemoryStack(MemoryStack memoryStack);
 		void Return();
+		void SetOutputStream(IOutputStream outputStream);
 	}
 	public record Alive(Type Type, string Key, List<object>? Instances = null);
 	public class Engine : IEngine, IDisposable
@@ -81,7 +82,7 @@ namespace PLang.Runtime
 		private ITypeHelper typeHelper;
 		private IAskUserHandlerFactory askUserHandlerFactory;
 		public IOutputStreamFactory OutputStreamFactory { get; private set; }
-
+		private IOutputStream outputStream;
 
 		private PrParser prParser;
 		private MemoryStack memoryStack;
@@ -101,6 +102,13 @@ namespace PLang.Runtime
 
 			var activeEvents = parentEngine.GetEventRuntime().GetActiveEvents(); 
 			this.eventRuntime.SetActiveEvents(activeEvents);
+		}
+
+
+		public void SetOutputStream(IOutputStream outputStream)
+		{
+			this.outputStream = outputStream;
+			OutputStreamFactory.SetOutputStream(outputStream);
 		}
 		public IPLangFileSystem FileSystem { get { return fileSystem; } }
 		public void ReplaceContext(PLangAppContext context)
