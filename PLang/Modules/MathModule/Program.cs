@@ -32,19 +32,11 @@ namespace PLang.Modules.MathModule
 		[Description("Solve a complex math expression given as a string. Please capitalize any functions called like sqrt() into Sqrt()")]
 		public async Task<(double?, IError?)> SolveExpression(string expression)
 		{
-			//Console.WriteLine("expression: " + expression);
-
-			if (expression == "")
+			if (string.IsNullOrEmpty(expression))
 				return (null, new ProgramError("Could not use empty variable", goalStep, function, FixSuggestion: $"The variable value is: '{expression}' (without quotes)"));
 
 			var solveFor = new NCalc.Expression(expression);
-			double? value = EvaluateCustomExpressions(solveFor);
-				
-			if (value == null)
-				return (null, new ProgramError("Could not evaluate expression", goalStep, function, FixSuggestion: $"The variable value is: '{expression}' (without quotes)"));
-			
-
-			return (value, null);
+			return EvaluateCustomExpressions(solveFor);
 		}
 
 		//Number theory
@@ -55,7 +47,7 @@ namespace PLang.Modules.MathModule
 			if (variable == 0)
 				return (1, null);
 
-			int value = Convert.ToInt32((1 / Math.Sqrt(5))*(Math.Pow( ((1 + Math.Sqrt(5)) / 2), variable ) - Math.Pow( ((1 - Math.Sqrt(5)) / 2), variable )));
+			int value = Convert.ToInt32((1 / Math.Sqrt(5)) * (Math.Pow(((1 + Math.Sqrt(5)) / 2), variable) - Math.Pow(((1 - Math.Sqrt(5)) / 2), variable)));
 
 			return (value, null);
 		}
@@ -63,35 +55,12 @@ namespace PLang.Modules.MathModule
 		[Description("Find the first n prime numbers where n is a given number.")]
 		public async Task<(List<int>, IError?)> PrimeNumbers(int number)
 		{
-			//size estimation formula only works for n >= 6
-			if (number <= 5)
-			{
-				switch (number)
-				{
-					case 1:
-						return ([2], null);
-						break;
-					case 2:
-						return ([2, 3], null);
-						break;
-					case 3:
-						return ([2, 3, 5], null);
-						break;
-					case 4:
-						return ([2, 3, 5, 7], null);
-						break;
-					case 5:
-						return ([2, 3, 5, 7, 11], null);
-						break;
-					default:
-						return ([], new ProgramError("Could not convert variable to integer", goalStep, function, FixSuggestion: $"The variable value is: '{number}' (without quotes)"));
-						break;
-				}
-			}
-
 			//formula to find an overestimate for the size of the array needed for Sieve of Eratosthenes to find the first n prime numbers
-			int size = Convert.ToInt32(Math.Ceiling(number * (Math.Log(number) + Math.Log(Math.Log(number)))));
-			Console.WriteLine("Size of array for n = " + number + " is: " + size);
+			int size = 13;
+			if (number >= 6)
+			{
+				size = Convert.ToInt32(Math.Ceiling(number * (Math.Log(number) + Math.Log(Math.Log(number)))));
+			}
 
 			bool[] isPrimeList = new bool[size];
 
@@ -134,7 +103,7 @@ namespace PLang.Modules.MathModule
 			return (primeList, null);
 		}
 
-		public double? EvaluateCustomExpressions(NCalc.Expression expression)
+		private (double?, IError?) EvaluateCustomExpressions(NCalc.Expression expression)
 		{
 			double value = 0;
 
@@ -145,10 +114,10 @@ namespace PLang.Modules.MathModule
 			}
 			catch (EvaluateException e)
 			{
-				return null;
+				return (null, new ProgramError(e.Message, goalStep, function, FixSuggestion: $"The variable value is: {expression}"));
 			}
 
-			return value;
+			return (value, null);
 		}
 	}
 }
