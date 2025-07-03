@@ -131,6 +131,73 @@ namespace PLang.Modules.UiModule
 			return (options, null);
 		}
 
+		private LayoutOptions? GetLayoutOptions(string? name = null)
+		{
+			context.TryGetValue("Layouts", out object? obj);
+			var layouts = obj as List<LayoutOptions>;
+			if (layouts == null)
+			{
+				return null;				
+			}
+			if (string.IsNullOrEmpty(name))
+			{
+				return layouts.FirstOrDefault(p => p.IsDefault);
+			}
+			return layouts.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));			
+		}
+
+
+		public record RenderTemplateOptions(string CssFramework, string Template, string Html, string? Target = null, string Layout = "default", bool RenderToOutputstream = false);
+		[Description(@"template=table|form|button|card|etc..... target is a css selector in html. When user doesn't write the return value into any variable, set it as renderToOutputstream=true, or when user defines it. Examples:
+```plang
+- render form, with 'Name', 'Address', append to #main => Template: form 
+- render table for %users%, 
+	Header: Name, Age
+	Rows: %name%, %age%
+		=> Properties: { Key: Header, Value : [""Name"", ""Age""], Key: Rows, Value: [""name"", ""age""] }
+```")]
+		public async Task<(object?, IError?)> RenderTemplate(RenderTemplateOptions options)
+		{
+			var templateEngine = GetProgramModule<TemplateEngineModule.Program>();
+			var outputStream = outputStreamFactory.CreateHandler();
+
+			string html = options.Html;
+			var filePath = GetPath(html);
+			if (fileSystem.File.Exists(filePath))
+			{
+				html = await fileSystem.File.ReadAllTextAsync(filePath);
+			}
+
+			(var content, var error) = await templateEngine.RenderContent(html);
+			if (error != null) return (content, error);
+
+			options = options with { Html = html };
+
+			if (!outputStream.IsFlushed && !memoryStack.Get<bool>("!request.IsAjax")) 
+			{
+				var layoutOptions = GetLayoutOptions();
+
+				if (layoutOptions != null)
+				{
+					var parameters = new Dictionary<string, object?>();
+					parameters.Add((clientTarget ?? options.Target ?? layoutOptions.DefaultTarget).TrimStart('#'), content);
+
+					(content, error) = await templateEngine.RenderFile(layoutOptions.Name, parameters, options.RenderToOutputstream);
+
+					if (error != null) return (content, error);
+
+					return (content, null);
+				}
+			}
+
+			if (options.RenderToOutputstream)
+			{
+				await outputStreamFactory.CreateHandler().Write(options);
+			}
+
+			return (options, null);
+		}
+
 		public async Task<(string?, IError?)> RenderImageToHtml(string path)
 		{
 			var param = new Dictionary<string, object?>();

@@ -273,6 +273,7 @@ public class Program : BaseProgram, IDisposable
 		return webserverInfo;
 	}
 
+		var error = await HandleRequest(httpContext, outputStream, webserverInfo);
 
 
 	private async Task HandleRequestAsync(HttpContext httpContext, WebserverInfo webserverInfo)

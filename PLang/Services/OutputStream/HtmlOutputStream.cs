@@ -76,6 +76,8 @@ namespace PLang.Services.OutputStream
 
 			IsFlushed = true;
 
+			IsFlushed = true;
+
 			return (null, null);
 		}
 
