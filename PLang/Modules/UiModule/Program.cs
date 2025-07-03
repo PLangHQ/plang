@@ -91,10 +91,7 @@ namespace PLang.Modules.UiModule
 		=> Properties: { Key: Header, Value : [""Name"", ""Age""], Key: Rows, Value: [""name"", ""age""] }
 ```")]
 		public async Task<(object?, IError?)> RenderTemplate(RenderTemplateOptions options)
-		{
-			var templateEngine = GetProgramModule<TemplateEngineModule.Program>();
-			var outputStream = outputStreamFactory.CreateHandler();
-
+		{			
 			string html = options.Html;
 			var filePath = GetPath(html);
 			if (fileSystem.File.Exists(filePath))
@@ -102,11 +99,13 @@ namespace PLang.Modules.UiModule
 				html = await fileSystem.File.ReadAllTextAsync(filePath);
 			}
 
+			var templateEngine = GetProgramModule<TemplateEngineModule.Program>();
 			(var content, var error) = await templateEngine.RenderContent(html);
 			if (error != null) return (content, error);
 
 			options = options with { Html = html };
 
+			var outputStream = outputStreamFactory.CreateHandler();
 			if (!outputStream.IsFlushed && !memoryStack.Get<bool>("!request.IsAjax")) 
 			{
 				var layoutOptions = GetLayoutOptions();

@@ -38,7 +38,7 @@ namespace PLang.Runtime
 		string Id { get; init; }
 		public string Name { get; set; }
 		IOutputStreamFactory OutputStreamFactory { get; }
-		HttpListenerContext? HttpContext { get; set; }
+		HttpContext? HttpContext { get; set; }
 		void SetParentEngine(IEngine engine);
 		IEngine? ParentEngine { get; }
 		string Path { get; }
@@ -87,7 +87,7 @@ namespace PLang.Runtime
 		private PrParser prParser;
 		private MemoryStack memoryStack;
 		private PLangAppContext context;
-		public HttpListenerContext? HttpContext { get; set; }
+		public HttpContext? HttpContext { get; set; }
 
 		IEngine? _parentEngine = null;
 		GoalStep? callingStep = null;

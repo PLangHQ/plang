@@ -23,15 +23,18 @@ namespace PLang.Services.OutputStream
 		private readonly IPLangFileSystem fileSystem;
 		private readonly string contentType;
 		private readonly LiveConnection? liveResponse;
-		private readonly Uri uri;
+		private readonly string path;
+		private readonly Encoding encoding;
 
-		public HttpOutputStream(HttpResponse response, IPLangFileSystem fileSystem, string contentType, LiveConnection? liveResponse, Uri uri)
+		public HttpOutputStream(HttpResponse response, IPLangFileSystem fileSystem, string contentType, LiveConnection? liveResponse, string path)
 		{
 			this.response = response;
 			this.fileSystem = fileSystem;
 			this.contentType = contentType;
 			this.liveResponse = liveResponse;
-			this.uri = uri;
+			this.path = path;
+			this.encoding = Encoding.UTF8;
+		
 		}
 
 		public Stream Stream { get { return this.response.Body; } }
@@ -93,19 +96,19 @@ namespace PLang.Services.OutputStream
 			IOutputStream outputStream;
 			if (contentType.Contains("plang"))
 			{
-				outputStream = new PlangOutputStream(response.Body, response.Headers..ContentEncoding ?? Encoding.UTF8, false);
+				outputStream = new PlangOutputStream(response.Body, encoding, false);
 			}
 			else if (contentType.Contains("json"))
 			{
-				outputStream = new JsonOutputStream(response.Body, response.ContentEncoding ?? Encoding.UTF8, false);
+				outputStream = new JsonOutputStream(response.Body, encoding, false);
 			}
 			else if (contentType.Contains("html"))
 			{
-				outputStream = new HtmlOutputStream(response.Body, response.ContentEncoding ?? Encoding.UTF8, fileSystem, uri.ToString(), false);
+				outputStream = new HtmlOutputStream(response.Body, encoding, fileSystem, path, false);
 			}
 			else
 			{
-				outputStream = new TextOutputStream(response.OutputStream, response.ContentEncoding ?? Encoding.UTF8, false, uri.ToString());
+				outputStream = new TextOutputStream(response.Body, encoding, false, path);
 			}
 			
 			var result = await outputStream.Ask(text, type, statusCode, parameters, callback, options);
@@ -132,27 +135,33 @@ namespace PLang.Services.OutputStream
 			if (!isFlushed)
 			{
 				response.StatusCode = httpStatusCode;
-				response.StatusDescription = type;
-				response.SendChunked = true;
-				response.Headers.Add("Content-Type", contentType);
+				try
+				{
+
+					response.Headers.TryAdd("Content-Type", contentType);
+				}
+				catch (Exception ex)
+				{
+					int i = 0;
+				}
 			}
 
 			IOutputStream outputStream;
 			if (contentType.Contains("plang"))
 			{
-				outputStream = new PlangOutputStream(response.OutputStream, response.ContentEncoding ?? Encoding.UTF8, false);
+				outputStream = new PlangOutputStream(response.Body, encoding, false);
 			}
 			else if (contentType.Contains("json"))
 			{
-				outputStream = new JsonOutputStream(response.OutputStream, response.ContentEncoding ?? Encoding.UTF8, false);
+				outputStream = new JsonOutputStream(response.Body, encoding, false);
 			}
 			else if (contentType.Contains("html"))
 			{
-				outputStream = new HtmlOutputStream(response.OutputStream, response.ContentEncoding ?? Encoding.UTF8, fileSystem, uri.ToString(), false);
+				outputStream = new HtmlOutputStream(response.Body, encoding, fileSystem, path.ToString(), false);
 			}
 			else
 			{
-				outputStream = new TextOutputStream(response.OutputStream, response.ContentEncoding ?? Encoding.UTF8, false, uri.ToString());
+				outputStream = new TextOutputStream(response.Body, encoding, false, path.ToString());
 			}
 
 			await outputStream.Write(obj);

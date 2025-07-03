@@ -20,15 +20,17 @@ namespace PLang.Services.OutputStream
 	{
 		private readonly bool isStatefull;
 		private readonly string? callbackUri;
+		private readonly int bufferSize;
 		Encoding encoding;
 		Stream stream;
 
-		public TextOutputStream(Stream stream, Encoding encoding, bool isStatefull = true, string? callbackUri = null) {
+		public TextOutputStream(Stream stream, Encoding encoding, bool isStatefull = true, string? callbackUri = null, int bufferSize = 4096) {
 			this.encoding = encoding;
 			this.stream = stream;
 
 			this.isStatefull = isStatefull;
 			this.callbackUri = callbackUri;
+			this.bufferSize = bufferSize;
 		}
 		public Stream Stream => stream;
 		public Stream ErrorStream => stream;

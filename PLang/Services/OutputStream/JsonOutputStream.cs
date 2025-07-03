@@ -18,12 +18,14 @@ namespace PLang.Services.OutputStream
 		private readonly Stream stream;
 		private readonly Encoding encoding;
 		private bool isStateful;
+		private readonly int bufferSize;
 
-		public JsonOutputStream(Stream stream, Encoding encoding, bool isStateful)
+		public JsonOutputStream(Stream stream, Encoding encoding, bool isStateful, int bufferSize = 4096)
 		{
 			this.stream = stream;
 			this.encoding = encoding;
 			this.isStateful = isStateful;
+			this.bufferSize = bufferSize;
 		}
 
 		public Stream Stream { get { return this.stream; } }
@@ -49,7 +51,7 @@ namespace PLang.Services.OutputStream
 				dictOptions.Add(option.ListNumber, option.SelectionInfo);
 			}
 
-			using (var writer = new StreamWriter(stream, encoding))
+			using (var writer = new StreamWriter(stream, encoding, bufferSize: this.bufferSize, leaveOpen: true))
 			{
 				if (text != null)
 				{
@@ -87,7 +89,7 @@ namespace PLang.Services.OutputStream
 			string? content = TypeHelper.GetAsString(obj);
 			if (content == null) return;
 
-			await using var writer = new StreamWriter(stream, encoding, bufferSize: 4096, leaveOpen: true);
+			await using var writer = new StreamWriter(stream, encoding, bufferSize: this.bufferSize, leaveOpen: true);
 			await writer.WriteAsync(content);
 			await writer.FlushAsync();
 

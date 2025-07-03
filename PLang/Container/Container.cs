@@ -77,13 +77,13 @@ namespace PLang.Container
 		}
 		
 		public static void RegisterForPLangWebserver(this ServiceContainer container, string appStartupPath, string relativeAppPath, 
-			HttpListenerContext httpContext, string contentType, LiveConnection? liveResponse)
+			HttpContext httpContext, string contentType, LiveConnection? liveResponse)
 		{
 			container.RegisterBaseForPLang(appStartupPath, relativeAppPath);
 			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
-			container.RegisterOutputStreamFactory(typeof(HttpOutputStream), true, new HttpOutputStream(httpContext.Response, container.GetInstance<IPLangFileSystem>(), contentType, liveResponse, httpContext.Request.Url));
+			container.RegisterOutputStreamFactory(typeof(HttpOutputStream), true, new HttpOutputStream(httpContext.Response, container.GetInstance<IPLangFileSystem>(), contentType, liveResponse, httpContext.Request.Path));
 			container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
 			
 			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler(container.GetInstance<IOutputSystemStreamFactory>()));

@@ -33,7 +33,7 @@ namespace PLang.Modules
 {
 	public abstract class BaseProgram
 	{
-		private HttpListenerContext? _listenerContext = null;
+		private HttpContext? _listenerContext = null;
 
 		protected MemoryStack memoryStack;
 		protected Goal goal;
@@ -54,7 +54,7 @@ namespace PLang.Modules
 		private IAskUserHandlerFactory askUserHandlerFactory;
 		private ISettings settings;
 		protected bool IsBuilder { get; } = false;
-		public HttpListenerContext? HttpListenerContext
+		public HttpContext? HttpContext
 		{
 			get
 			{
@@ -73,7 +73,7 @@ namespace PLang.Modules
 			IsBuilder = isBuilder;
 		}
 
-		public void Init(IServiceContainer container, Goal goal, GoalStep step, Instruction instruction, HttpListenerContext? httpListenerContext)
+		public void Init(IServiceContainer container, Goal goal, GoalStep step, Instruction instruction, HttpContext? httpContext)
 		{
 			this.container = container;
 
@@ -85,7 +85,7 @@ namespace PLang.Modules
 			this.fileSystem = container.GetInstance<IPLangFileSystem>();
 			this.askUserHandlerFactory = container.GetInstance<IAskUserHandlerFactory>();
 			this.settings = container.GetInstance<ISettings>();
-			_listenerContext = httpListenerContext;
+			_listenerContext = httpContext;
 
 			this.goal = goal;
 			this.goalStep = step;
@@ -717,7 +717,7 @@ namespace PLang.Modules
 		public T GetProgramModule<T>() where T : BaseProgram
 		{
 			var program = container.GetInstance<T>();
-			program.Init(container, goal, goalStep, instruction, HttpListenerContext);
+			program.Init(container, goal, goalStep, instruction, this.HttpContext);
 			return program;
 		}
 		/*

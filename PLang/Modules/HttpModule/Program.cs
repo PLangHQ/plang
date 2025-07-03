@@ -554,7 +554,7 @@ namespace PLang.Modules.HttpModule
 		}
 		private static Properties GetHttpResponse(HttpResponseMessage response)
 		{
-			var httpResponse = new HttpResponse()
+			var httpResponse = new Models.HttpResponse()
 			{
 				IsSuccess = response.IsSuccessStatusCode,
 				ReasonPhrase = response.ReasonPhrase,
