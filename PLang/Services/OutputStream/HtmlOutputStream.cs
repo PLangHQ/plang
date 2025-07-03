@@ -88,12 +88,11 @@ namespace PLang.Services.OutputStream
 			string? content = TypeHelper.GetAsString(obj, Output);
 			if (content == null) return;
 
-			byte[] buffer = Encoding.UTF8.GetBytes(content);
-			stream.Write(buffer, 0, buffer.Length);
-			//httpContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
-			await stream.FlushAsync();
+			await using var writer = new StreamWriter(stream, encoding, bufferSize: 4096, leaveOpen: true);
+			await writer.WriteAsync(content);
+			await writer.FlushAsync();
+
 			IsFlushed = true;
-			return;
 
 		}
 

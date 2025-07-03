@@ -145,7 +145,8 @@ namespace PLang.Services.SigningService
 			if (data != null)
 			{
 				var bytes = await serialier.Serialize(data, "json");
-				signature.Data = await hasher.Hash(bytes, true, type: "Keccak256");
+				(var hash, var error) = await hasher.Hash(bytes, true, type: "Keccak256");
+				signature.Data = new HashedData("Keccak256", "json", hash.ToString());
 			}
 
 			if (expires != null)
@@ -222,32 +223,27 @@ namespace PLang.Services.SigningService
 				return (null, new ServiceError("Nonce has been used. New request needs to be created", GetType(), SignatureInvalid));
 			}
 			await appCache.Set(cacheKey, true, DateTimeOffset.Now.AddMinutes(5).AddSeconds(5));
-
-			if (headers != null && headers.Count > 0)
+			
+			if (clientSignedMessage.Headers != null && clientSignedMessage.Headers.Count > 0)
 			{
-				if (clientSignedMessage.Headers == null || clientSignedMessage.Headers.Count == 0) return (null, new ServiceError($"No headers is not provided in received signature", GetType(), "InvalidSignature"));
+				if (headers == null || headers.Count == 0) return (null, new ServiceError($"No headers is provided in request", GetType(), "InvalidSignature"));
 
-				foreach (var header in headers)
+				foreach (var signedHeader in clientSignedMessage.Headers)
 				{
-					if (!clientSignedMessage.Headers.ContainsKey(header.Key))
+					var item = headers.FirstOrDefault(p => p.Key.Equals(signedHeader.Key, StringComparison.OrdinalIgnoreCase) && p.Value?.Equals(signedHeader.Value) == true);
+					if (item.Key == null)
 					{
-						return (null, new ServiceError($"Header '{header.Key}' not in received signature", GetType(), "InvalidSignature"));
-					}
-
-					string? value = clientSignedMessage.Headers[header.Key]?.ToString();
-					if (value == null || !value.Equals(header.Value))
-					{
-						return (null, new ServiceError($"Header '{header.Key}' does not match in value to received signature", GetType(), "InvalidSignatureHeader"));
+						return (null, new ServiceError($"Header '{signedHeader.Key}' not in received in request or did not match the value", GetType(), "InvalidSignature"));
 					}
 				}
 
 			}
 			if (data != null && clientSignedMessage.Data != null)
 			{
-				var bytes = await serialier.Serialize(data, "json");
-				var hash = await hasher.Hash(bytes, true, type: "Keccak256");
+				var bytes = await serialier.Serialize(data, clientSignedMessage.Data.Format);
+				(var hash, var error) = await hasher.Hash(bytes, true, type: clientSignedMessage.Data.Type);
 
-				string? value = clientSignedMessage.Data?.ToString();
+				string? value = clientSignedMessage.Data?.Hash.ToString();
 				if (value == null || !value.Equals(hash))
 				{
 					return (null, new ServiceError($"Data does not match in value to received signature", GetType(), "InvalidSignatureData"));

@@ -125,7 +125,7 @@ namespace PLang.Modules.IdentityModule
 			SignedMessage? signature = signatureFromUser as SignedMessage;
 			if (signature == null && signatureFromUser is string str)
 			{
-				signature = SignatureCreator.Parse(str); ;
+				signature = SignatureCreator.Parse(str);
 			} else if (signature == null && signatureFromUser is IDictionary)
 			{
 				var result = SignatureCreator.Cast(signatureFromUser as Dictionary<string, object?>);

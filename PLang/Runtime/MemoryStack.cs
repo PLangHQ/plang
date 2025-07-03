@@ -247,7 +247,9 @@ namespace PLang.Runtime
 
 		public T? Get<T>(string key, bool staticVariable = false)
 		{
-			return (T?)Get(key, staticVariable);
+			var obj = Get(key, staticVariable);
+			if (obj == null) return default(T);
+			return (T?)obj;
 		}
 
 		public object? Get(string key, Type type, bool staticVariable = false)
