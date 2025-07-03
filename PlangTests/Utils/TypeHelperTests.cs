@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json.Linq;
 using PLang.Utils;
 using PLangTests;
 using System;
@@ -13,12 +14,13 @@ namespace PLang.Utils.Tests
 	public class TypeHelperTests : BasePLangTest
 	{
 		[TestInitialize]
-		public void Init() {
+		public void Init()
+		{
 			Initialize();
 		}
 
 
-		
+
 
 		[TestMethod()]
 		public void GetTypeTest()
@@ -28,6 +30,17 @@ namespace PLang.Utils.Tests
 			Assert.IsTrue(typeof(PLang.Modules.CodeModule.Program) == type);
 		}
 
-		
-	}
+		[TestMethod()]
+		public void TryConvertToMatchingTypeTest()
+		{
+			List<int> list = [ 1, 2, 3, 4 ];
+			var jarray = JArray.Parse("[1, 2, 3, 4]");
+
+
+			(var obj1, var obj2) = TypeHelper.TryConvertToMatchingType(list, jarray);
+
+			Assert.AreEqual(obj1.GetType(), obj2.GetType());
+
+		}
+    }
 }

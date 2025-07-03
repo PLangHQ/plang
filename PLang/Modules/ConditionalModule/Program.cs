@@ -196,28 +196,20 @@ namespace PLang.Modules.ConditionalModule
 
 			if (result == null)
 			{
-				if (item1 is JObject jobj)
+				if (item1?.GetType() != item2?.GetType())
 				{
-					item1 = jobj.ToString();
+					(item1, item2) = TypeHelper.TryConvertToMatchingType(item1, item2);
 				}
 
-				if (item2 is JObject jobj2)
-				{
-					item2 = jobj2.ToString();
-				}
 				if (item1 is string && item2 is not string)
 				{
 					item2 = item2?.ToString() ?? string.Empty;
 				}
 
-				if (item1?.GetType() != item2?.GetType())
+				if (item1 is JToken jtoken1 && item2 is JToken jtoken2)
 				{
-
-					(item1, item2) = TypeHelper.TryConvertToMatchingType(item1, item2);
-
-				}
-
-				if (item1 is string i1 && item2 is string i2)
+					result = JToken.DeepEquals(jtoken1, jtoken2);
+				} else if (item1 is string i1 && item2 is string i2)
 				{
 					StringComparison co = (ignoreCase) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 					result = i1.Equals(i2, co);

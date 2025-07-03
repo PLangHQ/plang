@@ -23,7 +23,7 @@ namespace PLangTests.Mocks
 		public string BuildPath => Path.Join(RootDirectory, ".build");
 		public string DbPath => Path.Join(RootDirectory, ".db");
 
-		public string OsDirectory => throw new NotImplementedException();
+		public string OsDirectory => "";
 
 		public string Id { get;init; }
 

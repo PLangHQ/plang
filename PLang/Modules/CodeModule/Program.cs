@@ -188,7 +188,15 @@ namespace PLang.Modules.CodeModule
 							return (null, new ProgramError($"{parameters[i].Name} could not be found in build code. Please rebuild step", goalStep, function, StatusCode: 500));
 						}
 
-						var value = memoryStack.Get(inParameter.Value.ToString(), parameters[i].ParameterType);
+						object? value;
+						if (VariableHelper.IsVariable(inParameter.Value))
+						{
+							value = memoryStack.Get(inParameter.Value?.ToString(), parameters[i].ParameterType);
+						}
+						else
+						{
+							value = inParameter.Value;
+						}
 						parametersObject.Add(value);
 
 
