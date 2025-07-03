@@ -2,7 +2,7 @@ Code
 - listen to %assertResult%, call Result
 - set %name%(string) as 'Toby Flenderson'
 - [code] get first name of %name%, write to %firstName%
-- assert that %firstName% is "Toby"
+- assert that %firstName% is "Tobby"
 - [code] get last name of %name%, write to %lastName%
 - assert that %lastName% is "Flenderson"
 - [code] uppercase %name%, write to %uppercaseName%
@@ -12,6 +12,11 @@ Code
 - set %fileNameWithExtension% as 'video.mp4'
 - [code] remove file extension from %fileNameWithExtension%, write to %fileName%
 - assert that %fileName% is "video"
+- create %list1% = [1,2,3,4]
+- create %list2% = [3,4,5,6]
+- create %list3% = [1,2,3,4]
+- assert that %list1% is same as %list2%
+- assert that %list1% is same as %list3%
 
 Result
 - write out "%assertResult%"

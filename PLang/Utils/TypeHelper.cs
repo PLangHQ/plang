@@ -8,6 +8,7 @@ using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Modules;
 using System.Collections;
+using System.Collections.Generic;
 using System.Data;
 using System.Dynamic;
 using System.Globalization;
@@ -521,7 +522,18 @@ public class TypeHelper : ITypeHelper
 		return false;
 	}
 
-	public static (object? item1, object? item2) TryConvertToMatchingType(object item1, object item2)
+	public static (JToken first, JToken second) ToMatchingJTokens(object a, object b)
+		=> (ToToken(a), ToToken(b));
+
+	private static JToken ToToken(object o) => o switch
+	{
+		null => JValue.CreateNull(),
+		JToken jt => jt,
+		_ => JToken.FromObject(o)
+	};
+
+
+	public static (object? item1, object? item2) TryConvertToMatchingType(object? item1, object? item2)
 	{
 		if (item1 == null || item2 == null) return (item1, item2);
 
@@ -530,12 +542,15 @@ public class TypeHelper : ITypeHelper
 
 		var numericTypes = new[]
 		{
-		typeof(byte), typeof(short), typeof(ushort), typeof(int), typeof(uint),
-		typeof(long), typeof(ulong), typeof(float), typeof(double), typeof(decimal)
-			};
+			typeof(byte), typeof(short), typeof(ushort), typeof(int), typeof(uint),
+			typeof(long), typeof(ulong), typeof(float), typeof(double), typeof(decimal)
+		};
 
 		if (!numericTypes.Contains(type1) || !numericTypes.Contains(type2))
-			return (item1, item2);
+		{
+			return ToMatchingJTokens(item1, item2);
+		}
+			
 
 		Type widerType = GetWiderType(type1, type2);
 
