@@ -1,55 +1,48 @@
 {
   "Text": "[code] uppercase %name%, write to %uppercaseName%",
-  "ModuleType": null,
-  "Reload": false,
-  "LlmRequest": [
-    {
-      "temperature": 0.0,
-      "top_p": 0.0,
-      "frequencyPenalty": 0.0,
-      "presencePenalty": 0.0,
-      "maxLength": 4000,
-      "llmResponseType": "json",
-      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Namespace\": string,\n\t\"Name\": string,\n\t\"Using\"?: string[] = null,\n\t\"Assemblies\"?: string[] = null,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
-      "model": "gpt-4.1-mini",
-      "promptMessage": [
-        {
-          "role": "system",
-          "content": [
+  "ModuleType": "PLang.Modules.CodeModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The code converts the input variable 'name' to a string, validates it is not null, then converts it to uppercase and returns the result in 'uppercaseName'.",
+    "Name": "RunInlineCode",
+    "Parameters": [
+      {
+        "Type": "PLang.Services.CompilerService.CodeImplementationResponse",
+        "Name": "implementation",
+        "Value": {
+          "Reasoning": "The code converts the input variable 'name' to a string, validates it is not null, then converts it to uppercase and returns the result in 'uppercaseName'.",
+          "Namespace": "PLangGeneratedCode",
+          "Name": "ConvertNameToUppercase",
+          "Implementation": "using System.Diagnostics;\nusing System;\n\nusing System;\n\nnamespace PLangGeneratedCode\n{\n    public static class ConvertNameToUppercase\n    {\n        public static string ExecutePlangCode(object? name)\n        {\r\n    if (!AppContext.TryGetSwitch(\"skipCode\", out bool _))\r\n\t{\r\n        Debugger.Break();\r\n\t}\r\n\r\n\n            if (name == null)\n            {\n                throw new Exception(\"The input name cannot be empty. Please provide a valid name.\");\n            }\n\n            string nameString = Convert.ChangeType(name, typeof(string)) as string;\n            if (nameString == null)\n            {\n                throw new Exception(\"The input name must be a valid text.\");\n            }\n\n            string uppercaseName = nameString.ToUpperInvariant();\n            return uppercaseName;\n        }\n    }\n}\n",
+          "Using": [
+            "System"
+          ],
+          "Assemblies": [
+            "System.Private.CoreLib.dll"
+          ],
+          "Parameters": [
             {
-              "type": "text",
-              "text": "Act as a senior C# developer, that converts the user statement into a C#(Version. 9) code. \r\n\r\n## Rules ##\r\n- Generate static class. The code generated should have 1 method with the static method named ExecutePlangCode. \r\n- A variable in user intent is defined by starting and ending %.\r\n- Variables defined in the user intent can be passed into the ExecutePlangCode function by value, but only if defined by user intent. \r\n- Variable names passed to ExecutePlangCode function MUST be unmodified from the user statement\r\n- The code will not be modified after you generate it.\r\n- If condition fails, throw Exception, unless defined otherwise by user command\r\n- Exception message should be for non-technical user\r\n- ALWAYS use long or long? instead of int or int?\r\n- Use long.TryParse When validating if variable is long\r\n- Do not reference any DTO classes. Choose the type that seems to fit best when not defined by user input. Use dynamic? if complex object is needed.\r\n- Strings are defined with double quote (\")\r\n- Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. \r\n- If PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into ExecutePlangCode method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.\r\n- System.IO.Path needs to be mapped to PLang.SafeFileSystem.Path which DOES not contain static methods, e.g. Path.GetFileName => fileSystem.Path.GetFileName. fileSystem IS provided as parameter as part of ExecutePlangCode method \r\n- When condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. ExecutePlangCode(dynamic? variable)\r\n- Variables that are injected into ExecutePlangCode method and contain dot(.), then replace dot(.) with the letter α in the parameter list. e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α\r\n- Keep underscore in variables if defined by user, e.g.  if %data.user_id%(string) is null => ExecutePlangCode(string? dataαuser_id)\r\n- Consider top security measures when generating code and validate code\r\n- When checking type and converting variables to type, use Convert.ChangeType method\r\n- When user defines assembly or using, include them in your answer\r\n- append @ sign for reserved variable in C#\r\n- when input and output variable is same only define it once\r\n- on error in step is handled by external system, DO NOT generate code for it\r\n## Rules ##\r\n\r\n## Response information ##\r\n- Namespace: MUST be PLangGeneratedCode\r\n- Name: is name of class, it should represent the intent of what the code is doing. \r\n- Name of class cannot be: extract_first_name_from_name, extract_first_name_from_name, extract_last_name_from_name, extract_last_name_from_name, uppercase_name_variable, create_random_string_list, remove_file_extension_from_filename\n\r\n- Using: must include namespaces that are needed to compile code.\r\n- Assemblies: dll to reference to compile using Roslyn\r\n- Parameters: Parameters MUST match parameter count sent to ExecutePlangCode. Keep format as is defined by user, e.g. user: 'convert %name% to upper, write to %nameUpper%' => InputParameters would be [\"%name%\"]. user: 'check %items.count% > 0 and %isValid% and %!error.status%, write \"yes\" to %answer%' => InputParameters would be [\"%list[0]%\", \"%isValid%\", \"%!error.status%\"]\r\n- ReturnValues: keep as is defined by user, e.g. user: 'is leap year, write \"yes\" to %answer% => ReturnValues would be [\"%answer%\"], only return 1 value\r\n## Response information ##\r\n"
-            },
-            {
-              "type": "text",
-              "text": "Only write the raw c# code and json scheme, no summary, no extra text to explain, be concise.\r\n\tYOU MUST implement all code needed and valid c# code. \r\n\tYou must return ```csharp for the code implementation and ```json scheme: {\n\t\"Reasoning\": string,\n\t\"Namespace\": string,\n\t\"Name\": string,\n\t\"Using\"?: string[] = null,\n\t\"Assemblies\"?: string[] = null,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+              "Type": "object?",
+              "Name": "name",
+              "Value": "%name%"
             }
-          ]
-        },
-        {
-          "role": "assistant",
-          "content": [
+          ],
+          "ReturnValues": [
             {
-              "type": "text",
-              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nConvert the value of the variable %name% to uppercase and store the result in %uppercaseName%\n## functions available starts ##\r\n{\"Methods\":[{\"MethodName\":\"RunInlineCode\",\"Parameters\":[{\"Type\":\"PLang.Services.CompilerService.CodeImplementationResponse\",\"Name\":\"implementation\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"RunFileCode\",\"Parameters\":[{\"Type\":\"PLang.Modules.CodeModule.Builder+FileCodeImplementationResponse\",\"Name\":\"implementation\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\"}}],\"SupportingObjects\":[{\"Type\":\"PLang.Services.CompilerService.CodeImplementationResponse\",\"Name\":\"implementation\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Reasoning\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Namespace\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"List<string>\",\"Name\":\"Using\",\"IsRequired\":true},{\"Type\":\"List<string>\",\"Name\":\"Assemblies\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter]\",\"Name\":\"Parameters\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue]\",\"Name\":\"ReturnValues\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Building.Model.Instruction\",\"Name\":\"Instruction\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Text\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"ModuleType\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"GenericFunctionType\",\"IsRequired\":true},{\"Type\":\"Newtonsoft.Json.Linq.JToken\",\"Name\":\"FunctionJson\",\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"PLang.Modules.CodeModule.Builder+FileCodeImplementationResponse\",\"Name\":\"implementation\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Reasoning\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"FileName\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Hash\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"SourceCode\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Namespace\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"ClassName\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"MethodName\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter]\",\"Name\":\"Parameters\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue]\",\"Name\":\"ReturnValues\",\"IsRequired\":true},{\"Type\":\"PLang.Building.Model.Instruction\",\"Name\":\"Instruction\",\"Description\":\"System.Collections.Generic.List`1[PLang.Building.Model.IPropertyDescription] (see Type information in SupportingObjects)\",\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\nname (type:object), uppercasename (type:object), \r\n## defined variables ##\n\r\n## examples ##\r\nreplace \"<strong>\" with \"\" from %html%, write to %html% => string ExecutePlangCode(string? html) {\r\n    //validate input parameter \r\n    html = html.Replace(\"<strong>\", \"\");\r\n\treturn html;\r\n}\r\nParameters: \"%html%\"]\r\nReturnValue: \"%html%\"\r\n\r\n%list.Count%*50, write to %result% => long ExecutePlangCode(long? listαCount) {\r\n    //validate input parameter \r\n    result = listαCount*50;\r\n\treturn result;\r\n}\r\nParameters: \"%list.Count%\"\r\nReturnValues: \"%result%\"\r\n\r\n%response.data.total%*%response.data.total_amount%, write to %allTotal%, => long ExecutePlangCode(dynamic? response.data.total, dynamic? response.data.total_amount) { \r\n    //validate input parameter \r\n\tlong allTotal = response.data.total*response.data.total_amount;\r\n\treturn allTotal;\r\n}\r\nParameters: \"%response.data.total%\", \"%response.data.total_amount%\"\r\nReturnValues: \"%allTotal%\"\r\n\r\ncheck if %dirPath% exists, write to %folderExists% => bool ExecutePlangCode(IPlangFileSystem fileSystem, string dirPath) {\r\n\t//validate input parameter \r\n\tfolderExists = fileSystem.Directory.Exists(dirPath);\r\n\treturn folderExists;\r\n}\r\nParameters: \"%dirPath%\"\r\nReturnValues: \"%folderExists%\"\r\n\r\nget filename of %filePath%, write to %fileName% => string ExecutePlangCode(IPlangFileSystem fileSystem, string filePath) {\r\n\t//validate input parameter \r\n\tfileName = fileSystem.Path.GetFileName(filePath);\r\n\treturn fileName;\r\n}\r\nParameters: \"fileSystem\", \"%filePath%\"\r\nReturnValues: \"%fileName%\"\r\n## examples ##"
-            }
-          ]
-        },
-        {
-          "role": "user",
-          "content": [
-            {
-              "type": "text",
-              "text": "[code] uppercase %name%, write to %uppercaseName%"
+              "Type": "string",
+              "VariableName": "%uppercaseName%"
             }
           ]
         }
-      ],
-      "type": "PLang.Modules.CodeModule.Builder",
-      "caching": true,
-      "RawResponse": "```csharp\nusing System;\n\nnamespace PLangGeneratedCode\n{\n    public static class UppercaseName\n    {\n        public static string ExecutePlangCode(string? name)\n        {\n            if (name == null)\n            {\n                throw new Exception(\"The input name cannot be empty. Please provide a valid name.\");\n            }\n\n            string uppercaseName = name.ToUpperInvariant();\n            return uppercaseName;\n        }\n    }\n}\n```\n```json\n{\n  \"Reasoning\": \"The code converts the input string 'name' to uppercase and returns it as 'uppercaseName'. It validates that 'name' is not null and throws a user-friendly exception if it is.\",\n  \"Namespace\": \"PLangGeneratedCode\",\n  \"Name\": \"UppercaseName\",\n  \"Using\": [\n    \"System\"\n  ],\n  \"Assemblies\": [],\n  \"Parameters\": [\n    {\n      \"Type\": \"string?\",\n      \"Name\": \"name\"\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"string\",\n      \"VariableName\": \"uppercaseName\"\n    }\n  ]\n}\n```"
-    }
-  ],
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "string",
+        "VariableName": "%uppercaseName%"
+      }
+    ]
+  },
   "Properties": {
     "Parameters": {
       "implementation": [
@@ -92,49 +85,55 @@
       ]
     },
     "ReturnValues": {
-      "uppercaseName": []
+      "%uppercaseName%": []
     }
   },
-  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
-  "Function": {
-    "Reasoning": "The code converts the input string 'name' to uppercase and returns it as 'uppercaseName'. It validates that 'name' is not null and throws a user-friendly exception if it is.",
-    "Name": "RunInlineCode",
-    "Parameters": [
-      {
-        "Type": "PLang.Services.CompilerService.CodeImplementationResponse",
-        "Name": "implementation",
-        "Value": {
-          "Reasoning": "The code converts the input string 'name' to uppercase and returns it as 'uppercaseName'. It validates that 'name' is not null and throws a user-friendly exception if it is.",
-          "Namespace": "PLangGeneratedCode",
-          "Name": "UppercaseName",
-          "Implementation": "using System.Diagnostics;\nusing System;\n\nusing System;\n\nnamespace PLangGeneratedCode\n{\n    public static class UppercaseName\n    {\n        public static string ExecutePlangCode(string? name)\n        {\r\n    if (!AppContext.TryGetSwitch(\"skipCode\", out bool _))\r\n\t{\r\n        Debugger.Break();\r\n\t}\r\n\r\n\n            if (name == null)\n            {\n                throw new Exception(\"The input name cannot be empty. Please provide a valid name.\");\n            }\n\n            string uppercaseName = name.ToUpperInvariant();\n            return uppercaseName;\n        }\n    }\n}\n",
-          "Using": [
-            "System"
-          ],
-          "Assemblies": [
-            "System.Private.CoreLib.dll"
-          ],
-          "Parameters": [
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Namespace\": string,\n\t\"Name\": string,\n\t\"Using\"?: string[] = null,\n\t\"Assemblies\"?: string[] = null,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
             {
-              "Type": "string?",
-              "Name": "name",
-              "Value": null
+              "type": "text",
+              "text": "Act as a senior C# developer, that converts the user statement into a C#(Version. 9) code. \r\n\r\n## Rules ##\r\n- Generate static class. The code generated should have 1 method with the static method named ExecutePlangCode. \r\n- A variable in user intent is defined by starting and ending %.\r\n- Variables defined in the user intent can be passed into the ExecutePlangCode function by value, but only if defined by user. \r\n- Variable names passed to ExecutePlangCode function MUST be unmodified from the user statement\r\n- The code will not be modified after you generate it.\r\n- If condition fails, throw Exception, unless defined otherwise by user command\r\n- Exception message should be for non-technical user\r\n- ALWAYS use long or long? instead of int or int?\r\n- Use long.TryParse When validating if variable is long\r\n- Do not reference any DTO classes. Choose the type that seems to fit best when not defined by user input. Use dynamic? if complex object is needed.\r\n- Strings are defined with double quote (\")\r\n- Any class from System.IO, should be replaced with PLang.SafeFileSystem.PLangFileSystem. It contains same classes and methods. \r\n- If PLangFileSystem is needed, add parameter PLang.SafeFileSystem.PLangFileSystem fileSystem into ExecutePlangCode method, but ONLY if needed. Assembly for PLangFileSystem is already include, do not list it in Assemblies response.\r\n- System.IO.Path needs to be mapped to PLang.SafeFileSystem.Path which DOES not contain static methods, e.g. Path.GetFileName => fileSystem.Path.GetFileName. fileSystem IS provided as parameter as part of ExecutePlangCode method \r\n- When condition is checking if variable is null, the variable needs to be defined with ? in the parameter, e.g. ExecutePlangCode(dynamic? variable)\r\n- Variables that are injected into ExecutePlangCode method and contain dot(.), then replace dot(.) with the letter α in the parameter list. e.g. %user.id% to userαid, %product.items[0].title% to productαitemsα0ααtitle, %list[1]% to listα1α\r\n- Keep underscore in variables if defined by user, e.g.  if %data.user_id%(string) is null => ExecutePlangCode(string? dataαuser_id)\r\n- Consider top security measures when generating code and validate code\r\n- When checking type and converting variables to type, use Convert.ChangeType method\r\n- When user defines assembly or using, include them in your answer\r\n- append @ sign for reserved variable in C#\r\n- on error in step is handled by external system, DO NOT generate code for it\r\n- follow user instruction when generating code\r\n## Rules ##\r\n\r\n## Response information ##\r\n- Namespace: MUST be PLangGeneratedCode\r\n- Name: is name of class, it should represent the intent of what the code is doing. \r\n- Name of class cannot be: extract_first_name_from_name, extract_last_name_from_name\n\r\n- Using: must include namespaces that are needed to compile code.\r\n- Assemblies: dll to reference to compile using Roslyn\r\n- Parameters: Parameters MUST match parameter count sent to ExecutePlangCode.\r\n- PLang.Modules.BaseBuilder+Parameter has scheme => { Name:string, Value:string, Type:string } Name is the name of the parameter in the ExecutePlangCode method, Value is the %variable% name that matches and Type is .net object type\r\n- ReturnValues: keep as is defined by user, e.g. user: 'is leap year, write \"yes\" to %answer% => ReturnValues would be [\"%answer%\"], only return 1 value\r\n## Response information ##\r\n"
+            },
+            {
+              "type": "text",
+              "text": "Only write the raw c# code and json scheme, no summary, no extra text to explain, be concise.\r\n\tYOU MUST implement all code needed and valid c# code. \r\n\tYou must return ```csharp for the code implementation and ```json scheme: {\n\t\"Reasoning\": string,\n\t\"Namespace\": string,\n\t\"Name\": string,\n\t\"Using\"?: string[] = null,\n\t\"Assemblies\"?: string[] = null,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
             }
-          ],
-          "ReturnValues": [
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
             {
-              "Type": "string",
-              "VariableName": "uppercaseName"
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nConvert the value of the variable %name% to uppercase and store the result in %uppercaseName%\n## functions available starts ##\r\n{\"Methods\":[{\"MethodName\":\"RunInlineCode\",\"Parameters\":[{\"Type\":\"PLang.Services.CompilerService.CodeImplementationResponse\",\"Name\":\"implementation\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"RunFileCode\",\"Parameters\":[{\"Type\":\"PLang.Modules.CodeModule.Builder+FileCodeImplementationResponse\",\"Name\":\"implementation\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\"}}],\"SupportingObjects\":[{\"Type\":\"PLang.Services.CompilerService.CodeImplementationResponse\",\"Name\":\"implementation\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Reasoning\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Namespace\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"List<string>\",\"Name\":\"Using\",\"IsRequired\":true},{\"Type\":\"List<string>\",\"Name\":\"Assemblies\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter]\",\"Name\":\"Parameters\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue]\",\"Name\":\"ReturnValues\",\"IsRequired\":true}],\"IsRequired\":false},{\"Type\":\"PLang.Building.Model.Instruction\",\"Name\":\"Instruction\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Text\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"ModuleType\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"GenericFunctionType\",\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"PLang.Modules.CodeModule.Builder+FileCodeImplementationResponse\",\"Name\":\"implementation\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Reasoning\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Name\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"FileName\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Hash\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"SourceCode\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Namespace\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"ClassName\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"MethodName\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+Parameter]\",\"Name\":\"Parameters\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.BaseBuilder+ReturnValue]\",\"Name\":\"ReturnValues\",\"IsRequired\":true},{\"Type\":\"PLang.Building.Model.Instruction\",\"Name\":\"Instruction\",\"Description\":\"System.Collections.Generic.List`1[PLang.Building.Model.IPropertyDescription] (see Type information in SupportingObjects)\",\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\nname (type:object), uppercasename (type:object), \r\n## defined variables ##\n\r\n\r\n\r\n\r\n\r\n## examples ##\r\nreplace \"<strong>\" with \"\" from %html%, write to %html% => string ExecutePlangCode(string? html) {\r\n    //validate input parameter \r\n    html = html.Replace(\"<strong>\", \"\");\r\n\treturn html;\r\n}\r\nParameters: [{Name:\"html\", Value:\"%html%\", Type:\"string\"}]\r\nReturnValue: \"%html%\"\r\n\r\n%list.Count%*50, write to %result% => long ExecutePlangCode(long? listαCount) {\r\n    //validate input parameter \r\n    result = listαCount*50;\r\n\treturn result;\r\n}\r\nParameters: [{Name:\"listαCount\", Value:\"%list.Count%\", Type:\"long\"}]\r\nReturnValues: \"%result%\"\r\n\r\n%response.data.total%*%response.data.total_amount%, write to %allTotal%, => long ExecutePlangCode(dynamic? response.data.total, dynamic? response.data.total_amount) { \r\n    //validate input parameter \r\n\tlong allTotal = response.data.total*response.data.total_amount;\r\n\treturn allTotal;\r\n}\r\nParameters: [{Name:\"response.data.total\", Value:\"%response.data.total%\", Type:\"dynamic\"}, Name:\"response.data.total_amount\", Value:\"%response.data.total_amount%\", Type:\"dynamic\"}]\r\nReturnValues: \"%allTotal%\"\r\n\r\n\r\nget filename of %filePath%, write to %fileName% => string ExecutePlangCode(IPlangFileSystem fileSystem, string filePath) {\r\n\t//validate input parameter \r\n\tfileName = fileSystem.Path.GetFileName(filePath);\r\n\treturn fileName;\r\n}\r\nParameters: [{Name:\"fileSystem\", Value:\"%filePath%\", Type:\"string\"}]\r\nReturnValues: \"%fileName%\"\r\n## examples ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "[code] uppercase %name%, write to %uppercaseName%"
             }
           ]
         }
-      }
-    ],
-    "ReturnValues": [
-      {
-        "Type": "string",
-        "VariableName": "uppercaseName"
-      }
-    ]
-  }
+      ],
+      "type": "PLang.Modules.CodeModule.Builder",
+      "caching": true,
+      "RawResponse": "```csharp\nusing System;\n\nnamespace PLangGeneratedCode\n{\n    public static class ConvertNameToUppercase\n    {\n        public static string ExecutePlangCode(object? name)\n        {\n            if (name == null)\n            {\n                throw new Exception(\"The input name cannot be empty. Please provide a valid name.\");\n            }\n\n            string nameString = Convert.ChangeType(name, typeof(string)) as string;\n            if (nameString == null)\n            {\n                throw new Exception(\"The input name must be a valid text.\");\n            }\n\n            string uppercaseName = nameString.ToUpperInvariant();\n            return uppercaseName;\n        }\n    }\n}\n```\n```json\n{\n  \"Reasoning\": \"The code converts the input variable 'name' to a string, validates it is not null, then converts it to uppercase and returns the result in 'uppercaseName'.\",\n  \"Namespace\": \"PLangGeneratedCode\",\n  \"Name\": \"ConvertNameToUppercase\",\n  \"Using\": [\n    \"System\"\n  ],\n  \"Assemblies\": [],\n  \"Parameters\": [\n    {\n      \"Type\": \"object?\",\n      \"Name\": \"name\",\n      \"Value\": \"%name%\"\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"string\",\n      \"VariableName\": \"%uppercaseName%\"\n    }\n  ]\n}\n```"
+    }
+  ]
 }

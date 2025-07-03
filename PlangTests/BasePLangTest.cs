@@ -90,8 +90,8 @@ namespace PLangTests
 
 			container = CreateServiceContainer();
 
-			serializer = container.GetInstance<PLang.Modules.SerializerModule.Program>();
-			crypto = container.GetInstance<PLang.Modules.CryptographicModule.Program>();
+			//serializer = container.GetInstance<PLang.Modules.SerializerModule.Program>();
+			//crypto = container.GetInstance<PLang.Modules.CryptographicModule.Program>();
 
 
 			step = new PLang.Building.Model.GoalStep();

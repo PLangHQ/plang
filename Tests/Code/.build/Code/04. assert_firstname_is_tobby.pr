@@ -1,20 +1,20 @@
 {
-  "Text": "assert that %fileName% is \"video\"",
+  "Text": "assert that %firstName% is \"Tobby\"",
   "ModuleType": "PLang.Modules.AssertModule",
   "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
   "Function": {
-    "Reasoning": "The user wants to assert that the variable %fileName% is equal to the string 'video'. The IsEqual function is suitable for this purpose as it compares two values for equality.",
+    "Reasoning": "The user wants to assert that the variable %firstName% is exactly equal to the string 'Tobby'. The IsEqual function is suitable for this purpose as it compares two values for equality.",
     "Name": "IsEqual",
     "Parameters": [
       {
         "Type": "System.Object",
         "Name": "expectedValue",
-        "Value": "video"
+        "Value": "Tobby"
       },
       {
         "Type": "System.Object",
         "Name": "actualValue",
-        "Value": "%fileName%"
+        "Value": "%firstName%"
       }
     ],
     "ReturnValues": null
@@ -71,7 +71,7 @@
           "content": [
             {
               "type": "text",
-              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nVerify that the variable %fileName% exactly matches the string 'video'\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"User can force the type of expectedValue and actualValue, it should be FullName type, e.g. System.Int64, System.Double, etc. By default the types are not set and the runtime will try to match them\",\"MethodName\":\"IsEqual\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"expectedValue\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"actualValue\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"resultVariable\",\"DefaultValue\":\"assertResult\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"expectedValueType\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"actualValueType\",\"IsRequired\":false}]}],\"SupportingObjects\":[]}\r\n## functions available ends ##\r\n## defined variables ##\r\nfilename (type:object), \r\n## defined variables ##"
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nVerify that the variable %firstName% exactly matches the string 'Tobby'\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"User can force the type of expectedValue and actualValue, it should be FullName type, e.g. System.Int64, System.Double, etc. By default the types are not set and the runtime will try to match them\",\"MethodName\":\"IsEqual\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"expectedValue\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"actualValue\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"resultVariable\",\"DefaultValue\":\"assertResult\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"expectedValueType\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"actualValueType\",\"IsRequired\":false}]}],\"SupportingObjects\":[]}\r\n## functions available ends ##\r\n## defined variables ##\r\nfirstname (type:object), \r\n## defined variables ##"
             }
           ]
         },
@@ -80,14 +80,14 @@
           "content": [
             {
               "type": "text",
-              "text": "assert that %fileName% is \"video\""
+              "text": "assert that %firstName% is \"Tobby\""
             }
           ]
         }
       ],
       "type": "PLang.Modules.GenericFunctionBuilder",
       "caching": true,
-      "RawResponse": "{\n  \"Reasoning\": \"The user wants to assert that the variable %fileName% is equal to the string 'video'. The IsEqual function is suitable for this purpose as it compares two values for equality.\",\n  \"Name\": \"IsEqual\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"expectedValue\",\n      \"Value\": \"video\"\n    },\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"actualValue\",\n      \"Value\": \"%fileName%\"\n    }\n  ],\n  \"ReturnValues\": null\n}"
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to assert that the variable %firstName% is exactly equal to the string 'Tobby'. The IsEqual function is suitable for this purpose as it compares two values for equality.\",\n  \"Name\": \"IsEqual\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"expectedValue\",\n      \"Value\": \"Tobby\"\n    },\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"actualValue\",\n      \"Value\": \"%firstName%\"\n    }\n  ],\n  \"ReturnValues\": null\n}"
     }
   ]
 }
