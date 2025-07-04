@@ -1,0 +1,93 @@
+{
+  "Text": "assert that %result% == 6",
+  "ModuleType": "PLang.Modules.AssertModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to assert that the variable %result% is equal to the value 6. The IsEqual function is designed to compare two values and optionally store the result of the assertion. Here, expectedValue is 6 and actualValue is %result%.",
+    "Name": "IsEqual",
+    "Parameters": [
+      {
+        "Type": "System.Object",
+        "Name": "expectedValue",
+        "Value": 6
+      },
+      {
+        "Type": "System.Object",
+        "Name": "actualValue",
+        "Value": "%result%"
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "resultVariable": [
+        {
+          "Name": "resultVariable",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "expectedValueType": [
+        {
+          "Name": "expectedValueType",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "actualValueType": [
+        {
+          "Name": "actualValueType",
+          "FullTypeName": "System.String"
+        }
+      ]
+    },
+    "ReturnValues": {}
+  },
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nVerify that the variable %result% is equal to the value 6\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"User can force the type of expectedValue and actualValue, it should be FullName type, e.g. System.Int64, System.Double, etc. By default the types are not set and the runtime will try to match them\",\"MethodName\":\"IsEqual\",\"Parameters\":[{\"Type\":\"System.Object\",\"Name\":\"expectedValue\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"actualValue\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"resultVariable\",\"DefaultValue\":\"assertResult\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"expectedValueType\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"actualValueType\",\"IsRequired\":false}]}],\"SupportingObjects\":[]}\r\n## functions available ends ##\r\n## defined variables ##\r\nresult (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "assert that %result% == 6"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to assert that the variable %result% is equal to the value 6. The IsEqual function is designed to compare two values and optionally store the result of the assertion. Here, expectedValue is 6 and actualValue is %result%.\",\n  \"Name\": \"IsEqual\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"expectedValue\",\n      \"Value\": 6\n    },\n    {\n      \"Type\": \"System.Object\",\n      \"Name\": \"actualValue\",\n      \"Value\": \"%result%\"\n    }\n  ],\n  \"ReturnValues\": null\n}"
+    }
+  ]
+}
