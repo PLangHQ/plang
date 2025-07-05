@@ -267,13 +267,13 @@ namespace PLang.Modules.MessageModule
 					settings.Set(typeof(ModuleSettings), ModuleSettings.NostrDMSince + "_hash_" + publicKey, hash);
 				}
 				Dictionary<string, object> validationKeyValues = new Dictionary<string, object>();
-				Signature? signature = null;
+				SignedMessage? signature = null;
 				if (tags != null)
 				{
 					var signatureData = tags.FirstOrDefault(p => p.TagIdentifier.Equals("X-Signature"))?.AdditionalData.FirstOrDefault(p => p != null);
 					if (signatureData != null)
 					{
-						signature = JsonConvert.DeserializeObject<Signature>(signatureData.ToString());
+						signature = JsonConvert.DeserializeObject<SignedMessage>(signatureData.ToString());
 					}
 				}
 

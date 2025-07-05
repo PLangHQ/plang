@@ -50,8 +50,8 @@ namespace PLang.Services.SigningService.Tests
 			headers.Add("url", url);
 
 			var signatureInfo = await signingService.Sign(body, [contract], null, headers);
-			Assert.AreEqual("zEm+GE9Hhl08JspYtMfsibkqL2T+usZaZFLVCqlh4bO9rQWQL8+/YPnN5Vc38beo6tr3hHUQYkamRBsTNra9AQ==", signatureInfo.SignedData);
-			Assert.AreEqual("zEm+GE9Hhl08JspYtMfsibkqL2T+usZaZFLVCqlh4bO9rQWQL8+/YPnN5Vc38beo6tr3hHUQYkamRBsTNra9AQ==", signatureInfo.SignedData);
+			Assert.AreEqual("zEm+GE9Hhl08JspYtMfsibkqL2T+usZaZFLVCqlh4bO9rQWQL8+/YPnN5Vc38beo6tr3hHUQYkamRBsTNra9AQ==", signatureInfo.Signature);
+			Assert.AreEqual("zEm+GE9Hhl08JspYtMfsibkqL2T+usZaZFLVCqlh4bO9rQWQL8+/YPnN5Vc38beo6tr3hHUQYkamRBsTNra9AQ==", signatureInfo.Signature);
 			int i = 0;
 		
 		}

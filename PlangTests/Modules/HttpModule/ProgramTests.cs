@@ -77,7 +77,7 @@ namespace PLangTests.Modules.HttpModule
 			string encoding = "utf-8";
 			string contentType = "application/json";
 
-			signingService.Sign(Arg.Any<string>()).Returns(new PLang.Models.Signature());
+			signingService.Sign(Arg.Any<string>()).Returns(new PLang.Models.SignedMessage());
 			httpClientFactory.CreateClient().Returns(new HttpClient(new TestHttpMessageHandler(url, data, doNotSignRequest, headers, encoding, contentType)));
 
 			var result = await p.Post(url, data, doNotSignRequest, headers, encoding, contentType);

@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using PLang.Models;
 using PLang.Modules.IdentityModule;
+using Newtonsoft.Json.Linq;
+using System.Security.Cryptography;
 
 namespace PLang.Utils
 {
@@ -16,14 +18,14 @@ namespace PLang.Utils
 
 		public static readonly string InvalidSignature = "InvalidSignature";
 		
-		public static (Signature? Signature, IError? Error) Cast(Dictionary<string, object?>? dict)
+		public static (SignedMessage? Signature, IError? Error) Cast(Dictionary<string, object?>? dict)
 		{
 			if (dict == null)
 			{
-				return (null, new ServiceError("Signature is null", typeof(Signature), Key: InvalidSignature));
+				return (null, new ServiceError("Signature is null", typeof(SignedMessage), Key: InvalidSignature));
 			}
 
-			var signature = new Signature();
+			var signature = new SignedMessage();
 			signature.Type = GetByKey("type", dict).ToString();
 
 			var createdResult = GetCreated(dict);
@@ -48,7 +50,7 @@ namespace PLang.Utils
 				return (null, result.Error);
 			}
 
-			signature.ExpiresInMs = result.Expires;
+			signature.Expires = result.Expires;
 			signature.Nonce = dict["nonce"].ToString();
 			if (dict.ContainsKey("parent"))
 			{
@@ -76,7 +78,7 @@ namespace PLang.Utils
 			{
 				return (DateTimeOffset.FromUnixTimeMilliseconds(lngCreated), null);
 			}
-			return (null, new ServiceError("Signature expires is not long and could not be converted: '" + dict["expires"], typeof(Signature), Key: InvalidSignature));
+			return (null, new ServiceError("Signature expires is not long and could not be converted: '" + dict["expires"], typeof(SignedMessage), Key: InvalidSignature));
 		}
 
 
@@ -84,7 +86,7 @@ namespace PLang.Utils
 		{
 			if (!dict.ContainsKey("created"))
 			{
-				return (null, new ServiceError("Signature created date not found", typeof(Signature), Key: InvalidSignature));
+				return (null, new ServiceError("Signature created date not found", typeof(SignedMessage), Key: InvalidSignature));
 			}
 
 			if (dict["created"] is long lngCreated)
@@ -92,13 +94,36 @@ namespace PLang.Utils
 				return (DateTimeOffset.FromUnixTimeMilliseconds(lngCreated), null);
 			}
 
-			return (null, new ServiceError("Signature created date not long: '" + dict["created"], typeof(Signature), Key: InvalidSignature));
+			return (null, new ServiceError("Signature created date not long: '" + dict["created"], typeof(SignedMessage), Key: InvalidSignature));
 		}
 
 		public static object? GetByKey(string key, Dictionary<string, object?> dict)
 		{
 			var item = dict.FirstOrDefault(p => p.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
 			return item.Value;
+		}
+
+		internal static SignedMessage? Parse(string str)
+		{
+			var jobj = JObject.Parse(str);
+			var crv = jobj["jwkIdentity"];
+			if (crv != null)
+			{
+				var signature = JsonConvert.DeserializeObject<SignedMessageJwkIdentity>(str);
+				if (signature == null) return null;
+
+				string x = signature.JwkIdentity["x"].ToString();
+				string y = signature.JwkIdentity["y"].ToString();
+				string keyString = $"{{\"crv\":\"P-256\",\"kty\":\"EC\",\"x\":\"{x}\",\"y\":\"{y}\"}}";
+				using var sha = SHA256.Create();
+				byte[] hash = sha.ComputeHash(Encoding.UTF8.GetBytes(keyString));
+				signature.Identity = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+
+				return signature;
+			} else
+			{
+				return JsonConvert.DeserializeObject<SignedMessage>(str);
+			}
 		}
 	}
 }

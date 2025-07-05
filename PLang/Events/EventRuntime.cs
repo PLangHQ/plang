@@ -594,7 +594,8 @@ namespace PLang.Events
 					Variables = r.Variables;
 				}
 
-				if (result.Error is null or IErrorHandled or IUserDefinedError) return (Variables, result.Error);
+				if (result.Error is null or IErrorHandled) return (Variables, null);
+				if (result.Error is IUserDefinedError) return (Variables, result.Error);
 				/*if (result.Error is IErrorHandled eh) return (result.Variables, eh);
 				if (result.Error is IUserDefinedError ude)
 				{
@@ -737,12 +738,12 @@ namespace PLang.Events
 
 		private bool IsMatchingStarPattern(Goal goal, string goalToBindTo)
 		{
-
+			var goalRelativeFolderPath = goal.AbsolutePrFolderPath.Replace(fileSystem.BuildPath, "");
 			goalToBindTo = ChangeDirectorySeperators(goalToBindTo);
-			var goalRelativeFolderPath = ChangeDirectorySeperators(goal.RelativeGoalFolderPath);
-			if (!goalRelativeFolderPath.EndsWith("/")) goalRelativeFolderPath += "/";
+			goalRelativeFolderPath = ChangeDirectorySeperators(goalRelativeFolderPath);
+			if (goal.Visibility == Visibility.Public && !goalRelativeFolderPath.EndsWith("/")) goalRelativeFolderPath += "/";
 
-			return Regex.IsMatch(goalRelativeFolderPath, @"^" + goalToBindTo + "$");
+			return Regex.IsMatch(goalRelativeFolderPath, @"^" + goalToBindTo + "$", RegexOptions.IgnoreCase);
 
 		}
 

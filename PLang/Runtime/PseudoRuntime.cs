@@ -2,8 +2,10 @@
 using PLang.Building.Model;
 using PLang.Container;
 using PLang.Errors;
+using PLang.Errors.AskUser;
 using PLang.Errors.Handlers;
 using PLang.Errors.Runtime;
+using PLang.Exceptions;
 using PLang.Exceptions.AskUser;
 using PLang.Interfaces;
 using PLang.Models;
@@ -42,6 +44,7 @@ namespace PLang.Runtime
 
 			var goalName = goalToCall.Name;
 			var parameters = goalToCall.Parameters;
+			var isRented = false;
 
 			Goal? goalToRun = null;
 			try
@@ -61,6 +64,7 @@ namespace PLang.Runtime
 				string goalToRunPath = fileSystem.Path.Join(relativeAppPath, goalName);
 				if (goalToRunPath.StartsWith("//")) goalToRunPath = goalToRunPath.Substring(1);
 
+				
 				// todo: (Decision) The idea behind isolation is when you call a external app, that app should not have access
 				// to the memory of the calling app, and only get the parameters that are sent
 				// this is not working now, when I rent engine it gets the memory.
@@ -84,7 +88,7 @@ namespace PLang.Runtime
 						callingStep = callingGoal.GoalSteps[callingGoal.CurrentStepIndex];
 						//return (engine, null, new Error($"calling goal cannot be empty.{ErrorReporting.CreateIssueShouldNotHappen}"), null);
 					}
-
+					isRented = true;
 					engine = await engine.GetEnginePool(engineRootPath).RentAsync(engine, callingStep, engineRootPath);
 				}
 				else
@@ -170,6 +174,24 @@ namespace PLang.Runtime
 
 
 			}
+			/*
+			catch (FileAccessException ex)
+			{
+				return (engine, null, new AskUserFileAccess(ex.AppName, ex.Path, ex.Message, async (appName, path, answer) =>
+				{
+					
+					
+					fileSystem.AddFileAccess(new FileAccessControl(appName, path, ProcessId: engine.Id));
+
+					var result = await RunGoal(engine, context, relativeAppPath, goalToCall, callingGoal,
+						waitForExecution, delayWhenNotWaitingInMilliseconds,
+						waitForXMillisecondsBeforeRunningGoal, indent,
+						keepMemoryStackOnAsync, isolated);
+					if (result.error != null) return (false, result.error);
+
+					return (true, null);
+				}), null);
+			}*/
 			catch (Exception ex)
 			{
 				return (engine, null, new ExceptionError(ex), null);
@@ -180,7 +202,7 @@ namespace PLang.Runtime
 				{
 					await goalToRun.DisposeVariables(engine.GetMemoryStack());
 				}
-				if (waitForExecution && engine.ParentEngine != null)
+				if (isRented)
 				{
 					engine.ParentEngine.GetEnginePool(engine.Path).Return(engine);
 				}

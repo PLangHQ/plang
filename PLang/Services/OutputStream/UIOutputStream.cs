@@ -29,6 +29,8 @@ namespace PLang.Services.OutputStream
 
 		public string Output => "html";
 
+		public bool IsFlushed { get; set; }
+
 		public UIOutputStream(IFileSystem fileSystem, IForm iForm)
 		{
 			this.fileSystem = fileSystem;
@@ -70,6 +72,7 @@ namespace PLang.Services.OutputStream
 				try
 				{
 					IForm.Flush(str);
+					IsFlushed = true;
 				} catch (Exception e)
 				{
 					int i = 0;
@@ -103,7 +106,8 @@ namespace PLang.Services.OutputStream
 				}
 
 				Stream.Write(bytes, 0, bytes.Length);
-				
+
+				IsFlushed = true;
 			}
 			if (statusCode >= 300)
 			{

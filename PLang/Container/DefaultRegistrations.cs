@@ -79,7 +79,7 @@ namespace PLang.Container
 
 			if (instance != null)
 			{
-				container.RegisterSingleton(factor =>
+				container.Register(factor =>
 				{
 					return instance;
 				}, instance.GetType().FullName);

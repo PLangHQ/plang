@@ -167,13 +167,21 @@ namespace PLang.Services.SettingsService
             {
                 throw new MissingSettingsException(callingType, type, key, defaultValue, explain, SetInternal);
             }
+			try
+			{
+				var obj = JsonConvert.DeserializeObject<T>(setting.Value);
+				if (obj == null)
+				{
+					throw new MissingSettingsException(callingType, type, key, defaultValue, explain, SetInternal);
+				}
+				return obj;
+			}
+			catch (Exception ex)
+			{
 
-            var obj = JsonConvert.DeserializeObject<T>(setting.Value);
-            if (obj == null)
-            {
-                throw new MissingSettingsException(callingType, type, key, defaultValue, explain, SetInternal);
-            }
-            return obj;
+				throw new MissingSettingsException(callingType, type, key, defaultValue, explain, SetInternal);
+			}
+            
         }
         public T GetOrDefault<T>(Type callingType, string? key, T defaultValue)
         {

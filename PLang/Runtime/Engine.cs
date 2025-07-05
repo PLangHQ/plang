@@ -22,6 +22,7 @@ using PLang.Services.AppsRepository;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Utils;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
@@ -38,7 +39,7 @@ namespace PLang.Runtime
 		string Id { get; init; }
 		public string Name { get; set; }
 		IOutputStreamFactory OutputStreamFactory { get; }
-		HttpListenerContext? HttpContext { get; set; }
+		HttpContext? HttpContext { get; set; }
 		void SetParentEngine(IEngine engine);
 		IEngine? ParentEngine { get; }
 		string Path { get; }
@@ -62,8 +63,26 @@ namespace PLang.Runtime
 		void ReplaceContext(PLangAppContext pLangAppContext);
 		void ReplaceMemoryStack(MemoryStack memoryStack);
 		void Return();
+		void SetOutputStream(IOutputStream outputStream);
 	}
-	public record Alive(Type Type, string Key, List<object>? Instances = null);
+	public record Alive(Type Type, string Key, List<object> Instances) : IDisposable
+	{
+		public void Dispose()
+		{
+			foreach (var item in Instances)
+			{
+				if (item is IDisposable disposable) disposable.Dispose();
+				if (item is IList list)
+				{
+					foreach (var item2 in list)
+					{
+						if (item2 is IDisposable disposable1) disposable1.Dispose();
+					}
+				}
+			}
+		}
+	}
+
 	public class Engine : IEngine, IDisposable
 	{
 		public string Id { get; init; }
@@ -81,12 +100,12 @@ namespace PLang.Runtime
 		private ITypeHelper typeHelper;
 		private IAskUserHandlerFactory askUserHandlerFactory;
 		public IOutputStreamFactory OutputStreamFactory { get; private set; }
-
+		private IOutputStream outputStream;
 
 		private PrParser prParser;
 		private MemoryStack memoryStack;
 		private PLangAppContext context;
-		public HttpListenerContext? HttpContext { get; set; }
+		public HttpContext? HttpContext { get; set; }
 
 		IEngine? _parentEngine = null;
 		GoalStep? callingStep = null;
@@ -101,6 +120,13 @@ namespace PLang.Runtime
 
 			var activeEvents = parentEngine.GetEventRuntime().GetActiveEvents(); 
 			this.eventRuntime.SetActiveEvents(activeEvents);
+		}
+
+
+		public void SetOutputStream(IOutputStream outputStream)
+		{
+			this.outputStream = outputStream;
+			OutputStreamFactory.SetOutputStream(outputStream);
 		}
 		public IPLangFileSystem FileSystem { get { return fileSystem; } }
 		public void ReplaceContext(PLangAppContext context)
@@ -149,7 +175,8 @@ namespace PLang.Runtime
 									container.GetInstance<IErrorHandlerFactory>(), container.GetInstance<IErrorSystemHandlerFactory>(), this);
 
 				var engine = serviceContainer.GetInstance<IEngine>();
-				engine.Init(serviceContainer);				
+				engine.Init(serviceContainer);
+				engine.SetParentEngine(this);
 
 				return engine;
 			});

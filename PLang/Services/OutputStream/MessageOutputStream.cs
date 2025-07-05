@@ -26,6 +26,8 @@ namespace PLang.Services.OutputStream
 		public string Output => "text";
 		public bool IsStateful => false;
 
+		public bool IsFlushed { get; set; }
+
 		public async Task<(string?, IError?)> Ask(string text, string type, int statusCode = 200, Dictionary<string, object?>? parameters = null, Callback? callback = null, List<Option>? options = null)
 		{
 			throw new NotImplementedException();

@@ -346,7 +346,7 @@ ReturnValue rules
 			{
 				var json = JsonConvert.SerializeObject(classDescription, new JsonSerializerSettings
 				{
-					NullValueHandling = NullValueHandling.Ignore
+					NullValueHandling = NullValueHandling.Include
 				});
 				assistant = $@"
 ## functions available starts ##

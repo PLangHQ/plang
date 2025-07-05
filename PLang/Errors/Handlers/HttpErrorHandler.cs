@@ -12,13 +12,13 @@ namespace PLang.Errors.Handlers
 {
 	public class HttpErrorHandler : BaseErrorHandler, IErrorHandler
 	{
-		private readonly HttpListenerContext httpListenerContext;
+		private readonly HttpContext httpContext;
 		private readonly ILogger logger;
 		private readonly ProgramFactory programFactory;
 
-		public HttpErrorHandler(HttpListenerContext httpListenerContext, IAskUserHandlerFactory askUserHandlerFactory, ILogger logger, ProgramFactory programFactory) : base(askUserHandlerFactory)
+		public HttpErrorHandler(HttpContext httpContext, IAskUserHandlerFactory askUserHandlerFactory, ILogger logger, ProgramFactory programFactory) : base(askUserHandlerFactory)
 		{
-			this.httpListenerContext = httpListenerContext;
+			this.httpContext = httpContext;
 			this.logger = logger;
 			this.programFactory = programFactory;
 		}
@@ -32,9 +32,8 @@ namespace PLang.Errors.Handlers
 		{
 			try
 			{
-				var resp = httpListenerContext.Response;
+				var resp = httpContext.Response;
 				resp.StatusCode = error.StatusCode;
-				resp.StatusDescription = error.Key;
 
 
 				var identity = programFactory.GetProgram<Modules.IdentityModule.Program>(step);
@@ -65,7 +64,7 @@ namespace PLang.Errors.Handlers
 
 				var result = JsonConvert.SerializeObject(payload);
 				var result2 = System.Text.Json.JsonSerializer.Serialize(payload);
-				await programFactory.GetProgram<Modules.SerializerModule.Program>(step).Serialize(payload, stream: resp.OutputStream);
+				await programFactory.GetProgram<Modules.SerializerModule.Program>(step).Serialize(payload, stream: resp.Body);
 			}
 			catch (ObjectDisposedException)
 			{

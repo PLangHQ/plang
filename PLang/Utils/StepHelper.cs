@@ -46,7 +46,7 @@ namespace PLang.Utils
 			return null;
 		}
 
-		public record Callback(Stack<CallbackInfo> CallbackInfos, Signature Signature);
+		public record Callback(Stack<CallbackInfo> CallbackInfos, SignedMessage Signature);
 		public record CallbackInfo(string GoalName, string GoalHash, int StepIndex);
 		public static async Task<Callback?> GetCallback(GoalStep? step, Modules.ProgramFactory programFactory)
 		{

@@ -111,10 +111,8 @@ The parameters provided in <function> might not be correct, these are the legal 
 			}
 			
 
-			if (allGoals == null)
-			{
-				allGoals = goalParser.GetAllGoals();
-			}
+			allGoals = goalParser.GetAllGoals();
+			
 			var goalsFound = allGoals.Where(p => p.RelativePrFolderPath.Contains(goalName.Name.AdjustPathToOs(), StringComparison.OrdinalIgnoreCase)).ToList();
 			if (goalsFound.Count == 0)
 			{

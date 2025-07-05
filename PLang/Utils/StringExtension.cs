@@ -55,18 +55,21 @@ namespace PLang.Utils
 			return txt.Substring(0, maxLength) + trailing;
 		}
 
-		public static (string Hash, IError? Error) ComputeHash(this string? input, string mode = "keccak256", string? salt = null)
+		public static (string? Hash, IError? Error) ComputeHash(this string? input, string mode = "keccak256", string? salt = null)
 		{
 			if (input == null) {
-				return (string.Empty, new Error("input to compute hash cannog be empty"));
+				return (string.Empty, new Error("input to compute hash cannot be empty"));
 			}
+			mode = mode.Replace("-", "");
 
 			if (!string.IsNullOrWhiteSpace(salt))
 			{
 				input = salt + ";" + input;
 			}
-			if (mode.ToLower() == "sha256") return (ComputeSha256(input), null);
-			return (ComputeKeccack(input), null);
+			if (mode.Equals("sha256", StringComparison.OrdinalIgnoreCase)) return (ComputeSha256(input), null);
+			if (mode.Equals("keccak256", StringComparison.OrdinalIgnoreCase)) return (ComputeKeccack(input), null);
+
+			return (null, new Error($"{mode} is not supported. {ErrorReporting.CreateIssueNotImplemented}"));
 		}
 
 

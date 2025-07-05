@@ -436,6 +436,12 @@ public class TypeHelper : ITypeHelper
 			return jToken.ToObject(targetType);
 		}
 
+		if (IsListOfJToken(value) && targetType == typeof(string))
+		{
+			var jArray2 = new JArray((IEnumerable<JToken>)value);
+			return jArray2.ToString();
+		}
+
 
 		string? strValue = value.ToString()?.Trim();
 		if (strValue != null)
@@ -505,7 +511,20 @@ public class TypeHelper : ITypeHelper
 
 		}
 	}
+	static bool IsListOfJToken(object obj)
+	{
+		if (obj == null) return false;
 
+		var type = obj.GetType();
+
+		if (!type.IsGenericType) return false;
+
+		var genericTypeDef = type.GetGenericTypeDefinition();
+		if (genericTypeDef != typeof(List<>)) return false;
+
+		var argType = type.GetGenericArguments()[0];
+		return typeof(Newtonsoft.Json.Linq.JToken).IsAssignableFrom(argType);
+	}
 	public static bool IsBoolValue(string strValue, out bool? boolValue)
 	{
 		if (strValue == "1" || strValue.Equals("true", StringComparison.OrdinalIgnoreCase))

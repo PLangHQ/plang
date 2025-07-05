@@ -17,7 +17,8 @@ namespace PLang.Errors.Handlers
 
         public async Task<(bool, IError?)> Handle(AskUser.AskUserError error)
         {
-            var result = await outputStreamFactory.CreateHandler().Ask(error.Message, "ask", 200);
+            (var result, var askError) = await outputStreamFactory.CreateHandler().Ask(error.Message, "ask", 200);
+			if (askError != null) return (false, askError);
 
             return await error.InvokeCallback([result]);
 

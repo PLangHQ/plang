@@ -4,6 +4,7 @@
 	{
 		IOutputStream CreateHandler(string? name = null);
 		IOutputStreamFactory SetContext(string? name);
+		void SetOutputStream(IOutputStream outputStream);
 	}
 	public interface IOutputSystemStreamFactory
 	{

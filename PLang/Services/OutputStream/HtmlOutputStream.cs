@@ -21,14 +21,16 @@ namespace PLang.Services.OutputStream
 		private readonly IPLangFileSystem fileSystem;
 		private readonly string url;
 		private readonly bool isStateful;
+		private readonly int bufferSize;
 
-		public HtmlOutputStream(Stream stream, Encoding encoding, IPLangFileSystem fileSystem, string url, bool isStateful)
+		public HtmlOutputStream(Stream stream, Encoding encoding, IPLangFileSystem fileSystem, string url, bool isStateful, int bufferSize = 4096)
 		{
 			this.stream = stream;
 			this.encoding = encoding;
 			this.fileSystem = fileSystem;
 			this.url = url;
 			this.isStateful = isStateful;
+			this.bufferSize = bufferSize;
 		}
 
 		public Stream Stream { get { return this.stream; } }
@@ -36,6 +38,8 @@ namespace PLang.Services.OutputStream
 
 		public string Output => "html";
 		public bool IsStateful { get { return isStateful; } }
+
+		public bool IsFlushed { get; set; }
 
 		public async Task<(string?, IError?)> Ask(string question, string type, int statusCode = 200, Dictionary<string, object?>? parameters = null, Callback? callback = null, List<Option>? options = null)
 		{
@@ -52,7 +56,7 @@ namespace PLang.Services.OutputStream
 				{
 					return (null, new Error("parameters cannot contain 'question' as this is needed by plang runtime."));
 				}
-				
+
 				foreach (var option in options)
 				{
 					dictOptions.Add(option.ListNumber, option.SelectionInfo);
@@ -66,10 +70,14 @@ namespace PLang.Services.OutputStream
 			(var content, var error) = await templateEngine.RenderFile("/modules/OutputModule/ask.html", parameters);
 			if (error != null) return (null, error);
 
-			using (var writer = new StreamWriter(stream, encoding))
-			{
-				await writer.WriteAsync(content);
-			}
+			using var writer = new StreamWriter(stream, encoding, bufferSize: this.bufferSize, leaveOpen: true);
+			await writer.WriteAsync(content);
+			await writer.FlushAsync();
+
+			IsFlushed = true;
+
+			IsFlushed = true;
+
 			return (null, null);
 		}
 
@@ -77,18 +85,17 @@ namespace PLang.Services.OutputStream
 		{
 			return "";
 		}
-		
+
 		public async Task Write(object? obj, string type, int httpStatusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
 			string? content = TypeHelper.GetAsString(obj, Output);
 			if (content == null) return;
 
-			byte[] buffer = Encoding.UTF8.GetBytes(content);
-			stream.Write(buffer, 0, buffer.Length);
-			//httpContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
+			await using var writer = new StreamWriter(stream, encoding, bufferSize: this.bufferSize, leaveOpen: true);
+			await writer.WriteAsync(content);
+			await writer.FlushAsync();
 
-
-			return;
+			IsFlushed = true;
 
 		}
 
