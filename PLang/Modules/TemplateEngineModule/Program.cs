@@ -73,20 +73,26 @@ namespace PLang.Modules.TemplateEngineModule
 
 
 
-			if (memoryStack != null)
-			{
-				foreach (var kvp in memoryStack.GetMemoryStack())
-				{
-					var sv = ScriptVariable.Create(kvp.Name, ScriptVariableScope.Global);
-					templateContext.SetValue(sv, kvp.Value);
-				}
-			}
+			
 			if (variables != null)
 			{
 				foreach (var kvp in variables)
 				{
 					var sv = ScriptVariable.Create(kvp.Key, ScriptVariableScope.Global);
 					templateContext.SetValue(sv, kvp.Value);
+				}
+			}
+
+			if (memoryStack != null)
+			{
+				foreach (var kvp in memoryStack.GetMemoryStack())
+				{					
+					if (!ContainsVariable(kvp.Name, templateContext))
+					{
+						var sv = ScriptVariable.Create(kvp.Name, ScriptVariableScope.Global);
+						templateContext.SetValue(sv, kvp.Value);
+					}
+					
 				}
 			}
 

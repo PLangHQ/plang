@@ -42,7 +42,7 @@ namespace PLang.Modules.UiModule
 			clientTarget = memoryStack.Get("!target") as string;
 		}
 
-		public record LayoutOptions(bool IsDefault, string Name = "default", string DefaultTarget = "main",  string Description = "");
+		public record LayoutOptions(bool IsDefault, string FileName, string Name = "default", string DefaultRenderVariable = "main",  string Description = "");
 		[Description("set the layout for the gui")]
 		public async Task<(List<LayoutOptions>, IError?)> SetLayout(LayoutOptions options)
 		{
@@ -81,41 +81,37 @@ namespace PLang.Modules.UiModule
 		}
 
 
-		public record RenderTemplateOptions(string CssFramework, string Template, string Html, string? Target = null, string Layout = "default", bool RenderToOutputstream = false);
-		[Description(@"template=table|form|button|card|etc..... target is a css selector in html. When user doesn't write the return value into any variable, set it as renderToOutputstream=true, or when user defines it. Examples:
+		public record RenderTemplateOptions(string FileName, Dictionary<string, object?>? Parameters = null, string? Target = null, string LayoutName = "default", bool RenderToOutputstream = false);
+		[Description(@"When user doesn't write the return value into any variable, set it as renderToOutputstream=true, or when user defines it. Examples:
 ```plang
-- render form, with 'Name', 'Address', append to #main => Template: form 
-- render table for %users%, 
-	Header: Name, Age
-	Rows: %name%, %age%
-		=> Properties: { Key: Header, Value : [""Name"", ""Age""], Key: Rows, Value: [""name"", ""age""] }
+- render product.html => renderToOutputstream = true
+- render frontpage.html, write to %html% => renderToOutputstream = false
 ```")]
 		public async Task<(object?, IError?)> RenderTemplate(RenderTemplateOptions options)
 		{			
-			string html = options.Html;
-			var filePath = GetPath(html);
-			if (fileSystem.File.Exists(filePath))
+			var filePath = GetPath(options.FileName);
+			if (!fileSystem.File.Exists(filePath))
 			{
-				html = await fileSystem.File.ReadAllTextAsync(filePath);
+				return (null, new ProgramError($"Template file {options.FileName} not found", goalStep));
 			}
 
+			var html = await fileSystem.File.ReadAllTextAsync(filePath);
+
 			var templateEngine = GetProgramModule<TemplateEngineModule.Program>();
-			(var content, var error) = await templateEngine.RenderContent(html);
+			(var content, var error) = await templateEngine.RenderContent(html, variables: options.Parameters);
 			if (error != null) return (content, error);
 
-			options = options with { Html = html };
-
 			var outputStream = outputStreamFactory.CreateHandler();
-			if (!outputStream.IsFlushed && !memoryStack.Get<bool>("!request.IsAjax")) 
+			if (!outputStream.IsFlushed && !memoryStack.Get<bool>("request!IsAjax")) 
 			{
 				var layoutOptions = GetLayoutOptions();
 
 				if (layoutOptions != null)
 				{
 					var parameters = new Dictionary<string, object?>();
-					parameters.Add((clientTarget ?? options.Target ?? layoutOptions.DefaultTarget).TrimStart('#'), content);
+					parameters.Add(layoutOptions.DefaultRenderVariable, content);
 
-					(content, error) = await templateEngine.RenderFile(layoutOptions.Name, parameters, options.RenderToOutputstream);
+					(content, error) = await templateEngine.RenderFile(layoutOptions.FileName, parameters, options.RenderToOutputstream);
 
 					if (error != null) return (content, error);
 
@@ -125,12 +121,13 @@ namespace PLang.Modules.UiModule
 
 			if (options.RenderToOutputstream)
 			{
-				await outputStreamFactory.CreateHandler().Write(options);
+				
+				await outputStreamFactory.CreateHandler().Write(content);
 			}
 
 			return (options, null);
 		}
-
+		public record Html(string Value, string? TargetElement = null);
 		public async Task<(string?, IError?)> RenderImageToHtml(string path)
 		{
 			var param = new Dictionary<string, object?>();

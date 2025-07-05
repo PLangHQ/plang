@@ -38,7 +38,8 @@ namespace PLang.Runtime
 			for (int i = 0; i < initialSize; i++)
 			{
 				var engine = _factory();
-				
+				SetProperties(engine, engine.ParentEngine, null, engine.Name, engine.OutputStreamFactory.CreateHandler());
+
 				_pool.Add(engine);
 				//Interlocked.Increment(ref _currentCount);
 			}
@@ -59,7 +60,7 @@ namespace PLang.Runtime
 		{
 			engine.Name = name;
 			engine.SetParentEngine(parentEngine);
-			
+			engine.FileSystem.AddFileAccess(new SafeFileSystem.FileAccessControl(parentEngine.Path, engine.FileSystem.OsDirectory, ProcessId: engine.Id));
 			if (outputStream != null)
 			{
 				engine.SetOutputStream(outputStream);

@@ -96,18 +96,18 @@ namespace PLang.Modules.DbModule
 
 
 		[Description("Create a datasource to a database")]
-		public async Task<(DataSource?, IError?)> CreateDataSource([HandlesVariable] string name = "data", string databaseType = "sqlite",
+		public async Task<(DataSource?, IError?)> CreateDataSource([HandlesVariable] string dataSourceName = "data", string databaseType = "sqlite",
 			bool? setAsDefaultForApp = null, bool? keepHistoryEventSourcing = null)
 		{
 			if (!goal.IsSetup) return (null, new ProgramError("Create data source can only be in a setup file",
 				FixSuggestion: $"Create setup.goal file or a goal file in a setup folder. Only one create data source can be in each setup file"));
 
-			var (datasource, error) = await dbSettings.CreateDataSource(name, databaseType, setAsDefaultForApp ?? false, keepHistoryEventSourcing ?? false);
+			var (datasource, error) = await dbSettings.CreateDataSource(dataSourceName, databaseType, setAsDefaultForApp ?? false, keepHistoryEventSourcing ?? false);
 			if (datasource == null) return (datasource, error);
 
 			if (datasource.Name.Contains("%"))
 			{
-				var variables = variableHelper.GetVariables(name);
+				var variables = variableHelper.GetVariables(dataSourceName);
 				var emptyVariables = variables.Where(p => p.IsEmpty);
 				if (emptyVariables.Any())
 				{
@@ -136,9 +136,9 @@ namespace PLang.Modules.DbModule
 			return goal.GetVariable<DataSource>();
 		}
 
-		public async Task<(DataSource? DataSource, IError? Error)> SetDataSourceName([HandlesVariable] string? name = null)
+		public async Task<(DataSource? DataSource, IError? Error)> SetDataSourceName([HandlesVariable] string? dataSourceName = null)
 		{
-			return await SetInternalDataSourceName(name, true);
+			return await SetInternalDataSourceName(dataSourceName, true);
 		}
 		private async Task<(DataSource? DataSource, IError? Error)> SetInternalDataSourceName([HandlesVariable] string? name = null, bool setForGoal = false)
 		{
@@ -540,7 +540,7 @@ namespace PLang.Modules.DbModule
 			}
 			if (result.Table == null || result.Table.Count == 0) return (null, null);
 
-			if (function.ReturnValues != null && function.ReturnValues.Count == 1)
+			if (function.ReturnValues != null && function.ReturnValues.Count == 1 && result.Table.ColumnNames.Count != 1)
 			{
 				return (result.Table[0], null);
 			}
@@ -1132,22 +1132,9 @@ namespace PLang.Modules.DbModule
 				}
 				else
 				{
-					string prefix = "";
-					string postfix = "";
-					var variableName = p.VariableNameOrValue;
-					if (variableName.ToString().StartsWith("\\%"))
-					{
-						variableName = variableName.ToString().Substring(2);
-						prefix = "%";
-					}
-					if (variableName.ToString().EndsWith("\\%"))
-					{
-						variableName = variableName.ToString().TrimEnd('%').TrimEnd('\\');
-						postfix = "%";
-					}
+					var variableName = WrapForLike(p.VariableNameOrValue);
 
-
-					(object? value, IError? error) = ConvertObjectToType(prefix + variableName + postfix, p.TypeFullName, parameterName, p.VariableNameOrValue);
+					(object? value, IError? error) = ConvertObjectToType(variableName, p.TypeFullName, parameterName, p.VariableNameOrValue);
 					if (error != null)
 					{
 						if (parameterName == "id" && eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
@@ -1166,6 +1153,21 @@ namespace PLang.Modules.DbModule
 
 		}
 
+		private object WrapForLike(object variableName)
+		{
+			if (variableName is not string str) return variableName;
+
+			if (str.StartsWith("\\%") == true)
+			{
+				variableName = "%" + str.Substring(2);
+			}
+			if (str.EndsWith("\\%") == true)
+			{
+				variableName = variableName.ToString().TrimEnd('%').TrimEnd('\\') + "%";
+
+			}
+			return variableName;
+		}
 
 		private (object?, Error?) ConvertObjectToType(object obj, string typeFullName, string parameterName, object variableNameOrValue)
 		{
@@ -1211,7 +1213,6 @@ namespace PLang.Modules.DbModule
 					}
 					return (array, null);
 				}
-
 
 				return (TypeHelper.ConvertToType(obj, targetType), null);
 			}

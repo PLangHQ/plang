@@ -12,6 +12,7 @@ using Namotion.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Asn1.Ocsp;
+using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
 using PLang.Container;
@@ -42,9 +43,12 @@ using System.Net.WebSockets;
 using System.Reactive.Concurrency;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Web;
 using System.Xml.Linq;
+using UAParser;
 using static Dapper.SqlMapper;
 using static PLang.Modules.BaseBuilder;
 using static PLang.Modules.WebserverModule.Program;
@@ -144,18 +148,29 @@ public class Program : BaseProgram, IDisposable
 
 	public record WebserverInfo(string WebserverName, string Scheme, string Host, int Port,
 		long MaxContentLengthInBytes, string DefaultResponseContentEncoding, bool SignedRequestRequired, List<Routing>? Routings)
+		: IDisposable
 	{
 		public IHost Listener { get; set; }
 		public List<Routing>? Routings { get; set; } = Routings;
+
+		public void Dispose()
+		{
+			Console.WriteLine($"Shutting down {Scheme}://{Host}:{Port}");
+			this.Listener.StopAsync();
+		}
 	}
+	public record ParamInfo(string Name, string VariableOrValue, string Type, string? RegexValidation = null, string? ErrorMessage = null, object? DefaultValue = null);
+	public record GoalToCallWithParamInfo(string Name, List<ParamInfo> Parameters);
+	public record Routing(string Path, Route? Route = null, string[]? Method = null, string ContentType = "text/html",
+								long? MaxContentLength = null, string? DefaultResponseContentEncoding = null);
 
-
-	public record Routing(string Path, GoalToCallInfo? GoalToCall = null, string[]? Method = null, string ContentType = "text/html",
-								Dictionary<string, object?>? Parameters = null, long? MaxContentLength = null, string? DefaultResponseContentEncoding = null);
-
-	[Description("When path is /api, overwite the default ContentType value to application/json unless defined by user")]
-	public async Task<IError?> AddRoute(string path, GoalToCallInfo? goalToCall = null, string[]? method = null, string ContentType = "text/html",
-								Dictionary<string, object?>? Parameters = null, long? MaxContentLength = null, string? DefaultResponseContentEncoding = null,
+	[Description(@"When path is /api, ContentType=application/json unless defined by user. When user defines a variable in path, it should be defined in GoalToCallInfo, /product/%id% => Parameters: id=%id%")]
+	public async Task<IError?> AddRoute([HandlesVariable] string path, List<ParamInfo> PathParameters, GoalToCallInfo? goalToCall = null,
+		[Description("Default is GET")]
+		string[]? method = null, string ContentType = "text/html",
+								long? MaxContentLength = 8 * 1024,
+								[Description("Default is utf-8")]
+								string? DefaultResponseContentEncoding = null,
 								string? webserverName = "default")
 	{
 		WebserverInfo? webserverInfo = null;
@@ -183,11 +198,94 @@ public class Program : BaseProgram, IDisposable
 		if (method == null || method.Length == 0) method = ["GET"];
 
 		if (webserverInfo.Routings == null) webserverInfo.Routings = new();
-		webserverInfo.Routings.Add(new Routing(path, goalToCall, method, ContentType, Parameters, MaxContentLength, DefaultResponseContentEncoding));
+
+		var route = BuildRoute(path, PathParameters, goalToCall);
+
+		webserverInfo.Routings.Add(new Routing(path, route, method, ContentType, MaxContentLength, DefaultResponseContentEncoding));
 
 		return null;
 	}
 
+	private (bool, List<ObjectValue>?) TryMatch(Route route, HttpRequest request)
+	{
+
+		var path = request.Path.Value;
+		if (path == null) return (false, null);
+
+		var m = route.PathRegex.Match(path);
+		if (!m.Success) return (false, null);
+
+		var dict = m.Groups.Keys
+						 .Where(k => k != "0")
+						 .ToDictionary(k => k, k => m.Groups[k].Value,
+									   StringComparer.OrdinalIgnoreCase);
+
+		// query placeholders
+		if (route.QueryMap is { } qmap)
+		{
+			foreach (var (queryKey, varName) in qmap)
+			{
+				var value = request.Query[queryKey].ToString();
+				if (string.IsNullOrEmpty(value)) return (false, null); // required query missing
+				dict[varName] = value;
+			}
+		}
+
+		List<ObjectValue> variables = new();
+		foreach (var item in dict)
+		{
+			variables.Add(new ObjectValue(item.Key, item.Value));
+		}
+
+		return (true, variables);
+	}
+	public sealed record Route(Regex PathRegex,
+							Dictionary<string, string>? QueryMap,  // q -> %q%
+							GoalToCallInfo Goal);
+
+	private Route BuildRoute(string pattern, List<ParamInfo> paramInfos, GoalToCallInfo goal)
+	{
+		// split path / query
+		var queryMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		var qm = pattern.IndexOf('?', StringComparison.Ordinal);
+		var pathPart = qm >= 0 ? pattern[..qm] : pattern;
+		var queryPart = qm >= 0 ? pattern[(qm + 1)..] : null;
+
+		// build path regex
+		var regex = new StringBuilder("^");
+		for (int i = 0; i < pathPart.Length;)
+		{
+			if (pathPart[i] == '%')
+			{
+				var j = pathPart.IndexOf('%', i + 1);
+				var name = pathPart[(i + 1)..j];
+				regex.Append($"(?<{name}>[^/?&-]+)");   // stop at / ? & or - (hyphen safe)
+				i = j + 1;
+			}
+			else
+			{
+				regex.Append(Regex.Escape(pathPart[i].ToString()));
+				i++;
+			}
+		}
+		regex.Append(@"\/?$");
+
+		// collect query placeholders: q=%q%  =>  "q" ↦ "q"
+		if (queryPart != null)
+		{
+			foreach (var kv in queryPart.Split('&', StringSplitOptions.RemoveEmptyEntries))
+			{
+				var pair = kv.Split('=', 2);
+				if (pair.Length == 2 && pair[1].StartsWith('%') && pair[1].EndsWith('%'))
+					queryMap[pair[0]] = pair[1][1..^1]; // strip %
+			}
+		}
+
+		return new Route(new Regex(regex.ToString(),
+								   RegexOptions.Compiled | RegexOptions.IgnoreCase),
+						 queryMap.Count == 0 ? null : queryMap,
+						 goal);
+	}
 
 	public async Task<WebserverInfo> StartWebserver(string webserverName = "default", string scheme = "http", string host = "localhost",
 		int port = 8080, long maxContentLengthInBytes = 4096 * 2,
@@ -255,20 +353,14 @@ public class Program : BaseProgram, IDisposable
 
 		webserverInfo.Listener = app;
 
-		_ = Task.Run(async () =>
-		{
-			app.Run();//.Run($"http://{host}:{port}");
-
-		});
+		await app.StartAsync();
 
 		listeners.Add(webserverInfo);
 
 		logger.LogDebug($"Listening on {host}:{port}...");
 		Console.WriteLine($" - Listening on {host}:{port}...");
 
-		//_ = ListenForContext(listener, webserverInfo);
-
-		KeepAlive(app, "Webserver");
+		KeepAlive(listeners, "Webserver");
 
 		return webserverInfo;
 	}
@@ -277,14 +369,6 @@ public class Program : BaseProgram, IDisposable
 
 	private async Task HandleRequestAsync(HttpContext httpContext, WebserverInfo webserverInfo)
 	{
-
-		object obj = new();
-		httpContext.Response.OnCompleted((a) =>
-		{
-			int i = 0;
-			return Task.CompletedTask;
-		}, obj);
-
 		var outputStream = GetOutputStream(httpContext);
 
 		if (webserverInfo.SignedRequestRequired && !httpContext.Request.Headers.TryGetValue("X-Signature", out var value))
@@ -304,29 +388,6 @@ public class Program : BaseProgram, IDisposable
 
 	}
 
-	private IOutputStream GetOutputStream(HttpContext httpContext)
-	{
-		var contentType = GetContentType(httpContext.Request);
-		return new HttpOutputStream(httpContext.Response, fileSystem, contentType, null, httpContext.Request.Path);
-	}
-
-	private string GetContentType(HttpRequest request)
-	{
-
-
-		string? contentType = request.Headers.Accept.FirstOrDefault();
-		if (contentType?.StartsWith("application/plang") == true) return contentType;
-
-		var ext = fileSystem.Path.GetExtension(request.Path);
-		if (ext != null)
-		{
-			contentType = GetMimeType(ext);
-			if (contentType != null) return contentType;
-		}
-
-		return "text/html";
-	}
-
 	private async Task<IError?> HandleRequest(HttpContext httpContext, IOutputStream outputStream, WebserverInfo webserverInfo)
 	{
 		try
@@ -339,9 +400,8 @@ public class Program : BaseProgram, IDisposable
 				return await ProcessPlangRequest(httpContext, webserverInfo, webserverInfo.Routings, outputStream);
 			}
 
-
-			(var goalPath, var routing) = GetGoalPath(webserverInfo.Routings, httpContext.Request);
-			if (string.IsNullOrEmpty(goalPath))
+			(var goal, var routing, var slugVariables) = GetGoalByRouting(webserverInfo.Routings, httpContext.Request);
+			if (goal == null)
 			{
 				return await ProcessGeneralRequest(httpContext, outputStream);
 			}
@@ -355,7 +415,8 @@ public class Program : BaseProgram, IDisposable
 			// Unsigned requests are allowed, so we let 401 through
 			if (error?.StatusCode != 401) return error;
 
-			return await ProcessGoal(goalPath, webserverInfo, routing, httpContext, outputStream);
+
+			return await ProcessGoal(goal, slugVariables, webserverInfo, routing, httpContext, outputStream);
 		}
 		catch (Exception ex)
 		{
@@ -363,9 +424,8 @@ public class Program : BaseProgram, IDisposable
 		}
 	}
 
-	private async Task<IError?> ProcessGoal(string goalPath, WebserverInfo webserverInfo, Routing routing, HttpContext httpContext, IOutputStream outputStream)
+	private async Task<IError?> ProcessGoal(Goal goal, List<ObjectValue>? slugVariables, WebserverInfo webserverInfo, Routing routing, HttpContext httpContext, IOutputStream outputStream)
 	{
-		Goal? goal = prParser.GetGoal(fileSystem.Path.Join(goalPath, ISettings.GoalFileName));
 		if (goal == null)
 		{
 			return new NotFoundError($"Goal could not be loaded");
@@ -402,17 +462,24 @@ public class Program : BaseProgram, IDisposable
 		resp.Headers.Add("X-Goal-Hash", goal.Hash);
 		resp.Headers.Add("X-Goal-Signature", goal.Signature);
 
-		memoryStack.Put("!request", GetRequest(httpContext.Request));
-
-		(var parameters, var error) = await ParseRequest(httpContext);
+		(var requestObjectValue, var error) = await ParseRequest(httpContext);
 		if (error != null) return error;
 
 		(var callbackInfos, error) = await GetCallbackInfos(request);
 		if (error != null) return error;
 
 		var pool = this.engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath);
-		var engine = await pool.RentAsync(this.engine, goalStep, goalPath, outputStream);
+		var engine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream);
+
 		engine.HttpContext = httpContext;
+		engine.GetMemoryStack().Put(requestObjectValue, goalStep);
+		if (slugVariables != null)
+		{
+			foreach (var item in slugVariables)
+			{
+				engine.GetMemoryStack().Put(item, goalStep);
+			}
+		}
 
 		(var vars, error) = await engine.RunGoal(goal, 0, callbackInfos);
 		if (error != null && error is not IErrorHandled)
@@ -451,7 +518,10 @@ public class Program : BaseProgram, IDisposable
 	{
 		try
 		{
-			resp.StatusCode = error.StatusCode;
+			if (!resp.HasStarted)
+			{
+				resp.StatusCode = error.StatusCode;
+			}
 
 			await outputStream.Write(error);
 
@@ -468,6 +538,8 @@ public class Program : BaseProgram, IDisposable
 		(var signature, var error) = await VerifySignature(httpContext);
 		if (error != null) return error;
 
+		httpContext.Response.ContentType = "application/plang+json; charset=utf-8";
+
 		string? query = httpContext.Request.QueryString.Value;
 		if (query == "?plang.poll=1")
 		{
@@ -475,19 +547,24 @@ public class Program : BaseProgram, IDisposable
 			return null;
 		}
 
-		(var goalPath, var routing) = GetGoalPath(routings, httpContext.Request);
+		(var goal, var routing, var slugVariables) = GetGoalByRouting(routings, httpContext.Request);
 
 		if (routing == null) return new NotFoundError("Routing not found");
-		if (goalPath == null) return new NotFoundError("Goal not found");
+		if (goal == null) return new NotFoundError("Goal not found");
 
+		routing = routing with { ContentType = "application/plang+json" };
 
-		return await ProcessGoal(goalPath, webserverInfo, routing, httpContext, outputStream);
+		return await ProcessGoal(goal, slugVariables, webserverInfo, routing, httpContext, outputStream);
 	}
 
 	private async Task<(SignedMessage? SignedMessage, IError? Error)> VerifySignature(HttpContext httpContext)
 	{
 		var signatureData = httpContext.Request.Headers["X-Signature"].ToString();
-		if (string.IsNullOrEmpty(signatureData)) return (null, new UnauthorizedError("X-Signature is empty. Use plang app or compatible to continue."));
+		if (string.IsNullOrEmpty(signatureData))
+		{
+			memoryStack.Remove(ReservedKeywords.Identity);
+			return (null, new UnauthorizedError("X-Signature is empty. Use plang app or compatible to continue."));
+		}
 
 		var request = httpContext.Request;
 		var headers = new Dictionary<string, object?>();
@@ -516,32 +593,14 @@ public class Program : BaseProgram, IDisposable
 				liveConnections.TryGetValue(verifiedSignatureResult.Signature.Identity, out liveResponse);
 			}
 		}
+		else
+		{
+			memoryStack.Remove(ReservedKeywords.Identity);
+		}
 		return verifiedSignatureResult;
 	}
 
 
-	private Dictionary<string, object?>? GetRequest(HttpRequest request)
-	{
-		Dictionary<string, object?> dict = new();
-		dict.Add("Method", request.Method);
-		dict.Add("ContentLength", request.ContentLength);
-		dict.Add("QueryString", request.QueryString);
-		dict.Add("ContentType", request.ContentType);
-		dict.Add("HasFormContentType", request.HasFormContentType);
-
-		dict.Add("Headers", request.Headers);
-		dict.Add("KeepAlive", request.Headers.KeepAlive);
-
-		foreach (var item in request.Headers)
-		{
-			dict.Add(item.Key, item.Value);
-		}
-
-		request.Headers.TryGetValue("X-Requested-With", out var ajax);
-		dict.Add("IsAjax", ajax.ToString().Equals("XMLHttpRequest", StringComparison.OrdinalIgnoreCase));
-		dict.Add("UserAgentMode", UserAgentHelper.GetUserAgentMode(request.Headers.UserAgent));
-		return dict;
-	}
 
 	private async Task HandlePlangPoll(HttpContext httpContext, string Identity)
 	{
@@ -576,39 +635,7 @@ public class Program : BaseProgram, IDisposable
 		}
 	}
 
-	private bool IsValidMethod(Routing routing, HttpRequest request, Goal goal)
-	{
-		if (routing.Method == null) return false;
 
-		foreach (var method in routing.Method)
-		{
-
-			if (routing.Method != null && method.Equals(request.Method, StringComparison.OrdinalIgnoreCase)) return true;
-
-			if (goal.GoalInfo?.GoalApiInfo != null && request.Method.Equals(goal.GoalInfo.GoalApiInfo?.Method, StringComparison.OrdinalIgnoreCase))
-			{
-				return true;
-			}
-		}
-		return false;
-
-	}
-
-	private async Task ShowError(ServiceContainer container, IError error)
-	{
-		if (error is IUserDefinedError)
-		{
-			var errorHandlerFactory = container.GetInstance<IErrorHandlerFactory>();
-			var handler = errorHandlerFactory.CreateHandler();
-			await handler.ShowError(error);
-		}
-		else
-		{
-			var errorHandlerFactory = container.GetInstance<IErrorSystemHandlerFactory>();
-			var handler = errorHandlerFactory.CreateHandler();
-			await handler.ShowError(error);
-		}
-	}
 
 	private async Task<IError?> ProcessGeneralRequest(HttpContext httpContext, IOutputStream outputStream)
 	{
@@ -799,35 +826,36 @@ Frontpage
 	}
 
 
-	private (string?, Routing?) GetGoalPath(List<Routing>? routings, HttpRequest request)
+	private (Goal?, Routing?, List<ObjectValue>? SlugVariables) GetGoalByRouting(List<Routing>? routings, HttpRequest request)
 	{
-		if (request == null || request.Path == null || routings == null) return (null, null);
+		if (request == null || request.Path == null || routings == null) return (null, null, null);
 		foreach (var route in routings)
 		{
-			if (Regex.IsMatch(request.Path, "^" + route.Path + "$", RegexOptions.IgnoreCase))
+			(var isMatch, var variables) = TryMatch(route.Route, request);
+			if (isMatch)
 			{
-				return (GetGoalBuildDirPath(route, request), route);
+				return (GetGoalBuildDirPath(route, request), route, variables);
 			}
 
 		}
 
-		return ("", null);
+		return (null, null, null);
 	}
 
-	private string GetGoalBuildDirPath(Routing routing, HttpRequest request)
+	private Goal? GetGoalBuildDirPath(Routing routing, HttpRequest request)
 	{
-		if (!string.IsNullOrEmpty(routing.GoalToCall))
+		if (string.IsNullOrEmpty(routing.Route?.Goal?.Name)) return null;
+
+		var goal = prParser.GetGoalByAppAndGoalName(fileSystem.RelativeAppPath, routing.Route.Goal.Name);
+		if (goal != null)
 		{
-			var goal = prParser.GetGoalByAppAndGoalName(fileSystem.RelativeAppPath, routing.GoalToCall);
-			if (goal != null)
-			{
-				return goal.AbsolutePrFolderPath;
-			}
+			return goal;
 		}
-		if (request == null || request.Path == null) return "";
+
+		if (request == null || request.Path == null) return null;
 
 		var goalName = request.Path.Value?.AdjustPathToOs();
-		if (goalName == null) return "";
+		if (goalName == null) return null;
 
 		if (goalName.StartsWith(fileSystem.Path.DirectorySeparatorChar))
 		{
@@ -835,19 +863,25 @@ Frontpage
 		}
 		goalName = goalName.RemoveExtension();
 		string goalBuildDirPath = fileSystem.Path.Join(fileSystem.BuildPath, goalName).AdjustPathToOs();
-		if (fileSystem.Directory.Exists(goalBuildDirPath)) return goalBuildDirPath;
+		if (fileSystem.Directory.Exists(goalBuildDirPath))
+		{
+			return prParser.GetGoal(goalBuildDirPath);
+		}
 
 		logger.LogDebug($"Path doesnt exists - goalBuildDirPath:{goalBuildDirPath}");
-		return "";
+		return null;
 
 	}
 
-	static async Task<(Dictionary<string, object?>? Params, IError? Error)> ParseRequest(HttpContext? ctx)
+	private async Task<(ObjectValue? ObjectValue, IError? Error)> ParseRequest(HttpContext? ctx)
 	{
 		if (ctx is null) return (null, new Error("context is empty"));
 
 		var req = ctx.Request;
 		var query = req.Query.ToDictionary(k => k.Key, k => (object?)k.Value.ToString());
+		ObjectValue objectValue;
+
+		var properties = GetRequest(ctx);
 
 		// ---------- JSON --------------------------------------------------------
 		if (req.HasJsonContentType())
@@ -855,8 +889,24 @@ Frontpage
 			req.EnableBuffering();
 			var body = await System.Text.Json.JsonSerializer.DeserializeAsync<Dictionary<string, object?>>(req.Body)
 					   ?? new();
-			foreach (var (k, v) in query) body[k] = v;
-			return (new() { ["request"] = body }, null);
+
+			var parameters = new Dictionary<string, object?>();
+			foreach (var key in body)
+			{
+				var jsonObj = (JsonElement?)key.Value;
+				if (jsonObj == null) continue;
+
+				parameters.Add(key.Key, GetJsonElementValue(jsonObj.Value));
+			}
+
+			foreach (var (k, v) in query)
+			{
+				parameters.Add(k, v);
+			}
+
+			objectValue = new ObjectValue("request", parameters, properties: properties);
+
+			return (objectValue, null);
 		}
 
 		// ---------- Form / Multipart (fields + files) ---------------------------
@@ -870,14 +920,26 @@ Frontpage
 				["_files"] = form.Files
 			};
 			foreach (var (k, v) in query) payload.TryAdd(k, v);
-			return (new() { ["request"] = payload }, null);
+
+			objectValue = new ObjectValue("request", payload, properties: properties);
+
+
+			return (objectValue, null);
 		}
 
-		// ---------- Fallback: query only ---------------------------------------
-		return (new() { ["request"] = query }, null);
+		objectValue = new ObjectValue("request", query, properties: properties);
+		return (objectValue, null);
 	}
 
-
+	private object? GetJsonElementValue(JsonElement e) => e.ValueKind switch
+	{
+		JsonValueKind.String => e.GetString(),
+		JsonValueKind.Number => e.TryGetInt64(out var i) ? i : e.GetDouble(),
+		JsonValueKind.True
+	  or JsonValueKind.False => e.GetBoolean(),
+		JsonValueKind.Null => null,
+		_ => e.GetRawText()        // array/object ⇒ JSON string
+	};
 
 	private async Task<IError?> ProcessWebsocketRequest(HttpListenerContext httpContext, IOutputStream outputStream)
 	{
@@ -1056,22 +1118,79 @@ Frontpage
 	}
 
 
-	private static string GetBoundary(MediaTypeHeaderValue contentType, int lengthLimit)
+
+
+	private IOutputStream GetOutputStream(HttpContext httpContext)
 	{
-		var boundary = HeaderUtilities.RemoveQuotes(contentType.Boundary).Value;
-		if (string.IsNullOrWhiteSpace(boundary))
+		var contentType = GetContentType(httpContext.Request);
+		return new HttpOutputStream(httpContext.Response, fileSystem, contentType, null, httpContext.Request.Path);
+	}
+
+	private string GetContentType(HttpRequest request)
+	{
+		string? contentType = request.Headers.Accept.FirstOrDefault();
+		if (contentType?.StartsWith("application/plang") == true) return contentType;
+
+		var ext = fileSystem.Path.GetExtension(request.Path);
+		if (ext != null)
 		{
-			throw new InvalidDataException("Missing content-type boundary.");
+			contentType = GetMimeType(ext);
+			if (contentType != null) return contentType;
 		}
-		if (boundary.Length > lengthLimit)
+
+		return "text/html";
+	}
+
+	private Properties? GetRequest(HttpContext httpContext)
+	{
+		var request = httpContext.Request;
+		Properties properties = new();
+		properties.Add(new ObjectValue("Method", request.Method));
+		properties.Add(new ObjectValue("ContentLength", request.ContentLength));
+		properties.Add(new ObjectValue("QueryString", request.QueryString.ToString()));
+		properties.Add(new ObjectValue("ContentType", request.ContentType));
+		properties.Add(new ObjectValue("HasFormContentType", request.HasFormContentType));
+		properties.Add(new ObjectValue("HasJsonContentType", request.HasJsonContentType()));
+
+		properties.Add(new ObjectValue("Headers", request.Headers));
+		properties.Add(new ObjectValue("KeepAlive", request.Headers.KeepAlive.ToString()));
+
+		foreach (var item in request.Headers)
 		{
-			throw new InvalidDataException(
-				$"Multipart boundary length limit {lengthLimit} exceeded.");
+			properties.Add(new ObjectValue(item.Key, item.Value));
 		}
-		return boundary;
+
+		request.Headers.TryGetValue("X-Requested-With", out var ajax);
+		properties.Add(new ObjectValue("IsAjax", ajax.ToString().Equals("XMLHttpRequest", StringComparison.OrdinalIgnoreCase)));
+		properties.Add(new ObjectValue("Ip", httpContext.Connection.RemoteIpAddress?.ToString()));
+
+		if (!string.IsNullOrEmpty(request.Headers.UserAgent))
+		{
+			var clientInfo = Parser.GetDefault().Parse(request.Headers.UserAgent, true);
+			properties.Add(new ObjectValue("ClientInfo", clientInfo));
+		}
+
+		return properties;
 	}
 
 
+	private bool IsValidMethod(Routing routing, HttpRequest request, Goal goal)
+	{
+		if (routing.Method == null) return false;
+
+		foreach (var method in routing.Method)
+		{
+
+			if (routing.Method != null && method.Equals(request.Method, StringComparison.OrdinalIgnoreCase)) return true;
+
+			if (goal.GoalInfo?.GoalApiInfo != null && request.Method.Equals(goal.GoalInfo.GoalApiInfo?.Method, StringComparison.OrdinalIgnoreCase))
+			{
+				return true;
+			}
+		}
+		return false;
+
+	}
 }
 
 

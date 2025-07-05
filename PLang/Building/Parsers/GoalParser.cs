@@ -222,6 +222,12 @@ namespace PLang.Building.Parsers
 					currentGoal.ParentGoal = goals[0];
 				}
 			}
+
+			if (goals.Count() == 0)
+			{
+				throw new Exception($"No goal defined in {goalFileAbsolutePath}. Are you missing a goal name in the goal file?");
+			}
+
 			var setupOnceDictionary = settings.GetOrDefault<Dictionary<string, DateTime>>(typeof(Engine), "SetupRunOnce", new());
 			var goalsWithSameName = goals.GroupBy(p => p.GoalName).Where(p => p.Count() > 1).FirstOrDefault();
 			if (goalsWithSameName != null)

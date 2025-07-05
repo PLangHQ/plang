@@ -3,12 +3,27 @@ using LightInject;
 using PLang;
 using PLang.Container;
 using PLang.Interfaces;
+using PLang.Runtime;
 using PLang.Utils;
+using System.Collections;
 using System.ComponentModel;
 using static PLang.Executor;
 
 
 (var builder, var runtime) = RegisterStartupParameters.Register(args);
+
+Console.CancelKeyPress += async (_, e) =>
+{
+	e.Cancel = true;
+
+	var alives = AppContext.GetData("KeepAlive") as List<Alive>;
+	foreach (var alive in alives ?? [])
+	{
+		alive.Dispose();		
+	}
+	Environment.Exit(0);
+};
+
 
 if (builder)
 {

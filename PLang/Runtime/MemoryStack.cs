@@ -125,6 +125,7 @@ namespace PLang.Runtime
 				for (int i = 0; i < varsInList.Count; i++)
 				{
 					var ov = this.GetObjectValue(varsInList[i]);
+					
 					if (!ov.Initiated)
 					{
 						ov = new ObjectValue(varsInList[i], $"{varsInList[i]} is empty");
@@ -137,8 +138,8 @@ namespace PLang.Runtime
 					}
 					else
 					{
-						ov.Name = ov.PathAsVariable.Replace("%", "");
-						newMs.Add(ov);
+						var newObjectValue = new ObjectValue(ov.PathAsVariable.Replace("%", ""), ov.Value, properties: ov.Properties);
+						newMs.Add(newObjectValue);
 					}
 
 				}
@@ -322,7 +323,7 @@ namespace PLang.Runtime
 			string type = ".";
 
 			int i = 0;
-			while (i < variableName.Length && (char.IsLetterOrDigit(variableName[i]) || variableName[i] == '_' || variableName[i] == '!' || variableName[i] == ' '))
+			while (i < variableName.Length && (char.IsLetterOrDigit(variableName[i]) || variableName[i] == '_' || (i == 0 && variableName[i] == '!') || variableName[i] == ' '))
 				i++;
 
 			if (i >= 0 && i != variableName.Length)
@@ -377,7 +378,20 @@ namespace PLang.Runtime
 				{
 					return new ObjectValue(keyPath.Path, variable.Value.Properties, parent: variable.Value, isProperty: true);
 				}
-				return variable.Value.Properties.FirstOrDefault(p => p.IsName(keyPath.Path)) ?? ObjectValue.Nullable(keyPath.FullPath);
+
+				if (!keyPath.Path.Contains("."))
+				{
+					var objectValue2 = variable.Value.Properties.FirstOrDefault(p => p.IsName(keyPath.Path.TrimStart('!'))) ?? ObjectValue.Nullable(keyPath.FullPath);
+
+					return objectValue2;
+				}
+
+				var keyPath2 = GetKeyPath(keyPath.Path);
+				if (keyPath2 == null) return ObjectValue.Nullable(keyPath.FullPath);
+
+				var objectValue = variable.Value.Properties.FirstOrDefault(p => p.IsName(keyPath2.VariableName.TrimStart('!'))) ?? ObjectValue.Nullable(keyPath.FullPath);
+				var value = objectValue.GetObjectValue(keyPath2.Path);
+				return value;
 			}
 
 			//sub variable, e.g. %user.name%, %now+5days%

@@ -22,6 +22,7 @@ using PLang.Services.AppsRepository;
 using PLang.Services.LlmService;
 using PLang.Services.OutputStream;
 using PLang.Utils;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
@@ -64,7 +65,24 @@ namespace PLang.Runtime
 		void Return();
 		void SetOutputStream(IOutputStream outputStream);
 	}
-	public record Alive(Type Type, string Key, List<object>? Instances = null);
+	public record Alive(Type Type, string Key, List<object> Instances) : IDisposable
+	{
+		public void Dispose()
+		{
+			foreach (var item in Instances)
+			{
+				if (item is IDisposable disposable) disposable.Dispose();
+				if (item is IList list)
+				{
+					foreach (var item2 in list)
+					{
+						if (item2 is IDisposable disposable1) disposable1.Dispose();
+					}
+				}
+			}
+		}
+	}
+
 	public class Engine : IEngine, IDisposable
 	{
 		public string Id { get; init; }
@@ -157,7 +175,8 @@ namespace PLang.Runtime
 									container.GetInstance<IErrorHandlerFactory>(), container.GetInstance<IErrorSystemHandlerFactory>(), this);
 
 				var engine = serviceContainer.GetInstance<IEngine>();
-				engine.Init(serviceContainer);				
+				engine.Init(serviceContainer);
+				engine.SetParentEngine(this);
 
 				return engine;
 			});

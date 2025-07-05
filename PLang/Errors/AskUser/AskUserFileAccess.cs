@@ -8,7 +8,8 @@ namespace PLang.Errors.AskUser
 
     }
 
-    public record AskUserFileAccess(string App, string Path, string Message, Func<string, string, string?, Task<(bool, IError?)>> CallbackMethod) : AskUserError(Message, CreateAdapter(CallbackMethod))
+    public record AskUserFileAccess(string App, string Path, string Message, Func<string, string, string?, Task<(bool, IError?)>> CallbackMethod) : 
+		AskUserError(Message, CreateAdapter(CallbackMethod))
     {
         public override async Task<(bool, IError?)> InvokeCallback(object?[] answer)
         {

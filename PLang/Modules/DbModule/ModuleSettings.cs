@@ -639,7 +639,7 @@ where the goal CreateDataSource would create the database and table
 
 		public static string ConvertVariableNamesInDataSourceName(VariableHelper variableHelper, string dataSourceName)
 		{
-			if (!dataSourceName.Contains("%")) return dataSourceName;
+			if (!dataSourceName.Contains("%")) return dataSourceName.TrimStart('/');
 
 			var dataSourceVariables = variableHelper.GetVariables(dataSourceName);
 			for (int i = 0; i < dataSourceVariables.Count; i++)
@@ -648,7 +648,7 @@ where the goal CreateDataSource would create the database and table
 
 				dataSourceName = dataSourceName.Replace(dataSourceVariables[i].PathAsVariable, $"%variable{i}%");
 			}
-			return dataSourceName;
+			return dataSourceName.TrimStart('/');
 		}
 	}
 }

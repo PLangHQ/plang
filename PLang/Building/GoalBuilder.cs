@@ -174,8 +174,8 @@ namespace PLang.Building
 				logger.LogWarning($"  - ❌ Error building step - Error Message: {buildStepError.MessageOrDetail}");
 
 				excludeModules.Add(ime.ModuleType);
-				logger.LogWarning($"  - 🔍 Will try to find another module - attempt {excludeModules.Count+1} of 3");
-				
+				logger.LogWarning($"  - 🔍 Will try to find another module - attempt {excludeModules.Count + 1} of 3");
+
 				var result = await BuildStep(goal, stepIndex, excludeModules);
 				return result;
 			}
@@ -194,6 +194,7 @@ namespace PLang.Building
 			GroupedBuildErrors errors = new();
 			foreach (var step in goal.GoalSteps)
 			{
+
 				var functionResult = step.GetFunction(fileSystem);
 				if (functionResult.Error != null)
 				{
@@ -229,6 +230,7 @@ namespace PLang.Building
 				}
 
 				step.IsValid = true;
+
 			}
 			return (errors.Count > 0) ? errors : null;
 		}

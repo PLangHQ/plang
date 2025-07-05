@@ -443,8 +443,8 @@ namespace PLang.Modules
 					if (returnValues.Count == 1 && objectValues.Count == 1)
 					{
 						var objectValue = objectValues[0];
-						if (properties != null) objectValue.Properties = properties;
-						memoryStack.Put(objectValue, goalStep);
+						
+						memoryStack.Put(new ObjectValue(returnValues[0].VariableName, objectValue.Value, properties: properties), goalStep);
 					}
 					else if (returnValues.Count == 1 && objectValues.Count > 1)
 					{
@@ -487,8 +487,9 @@ namespace PLang.Modules
 				{
 					foreach (var returnValue in returnValues)
 					{
-						objectValue.Name = returnValue.VariableName;
-						memoryStack.Put(objectValue, goalStep);
+						var ov = new ObjectValue(returnValue.VariableName, objectValue.Value, properties:  objectValue.Properties);
+						
+						memoryStack.Put(ov, goalStep);
 					}
 
 				}
@@ -662,20 +663,29 @@ namespace PLang.Modules
 			var aliveType = alives.FirstOrDefault(p => p.Type == instance.GetType() && p.Key == key);
 			if (aliveType == null)
 			{
-				aliveType = new Alive(instance.GetType(), key);
-				alives.Add(aliveType);
-
-				AppContext.SetData("KeepAlive", alives);
+				aliveType = new Alive(instance.GetType(), key, [instance]);
+				alives.Add(aliveType);				
+			} else
+			{
+				aliveType.Instances.Add(instance);
 			}
+			AppContext.SetData("KeepAlive", alives);
 		}
 
 		public void RemoveKeepAlive(object instance, string key)
 		{
 			var alives = AppContext.GetData("KeepAlive") as List<Alive>;
+			if (alives == null) return;	
+
 			var aliveType = alives.FirstOrDefault(p => p.Type == instance.GetType() && p.Key == key);
 			if (aliveType != null)
 			{
-				alives.Remove(aliveType);
+				if (instance is IDisposable disposable) disposable.Dispose();
+				aliveType.Instances.Remove(instance);
+				if (aliveType.Instances.Count == 0)
+				{
+					alives.Remove(aliveType);
+				}
 
 				AppContext.SetData("KeepAlive", alives);
 			}

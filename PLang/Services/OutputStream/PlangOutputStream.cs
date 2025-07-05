@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace PLang.Services.OutputStream
@@ -36,6 +37,7 @@ namespace PLang.Services.OutputStream
 		public bool IsFlushed { get; set; }
 
 		public record OutputData(string Type, object Value, string? TargetElement);
+		public record ErrorOutputData(string Type, IError Value, string? TargetElement);
 		public record AskData(string Type, string text, string? TargetElement, StepHelper.Callback Callback, List<Program.Option>? Options);
 		public async Task<(string?, IError?)> Ask(string text, string type = "ask", int statusCode = 200, Dictionary<string, object?>? parameters = null, StepHelper.Callback? callback = null, List<Program.Option>? options = null)
 		{
@@ -73,9 +75,18 @@ namespace PLang.Services.OutputStream
 				targetElement = value?.ToString();
 			}
 			string outputType = GetOutputType(obj);
-			var outputData = new OutputData(outputType, obj, targetElement);
+			object outputData;
+			if (obj is IError)
+			{
+				outputData = new ErrorOutputData(outputType, (IError) obj, targetElement);
+			} else
+			{
+				outputData = new OutputData(outputType, obj, targetElement);
+			}
 
-			await System.Text.Json.JsonSerializer.SerializeAsync(Stream, outputData, new JsonSerializerOptions { WriteIndented = false });
+				var options = new JsonSerializerOptions { WriteIndented = false, ReferenceHandler = ReferenceHandler.IgnoreCycles };
+			options.Converters.Add(new IErrorConverter());
+			await System.Text.Json.JsonSerializer.SerializeAsync(Stream, outputData, options);
 			var nl = Encoding.UTF8.GetBytes("\n");
 			await Stream.WriteAsync(nl.AsMemory(0, nl.Length));
 			await Stream.FlushAsync();
