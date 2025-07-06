@@ -1,10 +1,12 @@
-﻿using MimeKit;
+﻿using AngleSharp.Css.Values;
+using MimeKit;
 using Newtonsoft.Json;
 using PLang.Errors;
 using PLang.Runtime;
 using PLang.Utils;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -36,11 +38,12 @@ namespace PLang.Services.OutputStream
 		public string Output { get => "text"; }
 		public bool IsStateful { get { return true; } }
 
-		public async Task<(string?, IError?)> Ask(string text, string type = "text", int statusCode = 202, Dictionary<string, object>? parameters = null,
+		public async Task<(string?, IError?)> Ask(string text, string type = "text", int statusCode = 202, Dictionary<string, object?>? parameters = null,
 			Callback? callback = null, List<Option>? options = null)
 		{
 			string? strOptions = GetStringFormattedOptions(options);
-			SetColor(statusCode);
+			
+			SetColor(statusCode, parameters);
 
 			Console.WriteLine($"[Ask] {text}{strOptions}");
 
@@ -67,7 +70,7 @@ namespace PLang.Services.OutputStream
 			return Console.ReadLine() ?? "";
 		}
 
-		public async Task Write(object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null)
+		public async Task Write(object? obj, string type = "text", int statusCode = 200, Dictionary<string, object?>? parameters = null)
 		{
 			if (obj == null) return;
 
@@ -77,11 +80,16 @@ namespace PLang.Services.OutputStream
 			{
 				fullName = fullName.Substring(0, fullName.IndexOf("["));
 			}
-			SetColor(statusCode);
-			if (paramaters != null && paramaters.TryGetValue("Position", out object? value))
+
+			if (parameters != null)
 			{
-				Console.SetCursorPosition(0, Console.CursorTop - (int)value);
+				long? position = parameters.FirstOrDefault(p => p.Key.Equals("position", StringComparison.OrdinalIgnoreCase)).Value as long?;
+				if (position != null) {
+					Console.SetCursorPosition(0, Console.CursorTop - (int)position);
+				}
 			}
+
+			SetColor(statusCode, parameters);
 
 			if (!content.StartsWith(fullName))
 			{
@@ -111,8 +119,33 @@ namespace PLang.Services.OutputStream
 			return JsonConvert.SerializeObject(obj, settings);
 		}
 
-		private void SetColor(int statusCode)
+		private void SetColor(int statusCode, Dictionary<string, object?>? parameters = null)
 		{
+			string? color = null;
+			string? background = null;
+			if (parameters != null)
+			{
+				color = parameters.FirstOrDefault(p => p.Key.Equals("color", StringComparison.OrdinalIgnoreCase)).Value as string;
+				background = parameters.FirstOrDefault(p => p.Key.Equals("background", StringComparison.OrdinalIgnoreCase)).Value as string;
+
+				if (!string.IsNullOrEmpty(color))
+				{
+					if (Enum.TryParse(typeof(ConsoleColor), color.Replace(" ", ""), true, out object? result))
+					{
+						Console.ForegroundColor = (ConsoleColor)result;
+					}
+				}
+				if (!string.IsNullOrEmpty(background))
+				{
+					if (Enum.TryParse(typeof(ConsoleColor), background.Replace(" ", ""), true, out object? result))
+					{
+						Console.BackgroundColor = (ConsoleColor)result;
+					}
+				}
+
+				if (color != null || background != null) return;
+			}			
+
 			if (statusCode >= 500)
 			{
 				Console.ForegroundColor = ConsoleColor.Red;
