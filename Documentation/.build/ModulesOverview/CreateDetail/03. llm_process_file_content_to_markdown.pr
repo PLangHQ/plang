@@ -1,0 +1,172 @@
+{
+  "Text": "[llm] system:%system_detail%\n        user: %file.Content%\n        respond in .md\n        write to %doc_details%",
+  "ModuleType": "PLang.Modules.LlmModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to send a system message and a user message to the LLM, specifying the system details and file content respectively, and receive a response in markdown format. The response should be written to the variable %doc_details%. The AskLlm function supports prompt messages with roles and content, and allows specifying the response type as markdown. The system and user messages are mapped accordingly, and the response is captured in %doc_details%.",
+    "Name": "AskLlm",
+    "Parameters": [
+      {
+        "Type": "System.Collections.Generic.List`1[PLang.Models.LlmMessage]",
+        "Name": "promptMessages",
+        "Value": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "text",
+                "text": "%system_detail%"
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "%file.Content%"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "Type": "System.String",
+        "Name": "llmResponseType",
+        "Value": "markdown"
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "System.Object",
+        "VariableName": "%doc_details%"
+      }
+    ]
+  },
+  "Properties": {
+    "Parameters": {
+      "promptMessages": [
+        {
+          "Name": "promptMessages",
+          "FullTypeName": "System.Object"
+        }
+      ],
+      "scheme": [
+        {
+          "Name": "scheme",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "model": [
+        {
+          "Name": "model",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "temperature": [
+        {
+          "Name": "temperature",
+          "FullTypeName": "System.Double"
+        }
+      ],
+      "topP": [
+        {
+          "Name": "topP",
+          "FullTypeName": "System.Double"
+        }
+      ],
+      "frequencyPenalty": [
+        {
+          "Name": "frequencyPenalty",
+          "FullTypeName": "System.Double"
+        }
+      ],
+      "presencePenalty": [
+        {
+          "Name": "presencePenalty",
+          "FullTypeName": "System.Double"
+        }
+      ],
+      "maxLength": [
+        {
+          "Name": "maxLength",
+          "FullTypeName": "System.Int32"
+        }
+      ],
+      "cacheResponse": [
+        {
+          "Name": "cacheResponse",
+          "FullTypeName": "System.Boolean"
+        }
+      ],
+      "llmResponseType": [
+        {
+          "Name": "llmResponseType",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "continuePrevConversation": [
+        {
+          "Name": "continuePrevConversation",
+          "FullTypeName": "System.Boolean"
+        }
+      ]
+    },
+    "ReturnValues": {
+      "%doc_details%": [
+        {
+          "Name": "%doc_details%",
+          "FullTypeName": "System.Object"
+        }
+      ]
+    }
+  },
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.\nThe following user request is for constructing a message to LLM engine\r\n\r\nllmResponseType can be null, text, json, markdown or html. default is null. \r\nWhen user defines a scheme then use json for llmResponseType, unless user defines otherwise\r\n\r\npromptMessages contains the system, assistant and user messages. assistant or user message is required.\r\nDetermine what part is system, assistant and user properties. If you cannot map it, the whole user request should be on user role\r\nif user does not define model, set model to \"gpt-4o-mini\" if content type is image_url\r\nmodel is default gpt-4o-mini\r\nthe json scheme from promptMessages without image is : {role:string, content:[{type:string, text:string}]} \r\nthe json scheme from promptMessages with image is : {role:string, content:[{type:string, image_url:{url:string}]} \r\n\r\n## examples ##\r\nsystem: %system%\r\n[\r\n\t{\r\n        \"role\": \"system\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%system%\"\r\n            }\r\n        ]\r\n    }\r\n]\r\n\r\n\r\nsystem: %system%, assistant: %assistant%, user: %user%\r\n\r\npromptMessages: \r\n[\r\n\t{\r\n        \"role\": \"system\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%system%\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"assistant\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%assistant%\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"user\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"%user%\"\r\n            }\r\n        ]\r\n    }\r\n]\r\n\r\n\r\nsystem: do stuff, user: this is data from user, write to %data%, %output% and %dest% => scheme: null, llResponseType=null\r\nsystem: setup up system, asssistant: some assistant stuff, user: this is data from user, scheme: {data:string, year:number, name:string} => scheme:  {data:string, year:number, name:string}\r\n\r\npromptMessages: \r\n[\r\n\t{\r\n        \"role\": \"system\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"setup up system\\nYou MUST respond in JSON, scheme:{data:string, year:number, name:string}\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"assistant\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"some assistant stuff\"\r\n            }\r\n        ]\r\n    },\r\n    {\r\n        \"role\": \"user\",\r\n        \"content\": [\r\n            {\r\n                \"type\": \"text\",\r\n                \"text\": \"this is data from user\"\r\n            }\r\n        ]\r\n    }\r\n]\r\n\r\ncontent can also have the type of image_url, the content of image_url json property can be a URL or a base64 of image.\r\nonly \"user\" role can send image\r\n\r\n\"role\": \"user\",\r\n\"content\": [\r\n    {\r\n        \"type\": \"image_url\",\r\n        \"image_url\": {\r\n            \"url\": \"%base64OfImage%\"\r\n        }\r\n    }\r\n]\r\n\r\nor url \r\n\r\n\"role\": \"user\",\r\n\"content\": [\r\n   {\r\n        \"type\": \"image_url\",\r\n        \"image_url\": {\r\n            \"url\": \"http://example.org/image.jpg\"\r\n        }\r\n    }\r\n]\r\n\r\n\r\n\r\n## examples ##\r\n"
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nUse a language model to process the content of a file and generate a markdown formatted response stored in a variable\n## functions available starts ##\r\n{\"Methods\":[{\"MethodName\":\"AppendToSystem\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"system\",\"IsRequired\":true}]},{\"MethodName\":\"AppendToAssistant\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"assistant\",\"IsRequired\":true}]},{\"MethodName\":\"AppendToUser\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"user\",\"IsRequired\":true}]},{\"Description\":\"Retrieves all previous messages\",\"MethodName\":\"GetPreviousMessages\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"PLang.Models.LlmMessage\"}},{\"MethodName\":\"AskLlm\",\"Parameters\":[{\"Type\":\"System.Collections.Generic.List`1[PLang.Models.LlmMessage]\",\"Name\":\"promptMessages\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"scheme\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"model\",\"DefaultValue\":\"gpt-4o-mini\",\"IsRequired\":false},{\"Type\":\"System.Double\",\"Name\":\"temperature\",\"DefaultValue\":0.0,\"IsRequired\":false},{\"Type\":\"System.Double\",\"Name\":\"topP\",\"DefaultValue\":0.0,\"IsRequired\":false},{\"Type\":\"System.Double\",\"Name\":\"frequencyPenalty\",\"DefaultValue\":0.0,\"IsRequired\":false},{\"Type\":\"System.Double\",\"Name\":\"presencePenalty\",\"DefaultValue\":0.0,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"maxLength\",\"DefaultValue\":4000,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"cacheResponse\",\"DefaultValue\":true,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"llmResponseType\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"continuePrevConversation\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"UseSharedIdentity\",\"Parameters\":[{\"Type\":\"System.Boolean\",\"Name\":\"useSharedIdentity\",\"DefaultValue\":true,\"IsRequired\":false}]},{\"MethodName\":\"GetLlmIdentity\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"System.String\"}}],\"SupportingObjects\":[{\"Type\":\"PLang.Models.ImageUrl\",\"Name\":\"ImageUrl\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Url\",\"IsRequired\":true}],\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Models.LlmMessage]\",\"Name\":\"promptMessages\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Role\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Models.LlmContent]\",\"Name\":\"Content\",\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\nsystem_detail (type:object), file.content (type:object), doc_details (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "[llm] system:%system_detail%\n        user: %file.Content%\n        respond in .md\n        write to %doc_details%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.LlmModule.Builder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to send a system message and a user message to the LLM, specifying the system details and file content respectively, and receive a response in markdown format. The response should be written to the variable %doc_details%. The AskLlm function supports prompt messages with roles and content, and allows specifying the response type as markdown. The system and user messages are mapped accordingly, and the response is captured in %doc_details%.\",\n  \"Name\": \"AskLlm\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Collections.Generic.List`1[PLang.Models.LlmMessage]\",\n      \"Name\": \"promptMessages\",\n      \"Value\": [\n        {\n          \"role\": \"system\",\n          \"content\": [\n            {\n              \"type\": \"text\",\n              \"text\": \"%system_detail%\"\n            }\n          ]\n        },\n        {\n          \"role\": \"user\",\n          \"content\": [\n            {\n              \"type\": \"text\",\n              \"text\": \"%file.Content%\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"llmResponseType\",\n      \"Value\": \"markdown\"\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"System.Object\",\n      \"VariableName\": \"%doc_details%\"\n    }\n  ]\n}"
+    }
+  ]
+}

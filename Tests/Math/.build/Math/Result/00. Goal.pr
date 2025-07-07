@@ -14,7 +14,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:21:40.7832826-05:00",
       "WaitForExecution": true,
@@ -24,7 +24,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 40,
+      "LineNumber": 41,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -73,10 +73,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "52253002501013a7150bf9918c6ff425b1b0de68318f132f779241074bc94e17",
-      "BuilderVersion": null,
+      "Hash": "2e907e624cfc6c80655cef4783b743c4f5caace7833b39750db6d381e982fff5",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Output the value of the variable %assertResult% to the user or output stream"
     }
   ],
   "SubGoals": [],
@@ -91,8 +91,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "FileHash": "faf25b4a17056363cb70fe0d94609ce80760bddec7e206df3f48fe383b62a627",
-  "Hash": "8f74a288961555587b811a67ae85383e03f8618bc03fd4e1d09676c1a9825e0b",
+  "FileHash": "0b3690f2e3d79d43aeac3014a6e3ebe2fc893871db7a495f32b4910468e3f9e4",
+  "Hash": "02807fb66f56099751d3e50c22c7893eabc79a11fc27e7f5072163f341152997",
   "IncomingVariablesRequired": {
     "assertResult": "The result that needs to be written out, which should be defined prior to calling this Goal."
   },
