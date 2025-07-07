@@ -23,7 +23,6 @@ Math
 - assert that %power% == 64
 - what is -2 ^ 3, write to %power%
 - assert that %power% == -8
-/ add a test case to make sure size is calculated correctly or something
 - find the 20th fibonacci number, write to %fib%
 - assert that %fib% == 6765
 - find the 1st fibonacci number, write to %fib%
