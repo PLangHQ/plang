@@ -26,6 +26,7 @@ namespace PLang.Services.OutputStream
 		public Action<string>? onFlush { get; set; }
 		public IForm IForm { get; set; }
 		public bool IsStateful => true;
+		public GoalStep Step { get; set; }
 
 		public string Output => "html";
 
@@ -41,10 +42,9 @@ namespace PLang.Services.OutputStream
 			sb = new StringBuilder();
 		}
 
-		public async Task<(string?, IError?)> Ask(string text, string type, int statusCode = 200, Dictionary<string, object?>? parameters = null, Callback? callback = null, List<Option>? options = null)
+		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{
-			
-			throw new NotImplementedException();
+			return await IForm.Ask(askOptions, callback, error);
 		}
 
 		public async Task Execute(string javascriptToCall)

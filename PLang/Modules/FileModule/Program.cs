@@ -90,7 +90,7 @@ namespace PLang.Modules.FileModule
 			{
 				if ((DateTime.UtcNow - startTime).TotalMilliseconds > timeoutInMilliseconds)
 				{
-					return new Error($"File not found within the timeout period: {absolutePath}");
+					return new Error($"File not found within the timeout period: {absolutePath}", StatusCode: 404);
 				}
 
 				await Task.Delay(50);
@@ -187,7 +187,7 @@ namespace PLang.Modules.FileModule
 				return (null, new ProgramError($"Could not split file on {newLineSymbol}", goalStep, function));
 			}
 			var parsedObjects = new List<dynamic>();
-			
+
 			foreach (var line in lines)
 			{
 				if (string.IsNullOrEmpty(line)) continue;
@@ -210,7 +210,7 @@ namespace PLang.Modules.FileModule
 			{
 				if (throwErrorOnNotFound)
 				{
-					return (null, new ProgramError($"{absolutePath} cannot be found", goalStep, function, Key: "FileNotFound"));
+					return (null, new ProgramError($"{absolutePath} cannot be found", goalStep, function, Key: "FileNotFound", StatusCode: 404));
 				}
 				return (returnValueIfFileNotExisting, null);
 			}
@@ -258,7 +258,7 @@ namespace PLang.Modules.FileModule
 
 		public record Sheet(string Name, string StartRow = "A1", string? VariableName = null, bool UseHeaderRow = true);
 
-		[Description("sheetsToExtract is name of sheet that should load into variable. Sheet1=%products% will load Sheet1 into %product% variable. StartRow MUST contains letter and number, e.g. A1")]
+		[Description("sheetsToExtract is name of sheet that should load into variable, default is null and will read all sheets, When user defines a sheet property but know name, set Name of sheet to *. Sheet1=%products% will load Sheet1 into %product% variable. StartRow MUST contains letter and number, e.g. A1")]
 		public async Task<object?> ReadExcelFile(string path,
 			[HandlesVariable] List<Sheet>? sheetsToExtract = null)
 		{
@@ -269,7 +269,7 @@ namespace PLang.Modules.FileModule
 				return null;
 			}
 
-			
+
 			if (sheetsToExtract == null || sheetsToExtract.Count == 0)
 			{
 				sheetsToExtract = new();
@@ -279,11 +279,23 @@ namespace PLang.Modules.FileModule
 					sheetsToExtract.Add(new Sheet(sheetName, "A1", MakeFitForVariable(sheetName)));
 				}
 			}
+			else if (string.IsNullOrEmpty(sheetsToExtract[0].Name) || sheetsToExtract[0].Name == "*")
+			{
+				List<Sheet> sheets = new();
 
-				List<ObjectValue?> returnValues = new();
+				List<string> sheetNames = MiniExcel.GetSheetNames(absolutePath);
+				foreach (var sheetName in sheetNames)
+				{
+					sheets.Add(new Sheet(sheetName, sheetsToExtract[0].StartRow, MakeFitForVariable(sheetName), sheetsToExtract[0].UseHeaderRow));
+				}
+				sheetsToExtract = sheets;
+			}
+
+
+			List<ObjectValue?> returnValues = new();
 			foreach (var sheet in sheetsToExtract)
 			{
-				var newSheet = sheet; 
+				var newSheet = sheet;
 				if (string.IsNullOrEmpty(sheet.VariableName))
 				{
 					newSheet = newSheet with { VariableName = MakeFitForVariable(sheet.Name) };
@@ -559,7 +571,7 @@ namespace PLang.Modules.FileModule
 		{
 			var searchOption = (includeSubfolders) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 			var absoluteDirectoryPath = GetPath(directoryPath);
-			
+
 			if (!fileSystem.Directory.Exists(absoluteDirectoryPath)) return new();
 
 			var allDirs = fileSystem.Directory.GetDirectories(absoluteDirectoryPath, "*", searchOption);
@@ -915,7 +927,8 @@ namespace PLang.Modules.FileModule
 				watcher.EnableRaisingEvents = true;
 
 				int counter = 0;
-				while (context.ContainsKey($"FileWatcher_{fileSearchPattern}_{goalToCall}_{counter}")) { counter++; };
+				while (context.ContainsKey($"FileWatcher_{fileSearchPattern}_{goalToCall}_{counter}")) { counter++; }
+				;
 
 				context.AddOrReplace($"FileWatcher_{fileSearchPattern}_{goalToCall}_{counter}", watcher);
 				KeepAlive(this, $"FileWatcher [{fileSearchPattern}]");
@@ -1008,7 +1021,7 @@ namespace PLang.Modules.FileModule
 			foreach (var key in fileWatchers)
 			{
 				var watcher = (IFileSystemWatcher)context[key];
-				
+
 				watcher?.Dispose();
 			}
 

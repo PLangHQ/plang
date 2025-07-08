@@ -402,7 +402,7 @@ namespace PLang.Modules.PlangModule
 
 			if (!fileSystem.File.Exists(step.AbsolutePrFilePath))
 			{
-				return (newStep, new StepError($"Could not find instruction file after building. {ErrorReporting.CreateIssueShouldNotHappen}", step));
+				return (newStep, new StepError($"Could not find instruction file after building. {ErrorReporting.CreateIssueShouldNotHappen}", step, StatusCode: 404));
 			}
 			
 			newStep.PrFile = fileSystem.File.ReadAllText(step.AbsolutePrFilePath);

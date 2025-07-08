@@ -1,6 +1,8 @@
 ﻿using MimeKit;
 using Newtonsoft.Json;
+using PLang.Building.Model;
 using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Runtime;
 using PLang.Utils;
 using System;
@@ -32,35 +34,59 @@ namespace PLang.Services.OutputStream
 		}
 		public Stream Stream => standardOutputStream;
 		public Stream ErrorStream => standardErrorStream;
-
+		public GoalStep Step { get; set; }
 		public string Output { get => "text"; }
 		public bool IsStateful { get { return true; } }
 
 		public bool IsFlushed { get;set; }
 
-		public async Task<(string?, IError?)> Ask(string text, string type = "text", int statusCode = 202, Dictionary<string, object>? parameters = null,
-			Callback? callback = null, List<Option>? options = null)
+		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{
-			string? strOptions = GetStringFormattedOptions(options);
-			SetColor(statusCode);
+			string? strOptions = GetStringFormattedOptions(askOptions.Choices);
+			SetColor(askOptions.StatusCode);
+			if (error != null)
+			{
+				Console.WriteLine(error);
+			}
 
-			Console.WriteLine($"[Ask] {text}{strOptions}");
+			Console.WriteLine($"[Ask] {askOptions.Question}{strOptions}");
 			IsFlushed = true;
 
-			string? line = Console.ReadLine();
+			object? answer = Console.ReadLine();
 			Console.ResetColor();
 			
-			return (line, null);
+			if (strOptions != null && askOptions.Choices != null)
+			{
+				if (answer == null)
+				{
+					return await Ask(askOptions, callback, new UserInputError($"'{answer}' is not valid answer", Step));
+				}
+
+				var option = askOptions.Choices.FirstOrDefault(p => p.Key.Equals(answer.ToString().Trim(), StringComparison.OrdinalIgnoreCase));
+				if (option.Key == null)
+				{
+					return await Ask(askOptions, callback, new UserInputError($"{answer} is not valid answer", Step));
+				}
+
+			}
+
+			return (answer, null);
 		}
 
-		private string? GetStringFormattedOptions(List<Option>? options)
+		private string? GetStringFormattedOptions(Dictionary<string, string>? choices)
 		{
-			if (options == null) return null;
+			if (choices == null) return null;
 
 			string? strOptions = null;
-			foreach (var option in options)
+			foreach (var option in choices)
 			{
-				strOptions += $"\n\t{option.ListNumber}. {option.SelectionInfo}";
+				if (option.Key != option.Value)
+				{
+					strOptions += $"\n\t{option.Key}. {option.Value}";
+				} else
+				{
+					strOptions += $"\n\t{option.Key}.";
+				}
 			}
 			return strOptions;
 		}

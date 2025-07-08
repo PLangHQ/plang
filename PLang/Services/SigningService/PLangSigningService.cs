@@ -240,7 +240,10 @@ namespace PLang.Services.SigningService
 			}
 			if (data != null && clientSignedMessage.Data != null)
 			{
-				var bytes = await serialier.Serialize(data, clientSignedMessage.Data.Format);
+				if (data is not byte[] bytes)
+				{
+					bytes = await serialier.Serialize(data, clientSignedMessage.Data.Format);
+				}
 				(var hash, var error) = await hasher.Hash(bytes, true, type: clientSignedMessage.Data.Type);
 
 				string? value = clientSignedMessage.Data?.Hash.ToString();

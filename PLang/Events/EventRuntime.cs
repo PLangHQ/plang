@@ -18,6 +18,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using static PLang.Modules.BaseBuilder;
 using static PLang.Utils.VariableHelper;
 
 namespace PLang.Events
@@ -594,13 +595,22 @@ namespace PLang.Events
 					Variables = r.Variables;
 				}
 
-				if (result.Error is null or IErrorHandled) return (Variables, null);
-				if (result.Error is IUserDefinedError) return (Variables, result.Error);
-				/*if (result.Error is IErrorHandled eh) return (result.Variables, eh);
-				if (result.Error is IUserDefinedError ude)
+				//if (result.Error is null or IErrorHandled) return (Variables, null);
+				//if (result.Error is IUserInputError) return (Variables, result.Error);
+				if (result.Error is EndGoal endGoal)
+				{
+					if (GoalHelper.IsPartOfCallStack(eve.Goal, endGoal) && endGoal.Levels > 0)
+					{
+						endGoal.Levels--; 
+						return (result.Variables, endGoal);
+					}
+					return (result.Variables, null);
+				}
+				if (result.Error == null || result.Error is IErrorHandled eh) return (result.Variables, null);
+				if (result.Error is IUserInputError ude)
 				{
 					return (null, (IEventError)ude);
-				}*/
+				}
 
 				if (isBuilder)
 				{

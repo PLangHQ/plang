@@ -12,6 +12,7 @@ using Namotion.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Org.BouncyCastle.Asn1.Ocsp;
+using Org.BouncyCastle.Ocsp;
 using PLang.Attributes;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
@@ -206,14 +207,20 @@ public class Program : BaseProgram, IDisposable
 		return null;
 	}
 
-	private (bool, List<ObjectValue>?) TryMatch(Route route, HttpRequest request)
+	private (bool, List<ObjectValue>?, IError?) TryMatch(Routing routing, HttpRequest request)
 	{
 
 		var path = request.Path.Value;
-		if (path == null) return (false, null);
+		if (path == null) return (false, null, null);
+
+		var route = routing.Route;
+		if (route == null) return (false, null, null);
 
 		var m = route.PathRegex.Match(path);
-		if (!m.Success) return (false, null);
+		if (!m.Success) return (false, null, null);
+
+		var method = routing.Method.FirstOrDefault(p => p.Equals(request.Method, StringComparison.OrdinalIgnoreCase));
+		if (method == null) return (false, null, new ProgramError($"{request.Method} is not supported for {request.Path}", goalStep));
 
 		var dict = m.Groups.Keys
 						 .Where(k => k != "0")
@@ -226,7 +233,7 @@ public class Program : BaseProgram, IDisposable
 			foreach (var (queryKey, varName) in qmap)
 			{
 				var value = request.Query[queryKey].ToString();
-				if (string.IsNullOrEmpty(value)) return (false, null); // required query missing
+				if (string.IsNullOrEmpty(value)) return (false, null, new ProgramError($"Missing {queryKey} from url")); // required query missing
 				dict[varName] = value;
 			}
 		}
@@ -237,7 +244,7 @@ public class Program : BaseProgram, IDisposable
 			variables.Add(new ObjectValue(item.Key, item.Value));
 		}
 
-		return (true, variables);
+		return (true, variables, null);
 	}
 	public sealed record Route(Regex PathRegex,
 							Dictionary<string, string>? QueryMap,  // q -> %q%
@@ -400,7 +407,9 @@ public class Program : BaseProgram, IDisposable
 				return await ProcessPlangRequest(httpContext, webserverInfo, webserverInfo.Routings, outputStream);
 			}
 
-			(var goal, var routing, var slugVariables) = GetGoalByRouting(webserverInfo.Routings, httpContext.Request);
+			(var goal, var routing, var slugVariables, var error) = GetGoalByRouting(webserverInfo.Routings, httpContext.Request);
+			if (error != null) return error;
+
 			if (goal == null)
 			{
 				return await ProcessGeneralRequest(httpContext, outputStream);
@@ -411,7 +420,7 @@ public class Program : BaseProgram, IDisposable
 				return new NotFoundError("Routing not found");
 			}
 
-			(var signedMessage, var error) = await VerifySignature(httpContext);
+			(var signedMessage, error) = await VerifySignature(httpContext, outputStream);
 			// Unsigned requests are allowed, so we let 401 through
 			if (error?.StatusCode != 401) return error;
 
@@ -448,11 +457,6 @@ public class Program : BaseProgram, IDisposable
 			return new Error($"Content sent to server is to big. Max {maxContentLength} bytes", StatusCode: 413);
 		}
 
-		if (!IsValidMethod(routing, request, goal))
-		{
-			return new Error($"Http method '{request.Method}' is not allowed on goal {goal.GoalName}", Key: "Method Not Allowed", StatusCode: 405);
-		}
-
 		string strEncoding = routing.DefaultResponseContentEncoding ?? webserverInfo.DefaultResponseContentEncoding;
 		var encoding = Encoding.GetEncoding(strEncoding);
 
@@ -473,6 +477,8 @@ public class Program : BaseProgram, IDisposable
 
 		engine.HttpContext = httpContext;
 		engine.GetMemoryStack().Put(requestObjectValue, goalStep);
+		engine.CallbackInfos = callbackInfos;
+
 		if (slugVariables != null)
 		{
 			foreach (var item in slugVariables)
@@ -481,9 +487,11 @@ public class Program : BaseProgram, IDisposable
 			}
 		}
 
-		(var vars, error) = await engine.RunGoal(goal, 0, callbackInfos);
+		(var vars, error) = await engine.RunGoal(goal, 0);
 		if (error != null && error is not IErrorHandled)
 		{
+			await outputStream.Write(error);
+
 			pool.Return(engine);
 			return error;
 		}
@@ -493,13 +501,26 @@ public class Program : BaseProgram, IDisposable
 
 	private async Task<(List<CallbackInfo>? CallbackInfo, IError? Error)> GetCallbackInfos(HttpRequest request)
 	{
-		if (!request.Headers.TryGetValue("!callback", out var value)) return (null, null);
+		string? callbackValue = "";
+		if (request.HasFormContentType)
+		{
+			callbackValue = request.Form["callback"];
+		}
+		else
+		{
+			if (!request.Headers.TryGetValue("!callback", out var value)) return (null, null);
+			callbackValue = value.ToString();
+		}
+
+		if (string.IsNullOrEmpty(callbackValue)) return (null, null);
+		
 
 		var identity = programFactory.GetProgram<Modules.IdentityModule.Program>(goalStep);
-		var callbackResult = await CallbackHelper.GetCallbackInfos(identity, value);
+		var callbackResult = await CallbackHelper.GetCallbackInfos(identity, callbackValue);
 		if (callbackResult.Error != null) return (null, callbackResult.Error);
 
 		var callbackInfos = callbackResult.CallbackInfos;
+		
 		/*
 		var keys = request.Headers.AllKeys.Where(p => p.StartsWith("!"));
 		foreach (var key in keys)
@@ -523,7 +544,7 @@ public class Program : BaseProgram, IDisposable
 				resp.StatusCode = error.StatusCode;
 			}
 
-			await outputStream.Write(error);
+			await outputStream.Write(error, statusCode: error.StatusCode);
 
 		}
 		catch (Exception ex)
@@ -535,7 +556,7 @@ public class Program : BaseProgram, IDisposable
 
 	private async Task<IError?> ProcessPlangRequest(HttpContext httpContext, WebserverInfo webserverInfo, List<Routing>? routings, IOutputStream outputStream)
 	{
-		(var signature, var error) = await VerifySignature(httpContext);
+		(var signature, var error) = await VerifySignature(httpContext, outputStream);
 		if (error != null) return error;
 
 		httpContext.Response.ContentType = "application/plang+json; charset=utf-8";
@@ -547,8 +568,8 @@ public class Program : BaseProgram, IDisposable
 			return null;
 		}
 
-		(var goal, var routing, var slugVariables) = GetGoalByRouting(routings, httpContext.Request);
-
+		(var goal, var routing, var slugVariables, error) = GetGoalByRouting(routings, httpContext.Request);
+		if (error != null) return error;
 		if (routing == null) return new NotFoundError("Routing not found");
 		if (goal == null) return new NotFoundError("Goal not found");
 
@@ -557,7 +578,7 @@ public class Program : BaseProgram, IDisposable
 		return await ProcessGoal(goal, slugVariables, webserverInfo, routing, httpContext, outputStream);
 	}
 
-	private async Task<(SignedMessage? SignedMessage, IError? Error)> VerifySignature(HttpContext httpContext)
+	private async Task<(SignedMessage? SignedMessage, IError? Error)> VerifySignature(HttpContext httpContext, IOutputStream outputStream)
 	{
 		var signatureData = httpContext.Request.Headers["X-Signature"].ToString();
 		if (string.IsNullOrEmpty(signatureData))
@@ -573,16 +594,11 @@ public class Program : BaseProgram, IDisposable
 			headers[header.Key] = header.Value;
 		}
 
-		string body = "";
-		using (var reader = new StreamReader(request.Body))
-		{
-			body = await reader.ReadToEndAsync();
-		}
-
+		byte[] rawBody = await GetRawBody(request);
 
 
 		var signing = GetProgramModule<IdentityModule.Program>();
-		var verifiedSignatureResult = await signing.VerifySignature(signatureData, headers, body);
+		var verifiedSignatureResult = await signing.VerifySignature(signatureData, headers, rawBody);
 		if (verifiedSignatureResult.Signature != null)
 		{
 			memoryStack.Put(ReservedKeywords.Identity, verifiedSignatureResult.Signature.Identity);
@@ -591,7 +607,12 @@ public class Program : BaseProgram, IDisposable
 			if (verifiedSignatureResult.Signature != null && verifiedSignatureResult.Signature.Identity != null)
 			{
 				liveConnections.TryGetValue(verifiedSignatureResult.Signature.Identity, out liveResponse);
+				if (liveResponse != null && outputStream is HttpOutputStream httpOutputStream)
+				{
+					httpOutputStream.SetLiveResponse(liveResponse);
+				}
 			}
+			
 		}
 		else
 		{
@@ -600,7 +621,15 @@ public class Program : BaseProgram, IDisposable
 		return verifiedSignatureResult;
 	}
 
+	private async Task<byte[]> GetRawBody(HttpRequest request)
+	{
+		request.EnableBuffering();
 
+		using var ms = new MemoryStream();
+		await request.Body.CopyToAsync(ms);
+		request.Body.Position = 0;       
+		return ms.ToArray();
+	}
 
 	private async Task HandlePlangPoll(HttpContext httpContext, string Identity)
 	{
@@ -678,6 +707,7 @@ public class Program : BaseProgram, IDisposable
 			case ".gif": return "image/gif";
 			case ".svg": return "image/svg+xml";
 			case ".webp": return "image/webp";
+			case ".ico": return "image/x-icon";
 
 			case ".woff": return "font/woff";
 			case ".woff2": return "font/woff2";
@@ -698,14 +728,18 @@ public class Program : BaseProgram, IDisposable
 		}
 	}
 
-	public async Task Redirect(string url)
+	public async Task<IError?> Redirect(string url, bool permanent = false, bool preserveMethod = false)
 	{
 		if (HttpContext == null)
 		{
-			throw new HttpListenerException(500, "Context is null. Start a webserver before calling me.");
+			return new ProgramError("Header has been sent to browser. Redirect cannot be sent after that.", StatusCode: 500);
 		}
+		if (HttpContext.Response.HasStarted) return new ProgramError("Header has been sent to browser. Redirect cannot be sent after that.", StatusCode: 500);
 
-		HttpContext.Response.Redirect(url);
+		HttpContext.Response.Redirect(url, permanent, preserveMethod);
+		await HttpContext.Response.Body.FlushAsync();
+
+		return null;
 	}
 
 	public async Task WriteToResponseHeader(Dictionary<string, object> headers)
@@ -826,36 +860,36 @@ Frontpage
 	}
 
 
-	private (Goal?, Routing?, List<ObjectValue>? SlugVariables) GetGoalByRouting(List<Routing>? routings, HttpRequest request)
+	private (Goal?, Routing?, List<ObjectValue>? SlugVariables, IError?) GetGoalByRouting(List<Routing>? routings, HttpRequest request)
 	{
-		if (request == null || request.Path == null || routings == null) return (null, null, null);
-		foreach (var route in routings)
+		if (request == null || request.Path == null || routings == null) return (null, null, null, new ProgramError("request object empty", goalStep, StatusCode: 500));
+		foreach (var routing in routings)
 		{
-			(var isMatch, var variables) = TryMatch(route.Route, request);
+			(var isMatch, var variables, var error) = TryMatch(routing, request);
+			if (error != null) return (null, null, null, error);
 			if (isMatch)
 			{
-				return (GetGoalBuildDirPath(route, request), route, variables);
+				(var goal, error) = GetGoalBuildDirPath(routing, request);
+				return (goal, routing, variables, error);
 			}
 
 		}
 
-		return (null, null, null);
+		return (null, null, null, null);
 	}
 
-	private Goal? GetGoalBuildDirPath(Routing routing, HttpRequest request)
+	private (Goal?, IError?) GetGoalBuildDirPath(Routing routing, HttpRequest request)
 	{
-		if (string.IsNullOrEmpty(routing.Route?.Goal?.Name)) return null;
+		if (string.IsNullOrEmpty(routing.Route?.Goal?.Name)) return (null, new ProgramError("Goal name in route is empty", goalStep, StatusCode: 500));
 
 		var goal = prParser.GetGoalByAppAndGoalName(fileSystem.RelativeAppPath, routing.Route.Goal.Name);
 		if (goal != null)
 		{
-			return goal;
+			return (goal, null);
 		}
 
-		if (request == null || request.Path == null) return null;
-
 		var goalName = request.Path.Value?.AdjustPathToOs();
-		if (goalName == null) return null;
+		if (goalName == null) return (null, new ProgramError("Goal name could not be extracted from request path", goalStep, StatusCode: 500));
 
 		if (goalName.StartsWith(fileSystem.Path.DirectorySeparatorChar))
 		{
@@ -865,11 +899,11 @@ Frontpage
 		string goalBuildDirPath = fileSystem.Path.Join(fileSystem.BuildPath, goalName).AdjustPathToOs();
 		if (fileSystem.Directory.Exists(goalBuildDirPath))
 		{
-			return prParser.GetGoal(goalBuildDirPath);
+			return (prParser.GetGoal(goalBuildDirPath), null);
 		}
 
 		logger.LogDebug($"Path doesnt exists - goalBuildDirPath:{goalBuildDirPath}");
-		return null;
+		return (null, null);
 
 	}
 
@@ -1062,8 +1096,7 @@ Frontpage
 
 		Console.WriteLine("Connected to the server");
 
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-		Task.Run(async () =>
+		_ = Task.Run(async () =>
 		{
 			byte[] buffer = new byte[1024];
 			MemoryStream messageStream = new MemoryStream();
@@ -1123,7 +1156,7 @@ Frontpage
 	private IOutputStream GetOutputStream(HttpContext httpContext)
 	{
 		var contentType = GetContentType(httpContext.Request);
-		return new HttpOutputStream(httpContext.Response, fileSystem, contentType, null, httpContext.Request.Path);
+		return new HttpOutputStream(httpContext.Response, fileSystem, contentType, 4096, httpContext.Request.Path, null);
 	}
 
 	private string GetContentType(HttpRequest request)
@@ -1174,23 +1207,6 @@ Frontpage
 	}
 
 
-	private bool IsValidMethod(Routing routing, HttpRequest request, Goal goal)
-	{
-		if (routing.Method == null) return false;
-
-		foreach (var method in routing.Method)
-		{
-
-			if (routing.Method != null && method.Equals(request.Method, StringComparison.OrdinalIgnoreCase)) return true;
-
-			if (goal.GoalInfo?.GoalApiInfo != null && request.Method.Equals(goal.GoalInfo.GoalApiInfo?.Method, StringComparison.OrdinalIgnoreCase))
-			{
-				return true;
-			}
-		}
-		return false;
-
-	}
 }
 
 

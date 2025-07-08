@@ -303,7 +303,7 @@ namespace PLang.Modules.DbModule
 			fileName = GetPath(fileName);
 			if (!fileSystem.File.Exists(fileName))
 			{
-				return new Error("File could not be found.", "FileNotFound");
+				return new Error("File could not be found.", "FileNotFound", StatusCode: 404);
 			}
 
 			((SqliteConnection)dbConnection).LoadExtension(fileName, procName);
@@ -1173,6 +1173,7 @@ namespace PLang.Modules.DbModule
 		{
 			// TODO: because of bad structure in building, can be removed when fix
 			if (typeFullName == "String") typeFullName = "System.String";
+			if (obj is System.DBNull) return (null, null);
 
 			Type? targetType = Type.GetType(typeFullName);
 			if (targetType == null)

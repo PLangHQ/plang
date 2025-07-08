@@ -43,16 +43,16 @@ namespace PLang.Modules
 		protected VariableHelper variableHelper;
 		protected ITypeHelper typeHelper;
 		protected IGenericFunction function;
-		private ILlmServiceFactory llmServiceFactory;
-		private ILogger logger;
-		private IServiceContainer container;
-		private IAppCache appCache;
-		private IOutputStreamFactory outputStreamFactory;
-		private IPLangFileSystem fileSystem;
-		private MethodHelper methodHelper;
-		private IFileAccessHandler fileAccessHandler;
-		private IAskUserHandlerFactory askUserHandlerFactory;
-		private ISettings settings;
+		protected ILlmServiceFactory llmServiceFactory;
+		protected ILogger logger;
+		protected IServiceContainer container;
+		protected IAppCache appCache;
+		protected IOutputStreamFactory outputStreamFactory;
+		protected IPLangFileSystem fileSystem;
+		protected MethodHelper methodHelper;
+		protected IFileAccessHandler fileAccessHandler;
+		protected IAskUserHandlerFactory askUserHandlerFactory;
+		protected ISettings settings;
 		protected bool IsBuilder { get; } = false;
 		public HttpContext? HttpContext
 		{
@@ -147,7 +147,9 @@ namespace PLang.Modules
 					return (new Error($"The method {method.Name} does not return Task. Method that are called must return Task"), null);
 				}
 
-				parameterValues = methodHelper.GetParameterValues(method, function);
+				(parameterValues, var error) = methodHelper.GetParameterValues(method, function);
+				if (error != null) return (null, error);
+
 				logger.LogTrace("Parameters:{0}", parameterValues);
 
 				// This is for memoryStack event handler. Should find a better way
@@ -232,7 +234,7 @@ namespace PLang.Modules
 					return (null, null);
 				}
 
-				(object? result, var error, var properties) = GetValuesFromTask(task);
+				(object? result, error, var properties) = GetValuesFromTask(task);
 				(result, error) = await HandleError(result, error);
 
 				SetReturnValue(function, result, properties);

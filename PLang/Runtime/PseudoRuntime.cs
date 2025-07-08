@@ -89,6 +89,7 @@ namespace PLang.Runtime
 						//return (engine, null, new Error($"calling goal cannot be empty.{ErrorReporting.CreateIssueShouldNotHappen}"), null);
 					}
 					isRented = true;
+					
 					engine = await engine.GetEnginePool(engineRootPath).RentAsync(engine, callingStep, engineRootPath);
 				}
 				else
@@ -202,7 +203,7 @@ namespace PLang.Runtime
 				{
 					await goalToRun.DisposeVariables(engine.GetMemoryStack());
 				}
-				if (isRented)
+				if (isRented && waitForExecution)
 				{
 					engine.ParentEngine.GetEnginePool(engine.Path).Return(engine);
 				}

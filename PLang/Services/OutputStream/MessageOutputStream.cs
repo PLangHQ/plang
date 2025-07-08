@@ -1,4 +1,5 @@
 ﻿using Nostr.Client.Client;
+using PLang.Building.Model;
 using PLang.Errors;
 using System;
 using System.Collections.Generic;
@@ -22,13 +23,14 @@ namespace PLang.Services.OutputStream
 		public Stream Stream => throw new NotImplementedException();
 
 		public Stream ErrorStream => throw new NotImplementedException();
+		public GoalStep Step { get; set; }
 
 		public string Output => "text";
 		public bool IsStateful => false;
 
 		public bool IsFlushed { get; set; }
 
-		public async Task<(string?, IError?)> Ask(string text, string type, int statusCode = 200, Dictionary<string, object?>? parameters = null, Callback? callback = null, List<Option>? options = null)
+		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{
 			throw new NotImplementedException();
 		}

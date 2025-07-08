@@ -1,7 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PLang.Modules.OutputModule;
 using NSubstitute;
+using PLang.Modules.OutputModule;
 using PLang.Services.OutputStream;
+using static PLang.Modules.OutputModule.Program;
 
 namespace PLangTests.Modules.OutputModule
 {
@@ -20,7 +21,7 @@ namespace PLangTests.Modules.OutputModule
 			throw new Exception("Needs fixing");
 		//	outputStream.Ask(Arg.Any<string>()).Returns(new Task<(string, PLang.Errors.IError)>("good", null));
 			var p = new Program(outputStreamFactory, outputSystemStreamFactory, variableHelper, programFactory);
-			var result = await p.Ask("Hello, how are your?");
+			var result = await p.Ask(new AskOptions("Hello, how are your?"));
 
 			Assert.AreEqual("good", result.Item1);
 		}

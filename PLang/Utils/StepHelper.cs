@@ -46,16 +46,16 @@ namespace PLang.Utils
 			return null;
 		}
 
-		public record Callback(Stack<CallbackInfo> CallbackInfos, SignedMessage Signature);
-		public record CallbackInfo(string GoalName, string GoalHash, int StepIndex);
-		public static async Task<Callback?> GetCallback(GoalStep? step, Modules.ProgramFactory programFactory)
+		public record Callback(string Path, Stack<CallbackInfo> CallbackInfos, SignedMessage Signature);
+		public record CallbackInfo(string GoalName, string GoalHash, int StepIndex, string? Answer = null);
+		public static async Task<Callback?> GetCallback(string path, GoalStep? step, Modules.ProgramFactory programFactory)
 		{
 			if (step == null) return null;
 
 			
 			var callbackInfos = new Stack<CallbackInfo>();
 			var goal = step.Goal;
-			string method = goal.GoalName ?? "Request";
+			string method = goal.GoalName;
 
 			callbackInfos.Push(new CallbackInfo(goal.GoalName, goal.Hash, goal.CurrentStepIndex));
 
@@ -70,7 +70,7 @@ namespace PLang.Utils
 			}
 
 			var signed = await programFactory.GetProgram<Modules.IdentityModule.Program>(step).Sign(callbackInfos);
-			return new Callback(callbackInfos, signed);
+			return new Callback(path, callbackInfos, signed);
 		}
 	}
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PLang.Errors.Interfaces
 {
-	internal interface IUserDefinedError
+	internal interface IUserInputError : IError
 	{
 	}
 }

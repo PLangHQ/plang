@@ -6,6 +6,7 @@ using PLang.Models;
 using System.Diagnostics;
 using System.Runtime.Serialization;
 using static PLang.Modules.BaseBuilder;
+using static PLang.Utils.StepHelper;
 
 namespace PLang.Building.Model
 {
@@ -80,6 +81,11 @@ namespace PLang.Building.Model
 		[IgnoreDataMemberAttribute]
 		[System.Text.Json.Serialization.JsonIgnore]
 		public bool Reload { get; set; }
+
+		[Newtonsoft.Json.JsonIgnore]
+		[IgnoreDataMemberAttribute]
+		[System.Text.Json.Serialization.JsonIgnore]
+		public CallbackInfo? Callback { get; set; }
 
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]

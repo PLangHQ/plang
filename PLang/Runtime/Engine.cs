@@ -45,13 +45,13 @@ namespace PLang.Runtime
 		string Path { get; }
 		GoalStep? CallingStep { get; }
 		IPLangFileSystem FileSystem { get; }
-
+		List<CallbackInfo>? CallbackInfos { get; set; }
 		void AddContext(string key, object value);
 		PLangAppContext GetContext();
 		MemoryStack GetMemoryStack();
 		void Init(IServiceContainer container, PLangAppContext? context = null);
 		Task Run(List<string> goalsToRun);
-		Task<(object? Variables, IError? Error)> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0, List<CallbackInfo>? callbackInfos = null);
+		Task<(object? Variables, IError? Error)> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0);
 		Goal? GetGoal(string goalName, Goal? callingGoal = null);
 		List<Goal> GetGoalsAvailable(string appPath, string goalName);
 		Task<(object? ReturnValue, IError? Error)> RunFromStep(string prFile);
@@ -122,6 +122,7 @@ namespace PLang.Runtime
 			this.eventRuntime.SetActiveEvents(activeEvents);
 		}
 
+		public List<CallbackInfo>? CallbackInfos { get; set; }
 
 		public void SetOutputStream(IOutputStream outputStream)
 		{
@@ -339,37 +340,22 @@ namespace PLang.Runtime
 									var engineWait = (EngineWait)aliveTaskType.Instances[i];
 									tasks.Add(engineWait.task);
 
-									await engineWait.task.ConfigureAwait(false);
 									if (engineWait.task.IsFaulted)
 									{
 										Console.WriteLine(engineWait.task.Exception.Flatten().ToString());
 									}
-									aliveTaskType.Instances.Remove(engineWait);
-									engineWait.engine.ParentEngine?.GetEnginePool(engineWait.engine.Path).Return(engineWait.engine);
-									i--;
 
+									if (engineWait.task.IsCompleted)
+									{
+										aliveTaskType.Instances.Remove(engineWait);
+										engineWait.engine.ParentEngine?.GetEnginePool(engineWait.engine.Path).Return(engineWait.engine);
+										i--;
+									}
 								}
 								if (aliveTaskType.Instances.Count == 0)
 								{
 									alives.Remove(aliveTaskType);
 								}
-								/*
-								if (!engineWait.task.IsCompleted)
-									{
-																				
-										isCompleted = false;
-									}
-									else
-									{
-										engineWait.engine.ParentEngine?.GetEnginePool(engineWait.engine.Path).Return(engineWait.engine);
-										
-										aliveTaskType.Instances.Remove(engineWait);
-									}
-								}
-								if (isCompleted)
-								{
-									alives.Remove(aliveTaskType);
-								}*/
 							}
 						}
 					}
@@ -531,7 +517,7 @@ namespace PLang.Runtime
 		{
 			if (!fileSystem.File.Exists(prFileAbsolutePath))
 			{
-				return (null, new Error($"{prFileAbsolutePath} could not be found. Not running goal"));
+				return (null, new Error($"{prFileAbsolutePath} could not be found. Not running goal", StatusCode: 404));
 			}
 
 			var stopwatch = new Stopwatch();
@@ -578,7 +564,7 @@ namespace PLang.Runtime
 			return;
 		}
 
-		public async Task<(object? Variables, IError? Error)> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0, List<CallbackInfo>? callbackInfos = null)
+		public async Task<(object? Variables, IError? Error)> RunGoal(Goal goal, uint waitForXMillisecondsBeforeRunningGoal = 0)
 		{
 			if (waitForXMillisecondsBeforeRunningGoal > 0) await Task.Delay((int)waitForXMillisecondsBeforeRunningGoal);
 			goal.Stopwatch = Stopwatch.StartNew();
@@ -602,7 +588,7 @@ namespace PLang.Runtime
 				if (result.Error != null) return result;
 
 				//if (await CachedGoal(goal)) return null;
-				(var returnValues, stepIndex, var stepError) = await RunSteps(goal, 0, callbackInfos);
+				(var returnValues, stepIndex, var stepError) = await RunSteps(goal, 0);
 				if (stepError != null && stepError is not IErrorHandled) return (returnValues, stepError);
 				//await CacheGoal(goal);
 
@@ -637,7 +623,7 @@ namespace PLang.Runtime
 
 		}
 
-		private async Task<(object? ReturnValue, int StepIndex, IError? Error)> RunSteps(Goal goal, int stepIndex = 0, List<CallbackInfo>? callbackInfos = null)
+		private async Task<(object? ReturnValue, int StepIndex, IError? Error)> RunSteps(Goal goal, int stepIndex = 0)
 		{
 			object? returnValues = null;
 			IError? error = null;
@@ -645,12 +631,15 @@ namespace PLang.Runtime
 			for (; stepIndex < goal.GoalSteps.Count; stepIndex++)
 			{
 
-				if (callbackInfos != null)
+				if (CallbackInfos != null)
 				{
-					var callbackInfo = callbackInfos.FirstOrDefault(p => p.GoalHash == goal.Hash);
+					var callbackInfo = CallbackInfos.FirstOrDefault(p => p.GoalHash == goal.Hash);
 					if (callbackInfo != null && stepIndex < callbackInfo.StepIndex)
 					{
 						continue;
+					} else if (callbackInfo != null && stepIndex == callbackInfo.StepIndex)
+					{
+						goal.GoalSteps[stepIndex].Callback = callbackInfo;
 					}
 				}
 				(returnValues, error) = await RunStep(goal, stepIndex);
@@ -663,7 +652,7 @@ namespace PLang.Runtime
 					}
 					if (error is EndGoal endGoal)
 					{
-						logger.LogDebug($"Exiting goal because of end goal: {endGoal}");
+						logger.LogDebug($"Exiting goal because of end goal: {endGoal.Goal?.RelativeGoalPath}");
 						stepIndex = goal.GoalSteps.Count;
 						if (GoalHelper.IsPartOfCallStack(goal, endGoal) && endGoal.Levels > 0)
 						{
@@ -768,7 +757,7 @@ private async Task CacheGoal(Goal goal)
 		{
 			if (error.Goal == null) error.Goal = goal;
 			if (error.Step == null && goal != null && goal.GoalSteps.Count > goalStepIndex - 1 && goalStepIndex > -1) error.Step = goal.GoalSteps[goalStepIndex];
-			if (error is IErrorHandled || error is IUserDefinedError) return (null, error);
+			if (error is IErrorHandled || error is IUserInputError) return (null, error);
 
 			var eventError = await eventRuntime.RunGoalErrorEvents(goal, goalStepIndex, error);
 			return eventError;
@@ -851,7 +840,7 @@ private async Task CacheGoal(Goal goal)
 
 		private async Task<(object? ReturnValue, IError? Error)> HandleStepError(Goal goal, GoalStep step, int goalStepIndex, IError? error, int retryCount)
 		{
-			if (error == null || error is IErrorHandled || error is EndGoal || error is IUserDefinedError) return (null, error);
+			if (error == null || error is IErrorHandled || error is EndGoal || error is IUserInputError) return (null, error);
 
 			if (error is Errors.AskUser.AskUserError aue)
 			{
@@ -1061,7 +1050,7 @@ private async Task CacheGoal(Goal goal)
 
 			if (!fileSystem.File.Exists(step.AbsolutePrFilePath))
 			{
-				return new StepError($"Could not find pr file {step.RelativePrPath}. Maybe try to build again?. This step is defined in Goal at {goal.RelativeGoalPath}. The location of it on drive should be {step.AbsolutePrFilePath}.", step, Key: "PrFileNotFound");
+				return new StepError($"Could not find pr file {step.RelativePrPath}. Maybe try to build again?. This step is defined in Goal at {goal.RelativeGoalPath}. The location of it on drive should be {step.AbsolutePrFilePath}.", step, Key: "PrFileNotFound", StatusCode: 404);
 			}
 
 			var instruction = prParser.ParseInstructionFile(step);

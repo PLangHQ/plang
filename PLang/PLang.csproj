@@ -98,7 +98,7 @@
     <PackageReference Include="pythonnet" Version="3.0.5" />
     <PackageReference Include="RazorEngineCore" Version="2024.4.1" />
     <PackageReference Include="ReverseMarkdown" Version="4.6.0" />
-    <PackageReference Include="Scriban.Signed" Version="5.12.1" />
+    <PackageReference Include="Scriban.Signed" Version="6.2.1" />
     <PackageReference Include="Sprache" Version="2.3.1" />
     <PackageReference Include="SuperSimpleTcp" Version="3.0.17" />
     <PackageReference Include="System.CodeDom" Version="9.0.2" />

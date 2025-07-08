@@ -18,18 +18,20 @@ using PLang.Utils;
 using PLangWindowForms;
 using Scriban;
 using Scriban.Syntax;
+using System;
+using System.ComponentModel;
 using System.Dynamic;
+using System.IO;
 using System.IO.Abstractions;
+using System.Net.Http;
 using System.Security.Policy;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 using static PLang.Executor;
+using static PLang.Modules.OutputModule.Program;
 using static PLang.Modules.UiModule.Program;
-using System.ComponentModel;
-using System.Net.Http;
-using System;
-using System.IO;
+using static PLang.Utils.StepHelper;
 
 namespace PlangWindowForms
 {
@@ -70,7 +72,10 @@ namespace PlangWindowForms
 			InitializeWebView();
 
 		}
-
+		public Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
+		{
+			throw new NotImplementedException();
+		}
 
 		private void InitializeWebView()
 		{
@@ -252,7 +257,7 @@ namespace PlangWindowForms
 			await ExecuteCode($@"plangUi.setVariablesToMonitor({jsVarsJson});");
 
 		}
-
+		/*
 		// elementPosition: replace|replaceOuter|appendTo|afterElement|beforeElement|prependTo|insertAfter|insertBefore
 		public async Task ModifyContent(string content, OutputTarget outputTarget, string id)
 		{
@@ -281,7 +286,7 @@ namespace PlangWindowForms
 			}, null);
 
 
-		}
+		}*/
 
 		public async Task ExecuteCode(string content)
 		{

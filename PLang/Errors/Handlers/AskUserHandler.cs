@@ -2,6 +2,7 @@
 using PLang.Errors.AskUser;
 using PLang.Interfaces;
 using PLang.Services.OutputStream;
+using static PLang.Modules.OutputModule.Program;
 
 namespace PLang.Errors.Handlers
 {
@@ -17,7 +18,9 @@ namespace PLang.Errors.Handlers
 
         public async Task<(bool, IError?)> Handle(AskUser.AskUserError error)
         {
-            (var result, var askError) = await outputStreamFactory.CreateHandler().Ask(error.Message, "ask", 200);
+			var askOptions = new AskOptions(error.Message);
+
+            (var result, var askError) = await outputStreamFactory.CreateHandler().Ask(askOptions);
 			if (askError != null) return (false, askError);
 
             return await error.InvokeCallback([result]);

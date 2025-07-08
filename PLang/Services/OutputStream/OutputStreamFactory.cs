@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static PLang.Modules.OutputModule.Program;
 
 namespace PLang.Services.OutputStream
 {

@@ -36,45 +36,27 @@ namespace PLang.Services.OutputStream
 		public Stream Stream { get { return this.stream; } }
 		public Stream ErrorStream { get { return this.stream; } }
 
+		public GoalStep Step { get; set; }
 		public string Output => "html";
 		public bool IsStateful { get { return isStateful; } }
 
 		public bool IsFlushed { get; set; }
 
-		public async Task<(string?, IError?)> Ask(string question, string type, int statusCode = 200, Dictionary<string, object?>? parameters = null, Callback? callback = null, List<Option>? options = null)
+		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{
-			if (parameters == null) parameters = new();
-			if (parameters.ContainsKey("question"))
-			{
-				return (null, new Error("parameters cannot contain 'question' as this is needed by plang runtime."));
-			}
-			parameters.Add("question", question);
-			Dictionary<int, object?> dictOptions = new();
-			if (options != null)
-			{
-				if (parameters.ContainsKey("options"))
-				{
-					return (null, new Error("parameters cannot contain 'question' as this is needed by plang runtime."));
-				}
-
-				foreach (var option in options)
-				{
-					dictOptions.Add(option.ListNumber, option.SelectionInfo);
-				}
-				parameters.AddOrReplace("options", dictOptions);
-			}
+			Dictionary<string, object?> parameters = new();
+			parameters.Add("askOptions", askOptions);
 			parameters.Add("callback", JsonConvert.SerializeObject(callback).ToBase64());
 			parameters.Add("url", url);
+			parameters.Add("error", error);
 
 			var templateEngine = new Modules.TemplateEngineModule.Program(fileSystem, null);
-			(var content, var error) = await templateEngine.RenderFile("/modules/OutputModule/ask.html", parameters);
+			(var content, error) = await templateEngine.RenderFile("/modules/OutputModule/ask.html", parameters);
 			if (error != null) return (null, error);
 
 			using var writer = new StreamWriter(stream, encoding, bufferSize: this.bufferSize, leaveOpen: true);
 			await writer.WriteAsync(content);
 			await writer.FlushAsync();
-
-			IsFlushed = true;
 
 			IsFlushed = true;
 

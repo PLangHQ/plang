@@ -395,7 +395,9 @@ namespace PLang.Runtime
 			}
 
 			//sub variable, e.g. %user.name%, %now+5days%
-			return variable.Value.Get<ObjectValue>(keyPath.Path, this) ?? ObjectValue.Nullable(keyPath.FullPath);
+			var ov = variable.Value.Get<ObjectValue>(keyPath.Path, this) ?? ObjectValue.Nullable(keyPath.FullPath);
+			
+			return ov;
 
 
 

@@ -1,8 +1,10 @@
-﻿using NBitcoin;
+﻿using Microsoft.AspNetCore.Http;
+using NBitcoin;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Attributes;
 using PLang.Errors;
+using PLang.Errors.Interfaces;
 using PLang.Errors.Runtime;
 using PLang.Errors.Types;
 using PLang.Exceptions;
@@ -47,7 +49,7 @@ namespace PLang.Modules.OutputModule
 			goal.AddVariable(new GoalToCallInfo(goalToCall, parameters), variableName: "!output_stream_" + channel);
 			return null;
 		}
-
+		/*
 		[Description("Send to user and waits for answer. Uses llm to construct a question to user and to format the answer. Developer defines specifically to use llm")]
 		public async Task<(object?, IError?)> AskUserUsingLlm(string text, string type = "text", int statusCode = 202,
 			string? developerInstructionForResult = "give me the object that matches, e.g. { \"id\": 123, \"name\": \"example\"}",
@@ -71,87 +73,165 @@ namespace PLang.Modules.OutputModule
 
 			return await callGoalModule.RunGoal(goalToCall, isolated: true);
 		}
-		[Description("Send to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. regexPattern can contain %variable%. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting.")]
-		public async Task<(object?, IError?)> AskUser(string text, string type = "text", int statusCode = 202, string? regexPattern = null, string? errorMessage = null, Dictionary<string, object>? parameters = null)
+		*/
+
+		public enum UserOrSystemEnum
 		{
-			return await Ask(text, type, statusCode, regexPattern, errorMessage, parameters, "user");
+			User = 0, System = 1
 		}
 
-		[Description("Send to user and waits for answer. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. regexPattern should contain start and end character if user input needs to match fully. regexPattern can contain %variable%. errorMessage is message to user when answer does not match expected regexPattern, use good grammar and correct formatting. channel=user|system|logger|audit|metric. User can also define his custom channel. selection is a %variable(s)% used to provide user with options to select from that will return the object of the selection ")]
-		public async Task<(object?, IError?)> Ask(string text, string type = "text", int statusCode = 202,
-			string? regexPattern = null, string? errorMessage = null,
-			Dictionary<string, object>? parameters = null, string? channel = null,
-			[HandlesVariable] string? selection = null, GoalToCallInfo? onCallback = null)
+		[Description("Remove % from AnswerVariableName. TemplateFile points to a file for custom rendering")]
+		public class AskOptions
 		{
+			public string Question { get; set; }
 
-			string? result;
-			IError? error = null;
-			List<Option>? options = null;
-			if (context.ContainsKey("!answer"))
+			[IgnoreWhenInstructed]
+			public int StatusCode { get; set; }
+
+			public Dictionary<string, string>? ValidationRegexPatternAndErrorMessage { get; set; }
+			public Dictionary<string, object>? CallBackData { get; set; }
+			[IgnoreWhenInstructed]
+			public Dictionary<string, object>? Parameters { get; set; }
+			public Dictionary<string, string>? Choices { get; set; }
+			public bool IsMultiChoice { get; set; }
+			public string? TemplateFile { get; set; }
+			[IgnoreWhenInstructed]
+			public GoalToCallInfo? OnCallback { get; set; }
+			public string AnswerVariableName { get; set; }
+			[IgnoreWhenInstructed]
+			public UserOrSystemEnum? UserOrSystem { get; set; }
+			[IgnoreWhenInstructed]
+			public string? Channel { get; set; }
+
+			[JsonIgnore]
+			public TemplateEngineModule.Program? TemplateEngine { get; set; }
+
+			[Description("answerVariableName is the variable being written to without %, e.g. write into %answer% => answerVariableName=\"answer\"")]
+			public AskOptions(
+				string question,
+				int statusCode = 202,
+				Dictionary<string, string>? validationRegexPatternAndErrorMessage = null,
+				Dictionary<string, object>? callBackData = null,
+				Dictionary<string, object>? parameters = null,
+				Dictionary<string, string>? choices = null,
+				bool isMultiChoice = false,
+				string? templateFile = null,
+				GoalToCallInfo? onCallback = null,
+				string answerVariableName = "answer",
+				UserOrSystemEnum? userOrSystem = null,
+				string? channel = null)
 			{
-				if (onCallback != null)
+				Question = question;
+				StatusCode = statusCode;
+				ValidationRegexPatternAndErrorMessage = validationRegexPatternAndErrorMessage;
+				CallBackData = callBackData;
+				Parameters = parameters;
+				Choices = choices;
+				IsMultiChoice = isMultiChoice;
+				TemplateFile = templateFile;
+				OnCallback = onCallback;
+				AnswerVariableName = answerVariableName;
+				UserOrSystem = userOrSystem;
+				Channel = channel;
+			}
+		}
+
+
+
+		[Description("Send to a question to the output stream and waits for answer.")]
+		public async Task<(object?, IError?)> Ask(AskOptions askOptions)
+		{
+			var result = await AskInternal(askOptions);
+			while (result.Error is IUserInputError ude)
+			{
+				result = await AskInternal(askOptions, ude);
+			}
+			return result;
+		}
+
+		private async Task<(object? Answer, IError? Error)> AskInternal(AskOptions askOptions, IError? error = null)
+		{
+			
+			object? answer;
+
+			if (goalStep.Callback != null)
+			{
+				string answerVariableName = askOptions.AnswerVariableName.Replace("%", "");
+				if (HttpContext.Request.HasFormContentType)
 				{
+					answer = HttpContext.Request.Form[answerVariableName];
+				} else
+				{
+					return (null, new ProgramError("Could not find answer"));
+				}
+
+				if (askOptions.OnCallback != null)
+				{
+					Dictionary<string, object?> parameters = new();
+					parameters.Add(answerVariableName, answer);
+
 					// onCallback is called before getting the options
 					var caller = programFactory.GetProgram<CallGoalModule.Program>(goalStep);
-					var runGoalResult = await caller.RunGoal(onCallback);
+					var runGoalResult = await caller.RunGoal(askOptions.OnCallback);
 					if (runGoalResult.Error != null) return (null, runGoalResult.Error);
 				}
-
-				result = context["!answer"]?.ToString() ?? "";
-
-				(options, error) = GetOptions(selection);
-				if (error != null) return (null, error);
-
-				if (options == null) return (result, null);
-
-				if (!int.TryParse(result, out int listNumber))
-				{
-					return (null, new ProgramError($"You must type in an number between {options.First().ListNumber} and {options.Last().ListNumber}"));
-				}
-
-				var option = options.FirstOrDefault(p => p.ListNumber == listNumber);
-				if (option == null)
-				{
-					return (null, new ProgramError($"You must type in an number between {options.First().ListNumber} and {options.Last().ListNumber}"));
-				}
-				return (option.ObjectValue, null);
+				return ProcessAnswer(answer, askOptions);
 			}
 
-			var outputStream = outputStreamFactory.CreateHandler();
+			var outputStream = outputStreamFactory.CreateHandler(/*askOptions.UserOrSystem, askOptions.Channel*/);
+			outputStream.Step = goalStep;
+			string path = "/";
+			if (HttpContext != null)
+			{
+				path = HttpContext.Request.Path;
+			}
 
-			var callback = await StepHelper.GetCallback(goalStep, programFactory);
-			(options, error) = GetOptions(selection);
+			var callback = await StepHelper.GetCallback(path, goalStep, programFactory);
+			(answer, error) = await outputStream.Ask(askOptions, callback, error);
 			if (error != null) return (null, error);
 
-			(result, error) = await outputStream.Ask(text, type, statusCode, parameters, callback, options);
-			
-			if (!outputStream.IsStateful) return (null, new EndGoal(goalStep, ""));
+			if (!outputStream.IsStateful) return (null, new EndGoal(goalStep, "", Levels: 9999));
 
+			return ProcessAnswer(answer, askOptions);
 
-			// escape any variable that user inputs
-			result = result.Replace("%", @"\%");
-
-			regexPattern = variableHelper.LoadVariables(regexPattern)?.ToString() ?? null;
-			if (!string.IsNullOrEmpty(regexPattern) && !Regex.IsMatch(result, regexPattern))
-			{
-				if (errorMessage != null && !text.Contains(errorMessage))
-				{
-					text = errorMessage + "\n\n" + text;
-				}
-				context.Remove("!answer");
-				return await Ask(text, type, statusCode, regexPattern, errorMessage, parameters);
-			}
-			return (result, null);
 		}
 
-		public record Option(int ListNumber, object SelectionInfo, ObjectValue ObjectValue);
-
-		private (List<Option>? Options, IError? Error) GetOptions(string? selection)
+		private (object?, IError?) ProcessAnswer(object? answer, AskOptions askOptions)
 		{
-			if (string.IsNullOrEmpty(selection)) return (null, null);
+			// escape any variable that user inputs
+			answer = answer.ToString()?.Replace("%", @"\%") ?? string.Empty;
+			if (askOptions.ValidationRegexPatternAndErrorMessage == null)
+			{
+				return (answer, null);
+			}
+
+			GroupedUserInputErrors groupedErrors = new GroupedUserInputErrors();
+			foreach (var validation in askOptions.ValidationRegexPatternAndErrorMessage)
+			{
+				var regexPattern = variableHelper.LoadVariables(validation.Key)?.ToString() ?? null;
+				if (!string.IsNullOrEmpty(regexPattern) && !Regex.IsMatch(answer.ToString(), regexPattern))
+				{
+					groupedErrors.Add(new UserInputError(validation.Value, goalStep));
+				}
+			}
+			if (groupedErrors.Count > 0) return (answer, groupedErrors);
+
+			return (answer, null);
+
+		}
+
+		public record Option(int ListNumber, object SelectionInfo)
+		{
+			[LlmIgnore]
+			public ObjectValue? ObjectValue { get; set; }
+		};
+
+		private (List<Option>? Options, IError? Error) GetOptions(string? answer)
+		{
+			if (string.IsNullOrEmpty(answer)) return (null, new ProgramError("Answer was empty", goalStep));
 
 			List<Option> options = new();
-			var variables = variableHelper.GetVariables(selection);
+			var variables = variableHelper.GetVariables(answer);
 			if (variables.Count == 0) return (null, new ProgramError("No variables defined in selection. It must contain a variable.", goalStep));
 
 			var roots = variables.Select(p => p.Root);
@@ -166,7 +246,7 @@ namespace PLang.Modules.OutputModule
 				object? value = variables[i].Value;
 				if (value != null)
 				{
-					options.Add(new Option((i + 1), value, variables[i]));
+					options.Add(new Option((i + 1), value) { ObjectValue = variables[i] });
 				}
 			}
 
@@ -186,15 +266,16 @@ namespace PLang.Modules.OutputModule
 		}
 
 		public record JsonOptions(NullValueHandling NullValueHandling = NullValueHandling.Include, DateFormatHandling DateFormatHandling = DateFormatHandling.IsoDateFormat,
-			string? DateFormatString = null, DefaultValueHandling DefaultValueHandling = DefaultValueHandling.Include, Formatting Formatting = Formatting.Indented, 
+			string? DateFormatString = null, DefaultValueHandling DefaultValueHandling = DefaultValueHandling.Include, Formatting Formatting = Formatting.Indented,
 			ReferenceLoopHandling ReferenceLoopHandling = ReferenceLoopHandling.Ignore);
 
 		[Description("Write out content. Do your best to make sure that content is valid json. Any %variable% should have double quotes around it. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. channel=user|system|logger|audit|metric. User can also define his custom channel")]
 		public async Task<IError?> WriteJson(object? content, JsonOptions? jsonOptions = null, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null, string? channel = null)
 		{
-			
+
 			JsonSerializerSettings settings = new();
-			if (jsonOptions != null) {
+			if (jsonOptions != null)
+			{
 				settings.NullValueHandling = jsonOptions.NullValueHandling;
 				settings.DateFormatHandling = jsonOptions.DateFormatHandling;
 				if (!string.IsNullOrEmpty(jsonOptions.DateFormatString))
@@ -204,15 +285,16 @@ namespace PLang.Modules.OutputModule
 				settings.DefaultValueHandling = jsonOptions.DefaultValueHandling;
 				settings.Formatting = jsonOptions.Formatting;
 				settings.ReferenceLoopHandling = jsonOptions.ReferenceLoopHandling;
-			} else
+			}
+			else
 			{
 				settings.Formatting = Formatting.Indented;
 				settings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
 			}
 
-			return await Write(JsonConvert.SerializeObject(content, settings), type, statusCode, paramaters,channel);
+			return await Write(JsonConvert.SerializeObject(content, settings), type, statusCode, paramaters, channel);
 		}
-		
+
 		[Description("Write to the output. type can be text|warning|error|info|debug|trace. statusCode(like http status code) should be defined by user. type=error should have statusCode between 400-599, depending on text. channel=user|system|logger|audit|metric. User can also define his custom channel")]
 		public async Task<IError?> Write(object content, string type = "text", int statusCode = 200, Dictionary<string, object?>? paramaters = null, string? channel = null)
 		{

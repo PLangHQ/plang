@@ -232,7 +232,7 @@ namespace PLang.Modules.HttpModule
 									}
 									else
 									{
-										return (null, new ProgramError($"{fileName} could not be found", goalStep, function), null);
+										return (null, new ProgramError($"{fileName} could not be found", goalStep, function, StatusCode: 404), null);
 									}
 								}
 								else

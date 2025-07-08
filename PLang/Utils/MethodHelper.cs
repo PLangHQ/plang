@@ -14,6 +14,7 @@ using PLang.Models.ObjectValueConverters;
 using PLang.Modules.DbModule;
 using PLang.Runtime;
 using PLang.Services.CompilerService;
+using PLang.Utils.JsonConverters;
 using System.Collections;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -274,11 +275,11 @@ namespace PLang.Utils
 			return newParamType.Replace("[[", "[") + "]";
 		}
 
-		public Dictionary<string, object?> GetParameterValues(MethodInfo method, IGenericFunction function)
+		public (Dictionary<string, object?> Parameters, IError? Error) GetParameterValues(MethodInfo method, IGenericFunction function)
 		{
 			var parameterValues = new Dictionary<string, object?>();
 			var parameters = method.GetParameters();
-			if (parameters.Length == 0) return parameterValues;
+			if (parameters.Length == 0) return (parameterValues, null);
 
 
 			foreach (var parameter in parameters)
@@ -291,6 +292,8 @@ namespace PLang.Utils
 				{
 					throw new ParameterException($"Could not find parameter {parameter.Name}", goalStep);
 				}
+
+
 
 				var variableValue = inputParameter?.Value;
 				try
@@ -355,11 +358,11 @@ namespace PLang.Utils
 				{
 					if (ex is AskUserError) throw;
 
-					throw new ParameterException($"Cannot convert {inputParameter?.Value} on parameter {parameter.Name} - value:{variableValue}", goalStep, ex);
+					return (parameterValues, new InvalidParameterError(function.Name, $"Cannot convert {inputParameter?.Value} on parameter {parameter.Name} - value:{variableValue}", goalStep, ex));
 				}
 
 			}
-			return parameterValues;
+			return (parameterValues, null);
 		}
 
 
@@ -483,7 +486,8 @@ namespace PLang.Utils
 			object? variableValue = null;
 			if (obj is JArray jArray)
 			{
-				list = jArray.ToObject(parameter.ParameterType) as System.Collections.IList;
+				list = jArray.ToObject(parameter.ParameterType) as IList;
+			
 			} else if (obj is JObject jObject)
 			{
 				list = JArray.FromObject(jObject) as System.Collections.IList;

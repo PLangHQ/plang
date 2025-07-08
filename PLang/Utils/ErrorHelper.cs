@@ -52,35 +52,15 @@ namespace PLang.Utils
 		}
 		public static object ToFormat(string contentType, IError error, string[]? propertyOrder = null, string? extraInfo = null)
 		{
-			AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool detailedError);			
-			if (error.ErrorChain != null && error.ErrorChain.Count > 0)
-			{
-				var errorChain = error.ErrorChain ?? new();
+			AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool detailedError);
 
-				List<object> errors = new List<object>();	
-				foreach (var e in errorChain)
-				{
-					errors.Add(e.ToFormat(contentType));
-				}
-
-				if (contentType == "text")
-				{
-					string str = "";
-					foreach (var e in errors)
-					{
-						str += e;
-					}
-					return str;
-				}
-				return errors;
-			}
 			if (error is RuntimeEventError rve && rve.InitialError != null)
 			{
 				//error = rve.InitialError;
 			}
 
 
-			if (error is IUserDefinedError && contentType == "json")
+			if (error is IUserInputError && contentType == "json")
 			{
 				JsonRpcError jsonRpcError = new()
 				{
@@ -121,7 +101,7 @@ namespace PLang.Utils
 					}
 				}
 			}
-			
+
 
 			var property = properties.FirstOrDefault(p => p.Name.Equals("Goal"));
 			if (property != null) goal = (Goal?)property.GetValue(error);

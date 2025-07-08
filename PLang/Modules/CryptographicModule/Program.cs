@@ -238,7 +238,8 @@ namespace PLang.Modules.CryptographicModule
 			var absolutePath = GetPath(filePath);
 			if (!fileSystem.File.Exists(absolutePath))
 			{
-				return (false, new ProgramError($"File {filePath} could not be found", goalStep, function, FixSuggestion: $"Make sure that the file {filePath} exists. The absolute path to it is {absolutePath}"));
+				return (false, new ProgramError($"File {filePath} could not be found", goalStep, function, StatusCode: 404,
+					FixSuggestion: $"Make sure that the file {filePath} exists. The absolute path to it is {absolutePath}"));
 			}
 
 			var fileBytes = await File.ReadAllBytesAsync(absolutePath);
@@ -269,7 +270,8 @@ namespace PLang.Modules.CryptographicModule
 			var absolutePath = GetPath(filePath);
 			if (!fileSystem.File.Exists(absolutePath))
 			{
-				return (null, new ProgramError($"File {filePath} could not be found", goalStep, function, FixSuggestion: $"Make sure that the file {filePath} exists. The absolute path to it is {absolutePath}"));
+				return (null, new ProgramError($"File {filePath} could not be found", goalStep, function, StatusCode: 404, 
+					FixSuggestion: $"Make sure that the file {filePath} exists. The absolute path to it is {absolutePath}"));
 			}
 
 			var fileBytes = await File.ReadAllBytesAsync(absolutePath);

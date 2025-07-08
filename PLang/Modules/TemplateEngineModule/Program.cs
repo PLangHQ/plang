@@ -31,16 +31,36 @@ namespace PLang.Modules.TemplateEngineModule
 ```")]
 	public class Program : BaseProgram
 	{
-		private readonly IPLangFileSystem fileSystem;
 		private readonly IOutputStreamFactory outputStreamFactory;
 
 		public Program(IPLangFileSystem fileSystem, IOutputStreamFactory outputStreamFactory)
 		{
-			this.fileSystem = fileSystem;
+			base.fileSystem = fileSystem;
 			this.outputStreamFactory = outputStreamFactory;
 		}
 
+		static IReadOnlyDictionary<string, HashSet<string>> GetMembers(Template template)
+		{
+			var collector = new MemberCollector();
+			collector.Visit(template.Page);
+			return collector.Members;
+		}
 
+		sealed class MemberCollector : ScriptVisitor
+		{
+			public Dictionary<string, HashSet<string>> Members { get; } =
+				new(StringComparer.OrdinalIgnoreCase);
+
+			public override void Visit(ScriptMemberExpression n)
+			{
+				if (n.Target is ScriptVariableGlobal g && n.Member is ScriptVariableGlobal m)
+				{
+					Members.TryAdd(g.Name, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+					Members[g.Name].Add(m.Name);
+				}
+				base.Visit(n);
+			}
+		}
 
 		[Description("Render a file path either into a write into value or straight to the output stream when no return variable is defined. Set writeToOutputStream=true when no variable is defined to write into")]
 		public async Task<(string?, IError?)> RenderFile(string path, Dictionary<string, object?>? variables = null, bool writeToOutputStream = false)
@@ -48,7 +68,7 @@ namespace PLang.Modules.TemplateEngineModule
 			var fullPath = GetPath(path);
 			if (!fileSystem.File.Exists(fullPath))
 			{
-				return (null, new ProgramError($"File {path} could not be found. Full path to the file is {fullPath}", goalStep, this.function));
+				return (null, new ProgramError($"File {path} could not be found. Full path to the file is {fullPath}", goalStep, this.function, StatusCode: 404));
 			}
 			string content = fileSystem.File.ReadAllText(fullPath);
 			var result = await RenderContent(content, fullPath, variables);
@@ -104,6 +124,8 @@ namespace PLang.Modules.TemplateEngineModule
 			try
 			{
 				var parsed = Template.Parse(content);
+				//var members = GetMembers(parsed);
+
 				var result = await parsed.RenderAsync(templateContext);
 
 				return (result, null);

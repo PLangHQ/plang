@@ -24,7 +24,7 @@ namespace PLang.Errors.Types
 
 	public record PaymentRequestError(GoalStep GoalStep, PaymentContract Contract, string Message, string Key = "PaymentRequest", int StatusCode = 402, 
 			Exception? Exception = null, string? FixSuggestion = null, string? HelpfulLinks = null, Callback? Callback = null)
-			: Error(Message, Key, StatusCode, Exception, FixSuggestion, HelpfulLinks, Contract), IError, IUserDefinedError, IBuilderError, IExternalCallbackError
+			: Error(Message, Key, StatusCode, Exception, FixSuggestion, HelpfulLinks, Contract), IError, IUserInputError, IBuilderError, IExternalCallbackError
 	{
 		public bool Retry => false;
 		public bool ContinueBuild => false;

@@ -308,8 +308,9 @@ Error handling is process by another step, if you see 'on error...' you can igno
 If there is some api key, settings, config replace it with %Settings.NameOfApiKey% 
 - NameOfApiKey should named in relation to what is happening if change is needed
 Dictionary<T1, T2> value is {{key: value, ... }}
+ONLY when string is prefixed with # is for translation, modify the string to be ""#:..."", e.g. #""Hello"" => ""#:Hello"".
 
-<Example>
+< Example >
 get url ""http://example.org"" => Value: ""http://example.org""
 write out 'Hello world' => Value: ""Hello world""
 <Example>

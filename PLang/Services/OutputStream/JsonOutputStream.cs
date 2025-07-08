@@ -30,6 +30,7 @@ namespace PLang.Services.OutputStream
 
 		public Stream Stream { get { return this.stream; } }
 		public Stream ErrorStream { get { return this.stream; } }
+		public GoalStep Step { get; set; }
 
 		public string Output => "json";
 
@@ -37,41 +38,17 @@ namespace PLang.Services.OutputStream
 
 		public bool IsFlushed { get; set; }
 
-		public async Task<(string?, IError?)> Ask(string text, string type, int statusCode = 200, Dictionary<string, object?>? parameters = null, Callback? callback = null, List<Option>? options = null)
+		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{
-			
-			if (parameters == null || !parameters.ContainsKey("url"))
-			{
-				throw new Exception("url parameter must be defined");
-			}
-
-			Dictionary<int, object> dictOptions = new();
-			foreach (var option in options)
-			{
-				dictOptions.Add(option.ListNumber, option.SelectionInfo);
-			}
-
 			using (var writer = new StreamWriter(stream, encoding, bufferSize: this.bufferSize, leaveOpen: true))
 			{
-				if (text != null)
+				await writer.WriteAsync(JsonConvert.SerializeObject(new
 				{
-					var url = parameters["url"];
-					parameters.Remove("url");
+					askOptions,
+					callback,
+					error
+				}));
 
-					var askObj = new
-					{
-						type = "ask",
-						statusCode,
-						url,
-						body = text,
-						parameters,
-						options = dictOptions,
-						callback
-					};
-
-
-					await writer.WriteAsync(JsonConvert.SerializeObject(askObj));
-				}
 				await writer.FlushAsync();
 				IsFlushed = true;
 			}
@@ -82,10 +59,10 @@ namespace PLang.Services.OutputStream
 		{
 			return "";
 		}
-		
+
 		public async Task Write(object? obj, string type, int httpStatusCode = 200, Dictionary<string, object?>? paramaters = null)
 		{
-			
+
 			string? content = TypeHelper.GetAsString(obj);
 			if (content == null) return;
 

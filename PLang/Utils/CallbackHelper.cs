@@ -21,7 +21,10 @@ namespace PLang.Utils
 		{
 			if (string.IsNullOrEmpty(callbackInfos)) return (null, null);
 
-			var obj = JObject.Parse(callbackInfos);
+			byte[] bytes = Convert.FromBase64String(callbackInfos);
+			string decoded = Encoding.UTF8.GetString(bytes);
+
+			var obj = JObject.Parse(decoded);
 			if (obj == null || obj["CallbackInfos"] == null || obj["Signature"] == null) return (null, null);
 
 

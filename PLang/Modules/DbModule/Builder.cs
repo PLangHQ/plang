@@ -69,25 +69,14 @@ namespace PLang.Modules.DbModule
 			List<Parameter>? Parameters = null, List<ReturnValue>? ReturnValues = null,
 			List<string>? TableNames = null, string? DataSource = null, Dictionary<string, string>? AffectedColumns = null, string? Warning = null) : GenericFunction(Reasoning, Name, Parameters, ReturnValues);
 
-		
+
 
 		public override async Task<(Instruction?, IBuilderError?)> Build(GoalStep goalStep, IBuilderError? previousBuildError = null)
 		{
-
-
-
-			string system = @$"";
-
-			List<DataSource> dataSources = new();
-			var currentDataSource = goalStep.GetVariable<DataSource>();
-			if (currentDataSource != null)
+			var dataSource = goalStep.GetVariable<DataSource>();
+			if (dataSource == null)
 			{
-				dataSources.Add(currentDataSource);
-			}
-			else
-			{
-
-				dataSources = await dbSettings.GetAllDataSources();
+				var dataSources = await dbSettings.GetAllDataSources();
 				if (dataSources == null)
 				{
 					await dbSettings.CreateDataSource();
@@ -98,6 +87,9 @@ namespace PLang.Modules.DbModule
 					(dataSources, var error) = await FigureOutDataSource(goalStep);
 					if (error != null) return (null, error);
 				}
+
+				dataSource = dataSources.FirstOrDefault();
+				goalStep.AddVariable<DataSource>(dataSource);
 			}
 
 
@@ -105,12 +97,11 @@ namespace PLang.Modules.DbModule
 			string sqlType = "sqlite";
 			string autoIncremental = "";
 			string insertAppend = "";
-			foreach (var dataSource in dataSources)
-			{
-				sqlType = dataSource.TypeFullName;
-				autoIncremental = (dataSource!.KeepHistory) ? "(NO auto increment)" : "auto incremental";
 
-				system += @$"
+			sqlType = dataSource.TypeFullName;
+			autoIncremental = (dataSource!.KeepHistory) ? "(NO auto increment)" : "auto incremental";
+
+			var system = @$"
 Use dataSourceName from <dataSource> when parameter for method is dataSourceName
 
 <dataSource name=""{dataSource.Name}"">
@@ -119,12 +110,12 @@ Database name:{dataSource.DbName}
 Id columns: {autoIncremental}
 </dataSource>
 ";
-				// todo: this will fail with different type of dbs
-				if (dataSource.KeepHistory)
-				{
-					insertAppend = "- On Insert, InsertOrUpdate, InsertOrUpdateAndSelectIdOfRow you must modify sql to include id(System.Int64) column and ParameterInfo @id=\"auto\"";
-				}
+			// todo: this will fail with different type of dbs
+			if (dataSource.KeepHistory)
+			{
+				insertAppend = "- On Insert, InsertOrUpdate, InsertOrUpdateAndSelectIdOfRow you must modify sql to include id(System.Int64) column and ParameterInfo @id=\"auto\"";
 			}
+
 
 			system += @$"
 Additional json Response explaination:
@@ -159,7 +150,7 @@ Rules:
 				int idx = gf.Parameters.FindIndex(p => p.Name == "dataSourceName");
 				gf.Parameters[idx] = gf.Parameters[idx] with { Value = dynamicDataSourceName };
 
-				buildResult.Instruction = buildResult.Instruction with { Function = gf };
+				//buildResult.Instruction = buildResult.Instruction with { Function = gf };
 			}
 
 			var parameters = gf.GetParameter<List<ParameterInfo>>("sqlParameters");
@@ -168,7 +159,7 @@ Rules:
 			{
 				return await ValidateSqlAndParameters(goalStep, insertAppend, buildResult.Instruction);
 			}
-			
+
 
 			return buildResult;
 		}
@@ -254,11 +245,12 @@ Give a short description of you Reason for the selection
 			string? additionalInfo = null;
 			if (gf.Name.StartsWith("Insert"))
 			{
-				additionalInfo = "Validate that the insert statement is not missing a not null column. Give a warning.";
+				additionalInfo = "- Validate that the insert statement is not missing a not null column. Give a warning.";
 			}
 			if (gf.Name.StartsWith("Select"))
 			{
-				additionalInfo = "User might escape % on LIKE statement, e.g. title=\\%%q%, then the VariableNameOrValue should be escaped as well, e.g. \\%%title%\\%, should map to VariableNameOrValue=\\%%title%\\%";
+				additionalInfo = @"- User might escape % on LIKE statement, e.g. title=\\%%q%, then the VariableNameOrValue should be escaped as well, e.g. \\%%title%\\%, should map to VariableNameOrValue=\\%%title%\\%
+- Respect join request by user";
 			}
 
 			List<LlmMessage> messages = new List<LlmMessage>();
@@ -266,9 +258,10 @@ Give a short description of you Reason for the selection
 You are provided with a information for sql query executed in c#.
 You job is to validate it with <table> information provided.
 
-Adjust the Parameters to match the names and data types of the columns in the <table>. 
-Datatype are .net object, TEXT=System.String, INTEGER=System.Int64, REAL=System.Double, NUMERIC=System.Double, BOOLEAN=System.Boolean, BLOB=byte[], etc.
-Validate <sql> statement that it matches with columns, adjust the sql if needed.
+- User is likely writing a pseudo sql, use your best judgement to create and validate the sql with help of <table> information
+- Adjust the Parameters to match the names and data types of the columns in the <table>. 
+- Datatype are .net object, TEXT=System.String, INTEGER=System.Int64, REAL=System.Double, NUMERIC=System.Double, BOOLEAN=System.Boolean, BLOB=byte[], etc.
+- Validate <sql> statement that it matches with columns, adjust the sql if needed.
 {additionalInfo}
 {insertAppend}
 "));
@@ -290,8 +283,9 @@ User intent: {goalStep.Text}
 			gf.Parameters[0] = gf.Parameters[0] with { Value = sqlAndParams.Sql };
 			gf.Parameters[1] = gf.Parameters[1] with { Value = sqlAndParams.Parameters };
 			gf = gf with { Warning = sqlAndParams.Warning };
-
+			
 			instruction = instruction with { Function = gf };
+			instruction.LlmRequest.Add(question);
 			return (instruction, null);
 		}
 
@@ -604,6 +598,11 @@ Reason:{error.Message}", step,
 
 		private async Task<(bool IsValid, string DataSourceName, IBuilderError? Error)> IsValidSql(string sql, string dataSourceName, GoalStep step)
 		{
+			var dataSource = step.GetVariable<DataSource>();
+			if (dataSource != null)
+			{
+				dataSourceName = dataSource.Name;
+			}
 
 			var anchors = context.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb", new()) ?? new();
 			if (!anchors.ContainsKey(dataSourceName))
@@ -624,50 +623,25 @@ Reason:{error.Message}", step,
 			}
 
 
-			var ordered = anchors
-				.OrderBy(kvp => kvp.Key == dataSourceName ? 0 : 1)
-				.ThenBy(kvp => kvp.Key);
+			var anchor = anchors
+				.FirstOrDefault(kvp => kvp.Key == dataSourceName);
 
-			Dictionary<string, string> errors = new();
-
-			foreach (var (key, value) in ordered)
+			try
 			{
-				try
-				{
-					using var cmd = value.CreateCommand();
-					cmd.CommandText = sql;
-					cmd.Prepare();
+				using var cmd = anchor.Value.CreateCommand();
+				cmd.CommandText = sql;
+				cmd.Prepare();
 
-					return (true, key, null);
-				}
-				catch (Exception ex)
-				{
-					if (!ex.Message.Contains("no such table"))
-					{
-						dataSourceName = key;
-					}
+				return (true, anchor.Key, null);
+			}
+			catch (Exception ex)
+			{
+				string errorInfo = "Error(s) while trying to valid the sql.\n";
+				errorInfo += $"\tDataSource: {anchor.Key} - Error Message:{ex.Message}\n";
 
-					errors.Add(key, ex.Message);
-				}
+				return (false, dataSourceName, new StepBuilderError(errorInfo, Step: step, Retry: false));
 			}
 
-			var orderedErrors = errors
-				.OrderBy(kvp => kvp.Key == dataSourceName ? 0 : 1)
-				.ThenBy(kvp => kvp.Key);
-
-
-			string errorInfo = "Error(s) while trying to valid the sql.\n";
-			if (errors.Count > 1)
-			{
-				errorInfo += $"I tried connecting to {errors.Count} data sources. Read each error message as only one might apply:\n";
-			}
-
-			foreach (var error in orderedErrors)
-			{
-				errorInfo += $"\tDataSource: {error.Key} - Error Message:{error.Value}\n";
-			}
-
-			return (false, dataSourceName, new StepBuilderError(errorInfo, Step: step, Retry: false));
 		}
 
 

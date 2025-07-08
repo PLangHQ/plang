@@ -1,0 +1,4 @@
+SendEmail
+- set default value of %service% = "email.plang.io"
+- call goal /service/%service%/SendEmail, write to %result%
+- return %result%

@@ -1,5 +1,6 @@
 ﻿using NBitcoin;
 using Newtonsoft.Json;
+using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Runtime;
 using PLang.Utils;
@@ -24,7 +25,7 @@ namespace PLang.Services.OutputStream
 		Encoding encoding;
 		Stream stream;
 
-		public TextOutputStream(Stream stream, Encoding encoding, bool isStatefull = true, string? callbackUri = null, int bufferSize = 4096) {
+		public TextOutputStream(Stream stream, Encoding encoding, bool isStatefull = true, int bufferSize = 4096, string? callbackUri = null) {
 			this.encoding = encoding;
 			this.stream = stream;
 
@@ -34,25 +35,32 @@ namespace PLang.Services.OutputStream
 		}
 		public Stream Stream => stream;
 		public Stream ErrorStream => stream;
+		public GoalStep Step { get; set; }
+
 
 		public string Output { get => "text"; }
 		public bool IsStateful => isStatefull;
 
 		public bool IsFlushed { get; set; }
 
-		public async Task<(string?, IError?)> Ask(string text, string type = "text", int statusCode = 202, Dictionary<string, object?>? parameters = null,
-			Callback? callback = null, List<Option>? options = null)
+		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{
 			string? strOptions = null;
-			if (options != null)
+			if (askOptions.Choices != null)
 			{
-				foreach (var option in options)
+				foreach (var option in askOptions.Choices)
 				{
-					strOptions += $"\n\t{option.ListNumber}. {option.SelectionInfo}";
+					if (option.Key != option.Value)
+					{
+						strOptions += $"\n\t{option.Key}. {option.Value}";
+					} else
+					{
+						strOptions += $"\n\t{option.Key}.";
+					}
 				}
 			}
 
-			var bytes = encoding.GetBytes($"[Ask] {text}{options}");
+			var bytes = encoding.GetBytes($"[Ask] {askOptions.Question}{strOptions}");
 			
 			await this.stream.WriteAsync(bytes);
 			await this.stream.FlushAsync();
@@ -61,9 +69,9 @@ namespace PLang.Services.OutputStream
 			if (!IsStateful) return (null, null);
 
 			string endMarker = "\n";
-			if (parameters != null && parameters.ContainsKey("endMarker"))
+			if (askOptions.Parameters != null && askOptions.Parameters.ContainsKey("endMarker"))
 			{
-				endMarker = parameters["endMarker"].ToString() ?? "\n";
+				endMarker = askOptions.Parameters["endMarker"].ToString() ?? "\n";
 				if (string.IsNullOrEmpty(endMarker)) endMarker = "\n";
 			}
 

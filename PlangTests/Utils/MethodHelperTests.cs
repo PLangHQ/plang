@@ -65,7 +65,7 @@ namespace PLang.Utils.Tests
 
 		
 			var method = await methodHelper.GetMethod(this, gf);
-            var parameters = methodHelper.GetParameterValues(method, gf);
+            (var parameters, var error) = methodHelper.GetParameterValues(method, gf);
 			Assert.AreEqual("AddToList", method.Name);
 			Assert.AreEqual(2, method.GetParameters().Length);
 			Assert.IsTrue(parameters["value"].ToString().Contains("Product3"));
@@ -109,7 +109,7 @@ namespace PLang.Utils.Tests
 
 
 			var method = await methodHelper.GetMethod(this, gf);
-			var parameters = methodHelper.GetParameterValues(method, gf);
+			 (var parameters, var error) = methodHelper.GetParameterValues(method, gf);
 			Assert.AreEqual("ReadTextFile", method.Name);
 			Assert.AreEqual(3, method.GetParameters().Length);
 			Assert.AreEqual("file.txt", parameters["path"]);
@@ -149,7 +149,7 @@ namespace PLang.Utils.Tests
 
 
 			var method = await methodHelper.GetMethod(this, gf);
-			var parameters = methodHelper.GetParameterValues(method, gf);
+			 (var parameters, var error) = methodHelper.GetParameterValues(method, gf);
 			Assert.AreEqual("WriteExcelFile", method.Name);
 			Assert.AreEqual("1,2,3", parameters["variablesToWriteToExcel"]);
 
@@ -190,7 +190,7 @@ namespace PLang.Utils.Tests
 
 
 			var method = await methodHelper.GetMethod(this, gf);
-			var parameters = methodHelper.GetParameterValues(method, gf);
+			 (var parameters, var error) = methodHelper.GetParameterValues(method, gf);
 			Assert.AreEqual("WriteExcelFile", method.Name);
 			Assert.AreEqual(2, ((string[])parameters["variablesToWriteToExcel"]).Length);
 
@@ -232,7 +232,7 @@ namespace PLang.Utils.Tests
 
 
 			var method = await methodHelper.GetMethod(this, gf);
-			var parameters = methodHelper.GetParameterValues(method, gf);
+			 (var parameters, var error) = methodHelper.GetParameterValues(method, gf);
 			Assert.AreEqual("WriteExcelFile2", method.Name);
 			Assert.AreEqual(2, ((string[])parameters["variablesToWriteToExcel"]).Length);
 
@@ -260,7 +260,7 @@ namespace PLang.Utils.Tests
             memoryStack.Put("password", "123");
             goalStep.Text = "hash %password%, write to %hashedPassword%";
 			var method = await methodHelper.GetMethod(this, gf);
-			var parameters = methodHelper.GetParameterValues(method, gf);
+			 (var parameters, var error) = methodHelper.GetParameterValues(method, gf);
 			Assert.AreEqual("HashInput", method.Name);
 			Assert.AreEqual("123", parameters["input"]);
 			Assert.AreEqual(null, parameters["ble"]);
@@ -330,7 +330,7 @@ namespace PLang.Utils.Tests
 
 			goalStep.Text = "hash %password%, write to %hashedPassword%";
 			var method = await methodHelper.GetMethod(this, gf);
-			var parameters = methodHelper.GetParameterValues(method, gf);
+			 (var parameters, var error) = methodHelper.GetParameterValues(method, gf);
 			Assert.AreEqual("Insert", method.Name);
 			Assert.AreEqual("insert into tasks (id, description, due_date) values (@id, @description, @due_date)", parameters["sql"]);
 
@@ -374,7 +374,7 @@ namespace PLang.Utils.Tests
 
 			goalStep.Text = "hash %password%, write to %hashedPassword%";
 			var method = await methodHelper.GetMethod(this, gf);
-			var parameters = methodHelper.GetParameterValues(method, gf);
+			 (var parameters, var error) = methodHelper.GetParameterValues(method, gf);
 			Assert.AreEqual("Insert", method.Name);
 			Assert.AreEqual("insert into tasks (id, description, due_date) values (@id, @description, @due_date)", parameters["sql"]);
 
@@ -419,7 +419,7 @@ namespace PLang.Utils.Tests
 
 			goalStep.Text = "hash %password%, write to %hashedPassword%";
 			var method = await methodHelper.GetMethod(this, gf);
-			var parameters = methodHelper.GetParameterValues(method, gf);
+			 (var parameters, var error) = methodHelper.GetParameterValues(method, gf);
 			Assert.AreEqual("Insert2", method.Name);
 			Assert.AreEqual("insert into tasks (id, description, due_date) values (@id, @description, @due_date)", parameters["sql"]);
 
@@ -466,7 +466,7 @@ namespace PLang.Utils.Tests
 
 			goalStep.Text = "hash %password%, write to %hashedPassword%";
 			var method = await methodHelper.GetMethod(this, gf);
-			var parameters = methodHelper.GetParameterValues(method, gf);
+			(var parameters, var error) = methodHelper.GetParameterValues(method, gf);
 			Assert.AreEqual("AddToList", method.Name);
 			Assert.AreEqual(@"{
   ""name"": ""Product3"",
@@ -500,7 +500,7 @@ namespace PLang.Utils.Tests
 			memoryStack.Put("list", list);
 			memoryStack.Put("%obj%", null);
 			var method = await methodHelper.GetMethod(this, gf);
-			var parameters = methodHelper.GetParameterValues(method, gf);
+			(var parameters, var error) = methodHelper.GetParameterValues(method, gf);
 			Assert.AreEqual("AddToList", method.Name);
 			Assert.AreEqual(null, parameters["value"]);
 			Assert.AreEqual(list, parameters["listInstance"]);
@@ -531,7 +531,7 @@ namespace PLang.Utils.Tests
 
 			memoryStack.Put("list", list);
 			var method = await methodHelper.GetMethod(this, gf);
-			var parameters = methodHelper.GetParameterValues(method, gf);
+			(var parameters, var error) = methodHelper.GetParameterValues(method, gf);
 			Assert.AreEqual("AddToList2", method.Name);
 			Assert.AreEqual(@"%obj%", parameters["value"]);
 			Assert.AreEqual(list, parameters["listInstance"]);
