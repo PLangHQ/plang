@@ -107,16 +107,16 @@ Trig
 - find the nth fibonacci term
 
 ## Examples
-- You can find the source code of the Math module at [Math Module Source Code](https://github.com/PLangHQ/plang/blob/main/PLang/Modules/Math/Program.cs).
-- For a full list of examples, visit [Math Examples](https://github.com/PLangHQ/plang/tree/main/Tests/Math).
+- You can find the source code of the Math module at [Math Module Source Code](https://github.com/PLangHQ/plang/blob/main/PLang/Modules/MathModule/Program.cs).
+- For a list of test cases, visit [Math Test Cases](https://github.com/PLangHQ/plang/tree/main/Tests/Math).
 
 ## Step options
 These options are available for each step. You can click the links for more details on how to use them:
-- [CacheHandler](./modules/handlers/CachingHandler.md)
-- [ErrorHandler](./modules/handlers/ErrorHandler.md)
-- [RetryHandler](./modules/handlers/RetryHandler.md)
-- [CancelationHandler](./moduels/CancelationHandler.md)
-- [Run and forget](./moduels/RunAndForget.md)
+- [CacheHandler](../CachingHandler.md)
+- [ErrorHandler](../ErrorHandler.md)
+- [RetryHandler](../RetryHandler.md)
+- [CancelationHandler](../CancelationHandler.md)
+- [Run and forget](../RunAndForget.md)
 
 ## Advanced
 For more advanced information, check out the [Advanced Math Module Documentation](./PLang.Modules.MathModule_advanced.md) if you want to understand how the underlying mapping works with C#.

@@ -51,10 +51,10 @@ public (int?, IError?) Fibonacci(int n);
 Not all methods are demonstrated, for more detail:
 - Simple documentation and all examples can be found at [./PLang.Modules.MathModule.md](./PLang.Modules.MathModule.md).
 - The repository for examples can be found at [https://github.com/PLangHQ/plang/tree/main/Tests/Math](https://github.com/PLangHQ/plang/tree/main/Tests/Math).
-- For additional insights, refer to the source code in [Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.MathModule/Program.cs).
+- For additional insights, refer to the source code in [Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/MathModule/Program.cs).
 
 ## Source code
-Program.cs is the runtime code, which can be found at [https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.MathModule/Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/PLang.Modules.MathModule/Program.cs).
+Program.cs is the runtime code, which can be found at [https://github.com/PLangHQ/plang/tree/main/PLang/Modules/MathModule/Program.cs](https://github.com/PLangHQ/plang/tree/main/PLang/Modules/MathModule/Program.cs).
 
 ## How plang is mapped to C#
 This section explains how modules are utilized in `plang`.
