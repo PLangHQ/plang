@@ -1,0 +1,84 @@
+{
+  "Text": "solve 5 + (12 - square root of 9) to the power of 2 all divided by 2 after then subtract 1, write to %test%",
+  "ModuleType": null,
+  "Reload": false,
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null,\n\t\"Instruction\": {\n\t\"Text\": string,\n\t\"ModuleType\": string,\n\t\"GenericFunctionType\": string,\n\t\"FunctionJson\"?: jtoken\n}\n}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.Get(\"settingName\", \"defaultValue\", \"Explain\")% \r\n- settingName would be the api key, config key, \r\n- defaultValue for settings is the usual value given, make it \"\" if no value can be default\r\n- Explain is an explanation about the setting that novice user can understand.\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.\nGiven a math instruction that is not in a string format, turn it into a string formatted math instruction from the NCalc C# library and passed into the solveExpression function.\r\n\t\t\t\tIf a trig function wants to be solved by the user and they ask to find the answer in degrees, convert the output to degrees from radians. If they want to find\r\n\t\t\t\tthe value of the trig function with a parameter in degrees, convert it to radians using 3.14 before passing it in. Also convert pi into 3.14 multiplied by whatever number is next to it if applicable.\r\n\t\t\t\tExamples:\r\n\t\t\t\tfind 3 plus 4 should turn into 3 + 4. Do this with any operator like *, -, +, /\r\n\t\t\t\tsolve for square root of 9 should turn into Sqrt(9)\r\n\t\t\t\twhat is 2 raised to the power of 4 should turn into Pow(2, 4)"
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null,\n\t\"Instruction\": {\n\t\"Text\": string,\n\t\"ModuleType\": string,\n\t\"GenericFunctionType\": string,\n\t\"FunctionJson\"?: jtoken\n}\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nPerform a mathematical calculation involving addition, subtraction, square root, exponentiation, division, and subtraction, then store the result in a variable\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"Solve a complex math expression given as a string. Please capitalize any functions called like sqrt() into Sqrt()\",\"MethodName\":\"SolveExpression\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"expression\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"Nullable<Double>\"}},{\"Description\":\"Find the fibonacci number of a given variable or number.\",\"MethodName\":\"Fibonacci\",\"Parameters\":[{\"Type\":\"System.Int32\",\"Name\":\"variable\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"Nullable<Int32>\"}},{\"Description\":\"Find the first n prime numbers where n is a given number.\",\"MethodName\":\"PrimeNumbers\",\"Parameters\":[{\"Type\":\"System.Int32\",\"Name\":\"number\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"List<Int32>\"}}],\"SupportingObjects\":[]}\r\n## functions available ends ##\r\n## defined variables ##\r\ntest (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "solve 5 + (12 - square root of 9) to the power of 2 all divided by 2 after then subtract 1, write to %test%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.MathModule.Builder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to solve a mathematical expression involving addition, subtraction, square root, exponentiation, division, and subtraction, and store the result in the variable %test%. The expression is converted into a string format compatible with the SolveExpression function, using capitalized function names like Sqrt().\",\n  \"Name\": \"SolveExpression\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"expression\",\n      \"Value\": \"((5 + Pow((12 - Sqrt(9)), 2)) / 2) - 1\"\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"Nullable<Double>\",\n      \"VariableName\": \"%test%\"\n    }\n  ],\n  \"Instruction\": {\n    \"Text\": \"Solve the expression ((5 + Pow((12 - Sqrt(9)), 2)) / 2) - 1 and store the result in %test%\",\n    \"ModuleType\": \"Math\",\n    \"GenericFunctionType\": \"SolveExpression\",\n    \"FunctionJson\": null\n  }\n}"
+    }
+  ],
+  "Properties": {
+    "Parameters": {
+      "expression": [
+        {
+          "Name": "expression",
+          "FullTypeName": "System.String"
+        }
+      ]
+    },
+    "ReturnValues": {
+      "%test%": []
+    }
+  },
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to solve a mathematical expression involving addition, subtraction, square root, exponentiation, division, and subtraction, and store the result in the variable %test%. The expression is converted into a string format compatible with the SolveExpression function, using capitalized function names like Sqrt().",
+    "Name": "SolveExpression",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "expression",
+        "Value": "((5 + Pow((12 - Sqrt(9)), 2)) / 2) - 1"
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "Nullable<Double>",
+        "VariableName": "%test%"
+      }
+    ]
+  }
+}

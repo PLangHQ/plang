@@ -61,6 +61,9 @@ namespace PLang.Modules.AssertModule
 				}
 			}
 
+			//Console.WriteLine("types: " + actualValue.GetType() + " " + expectedValue.GetType());
+
+			//Console.WriteLine("actual value: " + actualValue + " expected: " + expectedValue + " result: " + result);
 			
 
 			if (result) {

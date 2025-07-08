@@ -24,7 +24,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 0,
-      "LineNumber": 9,
+      "LineNumber": 13,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -73,7 +73,7 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "8791e8a30858e7e31058a5d5da2ed050cb1fa28e1f7d2de558a982b567639747",
+      "Hash": "69e2b629a800d73019a00e8f7e70e67ef34668fbde601d59c3b3d7b01395b7c4",
       "BuilderVersion": null,
       "RelativeGoalPath": "\\Prime.goal",
       "UserIntent": null
@@ -91,8 +91,8 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "FileHash": "e467671a95a2f216018ab34c2ebfff21b96f2d718b5998b3fddd1929f121d00c",
-  "Hash": "634fabcfb8ad324c68ffba468d52842e3ac168bd6015ef397eff82d37f6a8aa1",
+  "FileHash": "7bd489a3bd72c705c13882c74f4b1f6a2e15de4feadc061601e02273834b4f91",
+  "Hash": "a8685883954ed8f6b0b066de2da5289e8065229d50dff304708f1c7621fe796c",
   "IncomingVariablesRequired": {
     "assertResult": "The result that needs to be written out, which should be defined prior to calling this Goal."
   },

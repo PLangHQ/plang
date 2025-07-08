@@ -14,7 +14,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:19:46.051605-05:00",
       "WaitForExecution": true,
@@ -73,10 +73,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "d3a1d7827bba4646b91148f82bb8db1648d160111fb6e265d492d0d07f28add3",
-      "BuilderVersion": null,
+      "Hash": "1740fcfb8dbba4f934f298cfc9a2e90ebad8a1662929cf16fc224ced70e7ce4c",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Monitor the variable %assertResult% for changes and upon detection, trigger the execution of the 'Result' step or goal."
     },
     {
       "Text": "%temp% = 90",
@@ -89,7 +89,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:19:46.1108249-05:00",
       "WaitForExecution": true,
@@ -148,10 +148,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "826bb0cfd8a77d0c49977335bc4c9453be2e89376538d141d3b215436cf89c2b",
-      "BuilderVersion": null,
+      "Hash": "ce1e52559aa439bc75e48d1476f91b49d15c8f521cd3e24abfd2ebe0c7eca0df",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Assign the numeric value 90 to the variable %temp%"
     },
     {
       "Text": "solve for sqrt(%temp%), write to %firstResult%",
@@ -239,7 +239,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:19:55.1479399-05:00",
       "WaitForExecution": true,
@@ -298,10 +298,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "6c200b8b81bcadeeaa91aac5295b79395325e7f2b515242c6350ad36ba99a56c",
-      "BuilderVersion": null,
+      "Hash": "4d6797c8136b60d9632ecd7e16b7edbe2ba7dfa886780aa3ec2112d8470447f1",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Verify that the variable %firstResult% has the exact value 9.487"
     },
     {
       "Text": "what is sqrt(4), write to %result%",
@@ -389,7 +389,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:20:02.7495524-05:00",
       "WaitForExecution": true,
@@ -448,10 +448,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "d62850a9f4258c2ee0495c81aff01bbd515e9701a1f3ec76830943251f471852",
-      "BuilderVersion": null,
+      "Hash": "d784e5d97c763e169cd404f59302cf4f30cf12d45ef72bb609036e6ca1ddddc5",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Verify that the variable %result% is equal to the value 2"
     },
     {
       "Text": "solve for \"(Sqrt(100) + %result%) / %result%\", write to %result%",
@@ -539,7 +539,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:20:11.0069412-05:00",
       "WaitForExecution": true,
@@ -598,10 +598,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "512559385efd0faf5070c7b560aca7f2abe9e6ee309a317123a30d6e4f61779f",
-      "BuilderVersion": null,
+      "Hash": "9957f46ff2c499589251c7b6a9d0ba863016522c02d93852e27b43c7330db58d",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Verify that the variable %result% is equal to the value 6"
     },
     {
       "Text": "what is 5 plus 7, write to %sum%",
@@ -689,7 +689,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:20:18.7964865-05:00",
       "WaitForExecution": true,
@@ -748,10 +748,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "aeaf0ada7329bab25a378494aefea720996640a18381d5eb00c4d954b52df506",
-      "BuilderVersion": null,
+      "Hash": "a340bad4b64e45ba2d8712a0eaf96b0d64364f74891596f14343f06086d4eede",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Verify that the variable %sum% has the value 12 to ensure correctness or expected state"
     },
     {
       "Text": "what is 7 + 7.6533333, write to %sum%",
@@ -839,7 +839,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:20:26.8823497-05:00",
       "WaitForExecution": true,
@@ -898,10 +898,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "d04e715df424166b137940c23cf817858c30e5e64ca3a42b95126f573447e95f",
-      "BuilderVersion": null,
+      "Hash": "7e9f8035343d1df943e8a012397b06a08050e098baab059dfccc2a278c452eeb",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Verify that the variable %sum% has the exact value 14.653"
     },
     {
       "Text": "what is 9 times 6, write to %product%",
@@ -989,7 +989,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:20:33.8522416-05:00",
       "WaitForExecution": true,
@@ -1048,10 +1048,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "527347513f2d6bee0811188f10147bc7d7c1ca1076544c49800aa915e9fe5fba",
-      "BuilderVersion": null,
+      "Hash": "3e00a208e4e776e24b2a15712c6c917856bb1da4e3b35c4a3ff75829464afa9d",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Verify that the variable %product% has the value 54"
     },
     {
       "Text": "what is %sum% minus 633, write to %difference%",
@@ -1139,7 +1139,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:20:40.852321-05:00",
       "WaitForExecution": true,
@@ -1198,10 +1198,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "9ec34aff72b23d7579b45417014074047b75cfe50e2a9a80f4275d5c22e35952",
-      "BuilderVersion": null,
+      "Hash": "c203d9b676a499f0a21434b3c178be96d3657b6e638b55d060fad5ab83e344ba",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Verify that the variable %difference% has the exact value of -618.347"
     },
     {
       "Text": "what is -8 - 0.93, write to %difference%",
@@ -1289,7 +1289,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:20:49.6315603-05:00",
       "WaitForExecution": true,
@@ -1348,10 +1348,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "5ae18f39f945a788d01907aff1349a119c860e22aa6b0b28c954cf66b68971c0",
-      "BuilderVersion": null,
+      "Hash": "df18d6788a5829347732747752ec525d60be9f75cc95ec3affce1a1b9ee34e29",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Verify that the variable %difference% has the exact value of -8.93"
     },
     {
       "Text": "find the quotient of 9 divided by 0, write to %quotient%",
@@ -1589,7 +1589,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:20:56.9994408-05:00",
       "WaitForExecution": true,
@@ -1648,10 +1648,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "ddeff252eb3d8bef66630ffc79e06bbfaa32d440d5fd374a18d17d7e8949057b",
-      "BuilderVersion": null,
+      "Hash": "9d93d8b09e0a035c6e81b35e97e69672733c536edd6544a050380f90e8b74ced",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Verify that the variable %power% has the value 64"
     },
     {
       "Text": "what is -2 ^ 3, write to %power%",
@@ -1739,7 +1739,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:21:05.2100655-05:00",
       "WaitForExecution": true,
@@ -1798,14 +1798,14 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "212f3e966d4cfb9250fbc32f4d1e956c02a8febca0bd646a2fb66e0a07c8398a",
-      "BuilderVersion": null,
+      "Hash": "3ab00d2b7aabdb3b0a92f45e7317e82272bbd335a3586842911012896bf5e2f4",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Verify that the variable %power% has the value -8"
     },
     {
       "Text": "find the 20th fibonacci number, write to %fib%",
-      "Comment": null,
+      "Comment": "add a test case to make sure size is calculated correctly or something",
       "ModuleType": "PLang.Modules.MathModule",
       "Name": "calculate_20th_fibonacci_number",
       "Description": "Compute the 20th Fibonacci number using a mathematical or algorithmic approach and assign the resulting value to the variable %fib% for further use.",
@@ -1814,7 +1814,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:21:05.2584238-05:00",
       "WaitForExecution": true,
@@ -1824,7 +1824,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 24,
-      "LineNumber": 26,
+      "LineNumber": 27,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1873,10 +1873,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "58d49765cc23fd52b63f2d333404170b27486eb3740235b586341b1f2a2a3c02",
-      "BuilderVersion": null,
+      "Hash": "dae19fe0baa34adf2d57ae7edf8a04d495df68f4b8499508052753ab11c10f4a",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Calculate the 20th number in the Fibonacci sequence and store the result in the variable %fib%"
     },
     {
       "Text": "assert that %fib% == 6765",
@@ -1889,7 +1889,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:21:12.10799-05:00",
       "WaitForExecution": true,
@@ -1899,7 +1899,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 25,
-      "LineNumber": 27,
+      "LineNumber": 28,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -1948,10 +1948,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "41677c1022b35823ef0ecbd0fe8d9887a145b31aa2be8d694ae5f8fcc69d27fe",
-      "BuilderVersion": null,
+      "Hash": "60efe0845a0b189c3689727075d97783d7421541bb1833d270110c44f39158ca",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Verify that the variable %fib% has the expected value of 6765"
     },
     {
       "Text": "find the 1st fibonacci number, write to %fib%",
@@ -1964,7 +1964,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:21:12.151927-05:00",
       "WaitForExecution": true,
@@ -1974,7 +1974,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 26,
-      "LineNumber": 28,
+      "LineNumber": 29,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -2023,10 +2023,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "3a59cca79ceefe7d665c13c5dc5d55becbb9674f7c8229000bd77e68050e2092",
-      "BuilderVersion": null,
+      "Hash": "dccfa70975d46f58ca8c404833c93bd87336c8caf5e8e50827a694ba7fb1f1e1",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Calculate the first Fibonacci number and store it in the variable %fib%"
     },
     {
       "Text": "assert that %fib% == 1",
@@ -2039,7 +2039,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:21:20.0311094-05:00",
       "WaitForExecution": true,
@@ -2049,7 +2049,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 27,
-      "LineNumber": 29,
+      "LineNumber": 30,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -2098,10 +2098,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "6a5aec82d42fcccc8951606650251820a6e56c18767dcf8503b053bc4685015e",
-      "BuilderVersion": null,
+      "Hash": "54eb72a71480975ad0a3dc30313157b10095579d8ec4dc524d2d893c5e209a7d",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Verify that the variable %fib% has the value 1"
     },
     {
       "Text": "find the 3rd fibonacci number, write to %fib%",
@@ -2114,7 +2114,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:21:20.0776665-05:00",
       "WaitForExecution": true,
@@ -2124,7 +2124,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 28,
-      "LineNumber": 30,
+      "LineNumber": 31,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -2173,10 +2173,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "88498d53e2820c602d74cde26614951427ff918891b6f48bbdd7e0b87a619b39",
-      "BuilderVersion": null,
+      "Hash": "42d81d03ebf7fdae511e0526c6a581c2780cd81b976e078745d2c75c7754b5b4",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Calculate the 3rd number in the Fibonacci sequence and store the result in the variable %fib%"
     },
     {
       "Text": "assert that %fib% == 2",
@@ -2189,7 +2189,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:21:31.9293223-05:00",
       "WaitForExecution": true,
@@ -2199,7 +2199,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 29,
-      "LineNumber": 31,
+      "LineNumber": 32,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -2248,10 +2248,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "12abf8444296708b26c12b9c9beed82f3cb275ab235857d13aa0bf161243863e",
-      "BuilderVersion": null,
+      "Hash": "4c807aeb121e9952046c7d5395bd0a5a91c4373ace96dc4e34560a396cacff8e",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Verify that the variable %fib% has the value 2"
     },
     {
       "Text": "what is tangent of 45 degrees, write to %tan%",
@@ -2264,7 +2264,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:21:31.9777055-05:00",
       "WaitForExecution": true,
@@ -2274,7 +2274,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 30,
-      "LineNumber": 32,
+      "LineNumber": 33,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -2323,10 +2323,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "68a5214b5197ca462fae6fb4bc77f307943ab44878e7c17a6369d0f063cc5812",
-      "BuilderVersion": null,
+      "Hash": "13223b6521663c47d24bb9e732d6484cbb7649f997dc88712d84916635f677df",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Calculate the tangent of 45 degrees and store the result in the variable %tan%"
     },
     {
       "Text": "write out %tan%",
@@ -2339,7 +2339,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:21:32.0248505-05:00",
       "WaitForExecution": true,
@@ -2349,7 +2349,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 31,
-      "LineNumber": 33,
+      "LineNumber": 34,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -2398,10 +2398,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "7ce079ad9c303a03db5570e243378f65d891b36f1e9f871ca186d541030c30b8",
-      "BuilderVersion": null,
+      "Hash": "5fe482a1cc113d51722c2a85730942195519c6938a657acc7de93c58ecd50f24",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Output the value stored in the variable %tan% to the user or output stream"
     },
     {
       "Text": "what is sin of pi, write to %sin%",
@@ -2414,7 +2414,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:21:32.0696321-05:00",
       "WaitForExecution": true,
@@ -2424,7 +2424,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 32,
-      "LineNumber": 34,
+      "LineNumber": 35,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -2473,10 +2473,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "39a61dfd13cbc827e7de1d88301d5e43d7c1987a04d7618cc4219bc30f4e9fe6",
-      "BuilderVersion": null,
+      "Hash": "37ed4666df5e5f5a5c5529f81dd54e21630074bb963ec633b88c32b2e9514470",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Calculate the sine of the mathematical constant pi and store the result in a variable"
     },
     {
       "Text": "write out %sin%",
@@ -2489,7 +2489,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:21:32.1172186-05:00",
       "WaitForExecution": true,
@@ -2499,7 +2499,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 33,
-      "LineNumber": 35,
+      "LineNumber": 36,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -2548,10 +2548,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "3f218089a6381b47a380c54a9c3f05c36c7094869c02a53d354e7b3311767855",
-      "BuilderVersion": null,
+      "Hash": "7b0f2de30acd8db999e23976d2049887d61b511871cb9d8258570d8cedadd226",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Output the value stored in the variable %sin% to the user or output stream"
     },
     {
       "Text": "solve 5 + (12 - square root of 9) to the power of 2 all divided by 2 after then subtract 1, write to %test%",
@@ -2564,7 +2564,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:21:32.160725-05:00",
       "WaitForExecution": true,
@@ -2574,7 +2574,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 34,
-      "LineNumber": 36,
+      "LineNumber": 37,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -2623,10 +2623,10 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "aadc5f89dbc126a6758ced567b2bc6d1d4e658592cbe754ceb270b320f6fd9c7",
-      "BuilderVersion": null,
+      "Hash": "03331b1ddd39270c3272d961a9c7f4d1220b8e25460b616ab37204778f963788",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Perform a mathematical calculation involving addition, subtraction, square root, exponentiation, division, and subtraction, then store the result in a variable"
     },
     {
       "Text": "assert that %test% == 44.5",
@@ -2639,7 +2639,7 @@
       "Indent": 0,
       "Execute": true,
       "RunOnce": false,
-      "Confidence": null,
+      "Confidence": "Very High",
       "Inconsistency": null,
       "Generated": "2025-07-03T12:21:38.7180345-05:00",
       "WaitForExecution": true,
@@ -2649,7 +2649,7 @@
       "CacheHandler": null,
       "CancellationHandler": null,
       "Number": 35,
-      "LineNumber": 37,
+      "LineNumber": 38,
       "LlmRequest": {
         "temperature": 0.0,
         "top_p": 0.0,
@@ -2698,16 +2698,16 @@
       },
       "EventBinding": null,
       "IsEvent": false,
-      "Hash": "c9c91cff2682a63a6b5e7befd96e6ff2dfda842b48a2969aecac75fa79aafffa",
-      "BuilderVersion": null,
+      "Hash": "ccb6826db7c1360da4c3094b17aeded2974486a65ac60ed4ca2874615bddb7ff",
+      "BuilderVersion": "1.0.0.0",
       "RelativeGoalPath": "\\Math.goal",
-      "UserIntent": null
+      "UserIntent": "Verify that the variable %test% has the value 44.5"
     }
   ],
   "SubGoals": [
     "Result"
   ],
-  "Description": "The Math goal performs a series of mathematical operations and assertions. It calculates square roots, sums, products, differences, powers, and Fibonacci numbers, while asserting the correctness of each result. The goal also includes operations involving trigonometric functions and complex expressions, ensuring that the results match expected values.",
+  "Description": "The Math goal performs a series of mathematical operations and assertions. It calculates square roots, sums, products, differences, powers, and Fibonacci numbers, while asserting the correctness of each result. The goal also includes operations involving trigonometric functions and a complex expression involving addition, subtraction, and exponentiation.",
   "Visibility": 1,
   "GoalFileName": "Math.goal",
   "RelativeGoalPath": "\\Math.goal",
@@ -2718,13 +2718,12 @@
   "GoalInfo": null,
   "Injections": [],
   "Signature": null,
-  "FileHash": "faf25b4a17056363cb70fe0d94609ce80760bddec7e206df3f48fe383b62a627",
-  "Hash": "9e9b68263b2574923d5e3ccdeefc99a3e99a2664ef6cfb0df6e5af5fec8aa054",
+  "FileHash": "0b3690f2e3d79d43aeac3014a6e3ebe2fc893871db7a495f32b4910468e3f9e4",
+  "Hash": "9b77489771dffe99073c7bf2a7935c1efd6f2a664fd8aa1a7179cbf9cc644164",
   "IncomingVariablesRequired": {
-    "assertResult": "A variable to listen for assertions.",
+    "assertResult": "A variable to listen for assertions to be made.",
     "temp": "A temporary variable initialized to 90 for square root calculations.",
     "result": "A variable to store results of various calculations.",
-    "firstResult": "A variable to store the result of the square root of temp.",
     "sum": "A variable to store the sum of two numbers.",
     "product": "A variable to store the product of two numbers.",
     "difference": "A variable to store the difference between two numbers.",

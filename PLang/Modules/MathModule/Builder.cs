@@ -26,7 +26,7 @@ namespace PLang.Modules.MathModule
 				solve for square root of 9 should turn into Sqrt(9)
 				what is 2 raised to the power of 4 should turn into Pow(2, 4)"
 				);
-			
+      
 			return await base.Build(goalStep, previousBuildError);
 		}
 	}

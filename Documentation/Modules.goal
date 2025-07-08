@@ -1,8 +1,8 @@
 Modules
 - get all Program.cs files in ../Plang/Modules/%ModuleName%, include sub dirs, write to %files%
-- foreach %files%, call !GenerateModuleDocumentation file=%item%
+- foreach %files%, call GenerateModuleDoc item=%file%
 
-GenerateModuleDocumentation
+GenerateModuleDoc
 - read file 'template/modules/GenerateModuleDocumentation/system.txt', into %system%, load variables
 - read %file%, into %content%
 - write out 'Asking for: %ModuleName%'
@@ -11,7 +11,7 @@ GenerateModuleDocumentation
     scheme: {moduleName:string, namespace:string, desc:string, [{functions:string[], parameters:[{type:string, name:string, (defaultValue:string|required:yes)}, ...], returns:type|void}]}
     write to %module%
 - get folder access to '../Tests'
-- [cond] if dir '../Tests/%module.moduleName%/' exists, call CreateDocs, else PathNotFound
+- [cond] if dir "../Tests/%module.moduleName%/" exists, call CreateDocs, else PathNotFound
 
 PathNotFound
 - write out 'Could not find path "../Tests/%module.moduleName%/"'
@@ -26,8 +26,8 @@ CreateDocs
 - call !GenerateDocForAdvanced    
 
 LoadVars
-- read file '/template/modules/details/%module.moduleName%.txt', into %details%, empty if file not found
-- read file '/template/modules/plangRules.txt', into %plangRules%, empty if file not found 
+- read file "/template/modules/details/%module.moduleName%.txt", into %details%, empty if file not found
+- read file "/template/modules/plangRules.txt", into %plangRules%, empty if file not found 
 - set variable %SourceCode%, 'Progam.cs is the runtime code, can be found at https://github.com/PLangHQ/plang/tree/main/PLang/Modules/%module.namespace%/Program.cs'
 - if ../PLang/Modules/%module.moduleName%Module/Builder.cs exists, then
     - append to variable %SourceCode%, 'Builder.cs is for building of step, can be found at https://github.com/PLangHQ/plang/tree/main/PLang/Modules/%module.namespace%/Builder.cs'
@@ -38,7 +38,7 @@ GeneratePlangExamples
 - write out 'GeneratePlangExamples for: %ModuleName%'
 - get all *.goal files from ../Tests/%module.moduleName%/, write to %testFiles%
 - [var] set %plangExamples% to null
-- foreach %testFiles%, call !MergeFilesIntoOneVar path=%item%
+- foreach %testFiles%, call !MergeFilesIntoOneVar item=%path%
 - read 'template/modules/GeneratePlangExamples/system.txt', into %system%, load variables
 - read 'template/modules/GeneratePlangExamples/user.txt', into %user%, load variables
 - [llm]: system:%system%
