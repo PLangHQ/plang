@@ -92,6 +92,20 @@ Trig
 - write out %sin%
 ```
 
+## All Possible Functions
+- Basic arithmetic (+, -, *, /)
+- trigonometry (sin(x), cos(x), tan(x), arcsin(x), arccos(x), arctan(x))
+- square roots (sqrt(x))
+- exponents (pow(base, exponent))
+- expressions (x + y / z)
+- logarithms (log(value, base))
+- absolute values (abs(x))
+- eulers (exp(x) is the same as e^3)
+- rounding (floor(x), ceiling(y), round(value, #decimalPlaces), truncate(x))
+- min and max (minimum(x), maximum(x))
+- return first n prime numbers
+- find the nth fibonacci term
+
 ## Examples
 - You can find the source code of the Math module at [Math Module Source Code](https://github.com/PLangHQ/plang/blob/main/PLang/Modules/Math/Program.cs).
 - For a full list of examples, visit [Math Examples](https://github.com/PLangHQ/plang/tree/main/Tests/Math).
