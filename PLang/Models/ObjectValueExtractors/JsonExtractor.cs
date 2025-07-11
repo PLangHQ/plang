@@ -62,7 +62,15 @@ namespace PLang.Models.ObjectValueExtractors
 						tokens.Add(token);
 					}
 				}
-
+				object? obj = null;
+				if (segment.Value.Equals("first", StringComparison.OrdinalIgnoreCase)) obj = jArray.FirstOrDefault();
+				if (segment.Value.Equals("random", StringComparison.OrdinalIgnoreCase)) obj = jArray.OrderBy(x => Guid.NewGuid()).ToList();
+				if (segment.Value.Equals("last", StringComparison.OrdinalIgnoreCase)) obj = jArray.LastOrDefault();
+				if (segment.Value.Equals("count", StringComparison.OrdinalIgnoreCase)) obj = jArray.Count();
+				if (obj != null)
+				{
+					return new ObjectValue(segment.Value, obj, parent: parent, properties: parent.Properties);
+				}
 				if (tokens.Count == 0)
 				{
 					var objectExtractor = new ObjectExtractor(jArray, parent);

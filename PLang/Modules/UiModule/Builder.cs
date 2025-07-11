@@ -140,6 +140,7 @@ Examples:
 			var result = await llm.Query<string>(llmRequest);
 			if (result.Error != null) return (null, new BuilderError(result.Error));
 
+			fileSystem.File.WriteAllText(templatePath + "2", html);
 			fileSystem.File.WriteAllText(templatePath, result.Response);
 
 			return (instruction, null);

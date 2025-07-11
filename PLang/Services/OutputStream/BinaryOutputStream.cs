@@ -2,6 +2,7 @@
 using Nostr.Client.Client;
 using PLang.Building.Model;
 using PLang.Errors;
+using PLang.Runtime;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,7 +31,7 @@ namespace PLang.Services.OutputStream
 		public Stream Stream { get { return this.stream; } }
 		public Stream ErrorStream { get { return this.stream; } }
 		public GoalStep Step { get; set; }
-
+		public IEngine Engine { get; set; }
 		public string Output => "json";
 
 		public bool IsStateful => isStateful;

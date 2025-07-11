@@ -5,6 +5,7 @@ using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Interfaces;
 using PLang.Modules;
+using PLang.Runtime;
 using PLang.Utils;
 using ReverseMarkdown.Converters;
 using System;
@@ -17,25 +18,33 @@ using static PLang.Utils.StepHelper;
 
 namespace PLang.Services.OutputStream
 {
-	public class HttpOutputStream : IOutputStream
+	public interface IResponseProperties
+	{
+		Dictionary<string, string?> ResponseProperties { get; set; }
+	}
+
+	public class HttpOutputStream : IOutputStream, IResponseProperties
 	{
 		private readonly HttpResponse response;
+		private IEngine engine;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly string contentType;
 		private readonly int bufferSize;
 		private LiveConnection? liveResponse;
 		private readonly string path;
 		private readonly Encoding encoding;
+		private Dictionary<string, string?> responseProperties;
 
-		public HttpOutputStream(HttpResponse response, IPLangFileSystem fileSystem, string contentType, int bufferSize, string path, LiveConnection? liveResponse)
+		public HttpOutputStream(HttpResponse response, IEngine engine, string contentType, int bufferSize, string path, LiveConnection? liveResponse)
 		{
 			this.response = response;
-			this.fileSystem = fileSystem;
+			this.engine = engine;
 			this.contentType = contentType;
 			this.bufferSize = bufferSize;
 			this.liveResponse = liveResponse;
 			this.path = path;
 			this.encoding = Encoding.UTF8;
+			this.responseProperties = new();
 
 		}
 
@@ -48,6 +57,17 @@ namespace PLang.Services.OutputStream
 		}
 		public GoalStep Step { get; set; }
 		public bool IsStateful { get { return false; } }
+		public Dictionary<string, string?> ResponseProperties
+		{
+
+			get { 
+				return responseProperties; 
+			}
+			set { 
+				responseProperties = value;
+			}
+
+		}
 		public string Output
 		{
 			get
@@ -57,7 +77,10 @@ namespace PLang.Services.OutputStream
 		}
 
 		public bool IsFlushed { get; set; }
-
+		public IEngine Engine {
+			get { return engine; }
+			set { engine = value; }
+		}
 
 		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{
@@ -71,11 +94,11 @@ namespace PLang.Services.OutputStream
 				response.StatusCode = askOptions.StatusCode;
 				response.ContentType = contentType;
 			}
-
+			
 			IOutputStream outputStream;
 			if (contentType.Contains("plang"))
 			{
-				outputStream = new PlangOutputStream(response.Body, encoding, false, bufferSize, path, fileSystem);
+				outputStream = new PlangOutputStream(response.Body, encoding, false, bufferSize, path, engine, ResponseProperties);
 			}
 			else if (contentType.Contains("json"))
 			{
@@ -83,7 +106,7 @@ namespace PLang.Services.OutputStream
 			}
 			else if (contentType.Contains("html"))
 			{
-				outputStream = new HtmlOutputStream(response.Body, encoding, fileSystem, path, false);
+				outputStream = new HtmlOutputStream(response.Body, encoding, engine, path, false);
 			}
 			else
 			{
@@ -133,15 +156,15 @@ namespace PLang.Services.OutputStream
 			IOutputStream outputStream;
 			if (contentType.Contains("plang"))
 			{
-				outputStream = new PlangOutputStream(response.Body, encoding, false, bufferSize, path, fileSystem);
+				outputStream = new PlangOutputStream(response.Body, encoding, false, bufferSize, path, engine, ResponseProperties);
 			}
 			else if (contentType.Contains("json"))
 			{
 				outputStream = new JsonOutputStream(response.Body, encoding, false);
 			}
 			else if (contentType.Contains("html"))
-			{
-				outputStream = new HtmlOutputStream(response.Body, encoding, fileSystem, path.ToString(), false);
+			{ 
+				outputStream = new HtmlOutputStream(response.Body, encoding, engine, path.ToString(), false);
 			}
 			else if (contentType.Contains("text"))
 			{

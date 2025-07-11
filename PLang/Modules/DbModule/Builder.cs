@@ -90,11 +90,16 @@ namespace PLang.Modules.DbModule
 
 				dataSource = dataSources.FirstOrDefault();
 				goalStep.AddVariable<DataSource>(dataSource);
+			} 
+
+			if (dataSource == null)
+			{
+				return (null, new StepBuilderError("Could not find data source. Are you building in the correct directory?", goalStep, ContinueBuild: false));
 			}
 
 
 
-			string sqlType = "sqlite";
+				string sqlType = "sqlite";
 			string autoIncremental = "";
 			string insertAppend = "";
 

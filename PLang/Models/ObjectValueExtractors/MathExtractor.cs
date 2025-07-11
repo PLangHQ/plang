@@ -1,5 +1,6 @@
 ﻿using Fizzler;
 using Namotion.Reflection;
+using Newtonsoft.Json.Linq;
 using PLang.Models.ObjectValueConverters;
 using PLang.Runtime;
 using Sprache;
@@ -43,7 +44,7 @@ namespace PLang.Models.ObjectValueExtractors
 				return new ObjectValue(segment.Value, DoOp(list, segment), parent: parent, properties: parent.Properties);
 			}
 
-			if (firstItem is IList)
+			if (firstItem is IList && firstItem is not JToken)
 			{
 				List<object> result = new();
 				foreach (var item in list)
@@ -66,6 +67,7 @@ namespace PLang.Models.ObjectValueExtractors
 
 			object? obj = null;
 			if (segment.Value.Equals("first", StringComparison.OrdinalIgnoreCase)) obj = list.FirstOrDefault();
+			if (segment.Value.Equals("random", StringComparison.OrdinalIgnoreCase)) obj = list.OrderBy(x => Guid.NewGuid()).ToList();
 			if (segment.Value.Equals("last", StringComparison.OrdinalIgnoreCase)) obj = list.LastOrDefault();
 			if (segment.Value.Equals("count", StringComparison.OrdinalIgnoreCase)) obj = list.Count();
 			if (obj != null)
@@ -96,6 +98,7 @@ namespace PLang.Models.ObjectValueExtractors
 				"count" => toDouble(value.Count()),
 				"first" => value.FirstOrDefault(),
 				"last" => value.LastOrDefault(),
+				"random" => value.OrderBy(p => Guid.NewGuid()),
 				"range" => value.Max(toDouble) - value.Min(toDouble),
 				"median" => Median(value, toDouble),
 				"mode" => Mode(value, toDouble),

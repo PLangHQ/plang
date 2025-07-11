@@ -85,6 +85,11 @@ namespace PLang.Modules.CallGoalModule
 				{
 					return (ret.ReturnVariables, null);
 				}
+				if (result.error is EndGoal endGoal && (goal == null || GoalHelper.IsPartOfCallStack(goal, endGoal)) && endGoal.Levels == 0)
+				{
+					return (result.Variables, null);
+				}
+
 				return (result.Variables, result.error);
 			} catch (Exception ex)
 			{

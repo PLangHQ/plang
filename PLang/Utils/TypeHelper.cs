@@ -7,6 +7,7 @@ using PLang.Errors.Builder;
 using PLang.Exceptions;
 using PLang.Interfaces;
 using PLang.Modules;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
@@ -565,11 +566,20 @@ public class TypeHelper : ITypeHelper
 			typeof(long), typeof(ulong), typeof(float), typeof(double), typeof(decimal)
 		};
 
+
+
 		if (!numericTypes.Contains(type1) || !numericTypes.Contains(type2))
 		{
+			if (numericTypes.Contains(type1) || numericTypes.Contains(type2))
+			{
+				(item1, item2) = TryConvertToNumeric(item1, item2, numericTypes, out bool success);
+				if (success) return (item1, item2);
+			}
+
 			return ToMatchingJTokens(item1, item2);
+
 		}
-			
+
 
 		Type widerType = GetWiderType(type1, type2);
 
@@ -577,6 +587,38 @@ public class TypeHelper : ITypeHelper
 		var converted2 = Convert.ChangeType(item2, widerType);
 
 		return (converted1, converted2);
+	}
+
+	private static (object item1, object item2) TryConvertToNumeric(object item1, object item2, Type[] numericTypes, out bool success)
+	{
+		Type theNumericType;
+		object toConvert;
+		object sameObjToReturn;
+		if (numericTypes.Contains(item1.GetType()))
+		{
+			theNumericType = item1.GetType();
+			var obj = TypeHelper.ConvertToType(item2, item1.GetType());
+			if (obj != null)
+			{
+				success = true;
+				return (item1, obj);
+			}
+
+		}
+		else if (numericTypes.Contains(item2.GetType()))
+		{
+			var obj = TypeHelper.ConvertToType(item1, item2.GetType());
+			if (obj != null)
+			{
+				success = true;
+				return (obj, item2);
+			}
+		}
+
+
+		success = false;
+		return (item1, item2);
+
 	}
 
 	private static Type GetWiderType(Type t1, Type t2)

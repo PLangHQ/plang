@@ -411,7 +411,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 			throw new Exception($"StepPropertiesSystem.llm is missing from system. It should be located at {stepInformationSystemPath}");
 		}
 		var content = fileSystem.File.ReadAllText(stepInformationSystemPath);
-		var templateProgram = new Modules.TemplateEngineModule.Program(fileSystem, null);
+		var templateProgram = new Modules.TemplateEngineModule.Program(fileSystem, memoryStack, null);
 
 		Dictionary<string, object> variables = new();
 		variables.Add("canBeCached", canBeCached);

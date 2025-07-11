@@ -114,7 +114,7 @@ public class ObjectValue
 
 	public List<VariableEvent> Events = new List<VariableEvent>();
 	public string Name { get; }
-
+	[JsonIgnore]
 	public ObjectValue Root
 	{
 		get
@@ -159,6 +159,7 @@ public class ObjectValue
 	}
 	public Type? Type { get; set; }
 	public bool Initiated { get; set; }
+	[JsonIgnore]
 	public ObjectValue? Parent { 
 		get { return parent; }
 		set {

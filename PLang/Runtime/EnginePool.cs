@@ -61,8 +61,8 @@ namespace PLang.Runtime
 			engine.Name = name;
 			engine.SetParentEngine(parentEngine);
 			engine.CallbackInfos = parentEngine.CallbackInfos;
-
-			engine.FileSystem.AddFileAccess(new SafeFileSystem.FileAccessControl(parentEngine.Path, engine.FileSystem.OsDirectory, ProcessId: engine.Id));
+			
+			engine.FileSystem.AddFileAccess(new SafeFileSystem.FileAccessControl(parentEngine.Path, engine.FileSystem.OsDirectory, ProcessId: engine.FileSystem.Id));
 			if (outputStream != null)
 			{
 				engine.SetOutputStream(outputStream);
@@ -71,6 +71,7 @@ namespace PLang.Runtime
 				outputStream = parentEngine.OutputStreamFactory.CreateHandler();
 				engine.SetOutputStream(outputStream);
 			}
+
 			if (callingStep != null)
 			{
 				engine.SetCallingStep(callingStep);

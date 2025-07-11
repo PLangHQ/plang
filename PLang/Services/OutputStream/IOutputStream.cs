@@ -8,6 +8,7 @@ namespace PLang.Services.OutputStream
 {
 	public interface IOutputStream
 	{
+		IEngine Engine { get; set; }
 		public Stream Stream { get; }
 		public Stream ErrorStream { get; }
 		public string Output { get; }

@@ -78,7 +78,7 @@ namespace PLang.Modules.ThrowErrorModule
 			{
 				path = HttpContext.Request.Path;
 			}
-			var callback = await StepHelper.GetCallback(path, goalStep, programFactory);
+			var callback = await StepHelper.GetCallback(path, new(), memoryStack, goalStep, programFactory);
 
 			var obj = new PaymentContract(name, description, error, services);
 			

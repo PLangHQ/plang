@@ -83,7 +83,8 @@ namespace PLang.Container
 			RegisterModules(container);
 			container.RegisterForPLang(appStartupPath, relativeAppPath);
 
-			container.RegisterOutputStreamFactory(typeof(HttpOutputStream), true, new HttpOutputStream(httpContext.Response, container.GetInstance<IPLangFileSystem>(), contentType, 4096, httpContext.Request.Path, liveResponse));
+			container.RegisterOutputStreamFactory(typeof(HttpOutputStream), true, 
+				new HttpOutputStream(httpContext.Response, container.GetInstance<IEngine>(), contentType, 4096, httpContext.Request.Path, liveResponse));
 			container.RegisterOutputSystemStreamFactory(typeof(ConsoleOutputStream), true, new ConsoleOutputStream());
 			
 			container.RegisterAskUserHandlerFactory(typeof(AskUserConsoleHandler), true, new AskUserConsoleHandler(container.GetInstance<IOutputSystemStreamFactory>()));

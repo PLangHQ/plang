@@ -31,6 +31,7 @@ namespace PLang.Services.OutputStream
 		public string Output => "html";
 
 		public bool IsFlushed { get; set; }
+		public IEngine Engine { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
 		public UIOutputStream(IFileSystem fileSystem, IForm iForm)
 		{

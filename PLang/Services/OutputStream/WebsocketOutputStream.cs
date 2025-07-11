@@ -1,6 +1,7 @@
 ﻿using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Interfaces;
+using PLang.Runtime;
 using PLang.Services.SigningService;
 using PLang.Utils;
 using System;
@@ -32,6 +33,7 @@ namespace PLang.Services.OutputStream
 		public bool IsStateful => false;
 
 		public bool IsFlushed { get; set; }
+		public IEngine Engine { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
 		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{

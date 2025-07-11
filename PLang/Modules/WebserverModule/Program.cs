@@ -466,7 +466,7 @@ public class Program : BaseProgram, IDisposable
 		resp.Headers.Add("X-Goal-Hash", goal.Hash);
 		resp.Headers.Add("X-Goal-Signature", goal.Signature);
 
-		(var requestObjectValue, var error) = await ParseRequest(httpContext);
+		(var requestObjectValue, var error) = await ParseRequest(httpContext, outputStream);
 		if (error != null) return error;
 
 		(var callbackInfos, error) = await GetCallbackInfos(request);
@@ -508,7 +508,7 @@ public class Program : BaseProgram, IDisposable
 		}
 		else
 		{
-			if (!request.Headers.TryGetValue("!callback", out var value)) return (null, null);
+			if (!request.Headers.TryGetValue("callback", out var value)) return (null, null);
 			callbackValue = value.ToString();
 		}
 
@@ -907,14 +907,37 @@ Frontpage
 
 	}
 
-	private async Task<(ObjectValue? ObjectValue, IError? Error)> ParseRequest(HttpContext? ctx)
+	string[] supportedHeaders = ["data-plang-js", "data-plang-js-params", "data-plang-target-element", "data-plang-action"];
+
+	private void ParseHeaders(HttpContext ctx, IOutputStream outputStream)
+	{
+		var headers = ctx.Request.Headers;
+		
+
+		Dictionary<string, string?> responseProperties = new();
+		foreach (var supportedHeader in supportedHeaders)
+		{
+			if (headers.TryGetValue(supportedHeader, out var value))
+			{
+				responseProperties.AddOrReplace(supportedHeader, value.ToString());
+			}
+		}
+
+		if (responseProperties.Count > 0 && outputStream is IResponseProperties rp)
+		{	
+			rp.ResponseProperties = responseProperties;
+		}
+	}
+
+	private async Task<(ObjectValue? ObjectValue, IError? Error)> ParseRequest(HttpContext? ctx, IOutputStream outputStream)
 	{
 		if (ctx is null) return (null, new Error("context is empty"));
 
 		var req = ctx.Request;
 		var query = req.Query.ToDictionary(k => k.Key, k => (object?)k.Value.ToString());
 		ObjectValue objectValue;
-
+		
+		ParseHeaders(ctx, outputStream);
 		var properties = GetRequest(ctx);
 
 		// ---------- JSON --------------------------------------------------------
@@ -1156,7 +1179,7 @@ Frontpage
 	private IOutputStream GetOutputStream(HttpContext httpContext)
 	{
 		var contentType = GetContentType(httpContext.Request);
-		return new HttpOutputStream(httpContext.Response, fileSystem, contentType, 4096, httpContext.Request.Path, null);
+		return new HttpOutputStream(httpContext.Response, engine, contentType, 4096, httpContext.Request.Path, null);
 	}
 
 	private string GetContentType(HttpRequest request)

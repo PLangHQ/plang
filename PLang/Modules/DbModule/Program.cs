@@ -1,14 +1,18 @@
 ﻿using Dapper;
 using IdGen;
 using Markdig.Extensions.TaskLists;
+using Microsoft.AspNetCore.Connections;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
+using NBitcoin.Protocol;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Pqc.Crypto.Hqc;
 using PLang.Attributes;
 using PLang.Building.Parsers;
 using PLang.Errors;
 using PLang.Errors.Runtime;
+using PLang.Errors.Types;
 using PLang.Events;
 using PLang.Interfaces;
 using PLang.Models;
@@ -27,6 +31,7 @@ using System.Dynamic;
 using System.Globalization;
 using System.IO.Abstractions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using static Dapper.SqlMapper;
 using static PLang.Modules.DbModule.ModuleSettings;
 using static PLang.Utils.VariableHelper;
@@ -192,6 +197,8 @@ namespace PLang.Modules.DbModule
 			return (dataSource, null);
 		}
 
+		private string transactionKey = "transaction_{0}";
+		private string connectionKey = "con_{0}";
 
 		public async Task<IError?> BeginTransaction(string? name = null)
 		{
@@ -206,13 +213,13 @@ namespace PLang.Modules.DbModule
 			{
 				transaction.Dispose();
 				return Task.CompletedTask;
-			}, variableName: name);
+			}, variableName: string.Format(transactionKey, name));
 
 			goal.AddVariable(dbConnection, () =>
 			{
 				dbConnection.Dispose();
 				return Task.CompletedTask;
-			}, variableName: name);
+			}, variableName: string.Format(connectionKey, name));
 
 			return null;
 		}
@@ -241,53 +248,33 @@ namespace PLang.Modules.DbModule
 			(name, var error) = await GetNameForConnection(name);
 			if (error != null) return error;
 
-			var dbConnection = goal.GetVariable<IDbConnection>(name);
-			var transaction = goal.GetVariable<IDbTransaction>(name);
+			var dbConnection = goal.GetVariable<IDbConnection>(string.Format(connectionKey, name));
+			var transaction = goal.GetVariable<IDbTransaction>(string.Format(transactionKey, name));
 
 			if (transaction != null) transaction.Commit();
 			if (dbConnection != null) dbConnection.Close();
 
-			goal.RemoveVariable<IDbTransaction>(name);
-			goal.RemoveVariable<IDbConnection>(name);
+			goal.RemoveVariable<IDbTransaction>(string.Format(connectionKey, name));
+			goal.RemoveVariable<IDbConnection>(string.Format(transactionKey, name));
 
 			return null;
 		}
 
-		public async Task<IError?> Rollback(string? name = null, bool rollbackAllTranscations = true)
+		public async Task<IError?> Rollback(string? name = null)
 		{
-			if (rollbackAllTranscations)
-			{
-
-				var connections = goal.GetVariables<IDbConnection>();
-				var transactions = goal.GetVariables<IDbTransaction>();
-
-				foreach (var trans in transactions)
-				{
-					if (trans != null) trans.Rollback();
-				}
-
-				foreach (var connection in connections)
-				{
-					if (connection != null) connection.Close();
-				}
-
-				goal.RemoveVariables<IDbTransaction>();
-				goal.RemoveVariables<IDbConnection>();
-
-				return null;
-			}
+			
 
 			(name, var error) = await GetNameForConnection(name);
 			if (error != null) return error;
 
-			var dbConnection = goal.GetVariable<IDbConnection>(name);
-			var transaction = goal.GetVariable<IDbTransaction>(name);
+			var dbConnection = goal.GetVariable<IDbConnection>(string.Format(connectionKey, name));
+			var transaction = goal.GetVariable<IDbTransaction>(string.Format(transactionKey, name));
 
 			if (transaction != null) transaction.Rollback();
 			if (dbConnection != null) dbConnection.Close();
 
-			goal.RemoveVariable<IDbTransaction>(name);
-			goal.RemoveVariable<IDbConnection>(name);
+			goal.RemoveVariable<IDbTransaction>(string.Format(transactionKey, name));
+			goal.RemoveVariable<IDbConnection>(string.Format(connectionKey, name));
 
 			return null;
 		}
@@ -388,13 +375,15 @@ namespace PLang.Modules.DbModule
 
 
 
-		private (IDbConnection? connection, DynamicParameters? param, string sql, IError? error) Prepare(string sql, List<ParameterInfo>? Parameters = null, bool isInsert = false)
+		private (IDbConnection? connection, IDbTransaction? transaction, DynamicParameters? param, string sql, IError? error) Prepare(string sql, List<ParameterInfo>? Parameters = null, bool isInsert = false)
 		{
 			var dataSource = goalStep.GetVariable<DataSource>();
-			IDbConnection? connection = goal.GetVariable<IDbConnection>(dataSource.Name) ?? dbFactory.CreateHandler(goalStep);
+
+			var connection = goal.GetVariable<IDbConnection>(string.Format(connectionKey, dataSource.Name)) ?? dbFactory.CreateHandler(goalStep);
+			var transaction = goal.GetVariable<IDbTransaction>(string.Format(transactionKey, dataSource.Name));
 
 			var paramResult = GetDynamicParameters(sql, isInsert, Parameters);
-			if (paramResult.Error != null) return (null, null, sql, paramResult.Error);
+			if (paramResult.Error != null) return (null, null, null, sql, paramResult.Error);
 
 			if (connection != null && connection.State != ConnectionState.Open) connection.Open();
 			if (connection is SqliteConnection sqliteConnection)
@@ -415,7 +404,7 @@ namespace PLang.Modules.DbModule
 				}
 			}
 
-			return (connection, paramResult.DynamicParameters, sql, paramResult.Error);
+			return (connection, transaction, paramResult.DynamicParameters, sql, paramResult.Error);
 
 		}
 
@@ -424,8 +413,8 @@ namespace PLang.Modules.DbModule
 		{
 			var dataSource = goalStep.GetVariable<DataSource>();
 
-			var transaction = goal.GetVariable<IDbTransaction>(dataSource.Name);
-			IDbConnection? connection = goal.GetVariable<IDbConnection>(dataSource.Name);
+			var transaction = goal.GetVariable<IDbTransaction>(string.Format(transactionKey, dataSource.Name));
+			IDbConnection? connection = goal.GetVariable<IDbConnection>(string.Format(connectionKey, dataSource.Name));
 
 			if (connection == null) connection = dbFactory.CreateHandler(goalStep);
 
@@ -481,14 +470,13 @@ namespace PLang.Modules.DbModule
 					return (0, prepare.error);
 				}
 
-				var transaction = goal.GetVariable<IDbTransaction>();
 				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 				{
-					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
+					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
 				}
 				else
 				{
-					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param, transaction);
+					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param, prepare.transaction);
 				}
 
 				Done(prepare.connection);
@@ -505,7 +493,7 @@ namespace PLang.Modules.DbModule
 					}
 				}
 
-				return (0, new ProgramError(ex.Message, goalStep, function, Key: "SqlError", Exception: ex));
+				return (0, new SqlError(ex.Message, sql, null, goalStep, function, Exception: ex));
 			}
 			finally
 			{
@@ -618,7 +606,7 @@ namespace PLang.Modules.DbModule
 			}
 			catch (Exception ex)
 			{
-				return (null, new ProgramError(ex.Message, goalStep, function, Key: "SqlError", Exception: ex));
+				return (null, new SqlError(ex.Message, sql, sqlParameters, goalStep, function, Exception: ex));
 			}
 			finally
 			{
@@ -660,20 +648,21 @@ namespace PLang.Modules.DbModule
 				{
 					return (0, prepare.error);
 				}
+
 				long result;
 				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 				{
-					result = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
+					result = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
 				}
 				else
 				{
-					result = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param);
+					result = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param, prepare.transaction);
 				}
 				return (result, null);
 			}
 			catch (Exception ex)
 			{
-				return (0, new ProgramError(ex.Message, goalStep, function, Key: "SqlError", Exception: ex));
+				return (0, new SqlError(ex.Message, sql, sqlParameters, goalStep, function, Exception: ex));
 			}
 			finally
 			{
@@ -696,20 +685,22 @@ namespace PLang.Modules.DbModule
 				{
 					return (0, prepare.error);
 				}
+				
+
 				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 				{
-					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
+					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
 				}
 				else
 				{
-					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param);
+					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param, prepare.transaction);
 				}
 
 				return (rowsAffected, null);
 			}
 			catch (Exception ex)
 			{
-				return (0, new ProgramError(ex.Message, goalStep, function, Key: "SqlError", Exception: ex));
+				return (0, new SqlError(ex.Message, sql, sqlParameters, goalStep, function, Exception: ex));
 			}
 			finally
 			{
@@ -749,11 +740,11 @@ namespace PLang.Modules.DbModule
 
 				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 				{
-					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param);
+					rowsAffected = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction);
 				}
 				else
 				{
-					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param);
+					rowsAffected = await prepare.connection.ExecuteAsync(prepare.sql, prepare.param, prepare.transaction);
 				}
 			}
 			catch (Exception ex)
@@ -763,7 +754,7 @@ namespace PLang.Modules.DbModule
 					ShowWarning(ex);
 					return (rowsAffected, null);
 				}
-				return (0, new ProgramError(ex.Message, goalStep, function, Key: "SqlError", Exception: ex));
+				return (0, new SqlError(ex.Message, sql, sqlParameters, goalStep, function, Exception: ex));
 			}
 			finally
 			{
@@ -790,14 +781,14 @@ namespace PLang.Modules.DbModule
 
 				if (eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
 				{
-					var value = await prepare.connection.QuerySingleOrDefaultAsync(prepare.sql, prepare.param) as IDictionary<string, object>;
+					var value = await prepare.connection.QuerySingleOrDefaultAsync(prepare.sql, prepare.param, prepare.transaction) as IDictionary<string, object>;
 					Done(prepare.connection);
 
 					return (value.FirstOrDefault().Value, null);
 				}
 				else
 				{
-					var id = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, returnId: true);
+					var id = await eventSourceRepository.Add(prepare.connection, prepare.sql, prepare.param, prepare.transaction, returnId: true);
 					Done(prepare.connection);
 					if (id != 0)
 					{
@@ -814,7 +805,7 @@ namespace PLang.Modules.DbModule
 			}
 			catch (Exception ex)
 			{
-				return (0, new ProgramError(ex.Message, goalStep, function, Key: "SqlError", Exception: ex));
+				return (0, new SqlError(ex.Message, sql, sqlParameters, goalStep, function, Exception: ex));
 			}
 			finally
 			{
@@ -909,7 +900,7 @@ namespace PLang.Modules.DbModule
 			long affectedRows = 0;
 			var generator = new IdGenerator(1);
 			var id = generator.ElementAt(0);
-			IDbTransaction? transaction = goal.GetVariable<IDbTransaction>();
+			IDbTransaction? transaction = goal.GetVariable<IDbTransaction>(string.Format(transactionKey, dataSource.Name));
 			if (transaction == null)
 			{
 				await BeginTransaction();
@@ -965,7 +956,7 @@ namespace PLang.Modules.DbModule
 			}
 			if (transaction == null)
 			{
-				await EndTransaction();
+				await EndTransaction(dataSource.Name);
 			}
 
 			return (affectedRows, null);
@@ -1054,12 +1045,12 @@ namespace PLang.Modules.DbModule
 			List<ParameterInfo> parameters = new();
 			parameters.Add(new ParameterInfo("Database", dataSource.DbName, "System.String"));
 
-			(var connection, var par, _, error) = Prepare("", parameters);
+			(var connection, var transaction, var par, _, error) = Prepare("", parameters);
 			if (error != null)
 			{
 				return (string.Empty, error);
 			}
-			var result = await connection.QueryAsync(dataSource.SelectTablesAndViews, par);
+			var result = await connection.QueryAsync(dataSource.SelectTablesAndViews, par, transaction);
 
 
 			return (@$"## tables in database ##
@@ -1289,7 +1280,7 @@ namespace PLang.Modules.DbModule
 		private void Done(IDbConnection connection)
 		{
 			var dataSource = goalStep.GetVariable<DataSource>();
-			var transaction = goal.GetVariable<IDbTransaction>(dataSource.Name);
+			var transaction = goal.GetVariable<IDbTransaction>(string.Format(transactionKey, dataSource.Name));
 			if (transaction == null && connection != null)
 			{
 				//connection.Close();

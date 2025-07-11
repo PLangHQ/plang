@@ -29,7 +29,7 @@ namespace PLang.Models.ObjectValueExtractors
 		{
 			IList? list = null;
 			if (obj is JValue) obj = obj.ToString();
-			if (obj is IList tmp && tmp.Count > 0)
+			if (obj is not JToken && obj is IList tmp && tmp.Count > 0)
 			{
 				list = tmp;
 				obj = list[0];

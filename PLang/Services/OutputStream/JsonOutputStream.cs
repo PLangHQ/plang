@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Modules;
+using PLang.Runtime;
 using PLang.Utils;
 using System;
 using System.Net;
@@ -37,6 +38,7 @@ namespace PLang.Services.OutputStream
 		public bool IsStateful => isStateful;
 
 		public bool IsFlushed { get; set; }
+		public IEngine Engine { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
 		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)
 		{

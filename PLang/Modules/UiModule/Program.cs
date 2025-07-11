@@ -1,24 +1,25 @@
 ﻿using Newtonsoft.Json;
+using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Utilities.Zlib;
+using PLang.Errors;
+using PLang.Errors.Runtime;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Resources;
 using PLang.Runtime;
 using PLang.Services.OutputStream;
 using PLang.Utils;
-using Scriban.Syntax;
 using Scriban;
+using Scriban.Syntax;
+using Sprache;
+using System;
 using System.ComponentModel;
 using System.Dynamic;
 using System.IO.Compression;
-using static System.Net.Mime.MediaTypeNames;
-using System;
-using PLang.Models;
-using Org.BouncyCastle.Asn1;
-using PLang.Errors.Runtime;
-using PLang.Errors;
-using Sprache;
 using System.Threading;
+using static PLang.Modules.UiModule.Program;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace PLang.Modules.UiModule
 {
@@ -92,6 +93,14 @@ namespace PLang.Modules.UiModule
 			await outputStream.Write(domRemoves);
 			return null;
 
+		}
+
+		public record JavascriptFunction(string MethodName, Dictionary<string, object> Parameters);
+		public async Task<IError?> ExecuteJavascript(JavascriptFunction javascriptFunction)
+		{
+			var outputStream = outputStreamFactory.CreateHandler();
+			await outputStream.Write(javascriptFunction);
+			return null;
 		}
 
 		private LayoutOptions? GetLayoutOptions(string? name = null)

@@ -128,6 +128,7 @@ namespace PLang.Runtime
 		{
 			this.outputStream = outputStream;
 			OutputStreamFactory.SetOutputStream(outputStream);
+			outputStream.Engine = this;
 		}
 		public IPLangFileSystem FileSystem { get { return fileSystem; } }
 		public void ReplaceContext(PLangAppContext context)
@@ -144,14 +145,14 @@ namespace PLang.Runtime
 			{
 				throw new Exception($"Parent engine is null on return. {ErrorReporting.CreateIssueShouldNotHappen}");
 			}
-
+			outputStream.Engine = ParentEngine;
 			context = ParentEngine.GetContext();
 			memoryStack.Clear();
 			_parentEngine = null;
 			callingStep = null;
 			fileSystem.ClearFileAccess();
 			this.eventRuntime.GetActiveEvents().Clear();
-
+			
 			Name = string.Empty;
 		}
 
@@ -653,9 +654,10 @@ namespace PLang.Runtime
 					if (error is EndGoal endGoal)
 					{
 						logger.LogDebug($"Exiting goal because of end goal: {endGoal.Goal?.RelativeGoalPath}");
-						stepIndex = goal.GoalSteps.Count;
+						if (endGoal.Levels >= 0) stepIndex = goal.GoalSteps.Count;
+
 						if (GoalHelper.IsPartOfCallStack(goal, endGoal) && endGoal.Levels > 0)
-						{
+						{							
 							endGoal.Levels--;
 							return (returnValues, stepIndex, endGoal);
 						}

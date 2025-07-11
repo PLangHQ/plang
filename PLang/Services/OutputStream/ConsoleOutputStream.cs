@@ -37,7 +37,7 @@ namespace PLang.Services.OutputStream
 		public GoalStep Step { get; set; }
 		public string Output { get => "text"; }
 		public bool IsStateful { get { return true; } }
-
+		public IEngine Engine { get; set; }
 		public bool IsFlushed { get;set; }
 
 		public async Task<(object?, IError?)> Ask(AskOptions askOptions, Callback? callback = null, IError? error = null)

@@ -33,8 +33,9 @@ namespace PLang.Modules.TemplateEngineModule
 	{
 		private readonly IOutputStreamFactory outputStreamFactory;
 
-		public Program(IPLangFileSystem fileSystem, IOutputStreamFactory outputStreamFactory)
+		public Program(IPLangFileSystem fileSystem, MemoryStack memoryStack, IOutputStreamFactory outputStreamFactory)
 		{
+			base.memoryStack = memoryStack;
 			base.fileSystem = fileSystem;
 			this.outputStreamFactory = outputStreamFactory;
 		}

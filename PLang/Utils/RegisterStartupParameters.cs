@@ -29,7 +29,7 @@ namespace PLang.Utils
 				AppContext.SetSwitch(ReservedKeywords.StrictBuild, true);
 			}
 			var detailerror = args.FirstOrDefault(p => p == "--detailerror") != null;
-			if (detailerror)
+			if (detailerror) 
 			{
 				AppContext.SetSwitch(ReservedKeywords.DetailedError, true);
 			}

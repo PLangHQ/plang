@@ -316,7 +316,7 @@ namespace PLang.Events
 			{
 				goalText = $"Goal {goal.GoalFileName} had error";
 			}
-			logger.LogError($"[Error] - {goalText}{stepText} - {error.Message.ReplaceLineEndings("").MaxLength(40, "...")}");
+			logger.LogError($"[Error] - {goalText}{stepText} - {error.Message.ReplaceLineEndings("")}");
 		}
 
 		public async Task<(object? Variables, IBuilderError? Error)> RunBuildGoalEvents(string eventType, Goal goal)

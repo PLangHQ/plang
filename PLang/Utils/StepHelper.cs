@@ -1,4 +1,5 @@
 ﻿using Nethereum.Contracts.Standards.ENS.OffchainResolver.ContractDefinition;
+using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Errors;
 using PLang.Models;
@@ -46,9 +47,9 @@ namespace PLang.Utils
 			return null;
 		}
 
-		public record Callback(string Path, Stack<CallbackInfo> CallbackInfos, SignedMessage Signature);
+		public record Callback(string Path, Dictionary<string, object?>? CallbackData, Stack<CallbackInfo> CallbackInfos, SignedMessage Signature);
 		public record CallbackInfo(string GoalName, string GoalHash, int StepIndex, string? Answer = null);
-		public static async Task<Callback?> GetCallback(string path, GoalStep? step, Modules.ProgramFactory programFactory)
+		public static async Task<Callback?> GetCallback(string path, Dictionary<string, object?>? callbackData, Runtime.MemoryStack memoryStack, GoalStep? step, Modules.ProgramFactory programFactory)
 		{
 			if (step == null) return null;
 
@@ -68,9 +69,22 @@ namespace PLang.Utils
 					parentGoal = parentGoal.ParentGoal;
 				}
 			}
+			var encryption = programFactory.GetProgram<Modules.CryptographicModule.Program>(step);
 
+			if (callbackData != null)
+			{
+				foreach (var item in callbackData)
+				{
+					var obj = memoryStack.Get(item.Key);
+					if (obj != null)
+					{
+						var encryptedValue = await encryption.Encrypt(obj);
+						callbackData.AddOrReplace(item.Key, encryptedValue);
+					}
+				}
+			}
 			var signed = await programFactory.GetProgram<Modules.IdentityModule.Program>(step).Sign(callbackInfos);
-			return new Callback(path, callbackInfos, signed);
+			return new Callback(path, callbackData, callbackInfos, signed);
 		}
 	}
 }

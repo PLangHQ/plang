@@ -89,7 +89,7 @@ namespace PLang.Modules.OutputModule
 			public int StatusCode { get; set; }
 
 			public Dictionary<string, string>? ValidationRegexPatternAndErrorMessage { get; set; }
-			public Dictionary<string, object>? CallBackData { get; set; }
+			public Dictionary<string, object?>? CallBackData { get; set; }
 			[IgnoreWhenInstructed]
 			public Dictionary<string, object>? Parameters { get; set; }
 			public Dictionary<string, string>? Choices { get; set; }
@@ -159,7 +159,7 @@ namespace PLang.Modules.OutputModule
 				string answerVariableName = askOptions.AnswerVariableName.Replace("%", "");
 				if (HttpContext.Request.HasFormContentType)
 				{
-					answer = HttpContext.Request.Form[answerVariableName];
+					answer = memoryStack.Get("request." + answerVariableName);
 				} else
 				{
 					return (null, new ProgramError("Could not find answer"));
@@ -175,7 +175,7 @@ namespace PLang.Modules.OutputModule
 					var runGoalResult = await caller.RunGoal(askOptions.OnCallback);
 					if (runGoalResult.Error != null) return (null, runGoalResult.Error);
 				}
-				return ProcessAnswer(answer, askOptions);
+				return await ProcessAnswer(answer, askOptions);
 			}
 
 			var outputStream = outputStreamFactory.CreateHandler(/*askOptions.UserOrSystem, askOptions.Channel*/);
@@ -186,20 +186,20 @@ namespace PLang.Modules.OutputModule
 				path = HttpContext.Request.Path;
 			}
 
-			var callback = await StepHelper.GetCallback(path, goalStep, programFactory);
+			var callback = await StepHelper.GetCallback(path, askOptions.CallBackData, memoryStack, goalStep, programFactory);
 			(answer, error) = await outputStream.Ask(askOptions, callback, error);
 			if (error != null) return (null, error);
 
 			if (!outputStream.IsStateful) return (null, new EndGoal(goalStep, "", Levels: 9999));
 
-			return ProcessAnswer(answer, askOptions);
+			return await ProcessAnswer(answer, askOptions);
 
 		}
 
-		private (object?, IError?) ProcessAnswer(object? answer, AskOptions askOptions)
+		private async Task<(object?, IError?)> ProcessAnswer(object? answer, AskOptions askOptions)
 		{
 			// escape any variable that user inputs
-			answer = answer.ToString()?.Replace("%", @"\%") ?? string.Empty;
+			answer = answer?.ToString()?.Replace("%", @"\%") ?? string.Empty;
 			if (askOptions.ValidationRegexPatternAndErrorMessage == null)
 			{
 				return (answer, null);
@@ -215,6 +215,20 @@ namespace PLang.Modules.OutputModule
 				}
 			}
 			if (groupedErrors.Count > 0) return (answer, groupedErrors);
+
+			var callbackBase64 = memoryStack.Get<string>("request.callback");
+			if (string.IsNullOrEmpty(callbackBase64)) return (null, new ProgramError("callback was invalid", goalStep));
+			var callback = JsonConvert.DeserializeObject<Callback>(callbackBase64.FromBase64());
+			var encryption = programFactory.GetProgram<Modules.CryptographicModule.Program>(goalStep);
+			if (callback?.CallbackData != null)
+			{
+				foreach (var item in callback.CallbackData)
+				{
+					var decryptedValue = await encryption.Decrypt(item.Value.ToString());
+					memoryStack.Put(item.Key, decryptedValue);
+				}
+			}
+
 
 			return (answer, null);
 
