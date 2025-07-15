@@ -258,7 +258,7 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 	retrieveOneItem=""first""
 </example>
 ")]
-		public async Task<(object? Data, IError? Error)> FilterOnPropertyAndValue(object variableToExtractFrom, string propertyToFilterOn, string valueToFilterBy, string? operatorToFilterOnValue = "=",
+		public async Task<(object? Data, IError? Error)> FilterOnPropertyAndValue(object variableToExtractFrom, string propertyToFilterOn, object valueToFilterBy, string? operatorToFilterOnValue = "=",
 			 string operatorOnPropertyToFilter = "=", string? propertyToExtract = null, bool throwErrorWhenNothingFound = false, string? retrieveOneItem = null,
 			 string operatorToFilterOnValueComparer = "insensitive", bool throwErrorOnEmptyResult = false)
 		{
@@ -475,7 +475,11 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 
 		private object? GetExtractedItem(object item, string? propertyToExtract)
 		{
-			if (propertyToExtract == null) return item;
+			if (propertyToExtract == null)
+			{
+				if (item is JValue jv) return jv.Value;
+				return item;
+			}
 			if (item is JValue jValue)
 			{
 				var parent = jValue.Parent?.Parent;
@@ -613,7 +617,7 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 			return ParseParent(prop.Parent, propertyToExtract);
 		}
 
-		private Func<object, bool> GetPredicate(string operatorToFilter, string valueToFilterBy, string operatorToFilterOnValueComparer)
+		private Func<object, bool> GetPredicate(string operatorToFilter, object valueToFilterBy, string operatorToFilterOnValueComparer)
 		{
 
 			var comparer = (operatorToFilterOnValueComparer == "insensitive") ? StringComparison.OrdinalIgnoreCase : StringComparison.InvariantCulture;
@@ -623,11 +627,11 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 				{
 
 
-					return v != null && v.ToString().Contains(valueToFilterBy, comparer);
+					return v != null && v.ToString().Contains(valueToFilterBy.ToString(), comparer);
 				}),
 
-				"startwith" => new Func<object, bool>(v => v != null && v.ToString().StartsWith(valueToFilterBy, comparer)),
-				"endswith" => new Func<object, bool>(v => v != null && v.ToString().EndsWith(valueToFilterBy, comparer)), // Similar to contains
+				"startwith" => new Func<object, bool>(v => v != null && v.ToString().StartsWith(valueToFilterBy.ToString(), comparer)),
+				"endswith" => new Func<object, bool>(v => v != null && v.ToString().EndsWith(valueToFilterBy.ToString(), comparer)), // Similar to contains
 				"equals" or "=" => new Func<object, bool>(v =>
 				{
 					bool equal = IsEqual(v, valueToFilterBy, comparer);
@@ -638,13 +642,13 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 					bool equal = !IsEqual(v, valueToFilterBy, comparer);
 					return equal;
 				}),
-				">" => new Func<object, bool>(v => v != null && double.TryParse(v.ToString(), out var result) && result > double.Parse(valueToFilterBy)),
-				"<" => new Func<object, bool>(v => v != null && double.TryParse(v.ToString(), out var result) && result < double.Parse(valueToFilterBy)),
+				">" => new Func<object, bool>(v => v != null && double.TryParse(v.ToString(), out var result) && result > double.Parse(valueToFilterBy.ToString())),
+				"<" => new Func<object, bool>(v => v != null && double.TryParse(v.ToString(), out var result) && result < double.Parse(valueToFilterBy.ToString())),
 				_ => throw new ArgumentException($"Unsupported operator: {operatorToFilter}")
 			};
 		}
 
-		private bool IsEqual(object v, string valueToFilterBy, StringComparison comparer)
+		private bool IsEqual(object v, object valueToFilterBy, StringComparison comparer)
 		{
 			if (v == null && valueToFilterBy == null) return true;
 			if (v == null) return false;
@@ -655,7 +659,7 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 
 			if (v is string str)
 			{
-				return str != null && str.Equals(valueToFilterBy, comparer);
+				return str != null && str.Equals(valueToFilterBy.ToString(), comparer);
 			}
 
 			if (v is JToken token)
@@ -664,7 +668,7 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 				{
 					if (valueToFilterBy == null && valueToFilterBy == jValue.Value) return true;
 
-					return jValue.Value.ToString() == valueToFilterBy;
+					return jValue.Value == valueToFilterBy;
 				}
 				return token.ToString().Equals(valueToFilterBy.ToString(), comparer);
 			}

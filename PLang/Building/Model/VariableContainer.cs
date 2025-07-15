@@ -82,8 +82,13 @@ namespace PLang.Building.Model
 			var variable = _variables.FirstOrDefault(p => p.VariableName.Equals(variableName, StringComparison.OrdinalIgnoreCase));
 			if (variable != null) return variable?.Value;
 
-			if (level == 100)
+			if (level > 100)
 			{
+				var parent2 = GetParent();
+				string goalName = (parent2 != null) ? parent2.GoalName : "";
+				Console.ForegroundColor = ConsoleColor.Red;
+				Console.WriteLine($"To deep GetVariable. variableName:{variableName} | parent2.goalName:{goalName}");
+				Console.ResetColor();
 				return null;
 			}
 
@@ -97,7 +102,7 @@ namespace PLang.Building.Model
 		protected abstract Goal? GetParent();
 		protected abstract void SetVariableOnEvent(Variable goalVariable);
 
-		public T? GetVariable<T>(string? variableName = null)
+		public T? GetVariable<T>(string? variableName = null, int level = 0)
 		{
 			
 			if (variableName == null) variableName = typeof(T).FullName;
@@ -105,10 +110,20 @@ namespace PLang.Building.Model
 			var variable = _variables.FirstOrDefault(p => p.VariableName.Equals(variableName, StringComparison.OrdinalIgnoreCase));
 			if (variable != null) return (T?)variable?.Value;
 
+			if (level > 100)
+			{
+				var parent2 = GetParent();
+				string goalName = (parent2 != null) ? parent2.GoalName : "";
+				Console.ForegroundColor = ConsoleColor.Red;
+				Console.WriteLine($"To deep GetVariable. variableName:{variableName} | parent2.goalName:{goalName}");
+				Console.ResetColor();
+				return default;
+			}
+
 			var parent = GetParent();
 			if (parent == null) return default;
 
-			T? value = parent.GetVariable<T>(variableName);
+			T? value = parent.GetVariable<T>(variableName, ++level);
 			return value;
 		}
 

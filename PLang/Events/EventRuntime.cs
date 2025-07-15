@@ -702,11 +702,17 @@ namespace PLang.Events
 		 * GoalToBindTo = GenerateData(.goal)?:ProcessFile => Binds to any goal name called ProcessFile in the GenerateData.goal, if multiple then it will bind to all
 		 */
 
-		public bool IsGoalInEventCallstack(Goal goal, string path)
+		public bool IsGoalInEventCallstack(Goal goal, string path, int level = 0)
 		{
+			if (level == 100)
+			{
+				string parent = (goal.ParentGoal != null) ? goal.ParentGoal.GoalName : "";
+				logger.LogError($"To deep IsGoalInEventCallstack. goalName:{goal.GoalName} | path:{path} | parent:'{parent}'");
+				return false;
+			}
 			if (goal.RelativePrPath == path) return true;
 			if (goal.ParentGoal == null) return false;
-			return IsGoalInEventCallstack(goal.ParentGoal, path);
+			return IsGoalInEventCallstack(goal.ParentGoal, path, ++level);
 		}
 
 		public bool GoalHasBinding(Goal goal, EventBinding eventBinding)

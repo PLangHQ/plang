@@ -89,7 +89,12 @@ namespace PLang.Runtime
 
 
 				goalToRun.IsEvent = isEvent;
-				goalToRun.ParentGoal = callingGoal;
+
+				// prevent loop reference
+				if (callingGoal.ParentGoal == null || !callingGoal.ParentGoal.RelativePrPath.Equals(goalToRun.RelativePrPath))
+				{
+					goalToRun.ParentGoal = callingGoal;
+				}
 
 				var memoryStack = engine.GetMemoryStack();
 

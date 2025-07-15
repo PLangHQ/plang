@@ -140,7 +140,7 @@ namespace PLang.Modules.OutputModule
 		}
 
 		public record AskTemplateError(object Error, string OnErrorMethod);
-
+		/*
 		[Description("Remove % from AnswerVariableName.")]
 		public record AskTemplateOptions(string OutputFile, AskTemplateError error)
 		{
@@ -154,9 +154,9 @@ namespace PLang.Modules.OutputModule
 			Dictionary<string, object?>
 
 			var caller = GetProgramModule<CallGoalModule.Program>();
-			caller.RunGoal("/modules/UiModule/RenderUserIntent", )*/
+			caller.RunGoal("/modules/UiModule/RenderUserIntent", )
 			return (null, null);
-		}
+		}*/
 
 		[Description("Send to a question to the output stream and waits for answer.")]
 		public async Task<(object?, IError?)> Ask(AskOptions askOptions)
