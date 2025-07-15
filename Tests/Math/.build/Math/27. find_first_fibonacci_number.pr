@@ -1,0 +1,83 @@
+{
+  "Text": "find the 1st fibonacci number, write to %fib%",
+  "ModuleType": "PLang.Modules.MathModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to find the 1st Fibonacci number and store it in the variable %fib%. The Fibonacci function directly supports this by taking an integer input and returning the Fibonacci number. The input is 1, and the output should be stored in %fib%.",
+    "Name": "Fibonacci",
+    "Parameters": [
+      {
+        "Type": "System.Int32",
+        "Name": "variable",
+        "Value": "1"
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "Nullable<Int32>",
+        "VariableName": "%fib%"
+      }
+    ]
+  },
+  "Properties": {
+    "Parameters": {
+      "variable": [
+        {
+          "Name": "variable",
+          "FullTypeName": "System.Int32"
+        }
+      ]
+    },
+    "ReturnValues": {
+      "%fib%": []
+    }
+  },
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.\nGiven a math instruction that is not in a string format, turn it into a string formatted math instruction from the NCalc C# library and passed into the solveExpression function.\r\n\t\t\t\tIf a trig function wants to be solved by the user and they ask to find the answer in degrees, convert the output to degrees from radians. If they want to find\r\n\t\t\t\tthe value of the trig function with a parameter in degrees, convert it to radians using 3.14 before passing it in. Also convert pi into 3.14 multiplied by whatever number is next to it if applicable.\r\n\t\t\t\tExamples:\r\n\t\t\t\tfind 3 plus 4 should turn into 3 + 4. Do this with any operator like *, -, +, /\r\n\t\t\t\tsolve for square root of 9 should turn into Sqrt(9)\r\n\t\t\t\twhat is 2 raised to the power of 4 should turn into Pow(2, 4)"
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nCalculate the first Fibonacci number and store it in the variable %fib%\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":\"Solve a complex math expression given as a string. Please capitalize any functions called like sqrt() into Sqrt()\",\"MethodName\":\"SolveExpression\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"expression\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"Nullable<Double>\"}},{\"Description\":\"Find the fibonacci number of a given variable or number.\",\"MethodName\":\"Fibonacci\",\"Parameters\":[{\"Type\":\"System.Int32\",\"Name\":\"variable\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"Nullable<Int32>\"}},{\"Description\":\"Find the first n prime numbers where n is a given number.\",\"MethodName\":\"PrimeNumbers\",\"Parameters\":[{\"Type\":\"System.Int32\",\"Name\":\"number\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"List<Int32>\"}}],\"SupportingObjects\":[]}\r\n## functions available ends ##\r\n## defined variables ##\r\nfib (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "find the 1st fibonacci number, write to %fib%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.MathModule.Builder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to find the 1st Fibonacci number and store it in the variable %fib%. The Fibonacci function directly supports this by taking an integer input and returning the Fibonacci number. The input is 1, and the output should be stored in %fib%.\",\n  \"Name\": \"Fibonacci\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.Int32\",\n      \"Name\": \"variable\",\n      \"Value\": \"1\"\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"Nullable<Int32>\",\n      \"VariableName\": \"%fib%\"\n    }\n  ]\n}"
+    }
+  ]
+}

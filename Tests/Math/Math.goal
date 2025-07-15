@@ -1,0 +1,40 @@
+Math
+- listen to %assertResult%, call Result
+- %temp% = 90
+- solve for sqrt(%temp%), write to %firstResult%
+- assert that %firstResult% is 9.487
+- what is sqrt(4), write to %result%
+- assert that %result% == 2
+- solve for "(Sqrt(100) + %result%) / %result%", write to %result%
+- assert that %result% == 6
+- what is 5 plus 7, write to %sum%
+- assert that %sum% == 12
+- what is 7 + 7.6533333, write to %sum%
+- assert that %sum% == 14.653
+- what is 9 times 6, write to %product%
+- assert that %product% == 54
+- what is %sum% minus 633, write to %difference%
+- assert that %difference% == -618.347
+- what is -8 - 0.93, write to %difference%
+- assert that %difference% == -8.93
+- find the quotient of 9 divided by 0, write to %quotient%
+- write out %quotient%
+- what is 8 to the power of 2, write to %power%
+- assert that %power% == 64
+- what is -2 ^ 3, write to %power%
+- assert that %power% == -8
+- find the 20th fibonacci number, write to %fib%
+- assert that %fib% == 6765
+- find the 1st fibonacci number, write to %fib%
+- assert that %fib% == 1
+- find the 3rd fibonacci number, write to %fib%
+- assert that %fib% == 2
+- what is tangent of 45 degrees, write to %tan%
+- write out %tan%
+- what is sin of pi, write to %sin%
+- write out %sin%
+- solve 5 + (12 - square root of 9) to the power of 2 all divided by 2 after then subtract 1, write to %test%
+- assert that %test% == 44.5
+
+Result
+- write out %assertResult%

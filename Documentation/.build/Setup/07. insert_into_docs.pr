@@ -1,0 +1,136 @@
+{
+  "Text": "insert into docs Name='Plang or OpenAI'\n            Guide='template/plang_or_openai.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./PlangOrOpenAI.md'                           ",
+  "ModuleType": "PLang.Modules.DbModule",
+  "GenericFunctionType": "PLang.Modules.DbModule.Builder+DbGenericFunction",
+  "Function": {
+    "TableNames": [
+      "docs"
+    ],
+    "DataSource": "data",
+    "AffectedColumns": {
+      "Name": "insert",
+      "Guide": "insert",
+      "System": "insert",
+      "OutputFilename": "insert",
+      "id": "insert"
+    },
+    "Warning": "Columns 'Created' and 'LastUpdate' are NOT NULL but have default values, so they can be omitted in the insert statement.",
+    "Reasoning": "The user wants to insert a new record into the 'docs' table with specified values for Name, Guide, System, and OutputFilename fields. The Insert method is appropriate for this operation, and the id column is added automatically as required.",
+    "Name": "Insert",
+    "Parameters": [
+      {
+        "Type": "System.String",
+        "Name": "sql",
+        "Value": "insert into docs (id, Name, Guide, System, OutputFilename) values (@id, @Name, @Guide, @System, @OutputFilename)"
+      },
+      {
+        "Type": "System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]",
+        "Name": "sqlParameters",
+        "Value": [
+          {
+            "ParameterName": "@id",
+            "VariableNameOrValue": "auto",
+            "TypeFullName": "System.Int64"
+          },
+          {
+            "ParameterName": "@Name",
+            "VariableNameOrValue": "Plang or OpenAI",
+            "TypeFullName": "System.String"
+          },
+          {
+            "ParameterName": "@Guide",
+            "VariableNameOrValue": "template/plang_or_openai.txt",
+            "TypeFullName": "System.String"
+          },
+          {
+            "ParameterName": "@System",
+            "VariableNameOrValue": "template/guidance/teacher.txt",
+            "TypeFullName": "System.String"
+          },
+          {
+            "ParameterName": "@OutputFilename",
+            "VariableNameOrValue": "./PlangOrOpenAI.md",
+            "TypeFullName": "System.String"
+          }
+        ]
+      },
+      {
+        "Type": "System.String",
+        "Name": "dataSourceName",
+        "Value": "data"
+      }
+    ],
+    "ReturnValues": null
+  },
+  "Properties": {
+    "Parameters": {
+      "sql": [
+        {
+          "Name": "sql",
+          "FullTypeName": "System.String"
+        }
+      ],
+      "sqlParameters": [
+        {
+          "Name": "sqlParameters",
+          "FullTypeName": "System.Object"
+        }
+      ],
+      "dataSourceName": [
+        {
+          "Name": "dataSourceName",
+          "FullTypeName": "System.String"
+        }
+      ]
+    },
+    "ReturnValues": {}
+  },
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"TableNames\"?: string[] = null,\n\t\"DataSource\": string = null,\n\t\"AffectedColumns\"? : { String : String, ... } = null,\n\t\"Warning\": string = null,\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... }\r\n\r\n<Example>\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null.\n\r\nUse dataSourceName from <dataSource> when parameter for method is dataSourceName\r\n\r\n<dataSource>\r\ndataSourceName:data\r\nDatabase type:Microsoft.Data.Sqlite.SqliteConnection\r\nDatabase name:data\r\n</dataSource>\r\n\r\nAdditional json Response explaination:\r\n- DataSource: Datasource to use\r\n- TableNames: List of tables defined in sql statement\r\n- AffectedColumns: Dictionary of affected columns with type(primary_key|select|insert|update|delete|create|alter|index|drop|where|order|other), e.g. select name from users where id=1 => 'name':'select', 'id':'where'\r\n\r\nRules:\r\n- You MUST generate valid sql statement for Microsoft.Data.Sqlite.SqliteConnection\r\n- Returning 1 mean user want only one row to be returned (limit 1)\r\n- On CreateTable, include primary key, id, not null, (NO auto increment) when not defined by user. It must be long\r\n- On Insert, InsertOrUpdate, InsertOrUpdateAndSelectIdOfRow you must modify sql to include id(System.Int64) column and ParameterInfo @id=\"auto\"\r\n- Number(int => long) MUST be type System.Int64 unless defined by user.\r\n- string in user sql statement should be replaced with @ parameter in sql statement and added as parameters in ParamterInfo but as strings. Strings are as is in the parameter list.\r\n"
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"TableNames\"?: string[] = null,\n\t\"DataSource\": string = null,\n\t\"AffectedColumns\"? : { String : String, ... } = null,\n\t\"Warning\": string = null,\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nInsert a new record into the 'docs' database table with specified field values\n## functions available starts ##\r\n{\"Methods\":[{\"MethodName\":\"AsyncConstructor\",\"Parameters\":[]},{\"Description\":\"Create a datasource to a database\",\"MethodName\":\"CreateDataSource\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"name\",\"DefaultValue\":\"data\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"databaseType\",\"DefaultValue\":\"sqlite\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Boolean]\",\"Name\":\"setAsDefaultForApp\",\"IsRequired\":false},{\"Type\":\"System.Nullable`1[System.Boolean]\",\"Name\":\"keepHistoryEventSourcing\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"PLang.Modules.DbModule.ModuleSettings+DataSource\"}},{\"Description\":\"gets all databases that have been created\",\"MethodName\":\"GetDataSources\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"PLang.Modules.DbModule.ModuleSettings+DataSource\"}},{\"Description\":\"gets the current datasource\",\"MethodName\":\"GetDataSource\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"PLang.Modules.DbModule.ModuleSettings+DataSource\"}},{\"MethodName\":\"SetDataSourceName\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"name\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"PLang.Modules.DbModule.ModuleSettings+DataSource\"}},{\"MethodName\":\"BeginTransaction\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"name\",\"IsRequired\":false}]},{\"MethodName\":\"EndTransaction\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"name\",\"IsRequired\":false}]},{\"MethodName\":\"Rollback\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"name\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"rollbackAllTranscations\",\"DefaultValue\":true,\"IsRequired\":false}]},{\"MethodName\":\"LoadExtension\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"fileName\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"procName\",\"IsRequired\":false}]},{\"Description\":\"Return list of tables and views in a datasource\",\"MethodName\":\"GetDbScheme\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"dataSourceName\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"List<String>\"}},{\"Description\":\"Returns tables and views in database with the columns description\",\"MethodName\":\"GetDatabaseStructure\",\"Parameters\":[{\"Type\":\"List<string>\",\"Name\":\"tables\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"dataSourceName\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"List<TableInfo>\"}},{\"MethodName\":\"InsertEventSourceData\",\"Parameters\":[{\"Type\":\"System.Int64\",\"Name\":\"id\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"data\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"keyHash\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Int32\"}},{\"Description\":\"Executes a sql statement that is fully dynamic or from a %variable%. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be updated\",\"MethodName\":\"ExecuteDynamicSql\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"sql\",\"IsRequired\":true},{\"Type\":\"List<string>\",\"Name\":\"tableAllowList\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"dataSourceName\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Int64\"}},{\"Description\":\"Executes a sql statement that defined by user. This statement will be validated. Since this is pure and dynamic execution on database, user MUST to define list of tables that are allowed to be updated\",\"MethodName\":\"Execute\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"sql\",\"IsRequired\":true},{\"Type\":\"List<string>\",\"Name\":\"tableAllowList\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"dataSourceName\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Int64\"}},{\"Description\":\"When user does not define a primary key, add it to the create statement as id column not null, when KeepHistory is set to false, make the column auto increment\",\"MethodName\":\"CreateTable\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"sql\",\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Int64\"}},{\"Description\":\"When select should return 1 row (limit 1)\",\"MethodName\":\"SelectOneRow\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"sql\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]\",\"Name\":\"sqlParameters\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"dataSourceName\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"MethodName\":\"Select\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"sql\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]\",\"Name\":\"sqlParameters\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"dataSourceName\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"PLang.Modules.DbModule.Table\"}},{\"MethodName\":\"Update\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"sql\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]\",\"Name\":\"sqlParameters\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"dataSourceName\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Int64\"}},{\"MethodName\":\"Delete\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"sql\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]\",\"Name\":\"sqlParameters\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"dataSourceName\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Int64\"}},{\"Description\":\"Insert or update table(Upsert). Will return affected row count. \",\"MethodName\":\"InsertOrUpdate\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"sql\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]\",\"Name\":\"sqlParameters\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"dataSourceName\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Int64\"}},{\"Description\":\"Insert or update table(Upsert). Will return the primary key of the affected row\",\"MethodName\":\"InsertOrUpdateAndSelectIdOfRow\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"sql\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]\",\"Name\":\"sqlParameters\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"dataSourceName\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Insert into table. Will return affected row count\",\"MethodName\":\"Insert\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"sql\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]\",\"Name\":\"sqlParameters\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"dataSourceName\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Int64\"}},{\"Description\":\"Insert statement that will return the id of the inserted row. Use only if user requests the id\",\"MethodName\":\"InsertAndSelectIdOfInsertedRow\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"sql\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]\",\"Name\":\"sqlParameters\",\"Description\":\"(see Type information in SupportingObjects)\",\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"dataSourceName\",\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"ONLY When inserting list of items(%variables% is plural). Insert a list(bulk) into database, return number of rows inserted. columnMapping maps which variable should match with a column. User will define that he is using bulk insert.\",\"MethodName\":\"InsertBulk\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"tableName\",\"IsRequired\":true},{\"Type\":\"System.Collections.Generic.List`1[System.Object]\",\"Name\":\"itemsToInsert\",\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"columnMapping\",\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"ignoreContraintOnInsert\",\"DefaultValue\":false,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Int64\"}},{\"MethodName\":\"GetAdditionalSystemErrorInfo\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"MethodName\":\"GetAdditionalAssistantErrorInfo\",\"Parameters\":[],\"ReturnValue\":{\"Type\":\"System.String\"}}],\"SupportingObjects\":[{\"Type\":\"System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]\",\"Name\":\"sqlParameters\",\"Description\":\"ParameterName must be prefixed with @. VariableNameOrValue can be any primative type, string or a %variable%\",\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"ParameterName\",\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"VariableNameOrValue\",\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"TypeFullName\",\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "insert into docs Name='Plang or OpenAI'\n            Guide='template/plang_or_openai.txt'\n            System='template/guidance/teacher.txt'\n            OutputFilename='./PlangOrOpenAI.md'                           "
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.DbModule.Builder",
+      "caching": true,
+      "RawResponse": "{\n  \"TableNames\": [\n    \"docs\"\n  ],\n  \"DataSource\": \"data\",\n  \"AffectedColumns\": {\n    \"Name\": \"insert\",\n    \"Guide\": \"insert\",\n    \"System\": \"insert\",\n    \"OutputFilename\": \"insert\",\n    \"id\": \"insert\"\n  },\n  \"Reasoning\": \"The user wants to insert a new record into the 'docs' table with specified values for Name, Guide, System, and OutputFilename fields. The Insert method is appropriate for this operation, and the id column is added automatically as required.\",\n  \"Name\": \"Insert\",\n  \"Parameters\": [\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"sql\",\n      \"Value\": \"insert into docs (id, Name, Guide, System, OutputFilename) values (@id, @Name, @Guide, @System, @OutputFilename)\"\n    },\n    {\n      \"Type\": \"System.Collections.Generic.List`1[PLang.Modules.DbModule.Program+ParameterInfo]\",\n      \"Name\": \"sqlParameters\",\n      \"Value\": [\n        {\n          \"ParameterName\": \"@id\",\n          \"VariableNameOrValue\": \"auto\",\n          \"TypeFullName\": \"System.Int64\"\n        },\n        {\n          \"ParameterName\": \"@Name\",\n          \"VariableNameOrValue\": \"Plang or OpenAI\",\n          \"TypeFullName\": \"System.String\"\n        },\n        {\n          \"ParameterName\": \"@Guide\",\n          \"VariableNameOrValue\": \"template/plang_or_openai.txt\",\n          \"TypeFullName\": \"System.String\"\n        },\n        {\n          \"ParameterName\": \"@System\",\n          \"VariableNameOrValue\": \"template/guidance/teacher.txt\",\n          \"TypeFullName\": \"System.String\"\n        },\n        {\n          \"ParameterName\": \"@OutputFilename\",\n          \"VariableNameOrValue\": \"./PlangOrOpenAI.md\",\n          \"TypeFullName\": \"System.String\"\n        }\n      ]\n    },\n    {\n      \"Type\": \"System.String\",\n      \"Name\": \"dataSourceName\",\n      \"Value\": \"data\"\n    }\n  ]\n}"
+    }
+  ]
+}

@@ -9,7 +9,7 @@ CreateDetailOverview
 - foreach %moduleFiles% call !CreateDetail item=%file%
 
 CreateDetail
-- [code] get file name without extension from %file.Path%(string) , remove 'PLang.Modules.', 'Module' from the name, write to %moduleName%
+- set %moduleName% = %file.Path.Replace(".cs", "").Replace("PLang.Modules", "").Replace("Module", "")%
 - read file template/modules/Overview/detail_overview.txt, into %system_detail%, load vars
 - [llm] system:%system_detail%
         user: %file.Content%
@@ -26,7 +26,7 @@ CreateSimpleOverview
 
 
 CreateSimple
-- [code] get file name without extension from %file.Path%(string), write to %moduleName%
+- set %moduleName% = %file.Path.Replace(".cs", "").Replace("PLang.Modules", "").Replace("Module", "")%
 - read file template/modules/Overview/simple_overview.txt, into %system_simple%, load vars
 - [llm] system:%system_simple%
         user: %file.Content%

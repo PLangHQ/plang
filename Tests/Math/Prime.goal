@@ -1,0 +1,9 @@
+Prime
+- listen to %assertResult%, call Result
+- find the first 20 prime numbers, write to %primes%
+- assert that %primes% is [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71]
+- find the first 3 prime numbers, write to %primes%
+- assert that %primes% is [2, 3, 5]
+
+Result
+- write out %assertResult%

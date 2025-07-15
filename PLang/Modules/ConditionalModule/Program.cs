@@ -49,7 +49,7 @@ namespace PLang.Modules.ConditionalModule
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 			var path = GetPath(dirPathOrVariableName);
-			var result = fileSystem.File.Exists(path);
+			var result = fileSystem.Directory.Exists(path);
 			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 		}
 		public async Task<(bool, IError?)> HasAccessToPath(string dirOrFilePathOrVariableName, GoalToCallInfo? goalToCallIfTrue = null, GoalToCallInfo? goalToCallIfFalse = null,
