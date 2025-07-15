@@ -136,7 +136,7 @@ namespace PLang.Building
 			}
 
 			WriteToGoalPrFile(goal);
-			logger.LogInformation($"Done building all goals {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
+			logger.LogInformation($"Done building all goals {goal.GoalName} - It took {stopwatch.ElapsedMilliseconds}ms");
 
 			return (groupedBuildErrors.Count > 0) ? groupedBuildErrors : null;
 		}

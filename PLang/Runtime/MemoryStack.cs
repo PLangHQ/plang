@@ -42,8 +42,11 @@ namespace PLang.Runtime
 	public record VariableEvent(string EventType, GoalToCallInfo GoalToCall, bool waitForResponse = true, int delayWhenNotWaitingInMilliseconds = 50, string hash = null)
 	{
 
-		public bool waitForResponse { get; set; } = waitForResponse;
-		public int delayWhenNotWaitingInMilliseconds { get; set; } = delayWhenNotWaitingInMilliseconds;
+		public bool WaitForResponse { get; set; } = waitForResponse;
+		public int DelayWhenNotWaitingInMilliseconds { get; set; } = delayWhenNotWaitingInMilliseconds;
+
+		public Goal Goal { get; set; }
+		public GoalStep Step { get; set; }
 	};
 
 
@@ -1201,23 +1204,29 @@ namespace PLang.Runtime
 			var events = objectValue.Events.Where(p => p.EventType == eventType);
 			foreach (var eve in events)
 			{
+				eve.Goal = step.Goal;
+				eve.Step = step;
+
+
 				eve.GoalToCall.Parameters.AddOrReplace(objectValue.Name, objectValue.Value);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.VariableName, objectValue.Name);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.VariableValue, objectValue.Value);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.IsEvent, true);
+				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.Event, eve);
 
 				var goal = step.Goal;
 				if (eve.GoalToCall.Name == goal.GoalName) return;
 
 				var task = Task.Run(async () =>
 				{
-					var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, eve.GoalToCall);
+					var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, eve.GoalToCall, goal);
 					if (result.error != null)
 					{
+						// todo: should call event binding for step 
 						throw new ExceptionWrapper(result.error);
 					}
 				});
-				task.Wait();
+				//task.Wait();
 			}
 		}
 
@@ -1838,8 +1847,8 @@ namespace PLang.Runtime
 			if (existingEvent != null)
 			{
 				existingEvent.GoalToCall.Parameters = goalName.Parameters;
-				existingEvent.waitForResponse = waitForResponse;
-				existingEvent.delayWhenNotWaitingInMilliseconds = delayWhenNotWaitingInMilliseconds;
+				existingEvent.WaitForResponse = waitForResponse;
+				existingEvent.DelayWhenNotWaitingInMilliseconds = delayWhenNotWaitingInMilliseconds;
 			}
 			else
 			{

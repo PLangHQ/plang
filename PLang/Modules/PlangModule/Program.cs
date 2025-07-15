@@ -78,7 +78,7 @@ namespace PLang.Modules.PlangModule
 				return (null, new ProgramError($"No goals found at {fileOrFolderPath}, the absolute path is: {path}"));
 			}*/
 
-			if (propertiesToExtract?.Count == 0) return (goals, null);
+			if (propertiesToExtract == null || propertiesToExtract.Count == 0) return (goals, null);
 
 			JArray array = new JArray();
 			foreach (var goal in goals)
