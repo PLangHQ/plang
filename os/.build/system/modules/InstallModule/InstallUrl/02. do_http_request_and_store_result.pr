@@ -1,0 +1,116 @@
+{
+  "Text": "do http request %request% (HttpRequest), write to %httpResult%",
+  "ModuleType": "PLang.Modules.HttpModule",
+  "GenericFunctionType": "PLang.Modules.BaseBuilder+GenericFunction",
+  "Function": {
+    "Reasoning": "The user wants to perform an HTTP request using a provided HttpRequest object and store the result in a variable. The 'Request' method matches this intent as it accepts an HttpRequest object and returns the response.",
+    "Name": "Request",
+    "Parameters": [
+      {
+        "Type": "PLang.Modules.HttpModule.Program+HttpRequest",
+        "Name": "request",
+        "Value": "%request%"
+      }
+    ],
+    "ReturnValues": [
+      {
+        "Type": "System.Object",
+        "VariableName": "%httpResult%"
+      }
+    ]
+  },
+  "Properties": {
+    "Parameters": {
+      "request": [
+        {
+          "Name": "Url",
+          "FullTypeName": "System.String"
+        },
+        {
+          "Name": "Method",
+          "FullTypeName": "System.String"
+        },
+        {
+          "Name": "Data",
+          "FullTypeName": "System.Object"
+        },
+        {
+          "Name": "Headers",
+          "FullTypeName": "System.Collections.Generic.Dictionary`2[[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Object, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]"
+        },
+        {
+          "Name": "Encoding",
+          "FullTypeName": "System.String"
+        },
+        {
+          "Name": "ContentType",
+          "FullTypeName": "System.String"
+        },
+        {
+          "Name": "TimeoutInSeconds",
+          "FullTypeName": "System.Int32"
+        },
+        {
+          "Name": "SignRequest",
+          "FullTypeName": "System.Boolean"
+        }
+      ]
+    },
+    "ReturnValues": {
+      "%httpResult%": [
+        {
+          "Name": "%httpResult%",
+          "FullTypeName": "System.Object"
+        }
+      ]
+    }
+  },
+  "LlmRequest": [
+    {
+      "temperature": 0.0,
+      "top_p": 0.0,
+      "frequencyPenalty": 0.0,
+      "presencePenalty": 0.0,
+      "maxLength": 4000,
+      "llmResponseType": "json",
+      "scheme": "{\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}",
+      "model": "gpt-4.1-mini",
+      "promptMessage": [
+        {
+          "role": "system",
+          "content": [
+            {
+              "type": "text",
+              "text": "User is writing code in plang programming language.\r\n\r\nYour job is: \r\n1. Parse and understand user intent\r\n2. Map the intent to one of C# function provided to you\r\n3. Return a valid JSON\r\n\r\n## Rules\r\n%variable% in plang is defined with starting and ending percentage sign (%)\r\n%variable% MUST be wrapped in quotes(\") in json response, e.g. { \"name\":\"%name%\" }\r\nleave %variable% as is and do not change text to a variable\r\nnull is used to represent no value, e.g. { \"name\": null }\r\nVariables should not be changed, they can include dot(.) and parentheses()\r\nKeep \\n, \\r, \\t that are submitted to you for string variables\r\nParameter.Value that is type String MUST be without escaping quotes. See <Example>\r\nError handling is process by another step, if you see 'on error...' you can ignore it\r\nIf there is some api key, settings, config replace it with %Settings.NameOfApiKey% \r\n- NameOfApiKey should named in relation to what is happening if change is needed\r\nDictionary<T1, T2> value is {key: value, ... }\r\nONLY when string is prefixed with # is for translation, modify the string to be \"#:...\", e.g. #\"Hello\" => \"#:Hello\".\r\n\r\n< Example >\r\nget url \"http://example.org\" => Value: \"http://example.org\"\r\nwrite out 'Hello world' => Value: \"Hello world\"\r\n<Example>\r\n\r\n## JSON scheme information\r\nReasoning: A brief description of the reasoning behind the selection of the function and parameters based on the user's intent. This property provides context for why a particular function was chosen and how it aligns with the user intent.\r\nName: Name of the function to use from list of functions, if no function matches set as \"N/A\"\r\nParameters: List of parameters that are needed according to the user intent.\r\n- Type: the object type in c#\r\n- Name: name of the variable\r\n- Value: \"%variable%\" or hardcode string that should be used\r\nReturnValue rules\r\n- Only if the function returns a value AND if user defines %variable% to write into, e.g. ' write into %data%' or 'into %result%', or simliar intent to write return value into variable\r\n- If no %variable% is defined then set as null."
+            },
+            {
+              "type": "text",
+              "text": "You MUST respond in JSON, scheme:\r\n {\n\t\"Reasoning\": string,\n\t\"Name\": string,\n\t\"Parameters\"?: [{\n\t\"Type\": string,\n\t\"Name\": string,\n\t\"Value\"?: object\n}] = null,\n\t\"ReturnValues\"?: [{\n\t\"Type\": string,\n\t\"VariableName\": string\n}] = null\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Canonical User Intent (already disambiguated by LLM)\r\nPerform an HTTP request using the provided request details and store the response in a variable\n## functions available starts ##\r\n{\"Methods\":[{\"Description\":null,\"MethodName\":\"DownloadFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"pathToSaveTo\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"overwriteFile\",\"DefaultValue\":false,\"Description\":null,\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"headers\",\"Description\":null,\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"createPathToSaveTo\",\"DefaultValue\":true,\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotDownloadIfFileExists\",\"DefaultValue\":false,\"Description\":null,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.String\"}},{\"Description\":null,\"MethodName\":\"Request\",\"Parameters\":[{\"Type\":\"PLang.Modules.HttpModule.Program+HttpRequest\",\"Name\":\"request\",\"Description\":\"(see Type information in SupportingObjects)\",\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":null,\"MethodName\":\"Post\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"data\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotSignRequest\",\"DefaultValue\":false,\"Description\":null,\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"headers\",\"Description\":null,\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"contentType\",\"DefaultValue\":\"application/json\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"Description\":null,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":null,\"MethodName\":\"Patch\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"data\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotSignRequest\",\"DefaultValue\":false,\"Description\":null,\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"headers\",\"Description\":null,\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"contentType\",\"DefaultValue\":\"application/json\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"Description\":null,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":null,\"MethodName\":\"Get\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"data\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotSignRequest\",\"DefaultValue\":false,\"Description\":null,\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"headers\",\"Description\":null,\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"contentType\",\"DefaultValue\":\"application/json\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"Description\":null,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":null,\"MethodName\":\"Option\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"data\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotSignRequest\",\"DefaultValue\":false,\"Description\":null,\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"headers\",\"Description\":null,\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"contentType\",\"DefaultValue\":\"application/json\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"Description\":null,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":null,\"MethodName\":\"Head\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"data\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotSignRequest\",\"DefaultValue\":false,\"Description\":null,\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"headers\",\"Description\":null,\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"contentType\",\"DefaultValue\":\"application/json\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"Description\":null,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":null,\"MethodName\":\"Put\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"data\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotSignRequest\",\"DefaultValue\":false,\"Description\":null,\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"headers\",\"Description\":null,\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"contentType\",\"DefaultValue\":\"application/json\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"Description\":null,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":null,\"MethodName\":\"Delete\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"data\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotSignRequest\",\"DefaultValue\":false,\"Description\":null,\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"headers\",\"Description\":null,\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"contentType\",\"DefaultValue\":\"application/json\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"Description\":null,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Send binary file to server. Make sure to set correct headers on correct header variable, requestHeaders or contentHeader\",\"MethodName\":\"SendBinaryOfFile\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"filePath\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"httpMethod\",\"DefaultValue\":\"POST\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"requestHeaders\",\"Description\":null,\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"contentHeaders\",\"Description\":null,\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"Description\":null,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":\"Post a FileStream to url. When a variable is defined with @ sign, it defines that it should be a FileStream. data may contain something like file=@%fileName%;type=%fileType%, then keep as one value for the file parameter. The function will parse the file and type\",\"MethodName\":\"PostMultipartFormData\",\"Parameters\":[{\"Type\":\"System.String\",\"Name\":\"url\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"data\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"httpMethod\",\"DefaultValue\":\"POST\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Boolean\",\"Name\":\"doNotSignRequest\",\"DefaultValue\":false,\"Description\":null,\"IsRequired\":false},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"headers\",\"Description\":null,\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":false},{\"Type\":\"System.String\",\"Name\":\"encoding\",\"DefaultValue\":\"utf-8\",\"Description\":null,\"IsRequired\":false},{\"Type\":\"System.Int32\",\"Name\":\"timeoutInSeconds\",\"DefaultValue\":30,\"Description\":null,\"IsRequired\":false}],\"ReturnValue\":{\"Type\":\"System.Object\"}},{\"Description\":null,\"MethodName\":\"Request\",\"Parameters\":[{\"Type\":\"PLang.Modules.HttpModule.Program+HttpRequest\",\"Name\":\"request\",\"Description\":\"(see Type information in SupportingObjects)\",\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":true}],\"ReturnValue\":{\"Type\":\"System.Object\"}}],\"SupportingObjects\":[{\"Type\":\"PLang.Modules.HttpModule.Program+HttpRequest\",\"Name\":\"request\",\"Description\":null,\"DefaultValue\":null,\"TypeProperties\":[{\"Type\":\"System.String\",\"Name\":\"Url\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Method\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.Object\",\"Name\":\"Data\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"Dictionary<String, Object>\",\"Name\":\"Headers\",\"Description\":null,\"DefaultValue\":null,\"TypeProperties\":null,\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"Encoding\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.String\",\"Name\":\"ContentType\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.Int32\",\"Name\":\"TimeoutInSeconds\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true},{\"Type\":\"System.Boolean\",\"Name\":\"SignRequest\",\"DefaultValue\":null,\"Description\":null,\"IsRequired\":true}],\"IsRequired\":false}]}\r\n## functions available ends ##\r\n## defined variables ##\r\nrequest (type:object), httpResult (type:object), \r\n## defined variables ##"
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "do http request %request% (HttpRequest), write to %httpResult%"
+            }
+          ]
+        }
+      ],
+      "type": "PLang.Modules.GenericFunctionBuilder",
+      "caching": true,
+      "RawResponse": "{\n  \"Reasoning\": \"The user wants to perform an HTTP request using a provided HttpRequest object and store the result in a variable. The 'Request' method matches this intent as it accepts an HttpRequest object and returns the response.\",\n  \"Name\": \"Request\",\n  \"Parameters\": [\n    {\n      \"Type\": \"PLang.Modules.HttpModule.Program+HttpRequest\",\n      \"Name\": \"request\",\n      \"Value\": \"%request%\"\n    }\n  ],\n  \"ReturnValues\": [\n    {\n      \"Type\": \"System.Object\",\n      \"VariableName\": \"%httpResult%\"\n    }\n  ]\n}"
+    }
+  ]
+}

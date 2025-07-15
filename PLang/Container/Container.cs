@@ -205,7 +205,7 @@ namespace PLang.Container
 				runtimeContainer.RegisterSingleton<IEventRuntime, EventRuntime>();
 				
 				var fileAccessHandler2 = runtimeContainer.GetInstance<IFileAccessHandler>();				
-				fileAccessHandler2.GiveAccess(Environment.CurrentDirectory, fileSystem.OsDirectory);				
+				fileAccessHandler2.GiveAccess(Environment.CurrentDirectory, fileSystem.SystemDirectory);				
 
 				var engine2 = runtimeContainer.GetInstance<IEngine>(); 
 				engine2.Init(runtimeContainer, container.GetInstance<PLangAppContext>());
@@ -232,12 +232,12 @@ namespace PLang.Container
 
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
-			context.AddOrReplace("!plang.osPath", fileSystem.OsDirectory);
+			context.AddOrReplace("!plang.osPath", fileSystem.SystemDirectory);
 			context.AddOrReplace("!plang.rootPath", parentEngine?.Path ?? fileSystem.RootDirectory);
 
 
 			var fileAccessHandler = container.GetInstance<IFileAccessHandler>();
-			fileAccessHandler.GiveAccess(fileSystem.RootDirectory, fileSystem.OsDirectory);
+			fileAccessHandler.GiveAccess(fileSystem.RootDirectory, fileSystem.SystemDirectory);
 		}
 
 		private static void RegisterForPLang(this ServiceContainer container, string absoluteAppStartupPath, string relativeStartupAppPath, IEngine? parentEngine = null)
@@ -261,7 +261,7 @@ namespace PLang.Container
 			container.RegisterSingleton<IPseudoRuntime, PseudoRuntime>();
 			container.RegisterSingleton<IBuilderFactory>(factory =>
 			{
-				return new BuilderFactory(container, container.GetInstance<ITypeHelper>());
+				return new BuilderFactory(container, container.GetInstance<ITypeHelper>(), container.GetInstance<ILogger>());
 			});
 
 
@@ -277,7 +277,7 @@ namespace PLang.Container
 
 
 
-			container.Register<IGoalParser>(factory =>
+			container.RegisterSingleton<IGoalParser>(factory =>
 			{
 				return new GoalParser(container, container.GetInstance<IPLangFileSystem>(), container.GetInstance<ISettings>());
 			});
@@ -702,7 +702,7 @@ namespace PLang.Container
 			var prParser = container.GetInstance<PrParser>();
 
 			var fileSystem = container.GetInstance<IPLangFileSystem>();
-			var goals = prParser.LoadAllGoalsByPath(fileSystem.GoalsPath, true);
+			var goals = prParser.GetGoals();
 			var goalsWithInjections = goals.Where(p => p.Injections.FirstOrDefault(x => x.IsGlobal) != null);
 
 			foreach (var goal in goalsWithInjections)

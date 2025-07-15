@@ -132,7 +132,7 @@ namespace PLang.Building.Model
 
 		[IgnoreWhenInstructed]
 		[LlmIgnore]
-		public bool IsOS { get; set; }
+		public bool IsSystem { get; set; }
 		[IgnoreWhenInstructed]
 		public string UniqueId { get; set; }
 		[IgnoreWhenInstructed]
@@ -163,18 +163,39 @@ namespace PLang.Building.Model
 
 		}
 
+		protected override void SetVariableOnEvent(Variable goalVariable)
+		{
+			if (IsEvent && ParentGoal != null)
+			{
+				ParentGoal.AddVariable(goalVariable);
+			}
+		}
+
 		public Dictionary<string, string>? IncomingVariablesRequired { get; set; }
 		[LlmIgnore]
 		public string? DataSourceName { get; set; }
 		[LlmIgnore]
 		public bool IsSetup { get; set; }
+		[LlmIgnore]
+		public bool IsEvent { get; set; }
 
 		[LlmIgnore]
 		[IgnoreWhenInstructed]
 		public Stopwatch Stopwatch { get; set; }
 
+		public static Goal NotFound { get
+			{
+				return new Goal("NotFound", new());
+			}
+		}
 
-		
+		public static Goal Builder
+		{
+			get
+			{
+				return new Goal("Builder", new());
+			}
+		}
 	}
 
 	

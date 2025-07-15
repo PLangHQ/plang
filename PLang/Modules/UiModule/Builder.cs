@@ -23,13 +23,17 @@ namespace PLang.Modules.UiModule
 		private readonly ITypeHelper typeHelper;
 		private readonly ILlmServiceFactory llmServiceFactory;
 		private readonly IPLangFileSystem fileSystem;
+		private readonly ProgramFactory programFactory;
+		private readonly VariableHelper variableHelper;
 
-		public Builder(ILogger logger, ITypeHelper typeHelper, ILlmServiceFactory llmServiceFactory, IPLangFileSystem fileSystem) : base()
+		public Builder(ILogger logger, ITypeHelper typeHelper, ILlmServiceFactory llmServiceFactory, IPLangFileSystem fileSystem, ProgramFactory programFactory, VariableHelper variableHelper) : base()
 		{
 			this.logger = logger;
 			this.typeHelper = typeHelper;
 			this.llmServiceFactory = llmServiceFactory;
 			this.fileSystem = fileSystem;
+			this.programFactory = programFactory;
+			this.variableHelper = variableHelper;
 		}
 
 
@@ -361,7 +365,44 @@ stick to user intent and DO NOT assume elements not described, for example DO NO
 			return (instruction, null);
 		}
 
+		public async Task<(Instruction, IBuilderError?)> BuilderSetFrameworks(GoalStep step, Instruction instruction, GenericFunction gf)
+		{
+			var caller = programFactory.GetProgram<CallGoalModule.Program>(step);
 
+			var framework = gf.GetParameter<UiFramework>("framework");
+			var dict = new Dictionary<string, object?>();
+			dict.Add("framework", variableHelper.LoadVariables(framework));
+
+			var goalToCall = new GoalToCallInfo("/modules/UiModule/Builder/SetFrameworks", dict);
+
+			var result = await caller.RunGoal(goalToCall);
+			if (result.Error != null) return (instruction, new BuilderError(result.Error));
+
+			framework = result.Return as UiFramework;
+
+			var variable = programFactory.GetProgram<VariableModule.Program>(step); 
+			var storedFrameworks = await variable.GetSettings<UiFramework>("UiFrameworks");
+
+			await variable.SetSettingValue("UiFrameworks", storedFrameworks);
+
+			return (instruction, null);
+		}
+		public async Task<(Instruction, IBuilderError?)> BuilderSetLayout(GoalStep step, Instruction instruction, GenericFunction gf)
+		{
+			/*
+			var caller = programFactory.GetProgram<CallGoalModule.Program>(step);
+
+			var options = gf.GetParameter<LayoutOptions>("options");
+			var dict = new Dictionary<string, object?>();
+			dict.Add("options", variableHelper.LoadVariables(options));
+
+			var goalToCall = new GoalToCallInfo("/modules/UiModule/Builder/SetLayout", dict);
+
+			var result = await caller.RunGoal(goalToCall);
+			if (result.Error != null) return (instruction, new BuilderError(result.Error));
+			*/
+			return (instruction, null);
+		}
 	}
 
 	public record UiResponse(string? html = null, string? javascript = null, string? css = null);

@@ -79,27 +79,15 @@ namespace PLang.Runtime
 			{
 				var ms = GetMemoryStack();
 
-				List<string> varsInList = new();
+				List<string> varsInStep = new();
 				var eventBinding = Goal.GetVariable<EventBinding>(ReservedKeywords.Event);
 				if (eventBinding != null && eventBinding.GoalStep != null)
 				{
-					varsInList = VariableHelper.GetVariablesInText(eventBinding.GoalStep.Text);
+					varsInStep = VariableHelper.GetVariablesInText(eventBinding.GoalStep.Text);
 				}
 
-				for (int i = 0; i < ms.Count; i++)
-				{
-					if (ms[i].Value is IList list && list.Count > 50)
-					{
-						ms[i].Value = list.Cast<object>().Take(50).ToList();
-					}
-					else if (ms[i].Value is IDictionary dict && dict.Count > 50)
-					{
-						ms[i].Value = dict.Cast<object>().Take(50).ToList();
-					}
-					ms[i].Order += varsInList.Count;
-				}
 
-				
+
 				var customSettings = new JsonSerializerSettings
 				{
 					ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
@@ -113,7 +101,6 @@ namespace PLang.Runtime
 				// javascript cannot handle long variables, so we convert it to string
 				customSettings.Converters.Add(new LongAsStringConverter());
 
-				if (varsInList.Count == 0) return JsonConvert.SerializeObject(ms, customSettings);
 
 				// when there is variable in step, lets reorder the memorystack to put 
 				// used variable at the top and notify use if variable is empty.
@@ -122,13 +109,27 @@ namespace PLang.Runtime
 				var json = JsonConvert.SerializeObject(ms, customSettings);
 				var newMs = JsonConvert.DeserializeObject<List<ObjectValue>>(json);
 
-				for (int i = 0; i < varsInList.Count; i++)
+				for (int i = 0; i < newMs.Count; i++)
 				{
-					var ov = this.GetObjectValue(varsInList[i]);
+					if (newMs[i].Value is IList list && list.Count > 50)
+					{
+						newMs[i].Value = list.Cast<object>().Take(50).ToList();
+					}
+					else if (newMs[i].Value is IDictionary dict && dict.Count > 50)
+					{
+						newMs[i].Value = dict.Cast<object>().Take(50).ToList();
+					}
+					newMs[i].Order += varsInStep.Count;
+					ms[i].Order += varsInStep.Count;
+				}				
+
+				for (int i = 0; i < varsInStep.Count; i++)
+				{
+					var ov = this.GetObjectValue(varsInStep[i]);
 					
 					if (!ov.Initiated)
 					{
-						ov = new ObjectValue(varsInList[i], $"{varsInList[i]} is empty");
+						ov = new ObjectValue(varsInStep[i], $"{varsInStep[i]} is empty");
 					}
 					ov.Order = i;
 					var index = ms.FindIndex(p => p.PathAsVariable == ov.PathAsVariable);
@@ -149,7 +150,11 @@ namespace PLang.Runtime
 			} catch (Exception ex)
 			{
 				int i = 0;
-				return "";
+				List<ObjectValue> ovs = new();
+				var ov = new ObjectValue("Error", "Could not serialize memory stack: " + ex.Message);
+				ovs.Add(ov);
+
+				return JsonConvert.SerializeObject(ovs);
 			}
 		}
 

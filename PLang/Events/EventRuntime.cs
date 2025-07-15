@@ -35,7 +35,7 @@ namespace PLang.Events
 		Task<(object? Variables, IBuilderError? Error)> RunBuildGoalEvents(string eventType, Goal goal);
 		Task<(object? Variables, IBuilderError? Error)> RunBuildStepEvents(string eventType, Goal goal, GoalStep step, int stepIdx);
 		Task<(object? Variables, IError? Error)> RunGoalEvents(string eventType, Goal goal, bool isBuilder = false);
-		Task<(object? Variables, IError? Error)> RunStartEndEvents(string eventType, string eventScope, bool isBuilder = false);
+		Task<(object? Variables, IError? Error)> RunStartEndEvents(string eventType, string eventScope, Goal goal, bool isBuilder = false);
 		Task<(object? Variables, IError? Error)> RunStepEvents(string eventType, Goal goal, GoalStep step, bool isBuilder = false);
 		Task<(object? Variables, IError? Error)> RunOnErrorStepEvents(IError error, Goal goal, GoalStep step, bool isBuilder = false);
 		Task<(object? Variables, IError? Error)> RunGoalErrorEvents(Goal goal, int goalStepIndex, IError error, bool isBuilder = false);
@@ -105,15 +105,20 @@ namespace PLang.Events
 
 		public IError? Load(bool isBuilder = false)
 		{
+			Stopwatch stopwatch = Stopwatch.StartNew();
+
 			var events = new List<EventBinding>();
 
+			logger.LogDebug($" - Load events files - {stopwatch.ElapsedMilliseconds}");
 			(var eventsFiles, var error) = GetEventsFiles(fileSystem.BuildPath, isBuilder);
+			logger.LogDebug($" - Done loading events files({eventsFiles.Count}) - {stopwatch.ElapsedMilliseconds}");
 
 			if (error != null) return error;
 			if (eventsFiles == null) return null;
 
 			foreach (var eventFile in eventsFiles)
 			{
+				logger.LogDebug($" - Load file {eventFile} - {stopwatch.ElapsedMilliseconds}");
 				var goal = prParser.GetGoal(eventFile);
 				if (goal == null)
 				{
@@ -132,7 +137,8 @@ namespace PLang.Events
 					var eventBinding = events.FirstOrDefault(p => p == step.EventBinding);
 					if (eventBinding != null) continue;
 
-					var binding = step.EventBinding with { IsOnStep = false, IsLocal = !eventFile.StartsWith(fileSystem.Path.Join(fileSystem.OsDirectory, ".build")) };
+					bool isLocal = eventFile.StartsWith(fileSystem.Path.Join(fileSystem.RootDirectory, ".build"));					
+					var binding = step.EventBinding with { Goal = goal, GoalStep = step, IsOnStep = false, IsLocal = isLocal };
 					events.Add(binding);
 				}
 
@@ -143,6 +149,7 @@ namespace PLang.Events
 						container.RegisterForPLangUserInjections(injection.Type, injection.Path, injection.IsGlobal, injection.EnvironmentVariable, injection.EnvironmentVariableValue);
 					}
 				}
+				logger.LogDebug($" - Done loading file - {stopwatch.ElapsedMilliseconds}");
 			}
 			logger.LogDebug("Loaded {0} events", events.Count);
 			// todo: wtf Ingi?
@@ -154,8 +161,12 @@ namespace PLang.Events
 			{
 				runtimeEvents = events;
 			}
-
+			/* nothing should chnage on runtime, no need to reload goals
+			 * 
+			logger.LogDebug($" - Force reload - {stopwatch.ElapsedMilliseconds}");
 			prParser.ForceLoadAllGoals();
+			logger.LogDebug($" - Done Force reload - {stopwatch.ElapsedMilliseconds}");
+			*/
 			return null;
 		}
 
@@ -192,8 +203,10 @@ namespace PLang.Events
 			{
 				eventFiles.Add(rootEventFilePath);
 			}
+			//todo: hack, otherwise it will load events twice when building /system/
+			if (buildPath.EndsWith("/plang/system/.build".AdjustPathToOs())) return (eventFiles, null);
 
-			var osEventsPath = fileSystem.Path.Join(fileSystem.OsDirectory, ".build", "events", eventsFolderName);
+			var osEventsPath = fileSystem.Path.Join(fileSystem.SystemDirectory, ".build", "events", eventsFolderName);
 			var osEventFilePath = fileSystem.Path.Join(osEventsPath, "00. Goal.pr");
 			if (fileSystem.File.Exists(osEventFilePath))
 			{
@@ -204,7 +217,7 @@ namespace PLang.Events
 
 		}
 
-		public async Task<(object? Variables, IError? Error)> RunStartEndEvents(string eventType, string eventScope, bool isBuilder = false)
+		public async Task<(object? Variables, IError? Error)> RunStartEndEvents(string eventType, string eventScope, Goal goal, bool isBuilder = false)
 		{
 			var events = (isBuilder) ? await GetBuilderEvents() : await GetRuntimeEvents();
 			if (events == null) return (null, null);
@@ -216,6 +229,7 @@ namespace PLang.Events
 				var eve = eventsToRun[i];
 				if (ActiveEvents.ContainsKey(eve.Id)) continue;
 
+				eve.SourceGoal = goal;
 				var parameters = new Dictionary<string, object?>();
 				eve.GoalToCall.Parameters.Add(ReservedKeywords.Event, eve);
 				eve.GoalToCall.Parameters.Add(ReservedKeywords.IsEvent, true);
@@ -224,7 +238,7 @@ namespace PLang.Events
 				ActiveEvents.TryAdd(eve.Id, eve.GoalToCall.Name);
 				logger.LogDebug("Run event type {0} on scope {1}, binding to {2} calling {3}", eventType, eventScope, eve.GoalToBindTo, eve.GoalToCall);
 
-				var task = caller.RunGoal(eve.GoalToCall, isolated: !eve.IsLocal);
+				var task = caller.RunGoal(eve.GoalToCall, isolated: !eve.IsLocal, isEvent: true);
 				if (eve.WaitForExecution)
 				{
 					await task;
@@ -427,7 +441,14 @@ namespace PLang.Events
 					var goalToBindTo = new GoalToBindTo(goal.RelativeGoalPath);
 
 					var eventBinding = new EventBinding(EventType.Before, EventScope.StepError, goalToBindTo, errorHandler.GoalToCall,
-						true, step.Number, step.Text, true, null, errorHandler.IgnoreError, errorHandler.Key, errorHandler.Message, errorHandler.StatusCode, IsLocal: true, IsOnStep: true);
+						true, step.Number, step.Text, true, null, errorHandler.IgnoreError, errorHandler.Key, errorHandler.Message,
+						errorHandler.StatusCode, IsLocal: true, IsOnStep: true)
+					{
+						Goal = goal,
+						GoalStep = step,
+						SourceGoal = goal,
+						SourceStep = step
+					};
 
 					eventsToRun.Add(eventBinding);
 				}
@@ -506,7 +527,7 @@ namespace PLang.Events
 			return (null, error);
 		}
 
-		private async Task<(object? Variables, IError? Error)> Run(EventBinding eve, Goal? callingGoal = null, GoalStep? callingStep = null, IError? error = null, bool isBuilder = false)
+		private async Task<(object? Variables, IError? Error)> Run(EventBinding eve, Goal? sourceGoal = null, GoalStep? sourceStep = null, IError? error = null, bool isBuilder = false)
 		{
 
 			try
@@ -514,36 +535,38 @@ namespace PLang.Events
 				eve.Stopwatch = Stopwatch.StartNew();
 				if (error != null && AppContext.TryGetSwitch(ReservedKeywords.DetailedError, out bool isDetailedError))
 				{
-					ShowLogError(callingStep?.Goal, callingStep, error);
+					ShowLogError(sourceStep?.Goal, sourceStep, error);
 				}
 
 				string goalName = eve.GoalToCall.ToString() ?? "";
 				if (string.IsNullOrEmpty(goalName))
 				{
-					return (null, new RuntimeEventError("Goal name is empty", eve, callingGoal, callingStep));
+					return (null, new RuntimeEventError("Goal name is empty", eve, sourceGoal, sourceStep));
 				}
 
-				eve.Goal = callingGoal;
-				eve.GoalStep = callingStep;
-				eve.Instruction = callingStep?.Instruction;
+				eve.SourceGoal = sourceGoal;
+				eve.SourceStep = sourceStep;
+				eve.Instruction = sourceStep?.Instruction;
 
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.Event, eve);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.IsEvent, true);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.Error, error);
 			
+				/*
+				//todo: hack, we should not be modifying the goal name. 
 				if (eve.IsOnStep) {
-					eve.GoalToCall.Name = Path.Join(callingGoal?.RelativeGoalFolderPath ?? "", eve.GoalToCall.Name);
+					eve.GoalToCall.Name = Path.Join(sourceGoal?.RelativeGoalFolderPath ?? "", eve.GoalToCall.Name);
 				} else if (!eve.GoalToCall.Name.StartsWith("/"))
 				{
 					eve.GoalToCall.Name = Path.Join("/events", eve.GoalToCall.Name);
-				}
+				}*/
 
 				logger.LogDebug("Run event type {0} on scope {1}, binding to {2} calling {3}", eve.EventType.ToString(), eve.EventScope.ToString(), eve.GoalToBindTo, eve.GoalToCall);
 
 				ActiveEvents.TryAdd(eve.Id, eve.GoalToCall.Name);
 
-				if (callingStep != null) caller.SetStep(callingStep);
-				if (callingGoal != null) caller.SetGoal(callingGoal);
+				if (sourceStep != null) caller.SetStep(sourceStep);
+				if (sourceGoal != null) caller.SetGoal(sourceGoal);
 
 				Task<(object? Variables, IError? Error)> task;
 				if (eve.GoalToCall.Name.StartsWith("apps/") || eve.GoalToCall.Name.StartsWith("/apps/"))
@@ -553,7 +576,7 @@ namespace PLang.Events
 				}
 				else
 				{
-					task = caller.RunGoal(eve.GoalToCall, isolated: !eve.IsLocal);
+					task = caller.RunGoal(eve.GoalToCall, isolated: !eve.IsLocal, isEvent: true);
 				}
 
 				if (eve.WaitForExecution)
@@ -572,9 +595,9 @@ namespace PLang.Events
 					var exception = task.Exception.InnerException ?? task.Exception;
 					if (isBuilder)
 					{
-						return (null, new BuilderEventError(exception.Message, eve, callingGoal, callingStep, Exception: exception));
+						return (null, new BuilderEventError(exception.Message, eve, sourceGoal, sourceStep, Exception: exception));
 					}
-					return (null, new RuntimeEventError(exception.Message, eve, callingGoal, callingStep, Exception: exception));
+					return (null, new RuntimeEventError(exception.Message, eve, sourceGoal, sourceStep, Exception: exception));
 				}
 
 				var result = task.Result;
@@ -614,9 +637,9 @@ namespace PLang.Events
 
 				if (isBuilder)
 				{
-					return (Variables, new BuilderEventError(result.Error.Message, eve, callingGoal, callingStep, InitialError: result.Error));
+					return (Variables, new BuilderEventError(result.Error.Message, eve, sourceGoal, sourceStep, InitialError: result.Error));
 				}
-				return (Variables, new RuntimeEventError(result.Error.Message, eve, callingGoal, callingStep, InitialError: result.Error));
+				return (Variables, new RuntimeEventError(result.Error.Message, eve, sourceGoal, sourceStep, InitialError: result.Error));
 			}
 			catch (Exception ex)
 			{
@@ -650,7 +673,7 @@ namespace PLang.Events
 		 */
 		public bool IsStepMatch(GoalStep step, EventBinding eventBinding)
 		{
-			if (!eventBinding.IsLocal && step.Goal.IsOS && !eventBinding.IncludeOsGoals) return false;
+			if (!eventBinding.IsLocal && step.Goal.IsSystem && !eventBinding.IncludeOsGoals) return false;
 			if (eventBinding.StepNumber == null && eventBinding.StepText == null) return true;
 			if (eventBinding.StepNumber != null && step.Number == eventBinding.StepNumber)
 			{
@@ -678,17 +701,25 @@ namespace PLang.Events
 		 * GoalToBindTo = SampleApp.Hello => Binds to any goal name called Hello in /apps/SampleApp, if multiple then it will bind to all
 		 * GoalToBindTo = GenerateData(.goal)?:ProcessFile => Binds to any goal name called ProcessFile in the GenerateData.goal, if multiple then it will bind to all
 		 */
+
+		public bool IsGoalInEventCallstack(Goal goal, string path)
+		{
+			if (goal.RelativePrPath == path) return true;
+			if (goal.ParentGoal == null) return false;
+			return IsGoalInEventCallstack(goal.ParentGoal, path);
+		}
+
 		public bool GoalHasBinding(Goal goal, EventBinding eventBinding)
 		{
 			if (!eventBinding.IsLocal)
 			{
 				if (goal.Visibility == Visibility.Private && !eventBinding.IncludePrivate || eventBinding.GoalToBindTo == null) return false;
-				if (goal.IsOS && !eventBinding.IncludeOsGoals) return false;
+				if (goal.IsSystem && !eventBinding.IncludeOsGoals) return false;
 			}
 
-			if (goal.GoalName == eventBinding.GoalToCall.Name) return false;
+			if (IsGoalInEventCallstack(goal, eventBinding.GoalToCall.Path)) return false;
 
-			string goalToBindTo = eventBinding.GoalToBindTo.ToString().ToLower().Replace("!", "");
+			string goalToBindTo = eventBinding.GoalToBindTo.Name.ToLower().Replace("!", "");
 			// GoalToBindTo = Hello
 			if (!goalToBindTo.Contains(".") && !goalToBindTo.Contains("*") && !goalToBindTo.Contains("/") && !goalToBindTo.Contains(@"\") && !goalToBindTo.Contains(":"))
 			{

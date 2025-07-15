@@ -75,9 +75,11 @@ namespace PLang.Modules
 
 		public void Init(IServiceContainer container, Goal goal, GoalStep step, Instruction instruction, HttpContext? httpContext)
 		{
+			Stopwatch stopwatch = Stopwatch.StartNew();
 			this.container = container;
 
 			this.logger = container.GetInstance<ILogger>();
+			logger.LogDebug($"        - Init on BaseProgram - {stopwatch.ElapsedMilliseconds}");
 			this.memoryStack = container.GetInstance<MemoryStack>();
 			this.context = container.GetInstance<PLangAppContext>();
 			this.appCache = container.GetInstance<IAppCache>();
@@ -91,12 +93,13 @@ namespace PLang.Modules
 			this.goalStep = step;
 			this.instruction = instruction;
 			this.memoryStack.Goal = goal;
-
+			logger.LogDebug($"        - Set vars - {stopwatch.ElapsedMilliseconds}");
 			variableHelper = container.GetInstance<VariableHelper>();
 			this.typeHelper = container.GetInstance<ITypeHelper>();
 			this.llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
 			methodHelper = new MethodHelper(goalStep, variableHelper, typeHelper, logger);
 			fileAccessHandler = container.GetInstance<IFileAccessHandler>();
+			logger.LogDebug($"        - Done init - {stopwatch.ElapsedMilliseconds}");
 		}
 
 		public IServiceContainer Container { get { return container; } }
@@ -137,7 +140,7 @@ namespace PLang.Modules
 					return (null, new StepError($"Could not load method {function.Name} to run", goalStep, "MethodNotFound", 500));
 				}
 
-				logger.LogDebug("Method:{0}.{1}({2})", goalStep.ModuleType, method.Name, method.GetParameters());
+				logger.LogDebug("       - Method:{0}.{1}({2})", goalStep.ModuleType, method.Name, method.GetParameters());
 
 				//TODO: Should move this caching check up the call stack. code is doing to much work before returning cache
 				if (await LoadCached(method, function)) return (null, null);
@@ -190,7 +193,9 @@ namespace PLang.Modules
 					{
 						await task;
 					}
-					catch { }
+					catch (Exception ex) {
+						int i = 0;
+					}
 				}
 				if (task.Status == TaskStatus.Canceled)
 				{
@@ -712,9 +717,12 @@ namespace PLang.Modules
 		{
 			return PathHelper.GetPath(path, fileSystem, this.Goal);
 		}
+protected string GetSystemPath(string? path)
+		{
+			return PathHelper.GetSystemPath(path, fileSystem, this.Goal);
+		}
 
-
-		public IError? TaskHasError(Task<(IEngine, object? Variables, IError? error, IOutput output)> task)
+		public IError? TaskHasError(Task<(IEngine, object? Variables, IError? error)> task)
 		{
 
 			if (task.Exception != null)

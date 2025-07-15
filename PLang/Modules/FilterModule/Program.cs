@@ -168,7 +168,7 @@ can return a list of elements or one element, depending on if retrieveOneItem is
 - filter %list% where property contains 'Addr', return the first => variableToExtractFrom=""%list%"", propertyToFilterOn=""Name"", operatorOnPropertyToFilterOn=""contains"", retrieveOneItem=""first""
 </example>
 ")]
-		public async Task<(object?, IError?)> FilterOnProperty(object variableToExtractFrom, string propertyToFilterOn, string operatorOnPropertyToFilterOn = "=", string? retrieveOneItem = null)
+		public async Task<(object? Data, IError? Error)> FilterOnProperty(object variableToExtractFrom, string propertyToFilterOn, string operatorOnPropertyToFilterOn = "=", string? retrieveOneItem = null)
 		{
 			if (variableToExtractFrom == null)
 			{
@@ -258,7 +258,7 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 	retrieveOneItem=""first""
 </example>
 ")]
-		public async Task<(object?, IError?)> FilterOnPropertyAndValue(object variableToExtractFrom, string propertyToFilterOn, string valueToFilterBy, string? operatorToFilterOnValue = "=",
+		public async Task<(object? Data, IError? Error)> FilterOnPropertyAndValue(object variableToExtractFrom, string propertyToFilterOn, string valueToFilterBy, string? operatorToFilterOnValue = "=",
 			 string operatorOnPropertyToFilter = "=", string? propertyToExtract = null, bool throwErrorWhenNothingFound = false, string? retrieveOneItem = null,
 			 string operatorToFilterOnValueComparer = "insensitive", bool throwErrorOnEmptyResult = false)
 		{
@@ -630,31 +630,47 @@ throwErrorOnEmptyResult: set to true when user defines on error for key:NotFound
 				"endswith" => new Func<object, bool>(v => v != null && v.ToString().EndsWith(valueToFilterBy, comparer)), // Similar to contains
 				"equals" or "=" => new Func<object, bool>(v =>
 				{
-					if (v == null && valueToFilterBy == null) return true;
-					if (v == null) return false;
-					if (v is ObjectValue ov)
-					{
-						return v.Equals(valueToFilterBy);
-					}
-
-					if (v is string str)
-					{
-						return str != null && str.Equals(valueToFilterBy, comparer);
-					}
-
-					if (v is JToken token)
-					{
-						return token.ToString().Equals(valueToFilterBy.ToString(), comparer);
-					}
-					var obj = TypeHelper.ConvertToType(valueToFilterBy, v.GetType());
-
-					return v != null && v.Equals(obj);
+					bool equal = IsEqual(v, valueToFilterBy, comparer);
+					return equal;
+					
 				}),
-				"!=" => new Func<object, bool>(v => v != null && !v.Equals(valueToFilterBy)),
+				"!=" => new Func<object, bool>(v => {
+					bool equal = !IsEqual(v, valueToFilterBy, comparer);
+					return equal;
+				}),
 				">" => new Func<object, bool>(v => v != null && double.TryParse(v.ToString(), out var result) && result > double.Parse(valueToFilterBy)),
 				"<" => new Func<object, bool>(v => v != null && double.TryParse(v.ToString(), out var result) && result < double.Parse(valueToFilterBy)),
 				_ => throw new ArgumentException($"Unsupported operator: {operatorToFilter}")
 			};
+		}
+
+		private bool IsEqual(object v, string valueToFilterBy, StringComparison comparer)
+		{
+			if (v == null && valueToFilterBy == null) return true;
+			if (v == null) return false;
+			if (v is ObjectValue ov)
+			{
+				return ov.Equals(valueToFilterBy, comparer);
+			}
+
+			if (v is string str)
+			{
+				return str != null && str.Equals(valueToFilterBy, comparer);
+			}
+
+			if (v is JToken token)
+			{
+				if (token is JValue jValue)
+				{
+					if (valueToFilterBy == null && valueToFilterBy == jValue.Value) return true;
+
+					return jValue.Value.ToString() == valueToFilterBy;
+				}
+				return token.ToString().Equals(valueToFilterBy.ToString(), comparer);
+			}
+			var obj = TypeHelper.ConvertToType(valueToFilterBy, v.GetType());
+
+			return v != null && v.Equals(obj);
 		}
 
 		[Description("Retrieve element(s) from html by a css selector, retrieveOneItem: first|last|number (retrieveOneItem can also be a number representing the index.) ")]

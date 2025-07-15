@@ -1,0 +1,29 @@
+SetFramework
+- validate %framework.targetDevice% is not empty
+    on error call AskForDevice
+- get all folders in /.build/.templates, write to %folders%
+- get all folders in "templates" include system folder, %systemFolders%
+- merge %folders% and %systemFolders%, write to %folders%
+- filter %folders% where Name=%framework.Name%, return first and parent, write to %templateFolder%
+- if %templateFolder.AbsolutePath% is system path then
+    - copy %templateFolder.AbsolutePath% to /.build/.templates/%framework.Name%
+- get all files '.js' in /.build/.templates/%framework.Name%, write to %jsFiles%
+- get all files '.css' in /.build/.templates/%framework.Name%, write to %cssFiles%
+- foreach %jsFiles% call AppendToTypes Type="js"
+- foreach %cssFiles% call AppendToTypes Type="css"
+- return %framework%
+
+AppendToTypes
+- append to list %framework.Types% = {Type: "%Type%", Path:"%item.Path%"}
+
+AskForDevice
+- ask user "What kind of device is this app for, (console, website) - not supported yet(desktop, mobile, tv, watch, home assistant)"
+    write to %answer%
+- if %answer% is "console" or "website" then
+    - set %framework.targetDevice% = %answer%
+    - return goal
+- [llm] system: "What device does user want, console or website? set as null if neither"
+        user: %answer%
+        scheme: {device:console|website|null}
+- if %device% is null then call AskForDevice error="You can only choose between console and website"
+- set %framework.targetDevice% = %device%

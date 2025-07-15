@@ -1,0 +1,24 @@
+CheckGoals
+- logger info "Validating goals called"
+- get content of all '*.pr' files, in /.build/, include subfolder, write into %stepFiles%
+- foreach %stepFiles%, call InspectFileContent item=%file%
+- if %missingGoals% is not empty then, call ShowMissingGoals, else ShowAllValid
+
+InspectFileContent
+- filter from %file.Content% where "Type" equals "GoalToCall", get parent obj, write to %stepThatCallGoal%
+- go through %stepThatCallGoal%, call goal CheckGoal item=%parameter%
+
+CheckGoal
+- if %parameter.Value% does not contains "%" then, call SearchFor
+
+SearchFor
+- search in /.build/ for all dirs with name %parameter.Value.Replace("!", "")%, include sub folder
+    write to %dirs%
+- if %dirs.Count% == 0 then
+    - append to %missingGoals% list, unique = '%file.Path% - Missing goal: %item.Value%'
+
+ShowMissingGoals
+- logger warning 'Some goal file(s) are calling goals that dont exist:\n%missingGoals%'
+
+ShowAllValid
+- logger info '👍 All goals being called exist'

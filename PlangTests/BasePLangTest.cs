@@ -242,7 +242,7 @@ namespace PLangTests
 			archiver = Substitute.For<IArchiver>();
 			container.RegisterInstance(archiver);
 
-			prParser = new PrParser(fileSystem);
+			prParser = new PrParser(fileSystem, logger);
 			container.RegisterInstance(prParser);
 
 			llmCaching = new LlmCaching(fileSystem, settings);

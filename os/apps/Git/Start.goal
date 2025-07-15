@@ -1,0 +1,16 @@
+Start
+- write out "git client"
+/*
+- if %Settings.User% is empty then LoginToGit
+
+LoginToGit
+- ask user to give the neceary information, to login to github using cli
+    {scheme: appName:string, parameters:{key,value}}
+    on validate call ValidateResult
+    on before call ParseInput
+    on after call LogMetric
+    write to %answer%
+- terminal %answer.appName%, %answer.parameters%
+    write to %output%
+- if %output.type% == 
+*/

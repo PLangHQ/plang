@@ -61,6 +61,10 @@ namespace PLang.Events
 
 		[IgnoreWhenInstructed]
 		public Stopwatch Stopwatch { get; set; }
+		[JsonIgnore]
+		public Goal SourceGoal { get; internal set; }
+		[JsonIgnore]
+		public GoalStep SourceStep { get; internal set; }
 	}
 
 	public record EventModuleBinding(string[] Methods, EventBinding EventBinding) : EventBinding(EventBinding);

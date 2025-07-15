@@ -15,6 +15,8 @@ using PLang.Runtime;
 using PLang.Services.LlmService;
 using PLang.Utils;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Reactive.Concurrency;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text.RegularExpressions;
@@ -73,13 +75,17 @@ namespace PLang.Building
 
 		public async Task<IBuilderError?> BuildGoal(IServiceContainer container, Goal goal, int errorCount = 0, int goalIndex = 0)
 		{
+			Stopwatch stopwatch = Stopwatch.StartNew();
 			GroupedBuildErrors groupedBuildErrors = new();
 			if (!goal.HasChanged)
 			{
+				
 				bool hasChanged = goal.GoalSteps.Any(p => string.IsNullOrEmpty(p.AbsolutePrFilePath));
 				if (!hasChanged)
 				{
+					logger.LogDebug($" - Goal has not change - validating steps {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
 					var validationError = await ValidateSteps(goal);
+					logger.LogDebug($" - Done validating steps {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
 					if (validationError == null) return null;
 				}
 			}
@@ -95,7 +101,7 @@ namespace PLang.Building
 
 				return await BuildGoal(container, goal, errorCount, goalIndex);
 			}
-
+			logger.LogDebug($" - Run BuildGoal events {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
 			var (vars, buildEventError) = await eventRuntime.RunBuildGoalEvents(EventType.Before, goal);
 			if (!ContinueBuildGoal(buildEventError, goal))
 			{
@@ -106,7 +112,9 @@ namespace PLang.Building
 			{
 				if (goal.GoalSteps[i].IsValid) continue;
 
+				logger.LogDebug($" - Building step {goal.GoalSteps[i].Text.MaxLength(20)} - {stopwatch.ElapsedMilliseconds}");
 				var buildStepError = await BuildStep(goal, i);
+				logger.LogDebug($" - Done building step {goal.GoalSteps[i].Text.MaxLength(20)} - {stopwatch.ElapsedMilliseconds}");
 				if (buildStepError != null)
 				{
 					if (!buildStepError.ContinueBuild) return buildStepError;
@@ -114,8 +122,12 @@ namespace PLang.Building
 				}
 
 			}
+
+			logger.LogDebug($" - Cleanup and injections - {stopwatch.ElapsedMilliseconds}");
 			RemoveUnusedPrFiles(goal);
 			RegisterForPLangUserInjections(container, goal);
+
+			logger.LogDebug($" - Done with cleanup, running build events - {stopwatch.ElapsedMilliseconds}");
 
 			(vars, buildEventError) = await eventRuntime.RunBuildGoalEvents(EventType.After, goal);
 			if (!ContinueBuildGoal(buildEventError, goal))
@@ -124,7 +136,7 @@ namespace PLang.Building
 			}
 
 			WriteToGoalPrFile(goal);
-			logger.LogInformation($"Done building goal {goal.GoalName}");
+			logger.LogInformation($"Done building all goals {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");
 
 			return (groupedBuildErrors.Count > 0) ? groupedBuildErrors : null;
 		}
@@ -191,10 +203,11 @@ namespace PLang.Building
 
 		private async Task<GroupedBuildErrors?> ValidateSteps(Goal goal)
 		{
+			Stopwatch stopwatch = Stopwatch.StartNew();
 			GroupedBuildErrors errors = new();
 			foreach (var step in goal.GoalSteps)
 			{
-
+				logger.LogDebug($"   - Validating step {step.Text.MaxLength(10)} - {stopwatch.ElapsedMilliseconds}");
 				var functionResult = step.GetFunction(fileSystem);
 				if (functionResult.Error != null)
 				{
@@ -205,7 +218,7 @@ namespace PLang.Building
 					// skip rest of validation, we already know this step has invalid build
 					continue;
 				}
-
+				logger.LogDebug($"   - Found function, validating... - {stopwatch.ElapsedMilliseconds}");
 				var methodHelper = new MethodHelper(step, variableHelper, typeHelper, logger);
 				(var parameterProperties, var returnObjectsProperties, var invalidFunctionError) = methodHelper.ValidateFunctions(step.Instruction.Function, step.ModuleType, null);
 				if (invalidFunctionError != null)
@@ -217,6 +230,8 @@ namespace PLang.Building
 					// skip rest of validation, we already know this step has invalid build
 					continue;
 				}
+				
+				logger.LogDebug($"   - Validated function, run builder methods - {stopwatch.ElapsedMilliseconds}");
 
 				var builderRun = await instructionBuilder.RunBuilderMethod(step, step.Instruction, functionResult.Function);
 				if (builderRun.Error != null)
@@ -229,6 +244,18 @@ namespace PLang.Building
 					continue;
 				}
 
+				var validateGoalToCallResult = await instructionBuilder.ValidateGoalToCall(step, step.Instruction);
+				if (validateGoalToCallResult.Error != null) {
+					errors.Add(validateGoalToCallResult.Error);
+					step.Reload = true;
+					step.IsValid = false;
+
+					// skip rest of validation, we already know this step has invalid build
+					continue;
+				}
+				
+
+				logger.LogDebug($"   - Done running builder methods - {stopwatch.ElapsedMilliseconds}");
 				step.IsValid = true;
 
 			}
@@ -319,46 +346,22 @@ namespace PLang.Building
 					goal.GoalInfo = oldGoal.GoalInfo;
 				}
 			}
-			var isWebApiMethod = GoalNameContainsMethod(goal) || goal.RelativeGoalFolderPath.Contains(Path.DirectorySeparatorChar + "api");
 
-			if (!isWebApiMethod)
-			{
-				return await CreateDescriptionForGoal(goal, oldGoal);
-			}
-			if (goal.GoalInfo == null || goal.GoalInfo.GoalApiInfo == null || goal.Text == null || goal.Text != oldGoal?.Text)
-			{
-				var promptMessage = new List<LlmMessage>();
-				promptMessage.Add(new LlmMessage("system", $@"
-GoalApiIfo:
-	Determine the Method and write description of this api, using the content of the file.
-	Method can be: GET, POST, DELETE, PUT, PATCH, OPTIONS, HEAD. The content will describe a function in multiple steps.
-	From the first line, you should extrapolate the CacheControl if the user defines it.
-	ContentType: can be application/json, text/html, etc
-	CacheControlPrivateOrPublic: public or private
-	NoCacheOrNoStore: no-cache or no-store"));
-				promptMessage.Add(new LlmMessage("user", goal.GetGoalAsString()));
-				var llmRequest = new LlmRequest("GoalApiInfo", promptMessage);
-
-				(var result, var queryError) = await llmServiceFactory.CreateHandler().Query<Model.GoalInfo>(llmRequest);
-				if (queryError != null) return (goal, new GoalBuilderError(queryError, goal, false));
-
-				if (result != null)
-				{
-					goal.GoalInfo = result;
-				}
-
-			}
-			return (goal, null);
+			return await CreateDescriptionForGoal(goal, oldGoal);
+			
 		}
 
 		public record GoalDescription(string Description, Dictionary<string, string>? IncomingVariablesRequired = null);
 
 		private async Task<(Goal, IBuilderError?)> CreateDescriptionForGoal(Goal goal, Goal? oldGoal)
 		{
+			
 			if (!string.IsNullOrEmpty(goal.Description) && goal.GetGoalAsString() == oldGoal?.GetGoalAsString())
 			{
 				return (goal, null);
 			}
+
+			logger.LogDebug($" - Create desription for goal {goal.GoalName}");
 
 			var promptMessage = new List<LlmMessage>();
 			promptMessage.Add(new LlmMessage("system", $@"
@@ -395,7 +398,7 @@ Be concise
 
 			goal.Description = goalDescription.Description;
 			goal.IncomingVariablesRequired = goalDescription.IncomingVariablesRequired;
-
+			logger.LogDebug($" - Done creating desription for goal {goal.GoalName}");
 			return (goal, null);
 		}
 

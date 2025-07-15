@@ -29,7 +29,7 @@ namespace PLang.Services.SettingsService
 		public SqliteSettingsRepository(IPLangFileSystemFactory fileSystemFactory, PLangAppContext context, ILogger logger)
 		{
 			this.fileSystem = fileSystemFactory.CreateHandler();
-			if (fileSystem.RootDirectory.Equals(fileSystem.OsDirectory))
+			if (fileSystem.RootDirectory.Equals(fileSystem.SystemDirectory))
 			{
 				throw new Exception($"Settings should never point to OS folder. {ErrorReporting.CreateIssueShouldNotHappen}");
 			}

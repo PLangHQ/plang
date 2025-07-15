@@ -1,0 +1,17 @@
+Events
+/- before each goal, include private, call Runtime/SendExecutionPath action="start", startup args=--debug
+/- after each goal, include private, call Runtime/SendExecutionPath action="end", startup args=--debug
+/- before each step, include private, call Runtime/SendExecutionPath action="start_step", startup args=--debug
+- before each step, include private goals, call Runtime/SendDebug, start parameter --debug
+- before goal ends, include private goals, call Runtime/SendDebug, start parameter --debug
+- on step error, 
+    exception type: PLang.Exceptions.InvalidInstructionFileException, include os
+    call /events/Runtime/HandleBadInstructionFile
+- on step error, 
+    exception type: PLang.Exceptions.MethodNotFoundException, include os, 
+    call /events/Runtime/HandleBadInstructionFile
+- on step error, key:"InvalidParameter", include os, call /events/Runtime/HandleBadInstructionFile
+- on step error, key:"InvalidInstructionFile", include os, call /events/Runtime/HandleBadInstructionFile
+- on step error key:"PrFileNotFound", include os, call /events/Runtime/PrFileNotFound
+- on step error, call /events/Runtime/DebugErrorInIde, start args --debug
+- on app error, call /events/Runtime/OnAppError

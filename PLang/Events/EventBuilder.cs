@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using LightInject;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PLang.Building.Model;
 using PLang.Building.Parsers;
@@ -132,6 +133,12 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, Module, Go
                        return ([], new BuilderEventError($"Could not build an events from step {step.Text} in {filePath}. LLM didn't give any response. Try to rewriting the event.", eventBinding, Step: step, Goal: step.Goal));
                     }
 
+
+					(var foundGoal, error) = GoalHelper.GetGoal(step.RelativeGoalPath, step.Goal.AbsoluteAppStartupFolderPath, eventBinding.GoalToCall, goalParser.GetGoals(), new());
+					if (error != null) return (new(), new BuilderError(error));
+
+					eventBinding.GoalToCall.Path = foundGoal.RelativePrPath;
+
 					if (eventBinding.EventScope == EventScope.Module)
 					{
 						/*
@@ -230,21 +237,27 @@ EventScope {{ StartOfApp, EndOfApp, AppError, RunningApp, Goal, Step, Module, Go
             var eventsPath = Path.Join(fileSystem.GoalsPath, "events");
             if (fileSystem.File.Exists(eventsPath + ".goal"))
             {
-                return (new(), new Error("Events.goal file must be located in the events folder."));
+                return (new(), new Error("Events.goal file must be located in the 'events' folder."));
             }
             if (fileSystem.File.Exists(eventsPath + "build.goal"))
             {
-				return (new(), new Error("EventsBuild.goal file must be located in the events folder."));
+				return (new(), new Error("EventsBuild.goal file must be located in the 'events' folder."));
             }
 
-            if (!fileSystem.Directory.Exists(eventsPath)) return (new(), null);
-
-            return (fileSystem.Directory.GetFiles(eventsPath, "*.goal", SearchOption.AllDirectories)
-                .Where(file =>
+			List<string> files = new();
+			
+			if (fileSystem.Directory.Exists(eventsPath))
+			{
+				files = fileSystem.Directory.GetFiles(eventsPath, "*.goal", SearchOption.AllDirectories)
+				.Where(file =>
 				{
-                    var isMatch = Regex.IsMatch(Path.GetFileName(file).ToLower(), @"(events|eventsbuild)\.goal$");
-                    return isMatch;
-				}).ToList(), null);
+					var isMatch = Regex.IsMatch(Path.GetFileName(file).ToLower(), @"(events|eventsbuild)\.goal$");
+					return isMatch;
+				}).ToList();
+			}
+
+
+			return (files, null);
         }
     }
 

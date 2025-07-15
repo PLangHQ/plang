@@ -399,15 +399,21 @@ public class Program : BaseProgram, IDisposable
 	{
 		try
 		{
+			Stopwatch stopwatch = Stopwatch.StartNew();
+			IError? error = null;
+
 			var acceptedTypes = httpContext.Request.Headers.Accept.FirstOrDefault();
 
 			var isPlangRequest = acceptedTypes?.StartsWith("application/plang") ?? false;
 			if (isPlangRequest)
 			{
-				return await ProcessPlangRequest(httpContext, webserverInfo, webserverInfo.Routings, outputStream);
+				logger.LogInformation($" ---------- Request Starts ---------- - {stopwatch.ElapsedMilliseconds}");
+				error = await ProcessPlangRequest(httpContext, webserverInfo, webserverInfo.Routings, outputStream);
+				logger.LogInformation($" ---------- Request Done ---------- - {stopwatch.ElapsedMilliseconds}");
+				return error;
 			}
 
-			(var goal, var routing, var slugVariables, var error) = GetGoalByRouting(webserverInfo.Routings, httpContext.Request);
+			(var goal, var routing, var slugVariables, error) = GetGoalByRouting(webserverInfo.Routings, httpContext.Request);
 			if (error != null) return error;
 
 			if (goal == null)
@@ -420,12 +426,17 @@ public class Program : BaseProgram, IDisposable
 				return new NotFoundError("Routing not found");
 			}
 
+			logger.LogInformation($" ---------- Request Starts ---------- - {stopwatch.ElapsedMilliseconds}");
 			(var signedMessage, error) = await VerifySignature(httpContext, outputStream);
 			// Unsigned requests are allowed, so we let 401 through
 			if (error?.StatusCode != 401) return error;
 
 
-			return await ProcessGoal(goal, slugVariables, webserverInfo, routing, httpContext, outputStream);
+			error = await ProcessGoal(goal, slugVariables, webserverInfo, routing, httpContext, outputStream);
+
+			logger.LogInformation($" ---------- Request Done ---------- - {stopwatch.ElapsedMilliseconds}");
+
+			return error;
 		}
 		catch (Exception ex)
 		{
@@ -439,6 +450,7 @@ public class Program : BaseProgram, IDisposable
 		{
 			return new NotFoundError($"Goal could not be loaded");
 		}
+		Stopwatch stopwatch = Stopwatch.StartNew();
 
 		var resp = httpContext.Response;
 		var request = httpContext.Request;
@@ -465,20 +477,21 @@ public class Program : BaseProgram, IDisposable
 
 		resp.Headers.Add("X-Goal-Hash", goal.Hash);
 		resp.Headers.Add("X-Goal-Signature", goal.Signature);
+		
+		logger.LogDebug($"  - Starting parsing request - {stopwatch.ElapsedMilliseconds}");
 
 		(var requestObjectValue, var error) = await ParseRequest(httpContext, outputStream);
 		if (error != null) return error;
-
+		logger.LogDebug($"  - Done parsing request, doing callback info - {stopwatch.ElapsedMilliseconds}");
 		(var callbackInfos, error) = await GetCallbackInfos(request);
 		if (error != null) return error;
-
+		logger.LogDebug($"  - Done callback info, getting engine - {stopwatch.ElapsedMilliseconds}");
 		var pool = this.engine.GetEnginePool(goal.AbsoluteAppStartupFolderPath);
 		var engine = await pool.RentAsync(this.engine, goalStep, goal.AbsoluteGoalFolderPath, outputStream);
 
 		engine.HttpContext = httpContext;
 		engine.GetMemoryStack().Put(requestObjectValue, goalStep);
 		engine.CallbackInfos = callbackInfos;
-
 		if (slugVariables != null)
 		{
 			foreach (var item in slugVariables)
@@ -486,6 +499,7 @@ public class Program : BaseProgram, IDisposable
 				engine.GetMemoryStack().Put(item, goalStep);
 			}
 		}
+		logger.LogDebug($"  - Run goal - {stopwatch.ElapsedMilliseconds}");
 
 		(var vars, error) = await engine.RunGoal(goal, 0);
 		if (error != null && error is not IErrorHandled)
@@ -496,6 +510,9 @@ public class Program : BaseProgram, IDisposable
 			return error;
 		}
 		pool.Return(engine);
+
+		logger.LogDebug($"  - Return engine - {stopwatch.ElapsedMilliseconds}");
+
 		return null;
 	}
 
@@ -556,6 +573,10 @@ public class Program : BaseProgram, IDisposable
 
 	private async Task<IError?> ProcessPlangRequest(HttpContext httpContext, WebserverInfo webserverInfo, List<Routing>? routings, IOutputStream outputStream)
 	{
+		Stopwatch stopwatch = Stopwatch.StartNew();
+
+		logger.LogDebug($" - Verify signature - {stopwatch.ElapsedMilliseconds}");
+
 		(var signature, var error) = await VerifySignature(httpContext, outputStream);
 		if (error != null) return error;
 
@@ -567,7 +588,7 @@ public class Program : BaseProgram, IDisposable
 			await HandlePlangPoll(httpContext, signature.Identity);
 			return null;
 		}
-
+		logger.LogDebug($" - get routing - {stopwatch.ElapsedMilliseconds}");
 		(var goal, var routing, var slugVariables, error) = GetGoalByRouting(routings, httpContext.Request);
 		if (error != null) return error;
 		if (routing == null) return new NotFoundError("Routing not found");
@@ -575,7 +596,10 @@ public class Program : BaseProgram, IDisposable
 
 		routing = routing with { ContentType = "application/plang+json" };
 
-		return await ProcessGoal(goal, slugVariables, webserverInfo, routing, httpContext, outputStream);
+		logger.LogDebug($" - ProcessGoal starts - {stopwatch.ElapsedMilliseconds}");
+		error = await ProcessGoal(goal, slugVariables, webserverInfo, routing, httpContext, outputStream);
+		logger.LogDebug($" - ProcessGoal done - {stopwatch.ElapsedMilliseconds}");
+		return error;
 	}
 
 	private async Task<(SignedMessage? SignedMessage, IError? Error)> VerifySignature(HttpContext httpContext, IOutputStream outputStream)
@@ -882,6 +906,9 @@ Frontpage
 	{
 		if (string.IsNullOrEmpty(routing.Route?.Goal?.Name)) return (null, new ProgramError("Goal name in route is empty", goalStep, StatusCode: 500));
 
+		var result = GoalHelper.GetGoal("/", fileSystem.RootDirectory, routing.Route.Goal, prParser.GetGoals(), new());
+		if (result.Item1 != null) return (result.Item1, null);
+
 		var goal = prParser.GetGoalByAppAndGoalName(fileSystem.RelativeAppPath, routing.Route.Goal.Name);
 		if (goal != null)
 		{
@@ -899,7 +926,7 @@ Frontpage
 		string goalBuildDirPath = fileSystem.Path.Join(fileSystem.BuildPath, goalName).AdjustPathToOs();
 		if (fileSystem.Directory.Exists(goalBuildDirPath))
 		{
-			return (prParser.GetGoal(goalBuildDirPath), null);
+			return (prParser.GetGoal(fileSystem.Path.Join(goalBuildDirPath, ISettings.GoalFileName)), null);
 		}
 
 		logger.LogDebug($"Path doesnt exists - goalBuildDirPath:{goalBuildDirPath}");
@@ -933,16 +960,21 @@ Frontpage
 	{
 		if (ctx is null) return (null, new Error("context is empty"));
 
+		Stopwatch stopwatch = Stopwatch.StartNew();
+
 		var req = ctx.Request;
 		var query = req.Query.ToDictionary(k => k.Key, k => (object?)k.Value.ToString());
 		ObjectValue objectValue;
-		
+		logger.LogDebug($"    - ParseHeader - {stopwatch.ElapsedMilliseconds}");
 		ParseHeaders(ctx, outputStream);
+		logger.LogDebug($"    - GetRequest - {stopwatch.ElapsedMilliseconds}");
 		var properties = GetRequest(ctx);
-
+		logger.LogDebug($"    - Done with GetRequest - {stopwatch.ElapsedMilliseconds}");
 		// ---------- JSON --------------------------------------------------------
 		if (req.HasJsonContentType())
 		{
+			logger.LogDebug($"    - JsonHandler starts - {stopwatch.ElapsedMilliseconds}");
+
 			req.EnableBuffering();
 			var body = await System.Text.Json.JsonSerializer.DeserializeAsync<Dictionary<string, object?>>(req.Body)
 					   ?? new();
@@ -962,6 +994,8 @@ Frontpage
 			}
 
 			objectValue = new ObjectValue("request", parameters, properties: properties);
+			
+			logger.LogDebug($" - JsonHandler done - {stopwatch.ElapsedMilliseconds}");
 
 			return (objectValue, null);
 		}
@@ -969,6 +1003,7 @@ Frontpage
 		// ---------- Form / Multipart (fields + files) ---------------------------
 		if (req.HasFormContentType)
 		{
+			logger.LogDebug($"    - FormHandler starts - {stopwatch.ElapsedMilliseconds}");
 			var form = await req.ReadFormAsync();
 			var fields = form.ToDictionary(k => k.Key, k => (object?)k.Value.ToString());
 
@@ -979,12 +1014,14 @@ Frontpage
 			foreach (var (k, v) in query) payload.TryAdd(k, v);
 
 			objectValue = new ObjectValue("request", payload, properties: properties);
-
+			logger.LogDebug($"    - FormHandler done - {stopwatch.ElapsedMilliseconds}");
 
 			return (objectValue, null);
 		}
 
 		objectValue = new ObjectValue("request", query, properties: properties);
+
+		logger.LogDebug($"    - Return request object - {stopwatch.ElapsedMilliseconds}");
 		return (objectValue, null);
 	}
 
@@ -1222,14 +1259,14 @@ Frontpage
 
 		if (!string.IsNullOrEmpty(request.Headers.UserAgent))
 		{
-			var clientInfo = Parser.GetDefault().Parse(request.Headers.UserAgent, true);
+			var clientInfo = parser.Parse(request.Headers.UserAgent, true);
 			properties.Add(new ObjectValue("ClientInfo", clientInfo));
 		}
-
+		
 		return properties;
 	}
 
-
+	static Parser parser = Parser.GetDefault();
 }
 
 

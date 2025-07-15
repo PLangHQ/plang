@@ -1,5 +1,6 @@
 ﻿
 using LightInject;
+using Microsoft.Extensions.Logging;
 using PLang;
 using PLang.Container;
 using PLang.Interfaces;
@@ -12,7 +13,7 @@ using static PLang.Executor;
 
 (var builder, var runtime) = RegisterStartupParameters.Register(args);
 
-Console.CancelKeyPress += async (_, e) =>
+Console.CancelKeyPress += (_, e) =>
 {
 	e.Cancel = true;
 
@@ -32,7 +33,12 @@ if (builder)
 
 
 	var pLanguage = new Executor(container);
-	pLanguage.Execute(args, ExecuteType.Builder).GetAwaiter().GetResult();
+	var result = pLanguage.Execute(args, ExecuteType.Builder).GetAwaiter().GetResult();
+	if (result.Error != null)
+	{
+		var logger = container.GetInstance<ILogger>();
+		logger.LogError(result.Error.ToString());
+	}
 
 	container.Dispose();
 }
@@ -50,8 +56,12 @@ if (runtime)
 	fileAccessHandler.GiveAccess(Environment.CurrentDirectory, Path.Join(AppContext.BaseDirectory, "os"));
 
 	var pLanguage = new Executor(container);
-	pLanguage.Execute(args, ExecuteType.Runtime).GetAwaiter().GetResult();
-
+	var result = pLanguage.Execute(args, ExecuteType.Runtime).GetAwaiter().GetResult();
+	if (result.Error != null)
+	{
+		var logger = container.GetInstance<ILogger>();
+		logger.LogError(result.Error.ToFormat("text").ToString());
+	}
 	container.Dispose();
 }
 

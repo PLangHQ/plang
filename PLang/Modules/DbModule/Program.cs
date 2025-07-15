@@ -491,7 +491,10 @@ namespace PLang.Modules.DbModule
 						ShowWarning(ex);
 						return (1, null);
 					}
+
+					
 				}
+
 
 				return (0, new SqlError(ex.Message, sql, null, goalStep, function, Exception: ex));
 			}

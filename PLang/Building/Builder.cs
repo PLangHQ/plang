@@ -58,18 +58,26 @@ namespace PLang.Building
 			{
 				Stopwatch stopwatch = Stopwatch.StartNew();
 				AppContext.SetSwitch("Builder", true);
+				Goal goal = Goal.Builder;
 
-				var goals = goalParser.GetGoalFilesToBuild(fileSystem, fileSystem.GoalsPath);
-				
+				logger.LogDebug($"Loading goal files - {stopwatch.ElapsedMilliseconds}");
+				var goals = goalParser.GetGoalFilesToBuild();
+				logger.LogDebug($"Done loading goal files now Init folder - {stopwatch.ElapsedMilliseconds}");
+
 				InitFolders();
+
+				logger.LogDebug($"Done Init folder, now load event runtime - {stopwatch.ElapsedMilliseconds}");
 				logger.LogInformation("Build Start:" + DateTime.Now.ToLongTimeString());
 
 				var error = eventRuntime.Load(true);
 				if (error != null) return error;
 
+				logger.LogDebug($"Done event runtime - {stopwatch.ElapsedMilliseconds}");
+				
 				var setupGoals = goals.Where(p => p.IsSetup);
 				foreach (var setupGoal in setupGoals)
 				{
+					logger.LogDebug($"Start setup file build on '{setupGoal.GoalName}' - {stopwatch.ElapsedMilliseconds}");
 					var goalError = await goalBuilder.BuildGoal(container, setupGoal);
 					if (goalError != null && !goalError.ContinueBuild)
 					{
@@ -80,26 +88,30 @@ namespace PLang.Building
 						logger.LogWarning(goalError.ToFormat().ToString());
 						goalBuilder.BuildErrors.Add(goalError);
 					}
+					logger.LogDebug($"Done Setup Build on {setupGoal.GoalName} - {stopwatch.ElapsedMilliseconds}");
 				}
 
 				if (absoluteGoalPath != null)
 				{
 					goals = goals.Where(p => p.AbsoluteGoalPath.Equals(absoluteGoalPath)).ToList();
 				}
-
+				logger.LogDebug($"Start building BuildEvents - {stopwatch.ElapsedMilliseconds}");
 				(_, error) = await eventBuilder.BuildEventsPr();
 				if (error != null) return error;
+				logger.LogDebug($"Done building BuildEvents - {stopwatch.ElapsedMilliseconds}");
 
-				var (_, eventError) = await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.StartOfApp, true);
+				var (_, eventError) = await eventRuntime.RunStartEndEvents(EventType.Before, EventScope.StartOfApp, goal, true);
 				if (eventError != null)
 				{
 					return eventError;
 				}
 				
-				goals = goals.Where(p => !p.IsSetup).ToList();
-				foreach (var goal in goals)
+				goals = goals.Where(p => !p.IsSetup && !p.IsEvent).ToList();
+				foreach (var goalToBuild in goals)
 				{
-					var goalError = await goalBuilder.BuildGoal(container, goal);
+					Stopwatch buildGoalTime = Stopwatch.StartNew();
+					logger.LogDebug($"Building goal {goalToBuild.GoalName} - {stopwatch.ElapsedMilliseconds}");
+					var goalError = await goalBuilder.BuildGoal(container, goalToBuild);
 					if (goalError != null && !goalError.ContinueBuild)
 					{
 						return goalError;
@@ -109,12 +121,22 @@ namespace PLang.Building
 						goalBuilder.BuildErrors.Add(goalError);
 						logger.LogWarning(goalError.ToFormat().ToString());
 					}
+
+					foreach (var subGoalPr in goalToBuild.SubGoals)
+					{
+						var subgoal = goals.FirstOrDefault(p => p.RelativePrPath == subGoalPr);
+						if (subgoal != null)
+						{
+							subgoal.AddVariables(goalToBuild.GetVariables());
+						}
+					}
+					logger.LogDebug($"Done building goal {goalToBuild.GoalName} took {buildGoalTime.ElapsedMilliseconds} - Total build time: {stopwatch.ElapsedMilliseconds}");
 				}
 
-
+				logger.LogDebug($"Cleaning up goal files - {stopwatch.ElapsedMilliseconds}");
 				CleanGoalFiles();
 
-				(_, eventError) = await eventRuntime.RunStartEndEvents(EventType.After, EventScope.EndOfApp, true);
+				(_, eventError) = await eventRuntime.RunStartEndEvents(EventType.After, EventScope.EndOfApp, goal, true);
 				if (eventError != null)
 				{
 					return eventError;
@@ -123,7 +145,7 @@ namespace PLang.Building
 				ReleaseDatabase();
 				ShowBuilderErrors(goals, stopwatch);
 
-
+				logger.LogDebug($"Done - Finished cleaning, db releasee and inform user - {stopwatch.ElapsedMilliseconds}");
 
 
 			}

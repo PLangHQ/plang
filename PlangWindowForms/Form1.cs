@@ -517,7 +517,7 @@ namespace PlangWindowForms
 					return;
 				}
 
-				string result = goalResult.output.Data.ToString();
+				string result = "";
 		
 				if (string.IsNullOrEmpty(result)) {
 					args.Response = webView.CoreWebView2.Environment.CreateWebResourceResponse(null, 200, "Ok", $"Content-Type: text/html");

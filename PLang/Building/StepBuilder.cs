@@ -159,7 +159,7 @@ public class StepBuilder : IStepBuilder
 
 		if (ShouldReturnError(step, error)) return (instruction, error);
 
-		logger.Value.LogWarning("Error getting instruction, will try again. Error:" + error.MessageOrDetail);
+		logger.Value.LogWarning("Error getting instruction, will try again. Error:" + error.Message);
 
 		return await BuildInstruction(stepBuilder, goal, step, error);
 
@@ -250,7 +250,8 @@ public class StepBuilder : IStepBuilder
 
 		if (instruction!.Function == null || string.IsNullOrEmpty(instruction.Function.Name)) return (false, null);
 
-		step.Reload = (step.Reload || instruction.Reload && step.Text != instruction.Text);
+		bool doReload = (step.Reload || instruction.Reload && step.Text != instruction.Text);
+		step.Reload = doReload;
 		if (step.Reload) return (!step.Reload, null);
 
 		var gf = instruction.Function;
@@ -276,7 +277,7 @@ public class StepBuilder : IStepBuilder
 		if (prevError != null) result.Error.ErrorChain.Add(prevError);
 		if (ShouldReturnError(step, result.Error)) return (step, result.Error);
 
-		logger.Value.LogWarning($"- Error building step, will try again. Error: {result.Error.MessageOrDetail}");
+		logger.Value.LogWarning($"- Error building step, will try again. Error: {result.Error.Message}");
 
 		return await BuildStepInformationWithRetry(goal, step, stepIndex, excludeModules, result.Error);
 	}
@@ -405,7 +406,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 
 		(bool canBeCached, bool canHaveErrorHandling, bool canBeAsync) = GetMethodSettings(step, instruction);
 
-		var stepInformationSystemPath = fileSystem.Path.Join(fileSystem.OsDirectory, "modules", "StepPropertiesSystem.llm");
+		var stepInformationSystemPath = fileSystem.Path.Join(fileSystem.SystemDirectory, "modules", "StepPropertiesSystem.llm");
 		if (!fileSystem.File.Exists(stepInformationSystemPath))
 		{
 			throw new Exception($"StepPropertiesSystem.llm is missing from system. It should be located at {stepInformationSystemPath}");
@@ -496,7 +497,7 @@ Builder will continue on other steps but not this one: ({step.Text}).
 		}
 		var jsonScheme = TypeHelper.GetJsonSchema(typeof(StepInformation));
 
-		var stepInformationSystemPath = fileSystem.Path.Join(fileSystem.OsDirectory, "modules", "StepInformationSystem.llm");
+		var stepInformationSystemPath = fileSystem.Path.Join(fileSystem.SystemDirectory, "modules", "StepInformationSystem.llm");
 		if (!fileSystem.File.Exists(stepInformationSystemPath))
 		{
 			throw new Exception($"StepInformationSystem.llm is missing from system. It should be located at {stepInformationSystemPath}");

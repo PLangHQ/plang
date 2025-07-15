@@ -39,6 +39,8 @@ namespace PLang.Modules.OutputModule
 
 		public async Task<IError?> SetOutputStream(string channel, GoalToCallInfo goalToCall, Dictionary<string, object?>? parameters = null)
 		{
+			throw new NotImplementedException();
+			/*
 			var validate = programFactory.GetProgram<ValidateModule.Program>(goalStep);
 			var error = await validate.IsNotEmpty([channel], "Channel cannot be empty");
 			if (error != null) return error;
@@ -47,7 +49,8 @@ namespace PLang.Modules.OutputModule
 			if (error != null) return error;
 
 			goal.AddVariable(new GoalToCallInfo(goalToCall, parameters), variableName: "!output_stream_" + channel);
-			return null;
+			
+			return null;*/
 		}
 		/*
 		[Description("Send to user and waits for answer. Uses llm to construct a question to user and to format the answer. Developer defines specifically to use llm")]
@@ -136,7 +139,24 @@ namespace PLang.Modules.OutputModule
 			}
 		}
 
+		public record AskTemplateError(object Error, string OnErrorMethod);
 
+		[Description("Remove % from AnswerVariableName.")]
+		public record AskTemplateOptions(string OutputFile, AskTemplateError error)
+		{
+
+
+		}
+
+		[Description("Send to a question to the output stream and waits for answer. This is used when user defines complex options, it will build ui for it")]
+		public async Task<(object?, IError?)> AskTemplate(AskTemplateOptions askOptions)
+		{/*
+			Dictionary<string, object?>
+
+			var caller = GetProgramModule<CallGoalModule.Program>();
+			caller.RunGoal("/modules/UiModule/RenderUserIntent", )*/
+			return (null, null);
+		}
 
 		[Description("Send to a question to the output stream and waits for answer.")]
 		public async Task<(object?, IError?)> Ask(AskOptions askOptions)
@@ -175,7 +195,7 @@ namespace PLang.Modules.OutputModule
 					var runGoalResult = await caller.RunGoal(askOptions.OnCallback);
 					if (runGoalResult.Error != null) return (null, runGoalResult.Error);
 				}
-				return await ProcessAnswer(answer, askOptions);
+				return await ProcessAnswer(answer, askOptions, true);
 			}
 
 			var outputStream = outputStreamFactory.CreateHandler(/*askOptions.UserOrSystem, askOptions.Channel*/);
@@ -192,11 +212,11 @@ namespace PLang.Modules.OutputModule
 
 			if (!outputStream.IsStateful) return (null, new EndGoal(goalStep, "", Levels: 9999));
 
-			return await ProcessAnswer(answer, askOptions);
+			return await ProcessAnswer(answer, askOptions, outputStream.IsStateful);
 
 		}
 
-		private async Task<(object?, IError?)> ProcessAnswer(object? answer, AskOptions askOptions)
+		private async Task<(object?, IError?)> ProcessAnswer(object? answer, AskOptions askOptions, bool isStateful)
 		{
 			// escape any variable that user inputs
 			answer = answer?.ToString()?.Replace("%", @"\%") ?? string.Empty;
@@ -215,6 +235,8 @@ namespace PLang.Modules.OutputModule
 				}
 			}
 			if (groupedErrors.Count > 0) return (answer, groupedErrors);
+
+			if (isStateful) return (answer, null);
 
 			var callbackBase64 = memoryStack.Get<string>("request.callback");
 			if (string.IsNullOrEmpty(callbackBase64)) return (null, new ProgramError("callback was invalid", goalStep));

@@ -1,4 +1,5 @@
-﻿using Nethereum.ABI.CompilationMetadata;
+﻿using Epiforge.Extensions.Components;
+using Nethereum.ABI.CompilationMetadata;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
@@ -17,6 +18,7 @@ using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Xml;
+using System.Xml.Linq;
 using Websocket.Client.Logging;
 using static PLang.Modules.DbModule.Program;
 
@@ -31,7 +33,7 @@ public interface ITypeHelper
 	Type? GetBuilderType(string module);
 	Type? GetRuntimeType(string? module);
 	List<Type> GetTypesByType(Type type);
-	Task Run(string @namespace, string @class, string method, Dictionary<string, object?> parameters);
+	Task<object?> Run(string @namespace, string @class, string method, Dictionary<string, object?>? parameters);
 }
 
 public class TypeHelper : ITypeHelper
@@ -336,8 +338,30 @@ public class TypeHelper : ITypeHelper
 		if (!module.EndsWith(".Builder")) module += ".Builder";
 		return builderModules.FirstOrDefault(p => p.FullName == module);
 	}
-	public async Task Run(string @namespace, string @class, string method, Dictionary<string, object?>? Parameters)
+
+
+	public async Task<object?> Run(string ns, string cls, string method,
+		Dictionary<string, object?>? named = null)
 	{
+		var type = Type.GetType($"{ns}.{cls}", throwOnError: true)!;
+		var mi = type.GetMethod(method, BindingFlags.Public |
+											BindingFlags.Instance |
+											BindingFlags.Static)
+					?? throw new MissingMethodException(type.FullName, method);
+
+		// build positional array once
+		var pars = mi.GetParameters();
+		var args = pars.Length == 0
+			? Array.Empty<object?>()
+			: pars.Select(p =>
+				  named != null && named.TryGetValue(p.Name!, out var v)
+					  ? v
+					  : p.HasDefaultValue ? p.DefaultValue
+					  : throw new ArgumentException($"Missing '{p.Name}'."))
+				  .ToArray();
+
+		var target = mi.IsStatic ? null : Activator.CreateInstance(type);
+		return mi.FastInvoke(target, args);   
 
 		//InvokeMethoed(GetProgramInstance(), @namespace, @class, method, Parameters);
 	}
@@ -865,5 +889,6 @@ public class TypeHelper : ITypeHelper
 			return content;
 		}
 	}
+
 }
 

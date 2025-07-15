@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Utilities.Zlib;
+using PLang.Attributes;
 using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Exceptions;
@@ -31,7 +32,6 @@ namespace PLang.Modules.UiModule
 	public class Program : BaseProgram, IFlush
 	{
 		private readonly IOutputStreamFactory outputStreamFactory;
-		private readonly IPLangFileSystem fileSystem;
 		private readonly MemoryStack memoryStack;
 		private string? clientTarget;
 		public Program(IOutputStreamFactory outputStream, IPLangFileSystem fileSystem, MemoryStack memoryStack) : base()
@@ -42,11 +42,52 @@ namespace PLang.Modules.UiModule
 
 			clientTarget = memoryStack.Get("!target") as string;
 		}
+		public enum Type { css, js };
+		[Description("Type=css|js")]
+		public record UiFrameworkFile(Type Type, string Path);
+		public record UiFramework(string Name = "default", List<string>? TargetDevices = null, List<UiFrameworkFile>? Types = null);
+		public async Task SetFrameworks(UiFramework framework)
+		{
+			var variable = GetProgramModule<VariableModule.Program>();
+			var storedFrameworks = await variable.GetSettings<List<UiFramework>>("UiFrameworks");
 
-		public record LayoutOptions(bool IsDefault, string FileName, string Name = "default", string DefaultRenderVariable = "main",  string Description = "");
+			if (storedFrameworks == null)
+			{
+				storedFrameworks = new List<UiFramework>();
+				storedFrameworks.Add(framework);
+			}
+			else
+			{
+				var idx = storedFrameworks.FindIndex(p => p.Name.Equals(framework.Name, StringComparison.OrdinalIgnoreCase));
+				if (idx != -1)
+				{
+					storedFrameworks[idx] = framework;
+				}
+				else
+				{
+					storedFrameworks.Add(framework);
+				}
+			}
+			
+			await variable.SetSettingValue("UiFrameworks", storedFrameworks);
+			goal.AddVariable(framework);
+		}
+
+		[Description("Device=web|desktop|mobile|tablet|console|tv|watch|other")]
+		public record LayoutOptions(string Name = "default", string DefaultRenderVariable = "main",
+			[IsBuiltParameter("File")]
+			string OutputFile = "/ui/{name}/layout.html", string Device = "desktop");
 		[Description("set the layout for the gui")]
 		public async Task<(List<LayoutOptions>, IError?)> SetLayout(LayoutOptions options)
 		{
+			// read readme.md in /ui/template/{default}/readme.md, allowReadFromSystem = true
+			// read /outputfile, "" if empty
+			// ask llm, creata layout for me, %readme%
+			// write to output file
+
+			
+
+
 			context.TryGetValue("Layouts", out object? obj);
 			var layouts = obj as List<LayoutOptions>;
 			if (layouts == null)
@@ -58,7 +99,8 @@ namespace PLang.Modules.UiModule
 			if (idx == -1)
 			{
 				layouts.Add(options);
-			} else
+			}
+			else
 			{
 				layouts[idx] = options;
 			}
@@ -109,13 +151,14 @@ namespace PLang.Modules.UiModule
 			var layouts = obj as List<LayoutOptions>;
 			if (layouts == null)
 			{
-				return null;				
+				return null;
 			}
 			if (string.IsNullOrEmpty(name))
 			{
-				return layouts.FirstOrDefault(p => p.IsDefault);
+				name = "default";
 			}
-			return layouts.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));			
+
+			return layouts.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 		}
 
 
@@ -127,7 +170,7 @@ namespace PLang.Modules.UiModule
 - render frontpage.html, write to %html% => renderToOutputstream = false
 ```")]
 		public async Task<(object?, IError?)> RenderTemplate(RenderTemplateOptions options, List<Event>? events = null)
-		{			
+		{
 			var filePath = GetPath(options.FileName);
 			if (!fileSystem.File.Exists(filePath))
 			{
@@ -135,13 +178,13 @@ namespace PLang.Modules.UiModule
 			}
 
 			var html = await fileSystem.File.ReadAllTextAsync(filePath);
-			
+
 			var templateEngine = GetProgramModule<TemplateEngineModule.Program>();
 			(var content, var error) = await templateEngine.RenderContent(html, variables: options.Parameters);
 			if (error != null) return (content, error);
 
 			var outputStream = outputStreamFactory.CreateHandler();
-			if (!outputStream.IsFlushed && !memoryStack.Get<bool>("request!IsAjax")) 
+			if (!outputStream.IsFlushed && !memoryStack.Get<bool>("request!IsAjax"))
 			{
 				var layoutOptions = GetLayoutOptions();
 
@@ -150,7 +193,7 @@ namespace PLang.Modules.UiModule
 					var parameters = new Dictionary<string, object?>();
 					parameters.Add(layoutOptions.DefaultRenderVariable, content);
 
-					(content, error) = await templateEngine.RenderFile(layoutOptions.FileName, parameters, options.RenderToOutputstream);
+					(content, error) = await templateEngine.RenderFile(layoutOptions.OutputFile, parameters, options.RenderToOutputstream);
 
 					if (error != null) return (content, error);
 
@@ -160,7 +203,7 @@ namespace PLang.Modules.UiModule
 
 			if (options.RenderToOutputstream)
 			{
-				
+
 				await outputStreamFactory.CreateHandler().Write(content);
 			}
 

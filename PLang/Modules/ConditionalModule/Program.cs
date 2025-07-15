@@ -88,6 +88,31 @@ namespace PLang.Modules.ConditionalModule
 			return (item.Value, await ExecuteResult(item.Value, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
 		}
 
+		public async Task<(bool, IError?)> IsSystemPath(string? path, GoalToCallInfo? goalToCallIfTrue = null,
+			GoalToCallInfo? goalToCallIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		{
+			bool result = false;
+			if (!string.IsNullOrEmpty(path))
+			{
+				result = path.StartsWith(fileSystem.SystemDirectory);
+			}
+			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+		}
+
+		public async Task<(bool, IError?)> IsOsPath(string? path, GoalToCallInfo? goalToCallIfTrue = null,
+			GoalToCallInfo? goalToCallIfFalse = null,
+			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
+		{
+			bool result = false;
+			if (!string.IsNullOrEmpty(path))
+			{
+				result = path.StartsWith(fileSystem.OsDirectory);
+			}
+			return (result, await ExecuteResult(result, goalToCallIfTrue, goalToCallIfFalse, throwErrorOnTrue, throwErrorOnFalse));
+		}
+
+
 		public async Task<(bool, IError?)> IsTrue(bool? item, GoalToCallInfo? goalToCallIfTrue = null,
 			GoalToCallInfo? goalToCallIfFalse = null,
 			ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
@@ -321,7 +346,7 @@ namespace PLang.Modules.ConditionalModule
 			GoalToCallInfo? goalToCallOnFalse, ErrorInfo? throwErrorOnTrue = null, ErrorInfo? throwErrorOnFalse = null)
 		{
 
-			Task<(IEngine, object? Variables, IError? error, IOutput? output)>? task = null;
+			Task<(IEngine, object? Variables, IError? error)>? task = null;
 			GoalToCallInfo? goalToCall = null;
 			Dictionary<string, object?>? parameters = new();
 

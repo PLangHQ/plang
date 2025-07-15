@@ -11,6 +11,7 @@ using Newtonsoft.Json.Linq;
 using NJsonSchema;
 using PLang.Errors;
 using PLang.Modules.DbModule;
+using System.Text.Json.Nodes;
 
 namespace PLang.Utils
 {
@@ -48,7 +49,7 @@ namespace PLang.Utils
 			if (obj is not string) return false;
 			if (obj is Table || obj is Row) return false;
 			if (obj.GetType().Name.StartsWith("<>f__Anonymous")) return false;
-			
+
 
 			string content = obj.ToString()!;
 
@@ -114,6 +115,36 @@ namespace PLang.Utils
 			catch (Exception ex)
 			{
 				return (false, new ExceptionError(ex));
+			}
+		}
+
+		public static IEnumerable<JToken> FindTokens(JToken root, string propertyName, string valueToMatch, bool returnParent = false)
+		{
+			switch (root.Type)
+			{
+				case JTokenType.Object:
+					{
+						var obj = (JObject)root;
+
+						if (obj.TryGetValue(propertyName, out var prop) &&
+							prop.Type == JTokenType.String &&
+							prop.Value<string>() == valueToMatch)
+							yield return returnParent ? obj : prop;
+
+						foreach (var child in obj.Properties())
+							foreach (var hit in FindTokens(child.Value, propertyName, valueToMatch, returnParent))
+								yield return hit;
+
+						break;
+					}
+
+				case JTokenType.Array:
+					{
+						foreach (var item in root.Children())
+							foreach (var hit in FindTokens(item, propertyName, valueToMatch, returnParent))
+								yield return hit;
+						break;
+					}
 			}
 		}
 

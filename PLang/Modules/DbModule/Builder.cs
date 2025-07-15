@@ -335,9 +335,9 @@ User intent: {goalStep.Text}
 			var result = await program.Execute(sql, tableAllowList, dataSourceName);
 			if (result.Error != null)
 			{
-				return new BuilderError(result.Error);
+				return new BuilderError(result.Error) { Retry = false } ;
 			}
-			logger.LogInformation($"  - ✅ Sql statement validated - {sql.MaxLength(30, "...")}");
+			logger.LogInformation($"  - ✅ Sql statement validated - {sql.MaxLength(30, "...")} - {step.Goal.RelativeGoalPath}:{step.LineNumber}");
 			return null;
 		}
 
@@ -370,7 +370,7 @@ User intent: {goalStep.Text}
 				gf = gf with { DataSource = dataSourceName, Parameters = updatedParams };
 				instruction = instruction with { Function = gf };
 
-				logger.LogInformation($"  - ✅ Sql statement validated - {sql.MaxLength(30, "...")}");
+				logger.LogInformation($"  - ✅ Sql statement validated - {sql.MaxLength(30, "...")} - {step.Goal.RelativeGoalPath}:{step.LineNumber}");
 
 				return (instruction, null);
 			}
@@ -429,7 +429,7 @@ Reason:{error.Message}", step,
 				(_, error) = await program.CreateTable(sql);
 
 				if (error != null) return new StepBuilderError(error, step);
-				logger.LogInformation($"  - ✅ Sql statement validated - {sql.MaxLength(30, "...")}");
+				logger.LogInformation($"  - ✅ Sql statement validated - {sql.MaxLength(30, "...")} - {step.Goal.RelativeGoalPath}:{step.LineNumber}");
 			}
 
 

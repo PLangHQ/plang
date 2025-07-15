@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using PLang.Errors;
 using PLang.Exceptions;
 using PLang.Interfaces;
+using PLang.Runtime;
 using PLang.Utils;
 using System.IO.Abstractions;
 using System.Runtime.InteropServices;
@@ -27,6 +28,13 @@ namespace PLang.SafeFileSystem
 
 		public bool IsRootApp { get; private set; }
 		public string RelativeAppPath { get; set; }
+		public string SystemDirectory
+		{
+			get
+			{
+				return Path.Join(AppContext.BaseDirectory, "system");
+			}
+		}
 		public string OsDirectory
 		{
 			get
@@ -61,8 +69,10 @@ namespace PLang.SafeFileSystem
 			this.context = context;
 			this.rootPath = appStartupPath.AdjustPathToOs();
 			this.RelativeAppPath = relativeAppPath.AdjustPathToOs();
-			this.fileAccesses = new List<FileAccessControl>();
+
 			this.Id = Guid.NewGuid().ToString();
+
+			
 
 			DriveInfo = new PLangDriveInfoFactory(this);
 			DirectoryInfo = new PLangDirectoryInfoFactory(this);
@@ -72,6 +82,11 @@ namespace PLang.SafeFileSystem
 			Directory = new PLangDirectoryWrapper(this);
 			FileStream = new PLangFileStreamFactory(this);
 			FileSystemWatcher = new PLangFileSystemWatcherFactory(this);
+
+
+			this.fileAccesses = new List<FileAccessControl>();
+			fileAccesses.Add(new SafeFileSystem.FileAccessControl(appStartupPath, SystemDirectory, ProcessId: Id));
+
 
 			this.IsRootApp = (relativeAppPath == Path.DirectorySeparatorChar.ToString());
 			if (AppContext.GetData("sharedPath") != null)

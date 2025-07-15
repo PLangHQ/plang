@@ -1,5 +1,7 @@
-﻿using PLang.Attributes;
+﻿using Microsoft.AspNetCore.Mvc.TagHelpers;
+using PLang.Attributes;
 using PLang.Runtime;
+using System.Reflection.Metadata;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
@@ -31,14 +33,18 @@ namespace PLang.Building.Model
 			if (variableName == null) variableName = typeof(T).FullName;
 
 			var variableIdx = _variables.FindIndex(p => p.VariableName.Equals(variableName, StringComparison.OrdinalIgnoreCase));
+			var variable = new Variable(variableName, value) { DisposeFunc = func };
+
 			if (variableIdx == -1)
 			{
-				_variables.Add(new Variable(variableName, value) { DisposeFunc = func });
+				_variables.Add(variable);
 			}
 			else
 			{
-				_variables[variableIdx] = new Variable(variableName, value) { DisposeFunc = func };
+				_variables[variableIdx] = variable;
 			}
+			SetVariableOnEvent(variable);
+
 		}
 		public void AddVariable(Variable goalVariable)
 		{
@@ -51,9 +57,16 @@ namespace PLang.Building.Model
 			{
 				_variables[variableIdx] = goalVariable;
 			}
+			SetVariableOnEvent(goalVariable);
 
 		}
-
+		public void AddVariables(List<Variable> variables)
+		{
+			foreach (var variable in variables)
+			{
+				AddVariable(variable);
+			}
+		}
 		public List<Variable> GetVariables()
 		{
 			return _variables;
@@ -64,19 +77,25 @@ namespace PLang.Building.Model
 			return _variables.Where(p => p.GetType() == typeof(T)).Select(p => (T)p.Value).ToList();
 		}
 
-		public object? GetVariable(string variableName)
+		public object? GetVariable(string variableName, int level = 0)
 		{
 			var variable = _variables.FirstOrDefault(p => p.VariableName.Equals(variableName, StringComparison.OrdinalIgnoreCase));
 			if (variable != null) return variable?.Value;
 
+			if (level == 100)
+			{
+				return null;
+			}
+
 			var parent = GetParent();
 			if (parent == null) return default;
 
-			var value = parent.GetVariable(variableName);
+			var value = parent.GetVariable(variableName, ++level);
 			return value;
 		}
 
 		protected abstract Goal? GetParent();
+		protected abstract void SetVariableOnEvent(Variable goalVariable);
 
 		public T? GetVariable<T>(string? variableName = null)
 		{

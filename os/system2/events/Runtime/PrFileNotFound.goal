@@ -1,0 +1,10 @@
+PrFileNotFound
+- write out error(404) to system "Could not find PR File: %!error.Step.PrFileName%"
+    properties: %!error%
+- ask system user "Would you like me to rebuild your plang code? y or n", options: "y|n", write to %answer%
+- if %answer% == "y" then
+    - logger info "Building %!error.Goal.GoalName%"
+    - [plang] build plang code %!error.Step%, write to %step%
+    - retry
+- if %answer% == "n" then
+    - throw %!error%

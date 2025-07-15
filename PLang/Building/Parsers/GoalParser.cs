@@ -14,8 +14,8 @@ namespace PLang.Building.Parsers
 	public interface IGoalParser
 	{
 		List<Goal> GetAllApps();
-		List<Goal> GetAllGoals();
-		List<Goal> GetGoalFilesToBuild(IPLangFileSystem fileSystem, string goalsPath);
+		List<Goal> GetGoals(bool force = false);
+		List<Goal> GetGoalFilesToBuild(bool force = false);
 		List<Goal> ParseGoalFile(string goalFileAbsolutePath, bool isOS = false);
 	}
 
@@ -24,27 +24,40 @@ namespace PLang.Building.Parsers
 		private readonly IServiceContainer container;
 		private readonly IPLangFileSystem fileSystem;
 		private readonly ISettings settings;
-
+		private List<Goal> goals = null!;
 		public GoalParser(IServiceContainer container, IPLangFileSystem fileSystem, ISettings settings)
 		{
 			this.container = container;
 			this.fileSystem = fileSystem;
 			this.settings = settings;
+
+			this.goals = GetGoals();
 		}
 
-		public List<Goal> GetAllGoals()
+		public List<Goal> GetGoals(bool force = false)
 		{
-			List<Goal> goals = new List<Goal>();
+			if (!force && goals != null && goals.Count > 0) return goals;
+
+			List<Goal> goalsLoading = new();
+
 			var files = fileSystem.Directory.GetFiles(fileSystem.GoalsPath, "*.goal", SearchOption.AllDirectories);
 			foreach (var file in files)
 			{
 				if (file.Contains(Path.DirectorySeparatorChar + ".")) continue;
-				goals.AddRange(ParseGoalFile(file));
+				goalsLoading.AddRange(ParseGoalFile(file));
 			}
+
+			goals = goalsLoading;
 			return goals;
 		}
 
-		public List<Goal> ParseGoalFile(string goalFileAbsolutePath, bool isOS = false)
+
+		public List<Goal> GetEventGoals()
+		{
+			return goals.Where(p => p.IsEvent).ToList();
+		}
+
+		public List<Goal> ParseGoalFile(string goalFileAbsolutePath, bool isSystem = false)
 		{
 			if (fileSystem.Path.GetExtension(goalFileAbsolutePath) != ".goal")
 			{
@@ -56,19 +69,19 @@ namespace PLang.Building.Parsers
 
 			string rootPath = fileSystem.RootDirectory;
 			string rootBuildPath = fileSystem.BuildPath;
-			
-			
+
+
 			var appName = "";
-			if (isOS)
+			if (isSystem)
 			{
-				rootPath = fileSystem.OsDirectory;
-				rootBuildPath = fileSystem.Path.Join(fileSystem.OsDirectory, ".build");
+				rootPath = fileSystem.SystemDirectory;
+				rootBuildPath = fileSystem.Path.Join(fileSystem.SystemDirectory, ".build");
 			}
 
 			var appPath = $"{Path.DirectorySeparatorChar}apps{Path.DirectorySeparatorChar}";
-			if (isOS && goalFileAbsolutePath.Contains(appPath))
+			if (isSystem && goalFileAbsolutePath.Contains(appPath))
 			{
-				var replacedPath = (isOS) ? fileSystem.OsDirectory : fileSystem.RootDirectory;
+				var replacedPath = (isSystem) ? fileSystem.SystemDirectory : fileSystem.RootDirectory;
 
 				if (!replacedPath.Contains(appPath))
 				{
@@ -215,7 +228,7 @@ namespace PLang.Building.Parsers
 				uncertainComment = null;
 				stepNr = 0;
 				currentGoal.GoalSteps = new List<GoalStep>();
-				
+
 				goals.Add(currentGoal);
 				if (goals.Count > 1)
 				{
@@ -264,15 +277,16 @@ namespace PLang.Building.Parsers
 				goal.AbsoluteGoalFolderPath = Path.GetDirectoryName(goalFileAbsolutePath);
 				goal.RelativeGoalPath = goalFileAbsolutePath.Replace(rootPath, "");
 				goal.RelativeGoalFolderPath = Path.GetDirectoryName(goal.RelativeGoalPath);
-				if (i > 0)
-				{
-					goals[0].SubGoals.Add(goal.GoalName);
-				}
 
 				goal.AbsolutePrFilePath = prFileAbsolutePath;
 				goal.AbsolutePrFolderPath = Path.GetDirectoryName(prFileAbsolutePath);
 				goal.RelativePrPath = Path.Join(".build", prFileAbsolutePath.Replace(rootBuildPath, ""));
 				goal.RelativePrFolderPath = Path.GetDirectoryName(goal.RelativePrPath);
+
+				if (i > 0)
+				{
+					goals[0].SubGoals.Add(goal.RelativePrPath);
+				}
 
 				if (!goal.AbsolutePrFilePath.StartsWith("c:") && goal.AbsolutePrFilePath.Contains("c:"))
 				{
@@ -308,6 +322,7 @@ namespace PLang.Building.Parsers
 				}
 
 				goal.IsSetup = GoalHelper.IsSetup(goal);
+				goal.IsEvent = GoalHelper.IsEvent(goal);
 
 				if (!fileSystem.File.Exists(prFileAbsolutePath)) continue;
 
@@ -317,7 +332,7 @@ namespace PLang.Building.Parsers
 				goal.Description = prevBuildGoal.Description;
 				goal.IncomingVariablesRequired = prevBuildGoal.IncomingVariablesRequired;
 				goal.DataSourceName = prevBuildGoal.DataSourceName;
-				goal.IsOS = isOS;
+				goal.IsSystem = isSystem;
 				goal.HasChanged = prevBuildGoal.FileHash != goal.FileHash;
 				foreach (var injection in prevBuildGoal.Injections)
 				{
@@ -327,56 +342,62 @@ namespace PLang.Building.Parsers
 					}
 				}
 
-				for (int b = 0; prevBuildGoal != null && b < goals[i].GoalSteps.Count; b++)
+				for (int b = 0; b < goals[i].GoalSteps.Count; b++)
 				{
+					goals[i].GoalSteps[b].Index = b;
+					goals[i].GoalSteps[b].Number = b+1;
+					goals[i].GoalSteps[b].RelativeGoalPath = goal.RelativeGoalPath;
+					goals[i].GoalSteps[b].IsEvent = goal.IsEvent;
+
+					if (prevBuildGoal == null) continue;
+
 					var prevStep = prevBuildGoal.GoalSteps.FirstOrDefault(p => p.Text == goals[i].GoalSteps[b].Text && p.LineNumber == goals[i].GoalSteps[b].LineNumber);
 					if (prevStep == null)
 					{
 						prevStep = prevBuildGoal.GoalSteps.FirstOrDefault(p => p.Text == goals[i].GoalSteps[b].Text);
+						if (prevStep == null) continue;
 					}
-					goals[i].GoalSteps[b].Index = b;
-					goals[i].GoalSteps[b].RelativeGoalPath = goal.RelativeGoalPath;
-					if (prevStep != null)
+
+
+					goals[i].GoalSteps[b].EventBinding = prevStep.EventBinding;
+					goals[i].GoalSteps[b].IsEvent = goal.IsEvent;
+					goals[i].GoalSteps[b].Generated = prevStep.Generated;
+
+					var absolutePrStepFilePath = Path.Join(goal.AbsolutePrFolderPath, prevStep.PrFileName);
+					if (!fileSystem.File.Exists(absolutePrStepFilePath)) continue;
+
+					goals[i].GoalSteps[b].PrFileName = prevStep.PrFileName;
+					goals[i].GoalSteps[b].RelativePrPath = Path.Join(goal.RelativePrFolderPath, prevStep.PrFileName);
+					goals[i].GoalSteps[b].AbsolutePrFilePath = absolutePrStepFilePath;
+					goals[i].GoalSteps[b].Number = prevStep.Number;
+					goals[i].GoalSteps[b].LlmRequest = prevStep.LlmRequest;
+
+					goals[i].GoalSteps[b].Description = prevStep.Description;
+					goals[i].GoalSteps[b].WaitForExecution = prevStep.WaitForExecution;
+					goals[i].GoalSteps[b].ErrorHandlers = prevStep.ErrorHandlers;
+					goals[i].GoalSteps[b].CancellationHandler = prevStep.CancellationHandler;
+					goals[i].GoalSteps[b].CacheHandler = prevStep.CacheHandler;
+
+					goals[i].GoalSteps[b].PrFileName = prevStep.PrFileName;
+					goals[i].GoalSteps[b].ModuleType = prevStep.ModuleType;
+					goals[i].GoalSteps[b].Name = prevStep.Name;
+					goals[i].GoalSteps[b].UserIntent = prevStep.UserIntent;
+					goals[i].GoalSteps[b].RunOnce = prevStep.RunOnce;
+
+					var prFile = fileSystem.File.ReadAllText(absolutePrStepFilePath);
+					goals[i].GoalSteps[b].PrFile = JsonConvert.DeserializeObject(prFile);
+
+
+					if (setupOnceDictionary != null && goals[i].GoalSteps[b].RunOnce && setupOnceDictionary.ContainsKey(goals[i].GoalSteps[b].RelativePrPath))
 					{
-						goals[i].GoalSteps[b].EventBinding = prevStep.EventBinding;
-						goals[i].GoalSteps[b].IsEvent = prevStep.IsEvent;
-						goals[i].GoalSteps[b].Generated = prevStep.Generated;
-
-						var absolutePrStepFilePath = Path.Join(goal.AbsolutePrFolderPath, prevStep.PrFileName);
-						if (!fileSystem.File.Exists(absolutePrStepFilePath)) continue;
-
-						goals[i].GoalSteps[b].PrFileName = prevStep.PrFileName;
-						goals[i].GoalSteps[b].RelativePrPath = Path.Join(goal.RelativePrFolderPath, prevStep.PrFileName);
-						goals[i].GoalSteps[b].AbsolutePrFilePath = absolutePrStepFilePath;
-						goals[i].GoalSteps[b].Number = prevStep.Number;
-						goals[i].GoalSteps[b].LlmRequest = prevStep.LlmRequest;
-
-						goals[i].GoalSteps[b].Description = prevStep.Description;
-						goals[i].GoalSteps[b].WaitForExecution = prevStep.WaitForExecution;
-						goals[i].GoalSteps[b].ErrorHandlers = prevStep.ErrorHandlers;
-						goals[i].GoalSteps[b].CancellationHandler = prevStep.CancellationHandler;
-						goals[i].GoalSteps[b].CacheHandler = prevStep.CacheHandler;
-
-						goals[i].GoalSteps[b].PrFileName = prevStep.PrFileName;
-						goals[i].GoalSteps[b].ModuleType = prevStep.ModuleType;
-						goals[i].GoalSteps[b].Name = prevStep.Name;
-						goals[i].GoalSteps[b].UserIntent = prevStep.UserIntent;
-						goals[i].GoalSteps[b].RunOnce = prevStep.RunOnce;
-
-						var prFile = fileSystem.File.ReadAllText(absolutePrStepFilePath);
-						goals[i].GoalSteps[b].PrFile = JsonConvert.DeserializeObject(prFile);
-
-
-						if (setupOnceDictionary != null && goals[i].GoalSteps[b].RunOnce && setupOnceDictionary.ContainsKey(goals[i].GoalSteps[b].RelativePrPath))
-						{
-							goals[i].GoalSteps[b].Executed = setupOnceDictionary[goals[i].GoalSteps[b].RelativePrPath];
-						}
-
-						if (prevStep.Text.Trim() != goals[i].GoalSteps[b].Text.Trim())
-						{
-							goals[i].GoalSteps[b].PreviousText = prevStep.Text;
-						}
+						goals[i].GoalSteps[b].Executed = setupOnceDictionary[goals[i].GoalSteps[b].RelativePrPath];
 					}
+
+					if (prevStep.Text.Trim() != goals[i].GoalSteps[b].Text.Trim())
+					{
+						goals[i].GoalSteps[b].PreviousText = prevStep.Text;
+					}
+
 
 					prevStep = prevBuildGoal.GoalSteps.FirstOrDefault(p => goals[i].GoalSteps[b].Text.Trim().StartsWith("/") && p.Text == goals[i].GoalSteps[b].Text.Trim().TrimStart('/'));
 					if (prevStep != null)
@@ -420,7 +441,7 @@ namespace PLang.Building.Parsers
 		{
 			var appFolders = fileSystem.Directory.Exists("/apps") ? fileSystem.Directory.GetDirectories("/apps") : [];
 
-			var osPath = fileSystem.Path.Join(fileSystem.OsDirectory, "/apps");
+			var osPath = fileSystem.Path.Join(fileSystem.SystemDirectory, "/apps");
 			var osAppFolders = fileSystem.Directory.Exists(osPath) ? fileSystem.Directory.GetDirectories(osPath) : [];
 
 			List<Goal> apps = new List<Goal>();
@@ -451,8 +472,19 @@ namespace PLang.Building.Parsers
 			return apps;
 		}
 
-		public List<Goal> GetGoalFilesToBuild(IPLangFileSystem fileSystem, string goalsPath)
+		public List<Goal> GetGoalFilesToBuild(bool force = false)
 		{
+			var goals = GetGoals(force);
+			var goalsToBuild = goals.Where(p => !p.IsEvent);
+
+			var orderedFiles = goalsToBuild
+				.OrderBy(goal => !goal.RelativeGoalFolderPath.Equals(Path.DirectorySeparatorChar.ToString()))
+				.ThenBy(goal => goal.RelativeGoalPath)
+				.ToList();
+
+
+			return orderedFiles;
+			/*
 
 			string[] anyFile = fileSystem.Directory.GetFiles(goalsPath, "*.goal", SearchOption.AllDirectories);
 			if (anyFile.Length == 0)
@@ -466,10 +498,10 @@ namespace PLang.Building.Parsers
 			{
 				goals.AddRange(ParseGoalFile(file));
 			}
-			return goals;
+			return goals;*/
 
 		}
-
+		/*
 		private static List<string> Remove_SystemFolder(string goalPath, List<string> goalFiles)
 		{
 
@@ -489,16 +521,11 @@ namespace PLang.Building.Parsers
 			}).ToList();
 
 			// Order the files
-			var orderedFiles = filteredGoalFiles
-				.OrderBy(file => Path.GetFileName(file).ToLower() != "setup.goal") // "setup.goal" second
-				.ThenBy(file => !file.Contains(Path.Join(goalPath, "setup", Path.DirectorySeparatorChar.ToString()), StringComparison.OrdinalIgnoreCase))
-				.ThenBy(file => !file.Contains(Path.Join(goalPath, "events"), StringComparison.OrdinalIgnoreCase))  // "events" folder first
-				.ThenBy(file => Path.GetFileName(file).ToLower() != "start.goal")
-				.ToList();
+			;
 
 
 			return orderedFiles;
-		}
+		}*/
 	}
 
 }

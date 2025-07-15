@@ -166,7 +166,7 @@ namespace PLang.Modules.PlangModule
 			return scheme;
 		}
 		/*
-		 * TODO: Dictionary<string, object?> Parameters should be Parameters class, or just parameter, that is better 
+		 * TODO: Dictionary<string, object?> Parameters should be Parameters class 
 		 * */
 		public async Task<(object obj, IError?)> RunModule(string @namespace, string @class, string method, Dictionary<string, object?>? Parameters)
 		{
@@ -341,7 +341,7 @@ namespace PLang.Modules.PlangModule
 
 			//engine.GetContext().Remove(ReservedKeywords.IsEvent);
 
-			fileAccessHandler.GiveAccess(fileSystem.OsDirectory, fileSystem.GoalsPath);
+			fileAccessHandler.GiveAccess(fileSystem.SystemDirectory, fileSystem.GoalsPath);
 			if (parameters != null)
 			{
 				var ms = engine.GetMemoryStack();
@@ -364,7 +364,7 @@ namespace PLang.Modules.PlangModule
 					FixSuggestion: "Something has broken between the IDE sending the information and the runtime. Check if SendDebug.goal and the IDE is talking together correctly."));
 			}
 			var absoluteFilePath = GetPath(prFileName);
-			fileAccessHandler.GiveAccess(fileSystem.OsDirectory, fileSystem.GoalsPath);
+			fileAccessHandler.GiveAccess(fileSystem.SystemDirectory, fileSystem.GoalsPath);
 			if (!fileSystem.File.Exists(absoluteFilePath))
 			{
 				return (null, new ProgramError($"The file {prFileName} could not be found. I searched for it at {absoluteFilePath}", goalStep, function));

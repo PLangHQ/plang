@@ -6,23 +6,31 @@ using PLang.Interfaces;
 using PLang.Runtime;
 using PLang.SafeFileSystem;
 using PLang.Utils;
+using ReverseMarkdown.Converters;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.Export;
 using static PLang.Runtime.Startup.ModuleLoader;
 
 namespace PLang.Building.Parsers
 {
-	public class PrParser : IDisposable
+	public class PrParser
 	{
-		private readonly List<Goal> allGoals = new List<Goal>();
-		private readonly List<Goal> publicGoals = new List<Goal>();
+		private List<Goal> goals = null!;
+		private List<Goal> publicGoals = null!;
+		private List<Goal> systemGoals = null!;
 		private readonly Dictionary<string, Instruction> instructions = new Dictionary<string, Instruction>();
 		private readonly IPLangFileSystem fileSystem;
+		private readonly ILogger logger;
 		private bool disposed;
 
-		public PrParser(IPLangFileSystem fileSystem)
+		public PrParser(IPLangFileSystem fileSystem, ILogger logger)
 		{
 			this.fileSystem = fileSystem;
+			this.logger = logger;
+
+			goals = GetGoals();
+			systemGoals = GetSystemGoals();
 		}
 
 
@@ -89,7 +97,7 @@ namespace PLang.Building.Parsers
 			goal.AbsolutePrFolderPath = fileSystem.Path.Join(appAbsoluteStartupPath, goal.RelativePrFolderPath);
 
 			AdjustPathsToOS(goal);
-			goal.IsOS = absolutePrFilePath.Contains(fileSystem.OsDirectory);
+			goal.IsSystem = absolutePrFilePath.Contains(fileSystem.SystemDirectory);
 
 			
 			for (int i = 0; i < goal.GoalSteps.Count; i++)
@@ -107,20 +115,6 @@ namespace PLang.Building.Parsers
 			}
 
 			return goal;
-		}
-
-		public virtual void Dispose()
-		{
-			if (this.disposed)
-			{
-				return;
-			}
-
-			allGoals.Clear();
-			publicGoals.Clear();
-			instructions.Clear();
-
-			this.disposed = true;
 		}
 
 		protected virtual void ThrowIfDisposed()
@@ -182,9 +176,9 @@ namespace PLang.Building.Parsers
 				var goal = ParsePrFile(file);
 				if (goal != null)
 				{
-					if (allGoals.FirstOrDefault(p => p.RelativePrPath == goal.RelativePrPath) == null)
+					if (this.goals.FirstOrDefault(p => p.RelativePrPath == goal.RelativePrPath) == null)
 					{
-						allGoals.Add(goal);
+						this.goals.Add(goal);
 					}
 					if (goal.Visibility == Visibility.Public && publicGoals.FirstOrDefault(p => p.RelativePrPath == goal.RelativePrPath) == null)
 					{
@@ -193,41 +187,24 @@ namespace PLang.Building.Parsers
 				}
 			}		
 
-			return allGoals;
+			return this.goals;
 		}
 
 		public List<Goal> LoadAllGoals(bool force = false)
 		{
-			var osGoals = LoadAllGoalsByPath(fileSystem.OsDirectory, force);
-			var appGoals = LoadAllGoalsByPath(fileSystem.RootDirectory, force);
+			Stopwatch stopwatch = Stopwatch.StartNew();
+			logger.LogDebug($"   -- Loading all goals(force:{force})");
+			
+			GetGoals(force);
+			GetSystemGoals(force);
 
-			for (int i = 0; i < osGoals.Count; i++)
-			{
-				var osGoal = osGoals[i];
-				if (appGoals.FirstOrDefault(p => p.RelativePrPath == osGoal.RelativePrPath) == null)
-				{
-					appGoals.Add(osGoal);
-				}
-			}
-			var pubGoals = appGoals.Where(p => p.Visibility == Visibility.Public).ToList();
-			// this reloads the whole app
-			lock (_lock)
-			{
-				allGoals.Clear();
-				allGoals.AddRange(appGoals);
-				publicGoals.Clear();
-				publicGoals.AddRange(pubGoals);
-			}
-
-
-			return appGoals;
+			logger.LogDebug($"   -- Done loading all goals - {stopwatch.ElapsedMilliseconds}"); 
+			return goals;
 		}
 
-		public List<Goal> LoadAllGoalsByPath(string dir, bool force) { 
-			if (allGoals.Count > 0 && !force) return allGoals;
+		public List<Goal> LoadAllGoalsByPath(string dir) { 
 
 			string buildDir = fileSystem.Path.Join(dir, ".build");
-			string appsDir = fileSystem.Path.Join(dir, "apps");
 			if (!fileSystem.Directory.Exists(buildDir))
 			{
 				return new List<Goal>();
@@ -246,22 +223,6 @@ namespace PLang.Building.Parsers
 				.ThenBy(file => file.FileName) 
 				.Select(file => file.FileName).ToList();
 
-			if (fileSystem.Directory.Exists(appsDir))
-			{
-				var unsortedFiles = fileSystem.Directory.GetFiles(appsDir, ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
-				unsortedFiles = unsortedFiles.Select(file => new
-				{
-					FileName = file,
-					Order = file.ToLower().EndsWith(@"events\events\00. goal.pr") ? 0 :
-					file.ToLower().Contains(@"events\") ? 1 :
-					file.ToLower().Contains(@"setup\") ? 2 :
-					file.ToLower().Contains(@"start\") ? 3 : 4
-				})
-					.OrderBy(file => file.Order)
-					.ThenBy(file => file.FileName) 
-					.Select(file => file.FileName).ToList();
-				files.AddRange(unsortedFiles);
-			}
 
 			var goals = new List<Goal>();
 			foreach (var file in files)
@@ -276,12 +237,45 @@ namespace PLang.Building.Parsers
 			return goals;
 		}
 
+		public List<Goal> LoadAppsByPath(string dir)
+		{
+
+			string appsDir = fileSystem.Path.Join(dir, "apps");
+			List<string> files = new();
+			if (fileSystem.Directory.Exists(appsDir))
+			{
+				var unsortedFiles = fileSystem.Directory.GetFiles(appsDir, ISettings.GoalFileName, SearchOption.AllDirectories).ToList();
+				unsortedFiles = unsortedFiles.Select(file => new
+				{
+					FileName = file,
+					Order = file.ToLower().EndsWith(@"events\events\00. goal.pr") ? 0 :
+					file.ToLower().Contains(@"events\") ? 1 :
+					file.ToLower().Contains(@"setup\") ? 2 :
+					file.ToLower().Contains(@"start\") ? 3 : 4
+				})
+					.OrderBy(file => file.Order)
+					.ThenBy(file => file.FileName)
+					.Select(file => file.FileName).ToList();
+				files.AddRange(unsortedFiles);
+			}
+
+			var goals = new List<Goal>();
+			foreach (var file in files)
+			{
+				var goal = ParsePrFile(file);
+				if (goal != null)
+				{
+					goals.Add(goal);
+				}
+			}
+			return goals;
+		}
 		public List<Goal> GetAllGoals()
 		{
-			if (allGoals.Count > 0) return allGoals;
+			if (goals.Count > 0) return goals;
 
 			LoadAllGoals();
-			return allGoals;
+			return goals;
 		}
 
 		public List<Goal> GetPublicGoals()
@@ -294,13 +288,6 @@ namespace PLang.Building.Parsers
 		public Goal? GetGoal(string absolutePrFilePath)
 		{
 			return ParsePrFile(absolutePrFilePath);
-			/*
-			if (publicGoals.Count == 0)
-			{
-				LoadAllGoals();
-			}
-			return publicGoals.FirstOrDefault(p => p.AbsolutePrFilePath == absolutePrFilePath);
-			*/
 		}
 
 		public Goal? GetGoalByAppAndGoalName(string appStartupPath, string goalNameOrPath, Goal? callingGoal = null)
@@ -335,8 +322,6 @@ namespace PLang.Building.Parsers
 					appStartupPath = fileSystem.Path.DirectorySeparatorChar.ToString() + appStartupPath;
 				}
 			}
-
-			var goals = GetAllGoals();
 
 			Goal? goal = null;
 
@@ -382,7 +367,24 @@ namespace PLang.Building.Parsers
 			return goal;
 		}
 
+		public List<Goal> GetGoals(bool force = false)
+		{
+			if (!force && goals != null) return goals;
 
+			goals = LoadAllGoalsByPath(fileSystem.RootDirectory);
+			publicGoals = goals.Where(p => p.Visibility == Visibility.Public).ToList();
+
+			return goals;
+		}
+
+		public List<Goal> GetSystemGoals(bool force = false)
+		{
+			if (!force && systemGoals != null) return systemGoals;
+
+			systemGoals = LoadAllGoalsByPath(fileSystem.SystemDirectory);
+			
+			return systemGoals;
+		}
 		public List<Goal> GetApps()
 		{
 			var groupedGoals = GetAllGoals().GroupBy(p => p.AppName);
@@ -411,7 +413,7 @@ namespace PLang.Building.Parsers
 
 			if (files.Count == 0)
 			{
-				appPath = fileSystem.Path.Join(fileSystem.OsDirectory, appName, ".build");
+				appPath = fileSystem.Path.Join(fileSystem.SystemDirectory, appName, ".build");
 				if (fileSystem.Directory.Exists(appPath))
 				{
 					files = fileSystem.Directory.GetFiles(appPath, ISettings.GoalFileName, SearchOption.AllDirectories).ToList();

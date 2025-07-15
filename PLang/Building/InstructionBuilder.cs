@@ -1,18 +1,26 @@
 ﻿
+using Jil;
 using Microsoft.Extensions.Logging;
+using Namotion.Reflection;
 using NBitcoin;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PLang.Building.Model;
+using PLang.Building.Parsers;
 using PLang.Errors;
 using PLang.Errors.Builder;
 using PLang.Interfaces;
+using PLang.Models;
 using PLang.Modules;
 using PLang.Runtime;
 using PLang.Services.LlmService;
 using PLang.Utils;
 using RazorEngineCore;
+using System.Collections;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using static PLang.Modules.BaseBuilder;
 
 
@@ -22,6 +30,7 @@ namespace PLang.Building
 	{
 		Task<(Model.Instruction?, IBuilderError?)> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep step, IBuilderError? previousBuildError = null);
 		Task<(Instruction Instruction, IBuilderError? Error)> RunBuilderMethod(GoalStep goalStep, Model.Instruction? instruction, IGenericFunction? gf);
+		Task<(Instruction Instruction, IBuilderError? Error)> ValidateGoalToCall(GoalStep goalStep, Instruction instruction);
 	}
 
 	public class InstructionBuilder : IInstructionBuilder
@@ -35,10 +44,14 @@ namespace PLang.Building
 		private readonly PLangAppContext context;
 		private readonly VariableHelper variableHelper;
 		private readonly ISettings settings;
+		private readonly ProgramFactory programFactory;
+		private readonly IGoalParser goalParser;
+		private readonly PrParser prParser;
 
 		public InstructionBuilder(ILogger logger, IPLangFileSystem fileSystem, ITypeHelper typeHelper,
 			ILlmServiceFactory llmServiceFactory, IBuilderFactory builderFactory,
-			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ISettings settings)
+			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ISettings settings, 
+			ProgramFactory programFactory, IGoalParser goalParser, PrParser prParser)
 		{
 			this.typeHelper = typeHelper;
 			this.llmServiceFactory = llmServiceFactory;
@@ -49,9 +62,12 @@ namespace PLang.Building
 			this.context = context;
 			this.variableHelper = variableHelper;
 			this.settings = settings;
+			this.programFactory = programFactory;
+			this.goalParser = goalParser;
+			this.prParser = prParser;
 		}
 		public Dictionary<string, List<IBuilderError>> ErrorCount { get; set; } = new();
-		
+
 		public async Task<(Model.Instruction?, IBuilderError?)> BuildInstruction(StepBuilder stepBuilder, Goal goal, GoalStep step, IBuilderError? previousBuildError = null)
 		{
 			var result = await BuildInstructionInternal(stepBuilder, goal, step, previousBuildError);
@@ -77,12 +93,14 @@ namespace PLang.Building
 
 		private async Task<(Model.Instruction? Instruction, IBuilderError? Error)> BuildInstructionInternal(StepBuilder stepBuilder, Goal goal, GoalStep step, IBuilderError? previousBuildError = null)
 		{
+			Stopwatch stopwatch = Stopwatch.StartNew();
+			logger.LogDebug("Building instruction");
 			var classInstance = builderFactory.Create(step.ModuleType);
 			classInstance.InitBaseBuilder(step, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
 			string logInfo = (previousBuildError != null) ? "Retrying to build" : "Build";
 			logger.LogInformation(@$"  - {logInfo} using {step.ModuleType}");
-			
+
 			var build = await classInstance.Build(step, previousBuildError);
 			if (build.BuilderError != null) return build;
 
@@ -92,10 +110,11 @@ namespace PLang.Building
 			}
 
 			var instruction = build.Instruction;
-
+			logger.LogDebug($"Done with instruction - running Builder methods - {stopwatch.ElapsedMilliseconds} ");
 			(instruction, var builderError) = await RunBuilderMethod(step, instruction, instruction.Function);
 			if (builderError != null) return (instruction, builderError);
 
+			logger.LogDebug($"Done with builder method - running validate functions - {stopwatch.ElapsedMilliseconds} ");
 			// ValidateFunctions run after builder methods since they might change the function
 			var methodHelper = new MethodHelper(step, variableHelper, typeHelper, logger);
 			(var parameterProperties, var returnObjectsProperties, var invalidFunctionError) = methodHelper.ValidateFunctions(instruction.Function, step.ModuleType, memoryStack);
@@ -107,7 +126,7 @@ namespace PLang.Building
 				}
 				return (build.Instruction, invalidFunctionError);
 			}
-
+			logger.LogDebug($"Done with function validation - putting into memory and writing to file - {stopwatch.ElapsedMilliseconds} ");
 			var error = await stepBuilder.LoadVariablesIntoMemoryStack(instruction.Function, memoryStack, context, settings);
 			if (error != null) return (build.Instruction, error);
 
@@ -118,6 +137,7 @@ namespace PLang.Building
 
 			// since the no invalid function, we can save the instruction file
 			WriteInstructionFile(step, instruction);
+			logger.LogDebug($"Done with instruction building total time: {stopwatch.ElapsedMilliseconds} ");
 			return (instruction, null);
 		}
 
@@ -129,7 +149,7 @@ namespace PLang.Building
 			errors.Add(error);
 			ErrorCount!.AddOrReplace(step.RelativePrPath, errors);
 			return errors.Count;
-			
+
 		}
 
 		private InstructionBuilderError FunctionCouldNotBeCreated(GoalStep step)
@@ -140,9 +160,9 @@ namespace PLang.Building
 			{
 				errorCount = $"I tried {errorCount} times.";
 			}
-			return new InstructionBuilderError($@"Could not create instruction for {step.Text}. {errorCount}", step, step.Instruction, 
+			return new InstructionBuilderError($@"Could not create instruction for {step.Text}. {errorCount}", step, step.Instruction,
 				Retry: false,
-				FixSuggestion:@$"Try defining the step in more detail.
+				FixSuggestion: @$"Try defining the step in more detail.
 
 You have 3 options:
 	- Rewrite your step to fit better with a modules that you have installed. 
@@ -168,30 +188,44 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 
 		public async Task<(Instruction Instruction, IBuilderError? Error)> RunBuilderMethod(GoalStep goalStep, Model.Instruction instruction, IGenericFunction gf)
 		{
+			Stopwatch stopwatch = Stopwatch.StartNew();
+			logger.LogDebug($"    - Running 'Builder{gf.Name}' - {stopwatch.ElapsedMilliseconds}");
+
 			var builder = typeHelper.GetBuilderType(goalStep.ModuleType);
 			if (builder == null || gf == null) return (instruction, null);
+
+			logger.LogDebug($"    - Have builder type '{goalStep.ModuleType}' - {stopwatch.ElapsedMilliseconds}");
 
 			var defaultValidate = builder.GetMethod("BuilderValidate");
 
 			var method = builder.GetMethod("Builder" + gf.Name);
 			if (method == null && defaultValidate == null) return (instruction, null);
 
+			logger.LogDebug($"    - Create instance of {goalStep.ModuleType} - {stopwatch.ElapsedMilliseconds}");
 			var classInstance = builderFactory.Create(goalStep.ModuleType);
+			logger.LogDebug($"    - Have instance of {goalStep.ModuleType} - {stopwatch.ElapsedMilliseconds}");
+
 			classInstance.InitBaseBuilder(goalStep, fileSystem, llmServiceFactory, typeHelper, memoryStack, context, variableHelper, logger);
 
+			logger.LogDebug($"    - Loaded '{goalStep.ModuleType}' - {stopwatch.ElapsedMilliseconds}");
 			if (method != null)
 			{
+				logger.LogDebug($"    - Running 'Builder{gf.Name}' - {stopwatch.ElapsedMilliseconds}");
+
 				var method2 = classInstance.GetType().GetMethod("Builder" + gf.Name);
 				if (method2 == null) return (instruction, null);
-
 				var result = await InvokeMethod(classInstance, method2, goalStep, instruction!, gf);
+
+				logger.LogDebug($"    - Done 'Builder{gf.Name}' - {stopwatch.ElapsedMilliseconds}");
+
 				if (result.Error != null) return result;
-				
+
 				instruction = result.Instruction;
 			}
 
 			if (defaultValidate != null)
 			{
+				logger.LogDebug($"    - Running 'BuilderValidate' - {stopwatch.ElapsedMilliseconds}");
 				var method2 = classInstance.GetType().GetMethod("BuilderValidate");
 				if (method2 != null)
 				{
@@ -200,7 +234,56 @@ Builder will continue on other steps but not this one ({step.Text.MaxLength(30, 
 
 					instruction = result.Instruction;
 				}
+				logger.LogDebug($"    - Done 'BuilderValidate' - {stopwatch.ElapsedMilliseconds}");
 			}
+
+			(instruction, var error) = await ValidateGoalToCall(goalStep, instruction);
+			if (error != null) return (instruction, new BuilderError(error) {  Retry = false });
+
+			return (instruction, null);
+		}
+
+		public async Task<(Instruction Instruction, IBuilderError? Error)> ValidateGoalToCall(GoalStep goalStep, Instruction instruction)
+		{
+			var token = instruction.FunctionJson;
+
+			var nodes = JsonHelper.FindTokens(token, "Type", "PLang.Models.GoalToCallInfo", true);
+			if (!nodes.Any()) return (instruction, null);
+			foreach (var jsonNode in nodes)
+			{
+
+				if (jsonNode["Value"] == null)
+				{
+					throw new Exception($"Expected value {ErrorReporting.CreateIssueShouldNotHappen}");
+				}
+
+				var goalToCall = jsonNode["Value"]!.ToObject<GoalToCallInfo>();
+				if (goalToCall == null)
+				{
+					throw new Exception($"Expected value to be GoalToCallInfo. {ErrorReporting.CreateIssueShouldNotHappen}");
+				}
+
+				if (goalToCall.Name.Contains("%"))
+				{
+					logger.LogInformation($"Cannot validate goal to call that is dynamic: {goalToCall.Name} - {goalStep.RelativeGoalPath}:{goalStep.LineNumber}");
+					return (instruction, null);
+				}
+
+				(var goalFound, var error) = GoalHelper.GetGoalPath(goalStep.Goal.RelativeGoalFolderPath, goalToCall, goalParser.GetGoals(), prParser.GetSystemGoals());
+				if (error != null) return (instruction, new BuilderError(error) { Retry = false });
+				if (goalFound != null)
+				{
+					//if (goalToCall.Path?.Equals(goalFound.RelativeGoalPath) == true) return (instruction, null);
+
+					goalToCall.Path = goalFound.RelativePrPath;
+					jsonNode["Value"] = JToken.FromObject(goalToCall);
+				}
+
+			}
+
+			instruction.FunctionJson = token;
+
+			WriteInstructionFile(goalStep, instruction);
 
 			return (instruction, null);
 		}

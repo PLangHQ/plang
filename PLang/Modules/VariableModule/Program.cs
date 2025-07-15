@@ -7,6 +7,7 @@ using PLang.Errors;
 using PLang.Errors.Runtime;
 using PLang.Interfaces;
 using PLang.Models;
+using PLang.Modules.DbModule;
 using PLang.Runtime;
 using PLang.Utils;
 using System.Collections;
@@ -32,32 +33,62 @@ namespace PLang.Modules.VariableModule
 			this.programFactory = programFactory;
 			this.variableHelper = variableHelper;
 		}
-
 		public async Task<(object?, IError?)> Load([HandlesVariable] List<string> variables)
+		{
+			Dictionary<string, object?> varsWithValue = new();
+			foreach (var variable in variables)
+			{
+				varsWithValue.Add(variable, null);
+			}
+
+			return await LoadWithDefaultValue(varsWithValue);
+		}
+
+		[Description(@"Loads a variable with a default value, key: variable name, value: default value. example: load %age%, default 10 => key:%age% value:10")]
+		public async Task<(object?, IError?)> LoadWithDefaultValue([HandlesVariable] Dictionary<string, object?> variablesWithDefaultValue)
 		{
 			var db = programFactory.GetProgram<DbModule.Program>(goalStep);
 
 			List<object?> objects = new();
-			foreach (var variable in variables)
+			foreach (var variable in variablesWithDefaultValue)
 			{
 				List<ParameterInfo> parameters = new();
-				parameters.Add(new ParameterInfo("variable", variable, "System.String"));
+				parameters.Add(new ParameterInfo("variable", variable.Key, "System.String"));
 				try
 				{
 					var result = await db.Select("SELECT * FROM __Variables__ WHERE variable=@variable", parameters);
-					if (result.Table.Count == 0) continue;
+					if (result.Error != null && result.Error.Message.Contains("no such table"))
+					{
+						var createTableResult = await CreateVariablesTable(db);
+						if (createTableResult.Error != null) return (null, createTableResult.Error);
+						return await LoadWithDefaultValue(variablesWithDefaultValue);
+					}
 
-					dynamic row = result.Table[0];
-					if (row == null) continue;
+					if (result.Table == null || result.Table.Count == 0)
+					{
+						memoryStack.Put(variable.Key, variable.Value, goalStep: goalStep);
+						continue;
+					}
 
-					var json = row.value?.ToString();
-					if (json == null) continue;
+					var row = (Row) result.Table[0];
+					if (row == null)
+					{
+						memoryStack.Put(variable.Key, variable.Value, goalStep: goalStep);
+						continue;
+					}
+
+					var json = row["value"]?.ToString();
+					if (json == null)
+					{
+						memoryStack.Put(variable.Key, variable.Value, goalStep: goalStep);
+						continue;
+					}
 
 					var value = JsonConvert.DeserializeObject(json);
 
-					if (function?.ReturnValues?.Count == 0)
+					if (function?.ReturnValues == null || function?.ReturnValues?.Count == 0)
 					{
-						memoryStack.Put(variable, value, goalStep: goalStep);
+						memoryStack.Put(variable.Key, value, goalStep: goalStep);
 					}
 					else
 					{
@@ -572,6 +603,11 @@ namespace PLang.Modules.VariableModule
 			}
 
 			return trimmed;
+		}
+
+		public async Task<T?> GetSettings<T>(string key)
+		{
+			return settings.Get<T>(typeof(T), key, default(T), "");
 		}
 	}
 

@@ -79,7 +79,7 @@ namespace PLang
 			}
 		}
 
-		public async Task Execute(string[] args, ExecuteType executeType)
+		public async Task<(object? Variables, IError? Error)> Execute(string[] args, ExecuteType executeType)
 		{
 			var version = args.FirstOrDefault(p => p == "--version") != null;
 			if (version)
@@ -87,7 +87,7 @@ namespace PLang
 				var assembly = Assembly.GetAssembly(this.GetType());
 
 				Console.WriteLine("plang version: " + assembly.GetName().Version.ToString());
-				return;
+				return (null, null);
 			}
 
 			var debug = args.FirstOrDefault(p => p == "--debug") != null;
@@ -114,15 +114,16 @@ namespace PLang
 					WatchFolder(fileSystem.GoalsPath, "*.goal");
 					Console.Read();
 				}
-				return;
+				return (null, null);
 			}
 
 			if (watch)
 			{
 				WatchFolder(fileSystem.GoalsPath, "*.goal");
 			}
-			using var engine = await Run(debug, test, args);
-
+			
+			var result = await Run(debug, test, args);
+			return (result.Variables, result.Error);
 
 		}
 
@@ -243,7 +244,7 @@ namespace PLang
 				container.GetInstance<MemoryStack>().Clear();
 				this.engine.Init(container);
 
-				LoadArgsToMemoryStack(args, new());
+				LoadArgsToMemoryStack(args);
 
 				this.builder = container.GetInstance<IBuilder>();
 				var error = await builder.Start(container);
@@ -257,7 +258,7 @@ namespace PLang
 				}
 				else
 				{
-					prParser.LoadAllGoals();
+					prParser.LoadAllGoals(true);
 				}
 			}
 			catch (Exception ex)
@@ -269,7 +270,7 @@ namespace PLang
 		}
 
 
-		public async Task<IEngine> Run(bool debug = false, bool test = false, string[]? args = null)
+		public async Task<(IEngine? Engine, object? Variables, IError? Error)> Run(bool debug = false, bool test = false, string[]? args = null)
 		{
 			if (test) AppContext.SetSwitch(ReservedKeywords.Test, true);
 
@@ -280,15 +281,15 @@ namespace PLang
 
 			this.engine.Init(container);
 
-			var goalsToRun = new List<string>();
-			LoadArgsToMemoryStack(args, goalsToRun);
+			var goalToRun = LoadArgsToMemoryStack(args);
 
-			await engine.Run(goalsToRun);
-			return engine;
+			(var vars, var error) = await engine.Run(goalToRun);
+			return (engine, vars, error);
 		}
 
-		private void LoadArgsToMemoryStack(string[]? args, List<string> goalsToRun)
+		private string LoadArgsToMemoryStack(string[]? args)
 		{
+			string goalToRun = "Start.goal";
 			for (int i = 0; args != null && i < args.Length; i++)
 			{
 				if (args[i].StartsWith("--")) continue;
@@ -303,9 +304,10 @@ namespace PLang
 				}
 				else if (args[i].ToLower() != "run" && !string.IsNullOrEmpty(args[i]))
 				{
-					goalsToRun.Add(args[i].Trim());
+					goalToRun = args[i].Trim();
 				}
 			}
+			return goalToRun;
 		}
 	}
 
