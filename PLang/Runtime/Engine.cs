@@ -1043,12 +1043,6 @@ private async Task CacheGoal(Goal goal)
 
 		private IError? LoadInstruction(Goal goal, GoalStep step)
 		{
-
-			if (!fileSystem.File.Exists(step.AbsolutePrFilePath))
-			{
-				return new StepError($"Could not find pr file {step.RelativePrPath}. Maybe try to build again?. This step is defined in Goal at {goal.RelativeGoalPath}. The location of it on drive should be {step.AbsolutePrFilePath}.", step, Key: "PrFileNotFound", StatusCode: 404);
-			}
-
 			var instruction = prParser.ParseInstructionFile(step);
 			if (instruction == null)
 			{

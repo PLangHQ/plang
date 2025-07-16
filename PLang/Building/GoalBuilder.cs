@@ -47,12 +47,13 @@ namespace PLang.Building
 		private readonly ModuleSettings dbSettings;
 		private readonly IInstructionBuilder instructionBuilder;
 		private readonly VariableHelper variableHelper;
+		private readonly MethodHelper methodHelper;
 		private readonly IStepBuilder stepBuilder;
 		public List<IBuilderError> BuildErrors { get; init; }
 		public GoalBuilder(ILogger logger, IPLangFileSystem fileSystem, ILlmServiceFactory llmServiceFactory,
 				IGoalParser goalParser, IStepBuilder stepBuilder, IEventRuntime eventRuntime, ITypeHelper typeHelper,
 				PrParser prParser, ISettings settings, PLangAppContext context, Modules.DbModule.ModuleSettings dbSettings,
-				IInstructionBuilder instructionBuilder, VariableHelper variableHelper)
+				IInstructionBuilder instructionBuilder, VariableHelper variableHelper, MethodHelper methodHelper)
 		{
 
 			this.fileSystem = fileSystem;
@@ -68,6 +69,7 @@ namespace PLang.Building
 			this.dbSettings = dbSettings;
 			this.instructionBuilder = instructionBuilder;
 			this.variableHelper = variableHelper;
+			this.methodHelper = methodHelper;
 			BuildErrors = new();
 		}
 
@@ -79,7 +81,7 @@ namespace PLang.Building
 			GroupedBuildErrors groupedBuildErrors = new();
 			if (!goal.HasChanged)
 			{
-				
+
 				bool hasChanged = goal.GoalSteps.Any(p => string.IsNullOrEmpty(p.AbsolutePrFilePath));
 				if (!hasChanged)
 				{
@@ -219,7 +221,7 @@ namespace PLang.Building
 					continue;
 				}
 				logger.LogDebug($"   - Found function, validating... - {stopwatch.ElapsedMilliseconds}");
-				var methodHelper = new MethodHelper(step, variableHelper, typeHelper, logger);
+				
 				(var parameterProperties, var returnObjectsProperties, var invalidFunctionError) = methodHelper.ValidateFunctions(step.Instruction.Function, step.ModuleType, null);
 				if (invalidFunctionError != null)
 				{
@@ -230,7 +232,7 @@ namespace PLang.Building
 					// skip rest of validation, we already know this step has invalid build
 					continue;
 				}
-				
+
 				logger.LogDebug($"   - Validated function, run builder methods - {stopwatch.ElapsedMilliseconds}");
 
 				var builderRun = await instructionBuilder.RunBuilderMethod(step, step.Instruction, functionResult.Function);
@@ -245,7 +247,8 @@ namespace PLang.Building
 				}
 
 				var validateGoalToCallResult = await instructionBuilder.ValidateGoalToCall(step, step.Instruction);
-				if (validateGoalToCallResult.Error != null) {
+				if (validateGoalToCallResult.Error != null)
+				{
 					errors.Add(validateGoalToCallResult.Error);
 					step.Reload = true;
 					step.IsValid = false;
@@ -253,7 +256,7 @@ namespace PLang.Building
 					// skip rest of validation, we already know this step has invalid build
 					continue;
 				}
-				
+
 
 				logger.LogDebug($"   - Done running builder methods - {stopwatch.ElapsedMilliseconds}");
 				step.IsValid = true;
@@ -337,25 +340,22 @@ namespace PLang.Building
 
 		private async Task<(Goal, IBuilderError?)> LoadMethodAndDescription(Goal goal)
 		{
-			Goal? oldGoal = null;
-			if (fileSystem.File.Exists(goal.AbsolutePrFilePath))
+			Goal? oldGoal = JsonHelper.ParseFilePath<Goal>(fileSystem, goal.AbsolutePrFilePath);
+			if (oldGoal != null)
 			{
-				oldGoal = JsonHelper.ParseFilePath<Goal>(fileSystem, goal.AbsolutePrFilePath);
-				if (oldGoal != null)
-				{
-					goal.GoalInfo = oldGoal.GoalInfo;
-				}
+				goal.GoalInfo = oldGoal.GoalInfo;
 			}
 
+
 			return await CreateDescriptionForGoal(goal, oldGoal);
-			
+
 		}
 
 		public record GoalDescription(string Description, Dictionary<string, string>? IncomingVariablesRequired = null);
 
 		private async Task<(Goal, IBuilderError?)> CreateDescriptionForGoal(Goal goal, Goal? oldGoal)
 		{
-			
+
 			if (!string.IsNullOrEmpty(goal.Description) && goal.GetGoalAsString() == oldGoal?.GetGoalAsString())
 			{
 				return (goal, null);

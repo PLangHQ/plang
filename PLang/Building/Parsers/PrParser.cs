@@ -142,17 +142,17 @@ namespace PLang.Building.Parsers
 
 		public Instruction? ParseInstructionFile(GoalStep step)
 		{
-			if (!fileSystem.File.Exists(step.AbsolutePrFilePath))
-			{
-				return null;
-			}
-
 			if (instructions.TryGetValue(step.AbsolutePrFilePath, out var instruction))
 			{
 				return instruction;
 			}
 
-			return JsonHelper.ParseFilePath<Instruction>(fileSystem, step.AbsolutePrFilePath);
+			instruction = JsonHelper.ParseFilePath<Instruction>(fileSystem, step.AbsolutePrFilePath);
+			if (instruction != null)
+			{
+				instructions.TryAdd(step.AbsolutePrFilePath, instruction);
+			}
+			return instruction;
 			
 		}
 		public List<Goal> ForceLoadAllGoals()
@@ -197,6 +197,11 @@ namespace PLang.Building.Parsers
 			
 			GetGoals(force);
 			GetSystemGoals(force);
+
+			if (force)
+			{
+				instructions.Clear();
+			}
 
 			logger.LogDebug($"   -- Done loading all goals - {stopwatch.ElapsedMilliseconds}"); 
 			return goals;

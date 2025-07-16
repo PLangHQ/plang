@@ -324,8 +324,6 @@ namespace PLang.Building.Parsers
 				goal.IsSetup = GoalHelper.IsSetup(goal);
 				goal.IsEvent = GoalHelper.IsEvent(goal);
 
-				if (!fileSystem.File.Exists(prFileAbsolutePath)) continue;
-
 				var prevBuildGoal = JsonHelper.ParseFilePath<Goal>(fileSystem, prFileAbsolutePath);
 				if (prevBuildGoal == null) continue;
 

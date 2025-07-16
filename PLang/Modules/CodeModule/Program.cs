@@ -142,7 +142,7 @@ namespace PLang.Modules.CodeModule
 
 		}
 
-		private (List<object?>? Parameters, IError? Error) GetParameters(ParameterInfo[] parameters, List<Parameter>? inputParameters, List<BaseBuilder.ReturnValue>? returnValues)
+		private (List<object?>? Parameters, IError? Error) GetParameters(ParameterInfo[] parameters, IReadOnlyList<Parameter>? inputParameters, IReadOnlyList<BaseBuilder.ReturnValue>? returnValues)
 		{
 			List<object?> parametersObject = new();
 			for (var i = 0; i < parameters.Length; i++)

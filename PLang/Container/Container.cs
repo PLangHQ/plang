@@ -246,15 +246,15 @@ namespace PLang.Container
 			
 
 			container.RegisterSingleton<IFileAccessHandler, FileAccessHandler>();
-			
+
 			container.RegisterSingleton<IEngine, Engine>();
-			
+
 			/*
 			container.RegisterSingleton<EnginePool>(factory =>
 			{
 				return new EnginePool(10, () => container.GetInstance<IEngine>(), container);
 			});*/
-			
+
 			container.RegisterSingleton<ISettings, Settings>();
 			container.RegisterSingleton<IBuilder, Building.Builder>();
 			container.RegisterSingleton<ITypeHelper, TypeHelper>();
@@ -286,8 +286,9 @@ namespace PLang.Container
 			container.Register<IInstructionBuilder, InstructionBuilder>();
 
 			container.Register<LlmCaching, LlmCaching>();
-			container.Register<VariableHelper, VariableHelper>();
+			container.RegisterSingleton<VariableHelper, VariableHelper>();
 
+			container.RegisterSingleton<MethodHelper>();
 			container.Register<IPLangAppsRepository, PLangAppsRepository>();
 			container.Register<IHttpClientFactory, SimpleHttpClientFactory>();
 
@@ -626,7 +627,7 @@ namespace PLang.Container
 			// Register these types with the DI container
 			foreach (var type in modulesFromCurrentAssembly)
 			{
-				container.Register(type);
+				container.RegisterSingleton(type);
 				//container.Register(type, type, serviceName: type.FullName); 
 				/*container.Register(type, factory =>
 				{

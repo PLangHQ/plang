@@ -1,4 +1,5 @@
-﻿using IdGen;
+﻿using Epiforge.Extensions.Components;
+using IdGen;
 using LightInject;
 using Microsoft.Extensions.Logging;
 using Nethereum.Contracts.QueryHandlers.MultiCall;
@@ -97,7 +98,8 @@ namespace PLang.Modules
 			variableHelper = container.GetInstance<VariableHelper>();
 			this.typeHelper = container.GetInstance<ITypeHelper>();
 			this.llmServiceFactory = container.GetInstance<ILlmServiceFactory>();
-			methodHelper = new MethodHelper(goalStep, variableHelper, typeHelper, logger);
+			methodHelper = container.GetInstance<MethodHelper>();
+
 			fileAccessHandler = container.GetInstance<IFileAccessHandler>();
 			logger.LogDebug($"        - Done init - {stopwatch.ElapsedMilliseconds}");
 		}
@@ -129,18 +131,19 @@ namespace PLang.Modules
 		}
 		public async Task<(object? ReturnValue, IError? Error)> RunFunction(IGenericFunction function)
 		{
-
+			Stopwatch stopwatch = Stopwatch.StartNew();
 			Dictionary<string, object?>? parameterValues = null;
 			this.function = function; // this is to give sub classes access to current function running.
 			try
 			{
+				logger.LogDebug($"       - Get method {function.Name} - {stopwatch.ElapsedMilliseconds}");
 				MethodInfo? method = await methodHelper.GetMethod(this, function);
 				if (method == null)
 				{
 					return (null, new StepError($"Could not load method {function.Name} to run", goalStep, "MethodNotFound", 500));
 				}
 
-				logger.LogDebug("       - Method:{0}.{1}({2})", goalStep.ModuleType, method.Name, method.GetParameters());
+				logger.LogDebug($"       - Method:{goalStep.ModuleType}.{method.Name}({method.GetParameters()}) - {stopwatch.ElapsedMilliseconds}");
 
 				//TODO: Should move this caching check up the call stack. code is doing to much work before returning cache
 				if (await LoadCached(method, function)) return (null, null);
@@ -149,19 +152,20 @@ namespace PLang.Modules
 				{
 					return (new Error($"The method {method.Name} does not return Task. Method that are called must return Task"), null);
 				}
+				logger.LogDebug($"       - Loading parameter values - {stopwatch.ElapsedMilliseconds}");
 
 				(parameterValues, var error) = methodHelper.GetParameterValues(method, function);
 				if (error != null) return (null, error);
 
 				logger.LogTrace("Parameters:{0}", parameterValues);
-
+				logger.LogDebug($"       - Have parameter values, calling Invoke - {stopwatch.ElapsedMilliseconds}");
 				// This is for memoryStack event handler. Should find a better way
 				context.AddOrReplace(ReservedKeywords.Goal, goal);
 
 				Task? task = null;
 				try
 				{
-					task = method.Invoke(this, parameterValues.Values.ToArray()) as Task;
+					task = method.FastInvoke(this, parameterValues.Values.ToArray()) as Task;
 				}
 				catch (System.ArgumentException ex)
 				{
@@ -197,6 +201,9 @@ namespace PLang.Modules
 						int i = 0;
 					}
 				}
+
+				logger.LogDebug($"       - Invoke done - {stopwatch.ElapsedMilliseconds}");
+
 				if (task.Status == TaskStatus.Canceled)
 				{
 					return (null, new CancelledError(goal, goalStep, function));
@@ -426,7 +433,7 @@ namespace PLang.Modules
 		private void SetReturnValue(IGenericFunction function, object? result, Properties? properties)
 		{
 			//if (function.ReturnValues == null || function.ReturnValues.Count == 0) return;
-			var returnValues = function.ReturnValues ?? new();
+			var returnValues = function.ReturnValues ?? [];
 
 			if (result == null)
 			{

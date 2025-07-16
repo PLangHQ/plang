@@ -248,7 +248,7 @@ namespace PLangTests
 			llmCaching = new LlmCaching(fileSystem, settings);
 			container.RegisterInstance(llmCaching);
 
-			variableHelper = new VariableHelper(memoryStack, settings);
+			variableHelper = new VariableHelper(memoryStack, settings, logger);
 			container.RegisterInstance(variableHelper);
 
 			container.RegisterInstance(prParser);

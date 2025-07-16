@@ -5,6 +5,7 @@ using PLang.Models;
 using PLang.Models.ObjectValueConverters;
 using PLang.Models.ObjectValueExtractors;
 using PLang.Utils;
+using System.Diagnostics;
 using System.Xml.Linq;
 using Websocket.Client.Logging;
 
@@ -187,11 +188,10 @@ public class ObjectValue
 	public ObjectValue GetObjectValue(string path, Type? convertToType = null, MemoryStack? memoryStack = null)
 	{
 		var segments = PathSegmentParser.ParsePath(path);
-
 		var objectValue = ObjectValueExtractor.Extract(this, segments, memoryStack);
-		
 		if (convertToType == null || convertToType == typeof(ObjectValue)) return objectValue;
 		if (objectValue == null) return ObjectValue.Nullable(path);
+
 		return objectValue;
 	}
 	public object? Get(string path, Type? convertToType = null, MemoryStack? memoryStack = null)

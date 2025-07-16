@@ -20,6 +20,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Specialized;
 using System.Data;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Globalization;
 using System.Reflection;
@@ -272,6 +273,8 @@ namespace PLang.Runtime
 
 			object? obj = ov.Value;
 			if (defaultValue != null && !ov.Initiated || obj == null) return defaultValue;
+			if (obj is JValue jValue) return jValue.Value;
+
 			return obj;
 		}
 
@@ -372,7 +375,6 @@ namespace PLang.Runtime
 		}
 		private ObjectValue? GetFromVariables(KeyPath keyPath)
 		{
-
 			KeyValuePair<string, ObjectValue> variable = variables.FirstOrDefault(p => p.Value.IsName(keyPath.VariableName));
 			if (variable.Key == null) return null;
 

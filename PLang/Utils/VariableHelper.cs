@@ -9,6 +9,7 @@ using PLang.Models.ObjectValueConverters;
 using PLang.Runtime;
 using PLang.Services.SettingsService;
 using System.Collections;
+using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -21,12 +22,14 @@ namespace PLang.Utils
 	public class VariableHelper
 	{
 		private readonly ISettings settings;
+		private readonly ILogger logger;
 		private readonly MemoryStack memoryStack;
 		private JsonSerializerOptions jsonSerializerOptions;
 		private JsonSerializerSettings jsonSerializerSettings;
-		public VariableHelper(MemoryStack memoryStack, ISettings settings)
+		public VariableHelper(MemoryStack memoryStack, ISettings settings, ILogger logger)
 		{
 			this.settings = settings;
+			this.logger = logger;
 			this.memoryStack = memoryStack;
 
 			jsonSerializerOptions = new JsonSerializerOptions
@@ -76,9 +79,10 @@ namespace PLang.Utils
 		public object? LoadVariables(object? obj, bool emptyIfNotFound = true, object? defaultValue = null)
 		{
 			if (obj == null) return null;
-			
+			Stopwatch stopwatch = Stopwatch.StartNew();
 			if (obj is string variableName && IsVariable(variableName))
 			{
+				logger.LogDebug($"           - Loading {variableName} - {stopwatch.ElapsedMilliseconds}");
 				if (variableName.StartsWith("%Settings."))
 				{
 					var vars = GetVariables(variableName, emptyIfNotFound);
@@ -88,11 +92,8 @@ namespace PLang.Utils
 				else
 				{
 					var value = memoryStack.Get(variableName, false, defaultValue);
-					if (value != null)
-					{
-						if (value is JValue jValue) return jValue.Value;
-						return value;
-					}
+					logger.LogDebug($"           - Have variable {variableName} - {stopwatch.ElapsedMilliseconds}");
+					return value;
                 }
 			}
 
@@ -142,8 +143,10 @@ namespace PLang.Utils
 
 		}
 
-		private object? LoadVariablesToJArray(JArray array, List<ObjectValue> variables, object? defaultValue)
+		private object? LoadVariablesToJArray(JArray incomingArray, List<ObjectValue> variables, object? defaultValue)
 		{
+			var array = incomingArray.DeepClone() as JArray;
+
 			foreach (var variable in variables)
 			{
 				for (int i = 0; i < array.Count; i++)
@@ -157,8 +160,10 @@ namespace PLang.Utils
 			return array;
 		}
 
-		private object? LoadVariablesToJObject(JObject jobject, List<ObjectValue> variables, object? defaultValue)
+		private object? LoadVariablesToJObject(JObject incomingJObject, List<ObjectValue> variables, object? defaultValue)
 		{
+			var jobject = incomingJObject.DeepClone() as JObject;
+
 			foreach (var variable in variables)
 			{
 				var jsonProperty = FindPropertyNameByValue(jobject, variable.PathAsVariable);

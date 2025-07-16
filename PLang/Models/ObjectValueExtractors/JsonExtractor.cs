@@ -5,6 +5,7 @@ using PLang.Models.ObjectValueConverters;
 using PLang.Runtime;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace PLang.Models.ObjectValueExtractors
 {
@@ -29,8 +30,9 @@ namespace PLang.Models.ObjectValueExtractors
 					   .FirstOrDefault(p => string.Equals(p.Name, segment.Value, StringComparison.OrdinalIgnoreCase))
 					   ?.Value;
 				if (token == null) return null;
-
-				return new ObjectValue(segment.Value, token, parent: parent, properties: parent.Properties);
+			
+				var ov = new ObjectValue(segment.Value, token, parent: parent, properties: parent.Properties);
+				return ov;
 			}
 			else if (jToken is JArray jArray)
 			{

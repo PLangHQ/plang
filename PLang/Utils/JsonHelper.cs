@@ -81,18 +81,9 @@ namespace PLang.Utils
 		public static T? ParseFilePath<T>(IPLangFileSystem fileSystem, string? filePath)
 		{
 
-			if (filePath == null || !fileSystem.File.Exists(filePath)) return default;
+			if (string.IsNullOrEmpty(filePath) || !fileSystem.File.Exists(filePath)) return default;
 
 			string content = fileSystem.File.ReadAllText(filePath);
-			if (!IsJson(content))
-			{
-				if (typeof(T) == typeof(string))
-				{
-					return (T)(object)content;
-				}
-
-				return default;
-			}
 
 			try
 			{
@@ -100,7 +91,7 @@ namespace PLang.Utils
 			}
 			catch (Exception ex)
 			{
-				return default;
+				throw;
 			}
 		}
 

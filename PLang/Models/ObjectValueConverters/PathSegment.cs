@@ -1,5 +1,6 @@
 ﻿using PLang.Models.ObjectValueExtractors;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,13 +18,18 @@ namespace PLang.Models.ObjectValueConverters
 
 	public static class PathSegmentParser
 	{
+		static ConcurrentDictionary<string, List<PathSegment>> PathCache = new();
+
 		public static List<PathSegment> ParsePath(string path)
 		{
+			if (PathCache.TryGetValue(path, out var pathSegments)) return pathSegments;
+
 			var segments = new List<PathSegment>();
 			var regex = new Regex(@"([^[.\]]+)|\[(.+?)\]", RegexOptions.Compiled);
 			try
 			{
-				foreach (Match match in regex.Matches(path))
+				MatchCollection matches = regex.Matches(path);
+				foreach (Match match in matches)
 				{
 					if (match.Groups[1].Success)
 					{
@@ -70,6 +76,8 @@ namespace PLang.Models.ObjectValueConverters
 				Console.WriteLine($"Exception: {ex.Message} - path:{path}");
 				throw;
 			}
+
+			PathCache.TryAdd(path, segments);
 
 			return segments;
 		}

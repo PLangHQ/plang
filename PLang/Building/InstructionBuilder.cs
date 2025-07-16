@@ -47,11 +47,12 @@ namespace PLang.Building
 		private readonly ProgramFactory programFactory;
 		private readonly IGoalParser goalParser;
 		private readonly PrParser prParser;
+		private readonly MethodHelper methodHelper;
 
 		public InstructionBuilder(ILogger logger, IPLangFileSystem fileSystem, ITypeHelper typeHelper,
 			ILlmServiceFactory llmServiceFactory, IBuilderFactory builderFactory,
 			MemoryStack memoryStack, PLangAppContext context, VariableHelper variableHelper, ISettings settings, 
-			ProgramFactory programFactory, IGoalParser goalParser, PrParser prParser)
+			ProgramFactory programFactory, IGoalParser goalParser, PrParser prParser, MethodHelper methodHelper)
 		{
 			this.typeHelper = typeHelper;
 			this.llmServiceFactory = llmServiceFactory;
@@ -65,6 +66,7 @@ namespace PLang.Building
 			this.programFactory = programFactory;
 			this.goalParser = goalParser;
 			this.prParser = prParser;
+			this.methodHelper = methodHelper;
 		}
 		public Dictionary<string, List<IBuilderError>> ErrorCount { get; set; } = new();
 
@@ -116,7 +118,7 @@ namespace PLang.Building
 
 			logger.LogDebug($"Done with builder method - running validate functions - {stopwatch.ElapsedMilliseconds} ");
 			// ValidateFunctions run after builder methods since they might change the function
-			var methodHelper = new MethodHelper(step, variableHelper, typeHelper, logger);
+
 			(var parameterProperties, var returnObjectsProperties, var invalidFunctionError) = methodHelper.ValidateFunctions(instruction.Function, step.ModuleType, memoryStack);
 			if (invalidFunctionError != null)
 			{

@@ -12,6 +12,7 @@ using PLang.Runtime;
 using PLang.Utils;
 using System.Collections;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -339,9 +340,11 @@ namespace PLang.Modules.VariableModule
 		[Description(@"Set variable. Developer might use single/double quote to indicate the string value. If value is json, make sure to format it as valid json, use double quote("") by escaping it")]
 		public async Task SetVariable([HandlesVariable] string key, [HandlesVariable] object? value = null, bool doNotLoadVariablesInValue = false, bool keyIsDynamic = false, object? onlyIfValueIsNot = null, [HandlesVariable] object? defaultValue = null)
 		{
+			Stopwatch stopwatch = Stopwatch.StartNew();
+			logger.LogDebug($"         - Start SetVariable (key:{key} | value:{value}) - {stopwatch.ElapsedMilliseconds}");
 			if (value == null) value = defaultValue;
 			object? content = (doNotLoadVariablesInValue) ? value : variableHelper.LoadVariables(value, true, defaultValue);
-
+			logger.LogDebug($"         - loaded variable - {stopwatch.ElapsedMilliseconds}");
 			if (onlyIfValueIsNot?.ToString() == "null" && value == null) return;
 			if (onlyIfValueIsNot?.ToString() == "empty" && (value == null || VariableHelper.IsEmpty(value))) return;
 			if (onlyIfValueIsNot != null && onlyIfValueIsNot == value) return;
@@ -354,7 +357,9 @@ namespace PLang.Modules.VariableModule
 					key = newKey.ToString();
 				}
 			}
+			logger.LogDebug($"         - loaded % - {stopwatch.ElapsedMilliseconds}");
 			memoryStack.Put(key, content, goalStep: goalStep);
+			logger.LogDebug($"         - Done put into memorystack - {stopwatch.ElapsedMilliseconds}");
 		}
 
 
