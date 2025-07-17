@@ -921,7 +921,7 @@ namespace PLang.Runtime
 
 		public void Put(string originalKey, object? value, bool staticVariable = false,
 			bool initialize = true, bool convertToJson = true,
-			Properties? properties = null, GoalStep? goalStep = null)
+			Properties? properties = null, GoalStep? goalStep = null, bool disableEvent = false)
 		{
 			if (string.IsNullOrEmpty(originalKey)) return;
 			string key = Clean(originalKey);
@@ -933,7 +933,7 @@ namespace PLang.Runtime
 
 			if (value == null)
 			{
-				AddOrReplace(variables, key, new ObjectValue(key, null, null, null, initialize, properties), goalStep);
+				AddOrReplace(variables, key, new ObjectValue(key, null, null, null, initialize, properties), goalStep, disableEvent);
 				return;
 			}
 
@@ -979,7 +979,7 @@ namespace PLang.Runtime
 			if (!key.Contains("."))
 			{
 				var type = (value == null) ? null : value.GetType();
-				AddOrReplace(variables, key, new ObjectValue(key, value, type, null, initialize, properties), goalStep);
+				AddOrReplace(variables, key, new ObjectValue(key, value, type, null, initialize, properties), goalStep, disableEvent);
 				return;
 			}
 
@@ -1130,7 +1130,7 @@ namespace PLang.Runtime
 					SetJsonValue(jobj, keyPlan.JsonPath, value);
 				}
 
-				AddOrReplace(variables, keyPlan.VariableName, objectValue, goalStep);
+				AddOrReplace(variables, keyPlan.VariableName, objectValue, goalStep, disableEvent);
 			}
 
 
@@ -1162,7 +1162,7 @@ namespace PLang.Runtime
 			}
 		}
 
-		private void AddOrReplace(ConcurrentDictionary<string, ObjectValue> variables, string key, ObjectValue objectValue, GoalStep? goalStep = null)
+		private void AddOrReplace(ConcurrentDictionary<string, ObjectValue> variables, string key, ObjectValue objectValue, GoalStep? goalStep = null, bool disableEvent = false)
 		{
 			string? eventType = null;
 			key = Clean(key).ToLower();
@@ -1188,7 +1188,7 @@ namespace PLang.Runtime
 
 
 			variables.AddOrReplace(key, objectValue);
-			if (eventType != null)
+			if (!disableEvent && eventType != null)
 			{
 				CallEvent(eventType, objectValue, goalStep);
 			}

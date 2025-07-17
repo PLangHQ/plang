@@ -112,7 +112,8 @@ namespace PLang.Building
 			}
 
 			var instruction = build.Instruction;
-			
+			step.Instruction = instruction;
+
 			logger.LogDebug($"Done with instruction - running Builder methods - {stopwatch.ElapsedMilliseconds} ");
 			(instruction, var builderError) = await RunBuilderMethod(step, instruction, instruction.Function);
 			if (builderError != null) return (instruction, builderError);
@@ -120,7 +121,7 @@ namespace PLang.Building
 			logger.LogDebug($"Done with builder method - running validate functions - {stopwatch.ElapsedMilliseconds} ");
 			// ValidateFunctions run after builder methods since they might change the function
 
-			(var parameterProperties, var returnObjectsProperties, var invalidFunctionError) = methodHelper.ValidateFunctions(instruction.Function, step.ModuleType, memoryStack);
+			(var parameterProperties, var returnObjectsProperties, var invalidFunctionError) = methodHelper.ValidateFunctions(step, memoryStack);
 			if (invalidFunctionError != null)
 			{
 				if (previousBuildError?.ErrorChain.Count > 1)

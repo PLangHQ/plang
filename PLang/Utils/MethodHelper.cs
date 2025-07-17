@@ -83,10 +83,13 @@ namespace PLang.Utils
 			Dictionary<string, List<ParameterType>>? ReturnObjectProperties,
 			IBuilderError? Errors
 			)
-				ValidateFunctions(IGenericFunction function, string module, MemoryStack? memoryStack)
+				ValidateFunctions(GoalStep step, MemoryStack? memoryStack)
 		{
 			Dictionary<string, List<ParameterType>>? ParameterProperties = new();
 			Dictionary<string, List<ParameterType>>? ReturnObjectProperties = new();
+
+			var function = step.Instruction.Function;
+			var module = step.ModuleType;
 
 			var multipleError = new GroupedBuildErrors("InvalidFunction");
 			if (string.IsNullOrWhiteSpace(function.Name) || function.Name.ToUpper() == "N/A")
@@ -111,7 +114,7 @@ namespace PLang.Utils
 
 					foreach (var instanceFunction in instanceFunctions)
 					{
-						(var parameterProperties, var parameterErrors) = IsParameterMatch(instanceFunction, function.Parameters, function.Instruction.Step);
+						(var parameterProperties, var parameterErrors) = IsParameterMatch(instanceFunction, function.Parameters, step);
 						ParameterProperties.AddOrReplace(parameterProperties);
 
 						if (parameterErrors.Count == 0)

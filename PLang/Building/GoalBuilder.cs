@@ -222,7 +222,7 @@ namespace PLang.Building
 				}
 				logger.LogDebug($"   - Found function, validating... - {stopwatch.ElapsedMilliseconds}");
 				
-				(var parameterProperties, var returnObjectsProperties, var invalidFunctionError) = methodHelper.ValidateFunctions(step.Instruction.Function, step.ModuleType, null);
+				(var parameterProperties, var returnObjectsProperties, var invalidFunctionError) = methodHelper.ValidateFunctions(step, null);
 				if (invalidFunctionError != null)
 				{
 					step.Reload = true;

@@ -102,15 +102,13 @@ namespace PLang.Runtime
 				{
 					foreach (var param in parameters ?? [])
 					{
-						if (memoryStack.Contains(param.Key)) continue;
-
 						if (param.Key.StartsWith("!"))
 						{
 							goalToRun.AddVariable(param.Value, variableName: param.Key);
 						}
 						else
 						{
-							memoryStack.Put(param.Key, param.Value, goalStep: callingStep);
+							memoryStack.Put(param.Key, param.Value, goalStep: callingStep, disableEvent: true);
 						}
 					}
 				}
