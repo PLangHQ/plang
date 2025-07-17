@@ -294,12 +294,12 @@ namespace PLang.Modules.CryptographicModule
 
 		public void Dispose()
 		{
-			context.Remove(CurrentBearerToken);
+			context?.Remove(CurrentBearerToken);
 		}
 
 		public async Task SetCurrentBearerToken(string name)
 		{
-			context.AddOrReplace(CurrentBearerToken, name);
+			context?.AddOrReplace(CurrentBearerToken, name);
 		}
 
 		public async Task<string> GetBearerSecret()

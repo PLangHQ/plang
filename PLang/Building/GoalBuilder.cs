@@ -79,10 +79,10 @@ namespace PLang.Building
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			GroupedBuildErrors groupedBuildErrors = new();
+			
 			if (!goal.HasChanged)
 			{
-
-				bool hasChanged = goal.GoalSteps.Any(p => string.IsNullOrEmpty(p.AbsolutePrFilePath));
+				bool hasChanged = goal.GoalSteps.Any(p => p.HasChanged);
 				if (!hasChanged)
 				{
 					logger.LogDebug($" - Goal has not change - validating steps {goal.GoalName} - {stopwatch.ElapsedMilliseconds}");

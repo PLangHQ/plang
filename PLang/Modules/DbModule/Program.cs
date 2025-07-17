@@ -172,7 +172,7 @@ namespace PLang.Modules.DbModule
 
 			if (!IsBuilder && dataSource!.Name.Contains("%"))
 			{
-				var variables = variableHelper.GetVariables(dataSource.Name);
+				var variables = variableHelper.GetVariables(name);
 				(dataSource, var error) = await GetRuntimeDataSource(dataSource, variables);
 				if (error != null) return (dataSource, error);
 			}
@@ -262,7 +262,7 @@ namespace PLang.Modules.DbModule
 
 		public async Task<IError?> Rollback(string? name = null)
 		{
-			
+
 
 			(name, var error) = await GetNameForConnection(name);
 			if (error != null) return error;
@@ -381,8 +381,9 @@ namespace PLang.Modules.DbModule
 
 			var connection = goal.GetVariable<IDbConnection>(string.Format(connectionKey, dataSource.Name)) ?? dbFactory.CreateHandler(goalStep);
 			var transaction = goal.GetVariable<IDbTransaction>(string.Format(transactionKey, dataSource.Name));
+			bool isSqlite = (dataSource.TypeFullName.Contains("sqlite", StringComparison.OrdinalIgnoreCase));
 
-			var paramResult = GetDynamicParameters(sql, isInsert, Parameters);
+			var paramResult = GetDynamicParameters(sql, isInsert, Parameters, isSqlite);
 			if (paramResult.Error != null) return (null, null, null, sql, paramResult.Error);
 
 			if (connection != null && connection.State != ConnectionState.Open) connection.Open();
@@ -448,7 +449,8 @@ namespace PLang.Modules.DbModule
 			return await ExecuteRaw(sql, dataSourceName);
 		}
 
-		private async Task<(long RowsAffected, IError? Error)> ExecuteRaw(string sql, [HandlesVariable] string? dataSourceName = null) { 
+		private async Task<(long RowsAffected, IError? Error)> ExecuteRaw(string sql, [HandlesVariable] string? dataSourceName = null)
+		{
 			(var dataSource, var error) = await SetInternalDataSourceName(dataSourceName, false);
 			if (error != null) return (0, error);
 
@@ -492,7 +494,7 @@ namespace PLang.Modules.DbModule
 						return (1, null);
 					}
 
-					
+
 				}
 
 
@@ -579,7 +581,7 @@ namespace PLang.Modules.DbModule
 						var param = cmd.CreateParameter();
 						param.ParameterName = prop.ParameterName;
 						param.Value = ConvertToType(prop.VariableNameOrValue, prop.TypeFullName) ?? DBNull.Value;
-						
+
 						cmd.Parameters.Add(param);
 					}
 				}
@@ -596,7 +598,18 @@ namespace PLang.Modules.DbModule
 				{
 					var row = new Row(table);
 					foreach (var col in cols)
-						row[col] = reader[col];
+					{
+						var type = MapType(reader.GetDataTypeName(col));
+						if (type == null)
+						{
+							row[col] = reader[col];
+						}
+						else
+						{
+							row[col] = TypeHelper.ConvertToType(reader[col], type);
+						}
+					}
+
 					table.Add(row);
 				}
 
@@ -688,7 +701,7 @@ namespace PLang.Modules.DbModule
 				{
 					return (0, prepare.error);
 				}
-				
+
 
 				if (eventSourceRepository.GetType() != typeof(DisableEventSourceRepository))
 				{
@@ -966,19 +979,44 @@ namespace PLang.Modules.DbModule
 
 		}
 
-		private string ConvertFromColumnTypeToCSharpType(string type)
-		{
-			if (type == "TEXT" || type.Equals("string", StringComparison.OrdinalIgnoreCase)) return typeof(String).FullName;
-			if (type == "INTEGER" || type.Equals("int", StringComparison.OrdinalIgnoreCase)) return typeof(long).FullName;
-			if (type == "REAL") return typeof(double).FullName;
-			if (type == "BLOB") return typeof(byte[]).FullName;
-			if (type == "NUMERIC") return typeof(double).FullName;
-			if (type == "BOOLEAN" || type.Equals("bool", StringComparison.OrdinalIgnoreCase)) return typeof(bool).FullName;
-			if (type == "NULL") return typeof(DBNull).FullName;
-			if (type == "BIGINT" || type.Equals("int64", StringComparison.OrdinalIgnoreCase)) return typeof(Int64).FullName;
 
-			throw new Exception($"Could not map type: {type} to C# object");
+		static readonly Dictionary<string, Type> SqliteToClr = new(StringComparer.OrdinalIgnoreCase)
+		{
+			["NULL"] = typeof(DBNull),
+			["INTEGER"] = typeof(long),
+			["INT"] = typeof(long),
+			["REAL"] = typeof(double),
+			["NUMERIC"] = typeof(decimal),
+			["TEXT"] = typeof(string),
+			["STRING"] = typeof(string),
+			["CHAR"] = typeof(string),
+			["CLOB"] = typeof(string),
+			["BLOB"] = typeof(byte[]),
+			["BOOLEAN"] = typeof(bool),
+			["DATE"] = typeof(DateTime),
+			["DATETIME"] = typeof(DateTime),
+			["TIMESTAMP"] = typeof(DateTime),
+			["GUID"] = typeof(Guid)
+		};
+
+		//this is only sqlite support, each database should have it's own implementation
+		static Type? MapType(string declared) =>
+				SqliteToClr.TryGetValue(declared, out var t) ? t
+				: declared.IndexOf("INT", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(long)
+				: declared.IndexOf("CHAR", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				  declared.IndexOf("CLOB", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				  declared.IndexOf("TEXT", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(string)
+				: declared.IndexOf("BLOB", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(byte[])
+				: declared.IndexOf("REAL", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				  declared.IndexOf("FLOA", StringComparison.OrdinalIgnoreCase) >= 0 ||
+				  declared.IndexOf("DOUB", StringComparison.OrdinalIgnoreCase) >= 0 ? typeof(double)
+				: null;
+
+		private string? ConvertFromColumnTypeToCSharpTypeFullName(string type)
+		{
+			return MapType(type)?.FullName;
 		}
+
 
 		private string? GetBulkSql(string tableName, Dictionary<string, object> mapping, List<object> items, bool ignoreContraintOnInsert, ModuleSettings.DataSource dataSource)
 		{
@@ -1063,7 +1101,7 @@ namespace PLang.Modules.DbModule
 		}
 
 
-		private (DynamicParameters DynamicParameters, IError? Error) GetDynamicParameters(string sql, bool isInsert, List<ParameterInfo>? Parameters)
+		private (DynamicParameters DynamicParameters, IError? Error) GetDynamicParameters(string sql, bool isInsert, List<ParameterInfo>? Parameters, bool isSqlite)
 		{
 			DynamicParameters param = new();
 			if (Parameters == null) return (param, null);
@@ -1119,7 +1157,7 @@ namespace PLang.Modules.DbModule
 						postfix = "%";
 					}
 					var variableValue = variableName; // variableHelper.LoadVariables(variableName);
-					(object? value, Error? error) = ConvertObjectToType(variableValue, p.TypeFullName, parameterName, p.VariableNameOrValue);
+					(object? value, Error? error) = ConvertObjectToType(variableValue, p.TypeFullName, parameterName, p.VariableNameOrValue, isSqlite);
 					if (error != null) multipleErrors.Add(error);
 
 					param.Add("@" + parameterName, prefix + value + postfix);
@@ -1128,7 +1166,7 @@ namespace PLang.Modules.DbModule
 				{
 					var variableName = WrapForLike(p.VariableNameOrValue);
 
-					(object? value, IError? error) = ConvertObjectToType(variableName, p.TypeFullName, parameterName, p.VariableNameOrValue);
+					(object? value, IError? error) = ConvertObjectToType(variableName, p.TypeFullName, parameterName, p.VariableNameOrValue, isSqlite);
 					if (error != null)
 					{
 						if (parameterName == "id" && eventSourceRepository.GetType() == typeof(DisableEventSourceRepository))
@@ -1163,17 +1201,33 @@ namespace PLang.Modules.DbModule
 			return variableName;
 		}
 
-		private (object?, Error?) ConvertObjectToType(object obj, string typeFullName, string parameterName, object variableNameOrValue)
+		private (object?, Error?) ConvertObjectToType(object obj, string typeFullName, string parameterName, object variableNameOrValue, bool isSqlite)
 		{
 			// TODO: because of bad structure in building, can be removed when fix
 			if (typeFullName == "String") typeFullName = "System.String";
-			if (obj is System.DBNull) return (null, null);
+			
+
+			if (obj is ObjectValue ov)
+			{
+				obj = ov.Value;
+			}
+			else if (obj is List<ObjectValue> ovList)
+			{
+				List<object?> list = new();
+				ovList.ForEach(p => list.Add(p.Value));
+				obj = list;
+			}
+
+			if (obj is System.DBNull || obj == null) return (null, null);
 
 			Type? targetType = Type.GetType(typeFullName);
 			if (targetType == null)
 			{
-				typeFullName = ConvertFromColumnTypeToCSharpType(typeFullName);
-				targetType = Type.GetType(typeFullName);
+				typeFullName = ConvertFromColumnTypeToCSharpTypeFullName(typeFullName);
+				if (typeFullName != null)
+				{
+					targetType = Type.GetType(typeFullName);
+				}
 			}
 			try
 			{
@@ -1208,7 +1262,10 @@ namespace PLang.Modules.DbModule
 					}
 					return (array, null);
 				}
-
+				if (isSqlite && obj is DateTime dt && targetType == typeof(string))
+				{
+					return (dt.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture), null);
+				}
 				return (TypeHelper.ConvertToType(obj, targetType), null);
 			}
 			catch (Exception ex)

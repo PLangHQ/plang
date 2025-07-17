@@ -175,7 +175,8 @@ namespace PLang.Utils
 				variables = @" Variables:";
 				foreach (var variable in error.Variables)
 				{
-					variables += $"\n\t - {variable.PathAsVariable} => {JsonConvert.SerializeObject(variable.Value)}";
+					var value = JsonConvert.SerializeObject(variable.Value).MaxLength(5000);
+					variables += $"\n\t - {variable.PathAsVariable} => {value}";
 				}
 			}
 			string? callStack = null;
@@ -199,7 +200,7 @@ namespace PLang.Utils
 				string paramsStr = $"";
 				if (parameterValues == null)
 				{
-					paramsStr = JsonConvert.SerializeObject(genericFunction.Parameters);
+					paramsStr = JsonConvert.SerializeObject(genericFunction.Parameters).MaxLength(5000);
 				}
 				else
 				{
@@ -207,7 +208,8 @@ namespace PLang.Utils
 					{
 						if (parameterValues.ContainsKey(param.Name))
 						{
-							paramsStr += $"\t{param.Name} : {parameterValues[param.Name] ?? "[empty]"}\n";
+							var value = parameterValues[param.Name]?.ToString().MaxLength(5000) ?? "[empty]";
+							paramsStr += $"\t{param.Name} : {value}\n";
 						}
 						else
 						{

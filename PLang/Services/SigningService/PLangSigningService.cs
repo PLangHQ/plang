@@ -31,7 +31,7 @@ namespace PLang.Services.SigningService
 	{
 		Task<string> GetPublicKey();
 
-		Task<SignedMessage> Sign(object? data, List<string>? contracts = null, int? expiresInSeconds = null, Dictionary<string, object>? headers = null);
+		Task<SignedMessage> Sign(object? data, List<string>? contracts = null, int? expiresInSeconds = null, Dictionary<string, object>? headers = null, bool skipNonce = false);
 
 		Task<(SignedMessage? Signature, IError? Error)> VerifyDictionarySignature(Dictionary<string, object?> signature, Dictionary<string, object?>? headers = null, object? data = null, List<string>? contracts = null);
 		Task<(SignedMessage? Signature, IError? Error)> VerifySignature(SignedMessage signature, Dictionary<string, object?>? headers = null, object? data = null, List<string>? contracts = null);
@@ -60,7 +60,7 @@ namespace PLang.Services.SigningService
 			this.hasher = hasher;
 		}
 
-		public async Task<SignedMessage?> Sign(object? data, List<string>? contracts = null, int? expiresInSeconds = null, Dictionary<string, object?>? headers = null)
+		public async Task<SignedMessage?> Sign(object? data, List<string>? contracts = null, int? expiresInSeconds = null, Dictionary<string, object?>? headers = null, bool skipNonce = false)
 		{
 			var identity = identityService.GetCurrentIdentityWithPrivateKey();
 			var seed = Convert.FromBase64String(identity.Value!.ToString()!);
@@ -71,7 +71,7 @@ namespace PLang.Services.SigningService
 				expires = DateTimeOffset.Now.AddSeconds(expiresInSeconds.Value);
 			}
 
-			var result = await SignInternal(seed, data, headers, contracts, expires);
+			var result = await SignInternal(seed, data, headers, contracts, expires, skipNonce);
 
 			return result;
 		}
@@ -99,13 +99,14 @@ namespace PLang.Services.SigningService
 			return Key.Import(algorithm, privateKeyBytes, KeyBlobFormat.RawPrivateKey);
 		}
 
-		private async Task<SignedMessage?> SignInternal(byte[] seed, object? data = null, Dictionary<string, object?>? headers = null, List<string>? contracts = null, DateTimeOffset? expires = null)
+		private async Task<SignedMessage?> SignInternal(byte[] seed, object? data = null, Dictionary<string, object?>? headers = null,
+			List<string>? contracts = null, DateTimeOffset? expires = null, bool skipNonce = false)
 		{
 			// TODO: signing a message should trigger a AskUserException. 
 			// this would then ask the user if he want to sign the message
 			// the user can accept it and even allow expire date far into future.
 			DateTimeOffset created = SystemTime.OffsetUtcNow();
-			string nonce = SystemNonce.New();
+			string nonce = (!skipNonce) ? SystemNonce.New() : "";
 
 			var signature = await CreateSignatureData(data, created, nonce, headers, contracts, expires);
 
@@ -135,9 +136,13 @@ namespace PLang.Services.SigningService
 			{
 				Type = type,
 				Created = created,
-				Nonce = nonce,
 				Contracts = contracts ?? ["C0"]
 			};
+			if (!string.IsNullOrEmpty(nonce))
+			{
+				signature.Nonce = nonce;
+			}
+
 			if (headers != null && headers.Count > 0)
 			{
 				signature.Headers = headers;

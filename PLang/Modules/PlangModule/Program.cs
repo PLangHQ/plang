@@ -369,6 +369,9 @@ namespace PLang.Modules.PlangModule
 			{
 				return (null, new ProgramError($"The file {prFileName} could not be found. I searched for it at {absoluteFilePath}", goalStep, function));
 			}
+			// todo: attaching debugger and running from step does not work for http requests
+			// Run from step should also be a callback, like is done on websites (stateless)
+			// this validates that the user sending calls RunFromStep is valid
 			var startingEngine = engine.GetContext()[ReservedKeywords.StartingEngine] as IEngine;
 			if (startingEngine == null) startingEngine = engine;
 

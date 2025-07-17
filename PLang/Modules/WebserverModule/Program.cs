@@ -626,7 +626,7 @@ public class Program : BaseProgram, IDisposable
 		if (verifiedSignatureResult.Signature != null)
 		{
 			memoryStack.Put(ReservedKeywords.Identity, verifiedSignatureResult.Signature.Identity);
-
+			memoryStack.Put(ReservedKeywords.Signature, verifiedSignatureResult.Signature);
 			LiveConnection? liveResponse = null;
 			if (verifiedSignatureResult.Signature != null && verifiedSignatureResult.Signature.Identity != null)
 			{
@@ -1007,10 +1007,11 @@ Frontpage
 			var form = await req.ReadFormAsync();
 			var fields = form.ToDictionary(k => k.Key, k => (object?)k.Value.ToString());
 
-			var payload = new Dictionary<string, object?>(fields, StringComparer.OrdinalIgnoreCase)
+			var payload = new Dictionary<string, object?>(fields, StringComparer.OrdinalIgnoreCase);
+			if (form.Files.Count > 0)
 			{
-				["_files"] = form.Files
-			};
+				payload.Add("_files", form.Files);
+			}
 			foreach (var (k, v) in query) payload.TryAdd(k, v);
 
 			objectValue = new ObjectValue("request", payload, properties: properties);

@@ -104,9 +104,9 @@ namespace PLang.Modules.IdentityModule
 		}
 
 		[Description("Sign a content with specific headers and contracts. Returns signature object that contains the values to validate the signature")]
-		public async Task<SignedMessage> Sign(object? body, List<string>? contracts = null, int? expiresInSeconds = null, Dictionary<string, object>? headers = null)
+		public async Task<SignedMessage> Sign(object? body, List<string>? contracts = null, int? expiresInSeconds = null, Dictionary<string, object>? headers = null, bool skipNonce = false)
 		{
-			return await signingService.Sign(body, contracts, expiresInSeconds, headers);
+			return await signingService.Sign(body, contracts, expiresInSeconds, headers, skipNonce: skipNonce);
 		}
 
 		[Description("Validate a signature on specific properties")]

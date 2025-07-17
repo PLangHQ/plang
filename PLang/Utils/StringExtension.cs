@@ -73,6 +73,13 @@ namespace PLang.Utils
 		}
 
 
+		public static string ComputeKeccack(object input)
+		{
+			var str = JsonConvert.SerializeObject(input);
+
+			return str.ComputeKeccack();
+		}
+
 		public static string ComputeSha256(this string input)
 		{
 			if (input == null) return "";

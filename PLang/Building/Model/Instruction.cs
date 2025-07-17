@@ -89,6 +89,13 @@ namespace PLang.Building.Model
 			get; set;
 		}
 
+		[LlmIgnore]
+		public string Hash { get; set; }
+
+		[LlmIgnore]
+		public SignedMessage SignedMessage { get; set; }
+
+
 		IGenericFunction function;
 		[Newtonsoft.Json.JsonIgnore]
 		[IgnoreDataMemberAttribute]
@@ -98,6 +105,8 @@ namespace PLang.Building.Model
 		{
 			get
 			{
+				if (function.Instruction == null) function.Instruction = this;
+
 				return function;
 			}
 			set { 

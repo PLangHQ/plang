@@ -90,23 +90,30 @@ namespace PLang.Modules.DbModule
 
 				dataSource = dataSources.FirstOrDefault();
 				goalStep.AddVariable<DataSource>(dataSource);
-			} 
+			}
 
-			if (dataSource == null)
+			if (!goalStep.Goal.IsSetup && dataSource == null)
 			{
 				return (null, new StepBuilderError("Could not find data source. Are you building in the correct directory?", goalStep, ContinueBuild: false));
 			}
+			else
+			{
+				if (goalStep.Goal.GoalName.Equals("Setup"))
+				{
+					dataSource = (await dbSettings.GetAllDataSources()).FirstOrDefault(p => p.IsDefault);
+				}
+			}
 
-
-
-				string sqlType = "sqlite";
+			string sqlType = "sqlite";
 			string autoIncremental = "";
 			string insertAppend = "";
+			string system = "";
+			if (dataSource != null)
+			{
+				sqlType = dataSource.TypeFullName;
+				autoIncremental = (dataSource!.KeepHistory) ? "(NO auto increment)" : "auto incremental";
 
-			sqlType = dataSource.TypeFullName;
-			autoIncremental = (dataSource!.KeepHistory) ? "(NO auto increment)" : "auto incremental";
-
-			var system = @$"
+				system = @$"
 Use dataSourceName from <dataSource> when parameter for method is dataSourceName
 
 <dataSource name=""{dataSource.Name}"">
@@ -115,12 +122,12 @@ Database name:{dataSource.DbName}
 Id columns: {autoIncremental}
 </dataSource>
 ";
-			// todo: this will fail with different type of dbs
-			if (dataSource.KeepHistory)
-			{
-				insertAppend = "- On Insert, InsertOrUpdate, InsertOrUpdateAndSelectIdOfRow you must modify sql to include id(System.Int64) column and ParameterInfo @id=\"auto\"";
+				// todo: this will fail with different type of dbs
+				if (dataSource.KeepHistory)
+				{
+					insertAppend = "- On Insert, InsertOrUpdate, InsertOrUpdateAndSelectIdOfRow you must modify sql to include id(System.Int64) column and ParameterInfo @id=\"auto\"";
+				}
 			}
-
 
 			system += @$"
 Additional json Response explaination:
@@ -288,7 +295,7 @@ User intent: {goalStep.Text}
 			gf.Parameters[0] = gf.Parameters[0] with { Value = sqlAndParams.Sql };
 			gf.Parameters[1] = gf.Parameters[1] with { Value = sqlAndParams.Parameters };
 			gf = gf with { Warning = sqlAndParams.Warning };
-			
+
 			instruction = instruction with { Function = gf };
 			instruction.LlmRequest.Add(question);
 			return (instruction, null);
@@ -335,7 +342,7 @@ User intent: {goalStep.Text}
 			var result = await program.Execute(sql, tableAllowList, dataSourceName);
 			if (result.Error != null)
 			{
-				return new BuilderError(result.Error) { Retry = false } ;
+				return new BuilderError(result.Error) { Retry = false };
 			}
 			logger.LogInformation($"  - ✅ Sql statement validated - {sql.MaxLength(30, "...")} - {step.Goal.RelativeGoalPath}:{step.LineNumber}");
 			return null;
@@ -603,10 +610,14 @@ Reason:{error.Message}", step,
 
 		private async Task<(bool IsValid, string DataSourceName, IBuilderError? Error)> IsValidSql(string sql, string dataSourceName, GoalStep step)
 		{
-			var dataSource = step.GetVariable<DataSource>();
-			if (dataSource != null)
+
+			if (string.IsNullOrEmpty(dataSourceName))
 			{
-				dataSourceName = dataSource.Name;
+				var dataSource = step.GetVariable<DataSource>();
+				if (dataSource != null)
+				{
+					dataSourceName = dataSource.Name;
+				}
 			}
 
 			var anchors = context.GetOrDefault<Dictionary<string, IDbConnection>>("AnchorMemoryDb", new()) ?? new();

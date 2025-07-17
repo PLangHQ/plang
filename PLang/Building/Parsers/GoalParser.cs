@@ -8,6 +8,7 @@ using PLang.Runtime;
 using PLang.Utils;
 using Sprache;
 using System.Text.RegularExpressions;
+using Instruction = PLang.Building.Model.Instruction;
 
 namespace PLang.Building.Parsers
 {
@@ -361,9 +362,15 @@ namespace PLang.Building.Parsers
 					goals[i].GoalSteps[b].IsEvent = goal.IsEvent;
 					goals[i].GoalSteps[b].Generated = prevStep.Generated;
 
-					var absolutePrStepFilePath = Path.Join(goal.AbsolutePrFolderPath, prevStep.PrFileName);
-					if (!fileSystem.File.Exists(absolutePrStepFilePath)) continue;
+					var absolutePrStepFilePath = fileSystem.Path.Join(goal.AbsolutePrFolderPath, prevStep.PrFileName);
+					var instruction = JsonHelper.ParseFilePath<Instruction>(fileSystem, absolutePrStepFilePath);
+					
+					if (instruction == null) continue;
 
+					// todo: this HasChange is not good enough, function might have change
+					// should validate hash of file and the signature also.
+					// it should allow modifying of function just give warning.
+					goals[i].GoalSteps[b].HasChanged = !prevStep.Text.Equals(instruction.Text);
 					goals[i].GoalSteps[b].PrFileName = prevStep.PrFileName;
 					goals[i].GoalSteps[b].RelativePrPath = Path.Join(goal.RelativePrFolderPath, prevStep.PrFileName);
 					goals[i].GoalSteps[b].AbsolutePrFilePath = absolutePrStepFilePath;
@@ -478,6 +485,7 @@ namespace PLang.Building.Parsers
 			var orderedFiles = goalsToBuild
 				.OrderBy(goal => !goal.RelativeGoalFolderPath.Equals(Path.DirectorySeparatorChar.ToString()))
 				.ThenBy(goal => goal.RelativeGoalPath)
+				.ThenBy(goal => goal.Visibility != Visibility.Public)
 				.ToList();
 
 

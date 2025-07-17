@@ -112,6 +112,7 @@ namespace PLang.Building
 			}
 
 			var instruction = build.Instruction;
+			
 			logger.LogDebug($"Done with instruction - running Builder methods - {stopwatch.ElapsedMilliseconds} ");
 			(instruction, var builderError) = await RunBuilderMethod(step, instruction, instruction.Function);
 			if (builderError != null) return (instruction, builderError);

@@ -137,7 +137,7 @@ namespace PLang.Utils
 				}
 				
 
-				content = content.Replace(variable.PathAsVariable, strValue);
+				content = content.Replace(variable.PathAsVariable, strValue, StringComparison.OrdinalIgnoreCase);
 			}
 			return content;
 

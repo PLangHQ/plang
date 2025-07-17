@@ -451,6 +451,10 @@ public class TypeHelper : ITypeHelper
 		{
 			return jobj.ToObject(targetType);
 		}
+		if (value is JValue jValue)
+		{
+			return jValue.Value;
+		}
 
 		if (value is JArray jArray)
 		{
@@ -465,6 +469,11 @@ public class TypeHelper : ITypeHelper
 		{
 			var jArray2 = new JArray((IEnumerable<JToken>)value);
 			return jArray2.ToString();
+		}
+
+		if (TypeHelper.IsRecordType(value) && targetType == typeof(string))
+		{
+			return JsonConvert.SerializeObject(value);
 		}
 
 

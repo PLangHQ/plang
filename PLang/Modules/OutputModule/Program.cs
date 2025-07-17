@@ -92,7 +92,7 @@ namespace PLang.Modules.OutputModule
 			public int StatusCode { get; set; }
 
 			public Dictionary<string, string>? ValidationRegexPatternAndErrorMessage { get; set; }
-			public Dictionary<string, object?>? CallBackData { get; set; }
+			public Dictionary<string, object?>? CallbackData { get; set; }
 			[IgnoreWhenInstructed]
 			public Dictionary<string, object>? Parameters { get; set; }
 			public Dictionary<string, string>? Choices { get; set; }
@@ -105,6 +105,7 @@ namespace PLang.Modules.OutputModule
 			public UserOrSystemEnum? UserOrSystem { get; set; }
 			[IgnoreWhenInstructed]
 			public string? Channel { get; set; }
+			public bool IncludeNonce { get; set; } = false;
 
 			[JsonIgnore]
 			public TemplateEngineModule.Program? TemplateEngine { get; set; }
@@ -114,7 +115,7 @@ namespace PLang.Modules.OutputModule
 				string question,
 				int statusCode = 202,
 				Dictionary<string, string>? validationRegexPatternAndErrorMessage = null,
-				Dictionary<string, object>? callBackData = null,
+				Dictionary<string, object>? callbackData = null,
 				Dictionary<string, object>? parameters = null,
 				Dictionary<string, string>? choices = null,
 				bool isMultiChoice = false,
@@ -122,12 +123,12 @@ namespace PLang.Modules.OutputModule
 				GoalToCallInfo? onCallback = null,
 				string answerVariableName = "answer",
 				UserOrSystemEnum? userOrSystem = null,
-				string? channel = null)
+				string? channel = null, bool includeNonce = false)
 			{
 				Question = question;
 				StatusCode = statusCode;
 				ValidationRegexPatternAndErrorMessage = validationRegexPatternAndErrorMessage;
-				CallBackData = callBackData;
+				CallbackData = callbackData;
 				Parameters = parameters;
 				Choices = choices;
 				IsMultiChoice = isMultiChoice;
@@ -136,6 +137,7 @@ namespace PLang.Modules.OutputModule
 				AnswerVariableName = answerVariableName;
 				UserOrSystem = userOrSystem;
 				Channel = channel;
+				IncludeNonce = includeNonce;
 			}
 		}
 
@@ -171,16 +173,17 @@ namespace PLang.Modules.OutputModule
 
 		private async Task<(object? Answer, IError? Error)> AskInternal(AskOptions askOptions, IError? error = null)
 		{
-			
-			object? answer;
 
+			object? answer;
+			var outputStream = outputStreamFactory.CreateHandler(/*askOptions.UserOrSystem, askOptions.Channel*/);
 			if (goalStep.Callback != null)
 			{
 				string answerVariableName = askOptions.AnswerVariableName.Replace("%", "");
 				if (HttpContext.Request.HasFormContentType)
 				{
 					answer = memoryStack.Get("request." + answerVariableName);
-				} else
+				}
+				else
 				{
 					return (null, new ProgramError("Could not find answer"));
 				}
@@ -195,10 +198,10 @@ namespace PLang.Modules.OutputModule
 					var runGoalResult = await caller.RunGoal(askOptions.OnCallback);
 					if (runGoalResult.Error != null) return (null, runGoalResult.Error);
 				}
-				return await ProcessAnswer(answer, askOptions, true);
+				return await ProcessAnswer(answer, askOptions, outputStream.IsStateful);
 			}
 
-			var outputStream = outputStreamFactory.CreateHandler(/*askOptions.UserOrSystem, askOptions.Channel*/);
+
 			outputStream.Step = goalStep;
 			string path = "/";
 			if (HttpContext != null)
@@ -206,7 +209,7 @@ namespace PLang.Modules.OutputModule
 				path = HttpContext.Request.Path;
 			}
 
-			var callback = await StepHelper.GetCallback(path, askOptions.CallBackData, memoryStack, goalStep, programFactory);
+			var callback = await StepHelper.GetCallback(path, askOptions.CallbackData, memoryStack, goalStep, programFactory, !askOptions.IncludeNonce);
 			(answer, error) = await outputStream.Ask(askOptions, callback, error);
 			if (error != null) return (null, error);
 
@@ -242,12 +245,20 @@ namespace PLang.Modules.OutputModule
 			if (string.IsNullOrEmpty(callbackBase64)) return (null, new ProgramError("callback was invalid", goalStep));
 			var callback = JsonConvert.DeserializeObject<Callback>(callbackBase64.FromBase64());
 			var encryption = programFactory.GetProgram<Modules.CryptographicModule.Program>(goalStep);
-			if (callback?.CallbackData != null)
+			if ((callback?.CallbackData == null || callback?.CallbackData?.Count == 0) && function.ReturnValues?.Count > 0)
 			{
-				foreach (var item in callback.CallbackData)
+				answer = memoryStack.Get("request");
+			}
+			else
+			{
+				foreach (var item in callback?.CallbackData ?? [])
 				{
-					var decryptedValue = await encryption.Decrypt(item.Value.ToString());
+					string? value = item.Value?.ToString();
+					if (string.IsNullOrEmpty(value)) continue;
+
+					var decryptedValue = await encryption.Decrypt(value);
 					memoryStack.Put(item.Key, decryptedValue);
+
 				}
 			}
 

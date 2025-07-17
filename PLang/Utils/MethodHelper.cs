@@ -777,7 +777,7 @@ namespace PLang.Utils
 				}
 				else
 				{
-					parameterValues.Add(parameter.Name, Type.Missing);
+					parameterValues.Add(parameter.Name, null);
 				}
 			}
 		}
