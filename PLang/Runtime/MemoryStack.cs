@@ -1228,7 +1228,7 @@ namespace PLang.Runtime
 						throw new ExceptionWrapper(result.error);
 					}
 				});
-				//task.Wait();
+				task.Wait();
 			}
 		}
 

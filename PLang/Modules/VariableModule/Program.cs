@@ -324,8 +324,11 @@ namespace PLang.Modules.VariableModule
 
 		}
 		[Description(@"Set default value of int/long variable. If value already exists it wont be set.")]
-		public async Task SetDefaultNumberVariable([HandlesVariable] string key, long? value = null, long? defaultValue = null)
+		public async Task SetDefaultNumberVariable([HandlesVariable] string key, long? value = null, long? defaultValue = null, long? maxValue = null, long? minValue = null)
 		{
+			if (minValue != null && value < minValue) value = minValue;
+			if (maxValue != null && value > maxValue) value = maxValue;
+
 			var objectValue = memoryStack.GetObjectValue(key, false);
 			if (objectValue.Initiated) return;
 
@@ -354,8 +357,10 @@ namespace PLang.Modules.VariableModule
 			return null;
 		}
 		[Description(@"Set int/long variable.")]
-		public async Task SetNumberVariable([HandlesVariable] string key, long? value = null, long? defaultValue = null)
+		public async Task SetNumberVariable([HandlesVariable] string key, long? value = null, long? defaultValue = null, long? maxValue = null, long? minValue = null)
 		{
+			if (minValue != null && value < minValue) value = minValue;	
+			if (maxValue != null && value > maxValue) value = maxValue;
 			memoryStack.Put(key, value ?? defaultValue, goalStep: goalStep);
 		}
 		[Description(@"Set double variable.")]
