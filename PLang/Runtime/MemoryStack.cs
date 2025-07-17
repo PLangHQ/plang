@@ -125,12 +125,12 @@ namespace PLang.Runtime
 					}
 					newMs[i].Order += varsInStep.Count;
 					ms[i].Order += varsInStep.Count;
-				}				
+				}
 
 				for (int i = 0; i < varsInStep.Count; i++)
 				{
 					var ov = this.GetObjectValue(varsInStep[i]);
-					
+
 					if (!ov.Initiated)
 					{
 						ov = new ObjectValue(varsInStep[i], $"{varsInStep[i]} is empty");
@@ -151,7 +151,8 @@ namespace PLang.Runtime
 				newMs = newMs.OrderBy(p => p.Order).ToList();
 				return JsonConvert.SerializeObject(newMs, customSettings);
 
-			} catch (Exception ex)
+			}
+			catch (Exception ex)
 			{
 				int i = 0;
 				List<ObjectValue> ovs = new();
@@ -406,7 +407,7 @@ namespace PLang.Runtime
 
 			//sub variable, e.g. %user.name%, %now+5days%
 			var ov = variable.Value.Get<ObjectValue>(keyPath.Path, this) ?? ObjectValue.Nullable(keyPath.FullPath);
-			
+
 			return ov;
 
 
@@ -1185,13 +1186,15 @@ namespace PLang.Runtime
 				objectValue.Events = prevObjectValue.Events;
 			}
 
+
 			variables.AddOrReplace(key, objectValue);
 			if (eventType != null)
 			{
 				CallEvent(eventType, objectValue, goalStep);
 			}
-		}
 
+		}
+		private static readonly object _locker = new();
 
 		private void CallEvent(string eventType, ObjectValue objectValue, GoalStep? step = null)
 		{
@@ -1209,8 +1212,6 @@ namespace PLang.Runtime
 				eve.Goal = step.Goal;
 				eve.Step = step;
 
-
-				eve.GoalToCall.Parameters.AddOrReplace(objectValue.Name, objectValue.Value);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.VariableName, objectValue.Name);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.VariableValue, objectValue.Value);
 				eve.GoalToCall.Parameters.AddOrReplace(ReservedKeywords.IsEvent, true);
@@ -1219,16 +1220,13 @@ namespace PLang.Runtime
 				var goal = step.Goal;
 				if (eve.GoalToCall.Name == goal.GoalName) return;
 
-				var task = Task.Run(async () =>
+				var task = pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, eve.GoalToCall, goal);
+				var result = task.GetAwaiter().GetResult();
+				if (result.error != null)
 				{
-					var result = await pseudoRuntime.RunGoal(engine, context, goal.RelativeAppStartupFolderPath, eve.GoalToCall, goal);
-					if (result.error != null)
-					{
-						// todo: should call event binding for step 
-						throw new ExceptionWrapper(result.error);
-					}
-				});
-				task.Wait();
+					// todo: should call event binding for step 
+					throw new ExceptionWrapper(result.error);
+				}
 			}
 		}
 

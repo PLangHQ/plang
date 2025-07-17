@@ -102,6 +102,8 @@ namespace PLang.Runtime
 				{
 					foreach (var param in parameters ?? [])
 					{
+						if (memoryStack.Contains(param.Key)) continue;
+
 						if (param.Key.StartsWith("!"))
 						{
 							goalToRun.AddVariable(param.Value, variableName: param.Key);

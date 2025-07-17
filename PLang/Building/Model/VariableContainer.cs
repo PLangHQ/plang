@@ -158,6 +158,8 @@ namespace PLang.Building.Model
 			for (int i = _variables.Count - 1; i >= 0; i--)
 			{
 				var variable = _variables[i];
+				if (variable == null) continue;
+
 				var parent = GetParent();
 				if (parent != null && memoryStack.ContainsObject(variable))
 				{
